@@ -6,6 +6,8 @@ import '../constants.dart' show GamePlayerLookup;
 import '../diplomacy/diplomacy_resolver.dart' show worldMarketBidTypeCap;
 import '../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
 import '../economy/world_market/trade_order_suggester.dart';
+import '../economy/world_market/treasury_bid_budget.dart'
+    show treasuryAvailableForBidsByPlayer;
 import 'order_suggestion.dart' as suggestion;
 import 'order_suggestion_api.dart';
 import '../world/player_view.dart';
@@ -230,6 +232,11 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
       tradeCargoCapacity: cargoHoldsForHomeFleet(game, view.playerId),
       availableStockpileByCommodityId: available,
       commodityNeedByCommodityId: const <CommodityId, int>{},
+      treasuryBudgetForBids: treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: view.playerId,
+      ),
+      worldMarketState: game.worldMarketState,
     );
   }
 }

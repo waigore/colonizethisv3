@@ -197,6 +197,7 @@ List<TradeOrder> runTreasuryPlanner({
     return const <TradeOrder>[];
   }
 
+  final treasuryBudgetForBids = treasury < 0 ? 0 : treasury;
   final suggestion = TradeOrderSuggester.suggest(
     TradeSuggestionContext(
       playerId: playerId,
@@ -204,6 +205,8 @@ List<TradeOrder> runTreasuryPlanner({
       tradeCargoCapacity: tradeCargoCapacity,
       availableStockpileByCommodityId: available,
       commodityNeedByCommodityId: need,
+      treasuryBudgetForBids: treasuryBudgetForBids,
+      worldMarketState: game.worldMarketState,
       offerPriority: offerPriority,
       bidPriority: kTreasuryBidPriorityRawMaterial,
     ),

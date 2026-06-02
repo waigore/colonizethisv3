@@ -358,6 +358,9 @@ class TradeSuggestionContext {
     required this.tradeCargoCapacity,
     required this.availableStockpileByCommodityId,
     required this.commodityNeedByCommodityId,
+    this.treasuryBudgetForBids = 1 << 30,
+    this.worldMarketState = const WorldMarketState(),
+    this.resourceRules = ResourceRules.defaultRules,
     this.offerPriority = 5,
     this.bidPriority = 5,
   });
@@ -367,6 +370,9 @@ class TradeSuggestionContext {
   final int tradeCargoCapacity;
   final Map<CommodityId, int> availableStockpileByCommodityId;
   final Map<CommodityId, int> commodityNeedByCommodityId;
+  final int treasuryBudgetForBids;
+  final WorldMarketState worldMarketState;
+  final ResourceRules resourceRules;
   final int offerPriority;
   final int bidPriority;
 }
@@ -384,11 +390,12 @@ class TradeOrderSuggester {
 Both selectors iterate commodities in **alphabetical id order** for determinism and skip every entry with `commodityId` in `richesCommodityIds` (rule 2) or `quantity <= 0` (rule 1) before emitting a `TradeOrder`. Mutual-exclusion (rule 3) is enforced at suggestion time: a commodity that has both a positive available stockpile and a positive forecast need is treated as **net** — `net = availableStockpile - need`; positive net produces an offer and zero bid, non-positive net produces a bid (when `need > availableStockpile`) and zero offer. The resulting parallel lists never share a commodity id.
 
 1. **Offer pass** — for every commodity with `net > 0`, emit `TradeOrder(commodityId, type: offer, quantity: net, priority: offerPriority, isFtp: false)`. There is no per-commodity offer cap (rule 6 only requires `quantity <= availableStockpile`, which `net` satisfies by construction).
-2. **Bid pass** — maintain `remainingCargoBudget = tradeCargoCapacity` and `admittedBids = 0`. For every commodity with `bidQuantity > 0` (need exceeds available stockpile):
-   - Compute `cappedQty = min(bidQuantity, remainingCargoBudget, tradeCargoCapacity)`.
-   - When `cappedQty == 0` (capacity exhausted) skip — no zero-quantity bid is emitted.
+2. **Bid pass** — maintain `remainingCargoBudget = tradeCargoCapacity`, `remainingTreasuryBudget = treasuryBudgetForBids`, and `admittedBids = 0`. For every commodity with `bidQuantity > 0` (need exceeds available stockpile):
+   - Resolve `unitPrice = effectiveMarketPriceForCommodityId(commodityId, worldMarketState, resourceRules)` (same helper as validator rule 5).
+   - Compute `cappedQty = min(bidQuantity, remainingCargoBudget)`. When `unitPrice > 0`, further cap with `floor(remainingTreasuryBudget / unitPrice)`; when `unitPrice` is `null` or `0`, treasury does not constrain quantity (validator treats spend as `0`).
+   - When `cappedQty == 0` (capacity or treasury exhausted) skip — no zero-quantity bid is emitted.
    - When `admittedBids == bidTypeCap` (cap exhausted) stop iterating bids — later candidates are silently dropped to keep the suggestion validator-clean.
-   - Otherwise emit `TradeOrder(commodityId, type: bid, quantity: cappedQty, priority: bidPriority, isFtp: false)`, decrement `remainingCargoBudget` by `cappedQty`, and increment `admittedBids` by 1.
+   - Otherwise emit `TradeOrder(commodityId, type: bid, quantity: cappedQty, priority: bidPriority, isFtp: false)`, decrement `remainingCargoBudget` by `cappedQty`, decrement `remainingTreasuryBudget` by `cappedQty × unitPrice` when `unitPrice > 0`, and increment `admittedBids` by 1.
 
 ### Default `OrderSuggestionAPI` wiring
 
@@ -400,6 +407,8 @@ Both selectors iterate commodities in **alphabetical id order** for determinism 
 | `tradeCargoCapacity` | `cargoHoldsForHomeFleet(game, playerId)` (extraction-tonnage subtraction is folded in by the phase handler in Issue B / #2990) |
 | `availableStockpileByCommodityId` | `Player.stockpile.quantities` minus `richesCommodityIds`; industry-allocation subtraction stays at the validator boundary today and tightens up when the production projection wires in. |
 | `commodityNeedByCommodityId` | empty map until the production-input projection lands; documents the validator-clean default (the suggester emits offers only and `OrderSuggestionAPI` callers must opt in to bids by passing an explicit forecast). |
+| `treasuryBudgetForBids` | `treasuryAvailableForBidsByPlayer(game, playerId)` (raw treasury; projection wiring matches validator when callers supply staged orders). |
+| `worldMarketState` | `game.worldMarketState` (prices for bid-spend caps). |
 
 ---
 
@@ -507,7 +516,9 @@ The pure helpers (`computeNextPrice`, `computeMarketActivity`, `DealMatcher.matc
 - Given `bidTypeCap: 0` and any `commodityNeedByCommodityId`, when the suggester runs, then `result.bids` is empty (rule 4 absolute cap respected).
 - Given `bidTypeCap: 3` and `commodityNeedByCommodityId: {'coal': 10, 'iron': 10, 'timber': 10, 'wool': 10}` (alphabetical iteration), when the suggester runs, then exactly the first three commodities (`coal`, `iron`, `timber`) appear as bids and `wool` is silently dropped.
 - Given `tradeCargoCapacity: 6` and `commodityNeedByCommodityId: {'coal': 4, 'iron': 5}`, when the suggester runs, then `coal` is emitted at quantity `4`, `iron` is partial-capped at `2` (`6 - 4`), and the suggested bids honor cumulative buyer cargo.
-- Given any `TradeSuggestionContext`, when the suggester runs and the resulting orders are passed to `TradeOrderValidator.validate` with the same context's `bidTypeCap`, `tradeCargoCapacity`, and `availableStockpileByCommodityId`, then every entry in the parallel result is `accepted` (suggester output is validator-clean by construction).
+- Given `treasuryBudgetForBids: 90`, `worldMarketState.prices: {'iron': 30, 'timber': 30}`, `commodityNeedByCommodityId: {'iron': 5, 'timber': 5}`, and `tradeCargoCapacity: 100`, when the suggester runs, then `iron` bid quantity is `3` and `timber` is omitted (alphabetical bid pass exhausts treasury on the first commodity).
+- Given `treasuryBudgetForBids: 90`, `worldMarketState.prices: {'timber': 30}`, `commodityNeedByCommodityId: {'timber': 5}`, and `tradeCargoCapacity: 100`, when the suggester runs, then `timber` bid quantity is `3` (`min(5, 100, floor(90/30))`).
+- Given any `TradeSuggestionContext`, when the suggester runs and the resulting orders are passed to `TradeOrderValidator.validate` with the same context's `bidTypeCap`, `tradeCargoCapacity`, `treasuryBudgetForBids`, `worldMarketState`, `resourceRules`, and `availableStockpileByCommodityId`, then every entry in the parallel result is `accepted` (suggester output is validator-clean by construction).
 
 ### FTP diplomacy (issue #2989)
 
