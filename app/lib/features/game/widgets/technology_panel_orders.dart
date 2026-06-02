@@ -161,7 +161,7 @@ class _ChooseTechEmptyMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: CtSpacing.ml),
       child: Text(
         l10n.technologyPanel_noTechsAvailable,
         textAlign: TextAlign.center,

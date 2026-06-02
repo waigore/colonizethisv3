@@ -262,7 +262,7 @@ class _InterventionDialogueOverlayState
         context: context,
         bodyChildren: const [
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: CtSpacing.m),
             child: Align(
               alignment: Alignment.center,
               child: CtLoadingIndicator(),
