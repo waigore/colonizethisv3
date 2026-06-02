@@ -88,12 +88,16 @@ The bias never affects `defend`, `expand`, `conquer`, `tech`, or `diplomacy`; th
 ### Module
 
 - `packages/colonizethis_ai/lib/src/planning/treasury_planner.dart` — `runTreasuryPlanner(...)`.
-- Called from `runEconomyPlanner` after production assignments are chosen; results are stored on `EconomyPlan.tradeOrders` and merged into `Orders.tradeOrdersByPlayerId` by `runDomainPlannersWithOutcome` (F7 wiring) so every orchestrator caller — including the strategic-AI entry `generateStrategicOrdersWithTrace` and the simpler `runDomainPlanners` test entrypoint — surfaces the same trade output without duplicating the merge.
+- Called from `runEconomyPlanner` after production assignments are chosen by default; results are stored on `EconomyPlan.tradeOrders` and merged into `Orders.tradeOrdersByPlayerId` by `runDomainPlannersWithOutcome` (F7 wiring) so every orchestrator caller — including the strategic-AI entry `generateStrategicOrdersWithTrace` and the simpler `runDomainPlanners` test entrypoint — surfaces the same trade output without duplicating the merge.
+- **Refs #3122 orchestrator wiring** — the strategic-AI production entry sets `runEconomyPlanner(skipTradeOrderGeneration: true)` and `runDomainPlannersWithOutcome(recomputeTradeOrdersWithPendingCosts: true)` so the orchestrator re-invokes `runTreasuryPlanner` at the tail of the domain pipeline (after work, build, recruit, research, naval, and diplomacy passes) with `currentOrders = ctx.orders`. This makes `pendingTreasuryCostsForTurn` see the AI's own pending build / recruit / research orders so the bid budget is shaped to the same treasury the matcher (#3115) will enforce at phase 13. Callers that do not opt in (existing `runDomainPlanners` test entrypoints, the wiring test fixture) continue to consume `economyPlan.tradeOrders` unchanged.
 
-### Orchestrator wiring (Refs #2994 F7)
+### Orchestrator wiring (Refs #2994 F7 / Refs #3122)
 
-- After all other domain planners run, the orchestrator appends `economyPlan.tradeOrders` (when non-empty) to `ctx.orders.tradeOrdersByPlayerId[nationId]` via `Orders.appendTradeOrders`. The append is skipped when the list is empty, so `tradeOrdersByPlayerId` stays absent for that player and downstream `MapEquality` checks in tests remain stable.
-- The orchestrator records a `tradePlannerRan` boolean on `DomainGateData` (`true` iff at least one trade order was emitted by the treasury planner). This field is emitted under `thresholds.domainGates.tradePlannerRan` in the AI trace alongside the existing per-domain `*PlannerRan` flags, so an analyst can distinguish "treasury planner produced zero orders" from "treasury planner did not run for this player turn" without consulting per-player JSON.
+- After all other domain planners run, the orchestrator merges trade orders into `ctx.orders.tradeOrdersByPlayerId[nationId]` via `Orders.appendTradeOrders`. The append is skipped when the resolved list is empty, so `tradeOrdersByPlayerId` stays absent for that player and downstream `MapEquality` checks in tests remain stable.
+- Source of the merged list:
+  - **Default path** (`recomputeTradeOrdersWithPendingCosts == false`, Refs #2994 F7) — the orchestrator uses `economyPlan.tradeOrders` exactly as supplied. The wiring contract preserves prior behaviour for `runDomainPlanners` test entrypoints and the F7 fixture.
+  - **Pending-cost projector path** (`recomputeTradeOrdersWithPendingCosts == true`, Refs #3122) — the orchestrator calls `runTreasuryPlanner(game, playerId, stockpile, productionAssignments, treasury, currentOrders: ctx.orders, tileMapByRegion, topology)` using the inputs already present on `economyPlan` plus the live `game.playerById(nationId)` stockpile and treasury. `economyPlan.tradeOrders` is **ignored** in this mode; `runEconomyPlanner(skipTradeOrderGeneration: true)` returns the empty list so no work is duplicated.
+- The orchestrator records a `tradePlannerRan` boolean on `DomainGateData` (`true` iff at least one trade order was emitted in the resolved list). This field is emitted under `thresholds.domainGates.tradePlannerRan` in the AI trace alongside the existing per-domain `*PlannerRan` flags, so an analyst can distinguish "treasury planner produced zero orders" from "treasury planner did not run for this player turn" without consulting per-player JSON.
 - `ai_order_reporting.orderCountsByDomain` and `finalAggregatedOrders` include trade entries (`domain: 'trade'`, with `commodityId`, `type`, `quantity`, `priority`) so the trace's `domainOutputs.trade` count and `finalAggregatedOrders` array reflect the merged trade orders. This keeps counts symmetric with every other domain (move/build/work/diplomatic/research/navalMove/navalMission) the orchestrator already reports.
 - Strategic-AI (`generateStrategicOrdersWithTrace`) consumes the orchestrator's `outcome.orders` directly without re-merging trade orders; the in-function `tradeOrdersByPlayerId` `copyWith` block previously responsible for the merge is retired by F7.
 
@@ -376,6 +380,33 @@ well inside the 15-second turn-resolution envelope per
   `pendingTreasuryCostsForTurn(game, playerId, currentOrders)` is
   called, then it returns `treasuryCostForFunding(L) + C_b + C_r`
   exactly (the `WorkOrder` is excluded because it is stockpile-only).
+- Given `runEconomyPlanner` is called with
+  `skipTradeOrderGeneration: true`, when the planner returns, then
+  `EconomyPlan.tradeOrders` is the empty list (no
+  `runTreasuryPlanner` call is made and no stale planner pass is
+  embedded in the plan).
+- Given `runDomainPlannersWithOutcome` is called with
+  `recomputeTradeOrdersWithPendingCosts: true`, an `economyPlan`
+  with non-empty `tradeOrders`, and a `nationId` whose
+  `game.playerById(nationId)` is non-`null`, when the orchestrator
+  reaches the trade-merge step, then it ignores
+  `economyPlan.tradeOrders` and instead emits whatever
+  `runTreasuryPlanner` returns when called with
+  `currentOrders = ctx.orders` (the orders accumulated by every
+  upstream domain planner in this pipeline).
+- Given the orchestrator runs with
+  `recomputeTradeOrdersWithPendingCosts: true`, the AI's build pass
+  has already appended a `BuildUnitOrder` whose
+  `buildTreasuryCost == C_b` for `nationId`, and
+  `game.playerById(nationId).treasury == T`, when the orchestrator's
+  trade recompute runs and emits a bid `b`, then
+  `b.quantity × effectiveMarketPriceForCommodityId(b.commodityId)`
+  plus the cumulative notional of every other recomputed bid plus
+  `carryForwardBidNotionalByPlayer(...)` plus the same fixture's
+  `pendingTreasuryCostsForTurn` (which now includes `C_b`) is less
+  than or equal to `T`. The recompute therefore never authorises an
+  AI bid the matcher (#3115) would have to truncate against the
+  same `T`.
 
 ---
 

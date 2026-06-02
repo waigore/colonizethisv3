@@ -158,6 +158,13 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     snapshot: planningSnapshot,
     personalityId: config.personalityId,
   );
+  // Refs #3122 orchestrator wiring: the production strategic-AI entry
+  // skips trade-order generation inside [runEconomyPlanner] so the
+  // orchestrator can re-invoke [runTreasuryPlanner] after every other
+  // domain planner has had a chance to emit pending orders. That way
+  // pending build / recruit / research treasury costs feed the
+  // `pendingTreasuryCostsForTurn` projector and the bid budget reflects
+  // the real treasury the matcher will see at phase 13.
   final economyPlan = runEconomyPlanner(
     game: planningGame,
     view: planningView,
@@ -168,6 +175,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     phasePlan: phasePlan,
     tileMapByRegion: tileMapByRegion,
     topology: topology,
+    skipTradeOrderGeneration: true,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
@@ -184,6 +192,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     onStagedPlannerProgress: onStagedPlannerProgress,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     phasePlan: phasePlan,
+    recomputeTradeOrdersWithPendingCosts: true,
   );
   // Trade orders are merged into [Orders.tradeOrdersByPlayerId] inside the
   // domain orchestrator (Refs #2994 F7) so all orchestrator callers see the

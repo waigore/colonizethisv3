@@ -41,6 +41,7 @@ EconomyPlan runEconomyPlanner({
   PhasePlanOutcome? phasePlan,
   Map<String, TileMapResult>? tileMapByRegion,
   MapTopology? topology,
+  bool skipTradeOrderGeneration = false,
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
@@ -84,15 +85,22 @@ EconomyPlan runEconomyPlanner({
         colonial: colonial,
         belowQuotaPeaceTreasuryRecovery: belowQuotaPeaceTreasuryRecovery,
       ),
-      tradeOrders: runTreasuryPlanner(
-        game: game,
-        playerId: view.playerId,
-        stockpile: stockpile,
-        productionAssignments: const [],
-        treasury: player.treasury,
-        tileMapByRegion: tileMapByRegion,
-        topology: topology,
-      ),
+      // Refs #3122 orchestrator wiring: when the orchestrator will
+      // recompute trade orders after domain planning (so pending
+      // build / recruit / research costs feed the treasury budget),
+      // return the empty list here to avoid emitting a stale planner
+      // pass whose results would be discarded.
+      tradeOrders: skipTradeOrderGeneration
+          ? const <TradeOrder>[]
+          : runTreasuryPlanner(
+              game: game,
+              playerId: view.playerId,
+              stockpile: stockpile,
+              productionAssignments: const [],
+              treasury: player.treasury,
+              tileMapByRegion: tileMapByRegion,
+              topology: topology,
+            ),
     );
   }
 
@@ -118,15 +126,22 @@ EconomyPlan runEconomyPlanner({
     colonial: colonial,
     belowQuotaPeaceTreasuryRecovery: belowQuotaPeaceTreasuryRecovery,
   );
-  final tradeOrders = runTreasuryPlanner(
-    game: game,
-    playerId: view.playerId,
-    stockpile: stockpile,
-    productionAssignments: assignments,
-    treasury: player.treasury,
-    tileMapByRegion: tileMapByRegion,
-    topology: topology,
-  );
+  // Refs #3122 orchestrator wiring: when the orchestrator will
+  // recompute trade orders after domain planning, the planner pass
+  // here would run with an empty `currentOrders` and any pending
+  // build / recruit / research costs would contribute zero to the
+  // budget. Skipping the call in that mode avoids the wasted work.
+  final tradeOrders = skipTradeOrderGeneration
+      ? const <TradeOrder>[]
+      : runTreasuryPlanner(
+          game: game,
+          playerId: view.playerId,
+          stockpile: stockpile,
+          productionAssignments: assignments,
+          treasury: player.treasury,
+          tileMapByRegion: tileMapByRegion,
+          topology: topology,
+        );
   _log.i(
     'economy plan playerId=${view.playerId} '
     'cargoPreference=$cargoPref productionAssignmentsCount=${assignments.length} '

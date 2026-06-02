@@ -336,7 +336,7 @@ class _ArmyExpansionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.only(left: CtSpacing.m),
       child: ExpansionTile(
         title: _buildTitleRow(),
         subtitle: Text(_subtitleText()),
@@ -426,16 +426,22 @@ class _ArmyExpansionTile extends StatelessWidget {
           if (onMove != null) ...[
             CtNinePatchButton(
               onPressed: onMove,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: CtSpacing.ml,
+                vertical: CtSpacing.m,
+              ),
               minHeight: 36,
               child: Text(l10n.common_move),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: CtSpacing.m),
           ],
           if (onSplit != null)
             CtNinePatchButton(
               onPressed: onSplit,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: CtSpacing.ml,
+                vertical: CtSpacing.m,
+              ),
               minHeight: 36,
               child: Text(l10n.common_split),
             ),
@@ -455,7 +461,7 @@ class _RegimentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.only(left: CtSpacing.m),
       child: ListTile(
         title: Text(
           l10n.military_units_typeCount(
@@ -486,7 +492,7 @@ class _ShipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.only(left: CtSpacing.m),
       child: ListTile(
         title: Text(
           l10n.military_units_typeCount(
