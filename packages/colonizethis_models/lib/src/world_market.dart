@@ -241,7 +241,16 @@ enum MarketActivityNoteKind {
   /// current trade cargo capacity is below the order's quantity
   /// (`SPEC/game/world-market.md` § Order persistence
   /// "Carry-forward drop on cargo shortfall").
-  carryForwardDroppedCargoInsufficient;
+  carryForwardDroppedCargoInsufficient,
+
+  /// Bid partially filled (or fully suppressed) inside the deal matcher
+  /// because the buyer's start-of-phase treasury budget could not cover
+  /// the bid's full notional at the matched price. Recorded once per
+  /// truncated bid per `SPEC/program/world-market-resolution.md` § Step C
+  /// (treasury clamp, Refs #3115). The note's `quantity` is the original
+  /// submitted bid quantity; the residual carry-forward is preserved in
+  /// `DealMatchResult.unfilledBidsByFactionId` for next-turn re-entry.
+  bidPartialFillTreasuryInsufficient;
 
   String toJsonName() => name;
 
