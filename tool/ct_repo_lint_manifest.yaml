@@ -371,6 +371,13 @@ rules:
     runner: dart
     script: tool/check_app_no_material_switchlisttile.dart
 
+  - rule_id: repo.app_no_material_chip
+    group: ui_structure
+    title: "app/lib/features must compose palette-token primitives or CtChoiceChip instead of Material Chip (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_chip.dart
+
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
     title: colonizethis_logic limits direct oldWorld/newWorld province list access
