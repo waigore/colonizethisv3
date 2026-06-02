@@ -18,6 +18,11 @@ import '../../../../widgets/ct_spacing.dart';
 /// - **Background:** Top-to-bottom panel gradient sourced from
 ///   [CtGradients.panelGradient]. No hard-coded hex literals; gradient stops
 ///   resolve from the dark-theme tokens (`--surface` → `--bg`).
+/// - **Default text style:** Falls back to [EditorialMonoclePalette.fg]
+///   (the canonical `--fg` primary-text token) when the host theme's
+///   `TextTheme.bodyMedium` is `null`. Hard-coded `Colors.white` fallbacks
+///   are forbidden here (issue #2914 S3 — § Hard-coded color ban in
+///   `SPEC/ui/pixel-art-ui-catalog.md`).
 ///
 /// The modal barrier (scrim) is the caller's responsibility: pass
 /// `barrierColor` to `showDialog` (or rely on the route's default). This
@@ -74,6 +79,18 @@ class CtDialogShell extends StatelessWidget {
   /// `SPEC/ui/move-army-dialog.md` AC (war confirmation).
   static const double dangerBorderWidth = 1;
 
+  /// Defensive fallback applied to the body text style when the host theme's
+  /// `TextTheme.bodyMedium` resolves to `null`. Anchored on
+  /// [EditorialMonoclePalette.fg] (the canonical `--fg` primary-text token)
+  /// to keep the surface honoring the dark editorial-monocle palette tokens
+  /// even outside a fully-themed `MaterialApp`. Tests pin this to guard
+  /// against regressions to `Colors.white` or other raw Material color
+  /// literals — see `SPEC/ui/pixel-art-ui-catalog.md` § Hard-coded color ban
+  /// (issue #2914 S3).
+  @visibleForTesting
+  static TextStyle get fallbackBodyTextStyle =>
+      TextStyle(color: EditorialMonoclePalette.fg);
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -104,8 +121,7 @@ class CtDialogShell extends StatelessWidget {
                     padding: padding,
                     child: DefaultTextStyle(
                       style:
-                          theme.textTheme.bodyMedium ??
-                          const TextStyle(color: Colors.white),
+                          theme.textTheme.bodyMedium ?? fallbackBodyTextStyle,
                       child: child,
                     ),
                   ),
