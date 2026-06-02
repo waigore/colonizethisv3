@@ -22,6 +22,7 @@ import 'move_planner.dart';
 import 'naval_planner.dart';
 import 'planner_context.dart';
 import 'research_planner.dart';
+import 'treasury_planner.dart';
 
 final _log = packageLogger();
 
@@ -47,6 +48,7 @@ Orders runDomainPlanners({
   Map<String, TileMapResult>? tileMapByRegion,
   void Function(String phaseId)? onStagedPlannerProgress,
   PhasePlanOutcome? phasePlan,
+  bool recomputeTradeOrdersWithPendingCosts = false,
 }) {
   return runDomainPlannersWithOutcome(
     game: game,
@@ -62,6 +64,8 @@ Orders runDomainPlanners({
     tileMapByRegion: tileMapByRegion,
     onStagedPlannerProgress: onStagedPlannerProgress,
     phasePlan: phasePlan,
+    recomputeTradeOrdersWithPendingCosts:
+        recomputeTradeOrdersWithPendingCosts,
   ).orders;
 }
 
@@ -91,6 +95,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   void Function(String phaseId)? onStagedPlannerProgress,
   Orders? sameTurnPriorDiplomaticOrders,
   PhasePlanOutcome? phasePlan,
+  bool recomputeTradeOrdersWithPendingCosts = false,
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
@@ -229,16 +234,42 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));
   emit('aiStageG');
 
-  // Refs #2994 F7: merge treasury-planner trade orders into the orchestrator
-  // output so every caller (strategic-AI entry + the simpler
-  // [runDomainPlanners] test entrypoint) surfaces trade alongside the other
-  // domain order families. Skip the append when the list is empty so
+  // Refs #2994 F7 / Refs #3122 orchestrator wiring: merge treasury-planner
+  // trade orders into the orchestrator output so every caller (strategic-AI
+  // entry + the simpler [runDomainPlanners] test entrypoint) surfaces trade
+  // alongside the other domain order families. When
+  // [recomputeTradeOrdersWithPendingCosts] is set, the orchestrator
+  // re-invokes [runTreasuryPlanner] at this tail position with
+  // `currentOrders = ctx.orders` so the treasury budget subtracts the
+  // pending build / recruit / research costs emitted earlier in this
+  // pipeline (Refs #3122 pending-cost projector). Otherwise the
+  // orchestrator falls back to the pre-baked `economyPlan.tradeOrders` so
+  // existing callers and the F7 wiring contract stay behaviour-equal.
+  // Skip the append when the resolved list is empty so
   // `tradeOrdersByPlayerId` stays absent for that player and existing
   // `MapEquality` assertions remain stable.
-  final tradePlannerRan = economyPlan.tradeOrders.isNotEmpty;
+  final List<TradeOrder> resolvedTradeOrders;
+  if (recomputeTradeOrdersWithPendingCosts) {
+    final player = game.playerById(nationId);
+    resolvedTradeOrders = player == null
+        ? const <TradeOrder>[]
+        : runTreasuryPlanner(
+            game: game,
+            playerId: nationId,
+            stockpile: player.stockpile,
+            productionAssignments: economyPlan.productionAssignments,
+            treasury: player.treasury,
+            tileMapByRegion: tileMapByRegion,
+            topology: topology,
+            currentOrders: ctx.orders,
+          );
+  } else {
+    resolvedTradeOrders = economyPlan.tradeOrders;
+  }
+  final tradePlannerRan = resolvedTradeOrders.isNotEmpty;
   if (tradePlannerRan) {
     ctx = ctx.withOrders(
-      ctx.orders.appendTradeOrders(nationId, economyPlan.tradeOrders),
+      ctx.orders.appendTradeOrders(nationId, resolvedTradeOrders),
     );
   }
 

@@ -88,12 +88,16 @@ The bias never affects `defend`, `expand`, `conquer`, `tech`, or `diplomacy`; th
 ### Module
 
 - `packages/colonizethis_ai/lib/src/planning/treasury_planner.dart` — `runTreasuryPlanner(...)`.
-- Called from `runEconomyPlanner` after production assignments are chosen; results are stored on `EconomyPlan.tradeOrders` and merged into `Orders.tradeOrdersByPlayerId` by `runDomainPlannersWithOutcome` (F7 wiring) so every orchestrator caller — including the strategic-AI entry `generateStrategicOrdersWithTrace` and the simpler `runDomainPlanners` test entrypoint — surfaces the same trade output without duplicating the merge.
+- Called from `runEconomyPlanner` after production assignments are chosen by default; results are stored on `EconomyPlan.tradeOrders` and merged into `Orders.tradeOrdersByPlayerId` by `runDomainPlannersWithOutcome` (F7 wiring) so every orchestrator caller — including the strategic-AI entry `generateStrategicOrdersWithTrace` and the simpler `runDomainPlanners` test entrypoint — surfaces the same trade output without duplicating the merge.
+- **Refs #3122 orchestrator wiring** — the strategic-AI production entry sets `runEconomyPlanner(skipTradeOrderGeneration: true)` and `runDomainPlannersWithOutcome(recomputeTradeOrdersWithPendingCosts: true)` so the orchestrator re-invokes `runTreasuryPlanner` at the tail of the domain pipeline (after work, build, recruit, research, naval, and diplomacy passes) with `currentOrders = ctx.orders`. This makes `pendingTreasuryCostsForTurn` see the AI's own pending build / recruit / research orders so the bid budget is shaped to the same treasury the matcher (#3115) will enforce at phase 13. Callers that do not opt in (existing `runDomainPlanners` test entrypoints, the wiring test fixture) continue to consume `economyPlan.tradeOrders` unchanged.
 
-### Orchestrator wiring (Refs #2994 F7)
+### Orchestrator wiring (Refs #2994 F7 / Refs #3122)
 
-- After all other domain planners run, the orchestrator appends `economyPlan.tradeOrders` (when non-empty) to `ctx.orders.tradeOrdersByPlayerId[nationId]` via `Orders.appendTradeOrders`. The append is skipped when the list is empty, so `tradeOrdersByPlayerId` stays absent for that player and downstream `MapEquality` checks in tests remain stable.
-- The orchestrator records a `tradePlannerRan` boolean on `DomainGateData` (`true` iff at least one trade order was emitted by the treasury planner). This field is emitted under `thresholds.domainGates.tradePlannerRan` in the AI trace alongside the existing per-domain `*PlannerRan` flags, so an analyst can distinguish "treasury planner produced zero orders" from "treasury planner did not run for this player turn" without consulting per-player JSON.
+- After all other domain planners run, the orchestrator merges trade orders into `ctx.orders.tradeOrdersByPlayerId[nationId]` via `Orders.appendTradeOrders`. The append is skipped when the resolved list is empty, so `tradeOrdersByPlayerId` stays absent for that player and downstream `MapEquality` checks in tests remain stable.
+- Source of the merged list:
+  - **Default path** (`recomputeTradeOrdersWithPendingCosts == false`, Refs #2994 F7) — the orchestrator uses `economyPlan.tradeOrders` exactly as supplied. The wiring contract preserves prior behaviour for `runDomainPlanners` test entrypoints and the F7 fixture.
+  - **Pending-cost projector path** (`recomputeTradeOrdersWithPendingCosts == true`, Refs #3122) — the orchestrator calls `runTreasuryPlanner(game, playerId, stockpile, productionAssignments, treasury, currentOrders: ctx.orders, tileMapByRegion, topology)` using the inputs already present on `economyPlan` plus the live `game.playerById(nationId)` stockpile and treasury. `economyPlan.tradeOrders` is **ignored** in this mode; `runEconomyPlanner(skipTradeOrderGeneration: true)` returns the empty list so no work is duplicated.
+- The orchestrator records a `tradePlannerRan` boolean on `DomainGateData` (`true` iff at least one trade order was emitted in the resolved list). This field is emitted under `thresholds.domainGates.tradePlannerRan` in the AI trace alongside the existing per-domain `*PlannerRan` flags, so an analyst can distinguish "treasury planner produced zero orders" from "treasury planner did not run for this player turn" without consulting per-player JSON.
 - `ai_order_reporting.orderCountsByDomain` and `finalAggregatedOrders` include trade entries (`domain: 'trade'`, with `commodityId`, `type`, `quantity`, `priority`) so the trace's `domainOutputs.trade` count and `finalAggregatedOrders` array reflect the merged trade orders. This keeps counts symmetric with every other domain (move/build/work/diplomatic/research/navalMove/navalMission) the orchestrator already reports.
 - Strategic-AI (`generateStrategicOrdersWithTrace`) consumes the orchestrator's `outcome.orders` directly without re-merging trade orders; the in-function `tradeOrdersByPlayerId` `copyWith` block previously responsible for the merge is retired by F7.
 
@@ -206,6 +210,203 @@ No affordability bypass: buyers debit treasury at deal time. Because the bid qua
 - Given identical inputs, when `runTreasuryPlanner` runs twice, then `lockRecoveryDesignatedBuyerId` and the emitted trade orders are identical (determinism).
 - Given tile maps and topology where overseas extraction would consume all home-fleet cargo holds, when `runTreasuryPlanner` runs with those maps, then `TradeOrderSuggester` receives `tradeCargoCapacity == 0` (no bids that cannot clear at world-market phase).
 - Given the same fixture but `tileMapByRegion` omitted, when `runTreasuryPlanner` runs, then `tradeCargoCapacity` equals `cargoHoldsForHomeFleet` (backward-compatible unit-test path).
+
+---
+
+## Treasury-budget-aware bid sizing (Refs #3122)
+
+After the world-market matcher began clamping bid fills to per-buyer
+treasury (Refs #3115), `runTreasuryPlanner` must shape its emitted bids
+so the AI never spends a `bidTypeCap` slot on a notional that exceeds
+the same budget the matcher enforces at phase 13. Otherwise the AI
+emits bids that the matcher truncates to zero or near-zero fills,
+wasting the single bid slot for the turn and breaking lock-recovery
+food liquidity (F11/F12).
+
+### Bid treasury budget
+
+At the start of `runTreasuryPlanner` for `playerId`:
+
+```
+budget = max(0, player.treasury)
+       - pendingTreasuryCostsForTurn(game, playerId, currentOrders)
+       - carryForwardBidNotional(game, playerId)
+```
+
+- **Pending treasury costs** is a new public pure helper
+  `pendingTreasuryCostsForTurn(Game, String, Orders) -> int` in
+  `packages/colonizethis_logic` that sums treasury debits for the
+  three order types that resolve **before** phase 13 (World Market)
+  and reduce `player.treasury`:
+  - `ResearchOrder` — `treasuryCostForFunding(level)` per
+    `SPEC/program/turn-resolution-phases.md` § Phase 7 Research and
+    `packages/colonizethis_logic/lib/src/turn/research_rules.dart`.
+  - `RecruitWorkerOrder` — `WorkerActionEconomyCatalog.forTier(...).treasuryCost`
+    per phase 12 worker-pool sub-phase, reusing `canAffordRecruitWorker`
+    affordability gating so unaffordable pending orders are excluded
+    (the live resolver also skips them).
+  - `BuildUnitOrder` — `buildTreasuryCost` per
+    `RegimentEconomyCatalog` / `ShipEconomyCatalog`, reusing
+    `ProjectedCostEngine.canAffordBuildOrder` for the same reason.
+  Pending `WorkOrder` material costs are stockpile-only (no treasury)
+  and are excluded. Any future phase-pre-13 treasury sink must be
+  added to `pendingTreasuryCostsForTurn` in lockstep with the resolver
+  change that introduces it.
+- **Carry-forward notional** sums
+  `quantity × effectiveMarketPriceForCommodityId(commodityId, ...)` over
+  `game.worldMarketState.carryForwardBidsByFactionId[playerId]`,
+  using the price-resolution helper introduced by #3115. Bids whose
+  effective price is `null` (no market price and no catalog default
+  — manufactured commodities until in-game discovery seeds a price)
+  contribute `0` to the notional, matching the validator-side
+  defensive skip in `stagedBidTotalSpendByPlayer`.
+- **No in-turn credit:** the helper does **not** add `expectedOfferInflow`
+  to the budget. The matcher does not credit in-turn sales mid-match
+  (Refs #3115), so any speculative credit would over-estimate the
+  budget at the moment bids are clamped.
+
+### Per-bid clamp
+
+After the existing cargo clamp in `_prioritizedBids`, for each bid
+admitted in priority order:
+
+```
+maxAffordable = pricePerUnit > 0
+                  ? remainingTreasuryBudget ~/ pricePerUnit
+                  : remainingCargo                    // free bids fall back to cargo
+cappedQty     = min(bid.quantity, remainingCargo, maxAffordable)
+```
+
+- If `cappedQty <= 0`, the bid is skipped and `admitted` is **not**
+  incremented (the bid slot stays available for the next eligible
+  bid).
+- Otherwise the bid is emitted with `quantity = cappedQty`,
+  `remainingCargo -= cappedQty`, and `remainingTreasuryBudget` is
+  decremented by `(cappedQty * pricePerUnit)` (an integer because
+  prices are integer treasury units; matches matcher Step D in
+  #3115).
+- Priority order is unchanged (`_bidPriorityForCommodity` →
+  alphabetical, with `preferCommodityId` override when active).
+
+When `pricePerUnit` is `null` (manufactured commodity without a
+discovered price) the planner cannot reason about treasury cost and
+falls back to the cargo-only clamp for that bid; the matcher applies
+its own per-tier accounting if such a bid clears.
+
+### Speculative and lock-recovery paths
+
+- **Affluent speculative pass (`_addSpeculativeBidNeeds`):** still
+  adds at most one synthetic `need` entry. Final quantity is clamped
+  in `_prioritizedBids` (treasury and cargo). The affluence gate
+  (`treasury >= treasuryAffluenceThreshold()`) is unchanged so broke
+  GPs still never enter speculation; the per-bid clamp catches the
+  edge case where an affluent GP's projected pending costs reduce
+  budget below `pricePerUnit`.
+- **Lock-recovery designated buyer (`_applyLockRecoveryLiquidityBid`):**
+  the existing in-place treasury cap (`max(0, buyerTreasury / pricePerUnit)`)
+  is replaced by the same budget formula above — pending costs and
+  carry-forward notional are subtracted from `buyerTreasury` before
+  computing `affordableQty`. When the result is `0` the designated
+  buyer emits no bid for that turn (rotation handles the next turn);
+  mutual-exclusion with the offer side is preserved by the existing
+  `available.remove(commodityId)` call.
+
+### Determinism and budget
+
+`pendingTreasuryCostsForTurn`, `carryForwardBidNotional`, and the
+per-bid clamp are pure functions of `(game, playerId, currentOrders)`
+and the static economy/tech catalogs. They allocate at most
+O(orders for one player + carryForwardBids for one player) work,
+log nothing on the hot path, and preserve the alphabetical commodity
+ordering already used by `_prioritizedBids`. Per-turn budget remains
+well inside the 15-second turn-resolution envelope per
+`.cursor/rules/colonizethis-turn-resolution-budget.mdc`.
+
+### Acceptance criteria (Refs #3122)
+
+- Given an AI Great Power with `player.treasury == 0` and any
+  deficit / speculative / lock-recovery path active, when
+  `runTreasuryPlanner` runs, then it emits no `TradeOrderType.bid`
+  orders (the budget is `0` so every per-bid clamp drops to `0`).
+- Given an AI Great Power with `player.treasury == 100`, one pending
+  `BuildUnitOrder` with `buildTreasuryCost == 50`, and a fabric
+  deficit bid whose nominal quantity would cost `80` at
+  `pricePerUnit == 10`, when `runTreasuryPlanner` runs, then the
+  emitted fabric bid has `quantity <= floor(50 / 10) == 5` and the
+  cumulative `quantity × pricePerUnit` across all emitted bids does
+  not exceed `50`.
+- Given an AI Great Power with `player.treasury == 100`, one
+  carry-forward `TradeOrderType.bid` for timber with
+  `quantity == 6` at `effectiveMarketPriceForCommodityId(timber) == 10`
+  (carry-forward notional `60`), and a new fabric deficit bid at
+  `pricePerUnit == 10`, when `runTreasuryPlanner` runs, then the
+  emitted fabric bid's `quantity × pricePerUnit` is at most `40`
+  (`100 − 60`).
+- Given an AI Great Power with two deficit commodities where the
+  first bid (after cargo clamp) would consume the full remaining
+  treasury budget, when `runTreasuryPlanner` runs, then the first
+  bid is emitted and the second commodity is skipped without
+  consuming a second `bidTypeCap` slot (the planner does not emit
+  a zero-quantity placeholder for the dropped bid).
+- Given an AI Great Power with `player.treasury >= treasuryAffluenceThreshold()`
+  and a positive speculative gap on commodity `C` but
+  `floor(remainingBudget / pricesByCommodityId[C]) < kSpeculativeBidStockpileTarget`,
+  when `runTreasuryPlanner` runs, then the speculative bid's
+  `quantity` equals the affordable floor and the bid is not dropped
+  unless that floor is `0`.
+- Given a Great Power that is the lock-recovery designated buyer with
+  `player.treasury` below the liquidity-bid notional
+  (`kSpeculativeBidStockpileTarget × pricesByCommodityId[liquidity]`),
+  when `runTreasuryPlanner` runs, then it emits no bid for the
+  lock-recovery food commodity and (per the existing
+  `available.remove`) does not offer it either (mutual-exclusion
+  preserved).
+- Given identical inputs `(game, playerId, stockpile, productionAssignments,
+  treasury, tileMapByRegion, topology, currentOrders)`, when
+  `runTreasuryPlanner` runs twice, then both runs return identical
+  `List<TradeOrder>` outputs (determinism — the new clamp is a pure
+  function of the same inputs).
+- Given any `runTreasuryPlanner` output for any fixture, when each
+  emitted bid's `quantity × effectiveMarketPriceForCommodityId(commodityId)`
+  is summed with `pendingTreasuryCostsForTurn` and `carryForwardBidNotional`,
+  then the total is less than or equal to the player's
+  `treasury` at planner entry (budget invariant — the planner never
+  commits more treasury than the matcher will accept at phase 13).
+- Given a player with one pending `ResearchOrder` at funding level
+  `L`, one pending `BuildUnitOrder` with `buildTreasuryCost == C_b`,
+  one pending `RecruitWorkerOrder` whose
+  `WorkerActionEconomyCatalog.forTier(targetTier).treasuryCost == C_r`,
+  and one pending stockpile-only `WorkOrder`, when
+  `pendingTreasuryCostsForTurn(game, playerId, currentOrders)` is
+  called, then it returns `treasuryCostForFunding(L) + C_b + C_r`
+  exactly (the `WorkOrder` is excluded because it is stockpile-only).
+- Given `runEconomyPlanner` is called with
+  `skipTradeOrderGeneration: true`, when the planner returns, then
+  `EconomyPlan.tradeOrders` is the empty list (no
+  `runTreasuryPlanner` call is made and no stale planner pass is
+  embedded in the plan).
+- Given `runDomainPlannersWithOutcome` is called with
+  `recomputeTradeOrdersWithPendingCosts: true`, an `economyPlan`
+  with non-empty `tradeOrders`, and a `nationId` whose
+  `game.playerById(nationId)` is non-`null`, when the orchestrator
+  reaches the trade-merge step, then it ignores
+  `economyPlan.tradeOrders` and instead emits whatever
+  `runTreasuryPlanner` returns when called with
+  `currentOrders = ctx.orders` (the orders accumulated by every
+  upstream domain planner in this pipeline).
+- Given the orchestrator runs with
+  `recomputeTradeOrdersWithPendingCosts: true`, the AI's build pass
+  has already appended a `BuildUnitOrder` whose
+  `buildTreasuryCost == C_b` for `nationId`, and
+  `game.playerById(nationId).treasury == T`, when the orchestrator's
+  trade recompute runs and emits a bid `b`, then
+  `b.quantity × effectiveMarketPriceForCommodityId(b.commodityId)`
+  plus the cumulative notional of every other recomputed bid plus
+  `carryForwardBidNotionalByPlayer(...)` plus the same fixture's
+  `pendingTreasuryCostsForTurn` (which now includes `C_b`) is less
+  than or equal to `T`. The recompute therefore never authorises an
+  AI bid the matcher (#3115) would have to truncate against the
+  same `T`.
 
 ---
 
