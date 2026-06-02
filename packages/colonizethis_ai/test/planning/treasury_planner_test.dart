@@ -12,6 +12,7 @@ Game _gameWithStockpile({
   List<OvertureState> overtures = const [],
   int turnNumber = 1,
   List<Player>? extraPlayers,
+  int oldWorldProvincesOwnedPerGp = 1,
 }) {
   const ow = 'oldWorld';
   final players = [
@@ -19,21 +20,29 @@ Game _gameWithStockpile({
       id: 'gp1',
       displayName: 'GP1',
       isHuman: false,
-      capitalProvinceId: '$ow|p1',
+      capitalProvinceId: '$ow|gp1_p0',
       stockpile: stockpile,
       treasury: treasury,
     ),
     ...?extraPlayers,
   ];
+  final provinces = <Province>[];
+  for (final player in players) {
+    for (var i = 0; i < oldWorldProvincesOwnedPerGp; i++) {
+      provinces.add(
+        Province(
+          id: '$ow|${player.id}_p$i',
+          regionId: ow,
+          ownerId: player.id,
+        ),
+      );
+    }
+  }
   return Game(
     id: 'g1',
     worldState: WorldState(
       turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-        ],
-      ),
+      oldWorld: RegionData(provinces: provinces),
       newWorld: const RegionData(),
     ),
     players: players,
@@ -176,18 +185,19 @@ void main() {
             kSpeculativeBidStockpileTarget * 4,
           );
         }
+        final affluentTreasury = cheapestRegimentBuildTreasuryCost() + 100;
         final game = _gameWithStockpile(
           stockpile: stockpile,
           treasury: 0,
           turnNumber: 1,
-          extraPlayers: const [
+          extraPlayers: [
             Player(
               id: 'gp2',
               displayName: 'GP2',
               isHuman: false,
               capitalProvinceId: 'oldWorld|p2',
               stockpile: Stockpile.empty,
-              treasury: 0,
+              treasury: affluentTreasury,
             ),
           ],
         );
@@ -312,14 +322,15 @@ void main() {
         final stockpile = const Stockpile().applyDelta('grain', 500);
         final game = _gameWithStockpile(
           stockpile: stockpile,
-          treasury: 50,
+          treasury: 5,
           turnNumber: 1,
+          oldWorldProvincesOwnedPerGp: kObserverConquestMinOwProvincesPerGp,
           extraPlayers: const [
             Player(
               id: 'gp2',
               displayName: 'GP2',
               isHuman: false,
-              capitalProvinceId: 'oldWorld|p2',
+              capitalProvinceId: 'oldWorld|gp2_p0',
               stockpile: Stockpile.empty,
               treasury: 100,
             ),
@@ -343,16 +354,133 @@ void main() {
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
-          treasury: 50,
+          treasury: 5,
         );
         expect(
           orders.where((o) => o.type == TradeOrderType.bid),
           isEmpty,
-          reason: 'Actual treasury 50 < 2000 must keep gp1 on offers-only '
-              'even when F8 forecast inflow would exceed the threshold.',
+          reason: 'Actual treasury 5 < 2000 and gp1 is not a F15 co-buyer '
+              '(cannot afford grain at 10) so gp1 stays offers-only even when '
+              'F8 forecast inflow would exceed the threshold.',
         );
         expect(
           orders.where((o) => o.type == TradeOrderType.offer),
+          isNotEmpty,
+        );
+      },
+    );
+
+    test(
+      'lock-recovery richest buyer when no affluent GP exists (Refs #2924 F15)',
+      () {
+        final game = _gameWithStockpile(
+          stockpile: const Stockpile(),
+          treasury: 55,
+          turnNumber: 4,
+          oldWorldProvincesOwnedPerGp: kObserverConquestMinOwProvincesPerGp,
+          extraPlayers: const [
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|gp2_p0',
+              stockpile: Stockpile.empty,
+              treasury: 52,
+            ),
+            Player(
+              id: 'gp3',
+              displayName: 'GP3',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|gp3_p0',
+              stockpile: Stockpile.empty,
+              treasury: 5,
+            ),
+          ],
+        ).copyWith(
+          worldMarketState: WorldMarketState.withDefaultPrices(const {
+            'grain': 10,
+          }),
+        );
+        expect(
+          lockRecoveryLiquidityBuyerIds(game),
+          ['gp1', 'gp2'],
+          reason: 'F15 returns both richest eligible buyers (gp1, gp2).',
+        );
+        expect(lockRecoveryDesignatedBuyerId(game), 'gp1');
+      },
+    );
+
+    test(
+      'richest buyer emits urgent grain bid; poorest broke GP offers only '
+      '(Refs #2924 F15)',
+      () {
+        final richStockpile = const Stockpile().applyDelta('grain', 200);
+        final poorStockpile = const Stockpile().applyDelta('grain', 500);
+        final game = _gameWithStockpile(
+          stockpile: richStockpile,
+          treasury: 55,
+          turnNumber: 0,
+          oldWorldProvincesOwnedPerGp: kObserverConquestMinOwProvincesPerGp,
+          extraPlayers: const [
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|gp2_p0',
+              stockpile: Stockpile.empty,
+              treasury: 52,
+            ),
+            Player(
+              id: 'gp3',
+              displayName: 'GP3',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|gp3_p0',
+              stockpile: Stockpile.empty,
+              treasury: 5,
+            ),
+          ],
+        ).copyWith(
+          worldMarketState: WorldMarketState.withDefaultPrices(const {
+            'grain': 10,
+          }).copyWith(
+            lastTurnActivity: {
+              'grain': const MarketActivity(
+                totalBidQuantity: 0,
+                totalOfferQuantity: 100,
+                filledQuantity: 0,
+              ),
+            },
+          ),
+        );
+        final buyerOrders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: richStockpile,
+          productionAssignments: const [],
+          treasury: 55,
+        );
+        expect(
+          buyerOrders.where(
+            (o) => o.type == TradeOrderType.bid && o.commodityId == 'grain',
+          ),
+          isNotEmpty,
+        );
+        expect(
+          buyerOrders.where(
+            (o) => o.type == TradeOrderType.offer && o.commodityId == 'grain',
+          ),
+          isEmpty,
+        );
+        final sellerOrders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp3',
+          stockpile: poorStockpile,
+          productionAssignments: const [],
+          treasury: 5,
+        );
+        expect(sellerOrders.where((o) => o.type == TradeOrderType.bid), isEmpty);
+        expect(
+          sellerOrders.where((o) => o.type == TradeOrderType.offer),
           isNotEmpty,
         );
       },

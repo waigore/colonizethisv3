@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart'
     show
+        buildPlayerView,
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
@@ -13,6 +14,9 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../perception/perception_snapshot.dart';
+import 'expand_phase_planner.dart'
+    show expandIsGeographicPeerWarLockNoNwTreasuryRecovery;
 import 'recipe_scoring.dart' show kShortageThreshold;
 
 /// Bid priority tiers (1 = highest). Refs #2994 F4.
@@ -48,6 +52,10 @@ int treasuryAffluenceThreshold() =>
     kTreasuryAffluenceThresholdMultiplier *
         cheapestRegimentBuildTreasuryCost();
 
+/// How many highest-treasury Great Powers rotate as lock-recovery buyers
+/// when no GP meets [treasuryAffluenceThreshold] (Refs #2924 F15).
+const int kLockRecoveryRichestBuyerPoolSize = 2;
+
 /// Returns trade orders for one AI-controlled GP after production planning.
 ///
 /// Runs after [productionAssignments] are chosen in [runEconomyPlanner]. Uses
@@ -65,6 +73,7 @@ List<TradeOrder> runTreasuryPlanner({
   MapTopology? topology,
   Orders currentOrders = const Orders(),
   ResourceRules? resourceRules,
+  AIWorldSnapshot? snapshot,
 }) {
   final ResourceRules rules = resourceRules ?? ResourceRules.defaultRules;
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
@@ -178,20 +187,38 @@ List<TradeOrder> runTreasuryPlanner({
   // other broke GPs' urgent offers). Without this branch an affluent designated
   // buyer never enters the F11 liquidity-bid path because lockRecoveryUrgent
   // is false for it.
-  final designatedBuyerId = lockRecoveryDesignatedBuyerId(game);
-  final isDesignatedLockRecoveryBuyer =
-      designatedBuyerId.isNotEmpty && playerId == designatedBuyerId;
+  final effectiveSnapshot = snapshot ??
+      (topology != null
+          ? AIWorldSnapshot.fromPlayerView(
+              buildPlayerView(game, topology, playerId),
+              topology: topology,
+            )
+          : null);
+  final geographicPeerWarLockOffersOnly =
+      _isGeographicPeerWarLockTreasuryRecoverySellerOnly(
+        game: game,
+        snapshot: effectiveSnapshot,
+        playerId: playerId,
+        brokeForLockRecovery: brokeForLockRecovery,
+      );
+  final liquidityBuyerIds = lockRecoveryLiquidityBuyerIds(
+    game,
+    topology: topology,
+  );
+  final isLockRecoveryLiquidityBuyer =
+      !geographicPeerWarLockOffersOnly &&
+      liquidityBuyerIds.contains(playerId);
   final inLockRecovery =
-      isDesignatedLockRecoveryBuyer || lockRecoveryUrgent;
+      isLockRecoveryLiquidityBuyer || lockRecoveryUrgent;
 
   // Refs #2924 F10: affluent GPs spend treasury on inventory ahead of strict
   // deficits so the world market clears. Gated by treasury affluence so broke
   // GPs never speculate; the F3 price gate is bypassed because the GP is
   // choosing to convert treasury into stockpile regardless of unit cost.
-  // Suppressed for the designated lock-recovery buyer (its single bid slot
-  // is committed to the urgent grain liquidity bid below — F12).
+  // Suppressed for lock-recovery liquidity buyers (their single bid slot is
+  // committed to the urgent grain liquidity bid below — F12 / F15).
   if (treasury >= treasuryAffluenceThreshold() &&
-      !isDesignatedLockRecoveryBuyer) {
+      !isLockRecoveryLiquidityBuyer) {
     _addSpeculativeBidNeeds(
       need: need,
       available: available,
@@ -211,18 +238,19 @@ List<TradeOrder> runTreasuryPlanner({
     _applyLockRecoveryLiquidityBid(
       playerId: playerId,
       game: game,
+      topology: topology,
       need: need,
       available: available,
       carryForwardBids: carryForwardBids,
       treasuryBudgetForBids: treasuryBudgetForBids,
     );
     final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
-    if (isDesignatedLockRecoveryBuyer) {
+    if (isLockRecoveryLiquidityBuyer) {
       // Keep only the liquidity food bid so the single bidTypeCap slot is not
       // consumed by fabric/bronze deficits that cannot match urgent grain offers.
       need.removeWhere((id, _) => id != liquidity);
     } else {
-      // Broke non-designated GPs only sell during lock recovery.
+      // Broke non-buyer GPs only sell during lock recovery.
       need.clear();
     }
   }
@@ -591,30 +619,120 @@ bool _anyBrokeGreatPower(Game game) {
   return false;
 }
 
-/// One GP per turn acts as the market buyer for the lock-recovery food
-/// commodity so other GPs' urgent offers can clear. Refs #2924 F11.
+/// Great Powers that may emit the lock-recovery liquidity grain bid this turn.
 ///
-/// Rotates only among GPs at or above [treasuryAffluenceThreshold] so a
-/// broke designated buyer does not waste the single `bidTypeCap` slot on
-/// grain bids its treasury cannot fund while other GPs' urgent offers
-/// starve (seed-42 gp4/gp6 `totalDealsAsSeller == 0` diagnostic). When no
-/// GP meets the affluence band, falls back to the full sorted GP list.
+/// When at least one GP is affluent ([treasuryAffluenceThreshold]), exactly
+/// one affluent GP rotates as buyer (F11/F12). When every GP is below that
+/// band but at least one is broke, up to [kLockRecoveryRichestBuyerPoolSize]
+/// GPs with the highest treasury who can afford at least one unit of the
+/// liquidity commodity rotate as buyers (F15) instead of round-robin across
+/// the full GP list (which stranded seed-42 liquidity on ~14-treasury buyers
+/// while richer ~55-treasury GPs never bid).
 ///
-/// Returns the empty string when no Great Power is broke — every GP is
-/// already at or above the regiment threshold and the F1–F5 / F10 paths
-/// handle the steady state without a synthetic grain bid. Refs #2924 F12.
-String lockRecoveryDesignatedBuyerId(Game game) {
-  if (!_anyBrokeGreatPower(game)) return '';
+/// Returns empty when no GP is broke. Refs #2924 F11, F12, F15.
+bool _isGeographicPeerWarLockTreasuryRecoverySellerOnly({
+  required Game game,
+  required String playerId,
+  required bool brokeForLockRecovery,
+  AIWorldSnapshot? snapshot,
+}) {
+  if (snapshot == null || !brokeForLockRecovery) return false;
+  if (!expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+    game: game,
+    snapshot: snapshot,
+  )) {
+    return false;
+  }
+  return snapshot.playerId == playerId;
+}
+
+List<String> lockRecoveryLiquidityBuyerIds(
+  Game game, {
+  MapTopology? topology,
+}) {
+  if (!_anyBrokeGreatPower(game)) return const [];
   final gpIds = _sortedGreatPowerIds(game);
-  if (gpIds.isEmpty) return '';
+  if (gpIds.isEmpty) return const [];
+
   final threshold = treasuryAffluenceThreshold();
   final affluent = <String>[
     for (final id in gpIds)
       if (_treasuryForPlayer(game, id) >= threshold) id,
   ];
-  final pool = affluent.isNotEmpty ? affluent : gpIds;
-  final turn = game.worldState.turnState.turnNumber;
-  return pool[turn % pool.length];
+  if (affluent.isNotEmpty) {
+    final turn = game.worldState.turnState.turnNumber;
+    return [affluent[turn % affluent.length]];
+  }
+
+  final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
+  final pricePerUnit = game.worldMarketState.prices[liquidity] ?? 0;
+  if (pricePerUnit <= 0) return const [];
+
+  final eligible = <String>[
+    for (final id in gpIds)
+      if (_isLockRecoveryBuyerEligible(
+        game: game,
+        playerId: id,
+        pricePerUnit: pricePerUnit,
+        topology: topology,
+      ))
+        id,
+  ];
+  if (eligible.isEmpty) return const [];
+  eligible.sort((a, b) {
+    final treasuryCmp = _treasuryForPlayer(game, b)
+        .compareTo(_treasuryForPlayer(game, a));
+    if (treasuryCmp != 0) return treasuryCmp;
+    return a.compareTo(b);
+  });
+  final poolSize = eligible.length < kLockRecoveryRichestBuyerPoolSize
+      ? eligible.length
+      : kLockRecoveryRichestBuyerPoolSize;
+  // Refs #2924 F15b: all pool members bid each turn (not one rotating
+  // buyer). Seed-42 diagnostics showed a single ~9-treasury buyer could
+  // not clear enough urgent offers from lock-trapped sellers; two
+  // concurrent richest eligible buyers doubles buy-side liquidity.
+  return eligible.take(poolSize).toList(growable: false);
+}
+
+/// Primary lock-recovery buyer id for diagnostics and single-buyer callers.
+///
+/// Returns the first entry of [lockRecoveryLiquidityBuyerIds] or the empty
+/// string when lock recovery is inactive. Refs #2924 F11.
+String lockRecoveryDesignatedBuyerId(Game game, {MapTopology? topology}) {
+  final buyers = lockRecoveryLiquidityBuyerIds(game, topology: topology);
+  if (buyers.isEmpty) return '';
+  return buyers.first;
+}
+
+bool _isLockRecoveryBuyerEligible({
+  required Game game,
+  required String playerId,
+  required int pricePerUnit,
+  MapTopology? topology,
+}) {
+  if (_treasuryForPlayer(game, playerId) < pricePerUnit) return false;
+  if (topology != null) {
+    final view = buildPlayerView(game, topology, playerId);
+    final snap = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+    if (expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+      game: game,
+      snapshot: snap,
+    )) {
+      return false;
+    }
+    return true;
+  }
+  return _oldWorldProvincesOwned(game, playerId) >=
+      kObserverConquestMinOwProvincesPerGp;
+}
+
+int _oldWorldProvincesOwned(Game game, String playerId) {
+  var count = 0;
+  for (final province in game.worldState.oldWorld.provinces) {
+    if (province.ownerId == playerId) count++;
+  }
+  return count;
 }
 
 /// Designated buyer bids [commodityId] and does not offer it this turn.
@@ -627,12 +745,15 @@ String lockRecoveryDesignatedBuyerId(Game game) {
 void _applyLockRecoveryLiquidityBid({
   required String playerId,
   required Game game,
+  MapTopology? topology,
   required Map<CommodityId, int> need,
   required Map<CommodityId, int> available,
   required Map<CommodityId, int> carryForwardBids,
   required int treasuryBudgetForBids,
 }) {
-  if (playerId != lockRecoveryDesignatedBuyerId(game)) return;
+  if (!lockRecoveryLiquidityBuyerIds(game, topology: topology).contains(playerId)) {
+    return;
+  }
   final commodityId = _lockRecoveryLiquidityCommodity(game.worldMarketState);
   available.remove(commodityId);
   final pricePerUnit = game.worldMarketState.prices[commodityId] ?? 0;

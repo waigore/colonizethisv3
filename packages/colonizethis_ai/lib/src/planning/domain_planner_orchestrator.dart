@@ -262,6 +262,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
             tileMapByRegion: tileMapByRegion,
             topology: topology,
             currentOrders: ctx.orders,
+            snapshot: snapshot,
           );
   } else {
     resolvedTradeOrders = economyPlan.tradeOrders;

@@ -100,6 +100,7 @@ EconomyPlan runEconomyPlanner({
               treasury: player.treasury,
               tileMapByRegion: tileMapByRegion,
               topology: topology,
+              snapshot: snapshot,
             ),
     );
   }
@@ -141,6 +142,7 @@ EconomyPlan runEconomyPlanner({
           treasury: player.treasury,
           tileMapByRegion: tileMapByRegion,
           topology: topology,
+          snapshot: snapshot,
         );
   _log.i(
     'economy plan playerId=${view.playerId} '
