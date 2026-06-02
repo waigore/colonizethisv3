@@ -14,11 +14,12 @@
 //    (mirroring the Production panel's Available subpanel),
 //  * last market price sourced from `Game.worldMarketState.prices`
 //    (integer, post-#3093). Rows fall back to
-//    `ResourceRules.defaultMarketPrice` when the prices map lacks an
-//    entry for a raw-resource commodity (e.g. iron — base price 80);
-//    rows for manufactured commodities (no catalog default today) still
-//    render the em-dash glyph `—` until they participate in a market
-//    turn. Tracked as follow-up to #3093.
+//    `ResourceRules.defaultMarketPriceForCommodityId` when the prices
+//    map lacks an entry — the catalog covers every tradeable commodity,
+//    raw resources (e.g. iron → 80) and manufactured commodities (e.g.
+//    lumber → 60 per SPEC/game/commodity-catalog.md § Manufactured base
+//    prices). The em-dash glyph is reserved as a defensive fallback for
+//    future commodity additions that ship without a catalog default.
 //  * previous-turn aggregate volume line `Bids X / Offers Y` sourced
 //    from `Game.worldMarketState.lastTurnActivity`.
 //
@@ -406,9 +407,10 @@ void main() {
       testWidgets(
         'renders the live `WorldMarketState.prices` integer price for a '
         'seeded commodity (timber=30 → `30`) and falls back to the resource '
-        'catalog default for an unseeded raw-resource commodity '
-        '(iron → `80`); manufactured commodities without a catalog default '
-        'still render the em-dash (Refs #3093)',
+        'catalog default for both unseeded raw resources (iron → `80`) and '
+        'manufactured commodities (lumber → `60`, castIron → `220`) — '
+        '`SPEC/game/commodity-catalog.md` § Manufactured base prices, '
+        'Refs #3093',
         (tester) async {
           await _pumpTradeScreen(
             tester,
@@ -451,10 +453,13 @@ void main() {
                 '`WorldMarketState.prices` lacks an entry. Iron is a raw '
                 'resource with catalog default 80.',
           );
-          // Negative pin: iron must NOT render the em-dash price glyph
-          // (the price-slot em-dash is reserved for the manufactured
-          // commodities whose catalog default has not been wired yet).
-          // The quantity-idle em-dash is a separate concern below.
+          // Negative pin: iron must NOT render the em-dash price glyph.
+          // The price-slot em-dash is now reserved as a defensive
+          // fallback for tradeable commodities that ship without a
+          // catalog default — none exist under the current ruleset
+          // (Refs #3093 manufactured-default-prices slice). Only the
+          // quantity-idle em-dash remains in an iron row when no trade
+          // order is staged.
           expect(
             find.descendant(
               of: ironRow,
@@ -488,14 +493,28 @@ void main() {
                 'idle em-dash glyph).',
           );
 
-          // Manufactured commodity row (no catalog default today): the
-          // em-dash glyph remains in the price slot until the commodity
-          // participates in a market turn. This pins the explicit deferral
-          // documented in `_formatPrice`.
+          // Manufactured commodity row (now seeded by the catalog): the
+          // price slot reads the input-cost-derived base price from
+          // SPEC/game/commodity-catalog.md § Manufactured base prices.
+          // Lumber's canonical recipe (`timber x 2` at 30 each) yields
+          // 60; castIron's (`timber x 2 + iron x 2`) yields 220.
           final lumberRow = find.byKey(
             TradeScreen.marketCommodityRowKey(CommodityCatalog.lumber.id),
           );
           expect(lumberRow, findsOneWidget);
+          expect(
+            find.descendant(of: lumberRow, matching: find.text('60')),
+            findsOneWidget,
+            reason:
+                'Refs #3093 (manufactured-default-prices slice) — the '
+                'lumber price cell falls back to `ResourceRules.defaultRules'
+                '.defaultMarketPriceForCommodityId("lumber") = 60` '
+                '(SPEC/game/commodity-catalog.md § Manufactured base prices: '
+                '`timber x 2` at `30` each).',
+          );
+          // Negative pin: the lumber price slot must NOT render the
+          // em-dash glyph now that the catalog publishes a manufactured
+          // base price for it. Only the quantity-idle em-dash remains.
           expect(
             find.descendant(
               of: lumberRow,
@@ -504,12 +523,27 @@ void main() {
                 '—',
               ),
             ),
-            findsNWidgets(2),
+            findsOneWidget,
             reason:
-                'Refs #3093 — manufactured commodities are not enumerated '
-                'in `ResourceRules.defaultMarketPrice`; their price slot '
-                'continues to render the em-dash glyph (and the quantity-'
-                'idle em-dash also renders when no TradeOrder is staged).',
+                'Refs #3093 (manufactured-default-prices slice) — the '
+                'price-slot em-dash MUST NOT appear for manufactured '
+                'commodities now that SPEC/game/commodity-catalog.md § '
+                'Manufactured base prices supplies a published catalog '
+                'default. Only the quantity-idle em-dash should remain '
+                'when no TradeOrder is staged.',
+          );
+
+          final castIronRow = find.byKey(
+            TradeScreen.marketCommodityRowKey(CommodityCatalog.castIron.id),
+          );
+          expect(castIronRow, findsOneWidget);
+          expect(
+            find.descendant(of: castIronRow, matching: find.text('220')),
+            findsOneWidget,
+            reason:
+                'Refs #3093 — castIron base price `220` per '
+                'SPEC/game/commodity-catalog.md § Manufactured base prices '
+                '(`timber x 2 + iron x 2` = `60 + 160`).',
           );
         },
       );
