@@ -27,7 +27,7 @@
 ///
 /// | Phase | Suggestion suppressed |
 /// |---|---|
-/// | [ObserverGoalPhase.expand] | NW `purchase_land` and NW `build_improvement` (any NW civilian work order) |
+/// | [ObserverGoalPhase.expand] | NW `purchase_land` and NW `build_improvement` only when `priorityWeights.newWorldAcquisition <= 0.0` (legacy hard-suppress equivalent; the default soft-phase curve never emits `0.0`, so NW civilian work stays reachable at low priority under EXPAND — Refs #2847 Phase 3 work-order filter wiring) |
 /// | [ObserverGoalPhase.colonialLite] | NW `purchase_land` only (NW `build_improvement` passes through so EXPAND-side OW push tolerates incidental NW improvement candidates) |
 /// | [ObserverGoalPhase.colonial] | nothing (COLONIAL imperative needs every NW civilian path) |
 /// | [ObserverGoalPhase.develop] | NW `purchase_land` only (NW `build_improvement` passes through so the 70 % improvement gate stays reachable) |
@@ -51,14 +51,16 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
+import 'phase_planner_economy_filter.dart'
+    show resolvePhaseEconomyColonialPressureWeight;
 
 /// Returns `true` when [order] must be dropped from the orchestrator's
 /// civilian work suggestion pool under [outcome]'s active phase.
 ///
 /// See the library docstring for the full suppression matrix. The short
-/// version is: EXPAND drops every NW civilian work order, COLONIAL-lite
-/// and DEVELOP drop NW `purchase_land` only, COLONIAL keeps every
-/// candidate.
+/// version is: EXPAND drops NW civilian work orders only when the
+/// soft-phase NW acquisition weight is `<= 0.0`; COLONIAL-lite and
+/// DEVELOP drop NW `purchase_land` only; COLONIAL keeps every candidate.
 ///
 /// The function is pure — the same `(order, outcome.phase)` pair always
 /// returns the same boolean — so the orchestrator can call it inside a
@@ -70,7 +72,10 @@ bool shouldSuppressWorkOrderFromPhasePlan(
 ) {
   switch (outcome.phase) {
     case ObserverGoalPhase.expand:
-      return _isNewWorldCivilianAcquisitionOrImprovement(order);
+      if (resolvePhaseEconomyColonialPressureWeight(phasePlan: outcome) <= 0.0) {
+        return _isNewWorldCivilianAcquisitionOrImprovement(order);
+      }
+      return false;
     case ObserverGoalPhase.colonialLite:
     case ObserverGoalPhase.develop:
       return _isNewWorldPurchaseLand(order);
