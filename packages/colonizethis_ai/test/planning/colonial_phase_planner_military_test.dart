@@ -812,6 +812,106 @@ void main() {
       );
 
       test(
+        'partial treasury with boostTreasuryRecoveryCargo keeps NW plan',
+        () {
+          final game = _colonialGame(
+            newWorldProvinces: const [
+              Province(
+                id: _nwProvTribeA,
+                regionId: 'newWorld',
+                ownerId: _tribe1,
+              ),
+            ],
+            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          );
+          final snapshot = AIWorldSnapshot(
+            playerId: _gp1,
+            threats: const ThreatSummary(atWarWith: [_tribe1]),
+            opportunities: const OpportunitySummary(),
+            conquest: ConquestSummary(
+              oldWorldProvincesOwned: 9,
+              provincesToVictory: 31,
+              invadableProvinceIdsSorted: const [],
+            ),
+            colonial: ColonialSummary(
+              invadableNewWorldProvinceIdsSorted: const [_nwProvTribeA],
+              newWorldProvincesOwned: 0,
+            ),
+            economy: const EconomySummary(treasury: 500),
+            relations: const {},
+          );
+          expect(
+            planColonialMilitary(
+              game: game,
+              snapshot: snapshot,
+              colonialDeclaredWarTargetFactionId: _tribe1,
+              expandEconomyPlan: const ExpandEconomyPlan(
+                forceCheapestRegimentBuild: false,
+                boostTreasuryRecoveryCargo: true,
+              ),
+            ),
+            ColonialMilitaryPlan(
+              priorityDestinationProvinceIdsSorted: const [_nwProvTribeA],
+              priorityTargetOwnerFactionIdsSorted: const [_tribe1],
+            ),
+            reason:
+                'Path E must stay armed after Path F credits treasury above '
+                'zero but below the regiment threshold.',
+          );
+        },
+      );
+
+      test(
+        'post-threshold treasury with forceCheapestRegimentBuild keeps NW plan',
+        () {
+          final game = _colonialGame(
+            newWorldProvinces: const [
+              Province(
+                id: _nwProvTribeA,
+                regionId: 'newWorld',
+                ownerId: _tribe1,
+              ),
+            ],
+            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          );
+          final snapshot = AIWorldSnapshot(
+            playerId: _gp1,
+            threats: const ThreatSummary(atWarWith: [_tribe1]),
+            opportunities: const OpportunitySummary(),
+            conquest: ConquestSummary(
+              oldWorldProvincesOwned: 9,
+              provincesToVictory: 31,
+              invadableProvinceIdsSorted: const [],
+            ),
+            colonial: ColonialSummary(
+              invadableNewWorldProvinceIdsSorted: const [_nwProvTribeA],
+              newWorldProvincesOwned: 0,
+            ),
+            economy: const EconomySummary(treasury: 2500),
+            relations: const {},
+          );
+          expect(
+            planColonialMilitary(
+              game: game,
+              snapshot: snapshot,
+              colonialDeclaredWarTargetFactionId: _tribe1,
+              expandEconomyPlan: const ExpandEconomyPlan(
+                forceCheapestRegimentBuild: true,
+                boostTreasuryRecoveryCargo: false,
+              ),
+            ),
+            ColonialMilitaryPlan(
+              priorityDestinationProvinceIdsSorted: const [_nwProvTribeA],
+              priorityTargetOwnerFactionIdsSorted: const [_tribe1],
+            ),
+            reason:
+                'Geographic peer-war lock Arm D must keep colonial military '
+                'plans active until the GP owns an NW province.',
+          );
+        },
+      );
+
+      test(
         'below quota without override keeps defaultPlan regression guard',
         () {
           final game = _colonialGame(

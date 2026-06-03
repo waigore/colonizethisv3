@@ -651,6 +651,42 @@ void main() {
     );
 
     test(
+      'partial treasury with boostTreasuryRecoveryCargo emits declareWar',
+      () {
+        final game = _declareWarGame(
+          activePlayerTreasury: 500,
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
+          armies: <Army>[_homeArmyWithRegiments(_gp1, 1)],
+          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        );
+        final snapshot = _declareWarSnapshot(
+          invadableNw: const [_nwProv1],
+          treasury: 500,
+          newWorldProvincesOwned: 0,
+        );
+        expect(
+          planColonialAcquisition(
+            game: game,
+            snapshot: snapshot,
+            expandEconomyPlan: const ExpandEconomyPlan(
+              forceCheapestRegimentBuild: false,
+              boostTreasuryRecoveryCargo: true,
+            ),
+          ),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.declareWar,
+          ),
+          reason:
+              'Path E declare-war waiver must persist after Path F raises '
+              'treasury above zero but below the regiment threshold.',
+        );
+      },
+    );
+
+    test(
       'treasury zero without override keeps declareWar suppressed',
       () {
         final game = _declareWarGame(

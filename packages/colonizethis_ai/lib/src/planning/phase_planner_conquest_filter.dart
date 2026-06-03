@@ -95,7 +95,7 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
       );
 
   final prioritizeColonialNwUnderLockRecovery = snapshot != null &&
-      isNwTreasuryRecoveryOverrideActive(
+      isNwLockRecoveryPathEActive(
         snapshot: snapshot,
         expandEconomyPlan: phasePlan.expandEconomyPlan,
       ) &&
