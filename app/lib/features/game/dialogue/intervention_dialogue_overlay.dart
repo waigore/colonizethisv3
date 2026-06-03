@@ -239,12 +239,12 @@ class _InterventionDialogueOverlayState
             l10n.game_intervention_loadError(_loadError.toString()),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           Text(
             l10n.game_intervention_degradedHint,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
@@ -280,7 +280,7 @@ class _InterventionDialogueOverlayState
         bodyChildren: [
           if (line != null) ...[
             Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: 16),
+            const SizedBox(height: CtSpacing.l),
             Align(
               alignment: Alignment.centerRight,
               child: CtNinePatchButton(
@@ -317,7 +317,7 @@ class _InterventionDialogueOverlayState
             ),
             style: Theme.of(context).textTheme.titleSmall,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           Text(
             l10n.game_intervention_situation(
               _factionDisplayName(widget.game, prompt.aggressorGpId),
@@ -329,7 +329,7 @@ class _InterventionDialogueOverlayState
             ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           InterventionChoiceButtons(onPick: _pick),
         ],
       );

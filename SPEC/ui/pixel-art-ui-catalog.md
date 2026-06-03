@@ -304,6 +304,13 @@ theme. Values are derived from observed `app/lib/widgets/**` and
 review (issues #2914 S5 / S6) can adopt them in Ct-\* widget defaults and
 feature padding/radius callsites without re-deriving the scale per file.
 
+The spacing-token adoption surface is every callsite that embeds a raw
+spacing magnitude from the scale, not only `EdgeInsets.all` / `symmetric`:
+it also covers `EdgeInsets.only` / `EdgeInsets.fromLTRB` insets and
+`SizedBox(height:)` / `SizedBox(width:)` gap dimensions (a `SizedBox`
+spacer of `12` logical px adopts `CtSpacing.ml`, etc.). Out-of-scale
+magnitudes (`4`, `10`, `14`) remain explicit per-component overrides.
+
 ### Spacing tokens
 
 The Dart implementation lands as `CtSpacing` constants in

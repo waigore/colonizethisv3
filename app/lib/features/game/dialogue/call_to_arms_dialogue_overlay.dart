@@ -103,11 +103,11 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(l10n.game_callToArms_title, style: titleStyle),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           Text(l10n.game_callToArms_intro, style: introStyle),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           const CtBrassDivider(),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -130,7 +130,7 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
@@ -211,7 +211,7 @@ class _CallToArmsCallRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _buildPrompt(theme),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           _buildDecisionRow(theme),
         ],
       ),
@@ -328,7 +328,7 @@ class _LabeledToggle extends StatelessWidget {
             onGlowColor: onGlowColor,
             onChanged: onChanged,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: CtSpacing.s),
           Text(label, style: labelStyle),
         ],
       ),

@@ -186,7 +186,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(l10n.game_overture_loadError('$_loadError')),
-            const SizedBox(height: 16),
+            const SizedBox(height: CtSpacing.l),
             CtNinePatchButton(
               onPressed: _submitErrorFallback,
               child: Text(l10n.game_intervention_continue),
@@ -207,7 +207,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
           children: [
             if (line != null) ...[
               Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 16),
+              const SizedBox(height: CtSpacing.l),
               Align(
                 alignment: Alignment.centerRight,
                 child: CtNinePatchButton(
@@ -259,7 +259,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
             key: const ValueKey<String>('overtureIntro'),
             style: introStyle,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -280,7 +280,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
@@ -380,7 +380,7 @@ class _OvertureOfferRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildLabelsRow(Theme.of(context)),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           _buildDecisionRow(Theme.of(context)),
         ],
       ),
@@ -506,7 +506,7 @@ class _LabeledToggle extends StatelessWidget {
             onGlowColor: onGlowColor,
             onChanged: onChanged,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: CtSpacing.s),
           Text(label, style: labelStyle),
         ],
       ),
