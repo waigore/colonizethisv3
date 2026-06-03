@@ -16,13 +16,10 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// Pins the primary AC (owner clarification 2026-06-01): after 100 Full-AI
 /// turns on seed 42, gp3–gp6 each fall below
 /// `cheapestRegimentBuildTreasuryCost()` under the EXPAND geographic peer-war
-/// lock and then cross it again at least once from legitimate world-market
-/// seller credits (no affordability bypass). Crossing the threshold restores
-/// access to the unchanged build/affordability pipeline — the regiment build
-/// itself fires only when the GP is below regiment quota, which is not
-/// guaranteed for a GP held in the mutual-peace lock, so this regression pins
-/// the treasury-recovery AC the issue actually specifies rather than a
-/// build-count.
+/// lock, receive positive world-market seller credits, cross the threshold
+/// again at least once from legitimate market income (no affordability bypass),
+/// and emit at least one regiment `BuildUnitOrder` after recovery so the
+/// unchanged build/affordability pipeline is exercised.
 ///
 /// The run uses a faithful Full-AI handoff (every player `isHuman: false`,
 /// every GP AI-controlled) so the diplomacy intervention resolver auto-resolves
@@ -67,13 +64,32 @@ void main() {
       final lifetimeSellerCredit = <String, int>{
         for (final gpId in failingGpIds) gpId: 0,
       };
+      final regimentBuildsWhileAffordable = <String, int>{
+        for (final gpId in failingGpIds) gpId: 0,
+      };
 
       for (var t = 0; t < 100; t++) {
+        final treasuryBeforeOrders = <String, int>{
+          for (final gpId in failingGpIds)
+            gpId: game.playerById(gpId)?.treasury ?? 0,
+        };
         final fullAi = generateOrdersForGameFullAI(
           game,
           topo,
           tileMapByRegion: tileMap,
         );
+        for (final gpId in failingGpIds) {
+          if (treasuryBeforeOrders[gpId]! < threshold) continue;
+          final orders =
+              fullAi.orders.buildUnitOrdersByPlayerId[gpId] ?? const [];
+          regimentBuildsWhileAffordable[gpId] =
+              regimentBuildsWhileAffordable[gpId]! +
+              orders
+                  .where(
+                    (o) => RegimentEconomyCatalog.byId.containsKey(o.unitType),
+                  )
+                  .length;
+        }
         final merged = mergeOrderLists(
           humanOrders: const Orders(),
           aiOrders: fullAi.orders,
@@ -129,6 +145,19 @@ void main() {
           reason: 'Refs #2924: $gpId never recovered to treasury >= $threshold '
               'after being broke (maxTreasury=${maxTreasury[gpId]}, '
               'lifetimeSellerCredit=${lifetimeSellerCredit[gpId]}).',
+        );
+        expect(
+          lifetimeSellerCredit[gpId],
+          greaterThan(0),
+          reason: 'Refs #2924 Path F: $gpId received zero world-market seller '
+              'credits across 100 turns.',
+        );
+        expect(
+          regimentBuildsWhileAffordable[gpId],
+          greaterThan(0),
+          reason: 'Refs #2924 Path F: $gpId emitted no regiment builds on a '
+              'turn with treasury >= $threshold (maxTreasury='
+              '${maxTreasury[gpId]}).',
         );
       }
     },
