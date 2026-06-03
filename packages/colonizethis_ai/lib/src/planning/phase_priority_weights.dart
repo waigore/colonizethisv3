@@ -133,6 +133,26 @@ const double kPhasePriorityNwTreasuryRecoveryFloor = 0.60;
 /// && conquest.invadableProvinceIdsSorted.isNotEmpty`.
 const double kPhasePriorityNwZeroRegimentFloor = 0.30;
 
+/// Minimum dispatched `newWorldAcquisition` weight at which a **below-quota**
+/// GP's NW-invasion army-move scoring treats the GP as electing to pursue New
+/// World acquisition for treasury income (Refs #2847 Phase 2 conquest
+/// NW-invasion sign migration; requirement clarification #3 — resource-need
+/// overrides bypass phase priority so the AI pursues NW provinces *because* it
+/// needs income to fund OW conquest).
+///
+/// Only the § Resource-need overrides floors raise `newWorldAcquisition`
+/// to/above this threshold while a GP is below the OW conquest quota: the
+/// treasury-recovery floor ([kPhasePriorityNwTreasuryRecoveryFloor] = `0.60`)
+/// and the zero-regiment floor ([kPhasePriorityNwZeroRegimentFloor] = `0.30`).
+/// The ordinary below-quota curve plateau peaks at `0.20` (OW = 9, see
+/// `SPEC/ai/phase-planner-architecture.md` § Soft-phase priority weights), so
+/// it never reaches this threshold — healthy below-quota GPs keep the
+/// early-sprint OW-push NW penalty and the gp1/gp2 +6 OW baseline is
+/// unaffected. The threshold is the smaller override floor by construction so
+/// either override engages the NW-pursuit sign.
+const double kPhasePriorityNwInvadablePursuitWeightThreshold =
+    kPhasePriorityNwZeroRegimentFloor;
+
 /// Returns the [PhasePriorityWeights] for one phase-planner dispatch
 /// (Refs #2847 Phase 1 scaffolding).
 ///
