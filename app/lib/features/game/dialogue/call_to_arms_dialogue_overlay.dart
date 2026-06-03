@@ -8,6 +8,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_toggle_switch.dart';
 
 /// Blocking overlay: human ally accepts or refuses each pending call to arms.
@@ -205,7 +206,7 @@ class _CallToArmsCallRow extends StatelessWidget {
     // (issue #2870 S8 / S10; SPEC/ui/call-to-arms-dialogue-overlay.md
     // § Layout / wireframe; SPEC/ui/mobile-adaptation.md § 7).
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: CtSpacing.ml),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[

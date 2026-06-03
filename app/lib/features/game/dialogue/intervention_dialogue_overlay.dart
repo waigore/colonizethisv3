@@ -291,7 +291,7 @@ class _InterventionDialogueOverlayState
           ] else if (choice != null) ...[
             ...choice.options.asMap().entries.map(
               (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: CtSpacing.m),
                 child: CtNinePatchButton(
                   onPressed: () => _view!.selectOption(entry.key),
                   child: Text(entry.value.text),
