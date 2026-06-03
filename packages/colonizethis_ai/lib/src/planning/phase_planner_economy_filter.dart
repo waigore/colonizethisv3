@@ -437,6 +437,69 @@ double resolvePhaseEconomyColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.priorityWeights.newWorldAcquisition;
 
+/// Returns the economy-pass civilian-work threshold cap scaled by the
+/// soft-phase NW acquisition weight (Refs #2847 Phase 3 economy
+/// civilian-work threshold cap wiring).
+///
+/// `_runEconomyDomainPlanners` consumes this helper as the production
+/// source of truth for the colonial-pressure civilian-work threshold
+/// cap that previously activated as a hard
+/// `workThreshold = min(workThreshold, kColonialCivilianWorkThresholdCap)`
+/// step under the boolean [resolvePhaseEconomyColonialPressureActive].
+/// The new helper interpolates the cap linearly from the uncapped
+/// threshold (no cap) down to [kColonialCivilianWorkThresholdCap] as
+/// [colonialPressureWeight] rises, so the civilian-work bar tracks the
+/// soft-phase NW acquisition priority instead of stepping on/off at the
+/// EXPAND→COLONIAL boundary:
+///
+/// - `colonialPressureWeight <= 0.0` returns [uncappedThreshold] (no cap
+///   applied — legacy `colonialPressure: false` equivalent; the civilian
+///   work bar keeps whatever value the spy-modifier base produced).
+/// - `colonialPressureWeight == 1.0` returns
+///   [kColonialCivilianWorkThresholdCap] exactly — identity-equal to the
+///   legacy COLONIAL hard-phase cap.
+/// - Intermediate `colonialPressureWeight` values return
+///   `round(uncappedThreshold - (uncappedThreshold -
+///   kColonialCivilianWorkThresholdCap) × colonialPressureWeight)`,
+///   matching the continuous-scale contract used by the conquest
+///   army-move floor, the naval colonial-pressure bonus/floor, the
+///   goal-score floors, and the economy build-pick cargo bonus
+///   (`SPEC/ai/phase-planner-architecture.md` § Phase 3 consumer
+///   wiring).
+///
+/// At the early-sprint default curve (`newWorldAcquisition = 0.05` for
+/// `oldWorldProvincesOwned <= 7`) with the default `uncappedThreshold`
+/// of `40`, the cap collapses to `round(40 - 28 × 0.05) = 39` — a
+/// one-point relaxation that leaves the OW conquest sprint civilian/build
+/// balance essentially unchanged. At the resource-need override floor
+/// (`newWorldAcquisition = 0.60`, the EXPAND geographic peer-war lock
+/// recovery weight per § Resource-need overrides) the cap reaches
+/// `round(40 - 28 × 0.60) = 23`, lowering the civilian-work bar so
+/// colonial Builder / Merchant work can engage while a locked GP is still
+/// in EXPAND.
+///
+/// The orchestrator applies `math.min(workThreshold, <result>)` so a base
+/// threshold already at or below [kColonialCivilianWorkThresholdCap]
+/// (after a large spy modifier) is never raised by this helper.
+///
+/// Pure and deterministic — identical
+/// `(colonialPressureWeight, uncappedThreshold)` inputs always yield
+/// identical `int` results (Refs #2509 Must-have #7). Performs no I/O,
+/// no logging, no order emission. The function is a projection of two
+/// scalar inputs and never reads `PhasePlanOutcome`, snapshot, or `Game`
+/// state.
+int economyColonialPressureCivilianWorkThresholdCap({
+  required double colonialPressureWeight,
+  required int uncappedThreshold,
+}) {
+  if (colonialPressureWeight <= 0.0) {
+    return uncappedThreshold;
+  }
+  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
+  final span = uncappedThreshold - kColonialCivilianWorkThresholdCap;
+  return (uncappedThreshold - span * clamped).round();
+}
+
 /// Advisory `[0.0, 1.0]` multiplier for the OW civilian-work bias
 /// (build / improvement / population orders on OW-owned land)
 /// sourced from [PhasePriorityWeights.oldWorldCivilian] (Refs #2847
