@@ -234,22 +234,24 @@ void main() {
 
         expect(find.textContaining('Assign work'), findsOneWidget);
 
-        // Get all ListTiles - all should be disabled
-        final listTiles = find
+        // Get all target rows - all should be disabled. Work-target menu rows
+        // render through InkWell over palette-token chrome (Refs #2914 S8 —
+        // no Material ListTile); a disabled row has a null onTap.
+        final targetRows = find
             .descendant(
               of: find.byType(BottomSheet),
-              matching: find.byType(ListTile),
+              matching: find.byType(InkWell),
             )
             .evaluate();
 
-        expect(listTiles, isNotEmpty);
+        expect(targetRows, isNotEmpty);
 
         // All items should be disabled when availableWorkTargets is empty
-        for (final tile in listTiles) {
-          final widget = tile.widget as ListTile;
+        for (final row in targetRows) {
+          final widget = row.widget as InkWell;
           expect(
-            widget.enabled,
-            isFalse,
+            widget.onTap,
+            isNull,
             reason: 'All items should be disabled when no available targets',
           );
         }
