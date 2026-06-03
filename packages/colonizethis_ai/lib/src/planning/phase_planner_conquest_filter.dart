@@ -15,6 +15,7 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import 'colonial_phase_planner.dart' show ColonialMilitaryPlan;
@@ -51,6 +52,23 @@ class PhaseConquestInvadableResolution {
   final bool skipConquestPass;
 }
 
+/// True when [playerId] has at least one non-Home field army with regiments
+/// stationed in [regionId] (Refs #2924 Path E NW conquest feasibility).
+bool playerHasNonHomeFieldArmyInRegion({
+  required Game game,
+  required String playerId,
+  required String regionId,
+}) {
+  for (final army in game.worldState.armies) {
+    if (army.ownerId != playerId || army.isHomeArmy) continue;
+    if (army.regimentUnitIds.isEmpty) continue;
+    if (ProvinceId.regionIdFrom(army.stationedProvinceId) == regionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Resolves the conquest destination filter for [phasePlan].
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -58,6 +76,7 @@ class PhaseConquestInvadableResolution {
 PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
   required PhasePlanOutcome phasePlan,
   AIWorldSnapshot? snapshot,
+  Game? game,
 }) {
   if (phasePlan.phase == ObserverGoalPhase.develop) {
     return const PhaseConquestInvadableResolution(skipConquestPass: true);
@@ -66,12 +85,22 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
   final expandPlan = expandMilitaryPlanFromPhasePlan(phasePlan);
   final colonialPlan = colonialMilitaryPlanFromPhasePlan(phasePlan);
 
+  final nwInvasionArmyMoveFeasible =
+      game != null &&
+      snapshot != null &&
+      playerHasNonHomeFieldArmyInRegion(
+        game: game,
+        playerId: snapshot.playerId,
+        regionId: kNewWorldRegionId,
+      );
+
   final prioritizeColonialNwUnderLockRecovery = snapshot != null &&
       isNwTreasuryRecoveryOverrideActive(
         snapshot: snapshot,
         expandEconomyPlan: phasePlan.expandEconomyPlan,
       ) &&
-      colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty;
+      colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty &&
+      nwInvasionArmyMoveFeasible;
 
   if (prioritizeColonialNwUnderLockRecovery) {
     return PhaseConquestInvadableResolution(

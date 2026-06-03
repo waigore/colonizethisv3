@@ -68,8 +68,8 @@ void main() {
     );
 
     test(
-      'EXPAND lock-recovery override prioritises colonial NW over EXPAND OW '
-      '(Refs #2924 Path E)',
+      'EXPAND lock-recovery override keeps OW when no NW field army '
+      '(Refs #2924 Path E feasibility gate)',
       () {
         const outcome = PhasePlanOutcome(
           phase: ObserverGoalPhase.expand,
@@ -83,17 +83,113 @@ void main() {
             newWorldCivilian: 0.10,
           ),
         );
+        final snapshot = _lockRecoverySnapshot();
+        final gameOwOnly = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'tribe1_a',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+            armies: const [
+              Army(
+                id: 'army_ow',
+                ownerId: 'gp1',
+                regionId: 'oldWorld',
+                stationedProvinceId: 'oldWorld|p1',
+                regimentUnitIds: ['u1'],
+              ),
+            ],
+          ),
+          players: const [Player(id: 'gp1', displayName: 'gp1', isHuman: false)],
+          minorNations: const [],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'tribe1')],
+        );
+        final resolution = resolvePhaseConquestInvadable(
+          phasePlan: outcome,
+          snapshot: snapshot,
+          game: gameOwOnly,
+        );
+        expect(
+          resolution.phasePlanInvadableSorted,
+          _expandOwOnly.priorityDestinationProvinceIdsSorted,
+          reason:
+              'Without a NW field army, NW invasion moves are infeasible — '
+              'OW destinations must remain available for peer-war conquest.',
+        );
+      },
+    );
+
+    test(
+      'EXPAND lock-recovery override prioritises colonial NW when NW field '
+      'army exists (Refs #2924 Path E)',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          expandMilitaryPlan: _expandOwOnly,
+          colonialMilitaryPlan: _colonialNwOnly,
+          expandEconomyPlan: _nwTreasuryRecoveryOverridePlan,
+          priorityWeights: PhasePriorityWeights(
+            oldWorldConquest: 0.95,
+            newWorldAcquisition: kPhasePriorityNwTreasuryRecoveryFloor,
+            oldWorldCivilian: 0.90,
+            newWorldCivilian: 0.10,
+          ),
+        );
+        final gameNwFieldArmy = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'tribe1_a',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+            armies: const [
+              Army(
+                id: 'army_nw',
+                ownerId: 'gp1',
+                regionId: 'newWorld',
+                stationedProvinceId: 'newWorld|tribe1_a',
+                regimentUnitIds: ['u1'],
+              ),
+            ],
+          ),
+          players: const [Player(id: 'gp1', displayName: 'gp1', isHuman: false)],
+          minorNations: const [],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'tribe1')],
+        );
         final resolution = resolvePhaseConquestInvadable(
           phasePlan: outcome,
           snapshot: _lockRecoverySnapshot(),
+          game: gameNwFieldArmy,
         );
         expect(
           resolution.phasePlanInvadableSorted,
           _colonialNwOnly.priorityDestinationProvinceIdsSorted,
           reason:
-              'Under treasury-recovery override the NW colonial military '
-              'plan must win over the EXPAND OW plan so army moves can '
-              'reach tribe targets.',
+              'With a NW field army, treasury-recovery override may restrict '
+              'conquest to colonial NW invasion targets.',
         );
       },
     );
