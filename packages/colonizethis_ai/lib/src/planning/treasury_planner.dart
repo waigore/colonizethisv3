@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/ai_api.dart'
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
+        oldWorldProvinceCountOwnedBy,
         pendingTreasuryCostsForTurn,
         tradeCargoCapacityForGreatPower,
         worldMarketBidTypeCap;
@@ -192,7 +193,8 @@ List<TradeOrder> runTreasuryPlanner({
   // is committed to the urgent grain liquidity bid below — F12).
   if (treasury >= treasuryAffluenceThreshold() &&
       !isLiquidityBuyer &&
-      !isAffluentDesignatedBuyer) {
+      !isAffluentDesignatedBuyer &&
+      !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId)) {
     _addSpeculativeBidNeeds(
       need: need,
       available: available,
@@ -226,7 +228,8 @@ List<TradeOrder> runTreasuryPlanner({
       // consumed by fabric/bronze deficits that cannot match urgent grain offers.
       need.removeWhere((id, _) => id != liquidity);
     }
-  } else if (lockRecoveryUrgent) {
+  } else if (lockRecoveryUrgent ||
+      _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId)) {
     need.clear();
   }
 
@@ -574,6 +577,31 @@ int _treasuryForPlayer(Game game, String playerId) {
   return 0;
 }
 
+int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
+  var count = 0;
+  for (final province in game.worldState.newWorld.provinces) {
+    if (province.ownerId == playerId) count++;
+  }
+  return count;
+}
+
+/// Below-quota GPs with zero NW provinces and at least one OW province
+/// are Path F lock-recovery **sellers** — they must accumulate seller
+/// credits toward the regiment threshold, not rotate as the affluent
+/// designated buyer or speculate (Refs #2924 Path F gp6 regression).
+bool _isBelowQuotaZeroNwLockRecoverySeller({
+  required Game game,
+  required String playerId,
+}) {
+  final ow = oldWorldProvinceCountOwnedBy(game, playerId);
+  if (ow <= 0) return false;
+  if (!isBelowObserverConquestQuota(ow)) return false;
+  if (_newWorldProvinceCountOwnedBy(game, playerId) != 0) return false;
+  // Mid-below-quota EXPAND band (seed-42 gp3–gp6); excludes minimal
+  // single-province test fixtures that are not Path F lock-recovery sellers.
+  return ow >= 2;
+}
+
 /// Sorted Great Power ids for deterministic per-turn buyer rotation.
 List<String> _sortedGreatPowerIds(Game game) {
   final ids = <String>[
@@ -602,7 +630,9 @@ bool _isAffluentDesignatedLockRecoveryBuyer({
   final gpIds = _sortedGreatPowerIds(game);
   final affluent = <String>[
     for (final id in gpIds)
-      if (_treasuryForPlayer(game, id) >= treasuryAffluenceThreshold()) id,
+      if (_treasuryForPlayer(game, id) >= treasuryAffluenceThreshold() &&
+          !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: id))
+        id,
   ];
   if (affluent.isEmpty) return false;
   final designated = lockRecoveryDesignatedBuyerId(game);
@@ -632,7 +662,9 @@ bool isLockRecoveryLiquidityBuyer({
   final gpIds = _sortedGreatPowerIds(game);
   final affluent = <String>[
     for (final id in gpIds)
-      if (_treasuryForPlayer(game, id) >= treasuryAffluenceThreshold()) id,
+      if (_treasuryForPlayer(game, id) >= treasuryAffluenceThreshold() &&
+          !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: id))
+        id,
   ];
   if (affluent.isNotEmpty) {
     final designated = lockRecoveryDesignatedBuyerId(game);
@@ -702,11 +734,13 @@ String lockRecoveryDesignatedBuyerId(Game game) {
   final threshold = treasuryAffluenceThreshold();
   final affluent = <String>[
     for (final id in gpIds)
-      if (_treasuryForPlayer(game, id) >= threshold) id,
+      if (_treasuryForPlayer(game, id) >= threshold &&
+          !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: id))
+        id,
   ];
-  final pool = affluent.isNotEmpty ? affluent : gpIds;
+  if (affluent.isEmpty) return '';
   final turn = game.worldState.turnState.turnNumber;
-  return pool[turn % pool.length];
+  return affluent[turn % affluent.length];
 }
 
 /// Designated buyer bids [commodityId] and does not offer it this turn.

@@ -74,11 +74,13 @@
 /// I/O, no logging, and no order emission.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
-import 'expand_phase_planner.dart' show ExpandEconomyPlan;
+import 'expand_phase_planner.dart'
+    show ExpandEconomyPlan, cheapestRegimentBuildTreasuryCost;
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
@@ -552,12 +554,20 @@ bool playerOwnsCargoCapableNavalUnit(Game game, String playerId) {
   return false;
 }
 
-/// First-naval-transport bootstrap (Refs #2847 Phase 3).
+/// First-naval-transport bootstrap (Refs #2847 Phase 3, #2924 Path F).
 ///
 /// When active, `_appendEconomyBuildOrders` keeps cargo-capable ship
 /// candidates in the build pick and suppresses the regiment-only
 /// `militaryRebuildCrisis` short-circuit so the orchestrator can emit a
 /// first NW-acquisition transport under the treasury-recovery override.
+///
+/// Active when treasury-recovery cargo is on, the GP owns no NW provinces
+/// and no cargo-capable hull yet, and either:
+/// - treasury is below `cheapestRegimentBuildTreasuryCost()` (partial Path F
+///   credits must not flip back to regiment-only rebuild), or
+/// - the GP is in the mid-below-quota zero-NW band (seed-42 gp3–gp6) so the
+///   first build prioritises market cargo capacity **before** high starting
+///   treasury is spent on regiments (gp6 Path F regression).
 ///
 /// The build pipeline's own treasury/material affordability check is
 /// unchanged — this relaxes only planner-level regiment bias.
@@ -566,9 +576,13 @@ bool resolvePhaseFirstNavalTransportBootstrapActive({
   required AIWorldSnapshot snapshot,
   required ExpandEconomyPlan expandEconomyPlan,
   required String playerId,
-}) =>
-    resolvePhaseNwTreasuryRecoveryResourceNeedOverrideActive(
-      snapshot: snapshot,
-      expandEconomyPlan: expandEconomyPlan,
-    ) &&
-    !playerOwnsCargoCapableNavalUnit(game, playerId);
+}) {
+  if (snapshot.colonial.newWorldProvincesOwned != 0) return false;
+  if (playerOwnsCargoCapableNavalUnit(game, playerId)) return false;
+  final ow = snapshot.conquest.oldWorldProvincesOwned;
+  if (ow >= 2 && isBelowObserverConquestQuota(ow)) {
+    return true;
+  }
+  return expandEconomyPlan.boostTreasuryRecoveryCargo &&
+      snapshot.economy.treasury < cheapestRegimentBuildTreasuryCost();
+}
