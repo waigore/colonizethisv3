@@ -286,11 +286,15 @@ PhasePriorityWeights _curveWeightsForOw(int ow) {
 }
 
 /// True when the § Resource-need overrides treasury-recovery predicate
-/// is active for this dispatch (Refs #2847 / #2924 Path E).
+/// is active for this dispatch (Refs #2847).
 ///
 /// Predicate: `economy.treasury == 0` **and**
 /// `colonial.newWorldProvincesOwned == 0` **and**
 /// `expandEconomyPlan.boostTreasuryRecoveryCargo == true`.
+///
+/// Used for the `newWorldAcquisition` weight floor only. Path E colonial
+/// dispatch uses [isNwLockRecoveryPathEActive] so the NW chain stays armed
+/// after Path F world-market credits raise treasury above zero.
 bool isNwTreasuryRecoveryOverrideActive({
   required AIWorldSnapshot snapshot,
   required ExpandEconomyPlan expandEconomyPlan,
@@ -298,6 +302,24 @@ bool isNwTreasuryRecoveryOverrideActive({
     snapshot.economy.treasury == 0 &&
     snapshot.colonial.newWorldProvincesOwned == 0 &&
     expandEconomyPlan.boostTreasuryRecoveryCargo;
+
+/// True when the EXPAND lock-recovery Path E chain should stay active
+/// (Refs #2924).
+///
+/// Predicate: `colonial.newWorldProvincesOwned == 0` **and** at least one of
+/// `expandEconomyPlan.boostTreasuryRecoveryCargo` (treasury still below the
+/// cheapest regiment build cost) or `expandEconomyPlan.forceCheapestRegimentBuild`
+/// (geographic peer-war lock Arm D). Without this broader gate,
+/// `planColonialMilitary` / `planColonialNaval` revert to `defaultPlan` as
+/// soon as treasury rises above zero even though the GP still owns no NW
+/// provinces and the beachhead / invasion chain is unfinished.
+bool isNwLockRecoveryPathEActive({
+  required AIWorldSnapshot snapshot,
+  required ExpandEconomyPlan expandEconomyPlan,
+}) =>
+    snapshot.colonial.newWorldProvincesOwned == 0 &&
+    (expandEconomyPlan.boostTreasuryRecoveryCargo ||
+        expandEconomyPlan.forceCheapestRegimentBuild);
 
 double _nwAcquisitionFloor({
   required AIWorldSnapshot snapshot,

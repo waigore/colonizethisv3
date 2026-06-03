@@ -216,7 +216,7 @@ import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
-import 'phase_priority_weights.dart' show isNwTreasuryRecoveryOverrideActive;
+import 'phase_priority_weights.dart' show isNwLockRecoveryPathEActive;
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in COLONIAL phase.
@@ -620,7 +620,7 @@ ColonialAcquisitionTarget? planColonialAcquisition({
     provinceOwner: provinceOwner,
     treasury: treasury,
   );
-  final waiveDeclareWarTreasuryGate = isNwTreasuryRecoveryOverrideActive(
+  final waiveDeclareWarTreasuryGate = isNwLockRecoveryPathEActive(
     snapshot: snapshot,
     expandEconomyPlan: expandEconomyPlan,
   );
@@ -1065,7 +1065,7 @@ ColonialMilitaryPlan planColonialMilitary({
       expand_phase_planner.ExpandEconomyPlan.defaultPlan,
 }) {
   if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      !isNwTreasuryRecoveryOverrideActive(
+      !isNwLockRecoveryPathEActive(
         snapshot: snapshot,
         expandEconomyPlan: expandEconomyPlan,
       )) {
@@ -1356,7 +1356,7 @@ ColonialNavalPlan planColonialNaval({
       expand_phase_planner.ExpandEconomyPlan.defaultPlan,
 }) {
   if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      !isNwTreasuryRecoveryOverrideActive(
+      !isNwLockRecoveryPathEActive(
         snapshot: snapshot,
         expandEconomyPlan: expandEconomyPlan,
       )) {
