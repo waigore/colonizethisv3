@@ -117,6 +117,7 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -210,6 +211,7 @@ AIWorldSnapshot _declareWarSnapshot({
   required List<String> invadableNw,
   String playerId = _gp1,
   int treasury = 100000,
+  int newWorldProvincesOwned = 0,
 }) {
   return AIWorldSnapshot(
     playerId: playerId,
@@ -219,11 +221,19 @@ AIWorldSnapshot _declareWarSnapshot({
       oldWorldProvincesOwned: 10,
       provincesToVictory: 31,
     ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
+    colonial: ColonialSummary(
+      invadableNewWorldProvinceIdsSorted: invadableNw,
+      newWorldProvincesOwned: newWorldProvincesOwned,
+    ),
     economy: EconomySummary(treasury: treasury),
     relations: const {},
   );
 }
+
+const ExpandEconomyPlan _nwTreasuryRecoveryOverridePlan = ExpandEconomyPlan(
+  forceCheapestRegimentBuild: true,
+  boostTreasuryRecoveryCargo: true,
+);
 
 OvertureState _embassy(String gpId, String targetId, {int sinceTurn = 100}) =>
     OvertureState(
@@ -599,5 +609,76 @@ void main() {
             'silently regress to `(null, null)` on both calls.',
       );
     });
+  });
+
+  group('planColonialAcquisition declareWar Path E (Refs #2924)', () {
+    test(
+      'treasury zero with NW recovery override emits declareWar target',
+      () {
+        final cheapest = _cheapestRegimentBuildCost();
+        final game = _declareWarGame(
+          activePlayerTreasury: 0,
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
+          armies: <Army>[_homeArmyWithRegiments(_gp1, 1)],
+          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        );
+        final snapshot = _declareWarSnapshot(
+          invadableNw: const [_nwProv1],
+          treasury: 0,
+          newWorldProvincesOwned: 0,
+        );
+        expect(
+          planColonialAcquisition(
+            game: game,
+            snapshot: snapshot,
+            expandEconomyPlan: _nwTreasuryRecoveryOverridePlan,
+          ),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.declareWar,
+          ),
+          reason:
+              'Under the treasury-recovery resource-need override '
+              '(treasury == 0, NW == 0, boostTreasuryRecoveryCargo) '
+              'the declareWar arm must waive the planner-level '
+              'treasury gate so the NW conquest → riches chain can '
+              'begin without bypassing build affordability.',
+        );
+        expect(cheapest, greaterThan(0));
+      },
+    );
+
+    test(
+      'treasury zero without override keeps declareWar suppressed',
+      () {
+        final game = _declareWarGame(
+          activePlayerTreasury: 0,
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
+          armies: <Army>[_homeArmyWithRegiments(_gp1, 1)],
+          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        );
+        final snapshot = _declareWarSnapshot(
+          invadableNw: const [_nwProv1],
+          treasury: 0,
+          newWorldProvincesOwned: 0,
+        );
+        expect(
+          planColonialAcquisition(
+            game: game,
+            snapshot: snapshot,
+            expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+          ),
+          isNull,
+          reason:
+              'Regression guard: without boostTreasuryRecoveryCargo the '
+              'legacy treasury >= cheapestRegimentBuildTreasuryCost gate '
+              'must still suppress declareWar at treasury zero.',
+        );
+      },
+    );
   });
 }

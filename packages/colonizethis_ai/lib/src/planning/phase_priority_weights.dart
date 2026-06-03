@@ -285,15 +285,30 @@ PhasePriorityWeights _curveWeightsForOw(int ow) {
   }
 }
 
+/// True when the § Resource-need overrides treasury-recovery predicate
+/// is active for this dispatch (Refs #2847 / #2924 Path E).
+///
+/// Predicate: `economy.treasury == 0` **and**
+/// `colonial.newWorldProvincesOwned == 0` **and**
+/// `expandEconomyPlan.boostTreasuryRecoveryCargo == true`.
+bool isNwTreasuryRecoveryOverrideActive({
+  required AIWorldSnapshot snapshot,
+  required ExpandEconomyPlan expandEconomyPlan,
+}) =>
+    snapshot.economy.treasury == 0 &&
+    snapshot.colonial.newWorldProvincesOwned == 0 &&
+    expandEconomyPlan.boostTreasuryRecoveryCargo;
+
 double _nwAcquisitionFloor({
   required AIWorldSnapshot snapshot,
   required Game game,
   required ExpandEconomyPlan expandEconomyPlan,
 }) {
   var floor = 0.0;
-  if (snapshot.economy.treasury == 0 &&
-      snapshot.colonial.newWorldProvincesOwned == 0 &&
-      expandEconomyPlan.boostTreasuryRecoveryCargo) {
+  if (isNwTreasuryRecoveryOverrideActive(
+    snapshot: snapshot,
+    expandEconomyPlan: expandEconomyPlan,
+  )) {
     if (kPhasePriorityNwTreasuryRecoveryFloor > floor) {
       floor = kPhasePriorityNwTreasuryRecoveryFloor;
     }
