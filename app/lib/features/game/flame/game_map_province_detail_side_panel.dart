@@ -14,6 +14,7 @@ import '../../../core/services/game_service.dart' show GameMapData;
 import 'game_map_area_state_logic.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'per_player_work_target_selection_cache.dart';
+import 'province_detail_panel_slide_transition.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
 /// Wide-layout province / sea zone panel; reads [mapProvincePanelProvider] only.
@@ -41,12 +42,6 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final panel = ref.watch(mapProvincePanelProvider);
     final draftOrders = ref.watch(currentOrdersProvider);
-    if (!panel.overlayOpen) {
-      if (kCtE2EEnabled) {
-        updateCtE2eLastPanelSnapshotIfEnabled(null);
-      }
-      return const SizedBox.shrink();
-    }
     final tileKey = panel.selectedTileKey;
     final displayId = tileKey == null || tileKey.isEmpty
         ? ''
@@ -56,11 +51,16 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
                   ) ??
                   displayProvinceOrSeaIdFromTileKey(tileKey)) ??
               '';
-    if (displayId.isEmpty) {
+    final showPanel = panel.overlayOpen && displayId.isNotEmpty;
+    if (!showPanel) {
       if (kCtE2EEnabled) {
         updateCtE2eLastPanelSnapshotIfEnabled(null);
       }
-      return const SizedBox.shrink();
+      return ProvinceDetailPanelSlideTransition(
+        visible: false,
+        axis: ProvinceDetailPanelSlideAxis.end,
+        child: const SizedBox.shrink(),
+      );
     }
     if (kCtE2EEnabled && panel.selectedTileKey != null) {
       updateCtE2eLastPanelSnapshotIfEnabled(
@@ -216,6 +216,13 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
     if (kCtE2EEnabled) {
       overlay = KeyedSubtree(key: kCtE2EProvincePanelRootKey, child: overlay);
     }
-    return SizedBox(width: kGameMapWideProvinceSidePanelWidth, child: overlay);
+    return ProvinceDetailPanelSlideTransition(
+      visible: true,
+      axis: ProvinceDetailPanelSlideAxis.end,
+      child: SizedBox(
+        width: kGameMapWideProvinceSidePanelWidth,
+        child: overlay,
+      ),
+    );
   }
 }

@@ -39,6 +39,7 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 
 - **Open / update:** User taps/clicks a tile → provider records `selectedTileKey`, sets `overlayOpen` → panel shows that province/sea zone; **Tile** section uses the same tile key.
 - **Close:** User uses the overlay close control → `overlayOpen` false; `selectedTileKey` may remain for a later reopen. Map **orange selection** follows provider: implementation may clear or keep selection when closed; tile tap while closed should be able to **reopen** with that tile selected.
+- **Panel motion:** Panel hosts animate open/close with `ProvinceDetailPanelSlideTransition` (**200 ms**): wide [`GameMapProvinceDetailSidePanel`](../../app/lib/features/game/flame/game_map_province_detail_side_panel.dart) slides from the **end** (right); narrow [`GameMapNarrowDetailOverlaySlot`](game-map-narrow-detail-overlay-slot.md) slides from the **bottom** (`Offset(0, 1)`). Enter uses `Curves.easeOut`; exit uses `Curves.easeIn`. Content updates while open (tile/province switch) do not replay the enter animation — only `overlayOpen` false→true toggles it.
 - **Switch province/tile:** Tap another tile → new `selectedTileKey` → panel updates (including province-scoped sections for the new tile's province).
 - **Hover:** Pointer hover updates **only** map hover visuals (and optional `onProvinceHovered` / tooltips). It does **not** update `selectedTileKey` or the Tile section.
 - **Touch / mobile:** There is **no** "tap-as-hover" for **panel** content. Only **tap** commits selection for the overlay.
