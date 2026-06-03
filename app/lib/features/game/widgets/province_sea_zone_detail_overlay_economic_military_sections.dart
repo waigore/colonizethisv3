@@ -162,7 +162,7 @@ Widget _buildMilitarySectionByOwner({
           }
           final name = _ownerName(game, oid);
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: CtSpacing.m),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -185,7 +185,7 @@ Widget _buildMilitarySectionByOwner({
           );
         }),
         if (pending.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: CtSpacing.m / 2),
           ...pending.map(
             (line) => Padding(
               padding: const EdgeInsets.only(left: CtSpacing.m / 2),
@@ -318,7 +318,7 @@ Widget _buildNavalSection({
             );
           }),
         if (pending.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: CtSpacing.m / 2),
           ...pending.map(
             (line) => Padding(
               padding: const EdgeInsets.only(left: CtSpacing.m / 2),

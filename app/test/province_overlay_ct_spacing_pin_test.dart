@@ -48,7 +48,26 @@ void main() {
         'lib/features/game/widgets/province_sea_zone_detail_overlay_economic_military_sections.dart',
       ).readAsStringSync();
       expect(source, contains('left: CtSpacing.m / 2'));
+      expect(source, contains('bottom: CtSpacing.m'));
+      expect(source, contains('SizedBox(height: CtSpacing.m / 2)'));
       expect(source, isNot(contains('EdgeInsets.only(left: 4)')));
+      expect(source, isNot(contains('EdgeInsets.only(bottom: 8)')));
+      expect(source, isNot(contains('SizedBox(height: 4)')));
+    });
+
+    test('close button vertical padding uses CtSpacing.m / 2', () {
+      final source = File(
+        'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
+      ).readAsStringSync();
+      expect(source, contains('vertical: CtSpacing.m / 2'));
+      expect(
+        source,
+        isNot(
+          contains(
+            'vertical: 4,',
+          ),
+        ),
+      );
     });
 
     test('tile road caption uses labelSmall TextTheme slot', () {

@@ -319,7 +319,7 @@ class _OverlayCloseButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: CtSpacing.m,
-          vertical: 4,
+          vertical: CtSpacing.m / 2,
         ),
         decoration: BoxDecoration(
           border: Border.all(
