@@ -386,10 +386,32 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   final colonialPressure = resolvePhaseEconomyColonialPressureActive(
     phasePlan: phasePlan,
   );
+  // Refs #2847 Phase 3 economy civilian-work threshold cap wiring: the
+  // colonial-pressure civilian-work cap now scales continuously with the
+  // soft-phase NW acquisition weight instead of stepping to the hard
+  // `kColonialCivilianWorkThresholdCap` only under the COLONIAL boolean.
+  // `economyColonialPressureCivilianWorkThresholdCap` is identity-equal to
+  // the legacy uncapped threshold at weight 0.0 and to the hard colonial
+  // cap at weight 1.0 (see `SPEC/ai/phase-planner-architecture.md`
+  // § Phase 3 consumer wiring — economy civilian-work threshold cap). The
+  // `newWorldProvincesOwned > 0` tagalong remains a hard cap so a GP that
+  // already holds NW land keeps the full colonial civilian-work bar.
+  final colonialPressureWeight = resolvePhaseEconomyColonialPressureWeight(
+    phasePlan: phasePlan,
+  );
   if (developPhase) {
     workThreshold = math.min(workThreshold, kDevelopCivilianWorkThresholdCap);
-  } else if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
-    workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
+  } else {
+    workThreshold = math.min(
+      workThreshold,
+      economyColonialPressureCivilianWorkThresholdCap(
+        colonialPressureWeight: colonialPressureWeight,
+        uncappedThreshold: workThreshold,
+      ),
+    );
+    if (snapshot.colonial.newWorldProvincesOwned > 0) {
+      workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
+    }
   }
   final runFullAiCivilianWork =
       developPhase ||
