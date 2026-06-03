@@ -62,11 +62,28 @@ int _declareWarColonialNwTribeBonuses(_DeclareWarTargetContext ctx, int s) {
   if (!ctx.colonialPressure || !ctx.ownsInvadableNw || !ctx.isTribeTarget) {
     return s;
   }
-  s += kDeclareWarColonialNwTribeDominanceBonus;
+  // Refs #2847 Phase 3 diplomacy declare-war NW-tribe bonus wiring: scale the
+  // NW-tribe dominance / priority-over-OW-minor addends by the soft-phase NW
+  // acquisition weight (`ctx.nwAcquisitionWeight`) instead of applying their
+  // full magnitudes on the binary `colonialPressure` (weight > 0) gate. The
+  // active phase now biases the magnitude of these NW-acquisition score
+  // contributions along the continuous weight curve (requirement
+  // clarification #1/#2/#6) — at the early-sprint default curve (0.05 at
+  // OW <= 7) the addends collapse to a token nudge so the OW conquest sprint
+  // stays dominant and the gp1/gp2 +6 OW baseline holds by construction; the
+  // § Resource-need override floors keep a proportionate NW-tribe bias for
+  // treasury / zero-regiment locked GPs. See
+  // `SPEC/ai/phase-planner-architecture.md` § Phase 3 consumer wiring —
+  // diplomacy declare-war NW scoring.
+  s += declareWarColonialNwTribeDominanceBonus(
+    nwAcquisitionWeight: ctx.nwAcquisitionWeight,
+  );
   if (ctx.stalledOwExpansion &&
       !ctx.hasInvadableMinorOwner &&
       !ctx.atWarInvadableOwMinor) {
-    s += kDeclareWarColonialNwTribePriorityOverOwMinorBonus;
+    s += declareWarColonialNwTribePriorityOverOwMinorBonus(
+      nwAcquisitionWeight: ctx.nwAcquisitionWeight,
+    );
   }
   return s;
 }
