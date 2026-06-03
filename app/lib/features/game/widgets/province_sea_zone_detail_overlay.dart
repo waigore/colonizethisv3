@@ -205,7 +205,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
 
   Widget _buildOverlayHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
+      padding: const EdgeInsets.only(
+        left: CtSpacing.ml,
+        right: CtSpacing.m,
+        top: CtSpacing.m,
+      ),
       child: Row(
         children: [
           Expanded(

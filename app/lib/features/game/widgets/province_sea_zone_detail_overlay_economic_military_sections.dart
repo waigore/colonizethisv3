@@ -127,7 +127,7 @@ Widget _buildMilitarySectionByOwner({
         children: pending
             .map(
               (line) => Padding(
-                padding: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.only(left: CtSpacing.m / 2),
                 child: Text(
                   line,
                   style: TextStyle(color: EditorialMonoclePalette.muted),
@@ -188,7 +188,7 @@ Widget _buildMilitarySectionByOwner({
           const SizedBox(height: 4),
           ...pending.map(
             (line) => Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: CtSpacing.m / 2),
               child: Text(
                 line,
                 style: TextStyle(color: EditorialMonoclePalette.muted),
@@ -321,7 +321,7 @@ Widget _buildNavalSection({
           const SizedBox(height: 4),
           ...pending.map(
             (line) => Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: CtSpacing.m / 2),
               child: Text(
                 line,
                 style: TextStyle(color: EditorialMonoclePalette.muted),
