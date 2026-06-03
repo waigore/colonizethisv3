@@ -6,7 +6,8 @@
 // this slice to add the civilian work-order row):
 //
 //   civilianWorkOrdersFromPhasePlan(outcome):
-//     - EXPAND          -> const <WorkOrder>[]
+//     - EXPAND          -> colonialCivilianWorkOrders when
+//       phasePlanFullColonialOutputsActive (NW weight > 0); else const []
 //     - COLONIAL-lite   -> const <WorkOrder>[]
 //     - COLONIAL        -> outcome.colonialCivilianWorkOrders
 //     - DEVELOP         -> outcome.developCivilianWorkOrders
@@ -19,8 +20,17 @@
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_civilian_work_orders.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
+import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' show WorkOrder;
 import 'package:colonizethis_test/test.dart';
+
+/// Legacy hard-suppress contract: explicit zero NW weight (Refs #2847).
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
 
 const WorkOrder _colonialWork = WorkOrder(
   unitId: 'u_merchant_1',
@@ -70,10 +80,30 @@ void main() {
       ]);
     });
 
-    test('EXPAND surfaces empty list (no civilian work orders in EXPAND)', () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
-      expect(civilianWorkOrdersFromPhasePlan(outcome), isEmpty);
-    });
+    test(
+      'EXPAND with zero NW weight surfaces empty list',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          priorityWeights: _nwAcquisitionZeroExpand,
+        );
+        expect(civilianWorkOrdersFromPhasePlan(outcome), isEmpty);
+      },
+    );
+
+    test(
+      'EXPAND with positive NW weight surfaces colonialCivilianWorkOrders',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          colonialCivilianWorkOrders: [_colonialWork],
+        );
+        expect(
+          civilianWorkOrdersFromPhasePlan(outcome),
+          const [_colonialWork],
+        );
+      },
+    );
 
     test(
       'COLONIAL-lite surfaces empty list (safeguard suppresses NW work)',
@@ -85,24 +115,23 @@ void main() {
   });
 
   group('civilianWorkOrdersFromPhasePlan — defensive phase suppression', () {
-    test('EXPAND surfaces empty even when COLONIAL slot non-empty', () {
-      // Defensive: the dispatcher never populates colonialCivilianWorkOrders
-      // in EXPAND, but the adapter must short-circuit on phase to defend the
-      // suppression matrix against a future regression that leaks NW work
-      // orders into the EXPAND economy pass.
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.expand,
-        colonialCivilianWorkOrders: [_colonialWork],
-      );
-      expect(
-        civilianWorkOrdersFromPhasePlan(outcome),
-        isEmpty,
-        reason:
-            'EXPAND has no civilian work orders by spec; a non-empty '
-            'colonialCivilianWorkOrders slot must not leak NW work into '
-            'the EXPAND economy pass.',
-      );
-    });
+    test(
+      'EXPAND with zero NW weight suppresses colonial slot',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          priorityWeights: _nwAcquisitionZeroExpand,
+          colonialCivilianWorkOrders: [_colonialWork],
+        );
+        expect(
+          civilianWorkOrdersFromPhasePlan(outcome),
+          isEmpty,
+          reason:
+              'phasePlanFullColonialOutputsActive is false when '
+              'newWorldAcquisition is zero; colonial slot must not leak.',
+        );
+      },
+    );
 
     test('COLONIAL-lite surfaces empty even when COLONIAL slot non-empty', () {
       // Defensive: COLONIAL-lite is the EXPAND safeguard that suppresses
