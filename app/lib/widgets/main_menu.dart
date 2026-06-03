@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import '../config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
 import '../config/ui_screen_ids.dart';
@@ -32,15 +33,15 @@ const double kMainMenuButtonLetterSpacingNarrow = 0.6;
 /// Menu container padding at viewports `> kMainMenuNarrowBreakpoint`.
 /// Default desktop / wide layout.
 const EdgeInsets kMainMenuBodyPaddingDefault = EdgeInsets.symmetric(
-  horizontal: 24,
+  horizontal: CtSpacing.xxl,
 );
 
 /// Menu container padding at viewports `≤ kMainMenuNarrowBreakpoint`.
 /// Compacts horizontal padding and adds explicit vertical padding to mirror
 /// the mockup `.menu-container { padding: 24px 12px; }` narrow override.
 const EdgeInsets kMainMenuBodyPaddingNarrow = EdgeInsets.symmetric(
-  horizontal: 12,
-  vertical: 24,
+  horizontal: CtSpacing.ml,
+  vertical: CtSpacing.xxl,
 );
 
 /// Stable `Key` value for the menu body `Padding` widget that owns the
@@ -639,8 +640,8 @@ class _FooterQuitButtonState extends State<_FooterQuitButton> {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+                  horizontal: CtSpacing.xl,
+                  vertical: CtSpacing.m,
                 ),
                 child: Center(
                   child: Text(

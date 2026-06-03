@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:flutter/material.dart';
 
 import '../config/constants.dart';
@@ -130,7 +131,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: CtSpacing.xxl),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
@@ -616,7 +617,10 @@ class _GameSetupCancelButtonState extends State<_GameSetupCancelButton> {
                 width: _GameSetupCancelButton.borderThickness,
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: CtSpacing.l,
+              vertical: CtSpacing.ml,
+            ),
             alignment: Alignment.center,
             child: Text(
               widget.label,
