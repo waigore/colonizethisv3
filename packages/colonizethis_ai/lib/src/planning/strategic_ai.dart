@@ -8,7 +8,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'army_conquest_prep.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
-import 'expand_phase_planner.dart' show ExpandEconomyPlan;
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
@@ -93,20 +92,19 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   // priority weights from the pre-prep snapshot/game so the
   // `evaluateStrategicGoalScores` colonial-pressure penalty/floor pass
   // can scale continuously with `newWorldAcquisition` instead of switching
-  // on/off at the EXPAND→COLONIAL hard-phase boundary. The dispatch path's
-  // EXPAND economy plan is computed downstream inside `runPhasePlanners`,
-  // so the goal-eval call site uses `ExpandEconomyPlan.defaultPlan` for
-  // its weight derivation — the curve and the zero-regiment override fire
-  // here, but the treasury-recovery override (which depends on
-  // `boostTreasuryRecoveryCargo`) only activates once the EXPAND plan is
-  // available downstream. A follow-up slice can hoist the EXPAND plan to
-  // close that gap; this slice migrates the structural EXPAND→COLONIAL
-  // gate that was the primary source of the 10-OW cliff.
-  final goalColonialPressureWeight = computePhasePriorityWeights(
+  // on/off at the EXPAND→COLONIAL hard-phase boundary.
+  // `goalColonialPressureWeightFor` derives the EXPAND economy plan from the
+  // pre-prep `(game, snapshot)` so the treasury-recovery resource-need
+  // override lifts the goal-score NW acquisition weight to its `0.60` floor
+  // for a below-quota peer-war-locked GP — matching the conquest / naval /
+  // diplomacy scoring sites that already consume the dispatched plan's
+  // weights. Goal selection precedes `prepareConquestFieldArmy`, so the
+  // pre-prep state is the correct input here (Refs #2847 § Resource-need
+  // overrides).
+  final goalColonialPressureWeight = goalColonialPressureWeightFor(
     snapshot: snapshot,
     game: game,
-    expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
-  ).newWorldAcquisition;
+  );
   final goalScores = evaluateStrategicGoalScores(
     snapshot,
     config,

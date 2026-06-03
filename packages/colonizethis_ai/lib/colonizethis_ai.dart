@@ -25,6 +25,7 @@ export 'src/planning/phase_priority_weights.dart'
     show
         PhasePriorityWeights,
         computePhasePriorityWeights,
+        goalColonialPressureWeightFor,
         kPhasePriorityCurveEarlySprintCeiling,
         kPhasePriorityNwTreasuryRecoveryFloor,
         kPhasePriorityNwZeroRegimentFloor;
