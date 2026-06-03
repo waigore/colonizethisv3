@@ -110,7 +110,11 @@ Set<String> _invadableProvinceIdsForConquestPass({
     );
   }
   final resolution =
-      conquestResolution ?? resolvePhaseConquestInvadable(phasePlan: phasePlan);
+      conquestResolution ??
+      resolvePhaseConquestInvadable(
+        phasePlan: phasePlan,
+        snapshot: snapshot,
+      );
   final nwInvasionWeightFromPhasePlan = resolvePhaseConquestNwInvasionWeight(
     phasePlan: phasePlan,
   );
@@ -134,7 +138,10 @@ Orders runConquestArmyMovePlanner({
 }) {
   PhaseConquestInvadableResolution? conquestResolution;
   if (phasePlan != null) {
-    conquestResolution = resolvePhaseConquestInvadable(phasePlan: phasePlan);
+    conquestResolution = resolvePhaseConquestInvadable(
+      phasePlan: phasePlan,
+      snapshot: snapshot,
+    );
     if (conquestResolution.skipConquestPass) {
       return ctx.orders;
     }

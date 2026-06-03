@@ -1061,8 +1061,14 @@ ColonialMilitaryPlan planColonialMilitary({
   required Game game,
   required AIWorldSnapshot snapshot,
   String? colonialDeclaredWarTargetFactionId,
+  expand_phase_planner.ExpandEconomyPlan expandEconomyPlan =
+      expand_phase_planner.ExpandEconomyPlan.defaultPlan,
 }) {
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+      !isNwTreasuryRecoveryOverrideActive(
+        snapshot: snapshot,
+        expandEconomyPlan: expandEconomyPlan,
+      )) {
     return ColonialMilitaryPlan.defaultPlan;
   }
   if (game.playerById(snapshot.playerId) == null) {
@@ -1346,8 +1352,14 @@ ColonialNavalPlan planColonialNaval({
   required Game game,
   required AIWorldSnapshot snapshot,
   String? colonialDeclaredWarTargetFactionId,
+  expand_phase_planner.ExpandEconomyPlan expandEconomyPlan =
+      expand_phase_planner.ExpandEconomyPlan.defaultPlan,
 }) {
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+      !isNwTreasuryRecoveryOverrideActive(
+        snapshot: snapshot,
+        expandEconomyPlan: expandEconomyPlan,
+      )) {
     return ColonialNavalPlan.defaultPlan;
   }
   if (game.playerById(snapshot.playerId) == null) {

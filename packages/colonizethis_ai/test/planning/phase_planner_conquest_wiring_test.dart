@@ -24,6 +24,30 @@ const ColonialMilitaryPlan _colonialNwOnly = ColonialMilitaryPlan(
   priorityTargetOwnerFactionIdsSorted: <String>['tribe1'],
 );
 
+const ExpandEconomyPlan _nwTreasuryRecoveryOverridePlan = ExpandEconomyPlan(
+  forceCheapestRegimentBuild: true,
+  boostTreasuryRecoveryCargo: true,
+);
+
+AIWorldSnapshot _lockRecoverySnapshot() {
+  return AIWorldSnapshot(
+    playerId: 'gp1',
+    threats: const ThreatSummary(atWarWith: ['tribe1']),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: 7,
+      provincesToVictory: 31,
+      invadableProvinceIdsSorted: const ['oldWorld|minor1_a'],
+    ),
+    colonial: ColonialSummary(
+      invadableNewWorldProvinceIdsSorted: const ['newWorld|tribe1_a'],
+      newWorldProvincesOwned: 0,
+    ),
+    economy: const EconomySummary(treasury: 0),
+    relations: const {},
+  );
+}
+
 void main() {
   group('resolvePhaseConquestInvadable', () {
     test(
@@ -36,6 +60,73 @@ void main() {
         final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
         expect(resolution.skipConquestPass, isFalse);
         expect(resolution.useLegacyInvadable, isFalse);
+        expect(
+          resolution.phasePlanInvadableSorted,
+          _expandOwOnly.priorityDestinationProvinceIdsSorted,
+        );
+      },
+    );
+
+    test(
+      'EXPAND lock-recovery override prioritises colonial NW over EXPAND OW '
+      '(Refs #2924 Path E)',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          expandMilitaryPlan: _expandOwOnly,
+          colonialMilitaryPlan: _colonialNwOnly,
+          expandEconomyPlan: _nwTreasuryRecoveryOverridePlan,
+          priorityWeights: PhasePriorityWeights(
+            oldWorldConquest: 0.95,
+            newWorldAcquisition: kPhasePriorityNwTreasuryRecoveryFloor,
+            oldWorldCivilian: 0.90,
+            newWorldCivilian: 0.10,
+          ),
+        );
+        final resolution = resolvePhaseConquestInvadable(
+          phasePlan: outcome,
+          snapshot: _lockRecoverySnapshot(),
+        );
+        expect(
+          resolution.phasePlanInvadableSorted,
+          _colonialNwOnly.priorityDestinationProvinceIdsSorted,
+          reason:
+              'Under treasury-recovery override the NW colonial military '
+              'plan must win over the EXPAND OW plan so army moves can '
+              'reach tribe targets.',
+        );
+      },
+    );
+
+    test(
+      'EXPAND with both military plans keeps OW precedence without override '
+      '(Refs #2924 regression guard)',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          expandMilitaryPlan: _expandOwOnly,
+          colonialMilitaryPlan: _colonialNwOnly,
+        );
+        final snapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: const ThreatSummary(atWarWith: ['tribe1']),
+          opportunities: const OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 31,
+            invadableProvinceIdsSorted: const ['oldWorld|minor1_a'],
+          ),
+          colonial: ColonialSummary(
+            invadableNewWorldProvinceIdsSorted: const ['newWorld|tribe1_a'],
+            newWorldProvincesOwned: 0,
+          ),
+          economy: const EconomySummary(treasury: 500),
+          relations: const {},
+        );
+        final resolution = resolvePhaseConquestInvadable(
+          phasePlan: outcome,
+          snapshot: snapshot,
+        );
         expect(
           resolution.phasePlanInvadableSorted,
           _expandOwOnly.priorityDestinationProvinceIdsSorted,

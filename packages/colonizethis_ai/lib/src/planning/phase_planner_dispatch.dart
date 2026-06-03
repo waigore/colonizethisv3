@@ -471,11 +471,13 @@ PhasePlanOutcome _colonialLiteOutcome({
       game: game,
       snapshot: snapshot,
       colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+      expandEconomyPlan: expandEconomyPlan,
     ),
     naval: planColonialNaval(
       game: game,
       snapshot: snapshot,
       colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+      expandEconomyPlan: expandEconomyPlan,
     ),
     civilian: planColonialCivilian(game: game, snapshot: snapshot),
   );
