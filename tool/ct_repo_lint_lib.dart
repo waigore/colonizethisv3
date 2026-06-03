@@ -10,6 +10,7 @@ import 'check_app_event_handler_scope_logic_boundary.dart';
 import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_no_duplicate_helpers.dart';
 import 'check_app_no_material_alertdialog.dart';
+import 'check_app_no_material_button.dart';
 import 'check_app_no_material_chip.dart';
 import 'check_app_no_material_filterchip.dart';
 import 'check_app_no_material_iconbutton.dart';
@@ -863,6 +864,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppTextStyleFontSizeFallback(repoRoot);
     case 'repo.app_no_material_alertdialog':
       return runCheckAppNoMaterialAlertDialog(repoRoot);
+    case 'repo.app_no_material_button':
+      return runCheckAppNoMaterialButton(repoRoot);
     case 'repo.app_no_material_chip':
       return runCheckAppNoMaterialChip(repoRoot);
     case 'repo.app_no_material_filterchip':
