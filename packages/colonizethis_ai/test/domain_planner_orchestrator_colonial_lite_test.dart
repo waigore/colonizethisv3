@@ -366,12 +366,13 @@ void main() {
     );
 
     test(
-      'EXPAND control: turn 90 with otherwise identical fixture drops both '
-      'NW work candidates and the NW-tribe establishOverture',
+      'EXPAND control: turn 90 keeps NW civilian work but drops NW-tribe '
+      'establishOverture',
       () {
         // Same OW=9 + tribe-owned NW fixture, but turn 90 is below
-        // `kObserverColonialLiteMinTurn` (120) so the GP stays in EXPAND and
-        // the EXPAND-only suppressions must fire.
+        // `kObserverColonialLiteMinTurn` (120) so the GP stays in EXPAND.
+        // Soft-phase work-order filter keeps NW civilian work at low
+        // priority; colonial diplomacy suppression still blocks overtures.
         final game = _scenarioGame(turnNumber: 90);
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
@@ -405,28 +406,24 @@ void main() {
         expect(
           work.any(
             (w) =>
-                w.target == kWorkTargetBuildImprovement &&
-                w.targetTileKey == _nwGpTile,
+                w.target == kWorkTargetPurchaseLand &&
+                w.targetTileKey == _nwTribeTile,
           ),
-          isFalse,
+          isTrue,
           reason:
-              'EXPAND must drop NW build_improvement candidates — this is '
-              'the key contract differentiating EXPAND from COLONIAL-lite. '
-              'A surviving order here means the EXPAND NW work filter is '
-              'mis-gated and OW conquest pressure is being traded for NW '
-              'improvement work below the turn-120 gate.',
+              'EXPAND with soft-phase NW weight must keep NW purchase_land — '
+              'the key contract differentiating EXPAND from COLONIAL-lite '
+              '(which drops purchase_land only).',
         );
         expect(
           work.any(
             (w) =>
-                w.target == kWorkTargetPurchaseLand &&
-                w.targetTileKey == _nwTribeTile,
+                w.target == kWorkTargetBuildImprovement &&
+                w.targetTileKey == _nwGpTile,
           ),
-          isFalse,
+          isTrue,
           reason:
-              'EXPAND must drop NW purchase_land candidates (same SPEC '
-              'EXPAND suppress list — coincides with the COLONIAL-lite '
-              'positive case to keep the two contracts symmetric).',
+              'EXPAND must also keep NW build_improvement at low priority.',
         );
         expect(
           _overtureTargets(orders),

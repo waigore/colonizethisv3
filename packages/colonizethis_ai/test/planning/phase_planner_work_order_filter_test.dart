@@ -9,6 +9,8 @@
 //
 //   shouldSuppressWorkOrderFromPhasePlan(order, outcome):
 //     - EXPAND          -> true for NW purchase_land OR NW build_improvement
+//                          only when priorityWeights.newWorldAcquisition <= 0.0
+//                          (Refs #2847 Phase 3 work-order filter wiring)
 //     - COLONIAL-lite   -> true for NW purchase_land only
 //                          (NW build_improvement passes through)
 //     - DEVELOP         -> true for NW purchase_land only
@@ -32,6 +34,7 @@
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_work_order_filter.dart';
+import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' show WorkOrder;
 import 'package:colonizethis_test/test.dart';
 
@@ -65,20 +68,52 @@ const WorkOrder _stealTechAnyRegion = WorkOrder(
   targetTileKey: 'newWorld|nw1|0|0',
 );
 
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
+
 void main() {
   group('shouldSuppressWorkOrderFromPhasePlan — EXPAND', () {
     const expand = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
 
-    test('drops NW purchase_land (acquisition path)', () {
+    test('keeps NW purchase_land when soft-phase NW weight > 0', () {
       expect(
         shouldSuppressWorkOrderFromPhasePlan(_nwPurchaseLand, expand),
+        isFalse,
+      );
+    });
+
+    test('keeps NW build_improvement when soft-phase NW weight > 0', () {
+      expect(
+        shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, expand),
+        isFalse,
+      );
+    });
+
+    test('drops NW purchase_land when NW weight is zero (legacy guard)', () {
+      const zeroWeightExpand = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        priorityWeights: _nwAcquisitionZeroExpand,
+      );
+      expect(
+        shouldSuppressWorkOrderFromPhasePlan(_nwPurchaseLand, zeroWeightExpand),
         isTrue,
       );
     });
 
-    test('drops NW build_improvement (improvement path)', () {
+    test('drops NW build_improvement when NW weight is zero (legacy guard)', () {
+      const zeroWeightExpand = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        priorityWeights: _nwAcquisitionZeroExpand,
+      );
       expect(
-        shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, expand),
+        shouldSuppressWorkOrderFromPhasePlan(
+          _nwBuildImprovement,
+          zeroWeightExpand,
+        ),
         isTrue,
       );
     });
@@ -226,8 +261,8 @@ void main() {
         _nwPurchaseLand,
         outcome,
       );
-      expect(first, isTrue);
-      expect(second, isTrue);
+      expect(first, isFalse);
+      expect(second, isFalse);
       expect(first, equals(second));
     });
 
@@ -237,7 +272,7 @@ void main() {
       const colonial = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
       expect(
         shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, expand),
-        isTrue,
+        isFalse,
       );
       expect(
         shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, colonial),
