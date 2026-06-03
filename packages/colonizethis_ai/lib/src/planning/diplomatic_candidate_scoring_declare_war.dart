@@ -77,6 +77,7 @@ final class _DeclareWarTargetContext {
     required this.ownsInvadableNw,
     required this.colonialPressure,
     required this.nwAcquisitionWeight,
+    required this.oldWorldConquestWeight,
     required this.isTribeTarget,
     required this.stalledOwExpansion,
     required this.ownsInvadableOwMinor,
@@ -143,6 +144,19 @@ final class _DeclareWarTargetContext {
   /// instead of being structurally collapsed under EXPAND /
   /// COLONIAL-lite (Refs #2847 § Soft-phase priority weights).
   final double nwAcquisitionWeight;
+
+  /// Soft-phase OW conquest weight for the active player turn (Refs
+  /// #2847 Phase 3 diplomacy declare-war OW scoring). Sourced from
+  /// `resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight(phasePlan)`
+  /// when a [PhasePlanOutcome] is threaded through; callers without a
+  /// phase plan use `1.0` (legacy full-magnitude OW bonuses).
+  ///
+  /// Consumed by `_scoreDeclareWarBonuses` via
+  /// [declareWarOldWorldConquestScaledBonus] on OW-expansion addends
+  /// (stalled-OW minor priority, adjacent invadable minor bonuses,
+  /// invadable-GP-blocker bonuses, score floors). NW-tribe addends use
+  /// [nwAcquisitionWeight] instead.
+  final double oldWorldConquestWeight;
 
   final bool isTribeTarget;
   final bool stalledOwExpansion;
@@ -235,6 +249,11 @@ final class _DeclareWarTargetContext {
               ? 1.0
               : 0.0);
     final colonialPressure = nwAcquisitionWeight > 0.0;
+    final oldWorldConquestWeight = phasePlan != null
+        ? resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight(
+            phasePlan: phasePlan,
+          )
+        : 1.0;
     final isTribeTarget = isTribeFaction(game, order.targetFactionId);
     final stalledOwExpansion = isObserverConquestExpansionPressure(
       snapshot.conquest.oldWorldProvincesOwned,
@@ -323,6 +342,7 @@ final class _DeclareWarTargetContext {
       ownsInvadableNw: ownsInvadableNw,
       colonialPressure: colonialPressure,
       nwAcquisitionWeight: nwAcquisitionWeight,
+      oldWorldConquestWeight: oldWorldConquestWeight,
       isTribeTarget: isTribeTarget,
       stalledOwExpansion: stalledOwExpansion,
       ownsInvadableOwMinor: ownsInvadableOwMinor,

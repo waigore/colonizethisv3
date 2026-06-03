@@ -195,18 +195,16 @@ double resolvePhaseDiplomacyDeclareWarColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.priorityWeights.newWorldAcquisition;
 
-/// Advisory `[0.0, 1.0]` multiplier for OW declare-war scoring bias
+/// Production `[0.0, 1.0]` multiplier for OW declare-war scoring bias
 /// sourced from [PhasePriorityWeights.oldWorldConquest] (Refs #2847
-/// Phase 2 scaffolding).
+/// Phase 3 diplomacy declare-war OW scoring).
 ///
 /// Pairs with [resolvePhaseDiplomacyDeclareWarColonialPressureWeight]
-/// to form the OW/NW weight pair the Phase 3 orchestrator wiring
-/// will multiply into declare-war scoring. The structural booleans
-/// continue to gate today's suppression matrix
-/// (`resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive`,
-/// `resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive`,
-/// `resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive`)
-/// unchanged in this scaffolding slice.
+/// to form the OW/NW weight pair consumed by `_scoreDeclareWarBonuses`
+/// via [declareWarOldWorldConquestScaledBonus]. Structural booleans
+/// continue to gate the suppression matrix
+/// (`resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive`, etc.)
+/// unchanged.
 ///
 /// Pure and deterministic (Refs #2509 Must-have #7). Reads only
 /// `phasePlan.priorityWeights`.
@@ -296,5 +294,39 @@ int _scaleDeclareWarColonialNwTribeBonus({
     return 0;
   }
   final clamped = nwAcquisitionWeight > 1.0 ? 1.0 : nwAcquisitionWeight;
+  return (baseBonus * clamped).round();
+}
+
+/// Returns an OW declare-war additive bonus scaled by the soft-phase
+/// OW conquest weight (Refs #2847 Phase 3 diplomacy declare-war OW
+/// scoring).
+///
+/// `_declareWarAdjacencyAndStalledBonuses` and related OW-expansion
+/// paths consume this helper as the production source of truth for
+/// OW-minor / stalled-OW / invadable-blocker addends that previously
+/// applied at full magnitude every turn. Scaling mirrors
+/// [conquestOldWorldArmyMoveScaledBonus] on the army-move path:
+///
+/// - `oldWorldConquestWeight <= 0.0` returns `0` (legacy
+///   hard-suppress equivalent).
+/// - `oldWorldConquestWeight == 1.0` returns [baseBonus] exactly.
+/// - Intermediate weights return `round(baseBonus × weight)` with
+///   clamping to `[0.0, 1.0]`.
+///
+/// At the early-sprint default curve (`oldWorldConquest = 0.95` for
+/// OW ≤ 7) OW declare-war bonuses retain `95%` of their legacy
+/// magnitudes so the gp1/gp2 +6 OW baseline is preserved. The §
+/// Resource-need override never weakens `oldWorldConquest`.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+int declareWarOldWorldConquestScaledBonus({
+  required int baseBonus,
+  required double oldWorldConquestWeight,
+}) {
+  if (oldWorldConquestWeight <= 0.0) {
+    return 0;
+  }
+  final clamped =
+      oldWorldConquestWeight > 1.0 ? 1.0 : oldWorldConquestWeight;
   return (baseBonus * clamped).round();
 }
