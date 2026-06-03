@@ -9,12 +9,13 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 
-FilterChip _chipWithLabel(WidgetTester tester, String label) {
-  return tester.widget<FilterChip>(
+CtChoiceChip _chipWithLabel(WidgetTester tester, String label) {
+  return tester.widget<CtChoiceChip>(
     find.ancestor(
       of: find.text(label),
-      matching: find.byType(FilterChip),
+      matching: find.byType(CtChoiceChip),
     ),
   );
 }

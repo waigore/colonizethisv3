@@ -6,6 +6,7 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 /// Full-screen viewer for session logs with multiselect filters by package and level.
@@ -80,7 +81,7 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
             runSpacing: 4,
             children: _viewerPackagePrefixes.map((p) {
               final selected = _selectedPrefixes.contains(p);
-              return FilterChip(
+              return CtChoiceChip(
                 label: Text(p),
                 selected: selected,
                 onSelected: (_) {
@@ -103,7 +104,7 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
             runSpacing: 4,
             children: knownLevels.map((l) {
               final selected = _selectedLevels.contains(l);
-              return FilterChip(
+              return CtChoiceChip(
                 label: Text(l.name),
                 selected: selected,
                 onSelected: (_) {

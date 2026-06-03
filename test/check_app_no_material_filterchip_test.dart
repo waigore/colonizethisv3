@@ -191,7 +191,7 @@ Widget fallback() => FilterChip(
       },
     );
 
-    test('allowlists dev-tooling screens (SYS10001, SYS20001)', () {
+    test('allowlists dev-tooling screen SYS20001 (Debug Console Overlay)', () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_no_material_filterchip_devtools_',
       );
@@ -199,11 +199,41 @@ Widget fallback() => FilterChip(
 
       const debugConsole =
           'app/lib/features/game/flame/debug_console_overlay_panel.dart';
-      const debugViewer =
-          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-      for (final rel in [debugConsole, debugViewer]) {
-        File('${temp.path}/$rel')
+      File('${temp.path}/$debugConsole')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+Widget bypass() => FilterChip(
+  label: const Text('x'),
+  selected: false,
+  onSelected: (_) {},
+);
+''');
+
+      final code = runCheckAppNoMaterialFilterChip(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
+
+      expect(code, 0);
+    });
+
+    test(
+      'flags SYS10001 (Debug Log Viewer) — promoted out of the allowlist by '
+      'the Refs #2914 S8 CtChoiceChip adoption slice',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_filterchip_viewer_inscope_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        const debugViewer =
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+
+        File('${temp.path}/$debugViewer')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -214,16 +244,21 @@ Widget bypass() => FilterChip(
   onSelected: (_) {},
 );
 ''');
-      }
 
-      final code = runCheckAppNoMaterialFilterChip(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final logs = <String>[];
+        final code = runCheckAppNoMaterialFilterChip(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains('debug_log_viewer_screen.dart:3: FilterChip('),
+        );
+      },
+    );
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -346,19 +381,28 @@ Widget probe() => FilterChip(
       );
     });
 
-    test('skips canonical dev-tooling screens', () {
-      const skipped = <String>[
-        'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
-      ];
-      for (final path in skipped) {
-        expect(
-          shouldSkipAppNoMaterialFilterChipFile(path),
-          isTrue,
-          reason: 'expected $path to be allowlisted',
-        );
-      }
+    test('skips canonical dev-tooling screen SYS20001', () {
+      expect(
+        shouldSkipAppNoMaterialFilterChipFile(
+          'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+        ),
+        isTrue,
+        reason: 'expected the Debug Console Overlay to be allowlisted',
+      );
     });
+
+    test(
+      'does not skip the Debug Log Viewer (SYS10001) — CtChoiceChip adopted, '
+      'back in scope (Refs #2914 S8)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialFilterChipFile(
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('does not skip ordinary feature widgets (in scope for the check)', () {
       expect(
