@@ -92,6 +92,17 @@ InitGameResult runInitGame({
     );
   }
 
+  for (final slotIndex in config.humanGreatPowerSlotIndices) {
+    if (slotIndex < 0 || slotIndex >= config.greatPowerCount) {
+      throw SetupConfigConstraintException(
+        code: 'human_slot_index_out_of_range',
+        details:
+            'humanGreatPowerSlotIndices contains $slotIndex but valid Great '
+            'Power slot indices are [0, ${config.greatPowerCount})',
+      );
+    }
+  }
+
   logicLog.i(
     'init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
   );

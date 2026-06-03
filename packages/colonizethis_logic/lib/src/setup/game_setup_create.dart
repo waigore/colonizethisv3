@@ -414,12 +414,13 @@ Game _buildInitialGame({
     newWorld: RegionData(provinces: newWorldProvinces),
   );
   final baseStockpileQuantities = _buildInitialStockpileQuantities(config);
+  final humanSlots = config.humanGreatPowerSlotIndices;
   final players = <Player>[
     for (var i = 0; i < gpIds.length; i++)
       Player(
         id: gpIds[i],
         displayName: 'Power ${i + 1}',
-        isHuman: i == 0,
+        isHuman: humanSlots.contains(i),
         stockpile: Stockpile(
           quantities: baseStockpileQuantities.isEmpty
               ? const {}
