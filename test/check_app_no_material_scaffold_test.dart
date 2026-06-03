@@ -224,7 +224,7 @@ Widget fallback() => Scaffold(body: const SizedBox.shrink());
       },
     );
 
-    test('allowlists dev-tooling screens (SYS10001, SYS20001)', () {
+    test('allowlists the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_no_material_scaffold_devtools_',
       );
@@ -232,18 +232,14 @@ Widget fallback() => Scaffold(body: const SizedBox.shrink());
 
       const debugConsole =
           'app/lib/features/game/flame/debug_console_overlay_panel.dart';
-      const debugViewer =
-          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-      for (final rel in [debugConsole, debugViewer]) {
-        File('${temp.path}/$rel')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/$debugConsole')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => Scaffold(body: const SizedBox.shrink());
 ''');
-      }
 
       final code = runCheckAppNoMaterialScaffold(
         temp.path,
@@ -253,6 +249,41 @@ Widget bypass() => Scaffold(body: const SizedBox.shrink());
 
       expect(code, 0);
     });
+
+    test(
+      'no longer allowlists the Debug Log Viewer (SYS10001) after the '
+      'Refs #2914 S8 CtScreenShell migration',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_scaffold_debug_log_promoted_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        const debugViewer =
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+
+        File('${temp.path}/$debugViewer')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+Widget bypass() => Scaffold(body: const SizedBox.shrink());
+''');
+
+        final logs = <String>[];
+        final code = runCheckAppNoMaterialScaffold(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
+
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains('debug_log_viewer_screen.dart:3: Scaffold('),
+        );
+      },
+    );
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -381,19 +412,27 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
       );
     });
 
-    test('skips canonical dev-tooling screens', () {
-      const skipped = <String>[
-        'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
-      ];
-      for (final path in skipped) {
-        expect(
-          shouldSkipAppNoMaterialScaffoldFile(path),
-          isTrue,
-          reason: 'expected $path to be allowlisted',
-        );
-      }
+    test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
+      expect(
+        shouldSkipAppNoMaterialScaffoldFile(
+          'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+        ),
+        isTrue,
+      );
     });
+
+    test(
+      'does not skip debug_log_viewer_screen.dart (in scope for the '
+      'check after Refs #2914 S8 CtScreenShell migration)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialScaffoldFile(
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test(
       'does not skip ordinary feature screens (in scope for the check)',

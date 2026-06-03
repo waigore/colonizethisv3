@@ -9,6 +9,7 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 
 CtChoiceChip _chipWithLabel(WidgetTester tester, String label) {
@@ -62,7 +63,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Debug log'), findsOneWidget);
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(find.byType(CtBackButton), findsOneWidget);
     });
 
     testWidgets('shows filter chips for package and level', (WidgetTester tester) async {
@@ -153,7 +154,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Debug log'), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(find.byType(CtBackButton));
       await tester.pumpAndSettle();
 
       expect(find.text('Debug log'), findsNothing);
