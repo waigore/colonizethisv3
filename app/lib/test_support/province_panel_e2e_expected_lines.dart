@@ -154,6 +154,16 @@ List<String> provincePanelWideLayoutExpectedTexts(
   addSection('Political', () {
     out.add('Name: ${province?.displayName ?? provinceId}');
     out.add('Owner: ${_ownerName(game, province?.ownerId)}');
+    // Region and Capital are always-exact political intel rendered alongside
+    // Name / Owner regardless of fog (Refs #2865 Political section; mirrored
+    // here so the e2e snapshot stays in sync with
+    // province_sea_zone_detail_overlay_sections.dart `_buildPoliticalSection`).
+    out.add(l10n.provinceOverlay_region(_regionLabel(l10n, regionId)));
+    out.add(
+      _isCapitalProvince(game, provinceId)
+          ? l10n.provinceOverlay_capitalYes
+          : l10n.provinceOverlay_capitalNo,
+    );
   });
 
   addSection('Tile', () {
@@ -378,6 +388,34 @@ Province? _findProvince(Game game, String provinceId) {
     if (p.id == provinceId) return p;
   }
   return null;
+}
+
+/// Mirrors `provinceOverlayRegionLabel` from
+/// province_sea_zone_detail_overlay_sections.dart (duplicated rather than
+/// imported to keep this fixture free of `@visibleForTesting` production
+/// symbols, per the file header convention).
+String _regionLabel(AppLocalizations l10n, String regionId) {
+  return switch (regionId) {
+    'oldWorld' => l10n.region_oldWorld,
+    'newWorld' => l10n.region_newWorld,
+    _ => regionId,
+  };
+}
+
+/// Mirrors `provinceOverlayIsCapital` from
+/// province_sea_zone_detail_overlay_sections.dart: a province is a capital
+/// when any faction (player, minor nation, or tribe) claims it as its capital.
+bool _isCapitalProvince(Game game, String provinceId) {
+  for (final p in game.players) {
+    if (p.capitalProvinceId == provinceId) return true;
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalProvinceId == provinceId) return true;
+  }
+  for (final t in game.tribes) {
+    if (t.capitalProvinceId == provinceId) return true;
+  }
+  return false;
 }
 
 String _ownerName(Game game, String? ownerId) {
