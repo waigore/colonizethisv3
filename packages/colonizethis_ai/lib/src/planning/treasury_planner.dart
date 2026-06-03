@@ -115,6 +115,19 @@ List<TradeOrder> runTreasuryPlanner({
   final threshold = cheapestRegimentBuildTreasuryCost();
   final brokeForLockRecovery = rawTreasury < threshold;
 
+  // Refs #2924 F17: a below-quota zero-NW lock-recovery seller releases its
+  // food surplus aggressively so its trade cargo is spent selling the
+  // liquidity-food commodity into the net-positive minor/tribe auto-bid pool
+  // (F15) instead of being left idle behind a 2x food safety buffer. On seed
+  // 42 gp6 keeps only ~42 grain and rarely clears the 2x reserve (24), so it
+  // emits offers on ~14 of 100 turns and never accumulates enough seller
+  // credit to cross the regiment threshold, while gp5 — which hoards grain —
+  // recovers. Dropping the safety buffer (keeping one consumption-cycle
+  // reserve) lets the seller offer down to that floor each turn.
+  // SPEC/ai/treasury-planner.md § Lock-recovery seller food-surplus release.
+  final isLockRecoverySeller =
+      _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+
   for (final id in trackedCommodityIds) {
     if (richesCommodityIds.contains(id)) continue;
     final commodity = CommodityCatalog.byId[id];
@@ -126,7 +139,7 @@ List<TradeOrder> runTreasuryPlanner({
     );
     final inputs = inputNeeds[id] ?? 0;
     final safety = commodity.category == CommodityCategory.food
-        ? consumption * 2
+        ? (isLockRecoverySeller ? 0 : consumption * 2)
         : consumption;
     final reserve = consumption + inputs + safety;
     final projectedQty = projected.quantityOf(id);
@@ -194,7 +207,7 @@ List<TradeOrder> runTreasuryPlanner({
   if (treasury >= treasuryAffluenceThreshold() &&
       !isLiquidityBuyer &&
       !isAffluentDesignatedBuyer &&
-      !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId)) {
+      !isLockRecoverySeller) {
     _addSpeculativeBidNeeds(
       need: need,
       available: available,
@@ -228,8 +241,7 @@ List<TradeOrder> runTreasuryPlanner({
       // consumed by fabric/bronze deficits that cannot match urgent grain offers.
       need.removeWhere((id, _) => id != liquidity);
     }
-  } else if (lockRecoveryUrgent ||
-      _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId)) {
+  } else if (lockRecoveryUrgent || isLockRecoverySeller) {
     need.clear();
   }
 
