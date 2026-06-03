@@ -1153,6 +1153,15 @@ abstract class AppLocalizations {
   /// Political section owner row.
   String provinceOverlay_owner(String owner);
 
+  /// Political section region row (Old World / New World label).
+  String provinceOverlay_region(String region);
+
+  /// Political section capital row when the province is the capital of its owning faction.
+  String get provinceOverlay_capitalYes;
+
+  /// Political section capital row when the province is not a faction capital.
+  String get provinceOverlay_capitalNo;
+
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
 

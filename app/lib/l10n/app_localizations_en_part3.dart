@@ -326,6 +326,17 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_region(String region) {
+    return 'Region: $region';
+  }
+
+  @override
+  String get provinceOverlay_capitalYes => 'Capital: Yes';
+
+  @override
+  String get provinceOverlay_capitalNo => 'Capital: No';
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }
