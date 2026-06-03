@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../widgets/ct_section_label.dart';
+import '../../../../../widgets/ct_spacing.dart';
 
 /// Section title for a world region (Old World / New World) in units panels.
 ///
@@ -13,7 +14,7 @@ class RegionSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      padding: const EdgeInsets.only(top: CtSpacing.m, bottom: 4),
       child: CtSectionLabel(label),
     );
   }

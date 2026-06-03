@@ -182,7 +182,10 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         CtNinePatchButton(
           onPressed: canCombine ? () => _performCombine(flat) : null,
           enabled: canCombine,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: CtSpacing.s,
+          ),
           minHeight: 32,
           child: Text(l10n.common_combine),
         ),

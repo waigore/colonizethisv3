@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'utils/naval_tree_builder.dart';
 import 'units/shared/units_entity_action_row.dart';
 
@@ -57,7 +58,7 @@ class FleetExpansionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.only(left: CtSpacing.m),
       child: ExpansionTile(
         title: _buildTitle(),
         subtitle: _buildSubtitle(),
@@ -146,7 +147,12 @@ class FleetExpansionTile extends StatelessWidget {
   List<Widget> _buildChildren() {
     return [
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        padding: const EdgeInsets.fromLTRB(
+          CtSpacing.l,
+          4,
+          CtSpacing.l,
+          CtSpacing.m,
+        ),
         child: _FleetExpandedContent(row: row, l10n: l10n),
       ),
     ];
@@ -277,7 +283,10 @@ class _FleetExpandedContent extends StatelessWidget {
 
   Widget _cell(Widget child, {AlignmentGeometry align = Alignment.centerLeft}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 4,
+        vertical: CtSpacing.xs,
+      ),
       child: Align(alignment: align, child: child),
     );
   }
