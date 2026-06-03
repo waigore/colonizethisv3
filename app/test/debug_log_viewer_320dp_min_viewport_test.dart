@@ -22,8 +22,9 @@
 // debug-log shell. The screen mounts a Material `Scaffold` whose body
 // stacks (top → bottom): an `AppBar` with title `Debug log` + trailing
 // close `Icons.close` button, a filter row hosted by a horizontal
-// `SingleChildScrollView` (package + level multi-select `FilterChip`
-// rows), a 1 dp `Divider`, and an expanding `ListView.builder` of
+// `SingleChildScrollView` (package + level multi-select `CtChoiceChip`
+// rows — Refs #2914 S8 CtChoiceChip adoption), a 1 dp `Divider`, and an
+// expanding `ListView.builder` of
 // per-entry `Container` + `SelectableText` rows. At `kMinViewportWidth`
 // (320 dp) the available column collapses to 320 dp; the chrome and
 // body must lay out without `RenderFlex` overflow under both the
@@ -42,8 +43,8 @@
 //    actually exercises the debug-log shell at 320 dp rather than
 //    no-op'ing on an off-screen widget.
 //  * The package filter row mounts the default-selected `app`
-//    `FilterChip` and the level filter row mounts the default-selected
-//    `info` / `warning` / `error` `FilterChip`s (per
+//    `CtChoiceChip` and the level filter row mounts the default-selected
+//    `info` / `warning` / `error` `CtChoiceChip`s (per
 //    `SPEC/program/debug-log-viewer.md` § 3 defaults), so the row
 //    composition exercised at 320 dp matches the running app.
 //
@@ -65,6 +66,7 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -154,7 +156,7 @@ void main() {
                 'the horizontal-scroll `SingleChildScrollView` filter '
                 'row + 1 dp Divider + expanding ListView body — must '
                 'lay out within the 320 dp column. The filter row '
-                'hosts package + level multi-select `FilterChip` `Wrap`s '
+                'hosts package + level multi-select `CtChoiceChip` `Wrap`s '
                 "wrapped in a horizontal `SingleChildScrollView` so its "
                 'intrinsic width is not bound by the 320 dp viewport, '
                 'but the surrounding Scaffold + Divider + body chain '
@@ -187,7 +189,7 @@ void main() {
           // host without overflowing horizontally.
           expect(
             find.descendant(
-              of: find.byType(FilterChip),
+              of: find.byType(CtChoiceChip),
               // ignore: avoid_hardcoded_strings_in_widgets
               matching: find.text('app'),
             ),
@@ -202,7 +204,7 @@ void main() {
               in const <String>['info', 'warning', 'error']) {
             expect(
               find.descendant(
-                of: find.byType(FilterChip),
+                of: find.byType(CtChoiceChip),
                 matching: find.text(label),
               ),
               findsOneWidget,
