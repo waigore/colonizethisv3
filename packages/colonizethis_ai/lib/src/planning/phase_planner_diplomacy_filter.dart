@@ -48,6 +48,8 @@
 /// no I/O, no logging, and no order emission.
 library;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
@@ -211,3 +213,88 @@ double resolvePhaseDiplomacyDeclareWarColonialPressureWeight({
 double resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.priorityWeights.oldWorldConquest;
+
+/// Returns the NW-tribe declare-war dominance bonus scaled by the soft-phase
+/// NW acquisition weight (Refs #2847 Phase 3 diplomacy declare-war NW-tribe
+/// bonus wiring).
+///
+/// `_declareWarColonialNwTribeBonuses`
+/// (`diplomatic_candidate_scoring_declare_war_bonuses.dart`) consumes this
+/// helper as the production source of truth for the
+/// [kDeclareWarColonialNwTribeDominanceBonus] addend that previously applied
+/// at its **full** magnitude whenever the binary `colonialPressure`
+/// (`nwAcquisitionWeight > 0.0`) gate fired. Scaling the addend linearly with
+/// [nwAcquisitionWeight] realises requirement clarification #1/#2/#6 — the
+/// active phase biases the *magnitude* of the NW-acquisition module's score
+/// contribution along the continuous weight curve instead of switching the
+/// full bonus on/off at the EXPAND→COLONIAL boundary:
+///
+/// - `nwAcquisitionWeight <= 0.0` returns `0` (legacy `colonialPressure:
+///   false` equivalent; the caller's `colonialPressure` guard already
+///   short-circuits before this helper at zero weight).
+/// - `nwAcquisitionWeight == 1.0` returns
+///   [kDeclareWarColonialNwTribeDominanceBonus] exactly (identity-equal to the
+///   legacy full-magnitude addend).
+/// - Intermediate weights return
+///   `round(kDeclareWarColonialNwTribeDominanceBonus × nwAcquisitionWeight)`,
+///   matching the continuous-scale contract used by the conquest army-move
+///   colonial-pressure floor, the goal-score colonial-pressure floors, the
+///   economy build-pick cargo bonus, and the naval colonial-pressure bonus
+///   (`SPEC/ai/phase-planner-architecture.md` § Phase 3 consumer wiring).
+///
+/// At the early-sprint default curve (`newWorldAcquisition = 0.05` for
+/// `oldWorldProvincesOwned <= 7`) the dominance addend collapses to
+/// `round(100 × 0.05) = 5`, keeping the early OW conquest sprint dominant so
+/// the gp1/gp2 +6 OW baseline is preserved by construction; the § Resource-need
+/// treasury-recovery (`0.60`) / zero-regiment (`0.30`) override floors keep a
+/// proportionate NW-tribe bias for locked GPs.
+///
+/// Pure and deterministic — identical [nwAcquisitionWeight] inputs always
+/// yield identical `int` results (Refs #2509 Must-have #7). The function is a
+/// projection of a single scalar input and never reads `PhasePlanOutcome`,
+/// snapshot, or `Game` state. Out-of-range weights clamp (`> 1.0 -> 1.0`,
+/// `< 0.0 -> 0.0`) so callers do not need to clamp upstream.
+int declareWarColonialNwTribeDominanceBonus({
+  required double nwAcquisitionWeight,
+}) => _scaleDeclareWarColonialNwTribeBonus(
+  baseBonus: kDeclareWarColonialNwTribeDominanceBonus,
+  nwAcquisitionWeight: nwAcquisitionWeight,
+);
+
+/// Returns the NW-tribe "priority over OW minor" declare-war bonus scaled by
+/// the soft-phase NW acquisition weight (Refs #2847 Phase 3 diplomacy
+/// declare-war NW-tribe bonus wiring).
+///
+/// Companion to [declareWarColonialNwTribeDominanceBonus] for the
+/// [kDeclareWarColonialNwTribePriorityOverOwMinorBonus] addend, which
+/// `_declareWarColonialNwTribeBonuses` applies on top of the dominance bonus
+/// when colonial pressure is active **and** Old World expansion is stalled so
+/// NW tribe targets out-rank stacked OW-minor declare-war bonuses. This addend
+/// is the literal OW-vs-NW candidate-selection lever requirement clarification
+/// #6 describes ("NW declare-war candidates score normally and compete against
+/// OW candidates"); scaling it by the weight makes that competition
+/// proportional to the active NW acquisition priority rather than a binary
+/// override. Because the addend is gated on `stalledOwExpansion` (below the OW
+/// quota) it never fires for above-quota GPs, so scaling it cannot weaken the
+/// OW push of GPs that have already cleared the conquest gate.
+///
+/// Scaling, clamping, identity (`1.0`), zero (`<= 0.0`), and determinism
+/// semantics match [declareWarColonialNwTribeDominanceBonus]; at the
+/// early-sprint default curve the addend collapses to `round(360 × 0.05) = 18`.
+int declareWarColonialNwTribePriorityOverOwMinorBonus({
+  required double nwAcquisitionWeight,
+}) => _scaleDeclareWarColonialNwTribeBonus(
+  baseBonus: kDeclareWarColonialNwTribePriorityOverOwMinorBonus,
+  nwAcquisitionWeight: nwAcquisitionWeight,
+);
+
+int _scaleDeclareWarColonialNwTribeBonus({
+  required int baseBonus,
+  required double nwAcquisitionWeight,
+}) {
+  if (nwAcquisitionWeight <= 0.0) {
+    return 0;
+  }
+  final clamped = nwAcquisitionWeight > 1.0 ? 1.0 : nwAcquisitionWeight;
+  return (baseBonus * clamped).round();
+}
