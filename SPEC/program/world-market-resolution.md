@@ -177,6 +177,18 @@ Minor Nations and Tribes never hold treasury (see [factions.md](../game/factions
 
 The treasury sink is recorded as a `MarketActivityNote` (`treasury_sink_minor_tribe`) so the Deal Book and observer tools can audit the flow.
 
+### Treasury conservation invariant (Refs #2924)
+
+Step D transfers are the only way phase 13 mutates `Player.treasury`. Every Great-Power-seller fill moves exactly `quantity × pricePerUnit` from the buyer to the seller (a transfer **within** the Great-Power pool), and every Minor/Tribe-seller fill debits the buyer with no offsetting credit (a leak **out** of the pool to the sink). No phase-13 path credits a Great Power without an equal Great-Power debit. Therefore the **sum of all Great-Power treasuries is non-increasing across the World Market phase**: GP↔GP trade only *redistributes* the existing pool, and GP purchases from minor/tribe auto-offers *reduce* it. Phase 13 never *creates* net Great-Power treasury — that is the role of separate treasury-source phases (riches conversion, subsidies), not the market.
+
+This invariant is the mechanical reason the [treasury-planner](../ai/treasury-planner.md) lock-recovery path (Refs #2924 F10–F14) cannot, on its own, lift a pool of broke Great Powers above `cheapestRegimentBuildTreasuryCost()`: trading among broke GPs cannot raise their *aggregate* treasury, so unblocking regiment builds for a structurally broke peer set requires a net treasury source (NW riches acquisition), not more market liquidity.
+
+#### Acceptance criteria (Refs #2924 conservation)
+
+- Given a set of Great Powers and any merged `Orders.tradeOrdersByPlayerId` whose only sellers and buyers are Great Powers (no minor/tribe auto-offers; `tileMapByRegion` omitted), when `worldMarketTurnPhaseHandler` resolves phase 13, then the sum of `Player.treasury` over all Great Powers after the phase equals the sum before the phase (exact conservation: every buyer debit is matched by an equal Great-Power-seller credit).
+- Given a Great Power buyer with positive treasury and a matching minor/tribe auto-offer (`tileMapByRegion` supplied), when `worldMarketTurnPhaseHandler` resolves phase 13 and at least one minor/tribe deal fills, then the sum of `Player.treasury` over all Great Powers after the phase is strictly less than the sum before the phase by exactly `Σ (quantity × pricePerUnit)` over the minor/tribe fills that are not credited under first-right-of-refusal (treasury leaks to the sink).
+- Given any Great Power buyer and any combination of Great-Power and minor/tribe sellers, when `worldMarketTurnPhaseHandler` resolves phase 13, then the sum of `Player.treasury` over all Great Powers after the phase is less than or equal to the sum before the phase (the pool is never increased by the market).
+
 ### Step E — Price discovery and carry-forwards
 
 Aggregate `totalBid_new` and `totalOffer_new` per commodity from this turn's newly-submitted orders, with a bid-side asymmetry:
