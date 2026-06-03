@@ -221,12 +221,13 @@ When the same override is active, `planColonialMilitary` and `planColonialNaval`
 
 #### Phase 3 consumer wiring — first-naval-transport bootstrap (Refs #2847)
 
-`_appendEconomyBuildOrders` (`domain_planner_orchestrator.dart`) consumes `resolvePhaseFirstNavalTransportBootstrapActive` (`phase_planner_economy_filter.dart`) when the treasury-recovery resource-need override is active and the GP still owns zero cargo-capable naval hulls:
+`_appendEconomyBuildOrders` (`domain_planner_orchestrator.dart`) consumes `resolvePhaseFirstNavalTransportBootstrapActive` (`phase_planner_economy_filter.dart`) when the GP is still below the regiment-build treasury band, treasury-recovery cargo is active, and the GP still owns zero cargo-capable naval hulls:
 
-- Predicate: `resolvePhaseNwTreasuryRecoveryResourceNeedOverrideActive` (`treasury == 0 && newWorldProvincesOwned == 0 && boostTreasuryRecoveryCargo == true`) **and** `!playerOwnsCargoCapableNavalUnit(game, playerId)`.
+- Predicate: `newWorldProvincesOwned == 0 && !playerOwnsCargoCapableNavalUnit(game, playerId)` **and** (`oldWorldProvincesOwned >= 2 && oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` **or** (`boostTreasuryRecoveryCargo == true && treasury < cheapestRegimentBuildTreasuryCost()`)). The mid-below-quota zero-NW disjunct keeps cargo-ship bootstrap active for seed-42 gp3–gp6 **from turn 1** (before high starting treasury drops below the regiment band and arm C toggles `boostTreasuryRecoveryCargo`), as well as after partial Path F seller credits arrive (Refs #2924 Path F gp6 regression).
 - When active, the orchestrator **does not** narrow `candidatesForBuild` to regiments-only under `forceRegimentRebuild`, and `pickBuildOrder` receives `militaryRebuildCrisis: false` so the regiment-only crisis short-circuit cannot suppress ship candidates.
 - `BuildPickInput.colonialPressureWeight` is floored to at least `kPhasePriorityNwTreasuryRecoveryFloor` (`0.60`) so the cargo-ship build bonus engages at the same magnitude as the naval-pass colonial-pressure floor.
 - The build pipeline's treasury/material affordability check is **unchanged** — this slice relaxes only planner-level regiment bias, not build validation.
+- Given a below-quota EXPAND GP with `ExpandEconomyPlan.boostTreasuryRecoveryCargo == true`, `ColonialSummary.newWorldProvincesOwned == 0`, `economy.treasury == 500` (strictly below `cheapestRegimentBuildTreasuryCost()`), and zero cargo-capable naval hulls, when `resolvePhaseFirstNavalTransportBootstrapActive(...)` runs, then the return equals `true` even though `resolvePhaseNwTreasuryRecoveryResourceNeedOverrideActive` returns `false` (Refs #2924 Path F — partial seller credits must not end bootstrap before the first cargo hull exists).
 
 #### Phase 3 consumer wiring — conquest army-move colonial-pressure floor (Refs #2847)
 
