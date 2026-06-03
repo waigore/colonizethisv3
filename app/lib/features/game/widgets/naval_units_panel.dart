@@ -14,6 +14,7 @@ import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'fleet_expansion_tile.dart';
 import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
@@ -504,7 +505,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                 widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
               });
             },
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: CtSpacing.s,
+            ),
             minHeight: 32,
             child: Text(l10n.civilian_units_tile),
           ),
@@ -527,7 +531,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           CtNinePatchButton(
             onPressed: canCombine ? () => _performCombine(flat) : null,
             enabled: canCombine,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: CtSpacing.s,
+            ),
             minHeight: 32,
             child: Text(l10n.common_combine),
           ),

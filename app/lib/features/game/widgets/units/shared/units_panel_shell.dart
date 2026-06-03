@@ -23,7 +23,12 @@ class UnitsPanelShell extends StatelessWidget {
     required this.hasContent,
     required this.listChildren,
     required this.emptyMessage,
-    this.listPadding = const EdgeInsets.fromLTRB(8, 0, 8, 8),
+    this.listPadding = const EdgeInsets.fromLTRB(
+      CtSpacing.m,
+      0,
+      CtSpacing.m,
+      CtSpacing.m,
+    ),
     this.panelConstraints = defaultPanelConstraints,
   });
 
