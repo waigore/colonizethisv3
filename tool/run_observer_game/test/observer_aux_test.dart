@@ -142,7 +142,8 @@ void main() {
           game,
           postResolutionTurnNumber: 1,
         );
-        final players = (json['players'] as List).cast<Map<String, Object?>>();
+        final players =
+            (json['players'] as List<Object?>).cast<Map<String, Object?>>();
         expect(players, hasLength(3));
         for (final row in players) {
           expect(row['isHuman'], isFalse, reason: '${row['playerId']}');
