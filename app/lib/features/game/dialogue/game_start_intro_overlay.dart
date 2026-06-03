@@ -139,7 +139,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-            const SizedBox(height: 12),
+            const SizedBox(height: CtSpacing.ml),
             const CtBrassDivider(),
             const SizedBox(height: 14),
             Text(
@@ -149,7 +149,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: CtSpacing.l),
             Align(
               alignment: Alignment.center,
               child: CtNinePatchButton(
@@ -193,7 +193,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: CtSpacing.l),
             Align(
               alignment: Alignment.center,
               child: CtNinePatchButton(
@@ -229,7 +229,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           const CtBrassDivider(),
           const SizedBox(height: 14),
           body,
