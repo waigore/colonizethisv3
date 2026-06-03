@@ -40,7 +40,7 @@ Widget _buildEconomicSection({
                 commodityId: resId,
                 labelStyle: TextStyle(color: EditorialMonoclePalette.fg),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: CtSpacing.m / 2),
               Expanded(
                 child: Text(
                   l10n.province_economic_resourceRow(
@@ -69,7 +69,7 @@ Widget _buildEconomicSection({
                 commodityId: resId,
                 labelStyle: TextStyle(color: EditorialMonoclePalette.muted),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: CtSpacing.m / 2),
               Expanded(
                 child: Text(
                   l10n.province_economic_resourceRow(
@@ -127,7 +127,7 @@ Widget _buildMilitarySectionByOwner({
         children: pending
             .map(
               (line) => Padding(
-                padding: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.only(left: CtSpacing.m / 2),
                 child: Text(
                   line,
                   style: TextStyle(color: EditorialMonoclePalette.muted),
@@ -162,7 +162,7 @@ Widget _buildMilitarySectionByOwner({
           }
           final name = _ownerName(game, oid);
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: CtSpacing.m),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -185,10 +185,10 @@ Widget _buildMilitarySectionByOwner({
           );
         }),
         if (pending.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: CtSpacing.m / 2),
           ...pending.map(
             (line) => Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: CtSpacing.m / 2),
               child: Text(
                 line,
                 style: TextStyle(color: EditorialMonoclePalette.muted),
@@ -318,10 +318,10 @@ Widget _buildNavalSection({
             );
           }),
         if (pending.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: CtSpacing.m / 2),
           ...pending.map(
             (line) => Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: CtSpacing.m / 2),
               child: Text(
                 line,
                 style: TextStyle(color: EditorialMonoclePalette.muted),
