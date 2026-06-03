@@ -16,6 +16,7 @@ import 'check_app_no_material_iconbutton.dart';
 import 'check_app_no_material_scaffold.dart';
 import 'check_app_no_material_switchlisttile.dart';
 import 'check_app_no_material_textbutton.dart';
+import 'check_app_textstyle_fontsize_fallback.dart';
 import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
@@ -857,6 +858,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppWidgetImports(repoRoot);
     case 'repo.app_editorial_monocle_colors':
       return runCheckAppEditorialMonocleColors(repoRoot);
+    case 'repo.app_textstyle_fontsize_fallback':
+      return runCheckAppTextStyleFontSizeFallback(repoRoot);
     case 'repo.app_no_material_alertdialog':
       return runCheckAppNoMaterialAlertDialog(repoRoot);
     case 'repo.app_no_material_chip':
