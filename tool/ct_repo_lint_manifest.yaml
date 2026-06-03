@@ -399,6 +399,48 @@ rules:
     runner: dart
     script: tool/check_app_no_material_button.dart
 
+  - rule_id: repo.app_no_material_card
+    group: ui_structure
+    title: "app/lib/features must use CtPanel instead of Material Card (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_card.dart
+
+  - rule_id: repo.app_no_material_dialog
+    group: ui_structure
+    title: "app/lib/features must use CtDialogShell / CtFullScreenDialogueShell instead of Material Dialog (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_dialog.dart
+
+  - rule_id: repo.app_no_material_choicechip
+    group: ui_structure
+    title: "app/lib/features must use CtChoiceChip instead of Material ChoiceChip (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_choicechip.dart
+
+  - rule_id: repo.app_no_material_slider
+    group: ui_structure
+    title: "app/lib/features must use CtSlider instead of Material Slider (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_slider.dart
+
+  - rule_id: repo.app_no_material_dropdownbutton
+    group: ui_structure
+    title: "app/lib/features must use CtDropdown instead of Material DropdownButton (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_dropdownbutton.dart
+
+  - rule_id: repo.app_no_material_appbar
+    group: ui_structure
+    title: "app/lib/features must use CtTopBar / CtScreenShell instead of Material AppBar (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_appbar.dart
+
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
     title: colonizethis_logic limits direct oldWorld/newWorld province list access
