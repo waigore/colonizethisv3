@@ -369,6 +369,7 @@ PhasePlanOutcome _expandOutcome({
           game: game,
           snapshot: snapshot,
           personalityId: personalityId,
+          expandEconomyPlan: expandEconomyPlan,
         )
       : null;
   return PhasePlanOutcome(
@@ -450,11 +451,13 @@ PhasePlanOutcome _colonialLiteOutcome({
   required Game game,
   required AIWorldSnapshot snapshot,
   String? personalityId,
+  ExpandEconomyPlan expandEconomyPlan = ExpandEconomyPlan.defaultPlan,
 }) {
   final acquisition = planColonialAcquisition(
     game: game,
     snapshot: snapshot,
     personalityId: personalityId,
+    expandEconomyPlan: expandEconomyPlan,
   );
   final declaredColonialTarget =
       (acquisition != null &&
@@ -487,6 +490,7 @@ PhasePlanOutcome _colonialOutcome({
     game: game,
     snapshot: snapshot,
     personalityId: personalityId,
+    expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
   );
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.colonial,

@@ -216,6 +216,7 @@ import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
+import 'phase_priority_weights.dart' show isNwTreasuryRecoveryOverrideActive;
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in COLONIAL phase.
@@ -588,6 +589,8 @@ ColonialAcquisitionTarget? planColonialAcquisition({
   required Game game,
   required AIWorldSnapshot snapshot,
   String? personalityId,
+  expand_phase_planner.ExpandEconomyPlan expandEconomyPlan =
+      expand_phase_planner.ExpandEconomyPlan.defaultPlan,
 }) {
   if (game.playerById(snapshot.playerId) == null) {
     return null;
@@ -617,12 +620,17 @@ ColonialAcquisitionTarget? planColonialAcquisition({
     provinceOwner: provinceOwner,
     treasury: treasury,
   );
+  final waiveDeclareWarTreasuryGate = isNwTreasuryRecoveryOverrideActive(
+    snapshot: snapshot,
+    expandEconomyPlan: expandEconomyPlan,
+  );
   ColonialAcquisitionTarget? tryDeclareWar() => _findDeclareWarTarget(
     game: game,
     snapshot: snapshot,
     invadable: invadable,
     provinceOwner: provinceOwner,
     treasury: treasury,
+    waiveTreasuryGate: waiveDeclareWarTreasuryGate,
   );
 
   if (preferDeclareWarOverJoinEmpire) {
@@ -747,11 +755,12 @@ ColonialAcquisitionTarget? _findDeclareWarTarget({
   required List<String> invadable,
   required Map<String, String> provinceOwner,
   required int treasury,
+  required bool waiveTreasuryGate,
 }) {
   if (regimentCountForPlayer(game, snapshot.playerId) <= 0) {
     return null;
   }
-  if (treasury < _cheapestRegimentBuildTreasuryCost()) {
+  if (!waiveTreasuryGate && treasury < _cheapestRegimentBuildTreasuryCost()) {
     return null;
   }
 
