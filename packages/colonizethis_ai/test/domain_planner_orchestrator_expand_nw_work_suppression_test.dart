@@ -1,14 +1,15 @@
-// Pins the EXPAND-phase New World work-order suppression AC from issue #2509:
+// Pins the EXPAND-phase New World work-order filter at the
+// `runDomainPlanners` integration boundary (Refs #2509, #2847 Phase 3
+// work-order filter wiring):
 //
-//   Given a GP in EXPAND with sea-reachable unowned NW provinces, when domain
-//   planning runs, then no NW declareWar, NW army move, or NW purchase_land
-//   orders are suggested that turn.
+//   - With default soft-phase weights (`newWorldAcquisition > 0`), NW
+//     `purchase_land` and NW `build_improvement` suggestions survive the
+//     EXPAND filter so colonial civilian work can engage at low priority.
+//   - With `newWorldAcquisition == 0.0`, the legacy hard-suppress path drops
+//     those NW civilian work orders again.
 //
-// This test pins the **civilian work** and **conquest army move** portions of
-// that contract at the `runDomainPlanners` integration boundary. The
-// orchestrator must drop NW `purchase_land`, NW `build_improvement`, and NW
-// invasion `ArmyMoveOrder` suggestions while in EXPAND
-// (`shouldFilterObserverPhaseWorkOrder` for `ObserverGoalPhase.expand`).
+// Conquest army-move scoring (OW vs NW preference under early-sprint weight)
+// remains pinned separately below.
 //
 // Existing tests pin the underlying predicate
 // (`packages/colonizethis_ai/test/observer_goal_phase_test.dart` group
@@ -238,10 +239,17 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'peacemaker',
 );
 
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
+
 void main() {
-  group('runDomainPlanners EXPAND-phase NW work suppression', () {
+  group('runDomainPlanners EXPAND-phase NW work filter', () {
     test(
-      'EXPAND drops NW build_improvement and NW purchase_land, keeps OW build_improvement',
+      'EXPAND with soft-phase NW weight keeps NW civilian work, keeps OW build_improvement',
       () {
         final game = _expandScenarioGame();
         const topology = MapTopology(nodes: [], edges: []);
@@ -283,20 +291,15 @@ void main() {
         expect(
           work.any(
             (w) =>
-                w.target == kWorkTargetBuildImprovement &&
-                w.targetTileKey == _nwOwnedTile,
+                (w.target == kWorkTargetBuildImprovement &&
+                        w.targetTileKey == _nwOwnedTile) ||
+                    (w.target == kWorkTargetPurchaseLand &&
+                        w.targetTileKey == _nwTribeTile),
           ),
-          isFalse,
-          reason: 'EXPAND must drop NW build_improvement candidates.',
-        );
-        expect(
-          work.any(
-            (w) =>
-                w.target == kWorkTargetPurchaseLand &&
-                w.targetTileKey == _nwTribeTile,
-          ),
-          isFalse,
-          reason: 'EXPAND must drop NW purchase_land candidates.',
+          isTrue,
+          reason:
+              'EXPAND with default soft-phase NW weight must keep at least one '
+              'NW civilian work candidate.',
         );
         expect(
           work.any(
@@ -313,7 +316,66 @@ void main() {
     );
 
     test(
-      'COLONIAL keeps the same NW work candidates the EXPAND filter would drop',
+      'EXPAND with zero NW weight drops NW civilian work (legacy guard)',
+      () {
+        final game = _expandScenarioGame();
+        const topology = MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, _nationId);
+        final snapshot = AIWorldSnapshot(
+          playerId: _nationId,
+          threats: const ThreatSummary(),
+          opportunities: const OpportunitySummary(),
+          conquest: const ConquestSummary(oldWorldProvincesOwned: 7),
+          colonial: const ColonialSummary(
+            invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
+            adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+          ),
+          economy: const EconomySummary(ownProvinceCount: 1),
+          relations: const {},
+        );
+        final phasePlan = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          priorityWeights: _nwAcquisitionZeroExpand,
+        );
+
+        final orders = runDomainPlanners(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(2509006),
+          suggestionAPI: _mixedRegionWorkApi,
+          economyPlan: _economyPlan,
+          phasePlan: phasePlan,
+        );
+
+        final work = orders.workOrdersByPlayerId[_nationId] ?? const [];
+        expect(
+          work.any(
+            (w) =>
+                w.target == kWorkTargetBuildImprovement &&
+                w.targetTileKey == _nwOwnedTile,
+          ),
+          isFalse,
+          reason: 'Zero NW weight must restore legacy NW build_improvement drop.',
+        );
+        expect(
+          work.any(
+            (w) =>
+                w.target == kWorkTargetPurchaseLand &&
+                w.targetTileKey == _nwTribeTile,
+          ),
+          isFalse,
+          reason: 'Zero NW weight must restore legacy NW purchase_land drop.',
+        );
+      },
+    );
+
+    test(
+      'COLONIAL keeps NW civilian work candidates under full colonial imperative',
       () {
         final game = _expandScenarioGame();
         const topology = MapTopology(nodes: [], edges: []);
