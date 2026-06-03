@@ -48,6 +48,8 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart'
+    show phasePlanFullColonialOutputsActive;
 import 'package:colonizethis_ai/src/planning/develop_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -354,7 +356,8 @@ void main() {
   });
 
   group('EXPAND outcome composition', () {
-    test('EXPAND populates EXPAND slots only; other slots stay default', () {
+    test('EXPAND populates EXPAND slots and colonial bundle when NW weight > 0 '
+        '(Refs #2847)', () {
       final game = _expandGame();
       final snapshot = _expandSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
@@ -380,15 +383,43 @@ void main() {
           declaredWarTargetFactionId: _minor1,
         ),
       );
+      expect(outcome.priorityWeights.newWorldAcquisition, greaterThan(0.0));
+      expect(phasePlanFullColonialOutputsActive(outcome), isTrue);
 
-      // Non-EXPAND slots structurally default.
+      final colonial = planColonialAcquisition(game: game, snapshot: snapshot);
+      expect(outcome.colonialAcquisitionTarget, colonial);
+      expect(
+        outcome.colonialPeaceTargetFactionIdsSorted,
+        planColonialPeace(game: game, snapshot: snapshot),
+      );
+      final declaredColonialTarget =
+          (colonial != null && colonial.method == AcquisitionMethod.declareWar)
+          ? colonial.targetFactionId
+          : null;
+      expect(
+        outcome.colonialMilitaryPlan,
+        planColonialMilitary(
+          game: game,
+          snapshot: snapshot,
+          colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+        ),
+      );
+      expect(
+        outcome.colonialNavalPlan,
+        planColonialNaval(
+          game: game,
+          snapshot: snapshot,
+          colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+        ),
+      );
+      expect(
+        outcome.colonialCivilianWorkOrders,
+        planColonialCivilian(game: game, snapshot: snapshot),
+      );
+
+      // COLONIAL-lite and DEVELOP slots stay default under EXPAND.
       expect(outcome.colonialLiteOverturesSorted, isEmpty);
       expect(outcome.colonialLiteNavalPlan, ColonialLiteNavalPlan.defaultPlan);
-      expect(outcome.colonialAcquisitionTarget, isNull);
-      expect(outcome.colonialPeaceTargetFactionIdsSorted, isEmpty);
-      expect(outcome.colonialMilitaryPlan, ColonialMilitaryPlan.defaultPlan);
-      expect(outcome.colonialNavalPlan, ColonialNavalPlan.defaultPlan);
-      expect(outcome.colonialCivilianWorkOrders, isEmpty);
       expect(outcome.developPeaceTargetFactionIdsSorted, isEmpty);
       expect(outcome.developCivilianWorkOrders, isEmpty);
     });

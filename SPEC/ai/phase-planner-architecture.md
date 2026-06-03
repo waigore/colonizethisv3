@@ -145,7 +145,11 @@ When both predicates fire on the same dispatch, the larger floor (`0.60`) wins. 
 - `domain_planner_orchestrator.dart` sources the weight via `resolvePhaseEconomyColonialPressureWeight(phasePlan: phasePlan)` and threads both the legacy boolean (for the null-weight fallback path) and the weight (production source of truth) into `BuildPickInput`.
 - Callers that construct `BuildPickInput` directly without supplying `colonialPressureWeight` (tests, legacy entry points) keep the legacy boolean behaviour exactly.
 
-Other scoring sites (economy civilian threshold cap) still use the Phase 2 boolean resolvers until their Phase 3 slices land. Hard structural suppression for planner-module dispatch (which modules run per phase) remains unchanged in this slice.
+Other scoring sites (economy civilian threshold cap) still use the Phase 2 boolean resolvers until their Phase 3 slices land.
+
+#### EXPAND universal colonial dispatch (Refs #2847)
+
+`runPhasePlanners` under [ObserverGoalPhase.expand] now composes the full-COLONIAL planner bundle (`planColonialAcquisition`, `planColonialPeace`, `planColonialMilitary`, `planColonialNaval`, `planColonialCivilian`) whenever `priorityWeights.newWorldAcquisition > 0.0` (the early-sprint curve floor is `0.05`, so the bundle is always populated on EXPAND dispatches today). Orchestrator adapters (`colonialMilitaryPlanFromPhasePlan`, `colonialNavalPlanFromPhasePlan`, `gpColonialDeclareWarTargetFromPhasePlan`, `civilianWorkOrdersFromPhasePlan`) gate consumption through [phasePlanFullColonialOutputsActive] instead of requiring `phase == colonial`. [ObserverGoalPhase.colonialLite] and [ObserverGoalPhase.develop] remain excluded — COLONIAL-lite safeguard and DEVELOP structural separation are unchanged.
 
 #### Phase 3 consumer wiring — naval planner colonial-pressure bonus + floor (Refs #2847)
 

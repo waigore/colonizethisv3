@@ -57,13 +57,11 @@ import 'phase_planner_dispatch.dart';
 /// `planDevelopCivilian`); the adapter never reorders or filters
 /// entries.
 List<WorkOrder> civilianWorkOrdersFromPhasePlan(PhasePlanOutcome outcome) {
-  switch (outcome.phase) {
-    case ObserverGoalPhase.expand:
-    case ObserverGoalPhase.colonialLite:
-      return const <WorkOrder>[];
-    case ObserverGoalPhase.colonial:
-      return outcome.colonialCivilianWorkOrders;
-    case ObserverGoalPhase.develop:
-      return outcome.developCivilianWorkOrders;
+  if (phasePlanFullColonialOutputsActive(outcome)) {
+    return outcome.colonialCivilianWorkOrders;
   }
+  if (outcome.phase == ObserverGoalPhase.develop) {
+    return outcome.developCivilianWorkOrders;
+  }
+  return const <WorkOrder>[];
 }
