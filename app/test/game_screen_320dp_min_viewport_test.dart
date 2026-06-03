@@ -21,6 +21,13 @@
 //    - the left-rail empire buttons keyed by
 //      `kEmpireProductionButtonKey` / `kEmpireTechnologyButtonKey`
 //      per `SPEC/ui/empire-overview.md` § Left rail.
+//  * The narrow in-game chrome measurements from
+//    `SPEC/ui/mobile-adaptation.md` § In-game shell: at < 600 dp the
+//    left-rail empire buttons render at 26 × 26 dp (Req 8) and the
+//    bottom-left corner-control buttons render at 24 × 24 dp (Req 9),
+//    while the 1024 × 768 wide control renders them at the default
+//    36 × 36 dp / 32 × 32 dp so the breakpoint comparator direction is
+//    pinned from both sides.
 //  * The wide-only floating `GameMapPlayersBar` (keyed by
 //    `kGameMapPlayersBarKey`) is NOT present at narrow widths, pinning
 //    Refs #2870 Requirement 6 ("Players bar hidden" below the shell
@@ -32,17 +39,22 @@
 //    widths `GameMapPlayersBar` reappears so the contrast also pins the
 //    Req 6 narrow-only suppression.
 //
-// SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
+// SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin) and
+// § 4 In-game shell narrow measurement table (left rail 26 × 26 dp,
+// corner controls 24 × 24 dp).
 // SPEC: `SPEC/ui/empire-overview.md` (left-rail empire buttons + top bar).
 // SPEC: `SPEC/ui/in-game-shell-narrow.md` § Top bar.
 // Refs #2870 S10 (no horizontal overflow at 320 dp on every covered
-// screen) + Req 6 (players bar hidden at < 600 dp).
+// screen) + Req 6 (players bar hidden at < 600 dp) + Req 8/9 (narrow
+// left-rail 26 × 26 dp / corner-control 24 × 24 dp measurements, S3).
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -251,6 +263,55 @@ void main() {
       );
 
       testWidgets(
+        'AC (positive) GameScreen @ 320×640: left-rail empire buttons '
+        'render at 26 × 26 dp and corner-control buttons at 24 × 24 dp '
+        '(Refs #2870 Req 8 / 9, S3)',
+        (WidgetTester tester) async {
+          await pumpGameScreenAtSize(tester, size: _kMinViewport);
+
+          expect(
+            tester.takeException(),
+            isNull,
+            reason:
+                'SPEC/ui/mobile-adaptation.md § 4 In-game shell: the '
+                'narrow chrome must lay out without exception before its '
+                'measurements are asserted.',
+          );
+
+          expect(
+            tester.getSize(find.byKey(kEmpireProductionButtonKey)),
+            const Size(
+              GameMapEmpireLeftRail.narrowButtonSize,
+              GameMapEmpireLeftRail.narrowButtonSize,
+            ),
+            reason:
+                'Refs #2870 Req 8 / SPEC/ui/mobile-adaptation.md § 4 '
+                'In-game shell: below the 600 dp shell breakpoint each '
+                'left-rail empire button compresses to '
+                '${GameMapEmpireLeftRail.narrowButtonSize} × '
+                '${GameMapEmpireLeftRail.narrowButtonSize} dp '
+                '(mockup `.empire-btn @media (max-width:600px)`).',
+          );
+
+          expect(
+            tester.getSize(find.byKey(kBaseLayerCycleButtonKey)),
+            const Size(
+              GameMapCornerControls.narrowButtonSize,
+              GameMapCornerControls.narrowButtonSize,
+            ),
+            reason:
+                'Refs #2870 Req 9 / SPEC/ui/mobile-adaptation.md § 4 '
+                'In-game shell: below the 600 dp shell breakpoint each '
+                'bottom-left corner-control button compresses to '
+                '${GameMapCornerControls.narrowButtonSize} × '
+                '${GameMapCornerControls.narrowButtonSize} dp '
+                '(mockup `.corner-btn @media (max-width:600px)`).',
+          );
+        },
+        timeout: const Timeout(Duration(seconds: 20)),
+      );
+
+      testWidgets(
         'Negative control: GameScreen @ 1024×768 also pumps without '
         'exception, left-rail chrome still renders, players bar '
         'reappears at wide widths (Req 6 wide-side contrast)',
@@ -281,6 +342,37 @@ void main() {
                 'Wide layout must still mount the empire production '
                 'rail button — the contrast keeps the narrow pin '
                 'honest about exercising the same shell composite.',
+          );
+
+          expect(
+            tester.getSize(find.byKey(kEmpireProductionButtonKey)),
+            const Size(
+              GameMapEmpireLeftRail.buttonSize,
+              GameMapEmpireLeftRail.buttonSize,
+            ),
+            reason:
+                'Refs #2870 Req 8 wide-side contrast: at viewport width '
+                '≥ the 600 dp shell breakpoint each left-rail empire '
+                'button renders at the default '
+                '${GameMapEmpireLeftRail.buttonSize} × '
+                '${GameMapEmpireLeftRail.buttonSize} dp, so the narrow '
+                '26 × 26 dp assertion above pins the breakpoint '
+                'comparator direction rather than a static size.',
+          );
+
+          expect(
+            tester.getSize(find.byKey(kBaseLayerCycleButtonKey)),
+            const Size(
+              GameMapCornerControls.buttonSize,
+              GameMapCornerControls.buttonSize,
+            ),
+            reason:
+                'Refs #2870 Req 9 wide-side contrast: at viewport width '
+                '≥ the 600 dp shell breakpoint each corner-control '
+                'button renders at the default '
+                '${GameMapCornerControls.buttonSize} × '
+                '${GameMapCornerControls.buttonSize} dp, keeping the '
+                'narrow 24 × 24 dp assertion meaningful.',
           );
 
           expect(
