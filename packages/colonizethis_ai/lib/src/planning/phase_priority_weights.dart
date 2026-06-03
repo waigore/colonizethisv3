@@ -33,7 +33,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
-import 'expand_phase_planner.dart' show ExpandEconomyPlan;
+import 'expand_phase_planner.dart' show ExpandEconomyPlan, planExpandEconomy;
 
 /// Per-domain priority weights for one phase-planner dispatch (Refs
 /// #2847 § Soft-phase priority weights).
@@ -181,6 +181,39 @@ PhasePriorityWeights computePhasePriorityWeights({
     newWorldCivilian: curve.newWorldCivilian,
   );
 }
+
+/// Production goal-score colonial-pressure weight for the pre-prep
+/// `strategic_ai.dart` goal-eval site (Refs #2847 Phase 3 goal-score
+/// wiring).
+///
+/// Derives the EXPAND economy plan from `planExpandEconomy(game, snapshot)`
+/// — rather than [ExpandEconomyPlan.defaultPlan] — so the § Resource-need
+/// overrides treasury-recovery floor (`newWorldAcquisition = 0.60` when
+/// `treasury == 0 && newWorldProvincesOwned == 0 &&
+/// boostTreasuryRecoveryCargo == true`) lifts the goal-score colonial
+/// pressure for a below-quota peer-war-locked GP at the goal-scoring layer,
+/// matching the conquest / naval / diplomacy scoring sites that already
+/// consume the dispatched plan's weights. `planExpandEconomy` returns
+/// [ExpandEconomyPlan.defaultPlan] once the GP reaches the OW quota, and the
+/// treasury-recovery override requires `treasury == 0`, so healthy GPs are
+/// unaffected (the gp1/gp2 +6 OW baseline holds by construction).
+///
+/// Goal selection in `strategic_ai.dart` runs *before*
+/// `prepareConquestFieldArmy`, so callers pass the **pre-prep**
+/// `(game, snapshot)`.
+///
+/// Pure and deterministic — identical `(snapshot, game)` inputs always
+/// yield the same `double` in `[0.0, 1.0]` because both
+/// [planExpandEconomy] and [computePhasePriorityWeights] are pure
+/// (Refs #2509 Must-have #7). Performs no I/O and no logging.
+double goalColonialPressureWeightFor({
+  required AIWorldSnapshot snapshot,
+  required Game game,
+}) => computePhasePriorityWeights(
+  snapshot: snapshot,
+  game: game,
+  expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
+).newWorldAcquisition;
 
 PhasePriorityWeights _curveWeightsForOw(int ow) {
   if (ow <= kPhasePriorityCurveEarlySprintCeiling) {
