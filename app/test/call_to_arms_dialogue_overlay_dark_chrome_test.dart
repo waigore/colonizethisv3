@@ -3,6 +3,7 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -175,6 +176,107 @@ void main() {
               'Submit must enable as soon as every row has a non-null '
               'decision (#2867 R25 positive case).',
         );
+      },
+    );
+  });
+
+  group('CallToArmsDialogueOverlay R24 CtToggleSwitch (#2867 R24)', () {
+    Finder joinToggle(int rowIndex) => find.byKey(
+          ValueKey<String>('callToArmsJoinToggle_$rowIndex'),
+        );
+    Finder refuseToggle(int rowIndex) => find.byKey(
+          ValueKey<String>('callToArmsRefuseToggle_$rowIndex'),
+        );
+
+    testWidgets(
+      'each row exposes Join (--success glow) + Refuse (--danger glow) '
+      'CtToggleSwitch controls and an accent faction-name label',
+      (WidgetTester tester) async {
+        await pumpOverlay(tester);
+
+        expect(joinToggle(0), findsOneWidget);
+        expect(refuseToggle(0), findsOneWidget);
+
+        final CtToggleSwitch join =
+            tester.widget<CtToggleSwitch>(joinToggle(0));
+        final CtToggleSwitch refuse =
+            tester.widget<CtToggleSwitch>(refuseToggle(0));
+        expect(join.onGlowColor, EditorialMonoclePalette.success);
+        expect(refuse.onGlowColor, EditorialMonoclePalette.danger);
+
+        // The prompt Text.rich must paint the calling faction (defender)
+        // name span in --accent (#2867 R24 "faction name in --accent").
+        final Text prompt = tester.widget<Text>(
+          find.byKey(const ValueKey<String>('callToArmsPrompt')),
+        );
+        final InlineSpan? span = prompt.textSpan;
+        expect(span, isA<TextSpan>());
+        final List<InlineSpan> children =
+            (span! as TextSpan).children ?? const <InlineSpan>[];
+        final Iterable<TextSpan> accentSpans = children
+            .whereType<TextSpan>()
+            .where((s) => s.text == 'Portugal');
+        expect(
+          accentSpans,
+          isNotEmpty,
+          reason: 'Defender name must be its own span in the prompt rich text.',
+        );
+        expect(accentSpans.first.style?.color, EditorialMonoclePalette.accent);
+      },
+    );
+
+    testWidgets(
+      'tapping an active Join toggle reverts the row to undecided and '
+      're-disables Submit (#2867 R24 tristate / R25 gate)',
+      (WidgetTester tester) async {
+        await pumpOverlay(tester);
+
+        CtNinePatchButton submitButton() => tester.widget<CtNinePatchButton>(
+              find.byKey(const ValueKey<String>('callToArmsSubmitButton')),
+            );
+        CtToggleSwitch joinSwitch() =>
+            tester.widget<CtToggleSwitch>(joinToggle(0));
+
+        expect(joinSwitch().value, isFalse);
+        expect(submitButton().enabled, isFalse);
+
+        await tester.tap(joinToggle(0));
+        await tester.pump();
+        expect(joinSwitch().value, isTrue);
+        expect(submitButton().enabled, isTrue);
+
+        await tester.tap(joinToggle(0));
+        await tester.pump();
+        expect(
+          joinSwitch().value,
+          isFalse,
+          reason:
+              'Tapping an active toggle must revert the row to undecided '
+              '(#2867 R24 tristate).',
+        );
+        expect(
+          submitButton().enabled,
+          isFalse,
+          reason:
+              'Reverting to undecided must re-disable Submit (#2867 R25).',
+        );
+      },
+    );
+
+    testWidgets(
+      'Join and Refuse are mutually exclusive within a row',
+      (WidgetTester tester) async {
+        await pumpOverlay(tester);
+
+        await tester.tap(find.text('Join'));
+        await tester.pump();
+        expect(tester.widget<CtToggleSwitch>(joinToggle(0)).value, isTrue);
+        expect(tester.widget<CtToggleSwitch>(refuseToggle(0)).value, isFalse);
+
+        await tester.tap(find.text('Refuse'));
+        await tester.pump();
+        expect(tester.widget<CtToggleSwitch>(joinToggle(0)).value, isFalse);
+        expect(tester.widget<CtToggleSwitch>(refuseToggle(0)).value, isTrue);
       },
     );
   });
