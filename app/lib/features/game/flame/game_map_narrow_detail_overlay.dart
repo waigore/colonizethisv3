@@ -12,6 +12,7 @@ import '../../../../providers/map_province_panel_provider.dart';
 import '../../../core/services/game_service.dart' show GameMapData;
 import 'game_map_area_state_logic.dart';
 import 'per_player_work_target_selection_cache.dart';
+import 'province_detail_panel_slide_transition.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
 /// Narrow-layout bottom sheet host; reads [mapProvincePanelProvider] only.
@@ -51,9 +52,6 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final panel = ref.watch(mapProvincePanelProvider);
     final draftOrders = ref.watch(currentOrdersProvider);
-    if (!panel.overlayOpen) {
-      return const SizedBox.shrink();
-    }
     final tileKey = panel.selectedTileKey;
     final displayId = tileKey == null || tileKey.isEmpty
         ? ''
@@ -63,8 +61,13 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
                   ) ??
                   displayProvinceOrSeaIdFromTileKey(tileKey)) ??
               '';
-    if (displayId.isEmpty) {
-      return const SizedBox.shrink();
+    final showPanel = panel.overlayOpen && displayId.isNotEmpty;
+    if (!showPanel) {
+      return ProvinceDetailPanelSlideTransition(
+        visible: false,
+        axis: ProvinceDetailPanelSlideAxis.bottom,
+        child: const SizedBox.shrink(),
+      );
     }
     GameMapData? mapData;
     try {
@@ -106,7 +109,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             playerView: playerView,
             workTargetSelectionCache: workTargetSelectionCache,
           );
-    return SizedBox(
+    final overlay = SizedBox(
       width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
       child: ProvinceSeaZoneDetailOverlay(
@@ -122,15 +125,15 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             .setSecondaryHighlight(k),
         onClose: () =>
             ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
-      showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
-      prospectActionEnabled: canMutateViaUi && prospectState.enabled,
-      showExploreActionIcon: canMutateViaUi && exploreState.showIcon,
-      exploreActionEnabled: canMutateViaUi && exploreState.enabled,
-      showBuildImprovementActionIcon:
-          canMutateViaUi && buildImprovementState.showIcon,
-      buildImprovementActionEnabled:
-          canMutateViaUi && buildImprovementState.enabled,
-      omniscientDetail: omniscientDetail,
+        showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
+        prospectActionEnabled: canMutateViaUi && prospectState.enabled,
+        showExploreActionIcon: canMutateViaUi && exploreState.showIcon,
+        exploreActionEnabled: canMutateViaUi && exploreState.enabled,
+        showBuildImprovementActionIcon:
+            canMutateViaUi && buildImprovementState.showIcon,
+        buildImprovementActionEnabled:
+            canMutateViaUi && buildImprovementState.enabled,
+        omniscientDetail: omniscientDetail,
         onExploreWithExplorerTap:
             exploreState.enabled && panel.selectedTileKey != null
             ? () {
@@ -209,6 +212,11 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
               }
             : null,
       ),
+    );
+    return ProvinceDetailPanelSlideTransition(
+      visible: true,
+      axis: ProvinceDetailPanelSlideAxis.bottom,
+      child: overlay,
     );
   }
 }
