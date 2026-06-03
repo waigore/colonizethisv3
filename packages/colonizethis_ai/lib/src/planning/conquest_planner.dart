@@ -114,6 +114,7 @@ Set<String> _invadableProvinceIdsForConquestPass({
       resolvePhaseConquestInvadable(
         phasePlan: phasePlan,
         snapshot: snapshot,
+        game: game,
       );
   final nwInvasionWeightFromPhasePlan = resolvePhaseConquestNwInvasionWeight(
     phasePlan: phasePlan,
@@ -141,6 +142,7 @@ Orders runConquestArmyMovePlanner({
     conquestResolution = resolvePhaseConquestInvadable(
       phasePlan: phasePlan,
       snapshot: snapshot,
+      game: ctx.game,
     );
     if (conquestResolution.skipConquestPass) {
       return ctx.orders;
