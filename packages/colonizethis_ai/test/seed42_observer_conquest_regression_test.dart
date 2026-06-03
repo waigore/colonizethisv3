@@ -78,12 +78,11 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509 S10: seed-42 turn-100 gate — gp1 now passes via the '
-        'EXPAND stalled-expansion own-territory frontier-march fix combined '
-        'with the planExpandDeclareWar per-arm treasury gate and the '
-        'planColonialPeace below-quota-peer exclusion (Refs #2509). '
-        'gp3/gp4/gp5/gp6 still below +3 OW vs turn-1 snapshot; remaining gap '
-        'tracks companion stalled-tuning slices (separate follow-up).',
+        'Partial AC #2509 S10 / #2847: seed-42 turn-100 gate — gp1/gp2 PASS '
+        '(+6 each). gp3 +2, gp4 +1, gp5 -7, gp6 +10 (post-PR #3179 EXPAND '
+        'colonial dispatch + World Market treasury recovery on dev, 2026-06-03 '
+        'S7-D refresh). gp3–gp5 still below ≥3 OW floor; Phase 2 weight '
+        'consumer wiring required before skip removal (Refs #2847).',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
