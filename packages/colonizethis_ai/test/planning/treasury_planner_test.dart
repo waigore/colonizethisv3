@@ -699,11 +699,14 @@ void main() {
     );
 
     test(
-      'prior-turn full fill rate lifts forecast above threshold and uses moderate offer priority',
+      'prior-turn full fill rate lifts forecast above threshold but keeps '
+      'urgent offer priority while treasury below threshold (Refs #2924 F16)',
       () {
-        // treasury (1000) is below the cheapest regiment cost (2000) but the
+        // treasury (1000) is below the cheapest regiment cost (2000); the
         // discounted forecast 1000 + 72 * 20 * 1.0 = 2440 clears the
-        // threshold, so the offer priority falls back to moderate.
+        // threshold, but F16 keys offer priority off actual treasury, so the
+        // optimistic forecast must NOT downgrade offers to the moderate tier
+        // while the GP is still broke (seed-42 gp5 stalled at 1999 otherwise).
         const treasury = 1000;
         final stockpile = const Stockpile().applyDelta('timber', 80);
         final game = _gameWithStockpile(
@@ -720,6 +723,13 @@ void main() {
             },
           ),
         );
+        expect(
+          treasury < cheapestRegimentBuildTreasuryCost(),
+          isTrue,
+          reason:
+              'Test premise: treasury must be below the regiment threshold so '
+              'F16 keeps the offer urgent despite the clearing forecast.',
+        );
         final orders = runTreasuryPlanner(
           game: game,
           playerId: 'gp1',
@@ -732,7 +742,7 @@ void main() {
               o.commodityId == CommodityCatalog.timber.id &&
               o.type == TradeOrderType.offer,
         );
-        expect(timberOffer.priority, kTreasuryOfferPriorityModerate);
+        expect(timberOffer.priority, kTreasuryOfferPriorityUrgent);
       },
     );
 
