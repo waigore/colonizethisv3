@@ -40,7 +40,7 @@ Widget _buildEconomicSection({
                 commodityId: resId,
                 labelStyle: TextStyle(color: EditorialMonoclePalette.fg),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: CtSpacing.m / 2),
               Expanded(
                 child: Text(
                   l10n.province_economic_resourceRow(
@@ -69,7 +69,7 @@ Widget _buildEconomicSection({
                 commodityId: resId,
                 labelStyle: TextStyle(color: EditorialMonoclePalette.muted),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: CtSpacing.m / 2),
               Expanded(
                 child: Text(
                   l10n.province_economic_resourceRow(

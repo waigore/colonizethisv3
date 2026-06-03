@@ -50,9 +50,11 @@ void main() {
       expect(source, contains('left: CtSpacing.m / 2'));
       expect(source, contains('bottom: CtSpacing.m'));
       expect(source, contains('SizedBox(height: CtSpacing.m / 2)'));
+      expect(source, contains('SizedBox(width: CtSpacing.m / 2)'));
       expect(source, isNot(contains('EdgeInsets.only(left: 4)')));
       expect(source, isNot(contains('EdgeInsets.only(bottom: 8)')));
       expect(source, isNot(contains('SizedBox(height: 4)')));
+      expect(source, isNot(contains('SizedBox(width: 4)')));
     });
 
     test('close button vertical padding uses CtSpacing.m / 2', () {
