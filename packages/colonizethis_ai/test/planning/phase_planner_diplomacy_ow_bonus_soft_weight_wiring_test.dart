@@ -4,7 +4,6 @@
 // OW-expansion declare-war addends via `declareWarOldWorldConquestScaledBonus`.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

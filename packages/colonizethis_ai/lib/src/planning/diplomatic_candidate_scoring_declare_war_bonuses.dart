@@ -181,7 +181,7 @@ int _declareWarExpansionAndColonialBonuses(
   return s;
 }
 
-int _declareWarAdjacencyAndStalledBonuses(
+int _declareWarAdjacentOwnerBonuses(
   _DeclareWarTargetContext ctx,
   int s,
 ) {
@@ -271,6 +271,14 @@ int _declareWarAdjacencyAndStalledBonuses(
       s += kDeclareWarLowWarLikelihoodAdjacentBonus;
     }
   }
+  return s;
+}
+
+int _declareWarAdjacencyAndStalledBonuses(
+  _DeclareWarTargetContext ctx,
+  int s,
+) {
+  s = _declareWarAdjacentOwnerBonuses(ctx, s);
   if (!ctx.isAdjacentOwner && ctx.stalledOwExpansion && ctx.ownsInvadableOwMinor) {
     s += _owConquestDeclareWarBonus(
       ctx,
