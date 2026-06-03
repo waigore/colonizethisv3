@@ -72,7 +72,7 @@ String? gpExpandDeclareWarTargetFromPhasePlan(PhasePlanOutcome outcome) {
 ///   - Non-COLONIAL phases never populate `colonialAcquisitionTarget`
 ///     (suppression matrix), so this adapter returns `null` structurally.
 String? gpColonialDeclareWarTargetFromPhasePlan(PhasePlanOutcome outcome) {
-  if (outcome.phase != ObserverGoalPhase.colonial) {
+  if (!phasePlanFullColonialOutputsActive(outcome)) {
     return null;
   }
   final target = outcome.colonialAcquisitionTarget;

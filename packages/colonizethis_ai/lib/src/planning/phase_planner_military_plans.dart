@@ -108,12 +108,8 @@ ExpandMilitaryPlan expandMilitaryPlanFromPhasePlan(PhasePlanOutcome outcome) {
 ColonialMilitaryPlan colonialMilitaryPlanFromPhasePlan(
   PhasePlanOutcome outcome,
 ) {
-  switch (outcome.phase) {
-    case ObserverGoalPhase.expand:
-    case ObserverGoalPhase.colonialLite:
-    case ObserverGoalPhase.develop:
-      return ColonialMilitaryPlan.defaultPlan;
-    case ObserverGoalPhase.colonial:
-      return outcome.colonialMilitaryPlan;
+  if (phasePlanFullColonialOutputsActive(outcome)) {
+    return outcome.colonialMilitaryPlan;
   }
+  return ColonialMilitaryPlan.defaultPlan;
 }

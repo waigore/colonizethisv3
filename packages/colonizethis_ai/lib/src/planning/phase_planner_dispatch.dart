@@ -308,6 +308,23 @@ class PhasePlanOutcome {
 /// The function is pure and deterministic — identical inputs always
 /// yield identical [PhasePlanOutcome] instances (Refs #2509 Must-have
 /// #7). It performs no I/O, no logging, and no order emission.
+/// Whether full-COLONIAL planner outputs on [outcome] may be consumed by
+/// orchestrator adapters (Refs #2847 EXPAND universal colonial dispatch).
+///
+/// [ObserverGoalPhase.colonialLite] stays excluded — the safeguard
+/// suppresses NW invasion transport and army moves per issue #2509.
+bool phasePlanFullColonialOutputsActive(PhasePlanOutcome outcome) {
+  switch (outcome.phase) {
+    case ObserverGoalPhase.colonial:
+      return true;
+    case ObserverGoalPhase.colonialLite:
+    case ObserverGoalPhase.develop:
+      return false;
+    case ObserverGoalPhase.expand:
+      return outcome.priorityWeights.newWorldAcquisition > 0.0;
+  }
+}
+
 PhasePlanOutcome runPhasePlanners({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -316,7 +333,11 @@ PhasePlanOutcome runPhasePlanners({
   final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
   switch (phase) {
     case ObserverGoalPhase.expand:
-      return _expandOutcome(game: game, snapshot: snapshot);
+      return _expandOutcome(
+        game: game,
+        snapshot: snapshot,
+        personalityId: personalityId,
+      );
     case ObserverGoalPhase.colonialLite:
       return _colonialLiteOutcome(game: game, snapshot: snapshot);
     case ObserverGoalPhase.colonial:
@@ -333,10 +354,23 @@ PhasePlanOutcome runPhasePlanners({
 PhasePlanOutcome _expandOutcome({
   required Game game,
   required AIWorldSnapshot snapshot,
+  String? personalityId,
 }) {
   final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
   final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
   final expandEconomyPlan = planExpandEconomy(game: game, snapshot: snapshot);
+  final priorityWeights = computePhasePriorityWeights(
+    snapshot: snapshot,
+    game: game,
+    expandEconomyPlan: expandEconomyPlan,
+  );
+  final colonial = priorityWeights.newWorldAcquisition > 0.0
+      ? _colonialPlannerBundle(
+          game: game,
+          snapshot: snapshot,
+          personalityId: personalityId,
+        )
+      : null;
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.expand,
     expandDeclareWarTargetFactionId: declareWarTarget,
@@ -354,11 +388,15 @@ PhasePlanOutcome _expandOutcome({
         expandFrontier.gpOnlyInvadableFrontierActive,
     expandPrimaryInvadableGpBlockerFactionId:
         expandFrontier.primaryInvadableGpBlockerFactionId,
-    priorityWeights: computePhasePriorityWeights(
-      snapshot: snapshot,
-      game: game,
-      expandEconomyPlan: expandEconomyPlan,
-    ),
+    colonialAcquisitionTarget: colonial?.acquisition,
+    colonialPeaceTargetFactionIdsSorted:
+        colonial?.peaceTargets ?? const <String>[],
+    colonialMilitaryPlan:
+        colonial?.military ?? ColonialMilitaryPlan.defaultPlan,
+    colonialNavalPlan: colonial?.naval ?? ColonialNavalPlan.defaultPlan,
+    colonialCivilianWorkOrders:
+        colonial?.civilian ?? const <WorkOrder>[],
+    priorityWeights: priorityWeights,
   );
 }
 
@@ -402,10 +440,16 @@ PhasePlanOutcome _colonialLiteOutcome({
   );
 }
 
-PhasePlanOutcome _colonialOutcome({
+({
+  ColonialAcquisitionTarget? acquisition,
+  List<String> peaceTargets,
+  ColonialMilitaryPlan military,
+  ColonialNavalPlan naval,
+  List<WorkOrder> civilian,
+}) _colonialPlannerBundle({
   required Game game,
   required AIWorldSnapshot snapshot,
-  required String? personalityId,
+  String? personalityId,
 }) {
   final acquisition = planColonialAcquisition(
     game: game,
@@ -417,27 +461,40 @@ PhasePlanOutcome _colonialOutcome({
           acquisition.method == AcquisitionMethod.declareWar)
       ? acquisition.targetFactionId
       : null;
+  return (
+    acquisition: acquisition,
+    peaceTargets: planColonialPeace(game: game, snapshot: snapshot),
+    military: planColonialMilitary(
+      game: game,
+      snapshot: snapshot,
+      colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+    ),
+    naval: planColonialNaval(
+      game: game,
+      snapshot: snapshot,
+      colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+    ),
+    civilian: planColonialCivilian(game: game, snapshot: snapshot),
+  );
+}
+
+PhasePlanOutcome _colonialOutcome({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required String? personalityId,
+}) {
+  final colonial = _colonialPlannerBundle(
+    game: game,
+    snapshot: snapshot,
+    personalityId: personalityId,
+  );
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.colonial,
-    colonialAcquisitionTarget: acquisition,
-    colonialPeaceTargetFactionIdsSorted: planColonialPeace(
-      game: game,
-      snapshot: snapshot,
-    ),
-    colonialMilitaryPlan: planColonialMilitary(
-      game: game,
-      snapshot: snapshot,
-      colonialDeclaredWarTargetFactionId: declaredColonialTarget,
-    ),
-    colonialNavalPlan: planColonialNaval(
-      game: game,
-      snapshot: snapshot,
-      colonialDeclaredWarTargetFactionId: declaredColonialTarget,
-    ),
-    colonialCivilianWorkOrders: planColonialCivilian(
-      game: game,
-      snapshot: snapshot,
-    ),
+    colonialAcquisitionTarget: colonial.acquisition,
+    colonialPeaceTargetFactionIdsSorted: colonial.peaceTargets,
+    colonialMilitaryPlan: colonial.military,
+    colonialNavalPlan: colonial.naval,
+    colonialCivilianWorkOrders: colonial.civilian,
     priorityWeights: computePhasePriorityWeights(
       snapshot: snapshot,
       game: game,

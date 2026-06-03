@@ -81,14 +81,10 @@ import 'phase_planner_dispatch.dart';
 /// `planColonialNaval`; the adapter never reorders list contents or
 /// substitutes a different plan instance.
 ColonialNavalPlan colonialNavalPlanFromPhasePlan(PhasePlanOutcome outcome) {
-  switch (outcome.phase) {
-    case ObserverGoalPhase.expand:
-    case ObserverGoalPhase.colonialLite:
-    case ObserverGoalPhase.develop:
-      return ColonialNavalPlan.defaultPlan;
-    case ObserverGoalPhase.colonial:
-      return outcome.colonialNavalPlan;
+  if (phasePlanFullColonialOutputsActive(outcome)) {
+    return outcome.colonialNavalPlan;
   }
+  return ColonialNavalPlan.defaultPlan;
 }
 
 /// Returns the phase-specific [ColonialLiteNavalPlan] tribe / minor
