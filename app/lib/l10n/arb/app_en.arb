@@ -2148,6 +2148,14 @@
   "@provinceOverlay_sectionNaval": {
     "description": "Province overlay section heading for naval details."
   },
+  "provinceOverlay_titleProvince": "Province",
+  "@provinceOverlay_titleProvince": {
+    "description": "Province overlay header title shown above the tab strip for a province."
+  },
+  "provinceOverlay_titleSeaZone": "Sea zone",
+  "@provinceOverlay_titleSeaZone": {
+    "description": "Province overlay header title shown above the tab strip for a sea zone."
+  },
   "gameSetup_title": "Game Setup",
   "@gameSetup_title": {
     "description": "Game setup screen title."

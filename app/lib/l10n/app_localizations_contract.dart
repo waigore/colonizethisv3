@@ -1200,6 +1200,12 @@ abstract class AppLocalizations {
   /// Province overlay section heading for naval details.
   String get provinceOverlay_sectionNaval;
 
+  /// Province overlay header title shown above the tab strip for a province.
+  String get provinceOverlay_titleProvince;
+
+  /// Province overlay header title shown above the tab strip for a sea zone.
+  String get provinceOverlay_titleSeaZone;
+
   /// Game setup screen title.
   String get gameSetup_title;
 

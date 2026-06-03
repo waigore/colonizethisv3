@@ -204,6 +204,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   }
 
   Widget _buildOverlayHeader(BuildContext context) {
+    final l10n = appL10n(context);
     return Padding(
       padding: const EdgeInsets.only(
         left: CtSpacing.ml,
@@ -214,7 +215,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              _isSeaZone(displayId) ? 'Sea zone' : 'Province',
+              _isSeaZone(displayId)
+                  ? l10n.provinceOverlay_titleSeaZone
+                  : l10n.provinceOverlay_titleProvince,
               style: _overlayTitleStyle(context),
             ),
           ),

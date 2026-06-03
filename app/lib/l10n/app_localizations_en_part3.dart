@@ -383,6 +383,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_sectionNaval => 'Naval';
 
   @override
+  String get provinceOverlay_titleProvince => 'Province';
+
+  @override
+  String get provinceOverlay_titleSeaZone => 'Sea zone';
+
+  @override
   String get gameSetup_title => 'Game Setup';
 
   @override
