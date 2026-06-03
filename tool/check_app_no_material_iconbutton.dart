@@ -22,10 +22,7 @@ import 'package:path/path.dart' as p;
 /// Skipped (whole-file path exclusions per repo-lint scope-only policy in
 /// `SPEC/program/repo-lint.md` § "Policy: no violation allowlists"):
 ///
-/// 1. **Dev-tooling screens** — `SYS10001` Debug Log Viewer
-///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) is an
-///    operator-only surface; implementing Ct-* catalog widgets there
-///    remains low-value (see #2914 Risks / edge cases). `SYS20001`
+/// 1. **Dev-tooling screens** — `SYS20001`
 ///    Debug Console Overlay
 ///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`)
 ///    was promoted out of the allowlist after migrating its close
@@ -160,7 +157,6 @@ const Set<String> _appNoMaterialIconButtonAllowedFiles = <String>{
   // adoption slice (see SPEC/ui/debug-console-panel.md § Visual chrome
   // and the dark editorial-monocle chrome tests in
   // app/test/debug_console_overlay_panel_test.dart).
-  'app/lib/features/debug_log/debug_log_viewer_screen.dart',
 };
 
 const Set<String> _appNoMaterialIconButtonAllowedDirPrefixes = <String>{

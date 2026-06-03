@@ -19,9 +19,9 @@
 // `game_initializing_320dp_min_viewport_test.dart`,
 // `game_screen_320dp_min_viewport_test.dart`) cover every other
 // player-app screen surface; this file extends that coverage to the
-// debug-log shell. The screen mounts a Material `Scaffold` whose body
-// stacks (top → bottom): an `AppBar` with title `Debug log` + trailing
-// close `Icons.close` button, a filter row hosted by a horizontal
+// debug-log shell. The screen mounts [CtScreenShell] whose body
+// stacks (top → bottom): a [CtTopBar] with title `Debug log` + leading
+// [CtBackButton] close affordance, a filter row hosted by a horizontal
 // `SingleChildScrollView` (package + level multi-select `CtChoiceChip`
 // rows — Refs #2914 S8 CtChoiceChip adoption), a 1 dp `Divider`, and an
 // expanding `ListView.builder` of
@@ -38,8 +38,8 @@
 //    overflow exception (which Flutter surfaces via
 //    `FlutterError.onError`) escapes the framework — the contract
 //    every sibling `*_320dp_min_viewport_test.dart` file relies on.
-//  * The `AppBar` title `Debug log` and the trailing close
-//    `Icons.close` button both render end-to-end so the layout
+//  * The `CtTopBar` title `Debug log` and the leading [CtBackButton]
+//    both render end-to-end so the layout
 //    actually exercises the debug-log shell at 320 dp rather than
 //    no-op'ing on an off-screen widget.
 //  * The package filter row mounts the default-selected `app`
@@ -66,6 +66,7 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -138,8 +139,8 @@ void main() {
     () {
       testWidgets(
         'AC (positive) DebugLogViewerScreen empty buffer @ 320×640: no '
-        'RenderFlex overflow exception, AppBar title `Debug log` + '
-        'trailing close icon + default-selected `app` package chip + '
+        'RenderFlex overflow exception, CtTopBar title `Debug log` + '
+        'leading CtBackButton + default-selected `app` package chip + '
         'default-selected `info`/`warning`/`error` level chips all '
         'render',
         (WidgetTester tester) async {
@@ -151,15 +152,15 @@ void main() {
             reason:
                 'SPEC/ui/mobile-adaptation.md § 7: DebugLogViewerScreen '
                 'must not emit a RenderFlex overflow exception at '
-                'kMinViewportWidth (320 dp). The Material `Scaffold` '
-                'chrome — AppBar (title + trailing close icon) above '
+                'kMinViewportWidth (320 dp). The `CtScreenShell` '
+                'chrome — CtTopBar (title + leading CtBackButton) above '
                 'the horizontal-scroll `SingleChildScrollView` filter '
                 'row + 1 dp Divider + expanding ListView body — must '
                 'lay out within the 320 dp column. The filter row '
                 'hosts package + level multi-select `CtChoiceChip` `Wrap`s '
                 "wrapped in a horizontal `SingleChildScrollView` so its "
                 'intrinsic width is not bound by the 320 dp viewport, '
-                'but the surrounding Scaffold + Divider + body chain '
+                'but the surrounding shell + Divider + body chain '
                 'must still respect the 320 dp horizontal budget.',
           );
 
@@ -172,14 +173,13 @@ void main() {
           // ignore: avoid_hardcoded_strings_in_widgets
           expect(find.text('Debug log'), findsOneWidget);
           expect(
-            find.byIcon(Icons.close),
+            find.byType(CtBackButton),
             findsOneWidget,
             reason:
-                'The AppBar trailing close `Icons.close` button must '
-                'remain mounted at 320 dp so the screen stays '
-                'dismissable on the minimum viewport (the side menu '
-                'flow is the primary mobile reach per '
-                'SPEC/program/debug-log-viewer.md § 4).',
+                'The CtTopBar leading CtBackButton must remain mounted '
+                'at 320 dp so the screen stays dismissable on the '
+                'minimum viewport (the side menu flow is the primary '
+                'mobile reach per SPEC/program/debug-log-viewer.md § 4).',
           );
 
           // SPEC/program/debug-log-viewer.md § 3 Filters pins the
@@ -230,7 +230,7 @@ void main() {
           expect(tester.takeException(), isNull);
           // ignore: avoid_hardcoded_strings_in_widgets
           expect(find.text('Debug log'), findsOneWidget);
-          expect(find.byIcon(Icons.close), findsOneWidget);
+          expect(find.byType(CtBackButton), findsOneWidget);
         },
       );
     },
