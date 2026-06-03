@@ -25,6 +25,10 @@ melos run run_observer_game -- [options]
 
 **Errors:** Diagnostics via `logger`; user-facing failures → **stderr** and non-zero exit; no raw stack traces by default (match `init_game`).
 
+## Full-AI setup (no post-init override)
+
+The observer always builds a **fully-AI** game **at init** by forcing `GameSetupConfig.humanGreatPowerSlotIndices = {}` (empty) regardless of any `--config` JSON or `--seed` override (see [game-setup-pipeline.md](game-setup-pipeline.md) § Human/AI slot assignment). Consequently every Great Power has `isHuman == false` and `aiControlByGpId[gpId] == true` from creation; the tool does **not** mutate `aiControlByGpId` after init. Snapshot player rollups therefore report `"isHuman": false` for every GP including `gp1`.
+
 ## Artifact layout
 
 Under `<output>/observer-traces/<gameId>/`:

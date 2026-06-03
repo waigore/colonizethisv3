@@ -13,12 +13,6 @@ import 'package_logger.dart';
 
 final _sessionLog = packageLogger('session');
 
-Game _greatPowersAiOnly(Game game) {
-  return game.copyWith(
-    aiControlByGpId: {for (final p in game.players) p.id: true},
-  );
-}
-
 /// Runs init + Full AI loop; writes traces, snapshots, and `run-summary.json`.
 /// Exit code 0 on success; non-zero on setup/resolve/export failure.
 Future<int> runObserverSession({
@@ -64,7 +58,11 @@ Future<int> runObserverSession({
     );
   }
 
-  Game game = _greatPowersAiOnly(init.game);
+  // Init already yields a fully-AI game because the observer forces
+  // `humanGreatPowerSlotIndices = {}` (see setup_config_parser.dart and
+  // SPEC/program/run_observer_game-tool.md § Full-AI setup). No post-init
+  // aiControlByGpId override is needed.
+  Game game = init.game;
   final traceRoot = '$outputRoot/observer-traces';
   final artifactBudget = minimalTraceMode
       ? ObserverArtifactBudget(capBytes: verifyArtifactCapBytes)

@@ -24,8 +24,11 @@ class GameSetupConfig {
     this.terrainVariation = 0.5,
     this.startingResources = const StartingResourcesConfig(),
     this.preferredInitialMapZoomMultiplier,
+    Set<int>? humanGreatPowerSlotIndices,
     Set<String>? initTownRoadWiringRegionIds,
-  }) : initTownRoadWiringRegionIds =
+  }) : humanGreatPowerSlotIndices =
+           humanGreatPowerSlotIndices ?? const {0},
+       initTownRoadWiringRegionIds =
            initTownRoadWiringRegionIds ?? const {'oldWorld'},
        assert(
          selectedGreatPowerIds.isNotEmpty,
@@ -94,6 +97,16 @@ class GameSetupConfig {
   /// Empty set disables. Default `{oldWorld}` — New World tribes are skipped unless
   /// wired explicitly. SPEC/game/capital-and-connectivity.md § Init town roads.
   final Set<String> initTownRoadWiringRegionIds;
+
+  /// Great Power **slot** indices (0-based, into [selectedGreatPowerIds] /
+  /// runtime `gp{i+1}`) that are **human-controlled** at creation. Default
+  /// `{0}` — slot 0 (`gp1`) is human and the rest are AI, reproducing the
+  /// prior hardcoded behavior byte-for-byte. An empty set creates a fully-AI
+  /// game (used by the Full-AI observer). Indices are validated against
+  /// `[0, greatPowerCount)` at init; out-of-range fails with
+  /// `human_slot_index_out_of_range`. SPEC/program/game-setup-pipeline.md
+  /// § Human/AI slot assignment.
+  final Set<int> humanGreatPowerSlotIndices;
 
   /// Default config for Phase 2.
   static final GameSetupConfig defaultConfig = GameSetupConfig();
