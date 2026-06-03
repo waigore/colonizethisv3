@@ -628,6 +628,35 @@ still fails the test.
   manual reformatting (mirrors the S7-D `S7D_DIAGNOSTIC_JSON_BEGIN/END`
   contract).
 
+## Seed-42 Path F lock-recovery acceptance (Refs #2924)
+
+The primary #2924 acceptance surface is the skipped integration regression
+`packages/colonizethis_ai/test/seed42_observer_world_market_lock_recovery_regression_test.dart`
+(~4 min, `dart test --run-skipped`). It exercises the same faithful Full-AI
+handoff as `support/faithful_full_ai_test_handoff.dart` (every GP
+`isHuman: false`, every GP AI-controlled) so diplomacy intervention does not
+pause the 100-turn loop.
+
+### Acceptance criteria (primary Path F — seed 42)
+
+- Given seed 42 and the faithful Full-AI handoff, when the 100-turn campaign
+  completes, then each of gp3, gp4, gp5, and gp6 falls below
+  `cheapestRegimentBuildTreasuryCost()` after turn 1, receives strictly
+  positive cumulative world-market seller credits, crosses back to treasury ≥
+  `cheapestRegimentBuildTreasuryCost()` at least once, and emits at least one
+  regiment `BuildUnitOrder` on a turn where pre-order treasury is already ≥
+  the threshold — with **no** affordability bypass at the validator boundary.
+- Given the same lock-recovery configuration but `treasury <
+  cheapestRegimentBuildTreasuryCost()`, when `suggestBuildOrders` runs for
+  regiments, then candidates remain empty (negative control — pinned in
+  `packages/colonizethis_logic/test/orders/order_suggestion_build_lock_recovery_affordability_guard_test.dart`
+  and `build_order_treasury_no_bypass_test.dart`).
+
+Secondary Path E (NW `declareWar` emission under the treasury-recovery
+override) is pinned separately in
+`seed42_observer_nw_lock_recovery_declare_war_regression_test.dart` and the
+unit tests in `phase-planner-architecture.md` § Path E.
+
 ## Out of scope for this SPEC slice
 
 The following remain under remaining `#2994` subtasks:
