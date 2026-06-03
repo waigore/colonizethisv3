@@ -112,6 +112,7 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -176,6 +177,34 @@ AIWorldSnapshot _colonialSnapshot({
     ),
     colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
     economy: const EconomySummary(),
+    relations: const {},
+  );
+}
+
+const ExpandEconomyPlan _nwTreasuryRecoveryOverridePlan = ExpandEconomyPlan(
+  forceCheapestRegimentBuild: true,
+  boostTreasuryRecoveryCargo: true,
+);
+
+const String _nwProvTribeA = 'newWorld|tribe1_a';
+
+AIWorldSnapshot _lockRecoveryBelowQuotaSnapshot({
+  required List<String> invadableNw,
+}) {
+  return AIWorldSnapshot(
+    playerId: _gp1,
+    threats: const ThreatSummary(atWarWith: [_tribe1]),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: 9,
+      provincesToVictory: 31,
+      invadableProvinceIdsSorted: const [],
+    ),
+    colonial: ColonialSummary(
+      invadableNewWorldProvinceIdsSorted: invadableNw,
+      newWorldProvincesOwned: 0,
+    ),
+    economy: const EconomySummary(treasury: 0),
     relations: const {},
   );
 }
@@ -926,6 +955,76 @@ void main() {
         plan.priorityTargetOwnerFactionIdsSorted,
         const <String>[_minor1, _tribe1],
         reason: 'Owner list also sorted ascending across the dedup set.',
+      );
+    });
+
+    group('Path E below-quota waiver (Refs #2924)', () {
+      test(
+        'treasury-recovery override emits NW transport destinations below quota',
+        () {
+          final game = _colonialGame(
+            newWorldProvinces: const [
+              Province(
+                id: _nwProvTribeA,
+                regionId: 'newWorld',
+                ownerId: _tribe1,
+              ),
+            ],
+            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          );
+          final snapshot = _lockRecoveryBelowQuotaSnapshot(
+            invadableNw: const [_nwProvTribeA],
+          );
+          expect(
+            planColonialNaval(
+              game: game,
+              snapshot: snapshot,
+              colonialDeclaredWarTargetFactionId: _tribe1,
+              expandEconomyPlan: _nwTreasuryRecoveryOverridePlan,
+            ),
+            ColonialNavalPlan(
+              priorityInvasionTransportProvinceIdsSorted: const [_nwProvTribeA],
+              priorityTargetOwnerFactionIdsSorted: const [_tribe1],
+            ),
+            reason:
+                'EXPAND universal colonial dispatch must honour the '
+                'treasury-recovery override by waiving the below-quota '
+                'outer guard so invasion-transport naval moves can '
+                'follow a declared tribal war target.',
+          );
+        },
+      );
+
+      test(
+        'below quota without override keeps defaultPlan regression guard',
+        () {
+          final game = _colonialGame(
+            newWorldProvinces: const [
+              Province(
+                id: _nwProvTribeA,
+                regionId: 'newWorld',
+                ownerId: _tribe1,
+              ),
+            ],
+            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          );
+          final snapshot = _lockRecoveryBelowQuotaSnapshot(
+            invadableNw: const [_nwProvTribeA],
+          );
+          expect(
+            planColonialNaval(
+              game: game,
+              snapshot: snapshot,
+              colonialDeclaredWarTargetFactionId: _tribe1,
+              expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+            ),
+            same(ColonialNavalPlan.defaultPlan),
+            reason:
+                'Without boostTreasuryRecoveryCargo the legacy '
+                'isBelowObserverConquestQuota guard must still block '
+                'NW naval plans for below-quota GPs.',
+          );
+        },
       );
     });
 

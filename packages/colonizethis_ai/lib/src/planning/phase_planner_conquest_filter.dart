@@ -16,6 +16,7 @@ library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import '../perception/perception_snapshot.dart';
 import 'colonial_phase_planner.dart' show ColonialMilitaryPlan;
 import 'expand_phase_planner.dart' show ExpandMilitaryPlan;
 import 'observer_goal_phase.dart';
@@ -56,19 +57,35 @@ class PhaseConquestInvadableResolution {
 /// resolutions (Refs #2509 Must-have #7).
 PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
   required PhasePlanOutcome phasePlan,
+  AIWorldSnapshot? snapshot,
 }) {
   if (phasePlan.phase == ObserverGoalPhase.develop) {
     return const PhaseConquestInvadableResolution(skipConquestPass: true);
   }
 
   final expandPlan = expandMilitaryPlanFromPhasePlan(phasePlan);
+  final colonialPlan = colonialMilitaryPlanFromPhasePlan(phasePlan);
+
+  final prioritizeColonialNwUnderLockRecovery = snapshot != null &&
+      isNwTreasuryRecoveryOverrideActive(
+        snapshot: snapshot,
+        expandEconomyPlan: phasePlan.expandEconomyPlan,
+      ) &&
+      colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty;
+
+  if (prioritizeColonialNwUnderLockRecovery) {
+    return PhaseConquestInvadableResolution(
+      phasePlanInvadableSorted:
+          colonialPlan.priorityDestinationProvinceIdsSorted,
+    );
+  }
+
   if (expandPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
     return PhaseConquestInvadableResolution(
       phasePlanInvadableSorted: expandPlan.priorityDestinationProvinceIdsSorted,
     );
   }
 
-  final colonialPlan = colonialMilitaryPlanFromPhasePlan(phasePlan);
   if (colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
     return PhaseConquestInvadableResolution(
       phasePlanInvadableSorted:

@@ -453,7 +453,13 @@ void main() {
             invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
             adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
           ),
-          economy: const EconomySummary(ownProvinceCount: 1),
+          // Non-zero treasury keeps this fixture out of the NW
+          // treasury-recovery override (isNwTreasuryRecoveryOverrideActive
+          // requires treasury == 0); this pins the *default* EXPAND
+          // OW-preference, not the lock-recovery NW prioritisation path
+          // (Refs #2924 Path E), which is covered separately in
+          // test/planning/phase_planner_conquest_wiring_test.dart.
+          economy: const EconomySummary(ownProvinceCount: 1, treasury: 500),
           relations: const {},
         );
         expect(
