@@ -9,11 +9,25 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Seed-42 Path F lock-recovery acceptance regression (Refs #2924).
 ///
-/// Pins the primary AC: after 100 Full-AI turns on seed 42, gp3–gp6 each
-/// cross `cheapestRegimentBuildTreasuryCost()` at least once from legitimate
-/// world-market seller credits (no affordability bypass).
+/// Pins the primary AC (owner clarification 2026-06-01): after 100 Full-AI
+/// turns on seed 42, gp3–gp6 each fall below
+/// `cheapestRegimentBuildTreasuryCost()` under the EXPAND geographic peer-war
+/// lock and then cross it again at least once from legitimate world-market
+/// seller credits (no affordability bypass). Crossing the threshold restores
+/// access to the unchanged build/affordability pipeline — the regiment build
+/// itself fires only when the GP is below regiment quota, which is not
+/// guaranteed for a GP held in the mutual-peace lock, so this regression pins
+/// the treasury-recovery AC the issue actually specifies rather than a
+/// build-count.
+///
+/// The run uses a faithful Full-AI handoff (every player `isHuman: false`,
+/// every GP AI-controlled) so the diplomacy intervention resolver auto-resolves
+/// AI interventions instead of pausing with
+/// `TurnResolutionPendingIntervention` (which only arises for human players).
 ///
 /// Skipped by default (~4 min). Re-run with `dart test --run-skipped` when
 /// the lock-recovery surface changes.
@@ -36,9 +50,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      var game = init.game.copyWith(
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 

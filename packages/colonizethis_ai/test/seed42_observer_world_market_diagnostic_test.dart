@@ -135,6 +135,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Great Power factionIds the diagnostic scopes to (`gp1..gp6`). Mirrors
 /// `kColonialPhaseEntryGreatPowerIds` in
 /// `seed42_observer_colonial_phase_entry_budget_test.dart` and the
@@ -334,9 +336,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      var game = init.game.copyWith(
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 

@@ -15,6 +15,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Seed-42 turn-100 EXPAND-arm S7-D diagnostic (Refs #2847).
 ///
 /// Per the issue's S7-D subtask, this test runs the 100-turn seed-42
@@ -39,6 +41,15 @@ import 'package:logger/logger.dart';
 /// was collected (per-GP phase count totals match turn count) — it
 /// does **not** pin any arm-fire counts so the diagnostic surface can
 /// move freely as the planner is tuned in subsequent slices.
+///
+/// The run uses a faithful Full-AI handoff (every player `isHuman: false`,
+/// every GP AI-controlled) so the diplomacy intervention resolver
+/// auto-resolves AI interventions instead of pausing with
+/// `TurnResolutionPendingIntervention` (which only arises for human players).
+/// Without this, gp1 (init default `isHuman: i == 0`) pauses the run the
+/// moment it becomes intervention-eligible, and the Step-0 lock-recovery
+/// metrics no longer reflect faithful full-AI observer semantics (Refs
+/// #2924, matching `seed42_observer_world_market_lock_recovery_regression_test`).
 ///
 /// ## S7-D findings (captured 2026-05-26)
 ///
@@ -297,9 +308,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      var game = init.game.copyWith(
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 
