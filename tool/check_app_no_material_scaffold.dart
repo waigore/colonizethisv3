@@ -27,9 +27,7 @@ import 'package:path/path.dart' as p;
 /// Skipped (whole-file path exclusions per repo-lint scope-only policy in
 /// `SPEC/program/repo-lint.md` § "Policy: no violation allowlists"):
 ///
-/// 1. **Dev-tooling screens** — `SYS10001` Debug Log Viewer
-///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) and
-///    `SYS20001` Debug Console Overlay
+/// 1. **Dev-tooling screens** — `SYS20001` Debug Console Overlay
 ///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`) are
 ///    operator-only surfaces; implementing Ct-* catalog widgets there is
 ///    low-value (see #2914 Risks / edge cases). The allowlist mirrors the
@@ -184,7 +182,6 @@ const Set<String> _appNoMaterialScaffoldAllowedFiles = <String>{
   // repo.app_no_material_alertdialog, and repo.app_no_material_textbutton
   // allowlists so the Material-widget ban family stays scope-uniform
   // across rules.
-  'app/lib/features/debug_log/debug_log_viewer_screen.dart',
   'app/lib/features/game/flame/debug_console_overlay_panel.dart',
 };
 

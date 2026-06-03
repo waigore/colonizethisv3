@@ -7,6 +7,7 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
+import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 /// Full-screen viewer for session logs with multiselect filters by package and level.
@@ -43,18 +44,10 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.debugLog_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-            tooltip: l10n.common_close,
-          ),
-        ],
-      ),
-      body: Column(
+    return CtScreenShell(
+      title: l10n.debugLog_title,
+      showBackButton: true,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildFilters(context),
