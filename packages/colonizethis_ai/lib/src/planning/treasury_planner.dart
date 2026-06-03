@@ -164,13 +164,14 @@ List<TradeOrder> runTreasuryPlanner({
         marketPrices: marketPrices,
         state: game.worldMarketState,
       );
-  final offerPriority = treasuryForecast < threshold
+  // Refs #2924 F13/F16: lock-recovery tier alignment keys off actual treasury,
+  // not the F8 offer-inflow forecast. An optimistic forecast must not downgrade
+  // offers to the moderate tier while the GP still holds less than a regiment
+  // build (seed-42 gp5 stalls at treasury 1999 when forecast >= 2000).
+  final lockRecoveryUrgent = brokeForLockRecovery;
+  final offerPriority = lockRecoveryUrgent || treasuryForecast < threshold
       ? kTreasuryOfferPriorityUrgent
       : kTreasuryOfferPriorityModerate;
-  // Refs #2924 F13: lock-recovery bid suppression uses actual treasury, not
-  // the F8 offer-inflow forecast, so an optimistic forecast cannot exit the
-  // "offers only" path while the GP still holds less than a regiment build.
-  final lockRecoveryUrgent = brokeForLockRecovery;
 
   final isLiquidityBuyer = isLockRecoveryLiquidityBuyer(
     game: game,

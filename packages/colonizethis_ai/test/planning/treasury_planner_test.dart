@@ -421,6 +421,52 @@ void main() {
           orders.where((o) => o.type == TradeOrderType.offer),
           isNotEmpty,
         );
+        for (final offer in orders.where((o) => o.type == TradeOrderType.offer)) {
+          expect(
+            offer.priority,
+            kTreasuryOfferPriorityUrgent,
+            reason: 'Refs #2924 F16: actual treasury below regiment threshold '
+                'must keep offers on the urgent tier even when F8 forecast '
+                'exceeds the threshold.',
+          );
+        }
+      },
+    );
+
+    test(
+      'broke GP keeps urgent offer tier at treasury 1999 when forecast clears '
+      'threshold (Refs #2924 F16)',
+      () {
+        final stockpile = const Stockpile().applyDelta('grain', 500);
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: 1999,
+          turnNumber: 1,
+        ).copyWith(
+          worldMarketState: WorldMarketState.withDefaultPrices(const {
+            'grain': 10,
+          }).copyWith(
+            lastTurnActivity: {
+              'grain': const MarketActivity(
+                totalBidQuantity: 0,
+                totalOfferQuantity: 100,
+                filledQuantity: 100,
+              ),
+            },
+          ),
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 1999,
+        );
+        final offers = orders.where((o) => o.type == TradeOrderType.offer);
+        expect(offers, isNotEmpty);
+        for (final offer in offers) {
+          expect(offer.priority, kTreasuryOfferPriorityUrgent);
+        }
       },
     );
 

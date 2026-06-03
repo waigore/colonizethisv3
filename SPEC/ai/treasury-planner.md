@@ -195,10 +195,12 @@ When at least one Great Power is broke (`player.treasury < cheapestRegimentBuild
 3. The designated buyer **removes** that commodity from `available` so it does not offer and bid the same commodity (validator mutual-exclusion rule 3).
 4. All broke GPs keep urgent offers on their surplus food; the designated buyer's bid at priority `2` matches those offers in the same tier. When the designated buyer is affluent its own `offerPriority` is moderate, but `forceBidPriority` overrides the emitted bid to `kTreasuryOfferPriorityUrgent` so tier alignment holds (Refs #2924 F12).
 5. Broke non-designated GPs **do not** emit deficit or speculative bids (their single `bidTypeCap` slot would target non-grain commodities that do not match the urgent grain offers). This suppression keys off **current** `player.treasury < cheapestRegimentBuildTreasuryCost()`, not the F8 offer-inflow forecast, so an optimistic forecast cannot resume deficit bidding while the GP is still broke (Refs #2924 F13). F1–F5 deficit bids resume once `treasuryForecast >= cheapestRegimentBuildTreasuryCost()`.
+6. **Offer priority follows actual treasury under lock recovery (Refs #2924 F16).** When `player.treasury < cheapestRegimentBuildTreasuryCost()`, emitted offers use `kTreasuryOfferPriorityUrgent` even when `treasuryForecast >= cheapestRegimentBuildTreasuryCost()`. Matching runs only within the same integer priority tier; downgrading to `kTreasuryOfferPriorityModerate` while still broke strands urgent minor/tribe bids (priority `2`) and stalls seller credits one unit below the regiment threshold (seed-42 gp5 at treasury `1999`).
 
-### Acceptance criteria (F13)
+### Acceptance criteria (F13 / F16)
 
 - Given `player.treasury < cheapestRegimentBuildTreasuryCost()` and `treasuryForecast >= cheapestRegimentBuildTreasuryCost()` for a non-designated GP, when `runTreasuryPlanner` runs, then it emits offers only (no bids).
+- Given the same fixture, when `runTreasuryPlanner` runs, then every emitted offer has `priority == kTreasuryOfferPriorityUrgent` (F16 tier alignment).
 
 The lock-recovery branch activates for the designated buyer even when its own `treasuryForecast >= cheapestRegimentBuildTreasuryCost()` (`isDesignatedLockRecoveryBuyer`), because the affluent buyer is providing buy-side liquidity for other broke GPs' urgent offers.
 
