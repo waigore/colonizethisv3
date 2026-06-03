@@ -296,19 +296,53 @@ String _improvementLabelForTileDetail({
   return '$base L$impLevel';
 }
 
+/// Human-readable region label for the province's `regionId`. Maps the two
+/// canonical world regions to their localized tab labels and falls back to
+/// the raw id for any other region (Refs #2865, SPEC § Province overlay
+/// content `Political / Economic / Naval`).
+@visibleForTesting
+String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
+  return switch (regionId) {
+    'oldWorld' => l10n.region_oldWorld,
+    'newWorld' => l10n.region_newWorld,
+    _ => regionId,
+  };
+}
+
+/// Whether [provinceId] is the capital province of any faction (player,
+/// minor nation, or tribe). Capital status is always-exact political intel
+/// (Refs #2865, SPEC § Province overlay content `Political / Economic /
+/// Naval`).
+@visibleForTesting
+bool provinceOverlayIsCapital(Game game, String provinceId) {
+  for (final p in game.players) {
+    if (p.capitalProvinceId == provinceId) return true;
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalProvinceId == provinceId) return true;
+  }
+  for (final t in game.tribes) {
+    if (t.capitalProvinceId == provinceId) return true;
+  }
+  return false;
+}
+
 Widget _buildPoliticalSection({
   required AppLocalizations l10n,
   required String name,
   required String ownerName,
+  required String regionLabel,
+  required bool isCapital,
 }) {
   // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
-  // tokens). Both body rows declare TextStyle.color explicitly via the
+  // tokens). Every body row declares TextStyle.color explicitly via the
   // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme owns
   // this surface and the section stops inheriting DefaultTextStyle /
   // Material bodyMedium colours. The helper is shared with the Tile
   // live-data rows (coordinates / terrain / civilian units) and the
   // sea-zone Political display-name row so every live-data body row stays
-  // in sync with one token source.
+  // in sync with one token source. Region and Capital are always-exact
+  // political intel, shown alongside Name / Owner regardless of fog.
   final bodyStyle = _fgBodyStyle();
   return _buildSection(
     l10n.provinceOverlay_sectionPolitical,
@@ -318,6 +352,13 @@ Widget _buildPoliticalSection({
       children: [
         Text(l10n.provinceOverlay_name(name), style: bodyStyle),
         Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
+        Text(l10n.provinceOverlay_region(regionLabel), style: bodyStyle),
+        Text(
+          isCapital
+              ? l10n.provinceOverlay_capitalYes
+              : l10n.provinceOverlay_capitalNo,
+          style: bodyStyle,
+        ),
       ],
     ),
   );
