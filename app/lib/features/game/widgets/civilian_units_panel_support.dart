@@ -278,18 +278,14 @@ class _UnitRow extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
-            ...allowed.map(
-              (target) => ListTile(
-                title: Text(
-                  _workTargetLabels[target] ?? target,
-                  style: TextStyle(
-                    color: available.contains(target)
-                        ? null
-                        : Theme.of(context).disabledColor,
-                  ),
-                ),
-                enabled: available.contains(target),
-                onTap: available.contains(target)
+            // Tappable work-target menu rows rendered without Material
+            // `ListTile` chrome (Refs #2914 S8): an `InkWell` provides the
+            // tap affordance, and the label muting reuses the theme
+            // `disabledColor` for unavailable targets.
+            ...allowed.map((target) {
+              final isAvailable = available.contains(target);
+              return InkWell(
+                onTap: isAvailable
                     ? () {
                         Navigator.of(ctx).pop();
                         bus.emit(const ClosePanelEvent());
@@ -303,8 +299,22 @@ class _UnitRow extends ConsumerWidget {
                         });
                       }
                     : null,
-              ),
-            ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: CtSpacing.l,
+                    vertical: CtSpacing.ml,
+                  ),
+                  child: Text(
+                    _workTargetLabels[target] ?? target,
+                    style: TextStyle(
+                      color: isAvailable
+                          ? null
+                          : Theme.of(context).disabledColor,
+                    ),
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       ),

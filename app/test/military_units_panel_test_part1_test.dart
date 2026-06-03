@@ -234,7 +234,12 @@ void main() {
             )
             .length;
         if (militaryCount > 0 || fleetCount > 0) {
-          expect(find.byType(ListTile), findsAtLeastNWidgets(1));
+          // Army/fleet entries surface their actions through the
+          // UnitsEntityActionRow composite (detail sub-rows no longer use
+          // Material ListTile chrome; Refs #2914 S8). The remaining ListTile
+          // in the tree, if any, belongs to the ExpansionTile header, not the
+          // migrated sub-rows — source-level ListTile usage is covered by the
+          // repo.app_no_material_listtile gate.
           expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
           expect(
             find.text('OLD WORLD').evaluate().isNotEmpty ||
@@ -344,6 +349,8 @@ void main() {
       // Army entries use ExpansionTile; subtitle includes "regiments ·".
       expect(find.textContaining('regiments ·'), findsAtLeastNWidgets(1));
       await expandAllArmyExpansions(tester);
+      // ExpansionTile headers render a framework ListTile; expanded regiment
+      // detail sub-rows use non-Material chrome (Refs #2914 S8).
       expect(find.byType(ListTile), findsAtLeastNWidgets(1));
     });
 
@@ -355,7 +362,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        if (find.byType(ListTile).evaluate().isEmpty) return;
+        // Skip when the panel has no unit content (armies → UnitsEntityActionRow,
+        // naval ship rows → "Status: …" subtitle). Detail rows no longer use
+        // Material ListTile chrome (Refs #2914 S8).
+        if (find.byType(UnitsEntityActionRow).evaluate().isEmpty &&
+            find.textContaining('Status:').evaluate().isEmpty) {
+          return;
+        }
         expect(find.textContaining(' — '), findsAtLeastNWidgets(1));
       },
     );
@@ -401,11 +414,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isNotEmpty) {
-        await tester.tap(listTiles.first);
-        await tester.pumpAndSettle();
-      }
+      // Locate-tap behavior on detail sub-rows is covered by the dedicated
+      // LocateMapTileEvent test; here we only assert the panel builds without a
+      // locate callback wired (Refs #2914 S8 migrated rows off Material
+      // ListTile chrome).
     });
 
     testWidgets('Train button emits train-military dialog open event', (

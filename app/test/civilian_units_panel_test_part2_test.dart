@@ -419,16 +419,19 @@ void main() {
         await tester.tap(assignButton.first);
         await tester.pumpAndSettle();
 
-        final enabledTargetTile = find.descendant(
+        // Work-target menu rows render through InkWell over palette-token
+        // chrome (Refs #2914 S8 — no Material ListTile); an enabled row has a
+        // non-null onTap.
+        final enabledTargetRow = find.descendant(
           of: find.byType(BottomSheet),
           matching: find.byWidgetPredicate(
-            (w) => w is ListTile && w.enabled == true,
+            (w) => w is InkWell && w.onTap != null,
           ),
         );
-        if (enabledTargetTile.evaluate().isEmpty) return;
-        final targetTile = tester.widget<ListTile>(enabledTargetTile.first);
-        expect(targetTile.onTap, isNotNull);
-        targetTile.onTap!();
+        if (enabledTargetRow.evaluate().isEmpty) return;
+        final targetRow = tester.widget<InkWell>(enabledTargetRow.first);
+        expect(targetRow.onTap, isNotNull);
+        targetRow.onTap!();
         await tester.pump();
         await tester.pumpAndSettle();
 

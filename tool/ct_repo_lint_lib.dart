@@ -13,6 +13,7 @@ import 'check_app_no_material_alertdialog.dart';
 import 'check_app_no_material_chip.dart';
 import 'check_app_no_material_filterchip.dart';
 import 'check_app_no_material_iconbutton.dart';
+import 'check_app_no_material_listtile.dart';
 import 'check_app_no_material_scaffold.dart';
 import 'check_app_no_material_switchlisttile.dart';
 import 'check_app_no_material_textbutton.dart';
@@ -868,6 +869,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppNoMaterialFilterChip(repoRoot);
     case 'repo.app_no_material_iconbutton':
       return runCheckAppNoMaterialIconButton(repoRoot);
+    case 'repo.app_no_material_listtile':
+      return runCheckAppNoMaterialListTile(repoRoot);
     case 'repo.app_no_material_switchlisttile':
       return runCheckAppNoMaterialSwitchListTile(repoRoot);
     case 'repo.app_no_material_textbutton':
