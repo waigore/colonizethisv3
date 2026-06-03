@@ -279,6 +279,30 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Mobile viewport',
+        builder: (context) => mobileViewport(
+          context,
+          _playerTurnEventFeedCardNarrowStoryFrame(
+            viewportWidth: 360,
+            child: const PlayerTurnEventFeedCard(
+              entries: [
+                PlayerTurnEventFeedEntry(
+                  // ignore: avoid_hardcoded_strings_in_widgets
+                  text: 'Castile completed Castle in Lisbon.',
+                ),
+                PlayerTurnEventFeedEntry(
+                  // ignore: avoid_hardcoded_strings_in_widgets
+                  text: 'England declared war on France.',
+                ),
+              ],
+              // ignore: avoid_hardcoded_strings_in_widgets
+              emptyLabel: 'No events this turn.',
+              narrow: true,
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Narrow (360 dp) — populated, clamp(180, 50vw, 260)',
         builder: (context) => _playerTurnEventFeedCardNarrowStoryFrame(
           viewportWidth: 360,
