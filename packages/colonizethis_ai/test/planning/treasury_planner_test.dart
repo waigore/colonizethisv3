@@ -421,6 +421,52 @@ void main() {
           orders.where((o) => o.type == TradeOrderType.offer),
           isNotEmpty,
         );
+        for (final offer in orders.where((o) => o.type == TradeOrderType.offer)) {
+          expect(
+            offer.priority,
+            kTreasuryOfferPriorityUrgent,
+            reason: 'Refs #2924 F16: actual treasury below regiment threshold '
+                'must keep offers on the urgent tier even when F8 forecast '
+                'exceeds the threshold.',
+          );
+        }
+      },
+    );
+
+    test(
+      'broke GP keeps urgent offer tier at treasury 1999 when forecast clears '
+      'threshold (Refs #2924 F16)',
+      () {
+        final stockpile = const Stockpile().applyDelta('grain', 500);
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: 1999,
+          turnNumber: 1,
+        ).copyWith(
+          worldMarketState: WorldMarketState.withDefaultPrices(const {
+            'grain': 10,
+          }).copyWith(
+            lastTurnActivity: {
+              'grain': const MarketActivity(
+                totalBidQuantity: 0,
+                totalOfferQuantity: 100,
+                filledQuantity: 100,
+              ),
+            },
+          ),
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 1999,
+        );
+        final offers = orders.where((o) => o.type == TradeOrderType.offer);
+        expect(offers, isNotEmpty);
+        for (final offer in offers) {
+          expect(offer.priority, kTreasuryOfferPriorityUrgent);
+        }
       },
     );
 
@@ -653,11 +699,14 @@ void main() {
     );
 
     test(
-      'prior-turn full fill rate lifts forecast above threshold and uses moderate offer priority',
+      'prior-turn full fill rate lifts forecast above threshold but keeps '
+      'urgent offer priority while treasury below threshold (Refs #2924 F16)',
       () {
-        // treasury (1000) is below the cheapest regiment cost (2000) but the
+        // treasury (1000) is below the cheapest regiment cost (2000); the
         // discounted forecast 1000 + 72 * 20 * 1.0 = 2440 clears the
-        // threshold, so the offer priority falls back to moderate.
+        // threshold, but F16 keys offer priority off actual treasury, so the
+        // optimistic forecast must NOT downgrade offers to the moderate tier
+        // while the GP is still broke (seed-42 gp5 stalled at 1999 otherwise).
         const treasury = 1000;
         final stockpile = const Stockpile().applyDelta('timber', 80);
         final game = _gameWithStockpile(
@@ -674,6 +723,13 @@ void main() {
             },
           ),
         );
+        expect(
+          treasury < cheapestRegimentBuildTreasuryCost(),
+          isTrue,
+          reason:
+              'Test premise: treasury must be below the regiment threshold so '
+              'F16 keeps the offer urgent despite the clearing forecast.',
+        );
         final orders = runTreasuryPlanner(
           game: game,
           playerId: 'gp1',
@@ -686,7 +742,7 @@ void main() {
               o.commodityId == CommodityCatalog.timber.id &&
               o.type == TradeOrderType.offer,
         );
-        expect(timberOffer.priority, kTreasuryOfferPriorityModerate);
+        expect(timberOffer.priority, kTreasuryOfferPriorityUrgent);
       },
     );
 
