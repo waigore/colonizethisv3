@@ -224,6 +224,68 @@ When every Great Power is below `treasuryAffluenceThreshold()` but at least one 
 
 ---
 
+## Lock-recovery seller food-surplus release (Refs #2924 F17)
+
+F17 closes the seed-42 **gp6** Path F gap where a below-quota zero-NW
+lock-recovery seller leaves its trade cargo idle for lack of offered food.
+The per-turn seller credit a broke GP can earn is bounded by how much of the
+liquidity-food commodity it ships into the net-positive minor/tribe auto-bid
+pool (F15: amplified `2×` notional plus
+`kLockRecoverySellerBonusPerLiquidityDeal`). On seed 42 the recovering GPs
+(`gp3`, `gp5`) hoard large grain stockpiles and saturate their cargo every
+turn, while `gp6` keeps only a small grain stockpile (~42) that rarely clears
+the default `2×` food safety reserve (`24` units), so it emits grain offers on
+only ~14 of 100 turns, never approaches its ~21-hold cargo ceiling, and its
+cumulative seller credit (~913) stays far below
+`cheapestRegimentBuildTreasuryCost()`.
+
+### Food safety buffer for lock-recovery sellers
+
+The F1–F5 surplus formula (§ Surplus / need maps) uses
+`safety = 2 × consumption` for food and `1 × consumption` for other
+categories. When the GP is a **below-quota zero-NW lock-recovery seller**
+(`_isBelowQuotaZeroNwLockRecoverySeller`: `oldWorldProvincesOwned >= 2`,
+`isBelowObserverConquestQuota(ow)`, and `newWorldProvincesOwned == 0`), the
+food safety buffer is **`0`**, so the food reserve collapses to
+`consumption + inputs` — one consumption cycle. The seller therefore offers
+all food beyond a single-cycle reserve, maximising the cargo it ships into the
+F15 minor/tribe liquidity instead of stranding surplus behind the precautionary
+buffer. Non-food safety buffers are unchanged, and the change applies only to
+lock-recovery sellers; every other GP keeps the `2×` food buffer. This is a
+sell-side throughput change only — no affordability rule is bypassed, and
+buyers/minors still debit per filled unit.
+
+### Determinism and budget
+
+The seller predicate and the buffer selection are pure functions of `game`,
+`playerId`, the `Stockpile`, and the static catalogs; identical inputs yield
+identical surplus maps. No hot-path logging is added; the per-turn cost is the
+existing `O(tracked commodities)` surplus pass.
+
+### Acceptance criteria (F17)
+
+- Given an AI Great Power that is a below-quota zero-NW lock-recovery seller
+  (`oldWorldProvincesOwned` in `[2, kObserverConquestMinOwProvincesPerGp)`,
+  `newWorldProvincesOwned == 0`) with `treasury == 0` and a grain stockpile of
+  `kShortageThreshold + 8` (`16`) and no production assignments, when
+  `runTreasuryPlanner` runs, then it emits at least one `TradeOrderType.offer`
+  for grain at `priority == kTreasuryOfferPriorityUrgent` (the `0` food safety
+  buffer yields a positive surplus of `8`).
+- Given an otherwise identical AI Great Power that is **not** a lock-recovery
+  seller (`oldWorldProvincesOwned == 1`) with the same `16`-unit grain
+  stockpile and `treasury == 0`, when `runTreasuryPlanner` runs, then it emits
+  **no** grain offer (the default `2×` food safety reserve of `24` exceeds the
+  stockpile, so surplus is non-positive — negative control).
+- Given a below-quota zero-NW lock-recovery seller with a non-food surplus
+  (e.g. `timber`) and the same fixture, when `runTreasuryPlanner` runs, then
+  the timber surplus is computed with the unchanged `1×` (non-food) safety
+  buffer (F17 only relaxes the food buffer).
+- Given identical inputs, when `runTreasuryPlanner` runs twice on the
+  lock-recovery seller path, then both runs return identical `List<TradeOrder>`
+  outputs (determinism).
+
+---
+
 ## Treasury-budget-aware bid sizing (Refs #3122)
 
 After the world-market matcher began clamping bid fills to per-buyer

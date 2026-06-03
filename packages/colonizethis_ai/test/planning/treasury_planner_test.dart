@@ -51,6 +51,44 @@ Game _gameWithStockpile({
   );
 }
 
+/// Builds a single-GP game where `gp1` is a below-quota zero-NW lock-recovery
+/// seller (`oldWorldProvincesOwned == owProvinces` in `[2, 10)`, no NW
+/// provinces) for the F17 food-surplus-release tests (Refs #2924).
+Game _lockRecoverySellerGame({
+  required Stockpile stockpile,
+  required int treasury,
+  int owProvinces = 3,
+}) {
+  const ow = 'oldWorld';
+  return Game(
+    id: 'g-lock-recovery-seller-f17',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 0; i < owProvinces; i++)
+            Province(id: '$ow|p1_$i', regionId: ow, ownerId: 'gp1'),
+        ],
+      ),
+      newWorld: const RegionData(),
+    ),
+    players: [
+      Player(
+        id: 'gp1',
+        displayName: 'GP1',
+        isHuman: false,
+        capitalProvinceId: '$ow|p1_0',
+        stockpile: stockpile,
+        treasury: treasury,
+      ),
+    ],
+    worldMarketState: WorldMarketState.withDefaultPrices(const {
+      'grain': 10,
+      'timber': 20,
+    }),
+  );
+}
+
 void main() {
   group('runTreasuryPlanner (Refs #2994)', () {
     test(
@@ -538,6 +576,108 @@ void main() {
         stockpile: stockpile,
         productionAssignments: const [],
         treasury: 10,
+      );
+      expect(a, b);
+    });
+  });
+
+  group('lock-recovery seller food-surplus release (Refs #2924 F17)', () {
+    test(
+      'below-quota zero-NW seller releases food above one consumption cycle',
+      () {
+        // grain reserve for the seller is consumption (8) with the 2x safety
+        // buffer dropped, so grain 16 yields surplus 8 -> an urgent offer.
+        final stockpile = const Stockpile().applyDelta('grain', 16);
+        final game = _lockRecoverySellerGame(stockpile: stockpile, treasury: 0);
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 0,
+        );
+        final grainOffers = orders
+            .where(
+              (o) => o.type == TradeOrderType.offer && o.commodityId == 'grain',
+            )
+            .toList();
+        expect(
+          grainOffers,
+          isNotEmpty,
+          reason: 'F17: a broke lock-recovery seller drops the 2x food safety '
+              'buffer so grain above one consumption cycle is offered.',
+        );
+        expect(grainOffers.first.priority, kTreasuryOfferPriorityUrgent);
+        expect(grainOffers.first.quantity, greaterThan(0));
+      },
+    );
+
+    test(
+      'seller food reserve floor equals one consumption cycle (no offer at 8)',
+      () {
+        // grain 8 == consumption: surplus 0, so no offer. This pins the food
+        // reserve at exactly `consumption` (safety buffer == 0) for sellers,
+        // distinguishing F17 from the 1x (reserve 16) and 2x (reserve 24)
+        // buffers.
+        final stockpile = const Stockpile().applyDelta('grain', 8);
+        final game = _lockRecoverySellerGame(stockpile: stockpile, treasury: 0);
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 0,
+        );
+        expect(
+          orders.where(
+            (o) => o.type == TradeOrderType.offer && o.commodityId == 'grain',
+          ),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'non-seller GP keeps the 2x food safety buffer (negative control)',
+      () {
+        // gp1 owns a single OW province -> not a lock-recovery seller. grain 16
+        // is below the 2x reserve (24), so no offer is emitted.
+        final stockpile = const Stockpile().applyDelta('grain', 16);
+        final game = _gameWithStockpile(stockpile: stockpile, treasury: 0);
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 0,
+        );
+        expect(
+          orders.where(
+            (o) => o.type == TradeOrderType.offer && o.commodityId == 'grain',
+          ),
+          isEmpty,
+          reason: 'A non-seller GP retains the 2x food safety buffer, so grain '
+              '16 < reserve 24 yields no surplus offer.',
+        );
+      },
+    );
+
+    test('seller food-release path is deterministic', () {
+      final stockpile = const Stockpile().applyDelta('grain', 20);
+      final game = _lockRecoverySellerGame(stockpile: stockpile, treasury: 0);
+      final a = runTreasuryPlanner(
+        game: game,
+        playerId: 'gp1',
+        stockpile: stockpile,
+        productionAssignments: const [],
+        treasury: 0,
+      );
+      final b = runTreasuryPlanner(
+        game: game,
+        playerId: 'gp1',
+        stockpile: stockpile,
+        productionAssignments: const [],
+        treasury: 0,
       );
       expect(a, b);
     });
