@@ -9,6 +9,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Seed-42 Path F lock-recovery acceptance regression (Refs #2924).
 ///
 /// Pins the primary AC (owner clarification 2026-06-01): after 100 Full-AI
@@ -48,20 +50,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      // Refs #2924: faithful Full-AI handoff — clear `isHuman` on every player
-      // and enable AI control for all GPs, mirroring the observe-mode handoff
-      // (`ObserveSessionController.applyObserveHandoffIfNeeded` full-AI branch).
-      // Leaving gp1 (init default `isHuman: i == 0`) human makes the run pause
-      // with a `TurnResolutionPendingIntervention` the moment gp1 becomes
-      // eligible to intervene in a minor/tribe war (the diplomacy intervention
-      // resolver only auto-resolves for AI players); a full-AI acceptance run
-      // must auto-resolve every intervention.
-      var game = init.game.copyWith(
-        players: [
-          for (final p in init.game.players) p.copyWith(isHuman: false),
-        ],
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 

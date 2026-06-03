@@ -42,6 +42,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Mirrors `kObserverColonialMinImprovementRatio` from
 /// `tool/run_observer_game/lib/observer_colonial_verify.dart`. Kept as a
 /// duplicate constant to avoid an `ai → tool` package dependency.
@@ -84,9 +86,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      var game = init.game.copyWith(
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 

@@ -44,6 +44,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Per-GP COLONIAL phase-entry budget for the seed-42 turn-150 observer
 /// campaign per #2848 § "COLONIAL phase timeline budget". A first-COLONIAL
 /// turn (zero-based) at or below this value satisfies the budget; above
@@ -95,9 +97,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      var game = init.game.copyWith(
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 

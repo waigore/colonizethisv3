@@ -15,6 +15,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Seed-42 turn-100 EXPAND-arm S7-D diagnostic (Refs #2847).
 ///
 /// Per the issue's S7-D subtask, this test runs the 100-turn seed-42
@@ -306,21 +308,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      // Refs #2924: faithful Full-AI handoff — clear `isHuman` on every player
-      // and enable AI control for all GPs, mirroring the observe-mode handoff
-      // (`ObserveSessionController.applyObserveHandoffIfNeeded` full-AI branch)
-      // and matching `seed42_observer_world_market_lock_recovery_regression_test`.
-      // Leaving gp1 (init default `isHuman: i == 0`) human makes the run pause
-      // with a `TurnResolutionPendingIntervention` the moment gp1 becomes
-      // eligible to intervene in a minor/tribe war (the diplomacy intervention
-      // resolver only auto-resolves for AI players), so the Step-0 diagnostic
-      // metrics would not reflect faithful full-AI observer semantics.
-      var game = init.game.copyWith(
-        players: [
-          for (final p in init.game.players) p.copyWith(isHuman: false),
-        ],
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 
