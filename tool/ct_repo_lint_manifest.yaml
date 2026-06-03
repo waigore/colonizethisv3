@@ -329,6 +329,13 @@ rules:
     runner: dart
     script: tool/check_app_editorial_monocle_colors.dart
 
+  - rule_id: repo.app_textstyle_fontsize_fallback
+    group: ui_structure
+    title: "app/lib/features and app/lib/widgets themed-text fallbacks must size to the canonical TextTheme slot (Refs #2914 S7)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_textstyle_fontsize_fallback.dart
+
   - rule_id: repo.app_no_material_iconbutton
     group: ui_structure
     title: "app/lib/features must use CtIconAction instead of Material IconButton (Refs #2914 G2)"
