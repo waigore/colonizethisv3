@@ -7,6 +7,7 @@ import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
+import 'phase_priority_weights.dart';
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 import '../util/faction_query.dart';
@@ -529,6 +530,45 @@ double _stalledExpansionArmyMoveScoreDelta({
   return -0.95;
 }
 
+/// NW-invadable army-move bonus contribution for the conquest destination
+/// scorer (Refs #2847 Phase 2 conquest NW-invasion sign migration).
+///
+/// A **below-quota** GP normally pays a **negative** NW-invadable bonus so the
+/// early-game OW conquest sprint stays dominant. But once a § Resource-need
+/// override has lifted the dispatched `newWorldAcquisition` weight to/above
+/// [kPhasePriorityNwInvadablePursuitWeightThreshold], the GP is electing to
+/// pursue NW provinces for treasury income (requirement clarification #3 —
+/// "resource-need overrides bypass phase priority; the AI pursues NW provinces
+/// *because* it needs income to fund OW conquest"). Below quota, only the
+/// treasury-recovery (`0.60`) and zero-regiment (`0.30`) override floors reach
+/// that threshold; the ordinary curve plateau peaks at `0.20` at OW = 9, so it
+/// never trips it. The bonus then flips **positive** so the weight biases the
+/// field army *toward* the NW income foothold instead of repelling it (the
+/// prior unconditional below-quota negation inverted the override, leaving
+/// treasury-locked below-quota GPs unable to reach the NW foothold the
+/// override exists to unlock).
+///
+/// At or above the OW conquest quota ([belowQuota] is `false`) the bonus is
+/// always positive — the early-sprint penalty applies only below quota — so
+/// healthy expanding GPs are unaffected and the magnitude scales continuously
+/// with [nwInvasionWeight].
+///
+/// Pure and deterministic — identical `(belowQuota, nwInvasionWeight)` inputs
+/// always yield the same `double` (Refs #2509 Must-have #7). Callers gate the
+/// `nwInvasionWeight <= 0.0` legacy hard-suppress case (zeroed destination)
+/// before invoking this helper.
+double conquestNwInvadableArmyMoveBonus({
+  required bool belowQuota,
+  required double nwInvasionWeight,
+}) {
+  final pursueNwForResourceNeed =
+      nwInvasionWeight >= kPhasePriorityNwInvadablePursuitWeightThreshold;
+  final signedBonus = (belowQuota && !pursueNwForResourceNeed)
+      ? -kConquestArmyMoveNwInvadableBonus
+      : kConquestArmyMoveNwInvadableBonus;
+  return signedBonus * nwInvasionWeight;
+}
+
 double _scoreArmyMoveDestination({
   required ArmyMoveOrder move,
   required String nationId,
@@ -600,12 +640,12 @@ double _scoreArmyMoveDestination({
     if (nwInvasionWeight <= 0.0) {
       return 0;
     }
-    final nwBonus = isBelowObserverConquestQuota(
-      snapshot.conquest.oldWorldProvincesOwned,
-    )
-        ? -kConquestArmyMoveNwInvadableBonus
-        : kConquestArmyMoveNwInvadableBonus;
-    score += nwBonus * nwInvasionWeight;
+    score += conquestNwInvadableArmyMoveBonus(
+      belowQuota: isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ),
+      nwInvasionWeight: nwInvasionWeight,
+    );
   }
   if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
     score += 8;
