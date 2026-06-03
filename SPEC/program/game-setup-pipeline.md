@@ -6,11 +6,22 @@ Orchestrates game creation from config through map generation, province/capital 
 
 ## Data Model
 
-- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor, **`infiniteMode`** (`bool`, default **false** — when true, copied to `Game.infiniteMode` at creation; bypasses calendar year-1800 halt per [turn-time-mapping.md](../game/turn-time-mapping.md)), **`initTownRoadWiringRegionIds`** (`Set<String>`, default **`{oldWorld}`**), and optional **`preferredInitialMapZoomMultiplier`** (`double?`, fit-relative `m`): regions where §7d.bis runs town→capital init roads on owned tiles; empty disables; include **`newWorld`** only if NW init wiring is desired. Old/New World province painting uses the **locked province assigner** (see [locked-province-assigner.md](locked-province-assigner.md)); there is **no** separate “fair assignment” flag and **no** post-pass GP land connectivity repair. For fresh campaign setup, if `preferredInitialMapZoomMultiplier` is null the setup seeds `Game.mapViewState.zoomMultiplier = 4.0`; if set, setup uses that preferred value. In both cases setup clamps to the shared fit-relative band `[0.5, 8.0]`. **current product:** Values come from program defaults and optional CLI/API JSON per [init-game-tool.md](init-game-tool.md); there is **no** Base → Difficulty → Scenario JSON merge yet (deferred per [ruleset-config.md](../game/ruleset-config.md) / #57 / #58). **Future:** Same fields resolved from ruleset merge as in ruleset-config.
+- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor, **`humanGreatPowerSlotIndices`** (`Set<int>`, default **`{0}`** — see § Human/AI slot assignment), **`infiniteMode`** (`bool`, default **false** — when true, copied to `Game.infiniteMode` at creation; bypasses calendar year-1800 halt per [turn-time-mapping.md](../game/turn-time-mapping.md)), **`initTownRoadWiringRegionIds`** (`Set<String>`, default **`{oldWorld}`**), and optional **`preferredInitialMapZoomMultiplier`** (`double?`, fit-relative `m`): regions where §7d.bis runs town→capital init roads on owned tiles; empty disables; include **`newWorld`** only if NW init wiring is desired. Old/New World province painting uses the **locked province assigner** (see [locked-province-assigner.md](locked-province-assigner.md)); there is **no** separate “fair assignment” flag and **no** post-pass GP land connectivity repair. For fresh campaign setup, if `preferredInitialMapZoomMultiplier` is null the setup seeds `Game.mapViewState.zoomMultiplier = 4.0`; if set, setup uses that preferred value. In both cases setup clamps to the shared fit-relative band `[0.5, 8.0]`. **current product:** Values come from program defaults and optional CLI/API JSON per [init-game-tool.md](init-game-tool.md); there is **no** Base → Difficulty → Scenario JSON merge yet (deferred per [ruleset-config.md](../game/ruleset-config.md) / #57 / #58). **Future:** Same fields resolved from ruleset merge as in ruleset-config.
 - **Effective seed:** if `config.seed ≠ 0`, use directly; if 0 or absent, derive from `DateTime.now().millisecondsSinceEpoch`. **Shared API:** `resolveEffectiveSetupSeed(config.seed)` in `packages/colonizethis_logic/lib/src/setup/effective_setup_seed.dart` (used by `runInitGame` and app `GameService` so CLI and shell agree).
 - **Game / WorldState:** RegionData per region (OW, NW), Province list (id, regionId, ownerId), faction records (Players, Minor Nations, Tribes).
 - **InitGameResult:** Game, mapPngBytes, markdown, InitGameMapViewData, tileMapByRegion, topologyByRegion, **warpLinks**, combinedTopology (or equivalent for cross-region sea paths). Warp links are produced in step 4 and consumed when building combined topology / connectivity.
 - **Province identity:** Province ids in Game, WorldState, InitGameResult, and capital/town assignment use the prefixed form (`regionId|localId`); topology and map lookups during setup are per-region. See [world-model-identity.md](../game/world-model-identity.md).
+
+## Human/AI slot assignment
+
+`GameSetupConfig.humanGreatPowerSlotIndices` (`Set<int>`, default **`{0}`**) selects which Great Power **slots** are human-controlled at creation. A slot index `i` is 0-based into `selectedGreatPowerIds` (runtime Player id `gp{i+1}`).
+
+- A slot `i` is **human** iff `humanGreatPowerSlotIndices.contains(i)`; otherwise it is **AI**.
+- `_buildInitialGame` sets `Player.isHuman = humanGreatPowerSlotIndices.contains(i)` and keeps `aiControlByGpId[gpId] = !isHuman` for every GP so the two stay consistent (no half-measures). `isAiControlled` honors `aiControlByGpId` first (see [ai-control](../game/factions.md)).
+- **Default `{0}`** reproduces current behavior exactly: slot 0 (`gp1`) human, `gp2…gpN` AI; for a fixed seed init output is byte-for-byte unchanged from before this field existed (the field does not advance RNG).
+- **Empty set `{}`** = fully AI (no human player); used by `run_observer_game` so observer snapshots report every GP `"isHuman": false`.
+- **Validation:** every index must satisfy `0 <= i < greatPowerCount`; an out-of-range or negative index makes `runInitGame` throw `SetupConfigConstraintException` with stable code **`human_slot_index_out_of_range`** and produce **no** game. An empty set is valid (all AI).
+- The player-app new-game flow keeps the default `{0}` (one human, slot 0); see [game-setup.md](../game/game-setup.md) and the UI contract in `SPEC/ui/game-setup.md` (unchanged).
 
 ## Algorithm / Flow
 
@@ -165,3 +176,19 @@ These criteria are implemented and covered by automated tests where noted.
 - Given the `init_game` CLI runs with `--output-markdown <file>`, `--output-map <file>`, `--output-game <dir>`, and **without** `--no-save`, using flags that yield a valid small game (e.g. reduced province counts)  
   When the process exits with code `0`  
   Then the markdown file contains `# Game Setup` and `## Faction Setup`, the map PNG file has length greater than zero, and the game directory contains at least one Hive artifact (`tool/init_game/test/cli_artifacts_test.dart`).
+
+- Given a `GameSetupConfig` whose `humanGreatPowerSlotIndices` is omitted (defaulted)  
+  When `runInitGame` creates the game  
+  Then exactly one player has `isHuman == true` (slot 0 / `gp1`) and `aiControlByGpId` equals `{gp1:false, gp2:true, …, gpN:true}`, identical to the prior hardcoded behavior.
+
+- Given a `GameSetupConfig` whose `humanGreatPowerSlotIndices` is the empty set `{}`  
+  When `runInitGame` creates the game  
+  Then every Great Power player has `isHuman == false` and `aiControlByGpId[gpId] == true` for every GP.
+
+- Given a `GameSetupConfig` whose `humanGreatPowerSlotIndices == {2}` and `greatPowerCount >= 3`  
+  When `runInitGame` creates the game  
+  Then only slot index 2 (`gp3`) has `isHuman == true` and `aiControlByGpId['gp3'] == false`, while every other GP has `isHuman == false` and `aiControlByGpId == true`.
+
+- Given a `GameSetupConfig` whose `humanGreatPowerSlotIndices` contains an index `< 0` or `>= greatPowerCount`  
+  When `runInitGame` runs  
+  Then The System throws `SetupConfigConstraintException` with stable code `human_slot_index_out_of_range` and does not produce a `Game`.

@@ -669,7 +669,10 @@ ProviderScope _tradeScreenDealBookProviderScope({
 }) {
   final Game game =
       _tradeScreenDealBookStoryGame(worldMarketState: worldMarketState);
-  final Player player = game.players.firstWhere((p) => p.isHuman);
+  final Player player = game.players.firstWhere(
+    (p) => p.isHuman,
+    orElse: () => game.players.first,
+  );
   return ProviderScope(
     overrides: [
       appEventBusProvider.overrideWith((ref) {
