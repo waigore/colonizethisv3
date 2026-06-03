@@ -2053,6 +2053,23 @@
       }
     }
   },
+  "provinceOverlay_region": "Region: {region}",
+  "@provinceOverlay_region": {
+    "description": "Political section region row (Old World / New World label).",
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_capitalYes": "Capital: Yes",
+  "@provinceOverlay_capitalYes": {
+    "description": "Political section capital row when the province is the capital of its owning faction."
+  },
+  "provinceOverlay_capitalNo": "Capital: No",
+  "@provinceOverlay_capitalNo": {
+    "description": "Political section capital row when the province is not a faction capital."
+  },
   "provinceOverlay_indentedCount": "  {label}: {count}",
   "@provinceOverlay_indentedCount": {
     "description": "Indented count line used in military summary lists.",
