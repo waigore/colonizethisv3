@@ -69,7 +69,7 @@ abstract final class TradeOrderRejectionReasons {
 /// the `Game` directly — keeping it pure makes it trivially reusable from
 /// the order engine, AI planner, and tests without mocking.
 class TradeOrderValidationContext {
-  const TradeOrderValidationContext({
+  TradeOrderValidationContext({
     required this.playerId,
     required this.bidTypeCap,
     required this.tradeCargoCapacity,

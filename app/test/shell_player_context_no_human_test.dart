@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
@@ -40,6 +41,8 @@ ShellPlayerContext _noHumanShell() {
 }
 
 void main() {
+  suppressLogsForTests();
+
   group('shell helpers tolerate zero human players (Refs #3176)', () {
     test('mapPlayerIdFor falls back to first player and does not throw', () {
       final game = _allAiGame();
