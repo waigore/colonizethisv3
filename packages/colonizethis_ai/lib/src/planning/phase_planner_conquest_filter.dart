@@ -214,12 +214,12 @@ double resolvePhaseConquestNwInvasionWeight({
 /// scaffolding).
 ///
 /// Companion to [resolvePhaseConquestNwInvasionWeight]; the two
-/// resolvers form the OW/NW weight pair that future Phase 3
-/// consumer-wiring slices will multiply into the conquest scoring
-/// passes. The booleans
+/// resolvers form the OW/NW weight pair consumed by
+/// `_scoreArmyMoveDestination` via [conquestOldWorldArmyMoveScaledBonus]
+/// and [conquestNwInvadableArmyMoveBonus]. The booleans
 /// [resolvePhaseConquestColonialPressureActive] and
 /// [resolvePhaseConquestExtraPassesActive] remain the production
-/// source of truth for the scoring/extra-pass decisions in this slice.
+/// source of truth for extra-pass decisions until Phase 4 alignment.
 ///
 /// Pure and deterministic (Refs #2509 Must-have #7). Reads only
 /// `phasePlan.priorityWeights`.
