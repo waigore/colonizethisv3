@@ -153,8 +153,10 @@ List<Widget> _buildTileRoadLabelWidgets({
   if (roadLevel == null) {
     return [Text(l10n.provinceOverlay_tileRoadNone, style: _fgBodyStyle())];
   }
-  final roadCaptionStyle = TextStyle(
-    fontSize: 11,
+  final theme = Theme.of(context);
+  final roadCaptionStyle = (theme.textTheme.labelSmall ??
+          const TextStyle(fontSize: 11))
+      .copyWith(
     height: 1.25,
     color: EditorialMonoclePalette.muted,
   );
@@ -208,7 +210,7 @@ Widget _economicHoverRow({
     onEnter: (_) => onHighlightTile?.call(tileKey),
     onExit: (_) => onHighlightTile?.call(null),
     child: Padding(
-      padding: const EdgeInsets.only(left: 4, top: 2),
+      padding: const EdgeInsets.only(left: CtSpacing.m / 2, top: CtSpacing.xs),
       child: child,
     ),
   );
@@ -578,14 +580,14 @@ Province? _findProvince(Game game, String provinceId) {
 // underline beneath the tab strip.
 Widget _buildSection(String title, Widget child) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.only(bottom: CtSpacing.ml),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (title.isNotEmpty) ...[
           CtSectionLabel(title),
-          const SizedBox(height: 4),
+          SizedBox(height: CtSpacing.m / 2),
         ],
         child,
       ],
