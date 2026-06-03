@@ -13,6 +13,7 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 const int _kNumSlots = 6;
@@ -227,24 +228,24 @@ class _NewGameLeaderSelectionDialogState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(l10n, styles),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: slotWidgets,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           _buildSeedField(theme, l10n, styles),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           _buildInfiniteModeTile(theme, l10n, styles),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           _buildTerrainVariationField(
             context,
             l10n,
             fieldLabelStyle: styles.fieldLabel,
             helperStyle: styles.helper,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           _buildFooterButtons(l10n, context),
         ],
       ),
@@ -284,11 +285,11 @@ class _NewGameLeaderSelectionDialogState
           key: const ValueKey<String>('leaderSelectionDialogTitle'),
           style: styles.title,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: CtSpacing.m),
         const CtBrassDivider(
           key: ValueKey<String>('leaderSelectionDialogBrassDivider'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: CtSpacing.ml),
         Text(
           l10n.shell_leaderDialog_intro,
           key: const ValueKey<String>('leaderSelectionDialogIntro'),
@@ -312,7 +313,7 @@ class _NewGameLeaderSelectionDialogState
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(l10n.shell_leaderDialog_seedLabel, style: styles.fieldLabel),
-        const SizedBox(height: 4),
+        const SizedBox(height: CtSpacing.m / 2),
         TextField(
           controller: _seedController,
           keyboardType: TextInputType.number,
@@ -332,7 +333,7 @@ class _NewGameLeaderSelectionDialogState
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: CtSpacing.s),
         Text(l10n.shell_leaderDialog_seedHelper, style: styles.helper),
       ],
     );
@@ -374,7 +375,7 @@ class _NewGameLeaderSelectionDialogState
           onPressed: widget.onCancel,
           child: Text(l10n.common_cancel),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: CtSpacing.m),
         CtNinePatchButton(
           onPressed: _startEnabled ? () => _handleStartPressed(context) : null,
           enabled: _startEnabled,
@@ -413,7 +414,7 @@ class _NewGameLeaderSelectionDialogState
           l10n.shell_leaderDialog_terrainVariationLabel(percent),
           style: fieldLabelStyle,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: CtSpacing.s),
         CtSlider(
           value: _terrainVariation,
           min: 0.0,
@@ -423,7 +424,7 @@ class _NewGameLeaderSelectionDialogState
             setState(() => _terrainVariation = value);
           },
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: CtSpacing.s),
         Text(
           l10n.shell_leaderDialog_terrainVariationHelper,
           style: helperStyle,
@@ -506,7 +507,7 @@ class _NewGameLeaderSelectionDialogState
     );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: CtSpacing.ml),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -520,7 +521,7 @@ class _NewGameLeaderSelectionDialogState
               fontWeight: slotIndex == 0 ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CtSpacing.m / 2),
           _SlotPickersBody(
             nationDropdown: nationDropdown,
             leaderDropdown: leaderDropdown,
@@ -564,9 +565,9 @@ class _SlotPickersBody extends StatelessWidget {
   final Widget leaderDropdown;
 
   /// Vertical gap between the nation dropdown and the leader dropdown when
-  /// the slot body is stacked (matches the existing `SizedBox(height: 4)`
-  /// gap between the slot label and pickers).
-  static const double stackedGap = 4;
+  /// the slot body is stacked (matches the slot label ↔ pickers gap of
+  /// `CtSpacing.m / 2` = 4 dp).
+  static const double stackedGap = CtSpacing.m / 2;
 
   /// Key applied to the vertically stacked `Column` body (narrow viewport).
   /// Tests pin the narrow-stacking AC by asserting one such column per slot.
@@ -601,7 +602,7 @@ class _SlotPickersBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(child: nationDropdown),
-        const SizedBox(width: 8),
+        const SizedBox(width: CtSpacing.m),
         Expanded(child: leaderDropdown),
       ],
     );
