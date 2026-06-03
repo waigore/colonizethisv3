@@ -11,9 +11,21 @@ import 'package:logger/logger.dart';
 
 /// Seed-42 Path F lock-recovery acceptance regression (Refs #2924).
 ///
-/// Pins the primary AC: after 100 Full-AI turns on seed 42, gp3–gp6 each
-/// cross `cheapestRegimentBuildTreasuryCost()` at least once from legitimate
-/// world-market seller credits (no affordability bypass).
+/// Pins the primary AC (owner clarification 2026-06-01): after 100 Full-AI
+/// turns on seed 42, gp3–gp6 each fall below
+/// `cheapestRegimentBuildTreasuryCost()` under the EXPAND geographic peer-war
+/// lock and then cross it again at least once from legitimate world-market
+/// seller credits (no affordability bypass). Crossing the threshold restores
+/// access to the unchanged build/affordability pipeline — the regiment build
+/// itself fires only when the GP is below regiment quota, which is not
+/// guaranteed for a GP held in the mutual-peace lock, so this regression pins
+/// the treasury-recovery AC the issue actually specifies rather than a
+/// build-count.
+///
+/// The run uses a faithful Full-AI handoff (every player `isHuman: false`,
+/// every GP AI-controlled) so the diplomacy intervention resolver auto-resolves
+/// AI interventions instead of pausing with
+/// `TurnResolutionPendingIntervention` (which only arises for human players).
 ///
 /// Skipped by default (~4 min). Re-run with `dart test --run-skipped` when
 /// the lock-recovery surface changes.
@@ -36,7 +48,18 @@ void main() {
           skipFillLakes: false,
         ),
       );
+      // Refs #2924: faithful Full-AI handoff — clear `isHuman` on every player
+      // and enable AI control for all GPs, mirroring the observe-mode handoff
+      // (`ObserveSessionController.applyObserveHandoffIfNeeded` full-AI branch).
+      // Leaving gp1 (init default `isHuman: i == 0`) human makes the run pause
+      // with a `TurnResolutionPendingIntervention` the moment gp1 becomes
+      // eligible to intervene in a minor/tribe war (the diplomacy intervention
+      // resolver only auto-resolves for AI players); a full-AI acceptance run
+      // must auto-resolve every intervention.
       var game = init.game.copyWith(
+        players: [
+          for (final p in init.game.players) p.copyWith(isHuman: false),
+        ],
         aiControlByGpId: {for (final p in init.game.players) p.id: true},
       );
       final topo = init.combinedTopology;
