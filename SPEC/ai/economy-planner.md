@@ -116,6 +116,15 @@ The boost re-prioritises **existing** build-improvement suggestions; it does not
 - Given the gate is active and a Builder has both an unimproved `wool` resource tile and an unimproved non-feedstock (`grain`) resource tile as `build_improvement` suggestions, when `selectFullAiCivilianWorkOrders` runs, then it selects the `wool` tile; given the same fixture but the gate inactive (e.g. at quota), it selects by the ordinary build-improvement score ordering.
 - Given identical inputs, when the feedstock-extraction gate and `selectFullAiCivilianWorkOrders` run twice, then both runs return identical results (determinism).
 
+### Orchestrator civilian-work force-on (Refs #2847 H8-extraction wiring)
+
+The feedstock-extraction score boost in `selectFullAiCivilianWorkOrders` has no effect when `_runEconomyDomainPlanners` (`packages/colonizethis_ai/lib/src/planning/domain_planner_orchestrator.dart`) skips the Full-AI civilian work pass because `domainWeights.economy < workThreshold` and `primaryGoal != StrategicGoal.expand`. Below-quota lock-recovery sellers in EXPAND often carry `StrategicGoal.conquer`, so the orchestrator forces `runFullAiCivilianWork` whenever `regimentBuildInputFeedstockExtractionResourceIds(game, nationId)` is non-empty — mirroring the DEVELOP / colonial-pressure / NW-owned force-on clauses already present in `_runEconomyDomainPlanners`. The orchestrator reuses the existing logic-side gate predicate unchanged (it only reads whether the feedstock set is non-empty); it adds no duplicate regiment-count logic and no new config constant.
+
+#### Acceptance criteria (H8-extraction orchestrator wiring)
+
+- Given a below-quota zero-NW lock-recovery seller with `primaryGoal == StrategicGoal.conquer`, `player.treasury >= cheapestRegimentBuildTreasuryCost()`, `regimentCountForPlayer == 0`, and a Builder offered both an unimproved `wool` feedstock tile and an unimproved `grain` tile as `build_improvement` suggestions, when the domain planners run via `runDomainPlannersWithOutcome`, then the work planner runs (`workPlannerRan == true`) and the single emitted `WorkOrder` targets the `wool` feedstock tile.
+- Given an otherwise identical seller whose `player.treasury < cheapestRegimentBuildTreasuryCost()` so the feedstock-extraction gate is inactive, when the domain planners run via `runDomainPlannersWithOutcome`, then no feedstock score boost fires and the single emitted `WorkOrder` targets the `grain` tile under the ordinary build-improvement ordering (negative control).
+
 ---
 
 ## Integration
