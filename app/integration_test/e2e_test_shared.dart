@@ -111,6 +111,20 @@ const String kE2eDefaultAdvanceGameStartIntroPhase =
 const String kE2eAdvanceGameStartIntroIterationsCounter =
     'advance_game_start_intro_until_dismissed_iterations';
 
+/// Yarn intro control labels tried in order each loop iteration (GitHub #2336).
+const List<String> kE2eGameStartIntroControlLabels = ['Continue', 'I shall.'];
+
+/// Per-control post-tap settle budget after an intro button tap.
+///
+/// Intermediate controls (for example **Continue** before **I shall.**) do not
+/// dismiss the blocking shell; the legacy 5 s [e2ePumpUntilConditionOrIdle]
+/// cap per tap therefore burned ~5 s on every bootstrap before the next label
+/// could be tried. A shorter cap keeps frame settlement without blocking the
+/// multi-label pass (Refs GitHub #2336 AC5 / bootstrap wall-clock).
+const Duration kE2eDefaultIntroControlPostTapSettleTimeout = Duration(
+  milliseconds: 500,
+);
+
 /// Advances yarn intro lines/choices until the overlay no longer blocks taps.
 ///
 /// The spinner / no-tap-target branches previously each paid a fixed 50 ms
@@ -120,6 +134,14 @@ const String kE2eAdvanceGameStartIntroIterationsCounter =
 /// is reset to 25 ms whenever a tap advances the overlay or the loading
 /// indicator clears, mirroring the prepump-free panel openers landed in this
 /// PR. Refs GitHub #2336 AC5 / pump-reduction.
+///
+/// **Multi-label pass:** each loop iteration tries every label in
+/// [kE2eGameStartIntroControlLabels] without breaking after the first tap.
+/// Intermediate controls (for example **Continue** before **I shall.**) keep
+/// the blocking shell mounted; the per-control post-tap settle uses
+/// [kE2eDefaultIntroControlPostTapSettleTimeout] (500 ms) instead of the
+/// legacy 5 s cap so bootstrap does not burn ~5 s waiting for full dismissal
+/// before the next control is tapped.
 ///
 /// Perf attribution (Refs GitHub #2336 AC8 / baseline measurement):
 ///
@@ -169,7 +191,10 @@ Future<void> e2eAdvanceGameStartIntroUntilDismissed(
     }
     final overlay = find.byType(GameStartIntroOverlay);
     var tapped = false;
-    for (final label in ['Continue', 'I shall.']) {
+    for (final label in kE2eGameStartIntroControlLabels) {
+      if (!e2eGameStartIntroBlocksUi(tester)) {
+        break;
+      }
       final control = find
           .descendant(of: overlay, matching: find.text(label))
           .hitTestable();
@@ -180,13 +205,12 @@ Future<void> e2eAdvanceGameStartIntroUntilDismissed(
       await e2ePumpUntilConditionOrIdle(
         tester,
         () => !e2eGameStartIntroBlocksUi(tester),
-        timeout: const Duration(seconds: 5),
+        timeout: kE2eDefaultIntroControlPostTapSettleTimeout,
         perf: perf,
         phaseName: 'pump_until_intro_advance_after_$label',
       );
       tapped = true;
       idlePollMs = 25;
-      break;
     }
     if (!tapped) {
       await tester.pump(Duration(milliseconds: idlePollMs));
@@ -596,11 +620,16 @@ Future<void> e2eScrollButtonIntoHitTestableView(
     return;
   }
   const maxScrollSteps = 20;
-  for (var i = 0;
-      i < maxScrollSteps && button.hitTestable().evaluate().isEmpty;
-      i++) {
-    final dragged =
-        await e2eDragScrollableFromVisiblePoint(tester, scrollable, const Offset(0, -120));
+  for (
+    var i = 0;
+    i < maxScrollSteps && button.hitTestable().evaluate().isEmpty;
+    i++
+  ) {
+    final dragged = await e2eDragScrollableFromVisiblePoint(
+      tester,
+      scrollable,
+      const Offset(0, -120),
+    );
     if (!dragged) {
       break;
     }
@@ -760,7 +789,10 @@ Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
     120,
     scrollable: panelScrollable,
   );
-  final didTap = await e2eTapEnclosingNinePatchButtonOrLabel(tester, firstAssign);
+  final didTap = await e2eTapEnclosingNinePatchButtonOrLabel(
+    tester,
+    firstAssign,
+  );
   expect(
     didTap,
     isTrue,
@@ -889,7 +921,11 @@ Future<void> e2eTapAssignOnCivilianRowWithTitle(
   for (var i = 0; i < n; i++) {
     final titleAt = titlesInList.at(i);
     try {
-      await tester.scrollUntilVisible(titleAt, 120, scrollable: panelScrollable);
+      await tester.scrollUntilVisible(
+        titleAt,
+        120,
+        scrollable: panelScrollable,
+      );
     } catch (_) {}
     try {
       await tester.ensureVisible(titleAt);
@@ -903,7 +939,10 @@ Future<void> e2eTapAssignOnCivilianRowWithTitle(
       continue;
     }
     final assignHit = assign.first;
-    final didTap = await e2eTapEnclosingNinePatchButtonOrLabel(tester, assignHit);
+    final didTap = await e2eTapEnclosingNinePatchButtonOrLabel(
+      tester,
+      assignHit,
+    );
     expect(
       didTap,
       isTrue,
