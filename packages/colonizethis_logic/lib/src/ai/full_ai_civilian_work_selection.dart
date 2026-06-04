@@ -8,6 +8,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/build_rail_work_rules.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
 
 /// Idle civilian (no new work) for Full AI observability.
 class FullAiCivilianWorkIdle {
@@ -392,17 +393,12 @@ int _buildImprovementWorkScore(
 
 int _regimentCountForPlayer(Game game, String playerId) {
   var count = 0;
-  void countRegiments(Iterable<Unit> units) {
-    for (final unit in units) {
-      if (unit.ownerId != playerId) continue;
-      if (RegimentEconomyCatalog.byId.containsKey(unit.type)) {
-        count++;
-      }
+  for (final unit in allUnitsFromWorld(game.worldState)) {
+    if (unit.ownerId != playerId) continue;
+    if (RegimentEconomyCatalog.byId.containsKey(unit.type)) {
+      count++;
     }
   }
-
-  countRegiments(game.worldState.oldWorld.units);
-  countRegiments(game.worldState.newWorld.units);
   return count;
 }
 
