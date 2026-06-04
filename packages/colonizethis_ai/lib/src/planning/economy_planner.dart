@@ -17,6 +17,18 @@ final _log = packageLogger('economy_planner');
 /// (Refs #2847 H8 production companion).
 const double kRegimentBuildInputProductionScoreBoost = 50.0;
 
+/// Recipe-score boost an **affluent supplier** applies to a domestically
+/// produced improvement input (e.g. `castIron`) that a *peer* lock-recovery
+/// seller needs but the world market structurally cannot supply (Refs #2847
+/// H8-supply castIron source). Deliberately **small** — far below the
+/// shortage-driven score of the supplier's own essential recipes
+/// (`kShortageWeight * kShortageThreshold == 16`) — so the supplier only
+/// converts **leftover** labour/feedstock into a releasable surplus and never
+/// starves its own conquest economy. This keeps the +6 OW baseline for the
+/// healthy GPs (gp1/gp2) safe by construction. Planner-internal (not a new
+/// `ai_victory_config.dart` constant).
+const double kSupplierBuildInputReleaseProductionScoreBoost = 5.0;
+
 /// Runs the economy planner for one AI-controlled player. Deterministic given
 /// [game], [view], [config], and [seeds]. Returns production assignments and
 /// cargo preference. SPEC/ai/economy-planner.md.
@@ -148,6 +160,21 @@ EconomyPlan runEconomyPlanner({
     ...domesticImprovementInputOutputs,
   };
 
+  // Refs #2847 H8-supply castIron source: an affluent supplier over-produces
+  // the domestically-produced improvement inputs a *peer* lock-recovery seller
+  // needs (e.g. `castIron`, which has no world-market supply on seed 42) so the
+  // treasury planner can release the resulting surplus into the seller's bid.
+  // The supplier role excludes a GP that is itself a locked seller (its own
+  // self-path boost already covers it) and the boost is intentionally small so
+  // only spare labour/feedstock is consumed — the +6 OW baseline GPs are never
+  // starved. SPEC/ai/economy-planner.md § Supplier improvement-input
+  // over-production for release.
+  final supplierReleaseImprovementInputs =
+      (!isBelowQuotaZeroNwLockRecoverySeller(game, view.playerId) &&
+              anyLockRecoverySellerNeedsCastIronImprovementInput(game))
+          ? kDomesticProductionImprovementInputIds
+          : const <String>{};
+
   final assignments = _allocateLabour(
     stockpile: stockpile,
     workers: workers,
@@ -157,6 +184,7 @@ EconomyPlan runEconomyPlanner({
     militaryRebuildCrisis: militaryRebuildCrisis,
     regimentBuildInputProductionBoost: regimentBuildInputProductionBoost,
     missingRegimentBuildInputIds: boostedBuildInputOutputs,
+    supplierReleaseImprovementInputIds: supplierReleaseImprovementInputs,
   );
 
   final cargoPref = _cargoPreference(
@@ -259,6 +287,7 @@ List<AssignedRecipe> _allocateLabour({
   bool militaryRebuildCrisis = false,
   bool regimentBuildInputProductionBoost = false,
   Set<String> missingRegimentBuildInputIds = const {},
+  Set<String> supplierReleaseImprovementInputIds = const {},
 }) {
   final recipes = ProductionRecipesCatalog.all;
   final agendaId = config.hiddenAgendaId;
@@ -290,6 +319,9 @@ List<AssignedRecipe> _allocateLabour({
     if (regimentBuildInputProductionBoost &&
         missingRegimentBuildInputIds.contains(recipe.outputCommodityId)) {
       score += kRegimentBuildInputProductionScoreBoost;
+    }
+    if (supplierReleaseImprovementInputIds.contains(recipe.outputCommodityId)) {
+      score += kSupplierBuildInputReleaseProductionScoreBoost;
     }
     candidates.add(ScoredRecipe(recipe: recipe, score: score));
   }
