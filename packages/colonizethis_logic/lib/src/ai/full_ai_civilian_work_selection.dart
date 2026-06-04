@@ -753,6 +753,150 @@ Set<String> _peerLockRecoverySellerNeededProducibleImprovementInputs(
   return result;
 }
 
+/// True iff [playerId] owns at least one **Old World** province tile hosting a
+/// resource in [feedstockIds] that is still unimproved (`improvementLevel < 1`)
+/// — the `build_improvement` target a supplier (or seller) must keep an idle
+/// Builder in the Old World to extract (Refs #2847 § H8-extraction supplier
+/// Old World feedstock unit reservation). Old World is every region that is not
+/// [kNewWorldRegionId], derived from the tile key alone so the scan works from
+/// `WorldState.resourceByTileKey`. Read-only and deterministic.
+bool _ownsUnimprovedOldWorldFeedstockTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    if (ws.tileState.improvementLevel(entry.key) < 1) return true;
+  }
+  return false;
+}
+
+/// True iff [playerId] owns at least one **Old World** province tile hosting an
+/// **unprospected mineral** feedstock resource in [feedstockIds] — the
+/// `prospect` target a supplier (or seller) must keep an idle Explorer in the
+/// Old World to expose before the Builder can improve it (Refs #2847
+/// § H8-extraction supplier Old World feedstock unit reservation). Read-only
+/// and deterministic.
+bool _ownsUnprospectedOldWorldMineralFeedstockTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    if (_isUnprospectedMineralFeedstockTile(
+      game,
+      playerId,
+      entry.key,
+      feedstockIds,
+    )) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// The (at most) one idle Builder and one idle Explorer the active player must
+/// keep in the Old World for H8 feedstock prospecting + extraction, instead of
+/// letting them migrate to New World colonial work (Refs #2847 § H8-extraction
+/// supplier Old World feedstock unit reservation).
+///
+/// The seed-42 affluent suppliers own an unimproved Old World `iron` / `timber`
+/// feedstock tile on every gate-active turn, yet every idle Builder / Explorer
+/// is routed to higher-scoring **New World** owned-resource work (the New World
+/// bonuses in [_buildImprovementWorkScore] / [_eScore]), so the now-correct
+/// prospecting / co-availability ordering chain never gets a unit positioned on
+/// the Old World feedstock tile. Holding one idle Builder and one idle Explorer
+/// out of New World work keeps them available for the Old World feedstock
+/// `prospect` + `build_improvement` the existing
+/// [kFeedstockMineralProspectScoreBoost] /
+/// [kRegimentBuildInputFeedstockExtractionScoreBoost] boosts then select.
+class _OwFeedstockReservation {
+  const _OwFeedstockReservation({this.builderUnitId, this.explorerUnitId});
+
+  final String? builderUnitId;
+  final String? explorerUnitId;
+
+  static const none = _OwFeedstockReservation();
+
+  bool reserves(String unitId) =>
+      unitId == builderUnitId || unitId == explorerUnitId;
+}
+
+/// Resolves the [_OwFeedstockReservation] for the active player.
+///
+/// Returns [_OwFeedstockReservation.none] unless the feedstock-extraction gate
+/// is active ([feedstockExtractionResourceIds] non-empty). When active, reserves
+/// the lexicographically-smallest idle (`currentWork == null`) Builder iff the
+/// player owns an unimproved Old World feedstock tile, and the
+/// lexicographically-smallest idle Explorer iff the player owns an unprospected
+/// Old World mineral feedstock tile. Deterministic over
+/// `(view.ownUnits, game, feedstockExtractionResourceIds)`.
+_OwFeedstockReservation _resolveOwFeedstockReservation(
+  PlayerView view,
+  Game game,
+  Set<String> feedstockExtractionResourceIds,
+) {
+  if (feedstockExtractionResourceIds.isEmpty) {
+    return _OwFeedstockReservation.none;
+  }
+  final playerId = view.playerId;
+  final reserveBuilder = _ownsUnimprovedOldWorldFeedstockTile(
+    game,
+    playerId,
+    feedstockExtractionResourceIds,
+  );
+  final reserveExplorer = _ownsUnprospectedOldWorldMineralFeedstockTile(
+    game,
+    playerId,
+    feedstockExtractionResourceIds,
+  );
+  if (!reserveBuilder && !reserveExplorer) return _OwFeedstockReservation.none;
+  final idleBuilders = <String>[];
+  final idleExplorers = <String>[];
+  for (final unit in view.ownUnits) {
+    if (unit.currentWork != null) continue;
+    if (reserveBuilder && unit.type == kUnitTypeBuilder) {
+      idleBuilders.add(unit.id);
+    }
+    if (reserveExplorer && isExplorerUnit(unit.type)) {
+      idleExplorers.add(unit.id);
+    }
+  }
+  idleBuilders.sort();
+  idleExplorers.sort();
+  return _OwFeedstockReservation(
+    builderUnitId: idleBuilders.isEmpty ? null : idleBuilders.first,
+    explorerUnitId: idleExplorers.isEmpty ? null : idleExplorers.first,
+  );
+}
+
+/// Drops every New World `targetTileKey` work order from [orders] so a reserved
+/// Old World feedstock unit is not routed to New World colonial work. Leaves the
+/// unit with only its Old World candidates (or none, in which case it stays idle
+/// in the Old World). Refs #2847 § H8-extraction supplier Old World feedstock
+/// unit reservation.
+void _dropNewWorldWorkOrders(List<WorkOrder> orders) {
+  orders.removeWhere(
+    (w) => Unit.regionIdFromTileKey(w.targetTileKey) == kNewWorldRegionId,
+  );
+}
+
 WorkOrder? _bestBuildImprovementRow(
   List<WorkOrder> candidates,
   Game game, {
@@ -986,6 +1130,7 @@ void _appendSelectionForUnitId({
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
   Set<String> feedstockExtractionResourceIds = const <String>{},
+  _OwFeedstockReservation reservation = _OwFeedstockReservation.none,
 }) {
   final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
   _sortWorkOrdersLex(W);
@@ -994,6 +1139,14 @@ void _appendSelectionForUnitId({
   if (unit != null &&
       (unit.currentWork != null || !_civilianWorkCapableType(unit.type))) {
     return;
+  }
+
+  // Refs #2847 § H8-extraction: a reserved Old World feedstock unit keeps only
+  // its Old World candidates so it is not routed to higher-scoring New World
+  // colonial work, staying available for the Old World feedstock prospect /
+  // build_improvement the feedstock score boosts then select.
+  if (reservation.reserves(unitId)) {
+    _dropNewWorldWorkOrders(W);
   }
 
   final isExplorerCase = unit != null && isExplorerUnit(unit.type);
@@ -1079,6 +1232,11 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
     game,
     view.playerId,
   );
+  final reservation = _resolveOwFeedstockReservation(
+    view,
+    game,
+    feedstockExtractionResourceIds,
+  );
 
   for (final unitId in allUnitIds) {
     _appendSelectionForUnitId(
@@ -1091,6 +1249,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
       workOrders: workOrders,
       idleEvents: idleEvents,
       feedstockExtractionResourceIds: feedstockExtractionResourceIds,
+      reservation: reservation,
     );
   }
 
