@@ -1126,6 +1126,12 @@ abstract class AppLocalizations {
   /// Tile section prospecting state row.
   String provinceOverlay_tileProspected(String value);
 
+  /// Tile section prospecting state value when the tile is prospectable and prospected by the human player.
+  String get provinceOverlay_tileProspectedYes;
+
+  /// Tile section prospecting state value when the tile is prospectable but not yet prospected by the human player.
+  String get provinceOverlay_tileProspectedNo;
+
   /// Tooltip and semantics label for province tile prospect shortcut action.
   String get provinceOverlay_tileProspectWithExplorerTooltip;
 
@@ -1141,6 +1147,51 @@ abstract class AppLocalizations {
   /// Tile section road/rail row when not applicable.
   String get provinceOverlay_tileRoadNone;
 
+  /// Tile section road/rail primary numeric line on land tiles.
+  String provinceOverlay_tileRoadTransportLevel(int level);
+
+  /// Tile section road/rail supplementary GDD label for transport level 0.
+  String get provinceOverlay_tileRoadLabelNone;
+
+  /// Tile section road/rail supplementary GDD label for transport level 1.
+  String get provinceOverlay_tileRoadLabelPrimitiveRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 2.
+  String get provinceOverlay_tileRoadLabelImprovedRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 4.
+  String get provinceOverlay_tileRoadLabelPortOrRailroad;
+
+  /// Tile section road/rail supplementary GDD label for unexpected levels.
+  String get provinceOverlay_tileRoadLabelNonStandard;
+
+  /// Tile section road/rail level-1 gloss clarifying railroads are level 4.
+  String get provinceOverlay_tileRoadRailGloss;
+
+  /// Tile/Economic improvement type name for tiles with no resource (generic fallback).
+  String get provinceOverlay_improvementGeneric;
+
+  /// Tile/Economic improvement type name for grain resource tiles.
+  String get provinceOverlay_improvementFarm;
+
+  /// Tile/Economic improvement type name for meat/horses resource tiles.
+  String get provinceOverlay_improvementRanch;
+
+  /// Tile/Economic improvement type name for wool resource tiles.
+  String get provinceOverlay_improvementPasture;
+
+  /// Tile/Economic improvement type name for timber resource tiles.
+  String get provinceOverlay_improvementLumberCamp;
+
+  /// Tile/Economic improvement type name for plantation-crop resource tiles (sugar cane/tobacco/cotton/spices).
+  String get provinceOverlay_improvementPlantation;
+
+  /// Tile/Economic improvement type name for furs resource tiles.
+  String get provinceOverlay_improvementFurPost;
+
+  /// Tile/Economic improvement type name for mineral resource tiles (iron/copper/coal/silver/gold/etc.).
+  String get provinceOverlay_improvementMine;
+
   /// Tile section civilian unit count row.
   String provinceOverlay_tileCivilianUnits(int count);
 
@@ -1152,6 +1203,9 @@ abstract class AppLocalizations {
 
   /// Political section owner row.
   String provinceOverlay_owner(String owner);
+
+  /// Political section owner display name when a province/tile is unowned.
+  String get provinceOverlay_ownerUnclaimed;
 
   /// Political section region row (Old World / New World label).
   String provinceOverlay_region(String region);
@@ -1199,6 +1253,12 @@ abstract class AppLocalizations {
 
   /// Province overlay section heading for naval details.
   String get provinceOverlay_sectionNaval;
+
+  /// Province overlay header title shown above the tab strip for a province.
+  String get provinceOverlay_titleProvince;
+
+  /// Province overlay header title shown above the tab strip for a sea zone.
+  String get provinceOverlay_titleSeaZone;
 
   /// Game setup screen title.
   String get gameSetup_title;

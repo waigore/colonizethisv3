@@ -3,40 +3,41 @@
 part of 'province_sea_zone_detail_overlay.dart';
 
 @visibleForTesting
-String roadRailSupplementaryLabel(int roadLevel) {
+String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   return switch (roadLevel) {
-    0 => 'none',
-    1 => 'primitive road',
-    2 => 'improved road',
-    4 => 'port or railroad',
-    _ => 'non-standard transport level',
+    0 => l10n.provinceOverlay_tileRoadLabelNone,
+    1 => l10n.provinceOverlay_tileRoadLabelPrimitiveRoad,
+    2 => l10n.provinceOverlay_tileRoadLabelImprovedRoad,
+    4 => l10n.provinceOverlay_tileRoadLabelPortOrRailroad,
+    _ => l10n.provinceOverlay_tileRoadLabelNonStandard,
   };
 }
 
-/// Gloss under level 1 so “primitive road” is not read as railroad.
-@visibleForTesting
-const String kRoadRailPrimitiveVersusRailGloss =
-    'Basic land link for connectivity and yield caps. Railroads are transport level 4.';
-
 /// Primary Tile-section line for land tiles; [transportLevel] is stored road/rail level.
 @visibleForTesting
-String roadRailTransportLevelPrimaryLine(int transportLevel) {
-  return 'Road / railroad: transport level $transportLevel';
+String roadRailTransportLevelPrimaryLine(
+  AppLocalizations l10n,
+  int transportLevel,
+) {
+  return l10n.provinceOverlay_tileRoadTransportLevel(transportLevel);
 }
 
 /// Ordered text lines for Tile “Road / railroad” (null → sea / no land transport row).
 @visibleForTesting
-List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
+List<String> roadRailTileDetailLinesForTests({
+  required AppLocalizations l10n,
+  required int? transportLevel,
+}) {
   if (transportLevel == null) {
-    return const ['Road / railroad: —'];
+    return [l10n.provinceOverlay_tileRoadNone];
   }
   final v = transportLevel;
   final lines = <String>[
-    roadRailTransportLevelPrimaryLine(v),
-    roadRailSupplementaryLabel(v),
+    roadRailTransportLevelPrimaryLine(l10n, v),
+    roadRailSupplementaryLabel(l10n, v),
   ];
   if (v == 1) {
-    lines.add(kRoadRailPrimitiveVersusRailGloss);
+    lines.add(l10n.provinceOverlay_tileRoadRailGloss);
   }
   return lines;
 }
@@ -77,12 +78,15 @@ List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
 }
 
 @visibleForTesting
-String tileDetailProspectedDisplayLabel({
+String tileDetailProspectedDisplayLabel(
+  AppLocalizations l10n, {
   required bool terrainProspectable,
   required bool playerHasProspected,
 }) {
   if (!terrainProspectable) return '—';
-  return playerHasProspected ? 'yes' : 'no';
+  return playerHasProspected
+      ? l10n.provinceOverlay_tileProspectedYes
+      : l10n.provinceOverlay_tileProspectedNo;
 }
 
 Widget _buildTileResourceLabelRow({
@@ -126,6 +130,7 @@ Widget _buildTileImprovementLabel({
   required String? visibleResourceId,
 }) {
   final improvementLine = _improvementLabelForTileDetail(
+    l10n: l10n,
     impLevel: impLevel,
     visLevel: visLevel,
     rawResourceId: rawResourceId,
@@ -161,10 +166,13 @@ List<Widget> _buildTileRoadLabelWidgets({
     color: EditorialMonoclePalette.muted,
   );
   return [
-    Text(roadRailTransportLevelPrimaryLine(roadLevel), style: _fgBodyStyle()),
-    Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
+    Text(
+      roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+      style: _fgBodyStyle(),
+    ),
+    Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
-      Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
+      Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
   ];
 }
 
@@ -216,8 +224,10 @@ Widget _economicHoverRow({
   );
 }
 
-String _ownerName(Game game, String? ownerId) {
-  if (ownerId == null || ownerId.isEmpty) return 'Unclaimed';
+String _ownerName(AppLocalizations l10n, Game game, String? ownerId) {
+  if (ownerId == null || ownerId.isEmpty) {
+    return l10n.provinceOverlay_ownerUnclaimed;
+  }
   for (final p in game.players) {
     if (p.id == ownerId) return p.displayName;
   }
@@ -230,25 +240,25 @@ String _ownerName(Game game, String? ownerId) {
   return ownerId;
 }
 
-String _improvementNameForResource(String? resourceId) {
-  if (resourceId == null) return 'Improvement';
+String _improvementNameForResource(AppLocalizations l10n, String? resourceId) {
+  if (resourceId == null) return l10n.provinceOverlay_improvementGeneric;
   switch (resourceId) {
     case 'grain':
-      return 'Farm';
+      return l10n.provinceOverlay_improvementFarm;
     case 'meat':
     case 'horses':
-      return 'Ranch';
+      return l10n.provinceOverlay_improvementRanch;
     case 'wool':
-      return 'Pasture';
+      return l10n.provinceOverlay_improvementPasture;
     case 'timber':
-      return 'Lumber camp';
+      return l10n.provinceOverlay_improvementLumberCamp;
     case 'sugarCane':
     case 'tobacco':
     case 'cotton':
     case 'spices':
-      return 'Plantation';
+      return l10n.provinceOverlay_improvementPlantation;
     case 'furs':
-      return 'Fur post';
+      return l10n.provinceOverlay_improvementFurPost;
     case 'iron':
     case 'copper':
     case 'tin':
@@ -257,31 +267,53 @@ String _improvementNameForResource(String? resourceId) {
     case 'gold':
     case 'gems':
     case 'diamonds':
-      return 'Mine';
+      return l10n.provinceOverlay_improvementMine;
     default:
-      return 'Improvement';
+      return l10n.provinceOverlay_improvementGeneric;
   }
 }
 
+/// Test-only accessor for the resource → improvement-type name mapping
+/// (Refs #2865; SPEC § Province overlay content `Tile` improvement label).
+@visibleForTesting
+String provinceOverlayImprovementNameForResource(
+  AppLocalizations l10n,
+  String? resourceId,
+) =>
+    _improvementNameForResource(l10n, resourceId);
+
+/// Test-only accessor for the owner display-name resolution (Refs #2865;
+/// SPEC § Province overlay content `Political` Owner row — localized
+/// `provinceOverlay_ownerUnclaimed` fallback for unowned provinces/tiles).
+@visibleForTesting
+String provinceOverlayOwnerName(
+  AppLocalizations l10n,
+  Game game,
+  String? ownerId,
+) =>
+    _ownerName(l10n, game, ownerId);
+
 String _improvementBaseNameForPlayer({
+  required AppLocalizations l10n,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
   required String? visibleResourceId,
 }) {
   if (visibleResourceId != null) {
-    return _improvementNameForResource(visibleResourceId);
+    return _improvementNameForResource(l10n, visibleResourceId);
   }
   if (rawResourceId != null &&
       kProspectRequiredResourceIds.contains(rawResourceId)) {
-    return 'Mine';
+    return l10n.provinceOverlay_improvementMine;
   }
   if (rawResourceId != null) {
-    return _improvementNameForResource(rawResourceId);
+    return _improvementNameForResource(l10n, rawResourceId);
   }
-  return 'Improvement';
+  return l10n.provinceOverlay_improvementGeneric;
 }
 
 String _improvementLabelForTileDetail({
+  required AppLocalizations l10n,
   required int impLevel,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
@@ -291,6 +323,7 @@ String _improvementLabelForTileDetail({
     return '—';
   }
   final base = _improvementBaseNameForPlayer(
+    l10n: l10n,
     visLevel: visLevel,
     rawResourceId: rawResourceId,
     visibleResourceId: visibleResourceId,
@@ -453,6 +486,7 @@ Widget _buildTileSection({
       ? isProspectableTerrain(cell.terrainType!)
       : isProspectableTerrainId(cell.terrainTypeId);
   final prospectedLabel = tileDetailProspectedDisplayLabel(
+    l10n,
     terrainProspectable: prospectable,
     playerHasProspected: prospected.contains(selectedTileKey),
   );

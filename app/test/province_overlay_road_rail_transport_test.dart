@@ -8,42 +8,47 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/l10n/app_localizations_en.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
   suppressLogsForTests();
 
+  // Road / railroad Tile lines resolve through AppLocalizations (Refs #2865);
+  // the English implementation pins the canonical copy these ACs assert.
+  final l10n = AppLocalizationsEn();
+
   group('road/rail transport Tile copy (issue #1537)', () {
-    test('AC: sea / no land transport — single em dash line', () {
-      expect(roadRailTileDetailLinesForTests(transportLevel: null), [
-        'Road / railroad: —',
+    test('AC: sea / no land transport — single road/rail none line', () {
+      expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: null), [
+        l10n.provinceOverlay_tileRoadNone,
       ]);
     });
 
     test('AC: land level 0 — numeric 0 and supplementary none', () {
-      expect(roadRailTileDetailLinesForTests(transportLevel: 0), [
+      expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: 0), [
         'Road / railroad: transport level 0',
         'none',
       ]);
     });
 
     test('AC: land level 1 — numeric 1, primitive road, rail gloss', () {
-      expect(roadRailTileDetailLinesForTests(transportLevel: 1), [
+      expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: 1), [
         'Road / railroad: transport level 1',
         'primitive road',
-        kRoadRailPrimitiveVersusRailGloss,
+        l10n.provinceOverlay_tileRoadRailGloss,
       ]);
     });
 
     test('AC: land level 2 — numeric 2 and improved road', () {
-      expect(roadRailTileDetailLinesForTests(transportLevel: 2), [
+      expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: 2), [
         'Road / railroad: transport level 2',
         'improved road',
       ]);
     });
 
     test('AC: land level 4 — numeric 4 and port or railroad', () {
-      expect(roadRailTileDetailLinesForTests(transportLevel: 4), [
+      expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: 4), [
         'Road / railroad: transport level 4',
         'port or railroad',
       ]);
@@ -52,12 +57,36 @@ void main() {
     test(
       'AC: unexpected positive level — numeric shown and non-standard label',
       () {
-        expect(roadRailTileDetailLinesForTests(transportLevel: 3), [
+        expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: 3), [
           'Road / railroad: transport level 3',
           'non-standard transport level',
         ]);
       },
     );
+
+    test('AC: road/rail Tile lines resolve from AppLocalizations keys', () {
+      expect(
+        roadRailTransportLevelPrimaryLine(l10n, 2),
+        l10n.provinceOverlay_tileRoadTransportLevel(2),
+      );
+      expect(roadRailSupplementaryLabel(l10n, 0), l10n.provinceOverlay_tileRoadLabelNone);
+      expect(
+        roadRailSupplementaryLabel(l10n, 1),
+        l10n.provinceOverlay_tileRoadLabelPrimitiveRoad,
+      );
+      expect(
+        roadRailSupplementaryLabel(l10n, 2),
+        l10n.provinceOverlay_tileRoadLabelImprovedRoad,
+      );
+      expect(
+        roadRailSupplementaryLabel(l10n, 4),
+        l10n.provinceOverlay_tileRoadLabelPortOrRailroad,
+      );
+      expect(
+        roadRailSupplementaryLabel(l10n, 7),
+        l10n.provinceOverlay_tileRoadLabelNonStandard,
+      );
+    });
   });
 
   group('ProvinceSeaZoneDetailOverlay Tile road/rail wiring', () {

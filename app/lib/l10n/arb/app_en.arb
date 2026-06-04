@@ -1992,6 +1992,14 @@
       }
     }
   },
+  "provinceOverlay_tileProspectedYes": "yes",
+  "@provinceOverlay_tileProspectedYes": {
+    "description": "Tile section prospecting state value when the tile is prospectable and prospected by the human player."
+  },
+  "provinceOverlay_tileProspectedNo": "no",
+  "@provinceOverlay_tileProspectedNo": {
+    "description": "Tile section prospecting state value when the tile is prospectable but not yet prospected by the human player."
+  },
   "provinceOverlay_tileProspectWithExplorerTooltip": "Prospect with explorer",
   "@provinceOverlay_tileProspectWithExplorerTooltip": {
     "description": "Tooltip and semantics label for province tile prospect shortcut action."
@@ -2016,6 +2024,71 @@
   "provinceOverlay_tileRoadNone": "Road / railroad: -",
   "@provinceOverlay_tileRoadNone": {
     "description": "Tile section road/rail row when not applicable."
+  },
+  "provinceOverlay_tileRoadTransportLevel": "Road / railroad: transport level {level}",
+  "@provinceOverlay_tileRoadTransportLevel": {
+    "description": "Tile section road/rail primary numeric line on land tiles.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileRoadLabelNone": "none",
+  "@provinceOverlay_tileRoadLabelNone": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 0."
+  },
+  "provinceOverlay_tileRoadLabelPrimitiveRoad": "primitive road",
+  "@provinceOverlay_tileRoadLabelPrimitiveRoad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 1."
+  },
+  "provinceOverlay_tileRoadLabelImprovedRoad": "improved road",
+  "@provinceOverlay_tileRoadLabelImprovedRoad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 2."
+  },
+  "provinceOverlay_tileRoadLabelPortOrRailroad": "port or railroad",
+  "@provinceOverlay_tileRoadLabelPortOrRailroad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 4."
+  },
+  "provinceOverlay_tileRoadLabelNonStandard": "non-standard transport level",
+  "@provinceOverlay_tileRoadLabelNonStandard": {
+    "description": "Tile section road/rail supplementary GDD label for unexpected levels."
+  },
+  "provinceOverlay_tileRoadRailGloss": "Basic land link for connectivity and yield caps. Railroads are transport level 4.",
+  "@provinceOverlay_tileRoadRailGloss": {
+    "description": "Tile section road/rail level-1 gloss clarifying railroads are level 4."
+  },
+  "provinceOverlay_improvementGeneric": "Improvement",
+  "@provinceOverlay_improvementGeneric": {
+    "description": "Tile/Economic improvement type name for tiles with no resource (generic fallback)."
+  },
+  "provinceOverlay_improvementFarm": "Farm",
+  "@provinceOverlay_improvementFarm": {
+    "description": "Tile/Economic improvement type name for grain resource tiles."
+  },
+  "provinceOverlay_improvementRanch": "Ranch",
+  "@provinceOverlay_improvementRanch": {
+    "description": "Tile/Economic improvement type name for meat/horses resource tiles."
+  },
+  "provinceOverlay_improvementPasture": "Pasture",
+  "@provinceOverlay_improvementPasture": {
+    "description": "Tile/Economic improvement type name for wool resource tiles."
+  },
+  "provinceOverlay_improvementLumberCamp": "Lumber camp",
+  "@provinceOverlay_improvementLumberCamp": {
+    "description": "Tile/Economic improvement type name for timber resource tiles."
+  },
+  "provinceOverlay_improvementPlantation": "Plantation",
+  "@provinceOverlay_improvementPlantation": {
+    "description": "Tile/Economic improvement type name for plantation-crop resource tiles (sugar cane/tobacco/cotton/spices)."
+  },
+  "provinceOverlay_improvementFurPost": "Fur post",
+  "@provinceOverlay_improvementFurPost": {
+    "description": "Tile/Economic improvement type name for furs resource tiles."
+  },
+  "provinceOverlay_improvementMine": "Mine",
+  "@provinceOverlay_improvementMine": {
+    "description": "Tile/Economic improvement type name for mineral resource tiles (iron/copper/coal/silver/gold/etc.)."
   },
   "provinceOverlay_tileCivilianUnits": "Civilian units (province): {count}",
   "@provinceOverlay_tileCivilianUnits": {
@@ -2052,6 +2125,10 @@
         "type": "String"
       }
     }
+  },
+  "provinceOverlay_ownerUnclaimed": "Unclaimed",
+  "@provinceOverlay_ownerUnclaimed": {
+    "description": "Political section owner display name when a province/tile is unowned."
   },
   "provinceOverlay_region": "Region: {region}",
   "@provinceOverlay_region": {
@@ -2147,6 +2224,14 @@
   "provinceOverlay_sectionNaval": "Naval",
   "@provinceOverlay_sectionNaval": {
     "description": "Province overlay section heading for naval details."
+  },
+  "provinceOverlay_titleProvince": "Province",
+  "@provinceOverlay_titleProvince": {
+    "description": "Province overlay header title shown above the tab strip for a province."
+  },
+  "provinceOverlay_titleSeaZone": "Sea zone",
+  "@provinceOverlay_titleSeaZone": {
+    "description": "Province overlay header title shown above the tab strip for a sea zone."
   },
   "gameSetup_title": "Game Setup",
   "@gameSetup_title": {

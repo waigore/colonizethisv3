@@ -287,6 +287,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_tileProspectedYes => 'yes';
+
+  @override
+  String get provinceOverlay_tileProspectedNo => 'no';
+
+  @override
   String get provinceOverlay_tileProspectWithExplorerTooltip =>
       'Prospect with explorer';
 
@@ -304,6 +310,56 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_tileRoadNone => 'Road / railroad: -';
+
+  @override
+  String provinceOverlay_tileRoadTransportLevel(int level) {
+    return 'Road / railroad: transport level $level';
+  }
+
+  @override
+  String get provinceOverlay_tileRoadLabelNone => 'none';
+
+  @override
+  String get provinceOverlay_tileRoadLabelPrimitiveRoad => 'primitive road';
+
+  @override
+  String get provinceOverlay_tileRoadLabelImprovedRoad => 'improved road';
+
+  @override
+  String get provinceOverlay_tileRoadLabelPortOrRailroad => 'port or railroad';
+
+  @override
+  String get provinceOverlay_tileRoadLabelNonStandard =>
+      'non-standard transport level';
+
+  @override
+  String get provinceOverlay_tileRoadRailGloss =>
+      'Basic land link for connectivity and yield caps. '
+      'Railroads are transport level 4.';
+
+  @override
+  String get provinceOverlay_improvementGeneric => 'Improvement';
+
+  @override
+  String get provinceOverlay_improvementFarm => 'Farm';
+
+  @override
+  String get provinceOverlay_improvementRanch => 'Ranch';
+
+  @override
+  String get provinceOverlay_improvementPasture => 'Pasture';
+
+  @override
+  String get provinceOverlay_improvementLumberCamp => 'Lumber camp';
+
+  @override
+  String get provinceOverlay_improvementPlantation => 'Plantation';
+
+  @override
+  String get provinceOverlay_improvementFurPost => 'Fur post';
+
+  @override
+  String get provinceOverlay_improvementMine => 'Mine';
 
   @override
   String provinceOverlay_tileCivilianUnits(int count) {
@@ -324,6 +380,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String provinceOverlay_owner(String owner) {
     return 'Owner: $owner';
   }
+
+  @override
+  String get provinceOverlay_ownerUnclaimed => 'Unclaimed';
 
   @override
   String provinceOverlay_region(String region) {
@@ -381,6 +440,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_sectionNaval => 'Naval';
+
+  @override
+  String get provinceOverlay_titleProvince => 'Province';
+
+  @override
+  String get provinceOverlay_titleSeaZone => 'Sea zone';
 
   @override
   String get gameSetup_title => 'Game Setup';

@@ -25,6 +25,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/l10n/app_localizations_en.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 Color _expectedDisabledIconColor() {
@@ -157,7 +158,7 @@ void main() {
 
           final glossStyle = _textStyleFor(
             tester,
-            kRoadRailPrimitiveVersusRailGloss,
+            AppLocalizationsEn().provinceOverlay_tileRoadRailGloss,
           );
           expect(
             glossStyle.color,
