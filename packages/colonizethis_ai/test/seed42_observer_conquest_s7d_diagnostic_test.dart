@@ -260,6 +260,87 @@ import 'support/faithful_full_ai_test_handoff.dart';
 ///      remains and can be tuned in a follow-up declare-war
 ///      cooldown slice.
 ///
+/// ## S7-D refresh (captured 2026-06-04 on merged `dev` @ `b4c79488`,
+///     after the World Market treasury-recovery path (#2924 / #2994),
+///     EXPAND universal colonial dispatch (#3179), and the stalled-EXPAND
+///     minor-transit army-move routing (#3224) all merged)
+///
+/// The diagnostic surface has **shifted materially** — the dominant
+/// EXPAND-lock blocker is **no longer treasury starvation**:
+///
+///   * **OW gain (+3 gate):** gp1=+6, gp2=+6 (PASS). gp3=+2, gp4=+1,
+///     gp5=+1, gp6=+2 — all four still failing, but back in the low
+///     +1/+2 band. #3224's minor-transit routing recovered gp5 from
+///     the −7 zero-sum collapse seen in the 2026-06-03 on-branch run
+///     to +1; the symmetric −7 / +10 winner/loser split no longer
+///     appears on merged `dev`.
+///   * **Treasury is solved.** The four failing GPs hold ~2029–2170
+///     treasury at turn 99 (above `cheapestRegimentBuildTreasuryCost`
+///     = 2000) and sit at-or-above the cheapest-regiment cost for
+///     32–56 of 100 turns (vs 3 turns pre-World-Market). The old
+///     H5 "treasury-recovery cargo futility" diagnosis no longer
+///     holds — the World Market lifts treasury for the locked GPs.
+///   * **New dominant bottleneck: regiment rebuilds are barely
+///     emitted.** The new instrument fields (added in this slice)
+///     isolate the proximate cause, and they **refute** the naive
+///     "build one, lose it, rebuild every turn" churn hypothesis:
+///     - `gpMilitaryBuildOrdersEmitted` = **2 / 4 / 2 / 2** for
+///       gp3 / gp4 / gp5 / gp6 across the whole 100-turn run (gp1 / gp2
+///       also only 2). So military `BuildUnitOrder`s are *rare* for
+///       everyone — even though `forceCheapestRegimentBuild` fires
+///       85–100 turns for the failing GPs and treasury is affordable
+///       32–56 turns. The planner directive is **not** converting into
+///       emitted build orders.
+///     - `gpRegimentPeak` = **3** for every failing GP — they begin the
+///       game with regiments rather than building up to a standing
+///       army.
+///     - `gpRegimentTurnsAtZero` = **39 / 1 / 59 / 59** for
+///       gp3 / gp4 / gp5 / gp6. gp5 and gp6 spend the majority of the
+///       run with **zero** regiments after their starting army is lost,
+///       and almost never rebuild (2 emitted builds). gp4 is the
+///       opposite case: it holds regiments nearly every turn (1 turn at
+///       zero) yet still only gains +1 — for gp4 the blocker is reach /
+///       offensive strength against the locked peer, not a missing
+///       rebuild.
+///   * **Two distinct failure modes** now separate cleanly:
+///     (a) gp5 / gp6 (and partly gp3) — the `forceCheapestRegimentBuild`
+///     directive does not reach the build pipeline as an emitted
+///     military build, so the lost starting army is never replaced; and
+///     (b) gp4 — regiments are present but cannot convert the
+///     peer-locked invadable frontier into OW gains.
+///
+/// ## Updated S7-T tuning surface (ordered by 2026-06-04 evidence)
+///
+/// Constraint per issue § Scope constraint unchanged: **phase-planner
+/// logic only**, **no new config constants**, **no value changes** to
+/// existing constants in
+/// `packages/colonizethis_data/lib/src/ai_victory_config.dart`.
+///
+///   1. **H8 (new, highest signal): regiment-rebuild directive →
+///      emitted build conversion gap.** The 2026-06-04 instrument shows
+///      `forceCheapestRegimentBuild` fires 85–100 turns for the failing
+///      GPs while `gpMilitaryBuildOrdersEmitted` is only 2–4 and
+///      `gpRegimentTurnsAtZero` is 39–59 for gp3 / gp5 / gp6. The
+///      directive is set but the build pipeline rarely emits the
+///      cheapest-regiment `BuildUnitOrder`, so the lost starting army is
+///      never replaced. The highest-signal slice is to find why
+///      `forceCheapestRegimentBuild` does not produce an emitted
+///      military build under the lock with treasury available (e.g.
+///      spawn-province eligibility, production-assignment routing, or a
+///      build-pick gate) — phase-planner / orchestrator scope, no new
+///      constants. Verify any fix by re-running this diagnostic and
+///      confirming `gpMilitaryBuildOrdersEmitted` rises and
+///      `gpRegimentTurnsAtZero` falls for gp5 / gp6.
+///   2. **H4-b (unblocked for the regiment-holding case): minor-transit
+///      reach.** gp4 holds regiments almost every turn (1 turn at zero)
+///      yet still gains only +1 — its blocker is reach / offensive
+///      strength against the locked peer. #3224 routes locked-GP army
+///      moves toward at-war minor / tribe OW provinces through the
+///      peer's territory and recovered gp5; extending the same routing
+///      to gp4 (which #3224 left unchanged) is the natural follow-up for
+///      the regiment-holding failure mode.
+///   3. **H2 (still open): residual peer-war re-declare oscillation.**
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
@@ -351,6 +432,27 @@ void main() {
       };
       final lastSnapshotFields = <String, Map<String, Object?>>{};
 
+      // Refs #2847 regiment-accumulation surface (post-#2924 / World
+      // Market merge). Treasury starvation is no longer the dominant
+      // EXPAND-lock blocker for the failing GPs; the new question is
+      // whether the standing regiment count actually grows once the GP
+      // can afford a build. These per-GP rollups capture the regiment
+      // trajectory (peak / turns at zero / turns at-or-above the cheapest
+      // build cost) and the number of military `BuildUnitOrder`s the AI
+      // actually emits each turn, so a future tuning implementer can tell
+      // apart "the build order is never emitted/accepted" from "regiments
+      // are built but immediately lost in the peer-war zero-sum churn".
+      final regimentPeak = <String, int>{for (final gpId in gpIds) gpId: 0};
+      final regimentTurnsAtZero = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final treasuryAtOrAboveCheapestTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final militaryBuildOrdersEmitted = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+
       // Refs #2924 Step 0 — world-market lock-recovery diagnostics:
       // per-GP rollups capturing (a) trade orders the AI submits each
       // turn (offer/bid counts plus urgent-priority offer counts at
@@ -439,7 +541,18 @@ void main() {
             if (player.treasury < cheapest) {
               treasuryUnderCheapestTurns[gpId] =
                   (treasuryUnderCheapestTurns[gpId] ?? 0) + 1;
+            } else {
+              treasuryAtOrAboveCheapestTurns[gpId] =
+                  (treasuryAtOrAboveCheapestTurns[gpId] ?? 0) + 1;
             }
+          }
+          final regiments = regimentCountForPlayer(game, gpId);
+          if (regiments > (regimentPeak[gpId] ?? 0)) {
+            regimentPeak[gpId] = regiments;
+          }
+          if (regiments == 0) {
+            regimentTurnsAtZero[gpId] =
+                (regimentTurnsAtZero[gpId] ?? 0) + 1;
           }
           // Cache the turn-99 snapshot fields for the final rollup.
           if (t == 99) {
@@ -469,6 +582,23 @@ void main() {
           humanOrders: const Orders(),
           aiOrders: fullAi.orders,
         );
+
+        // Refs #2847 — count military `BuildUnitOrder`s the AI emits per
+        // GP this turn (regiment / warship builds carry `isMilitary ==
+        // true`). Compared against the regiment trajectory above, a high
+        // emission count with a flat/zero peak indicates builds rejected
+        // downstream or units lost as fast as they are produced; a low
+        // emission count indicates the planner never queues the build.
+        for (final gpId in gpIds) {
+          final builds = merged.buildUnitOrdersByPlayerId[gpId];
+          if (builds == null) continue;
+          for (final build in builds) {
+            if (build.isMilitary) {
+              militaryBuildOrdersEmitted[gpId] =
+                  (militaryBuildOrdersEmitted[gpId] ?? 0) + 1;
+            }
+          }
+        }
 
         // Refs #2924 Step 0 — count submitted trade orders per GP
         // from the merged order list that the resolver will apply.
@@ -586,6 +716,11 @@ void main() {
         'gpInvadableEmptyTurns': invadableEmptyTurns,
         'gpAtWarTurnsByPeer': atWarTurnsByPeer,
         'gpTreasuryUnderCheapestRegimentTurns': treasuryUnderCheapestTurns,
+        'gpTreasuryAtOrAboveCheapestRegimentTurns':
+            treasuryAtOrAboveCheapestTurns,
+        'gpRegimentPeak': regimentPeak,
+        'gpRegimentTurnsAtZero': regimentTurnsAtZero,
+        'gpMilitaryBuildOrdersEmitted': militaryBuildOrdersEmitted,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
 
