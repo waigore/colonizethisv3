@@ -514,6 +514,93 @@ bootstrap path.
   H8-supply market path, then both runs return identical
   `List<TradeOrder>` outputs (determinism).
 
+### Lock-recovery seller feedstock-improvement input bootstrap (Refs #2847 H8-extraction)
+
+The H8-supply paths above let a recovered lock-recovery seller acquire or retain
+the recipe **feedstock** (`wool` / `cotton`), and the economy planner routes a
+Builder onto the seller's owned unimproved feedstock tile
+([economy-planner.md](economy-planner.md) § Regiment build-input production
+priority; `regimentBuildInputFeedstockExtractionResourceIds`). But the routed
+Builder cannot start: raising an unimproved resource tile to level 1 costs the
+level-0 `build_improvement` material — **1 lumber + 1 cast iron**
+(`work_order_costs.dart` § `workOrderCostBuildImprovement(0)`) — which the locked
+seller holds zero of, and the work-order validator
+(`work_order_validator.dart` § `_validateWorkMaterialCosts`) rejects the
+`build_improvement` candidate before any selection boost applies. The seller
+cannot extract those inputs domestically either, because every other
+`build_improvement` (including a lumber or iron tile) costs the same 1 lumber +
+1 cast iron it does not hold — a self-reinforcing **lumber / cast-iron
+deadlock**. On seed 42 the diagnostic
+(`seed42_observer_conquest_s7d_diagnostic_test.dart`) pins this exactly:
+`gpFeedstockGateImprovementCostAffordableTurns == 0` on every gate-active turn
+for gp3 / gp5 / gp6. The only non-deadlocking source of the first lumber + cast
+iron is the world market.
+
+**Improvement-input bid (bootstrap extension).** The
+`regimentBuildInputFeedstockImprovementInputCost(game, playerId)` contract
+(`colonizethis_logic/ai_api.dart`) returns the level-0 `build_improvement`
+material cost map (`{lumber: 1, castIron: 1}`) **only** when, for the lock-recovery
+seller:
+
+- `regimentBuildInputFeedstockExtractionResourceIds(game, playerId)` is non-empty
+  (the same recovered-seller / zero-regiment / missing-build-input gate as the
+  bootstrap bid), **and**
+- the seller owns at least one province tile hosting one of those feedstock
+  resource ids that is still unimproved (`improvementLevel < 1`).
+
+It returns the empty map otherwise (self-clearing once the GP owns a regiment,
+holds the build input, or has improved its feedstock tile). Under the same gate
+as § Lock-recovery seller regiment build-input bootstrap, when this cost map is
+non-empty, `runTreasuryPlanner` injects a bid for each improvement-input
+commodity the projected stockpile (plus carry-forward bids) is short of
+(`need[c] = cost[c] - held` when positive), and **suppresses** the downstream
+feedstock / fabric bootstrap bids for that turn while any improvement-input
+deficit remains — the single `bidTypeCap` slot targets the prerequisite supply,
+mirroring the way the fabric bid is suppressed while a feedstock deficit remains.
+No affordability rule is bypassed: the matcher still debits treasury per filled
+unit at phase 13, and the work-order validator still gates the eventual
+`build_improvement`. Once the inputs land the seller resumes the feedstock /
+fabric bootstrap bids.
+
+**Affluent-GP improvement-input offers.** `lumber` and `castIron` join `wool`,
+`cotton`, and `fabric` in the affluent-supplier release set
+(`_regimentBuildInputSupplyCommodityIds`), so while any lock-recovery seller
+needs the bootstrap path, every other Great Power with
+`player.treasury >= cheapestRegimentBuildTreasuryCost()` releases its `lumber` /
+`castIron` surplus aggressively (safety buffer `0`, production inputs still
+reserved) so the seller's improvement-input bid can match.
+
+#### Acceptance criteria (H8-extraction)
+
+- Given a below-quota zero-NW lock-recovery seller with recovered treasury, zero
+  regiments, a projected stockpile missing the cheapest regiment's `fabric`
+  build input, an owned unimproved `wool` (or `cotton`) resource tile, and zero
+  `lumber` and zero `castIron`, when `runTreasuryPlanner` runs for that seller,
+  then it emits at least one `TradeOrderType.bid` for an improvement-input
+  commodity (`lumber` or `castIron`, bounded per turn by the player's
+  `worldMarketBidTypeCap`) and emits **no** `fabric` or feedstock (`wool` /
+  `cotton`) bid that turn (the improvement-input prerequisite is acquired
+  first).
+- Given an otherwise identical lock-recovery seller that already holds at least
+  1 `lumber` and 1 `castIron`, when `runTreasuryPlanner` runs, then it emits
+  **no** improvement-input bid (the bootstrap clears once the inputs are on
+  hand) and resumes its feedstock / fabric bootstrap bids.
+- Given an otherwise identical lock-recovery seller that owns **no** unimproved
+  feedstock resource tile, when `runTreasuryPlanner` runs, then it emits **no**
+  improvement-input bid (the bootstrap is scoped to sellers that have a
+  feedstock tile to improve).
+- Given an otherwise identical lock-recovery seller with
+  `regimentCountForPlayer(game, playerId) > 0`, when `runTreasuryPlanner` runs,
+  then it emits **no** improvement-input bid (the bootstrap targets the
+  zero-regiment rebuild gap only).
+- Given the same game state and a non-seller Great Power with surplus `lumber`
+  and `player.treasury >= cheapestRegimentBuildTreasuryCost()`, when
+  `runTreasuryPlanner` runs for that affluent GP, then it emits a
+  `TradeOrderType.offer` for `lumber`.
+- Given identical inputs, when `runTreasuryPlanner` runs twice on the
+  improvement-input bootstrap path, then both runs return identical
+  `List<TradeOrder>` outputs (determinism).
+
 ---
 
 ## Treasury-budget-aware bid sizing (Refs #3122)

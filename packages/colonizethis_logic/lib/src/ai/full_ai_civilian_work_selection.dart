@@ -462,6 +462,62 @@ Set<String> regimentBuildInputFeedstockExtractionResourceIds(
   return feedstock;
 }
 
+/// True iff [playerId] owns at least one province tile hosting a resource in
+/// [feedstockIds] that is still unimproved (`improvementLevel < 1`) — a Builder
+/// target whose `build_improvement` would extract the feedstock the
+/// `fabricFrom*` recipes consume. Province ownership is derived from the tile
+/// key (`Unit.provinceIdFromTileKey`) so the scan works from
+/// `WorldState.resourceByTileKey` alone. Read-only; Refs #2847 H8-extraction.
+bool _ownsUnimprovedFeedstockResourceTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    if (ws.tileState.improvementLevel(entry.key) < 1) return true;
+  }
+  return false;
+}
+
+/// Level-0 `build_improvement` material cost (`{lumber: 1, castIron: 1}`,
+/// `work_order_costs.dart` § `workOrderCostBuildImprovement`) a below-quota
+/// zero-NW lock-recovery seller must hold to extract its own fabric feedstock
+/// tile (Refs #2847 § H8-extraction; companion to `treasury-planner.md`
+/// § Lock-recovery seller feedstock-improvement input bootstrap).
+///
+/// Returns the cost map **only** when the regiment build-input
+/// feedstock-extraction gate is active for [playerId]
+/// ([regimentBuildInputFeedstockExtractionResourceIds] non-empty) **and** the
+/// seller owns an unimproved tile hosting one of those feedstock resources —
+/// the case where the routed Builder is blocked by the lumber / cast-iron
+/// improvement cost it cannot afford. Returns the empty map otherwise, so it
+/// self-clears once the GP owns a regiment, holds the build input, or has
+/// improved the feedstock tile. The returned quantities are the **full** level-0
+/// cost; the caller nets on-hand stock and carry-forward bids to size the actual
+/// bid. Pure and deterministic over `(game, playerId)` and the static
+/// `RegimentEconomyCatalog` / `ProductionRecipesCatalog` / work-order cost table.
+Map<String, int> regimentBuildInputFeedstockImprovementInputCost(
+  Game game,
+  String playerId,
+) {
+  final feedstockIds = regimentBuildInputFeedstockExtractionResourceIds(
+    game,
+    playerId,
+  );
+  if (feedstockIds.isEmpty) return const <String, int>{};
+  if (!_ownsUnimprovedFeedstockResourceTile(game, playerId, feedstockIds)) {
+    return const <String, int>{};
+  }
+  return Map<String, int>.unmodifiable(workOrderCostBuildImprovement(0));
+}
+
 WorkOrder? _bestBuildImprovementRow(
   List<WorkOrder> candidates,
   Game game, {

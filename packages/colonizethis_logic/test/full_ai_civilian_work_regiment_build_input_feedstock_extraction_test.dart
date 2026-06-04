@@ -17,6 +17,7 @@ Game _belowQuotaZeroNwSellerGame({
     _tileGrain: 'grain',
     _tileWool: 'wool',
   },
+  TileMapState? tileState,
 }) {
   final provinces = List.generate(
     owOwned,
@@ -33,6 +34,7 @@ Game _belowQuotaZeroNwSellerGame({
       oldWorld: RegionData(provinces: provinces, units: extraUnits),
       newWorld: const RegionData(),
       resourceByTileKey: resourceByTileKey,
+      tileState: tileState ?? TileMapState(),
     ),
     players: [
       Player(
@@ -139,6 +141,95 @@ void main() {
       final a = regimentBuildInputFeedstockExtractionResourceIds(game, _playerId);
       final b = regimentBuildInputFeedstockExtractionResourceIds(game, _playerId);
       expect(a, equals(b));
+    });
+  });
+
+  group('regimentBuildInputFeedstockImprovementInputCost (Refs #2847 H8-extraction)', () {
+    test('active gate + owned unimproved feedstock tile returns level-0 cost', () {
+      final game = _belowQuotaZeroNwSellerGame(
+        owOwned: 5,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+      );
+      expect(
+        regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
+        equals(workOrderCostBuildImprovement(0)),
+      );
+    });
+
+    test('returns empty when no feedstock resource tile is owned', () {
+      final game = _belowQuotaZeroNwSellerGame(
+        owOwned: 5,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+        resourceByTileKey: const {_tileGrain: 'grain'},
+      );
+      expect(
+        regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
+        isEmpty,
+      );
+    });
+
+    test('returns empty when the feedstock tile is already improved', () {
+      final game = _belowQuotaZeroNwSellerGame(
+        owOwned: 5,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+        tileState: TileMapState().setImprovement(_tileWool, 1),
+      );
+      expect(
+        regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
+        isEmpty,
+      );
+    });
+
+    test('returns empty when treasury below regiment threshold', () {
+      final game = _belowQuotaZeroNwSellerGame(
+        owOwned: 5,
+        treasury: cheapestRegimentBuildTreasuryCost() - 1,
+      );
+      expect(
+        regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
+        isEmpty,
+      );
+    });
+
+    test('returns empty when GP already owns a regiment', () {
+      final game = _belowQuotaZeroNwSellerGame(
+        owOwned: 5,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+        extraUnits: [
+          Unit(
+            id: 'r1',
+            type: 'peasant_levies',
+            ownerId: _playerId,
+            locationProvinceId: 'oldWorld|p0',
+          ),
+        ],
+      );
+      expect(
+        regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
+        isEmpty,
+      );
+    });
+
+    test('returns empty when GP is at or above the conquest quota', () {
+      final game = _belowQuotaZeroNwSellerGame(
+        owOwned: kObserverConquestMinOwProvincesPerGp,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+      );
+      expect(
+        regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
+        isEmpty,
+      );
+    });
+
+    test('evaluation is deterministic', () {
+      final game = _belowQuotaZeroNwSellerGame(
+        owOwned: 5,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+      );
+      expect(
+        regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
+        equals(regimentBuildInputFeedstockImprovementInputCost(game, _playerId)),
+      );
     });
   });
 
