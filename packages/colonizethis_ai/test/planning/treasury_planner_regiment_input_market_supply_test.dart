@@ -8,6 +8,7 @@ import 'package:colonizethis_test/test.dart';
 
 const _fabricId = 'fabric';
 const _woolId = 'wool';
+const _timberId = 'timber';
 
 Game _twoGpGame({
   required int sellerTreasury,
@@ -15,6 +16,7 @@ Game _twoGpGame({
   required int sellerFabricHeld,
   required int sellerWoolHeld,
   required int supplierWoolHeld,
+  int supplierTimberHeld = 0,
   int sellerOwProvinces = 3,
   int supplierOwProvinces = 12,
 }) {
@@ -29,6 +31,10 @@ Game _twoGpGame({
   var supplierStockpile = const Stockpile().applyDelta('grain', 80);
   if (supplierWoolHeld > 0) {
     supplierStockpile = supplierStockpile.applyDelta(_woolId, supplierWoolHeld);
+  }
+  if (supplierTimberHeld > 0) {
+    supplierStockpile =
+        supplierStockpile.applyDelta(_timberId, supplierTimberHeld);
   }
   return Game(
     id: 'g-h8-supply-market',
@@ -66,6 +72,7 @@ Game _twoGpGame({
       'grain': 10,
       _woolId: 20,
       _fabricId: 40,
+      _timberId: 30,
     }),
   );
 }
@@ -170,6 +177,80 @@ void main() {
         isNotEmpty,
       );
     });
+
+    test(
+      'supplier build-input offer lands in the same priority tier the buyer '
+      'bids at so the DealMatcher can cross them (Refs #2847 H8-supply market '
+      'order matching)',
+      () {
+        final game = _twoGpGame(
+          sellerTreasury: threshold,
+          supplierTreasury: threshold,
+          sellerFabricHeld: 0,
+          sellerWoolHeld: 0,
+          supplierWoolHeld: 20,
+        );
+        final supplierWoolOffer = _run(game, 'gp_supplier').firstWhere(
+          (o) => o.type == TradeOrderType.offer && o.commodityId == _woolId,
+        );
+        final sellerWoolBid = _run(game, 'gp_seller').firstWhere(
+          (o) => o.type == TradeOrderType.bid && o.commodityId == _woolId,
+        );
+        expect(
+          supplierWoolOffer.priority,
+          sellerWoolBid.priority,
+          reason:
+              'The build-input supply offer and the buyer build-input bid '
+              'must share an integer priority tier; the DealMatcher only '
+              'crosses orders within the same tier.',
+        );
+        expect(
+          supplierWoolOffer.priority,
+          kTreasuryBidPriorityRawMaterial,
+          reason:
+              'wool is a raw material; the supply offer is re-tagged to the '
+              'raw bid tier rather than the moderate offer tier.',
+        );
+      },
+    );
+
+    test(
+      'only build-input supply commodities are re-tagged; a non-build-input '
+      'surplus offer keeps the moderate offer tier (Refs #2847 H8-supply '
+      'market order matching)',
+      () {
+        final game = _twoGpGame(
+          sellerTreasury: threshold,
+          supplierTreasury: threshold,
+          sellerFabricHeld: 0,
+          sellerWoolHeld: 0,
+          supplierWoolHeld: 20,
+          supplierTimberHeld: 200,
+        );
+        final supplierOrders = _run(game, 'gp_supplier');
+        final timberOffer = supplierOrders.firstWhere(
+          (o) => o.type == TradeOrderType.offer && o.commodityId == _timberId,
+        );
+        expect(
+          timberOffer.priority,
+          kTreasuryOfferPriorityModerate,
+          reason:
+              'timber is not a regiment build-input supply commodity, so its '
+              'surplus offer keeps the general moderate offer priority and is '
+              'not re-tagged.',
+        );
+        final woolOffer = supplierOrders.firstWhere(
+          (o) => o.type == TradeOrderType.offer && o.commodityId == _woolId,
+        );
+        expect(
+          woolOffer.priority,
+          kTreasuryBidPriorityRawMaterial,
+          reason:
+              'wool is a build-input supply commodity, so it is re-tagged to '
+              'the buyer bid tier even while timber is not.',
+        );
+      },
+    );
 
     test('H8-supply market path is deterministic', () {
       final game = _twoGpGame(

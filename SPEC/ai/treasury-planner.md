@@ -583,7 +583,47 @@ unfilled (`gpRegimentInputDealsAsBuyer == 0`,
 treasury gate keeps the supplier's own consumption + production inputs reserved
 (only the extra safety buffer drops to `0`), so it cannot starve the supplier.
 
+**Supplier offer-tier alignment (order matching).** Surfacing the supply is
+necessary but not sufficient: the [DealMatcher](../program/world-market-resolution.md)
+§ Step C crosses offers and bids **only within the same integer priority tier**.
+A lock-recovery supplier emits all surplus at its general `offerPriority` — the
+urgent tier (`kTreasuryOfferPriorityUrgent` = `2`) while broke, the moderate tier
+(`kTreasuryOfferPriorityModerate` = `5`) once recovered — but the locked buyer
+bids each build input at `_bidPriorityForCommodity` (essential = `1` for the
+manufactured `lumber` / `castIron` / `fabric`, raw = `3` for `wool` / `cotton`)
+because the H8 bootstrap bid fires only **after** the seller has recovered above
+the regiment threshold (so `alignBidPriorityWithUrgentOffers` is false for it). On
+seed 42 this stranded a priority-`2` `lumber` offer and a priority-`1` `lumber`
+bid in different tiers every turn (`filledQuantity == 0` despite both standing).
+Therefore, while the supplier role is active, every offer whose commodity is in
+`_regimentBuildInputSupplyCommodityIds` is re-tagged to the **same per-commodity
+tier the buyer bids at** (`_bidPriorityForCommodity(commodityId)`) so the standing
+offer and bid land in one tier and cross. Only build-input supply commodities are
+re-tagged; the urgent liquidity-food offer and all other surplus keep their
+computed `offerPriority`. This mirrors the bid-side
+`alignBidPriorityWithUrgentOffers` tier-alignment machinery (Refs #2924 F12/F16)
+and bypasses no affordability rule (the matcher still debits the buyer's treasury
+per filled unit at phase 13).
+
+> **Residual (Refs #2847 H8, separate from this rule):** the bootstrap
+> `build_improvement` needs **both** `lumber` and `castIron`. On seed 42 no Great
+> Power ever offers a `castIron` surplus (it is consumed by Old World military
+> builds), so even with offer-tier alignment the `castIron` bid has zero market
+> supply to cross. Closing the full H8 deadlock requires a `castIron` supply or
+> production source, not a further matching change.
+
 #### Acceptance criteria (H8-extraction)
+
+- Given a lock-recovery supplier (an affluent or below-regiment-band Great Power
+  releasing surplus while another GP needs the H8 bootstrap) with a `lumber`
+  surplus, when `runTreasuryPlanner` runs for that supplier, then its emitted
+  `lumber` `TradeOrderType.offer` has `priority == kTreasuryBidPriorityEssentialInput`
+  (the same tier the recovered buyer bids `lumber` at) rather than the general
+  `offerPriority`, so the DealMatcher can cross the standing offer and bid.
+- Given the same supplier and a non-build-input surplus commodity (for example
+  `timber`), when `runTreasuryPlanner` runs, then that commodity's offer keeps the
+  general moderate offer priority (`kTreasuryOfferPriorityModerate`) — only the
+  build-input supply commodities are re-tagged.
 
 - Given a below-quota zero-NW lock-recovery seller with recovered treasury, zero
   regiments, a projected stockpile missing the cheapest regiment's `fabric`
