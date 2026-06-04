@@ -90,6 +90,35 @@ void main() {
   // short-circuit / timeout tests at the top of this file (which all pass
   // `perf: null` by default).
 
+  group('e2eAdvanceGameStartIntroUntilDismissed multi-label pass', () {
+    test(
+      'control label order and post-tap settle cap stay pinned for bootstrap '
+      'wall-clock (#2336 AC5)',
+      () {
+        expect(
+          kE2eGameStartIntroControlLabels,
+          ['Continue', 'I shall.'],
+          reason:
+              'Yarn intro controls must be tried in narrative order so an '
+              'intermediate Continue tap can be followed by I shall. in the '
+              'same loop iteration.',
+        );
+        expect(
+          kE2eDefaultIntroControlPostTapSettleTimeout,
+          const Duration(milliseconds: 500),
+          reason:
+              'Per-control settle must stay well below the legacy 5 s cap so '
+              'bootstrap does not burn seconds waiting for full dismissal '
+              'after an intermediate control tap.',
+        );
+        expect(
+          kE2eDefaultIntroControlPostTapSettleTimeout.inMilliseconds,
+          lessThan(5000),
+        );
+      },
+    );
+  });
+
   group('e2eAdvanceGameStartIntroUntilDismissed perf attribution', () {
     test('phase constant matches the documented '
         '`advance_game_start_intro_until_dismissed` label', () {
