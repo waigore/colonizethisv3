@@ -35,7 +35,15 @@ void _addWorkerSuggestionsForUnit({
           playerOwnedProvinceIds: playerOwnedProvinceIds,
           factionMembership: factionMembership,
         );
-        return sortedVisibleWorkTargetCandidates(view, raw);
+        final visible = sortedVisibleWorkTargetCandidates(view, raw);
+        if (target == kWorkTargetBuildImprovement) {
+          return _prioritizeFeedstockBuildImprovementCandidates(
+            game: game,
+            playerId: playerId,
+            sortedVisible: visible,
+          );
+        }
+        return visible;
       },
     );
 
@@ -63,4 +71,50 @@ void _addWorkerSuggestionsForUnit({
       probeBudget: workProbeBudget,
     );
   }
+}
+
+/// Refs #2847 § H8-extraction: when [playerId]'s feedstock-extraction gate is
+/// active ([feedstockExtractionResourceIdsForPlayer] non-empty), stable-
+/// partitions the lexicographically-sorted `build_improvement` candidates so
+/// tiles hosting an unimproved feedstock resource sort ahead of the rest.
+///
+/// The worker suggestion pipeline emits only the **first accepted**
+/// `build_improvement` candidate per Builder ([WorkSuggestionPipeline.run]
+/// with `includeAllAccepted: false`), so without this reordering the lone
+/// suggested tile is whichever sorts first lexicographically — rarely the
+/// feedstock tile. The downstream
+/// [kRegimentBuildInputFeedstockExtractionScoreBoost] in
+/// `selectFullAiCivilianWorkOrders` can only re-rank suggestions that exist,
+/// so the boost is inert unless the feedstock tile is actually suggested. This
+/// puts unimproved feedstock tiles first so the emitted suggestion targets the
+/// tile the boost is meant to select.
+///
+/// Off-gate (empty feedstock set) or when no candidate is an unimproved
+/// feedstock tile, returns [sortedVisible] unchanged so ordinary players and
+/// targets keep their existing deterministic ordering. Stable within each
+/// partition (lexicographic order preserved); pure over
+/// `(game, playerId, sortedVisible)`.
+List<String> _prioritizeFeedstockBuildImprovementCandidates({
+  required Game game,
+  required String playerId,
+  required List<String> sortedVisible,
+}) {
+  final feedstockIds = feedstockExtractionResourceIdsForPlayer(game, playerId);
+  if (feedstockIds.isEmpty) return sortedVisible;
+  final resourceByTile = game.worldState.resourceByTileKey;
+  final tileState = game.worldState.tileState;
+  final front = <String>[];
+  final back = <String>[];
+  for (final tileKey in sortedVisible) {
+    final resourceId = resourceByTile[tileKey];
+    if (resourceId != null &&
+        feedstockIds.contains(resourceId) &&
+        tileState.improvementLevel(tileKey) < 1) {
+      front.add(tileKey);
+    } else {
+      back.add(tileKey);
+    }
+  }
+  if (front.isEmpty) return sortedVisible;
+  return <String>[...front, ...back];
 }

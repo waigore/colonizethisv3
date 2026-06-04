@@ -574,6 +574,32 @@ Set<String> supplierImprovementInputFeedstockExtractionResourceIds(
   return feedstock;
 }
 
+/// Union of the seller-side regiment-build-input feedstock gate
+/// ([regimentBuildInputFeedstockExtractionResourceIds]) and the supplier-side
+/// improvement-input feedstock gate
+/// ([supplierImprovementInputFeedstockExtractionResourceIds]) for [playerId]
+/// (Refs #2847 § H8-extraction).
+///
+/// The seller-side gate routes a locked seller's own Builder onto its fabric
+/// feedstock; the supplier-side gate routes an affluent supplier's idle Builder
+/// onto the `timber` / `iron` the `castIron` recipe consumes so the supplier
+/// can over-produce the improvement input a peer locked seller needs. A player
+/// matches at most one gate (the supplier gate excludes locked sellers), so the
+/// union never double-counts. Non-empty **only** under those deterministic
+/// lock-recovery conditions; the empty set for every ordinary player so callers
+/// (civilian-work selection scoring and `build_improvement` suggestion
+/// ordering) leave off-gate behaviour unchanged. Pure and deterministic over
+/// `(game, playerId)` and the static catalogs.
+Set<String> feedstockExtractionResourceIdsForPlayer(
+  Game game,
+  String playerId,
+) {
+  return <String>{
+    ...regimentBuildInputFeedstockExtractionResourceIds(game, playerId),
+    ...supplierImprovementInputFeedstockExtractionResourceIds(game, playerId),
+  };
+}
+
 /// True iff [playerId] holds Old World land below the observer conquest quota
 /// (`oldWorldProvinceCountOwnedBy` in `[2, kObserverConquestMinOwProvincesPerGp)`)
 /// and owns zero New World provinces — the Path F lock-recovery seller band the
@@ -938,20 +964,10 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   final workOrders = <WorkOrder>[];
   final idleEvents = <FullAiCivilianWorkIdle>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
-  // The seller-side gate routes a locked seller's own Builder onto its fabric
-  // feedstock; the supplier-side gate (Refs #2847 H8-extraction supplier
-  // feedstock) routes an affluent supplier's idle Builder onto the `timber` /
-  // `iron` the `castIron` recipe consumes so the supplier can over-produce the
-  // improvement input a peer locked seller needs. A player matches at most one
-  // gate (the supplier gate excludes locked sellers), so the union never
-  // double-counts.
-  final feedstockExtractionResourceIds = <String>{
-    ...regimentBuildInputFeedstockExtractionResourceIds(game, view.playerId),
-    ...supplierImprovementInputFeedstockExtractionResourceIds(
-      game,
-      view.playerId,
-    ),
-  };
+  final feedstockExtractionResourceIds = feedstockExtractionResourceIdsForPlayer(
+    game,
+    view.playerId,
+  );
 
   for (final unitId in allUnitIds) {
     _appendSelectionForUnitId(

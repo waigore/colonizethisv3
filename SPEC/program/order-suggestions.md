@@ -212,6 +212,24 @@ For `explore`, step (1) must use the same per-player partially-revealed-province
 
 ---
 
+## Feedstock-extraction priority for `build_improvement` candidates (Refs #2847 H8-extraction)
+
+The worker suggestion pipeline (`WorkSuggestionPipeline.run`, `includeAllAccepted: false`) emits **only the first accepted** `build_improvement` candidate per Builder per pass, and the visible candidate list is sorted **lexicographically** by tile key (`sortedVisibleWorkTargetCandidates`). The lone suggested tile is therefore whichever owned/purchased resource tile sorts first by key — independent of resource. The Full-AI feedstock-extraction score boost (`kRegimentBuildInputFeedstockExtractionScoreBoost`, `selectFullAiCivilianWorkOrders`) only **re-ranks suggestions that already exist**, so it cannot route a Builder onto a feedstock tile that was never suggested.
+
+To make the boost effective, when a player's feedstock-extraction gate is active — `feedstockExtractionResourceIdsForPlayer(game, playerId)` non-empty, i.e. the seller-side `regimentBuildInputFeedstockExtractionResourceIds` **or** the supplier-side `supplierImprovementInputFeedstockExtractionResourceIds` gate fires (see [economy-planner.md](../ai/economy-planner.md) § H8-extraction) — the `build_improvement` candidate list is **stable-partitioned** so tiles hosting an **unimproved** feedstock resource (resource id in the gate set, `improvementLevel < 1`) sort ahead of all other candidates. Lexicographic order is preserved within each partition. The single emitted suggestion then targets a feedstock tile, which the downstream score boost selects ahead of competing work.
+
+This ordering change is **gated**: for every ordinary player the feedstock set is empty and the candidate order is unchanged, so human-shell and non-lock-recovery suggestions are unaffected. It adds **no** new work order, bypasses **no** suggestion, visibility, probe-budget, or order-engine acceptance gate (the reordered candidates still pass the same incremental validation), and introduces **no** `ai_victory_config.dart` constant. The reordering is a pure, deterministic function of `(game, playerId, candidate list)`; identical inputs yield identical ordering.
+
+**Acceptance criteria (feedstock-extraction `build_improvement` priority)**
+
+- Given a player whose feedstock-extraction gate is active for resource ids `{timber, iron}` and a lexicographically-sorted `build_improvement` candidate list containing an unimproved `grain` tile sorted before an unimproved `iron` tile, when the system orders the candidates, then the `iron` tile sorts before the `grain` tile.
+- Given the same player and candidate list, when the system orders the candidates, then every unimproved feedstock tile precedes every non-feedstock tile and the relative lexicographic order within the feedstock group and within the non-feedstock group is preserved.
+- Given a player whose feedstock-extraction gate is **inactive** (`feedstockExtractionResourceIdsForPlayer` empty), when the system orders the `build_improvement` candidates, then the list is returned unchanged in its lexicographic order (negative control).
+- Given a player whose feedstock-extraction gate is active but whose only feedstock-resource tile is **already improved** (`improvementLevel >= 1`), when the system orders the `build_improvement` candidates, then that improved tile is not promoted and the list is returned unchanged (negative control — only unimproved feedstock tiles are prioritized).
+- Given identical `(game, playerId, candidate list)` inputs, when the system orders the `build_improvement` candidates twice, then both orderings are identical (determinism).
+
+---
+
 ## Selected-unit availability (`getAvailableWorkTargetsForUnit`)
 
 **Purpose:** Human-shell **per-unit** work availability (which work targets have ≥1 valid tile) without broad per-player `suggestWorkOrders` enumeration. Return type `AvailableWorkTargetsForUnit` holds `assignable`, optional `blockedReason`, and `validTileKeysByTarget` (only targets with non-empty tile sets).
