@@ -175,6 +175,23 @@ EconomyPlan runEconomyPlanner({
           ? kDomesticProductionImprovementInputIds
           : const <String>{};
 
+  // Refs #2847 H8-extraction feedstock co-availability: the multi-input
+  // `castIron` recipe needs `timber` + `iron` together, but the single-input
+  // `lumber_from_timber` recipe drains `timber` every turn, so the feedstock
+  // never co-accumulates for one `castIron` run and the production boost above
+  // is consulted only after `feasibleRuns(castIron) > 0`. Reserve one run's
+  // feedstock for each domestically-produced improvement input the GP is
+  // actively producing — its own seller-side need
+  // (`domesticImprovementInputOutputs`) and the peer supplier-release need
+  // (`supplierReleaseImprovementInputs`) — so competing recipes cannot consume
+  // the reserved `timber` / `iron` while the multi-input recipe is still
+  // assembling its feedstock. The reserve is bounded to one run and
+  // self-clears when neither set targets `castIron`.
+  final feedstockReserveOutputIds = <String>{
+    ...domesticImprovementInputOutputs,
+    ...supplierReleaseImprovementInputs,
+  };
+
   final assignments = _allocateLabour(
     stockpile: stockpile,
     workers: workers,
@@ -185,6 +202,7 @@ EconomyPlan runEconomyPlanner({
     regimentBuildInputProductionBoost: regimentBuildInputProductionBoost,
     missingRegimentBuildInputIds: boostedBuildInputOutputs,
     supplierReleaseImprovementInputIds: supplierReleaseImprovementInputs,
+    feedstockReserveOutputIds: feedstockReserveOutputIds,
   );
 
   final cargoPref = _cargoPreference(
@@ -288,6 +306,7 @@ List<AssignedRecipe> _allocateLabour({
   bool regimentBuildInputProductionBoost = false,
   Set<String> missingRegimentBuildInputIds = const {},
   Set<String> supplierReleaseImprovementInputIds = const {},
+  Set<String> feedstockReserveOutputIds = const {},
 }) {
   final recipes = ProductionRecipesCatalog.all;
   final agendaId = config.hiddenAgendaId;
@@ -295,14 +314,28 @@ List<AssignedRecipe> _allocateLabour({
   var remainingLabour = effectiveLabour;
   final result = <AssignedRecipe>[];
 
+  // One production run's feedstock reserved for the multi-input improvement
+  // recipes the GP is actively producing (Refs #2847 H8-extraction feedstock
+  // co-availability). Empty when no such recipe is targeted, in which case
+  // feasibility falls back to the unreduced stockpile (behaviour-equal).
+  final feedstockReserve =
+      _feedstockReserveForOutputs(feedstockReserveOutputIds);
+
   // Build feasible recipes with scores. Feasible = can run at least 1 full run.
   final candidates = <ScoredRecipe>[];
   for (final recipe in recipes) {
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) continue;
+    // A reserve-target recipe consumes its own reserved feedstock, so it sees
+    // the full stockpile; every other recipe sees the reserve withheld so it
+    // cannot drain the feedstock the target recipe is assembling.
+    final feasibilityStock =
+        feedstockReserveOutputIds.contains(recipe.outputCommodityId)
+            ? virtual
+            : _stockpileWithReserve(virtual, feedstockReserve);
     final runs = feasibleRuns(
       recipe: recipe,
-      stockpile: virtual,
+      stockpile: feasibilityStock,
       remainingLabour: remainingLabour,
     );
     if (runs <= 0) continue;
@@ -347,9 +380,13 @@ List<AssignedRecipe> _allocateLabour({
   for (final scored in candidates) {
     if (remainingLabour <= 0) break;
     final recipe = scored.recipe;
+    final feasibilityStock =
+        feedstockReserveOutputIds.contains(recipe.outputCommodityId)
+            ? virtual
+            : _stockpileWithReserve(virtual, feedstockReserve);
     final runs = feasibleRuns(
       recipe: recipe,
-      stockpile: virtual,
+      stockpile: feasibilityStock,
       remainingLabour: remainingLabour,
     );
     if (runs <= 0) continue;
@@ -377,6 +414,46 @@ List<AssignedRecipe> _allocateLabour({
     'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
   );
   return result;
+}
+
+/// One production run's input requirements for each output id in
+/// [outputIds], summed across outputs. Used to reserve the multi-input
+/// feedstock (`timber` + `iron` for `castIron`) a domestically-produced
+/// improvement input needs so single-input competitors (`lumber_from_timber`)
+/// cannot drain it before the multi-input recipe accumulates a full run
+/// (Refs #2847 H8-extraction feedstock co-availability). Deterministic: the
+/// lowest-`id` recipe is chosen per output, and the catalog is iterated in a
+/// fixed order. Returns an empty map when [outputIds] is empty.
+Map<CommodityId, int> _feedstockReserveForOutputs(Set<String> outputIds) {
+  if (outputIds.isEmpty) return const {};
+  final reserve = <CommodityId, int>{};
+  final seenOutputs = <String>{};
+  final sorted = [...ProductionRecipesCatalog.all]
+    ..sort((a, b) => a.id.compareTo(b.id));
+  for (final recipe in sorted) {
+    final out = recipe.outputCommodityId;
+    if (!outputIds.contains(out)) continue;
+    if (!seenOutputs.add(out)) continue;
+    for (final entry in recipe.inputQuantities.entries) {
+      reserve[entry.key] = (reserve[entry.key] ?? 0) + entry.value;
+    }
+  }
+  return reserve;
+}
+
+/// [base] with each [reserve] quantity withheld (clamped at zero). The
+/// reserved feedstock is invisible to non-target recipes so they cannot
+/// consume it (Refs #2847 H8-extraction feedstock co-availability). Returns
+/// [base] unchanged when [reserve] is empty.
+Stockpile _stockpileWithReserve(Stockpile base, Map<CommodityId, int> reserve) {
+  if (reserve.isEmpty) return base;
+  var adjusted = base;
+  for (final entry in reserve.entries) {
+    final have = adjusted.quantityOf(entry.key);
+    final reduce = entry.value < have ? entry.value : have;
+    if (reduce > 0) adjusted = adjusted.applyDelta(entry.key, -reduce);
+  }
+  return adjusted;
 }
 
 bool _isMilitaryInputRecipe(ProductionRecipe recipe) {
