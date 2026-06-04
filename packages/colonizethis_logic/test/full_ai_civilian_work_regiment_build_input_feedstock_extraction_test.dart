@@ -80,14 +80,15 @@ void main() {
       );
     });
 
-    test('returns empty when treasury below regiment threshold', () {
-      final game = _belowQuotaZeroNwSellerGame(
-        owOwned: 5,
-        treasury: cheapestRegimentBuildTreasuryCost() - 1,
-      );
+    test('treasury-independent: returns wool/cotton even when broke', () {
+      // Refs #2847 H8-extraction: the extraction routing gate is
+      // treasury-independent (mirrors the production boost) so the Builder is
+      // routed onto the feedstock tile while still broke. The market bids and
+      // build order remain treasury-gated at their call sites.
+      final game = _belowQuotaZeroNwSellerGame(owOwned: 5, treasury: 0);
       expect(
         regimentBuildInputFeedstockExtractionResourceIds(game, _playerId),
-        isEmpty,
+        containsAll(['wool', 'cotton']),
       );
     });
 
@@ -180,14 +181,15 @@ void main() {
       );
     });
 
-    test('returns empty when treasury below regiment threshold', () {
-      final game = _belowQuotaZeroNwSellerGame(
-        owOwned: 5,
-        treasury: cheapestRegimentBuildTreasuryCost() - 1,
-      );
+    test('treasury-independent: returns level-0 cost even when broke', () {
+      // Refs #2847 H8-extraction: the underlying extraction gate is
+      // treasury-independent, so the improvement-input cost surfaces while
+      // broke. The actual bid stays treasury-gated in treasury_planner.dart
+      // (§ Lock-recovery seller regiment build-input bootstrap).
+      final game = _belowQuotaZeroNwSellerGame(owOwned: 5, treasury: 0);
       expect(
         regimentBuildInputFeedstockImprovementInputCost(game, _playerId),
-        isEmpty,
+        equals(workOrderCostBuildImprovement(0)),
       );
     });
 
@@ -239,6 +241,32 @@ void main() {
         owOwned: 5,
         treasury: cheapestRegimentBuildTreasuryCost(),
       );
+      final suggestions = [
+        const WorkOrder(
+          unitId: 'b1',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: _tileGrain,
+        ),
+        const WorkOrder(
+          unitId: 'b1',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: _tileWool,
+        ),
+      ];
+      final r = selectFullAiCivilianWorkOrders(
+        workSuggestions: suggestions,
+        view: _builderView(game),
+        game: game,
+      );
+      expect(r.workOrders, hasLength(1));
+      expect(r.workOrders.single.targetTileKey, _tileWool);
+    });
+
+    test('broke below-quota seller still routes Builder to wool feedstock tile', () {
+      // Refs #2847 H8-extraction: treasury-independent routing — a broke seller
+      // (treasury 0, below the cheapest regiment cost) is still routed onto the
+      // feedstock tile so the input can stage ahead of treasury recovery.
+      final game = _belowQuotaZeroNwSellerGame(owOwned: 5, treasury: 0);
       final suggestions = [
         const WorkOrder(
           unitId: 'b1',

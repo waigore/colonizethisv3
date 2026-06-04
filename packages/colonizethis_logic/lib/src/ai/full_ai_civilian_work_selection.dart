@@ -415,14 +415,32 @@ int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
 /// `treasury-planner.md` § Lock-recovery seller regiment build-input
 /// bootstrap).
 ///
-/// Returns the empty set unless the **same bootstrap gate** as the treasury
-/// build-input bootstrap holds for [playerId]:
+/// Returns the empty set unless the lock-recovery rebuild gate holds for
+/// [playerId]:
 ///
 /// - below-quota zero-NW lock-recovery seller — `oldWorldProvinceCountOwnedBy`
 ///   in `[2, kObserverConquestMinOwProvincesPerGp)` and zero New World
-///   provinces,
-/// - `player.treasury >= cheapestRegimentBuildTreasuryCost()` (recovered), and
+///   provinces, and
 /// - `regimentCountForPlayer == 0` (zero-regiment rebuild gap).
+///
+/// **Treasury-independent (Refs #2847 H8-extraction).** The gate is
+/// deliberately **not** conditioned on
+/// `player.treasury >= cheapestRegimentBuildTreasuryCost()`. Routing a Builder
+/// onto an owned feedstock tile only spends labour — it spends no treasury —
+/// and the phase planner already sets `forceCheapestRegimentBuild` (arm A:
+/// `regimentCount == 0` + invadable Old World frontier) regardless of treasury
+/// so the rebuild trap cannot stick. A treasury gate on extraction re-imposed
+/// that trap on the *input*: the failing seed-42 Great Powers sit below the
+/// regiment cost ~97 of 100 turns, so the Builder was only routed onto the
+/// feedstock tile on the rare recovered turn and the multi-turn
+/// `extract → produce → build` chain could never finish inside the brief
+/// recovery window. This mirrors the treasury-independent regiment build-input
+/// *production* boost (economy-planner.md § Treasury-independent staging); the
+/// actual market **bids** and build order remain treasury-gated at their call
+/// sites (treasury-planner.md § Lock-recovery seller regiment build-input
+/// bootstrap). The `regimentCount == 0` guard still excludes every healthy
+/// regiment-holding Great Power, so the +6 Old World conquest baseline GPs are
+/// never routed.
 ///
 /// The returned ids are the production-recipe feedstock commodities (e.g.
 /// `wool` / `cotton` for `fabric`) of every recipe whose output is a missing
@@ -438,9 +456,6 @@ Set<String> regimentBuildInputFeedstockExtractionResourceIds(
 ) {
   final player = game.playerById(playerId);
   if (player == null) return const <String>{};
-  if (player.treasury < cheapestRegimentBuildTreasuryCost()) {
-    return const <String>{};
-  }
   if (_regimentCountForPlayer(game, playerId) != 0) return const <String>{};
   final ow = oldWorldProvinceCountOwnedBy(game, playerId);
   if (ow < 2 || !isBelowObserverConquestQuota(ow)) return const <String>{};
