@@ -731,6 +731,45 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// the lock-recovery trigger. Verify by re-running this diagnostic and
 /// confirming `gpCastIronProductionAssignedTurns` rises for gp1 / gp2.
 ///
+/// ## S7-D refresh (captured 2026-06-04 on merged `dev` after #3247 —
+///     `gpSupplierActiveUnimprovedCastIronFeedstockTileTurns` and
+///     `gpCastIronFeedstockHeldAtTurn99` instrumentation added here)
+///
+/// #3247 (`economy_planner.dart` feedstock-reservation) reserves one
+/// `castIron` run's `timber` + `iron` from competing single-input recipes so
+/// the feedstock can co-accumulate. Re-running the diagnostic on the merged
+/// post-#3247 `dev` shows **no change** to the gate (gp1 / gp2 = +6 PASS; gp3 =
+/// +2, gp4 = +1, gp5 = +1, gp6 = +2 FAIL) and `gpCastIronProductionAssignedTurns
+/// == 0` for every GP. The two new counters localize *why* the reservation is
+/// inert decisively:
+///
+///   * **The supplier owns an unimproved `iron` tile the whole time:**
+///     `gpSupplierActiveUnimprovedCastIronFeedstockTileTurns` = `{timber: 52,
+///     iron: 52}` for both gp1 and gp2 (and `{7, 7}` for gp3). The earlier
+///     hypothesis that the supplier *lacks* an `iron` tile is **refuted** — an
+///     extraction target exists on every gate-active turn.
+///   * **Yet `iron` is never extracted:** `gpCastIronFeedstockHeldAtTurn99` =
+///     `{timber: 3, iron: 0}` for gp2 (`{0, 0}` for gp1), `gpLumberHeldAtTurn99`
+///     gp2 = 44. The supplier still routes its extracted `timber` into `lumber`
+///     and the owned `iron` tile stays unimproved, so the reserved `iron` slot
+///     can never be filled and `feasibleRuns(castIron)` stays 0.
+///
+/// **Tested-but-inert next-slice finding (no code shipped for it).** A
+/// per-commodity scarcity tie-break in `_buildImprovementWorkScore`
+/// (`full_ai_civilian_work_selection.dart`) that boosts the feedstock the GP
+/// holds least of — unit-verified in isolation
+/// (`full_ai_civilian_work_supplier_feedstock_extraction_test.dart`) to flip a
+/// Builder onto the `iron` tile when `timber` is held — produced **byte-identical**
+/// seed-42 output. So the supplier's idle Builder never evaluates the OW `iron`
+/// `build_improvement` in-sim at all: this is **not** a tile-selection tie-break
+/// problem. The next slice must target *why* the owned-unimproved `iron`
+/// `build_improvement` is never selected (no free Builder during the gate, the
+/// `iron` tile is not emitted as a `build_improvement` suggestion, or it is
+/// outranked by New World civilian work the affluent supplier prefers), or pivot
+/// away from domestic supplier `castIron` production entirely (relax the level-0
+/// `build_improvement` `castIron` requirement for the bootstrap extraction, or a
+/// market-sourced `iron` path).
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
@@ -1140,6 +1179,39 @@ void main() {
       final supplierFeedstockExtractionGateActiveTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 H8-extraction castIron co-availability localization
+      // (post-#3247). #3247 reserves the multi-input `castIron` feedstock
+      // (`timber` + `iron`) from competing single-input recipes so the
+      // feedstock can co-accumulate for one run, yet
+      // `gpCastIronProductionAssignedTurns` stays 0 for every GP and the
+      // affluent supplier gp2 still converts its extracted `timber` to
+      // `lumber`. The reservation cannot help if the supplier never has the
+      // *other* feedstock (`iron`) to reserve in the first place. These two
+      // counters decide the next slice's direction per feedstock commodity:
+      //
+      //   * `supplierActiveUnimprovedCastIronFeedstockTileTurns` — while the
+      //     supplier feedstock-extraction gate is active, per-commodity count
+      //     of turns the GP owns an *unimproved* tile of that castIron
+      //     feedstock (a Builder target it could extract). A flat zero for
+      //     `iron` on the supplier GPs (gp1 / gp2) means domestic `castIron`
+      //     production is structurally impossible (no `iron` tile to extract),
+      //     re-pointing the next slice to a market / requirement-relaxation
+      //     path; a non-zero `iron` count means the Builder routing simply is
+      //     not selecting the `iron` tile, re-pointing to a routing fix.
+      //   * `castIronFeedstockHeldAtTurn99` — per-commodity feedstock stock at
+      //     turn 99. Confirms which feedstock the supplier actually accumulates
+      //     (`timber`) versus never holds (`iron`).
+      //
+      // Read-only scans; freely tunable diagnostic surface.
+      final supplierActiveUnimprovedCastIronFeedstockTileTurns =
+          <String, Map<String, int>>{
+        for (final gpId in gpIds)
+          gpId: <String, int>{for (final id in castIronFeedstockIds) id: 0},
+      };
+      final castIronFeedstockHeldAtTurn99 = <String, Map<String, int>>{
+        for (final gpId in gpIds)
+          gpId: <String, int>{for (final id in castIronFeedstockIds) id: 0},
+      };
 
       // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
       // The post-#3235 surface shows the world market never supplies fabric
@@ -1401,6 +1473,22 @@ void main() {
           ).isNotEmpty) {
             supplierFeedstockExtractionGateActiveTurns[gpId] =
                 (supplierFeedstockExtractionGateActiveTurns[gpId] ?? 0) + 1;
+            // While the supplier gate is active, record per-castIron-feedstock
+            // whether the GP owns an unimproved tile of that commodity (a
+            // Builder extraction target). Pins whether the supplier ever has an
+            // `iron` source to feed domestic `castIron` (Refs #2847).
+            final feedstockTiles =
+                supplierActiveUnimprovedCastIronFeedstockTileTurns[gpId]!;
+            for (final feedstockId in castIronFeedstockIds) {
+              if (_ownsUnimprovedFeedstockResourceTile(
+                game,
+                gpId,
+                {feedstockId},
+              )) {
+                feedstockTiles[feedstockId] =
+                    (feedstockTiles[feedstockId] ?? 0) + 1;
+              }
+            }
           }
           if (player != null) {
             final holdsFeedstock = fabricFeedstockIds.any(
@@ -1621,6 +1709,12 @@ void main() {
               castIronHeldAtTurn99[gpId] = player.stockpile.quantityOf(
                 'castIron',
               );
+              final feedstockHeld = castIronFeedstockHeldAtTurn99[gpId]!;
+              for (final feedstockId in castIronFeedstockIds) {
+                feedstockHeld[feedstockId] = player.stockpile.quantityOf(
+                  feedstockId,
+                );
+              }
             }
           }
         }
@@ -1684,6 +1778,9 @@ void main() {
         'gpCastIronProductionAssignedTurns': castIronProductionAssignedTurns,
         'gpSupplierFeedstockExtractionGateActiveTurns':
             supplierFeedstockExtractionGateActiveTurns,
+        'gpSupplierActiveUnimprovedCastIronFeedstockTileTurns':
+            supplierActiveUnimprovedCastIronFeedstockTileTurns,
+        'gpCastIronFeedstockHeldAtTurn99': castIronFeedstockHeldAtTurn99,
         'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
         'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,
         'fabricFeedstockCommodityIds': fabricFeedstockIds.toList()..sort(),
