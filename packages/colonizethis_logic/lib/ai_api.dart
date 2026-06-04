@@ -11,6 +11,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         FullAiCivilianWorkSelectionResult,
         kRegimentBuildInputFeedstockExtractionScoreBoost,
         regimentBuildInputFeedstockExtractionResourceIds,
+        regimentBuildInputFeedstockImprovementInputCost,
         selectFullAiCivilianWorkOrders;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'

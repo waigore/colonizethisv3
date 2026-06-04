@@ -8,6 +8,7 @@ import 'package:colonizethis_logic/ai_api.dart'
         effectiveMarketPriceForCommodityId,
         oldWorldProvinceCountOwnedBy,
         pendingTreasuryCostsForTurn,
+        regimentBuildInputFeedstockImprovementInputCost,
         tradeCargoCapacityForGreatPower,
         worldMarketBidTypeCap;
 import 'package:colonizethis_logic/order_suggestion_api.dart'
@@ -376,6 +377,23 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   if (!isLockRecoverySeller ||
       rawTreasury < threshold ||
       regimentCountForPlayer(game, playerId) != 0) {
+    return;
+  }
+  // Refs #2847 H8-extraction: improvement-input prerequisite. The seller's
+  // routed Builder cannot extract its owned feedstock tile until it holds the
+  // level-0 `build_improvement` material (lumber + cast iron) it has zero of —
+  // a lumber / cast-iron deadlock with no domestic escape. Bid for those
+  // improvement inputs first and suppress the downstream feedstock / fabric
+  // bootstrap bids while any improvement-input deficit remains, so the single
+  // bid slot targets the prerequisite supply. Self-clears once the inputs land
+  // (or the tile is improved / a regiment is owned).
+  if (_addRegimentFeedstockImprovementInputNeed(
+    game: game,
+    playerId: playerId,
+    projected: projected,
+    carryForwardBids: carryForwardBids,
+    need: need,
+  )) {
     return;
   }
   final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
@@ -776,6 +794,40 @@ bool _addRegimentBuildInputFeedstockBootstrapNeed({
   return false;
 }
 
+/// Adds bids for the level-0 `build_improvement` inputs (lumber + cast iron) a
+/// lock-recovery seller must hold to extract its owned fabric feedstock tile,
+/// but does not, when the regiment build-input feedstock-extraction gate is
+/// active and a feedstock tile is owned (Refs #2847 § H8-extraction).
+///
+/// Returns true when at least one improvement-input bid was queued (a deficit
+/// remains). The caller suppresses the downstream feedstock / fabric bootstrap
+/// bids on that turn so the single `bidTypeCap` slot targets the prerequisite
+/// supply. Self-clearing: the
+/// [regimentBuildInputFeedstockImprovementInputCost] contract returns the empty
+/// map once the GP owns a regiment, holds the build input, or has improved the
+/// feedstock tile.
+bool _addRegimentFeedstockImprovementInputNeed({
+  required Game game,
+  required String playerId,
+  required Stockpile projected,
+  required Map<CommodityId, int> carryForwardBids,
+  required Map<CommodityId, int> need,
+}) {
+  final cost = regimentBuildInputFeedstockImprovementInputCost(game, playerId);
+  if (cost.isEmpty) return false;
+  var queued = false;
+  for (final entry in cost.entries) {
+    final held =
+        projected.quantityOf(entry.key) + (carryForwardBids[entry.key] ?? 0);
+    final missing = entry.value - held;
+    if (missing > 0) {
+      need[entry.key] = missing;
+      queued = true;
+    }
+  }
+  return queued;
+}
+
 /// Adds direct bids for any missing `peasant_levies` build input when no
 /// feedstock bootstrap bid is pending.
 void _addRegimentBuildInputDirectNeed({
@@ -818,6 +870,10 @@ const Set<CommodityId> _regimentBuildInputSupplyCommodityIds = {
   'wool',
   'cotton',
   'fabric',
+  // Refs #2847 H8-extraction: the level-0 build_improvement inputs the locked
+  // seller bids for to unblock domestic feedstock extraction.
+  'lumber',
+  'castIron',
 };
 
 /// True when any below-quota zero-NW lock-recovery seller still needs the
