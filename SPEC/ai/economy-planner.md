@@ -95,6 +95,29 @@ Companion to [treasury-planner.md](treasury-planner.md) § Lock-recovery seller 
 
 ---
 
+## Regiment build-input feedstock extraction priority (Refs #2847 H8-extraction)
+
+Companion to § Regiment build-input production priority (Refs #2847 H8) and [treasury-planner.md](treasury-planner.md) § Lock-recovery seller regiment build-input bootstrap. The production boost only converts feedstock the GP **already holds**, and the world-market bid only fills when a seller offers the feedstock. On seed 42 the failing below-quota zero-NW Great Powers (`gp3` / `gp5` / `gp6`) hold **no** `wool` / `cotton` because their idle Builders are not routed to improve the feedstock resource tiles they own, so neither the domestic production path nor the market-supply path has any feedstock to work with (the residual disclosed in `treasury-planner.md` § Residual feedstock-acquisition dependency).
+
+This slice routes the Full-AI civilian work selection (`selectFullAiCivilianWorkOrders`, `packages/colonizethis_logic/lib/src/ai/full_ai_civilian_work_selection.dart`) toward feedstock extraction. When the **same bootstrap gate** as the treasury build-input bootstrap holds for the player — a below-quota zero-NW lock-recovery seller (`oldWorldProvinceCountOwnedBy` in `[2, kObserverConquestMinOwProvincesPerGp)`, zero New World provinces), `player.treasury >= cheapestRegimentBuildTreasuryCost()` (recovered), and `regimentCountForPlayer == 0` — the build-improvement work score adds a planner-internal `kRegimentBuildInputFeedstockExtractionScoreBoost` (`600`) to every **unimproved** (`improvementLevel < 1`) resource tile whose resource id is a production-recipe feedstock of a missing `peasant_levies` build input (`wool` / `cotton` for `fabric`; tile resource ids equal commodity ids per `resource_extractor.dart` § `_resourceToCommodityId`).
+
+The boost re-prioritises the Builder onto the feedstock tile ahead of other extractable improvements; it adds no new work order and does not bypass any suggestion or affordability gate (the tile must already be a `build_improvement` suggestion). The constant is planner-internal (not a new `ai_victory_config.dart` constant), mirroring the H8 production boost and the #2847 scope constraint. The gate is **self-clearing**: once the build input lands in the stockpile or the GP owns a regiment, the feedstock set is empty and selection reverts to its ordinary deterministic ordering. The feedstock-resource set is a pure function of `(game, playerId)` and the static `RegimentEconomyCatalog` / `ProductionRecipesCatalog`; identical inputs yield identical selections.
+
+### Residual feedstock-tile dependency (disclosure)
+
+The boost re-prioritises **existing** build-improvement suggestions; it does not acquire a feedstock resource tile for a seller that owns none. A failing GP whose Old World territory contains no `wool` / `cotton` resource tile still cannot source `fabric` domestically, and the turn-100 conquest gate stays open on that axis. Closing it (feedstock-tile acquisition or routing extraction onto purchasable land) is tracked as further #2847 work; this slice is the extraction-routing invariant that converts owned feedstock tiles into stockpiled feedstock once the bootstrap gate is active.
+
+### Acceptance criteria (H8-extraction)
+
+- Given a below-quota zero-NW lock-recovery seller (`oldWorldProvinceCountOwnedBy` in `[2, kObserverConquestMinOwProvincesPerGp)`, zero New World provinces) with `player.treasury >= cheapestRegimentBuildTreasuryCost()`, `regimentCountForPlayer == 0`, and zero `fabric` in the stockpile, when the feedstock-extraction gate is evaluated, then it returns the recipe feedstock ids `{wool, cotton}` (the inputs of every recipe whose output is the missing `peasant_levies` build input).
+- Given an otherwise identical seller whose `player.treasury < cheapestRegimentBuildTreasuryCost()`, when the gate is evaluated, then it returns the empty set (negative control — treasury must be recovered first).
+- Given an otherwise identical seller with `regimentCountForPlayer > 0` or that already holds the `fabric` build input, when the gate is evaluated, then it returns the empty set (the bootstrap targets the zero-regiment, missing-input rebuild gap only).
+- Given an AI GP at or above the conquest quota (`oldWorldProvinceCountOwnedBy >= kObserverConquestMinOwProvincesPerGp`) or that owns at least one New World province, when the gate is evaluated, then it returns the empty set (the carve-out is scoped to below-quota zero-NW sellers).
+- Given the gate is active and a Builder has both an unimproved `wool` resource tile and an unimproved non-feedstock (`grain`) resource tile as `build_improvement` suggestions, when `selectFullAiCivilianWorkOrders` runs, then it selects the `wool` tile; given the same fixture but the gate inactive (e.g. at quota), it selects by the ordinary build-improvement score ordering.
+- Given identical inputs, when the feedstock-extraction gate and `selectFullAiCivilianWorkOrders` run twice, then both runs return identical results (determinism).
+
+---
+
 ## Integration
 
 - **Caller:** Strategic AI (e.g. `generateStrategicOrders`) calls the economy planner for each AI GP first, then passes the resulting **economy plan** (including `cargoPreference`) into the domain planners so the build step can weight ship vs land builds. Production assignments are collected per player and passed to the turn resolver as **per-player default production assignments** (resolver must accept `Map<String, List<AssignedRecipe>>` or equivalent for multi-player).

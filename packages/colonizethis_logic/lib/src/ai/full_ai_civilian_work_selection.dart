@@ -354,10 +354,21 @@ WorkOrder? _pickExplorerCandidateSet(
   return bestE;
 }
 
+/// Planner-internal score boost applied to an unimproved feedstock resource
+/// tile when the [regimentBuildInputFeedstockExtractionResourceIds] gate is
+/// active (Refs #2847 § H8-extraction). Sized above
+/// [kBuildImprovementExtractableResourceScore] plus the New World resource
+/// bonuses so a lock-recovery seller routes its Builder onto the feedstock
+/// tile ahead of any other extractable improvement. Planner-internal — not an
+/// `ai_victory_config.dart` constant — mirroring the economy-planner H8
+/// production boost and the #2847 "no new config constants" scope constraint.
+const int kRegimentBuildInputFeedstockExtractionScoreBoost = 600;
+
 int _buildImprovementWorkScore(
   WorkOrder w,
   Game game, {
   required String playerId,
+  Set<String> feedstockExtractionResourceIds = const <String>{},
 }) {
   if (w.target != kWorkTargetBuildImprovement) return 0;
   final level = game.worldState.tileState.improvementLevel(w.targetTileKey);
@@ -373,23 +384,113 @@ int _buildImprovementWorkScore(
       score += kBuildImprovementOwnedNewWorldResourceBonus;
     }
   }
+  if (feedstockExtractionResourceIds.contains(resourceId)) {
+    score += kRegimentBuildInputFeedstockExtractionScoreBoost;
+  }
   return score;
+}
+
+int _regimentCountForPlayer(Game game, String playerId) {
+  var count = 0;
+  void countRegiments(Iterable<Unit> units) {
+    for (final unit in units) {
+      if (unit.ownerId != playerId) continue;
+      if (RegimentEconomyCatalog.byId.containsKey(unit.type)) {
+        count++;
+      }
+    }
+  }
+
+  countRegiments(game.worldState.oldWorld.units);
+  countRegiments(game.worldState.newWorld.units);
+  return count;
+}
+
+int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
+  return game.worldState
+      .provincesForRegion(kRegionNewWorld)
+      .where((p) => p.ownerId == playerId)
+      .length;
+}
+
+/// Resource ids a below-quota zero-NW lock-recovery seller should extract to
+/// domestically produce the cheapest regiment's missing build input
+/// (Refs #2847 § H8-extraction; companion to
+/// `treasury-planner.md` § Lock-recovery seller regiment build-input
+/// bootstrap).
+///
+/// Returns the empty set unless the **same bootstrap gate** as the treasury
+/// build-input bootstrap holds for [playerId]:
+///
+/// - below-quota zero-NW lock-recovery seller — `oldWorldProvinceCountOwnedBy`
+///   in `[2, kObserverConquestMinOwProvincesPerGp)` and zero New World
+///   provinces,
+/// - `player.treasury >= cheapestRegimentBuildTreasuryCost()` (recovered), and
+/// - `regimentCountForPlayer == 0` (zero-regiment rebuild gap).
+///
+/// The returned ids are the production-recipe feedstock commodities (e.g.
+/// `wool` / `cotton` for `fabric`) of every recipe whose output is a missing
+/// `peasant_levies` build input. Tile resource ids equal commodity ids for
+/// these agricultural resources (`resource_extractor.dart`
+/// § `_resourceToCommodityId`), so the set can be matched directly against
+/// `WorldState.resourceByTileKey`. Self-clears once the build input is on hand
+/// or the GP owns a regiment. Pure and deterministic over `(game, playerId)`
+/// and the static `RegimentEconomyCatalog` / `ProductionRecipesCatalog`.
+Set<String> regimentBuildInputFeedstockExtractionResourceIds(
+  Game game,
+  String playerId,
+) {
+  final player = game.playerById(playerId);
+  if (player == null) return const <String>{};
+  if (player.treasury < cheapestRegimentBuildTreasuryCost()) {
+    return const <String>{};
+  }
+  if (_regimentCountForPlayer(game, playerId) != 0) return const <String>{};
+  final ow = oldWorldProvinceCountOwnedBy(game, playerId);
+  if (ow < 2 || !isBelowObserverConquestQuota(ow)) return const <String>{};
+  if (_newWorldProvinceCountOwnedBy(game, playerId) != 0) {
+    return const <String>{};
+  }
+  final missingInputs = <CommodityId>{
+    for (final entry
+        in RegimentEconomyCatalog.peasantLevies.buildInputs.entries)
+      if (player.stockpile.quantityOf(entry.key) < entry.value) entry.key,
+  };
+  if (missingInputs.isEmpty) return const <String>{};
+  final feedstock = <String>{};
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (missingInputs.contains(recipe.outputCommodityId)) {
+      feedstock.addAll(recipe.inputQuantities.keys);
+    }
+  }
+  return feedstock;
 }
 
 WorkOrder? _bestBuildImprovementRow(
   List<WorkOrder> candidates,
   Game game, {
   required String playerId,
+  Set<String> feedstockExtractionResourceIds = const <String>{},
 }) {
   final improvements = candidates
       .where((w) => w.target == kWorkTargetBuildImprovement)
       .toList();
   if (improvements.isEmpty) return null;
   var best = improvements.first;
-  var bestScore = _buildImprovementWorkScore(best, game, playerId: playerId);
+  var bestScore = _buildImprovementWorkScore(
+    best,
+    game,
+    playerId: playerId,
+    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
+  );
   for (var i = 1; i < improvements.length; i++) {
     final w = improvements[i];
-    final s = _buildImprovementWorkScore(w, game, playerId: playerId);
+    final s = _buildImprovementWorkScore(
+      w,
+      game,
+      playerId: playerId,
+      feedstockExtractionResourceIds: feedstockExtractionResourceIds,
+    );
     if (s > bestScore) {
       bestScore = s;
       best = w;
@@ -453,9 +554,15 @@ void _appendBuilderPathResult({
   required String playerId,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
+  Set<String> feedstockExtractionResourceIds = const <String>{},
 }) {
   final chosen =
-      _bestBuildImprovementRow(w, game, playerId: playerId) ??
+      _bestBuildImprovementRow(
+        w,
+        game,
+        playerId: playerId,
+        feedstockExtractionResourceIds: feedstockExtractionResourceIds,
+      ) ??
       _pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
@@ -589,6 +696,7 @@ void _appendSelectionForUnitId({
   required DiplomacyFactionMembership factionMembership,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
+  Set<String> feedstockExtractionResourceIds = const <String>{},
 }) {
   final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
   _sortWorkOrdersLex(W);
@@ -626,6 +734,7 @@ void _appendSelectionForUnitId({
       playerId: view.playerId,
       workOrders: workOrders,
       idleEvents: idleEvents,
+      feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     );
     return;
   }
@@ -676,6 +785,8 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   final workOrders = <WorkOrder>[];
   final idleEvents = <FullAiCivilianWorkIdle>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
+  final feedstockExtractionResourceIds =
+      regimentBuildInputFeedstockExtractionResourceIds(game, view.playerId);
 
   for (final unitId in allUnitIds) {
     _appendSelectionForUnitId(
@@ -687,6 +798,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
       factionMembership: factionMembership,
       workOrders: workOrders,
       idleEvents: idleEvents,
+      feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     );
   }
 
