@@ -13,6 +13,8 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
     show
         allUnitsFromWorld,
+        hasIdleExplorerUnit,
+        ownsProspectedOldWorldMineralFeedstockTile,
         regimentBuildInputFeedstockExtractionResourceIds,
         supplierImprovementInputFeedstockExtractionResourceIds;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -1451,6 +1453,37 @@ void main() {
           gpId: <String, int>{for (final id in castIronFeedstockIds) id: 0},
       };
 
+      // Refs #2847 H8-extraction Old World mineral feedstock prospect
+      // localization (post-#3257 reservation). The reservation holds back an
+      // idle Builder/Explorer for Old World feedstock work, yet
+      // `gpCastIronFeedstockHeldAtTurn99` still shows `iron == 0` for every
+      // supplier (`iron` is never extracted) while surface `timber` is. A
+      // mineral `build_improvement` is rejected until the tile is prospected
+      // (`work_order_target_prechecks.dart`), and only an **idle** Explorer is
+      // reservable, so these two counters split the residual `iron` break,
+      // captured while the supplier castIron gate is active:
+      //
+      //   * `supplierIdleExplorerPresentTurns` — the supplier owns an idle
+      //     Explorer this turn (a unit the reservation could route onto the
+      //     `iron` prospect). A near-zero count localizes the break to
+      //     **Explorer availability** (all Explorers busy / dispatched to
+      //     multi-turn New World exploration, so the reservation never has an
+      //     idle Explorer to hold).
+      //   * `supplierProspectedMineralFeedstockTileTurns` — the supplier owns a
+      //     **prospected** Old World `iron` mineral feedstock tile. A non-zero
+      //     count alongside `iron` held == 0 instead localizes the break
+      //     **downstream** of prospecting (the Builder never improves the
+      //     prospected tile / cannot afford the improvement); a flat zero
+      //     confirms the prospect itself never happens.
+      //
+      // Read-only; the (freely tunable) counts can move as later slices land.
+      final supplierIdleExplorerPresentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final supplierProspectedMineralFeedstockTileTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+
       // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
       // The post-#3235 surface shows the world market never supplies fabric
       // (`gpRegimentInputDealsAsBuyer == 0`) and the affluent-supplier release
@@ -1726,6 +1759,21 @@ void main() {
                 feedstockTiles[feedstockId] =
                     (feedstockTiles[feedstockId] ?? 0) + 1;
               }
+            }
+            // Refs #2847 H8-extraction prospect localization: split the
+            // never-extracted `iron` residual into Explorer availability vs a
+            // downstream (prospect-done / improvement) break.
+            if (hasIdleExplorerUnit(game, gpId)) {
+              supplierIdleExplorerPresentTurns[gpId] =
+                  (supplierIdleExplorerPresentTurns[gpId] ?? 0) + 1;
+            }
+            if (ownsProspectedOldWorldMineralFeedstockTile(
+              game,
+              gpId,
+              castIronFeedstockIds,
+            )) {
+              supplierProspectedMineralFeedstockTileTurns[gpId] =
+                  (supplierProspectedMineralFeedstockTileTurns[gpId] ?? 0) + 1;
             }
           }
           if (player != null) {
@@ -2018,6 +2066,9 @@ void main() {
             supplierFeedstockExtractionGateActiveTurns,
         'gpSupplierActiveUnimprovedCastIronFeedstockTileTurns':
             supplierActiveUnimprovedCastIronFeedstockTileTurns,
+        'gpSupplierIdleExplorerPresentTurns': supplierIdleExplorerPresentTurns,
+        'gpSupplierProspectedMineralFeedstockTileTurns':
+            supplierProspectedMineralFeedstockTileTurns,
         'gpCastIronFeedstockHeldAtTurn99': castIronFeedstockHeldAtTurn99,
         'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
         'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,

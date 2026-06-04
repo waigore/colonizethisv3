@@ -275,6 +275,27 @@ The reservation is **gated** by the same self-clearing feedstock set: for every 
 
 ---
 
+## Old World mineral feedstock prospect localization (Refs #2847 H8-extraction)
+
+After the Old World feedstock unit reservation lands, the seed-42 supplier (`gp1` / `gp2`) still never holds `iron` (`gpCastIronFeedstockHeldAtTurn99` `iron == 0`) while surface `timber` is extracted, so domestic `castIron` over-production stays infeasible. A mineral `build_improvement` is rejected until the tile is prospected (see § Mineral feedstock prospecting priority and `work_order_target_prechecks.dart`), so the residual is one of two stages: the reserved Explorer never **prospects** the `iron` tile, or the tile is prospected but the Builder never **improves** it. Two read-only predicates split these:
+
+- `hasIdleExplorerUnit(game, playerId)` — true iff the player owns an idle Explorer (`currentWork == null`), i.e. a unit the reservation could route onto the `iron` prospect this turn. A near-zero gate-active count localizes the break to **Explorer availability**.
+- `ownsProspectedOldWorldMineralFeedstockTile(game, playerId, feedstockIds)` — true iff the player owns an **Old World** mineral feedstock tile (resource id in `feedstockIds` ∩ `kMineralResourceIds`) that is in `playerProspectedTiles[playerId]`. A non-zero count with `iron` still held `0` localizes the break **downstream** of prospecting; a flat zero confirms the prospect itself never happens.
+
+Both are pure, read-only, gate-independent functions (the caller supplies the feedstock set / observes the gate). The seed-42 S7-D diagnostic capture (`gpSupplierIdleExplorerPresentTurns` = 51/51 for gp1/gp2; `gpSupplierProspectedMineralFeedstockTileTurns` = 0/0) **refutes** the Explorer-availability and prospect-done hypotheses and pins the residual to **prospect-candidate generation/selection** for the reserved idle Explorer: the next slice must investigate why no `prospect` row for the owned unprospected Old World `iron` tile reaches (or is selected by) the reserved Explorer.
+
+**Acceptance criteria (Old World mineral feedstock prospect localization)**
+
+- Given a player who owns an Old World `iron` mineral tile that is in `playerProspectedTiles` for that player, when `ownsProspectedOldWorldMineralFeedstockTile(game, playerId, {iron})` is evaluated, then the result is `true`.
+- Given a player who owns an Old World `iron` mineral tile that is **not** in `playerProspectedTiles`, when `ownsProspectedOldWorldMineralFeedstockTile(game, playerId, {iron})` is evaluated, then the result is `false` (negative control).
+- Given a player who owns a prospected Old World `timber` (non-mineral) tile, when `ownsProspectedOldWorldMineralFeedstockTile(game, playerId, {timber})` is evaluated, then the result is `false` (only mineral feedstock tiles count).
+- Given a player who owns a prospected **New World** `iron` mineral tile, when `ownsProspectedOldWorldMineralFeedstockTile(game, playerId, {iron})` is evaluated, then the result is `false` (Old World only).
+- Given a player who owns an idle Explorer (`currentWork == null`), when `hasIdleExplorerUnit(game, playerId)` is evaluated, then the result is `true`.
+- Given a player whose only Explorer has `currentWork != null`, when `hasIdleExplorerUnit(game, playerId)` is evaluated, then the result is `false`.
+- Given a player who owns no Explorer unit (only a Builder), when `hasIdleExplorerUnit(game, playerId)` is evaluated, then the result is `false` (negative control).
+
+---
+
 ## Feedstock bootstrap `castIron` waiver for level-0 `build_improvement` (Refs #2847 H8-extraction)
 
 When the feedstock-extraction gate is active and a Builder targets an **unimproved** feedstock resource tile, the order engine and work application use the **effective** material cost from `WorkOrderCostCalculator` (player-scoped), which may omit **cast iron** for the level-0 improvement while the stockpile holds enough **lumber** but not enough **cast iron** (see [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Improvement Build Costs (Builder) — H8 feedstock bootstrap). This makes feedstock-priority suggestions **affordable** on seed 42 where `gpFeedstockGateImprovementCostAffordableTurns` stayed zero solely because of the circular cast-iron dependency; it does not bypass visibility, probe budget, tech cap, or non-material validation gates.
