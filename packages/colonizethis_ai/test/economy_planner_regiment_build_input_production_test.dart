@@ -53,6 +53,51 @@ Game _regimentRebuildProductionGame({required int treasury}) {
   );
 }
 
+/// A below-quota zero-NW lock-recovery seller whose improvement-input gate
+/// (`regimentBuildInputFeedstockImprovementInputCost`) is active: recovered
+/// treasury, zero regiments, 3 Old World provinces, zero New World, missing
+/// `fabric`, and an owned **unimproved** `wool` resource tile. Holds
+/// `timber` + `iron` so the `castIron_from_timber_iron_coal` recipe is feasible,
+/// and zero `castIron`. Refs #2847 § H8-extraction castIron residual.
+Game _castIronImprovementInputGame({
+  required int treasury,
+  bool gateActive = true,
+}) {
+  const ow = 'oldWorld';
+  return Game(
+    id: 'g-h8-castiron-production',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 0; i < 3; i++)
+            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
+        ],
+      ),
+      newWorld: const RegionData(provinces: []),
+      // Unimproved wool resource tile in the seller's capital province (only
+      // present when the gate should be active).
+      resourceByTileKey: gateActive
+          ? const {'oldWorld|seller_0|1|0': 'wool'}
+          : const {},
+    ),
+    players: [
+      Player(
+        id: 'gp_seller',
+        displayName: 'Seller',
+        isHuman: false,
+        capitalProvinceId: '$ow|seller_0',
+        treasury: treasury,
+        stockpile: const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, 30)
+            .applyDelta(CommodityCatalog.timber.id, 30)
+            .applyDelta(CommodityCatalog.iron.id, 10),
+        workerPool: const WorkerPool(peasants: 12),
+      ),
+    ],
+  );
+}
+
 PhasePlanOutcome _expandForceRegimentBuildPlan({
   required bool forceCheapestRegimentBuild,
 }) {
@@ -182,6 +227,83 @@ void main() {
         expect(
           fabricLabour(withBoost),
           greaterThanOrEqualTo(fabricLabour(withoutBoost)),
+        );
+      },
+    );
+
+    test(
+      'domestic improvement-input boost assigns a castIron recipe when the '
+      'improvement-input gate is active and feedstock is on hand',
+      () {
+        final game = _castIronImprovementInputGame(treasury: threshold);
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+
+        // No forceCheapestRegimentBuild directive: the boost is driven solely by
+        // the active improvement-input gate.
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          reason:
+              'When the seller must produce castIron domestically (no market '
+              'supply) and holds the timber + iron feedstock, the production '
+              'boost must assign the castIron recipe.',
+        );
+      },
+    );
+
+    test(
+      'no domestic castIron boost when the improvement-input gate is inactive '
+      '(negative control — healthy GPs unaffected)',
+      () {
+        // gateActive: false removes the owned unimproved feedstock tile, so
+        // `regimentBuildInputFeedstockImprovementInputCost` returns empty and the
+        // castIron output gets no H8 boost (+6 baseline GPs are unaffected).
+        final game = _castIronImprovementInputGame(
+          treasury: threshold,
+          gateActive: false,
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+
+        // With no boost, castIron is not assigned solely because of H8 (it may
+        // still appear from ordinary scoring, so assert the boost did not force
+        // it by comparing against the same seed where the gate is the only
+        // differing input).
+        final gated = runEconomyPlanner(
+          game: _castIronImprovementInputGame(treasury: threshold),
+          view: buildPlayerView(
+            _castIronImprovementInputGame(treasury: threshold),
+            _topology,
+            'gp_seller',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        final castIronId =
+            ProductionRecipesCatalog.castIronFromTimberIronCoal.id;
+        int castIronLabour(EconomyPlan plan) => plan.productionAssignments
+            .where((a) => a.recipeId == castIronId)
+            .fold<int>(0, (sum, a) => sum + a.assignedLabour);
+        expect(
+          castIronLabour(plan),
+          lessThanOrEqualTo(castIronLabour(gated)),
+          reason:
+              'Activating the improvement-input gate must not reduce castIron '
+              'labour; the gate-inactive path receives no domestic-production '
+              'boost.',
         );
       },
     );
