@@ -422,6 +422,36 @@ feedstock lookup is a pure function of the projected `Stockpile` and the static
 `RegimentEconomyCatalog` / `ProductionRecipesCatalog`; identical inputs yield
 identical offer sets.
 
+##### Produced build-input retention (Refs #2847 H8-extraction)
+
+The feedstock reservation above keeps the recipe feedstock (`wool` / `cotton`)
+from being sold so a `fabric` run becomes feasible, and the economy-planner
+production boost then runs that recipe. But the **produced build input**
+(`fabric`) is itself an offerable commodity: a recovered below-quota zero-NW
+lock-recovery seller is a strong-cargo Path-F seller that offers its surplus
+urgently every turn, so the `fabric` the boost just produced is sold back into
+the world market before it can accumulate to the `peasant_levies` build cost.
+The seller then stays trapped at zero regiments even though feedstock extraction
+and production are working (seed-42 gp5 / gp6 reach a feasible `fabric` run on
+~40+ turns yet hold `fabric` for only a handful, build ~3 regiments, and sit at
+zero regiments 15–20 turns).
+
+Under the **same** carve-out gate as the feedstock reservation
+(`_isBelowQuotaZeroNwLockRecoverySeller(game, playerId)` is `true`,
+`player.treasury >= cheapestRegimentBuildTreasuryCost()`, and
+`regimentCountForPlayer(game, playerId) == 0`), the planner therefore also
+withholds every `peasant_levies` build-input commodity
+(`RegimentEconomyCatalog.peasantLevies.buildInputs.keys`, i.e. `fabric`) from
+its offer-`available` map. The retention adds no order — it only removes the
+build input from the offer set — so the domestically produced `fabric`
+accumulates across turns until `suggestBuildOrders` can surface the cheapest
+regiment. It is self-clearing: the enclosing `regimentCount == 0` guard releases
+the retention the turn the regiment lands. Like the feedstock reservation it is
+scoped to the below-quota zero-NW zero-regiment recovered band, so the +6 OW
+baseline GPs (gp1 / gp2, above quota and holding regiments) never withhold
+`fabric`. The build-input lookup is a pure function of the static
+`RegimentEconomyCatalog`; identical inputs yield identical offer sets.
+
 ##### Residual feedstock-acquisition dependency (disclosure)
 
 This reservation only has effect when the seller **already holds** the recipe
@@ -457,6 +487,20 @@ feedstock is on hand.
   seller) with surplus `wool` / `cotton`, when `runTreasuryPlanner` runs, then
   it emits those surplus offers as normal (the reservation is scoped to
   below-quota zero-NW sellers).
+- Given a below-quota zero-NW lock-recovery seller with
+  `player.treasury >= cheapestRegimentBuildTreasuryCost()`,
+  `regimentCountForPlayer(game, playerId) == 0`, and surplus `fabric` (the
+  cheapest regiment's build input) it would otherwise offer, when
+  `runTreasuryPlanner` runs, then it emits **no** `TradeOrderType.offer` for
+  `fabric` (the produced build input is retained for the regiment build).
+- Given an otherwise identical lock-recovery seller with
+  `regimentCountForPlayer(game, playerId) > 0` and surplus `fabric`, when
+  `runTreasuryPlanner` runs, then it emits its surplus `fabric` offer as normal
+  (the build-input retention targets the zero-regiment rebuild gap only).
+- Given an AI Great Power at or above the conquest quota (not a lock-recovery
+  seller) with surplus `fabric`, when `runTreasuryPlanner` runs, then it emits
+  that surplus `fabric` offer as normal (the retention is scoped to below-quota
+  zero-NW sellers).
 - Given identical inputs, when `runTreasuryPlanner` runs twice on the
   feedstock-reservation path, then both runs return identical
   `List<TradeOrder>` outputs (determinism).

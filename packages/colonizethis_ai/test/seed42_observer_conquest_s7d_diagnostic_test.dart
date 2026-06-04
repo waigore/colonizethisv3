@@ -877,6 +877,47 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `iron` > 0 simultaneously) then `gpCastIronProductionAssignedTurns` rise for
 /// gp3 / gp5 / gp6 before expecting OW gain to move.
 ///
+/// ### H8-extraction produced build-input retention (this slice, Refs #2847)
+///
+/// This slice closes the offer-side **symmetry gap** in the lock-recovery
+/// seller carve-out: the planner already withholds the fabric **feedstock**
+/// (`wool` / `cotton`) from a recovered zero-regiment seller's offers
+/// (treasury-planner.md § Build-input feedstock reservation), but it did **not**
+/// withhold the **produced build input** (`fabric`) itself. A recovered
+/// below-quota zero-NW seller is a strong-cargo Path-F seller that offers its
+/// surplus urgently every turn, so the `fabric` the economy-planner production
+/// boost produced was sold back into the world market before it could
+/// accumulate to the `peasant_levies` build cost. The fix withholds every
+/// `peasant_levies` build-input commodity under the **same** rebuild gate
+/// (below-quota zero-NW lock-recovery seller, `treasury >= cheapest cost`,
+/// zero regiments); it self-clears the turn a regiment lands. See
+/// treasury-planner.md § Produced build-input retention.
+///
+/// **Effect on the seed-42 surface (post-fix refresh):** the +6 OW baseline is
+/// preserved (gp1 = +6, gp2 = +6, gpRegimentPeak gp1 / gp2 = 5 / 5 unchanged)
+/// and behaviour is no longer byte-identical to the post-waiver baseline
+/// (gp5 / gp6 swap +2 / +1 → +1 / +2; gp5 now spends 15 colonial turns vs 1),
+/// but **no failing GP reaches the +3 floor** — the turn-100 OW gate stays
+/// open (gp3 = +2, gp4 = +1, gp5 = +1, gp6 = +2).
+///
+/// **Re-localization (binding constraint after this slice):** retention is
+/// **necessary but not sufficient** — it keeps produced `fabric`, but `fabric`
+/// is not *produced* on most feasible turns. For gp5 / gp6 the fabric recipe is
+/// feasible ~44 turns (`gpFabricRecipeFeasibleTurns` = 46 / 42, feedstock on
+/// hand 48 / 43) yet `gpRebuildReadyNoBuildMissingInputTurns` stays 7 / 11 and
+/// gp3 = 29 (and `gpRebuildReadyNoBuildInputsPresentTurns` = 0 for all — when
+/// the input *is* present they build). So on most rebuild-ready turns `fabric`
+/// is missing despite a feasible recipe: the economy-planner regiment
+/// build-input production boost is not actually assigning the `fabricFrom*`
+/// recipe. gp3 additionally never accumulates feedstock
+/// (`gpFeedstockInStockpileTurns` = 1 despite `gpFeedstockGateImprovedTileOwnedTurns`
+/// = 27). The next slice must target **fabric production allocation** (make the
+/// economy planner run the `fabricFrom*` recipe on feasible rebuild turns for
+/// the lock-recovery seller), not the offer side (feedstock reservation and
+/// build-input retention are both now in place). Verify by re-running this
+/// diagnostic and confirming `gpRebuildReadyNoBuildMissingInputTurns` falls for
+/// gp5 / gp6 before expecting OW gain to move.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project

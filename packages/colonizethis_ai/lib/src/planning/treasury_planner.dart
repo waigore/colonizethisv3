@@ -418,6 +418,27 @@ void _applyLockRecoverySellerRegimentRebuildBids({
       regimentCountForPlayer(game, playerId) != 0) {
     return;
   }
+  // Refs #2847 § H8-extraction build-input retention: a recovered zero-regiment
+  // lock-recovery seller produces the cheapest regiment's build input
+  // (`fabric`) domestically via the economy planner's regiment build-input
+  // production boost (economy-planner.md § Regiment build-input production
+  // priority). Withhold that produced build input from the offer set for the
+  // whole rebuild carve-out so the seller retains the `fabric` it needs to
+  // build the regiment instead of selling it back into the world market as
+  // surplus — the same retention the feedstock loop below already applies to
+  // the `wool` / `cotton` feedstock. Without this the boosted recipe's output
+  // is offered every turn (the seller is a strong-cargo Path-F seller, so any
+  // surplus is sold urgently) and `fabric` never accumulates to the
+  // `peasant_levies` build cost, leaving the recovered seller trapped at zero
+  // regiments. The enclosing `regimentCount == 0` guard self-clears the
+  // reservation the turn the regiment lands, and the gate only fires for a
+  // below-quota zero-NW lock-recovery seller, so the +6 OW baseline GPs
+  // (gp1 / gp2) are never affected. SPEC/ai/treasury-planner.md
+  // § Produced build-input retention.
+  for (final buildInputId
+      in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
+    available.remove(buildInputId);
+  }
   // Refs #2847 H8-extraction: improvement-input prerequisite. The seller's
   // routed Builder cannot extract its owned feedstock tile until it holds the
   // level-0 `build_improvement` material (lumber + cast iron) it has zero of —
