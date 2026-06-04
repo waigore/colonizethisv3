@@ -11,7 +11,10 @@ import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show allUnitsFromWorld, regimentBuildInputFeedstockExtractionResourceIds;
+    show
+        allUnitsFromWorld,
+        regimentBuildInputFeedstockExtractionResourceIds,
+        supplierImprovementInputFeedstockExtractionResourceIds;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -682,6 +685,52 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// gp1 / gp2 (the suppliers), then `gpCastIronFeedstockDealsAsBuyer` and
 /// `gpFeedstockGateImprovementCostAffordableTurns` rise for gp3 / gp5 / gp6.
 ///
+/// ## S7-D refresh (captured 2026-06-04 on branch
+///     `fix/issue-2847-supplier-castiron-source`, after the supplier feedstock
+///     extraction routing added in this slice — `gpSupplierFeedstockExtraction
+///     GateActiveTurns` instrumentation added here)
+///
+/// This slice closes the post-#3244 conclusion's missing link by routing an
+/// affluent supplier's idle Builder onto its own unimproved `timber` / `iron`
+/// tile (`supplierImprovementInputFeedstockExtractionResourceIds`,
+/// `full_ai_civilian_work_selection.dart`), so the #3244 supplier `castIron`
+/// over-production + release loop finally has a feedstock source. The new
+/// supplier gate **fires** where it was structurally absent before, and there
+/// is **no regression**:
+///
+///   * **OW gain unchanged:** gp1 = +6, gp2 = +6 (PASS); gp3 = +2, gp4 = +1,
+///     gp5 = +1, gp6 = +2 (FAIL) — identical to the post-#3244 baseline. The
+///     shared civilian-work routing change does not divert the +6 baseline GPs'
+///     conquest.
+///   * **Supplier gate now active:** `gpSupplierFeedstockExtractionGateActive
+///     Turns` = **52 / 52 / 7 / 0 / 0 / 0** for gp1 / gp2 / gp3 / gp4 / gp5 /
+///     gp6. The affluent above-quota suppliers gp1 / gp2 own an unimproved
+///     `timber` / `iron` tile and a peer locked seller needs `castIron` on 52
+///     turns each, so the Builder-routing boost fires — the structural advance
+///     over the prior inert slice (the gate previously did not exist).
+///   * **But castIron production stays 0:** `gpCastIronProductionAssignedTurns`
+///     = **0** for every GP, `gpCastIronHeldAtTurn99` = **0** for every GP, and
+///     `gpCastIronFeedstockOffersEmitted` / `gpCastIronFeedstockDealsAsBuyer`
+///     stay **0**. gp2 still converts its extracted `timber` to `lumber`
+///     (`gpLumberHeldAtTurn99` gp2 = 45) rather than to `castIron`.
+///
+/// Conclusion: the supplier-extraction routing is now **structurally present,
+/// unit-tested** (`full_ai_civilian_work_supplier_feedstock_extraction_test.dart`)
+/// **and firing** (52 turns for gp1 / gp2), but the loop still does not reach
+/// `castIron` production. The break has moved one stage downstream — the routed
+/// Builder's `timber` / `iron` improvement does not convert into `castIron`
+/// over-production, because (a) the `castIron` recipe needs **both** `timber`
+/// **and** `iron` and the supplier extracts only the `timber` it routes to
+/// `lumber`, and (b) the deliberately small `+5` over-production boost loses to
+/// the supplier's shortage-driven `lumber` recipe for the extracted `timber`.
+/// The next slice must pin, with a supplier-side `castIron` feedstock-holdings
+/// counter, whether the supplier lacks an unimproved **`iron`** tile or whether
+/// the over-production boost is simply out-competed for the extracted `timber`,
+/// then either route the supplier onto an `iron` tile specifically or lift the
+/// supplier `castIron` boost above the competing `lumber` shortage score under
+/// the lock-recovery trigger. Verify by re-running this diagnostic and
+/// confirming `gpCastIronProductionAssignedTurns` rises for gp1 / gp2.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
@@ -1077,6 +1126,20 @@ void main() {
       final castIronHeldAtTurn99 = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 H8-extraction supplier feedstock: per-GP count of turns the
+      // supplier-side castIron feedstock extraction gate is active
+      // (`supplierImprovementInputFeedstockExtractionResourceIds` non-empty) —
+      // i.e. the GP is a non-seller above the quota, a peer locked seller needs
+      // the producible `castIron` improvement input, and the GP owns an
+      // unimproved `timber` / `iron` tile to extract. A non-zero count for the
+      // supplier GPs (gp1 / gp2) paired with a rising
+      // `gpCastIronProductionAssignedTurns` confirms the supplier-extraction
+      // slice closes the over-production feedstock gap; a flat-zero count for
+      // gp1 / gp2 re-points the next slice (the suppliers own no unimproved
+      // `timber` / `iron` tile to extract). Read-only; freely tunable.
+      final supplierFeedstockExtractionGateActiveTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
 
       // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
       // The post-#3235 surface shows the world market never supplies fabric
@@ -1331,6 +1394,13 @@ void main() {
           )) {
             unimprovedFeedstockTileOwnedTurns[gpId] =
                 (unimprovedFeedstockTileOwnedTurns[gpId] ?? 0) + 1;
+          }
+          if (supplierImprovementInputFeedstockExtractionResourceIds(
+            game,
+            gpId,
+          ).isNotEmpty) {
+            supplierFeedstockExtractionGateActiveTurns[gpId] =
+                (supplierFeedstockExtractionGateActiveTurns[gpId] ?? 0) + 1;
           }
           if (player != null) {
             final holdsFeedstock = fabricFeedstockIds.any(
@@ -1612,6 +1682,8 @@ void main() {
         'gpCastIronFeedstockBidsEmitted': castIronFeedstockBidsEmitted,
         'gpCastIronFeedstockDealsAsBuyer': castIronFeedstockDealsAsBuyer,
         'gpCastIronProductionAssignedTurns': castIronProductionAssignedTurns,
+        'gpSupplierFeedstockExtractionGateActiveTurns':
+            supplierFeedstockExtractionGateActiveTurns,
         'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
         'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,
         'fabricFeedstockCommodityIds': fabricFeedstockIds.toList()..sort(),
