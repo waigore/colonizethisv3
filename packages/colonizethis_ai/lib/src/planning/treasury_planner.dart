@@ -845,17 +845,89 @@ bool _addRegimentFeedstockImprovementInputNeed({
 }) {
   final cost = regimentBuildInputFeedstockImprovementInputCost(game, playerId);
   if (cost.isEmpty) return false;
+  // Deterministic iteration over the cost map (insertion order is fixed by the
+  // contract, but sorting guards against future reordering).
+  final inputIds = cost.keys.toList()..sort();
+
+  // Pass 1 — directly-buyable improvement-inputs (e.g. `lumber`, which suppliers
+  // release as surplus). These are acquired first so the single `bidTypeCap`
+  // slot targets an essential input the world market can actually supply (the
+  // suggester admits bids in alphabetical, cap-bounded order, so a raw-material
+  // feedstock bid would otherwise crowd out the essential `lumber` bid).
   var queued = false;
-  for (final entry in cost.entries) {
+  for (final inputId in inputIds) {
+    if (kDomesticProductionImprovementInputIds.contains(inputId)) continue;
+    final held =
+        projected.quantityOf(inputId) + (carryForwardBids[inputId] ?? 0);
+    final missing = cost[inputId]! - held;
+    if (missing > 0) {
+      need[inputId] = missing;
+      queued = true;
+    }
+  }
+  if (queued) return true;
+
+  // Pass 2 — domestically-produced improvement-inputs (Refs #2847 H8-extraction
+  // castIron residual). `castIron` has no world-market supply on seed 42 (it is
+  // consumed by Old World military builds, so no Great Power offers a surplus),
+  // so the seller bids `castIron`'s production feedstock (`timber` + `iron`) and
+  // the economy planner produces it (SPEC/ai/treasury-planner.md § Lock-recovery
+  // seller improvement-input domestic production). A still-missing
+  // domestic-production input keeps the fabric/feedstock bootstrap suppressed
+  // even when its feedstock is already on hand (production is pending).
+  for (final inputId in inputIds) {
+    if (!kDomesticProductionImprovementInputIds.contains(inputId)) continue;
+    final held =
+        projected.quantityOf(inputId) + (carryForwardBids[inputId] ?? 0);
+    if (cost[inputId]! - held <= 0) continue;
+    _addImprovementInputProductionFeedstockNeed(
+      improvementInputId: inputId,
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      need: need,
+    );
+    queued = true;
+  }
+  return queued;
+}
+
+/// Bids the production feedstock for one run of [improvementInputId] when a
+/// lock-recovery seller is short of the feedstock to produce it domestically.
+/// Adds nothing when the feedstock for one full run is already on hand (the
+/// economy planner will run the recipe next; the caller still suppresses the
+/// direct improvement-input bid because the world market structurally lacks
+/// supply for it). Deterministic: selects the lowest-`id` recipe producing the
+/// input. Refs #2847 § H8-extraction castIron residual.
+void _addImprovementInputProductionFeedstockNeed({
+  required CommodityId improvementInputId,
+  required Stockpile projected,
+  required Map<CommodityId, int> carryForwardBids,
+  required Map<CommodityId, int> need,
+}) {
+  final recipe = _lowestIdRecipeProducing(improvementInputId);
+  if (recipe == null) return;
+  for (final entry in recipe.inputQuantities.entries) {
     final held =
         projected.quantityOf(entry.key) + (carryForwardBids[entry.key] ?? 0);
     final missing = entry.value - held;
     if (missing > 0) {
-      need[entry.key] = missing;
-      queued = true;
+      need[entry.key] = (need[entry.key] ?? 0) + missing;
     }
   }
-  return queued;
+}
+
+/// The production recipe with the lowest `id` whose output is [commodityId], or
+/// `null` when no recipe produces it. Deterministic over the static
+/// `ProductionRecipesCatalog`.
+ProductionRecipe? _lowestIdRecipeProducing(CommodityId commodityId) {
+  ProductionRecipe? best;
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (recipe.outputCommodityId != commodityId) continue;
+    if (best == null || recipe.id.compareTo(best.id) < 0) {
+      best = recipe;
+    }
+  }
+  return best;
 }
 
 /// Adds direct bids for any missing `peasant_levies` build input when no
@@ -893,6 +965,17 @@ int _feedstockQuantityForOneMissingBuildInputRun(
   }
   return needed;
 }
+
+/// Level-0 `build_improvement` improvement-input commodities a lock-recovery
+/// seller must produce domestically because the world market structurally lacks
+/// supply for them on seed 42. `castIron` is consumed by Old World military
+/// builds, so no Great Power offers a surplus for the seller's bid to cross
+/// (SPEC/ai/treasury-planner.md § Lock-recovery seller improvement-input
+/// domestic production; Refs #2847 § H8-extraction castIron residual). For these
+/// inputs the seller bids the production feedstock (e.g. `timber` + `iron` for
+/// `castIron`) and the economy planner produces the input
+/// (economy-planner.md § Regiment build-input production priority).
+const Set<CommodityId> kDomesticProductionImprovementInputIds = {'castIron'};
 
 /// Commodity ids affluent GPs release when any lock-recovery seller needs the
 /// H8 bootstrap path (Refs #2847 H8-supply market).
