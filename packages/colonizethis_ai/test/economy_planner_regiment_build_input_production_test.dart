@@ -166,6 +166,53 @@ Game _supplierCastIronSourceGame({
   );
 }
 
+/// A below-quota zero-NW lock-recovery seller whose castIron improvement-input
+/// gate is active, with **configurable** `timber` / `iron` feedstock so a test
+/// can pin the partial-feedstock state where the single-input
+/// `lumber_from_timber` recipe would otherwise drain the `timber` the
+/// multi-input `castIron_from_timber_iron_coal` recipe is assembling
+/// (Refs #2847 § H8-extraction feedstock co-availability). When [gateActive] is
+/// false the unimproved feedstock tile is removed, so the seller is no longer a
+/// reserve-target GP (negative control — no feedstock reservation).
+Game _castIronFeedstockCoavailabilityGame({
+  required int treasury,
+  required int timber,
+  required int iron,
+  bool gateActive = true,
+}) {
+  const ow = 'oldWorld';
+  return Game(
+    id: 'g-h8-castiron-coavailability',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 0; i < 3; i++)
+            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
+        ],
+      ),
+      newWorld: const RegionData(provinces: []),
+      resourceByTileKey: gateActive
+          ? const {'oldWorld|seller_0|1|0': 'wool'}
+          : const {},
+    ),
+    players: [
+      Player(
+        id: 'gp_seller',
+        displayName: 'Seller',
+        isHuman: false,
+        capitalProvinceId: '$ow|seller_0',
+        treasury: treasury,
+        stockpile: const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, 30)
+            .applyDelta(CommodityCatalog.timber.id, timber)
+            .applyDelta(CommodityCatalog.iron.id, iron),
+        workerPool: const WorkerPool(peasants: 12),
+      ),
+    ],
+  );
+}
+
 PhasePlanOutcome _expandForceRegimentBuildPlan({
   required bool forceCheapestRegimentBuild,
 }) {
@@ -445,6 +492,123 @@ void main() {
               'castIron labour; the supplier-release boost only fires while a '
               'peer needs the improvement input.',
         );
+      },
+    );
+
+    int lumberLabour(EconomyPlan plan) => plan.productionAssignments
+        .where((a) => a.recipeId == ProductionRecipesCatalog.lumberFromTimber.id)
+        .fold<int>(0, (sum, a) => sum + a.assignedLabour);
+
+    test(
+      'reserve-target GP withholds timber from the competing lumber recipe '
+      'while assembling a castIron run (Refs #2847 H8-extraction feedstock '
+      'co-availability)',
+      () {
+        // 2 timber + 0 iron: enough timber for one lumber_from_timber run but
+        // not yet a castIron run. The reserve must withhold the 2 timber so the
+        // single-input lumber recipe cannot drain it.
+        final game = _castIronFeedstockCoavailabilityGame(
+          treasury: threshold,
+          timber: 2,
+          iron: 0,
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          lumberLabour(plan),
+          0,
+          reason:
+              'With the castIron reserve active, the 2 held timber are withheld '
+              'from lumber_from_timber so they carry over toward a castIron run.',
+        );
+      },
+    );
+
+    test(
+      'non-reserve GP consumes the same timber via the lumber recipe '
+      '(negative control — no feedstock reservation when castIron is not '
+      'targeted)',
+      () {
+        // gateActive: false removes the feedstock tile, so the GP is not a
+        // castIron reserve target; the feasible lumber recipe consumes timber.
+        final game = _castIronFeedstockCoavailabilityGame(
+          treasury: threshold,
+          timber: 2,
+          iron: 0,
+          gateActive: false,
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          lumberLabour(plan),
+          greaterThan(0),
+          reason:
+              'Without a castIron reserve target, the feasible lumber_from_timber '
+              'recipe consumes the 2 held timber (the reservation is the only '
+              'differing behaviour).',
+        );
+      },
+    );
+
+    test(
+      'reserve-target GP assigns the castIron recipe once a full run of '
+      'feedstock co-accumulates (Refs #2847 H8-extraction feedstock '
+      'co-availability)',
+      () {
+        // 2 timber + 2 iron: one full castIron run is now co-available, so the
+        // boosted multi-input recipe runs.
+        final game = _castIronFeedstockCoavailabilityGame(
+          treasury: threshold,
+          timber: 2,
+          iron: 2,
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          reason:
+              'With timber + iron co-available the reserved feedstock lets the '
+              'boosted castIron recipe run.',
+        );
+      },
+    );
+
+    test(
+      'reserve-target allocation is deterministic across identical runs',
+      () {
+        Set<String> run() {
+          final game = _castIronFeedstockCoavailabilityGame(
+            treasury: threshold,
+            timber: 2,
+            iron: 0,
+          );
+          return _assignedRecipeIds(
+            runEconomyPlanner(
+              game: game,
+              view: buildPlayerView(game, _topology, 'gp_seller'),
+              config: config,
+              seeds: seeds,
+            ),
+          );
+        }
+
+        expect(run(), equals(run()));
       },
     );
   });

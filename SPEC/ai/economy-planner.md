@@ -165,6 +165,23 @@ The supplier feedstock ids are **unioned** with the seller-side `regimentBuildIn
 
 ---
 
+## Improvement-input feedstock co-availability reservation (Refs #2847 H8-extraction feedstock co-availability)
+
+Companion to § Supplier improvement-input over-production for release and § Supplier improvement-input feedstock extraction. Even once the Builder is routed onto a `timber` / `iron` tile, the `castIron_from_timber_iron_coal` recipe needs `timber` **and** `iron` together (2 + 2), while the single-input `lumber_from_timber` recipe (2 `timber`) is feasible as soon as 2 `timber` are on hand. Because the Builder extracts at most one feedstock tile per turn, the feasible `lumber` recipe drains the partial `timber` before `iron` accumulates, so `feasibleRuns(castIron) == 0` every turn and the `kSupplierBuildInputReleaseProductionScoreBoost` / `kRegimentBuildInputProductionScoreBoost` are never consulted (the boost is applied only to recipes that already clear `feasibleRuns > 0`).
+
+`_allocateLabour` (`economy_planner.dart`) therefore **reserves one production run's feedstock** for each domestically-produced improvement input the GP is actively producing — the union of its own seller-side need (`domesticImprovementInputOutputs`, the `kDomesticProductionImprovementInputIds` outputs the GP itself is short of) and the peer supplier-release need (`supplierReleaseImprovementInputs`). The reserve is the summed one-run `inputQuantities` of the lowest-`id` recipe producing each targeted output (`{timber: 2, iron: 2}` for `castIron`). When evaluating feasibility, a **reserve-target** recipe sees the full stockpile (it consumes its own reserved feedstock), while every **other** recipe sees the reserved quantities withheld (clamped at zero), so it cannot run on the reserved `timber` / `iron`. The withheld feedstock therefore carries across turns until the multi-input recipe accumulates a full run, at which point the boosted target recipe is assigned.
+
+The reserve is **bounded to one run per targeted output** and applies only while the GP is actively producing the improvement input, so it withholds at most 2 `timber` + 2 `iron` from competing recipes — negligible against the healthy supplier's throughput, keeping the +6 Old World conquest baseline for gp1/gp2 safe by construction. It is **self-clearing**: when neither set targets a domestic improvement input (a healthy GP, or once `castIron` is on hand), `feedstockReserveOutputIds` is empty, the reserve map is empty, and feasibility falls back to the unreduced stockpile (behaviour-equal to the prior allocator). Planner-internal (no `ai_victory_config.dart` constant); the reserve is a pure function of the targeted output ids and the static `ProductionRecipesCatalog`, so identical inputs yield identical allocations.
+
+### Acceptance criteria (H8-extraction feedstock co-availability)
+
+- Given an AI GP actively producing a domestic improvement input (`castIron`) whose targeted output set is non-empty, that holds exactly 2 `timber` and 0 `iron` (enough `timber` for one `lumber_from_timber` run but not yet a `castIron` run) and positive effective labour, when `runEconomyPlanner` runs, then no production assignment references `lumber_from_timber` (the 2 reserved `timber` are withheld from the competing recipe).
+- Given an otherwise identical GP that is **not** producing any domestic improvement input (the reserve-target set is empty — for example a healthy at-quota GP or a GP already holding `castIron`), when `runEconomyPlanner` runs with the same seed and the same 2 `timber` / 0 `iron` stockpile, then a production assignment references `lumber_from_timber` (negative control — with no reservation the feasible `lumber` recipe consumes the `timber`).
+- Given an AI GP actively producing `castIron` that holds 2 `timber` and 2 `iron` (one full `castIron` run) and positive effective labour, when `runEconomyPlanner` runs, then a production assignment references `castIron_from_timber_iron_coal` (the reserved feedstock co-availability lets the boosted multi-input recipe run).
+- Given identical inputs, when `runEconomyPlanner` runs twice for a reserve-target GP, then both runs return identical production assignments (determinism).
+
+---
+
 ## Integration
 
 - **Caller:** Strategic AI (e.g. `generateStrategicOrders`) calls the economy planner for each AI GP first, then passes the resulting **economy plan** (including `cargoPreference`) into the domain planners so the build step can weight ship vs land builds. Production assignments are collected per player and passed to the turn resolver as **per-player default production assignments** (resolver must accept `Map<String, List<AssignedRecipe>>` or equivalent for multi-player).
