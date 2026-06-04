@@ -770,6 +770,64 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `build_improvement` `castIron` requirement for the bootstrap extraction, or a
 /// market-sourced `iron` path).
 ///
+/// ## S7-D refresh (captured 2026-06-04 on branch
+///     `feat/issue-2847-feedstock-build-improvement-suggestion-priority`, after
+///     the worker-pipeline feedstock `build_improvement` suggestion-priority
+///     reorder added in PR #3250 — `_prioritizeFeedstockBuildImprovementCandidates`,
+///     `order_suggestion_work_worker.dart`)
+///
+/// PR #3250 targets the post-#3249 hypothesis (b) — "the `iron` tile is not
+/// emitted as a `build_improvement` suggestion." The worker suggestion pipeline
+/// emits only the **first accepted** `build_improvement` candidate per Builder
+/// ([WorkSuggestionPipeline.run] with `includeAllAccepted: false`), so the lone
+/// suggested tile was whichever sorted first lexicographically — rarely the
+/// feedstock tile. The slice stable-partitions unimproved feedstock tiles ahead
+/// so the downstream [kRegimentBuildInputFeedstockExtractionScoreBoost] has a
+/// suggestion to re-rank. Re-running the diagnostic on this branch shows the
+/// slice is **inert on seed-42 with no regression**:
+///
+///   * **OW gain byte-identical:** gp1 = +6, gp2 = +6 (PASS); gp3 = +2, gp4 =
+///     +1, gp5 = +1, gp6 = +2 (FAIL) — unchanged from the post-#3247 baseline.
+///     The reorder does not divert the +6 baseline GPs' conquest.
+///   * **`gpCastIronProductionAssignedTurns` = 0 for every GP**, and
+///     `gpCastIronHeldAtTurn99` = 0 for every GP — no castIron is ever produced.
+///
+/// The decisive new localization is `gpFeedstockGateValidBuildImprovementCandidate
+/// Turns` = **0 for every GP** alongside `gpFeedstockGateImprovementCostAffordable
+/// Turns` = **0 for every GP**: the validator (`getValidWorkOrderTileKeys`, the
+/// chain `suggestWorkOrders` runs) **never accepts** a `build_improvement` on the
+/// owned unimproved feedstock tile, so the new reorder helper has **nothing to
+/// reorder** — the partition is a no-op because both partitions are taken from an
+/// already-empty accepted set. This **refutes hypothesis (b) as the *binding*
+/// cause**: the suggestion is absent not because of candidate *ordering* but
+/// because no *affordable* candidate exists. The level-0 `build_improvement`
+/// material cost is `1 lumber + 1 castIron` (`work_order_costs.dart` §
+/// `workOrderCostBuildImprovement`), and `gpCastIronHeldAtTurn99` = 0 for every
+/// GP, so the validator's `_validateWorkMaterialCosts` rejects the candidate
+/// before any ordering or score boost applies. This is the **circular castIron
+/// dependency** pinned to its root: extracting the `iron` / `timber` that feeds
+/// `castIron` itself *costs* `castIron`, so no GP can bootstrap its first
+/// `castIron` from domestic extraction.
+///
+/// Conclusion: PR #3250 is a **correct-by-construction prerequisite** (the worker
+/// should surface the feedstock tile first once a candidate is affordable, and
+/// the change is unit-tested in
+/// `order_suggestion_work_feedstock_priority_test.dart`) but is **insufficient on
+/// seed-42** — it cannot fire until an affordable level-0 `build_improvement`
+/// candidate exists. The remaining break is one stage upstream of suggestion
+/// ordering: the **unaffordable level-0 `castIron` requirement** for the very
+/// first bootstrap extraction. The next slice must therefore pursue the
+/// domestic-production *pivot* flagged above — relax the level-0
+/// `build_improvement` `castIron` requirement for the first bootstrap extraction
+/// under the lock-recovery trigger (SPEC-authorized cost change, scoped to the
+/// first extraction only, must preserve the gp1 / gp2 +6 baseline), or wire a
+/// market-sourced first-`castIron` path — **not** another suggestion-ordering or
+/// tile-selection tweak (no accepted candidate exists for either to act on).
+/// Verify by re-running this diagnostic and confirming
+/// `gpFeedstockGateValidBuildImprovementCandidateTurns` and
+/// `gpFeedstockGateImprovementCostAffordableTurns` rise above 0 before expecting
+/// `gpCastIronProductionAssignedTurns` or OW gain to move.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
