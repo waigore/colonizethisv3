@@ -5,11 +5,17 @@ import 'army_conquest_prep.dart';
 import 'expand_phase_planner.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
+import 'phase_planner_expand_economy.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 import 'treasury_planner.dart';
 
 final _log = packageLogger('economy_planner');
+
+/// Recipe-score boost for outputs that supply a missing cheapest-regiment
+/// build input when the EXPAND regiment-rebuild directive is active
+/// (Refs #2847 H8 production companion).
+const double kRegimentBuildInputProductionScoreBoost = 50.0;
 
 /// Runs the economy planner for one AI-controlled player. Deterministic given
 /// [game], [view], [config], and [seeds]. Returns production assignments and
@@ -110,6 +116,17 @@ EconomyPlan runEconomyPlanner({
       regimentCountForPlayer(game, view.playerId) <
           kStalledMinRegimentCountWhenAtWar;
 
+  final expandEconomy = phasePlan != null
+      ? expandEconomyPlanFromPhasePlan(phasePlan)
+      : ExpandEconomyPlan.defaultPlan;
+  final missingRegimentBuildInputs =
+      _missingCheapestRegimentBuildInputIds(stockpile);
+  final regimentBuildInputProductionBoost =
+      expandEconomy.forceCheapestRegimentBuild &&
+      player.treasury >= cheapestRegimentBuildTreasuryCost() &&
+      regimentCountForPlayer(game, view.playerId) == 0 &&
+      missingRegimentBuildInputs.isNotEmpty;
+
   final assignments = _allocateLabour(
     stockpile: stockpile,
     workers: workers,
@@ -117,6 +134,8 @@ EconomyPlan runEconomyPlanner({
     config: config,
     seeds: seeds,
     militaryRebuildCrisis: militaryRebuildCrisis,
+    regimentBuildInputProductionBoost: regimentBuildInputProductionBoost,
+    missingRegimentBuildInputIds: missingRegimentBuildInputs,
   );
 
   final cargoPref = _cargoPreference(
@@ -198,6 +217,18 @@ CargoPreference _cargoPreference(
   return pref;
 }
 
+/// Commodity ids the cheapest regiment still needs in the stockpile before
+/// `suggestBuildOrders` will surface it (Refs #2847 H8).
+Set<String> _missingCheapestRegimentBuildInputIds(Stockpile stockpile) {
+  final missing = <String>{};
+  for (final entry in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+    if (stockpile.quantityOf(entry.key) < entry.value) {
+      missing.add(entry.key);
+    }
+  }
+  return missing;
+}
+
 List<AssignedRecipe> _allocateLabour({
   required Stockpile stockpile,
   required WorkerPool workers,
@@ -205,6 +236,8 @@ List<AssignedRecipe> _allocateLabour({
   required AIConfig config,
   required AISeedBundle seeds,
   bool militaryRebuildCrisis = false,
+  bool regimentBuildInputProductionBoost = false,
+  Set<String> missingRegimentBuildInputIds = const {},
 }) {
   final recipes = ProductionRecipesCatalog.all;
   final agendaId = config.hiddenAgendaId;
@@ -232,6 +265,10 @@ List<AssignedRecipe> _allocateLabour({
     );
     if (militaryRebuildCrisis && _isMilitaryInputRecipe(recipe)) {
       score += 40;
+    }
+    if (regimentBuildInputProductionBoost &&
+        missingRegimentBuildInputIds.contains(recipe.outputCommodityId)) {
+      score += kRegimentBuildInputProductionScoreBoost;
     }
     candidates.add(ScoredRecipe(recipe: recipe, score: score));
   }

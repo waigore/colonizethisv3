@@ -83,6 +83,18 @@ Naval planner and build planner consume this preference; the economy planner onl
 
 ---
 
+## Regiment build-input production priority (Refs #2847 H8)
+
+Companion to [treasury-planner.md](treasury-planner.md) § Lock-recovery seller regiment build-input bootstrap. The treasury planner can emit a world-market **bid** for the cheapest regiment's missing `buildInputs`, but on seed 42 there is often **no matching offer supply** for `fabric`, so the bid does not fill. When the EXPAND economy directive `forceCheapestRegimentBuild` is active, the GP holds `player.treasury >= cheapestRegimentBuildTreasuryCost()`, owns **zero** regiments, and the projected stockpile is short at least one `peasant_levies` build-input commodity, the economy planner adds `kRegimentBuildInputProductionScoreBoost` (`50.0`) to every **feasible** recipe whose `outputCommodityId` supplies a missing input. The boost is planner-internal (not a new `ai_victory_config.dart` constant). Labour is still capped by effective labour and integer runs; no affordability rule is bypassed.
+
+### Acceptance criteria (H8 production)
+
+- Given an AI GP with positive effective labour, a feasible `fabric_from_wool` (or `fabric_from_cotton`) recipe, `regimentCountForPlayer == 0`, `player.treasury >= cheapestRegimentBuildTreasuryCost()`, zero `fabric` in the stockpile, and a dispatched `PhasePlanOutcome` whose `expandEconomyPlan.forceCheapestRegimentBuild == true`, when `runEconomyPlanner` runs, then at least one production assignment references a recipe whose `outputCommodityId` is `fabric`.
+- Given the same inputs except `expandEconomyPlan.forceCheapestRegimentBuild == false`, when `runEconomyPlanner` runs with the same seed, then no assignment is required solely because of the H8 boost (the fabric recipe may still win from ordinary shortage scoring).
+- Given `forceCheapestRegimentBuild == true` but `player.treasury < cheapestRegimentBuildTreasuryCost()`, when `runEconomyPlanner` runs, then the H8 production boost does not apply (negative control — treasury must be recovered first).
+
+---
+
 ## Integration
 
 - **Caller:** Strategic AI (e.g. `generateStrategicOrders`) calls the economy planner for each AI GP first, then passes the resulting **economy plan** (including `cargoPreference`) into the domain planners so the build step can weight ship vs land builds. Production assignments are collected per player and passed to the turn resolver as **per-player default production assignments** (resolver must accept `Map<String, List<AssignedRecipe>>` or equivalent for multi-player).

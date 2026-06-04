@@ -337,12 +337,14 @@ the offers-only Path-F behaviour.
 The bootstrap converts recovered treasury into **demand** for the build
 input, but a deal only clears when matching **supply** exists on the world
 market that turn. On seed 42 the cheapest regiment's build input (`fabric`)
-has no Great-Power or minor/tribe offer supply, so the emitted bid does not
-fill and the seed-42 gp5/gp6 zero-regiment tail persists until a separate
-production-side change (out of scope for the treasury planner) puts that
-commodity on the market. This section authorises and pins the **bid-emission**
-behaviour only; closing the seed-42 regiment-build tail end to end requires
-the input-supply work tracked under #2847's remaining scope.
+often has no Great-Power or minor/tribe offer supply, so the emitted bid may
+not fill. The companion **production-side** slice in
+[economy-planner.md](economy-planner.md) § Regiment build-input production
+priority (Refs #2847 H8) prioritizes feasible recipes that output missing
+`peasant_levies` build inputs when `forceCheapestRegimentBuild` is active and
+treasury has recovered. This treasury section authorises and pins the
+**bid-emission** behaviour; the economy-planner section authorises domestic
+production when market supply is absent.
 
 ### Determinism and budget
 
