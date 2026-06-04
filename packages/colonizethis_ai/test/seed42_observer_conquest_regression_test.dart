@@ -79,10 +79,15 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10 / #2847: seed-42 turn-100 gate — gp1/gp2 PASS '
-        '(+6 each). gp3 +2, gp4 +1, gp5 -7, gp6 +10 (post-PR #3179 EXPAND '
-        'colonial dispatch + World Market treasury recovery on dev, 2026-06-03 '
-        'S7-D refresh). gp3–gp5 still below ≥3 OW floor; Phase 2 weight '
-        'consumer wiring required before skip removal (Refs #2847).',
+        '(+6 each). gp3 +2, gp4 +1, gp5 +1, gp6 +2 (merged dev @ b4c79488, '
+        '2026-06-04 S7-D refresh: World Market #2924/#2994 + EXPAND universal '
+        'colonial dispatch #3179 + stalled-EXPAND minor-transit routing #3224). '
+        'Treasury starvation is solved (failing GPs hold ~2000+ treasury); the '
+        'remaining blocker is offensive-strength accumulation under the '
+        'symmetric peer-war lock — forceCheapestRegimentBuild fires 85-100 '
+        'turns yet regimentCount stays 0-1. gp3-gp6 still below the >=3 OW '
+        'floor; skip removal awaits the H8 regiment-accumulation slice '
+        '(Refs #2847).',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
