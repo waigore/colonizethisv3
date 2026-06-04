@@ -98,6 +98,74 @@ Game _castIronImprovementInputGame({
   );
 }
 
+/// A two-GP game pairing a locked seller (castIron improvement-input gate
+/// active, like [_castIronImprovementInputGame]) with an affluent supplier
+/// (`gp_supplier`) holding `timber` + `iron` feedstock and ample labour, above
+/// the conquest quota so it is **not** a lock-recovery seller. Refs #2847
+/// H8-supply castIron source. When [sellerGateActive] is false the seller holds
+/// `castIron`, so no locked seller needs the improvement input and the supplier
+/// over-production trigger is off (negative control).
+Game _supplierCastIronSourceGame({
+  required int treasury,
+  bool sellerGateActive = true,
+}) {
+  const ow = 'oldWorld';
+  return Game(
+    id: 'g-h8-castiron-supplier-source',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 0; i < 3; i++)
+            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
+          for (var i = 0; i < 12; i++)
+            Province(
+              id: '$ow|supplier_$i',
+              regionId: ow,
+              ownerId: 'gp_supplier',
+            ),
+        ],
+      ),
+      newWorld: const RegionData(provinces: []),
+      resourceByTileKey: const {'oldWorld|seller_0|1|0': 'wool'},
+    ),
+    players: [
+      Player(
+        id: 'gp_seller',
+        displayName: 'Seller',
+        isHuman: false,
+        capitalProvinceId: '$ow|seller_0',
+        treasury: treasury,
+        stockpile: sellerGateActive
+            ? const Stockpile().applyDelta(CommodityCatalog.grain.id, 30)
+            : const Stockpile()
+                .applyDelta(CommodityCatalog.grain.id, 30)
+                .applyDelta(CommodityCatalog.castIron.id, 1),
+        workerPool: const WorkerPool(peasants: 12),
+      ),
+      Player(
+        id: 'gp_supplier',
+        displayName: 'Supplier',
+        isHuman: false,
+        capitalProvinceId: '$ow|supplier_0',
+        treasury: treasury,
+        // Ample feedstock + labour and no competing output shortage (every
+        // feasible output held at the shortage threshold, 8) so the supplier
+        // has genuine spare capacity: the small leftover-capacity castIron
+        // release boost is the differentiator, not shortage scoring.
+        stockpile: const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, 80)
+            .applyDelta(CommodityCatalog.timber.id, 40)
+            .applyDelta(CommodityCatalog.iron.id, 40)
+            .applyDelta(CommodityCatalog.castIron.id, 8)
+            .applyDelta(CommodityCatalog.lumber.id, 8)
+            .applyDelta(CommodityCatalog.paper.id, 8),
+        workerPool: const WorkerPool(peasants: 40),
+      ),
+    ],
+  );
+}
+
 PhasePlanOutcome _expandForceRegimentBuildPlan({
   required bool forceCheapestRegimentBuild,
 }) {
@@ -304,6 +372,78 @@ void main() {
               'Activating the improvement-input gate must not reduce castIron '
               'labour; the gate-inactive path receives no domestic-production '
               'boost.',
+        );
+      },
+    );
+
+    int castIronLabour(EconomyPlan plan) => plan.productionAssignments
+        .where(
+          (a) =>
+              a.recipeId == ProductionRecipesCatalog.castIronFromTimberIronCoal.id,
+        )
+        .fold<int>(0, (sum, a) => sum + a.assignedLabour);
+
+    test(
+      'affluent supplier over-produces castIron when a peer lock-recovery '
+      'seller needs the castIron improvement input (Refs #2847 H8-supply '
+      'castIron source)',
+      () {
+        final game = _supplierCastIronSourceGame(treasury: threshold);
+        final supplierView = buildPlayerView(game, _topology, 'gp_supplier');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: supplierView,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          reason:
+              'A supplier that is not a locked seller must over-produce castIron '
+              'for release while a peer lock-recovery seller still needs the '
+              'castIron improvement input.',
+        );
+      },
+    );
+
+    test(
+      'supplier castIron over-production is off when no peer needs the castIron '
+      'improvement input (negative control — +6 baseline GPs unaffected)',
+      () {
+        final active = runEconomyPlanner(
+          game: _supplierCastIronSourceGame(treasury: threshold),
+          view: buildPlayerView(
+            _supplierCastIronSourceGame(treasury: threshold),
+            _topology,
+            'gp_supplier',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        final inactive = runEconomyPlanner(
+          game: _supplierCastIronSourceGame(
+            treasury: threshold,
+            sellerGateActive: false,
+          ),
+          view: buildPlayerView(
+            _supplierCastIronSourceGame(
+              treasury: threshold,
+              sellerGateActive: false,
+            ),
+            _topology,
+            'gp_supplier',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          castIronLabour(inactive),
+          lessThanOrEqualTo(castIronLabour(active)),
+          reason:
+              'Removing the peer locked seller must not increase the supplier '
+              'castIron labour; the supplier-release boost only fires while a '
+              'peer needs the improvement input.',
         );
       },
     );

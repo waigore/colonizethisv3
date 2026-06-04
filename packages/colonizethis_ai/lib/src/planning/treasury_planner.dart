@@ -122,8 +122,17 @@ List<TradeOrder> runTreasuryPlanner({
   // SPEC/ai/treasury-planner.md § Lock-recovery seller food-surplus release.
   final isLockRecoverySeller =
       _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+  // Refs #2847 H8-supply castIron source: the supplier release also activates
+  // when a peer lock-recovery seller is stuck one stage earlier — at the
+  // level-0 build_improvement gate whose `castIron` input the world market
+  // structurally cannot supply. Activating the release here lets an affluent
+  // supplier's over-produced `castIron` surplus reach the locked seller before
+  // the seller ever reaches the regiment build-input (fabric) stage.
+  // SPEC/ai/treasury-planner.md § Lock-recovery castIron improvement-input
+  // supplier source.
   final regimentBuildInputMarketSupplyActive =
-      _anyLockRecoverySellerNeedsRegimentBuildInput(game);
+      _anyLockRecoverySellerNeedsRegimentBuildInput(game) ||
+          anyLockRecoverySellerNeedsCastIronImprovementInput(game);
   // Refs #2847 H8-extraction supply-side fix: releasing a *surplus* (stock held
   // above the GP's own consumption + production-input reserve) is selling, not
   // speculating, so the supplier role must not be gated on the supplier's own
@@ -597,6 +606,29 @@ Map<CommodityId, int> _carryForwardQuantitiesByCommodity({
   return result;
 }
 
+/// True when some faction other than [excludePlayerId] holds a standing
+/// (carry-forward) offer for [commodityId] in the world market — i.e. real
+/// supply the buyer can bid against. Refs #2847 H8-supply castIron source:
+/// once an affluent supplier's over-produced `castIron` surplus stands in the
+/// market, a locked seller bids `castIron` **directly** instead of routing to
+/// domestic production from feedstock it cannot extract. Pure read of
+/// [WorldMarketState.carryForwardOffersByFactionId]; deterministic.
+bool _marketHasStandingOfferSupplyFromOthers({
+  required WorldMarketState state,
+  required CommodityId commodityId,
+  required String excludePlayerId,
+}) {
+  for (final entry in state.carryForwardOffersByFactionId.entries) {
+    if (entry.key == excludePlayerId) continue;
+    for (final order in entry.value) {
+      if (order.commodityId == commodityId && order.quantity > 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 /// Discounts forecasted treasury inflow from this turn's offers by the
 /// prior-turn offer-side fill rate per commodity, rounded to an integer
 /// treasury unit. A first-ever market turn (no prior activity) returns the
@@ -856,7 +888,20 @@ bool _addRegimentFeedstockImprovementInputNeed({
   // feedstock bid would otherwise crowd out the essential `lumber` bid).
   var queued = false;
   for (final inputId in inputIds) {
-    if (kDomesticProductionImprovementInputIds.contains(inputId)) continue;
+    // Refs #2847 H8-supply castIron source: a domestic-production improvement
+    // input (e.g. `castIron`) is normally produced from feedstock (Pass 2)
+    // because the world market structurally lacks supply. Once an affluent
+    // supplier over-produces and offers it (a standing carry-forward offer
+    // exists), bid it **directly** here so the deal can cross — breaking the
+    // extraction deadlock without waiting on feedstock the seller cannot mine.
+    if (kDomesticProductionImprovementInputIds.contains(inputId) &&
+        !_marketHasStandingOfferSupplyFromOthers(
+          state: game.worldMarketState,
+          commodityId: inputId,
+          excludePlayerId: playerId,
+        )) {
+      continue;
+    }
     final held =
         projected.quantityOf(inputId) + (carryForwardBids[inputId] ?? 0);
     final missing = cost[inputId]! - held;
@@ -1034,6 +1079,47 @@ bool _anyLockRecoverySellerNeedsRegimentBuildInput(Game game) {
     if (regimentCountForPlayer(game, player.id) > 0) continue;
     for (final entry
         in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+      if (player.stockpile.quantityOf(entry.key) < entry.value) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Public accessor for the below-quota zero-NW lock-recovery seller predicate
+/// (Refs #2847 H8-supply castIron source). The economy planner uses it to keep
+/// the supplier `castIron` over-production off for a GP that is itself a locked
+/// seller (its own self-path boost already covers it).
+bool isBelowQuotaZeroNwLockRecoverySeller(Game game, String playerId) =>
+    _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+
+/// True when any below-quota zero-NW lock-recovery seller still lacks a
+/// domestically-produced level-0 `build_improvement` input (a
+/// [kDomesticProductionImprovementInputIds] commodity such as `castIron`) the
+/// world market structurally cannot supply on seed 42 (Refs #2847 H8-supply
+/// castIron source). When true, an affluent supplier over-produces that input
+/// for release (`economy_planner.dart`) and this planner releases the resulting
+/// surplus + aligns its offer tier so the locked seller's bid can cross.
+/// Pure function of `(game)` and the static catalogs; returns `false` once no
+/// locked seller still needs the improvement input (self-clearing).
+bool anyLockRecoverySellerNeedsCastIronImprovementInput(Game game) {
+  for (final player in game.players) {
+    if (!_isBelowQuotaZeroNwLockRecoverySeller(
+      game: game,
+      playerId: player.id,
+    )) {
+      continue;
+    }
+    final cost = regimentBuildInputFeedstockImprovementInputCost(
+      game,
+      player.id,
+    );
+    if (cost.isEmpty) continue;
+    for (final entry in cost.entries) {
+      if (!kDomesticProductionImprovementInputIds.contains(entry.key)) {
+        continue;
+      }
       if (player.stockpile.quantityOf(entry.key) < entry.value) {
         return true;
       }

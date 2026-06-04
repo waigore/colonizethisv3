@@ -516,6 +516,75 @@ bootstrap path.
   H8-supply market path, then both runs return identical
   `List<TradeOrder>` outputs (determinism).
 
+### Lock-recovery castIron improvement-input supplier source (Refs #2847 H8-supply castIron source)
+
+The H8-supply market path above releases `wool` / `cotton` / `fabric` and the
+directly-buyable `lumber` improvement input. It does **not** create a source for
+`castIron`, the second level-0 `build_improvement` input: `castIron` has no
+native world-market supply on seed 42 (every Great Power consumes the `castIron`
+it produces), so a locked seller is stuck at the extraction gate — it cannot
+mine the recipe feedstock without first raising its tile, and raising the tile
+costs `castIron` it can neither buy nor produce. This section opens a *first*
+`castIron` source.
+
+**Supplier activation trigger.** `anyLockRecoverySellerNeedsCastIronImprovementInput(game)`
+is `true` when any below-quota zero-NW lock-recovery seller's
+`regimentBuildInputFeedstockImprovementInputCost` includes a
+`kDomesticProductionImprovementInputIds` commodity (`castIron`) the seller does
+not hold. This trigger is OR-ed into the H8-supply-market supplier role
+(`regimentBuildInputMarketSupplyActive`), so the supplier release activates one
+stage earlier than the regiment build-input (fabric) gate — at the `castIron`
+improvement-input gate where seed-42 sellers actually stall.
+
+**Supplier offer (offer side).** An affluent non-seller over-produces `castIron`
+(see [economy-planner.md](economy-planner.md) § Supplier improvement-input
+over-production for release) and releases the resulting surplus with the
+build-input safety buffer dropped to `0`, re-tagged to the essential bid tier by
+`_alignBuildInputSupplyOfferTiers` so the locked seller's `castIron` bid can
+cross.
+
+**Buyer direct bid (bid side).** A `castIron` improvement-input is normally
+produced from feedstock (the production route). Once a supplier offer **stands**
+in the market (`WorldMarketState.carryForwardOffersByFactionId` carries a
+`castIron` offer from another faction with `quantity > 0`), the locked seller
+bids `castIron` **directly** in the improvement-input bootstrap (Pass 1) instead
+of routing to the feedstock it cannot mine. Absent standing supply, the seller
+keeps the existing domestic-production feedstock route unchanged.
+
+No new `ai_victory_config.dart` constants. The trigger and supply detection are
+pure functions of `(game)` / `(WorldMarketState)` and the static catalogs;
+identical inputs yield identical orders. The path self-clears once no locked
+seller still lacks `castIron`.
+
+#### Acceptance criteria (H8-supply castIron source)
+
+- Given a below-quota zero-NW lock-recovery seller that owns an unimproved
+  feedstock tile, has recovered treasury, holds zero regiments, and holds zero
+  `castIron`, when `anyLockRecoverySellerNeedsCastIronImprovementInput` is
+  evaluated, then it returns `true`.
+- Given the same game except the seller holds `castIron >= 1`, when
+  `anyLockRecoverySellerNeedsCastIronImprovementInput` is evaluated, then it
+  returns `false` (negative control).
+- Given a locked seller needing `castIron` and a non-seller Great Power holding
+  6 `castIron` (surplus above the consumption-only reserve of 4 once the
+  build-input safety buffer drops to 0), when `runTreasuryPlanner` runs for the
+  non-seller, then it emits a `TradeOrderType.offer` for `castIron`.
+- Given no below-quota zero-NW lock-recovery seller needs the `castIron`
+  improvement input, when `runTreasuryPlanner` runs for a non-seller holding 6
+  `castIron`, then it emits **no** `castIron` offer (the default consumption
+  safety buffer of 8 withholds it) (negative control).
+- Given a locked seller and a standing `castIron` offer from another faction in
+  `WorldMarketState.carryForwardOffersByFactionId`, when `runTreasuryPlanner`
+  runs for the seller, then it emits a `TradeOrderType.bid` for `castIron` and
+  **no** `timber` / `iron` feedstock bid.
+- Given a locked seller and **no** standing `castIron` offer in the market, when
+  `runTreasuryPlanner` runs for the seller, then it emits **no** `castIron` bid
+  and bids the production feedstock (`timber` / `iron`) instead (negative
+  control — existing behavior preserved).
+- Given identical inputs, when `runTreasuryPlanner` runs twice on the
+  H8-supply castIron source path, then both runs return identical
+  `List<TradeOrder>` outputs (determinism).
+
 ### Lock-recovery seller feedstock-improvement input bootstrap (Refs #2847 H8-extraction)
 
 The H8-supply paths above let a recovered lock-recovery seller acquire or retain

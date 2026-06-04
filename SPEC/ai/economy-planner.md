@@ -99,6 +99,17 @@ Companion to [treasury-planner.md](treasury-planner.md) § Lock-recovery seller 
 
 ---
 
+### Supplier improvement-input over-production for release (Refs #2847 H8-supply castIron source)
+
+The domestic improvement-input boost above only fires for the locked seller that owns the unimproved feedstock tile — and that seller cannot produce `castIron` because it holds no `timber` / `iron` (the extraction deadlock). To create a *first* `castIron` source, an affluent **supplier** over-produces `castIron` for release. When the player is **not** itself a below-quota zero-NW lock-recovery seller (`isBelowQuotaZeroNwLockRecoverySeller(game, playerId) == false`) and `anyLockRecoverySellerNeedsCastIronImprovementInput(game)` is `true`, every `kDomesticProductionImprovementInputIds` output (`castIron`) joins a **supplier-release** boosted set and receives `kSupplierBuildInputReleaseProductionScoreBoost` (`5.0`) in `_allocateLabour`.
+
+The boost is deliberately small — far below the shortage-driven score of the supplier's own essential recipes (`kShortageWeight * kShortageThreshold == 16`) — so the supplier converts only **leftover** labour/feedstock into a releasable `castIron` surplus and never starves its own conquest economy. This keeps the +6 OW baseline for the healthy GPs (gp1/gp2) safe by construction. The treasury planner then releases the surplus and re-tags its offer tier (see [treasury-planner.md](treasury-planner.md) § Lock-recovery castIron improvement-input supplier source). Planner-internal constant (no `ai_victory_config.dart` change); self-clearing once no locked seller needs `castIron`.
+
+#### Acceptance criteria (H8-supply castIron source)
+
+- Given a non-seller Great Power above the conquest quota with `timber` + `iron` feedstock, ample labour, and no competing output shortage, and a peer below-quota zero-NW lock-recovery seller that needs the `castIron` improvement input, when `runEconomyPlanner` runs for the non-seller, then at least one production assignment references the `castIron_from_timber_iron_coal` recipe.
+- Given the same non-seller but with no peer lock-recovery seller needing the `castIron` improvement input (the would-be seller is at quota or already holds `castIron`), when `runEconomyPlanner` runs for the non-seller with the same seed, then its assigned `castIron` labour is **not greater** than in the active case (negative control — the supplier-release boost only fires while a peer needs the input, so the +6 baseline GPs are unaffected).
+
 ## Regiment build-input feedstock extraction priority (Refs #2847 H8-extraction)
 
 Companion to § Regiment build-input production priority (Refs #2847 H8) and [treasury-planner.md](treasury-planner.md) § Lock-recovery seller regiment build-input bootstrap. The production boost only converts feedstock the GP **already holds**, and the world-market bid only fills when a seller offers the feedstock. On seed 42 the failing below-quota zero-NW Great Powers (`gp3` / `gp5` / `gp6`) hold **no** `wool` / `cotton` because their idle Builders are not routed to improve the feedstock resource tiles they own, so neither the domestic production path nor the market-supply path has any feedstock to work with (the residual disclosed in `treasury-planner.md` § Residual feedstock-acquisition dependency).

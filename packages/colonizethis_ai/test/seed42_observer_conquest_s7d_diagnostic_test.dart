@@ -632,6 +632,56 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `gpCastIronProductionAssignedTurns`, then
 /// `gpFeedstockGateImprovementCostAffordableTurns`, rise for gp3 / gp5 / gp6.
 ///
+/// ## S7-D refresh (captured 2026-06-04 on branch
+///     `fix/issue-2847-h8-extraction-next`, after the supplier-side castIron
+///     over-production + release + seller direct-bid loop added in this slice)
+///
+/// This slice wires a genuine first-castIron supplier source per the
+/// post-#3241 conclusion above: (A) an affluent supplier (not itself a
+/// below-quota zero-NW lock-recovery seller) over-produces `castIron` with a
+/// moderate leftover-capacity score boost
+/// ([kSupplierBuildInputReleaseProductionScoreBoost] = 5.0) whenever some
+/// lock-recovery seller needs the level-0 `castIron` improvement input
+/// ([anyLockRecoverySellerNeedsCastIronImprovementInput]); (B) the existing
+/// surplus-release path activates earlier so the supplier offers the surplus;
+/// and (C) the locked seller bids `castIron` **directly** (instead of routing
+/// to domestic `timber` / `iron` feedstock) once a standing `castIron` offer
+/// exists in the world market. The change is **safe by construction** — the
+/// moderate boost only consumes labour / feedstock left over after the
+/// supplier's own shortage-driven essentials, so gp1 / gp2 are never starved.
+///
+/// The diagnostic confirms **no regression and no emergent bite on seed-42**:
+///
+///   * **OW gain unchanged:** gp1 = +6, gp2 = +6 (PASS); gp3 = +2, gp4 = +1,
+///     gp5 = +1, gp6 = +2 (FAIL) — identical to the post-#3241 baseline. The
+///     safe-by-construction boost does not regress the passing GPs.
+///   * **`gpCastIronProductionAssignedTurns` = 0 for *every* GP** — including
+///     the boosted suppliers gp1 / gp2. The +5 boost ranks `castIron` highly,
+///     but `feasibleRuns` is still 0 because the suppliers hold **no `timber` /
+///     `iron` feedstock** to run the recipe (they extract neither — gp2's only
+///     releasable surplus is `lumber`, `gpLumberHeldAtTurn99` gp2 = 45). So no
+///     castIron is ever produced, no `castIron` offer is emitted, the seller's
+///     gated direct-`castIron` bid never activates
+///     (`gpCastIronFeedstockOffersEmitted` / `gpCastIronFeedstockDealsAsBuyer`
+///     stay 0), and `gpFeedstockGateImprovementCostAffordableTurns` stays
+///     **0 / 0 / 0** — the deadlock persists.
+///
+/// Conclusion: the supplier-castIron-source loop is now **structurally present
+/// and unit-tested** (`treasury_planner_supplier_castiron_source_test.dart`,
+/// `economy_planner_regiment_build_input_production_test.dart`), but inert on
+/// seed-42 because the missing link is one stage further upstream than a
+/// production *boost* can reach — **no affluent supplier holds or extracts the
+/// `timber` / `iron` the castIron recipe consumes**, so over-production is
+/// infeasible regardless of boost magnitude. This **refutes** the "a boost
+/// alone creates the first castIron" framing. The next slice must give an
+/// affluent supplier a genuine `timber` / `iron` source for release-driven
+/// castIron over-production (supplier feedstock extraction / improvement under
+/// the lock-recovery trigger), or relax the level-0 improvement's `castIron`
+/// requirement for the first bootstrap extraction. Verify by re-running this
+/// diagnostic and confirming `gpCastIronProductionAssignedTurns` rises for
+/// gp1 / gp2 (the suppliers), then `gpCastIronFeedstockDealsAsBuyer` and
+/// `gpFeedstockGateImprovementCostAffordableTurns` rise for gp3 / gp5 / gp6.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
