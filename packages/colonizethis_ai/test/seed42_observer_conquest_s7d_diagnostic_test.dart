@@ -341,6 +341,72 @@ import 'support/faithful_full_ai_test_handoff.dart';
 ///      the regiment-holding failure mode.
 ///   3. **H2 (still open): residual peer-war re-declare oscillation.**
 ///
+/// ## S7-D refresh (captured 2026-06-04 on merged `dev` @ `82984a23`,
+///     after the EXPAND regiment-rebuild production boost (#3229) and the
+///     lock-recovery seller build-input bid carve-out (#3226) merged —
+///     H8 conversion-gap instrumentation added in this slice)
+///
+/// New per-GP fields isolate the H8 directive → emitted-build gap into its
+/// proximate sub-cause. A turn counts as **rebuild-ready** when
+/// `forceCheapestRegimentBuild` is set, treasury affords the cheapest
+/// regiment (`peasant_levies`, one `fabric`), and the GP holds zero
+/// regiments — exactly when the lost starting army should be replaced.
+///
+///   * **The gap is 100% an input-acquisition problem, not a downstream
+///     build/suggestion gate.** `gpRebuildReadyNoBuildInputsPresentTurns`
+///     is **0** for every GP, while `gpRebuildReadyNoBuildMissingInputTurns`
+///     equals the entire `gpRebuildReadyNoBuildTurns` count: gp3 = 29,
+///     gp5 = 52, gp6 = 51. On **every** rebuild-ready turn that emits no
+///     military build, the cheapest-regiment input (fabric) is simply not
+///     in the stockpile. This exonerates spawn-province eligibility, the
+///     `pickBuildOrder` regiments-only filter, and the build-pass
+///     threshold — they never get a candidate to reject.
+///   * **Fabric is absent essentially the whole game for the failing GPs.**
+///     `gpCheapestRegimentInputsInStockpileTurns` = 2 / 2 / 2 for
+///     gp3 / gp5 / gp6 (vs gp4 = 61, the one failing GP that holds
+///     regiments and emits the most builds, 4). The failing GPs cannot
+///     produce fabric (no wool / cotton feedstock reaches the fabric
+///     recipe) for ~98 of 100 turns.
+///   * **The #3226 build-input bid is placed but the market never supplies
+///     fabric.** `isLockRecoverySeller` is true for gp3 / gp5 / gp6
+///     (OW >= 2, below quota, zero NW), so the treasury-planner build-input
+///     bid carve-out injects a fabric bid: `gpRegimentInputBidsEmitted` =
+///     1 / 1 / 1 (a single *fresh* emission per GP — on later turns the
+///     unfilled bid persists as a carry-forward, so the carve-out's
+///     `held < input.value` guard correctly suppresses a duplicate). The
+///     decisive number is `gpRegimentInputDealsAsBuyer` = **0** for every
+///     GP across all 100 turns: the fabric bid never matches a deal because
+///     no GP / tribe sells fabric into the world market. The bottleneck has
+///     moved off the planner entirely and onto **fabric supply** — the
+///     failing GPs can neither produce fabric (no feedstock) nor buy it
+///     (no seller).
+///
+/// ## Updated S7-T tuning surface (ordered by the conversion-gap split)
+///
+/// Constraint per issue § Scope constraint unchanged: **phase-planner
+/// logic only**, **no new config constants**, **no value changes** to
+/// existing constants in
+/// `packages/colonizethis_data/lib/src/ai_victory_config.dart`.
+///
+///   1. **H8-supply (new, highest signal): fabric supply for the
+///      zero-regiment lock-recovery sellers.** The directive, treasury,
+///      build-pass threshold, regiments-only filter, and build-input bid
+///      mechanism are all working; the missing piece is fabric **supply**.
+///      The next slice must either (a) make the failing GPs *produce*
+///      fabric — ensure the regiment build-input production boost also
+///      pulls the transitive wool / cotton feedstock so a fabric recipe
+///      becomes feasible — or (b) create world-market fabric **sellers**
+///      (e.g. a fabric-surplus GP offers down) so the existing #3226 bid
+///      can fill. Verify by re-running this diagnostic and confirming
+///      `gpCheapestRegimentInputsInStockpileTurns`,
+///      `gpMilitaryBuildOrdersEmitted`, and (downstream)
+///      `gpRegimentTurnsAtZero` all improve for gp5 / gp6.
+///   2. **H4-b (unblocked for the regiment-holding case): minor-transit
+///      reach.** gp4 holds regiments almost every turn yet still gains
+///      only +1 — its blocker is reach / offensive strength against the
+///      locked peer (see #3224).
+///   3. **H2 (still open): residual peer-war re-declare oscillation.**
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
@@ -453,6 +519,51 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
 
+      // Refs #2847 H8 conversion-gap isolation. The headline H8 finding is
+      // that `forceCheapestRegimentBuild` fires 85-100 turns while
+      // `gpMilitaryBuildOrdersEmitted` stays at 2-4 and `gpRegimentTurnsAtZero`
+      // is 39-59 for gp3 / gp5 / gp6. These accumulators split the gap into
+      // its proximate sub-causes so a tuning implementer can tell apart
+      // "the cheapest-regiment input (fabric) is never in the stockpile when
+      // the GP is ready to build" (production / market-acquisition gap) from
+      // "fabric is present and the GP is ready, yet no military build is
+      // emitted" (a downstream suggestion / build-pick gate). A turn counts
+      // as *rebuild-ready* when the EXPAND directive is active, treasury can
+      // afford the cheapest regiment, and the GP holds zero regiments — the
+      // exact condition under which the lost starting army should be
+      // replaced. The cheapest regiment (`peasant_levies`) requires a single
+      // unit of fabric, so fabric availability is the proximate input gate.
+      final cheapestRegimentInputs =
+          RegimentEconomyCatalog.peasantLevies.buildInputs;
+      final fabricInStockpileTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final rebuildReadyTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final rebuildReadyNoBuildTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final rebuildReadyNoBuildMissingInputTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final rebuildReadyNoBuildInputsPresentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      // Cheapest-regiment input commodity ids (e.g. fabric) and the bid /
+      // fill counters that prove whether the #3226 lock-recovery build-input
+      // bid carve-out actually secures the input from the world market. A
+      // high bid count with a near-zero fill count localizes the gap to
+      // world-market *supply* (no seller / no production feedstock) rather
+      // than the planner failing to bid.
+      final regimentInputCommodityIds = cheapestRegimentInputs.keys.toSet();
+      final regimentInputBidsEmitted = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final regimentInputDealsAsBuyer = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+
       // Refs #2924 Step 0 — world-market lock-recovery diagnostics:
       // per-GP rollups capturing (a) trade orders the AI submits each
       // turn (offer/bid counts plus urgent-priority offer counts at
@@ -463,45 +574,36 @@ void main() {
       // surfaces are issue-2924 specific and live alongside the
       // existing #2847 S7-D fields so a single run produces both
       // diagnostic blocks.
-      final tradeOfferCount = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final tradeOfferCount = <String, int>{for (final gpId in gpIds) gpId: 0};
       final tradeUrgentOfferCount = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
-      final tradeBidCount = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final dealsAsSeller = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final dealsAsBuyer = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final treasuryCredited = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final treasuryDebited = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final tradeBidCount = <String, int>{for (final gpId in gpIds) gpId: 0};
+      final dealsAsSeller = <String, int>{for (final gpId in gpIds) gpId: 0};
+      final dealsAsBuyer = <String, int>{for (final gpId in gpIds) gpId: 0};
+      final treasuryCredited = <String, int>{for (final gpId in gpIds) gpId: 0};
+      final treasuryDebited = <String, int>{for (final gpId in gpIds) gpId: 0};
       final regimentThresholdCrossingsUp = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
       final regimentThresholdFirstReachTurn = <String, int?>{
         for (final gpId in gpIds) gpId: null,
       };
-      final treasuryAtTurn99 = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final treasuryAtTurn99 = <String, int>{for (final gpId in gpIds) gpId: 0};
       // Treasury immediately after the previous turn resolved (seeded
       // from turn-0 pre-resolution treasury so the first crossing
       // detection compares against game start rather than zero).
       final treasuryPrevTurn = <String, int>{
-        for (final gpId in gpIds)
-          gpId: game.playerById(gpId)?.treasury ?? 0,
+        for (final gpId in gpIds) gpId: game.playerById(gpId)?.treasury ?? 0,
       };
 
       for (var t = 0; t < 100; t++) {
+        // Refs #2847 H8: per-turn rebuild-readiness + cheapest-regiment input
+        // availability, populated in the pre-resolution GP loop and reconciled
+        // against the emitted military builds after the merge below.
+        final turnRebuildReady = <String, bool>{};
+        final turnInputsPresent = <String, bool>{};
+
         // Capture phase / arm decisions *before* the turn resolves so the
         // diagnostic reflects what the planner saw entering turn t+1.
         for (final gpId in gpIds) {
@@ -551,8 +653,30 @@ void main() {
             regimentPeak[gpId] = regiments;
           }
           if (regiments == 0) {
-            regimentTurnsAtZero[gpId] =
-                (regimentTurnsAtZero[gpId] ?? 0) + 1;
+            regimentTurnsAtZero[gpId] = (regimentTurnsAtZero[gpId] ?? 0) + 1;
+          }
+          // Refs #2847 H8 conversion-gap: classify this GP's pre-resolution
+          // rebuild readiness and whether the cheapest-regiment build inputs
+          // are already in the stockpile. Reconciled against the emitted
+          // military builds after the merge below.
+          final inputsPresent =
+              player != null &&
+              cheapestRegimentInputs.entries.every(
+                (e) => player.stockpile.quantityOf(e.key) >= e.value,
+              );
+          turnInputsPresent[gpId] = inputsPresent;
+          if (inputsPresent) {
+            fabricInStockpileTurns[gpId] =
+                (fabricInStockpileTurns[gpId] ?? 0) + 1;
+          }
+          final rebuildReady =
+              outcome.expandEconomyPlan.forceCheapestRegimentBuild &&
+              player != null &&
+              player.treasury >= cheapestRegimentBuildTreasuryCost() &&
+              regiments == 0;
+          turnRebuildReady[gpId] = rebuildReady;
+          if (rebuildReady) {
+            rebuildReadyTurns[gpId] = (rebuildReadyTurns[gpId] ?? 0) + 1;
           }
           // Cache the turn-99 snapshot fields for the final rollup.
           if (t == 99) {
@@ -591,11 +715,31 @@ void main() {
         // emission count indicates the planner never queues the build.
         for (final gpId in gpIds) {
           final builds = merged.buildUnitOrdersByPlayerId[gpId];
-          if (builds == null) continue;
-          for (final build in builds) {
-            if (build.isMilitary) {
-              militaryBuildOrdersEmitted[gpId] =
-                  (militaryBuildOrdersEmitted[gpId] ?? 0) + 1;
+          var emittedMilitaryThisTurn = false;
+          if (builds != null) {
+            for (final build in builds) {
+              if (build.isMilitary) {
+                militaryBuildOrdersEmitted[gpId] =
+                    (militaryBuildOrdersEmitted[gpId] ?? 0) + 1;
+                emittedMilitaryThisTurn = true;
+              }
+            }
+          }
+          // Refs #2847 H8 conversion-gap reconciliation. On a rebuild-ready
+          // turn (directive active + treasury affordable + zero regiments)
+          // that emitted no military build, attribute the miss to either a
+          // missing cheapest-regiment input in the stockpile (production /
+          // market-acquisition gap) or inputs-present-yet-no-build (downstream
+          // suggestion / build-pick gate).
+          if ((turnRebuildReady[gpId] ?? false) && !emittedMilitaryThisTurn) {
+            rebuildReadyNoBuildTurns[gpId] =
+                (rebuildReadyNoBuildTurns[gpId] ?? 0) + 1;
+            if (turnInputsPresent[gpId] ?? false) {
+              rebuildReadyNoBuildInputsPresentTurns[gpId] =
+                  (rebuildReadyNoBuildInputsPresentTurns[gpId] ?? 0) + 1;
+            } else {
+              rebuildReadyNoBuildMissingInputTurns[gpId] =
+                  (rebuildReadyNoBuildMissingInputTurns[gpId] ?? 0) + 1;
             }
           }
         }
@@ -617,6 +761,10 @@ void main() {
               }
             } else if (order.type == TradeOrderType.bid) {
               tradeBidCount[gpId] = (tradeBidCount[gpId] ?? 0) + 1;
+              if (regimentInputCommodityIds.contains(order.commodityId)) {
+                regimentInputBidsEmitted[gpId] =
+                    (regimentInputBidsEmitted[gpId] ?? 0) + 1;
+              }
             }
           }
         }
@@ -654,8 +802,11 @@ void main() {
             final buyer = deal.buyerFactionId;
             if (treasuryDebited.containsKey(buyer)) {
               dealsAsBuyer[buyer] = (dealsAsBuyer[buyer] ?? 0) + 1;
-              treasuryDebited[buyer] =
-                  (treasuryDebited[buyer] ?? 0) + notional;
+              treasuryDebited[buyer] = (treasuryDebited[buyer] ?? 0) + notional;
+              if (regimentInputCommodityIds.contains(deal.commodityId)) {
+                regimentInputDealsAsBuyer[buyer] =
+                    (regimentInputDealsAsBuyer[buyer] ?? 0) + 1;
+              }
             }
           }
         }
@@ -721,6 +872,16 @@ void main() {
         'gpRegimentPeak': regimentPeak,
         'gpRegimentTurnsAtZero': regimentTurnsAtZero,
         'gpMilitaryBuildOrdersEmitted': militaryBuildOrdersEmitted,
+        'gpCheapestRegimentInputsInStockpileTurns': fabricInStockpileTurns,
+        'gpRebuildReadyTurns': rebuildReadyTurns,
+        'gpRebuildReadyNoBuildTurns': rebuildReadyNoBuildTurns,
+        'gpRebuildReadyNoBuildMissingInputTurns':
+            rebuildReadyNoBuildMissingInputTurns,
+        'gpRebuildReadyNoBuildInputsPresentTurns':
+            rebuildReadyNoBuildInputsPresentTurns,
+        'regimentInputCommodityIds': regimentInputCommodityIds.toList()..sort(),
+        'gpRegimentInputBidsEmitted': regimentInputBidsEmitted,
+        'gpRegimentInputDealsAsBuyer': regimentInputDealsAsBuyer,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
 
@@ -775,9 +936,7 @@ void main() {
       log.i(const JsonEncoder.withIndent('  ').convert(diagnostic));
       log.i('S7D_DIAGNOSTIC_JSON_END');
       log.i('ISSUE2924_STEP0_JSON_BEGIN');
-      log.i(
-        const JsonEncoder.withIndent('  ').convert(lockRecoveryDiagnostic),
-      );
+      log.i(const JsonEncoder.withIndent('  ').convert(lockRecoveryDiagnostic));
       log.i('ISSUE2924_STEP0_JSON_END');
 
       // Lightweight assertion: data was actually collected. The diagnostic
@@ -788,6 +947,19 @@ void main() {
           phaseCounts[gpId]!.values.fold<int>(0, (a, b) => a + b),
           100,
           reason: '$gpId phase-count total should equal turn count',
+        );
+        // Refs #2847 H8: structural invariant on the conversion-gap split.
+        // Every rebuild-ready turn with no military build is attributed to
+        // exactly one of the two mutually exclusive sub-causes, so the parts
+        // must sum to the whole. This guards the instrumentation itself
+        // without pinning the (freely tunable) per-GP counts.
+        expect(
+          rebuildReadyNoBuildMissingInputTurns[gpId]! +
+              rebuildReadyNoBuildInputsPresentTurns[gpId]!,
+          rebuildReadyNoBuildTurns[gpId],
+          reason:
+              '$gpId rebuild-ready no-build turns must split into '
+              'missing-input + inputs-present sub-causes',
         );
       }
     },
