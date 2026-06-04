@@ -828,6 +828,55 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `gpFeedstockGateImprovementCostAffordableTurns` rise above 0 before expecting
 /// `gpCastIronProductionAssignedTurns` or OW gain to move.
 ///
+/// ## S7-D refresh (captured 2026-06-04 on branch
+///     `feat/issue-2847-feedstock-build-improvement-suggestion-priority`,
+///     PR #3250, after the level-0 `build_improvement` castIron waiver
+///     `e2d139db2`)
+///
+/// The level-0 `build_improvement` `castIron` waiver
+/// (`feedstockBootstrapBuildImprovementCastIronWaived` +
+/// player-scoped `WorkOrderCostCalculator`) **does** move the prerequisite
+/// metric the prior refresh asked to verify, **without regressing the gp1 / gp2
+/// +6 baseline**, but it does **not** close the turn-100 OW gate on its own:
+///
+///   * **OW gain:** gp1 = +6, gp2 = +6 (PASS, baseline preserved); gp3 = +2,
+///     gp4 = +1, gp5 = +2, gp6 = +1 (FAIL). Behaviour is no longer
+///     byte-identical to the post-#3247 baseline (gp5 / gp6 swapped +1/+2 →
+///     +2/+1) but no failing GP reaches the +3 floor.
+///   * **`gpFeedstockGateValidBuildImprovementCandidateTurns` rises above 0 for
+///     the first time:** gp3 = 14, gp4 = 0, gp5 = 3, gp6 = 5 (was 0 / 0 / 0 / 0
+///     pre-waiver). The waiver makes `getValidWorkOrderTileKeys` (the same
+///     validator chain `suggestWorkOrders` runs) **accept** the
+///     `build_improvement` on the owned unimproved feedstock tile — the missing
+///     candidate the prior six refreshes pinned is now present.
+///   * **`gpFeedstockGateImprovementCostAffordableTurns` stays 0 / 0 / 0** — by
+///     design: that counter measures affordability of the **full** `1 lumber +
+///     1 castIron` cost, which the waiver intentionally bypasses, so it no
+///     longer reflects the binding constraint. Use
+///     `gpFeedstockGateValidBuildImprovementCandidateTurns` as the live
+///     prerequisite signal post-waiver.
+///   * **Downstream still flat:** `gpCastIronProductionAssignedTurns` = 0,
+///     `gpCastIronHeldAtTurn99` = 0, and `gpCastIronFeedstockHeldAtTurn99`
+///     `timber` / `iron` ≈ 0 for every GP. The now-valid candidate does not
+///     convert into held feedstock, domestic `castIron` production, or OW
+///     conquest within 100 turns.
+///
+/// Conclusion: the waiver is **correct-by-construction and effective at its
+/// scope** — it breaks the circular `castIron` dependency at the validator and
+/// surfaces an affordable level-0 feedstock `build_improvement` for the locked
+/// sellers (gp3 / gp5 / gp6). It is a valid, SPEC-authorized prerequisite, not a
+/// regression. The remaining break is now **downstream of candidate validity**:
+/// the routed Builder's extraction does not accumulate `timber` + `iron`
+/// together, so no `castIron` run becomes feasible and the OW conquest gate
+/// stays open. The next slice must target **feedstock co-availability →
+/// `castIron` production → conquest conversion** (e.g. reserve the routed
+/// Builder's extracted `timber` / `iron` from the competing feasible `lumber`
+/// recipe until one `castIron` run completes), **not** the level-0 cost (already
+/// waived) or suggestion ordering (already correct). Verify by re-running this
+/// diagnostic and confirming `gpCastIronFeedstockHeldAtTurn99` (`timber` **and**
+/// `iron` > 0 simultaneously) then `gpCastIronProductionAssignedTurns` rise for
+/// gp3 / gp5 / gp6 before expecting OW gain to move.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
