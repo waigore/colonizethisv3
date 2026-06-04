@@ -10,6 +10,8 @@ import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/ai_api.dart'
+    show regimentBuildInputFeedstockExtractionResourceIds;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -407,6 +409,65 @@ import 'support/faithful_full_ai_test_handoff.dart';
 ///      locked peer (see #3224).
 ///   3. **H2 (still open): residual peer-war re-declare oscillation.**
 ///
+/// ## S7-D refresh (captured 2026-06-04 on merged `dev` @ `0ef7919e`, after
+///     the H8-supply wool market path (#3233), the H8-extraction feedstock
+///     tile priority (#3234), and the civilian-work force-on gate (#3235)
+///     all merged — feedstock-stage instrumentation added in this slice)
+///
+/// The H8-supply market + extraction slices did **not** move the binding
+/// metric: `gpCheapestRegimentInputsInStockpileTurns` (fabric on hand) is
+/// still **2 / 2 / 2** for gp3 / gp5 / gp6 (gp4 = 61) and
+/// `gpRegimentInputDealsAsBuyer` is still **0** for every GP. OW gain is
+/// unchanged: gp1 = +6, gp2 = +6 (PASS); gp3 = +2, gp4 = +1, gp5 = +1,
+/// gp6 = +2 (FAIL).
+///
+/// New feedstock-stage fields localize the domestic `wool` / `cotton` ->
+/// `fabric` production break **precisely**, and refute the prior "no feedstock
+/// / create a fabric seller" framing of the H8-supply surface:
+///
+///   * `gpUnimprovedFeedstockTileOwnedTurns` = **100** for every GP — the
+///     failing GPs own an unimproved `wool` / `cotton` resource tile a Builder
+///     could extract on *every* turn. Feedstock geography is **not** the
+///     blocker.
+///   * `gpFeedstockExtractionGateActiveTurns` = **29 / 52 / 51** for
+///     gp3 / gp5 / gp6 (0 for gp1 / gp2 / gp4) — the #3234 / #3235
+///     Builder-routing gate (`regimentBuildInputFeedstockExtractionResourceIds`)
+///     fires on exactly the rebuild-ready turns, as designed.
+///   * `gpFeedstockInStockpileTurns` = **1** for every GP — yet `wool` /
+///     `cotton` reaches the stockpile only a single turn the entire run.
+///   * `gpFabricRecipeFeasibleTurns` = **1** for every GP — a `fabricFrom*`
+///     recipe is feasible for >= 1 run only that same single turn.
+///
+/// Conclusion: the feedstock tile **exists** and the extraction-routing gate
+/// **fires** for 29-52 turns, but the feedstock never lands in the stockpile.
+/// The break is therefore **upstream of recipe feasibility and world-market
+/// supply** — the routed Builder is not improving the feedstock tile (or the
+/// improved tile is not extracting `wool` / `cotton` into the stockpile) under
+/// the lock. The next slice must look at Builder availability / work
+/// assignment and the extraction step, not at recipe scoring or a world-market
+/// `fabric` seller.
+///
+/// ## Updated S7-T tuning surface (ordered by the feedstock-stage split)
+///
+/// Constraint per issue § Scope constraint unchanged: **phase-planner /
+/// orchestrator logic only**, **no new config constants**, **no value
+/// changes** to existing constants in
+/// `packages/colonizethis_data/lib/src/ai_victory_config.dart`.
+///
+///   1. **H8-extraction (new, highest signal): feedstock Builder extraction
+///      execution.** Gate active 29-52 turns + unimproved feedstock tile owned
+///      100 turns, yet `gpFeedstockInStockpileTurns` == 1. Determine why the
+///      routed Builder does not improve / extract a `wool` / `cotton` tile
+///      under the lock — candidate causes: the GP holds no idle Builder unit to
+///      route; `suggestWorkOrders` emits no build-improvement candidate for the
+///      feedstock tile; or the Builder is repeatedly preempted by the peer-war
+///      churn before extraction completes. Verify by re-running this diagnostic
+///      and confirming `gpFeedstockInStockpileTurns` and (downstream)
+///      `gpCheapestRegimentInputsInStockpileTurns` rise for gp3 / gp5 / gp6.
+///   2. **H4-b (regiment-holding case): gp4 reach / offensive strength**
+///      against the locked peer (unchanged; see #3224).
+///   3. **H2 (still open): residual peer-war re-declare oscillation.**
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
@@ -439,6 +500,34 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `gpTreasuryUnderCheapestRegimentTurns` count from the #2847
 /// surface. Copy this block into a fresh comment on issue #2924
 /// when refreshing the Step 0 decision-gate evidence.
+/// True iff [playerId] owns at least one province tile that hosts a fabric
+/// feedstock resource (a member of [feedstockIds]) and is still unimproved
+/// (improvement level < 1) — i.e. a Builder target a lock-recovery seller could
+/// extract to feed the `fabricFrom*` recipes. Read-only scan over owned
+/// provinces; Refs #2847 H8-supply feedstock-stage diagnostic.
+bool _ownsUnimprovedFeedstockResourceTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
+    for (final entry in byProvince.entries) {
+      final province = tryGetProvince(ws, entry.key);
+      if (province == null || province.ownerId != playerId) continue;
+      for (final tileKey in entry.value) {
+        final resourceId = ws.resourceByTileKey[tileKey];
+        if (resourceId == null || !feedstockIds.contains(resourceId)) {
+          continue;
+        }
+        if (ws.tileState.improvementLevel(tileKey) < 1) return true;
+      }
+    }
+  }
+  return false;
+}
+
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -564,6 +653,48 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
 
+      // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
+      // The post-#3235 surface shows the world market never supplies fabric
+      // (`gpRegimentInputDealsAsBuyer == 0`) and the affluent-supplier release
+      // path cannot help (the conquest GPs that might hold textile surplus sit
+      // far below the regiment-affluence treasury band), so the only viable
+      // fabric source for a locked seller is *domestic production* of the
+      // wool / cotton feedstock the `fabricFrom*` recipes consume. These
+      // read-only accumulators split that chain into its proximate links so a
+      // tuning implementer can tell apart, in order:
+      //   1. no Builder routing window — the feedstock-extraction gate
+      //      ([regimentBuildInputFeedstockExtractionResourceIds]) never fires;
+      //   2. no feedstock tile to improve — the GP owns no unimproved
+      //      wool / cotton resource tile a Builder could extract;
+      //   3. feedstock never reaches the stockpile — no wool / cotton on hand
+      //      despite the gate / tile;
+      //   4. feedstock present but not enough for a recipe run — no fabric
+      //      recipe is feasible for >=1 run;
+      // measured against the existing `gpCheapestRegimentInputsInStockpileTurns`
+      // (fabric on hand) so the break point is unambiguous. Pure observation —
+      // no production logic changes — so the (freely tunable) counts can move
+      // as later supply slices land.
+      final fabricRecipes = <ProductionRecipe>[
+        for (final recipe in ProductionRecipesCatalog.all)
+          if (cheapestRegimentInputs.containsKey(recipe.outputCommodityId))
+            recipe,
+      ];
+      final fabricFeedstockIds = <String>{
+        for (final recipe in fabricRecipes) ...recipe.inputQuantities.keys,
+      };
+      final feedstockExtractionGateActiveTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final unimprovedFeedstockTileOwnedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final feedstockInStockpileTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final fabricRecipeFeasibleTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+
       // Refs #2924 Step 0 — world-market lock-recovery diagnostics:
       // per-GP rollups capturing (a) trade orders the AI submits each
       // turn (offer/bid counts plus urgent-priority offer counts at
@@ -677,6 +808,44 @@ void main() {
           turnRebuildReady[gpId] = rebuildReady;
           if (rebuildReady) {
             rebuildReadyTurns[gpId] = (rebuildReadyTurns[gpId] ?? 0) + 1;
+          }
+          // Refs #2847 H8-supply feedstock-stage isolation (read-only). Splits
+          // the domestic wool/cotton -> fabric production chain into its
+          // proximate links: Builder-routing gate fired, an unimproved
+          // feedstock resource tile is owned, feedstock reached the stockpile,
+          // and a fabric recipe is feasible for at least one run.
+          if (regimentBuildInputFeedstockExtractionResourceIds(
+            game,
+            gpId,
+          ).isNotEmpty) {
+            feedstockExtractionGateActiveTurns[gpId] =
+                (feedstockExtractionGateActiveTurns[gpId] ?? 0) + 1;
+          }
+          if (_ownsUnimprovedFeedstockResourceTile(
+            game,
+            gpId,
+            fabricFeedstockIds,
+          )) {
+            unimprovedFeedstockTileOwnedTurns[gpId] =
+                (unimprovedFeedstockTileOwnedTurns[gpId] ?? 0) + 1;
+          }
+          if (player != null) {
+            final holdsFeedstock = fabricFeedstockIds.any(
+              (id) => player.stockpile.quantityOf(id) > 0,
+            );
+            if (holdsFeedstock) {
+              feedstockInStockpileTurns[gpId] =
+                  (feedstockInStockpileTurns[gpId] ?? 0) + 1;
+            }
+            final recipeFeasible = fabricRecipes.any(
+              (recipe) => recipe.inputQuantities.entries.every(
+                (e) => player.stockpile.quantityOf(e.key) >= e.value,
+              ),
+            );
+            if (recipeFeasible) {
+              fabricRecipeFeasibleTurns[gpId] =
+                  (fabricRecipeFeasibleTurns[gpId] ?? 0) + 1;
+            }
           }
           // Cache the turn-99 snapshot fields for the final rollup.
           if (t == 99) {
@@ -882,6 +1051,12 @@ void main() {
         'regimentInputCommodityIds': regimentInputCommodityIds.toList()..sort(),
         'gpRegimentInputBidsEmitted': regimentInputBidsEmitted,
         'gpRegimentInputDealsAsBuyer': regimentInputDealsAsBuyer,
+        'fabricFeedstockCommodityIds': fabricFeedstockIds.toList()..sort(),
+        'gpFeedstockExtractionGateActiveTurns':
+            feedstockExtractionGateActiveTurns,
+        'gpUnimprovedFeedstockTileOwnedTurns': unimprovedFeedstockTileOwnedTurns,
+        'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
+        'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
 

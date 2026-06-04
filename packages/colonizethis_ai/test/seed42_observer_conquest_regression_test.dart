@@ -79,15 +79,17 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10 / #2847: seed-42 turn-100 gate — gp1/gp2 PASS '
-        '(+6 each). gp3 +2, gp4 +1, gp5 +1, gp6 +2 (merged dev @ b4c79488, '
+        '(+6 each). gp3 +2, gp4 +1, gp5 +1, gp6 +2 (merged dev @ 0ef7919e, '
         '2026-06-04 S7-D refresh: World Market #2924/#2994 + EXPAND universal '
-        'colonial dispatch #3179 + stalled-EXPAND minor-transit routing #3224). '
-        'Treasury starvation is solved (failing GPs hold ~2000+ treasury); the '
-        'remaining blocker is offensive-strength accumulation under the '
-        'symmetric peer-war lock — forceCheapestRegimentBuild fires 85-100 '
-        'turns yet regimentCount stays 0-1. gp3-gp6 still below the >=3 OW '
-        'floor; skip removal awaits the H8 regiment-accumulation slice '
-        '(Refs #2847).',
+        'colonial dispatch #3179 + minor-transit routing #3224 + H8-supply wool '
+        'market/extraction #3233-#3235). Treasury starvation is solved (failing '
+        'GPs hold ~2000+ treasury); the remaining blocker is regiment-rebuild '
+        'fabric supply — feedstock-stage instrumentation shows the failing GPs '
+        'own unimproved wool/cotton tiles all 100 turns and the extraction gate '
+        'fires 29-52 turns, yet feedstock reaches the stockpile only 1 turn, so '
+        'the routed Builder never extracts the feedstock (H8-extraction). '
+        'gp3-gp6 still below the >=3 OW floor; skip removal awaits the '
+        'H8-extraction Builder-execution slice (Refs #2847).',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
