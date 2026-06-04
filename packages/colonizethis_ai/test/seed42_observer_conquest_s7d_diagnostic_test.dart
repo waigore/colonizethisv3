@@ -964,6 +964,50 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// civilian-work boost for gp3 — not the fabric production / offer side, which
 /// is now treasury-independent.
 ///
+/// ### H8 treasury-independent feedstock-extraction routing (this slice, Refs #2847)
+///
+/// This slice closes the **last treasury-gated link** the #3252 re-localization
+/// named: the civilian-work feedstock-extraction routing gate
+/// (`regimentBuildInputFeedstockExtractionResourceIds`,
+/// `full_ai_civilian_work_selection.dart`) still required
+/// `player.treasury >= cheapestRegimentBuildTreasuryCost()`. #3252 had already
+/// de-gated the regiment build-input *production* boost and the offer-side
+/// retention / feedstock reservation from treasury, but the *routing* boost that
+/// puts the seller's idle Builder on its own `wool` / `cotton` tile was still
+/// only active on the rare recovered turn. Routing a Builder spends no treasury,
+/// so gating it re-imposed the rebuild trap on the input. The fix drops the
+/// treasury clause; the `regimentCount == 0` / below-quota / zero-NW / missing-
+/// input scoping is unchanged, so the +6 baseline GPs (which hold regiments) are
+/// never routed, and the market **bids** stay treasury-gated at their
+/// `treasury_planner.dart` call site (economy-planner.md § Treasury-independent
+/// feedstock extraction; the parenthetical mirrors § Treasury-independent
+/// staging for production).
+///
+/// **Effect on the seed-42 surface (post-fix refresh, 100-turn local run):**
+///
+///   * **+6 OW baseline preserved** — gp1 = +6, gp2 = +6 (PASS),
+///     `gpRegimentPeak` 5 / 5 unchanged. No failing GP regressed: OW gain stays
+///     gp3 / gp4 / gp5 / gp6 = +2 / +1 / +2 / +1, byte-identical to the
+///     post-#3252 baseline.
+///   * **Routing now fires treasury-independently** — `gpFeedstockExtraction
+///     GateActiveTurns` rises gp3 29 → 32, gp5 7 → 13, gp6 11 → 19 (the boost
+///     now activates on broke turns), confirming the de-gate is effective at its
+///     scope.
+///
+/// **Re-localization (binding constraint after this slice):** the extra
+/// gate-active turns do **not** convert into held feedstock for gp3
+/// (`gpFeedstockInStockpileTurns` gp3 = 1 despite `gpFeedstockGateImprovedTile
+/// OwnedTurns` gp3 = 27): gp3's owned feedstock tile *is* improved on most gate
+/// turns yet yields no `wool` / `cotton` into the stockpile — the **transport /
+/// extraction-connectivity** stage (the improved tile is not extraction-
+/// connected), one stage downstream of routing. The next slice for gp3 must
+/// target that connectivity (e.g. route a Builder onto rail / transport for the
+/// improved feedstock tile), **not** the routing gate (now treasury-independent)
+/// or the production / offer side (treasury-independent since #3252). gp5 / gp6
+/// remain the peer-war regiment-attrition residual (H2 / H4). Verify a gp3
+/// connectivity slice by confirming `gpFeedstockInStockpileTurns` gp3 rises
+/// above 1 before expecting OW gain to move.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project

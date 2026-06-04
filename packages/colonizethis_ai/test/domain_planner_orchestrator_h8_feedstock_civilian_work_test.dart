@@ -114,14 +114,13 @@ void main() {
     );
 
     test(
-      'keeps legacy build-improvement ordering when feedstock gate is inactive',
+      'treasury-independent: selects wool improvement even when broke',
       () {
-        // Negative control: treasury below the cheapest-regiment threshold
-        // leaves the feedstock-extraction gate inactive, so no feedstock
-        // score boost fires and the Builder follows the ordinary
-        // build-improvement ordering (grain) rather than the wool feedstock
-        // tile selected when the gate is active.
-        final game = _lockRecoverySellerGame(treasury: threshold - 1);
+        // Refs #2847 H8-extraction: the feedstock-extraction gate is
+        // treasury-independent, so a broke below-quota seller is still routed
+        // onto the wool feedstock tile (the input stages ahead of treasury
+        // recovery; the market bids and build order stay treasury-gated).
+        final game = _lockRecoverySellerGame(treasury: 0);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = AIWorldSnapshot.fromPlayerView(
           view,
@@ -151,9 +150,10 @@ void main() {
           economyPlan: kTestEconomyPlan,
         );
 
+        expect(outcome.domainGateData?.workPlannerRan, isTrue);
         final work = outcome.orders.workOrdersByPlayerId[_nationId];
         expect(work, isNotNull);
-        expect(work!.single.targetTileKey, _tileGrain);
+        expect(work!.single.targetTileKey, _tileWool);
       },
     );
   });
