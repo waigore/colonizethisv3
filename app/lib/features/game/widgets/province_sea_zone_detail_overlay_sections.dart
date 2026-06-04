@@ -127,6 +127,7 @@ Widget _buildTileImprovementLabel({
   required String? visibleResourceId,
 }) {
   final improvementLine = _improvementLabelForTileDetail(
+    l10n: l10n,
     impLevel: impLevel,
     visLevel: visLevel,
     rawResourceId: rawResourceId,
@@ -220,8 +221,10 @@ Widget _economicHoverRow({
   );
 }
 
-String _ownerName(Game game, String? ownerId) {
-  if (ownerId == null || ownerId.isEmpty) return 'Unclaimed';
+String _ownerName(AppLocalizations l10n, Game game, String? ownerId) {
+  if (ownerId == null || ownerId.isEmpty) {
+    return l10n.provinceOverlay_ownerUnclaimed;
+  }
   for (final p in game.players) {
     if (p.id == ownerId) return p.displayName;
   }
@@ -234,25 +237,25 @@ String _ownerName(Game game, String? ownerId) {
   return ownerId;
 }
 
-String _improvementNameForResource(String? resourceId) {
-  if (resourceId == null) return 'Improvement';
+String _improvementNameForResource(AppLocalizations l10n, String? resourceId) {
+  if (resourceId == null) return l10n.provinceOverlay_improvementGeneric;
   switch (resourceId) {
     case 'grain':
-      return 'Farm';
+      return l10n.provinceOverlay_improvementFarm;
     case 'meat':
     case 'horses':
-      return 'Ranch';
+      return l10n.provinceOverlay_improvementRanch;
     case 'wool':
-      return 'Pasture';
+      return l10n.provinceOverlay_improvementPasture;
     case 'timber':
-      return 'Lumber camp';
+      return l10n.provinceOverlay_improvementLumberCamp;
     case 'sugarCane':
     case 'tobacco':
     case 'cotton':
     case 'spices':
-      return 'Plantation';
+      return l10n.provinceOverlay_improvementPlantation;
     case 'furs':
-      return 'Fur post';
+      return l10n.provinceOverlay_improvementFurPost;
     case 'iron':
     case 'copper':
     case 'tin':
@@ -261,31 +264,53 @@ String _improvementNameForResource(String? resourceId) {
     case 'gold':
     case 'gems':
     case 'diamonds':
-      return 'Mine';
+      return l10n.provinceOverlay_improvementMine;
     default:
-      return 'Improvement';
+      return l10n.provinceOverlay_improvementGeneric;
   }
 }
 
+/// Test-only accessor for the resource → improvement-type name mapping
+/// (Refs #2865; SPEC § Province overlay content `Tile` improvement label).
+@visibleForTesting
+String provinceOverlayImprovementNameForResource(
+  AppLocalizations l10n,
+  String? resourceId,
+) =>
+    _improvementNameForResource(l10n, resourceId);
+
+/// Test-only accessor for the owner display-name resolution (Refs #2865;
+/// SPEC § Province overlay content `Political` Owner row — localized
+/// `provinceOverlay_ownerUnclaimed` fallback for unowned provinces/tiles).
+@visibleForTesting
+String provinceOverlayOwnerName(
+  AppLocalizations l10n,
+  Game game,
+  String? ownerId,
+) =>
+    _ownerName(l10n, game, ownerId);
+
 String _improvementBaseNameForPlayer({
+  required AppLocalizations l10n,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
   required String? visibleResourceId,
 }) {
   if (visibleResourceId != null) {
-    return _improvementNameForResource(visibleResourceId);
+    return _improvementNameForResource(l10n, visibleResourceId);
   }
   if (rawResourceId != null &&
       kProspectRequiredResourceIds.contains(rawResourceId)) {
-    return 'Mine';
+    return l10n.provinceOverlay_improvementMine;
   }
   if (rawResourceId != null) {
-    return _improvementNameForResource(rawResourceId);
+    return _improvementNameForResource(l10n, rawResourceId);
   }
-  return 'Improvement';
+  return l10n.provinceOverlay_improvementGeneric;
 }
 
 String _improvementLabelForTileDetail({
+  required AppLocalizations l10n,
   required int impLevel,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
@@ -295,6 +320,7 @@ String _improvementLabelForTileDetail({
     return '—';
   }
   final base = _improvementBaseNameForPlayer(
+    l10n: l10n,
     visLevel: visLevel,
     rawResourceId: rawResourceId,
     visibleResourceId: visibleResourceId,

@@ -1,6 +1,5 @@
 // Province and sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         fleetsInPortAtProvince,
@@ -469,6 +468,7 @@ _OverlayContent _provinceContent({
     final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
     if (imp > 0) {
       final impBase = _improvementBaseNameForPlayer(
+        l10n: l10n,
         visLevel: visLevel,
         rawResourceId: res,
         visibleResourceId: visibleRes,
@@ -521,7 +521,7 @@ _OverlayContent _provinceContent({
   final political = _buildPoliticalSection(
     l10n: l10n,
     name: province?.displayName ?? provinceId,
-    ownerName: _ownerName(game, province?.ownerId),
+    ownerName: _ownerName(l10n, game, province?.ownerId),
     regionLabel: provinceOverlayRegionLabel(l10n, regionId),
     isCapital: provinceOverlayIsCapital(game, provinceId),
   );

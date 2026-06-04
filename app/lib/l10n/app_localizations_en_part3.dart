@@ -332,6 +332,30 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Railroads are transport level 4.';
 
   @override
+  String get provinceOverlay_improvementGeneric => 'Improvement';
+
+  @override
+  String get provinceOverlay_improvementFarm => 'Farm';
+
+  @override
+  String get provinceOverlay_improvementRanch => 'Ranch';
+
+  @override
+  String get provinceOverlay_improvementPasture => 'Pasture';
+
+  @override
+  String get provinceOverlay_improvementLumberCamp => 'Lumber camp';
+
+  @override
+  String get provinceOverlay_improvementPlantation => 'Plantation';
+
+  @override
+  String get provinceOverlay_improvementFurPost => 'Fur post';
+
+  @override
+  String get provinceOverlay_improvementMine => 'Mine';
+
+  @override
   String provinceOverlay_tileCivilianUnits(int count) {
     return 'Civilian units (province): $count';
   }
@@ -350,6 +374,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String provinceOverlay_owner(String owner) {
     return 'Owner: $owner';
   }
+
+  @override
+  String get provinceOverlay_ownerUnclaimed => 'Unclaimed';
 
   @override
   String provinceOverlay_region(String region) {
