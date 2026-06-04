@@ -251,6 +251,30 @@ The boost is **gated** by the same self-clearing feedstock set: for every ordina
 
 ---
 
+## Old World feedstock unit reservation (Refs #2847 H8-extraction)
+
+The co-availability ordering and mineral-prospecting boosts above can only re-rank suggestions that **exist** for a unit, and the feedstock `build_improvement` / `prospect` boosts can only select a unit that is **available** (idle, in the Old World where the feedstock tile is). On seed 42 the affluent supplier owns an unimproved Old World `iron` / `timber` feedstock tile on every gate-active turn, but each idle Builder and Explorer scores higher on **New World** owned-resource colonial work (the New World bonuses in `_buildImprovementWorkScore` / `_eScore`) and migrates there, so no unit is ever positioned to prospect or improve the Old World feedstock tile (`gpFeedstockGateIdleBuilderPresentTurns == 0` for the suppliers).
+
+To close this, `selectFullAiCivilianWorkOrders` (`packages/colonizethis_logic/lib/src/ai/full_ai_civilian_work_selection.dart`) reserves, per active player, **at most one** idle Builder and **at most one** idle Explorer for Old World feedstock work when the player's `feedstockExtractionResourceIdsForPlayer` gate is active:
+
+- The reserved Builder is the lexicographically-smallest idle (`currentWork == null`) Builder, reserved **only** when the player owns an **unimproved Old World** tile hosting a gate feedstock resource.
+- The reserved Explorer is the lexicographically-smallest idle Explorer, reserved **only** when the player owns an **unprospected Old World mineral** tile hosting a gate feedstock resource.
+- For a reserved unit, every work order whose `targetTileKey` is in the New World region (`Unit.regionIdFromTileKey == kNewWorldRegionId`) is dropped from its candidate list before scoring. The unit therefore keeps only its Old World candidates (and is selected onto the feedstock tile by the existing boosts), or — when it has no Old World candidate this turn — stays idle in the Old World rather than migrating to the New World.
+
+The reservation is **gated** by the same self-clearing feedstock set: for every ordinary player it is empty and selection is unchanged; it self-clears once the feedstock tiles are improved/prospected or the gate clears. It only ever holds back **one** Builder and **one** Explorer, leaving every other idle unit free for New World work, so it does not regress New World colonial throughput beyond a single reserved unit of each type. It adds **no** new work order, bypasses **no** suggestion/visibility/order-engine gate, and introduces **no** `ai_victory_config.dart` constant. It is a pure, deterministic function of `(game, view.ownUnits, feedstock set)`.
+
+**Acceptance criteria (Old World feedstock unit reservation)**
+
+- Given a player whose feedstock-extraction gate is active for `{timber, iron}`, who owns an unimproved Old World `iron` tile, and whose lone idle Builder has both a New World `build_improvement` order and an Old World `iron` `build_improvement` order, when `selectFullAiCivilianWorkOrders` runs, then the Builder is assigned the Old World `iron` order.
+- Given the same gate and two idle Builders each with only a New World `build_improvement` order, when `selectFullAiCivilianWorkOrders` runs, then the lexicographically-smallest Builder is left idle (no work order; `no_suggestions` idle event) and the other Builder keeps its New World order.
+- Given the same gate, an owned unprospected Old World `iron` mineral tile, and a lone idle Explorer with both a New World `explore` order and an Old World `iron` `prospect` order, when `selectFullAiCivilianWorkOrders` runs, then the Explorer is assigned the Old World `iron` `prospect` order.
+- Given the same gate and two idle Explorers each with only a New World `explore` order, when `selectFullAiCivilianWorkOrders` runs, then the lexicographically-smallest Explorer is left idle and the other Explorer keeps its New World order.
+- Given the feedstock-extraction gate is **inactive** (peer seller at quota), a Builder with only a New World `build_improvement` order, when `selectFullAiCivilianWorkOrders` runs, then no reservation applies and the Builder is assigned the New World order (negative control).
+- Given the gate active but the supplier's Old World feedstock tiles are all already improved, a Builder with only a New World `build_improvement` order, when `selectFullAiCivilianWorkOrders` runs, then no reservation applies and the Builder is assigned the New World order (negative control).
+- Given identical inputs with the gate active, when `selectFullAiCivilianWorkOrders` runs twice, then both runs produce the same work-order list (determinism).
+
+---
+
 ## Feedstock bootstrap `castIron` waiver for level-0 `build_improvement` (Refs #2847 H8-extraction)
 
 When the feedstock-extraction gate is active and a Builder targets an **unimproved** feedstock resource tile, the order engine and work application use the **effective** material cost from `WorkOrderCostCalculator` (player-scoped), which may omit **cast iron** for the level-0 improvement while the stockpile holds enough **lumber** but not enough **cast iron** (see [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Improvement Build Costs (Builder) — H8 feedstock bootstrap). This makes feedstock-priority suggestions **affordable** on seed 42 where `gpFeedstockGateImprovementCostAffordableTurns` stayed zero solely because of the circular cast-iron dependency; it does not bypass visibility, probe budget, tech cap, or non-material validation gates.
