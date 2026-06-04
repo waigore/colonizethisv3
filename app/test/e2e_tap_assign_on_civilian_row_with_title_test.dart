@@ -6,10 +6,13 @@
 // The helper is non-trivial: when multiple civilian rows share the same unit
 // title (`Builder`, `Merchant`, etc.), the panel may already have one of
 // them assigned to a work order (no `Assign` button) while another idle
-// row is still actionable. The helper must skip rows whose `ListTile`
-// subtree no longer contains a tappable `Assign` and pick the first row
-// that does — otherwise scenarios that exercise multi-unit panels would
-// fail mid-test when the first match is already busy.
+// row is still actionable. The helper must skip rows whose
+// `CivilianUnitRowCard` subtree no longer contains a tappable `Assign` and
+// pick the first row that does — otherwise scenarios that exercise
+// multi-unit panels would fail mid-test when the first match is already
+// busy. The civilian panel migrated its rows off Material `ListTile` to the
+// bespoke `CivilianUnitRowCard` (Refs #2914 S8), so this synthetic host
+// renders the same card the production helper now scopes to.
 //
 // The sibling helper `e2eTapFirstAssignInCivilianPanel` shares the
 // downstream "wait until work menu" contract; pinning both helpers in one
@@ -36,6 +39,11 @@
 library;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/config/themes.dart' show AppThemes;
+import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart'
+    show CivilianUnitRowCard;
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart'
+    show UnitsEntityAction;
 import 'package:colonizethis_models/colonizethis_models.dart'
     show kUnitTypeBuilder, kUnitTypeMerchant;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -69,6 +77,10 @@ class _CivilianPanelHostState extends State<_CivilianPanelHost> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      // CtNinePatchButton (the Assign control rendered inside
+      // CivilianUnitRowCard) resolves its palette from the editorial-monocle
+      // theme; the production civilian panel runs under the same theme.
+      theme: AppThemes.editorialMonocle,
       home: Scaffold(
         body: Container(
           key: kCtE2ECivilianPanelRootKey,
@@ -77,19 +89,31 @@ class _CivilianPanelHostState extends State<_CivilianPanelHost> {
               Expanded(
                 child: ListView(
                   children: [
+                    // The civilian panel migrated its unit rows off Material
+                    // `ListTile` to the bespoke `CivilianUnitRowCard`
+                    // (Refs #2914 S8). The title-scoped Assign helper now
+                    // scopes its per-row lookup to that card, so the synthetic
+                    // host must host its rows in the same widget for the pin to
+                    // exercise the real lookup path (#2336 H9).
                     for (var i = 0; i < widget.rows.length; i++)
-                      ListTile(
-                        title: Text(widget.rows[i].title),
-                        trailing: widget.rows[i].hasAssign
-                            ? TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _tappedRowIndex = i;
-                                  });
-                                },
-                                child: const Text('Assign'),
-                              )
-                            : const Text('Busy'),
+                      CivilianUnitRowCard(
+                        details: Text(widget.rows[i].title),
+                        selected: false,
+                        onTap: () {},
+                        actions: widget.rows[i].hasAssign
+                            ? [
+                                UnitsEntityAction(
+                                  tooltip: 'Assign',
+                                  icon: Icons.add,
+                                  label: 'Assign',
+                                  onPressed: () {
+                                    setState(() {
+                                      _tappedRowIndex = i;
+                                    });
+                                  },
+                                ),
+                              ]
+                            : const <UnitsEntityAction>[],
                       ),
                   ],
                 ),
