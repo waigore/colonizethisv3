@@ -70,19 +70,12 @@ List<TradeOrder> runTreasuryPlanner({
 }) {
   final ResourceRules rules = resourceRules ?? ResourceRules.defaultRules;
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
-  final tradeCargoCapacity = tileMapByRegion != null &&
-          tileMapByRegion.isNotEmpty &&
-          topology != null
-      ? tradeCargoCapacityForGreatPower(
-          game: game,
-          playerId: playerId,
-          tileMapByRegion: tileMapByRegion,
-          topology: topology,
-        )
-      : () {
-          final homeFleetHolds = cargoHoldsForHomeFleet(game, playerId);
-          return homeFleetHolds < 0 ? 0 : homeFleetHolds;
-        }();
+  final tradeCargoCapacity = _resolveTradeCargoCapacity(
+    game: game,
+    playerId: playerId,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
 
   final projected = _projectStockpileAfterProduction(
     stockpile: stockpile,
@@ -255,56 +248,20 @@ List<TradeOrder> runTreasuryPlanner({
     need.clear();
   }
 
-  // Refs #2847 § H8: a below-quota zero-NW lock-recovery seller accumulates
-  // treasury by selling food, but its bid `need` is cleared every turn (it is
-  // a sell-only Path-F seller), so it can never buy the cheapest regiment's
-  // build-input commodity. `peasant_levies` (the universal cheapest regiment,
-  // cost `cheapestRegimentBuildTreasuryCost()`) requires its `buildInputs`
-  // commodities in the stockpile; with zero of them on hand
-  // `suggestBuildOrders` returns no regiment candidate even when treasury is
-  // affordable and a peasant is free, so the seller that has *already*
-  // recovered treasury to/above the regiment threshold stays trapped at zero
-  // regiments (seed-42 gp5/gp6 hold treasury >= threshold yet 0 fabric for
-  // tens of turns). Inject a single build-input bid so the recovered treasury
-  // converts into the army the lock-recovery sell-down existed to fund. The
-  // carve-out fires only while the GP holds zero regiments and is missing a
-  // build input, and clears automatically once it owns a regiment or the
-  // input lands. SPEC/ai/treasury-planner.md
+  // Refs #2847 § H8: lock-recovery seller regiment build-input bootstrap bid +
+  // feedstock reservation. SPEC/ai/treasury-planner.md
   // § Lock-recovery seller regiment build-input bootstrap.
-  if (isLockRecoverySeller &&
-      rawTreasury >= threshold &&
-      regimentCountForPlayer(game, playerId) == 0) {
-    final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
-      feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(projected),
-      projected: projected,
-      carryForwardBids: carryForwardBids,
-      need: need,
-    );
-    if (!feedstockStillMissing) {
-      _addRegimentBuildInputDirectNeed(
-        projected: projected,
-        carryForwardBids: carryForwardBids,
-        need: need,
-      );
-    }
-    // Refs #2847 § H8-supply: the bootstrap bid above cannot fill when no
-    // world-market seller offers the build input (seed-42 `fabric` has zero GP
-    // / minor / tribe supply), so the recovered seller must *produce* the input
-    // domestically. The economy planner already boosts feasible recipes that
-    // output a missing build input (economy-planner.md § Regiment build-input
-    // production priority), but those recipes only become feasible once their
-    // feedstock (e.g. `wool` / `cotton` for `fabric`) reaches the per-run input
-    // requirement in the stockpile. A lock-recovery seller otherwise sells that
-    // feedstock as surplus every turn, so it never accumulates to a feasible
-    // run. Withhold the feedstock from the offer set while the rebuild carve-out
-    // is active so it accumulates; the reservation self-clears once the build
-    // input lands or the GP owns a regiment.
-    // SPEC/ai/treasury-planner.md
-    // § Lock-recovery seller build-input feedstock reservation.
-    for (final feedstockId in _regimentBuildInputFeedstockIds(projected)) {
-      available.remove(feedstockId);
-    }
-  }
+  _applyLockRecoverySellerRegimentRebuildBids(
+    isLockRecoverySeller: isLockRecoverySeller,
+    rawTreasury: rawTreasury,
+    threshold: threshold,
+    game: game,
+    playerId: playerId,
+    projected: projected,
+    carryForwardBids: carryForwardBids,
+    need: need,
+    available: available,
+  );
 
   if (available.isEmpty && need.isEmpty) {
     return const <TradeOrder>[];
@@ -353,6 +310,90 @@ List<TradeOrder> runTreasuryPlanner({
   );
 
   return [...offers, ...bids];
+}
+
+/// Resolves this GP's per-turn trade cargo capacity. Uses the tile-map-aware
+/// [tradeCargoCapacityForGreatPower] when a tile map and topology are present;
+/// otherwise falls back to the home-fleet cargo holds (floored at 0).
+int _resolveTradeCargoCapacity({
+  required Game game,
+  required String playerId,
+  required Map<String, TileMapResult>? tileMapByRegion,
+  required MapTopology? topology,
+}) {
+  if (tileMapByRegion != null && tileMapByRegion.isNotEmpty && topology != null) {
+    return tradeCargoCapacityForGreatPower(
+      game: game,
+      playerId: playerId,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+    );
+  }
+  final homeFleetHolds = cargoHoldsForHomeFleet(game, playerId);
+  return homeFleetHolds < 0 ? 0 : homeFleetHolds;
+}
+
+/// Refs #2847 § H8: a below-quota zero-NW lock-recovery seller accumulates
+/// treasury by selling food, but its bid `need` is cleared every turn (it is
+/// a sell-only Path-F seller), so it can never buy the cheapest regiment's
+/// build-input commodity. `peasant_levies` (the universal cheapest regiment,
+/// cost `cheapestRegimentBuildTreasuryCost()`) requires its `buildInputs`
+/// commodities in the stockpile; with zero of them on hand
+/// `suggestBuildOrders` returns no regiment candidate even when treasury is
+/// affordable and a peasant is free, so the seller that has *already* recovered
+/// treasury to/above the regiment threshold stays trapped at zero regiments
+/// (seed-42 gp5/gp6 hold treasury >= threshold yet 0 fabric for tens of turns).
+/// Inject a single build-input bid so the recovered treasury converts into the
+/// army the lock-recovery sell-down existed to fund. The carve-out fires only
+/// while the GP holds zero regiments and is missing a build input, and clears
+/// automatically once it owns a regiment or the input lands.
+///
+/// Refs #2847 § H8-supply: the bootstrap bid cannot fill when no world-market
+/// seller offers the build input (seed-42 `fabric` has zero GP / minor / tribe
+/// supply), so the recovered seller must *produce* the input domestically. The
+/// economy planner already boosts feasible recipes that output a missing build
+/// input (economy-planner.md § Regiment build-input production priority), but
+/// those recipes only become feasible once their feedstock (e.g. `wool` /
+/// `cotton` for `fabric`) reaches the per-run input requirement in the
+/// stockpile. A lock-recovery seller otherwise sells that feedstock as surplus
+/// every turn, so it never accumulates to a feasible run. Withhold the feedstock
+/// from the offer set while the rebuild carve-out is active so it accumulates;
+/// the reservation self-clears once the build input lands or the GP owns a
+/// regiment. SPEC/ai/treasury-planner.md
+/// § Lock-recovery seller regiment build-input bootstrap +
+/// § Lock-recovery seller build-input feedstock reservation.
+void _applyLockRecoverySellerRegimentRebuildBids({
+  required bool isLockRecoverySeller,
+  required int rawTreasury,
+  required int threshold,
+  required Game game,
+  required String playerId,
+  required Stockpile projected,
+  required Map<CommodityId, int> carryForwardBids,
+  required Map<CommodityId, int> need,
+  required Map<CommodityId, int> available,
+}) {
+  if (!isLockRecoverySeller ||
+      rawTreasury < threshold ||
+      regimentCountForPlayer(game, playerId) != 0) {
+    return;
+  }
+  final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
+    feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(projected),
+    projected: projected,
+    carryForwardBids: carryForwardBids,
+    need: need,
+  );
+  if (!feedstockStillMissing) {
+    _addRegimentBuildInputDirectNeed(
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      need: need,
+    );
+  }
+  for (final feedstockId in _regimentBuildInputFeedstockIds(projected)) {
+    available.remove(feedstockId);
+  }
 }
 
 Stockpile _projectStockpileAfterProduction({
