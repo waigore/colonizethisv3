@@ -483,15 +483,17 @@ suppressed while any such feedstock deficit remains so the single
 existing fabric bootstrap bid and production boost resume; the feedstock
 reservation prevents selling the acquired wool / cotton before conversion.
 
-**Affluent-GP feedstock / build-input offers.** When **any** below-quota
+**Supplier feedstock / build-input offers.** When **any** below-quota
 zero-NW lock-recovery seller in the game meets the H8 bootstrap gate
 (`player.treasury >= cheapestRegimentBuildTreasuryCost()`,
 `regimentCountForPlayer == 0`, missing a `peasant_levies` build input), every
-**other** Great Power that is **not** a lock-recovery seller and holds
-`player.treasury >= cheapestRegimentBuildTreasuryCost()` releases surplus
+**other** Great Power that is **not** a lock-recovery seller releases surplus
 `wool`, `cotton`, and `fabric` aggressively into its offer set (safety buffer
 `0` for those commodities — same release pattern as § Lock-recovery seller
-food-surplus release) so the seller's feedstock / fabric bids can match. The
+food-surplus release) so the seller's feedstock / fabric bids can match,
+**regardless of the supplier's own treasury** (see § Lock-recovery seller
+feedstock-improvement input bootstrap → Supplier improvement-input offers for
+the supply-side rationale: releasing a surplus is selling, not speculating). The
 gate clears automatically once no lock-recovery seller still needs the
 bootstrap path.
 
@@ -562,13 +564,24 @@ unit at phase 13, and the work-order validator still gates the eventual
 `build_improvement`. Once the inputs land the seller resumes the feedstock /
 fabric bootstrap bids.
 
-**Affluent-GP improvement-input offers.** `lumber` and `castIron` join `wool`,
-`cotton`, and `fabric` in the affluent-supplier release set
-(`_regimentBuildInputSupplyCommodityIds`), so while any lock-recovery seller
-needs the bootstrap path, every other Great Power with
-`player.treasury >= cheapestRegimentBuildTreasuryCost()` releases its `lumber` /
-`castIron` surplus aggressively (safety buffer `0`, production inputs still
-reserved) so the seller's improvement-input bid can match.
+**Supplier improvement-input offers (supply-side, treasury-independent).**
+`lumber` and `castIron` join `wool`, `cotton`, and `fabric` in the supplier
+release set (`_regimentBuildInputSupplyCommodityIds`), so while any lock-recovery
+seller needs the bootstrap path, every other Great Power that is **not** a
+lock-recovery seller releases its `lumber` / `castIron` (and `wool` / `cotton` /
+`fabric`) surplus aggressively (safety buffer `0`, production inputs still
+reserved) so the seller's improvement-input bid can match — **regardless of the
+supplier's own treasury**. Releasing a *surplus* (stock held above the supplier's
+own consumption + production-input reserve) is selling, not speculating, so the
+supplier role is **not** gated on `player.treasury >= cheapestRegimentBuildTreasuryCost()`.
+This is the decisive supply-side correction: on seed 42 the only GPs holding
+`lumber` / `castIron` / `fabric` surplus spend their treasury on Old World
+conquest and sit far below the regiment-affordable band, so the earlier
+treasury-gated supplier role left every lock-recovery seller bid permanently
+unfilled (`gpRegimentInputDealsAsBuyer == 0`,
+`gpFeedstockGateImprovementCostAffordableTurns == 0`). Dropping the supplier
+treasury gate keeps the supplier's own consumption + production inputs reserved
+(only the extra safety buffer drops to `0`), so it cannot starve the supplier.
 
 #### Acceptance criteria (H8-extraction)
 
@@ -597,6 +610,12 @@ reserved) so the seller's improvement-input bid can match.
   and `player.treasury >= cheapestRegimentBuildTreasuryCost()`, when
   `runTreasuryPlanner` runs for that affluent GP, then it emits a
   `TradeOrderType.offer` for `lumber`.
+- Given the same game state and a non-seller Great Power that holds a `lumber`
+  surplus above its consumption-only reserve (`kShortageThreshold ~/ 2`) but has
+  `player.treasury < cheapestRegimentBuildTreasuryCost()`, when
+  `runTreasuryPlanner` runs for that below-affordable GP, then it still emits a
+  `TradeOrderType.offer` for `lumber` (the supplier role is treasury-independent
+  because releasing a surplus is selling, not speculating).
 - Given identical inputs, when `runTreasuryPlanner` runs twice on the
   improvement-input bootstrap path, then both runs return identical
   `List<TradeOrder>` outputs (determinism).

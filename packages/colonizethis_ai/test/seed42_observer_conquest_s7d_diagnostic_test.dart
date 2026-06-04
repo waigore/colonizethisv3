@@ -547,6 +547,48 @@ import 'support/faithful_full_ai_test_handoff.dart';
 ///      against the locked peer (unchanged; see #3224).
 ///   3. **H2 (still open): residual peer-war re-declare oscillation.**
 ///
+/// ## S7-D refresh (captured 2026-06-04 on branch
+///     `fix/issue-2847-h8-extraction-improvement-input`, after the lock-recovery
+///     improvement-input bid carve-out (#3238) **and** the supply-side
+///     treasury-gate removal + improvement-input localization added in this
+///     slice)
+///
+/// The improvement-input bid carve-out alone (#3238) did **not** move the
+/// binding metric: `gpFeedstockGateImprovementCostAffordableTurns` stayed
+/// **0 / 0 / 0** for gp3 / gp5 / gp6 and `gpRegimentInputDealsAsBuyer` stayed
+/// **0**, with OW gain unchanged (gp1 = +6, gp2 = +6 PASS; gp3 = +2, gp4 = +1,
+/// gp5 = +1, gp6 = +2 FAIL). The new improvement-input counters
+/// (`improvementInputCommodityIds = [castIron, lumber]`) localize the remaining
+/// break **decisively**:
+///
+///   * **Supply now exists.** Dropping the `rawTreasury >= threshold` gate on the
+///     supplier role (so a GP releasing a *surplus* sells regardless of its own
+///     treasury) lifts `gpImprovementInputOffersEmitted` for gp2 from 0 to **40**
+///     (`gpImprovementInputHeldAtTurn99` gp2 = **48**). Before this slice no GP
+///     released lumber / cast iron because the only holders (gp1 / gp2) sit far
+///     below the regiment-affordable band. The supply-side fix works as intended.
+///   * **Demand exists.** The locked sellers emit improvement-input bids:
+///     `gpImprovementInputBidsEmitted` = **13 / 0 / 22 / 22** for gp3 / gp4 / gp5 /
+///     gp6 (gp4's gate is inactive, so 0 is expected).
+///   * **Yet zero deals fill.** `gpImprovementInputDealsAsBuyer` = **0** for every
+///     GP across all 100 turns. A standing lumber / cast-iron bid (13-22 turns)
+///     and a standing offer (40 turns, 48 surplus held) **coexist** but never
+///     cross.
+///
+/// Conclusion: the break has moved one decisive step downstream — from "no
+/// supply" (the #3238 / supply-side target) to **world-market order matching**.
+/// Both sides of the lumber / cast-iron trade are present every turn yet the
+/// matcher never pairs them. This **refutes** the supply-availability framing and
+/// **also** the "seller never bids" framing (bids are emitted). The next slice
+/// must look at why the bid and offer do not cross — price crossing
+/// (`_marketPriceBelowProductionCost` / offer vs bid price), bid priority tier
+/// vs the urgent grain-liquidity bid, the per-buyer treasury clamp (#3115), or
+/// the `bidTypeCap` slot allocation — **not** supply, bid emission, the validator
+/// material-cost gate, Builder availability, or recipe scoring. Verify by
+/// re-running this diagnostic and confirming `gpImprovementInputDealsAsBuyer`
+/// then (downstream) `gpFeedstockGateImprovementCostAffordableTurns` rise for
+/// gp3 / gp5 / gp6.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
@@ -852,6 +894,38 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
       final regimentInputDealsAsBuyer = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+
+      // Refs #2847 H8-extraction supply-side localization. The level-0
+      // `build_improvement` material (lumber + cast iron) is the prerequisite a
+      // locked seller's routed Builder needs but cannot afford
+      // (`gpFeedstockGateImprovementCostAffordableTurns == 0`). The
+      // improvement-input bid carve-out and the treasury-independent supplier
+      // release set both target these commodities, yet the seller never ends up
+      // holding them. These counters split that supply gap into its proximate
+      // links so a tuning implementer can tell apart, in order: (a) no GP / tribe
+      // *offers* the inputs at all (`gpImprovementInputOffersEmitted` flat zero =>
+      // nobody holds a releasable surplus); (b) offers exist but the seller's bid
+      // never *fills* (`gpImprovementInputDealsAsBuyer` flat zero alongside
+      // non-zero offers => price / priority / bid-cap matching gap); or (c) deals
+      // fill but the input is consumed before the gate observes it
+      // (`gpImprovementInputHeldAtTurn99` zero alongside non-zero buyer deals).
+      // Read-only; the (freely tunable) counts can move as later supply slices
+      // land.
+      final improvementInputCommodityIds = workOrderCostBuildImprovement(
+        0,
+      ).keys.toSet();
+      final improvementInputOffersEmitted = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final improvementInputBidsEmitted = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final improvementInputDealsAsBuyer = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final improvementInputHeldAtTurn99 = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
 
@@ -1208,11 +1282,19 @@ void main() {
                 tradeUrgentOfferCount[gpId] =
                     (tradeUrgentOfferCount[gpId] ?? 0) + 1;
               }
+              if (improvementInputCommodityIds.contains(order.commodityId)) {
+                improvementInputOffersEmitted[gpId] =
+                    (improvementInputOffersEmitted[gpId] ?? 0) + 1;
+              }
             } else if (order.type == TradeOrderType.bid) {
               tradeBidCount[gpId] = (tradeBidCount[gpId] ?? 0) + 1;
               if (regimentInputCommodityIds.contains(order.commodityId)) {
                 regimentInputBidsEmitted[gpId] =
                     (regimentInputBidsEmitted[gpId] ?? 0) + 1;
+              }
+              if (improvementInputCommodityIds.contains(order.commodityId)) {
+                improvementInputBidsEmitted[gpId] =
+                    (improvementInputBidsEmitted[gpId] ?? 0) + 1;
               }
             }
           }
@@ -1256,6 +1338,10 @@ void main() {
                 regimentInputDealsAsBuyer[buyer] =
                     (regimentInputDealsAsBuyer[buyer] ?? 0) + 1;
               }
+              if (improvementInputCommodityIds.contains(deal.commodityId)) {
+                improvementInputDealsAsBuyer[buyer] =
+                    (improvementInputDealsAsBuyer[buyer] ?? 0) + 1;
+              }
             }
           }
         }
@@ -1282,6 +1368,14 @@ void main() {
           treasuryPrevTurn[gpId] = after;
           if (t == 99) {
             treasuryAtTurn99[gpId] = after;
+            final player = game.playerById(gpId);
+            if (player != null) {
+              improvementInputHeldAtTurn99[gpId] = improvementInputCommodityIds
+                  .fold<int>(
+                    0,
+                    (sum, id) => sum + player.stockpile.quantityOf(id),
+                  );
+            }
           }
         }
       }
@@ -1331,6 +1425,12 @@ void main() {
         'regimentInputCommodityIds': regimentInputCommodityIds.toList()..sort(),
         'gpRegimentInputBidsEmitted': regimentInputBidsEmitted,
         'gpRegimentInputDealsAsBuyer': regimentInputDealsAsBuyer,
+        'improvementInputCommodityIds': improvementInputCommodityIds.toList()
+          ..sort(),
+        'gpImprovementInputOffersEmitted': improvementInputOffersEmitted,
+        'gpImprovementInputBidsEmitted': improvementInputBidsEmitted,
+        'gpImprovementInputDealsAsBuyer': improvementInputDealsAsBuyer,
+        'gpImprovementInputHeldAtTurn99': improvementInputHeldAtTurn99,
         'fabricFeedstockCommodityIds': fabricFeedstockIds.toList()..sort(),
         'gpFeedstockExtractionGateActiveTurns':
             feedstockExtractionGateActiveTurns,
