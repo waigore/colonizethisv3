@@ -413,8 +413,18 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
     }
   }
+  // Refs #2847 H8-extraction: force the Full-AI civilian work pass on for a
+  // locked seller routing its own fabric feedstock, AND for an affluent
+  // supplier routing its `timber` / `iron` so it can over-produce the
+  // `castIron` improvement input a peer locked seller needs (supplier feedstock
+  // extraction). Both gates only read whether their feedstock set is non-empty;
+  // no duplicate regiment-count logic and no new config constant.
   final feedstockExtractionActive =
       regimentBuildInputFeedstockExtractionResourceIds(
+        ctx.game,
+        ctx.nationId,
+      ).isNotEmpty ||
+      supplierImprovementInputFeedstockExtractionResourceIds(
         ctx.game,
         ctx.nationId,
       ).isNotEmpty;

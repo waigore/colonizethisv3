@@ -142,6 +142,29 @@ The feedstock-extraction score boost in `selectFullAiCivilianWorkOrders` has no 
 
 ---
 
+## Supplier improvement-input feedstock extraction (Refs #2847 H8-extraction supplier feedstock)
+
+Companion to § Supplier improvement-input over-production for release. The over-production boost only converts feedstock the supplier **already holds**, but on seed 42 no affluent supplier holds or extracts the `timber` / `iron` the `castIron` recipe consumes (the supplier extracts those resources only for its own `castIron` production, leaving zero true surplus). The over-production loop is therefore **infeasible regardless of boost magnitude** until a supplier gains spare `timber` / `iron`.
+
+This slice routes an affluent supplier's idle Builder onto its own unimproved `timber` / `iron` resource tile so the over-production has feedstock to run. `supplierImprovementInputFeedstockExtractionResourceIds(game, playerId)` (`packages/colonizethis_logic/lib/src/ai/full_ai_civilian_work_selection.dart`) returns the production-recipe feedstock commodities (`timber` / `iron` for `castIron`) of every recipe whose output is a producible improvement input a **peer** below-quota zero-NW lock-recovery seller still needs, only when ALL hold:
+
+- The player is **not** itself a below-quota zero-NW lock-recovery seller (`oldWorldProvinceCountOwnedBy` outside `[2, kObserverConquestMinOwProvincesPerGp)` or owns ≥1 New World province) — its own `regimentBuildInputFeedstockExtractionResourceIds` gate routes its Builder. This scopes the supplier role to healthy / above-quota Great Powers so the +6 Old World conquest baseline GPs are never starved.
+- Some **other** player **is** a below-quota zero-NW lock-recovery seller whose level-0 improvement-input gate (`regimentBuildInputFeedstockImprovementInputCost`) is active and that still lacks a **producible** improvement input (some `ProductionRecipesCatalog` recipe outputs it, and the seller's stockpile is short of it — e.g. `castIron`, which the world market structurally cannot supply on seed 42; a market-suppliable input the seller already holds such as `lumber` is excluded).
+- The player owns at least one **unimproved** (`improvementLevel < 1`) tile hosting one of those feedstock resources.
+
+The supplier feedstock ids are **unioned** with the seller-side `regimentBuildInputFeedstockExtractionResourceIds` set before the build-improvement score boost (`kRegimentBuildInputFeedstockExtractionScoreBoost`, `600`) is applied in `selectFullAiCivilianWorkOrders`, so the supplier's Builder prefers the `timber` / `iron` tile ahead of other extractable improvements. A player matches at most one gate (the supplier gate excludes locked sellers), so the union never double-counts. The orchestrator force-on for the Full-AI civilian work pass (`domain_planner_orchestrator.dart`) also fires when this supplier gate is non-empty. The boost adds no new work order, bypasses no suggestion or affordability gate (the level-0 `build_improvement` cost still applies downstream), and introduces no `ai_victory_config.dart` constant. The gate is **self-clearing**: once no locked seller needs the improvement input, or the supplier owns no unimproved feedstock tile, the set is empty and selection reverts to its ordinary deterministic ordering. The set is a pure function of `(game, playerId)` and the static catalogs; identical inputs yield identical selections.
+
+### Acceptance criteria (H8-extraction supplier feedstock)
+
+- Given a Great Power above the conquest quota (`oldWorldProvinceCountOwnedBy >= kObserverConquestMinOwProvincesPerGp`) that owns an unimproved `timber` resource tile, and a peer below-quota zero-NW lock-recovery seller whose improvement-input gate is active and that holds zero `castIron`, when `supplierImprovementInputFeedstockExtractionResourceIds(game, supplierId)` is evaluated, then it returns the `castIron` recipe feedstock ids `{timber, iron}`.
+- Given the same supplier and peer demand, when a Builder has both an unimproved `timber` feedstock tile and an unimproved non-feedstock (`grain`) tile as `build_improvement` suggestions and `selectFullAiCivilianWorkOrders` runs for the supplier, then it selects the `timber` tile.
+- Given a player that is **itself** a below-quota zero-NW lock-recovery seller (in `[2, kObserverConquestMinOwProvincesPerGp)`, zero New World provinces), when `supplierImprovementInputFeedstockExtractionResourceIds(game, playerId)` is evaluated, then it returns the empty set (negative control — its own seller-side gate routes its Builder).
+- Given a supplier with no peer below-quota zero-NW lock-recovery seller needing a producible improvement input (the would-be seller is at quota or already holds `castIron`), when `supplierImprovementInputFeedstockExtractionResourceIds(game, supplierId)` is evaluated, then it returns the empty set (negative control — the supplier extraction only fires while a peer needs the input).
+- Given a supplier with active peer demand that owns **no** unimproved `timber` / `iron` tile, when `supplierImprovementInputFeedstockExtractionResourceIds(game, supplierId)` is evaluated, then it returns the empty set (the carve-out routes existing tiles only; it acquires no tile).
+- Given identical inputs, when `supplierImprovementInputFeedstockExtractionResourceIds` and `selectFullAiCivilianWorkOrders` run twice, then both runs return identical results (determinism).
+
+---
+
 ## Integration
 
 - **Caller:** Strategic AI (e.g. `generateStrategicOrders`) calls the economy planner for each AI GP first, then passes the resulting **economy plan** (including `cargoPreference`) into the domain planners so the build step can weight ship vs land builds. Production assignments are collected per player and passed to the turn resolver as **per-player default production assignments** (resolver must accept `Map<String, List<AssignedRecipe>>` or equivalent for multi-player).

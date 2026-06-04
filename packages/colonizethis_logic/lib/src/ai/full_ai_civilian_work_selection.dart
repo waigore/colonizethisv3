@@ -518,6 +518,107 @@ Map<String, int> regimentBuildInputFeedstockImprovementInputCost(
   return Map<String, int>.unmodifiable(workOrderCostBuildImprovement(0));
 }
 
+/// Resource ids an affluent **supplier** should extract so it can over-produce
+/// the domestically-produced level-0 `build_improvement` input (e.g.
+/// `castIron`) a *peer* below-quota zero-NW lock-recovery seller needs but can
+/// neither mine nor buy (Refs #2847 § H8-extraction supplier feedstock).
+///
+/// Closes the upstream link the post-#3244 S7-D diagnostic pinned: the supplier
+/// `castIron` over-production (`economy_planner.dart` § Supplier improvement-
+/// input over-production) + surplus release (`treasury_planner.dart`) loop is
+/// **infeasible** while no affluent supplier holds or extracts the `timber` /
+/// `iron` the `castIron` recipe consumes. This routes the supplier's idle
+/// Builder onto its own unimproved `timber` / `iron` tile via the shared
+/// feedstock score boost in [_buildImprovementWorkScore], giving the over-
+/// production feedstock to run.
+///
+/// Returns the production-recipe feedstock commodities (e.g. `timber`, `iron`)
+/// of every recipe whose output is a producible improvement input a peer locked
+/// seller still needs, only when ALL hold:
+/// - [playerId] is NOT itself a below-quota zero-NW lock-recovery seller (its
+///   own [regimentBuildInputFeedstockExtractionResourceIds] gate already routes
+///   its Builder); this scopes the supplier role to healthy / above-quota Great
+///   Powers so the +6 Old World conquest baseline GPs are never starved,
+/// - some OTHER player IS a below-quota zero-NW lock-recovery seller whose
+///   level-0 improvement-input gate is active and is missing a producible
+///   improvement input (peer demand exists), and
+/// - [playerId] owns an unimproved tile hosting one of those feedstock
+///   resources to extract.
+/// Self-clears once no locked seller needs the improvement input or the
+/// supplier owns no unimproved feedstock tile. Pure and deterministic over
+/// `(game, playerId)` and the static `ProductionRecipesCatalog` / work-order
+/// cost table.
+Set<String> supplierImprovementInputFeedstockExtractionResourceIds(
+  Game game,
+  String playerId,
+) {
+  // The supplier role excludes a GP that is itself a locked seller — its own
+  // feedstock-extraction gate already routes its Builder. Restricting the role
+  // this way keeps it on healthy / above-quota GPs only.
+  if (_isBelowQuotaZeroNwSeller(game, playerId)) return const <String>{};
+  final neededInputs = _peerLockRecoverySellerNeededProducibleImprovementInputs(
+    game,
+    excludePlayerId: playerId,
+  );
+  if (neededInputs.isEmpty) return const <String>{};
+  final feedstock = <String>{};
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (neededInputs.contains(recipe.outputCommodityId)) {
+      feedstock.addAll(recipe.inputQuantities.keys);
+    }
+  }
+  if (feedstock.isEmpty) return const <String>{};
+  if (!_ownsUnimprovedFeedstockResourceTile(game, playerId, feedstock)) {
+    return const <String>{};
+  }
+  return feedstock;
+}
+
+/// True iff [playerId] holds Old World land below the observer conquest quota
+/// (`oldWorldProvinceCountOwnedBy` in `[2, kObserverConquestMinOwProvincesPerGp)`)
+/// and owns zero New World provinces — the Path F lock-recovery seller band the
+/// supplier role must exclude. Logic-local mirror of the AI-side predicate so
+/// the supplier gate stays computable inside the logic package.
+bool _isBelowQuotaZeroNwSeller(Game game, String playerId) {
+  final ow = oldWorldProvinceCountOwnedBy(game, playerId);
+  if (ow < 2) return false;
+  if (!isBelowObserverConquestQuota(ow)) return false;
+  return _newWorldProvinceCountOwnedBy(game, playerId) == 0;
+}
+
+/// Producible level-0 `build_improvement` input commodities still missing from
+/// at least one *other* below-quota zero-NW lock-recovery seller blocked at the
+/// improvement-cost gate (`regimentBuildInputFeedstockImprovementInputCost`
+/// non-empty). "Producible" means some `ProductionRecipesCatalog` recipe outputs
+/// the commodity, so an affluent supplier can over-produce it for release; a
+/// market-suppliable input the seller already holds (e.g. `lumber`, which the
+/// seller buys directly) is naturally excluded by the missing-stock check. Pure
+/// and deterministic over `(game)` and the static catalogs / cost table.
+Set<String> _peerLockRecoverySellerNeededProducibleImprovementInputs(
+  Game game, {
+  required String excludePlayerId,
+}) {
+  final result = <String>{};
+  for (final player in game.players) {
+    if (player.id == excludePlayerId) continue;
+    final cost = regimentBuildInputFeedstockImprovementInputCost(
+      game,
+      player.id,
+    );
+    if (cost.isEmpty) continue;
+    for (final entry in cost.entries) {
+      final producible = ProductionRecipesCatalog.all.any(
+        (r) => r.outputCommodityId == entry.key,
+      );
+      if (!producible) continue;
+      if (player.stockpile.quantityOf(entry.key) < entry.value) {
+        result.add(entry.key);
+      }
+    }
+  }
+  return result;
+}
+
 WorkOrder? _bestBuildImprovementRow(
   List<WorkOrder> candidates,
   Game game, {
@@ -837,8 +938,20 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   final workOrders = <WorkOrder>[];
   final idleEvents = <FullAiCivilianWorkIdle>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
-  final feedstockExtractionResourceIds =
-      regimentBuildInputFeedstockExtractionResourceIds(game, view.playerId);
+  // The seller-side gate routes a locked seller's own Builder onto its fabric
+  // feedstock; the supplier-side gate (Refs #2847 H8-extraction supplier
+  // feedstock) routes an affluent supplier's idle Builder onto the `timber` /
+  // `iron` the `castIron` recipe consumes so the supplier can over-produce the
+  // improvement input a peer locked seller needs. A player matches at most one
+  // gate (the supplier gate excludes locked sellers), so the union never
+  // double-counts.
+  final feedstockExtractionResourceIds = <String>{
+    ...regimentBuildInputFeedstockExtractionResourceIds(game, view.playerId),
+    ...supplierImprovementInputFeedstockExtractionResourceIds(
+      game,
+      view.playerId,
+    ),
+  };
 
   for (final unitId in allUnitIds) {
     _appendSelectionForUnitId(
