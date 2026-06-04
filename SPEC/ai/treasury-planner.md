@@ -461,6 +461,59 @@ feedstock is on hand.
   feedstock-reservation path, then both runs return identical
   `List<TradeOrder>` outputs (determinism).
 
+### Lock-recovery regiment build-input market supply (Refs #2847 H8-supply market)
+
+The offer-side feedstock reservation (above) and the economy-planner
+production boost only help when the lock-recovery seller **already holds**
+recipe feedstock. On seed 42 the failing below-quota zero-NW sellers
+(gp3 / gp5 / gp6) extract no `wool` / `cotton`, the world market carries
+no `fabric` offers, and the H8 bootstrap **fabric** bid therefore never
+clears (`gpRegimentInputDealsAsBuyer == 0` in the S7-D diagnostic). This
+section closes the **market supply** axis so the domestic production path
+can run.
+
+**Seller-side feedstock bid (bootstrap extension).** Under the same gate as
+§ Lock-recovery seller regiment build-input bootstrap, when the projected
+stockpile is short of a `peasant_levies` build input **and** short of the
+feedstock required for one feasible `fabric_from_wool` / `fabric_from_cotton`
+run, the planner injects a **feedstock bid first** (quantity = per-run recipe
+input minus on-hand plus carry-forward). The fabric build-input bid is
+suppressed while any such feedstock deficit remains so the single
+`bidTypeCap` slot targets acquirable supply. Once feedstock is on hand, the
+existing fabric bootstrap bid and production boost resume; the feedstock
+reservation prevents selling the acquired wool / cotton before conversion.
+
+**Affluent-GP feedstock / build-input offers.** When **any** below-quota
+zero-NW lock-recovery seller in the game meets the H8 bootstrap gate
+(`player.treasury >= cheapestRegimentBuildTreasuryCost()`,
+`regimentCountForPlayer == 0`, missing a `peasant_levies` build input), every
+**other** Great Power that is **not** a lock-recovery seller and holds
+`player.treasury >= cheapestRegimentBuildTreasuryCost()` releases surplus
+`wool`, `cotton`, and `fabric` aggressively into its offer set (safety buffer
+`0` for those commodities — same release pattern as § Lock-recovery seller
+food-surplus release) so the seller's feedstock / fabric bids can match. The
+gate clears automatically once no lock-recovery seller still needs the
+bootstrap path.
+
+#### Acceptance criteria (H8-supply market)
+
+- Given a below-quota zero-NW lock-recovery seller with recovered treasury,
+  zero regiments, zero `fabric`, and zero `wool`, when `runTreasuryPlanner`
+  runs for that seller, then it emits a `TradeOrderType.bid` for `wool` (or
+  `cotton` when that is the feasible feedstock) and emits **no** `fabric`
+  bid until the feedstock deficit is cleared.
+- Given the same game state and a non-seller Great Power with surplus `wool`
+  and `player.treasury >= cheapestRegimentBuildTreasuryCost()`, when
+  `runTreasuryPlanner` runs for that affluent GP, then it emits a
+  `TradeOrderType.offer` for `wool`.
+- Given no below-quota zero-NW lock-recovery seller meets the H8 bootstrap
+  gate, when `runTreasuryPlanner` runs for an affluent non-seller, then it
+  does **not** apply the aggressive `wool` / `cotton` / `fabric` offer
+  release (steady-state surplus rules apply).
+- Given identical inputs, when `runTreasuryPlanner` runs twice on the
+  H8-supply market path, then both runs return identical
+  `List<TradeOrder>` outputs (determinism).
+
 ---
 
 ## Treasury-budget-aware bid sizing (Refs #3122)

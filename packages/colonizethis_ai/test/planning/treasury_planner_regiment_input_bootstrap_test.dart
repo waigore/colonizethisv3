@@ -22,6 +22,7 @@ const _fabricId = 'fabric';
 Game _lockRecoverySellerGame({
   required int treasury,
   required int fabricHeld,
+  int woolHeld = 0,
   int owProvinces = 3,
   bool hasRegiment = false,
   bool zeroNewWorld = true,
@@ -29,6 +30,9 @@ Game _lockRecoverySellerGame({
   const ow = 'oldWorld';
   const nw = 'newWorld';
   var stockpile = const Stockpile().applyDelta('grain', 80);
+  if (woolHeld > 0) {
+    stockpile = stockpile.applyDelta('wool', woolHeld);
+  }
   if (fabricHeld > 0) {
     stockpile = stockpile.applyDelta(_fabricId, fabricHeld);
   }
@@ -102,8 +106,8 @@ void main() {
     });
 
     test(
-      'recovered-treasury seller holding zero fabric and zero regiments '
-      'emits a fabric build-input bid',
+      'recovered-treasury seller holding zero fabric and zero wool emits a '
+      'wool feedstock bid before fabric',
       () {
         final game = _lockRecoverySellerGame(
           treasury: threshold,
@@ -111,18 +115,39 @@ void main() {
         );
         final bids =
             _run(game).where((o) => o.type == TradeOrderType.bid).toList();
+        final woolBids =
+            bids.where((o) => o.commodityId == 'wool').toList();
         final fabricBids =
-            bids.where((o) => o.commodityId == _fabricId).toList();
+            bids.where((o) => o.commodityId == 'fabric').toList();
         expect(
-          fabricBids,
+          woolBids,
           isNotEmpty,
           reason:
               'A seller above the regiment threshold with no regiment and no '
-              'fabric must bid for the missing regiment build input.',
+              'fabric must bid for missing wool feedstock first.',
         );
-        expect(fabricBids.first.quantity, greaterThanOrEqualTo(fabricInput!));
+        expect(fabricBids, isEmpty);
       },
     );
+
+    test('seller with sufficient wool feedstock emits a fabric bid', () {
+      final game = _lockRecoverySellerGame(
+        treasury: threshold,
+        fabricHeld: 0,
+        woolHeld: 2,
+      );
+      final fabricBids = _run(game)
+          .where((o) =>
+              o.type == TradeOrderType.bid && o.commodityId == _fabricId)
+          .toList();
+      expect(fabricBids, isNotEmpty);
+      expect(
+        _run(game).where(
+          (o) => o.type == TradeOrderType.bid && o.commodityId == 'wool',
+        ),
+        isEmpty,
+      );
+    });
 
     test('seller still below the regiment threshold emits no fabric bid', () {
       final game = _lockRecoverySellerGame(

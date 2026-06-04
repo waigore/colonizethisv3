@@ -128,6 +128,11 @@ List<TradeOrder> runTreasuryPlanner({
   // SPEC/ai/treasury-planner.md § Lock-recovery seller food-surplus release.
   final isLockRecoverySeller =
       _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+  final regimentBuildInputMarketSupplyActive =
+      _anyLockRecoverySellerNeedsRegimentBuildInput(game);
+  final isRegimentBuildInputMarketSupplier = regimentBuildInputMarketSupplyActive &&
+      !isLockRecoverySeller &&
+      rawTreasury >= threshold;
 
   for (final id in trackedCommodityIds) {
     if (richesCommodityIds.contains(id)) continue;
@@ -139,9 +144,13 @@ List<TradeOrder> runTreasuryPlanner({
       inputNeeds: inputNeeds,
     );
     final inputs = inputNeeds[id] ?? 0;
-    final safety = commodity.category == CommodityCategory.food
+    var safety = commodity.category == CommodityCategory.food
         ? (isLockRecoverySeller ? 0 : consumption * 2)
         : consumption;
+    if (isRegimentBuildInputMarketSupplier &&
+        _regimentBuildInputSupplyCommodityIds.contains(id)) {
+      safety = 0;
+    }
     final reserve = consumption + inputs + safety;
     final projectedQty = projected.quantityOf(id);
     final surplus = projectedQty - reserve - (carryForwardOffers[id] ?? 0);
@@ -265,10 +274,34 @@ List<TradeOrder> runTreasuryPlanner({
   if (isLockRecoverySeller &&
       rawTreasury >= threshold &&
       regimentCountForPlayer(game, playerId) == 0) {
-    for (final input in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
-      final held = projected.quantityOf(input.key) + (carryForwardBids[input.key] ?? 0);
-      if (held < input.value) {
-        need[input.key] = input.value - held;
+    var feedstockStillMissing = false;
+    final feedstockCandidates = _regimentBuildInputFeedstockIds(projected).toList()
+      ..sort((a, b) {
+        // Old World lock-recovery sellers extract wool, not cotton (seed-42).
+        if (a == CommodityCatalog.wool.id) return -1;
+        if (b == CommodityCatalog.wool.id) return 1;
+        return a.compareTo(b);
+      });
+    for (final feedstockId in feedstockCandidates) {
+      final qtyNeeded =
+          _feedstockQuantityForOneMissingBuildInputRun(feedstockId, projected);
+      if (qtyNeeded <= 0) continue;
+      final held =
+          projected.quantityOf(feedstockId) + (carryForwardBids[feedstockId] ?? 0);
+      if (held < qtyNeeded) {
+        need[feedstockId] = qtyNeeded - held;
+        feedstockStillMissing = true;
+      }
+      break;
+    }
+    if (!feedstockStillMissing) {
+      for (final input
+          in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+        final held =
+            projected.quantityOf(input.key) + (carryForwardBids[input.key] ?? 0);
+        if (held < input.value) {
+          need[input.key] = input.value - held;
+        }
       }
     }
     // Refs #2847 § H8-supply: the bootstrap bid above cannot fill when no
@@ -684,6 +717,57 @@ Set<CommodityId> _regimentBuildInputFeedstockIds(Stockpile projected) {
     }
   }
   return feedstock;
+}
+
+/// Per-run feedstock input quantity required to produce one unit of a missing
+/// `peasant_levies` build input via a production recipe consuming [feedstockId].
+int _feedstockQuantityForOneMissingBuildInputRun(
+  CommodityId feedstockId,
+  Stockpile projected,
+) {
+  var needed = 0;
+  for (final entry in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+    if (projected.quantityOf(entry.key) >= entry.value) continue;
+    for (final recipe in ProductionRecipesCatalog.all) {
+      if (recipe.outputCommodityId != entry.key) continue;
+      final perRun = recipe.inputQuantities[feedstockId];
+      if (perRun != null && perRun > needed) {
+        needed = perRun;
+      }
+    }
+  }
+  return needed;
+}
+
+/// Commodity ids affluent GPs release when any lock-recovery seller needs the
+/// H8 bootstrap path (Refs #2847 H8-supply market).
+const Set<CommodityId> _regimentBuildInputSupplyCommodityIds = {
+  'wool',
+  'cotton',
+  'fabric',
+};
+
+/// True when any below-quota zero-NW lock-recovery seller still needs the
+/// H8 regiment build-input bootstrap path (Refs #2847 H8-supply market).
+bool _anyLockRecoverySellerNeedsRegimentBuildInput(Game game) {
+  final threshold = cheapestRegimentBuildTreasuryCost();
+  for (final player in game.players) {
+    if (!_isBelowQuotaZeroNwLockRecoverySeller(
+      game: game,
+      playerId: player.id,
+    )) {
+      continue;
+    }
+    if (player.treasury < threshold) continue;
+    if (regimentCountForPlayer(game, player.id) > 0) continue;
+    for (final entry
+        in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+      if (player.stockpile.quantityOf(entry.key) < entry.value) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /// Sorted Great Power ids for deterministic per-turn buyer rotation.
