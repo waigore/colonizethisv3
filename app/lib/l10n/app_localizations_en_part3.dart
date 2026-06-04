@@ -306,6 +306,32 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_tileRoadNone => 'Road / railroad: -';
 
   @override
+  String provinceOverlay_tileRoadTransportLevel(int level) {
+    return 'Road / railroad: transport level $level';
+  }
+
+  @override
+  String get provinceOverlay_tileRoadLabelNone => 'none';
+
+  @override
+  String get provinceOverlay_tileRoadLabelPrimitiveRoad => 'primitive road';
+
+  @override
+  String get provinceOverlay_tileRoadLabelImprovedRoad => 'improved road';
+
+  @override
+  String get provinceOverlay_tileRoadLabelPortOrRailroad => 'port or railroad';
+
+  @override
+  String get provinceOverlay_tileRoadLabelNonStandard =>
+      'non-standard transport level';
+
+  @override
+  String get provinceOverlay_tileRoadRailGloss =>
+      'Basic land link for connectivity and yield caps. '
+      'Railroads are transport level 4.';
+
+  @override
   String provinceOverlay_tileCivilianUnits(int count) {
     return 'Civilian units (province): $count';
   }

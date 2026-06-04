@@ -2017,6 +2017,39 @@
   "@provinceOverlay_tileRoadNone": {
     "description": "Tile section road/rail row when not applicable."
   },
+  "provinceOverlay_tileRoadTransportLevel": "Road / railroad: transport level {level}",
+  "@provinceOverlay_tileRoadTransportLevel": {
+    "description": "Tile section road/rail primary numeric line on land tiles.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileRoadLabelNone": "none",
+  "@provinceOverlay_tileRoadLabelNone": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 0."
+  },
+  "provinceOverlay_tileRoadLabelPrimitiveRoad": "primitive road",
+  "@provinceOverlay_tileRoadLabelPrimitiveRoad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 1."
+  },
+  "provinceOverlay_tileRoadLabelImprovedRoad": "improved road",
+  "@provinceOverlay_tileRoadLabelImprovedRoad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 2."
+  },
+  "provinceOverlay_tileRoadLabelPortOrRailroad": "port or railroad",
+  "@provinceOverlay_tileRoadLabelPortOrRailroad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 4."
+  },
+  "provinceOverlay_tileRoadLabelNonStandard": "non-standard transport level",
+  "@provinceOverlay_tileRoadLabelNonStandard": {
+    "description": "Tile section road/rail supplementary GDD label for unexpected levels."
+  },
+  "provinceOverlay_tileRoadRailGloss": "Basic land link for connectivity and yield caps. Railroads are transport level 4.",
+  "@provinceOverlay_tileRoadRailGloss": {
+    "description": "Tile section road/rail level-1 gloss clarifying railroads are level 4."
+  },
   "provinceOverlay_tileCivilianUnits": "Civilian units (province): {count}",
   "@provinceOverlay_tileCivilianUnits": {
     "description": "Tile section civilian unit count row.",

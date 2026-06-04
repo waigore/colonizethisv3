@@ -1141,6 +1141,27 @@ abstract class AppLocalizations {
   /// Tile section road/rail row when not applicable.
   String get provinceOverlay_tileRoadNone;
 
+  /// Tile section road/rail primary numeric line on land tiles.
+  String provinceOverlay_tileRoadTransportLevel(int level);
+
+  /// Tile section road/rail supplementary GDD label for transport level 0.
+  String get provinceOverlay_tileRoadLabelNone;
+
+  /// Tile section road/rail supplementary GDD label for transport level 1.
+  String get provinceOverlay_tileRoadLabelPrimitiveRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 2.
+  String get provinceOverlay_tileRoadLabelImprovedRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 4.
+  String get provinceOverlay_tileRoadLabelPortOrRailroad;
+
+  /// Tile section road/rail supplementary GDD label for unexpected levels.
+  String get provinceOverlay_tileRoadLabelNonStandard;
+
+  /// Tile section road/rail level-1 gloss clarifying railroads are level 4.
+  String get provinceOverlay_tileRoadRailGloss;
+
   /// Tile section civilian unit count row.
   String provinceOverlay_tileCivilianUnits(int count);
 

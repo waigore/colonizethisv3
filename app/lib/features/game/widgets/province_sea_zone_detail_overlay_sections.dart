@@ -3,40 +3,41 @@
 part of 'province_sea_zone_detail_overlay.dart';
 
 @visibleForTesting
-String roadRailSupplementaryLabel(int roadLevel) {
+String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   return switch (roadLevel) {
-    0 => 'none',
-    1 => 'primitive road',
-    2 => 'improved road',
-    4 => 'port or railroad',
-    _ => 'non-standard transport level',
+    0 => l10n.provinceOverlay_tileRoadLabelNone,
+    1 => l10n.provinceOverlay_tileRoadLabelPrimitiveRoad,
+    2 => l10n.provinceOverlay_tileRoadLabelImprovedRoad,
+    4 => l10n.provinceOverlay_tileRoadLabelPortOrRailroad,
+    _ => l10n.provinceOverlay_tileRoadLabelNonStandard,
   };
 }
 
-/// Gloss under level 1 so “primitive road” is not read as railroad.
-@visibleForTesting
-const String kRoadRailPrimitiveVersusRailGloss =
-    'Basic land link for connectivity and yield caps. Railroads are transport level 4.';
-
 /// Primary Tile-section line for land tiles; [transportLevel] is stored road/rail level.
 @visibleForTesting
-String roadRailTransportLevelPrimaryLine(int transportLevel) {
-  return 'Road / railroad: transport level $transportLevel';
+String roadRailTransportLevelPrimaryLine(
+  AppLocalizations l10n,
+  int transportLevel,
+) {
+  return l10n.provinceOverlay_tileRoadTransportLevel(transportLevel);
 }
 
 /// Ordered text lines for Tile “Road / railroad” (null → sea / no land transport row).
 @visibleForTesting
-List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
+List<String> roadRailTileDetailLinesForTests({
+  required AppLocalizations l10n,
+  required int? transportLevel,
+}) {
   if (transportLevel == null) {
-    return const ['Road / railroad: —'];
+    return [l10n.provinceOverlay_tileRoadNone];
   }
   final v = transportLevel;
   final lines = <String>[
-    roadRailTransportLevelPrimaryLine(v),
-    roadRailSupplementaryLabel(v),
+    roadRailTransportLevelPrimaryLine(l10n, v),
+    roadRailSupplementaryLabel(l10n, v),
   ];
   if (v == 1) {
-    lines.add(kRoadRailPrimitiveVersusRailGloss);
+    lines.add(l10n.provinceOverlay_tileRoadRailGloss);
   }
   return lines;
 }
@@ -161,10 +162,13 @@ List<Widget> _buildTileRoadLabelWidgets({
     color: EditorialMonoclePalette.muted,
   );
   return [
-    Text(roadRailTransportLevelPrimaryLine(roadLevel), style: _fgBodyStyle()),
-    Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
+    Text(
+      roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+      style: _fgBodyStyle(),
+    ),
+    Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
-      Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
+      Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
   ];
 }
 
