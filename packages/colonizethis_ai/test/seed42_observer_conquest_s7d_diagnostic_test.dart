@@ -11,7 +11,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show regimentBuildInputFeedstockExtractionResourceIds;
+    show allUnitsFromWorld, regimentBuildInputFeedstockExtractionResourceIds;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -447,6 +447,37 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// assignment and the extraction step, not at recipe scoring or a world-market
 /// `fabric` seller.
 ///
+/// ### H8-extraction execution-gap disambiguation (this slice, Refs #2847)
+///
+/// Two read-only sub-counters split the gate-active turns by Builder
+/// availability and improvement completion (`dart test --run-skipped`, merged
+/// `dev` baseline):
+///
+///   * `gpFeedstockGateIdleBuilderPresentTurns` = **29 / 52 / 51** for
+///     gp3 / gp5 / gp6 — **equal to** `gpFeedstockExtractionGateActiveTurns`.
+///     A free Builder (`currentWork == null`) is available on **every**
+///     gate-active turn. The "no idle Builder to route" cause is **ruled out**.
+///   * `gpFeedstockGateImprovedTileOwnedTurns` = **0** for **every** GP — the
+///     Builder **never** finishes improving a feedstock tile across the whole
+///     run, even though one is owned (`gpUnimprovedFeedstockTileOwnedTurns` =
+///     100) and a free Builder exists every gate-active turn.
+///
+/// This **refutes** the transport-cap / extraction-step hypothesis (which would
+/// show `gpFeedstockGateImprovedTileOwnedTurns` high with
+/// `gpFeedstockInStockpileTurns` near-zero) and **also** the "improvement
+/// preempted mid-work" hypothesis (which would still leave the tile improved on
+/// the turn it completes). The improved-tile count is flat **zero**, so the
+/// break is precisely at **work assignment → improvement completion**: a free
+/// Builder and an unimproved feedstock tile coexist for 29-52 turns, yet the
+/// `build_improvement` is never taken on that tile. The next slice (H8-extraction
+/// production fix) must determine why `suggestWorkOrders` never yields a
+/// `build_improvement` candidate for the owned unimproved feedstock tile for the
+/// idle Builder — the #3234 score boost can only bias a candidate that exists,
+/// so a missing candidate (Builder→tile reachability / suggestion gating), not
+/// the boost magnitude, is the live suspect — and verify by re-running this
+/// diagnostic and confirming `gpFeedstockGateImprovedTileOwnedTurns` and
+/// (downstream) `gpFeedstockInStockpileTurns` rise for gp3 / gp5 / gp6.
+///
 /// ## Updated S7-T tuning surface (ordered by the feedstock-stage split)
 ///
 /// Constraint per issue § Scope constraint unchanged: **phase-planner /
@@ -454,16 +485,20 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// changes** to existing constants in
 /// `packages/colonizethis_data/lib/src/ai_victory_config.dart`.
 ///
-///   1. **H8-extraction (new, highest signal): feedstock Builder extraction
-///      execution.** Gate active 29-52 turns + unimproved feedstock tile owned
-///      100 turns, yet `gpFeedstockInStockpileTurns` == 1. Determine why the
-///      routed Builder does not improve / extract a `wool` / `cotton` tile
-///      under the lock — candidate causes: the GP holds no idle Builder unit to
-///      route; `suggestWorkOrders` emits no build-improvement candidate for the
-///      feedstock tile; or the Builder is repeatedly preempted by the peer-war
-///      churn before extraction completes. Verify by re-running this diagnostic
-///      and confirming `gpFeedstockInStockpileTurns` and (downstream)
-///      `gpCheapestRegimentInputsInStockpileTurns` rise for gp3 / gp5 / gp6.
+///   1. **H8-extraction (new, highest signal): feedstock Builder work
+///      assignment.** Gate active 29-52 turns + unimproved feedstock tile owned
+///      100 turns + **idle Builder present every gate-active turn**
+///      (`gpFeedstockGateIdleBuilderPresentTurns` == gate-active turns), yet
+///      `gpFeedstockGateImprovedTileOwnedTurns` == 0 and
+///      `gpFeedstockInStockpileTurns` == 1. The disambiguation above narrows the
+///      live cause to **`suggestWorkOrders` never emitting a build-improvement
+///      candidate for the owned unimproved feedstock tile** (the #3234 boost can
+///      only bias an existing candidate), not Builder availability, recipe
+///      scoring, transport-cap extraction, or a world-market `fabric` seller.
+///      Verify by re-running this diagnostic and confirming
+///      `gpFeedstockGateImprovedTileOwnedTurns`, `gpFeedstockInStockpileTurns`,
+///      and (downstream) `gpCheapestRegimentInputsInStockpileTurns` rise for
+///      gp3 / gp5 / gp6.
 ///   2. **H4-b (regiment-holding case): gp4 reach / offensive strength**
 ///      against the locked peer (unchanged; see #3224).
 ///   3. **H2 (still open): residual peer-war re-declare oscillation.**
@@ -524,6 +559,60 @@ bool _ownsUnimprovedFeedstockResourceTile(
         if (ws.tileState.improvementLevel(tileKey) < 1) return true;
       }
     }
+  }
+  return false;
+}
+
+/// True iff [playerId] owns at least one province tile that hosts a fabric
+/// feedstock resource (a member of [feedstockIds]) that is already improved
+/// (improvement level >= 1) — i.e. a Builder has finished extracting the tile.
+///
+/// Companion to [_ownsUnimprovedFeedstockResourceTile] for the H8-extraction
+/// execution-gap disambiguation (Refs #2847). When the feedstock-extraction
+/// gate is active and an unimproved feedstock tile is owned all run, a near-zero
+/// improved-tile count localizes the break to the routing / Builder-availability
+/// stage (the Builder never finishes the improvement), whereas a high
+/// improved-tile count alongside a near-zero `gpFeedstockInStockpileTurns`
+/// localizes it to the extraction / transport-connectivity stage (the improved
+/// tile yields no commodity into the stockpile because it is not extraction-
+/// connected). Read-only scan over owned provinces.
+bool _ownsImprovedFeedstockResourceTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
+    for (final entry in byProvince.entries) {
+      final province = tryGetProvince(ws, entry.key);
+      if (province == null || province.ownerId != playerId) continue;
+      for (final tileKey in entry.value) {
+        final resourceId = ws.resourceByTileKey[tileKey];
+        if (resourceId == null || !feedstockIds.contains(resourceId)) {
+          continue;
+        }
+        if (ws.tileState.improvementLevel(tileKey) >= 1) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// True iff [playerId] owns at least one Builder unit that currently has no
+/// work assigned (`currentWork == null`) — i.e. a Builder the Full-AI civilian
+/// work selection could route onto a feedstock tile this turn.
+///
+/// Used by the H8-extraction execution-gap disambiguation (Refs #2847): a
+/// near-zero count on feedstock-gate-active turns localizes the break to
+/// Builder availability (no free Builder to route), distinguishing it from the
+/// "Builder present but improvement never completes / extracts" cases. Read-only
+/// scan over all world units.
+bool _hasIdleBuilderUnit(Game game, String playerId) {
+  for (final unit in allUnitsFromWorld(game.worldState)) {
+    if (unit.ownerId != playerId) continue;
+    if (unit.type != kUnitTypeBuilder) continue;
+    if (unit.currentWork == null) return true;
   }
   return false;
 }
@@ -694,6 +783,23 @@ void main() {
       final fabricRecipeFeasibleTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 H8-extraction execution-gap disambiguation (read-only).
+      // Both are gated on a feedstock-extraction-gate-active turn so they split
+      // the 29-52 gate-active turns into the proximate failure stage:
+      //   * `feedstockGateIdleBuilderPresentTurns` — a free Builder exists to
+      //     route (rules out "no Builder available");
+      //   * `feedstockGateImprovedTileOwnedTurns` — the routed Builder has
+      //     actually finished improving a feedstock tile. Near-zero here with
+      //     an idle Builder present and `gpUnimprovedFeedstockTileOwnedTurns`
+      //     high => the improvement never completes (routing / preemption);
+      //     high here with `gpFeedstockInStockpileTurns` near-zero => the
+      //     improved tile is not extraction-connected (transport-cap stage).
+      final feedstockGateIdleBuilderPresentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final feedstockGateImprovedTileOwnedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
 
       // Refs #2924 Step 0 — world-market lock-recovery diagnostics:
       // per-GP rollups capturing (a) trade orders the AI submits each
@@ -814,12 +920,29 @@ void main() {
           // proximate links: Builder-routing gate fired, an unimproved
           // feedstock resource tile is owned, feedstock reached the stockpile,
           // and a fabric recipe is feasible for at least one run.
-          if (regimentBuildInputFeedstockExtractionResourceIds(
-            game,
-            gpId,
-          ).isNotEmpty) {
+          final feedstockGateActive =
+              regimentBuildInputFeedstockExtractionResourceIds(
+                game,
+                gpId,
+              ).isNotEmpty;
+          if (feedstockGateActive) {
             feedstockExtractionGateActiveTurns[gpId] =
                 (feedstockExtractionGateActiveTurns[gpId] ?? 0) + 1;
+            // Refs #2847 H8-extraction execution-gap disambiguation: split the
+            // gate-active turns by Builder availability and improvement
+            // completion so the next slice can target the exact stage.
+            if (_hasIdleBuilderUnit(game, gpId)) {
+              feedstockGateIdleBuilderPresentTurns[gpId] =
+                  (feedstockGateIdleBuilderPresentTurns[gpId] ?? 0) + 1;
+            }
+            if (_ownsImprovedFeedstockResourceTile(
+              game,
+              gpId,
+              fabricFeedstockIds,
+            )) {
+              feedstockGateImprovedTileOwnedTurns[gpId] =
+                  (feedstockGateImprovedTileOwnedTurns[gpId] ?? 0) + 1;
+            }
           }
           if (_ownsUnimprovedFeedstockResourceTile(
             game,
@@ -1054,7 +1177,12 @@ void main() {
         'fabricFeedstockCommodityIds': fabricFeedstockIds.toList()..sort(),
         'gpFeedstockExtractionGateActiveTurns':
             feedstockExtractionGateActiveTurns,
-        'gpUnimprovedFeedstockTileOwnedTurns': unimprovedFeedstockTileOwnedTurns,
+        'gpUnimprovedFeedstockTileOwnedTurns':
+            unimprovedFeedstockTileOwnedTurns,
+        'gpFeedstockGateIdleBuilderPresentTurns':
+            feedstockGateIdleBuilderPresentTurns,
+        'gpFeedstockGateImprovedTileOwnedTurns':
+            feedstockGateImprovedTileOwnedTurns,
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
@@ -1135,6 +1263,24 @@ void main() {
           reason:
               '$gpId rebuild-ready no-build turns must split into '
               'missing-input + inputs-present sub-causes',
+        );
+        // Refs #2847 H8-extraction: the disambiguation sub-counters are each
+        // measured only on a feedstock-gate-active turn, so neither can exceed
+        // the gate-active total. Guards the instrumentation gating itself
+        // without pinning the (freely tunable) per-GP counts.
+        expect(
+          feedstockGateIdleBuilderPresentTurns[gpId]!,
+          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
+          reason:
+              '$gpId idle-Builder-present turns cannot exceed the '
+              'feedstock-extraction-gate-active turns',
+        );
+        expect(
+          feedstockGateImprovedTileOwnedTurns[gpId]!,
+          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
+          reason:
+              '$gpId improved-feedstock-tile-owned turns cannot exceed the '
+              'feedstock-extraction-gate-active turns',
         );
       }
     },
