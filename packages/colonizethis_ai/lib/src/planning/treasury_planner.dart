@@ -271,6 +271,23 @@ List<TradeOrder> runTreasuryPlanner({
         need[input.key] = input.value - held;
       }
     }
+    // Refs #2847 § H8-supply: the bootstrap bid above cannot fill when no
+    // world-market seller offers the build input (seed-42 `fabric` has zero GP
+    // / minor / tribe supply), so the recovered seller must *produce* the input
+    // domestically. The economy planner already boosts feasible recipes that
+    // output a missing build input (economy-planner.md § Regiment build-input
+    // production priority), but those recipes only become feasible once their
+    // feedstock (e.g. `wool` / `cotton` for `fabric`) reaches the per-run input
+    // requirement in the stockpile. A lock-recovery seller otherwise sells that
+    // feedstock as surplus every turn, so it never accumulates to a feasible
+    // run. Withhold the feedstock from the offer set while the rebuild carve-out
+    // is active so it accumulates; the reservation self-clears once the build
+    // input lands or the GP owns a regiment.
+    // SPEC/ai/treasury-planner.md
+    // § Lock-recovery seller build-input feedstock reservation.
+    for (final feedstockId in _regimentBuildInputFeedstockIds(projected)) {
+      available.remove(feedstockId);
+    }
   }
 
   if (available.isEmpty && need.isEmpty) {
@@ -640,6 +657,33 @@ bool _isBelowQuotaZeroNwLockRecoverySeller({
   // Mid-below-quota EXPAND band (seed-42 gp3–gp6); excludes minimal
   // single-province test fixtures that are not Path F lock-recovery sellers.
   return ow >= 2;
+}
+
+/// Feedstock commodity ids consumed by production recipes whose output is a
+/// currently-missing cheapest-regiment (`peasant_levies`) build input.
+///
+/// Refs #2847 § H8-supply. The cheapest regiment needs `fabric`, which is
+/// produced from `wool` (`fabricFromWool`) or `cotton` (`fabricFromCotton`).
+/// When the projected stockpile is short of a build input, this returns the
+/// input commodities of every recipe that outputs that build input so a
+/// lock-recovery seller can retain the feedstock instead of selling it as
+/// surplus. Pure function of the projected [Stockpile] and the static
+/// `RegimentEconomyCatalog` / `ProductionRecipesCatalog`; returns the empty
+/// set once every build input is on hand (the reservation self-clears).
+Set<CommodityId> _regimentBuildInputFeedstockIds(Stockpile projected) {
+  final missingInputs = <CommodityId>{
+    for (final entry
+        in RegimentEconomyCatalog.peasantLevies.buildInputs.entries)
+      if (projected.quantityOf(entry.key) < entry.value) entry.key,
+  };
+  if (missingInputs.isEmpty) return const <CommodityId>{};
+  final feedstock = <CommodityId>{};
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (missingInputs.contains(recipe.outputCommodityId)) {
+      feedstock.addAll(recipe.inputQuantities.keys);
+    }
+  }
+  return feedstock;
 }
 
 /// Sorted Great Power ids for deterministic per-turn buyer rotation.
