@@ -14,6 +14,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'recipe_scoring.dart' show kShortageThreshold;
 
 /// Bid priority tiers (1 = highest). Refs #2994 F4.
@@ -243,6 +244,33 @@ List<TradeOrder> runTreasuryPlanner({
     }
   } else if (lockRecoveryUrgent || isLockRecoverySeller) {
     need.clear();
+  }
+
+  // Refs #2847 § H8: a below-quota zero-NW lock-recovery seller accumulates
+  // treasury by selling food, but its bid `need` is cleared every turn (it is
+  // a sell-only Path-F seller), so it can never buy the cheapest regiment's
+  // build-input commodity. `peasant_levies` (the universal cheapest regiment,
+  // cost `cheapestRegimentBuildTreasuryCost()`) requires its `buildInputs`
+  // commodities in the stockpile; with zero of them on hand
+  // `suggestBuildOrders` returns no regiment candidate even when treasury is
+  // affordable and a peasant is free, so the seller that has *already*
+  // recovered treasury to/above the regiment threshold stays trapped at zero
+  // regiments (seed-42 gp5/gp6 hold treasury >= threshold yet 0 fabric for
+  // tens of turns). Inject a single build-input bid so the recovered treasury
+  // converts into the army the lock-recovery sell-down existed to fund. The
+  // carve-out fires only while the GP holds zero regiments and is missing a
+  // build input, and clears automatically once it owns a regiment or the
+  // input lands. SPEC/ai/treasury-planner.md
+  // § Lock-recovery seller regiment build-input bootstrap.
+  if (isLockRecoverySeller &&
+      rawTreasury >= threshold &&
+      regimentCountForPlayer(game, playerId) == 0) {
+    for (final input in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+      final held = projected.quantityOf(input.key) + (carryForwardBids[input.key] ?? 0);
+      if (held < input.value) {
+        need[input.key] = input.value - held;
+      }
+    }
   }
 
   if (available.isEmpty && need.isEmpty) {
