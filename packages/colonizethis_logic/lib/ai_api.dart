@@ -9,6 +9,8 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
     show
         FullAiCivilianWorkIdle,
         FullAiCivilianWorkSelectionResult,
+        feedstockBootstrapBuildImprovementCastIronWaived,
+        feedstockExtractionResourceIdsForPlayer,
         kRegimentBuildInputFeedstockExtractionScoreBoost,
         regimentBuildInputFeedstockExtractionResourceIds,
         regimentBuildInputFeedstockImprovementInputCost,

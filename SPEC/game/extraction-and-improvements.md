@@ -149,6 +149,12 @@ A Builder may build an improvement on a tile only if: (a) the tile has a **resou
 | 3 | 8 lumber + 8 cast iron | 3 resources/turn |
 | 4 | 16 lumber + 16 cast iron | 4 resources/turn |
 
+**H8 feedstock bootstrap (level 1 only).** When the feedstock-extraction gate is active for a player (`feedstockExtractionResourceIdsForPlayer` non-empty; see [economy-planner.md](../ai/economy-planner.md) § H8-extraction) and the Builder targets an **unimproved** tile whose resource id is in that gate set, the level-0 `build_improvement` cost may omit **cast iron** while the player's stockpile holds at least **1 lumber** but **fewer than 1 cast iron** — breaking the circular dependency where extracting `timber` / `iron` to produce cast iron itself requires cast iron. Once the player holds enough cast iron for the ordinary level-1 cost, or the gate is inactive, or the tile is not an unimproved feedstock resource, the full **1 lumber + 1 cast iron** cost applies. Authoritative logic: `feedstockBootstrapBuildImprovementCastIronWaived` and `WorkOrderCostCalculator` in `colonizethis_logic`.
+
+- Given a player whose feedstock-extraction gate is active, an unimproved `timber` resource tile, stockpile `{lumber: 1, castIron: 0}`, and a `build_improvement` work order on that tile at improvement level 0, when the system validates material cost, then the required commodities are `{lumber: 1}` only.
+- Given the same player and tile but stockpile `{lumber: 1, castIron: 1}`, when the system validates material cost, then the required commodities are `{lumber: 1, castIron: 1}` (negative control — waiver clears once cast iron is affordable).
+- Given a player whose feedstock-extraction gate is **inactive** and stockpile `{lumber: 1, castIron: 0}`, when the system validates a level-0 `build_improvement` on any tile, then the required commodities remain `{lumber: 1, castIron: 1}`.
+
 ### Road Costs (Engineer)
 
 1 lumber + 1 cast iron per tile (transport level 1). **Improved road (level 2):** requires **Road Construction** tech; validation and completion must check tech before setting road level to 2.

@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../economy/projected_cost_engine.dart';
+import '../orders/validators/work_order_cost_calculator.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
 import '../economy/worker_action_cost.dart';
 import '../world/player_state_pipeline.dart';
@@ -173,8 +174,12 @@ Game _applyPendingMaterialWorkOrderCostsForPreview({
         continue;
       }
       final province = game.worldState.tryGetProvince(u.locationProvinceId);
-      final cost = workOrderMaterialCost(
+      final cost = WorkOrderCostCalculator(
+        game,
+        playerId: player.id,
+      ).calculateCost(
         target,
+        targetTileKey,
         improvementLevel: tileState.improvementLevel(targetTileKey),
         fortLevel: province?.fortLevel ?? 0,
       );

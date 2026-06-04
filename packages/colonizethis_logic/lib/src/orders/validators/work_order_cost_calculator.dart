@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../ai/full_ai_civilian_work_selection.dart';
 import '../../constants.dart';
 import '../../world/province_lookup.dart';
 
@@ -8,8 +9,9 @@ import '../../world/province_lookup.dart';
 /// SPEC/program/orders.md § Work orders. Used by OrderEngine for work-order cost validation and projection.
 class WorkOrderCostCalculator {
   final Game game;
+  final String? playerId;
 
-  const WorkOrderCostCalculator(this.game);
+  const WorkOrderCostCalculator(this.game, {this.playerId});
 
   /// Calculates cost for a work order at the given tile.
   /// Returns null if no cost applies (steal_tech, counter_spy, purchase_land).
@@ -30,12 +32,40 @@ class WorkOrderCostCalculator {
     final fl = fortLevel ?? province?.fortLevel ?? 0;
     final rl = roadLevel ?? game.worldState.tileState.roadLevel(targetTileKey);
 
-    return workOrderMaterialCost(
+    final base = workOrderMaterialCost(
       target,
       improvementLevel: improvementLevel,
       fortLevel: fl,
       roadLevel: rl,
     );
+    if (base == null || playerId == null) return base;
+    return _applyFeedstockBootstrapCastIronWaiver(
+      target: target,
+      targetTileKey: targetTileKey,
+      improvementLevel: improvementLevel,
+      baseCost: base,
+    );
+  }
+
+  Map<String, int>? _applyFeedstockBootstrapCastIronWaiver({
+    required String target,
+    required String targetTileKey,
+    required int improvementLevel,
+    required Map<String, int> baseCost,
+  }) {
+    if (target != kWorkTargetBuildImprovement || improvementLevel != 0) {
+      return baseCost;
+    }
+    if (!feedstockBootstrapBuildImprovementCastIronWaived(
+      game,
+      playerId!,
+      targetTileKey,
+    )) {
+      return baseCost;
+    }
+    final waived = Map<String, int>.from(baseCost)
+      ..remove(CommodityCatalog.castIron.id);
+    return Map<String, int>.unmodifiable(waived);
   }
 
   Province? _targetProvince(String tileKey) {

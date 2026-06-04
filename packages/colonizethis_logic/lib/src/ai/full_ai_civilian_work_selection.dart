@@ -574,6 +574,73 @@ Set<String> supplierImprovementInputFeedstockExtractionResourceIds(
   return feedstock;
 }
 
+/// Union of the seller-side regiment-build-input feedstock gate
+/// ([regimentBuildInputFeedstockExtractionResourceIds]) and the supplier-side
+/// improvement-input feedstock gate
+/// ([supplierImprovementInputFeedstockExtractionResourceIds]) for [playerId]
+/// (Refs #2847 § H8-extraction).
+///
+/// The seller-side gate routes a locked seller's own Builder onto its fabric
+/// feedstock; the supplier-side gate routes an affluent supplier's idle Builder
+/// onto the `timber` / `iron` the `castIron` recipe consumes so the supplier
+/// can over-produce the improvement input a peer locked seller needs. A player
+/// matches at most one gate (the supplier gate excludes locked sellers), so the
+/// union never double-counts. Non-empty **only** under those deterministic
+/// lock-recovery conditions; the empty set for every ordinary player so callers
+/// (civilian-work selection scoring and `build_improvement` suggestion
+/// ordering) leave off-gate behaviour unchanged. Pure and deterministic over
+/// `(game, playerId)` and the static catalogs.
+Set<String> feedstockExtractionResourceIdsForPlayer(
+  Game game,
+  String playerId,
+) {
+  return <String>{
+    ...regimentBuildInputFeedstockExtractionResourceIds(game, playerId),
+    ...supplierImprovementInputFeedstockExtractionResourceIds(game, playerId),
+  };
+}
+
+/// True when level-0 `build_improvement` on an unimproved feedstock tile under
+/// the H8 feedstock-extraction gate may omit the `castIron` material input.
+///
+/// Closes the circular dependency pinned on seed 42: improving the `timber` /
+/// `iron` (or seller `wool` / `cotton`) feedstock tile costs `castIron`, but
+/// no GP holds `castIron` until that tile is improved and production runs.
+/// The waiver applies only while the gate is active, the target tile hosts an
+/// unimproved feedstock resource, and the GP holds enough `lumber` for the
+/// level-0 cost but not enough `castIron`. Once `castIron` is affordable, the
+/// full `{lumber, castIron}` cost applies. Refs #2847 H8-extraction.
+bool feedstockBootstrapBuildImprovementCastIronWaived(
+  Game game,
+  String playerId,
+  String targetTileKey,
+) {
+  final feedstockIds = feedstockExtractionResourceIdsForPlayer(game, playerId);
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  final resourceId = ws.resourceByTileKey[targetTileKey];
+  if (resourceId == null || !feedstockIds.contains(resourceId)) return false;
+  if (ws.tileState.improvementLevel(targetTileKey) >= 1) return false;
+  Player? player;
+  for (final p in game.players) {
+    if (p.id == playerId) {
+      player = p;
+      break;
+    }
+  }
+  if (player == null) return false;
+  final baseCost = workOrderCostBuildImprovement(0);
+  final castIronId = CommodityCatalog.castIron.id;
+  final castIronRequired = baseCost[castIronId] ?? 0;
+  if (castIronRequired <= 0) return false;
+  if (player.stockpile.quantityOf(castIronId) >= castIronRequired) {
+    return false;
+  }
+  final lumberId = CommodityCatalog.lumber.id;
+  final lumberRequired = baseCost[lumberId] ?? 0;
+  return player.stockpile.quantityOf(lumberId) >= lumberRequired;
+}
+
 /// True iff [playerId] holds Old World land below the observer conquest quota
 /// (`oldWorldProvinceCountOwnedBy` in `[2, kObserverConquestMinOwProvincesPerGp)`)
 /// and owns zero New World provinces — the Path F lock-recovery seller band the
@@ -938,20 +1005,10 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   final workOrders = <WorkOrder>[];
   final idleEvents = <FullAiCivilianWorkIdle>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
-  // The seller-side gate routes a locked seller's own Builder onto its fabric
-  // feedstock; the supplier-side gate (Refs #2847 H8-extraction supplier
-  // feedstock) routes an affluent supplier's idle Builder onto the `timber` /
-  // `iron` the `castIron` recipe consumes so the supplier can over-produce the
-  // improvement input a peer locked seller needs. A player matches at most one
-  // gate (the supplier gate excludes locked sellers), so the union never
-  // double-counts.
-  final feedstockExtractionResourceIds = <String>{
-    ...regimentBuildInputFeedstockExtractionResourceIds(game, view.playerId),
-    ...supplierImprovementInputFeedstockExtractionResourceIds(
-      game,
-      view.playerId,
-    ),
-  };
+  final feedstockExtractionResourceIds = feedstockExtractionResourceIdsForPlayer(
+    game,
+    view.playerId,
+  );
 
   for (final unitId in allUnitIds) {
     _appendSelectionForUnitId(

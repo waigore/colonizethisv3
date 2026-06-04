@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 import '../build_rail_work_rules.dart';
+import '../validators/work_order_cost_calculator.dart';
 import 'work_order_handler.dart';
 
 class _StandardWorkTargetConfig {
@@ -20,6 +21,7 @@ class _StandardWorkTargetConfig {
 
 typedef _StandardWorkTargetConfigBuilder =
     _StandardWorkTargetConfig Function({
+      required Game game,
       required String targetTileKey,
       required Unit unit,
       required TileMapState tileState,
@@ -37,6 +39,7 @@ final Map<String, _StandardWorkTargetConfigBuilder>
 _standardWorkTargetConfigBuilders = {
   kWorkTargetBuildImprovement:
       ({
+        required game,
         required targetTileKey,
         required unit,
         required tileState,
@@ -44,8 +47,12 @@ _standardWorkTargetConfigBuilders = {
       }) => _StandardWorkTargetConfig(
         allowedForUnitType: (t) =>
             isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildImprovement),
-        costFn: () => workOrderMaterialCost(
+        costFn: () => WorkOrderCostCalculator(
+          game,
+          playerId: unit.ownerId,
+        ).calculateCost(
           kWorkTargetBuildImprovement,
+          targetTileKey,
           improvementLevel: tileState.improvementLevel(targetTileKey),
         ),
         totalTurnsFn: () => totalTurnsForWork(
@@ -55,6 +62,7 @@ _standardWorkTargetConfigBuilders = {
       ),
   kWorkTargetBuildFort:
       ({
+        required game,
         required targetTileKey,
         required unit,
         required tileState,
@@ -89,6 +97,7 @@ _StandardWorkTargetConfigBuilder _fixedMaterialWorkTargetConfigBuilder(
   String target,
 ) =>
     ({
+      required game,
       required targetTileKey,
       required unit,
       required tileState,
@@ -103,6 +112,7 @@ const _StandardWorkTargetConfig _unsupportedStandardWorkTargetConfig =
     );
 
 _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
+  required Game game,
   required String target,
   required String targetTileKey,
   required Unit unit,
@@ -112,6 +122,7 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
   final builder = _standardWorkTargetConfigBuilders[target];
   if (builder == null) return _unsupportedStandardWorkTargetConfig;
   return builder(
+    game: game,
     targetTileKey: targetTileKey,
     unit: unit,
     tileState: tileState,
@@ -124,6 +135,7 @@ WorkOrderCost? _nullWorkOrderCost() => null;
 int _singleTurnWorkDuration() => 1;
 
 bool applyStandardWorkOrder({
+  required Game game,
   required WorkOrder order,
   required Unit unit,
   required String targetTileKey,
@@ -138,6 +150,7 @@ bool applyStandardWorkOrder({
   if (unit.currentWork != null || !hasValidTarget) return false;
 
   final config = _buildStandardWorkTargetConfig(
+    game: game,
     target: orderTarget,
     targetTileKey: targetTileKey,
     unit: unit,
@@ -248,6 +261,7 @@ class StandardBuildWorkOrderHandler implements WorkOrderHandler {
       return true;
     }
     return applyStandardWorkOrder(
+      game: context.state.game,
       order: order,
       unit: unit,
       targetTileKey: targetTileKey,

@@ -208,7 +208,17 @@ void main() {
           remainingTurns: 1,
         ),
       );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
       final applied = applyStandardWorkOrder(
+        game: game,
         order: const WorkOrder(
           unitId: 'b1',
           target: kWorkTargetBuildImprovement,
