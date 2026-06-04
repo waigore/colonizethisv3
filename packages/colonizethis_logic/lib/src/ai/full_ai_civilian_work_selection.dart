@@ -218,6 +218,42 @@ bool _tileCanHostAnyMineralInSet(
   return false;
 }
 
+/// Planner-internal prospect score boost applied to an **unprospected** mineral
+/// feedstock resource tile when the player's feedstock-extraction gate is active
+/// (Refs #2847 § H8-extraction mineral feedstock prospecting). A mineral
+/// feedstock tile (e.g. `iron`) must be prospected before a Builder can
+/// `build_improvement` it (`work_order_target_prechecks.dart`
+/// § "Mineral tile must be prospected first"), so without an Explorer
+/// prospecting it the Builder feedstock-extraction boost
+/// ([kRegimentBuildInputFeedstockExtractionScoreBoost]) has no valid tile to
+/// improve and the multi-input `castIron` recipe stays infeasible (`iron`
+/// remains `0` on seed 42 while the surface `timber` tile is improved freely).
+/// Sized to mirror the Builder feedstock boost so an Explorer prospects the
+/// feedstock mineral tile ahead of ordinary explore / prospect work.
+/// Planner-internal — not an `ai_victory_config.dart` constant — and gated by
+/// the same self-clearing feedstock set, so healthy / above-quota Great Powers
+/// are never routed.
+const int kFeedstockMineralProspectScoreBoost = 600;
+
+/// True when [tileKey] hosts a **mineral** resource in [feedstockIds] that
+/// [playerId] has **not** prospected — the Explorer prospect target the H8
+/// feedstock-extraction gate must route a unit onto before the Builder can
+/// improve it. Read-only and deterministic over `(game, playerId, tileKey)`.
+bool _isUnprospectedMineralFeedstockTile(
+  Game game,
+  String playerId,
+  String tileKey,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final resourceId = game.worldState.resourceByTileKey[tileKey];
+  if (resourceId == null || !feedstockIds.contains(resourceId)) return false;
+  if (!kMineralResourceIds.contains(resourceId)) return false;
+  final prospected =
+      game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+  return !prospected.contains(tileKey);
+}
+
 int _pScore(
   WorkOrder w,
   Game game,
@@ -225,8 +261,9 @@ int _pScore(
   String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
   Set<String> sHigh,
-  DiplomacyFactionMembership factionMembership,
-) {
+  DiplomacyFactionMembership factionMembership, {
+  Set<String> feedstockExtractionResourceIds = const <String>{},
+}) {
   final base =
       25 +
       _prospectTerritoryPoints(
@@ -240,7 +277,16 @@ int _pScore(
       _tileCanHostAnyMineralInSet(tileMapByRegion, w.targetTileKey, sHigh)
       ? 95
       : 0;
-  return base + urgent;
+  final feedstock = w.target == kWorkTargetProspect &&
+          _isUnprospectedMineralFeedstockTile(
+            game,
+            playerId,
+            w.targetTileKey,
+            feedstockExtractionResourceIds,
+          )
+      ? kFeedstockMineralProspectScoreBoost
+      : 0;
+  return base + urgent + feedstock;
 }
 
 int _exploreTieCompare(WorkOrder w, WorkOrder best) {
@@ -279,8 +325,9 @@ WorkOrder? _bestProspectRow(
   String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
   Set<String> sHigh,
-  DiplomacyFactionMembership factionMembership,
-) {
+  DiplomacyFactionMembership factionMembership, {
+  Set<String> feedstockExtractionResourceIds = const <String>{},
+}) {
   if (prospects.isEmpty) return null;
   var best = prospects.first;
   var bestScore = _pScore(
@@ -291,6 +338,7 @@ WorkOrder? _bestProspectRow(
     tileMapByRegion,
     sHigh,
     factionMembership,
+    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
   );
   for (var i = 1; i < prospects.length; i++) {
     final w = prospects[i];
@@ -302,6 +350,7 @@ WorkOrder? _bestProspectRow(
       tileMapByRegion,
       sHigh,
       factionMembership,
+      feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     );
     if (s > bestScore) {
       bestScore = s;
@@ -321,8 +370,9 @@ WorkOrder? _pickExplorerCandidateSet(
   PlayerView view,
   String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
-  DiplomacyFactionMembership factionMembership,
-) {
+  DiplomacyFactionMembership factionMembership, {
+  Set<String> feedstockExtractionResourceIds = const <String>{},
+}) {
   final explores = c.where((w) => w.target == kWorkTargetExplore).toList();
   final prospects = c.where((w) => w.target == kWorkTargetProspect).toList();
   final exposure = _exposureCountsByMineral(game, view, playerId);
@@ -336,6 +386,7 @@ WorkOrder? _pickExplorerCandidateSet(
     tileMapByRegion,
     sHigh,
     factionMembership,
+    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
   );
   if (bestE == null && bestP == null) return null;
   if (bestE == null) return bestP;
@@ -349,6 +400,7 @@ WorkOrder? _pickExplorerCandidateSet(
     tileMapByRegion,
     sHigh,
     factionMembership,
+    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
   );
   if (eScore > pScore) return bestE;
   if (pScore > eScore) return bestP;
@@ -860,6 +912,7 @@ void _appendExplorerPathResult({
   required DiplomacyFactionMembership factionMembership,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
+  Set<String> feedstockExtractionResourceIds = const <String>{},
 }) {
   final c = w
       .where(
@@ -885,6 +938,7 @@ void _appendExplorerPathResult({
     playerId,
     tileMapByRegion,
     factionMembership,
+    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
   );
   if (chosen != null) {
     workOrders.add(chosen);
@@ -957,6 +1011,7 @@ void _appendSelectionForUnitId({
       factionMembership: factionMembership,
       workOrders: workOrders,
       idleEvents: idleEvents,
+      feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     );
     return;
   }
