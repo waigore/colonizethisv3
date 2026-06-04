@@ -299,7 +299,24 @@ List<TradeOrder> runTreasuryPlanner({
     ),
   );
 
-  final offers = suggestion.offers;
+  // Refs #2847 H8-supply market order matching: a lock-recovery supplier
+  // releases its surplus at the GP's general `offerPriority` (the urgent tier
+  // when broke, the moderate tier otherwise), but the locked buyer bids the
+  // build inputs at `_bidPriorityForCommodity` (essential = 1 for the
+  // manufactured `lumber` / `castIron` / `fabric` inputs) once it has recovered
+  // above the regiment threshold. The DealMatcher crosses offers and bids only
+  // **within** the same integer priority tier
+  // (SPEC/program/world-market-resolution.md § Step C), so a standing
+  // build-input offer and the buyer's standing build-input bid never pair --
+  // confirmed on seed 42: a priority-2 `lumber` offer and a priority-1 `lumber`
+  // bid coexist every turn yet `filledQuantity == 0`. Re-tag the supplier's
+  // build-input supply offers to the same per-commodity tier the buyer bids at
+  // so the two cross. Mirrors the bid-side `alignBidPriorityWithUrgentOffers`
+  // tier-alignment machinery (Refs #2924 F12/F16).
+  // SPEC/ai/treasury-planner.md § Supplier offer-tier alignment.
+  final offers = isRegimentBuildInputMarketSupplier
+      ? _alignBuildInputSupplyOfferTiers(suggestion.offers)
+      : suggestion.offers;
   // Refs #2924 F11/F12: when the designated buyer is affluent its own forecast
   // is above the regiment threshold (offerPriority == moderate); the lock-
   // recovery bid still needs to clear at the urgent integer priority tier so
@@ -888,6 +905,36 @@ const Set<CommodityId> _regimentBuildInputSupplyCommodityIds = {
   'lumber',
   'castIron',
 };
+
+/// Re-tags a lock-recovery supplier's build-input supply offers so each lands
+/// in the **same** integer priority tier the locked buyer bids that commodity
+/// at (`_bidPriorityForCommodity`), enabling the per-commodity offer/bid cross
+/// the DealMatcher otherwise blocks across mismatched tiers
+/// (SPEC/program/world-market-resolution.md § Step C; Refs #2847 H8-supply
+/// market order matching). Only offers whose commodity is in
+/// [_regimentBuildInputSupplyCommodityIds] are retuned; all other offers (for
+/// example the urgent liquidity-food offer) keep their computed priority. The
+/// original list is returned unchanged when no tier actually moves so equal
+/// inputs keep their identity (determinism).
+List<TradeOrder> _alignBuildInputSupplyOfferTiers(List<TradeOrder> offers) {
+  if (offers.isEmpty) return offers;
+  var changed = false;
+  final result = <TradeOrder>[];
+  for (final offer in offers) {
+    if (!_regimentBuildInputSupplyCommodityIds.contains(offer.commodityId)) {
+      result.add(offer);
+      continue;
+    }
+    final alignedPriority = _bidPriorityForCommodity(offer.commodityId);
+    if (alignedPriority == offer.priority) {
+      result.add(offer);
+      continue;
+    }
+    result.add(offer.copyWith(priority: alignedPriority));
+    changed = true;
+  }
+  return changed ? result : offers;
+}
 
 /// True when any below-quota zero-NW lock-recovery seller still needs the
 /// H8 regiment build-input bootstrap path (Refs #2847 H8-supply market).
