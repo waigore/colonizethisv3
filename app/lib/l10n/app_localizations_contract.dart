@@ -1126,6 +1126,12 @@ abstract class AppLocalizations {
   /// Tile section prospecting state row.
   String provinceOverlay_tileProspected(String value);
 
+  /// Tile section prospecting state value when the tile is prospectable and prospected by the human player.
+  String get provinceOverlay_tileProspectedYes;
+
+  /// Tile section prospecting state value when the tile is prospectable but not yet prospected by the human player.
+  String get provinceOverlay_tileProspectedNo;
+
   /// Tooltip and semantics label for province tile prospect shortcut action.
   String get provinceOverlay_tileProspectWithExplorerTooltip;
 

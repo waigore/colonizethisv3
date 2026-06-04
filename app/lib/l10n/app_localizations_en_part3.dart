@@ -287,6 +287,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_tileProspectedYes => 'yes';
+
+  @override
+  String get provinceOverlay_tileProspectedNo => 'no';
+
+  @override
   String get provinceOverlay_tileProspectWithExplorerTooltip =>
       'Prospect with explorer';
 

@@ -78,12 +78,15 @@ List<String> roadRailTileDetailLinesForTests({
 }
 
 @visibleForTesting
-String tileDetailProspectedDisplayLabel({
+String tileDetailProspectedDisplayLabel(
+  AppLocalizations l10n, {
   required bool terrainProspectable,
   required bool playerHasProspected,
 }) {
   if (!terrainProspectable) return '—';
-  return playerHasProspected ? 'yes' : 'no';
+  return playerHasProspected
+      ? l10n.provinceOverlay_tileProspectedYes
+      : l10n.provinceOverlay_tileProspectedNo;
 }
 
 Widget _buildTileResourceLabelRow({
@@ -483,6 +486,7 @@ Widget _buildTileSection({
       ? isProspectableTerrain(cell.terrainType!)
       : isProspectableTerrainId(cell.terrainTypeId);
   final prospectedLabel = tileDetailProspectedDisplayLabel(
+    l10n,
     terrainProspectable: prospectable,
     playerHasProspected: prospected.contains(selectedTileKey),
   );

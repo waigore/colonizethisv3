@@ -1992,6 +1992,14 @@
       }
     }
   },
+  "provinceOverlay_tileProspectedYes": "yes",
+  "@provinceOverlay_tileProspectedYes": {
+    "description": "Tile section prospecting state value when the tile is prospectable and prospected by the human player."
+  },
+  "provinceOverlay_tileProspectedNo": "no",
+  "@provinceOverlay_tileProspectedNo": {
+    "description": "Tile section prospecting state value when the tile is prospectable but not yet prospected by the human player."
+  },
   "provinceOverlay_tileProspectWithExplorerTooltip": "Prospect with explorer",
   "@provinceOverlay_tileProspectWithExplorerTooltip": {
     "description": "Tooltip and semantics label for province tile prospect shortcut action."
