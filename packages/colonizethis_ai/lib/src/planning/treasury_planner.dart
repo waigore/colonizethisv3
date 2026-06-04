@@ -274,35 +274,18 @@ List<TradeOrder> runTreasuryPlanner({
   if (isLockRecoverySeller &&
       rawTreasury >= threshold &&
       regimentCountForPlayer(game, playerId) == 0) {
-    var feedstockStillMissing = false;
-    final feedstockCandidates = _regimentBuildInputFeedstockIds(projected).toList()
-      ..sort((a, b) {
-        // Old World lock-recovery sellers extract wool, not cotton (seed-42).
-        if (a == CommodityCatalog.wool.id) return -1;
-        if (b == CommodityCatalog.wool.id) return 1;
-        return a.compareTo(b);
-      });
-    for (final feedstockId in feedstockCandidates) {
-      final qtyNeeded =
-          _feedstockQuantityForOneMissingBuildInputRun(feedstockId, projected);
-      if (qtyNeeded <= 0) continue;
-      final held =
-          projected.quantityOf(feedstockId) + (carryForwardBids[feedstockId] ?? 0);
-      if (held < qtyNeeded) {
-        need[feedstockId] = qtyNeeded - held;
-        feedstockStillMissing = true;
-      }
-      break;
-    }
+    final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
+      feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(projected),
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      need: need,
+    );
     if (!feedstockStillMissing) {
-      for (final input
-          in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
-        final held =
-            projected.quantityOf(input.key) + (carryForwardBids[input.key] ?? 0);
-        if (held < input.value) {
-          need[input.key] = input.value - held;
-        }
-      }
+      _addRegimentBuildInputDirectNeed(
+        projected: projected,
+        carryForwardBids: carryForwardBids,
+        need: need,
+      );
     }
     // Refs #2847 § H8-supply: the bootstrap bid above cannot fill when no
     // world-market seller offers the build input (seed-42 `fabric` has zero GP
@@ -717,6 +700,55 @@ Set<CommodityId> _regimentBuildInputFeedstockIds(Stockpile projected) {
     }
   }
   return feedstock;
+}
+
+/// Build-input feedstock ids ordered so Old World lock-recovery sellers extract
+/// wool before cotton (seed-42), then alphabetically for determinism.
+List<CommodityId> _sortedRegimentBuildInputFeedstockIds(Stockpile projected) {
+  return _regimentBuildInputFeedstockIds(projected).toList()
+    ..sort((a, b) {
+      if (a == CommodityCatalog.wool.id) return -1;
+      if (b == CommodityCatalog.wool.id) return 1;
+      return a.compareTo(b);
+    });
+}
+
+/// Adds the feedstock bid for the first viable [feedstockCandidates] entry so a
+/// lock-recovery seller can domestically produce a missing regiment build input.
+/// Returns true when a feedstock bid was queued (still accumulating feedstock).
+bool _addRegimentBuildInputFeedstockBootstrapNeed({
+  required List<CommodityId> feedstockCandidates,
+  required Stockpile projected,
+  required Map<CommodityId, int> carryForwardBids,
+  required Map<CommodityId, int> need,
+}) {
+  for (final feedstockId in feedstockCandidates) {
+    final qtyNeeded =
+        _feedstockQuantityForOneMissingBuildInputRun(feedstockId, projected);
+    if (qtyNeeded <= 0) continue;
+    final held =
+        projected.quantityOf(feedstockId) + (carryForwardBids[feedstockId] ?? 0);
+    if (held >= qtyNeeded) return false;
+    need[feedstockId] = qtyNeeded - held;
+    return true;
+  }
+  return false;
+}
+
+/// Adds direct bids for any missing `peasant_levies` build input when no
+/// feedstock bootstrap bid is pending.
+void _addRegimentBuildInputDirectNeed({
+  required Stockpile projected,
+  required Map<CommodityId, int> carryForwardBids,
+  required Map<CommodityId, int> need,
+}) {
+  for (final input in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+    final held =
+        projected.quantityOf(input.key) + (carryForwardBids[input.key] ?? 0);
+    if (held < input.value) {
+      need[input.key] = input.value - held;
+    }
+  }
 }
 
 /// Per-run feedstock input quantity required to produce one unit of a missing
