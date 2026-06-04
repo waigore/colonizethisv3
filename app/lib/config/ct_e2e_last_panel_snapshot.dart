@@ -119,6 +119,8 @@ class CtE2eProductionPanelSnapshot {
     required this.desiredOutputByRecipe,
     required this.netDeltasByCommodity,
     required this.topology,
+    required this.currentOrders,
+    required this.canEditLabour,
     this.tileMapByRegion,
   });
 
@@ -127,6 +129,16 @@ class CtE2eProductionPanelSnapshot {
   final Map<String, int> desiredOutputByRecipe;
   final Map<String, int> netDeltasByCommodity;
   final MapTopology topology;
+
+  /// Draft orders backing the Labour Controls section (queued recruit/train
+  /// counts) the production panel appends to the Workers section. Required so
+  /// the e2e expected-lines mirror can reproduce that section.
+  final Orders currentOrders;
+
+  /// Whether the viewed player can mutate via UI (drives the Labour Controls
+  /// stepper/disband action affordances, which add their own `Text` labels to
+  /// the rendered tree).
+  final bool canEditLabour;
   final Map<String, TileMapResult>? tileMapByRegion;
 }
 

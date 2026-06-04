@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../config/ct_e2e.dart';
 import '../../../../../config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_panel.dart';
 import '../../../../../widgets/ct_spacing.dart';
@@ -86,6 +87,11 @@ class UnitsPanelShell extends StatelessWidget {
                 child: hasContent
                     ? ListView(
                         shrinkWrap: true,
+                        // E2E panel-text assertions walk the full ListView
+                        // preorder; a tall unit roster virtualizes rows below the
+                        // fold. A generous cache keeps every row built once the
+                        // test helper has scrolled through the list (Refs #2336).
+                        cacheExtent: kCtE2EEnabled ? 10000 : null,
                         padding: listPadding,
                         children: listChildren,
                       )

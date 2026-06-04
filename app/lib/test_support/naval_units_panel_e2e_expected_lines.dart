@@ -32,13 +32,15 @@ void _addFleetRowTexts({
     // Mockup `.home-tag` rendered next to the name (Refs #2866 S8 R26).
     out.add(l10n.naval_units_homeFleetChip);
   }
-  // UnitsEntityActionRow (dense): label (details) then Move (when allowed),
-  // Split, and the icon-only Locate control (no text label). Refs #2866 S8
-  // R25 + R27.
-  if (!row.isHomeFleet) {
-    out.add(l10n.common_move);
+  // UnitsEntityActionRow (dense): trailing Move / Split / Locate cluster.
+  // Non-home fleets on the headless 1280×720 E2E host fall below
+  // `_denseIconOnlyBreakpoint`, so Move and Split are icon-only (no `Text`
+  // labels in preorder traversal). Home Fleet keeps a visible Split label at
+  // default panel width. Locate is always icon-only. Refs #2866 S8 R25 + R27;
+  // GitHub #2336 panel-text mirror drift.
+  if (row.isHomeFleet) {
+    out.add(l10n.common_split);
   }
-  out.add(l10n.common_split);
   out.add(row.locationLabel);
   out.add(l10n.naval_units_mission(row.missionLabel));
   if (row.draftNavalMoveLine != null) {
