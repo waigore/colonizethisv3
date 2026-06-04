@@ -239,6 +239,37 @@ void main() {
       );
     });
 
+    test('below-affordable non-seller still releases surplus lumber while a '
+        'lock-recovery seller needs the improvement-input bootstrap', () {
+      // The only GPs holding lumber / cast-iron surplus on seed 42 sit far
+      // below the regiment-affordable band (they spend treasury on conquest),
+      // so the supplier role must release a true surplus regardless of the
+      // supplier's own treasury. `supplierLumberHeld: 6` is surplus above the
+      // supplier's consumption-only reserve (4 = kShortageThreshold ~/ 2) once
+      // the extra safety buffer is dropped, but is withheld under the default
+      // `2 * consumption` (= 8) buffer — so this discriminates the supply-side
+      // fix from the prior `rawTreasury >= threshold` gate.
+      final lumberOffers =
+          _run(
+            _game(
+              sellerTreasury: threshold,
+              supplierTreasury: threshold - 100,
+              supplierLumberHeld: 6,
+            ),
+            'gp_supplier',
+          ).where(
+            (o) => o.type == TradeOrderType.offer && o.commodityId == _lumberId,
+          );
+      expect(
+        lumberOffers,
+        isNotEmpty,
+        reason:
+            'A non-seller GP holding surplus lumber must release it regardless '
+            'of its own treasury so the locked seller\'s improvement-input bid '
+            'can clear.',
+      );
+    });
+
     test('improvement-input bootstrap path is deterministic', () {
       final game = _game(
         sellerTreasury: threshold,

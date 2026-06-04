@@ -124,9 +124,22 @@ List<TradeOrder> runTreasuryPlanner({
       _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
   final regimentBuildInputMarketSupplyActive =
       _anyLockRecoverySellerNeedsRegimentBuildInput(game);
-  final isRegimentBuildInputMarketSupplier = regimentBuildInputMarketSupplyActive &&
-      !isLockRecoverySeller &&
-      rawTreasury >= threshold;
+  // Refs #2847 H8-extraction supply-side fix: releasing a *surplus* (stock held
+  // above the GP's own consumption + production-input reserve) is selling, not
+  // speculating, so the supplier role must not be gated on the supplier's own
+  // treasury. On seed 42 the only GPs holding fabric / lumber / cast-iron
+  // surplus (gp1 / gp2) spend their treasury on conquest and sit far below the
+  // regiment-affordable band, so the prior `rawTreasury >= threshold` gate left
+  // every lock-recovery seller bid (fabric, then the level-0 build_improvement
+  // inputs) permanently unfilled — `gpRegimentInputDealsAsBuyer == 0` and
+  // `gpFeedstockGateImprovementCostAffordableTurns == 0` across the whole run.
+  // Releasing surplus regardless of the supplier's treasury still reserves the
+  // supplier's own consumption + production inputs (only the extra safety buffer
+  // drops to 0), so it cannot starve the supplier, while letting the needy
+  // seller's bid match. SPEC/ai/treasury-planner.md
+  // § Lock-recovery seller feedstock-improvement input bootstrap.
+  final isRegimentBuildInputMarketSupplier =
+      regimentBuildInputMarketSupplyActive && !isLockRecoverySeller;
 
   for (final id in trackedCommodityIds) {
     if (richesCommodityIds.contains(id)) continue;
