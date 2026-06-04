@@ -194,7 +194,7 @@ When at least one Great Power is broke (`player.treasury < cheapestRegimentBuild
 2. The designated buyer (when non-empty) adds a synthetic `need` entry for the lock-recovery food commodity (highest prior-turn `MarketActivity.totalOfferQuantity` among food ids; default alphabetical first food when activity is empty) with quantity `floor(treasuryBudgetForBids / pricesByCommodityId[liquidity])` where `treasuryBudgetForBids` is the same budget passed to `TradeOrderSuggester` (Refs #3122 — current treasury minus pending phase-pre-13 costs minus carry-forward bid notional, floored at `0`). The F10 `kSpeculativeBidStockpileTarget` ceiling does **not** apply to this synthetic bid (Refs #2924 F14). The buyer never commits more treasury than it currently holds. Other commodities are stripped from `need` for that GP so the single `bidTypeCap` slot cannot be spent on fabric/bronze deficits; F10 speculative bidding is suppressed for the designated buyer that turn.
 3. The designated buyer **removes** that commodity from `available` so it does not offer and bid the same commodity (validator mutual-exclusion rule 3).
 4. All broke GPs keep urgent offers on their surplus food; the designated buyer's bid at priority `2` matches those offers in the same tier. When the designated buyer is affluent its own `offerPriority` is moderate, but `forceBidPriority` overrides the emitted bid to `kTreasuryOfferPriorityUrgent` so tier alignment holds (Refs #2924 F12).
-5. Broke non-designated GPs **do not** emit deficit or speculative bids (their single `bidTypeCap` slot would target non-grain commodities that do not match the urgent grain offers). Mid-below-quota zero-NW lock-recovery **sellers** (`oldWorldProvincesOwned >= 2`, below quota, zero NW) stay offers-only even when `player.treasury >= cheapestRegimentBuildTreasuryCost()` so a brief threshold crossing cannot drain Path F seller credits on grain bids or F10 speculation (Refs #2924 Path F gp6 regression). Other broke GPs use the F13 forecast guard: suppression keys off **current** `player.treasury < cheapestRegimentBuildTreasuryCost()`, not the F8 offer-inflow forecast, so an optimistic forecast cannot resume deficit bidding while the GP is still broke. F1–F5 deficit bids resume once `treasuryForecast >= cheapestRegimentBuildTreasuryCost()` for GPs outside the seller band.
+5. Broke non-designated GPs **do not** emit deficit or speculative bids (their single `bidTypeCap` slot would target non-grain commodities that do not match the urgent grain offers). Mid-below-quota zero-NW lock-recovery **sellers** (`oldWorldProvincesOwned >= 2`, below quota, zero NW) stay offers-only even when `player.treasury >= cheapestRegimentBuildTreasuryCost()` so a brief threshold crossing cannot drain Path F seller credits on grain bids or F10 speculation (Refs #2924 Path F gp6 regression) — **except** for the single regiment build-input bootstrap bid described in § Lock-recovery seller regiment build-input bootstrap (Refs #2847 H8), which fires only after the seller has fully recovered (`player.treasury >= cheapestRegimentBuildTreasuryCost()`) yet still holds zero regiments and is missing the cheapest regiment's build input. Other broke GPs use the F13 forecast guard: suppression keys off **current** `player.treasury < cheapestRegimentBuildTreasuryCost()`, not the F8 offer-inflow forecast, so an optimistic forecast cannot resume deficit bidding while the GP is still broke. F1–F5 deficit bids resume once `treasuryForecast >= cheapestRegimentBuildTreasuryCost()` for GPs outside the seller band.
 6. **Offer priority follows actual treasury under lock recovery (Refs #2924 F16).** When `player.treasury < cheapestRegimentBuildTreasuryCost()`, emitted offers use `kTreasuryOfferPriorityUrgent` even when `treasuryForecast >= cheapestRegimentBuildTreasuryCost()`. Matching runs only within the same integer priority tier; downgrading to `kTreasuryOfferPriorityModerate` while still broke strands urgent minor/tribe bids (priority `2`) and stalls seller credits one unit below the regiment threshold (seed-42 gp5 at treasury `1999`).
 
 ### Acceptance criteria (F13 / F16)
@@ -283,6 +283,105 @@ existing `O(tracked commodities)` surplus pass.
 - Given identical inputs, when `runTreasuryPlanner` runs twice on the
   lock-recovery seller path, then both runs return identical `List<TradeOrder>`
   outputs (determinism).
+
+---
+
+## Lock-recovery seller regiment build-input bootstrap (Refs #2847 H8)
+
+H8 closes the seed-42 tail of the Path-F lock-recovery chain: a below-quota
+zero-NW lock-recovery seller (the same `_isBelowQuotaZeroNwLockRecoverySeller`
+predicate as F17) earns world-market seller credit by selling food and
+*does* recover treasury to or above `cheapestRegimentBuildTreasuryCost()`,
+but its bid `need` is cleared every turn (§ Rotating designated buyer point
+5 — sellers are offers-only). The cheapest regiment, `peasant_levies`,
+requires its `buildInputs` commodities **in the stockpile** before
+`suggestBuildOrders` will return it as a candidate
+(`SPEC/program/order-suggestions.md` § Build orders; the validator checks
+treasury, a free worker, **and** every `buildInputs` commodity). A recovered
+seller that holds zero of those input commodities therefore never produces a
+regiment candidate, so the treasury the sell-down accumulated stays idle and
+the GP is trapped at zero regiments indefinitely (seed-42 gp5/gp6 hold
+treasury `>= cheapestRegimentBuildTreasuryCost()` with `0` fabric for tens of
+consecutive turns).
+
+### Build-input bootstrap bid
+
+After the F13 `need.clear()` for lock-recovery sellers, the planner re-adds a
+single deficit entry for each missing build input of the cheapest regiment
+when **all** of the following hold for the lock-recovery seller:
+
+- `_isBelowQuotaZeroNwLockRecoverySeller(game, playerId)` is `true` (same
+  predicate as F17), and
+- `player.treasury >= cheapestRegimentBuildTreasuryCost()` (the seller has
+  fully recovered — the bootstrap never spends credits the seller is still
+  accumulating toward the threshold), and
+- `regimentCountForPlayer(game, playerId) == 0` (the GP owns no regiment
+  across Home and field armies).
+
+For each `entry` in `RegimentEconomyCatalog.peasantLevies.buildInputs`, let
+`held = projectedStockpile[entry.key] + carryForwardBids[entry.key]`; when
+`held < entry.value`, set `need[entry.key] = entry.value - held`. The bid is
+then sized and admitted by the existing `_prioritizedBids` pass under the
+**unchanged** cargo, `bidTypeCap`, and treasury-budget clamps (§
+Treasury-budget-aware bid sizing). No affordability rule is bypassed: the
+matcher still debits treasury per filled unit at phase 13, and the validator
+still gates the eventual `BuildUnitOrder`.
+
+The carve-out is self-clearing: once the GP owns a regiment
+(`regimentCountForPlayer > 0`) or the input lands in the stockpile
+(`held >= entry.value`) the entry is no longer added, so the seller returns to
+the offers-only Path-F behaviour.
+
+### Residual production-supply dependency (disclosure)
+
+The bootstrap converts recovered treasury into **demand** for the build
+input, but a deal only clears when matching **supply** exists on the world
+market that turn. On seed 42 the cheapest regiment's build input (`fabric`)
+has no Great-Power or minor/tribe offer supply, so the emitted bid does not
+fill and the seed-42 gp5/gp6 zero-regiment tail persists until a separate
+production-side change (out of scope for the treasury planner) puts that
+commodity on the market. This section authorises and pins the **bid-emission**
+behaviour only; closing the seed-42 regiment-build tail end to end requires
+the input-supply work tracked under #2847's remaining scope.
+
+### Determinism and budget
+
+The seller predicate, the regiment count, and the build-input lookup are pure
+functions of `game`, `playerId`, the projected `Stockpile`, the carry-forward
+bid map, and the static `RegimentEconomyCatalog`; identical inputs yield
+identical `need` maps. The added work is `O(buildInputs of one regiment)` with
+no hot-path logging, well inside the 15-second turn-resolution budget.
+
+### Acceptance criteria (H8)
+
+- Given an AI Great Power that is a below-quota zero-NW lock-recovery seller
+  with `player.treasury >= cheapestRegimentBuildTreasuryCost()`,
+  `regimentCountForPlayer(game, playerId) == 0`, and a projected stockpile
+  (plus carry-forward bids) holding fewer than `peasant_levies` requires of at
+  least one `buildInputs` commodity `C`, when `runTreasuryPlanner` runs, then
+  it emits at least one `TradeOrderType.bid` for `C` with
+  `quantity >= peasant_levies.buildInputs[C] - held`.
+- Given an otherwise identical lock-recovery seller whose
+  `player.treasury < cheapestRegimentBuildTreasuryCost()`, when
+  `runTreasuryPlanner` runs, then it emits **no** bid for any `peasant_levies`
+  build-input commodity (negative control — the seller keeps accumulating
+  credits before spending on the build input).
+- Given an otherwise identical lock-recovery seller that already holds at
+  least `peasant_levies.buildInputs[C]` of every build-input commodity `C`,
+  when `runTreasuryPlanner` runs, then it emits **no** build-input bid
+  (the carve-out clears once the input is on hand).
+- Given an otherwise identical lock-recovery seller with
+  `regimentCountForPlayer(game, playerId) > 0`, when `runTreasuryPlanner`
+  runs, then it emits **no** build-input bid (the bootstrap targets the
+  zero-regiment rebuild gap only).
+- Given an AI Great Power at or above the conquest quota
+  (`oldWorldProvincesOwned >= kObserverConquestMinOwProvincesPerGp`) — not a
+  lock-recovery seller — with the same treasury and zero regiments, when
+  `runTreasuryPlanner` runs, then it emits **no** build-input bootstrap bid
+  (the carve-out is scoped to below-quota zero-NW sellers).
+- Given identical inputs, when `runTreasuryPlanner` runs twice on the
+  build-input bootstrap path, then both runs return identical
+  `List<TradeOrder>` outputs (determinism).
 
 ---
 
