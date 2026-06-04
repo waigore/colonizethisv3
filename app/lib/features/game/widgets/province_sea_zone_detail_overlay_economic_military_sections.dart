@@ -146,7 +146,7 @@ Widget _buildMilitarySectionByOwner({
     ..sort((a, b) {
       if (a == humanPlayerId) return -1;
       if (b == humanPlayerId) return 1;
-      return _ownerName(game, a).compareTo(_ownerName(game, b));
+      return _ownerName(l10n, game, a).compareTo(_ownerName(l10n, game, b));
     });
   return _buildSection(
     l10n.provinceOverlay_sectionMilitary,
@@ -160,7 +160,7 @@ Widget _buildMilitarySectionByOwner({
           for (final u in list) {
             byType[u.type] = (byType[u.type] ?? 0) + 1;
           }
-          final name = _ownerName(game, oid);
+          final name = _ownerName(l10n, game, oid);
           return Padding(
             padding: const EdgeInsets.only(bottom: CtSpacing.m),
             child: Column(
@@ -254,7 +254,7 @@ Widget _buildCivilianSectionFiltered({
             style: TextStyle(color: EditorialMonoclePalette.fg),
           );
         }
-        final o = _ownerName(game, u.ownerId);
+        final o = _ownerName(l10n, game, u.ownerId);
         return Text(
           l10n.provinceOverlay_foreignUnitStatus(
             o,
@@ -294,7 +294,7 @@ Widget _buildNavalSection({
         if (fleets.isEmpty && pending.isEmpty) _emptyBodyDashText(),
         if (fleets.isNotEmpty)
           ...fleets.map((f) {
-            final ownerName = _ownerName(game, f.ownerId);
+            final ownerName = _ownerName(l10n, game, f.ownerId);
             final byType = <String, int>{};
             for (final s in f.ships) {
               byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
