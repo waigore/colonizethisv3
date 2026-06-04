@@ -117,7 +117,12 @@ List<String> navalUnitsPanelExpectedTexts(
   }
 
   for (final group in tree) {
-    out.add(unitsPanelRegionLabel(group.regionId));
+    // Region section headers render via RegionSectionHeader -> CtSectionLabel
+    // under the dark editorial-monocle theme (Refs #2859 R9 / #2866 S1-S3),
+    // which upper-cases the label (`Text(text.toUpperCase())`). The location
+    // header line below (LocationSectionHeader) renders as-is, so only the
+    // region group header is upper-cased here (Refs #2336).
+    out.add(unitsPanelRegionLabel(group.regionId).toUpperCase());
     if (group.homeFleet != null) {
       _addFleetRowTexts(
         out: out,

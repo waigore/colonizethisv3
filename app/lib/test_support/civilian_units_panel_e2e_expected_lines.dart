@@ -235,14 +235,6 @@ void _addUnitRowTexts({
   final showActions = !isTileScope || resolvedSelectedUnitId == unit.id;
 
   out.add(unit.type);
-  if (showActions) {
-    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
-      out.add(l10n.civilian_units_assign);
-    }
-    if (_hasWork(unit, currentOrders, humanPlayerId)) {
-      out.add(l10n.common_cancel);
-    }
-  }
   out.add(l10n.civilian_units_status(statusLabel));
   out.add(
     l10n.civilian_units_location(
@@ -258,6 +250,19 @@ void _addUnitRowTexts({
     provinceNames,
     l10n,
   );
+  // Action labels render in the row card's trailing slot, after the details
+  // column (type/status/location/assignedTo) — see _UnitRow.build /
+  // CivilianUnitRowCard in civilian_units_panel_support.dart (Refs #2866 R30
+  // card layout). The Locate action is icon-only and contributes no Text, so
+  // it is intentionally omitted here (Refs #2336).
+  if (showActions) {
+    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.civilian_units_assign);
+    }
+    if (_hasWork(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.common_cancel);
+    }
+  }
 }
 
 /// In-order [Text.data] strings for [CivilianUnitsPanel] preorder traversal.
@@ -331,7 +336,11 @@ List<String> civilianUnitsPanelExpectedTexts(
   }
 
   if (scopedOw.isNotEmpty) {
-    out.add(unitsPanelRegionLabel('oldWorld'));
+    // Region section headers render via RegionSectionHeader -> CtSectionLabel
+    // under the dark editorial-monocle theme (Refs #2859 R9 / #2866 S1-S3),
+    // which upper-cases the label (`Text(text.toUpperCase())`). The expected
+    // mirror must upper-case to match the rendered Text.data (Refs #2336).
+    out.add(unitsPanelRegionLabel('oldWorld').toUpperCase());
     for (final u in scopedOw) {
       _addUnitRowTexts(
         out: out,
@@ -352,7 +361,9 @@ List<String> civilianUnitsPanelExpectedTexts(
     }
   }
   if (scopedNw.isNotEmpty) {
-    out.add(unitsPanelRegionLabel('newWorld'));
+    // Upper-cased to match the RegionSectionHeader -> CtSectionLabel render
+    // (see oldWorld header above; Refs #2859 R9 / #2866 S1-S3 / #2336).
+    out.add(unitsPanelRegionLabel('newWorld').toUpperCase());
     for (final u in scopedNw) {
       _addUnitRowTexts(
         out: out,
