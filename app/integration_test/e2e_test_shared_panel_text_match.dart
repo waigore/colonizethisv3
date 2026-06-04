@@ -82,15 +82,25 @@ Future<void> e2eExpectCivilianPanelMatchesE2eSnapshot(
   WidgetTester tester,
   AppLocalizations l10n, {
   E2ePerfLog? perf,
-}) => e2eExpectPanelTextsMatchSnapshot(
-  tester,
-  panelRootKey: kCtE2ECivilianPanelRootKey,
-  snapshotReader: () => ctE2eCivilianPanelSnapshot,
-  buildExpected: () =>
-      civilianUnitsPanelExpectedTexts(ctE2eCivilianPanelSnapshot!, l10n),
-  phaseName: kE2eExpectCivilianPanelTextsPhase,
-  perf: perf,
-);
+}) async {
+  await e2eWaitUntilFound(
+    tester,
+    find.byKey(kCtE2ECivilianPanelRootKey),
+    timeout: kE2eDefaultExpectPanelTextsTimeout,
+    perf: perf,
+    phaseName: kE2eExpectCivilianPanelTextsPhase,
+  );
+  await e2ePrepareCivilianPanelListForTextCollection(tester);
+  await e2eExpectPanelTextsMatchSnapshot(
+    tester,
+    panelRootKey: kCtE2ECivilianPanelRootKey,
+    snapshotReader: () => ctE2eCivilianPanelSnapshot,
+    buildExpected: () =>
+        civilianUnitsPanelExpectedTexts(ctE2eCivilianPanelSnapshot!, l10n),
+    phaseName: kE2eExpectCivilianPanelTextsPhase,
+    perf: perf,
+  );
+}
 
 /// Asserts the [NavalUnitsPanel] rendered tree matches
 /// [navalUnitsPanelExpectedTexts] for the currently primed

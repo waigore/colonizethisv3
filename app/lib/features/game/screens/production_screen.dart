@@ -208,6 +208,8 @@ class ProductionScreen extends ConsumerWidget {
               desiredOutputByRecipe: desiredOutputByRecipe,
               netDeltasByCommodity: netDeltasByCommodity,
               topology: panelTopology,
+              currentOrders: currentOrders,
+              canEditLabour: canEdit,
               tileMapByRegion: panelTileMaps,
             ),
           );

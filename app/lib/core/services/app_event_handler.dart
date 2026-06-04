@@ -303,8 +303,12 @@ class AppEventHandler {
           final currentOrders = ref.watch(currentOrdersProvider);
           final bus = ref.watch(appEventBusProvider);
           final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
-          final maxHeight =
-              MediaQuery.sizeOf(context).height * (isNarrow ? 0.33 : 0.5);
+          // E2E panel-text assertions require every unit row mounted; the
+          // default 33–50 % sheet height virtualizes lower rows on the headless
+          // 1280×720 host (Refs GitHub #2336 AC6 / AC7 / AC10).
+          final maxHeight = kCtE2EEnabled
+              ? MediaQuery.sizeOf(context).height * 0.92
+              : MediaQuery.sizeOf(context).height * (isNarrow ? 0.33 : 0.5);
           return ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: CivilianUnitsPanel(
