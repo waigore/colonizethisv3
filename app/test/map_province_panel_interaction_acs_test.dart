@@ -62,6 +62,28 @@ void main() {
       },
     );
 
+    test(
+      'tapping a different tile while the overlay is open updates selection '
+      'and keeps the overlay open',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final n = container.read(mapProvincePanelProvider.notifier);
+        const first = 'oldWorld|p1|2|3';
+        const second = 'oldWorld|p2|7|8';
+
+        // Open on the first tile, then tap a different tile without closing.
+        n.reportMapTileTapped(first);
+        expect(container.read(mapProvincePanelProvider).overlayOpen, isTrue);
+
+        n.reportMapTileTapped(second);
+
+        final state = container.read(mapProvincePanelProvider);
+        expect(state.overlayOpen, isTrue);
+        expect(state.selectedTileKey, second);
+      },
+    );
+
     test('reopen via tile tap after close updates selection to a new tile', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -108,6 +130,22 @@ void main() {
         container.read(mapProvincePanelProvider).secondaryHighlightTileKey,
         secondary,
       );
+    });
+
+    test('reset clears overlay open state and both highlight keys', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final n = container.read(mapProvincePanelProvider.notifier);
+
+      n.reportMapTileTapped('oldWorld|p1|2|3');
+      n.setSecondaryHighlight('oldWorld|p1|4|5');
+
+      n.reset();
+
+      final state = container.read(mapProvincePanelProvider);
+      expect(state.overlayOpen, isFalse);
+      expect(state.selectedTileKey, isNull);
+      expect(state.secondaryHighlightTileKey, isNull);
     });
   });
 }
