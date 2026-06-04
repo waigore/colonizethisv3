@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -791,6 +789,11 @@ Future<void> e2eDismissTransientUi(
   perf?.timing(phaseName, sw.elapsed, meta: 'result=broad_sweep');
 }
 
+/// Pumps until [finder] matches at least one widget or [timeout] elapses,
+/// evaluating the finder before the first pump and ramping the pump interval
+/// via the shared [e2eNextIdlePollStepMs] doubling backoff (25 → 500 ms cap).
+/// Refs GitHub #2336 AC5 (adaptive polling) / Bottleneck 6 (single-source the
+/// poll-step ramp).
 Future<void> e2eWaitUntilFound(
   WidgetTester tester,
   Finder finder, {
@@ -813,7 +816,7 @@ Future<void> e2eWaitUntilFound(
       return;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   // Final check after the loop exits on the timeout edge: the most recent
   // pump may have made [finder] non-empty just as `sw.elapsed` crossed
@@ -856,8 +859,10 @@ Future<void> e2eWaitForNewGameEntry(
 }
 
 /// Pumps until [condition] returns true, evaluating [condition] before the
-/// first pump and using exponential backoff on pump intervals (same cap as
-/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper).
+/// first pump and ramping the pump interval via the shared
+/// [e2eNextIdlePollStepMs] doubling backoff (same 25 → 500 ms cap as
+/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper) / AC5 /
+/// Bottleneck 6 (single-source the poll-step ramp).
 Future<void> e2ePumpUntil(
   WidgetTester tester,
   bool Function() condition, {
@@ -874,7 +879,7 @@ Future<void> e2ePumpUntil(
       return;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   // Final check after the loop exits on the timeout edge: the most recent
   // pump may have flipped [condition] just as `sw.elapsed` crossed
@@ -965,6 +970,10 @@ Future<bool> e2ePumpUntilConditionOrIdle(
 // Bottleneck 6.
 
 /// Returns after the first [Finder] has at least one hit-testable match.
+///
+/// Evaluates the finders before the first pump and ramps the pump interval via
+/// the shared [e2eNextIdlePollStepMs] doubling backoff (25 → 500 ms cap). Refs
+/// GitHub #2336 AC5 / Bottleneck 6 (single-source the poll-step ramp).
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
   List<Finder> finders, {
@@ -993,7 +1002,7 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
       }
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   // Final check after the loop exits on the timeout edge: the most recent
   // pump may have made one of [finders] hit-testable just as `sw.elapsed`
