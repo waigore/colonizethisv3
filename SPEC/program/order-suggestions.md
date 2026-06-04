@@ -230,6 +230,17 @@ This ordering change is **gated**: for every ordinary player the feedstock set i
 
 ---
 
+## Feedstock bootstrap `castIron` waiver for level-0 `build_improvement` (Refs #2847 H8-extraction)
+
+When the feedstock-extraction gate is active and a Builder targets an **unimproved** feedstock resource tile, the order engine and work application use the **effective** material cost from `WorkOrderCostCalculator` (player-scoped), which may omit **cast iron** for the level-0 improvement while the stockpile holds enough **lumber** but not enough **cast iron** (see [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Improvement Build Costs (Builder) — H8 feedstock bootstrap). This makes feedstock-priority suggestions **affordable** on seed 42 where `gpFeedstockGateImprovementCostAffordableTurns` stayed zero solely because of the circular cast-iron dependency; it does not bypass visibility, probe budget, tech cap, or non-material validation gates.
+
+**Acceptance criteria**
+
+- Given the supplier-side feedstock gate active, stockpile `{lumber: 1, castIron: 0}`, and an unimproved `timber` tile as a visible `build_improvement` candidate, when `suggestWorkOrders` runs, then the emitted suggestion targets the `timber` tile (accepted under the waived cost).
+- Given the gate inactive and the same stockpile, when `suggestWorkOrders` runs for a lex-first `grain` tile, then no `build_improvement` suggestion is emitted if the player cannot afford `{lumber: 1, castIron: 1}` (negative control).
+
+---
+
 ## Selected-unit availability (`getAvailableWorkTargetsForUnit`)
 
 **Purpose:** Human-shell **per-unit** work availability (which work targets have ≥1 valid tile) without broad per-player `suggestWorkOrders` enumeration. Return type `AvailableWorkTargetsForUnit` holds `assignable`, optional `blockedReason`, and `validTileKeysByTarget` (only targets with non-empty tile sets).

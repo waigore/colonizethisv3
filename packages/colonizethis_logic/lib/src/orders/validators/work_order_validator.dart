@@ -371,7 +371,10 @@ class WorkOrderValidator extends StatefulValidator {
     required int improvementLevel,
     required int fortLevel,
     required int roadLevel,
-  }) => WorkOrderCostCalculator(_context.game).calculateCost(
+  }) => WorkOrderCostCalculator(
+    _context.game,
+    playerId: _context.playerId,
+  ).calculateCost(
     target,
     tileKey,
     improvementLevel: improvementLevel,
@@ -405,7 +408,10 @@ class WorkOrderValidator extends StatefulValidator {
   void _applyProjectedWorkCost(WorkOrder o) {
     if (_applyProjectedPurchaseLandCost(o)) return;
     if (_skipsProjectedCost(o.target)) return;
-    final costMap = WorkOrderCostCalculator(_context.game).calculateCost(
+    final costMap = WorkOrderCostCalculator(
+      _context.game,
+      playerId: _context.playerId,
+    ).calculateCost(
       o.target,
       o.targetTileKey,
       improvementLevel: _improvementLevelForCost(o),

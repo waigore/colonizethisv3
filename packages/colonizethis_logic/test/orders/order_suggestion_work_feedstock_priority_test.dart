@@ -1,5 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_logic/ai_api.dart'
+    show
+        feedstockBootstrapBuildImprovementCastIronWaived,
+        feedstockExtractionResourceIdsForPlayer;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -32,7 +35,7 @@ const _sellerWoolTile = 'oldWorld|gp2-p0|0|0';
 /// for [_supplierId] when [sellerOw] is below the conquest quota (the default).
 /// When [sellerOw] is at the quota, no peer needs the improvement input and the
 /// supplier gate is empty (negative control).
-Game _game({int sellerOw = 5}) {
+Game _game({int sellerOw = 5, int supplierCastIron = 0}) {
   const supplierOw = kObserverConquestMinOwProvincesPerGp;
   final provinces = <Province>[
     for (var i = 0; i < supplierOw; i++)
@@ -93,8 +96,12 @@ Game _game({int sellerOw = 5}) {
         displayName: 'Supplier',
         isHuman: false,
         treasury: 100000,
-        // Affordable build_improvement (level-0 cost {lumber: 1, castIron: 1}).
-        stockpile: const Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
+        stockpile: Stockpile(
+          quantities: {
+            'lumber': 10,
+            if (supplierCastIron > 0) 'castIron': supplierCastIron,
+          },
+        ),
       ),
       Player(
         id: _sellerId,
@@ -170,7 +177,10 @@ void main() {
         'supplier gate inactive (peer at quota): ordinary lexicographic '
         'ordering emits the grain tile (negative control)',
         () {
-          final game = _game(sellerOw: kObserverConquestMinOwProvincesPerGp);
+          final game = _game(
+            sellerOw: kObserverConquestMinOwProvincesPerGp,
+            supplierCastIron: 10,
+          );
           // Precondition: no peer needs the improvement input → gate empty.
           expect(
             feedstockExtractionResourceIdsForPlayer(game, _supplierId),
@@ -180,6 +190,24 @@ void main() {
           final improvements = _buildImprovementSuggestions(game);
           expect(improvements, isNotEmpty);
           expect(improvements.single.targetTileKey, _supplierGrainTile);
+        },
+      );
+
+      test(
+        'supplier with lumber only: feedstock build_improvement is accepted '
+        'under castIron waiver',
+        () {
+          final game = _game();
+          expect(
+            feedstockBootstrapBuildImprovementCastIronWaived(
+              game,
+              _supplierId,
+              _supplierTimberTile,
+            ),
+            isTrue,
+          );
+          final improvements = _buildImprovementSuggestions(game);
+          expect(improvements.single.targetTileKey, _supplierTimberTile);
         },
       );
 
