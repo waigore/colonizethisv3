@@ -399,25 +399,33 @@ fabric run and the production boost has nothing to convert. The seller then
 holds zero regiments indefinitely even though it can afford one (seed-42
 gp3 / gp5 / gp6 hold `fabric` for only ~2 of 100 turns).
 
-Under the **same** carve-out gate as the bootstrap bid
-(`_isBelowQuotaZeroNwLockRecoverySeller(game, playerId)` is `true`,
-`player.treasury >= cheapestRegimentBuildTreasuryCost()`, and
-`regimentCountForPlayer(game, playerId) == 0`), the planner withholds the
-build-input feedstock from its offer set: for every `peasant_levies` build
-input the projected stockpile is short of, the input commodities of every
-production recipe that outputs that build input are removed from the
-offer-`available` map. The reservation does not add any order — it only
-suppresses surplus offers for the feedstock commodities — so the retained
-feedstock accumulates across turns until a fabric recipe becomes feasible and
-the economy planner's boost runs it. It is self-clearing: once the build input
-lands in the stockpile (so the build input is no longer missing) or the GP owns
-a regiment, no feedstock is reserved and the seller resumes offering its
-surplus.
+The reservation is **treasury-independent** (Refs #2847 H8 production
+allocation): because the economy planner now produces `fabric` ahead of
+treasury recovery (economy-planner.md § Regiment build-input production
+priority § Treasury-independent staging), the feedstock must be retained even
+while the seller is still broke, otherwise the strong-cargo Path-F seller sells
+its `wool` / `cotton` every broke turn and the recipe never reaches a feasible
+run. Under the carve-out gate
+(`_isBelowQuotaZeroNwLockRecoverySeller(game, playerId)` is `true` and
+`regimentCountForPlayer(game, playerId) == 0`, **regardless of treasury**), the
+planner withholds the build-input feedstock from its offer set: for every
+`peasant_levies` build input the projected stockpile is short of, the input
+commodities of every production recipe that outputs that build input are removed
+from the offer-`available` map. The reservation does not add any order — it only
+suppresses surplus offers for the feedstock commodities, and spends no
+treasury — so the retained feedstock accumulates across turns until a fabric
+recipe becomes feasible and the economy planner's boost runs it. It is
+self-clearing: once the build input lands in the stockpile (so the build input
+is no longer missing) or the GP owns a regiment, no feedstock is reserved and
+the seller resumes offering its surplus. Treasury still gates the **bid** arms
+of the same carve-out (the bootstrap / feedstock / direct bids debit treasury on
+a match, so they fire only when `player.treasury >= cheapestRegimentBuildTreasuryCost()`).
 
 The reservation never weakens a healthy GP: it is gated to the below-quota
-zero-NW seller band (gp1 / gp2 are above quota), to the zero-regiment rebuild
-case (a seller already holding regiments keeps selling feedstock), and to a
-recovered treasury (a still-broke seller keeps selling for liquidity). The
+zero-NW seller band (gp1 / gp2 are above quota) and to the zero-regiment rebuild
+case (a seller already holding regiments keeps selling feedstock). Only the
+recipe feedstock (`wool` / `cotton`) is withheld; the broke seller keeps
+offering every other surplus commodity (grain, riches, etc.) for liquidity. The
 feedstock lookup is a pure function of the projected `Stockpile` and the static
 `RegimentEconomyCatalog` / `ProductionRecipesCatalog`; identical inputs yield
 identical offer sets.
@@ -437,20 +445,21 @@ and production are working (seed-42 gp5 / gp6 reach a feasible `fabric` run on
 zero regiments 15–20 turns).
 
 Under the **same** carve-out gate as the feedstock reservation
-(`_isBelowQuotaZeroNwLockRecoverySeller(game, playerId)` is `true`,
-`player.treasury >= cheapestRegimentBuildTreasuryCost()`, and
-`regimentCountForPlayer(game, playerId) == 0`), the planner therefore also
-withholds every `peasant_levies` build-input commodity
+(`_isBelowQuotaZeroNwLockRecoverySeller(game, playerId)` is `true` and
+`regimentCountForPlayer(game, playerId) == 0`, **regardless of treasury**), the
+planner therefore also withholds every `peasant_levies` build-input commodity
 (`RegimentEconomyCatalog.peasantLevies.buildInputs.keys`, i.e. `fabric`) from
-its offer-`available` map. The retention adds no order — it only removes the
-build input from the offer set — so the domestically produced `fabric`
-accumulates across turns until `suggestBuildOrders` can surface the cheapest
-regiment. It is self-clearing: the enclosing `regimentCount == 0` guard releases
-the retention the turn the regiment lands. Like the feedstock reservation it is
-scoped to the below-quota zero-NW zero-regiment recovered band, so the +6 OW
-baseline GPs (gp1 / gp2, above quota and holding regiments) never withhold
-`fabric`. The build-input lookup is a pure function of the static
-`RegimentEconomyCatalog`; identical inputs yield identical offer sets.
+its offer-`available` map. The retention adds no order and spends no treasury —
+it only removes the build input from the offer set — so the domestically
+produced `fabric` (staged ahead of treasury recovery per economy-planner.md
+§ Treasury-independent staging) accumulates across turns until the seller can
+afford and `suggestBuildOrders` can surface the cheapest regiment. It is
+self-clearing: the enclosing `regimentCount == 0` guard releases the retention
+the turn the regiment lands. Like the feedstock reservation it is scoped to the
+below-quota zero-NW zero-regiment band, so the +6 OW baseline GPs (gp1 / gp2,
+above quota and holding regiments) never withhold `fabric`. The build-input
+lookup is a pure function of the static `RegimentEconomyCatalog`; identical
+inputs yield identical offer sets.
 
 ##### Residual feedstock-acquisition dependency (disclosure)
 
@@ -470,11 +479,13 @@ feedstock is on hand.
 #### Acceptance criteria (H8-supply)
 
 - Given a below-quota zero-NW lock-recovery seller with
-  `player.treasury >= cheapestRegimentBuildTreasuryCost()`,
   `regimentCountForPlayer(game, playerId) == 0`, a projected stockpile missing
   the cheapest regiment's `fabric` build input, and surplus `wool` (or
   `cotton`) it would otherwise offer, when `runTreasuryPlanner` runs, then it
-  emits **no** `TradeOrderType.offer` for that feedstock commodity.
+  emits **no** `TradeOrderType.offer` for that feedstock commodity — both when
+  `player.treasury >= cheapestRegimentBuildTreasuryCost()` and when
+  `player.treasury < cheapestRegimentBuildTreasuryCost()` (the reservation is
+  treasury-independent so the feedstock stages while the seller is still broke).
 - Given an otherwise identical lock-recovery seller that already holds at least
   one `fabric`, when `runTreasuryPlanner` runs, then it emits its surplus
   `wool` / `cotton` offers as normal (the feedstock reservation self-clears once
@@ -488,11 +499,13 @@ feedstock is on hand.
   it emits those surplus offers as normal (the reservation is scoped to
   below-quota zero-NW sellers).
 - Given a below-quota zero-NW lock-recovery seller with
-  `player.treasury >= cheapestRegimentBuildTreasuryCost()`,
-  `regimentCountForPlayer(game, playerId) == 0`, and surplus `fabric` (the
+  `regimentCountForPlayer(game, playerId) == 0` and surplus `fabric` (the
   cheapest regiment's build input) it would otherwise offer, when
   `runTreasuryPlanner` runs, then it emits **no** `TradeOrderType.offer` for
-  `fabric` (the produced build input is retained for the regiment build).
+  `fabric` — both when `player.treasury >= cheapestRegimentBuildTreasuryCost()`
+  and when `player.treasury < cheapestRegimentBuildTreasuryCost()` (the produced
+  build input is retained for the regiment build, staged while the seller is
+  still broke).
 - Given an otherwise identical lock-recovery seller with
   `regimentCountForPlayer(game, playerId) > 0` and surplus `fabric`, when
   `runTreasuryPlanner` runs, then it emits its surplus `fabric` offer as normal

@@ -918,6 +918,52 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// diagnostic and confirming `gpRebuildReadyNoBuildMissingInputTurns` falls for
 /// gp5 / gp6 before expecting OW gain to move.
 ///
+/// ### H8 treasury-independent production allocation (this slice, Refs #2847)
+///
+/// This slice de-gates the regiment build-input **production boost**
+/// (economy-planner.md § Regiment build-input production priority
+/// § Treasury-independent staging) and the offer-side **retention** /
+/// **feedstock reservation** (treasury-planner.md) from
+/// `player.treasury >= cheapestRegimentBuildTreasuryCost()`. The phase planner
+/// already sets `forceCheapestRegimentBuild` (arm A) regardless of treasury "so
+/// the rebuild trap cannot stick", but the prior treasury clause re-imposed
+/// that trap on the *input*: the cheap build input was only produced on the
+/// rare recovered turn, never staged ahead of it, so the multi-turn
+/// `feedstock → fabric → build` chain could not finish inside the brief
+/// recovery window. Production / retention now stage the input while broke
+/// (they spend no treasury); only the market **bids** and the actual build
+/// order remain treasury-gated.
+///
+/// **Effect on the seed-42 surface (post-fix refresh, 100-turn local run):**
+///
+///   * **+6 OW baseline preserved** — gp1 = +6, gp2 = +6, `gpRegimentPeak`
+///     5 / 5 unchanged. No failing GP regressed below its prior gain; the
+///     turn-100 OW gate aggregate stays gp3 / gp4 / gp5 / gp6 = +2 / +1 / +2 / +1
+///     (gp5 / gp6 swap +1 / +2 → +2 / +1, a deterministic reshuffle, net zero).
+///   * **Staging mechanism now works** — gp4 holds `fabric` 61 of 100 turns
+///     (`gpCheapestRegimentInputsInStockpileTurns` gp4 = 61) where the prior
+///     treasury-gated boost banked it on only a handful, confirming the input
+///     is staged ahead of treasury and consumed into builds
+///     (`gpMilitaryBuildOrdersEmitted` gp4 = 4, gp5 / gp6 = 3 / 4).
+///
+/// **Re-localization (binding constraint after this slice):** fabric production
+/// is no longer the gp5 / gp6 bottleneck. `gpRebuildReadyNoBuildMissingInputTurns`
+/// stays 7 / 11 for gp5 / gp6 **not** because fabric is unproducible but because
+/// each turn the GP loses a regiment to its peer war it re-enters the
+/// missing-input window before the next staged `fabric` lands:
+/// `gpRegimentTurnsAtZero` = 15 / 20 for gp5 / gp6 while they *do* build
+/// 3 regiments each (`gpRegimentPeak` 3 / 3). The constraint has therefore moved
+/// to **peer-war regiment attrition** (hypotheses H2 / H4: the gp3↔gp4 and
+/// gp5↔gp6 mutual peer-war lock) — the failing GPs rebuild but cannot hold or
+/// grow regiments faster than the peer war strips them. gp3 remains a separate
+/// **feedstock-extraction** residual (`gpFeedstockInStockpileTurns` = 1 despite
+/// `gpRebuildReadyNoBuildMissingInputTurns` = 29): its civilian-work feedstock
+/// gate is still treasury-gated (deliberately out of scope for this slice), so
+/// gp3 holds no `wool` / `cotton` to convert. The next slices should target the
+/// peer-war attrition exit for gp5 / gp6 and de-gate the feedstock-extraction
+/// civilian-work boost for gp3 — not the fabric production / offer side, which
+/// is now treasury-independent.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project

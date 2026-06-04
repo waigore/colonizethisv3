@@ -4,8 +4,6 @@ library;
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     hide cheapestRegimentBuildTreasuryCost;
-import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
-import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -13,12 +11,15 @@ import 'package:colonizethis_test/test.dart';
 
 const _topology = MapTopology(nodes: [], edges: []);
 
-Game _regimentRebuildProductionGame({required int treasury}) {
+Game _regimentRebuildProductionGame({
+  required int treasury,
+  bool hasRegiment = false,
+}) {
   return Game(
     id: 'g-h8-production',
-    worldState: const WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+      oldWorld: const RegionData(
         provinces: [
           Province(
             id: 'oldWorld|p0',
@@ -32,8 +33,17 @@ Game _regimentRebuildProductionGame({required int treasury}) {
           ),
         ],
       ),
-      newWorld: RegionData(),
-      armies: [],
+      newWorld: const RegionData(),
+      armies: [
+        if (hasRegiment)
+          const Army(
+            id: 'army-gp1-field',
+            ownerId: 'gp1',
+            regionId: 'oldWorld',
+            stationedProvinceId: 'oldWorld|p0',
+            regimentUnitIds: ['reg-1'],
+          ),
+      ],
     ),
     players: [
       Player(
@@ -270,9 +280,13 @@ void main() {
     );
 
     test(
-      'forceCheapestRegimentBuild does not apply when treasury is below the '
-      'regiment threshold',
+      'forceCheapestRegimentBuild stages fabric even when treasury is below '
+      'the regiment threshold (Refs #2847 H8 production allocation)',
       () {
+        // Treasury-independent staging: the build input is produced ahead of
+        // treasury recovery so it is on hand the moment treasury crosses the
+        // cost. Production spends no treasury, so the broke turn is exactly
+        // when the seller must build up the input.
         final game = _regimentRebuildProductionGame(treasury: threshold - 1);
         final view = buildPlayerView(game, _topology, 'gp1');
 
@@ -291,10 +305,65 @@ void main() {
             ProductionRecipesCatalog.fabricFromWool.id,
             ProductionRecipesCatalog.fabricFromCotton.id,
           }),
-          isEmpty,
+          isNotEmpty,
           reason:
-              'without recovered treasury the H8 boost must not fire even when '
-              'the EXPAND directive is set',
+              'A zero-regiment GP on the EXPAND rebuild directive must stage the '
+              'cheapest regiment build input even while broke; production spends '
+              'no treasury, so the input is banked for when treasury recovers.',
+        );
+      },
+    );
+
+    test(
+      'no H8 production boost once the GP already holds a regiment '
+      '(negative control — +6 baseline GPs unaffected)',
+      () {
+        // A regiment-holding GP is past the rebuild trap, so the staging boost
+        // must not fire. Compare fabric labour against the same seed with the
+        // boost-eligible (zero-regiment) game to prove the regiment is the only
+        // differing input that suppresses the boost.
+        final withRegiment = _regimentRebuildProductionGame(
+          treasury: threshold,
+          hasRegiment: true,
+        );
+        final withRegimentPlan = runEconomyPlanner(
+          game: withRegiment,
+          view: buildPlayerView(withRegiment, _topology, 'gp1'),
+          config: config,
+          seeds: seeds,
+          phasePlan: _expandForceRegimentBuildPlan(
+            forceCheapestRegimentBuild: true,
+          ),
+        );
+
+        final zeroRegiment = _regimentRebuildProductionGame(treasury: threshold);
+        final zeroRegimentPlan = runEconomyPlanner(
+          game: zeroRegiment,
+          view: buildPlayerView(zeroRegiment, _topology, 'gp1'),
+          config: config,
+          seeds: seeds,
+          phasePlan: _expandForceRegimentBuildPlan(
+            forceCheapestRegimentBuild: true,
+          ),
+        );
+
+        int fabricLabour(EconomyPlan plan) {
+          final fabricIds = {
+            ProductionRecipesCatalog.fabricFromWool.id,
+            ProductionRecipesCatalog.fabricFromCotton.id,
+          };
+          return plan.productionAssignments
+              .where((a) => fabricIds.contains(a.recipeId))
+              .fold<int>(0, (sum, a) => sum + a.assignedLabour);
+        }
+
+        expect(
+          fabricLabour(withRegimentPlan),
+          lessThanOrEqualTo(fabricLabour(zeroRegimentPlan)),
+          reason:
+              'Holding a regiment must not increase fabric labour; the '
+              'zero-regiment path is the only one that receives the H8 staging '
+              'boost.',
         );
       },
     );

@@ -149,9 +149,26 @@ EconomyPlan runEconomyPlanner({
           stockpile.quantityOf(entry.key) < entry.value)
         entry.key,
   };
+  // Refs #2847 § H8 production allocation: the boost stages the cheapest
+  // regiment's build input (`fabric`) whenever the EXPAND rebuild directive is
+  // active for a zero-regiment GP that is short the input — **independent of
+  // treasury**. The phase planner already sets `forceCheapestRegimentBuild`
+  // (arm A: `regimentCount == 0` + invadable OW frontier) regardless of
+  // treasury "so the rebuild trap cannot stick" (expand_phase_planner.dart),
+  // but the prior `player.treasury >= cheapestRegimentBuildTreasuryCost()`
+  // clause re-imposed that exact trap on the *input*: the failing seed-42 GPs
+  // sit below the regiment cost ~97 of 100 turns, so the build input was only
+  // ever produced on the rare recovered turn — never staged ahead of it, so
+  // the multi-turn feedstock -> fabric -> build chain could not finish inside
+  // the brief recovery window. Producing the cheap input ahead of treasury is
+  // harmless (labour is still capped, no treasury is spent) and self-clears the
+  // moment the input lands or a regiment is owned (`regimentCount == 0` guard),
+  // so the +6 OW baseline GPs (gp1 / gp2, holding regiments) are unaffected.
+  // The actual build order still requires the treasury cost via the
+  // orchestrator's build pipeline. SPEC/ai/economy-planner.md § Regiment
+  // build-input production priority.
   final regimentBuildInputProductionBoost =
       (expandEconomy.forceCheapestRegimentBuild &&
-          player.treasury >= cheapestRegimentBuildTreasuryCost() &&
           regimentCountForPlayer(game, view.playerId) == 0 &&
           missingRegimentBuildInputs.isNotEmpty) ||
       domesticImprovementInputOutputs.isNotEmpty;

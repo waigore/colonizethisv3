@@ -126,21 +126,28 @@ void main() {
       },
     );
 
-    test('seller still below the regiment threshold keeps offering fabric', () {
-      // The retention shares the bootstrap gate: a broke seller is not yet
-      // rebuilding, so it keeps selling its surplus for liquidity.
-      final game = _lockRecoverySellerGame(
-        treasury: threshold - 1,
-        fabricHeld: surplusFabric,
-      );
-      expect(
-        _fabricOffers(_run(game)),
-        isNotEmpty,
-        reason:
-            'A still-broke seller keeps selling surplus for liquidity; the '
-            'retention only applies once treasury recovers.',
-      );
-    });
+    test(
+      'still-broke zero-regiment seller withholds fabric (treasury-independent '
+      'staging, Refs #2847 H8 production allocation)',
+      () {
+        // The economy planner now produces fabric ahead of treasury recovery,
+        // so the offer side must retain it even while broke — otherwise the
+        // staged input is sold back every broke turn and never accumulates to
+        // the build cost.
+        final game = _lockRecoverySellerGame(
+          treasury: threshold - 1,
+          fabricHeld: surplusFabric,
+        );
+        expect(
+          _fabricOffers(_run(game)),
+          isEmpty,
+          reason:
+              'A broke zero-regiment lock-recovery seller stages the build '
+              'input: the produced fabric is retained, not sold, so it banks '
+              'toward the regiment build cost.',
+        );
+      },
+    );
 
     test('seller that already holds a regiment keeps offering fabric', () {
       final game = _lockRecoverySellerGame(
