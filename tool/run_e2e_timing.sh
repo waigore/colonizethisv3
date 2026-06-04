@@ -15,6 +15,10 @@ ROOT="${CT_REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 RUNS="${1:-3}"
 OUT_DIR="${E2E_TIMING_OUT:-$ROOT/.cursor/e2e-timing}"
 mkdir -p "$OUT_DIR"
+# Absolutize before the later `cd "$ROOT/app"` so a relative E2E_TIMING_OUT
+# (e.g. `./timing_logs`, as the header documents) still resolves when the
+# summary and per-run logs are written from the app/ working directory.
+OUT_DIR="$(cd "$OUT_DIR" && pwd)"
 
 _snap_lld_path_for_flutter_root() {
   local flutter_root="$1"
@@ -41,6 +45,51 @@ _ensure_user_snap_ld_lld() {
   mkdir -p "$(dirname "$snap_lld")"
   ln -sf "$llvm18" "$snap_lld" 2>/dev/null || return 1
   [[ -x "$snap_lld" ]]
+}
+
+# Snap Flutter links the Linux desktop bundle with the engine toolchain bundled
+# inside the read-only snap mount (e.g.
+# `/snap/flutter/current/usr/lib/llvm-10/bin/ld.lld`), NOT the writable SDK
+# clone under `~/snap/flutter/common/flutter` that `flutter --version --machine`
+# reports as `flutterRoot`. The SDK-clone check above can pass while the build
+# still fails opaquely mid-link because flutter_tools searches the snap-bundled
+# directory. Echo the snap-toolchain `ld.lld` path so preflight can check the
+# location the build actually consults.
+_snap_toolchain_lld() {
+  local flutter_bin="$1"
+  local flutter_root resolved
+  flutter_root="$(_flutter_root "$flutter_bin")"
+  resolved="$(readlink -f "$(command -v "$flutter_bin" 2>/dev/null || echo "$flutter_bin")" 2>/dev/null || true)"
+  if [[ "$resolved" != /snap/* && "$flutter_root" != "${HOME}/snap/flutter"* && "$flutter_root" != /snap/* ]]; then
+    return 1
+  fi
+  local dir="/snap/flutter/current/usr/lib/llvm-10/bin"
+  if [[ ! -d "$dir" ]]; then
+    return 1
+  fi
+  echo "${dir}/ld.lld"
+}
+
+_ensure_snap_toolchain_ld_lld() {
+  local snap_lld="$1"
+  local dir
+  dir="$(dirname "$snap_lld")"
+  # flutter_tools accepts either `ld.lld` or `ld` in this directory.
+  if [[ -e "$snap_lld" || -e "${dir}/ld" ]]; then
+    return 0
+  fi
+  local llvm18="/usr/lib/llvm-18/bin/ld.lld"
+  if [[ ! -e "$llvm18" ]]; then
+    return 1
+  fi
+  if ln -sf "$llvm18" "$snap_lld" 2>/dev/null && [[ -e "$snap_lld" ]]; then
+    return 0
+  fi
+  if sudo -n true 2>/dev/null && sudo ln -sf "$llvm18" "$snap_lld" 2>/dev/null \
+    && [[ -e "$snap_lld" ]]; then
+    return 0
+  fi
+  return 1
 }
 
 _flutter_root() {
@@ -119,6 +168,20 @@ _preflight_e2e_host() {
         exit 1
       fi
     fi
+  fi
+  local snap_toolchain_lld
+  if snap_toolchain_lld="$(_snap_toolchain_lld "$FLUTTER")"; then
+    if ! _ensure_snap_toolchain_ld_lld "$snap_toolchain_lld"; then
+      echo "ERROR: snap Flutter links the Linux desktop bundle with ld.lld at" >&2
+      echo "  ${snap_toolchain_lld}, but it is missing and the snap mount is read-only." >&2
+      echo "  flutter_tools searches this snap-bundled toolchain dir during the link" >&2
+      echo "  step; the writable SDK-clone flutterRoot is NOT consulted, so the build" >&2
+      echo "  otherwise fails opaquely mid-link with 'Failed to find any of [ld.lld, ld]'." >&2
+      echo "  Fix (once, requires sudo): sudo ln -sf /usr/lib/llvm-18/bin/ld.lld ${snap_toolchain_lld}" >&2
+      echo "  Or set FLUTTER_BIN to a non-snap Flutter (e.g. FLUTTER_BIN=~/development/flutter/bin/flutter)." >&2
+      exit 1
+    fi
+    echo "Verified snap Flutter toolchain ld.lld at ${snap_toolchain_lld}" >&2
   fi
   if [[ -z "${DISPLAY:-}" ]] && command -v xvfb-run >/dev/null; then
     echo "DISPLAY unset; tests will run under xvfb-run -a" >&2
