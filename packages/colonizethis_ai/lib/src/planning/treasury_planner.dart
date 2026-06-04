@@ -414,30 +414,39 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   required Map<CommodityId, int> available,
 }) {
   if (!isLockRecoverySeller ||
-      rawTreasury < threshold ||
       regimentCountForPlayer(game, playerId) != 0) {
     return;
   }
-  // Refs #2847 § H8-extraction build-input retention: a recovered zero-regiment
-  // lock-recovery seller produces the cheapest regiment's build input
-  // (`fabric`) domestically via the economy planner's regiment build-input
-  // production boost (economy-planner.md § Regiment build-input production
-  // priority). Withhold that produced build input from the offer set for the
-  // whole rebuild carve-out so the seller retains the `fabric` it needs to
-  // build the regiment instead of selling it back into the world market as
-  // surplus — the same retention the feedstock loop below already applies to
-  // the `wool` / `cotton` feedstock. Without this the boosted recipe's output
-  // is offered every turn (the seller is a strong-cargo Path-F seller, so any
-  // surplus is sold urgently) and `fabric` never accumulates to the
-  // `peasant_levies` build cost, leaving the recovered seller trapped at zero
-  // regiments. The enclosing `regimentCount == 0` guard self-clears the
-  // reservation the turn the regiment lands, and the gate only fires for a
-  // below-quota zero-NW lock-recovery seller, so the +6 OW baseline GPs
+  // Refs #2847 § H8 production allocation: offer-side input staging is
+  // **treasury-independent**. The economy planner now produces the cheapest
+  // regiment's build input (`fabric`) and its recipe feedstock ahead of
+  // treasury recovery (economy-planner.md § Regiment build-input production
+  // priority), so the offer side must retain that staged input even while the
+  // seller is still broke — otherwise the strong-cargo Path-F seller sells the
+  // freshly produced `fabric` (and its `wool` / `cotton` feedstock) back into
+  // the world market every turn and it never accumulates to the
+  // `peasant_levies` build cost, leaving the seller trapped at zero regiments.
+  // Both reservations only suppress surplus offers (no order is added, no
+  // treasury is spent), are scoped to the below-quota zero-NW zero-regiment
+  // band, and self-clear the turn a regiment lands (enclosing guard) or the
+  // build input is on hand (feedstock self-clear), so the +6 OW baseline GPs
   // (gp1 / gp2) are never affected. SPEC/ai/treasury-planner.md
-  // § Produced build-input retention.
+  // § Produced build-input retention + § Build-input feedstock reservation.
   for (final buildInputId
       in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
     available.remove(buildInputId);
+  }
+  for (final feedstockId in _regimentBuildInputFeedstockIds(projected)) {
+    available.remove(feedstockId);
+  }
+  // Refs #2847 § H8 bootstrap bids: market bids spend treasury (the buyer's
+  // notional is debited on a match), so the build-input / feedstock / direct
+  // bid arms below require a **recovered** treasury. A still-broke seller stays
+  // offers-only (minus the staged input reservations above) until it crosses
+  // the regiment cost. SPEC/ai/treasury-planner.md § Lock-recovery seller
+  // regiment build-input bootstrap.
+  if (rawTreasury < threshold) {
+    return;
   }
   // Refs #2847 H8-extraction: improvement-input prerequisite. The seller's
   // routed Builder cannot extract its owned feedstock tile until it holds the
@@ -468,9 +477,6 @@ void _applyLockRecoverySellerRegimentRebuildBids({
       carryForwardBids: carryForwardBids,
       need: need,
     );
-  }
-  for (final feedstockId in _regimentBuildInputFeedstockIds(projected)) {
-    available.remove(feedstockId);
   }
 }
 

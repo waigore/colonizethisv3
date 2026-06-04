@@ -133,21 +133,27 @@ void main() {
       },
     );
 
-    test('seller still below the regiment threshold keeps offering wool', () {
-      // The reservation shares the bootstrap gate: a broke seller is not yet
-      // rebuilding, so it must keep selling its surplus for liquidity.
-      final game = _lockRecoverySellerGame(
-        treasury: threshold - 1,
-        fabricHeld: 0,
-      );
-      expect(
-        _woolOffers(_run(game)),
-        isNotEmpty,
-        reason:
-            'A still-broke seller keeps selling surplus feedstock for '
-            'liquidity; the reservation only applies once treasury recovers.',
-      );
-    });
+    test(
+      'still-broke zero-regiment seller withholds wool (treasury-independent '
+      'staging, Refs #2847 H8 production allocation)',
+      () {
+        // The economy planner produces fabric ahead of treasury recovery, so
+        // the feedstock must be retained even while broke — otherwise the
+        // wool / cotton is sold every broke turn and the fabric recipe never
+        // reaches a feasible run.
+        final game = _lockRecoverySellerGame(
+          treasury: threshold - 1,
+          fabricHeld: 0,
+        );
+        expect(
+          _woolOffers(_run(game)),
+          isEmpty,
+          reason:
+              'A broke zero-regiment lock-recovery seller stages feedstock: the '
+              'wool is retained so it accumulates to a feasible fabric run.',
+        );
+      },
+    );
 
     test('seller already holding the fabric input keeps offering wool', () {
       final game = _lockRecoverySellerGame(
