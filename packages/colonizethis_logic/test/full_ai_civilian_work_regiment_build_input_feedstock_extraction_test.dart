@@ -12,7 +12,7 @@ Game _belowQuotaZeroNwSellerGame({
   required int owOwned,
   required int treasury,
   Stockpile stockpile = const Stockpile(),
-  List<Unit> extraUnits = const [],
+  List<Army> armies = const [],
   Map<String, String> resourceByTileKey = const {
     _tileGrain: 'grain',
     _tileWool: 'wool',
@@ -30,8 +30,9 @@ Game _belowQuotaZeroNwSellerGame({
     id: 'g',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: provinces, units: extraUnits),
+      oldWorld: RegionData(provinces: provinces),
       newWorld: const RegionData(),
+      armies: armies,
       resourceByTileKey: resourceByTileKey,
     ),
     players: [
@@ -93,12 +94,13 @@ void main() {
       final game = _belowQuotaZeroNwSellerGame(
         owOwned: 5,
         treasury: cheapestRegimentBuildTreasuryCost(),
-        extraUnits: [
-          Unit(
-            id: 'r1',
-            type: 'peasant_levies',
+        armies: const [
+          Army(
+            id: 'army_gp1',
             ownerId: _playerId,
-            locationProvinceId: 'oldWorld|p0',
+            regionId: kRegionOldWorld,
+            stationedProvinceId: 'oldWorld|p0',
+            regimentUnitIds: ['r1'],
           ),
         ],
       );

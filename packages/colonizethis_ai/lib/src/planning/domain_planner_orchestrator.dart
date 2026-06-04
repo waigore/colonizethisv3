@@ -413,12 +413,18 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
     }
   }
+  final feedstockExtractionActive =
+      regimentBuildInputFeedstockExtractionResourceIds(
+        ctx.game,
+        ctx.nationId,
+      ).isNotEmpty;
   final runFullAiCivilianWork =
       developPhase ||
       ctx.primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
       colonialPressure ||
-      snapshot.colonial.newWorldProvincesOwned > 0;
+      snapshot.colonial.newWorldProvincesOwned > 0 ||
+      feedstockExtractionActive;
   _log.d(
     'work eval nationId=${ctx.nationId} workThreshold=$workThreshold '
     'domainWeights.economy=${domainWeights.economy} primaryGoal=${ctx.primaryGoal} '

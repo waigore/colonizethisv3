@@ -116,6 +116,17 @@ The boost re-prioritises **existing** build-improvement suggestions; it does not
 - Given the gate is active and a Builder has both an unimproved `wool` resource tile and an unimproved non-feedstock (`grain`) resource tile as `build_improvement` suggestions, when `selectFullAiCivilianWorkOrders` runs, then it selects the `wool` tile; given the same fixture but the gate inactive (e.g. at quota), it selects by the ordinary build-improvement score ordering.
 - Given identical inputs, when the feedstock-extraction gate and `selectFullAiCivilianWorkOrders` run twice, then both runs return identical results (determinism).
 
+### Orchestrator civilian-work force-on (Refs #2847 H8-extraction wiring)
+
+The feedstock-extraction score boost in `selectFullAiCivilianWorkOrders` has no effect when `_runEconomyDomainPlanners` skips the Full-AI civilian work pass because `domainWeights.economy < workThreshold` and `primaryGoal != StrategicGoal.expand`. Below-quota lock-recovery sellers in EXPAND often carry `StrategicGoal.conquer`, so the orchestrator must force `runFullAiCivilianWork` whenever `regimentBuildInputFeedstockExtractionResourceIds(game, playerId)` is non-empty — mirroring the DEVELOP / colonial-pressure / NW-owned force-on clauses in `domain_planner_orchestrator.dart`.
+
+The H8-extraction gate uses `regimentCountForPlayerFromArmies` (`packages/colonizethis_logic/lib/src/world/army_ids.dart`), exported via `ai_api.dart`, so the zero-regiment predicate matches the treasury / economy H8 bootstrap gates (`regimentCountForPlayer` in `colonizethis_ai`).
+
+#### Acceptance criteria (H8-extraction orchestrator wiring)
+
+- Given a below-quota zero-NW lock-recovery seller with an active feedstock-extraction gate, `primaryGoal == StrategicGoal.conquer`, and `domainWeights.economy < workThreshold`, when `_runEconomyDomainPlanners` runs, then `runFullAiCivilianWork` is `true` and at least one emitted `WorkOrder` targets an unimproved feedstock resource tile when such a suggestion exists.
+- Given an otherwise identical GP whose feedstock-extraction gate is inactive (e.g. already holds `fabric`), when `_runEconomyDomainPlanners` runs under the same conquer / low-economy-weight inputs, then `runFullAiCivilianWork` follows the legacy threshold gate only (negative control).
+
 ---
 
 ## Integration

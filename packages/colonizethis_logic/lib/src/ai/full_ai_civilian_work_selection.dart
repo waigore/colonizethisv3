@@ -6,9 +6,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/build_rail_work_rules.dart';
+import '../world/army_ids.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
-import '../world/unit_lookup.dart';
 
 /// Idle civilian (no new work) for Full AI observability.
 class FullAiCivilianWorkIdle {
@@ -391,17 +391,6 @@ int _buildImprovementWorkScore(
   return score;
 }
 
-int _regimentCountForPlayer(Game game, String playerId) {
-  var count = 0;
-  for (final unit in allUnitsFromWorld(game.worldState)) {
-    if (unit.ownerId != playerId) continue;
-    if (RegimentEconomyCatalog.byId.containsKey(unit.type)) {
-      count++;
-    }
-  }
-  return count;
-}
-
 int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
   return game.worldState
       .provincesForRegion(kRegionNewWorld)
@@ -441,7 +430,9 @@ Set<String> regimentBuildInputFeedstockExtractionResourceIds(
   if (player.treasury < cheapestRegimentBuildTreasuryCost()) {
     return const <String>{};
   }
-  if (_regimentCountForPlayer(game, playerId) != 0) return const <String>{};
+  if (regimentCountForPlayerFromArmies(game, playerId) != 0) {
+    return const <String>{};
+  }
   final ow = oldWorldProvinceCountOwnedBy(game, playerId);
   if (ow < 2 || !isBelowObserverConquestQuota(ow)) return const <String>{};
   if (_newWorldProvinceCountOwnedBy(game, playerId) != 0) {
