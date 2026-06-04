@@ -116,6 +116,105 @@ Game _game({int sellerOw = 5, int supplierCastIron = 0}) {
   );
 }
 
+// Co-availability fixture: the supplier owns an unimproved `timber` tile AND
+// an unimproved `iron` tile (both feedstock of `castIron`). The timber tile key
+// sorts lexicographically before the iron tile key, so ordinary feedstock-
+// priority ordering would emit the timber tile. Only the co-availability
+// ordering (least-held feedstock first) promotes the `iron` tile when the
+// supplier already holds `timber` but no `iron`.
+const _coAvailTimberTile = 'oldWorld|gp1-s0|1|0';
+const _coAvailIronTile = 'oldWorld|gp1-s0|2|0';
+
+/// Two-player world whose supplier-side feedstock gate is active and that owns
+/// an unimproved `timber` tile and an unimproved `iron` tile. The supplier
+/// holds [supplierTimberHeld] `timber` and [supplierIronHeld] `iron`.
+Game _coAvailGame({int supplierTimberHeld = 13, int supplierIronHeld = 0}) {
+  const supplierOw = kObserverConquestMinOwProvincesPerGp;
+  const sellerOw = 5;
+  final provinces = <Province>[
+    for (var i = 0; i < supplierOw; i++)
+      Province(
+        id: 'oldWorld|gp1-s$i',
+        regionId: kRegionOldWorld,
+        ownerId: _supplierId,
+      ),
+    for (var i = 0; i < sellerOw; i++)
+      Province(
+        id: 'oldWorld|gp2-p$i',
+        regionId: kRegionOldWorld,
+        ownerId: _sellerId,
+      ),
+  ];
+  final builder = Unit(
+    id: 'b1',
+    type: kUnitTypeBuilder,
+    ownerId: _supplierId,
+    locationProvinceId: 'oldWorld|gp1-s0',
+    tileKey: _coAvailTimberTile,
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(provinces: provinces, units: [builder]),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {
+      _supplierId: {
+        _coAvailTimberTile: 'fullyVisible',
+        _coAvailIronTile: 'fullyVisible',
+      },
+    },
+    // The iron tile is a mineral and must be prospected before a Builder may
+    // `build_improvement` it (work_order_target_prechecks.dart). Pre-prospect it
+    // so this fixture isolates the build_improvement co-availability ordering.
+    playerProspectedTiles: const {
+      _supplierId: {_coAvailIronTile},
+    },
+    tileKeysByRegionAndProvince: const {
+      kRegionOldWorld: {
+        'oldWorld|gp1-s0': [_coAvailTimberTile, _coAvailIronTile],
+        'oldWorld|gp2-p0': [_sellerWoolTile],
+      },
+    },
+    resourceByTileKey: const {
+      _coAvailTimberTile: 'timber',
+      _coAvailIronTile: 'iron',
+      _sellerWoolTile: 'wool',
+    },
+    tileState: TileMapState(
+      improvementByTile: const {
+        _coAvailTimberTile: 0,
+        _coAvailIronTile: 0,
+        _sellerWoolTile: 0,
+      },
+    ),
+  );
+  return Game(
+    id: 'g',
+    worldState: world,
+    players: [
+      Player(
+        id: _supplierId,
+        displayName: 'Supplier',
+        isHuman: false,
+        treasury: 100000,
+        stockpile: Stockpile(
+          quantities: {
+            'lumber': 10,
+            if (supplierTimberHeld > 0) 'timber': supplierTimberHeld,
+            if (supplierIronHeld > 0) 'iron': supplierIronHeld,
+          },
+        ),
+      ),
+      Player(
+        id: _sellerId,
+        displayName: 'Seller',
+        isHuman: false,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+        stockpile: const Stockpile(quantities: {'lumber': 1}),
+      ),
+    ],
+  );
+}
+
 MapTopology _topology(Game game) {
   return MapTopology(
     nodes: [
@@ -221,6 +320,63 @@ void main() {
             .toList();
         expect(first, equals(second));
         expect(first.single, _supplierTimberTile);
+      });
+    },
+  );
+
+  group(
+    'suggestWorkOrders feedstock co-availability ordering '
+    '(Refs #2847 H8-extraction feedstock co-availability)',
+    () {
+      test(
+        'supplier holds timber but no iron: the emitted build_improvement '
+        'suggestion targets the least-held iron tile, not the lex-first timber '
+        'tile',
+        () {
+          final game = _coAvailGame(supplierTimberHeld: 13, supplierIronHeld: 0);
+          // Precondition: the supplier-side feedstock gate covers timber + iron.
+          expect(
+            feedstockExtractionResourceIdsForPlayer(game, _supplierId),
+            containsAll(<String>['timber', 'iron']),
+          );
+
+          final improvements = _buildImprovementSuggestions(game);
+          expect(improvements, isNotEmpty);
+          // The single emitted suggestion is the least-held feedstock (iron),
+          // even though the timber tile sorts lexicographically first.
+          expect(
+            improvements.single.targetTileKey,
+            _coAvailIronTile,
+            reason:
+                'co-availability ordering must surface the missing co-feedstock '
+                '(iron) ahead of the already-held timber tile',
+          );
+        },
+      );
+
+      test(
+        'supplier holds equal feedstock (zero of each): lexicographic tie-break '
+        'emits the timber tile (negative control)',
+        () {
+          final game = _coAvailGame(supplierTimberHeld: 0, supplierIronHeld: 0);
+          final improvements = _buildImprovementSuggestions(game);
+          expect(improvements, isNotEmpty);
+          // Held timber == held iron == 0 → tie-break by tile key, and the
+          // timber tile key sorts before the iron tile key.
+          expect(improvements.single.targetTileKey, _coAvailTimberTile);
+        },
+      );
+
+      test('co-availability ordering is deterministic across repeated passes', () {
+        final game = _coAvailGame(supplierTimberHeld: 13, supplierIronHeld: 0);
+        final first = _buildImprovementSuggestions(game)
+            .map((o) => o.targetTileKey)
+            .toList();
+        final second = _buildImprovementSuggestions(game)
+            .map((o) => o.targetTileKey)
+            .toList();
+        expect(first, equals(second));
+        expect(first.single, _coAvailIronTile);
       });
     },
   );
