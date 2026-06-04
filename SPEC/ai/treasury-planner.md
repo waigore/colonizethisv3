@@ -605,12 +605,13 @@ computed `offerPriority`. This mirrors the bid-side
 and bypasses no affordability rule (the matcher still debits the buyer's treasury
 per filled unit at phase 13).
 
-> **Residual (Refs #2847 H8, separate from this rule):** the bootstrap
+> **castIron residual (Refs #2847 H8) — closed by § Lock-recovery seller
+> improvement-input domestic production (below):** the bootstrap
 > `build_improvement` needs **both** `lumber` and `castIron`. On seed 42 no Great
 > Power ever offers a `castIron` surplus (it is consumed by Old World military
-> builds), so even with offer-tier alignment the `castIron` bid has zero market
-> supply to cross. Closing the full H8 deadlock requires a `castIron` supply or
-> production source, not a further matching change.
+> builds), so even with offer-tier alignment a direct `castIron` bid has zero
+> market supply to cross. Rather than a matching change, the seller produces
+> `castIron` domestically (see the next subsection).
 
 #### Acceptance criteria (H8-extraction)
 
@@ -658,6 +659,66 @@ per filled unit at phase 13).
   because releasing a surplus is selling, not speculating).
 - Given identical inputs, when `runTreasuryPlanner` runs twice on the
   improvement-input bootstrap path, then both runs return identical
+  `List<TradeOrder>` outputs (determinism).
+
+### Lock-recovery seller improvement-input domestic production (Refs #2847 H8-extraction castIron residual)
+
+The improvement-input bid above acquires `lumber` from the market (suppliers
+release a `lumber` surplus), but `castIron` has no world-market supply on seed 42
+— every Great Power that could offer it consumes its `castIron` in Old World
+military builds. A direct `castIron` bid therefore never fills. The locked seller
+cannot extract `castIron`'s feedstock domestically either, because extracting any
+resource tile itself costs the `lumber` + `castIron` it is missing (the same
+deadlock). The non-deadlocking escape is to buy the **production feedstock** of
+`castIron` (`timber` + `iron`, raw materials suppliers do release) and produce
+`castIron` from it via `castIron_from_timber_iron_coal`
+(`ProductionRecipesCatalog`).
+
+`kDomesticProductionImprovementInputIds` (`treasury_planner.dart`) lists the
+improvement-inputs the seller produces domestically (`{castIron}`). The
+improvement-input bid path (above) acquires inputs in two ordered passes so the
+single `bidTypeCap` slot (baseline `1`) is never spent on a raw-material
+feedstock bid while an essential, market-supplied input is still missing (the
+suggester admits bids in alphabetical, cap-bounded order):
+
+1. **Directly-buyable inputs first.** Any missing improvement-input **not** in
+   the domestic-production set (for example `lumber`, which suppliers release as
+   surplus) is bid directly. While any such direct bid is queued the function
+   returns immediately, so `lumber` is acquired before the `castIron` feedstock.
+2. **Domestic-production feedstock.** Once every directly-buyable input is on
+   hand, for each still-missing domestic-production input the planner bids that
+   input's **production feedstock** (per-run recipe input quantities — `timber`
+   + `iron` for `castIron` — netted against on-hand stock and carry-forward
+   bids), selecting the lowest-`id` recipe producing the input for determinism.
+   A still-missing domestic-production input keeps the fabric/feedstock bootstrap
+   suppressed even when its feedstock is already on hand (production is pending);
+   the direct `castIron` bid is never emitted (the market cannot supply it). The economy planner then produces `castIron` from
+that feedstock — [economy-planner.md](economy-planner.md) § Regiment build-input
+production priority extends its production boost to the
+`kDomesticProductionImprovementInputIds` outputs whenever the improvement-input
+gate is active. No affordability rule is bypassed: the matcher debits treasury per
+filled feedstock unit, and the work-order validator still gates the eventual
+`build_improvement`. `lumber` keeps its direct market bid (it is not in the
+domestic-production set). The path is scoped to the same recovered, zero-regiment,
+feedstock-tile-owning lock-recovery seller gate, so a healthy Great Power
+(`gp1` / `gp2`) is never affected and the +6 Old World conquest baseline is
+preserved by construction.
+
+#### Acceptance criteria (H8-extraction castIron production)
+
+- Given a below-quota zero-NW lock-recovery seller with recovered treasury, zero
+  regiments, an owned unimproved `wool` resource tile, zero `castIron`, and zero
+  `timber` and zero `iron`, when `runTreasuryPlanner` runs for that seller, then
+  it emits at least one `TradeOrderType.bid` for a `castIron` production
+  feedstock commodity (`timber` or `iron`) and emits **no** `TradeOrderType.bid`
+  for `castIron` itself (the market structurally lacks `castIron` supply).
+- Given an otherwise identical lock-recovery seller that already holds the
+  `timber` + `iron` needed for one `castIron_from_timber_iron_coal` run, when
+  `runTreasuryPlanner` runs, then it emits **no** `castIron` feedstock bid and
+  **no** direct `castIron` bid that turn (production is pending), while any other
+  missing improvement-input (`lumber`) is still bid directly.
+- Given identical inputs, when `runTreasuryPlanner` runs twice on the
+  castIron-production feedstock path, then both runs return identical
   `List<TradeOrder>` outputs (determinism).
 
 ---

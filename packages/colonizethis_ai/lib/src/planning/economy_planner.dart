@@ -121,11 +121,32 @@ EconomyPlan runEconomyPlanner({
       : ExpandEconomyPlan.defaultPlan;
   final missingRegimentBuildInputs =
       _missingCheapestRegimentBuildInputIds(stockpile);
+  // Refs #2847 § H8-extraction castIron residual: when the improvement-input
+  // gate is active (a recovered, zero-regiment lock-recovery seller that owns
+  // an unimproved feedstock tile), the level-0 `build_improvement` material
+  // includes `castIron`, which the world market structurally cannot supply on
+  // seed 42. The seller must produce it domestically, so the producible
+  // improvement-inputs in `kDomesticProductionImprovementInputIds` join the
+  // regiment-build-input production boost. The gate self-clears for any healthy
+  // GP (gp1/gp2), so the +6 OW baseline is unaffected.
+  final improvementInputCost =
+      regimentBuildInputFeedstockImprovementInputCost(game, view.playerId);
+  final domesticImprovementInputOutputs = <String>{
+    for (final entry in improvementInputCost.entries)
+      if (kDomesticProductionImprovementInputIds.contains(entry.key) &&
+          stockpile.quantityOf(entry.key) < entry.value)
+        entry.key,
+  };
   final regimentBuildInputProductionBoost =
-      expandEconomy.forceCheapestRegimentBuild &&
-      player.treasury >= cheapestRegimentBuildTreasuryCost() &&
-      regimentCountForPlayer(game, view.playerId) == 0 &&
-      missingRegimentBuildInputs.isNotEmpty;
+      (expandEconomy.forceCheapestRegimentBuild &&
+          player.treasury >= cheapestRegimentBuildTreasuryCost() &&
+          regimentCountForPlayer(game, view.playerId) == 0 &&
+          missingRegimentBuildInputs.isNotEmpty) ||
+      domesticImprovementInputOutputs.isNotEmpty;
+  final boostedBuildInputOutputs = <String>{
+    ...missingRegimentBuildInputs,
+    ...domesticImprovementInputOutputs,
+  };
 
   final assignments = _allocateLabour(
     stockpile: stockpile,
@@ -135,7 +156,7 @@ EconomyPlan runEconomyPlanner({
     seeds: seeds,
     militaryRebuildCrisis: militaryRebuildCrisis,
     regimentBuildInputProductionBoost: regimentBuildInputProductionBoost,
-    missingRegimentBuildInputIds: missingRegimentBuildInputs,
+    missingRegimentBuildInputIds: boostedBuildInputOutputs,
   );
 
   final cargoPref = _cargoPreference(

@@ -589,6 +589,49 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// then (downstream) `gpFeedstockGateImprovementCostAffordableTurns` rise for
 /// gp3 / gp5 / gp6.
 ///
+/// ## S7-D refresh (captured 2026-06-04 on merged `dev` @ `168d03df`, post-#3241
+///     castIron-domestic-production slice) — castIron-feedstock localization
+///
+/// #3241 made the locked seller buy `lumber` directly and **produce** `castIron`
+/// domestically from its production feedstock (`timber` + `iron`), because no GP
+/// offers a `castIron` surplus. The binding metric is unchanged: OW gain gp1/gp2
+/// = +6 PASS, gp3 = +2, gp4 = +1, gp5 = +1, gp6 = +2 FAIL, and
+/// `gpFeedstockGateImprovementCostAffordableTurns` stays **0 / 0 / 0** for
+/// gp3 / gp5 / gp6 — the seller never holds both `lumber` **and** `castIron` at
+/// once. The new castIron-feedstock counters localize the residual **decisively**:
+///
+///   * **The seller bids castIron's feedstock.** `gpCastIronFeedstockBidsEmitted`
+///     = **15 / 0 / 26 / 27** for gp3 / gp4 / gp5 / gp6 — the #3241 Pass-2 bid for
+///     `timber` + `iron` fires on the rebuild-ready turns.
+///   * **But nobody offers it.** `gpCastIronFeedstockOffersEmitted` = **0** for
+///     *every* GP — `timber` / `iron` are absent from the supplier release set,
+///     and (verified out-of-band by temporarily adding them) gp1 / gp2 hold **no
+///     true surplus** of either: they extract `timber` / `iron` only to feed
+///     their own `castIron` production, so the surplus
+///     (`projectedQty − consumption − inputs`) is zero.
+///   * **So the bids never fill and castIron is never produced.**
+///     `gpCastIronFeedstockDealsAsBuyer` = **0** and
+///     `gpCastIronProductionAssignedTurns` = **0** for every GP. The seller holds
+///     `lumber` (`gpLumberHeldAtTurn99` = 1 / 1 / 1) but never any `castIron`
+///     (`gpCastIronHeldAtTurn99` = 0), so the level-0 `build_improvement`
+///     (1 lumber + 1 castIron) is never affordable.
+///
+/// Conclusion: the H8-extraction deadlock is now pinned to a **structural castIron
+/// scarcity** — every tile improvement (including extracting `timber` / `iron`)
+/// costs `castIron`, but no GP holds or can release a `castIron` (or `timber` /
+/// `iron`) surplus, so the locked seller can neither buy nor produce its first
+/// `castIron`. Adding `timber` / `iron` to the supplier release set alone does
+/// **not** help (no holder has surplus to release). The next slice must create a
+/// genuine first-castIron source for the locked seller — e.g. an affluent
+/// supplier *over-producing* `castIron` (or its `timber` / `iron` feedstock) for
+/// release when a lock-recovery seller needs it, or relaxing the level-0
+/// feedstock-extraction improvement's `castIron` requirement for the first
+/// bootstrap extraction — **not** another supply-set membership or order-matching
+/// tweak (offers are structurally absent, not mismatched). Verify by re-running
+/// this diagnostic and confirming `gpCastIronFeedstockDealsAsBuyer` /
+/// `gpCastIronProductionAssignedTurns`, then
+/// `gpFeedstockGateImprovementCostAffordableTurns`, rise for gp3 / gp5 / gp6.
+///
 /// ## How to refresh
 ///
 /// Skipped by default (long-running, ~4 minutes on the project
@@ -929,6 +972,62 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
 
+      // Refs #2847 H8-extraction castIron residual localization (post-#3241).
+      // The level-0 `build_improvement` material is `lumber + castIron`. #3241
+      // makes a lock-recovery seller buy `lumber` directly and produce
+      // `castIron` domestically from its production feedstock (timber + iron).
+      // The affordability gate
+      // (`gpFeedstockGateImprovementCostAffordableTurns`) requires BOTH inputs
+      // on hand simultaneously, yet it stays flat zero. These read-only
+      // counters split the castIron sub-chain so the next slice can target the
+      // exact stage, in order:
+      //   (a) the seller bids castIron's production feedstock at all
+      //       (`gpCastIronFeedstockBidsEmitted`);
+      //   (b) that feedstock is even *offered* on the world market
+      //       (`gpCastIronFeedstockOffersEmitted` flat zero => no releasable
+      //       supply — `timber` / `iron` are absent from the supplier release
+      //       set, so the affluent GPs never offer them);
+      //   (c) the bids *fill* (`gpCastIronFeedstockDealsAsBuyer`);
+      //   (d) the economy planner ever runs the castIron recipe
+      //       (`gpCastIronProductionAssignedTurns`); and
+      //   (e) the resulting per-commodity holdings at turn 99
+      //       (`gpLumberHeldAtTurn99` / `gpCastIronHeldAtTurn99`) — a non-zero
+      //       lumber with zero castIron confirms the production-feedstock break.
+      // Pure observation — no production logic changes — so the (freely
+      // tunable) counts can move as later supply slices land.
+      final castIronRecipes =
+          <ProductionRecipe>[
+            for (final recipe in ProductionRecipesCatalog.all)
+              if (recipe.outputCommodityId == 'castIron') recipe,
+          ]..sort((a, b) => a.id.compareTo(b.id));
+      final castIronProductionRecipe = castIronRecipes.isEmpty
+          ? null
+          : castIronRecipes.first;
+      final castIronFeedstockIds = <String>{
+        ...?castIronProductionRecipe?.inputQuantities.keys,
+      };
+      final castIronRecipeIds = <String>{
+        for (final recipe in castIronRecipes) recipe.id,
+      };
+      final castIronFeedstockBidsEmitted = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronFeedstockOffersEmitted = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronFeedstockDealsAsBuyer = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronProductionAssignedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final lumberHeldAtTurn99 = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronHeldAtTurn99 = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+
       // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
       // The post-#3235 surface shows the world market never supplies fabric
       // (`gpRegimentInputDealsAsBuyer == 0`) and the affluent-supplier release
@@ -1265,6 +1364,17 @@ void main() {
                   (rebuildReadyNoBuildMissingInputTurns[gpId] ?? 0) + 1;
             }
           }
+          // Refs #2847 H8-extraction castIron residual: did the economy planner
+          // assign a domestic castIron recipe this turn (only possible when the
+          // recipe's timber + iron feedstock is on hand for >= 1 full run)?
+          final plan = fullAi.economyPlansByPlayerId[gpId];
+          if (plan != null &&
+              plan.productionAssignments.any(
+                (a) => castIronRecipeIds.contains(a.recipeId),
+              )) {
+            castIronProductionAssignedTurns[gpId] =
+                (castIronProductionAssignedTurns[gpId] ?? 0) + 1;
+          }
         }
 
         // Refs #2924 Step 0 — count submitted trade orders per GP
@@ -1286,6 +1396,10 @@ void main() {
                 improvementInputOffersEmitted[gpId] =
                     (improvementInputOffersEmitted[gpId] ?? 0) + 1;
               }
+              if (castIronFeedstockIds.contains(order.commodityId)) {
+                castIronFeedstockOffersEmitted[gpId] =
+                    (castIronFeedstockOffersEmitted[gpId] ?? 0) + 1;
+              }
             } else if (order.type == TradeOrderType.bid) {
               tradeBidCount[gpId] = (tradeBidCount[gpId] ?? 0) + 1;
               if (regimentInputCommodityIds.contains(order.commodityId)) {
@@ -1295,6 +1409,10 @@ void main() {
               if (improvementInputCommodityIds.contains(order.commodityId)) {
                 improvementInputBidsEmitted[gpId] =
                     (improvementInputBidsEmitted[gpId] ?? 0) + 1;
+              }
+              if (castIronFeedstockIds.contains(order.commodityId)) {
+                castIronFeedstockBidsEmitted[gpId] =
+                    (castIronFeedstockBidsEmitted[gpId] ?? 0) + 1;
               }
             }
           }
@@ -1342,6 +1460,10 @@ void main() {
                 improvementInputDealsAsBuyer[buyer] =
                     (improvementInputDealsAsBuyer[buyer] ?? 0) + 1;
               }
+              if (castIronFeedstockIds.contains(deal.commodityId)) {
+                castIronFeedstockDealsAsBuyer[buyer] =
+                    (castIronFeedstockDealsAsBuyer[buyer] ?? 0) + 1;
+              }
             }
           }
         }
@@ -1375,6 +1497,10 @@ void main() {
                     0,
                     (sum, id) => sum + player.stockpile.quantityOf(id),
                   );
+              lumberHeldAtTurn99[gpId] = player.stockpile.quantityOf('lumber');
+              castIronHeldAtTurn99[gpId] = player.stockpile.quantityOf(
+                'castIron',
+              );
             }
           }
         }
@@ -1431,6 +1557,13 @@ void main() {
         'gpImprovementInputBidsEmitted': improvementInputBidsEmitted,
         'gpImprovementInputDealsAsBuyer': improvementInputDealsAsBuyer,
         'gpImprovementInputHeldAtTurn99': improvementInputHeldAtTurn99,
+        'castIronFeedstockCommodityIds': castIronFeedstockIds.toList()..sort(),
+        'gpCastIronFeedstockOffersEmitted': castIronFeedstockOffersEmitted,
+        'gpCastIronFeedstockBidsEmitted': castIronFeedstockBidsEmitted,
+        'gpCastIronFeedstockDealsAsBuyer': castIronFeedstockDealsAsBuyer,
+        'gpCastIronProductionAssignedTurns': castIronProductionAssignedTurns,
+        'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
+        'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,
         'fabricFeedstockCommodityIds': fabricFeedstockIds.toList()..sort(),
         'gpFeedstockExtractionGateActiveTurns':
             feedstockExtractionGateActiveTurns,
