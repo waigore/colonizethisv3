@@ -281,6 +281,13 @@ mixin _GameMapAreaStatePart2
                             );
                           },
                         ),
+                        // Players bar paints below the news feed card so an
+                        // open feed card is never obscured by player chips
+                        // (mockup z-order: news card 7 > players bar 5;
+                        // issue #2861 M4). Keep this child earlier in the
+                        // stack than the feed cards below.
+                        if (!isNarrow && widget.game.victory == null)
+                          GameMapPlayersBar(game: widget.game),
                         if (!isNarrow)
                           Consumer(
                             builder: (context, ref, _) {
@@ -316,8 +323,6 @@ mixin _GameMapAreaStatePart2
                               narrow: true,
                             ),
                           ),
-                        if (!isNarrow && widget.game.victory == null)
-                          GameMapPlayersBar(game: widget.game),
                       ],
                     ),
                   ),
