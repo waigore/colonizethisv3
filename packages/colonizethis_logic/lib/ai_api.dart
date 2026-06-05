@@ -28,6 +28,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         selectFullAiCivilianWorkOrders,
         selfLockRecoverySellerNeededProducibleImprovementInputs,
         sellerImprovementInputFeedstockExtractionResourceIds,
+        sellerNeedsImprovementInputFeedstockTileAcquisition,
         supplierImprovementInputFeedstockExtractionResourceIds;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'
