@@ -68,3 +68,61 @@ bool hasIdleExplorerUnit(Game game, String playerId) {
   }
   return false;
 }
+
+/// True iff [playerId] owns at least one **idle** Explorer unit
+/// (`currentWork == null`) standing in the **same Old World province** as one
+/// of the player's owned **unprospected mineral** feedstock tiles in
+/// [feedstockIds] (Refs #2847 § H8-extraction Old World mineral feedstock
+/// prospect localization).
+///
+/// Localizes the residual `iron`-extraction break one step further than
+/// [hasIdleExplorerUnit]: the prior counter proved a supplier holds an idle
+/// Explorer on every gate-active turn yet never prospects its Old World `iron`
+/// tile. A `prospect` work order is only generated for an Explorer that can
+/// reach the feedstock tile — the supplier's own province (`prospect`
+/// candidate generation in `order_suggestion_work_explorer.dart` requires the
+/// unit's province / single-hop reach) — and the Old World feedstock
+/// reservation (`full_ai_civilian_work_selection.dart`) reserves the
+/// lexicographically-smallest idle Explorer **without repositioning it**. This
+/// predicate therefore splits the break:
+///
+///   * **true on gate turns** → an idle Explorer is already co-located with the
+///     unprospected feedstock province, so a `prospect` candidate *should*
+///     generate; the residual is the candidate-generation gate (mineral-tile
+///     eligibility / validator) or selection ranking, not positioning.
+///   * **false while [hasIdleExplorerUnit] is true** → the player's idle
+///     Explorers are never positioned on the feedstock province, so no
+///     `prospect` candidate generates and the reserved Explorer idles; the
+///     residual is reservation positioning (the reservation never moves an
+///     Explorer onto the Old World feedstock province).
+///
+/// Read-only and deterministic over `(game, playerId, feedstockIds)`.
+bool ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
+  final feedstockProvinceIds = <String>{};
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    if (!kMineralResourceIds.contains(entry.value)) continue;
+    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
+    if (prospected.contains(entry.key)) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    feedstockProvinceIds.add(provinceId);
+  }
+  if (feedstockProvinceIds.isEmpty) return false;
+  for (final unit in allUnitsFromWorld(ws)) {
+    if (unit.ownerId != playerId) continue;
+    if (!isExplorerUnit(unit.type)) continue;
+    if (unit.currentWork != null) continue;
+    if (feedstockProvinceIds.contains(unit.locationProvinceId)) return true;
+  }
+  return false;
+}

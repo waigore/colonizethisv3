@@ -6,7 +6,10 @@ library;
 
 export 'src/ai/ai_control.dart' show isAiControlled;
 export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart'
-    show hasIdleExplorerUnit, ownsProspectedOldWorldMineralFeedstockTile;
+    show
+        hasIdleExplorerUnit,
+        ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
+        ownsProspectedOldWorldMineralFeedstockTile;
 export 'src/ai/full_ai_civilian_work_selection.dart'
     show
         FullAiCivilianWorkIdle,
@@ -51,11 +54,8 @@ export 'src/economy/sea_transport.dart' show cargoHoldsForHomeFleet;
 export 'src/economy/trade_cargo_capacity.dart'
     show tradeCargoCapacityForGreatPower;
 export 'src/economy/world_market/treasury_bid_budget.dart'
-    show
-        carryForwardBidNotionalByPlayer,
-        effectiveMarketPriceForCommodityId;
-export 'src/turn/pending_treasury_costs.dart'
-    show pendingTreasuryCostsForTurn;
+    show carryForwardBidNotionalByPlayer, effectiveMarketPriceForCommodityId;
+export 'src/turn/pending_treasury_costs.dart' show pendingTreasuryCostsForTurn;
 export 'src/economy/worker_economy.dart' show effectiveLabourForWorkers;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
