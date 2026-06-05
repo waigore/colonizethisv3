@@ -18,6 +18,8 @@ import 'package:colonizethis_logic/ai_api.dart'
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         regimentBuildInputFeedstockExtractionResourceIds,
+        colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates,
+        suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile,
         supplierImprovementInputFeedstockExtractionResourceIds;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -1503,6 +1505,21 @@ void main() {
       //     tile sits on non-prospectable terrain); equal non-zero counts
       //     instead point **downstream** of eligibility (validator material
       //     cost / visibility precheck or selection ranking).
+      //   * `supplierIdleExplorerColocatedSuggestedProspectTileTurns` — the
+      //     **real** `suggestWorkOrders` pass actually emits a `prospect`
+      //     candidate for the co-located mineral-eligible feedstock tile. This
+      //     is the next gate past terrain eligibility: it runs the live
+      //     generation pass (province visibility, move-leg validation, and the
+      //     incremental-validator material-cost / visibility precheck all live
+      //     inside it) rather than re-deriving one gate. Comparing it against
+      //     `supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns`
+      //     resolves the final fork: a non-zero count proves the prospect is
+      //     generated + validator-accepted, so the residual is **selection
+      //     ranking** (the accepted `prospect` loses to a competing `explore`
+      //     in `selectFullAiCivilianWorkOrders`); a flat zero while the
+      //     mineral-eligible count is non-zero localizes the residual **inside
+      //     generation** (the visibility / move-leg / validator gates), not
+      //     ranking.
       //
       // Read-only; the (freely tunable) counts can move as later slices land.
       final supplierIdleExplorerPresentTurns = <String, int>{
@@ -1515,6 +1532,14 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
       final supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final supplierIdleExplorerColocatedSuggestedProspectTileTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final supplierIdleExplorerColocatedFeedstockProspectValidatorTurns =
           <String, int>{for (final gpId in gpIds) gpId: 0};
 
       // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
@@ -1826,6 +1851,46 @@ void main() {
                       0) +
                   1;
             }
+            if (suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile(
+              game,
+              topo,
+              view,
+              gpId,
+              castIronFeedstockIds,
+              tileMap,
+            )) {
+              supplierIdleExplorerColocatedSuggestedProspectTileTurns[gpId] =
+                  (supplierIdleExplorerColocatedSuggestedProspectTileTurns[gpId] ??
+                      0) +
+                  1;
+            }
+            final intraPassGates =
+                colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates(
+                  game: game,
+                  topology: topo,
+                  view: view,
+                  playerId: gpId,
+                  feedstockIds: castIronFeedstockIds,
+                  tileMapByRegion: tileMap,
+                );
+            if (intraPassGates.provinceFoggedVisibility) {
+              supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns[gpId] =
+                  (supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns[gpId] ??
+                      0) +
+                  1;
+            }
+            if (intraPassGates.bundledMoveLeg) {
+              supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns[gpId] =
+                  (supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns[gpId] ??
+                      0) +
+                  1;
+            }
+            if (intraPassGates.validatorAccepted) {
+              supplierIdleExplorerColocatedFeedstockProspectValidatorTurns[gpId] =
+                  (supplierIdleExplorerColocatedFeedstockProspectValidatorTurns[gpId] ??
+                      0) +
+                  1;
+            }
           }
           if (player != null) {
             final holdsFeedstock = fabricFeedstockIds.any(
@@ -2124,6 +2189,14 @@ void main() {
             supplierIdleExplorerColocatedFeedstockTileTurns,
         'gpSupplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns':
             supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns,
+        'gpSupplierIdleExplorerColocatedSuggestedProspectTileTurns':
+            supplierIdleExplorerColocatedSuggestedProspectTileTurns,
+        'gpSupplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns':
+            supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns,
+        'gpSupplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns':
+            supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns,
+        'gpSupplierIdleExplorerColocatedFeedstockProspectValidatorTurns':
+            supplierIdleExplorerColocatedFeedstockProspectValidatorTurns,
         'gpCastIronFeedstockHeldAtTurn99': castIronFeedstockHeldAtTurn99,
         'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
         'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,

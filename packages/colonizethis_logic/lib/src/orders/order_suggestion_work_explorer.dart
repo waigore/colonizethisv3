@@ -240,10 +240,18 @@ void _addExplorerWorkSuggestionsForUnit({
       );
     }
   }
+  // Own-province prospect probes are exempt from the shared per-pass budget
+  // ([consumeSharedBudget] false) and must not be capped at
+  // [kMaxWorkProbeAttemptsPerUnitPerTarget] when other accepted mineral tiles in
+  // the same province sort earlier — otherwise a co-located feedstock `iron`
+  // tile never reaches the suggestion list (Refs #2847).
+  final maxTileProbes = consumeSharedBudget
+      ? kMaxWorkProbeAttemptsPerUnitPerTarget
+      : sortedTiles.length;
   var probeAttempts = 0;
   for (final tk in sortedTiles) {
     probeAttempts++;
-    if (probeAttempts > kMaxWorkProbeAttemptsPerUnitPerTarget) {
+    if (probeAttempts > maxTileProbes) {
       break;
     }
     if (prospected.contains(tk)) continue;
