@@ -354,6 +354,63 @@ bool sellerNeedsImprovementInputFeedstockTileAcquisition(
   return !_ownsFeedstockResourceTile(game, playerId, feedstock);
 }
 
+/// The deterministic ascending-sorted list of **Old World** province ids the
+/// flagged seller [playerId] could acquire (by conquest or purchasable land) to
+/// gain an improvement-input feedstock tile it does not currently own (Refs
+/// #2847 § H8-extraction seller feedstock-tile acquisition target selection).
+///
+/// Selection contract that builds directly on the acquisition-residual detector
+/// [sellerNeedsImprovementInputFeedstockTileAcquisition]: where the detector
+/// answers *whether* a seller must acquire a feedstock tile, this answers
+/// *which Old World provinces host the feedstock demand it could acquire*.
+/// Returns the empty list unless the acquisition residual is active for
+/// [playerId] (so it is empty for every healthy / above-quota / regiment-holding
+/// / NW-owning GP, and the +6 Old World conquest baseline GPs are never
+/// flagged). When active, it returns every Old World province **not** owned by
+/// [playerId] that hosts at least one tile whose resource is in the seller's
+/// improvement-input feedstock demand set
+/// ([_sellerImprovementInputFeedstockResourceIds]), sorted ascending by province
+/// id for a deterministic candidate ordering.
+///
+/// **Topology-free by construction.** Province adjacency, reachability, and
+/// war-cost ranking are the province of the later acquisition-wiring slice,
+/// which intersects this candidate list with the conquest / purchasable-land
+/// target sets it derives from the combined topology. This contract isolates the
+/// *which feedstock-bearing Old World provinces exist to acquire* question
+/// deterministically, so the wiring slice gates on it without re-deriving
+/// feedstock demand. New World provinces are excluded: the failing sellers hold
+/// zero New World land and the turn-100 gate is Old World conquest, so a New
+/// World feedstock tile cannot close it.
+///
+/// Province ownership and region are derived from the tile key
+/// (`Unit.provinceIdFromTileKey` / `Unit.regionIdFromTileKey`) and
+/// `tryGetProvince`, so the scan works from `WorldState.resourceByTileKey`
+/// alone. Pure and deterministic over `(game, playerId)` and the static
+/// `ProductionRecipesCatalog`; changes no behaviour on its own, performs no I/O
+/// and no logging, and adds no `ai_victory_config.dart` constant.
+List<String> sellerFeedstockTileAcquisitionTargetProvinceIdsSorted(
+  Game game,
+  String playerId,
+) {
+  if (!sellerNeedsImprovementInputFeedstockTileAcquisition(game, playerId)) {
+    return const <String>[];
+  }
+  final feedstock = _sellerImprovementInputFeedstockResourceIds(game, playerId);
+  final ws = game.worldState;
+  final provinceIds = <String>{};
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstock.contains(entry.value)) continue;
+    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId == playerId) continue;
+    provinceIds.add(provinceId);
+  }
+  final sorted = provinceIds.toList()..sort();
+  return List<String>.unmodifiable(sorted);
+}
+
 /// Union of the seller-side feedstock gates and the supplier-side gate for
 /// [playerId] (Refs #2847 § H8-extraction):
 ///
