@@ -33,22 +33,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _gp3 = 'gp3';
 const String _minor1 = 'minor1';
 const String _minor2 = 'minor2';
 const String _minor3 = 'minor3';
-
-int _cheapestRegimentBuildCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
 
 /// Game scaffold supporting both the "adjacent minor" and "sole GP
 /// blocker" arms. Old World provinces, players, minors, and unit-bearing
@@ -108,22 +100,6 @@ AIWorldSnapshot _expandSnapshot({
     colonial: const ColonialSummary(),
     economy: const EconomySummary(),
     relations: const {},
-  );
-}
-
-/// Build a Home Army for [ownerId] containing [regimentCount] dummy
-/// regiment unit ids. Matches the `regimentCountForPlayer` walk that
-/// counts `army.regimentUnitIds.length` summed across owned armies.
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: 'oldWorld',
-    stationedProvinceId: 'oldWorld|capital_$ownerId',
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
   );
 }
 
@@ -264,8 +240,8 @@ void main() {
         ],
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
       );
       final snapshot = _expandSnapshot(
@@ -411,8 +387,8 @@ void main() {
       final game = _expandGame(
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
       );
       final snapshot = _expandSnapshot(
@@ -444,8 +420,8 @@ void main() {
       final game = _expandGame(
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 3),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 3),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
       );
       final snapshot = _expandSnapshot(
@@ -478,8 +454,8 @@ void main() {
       final game = _expandGame(
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
       );
       final snapshot = _expandSnapshot(
@@ -507,8 +483,8 @@ void main() {
           Province(id: 'oldWorld|gp2_0', regionId: 'oldWorld', ownerId: _gp2),
         ],
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
       );
       final snapshot = _expandSnapshot(
@@ -538,8 +514,8 @@ void main() {
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
       );
       final snapshot = _expandSnapshot(
@@ -567,9 +543,9 @@ void main() {
           Province(id: 'oldWorld|gp3_0', regionId: 'oldWorld', ownerId: _gp3),
         ],
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
-          _homeArmyWithRegiments(_gp3, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp3, 5),
         ],
       );
       final snapshot = _expandSnapshot(
@@ -614,7 +590,7 @@ void main() {
     test('treasury exactly at cheapest regiment cost -> qualifies', () {
       // Boundary pin: the gate is `treasury < cheapest`, so `==` must
       // pass (a regression flipping `<` to `<=` would surface here).
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _expandGame(
         players: [
           Player(
@@ -698,8 +674,8 @@ void main() {
         turnNumber: 50,
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
         diplomaticHistoryEvents: const [
           DiplomaticEvent(
@@ -749,8 +725,8 @@ void main() {
         turnNumber: 50,
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
         diplomaticHistoryEvents: const [
           DiplomaticEvent(
@@ -802,8 +778,8 @@ void main() {
         turnNumber: 50,
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
         diplomaticHistoryEvents: const [
           DiplomaticEvent(
@@ -851,8 +827,8 @@ void main() {
         turnNumber: 50,
         oldWorldProvinces: owProvinces,
         armies: [
-          _homeArmyWithRegiments(_gp1, 5),
-          _homeArmyWithRegiments(_gp2, 5),
+          homeArmyWithRegimentsAtCapital(_gp1, 5),
+          homeArmyWithRegimentsAtCapital(_gp2, 5),
         ],
         diplomaticHistoryEvents: const [
           DiplomaticEvent(
@@ -944,8 +920,8 @@ void main() {
           MinorNation(id: _minor3, displayName: 'M3'),
         ],
         armies: [
-          _homeArmyWithRegiments(_gp1, 2),
-          _homeArmyWithRegiments(_gp2, 2),
+          homeArmyWithRegimentsAtCapital(_gp1, 2),
+          homeArmyWithRegimentsAtCapital(_gp2, 2),
         ],
       );
       final snapshot = _expandSnapshot(

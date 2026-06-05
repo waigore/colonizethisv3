@@ -37,18 +37,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
-
-int _cheapestRegimentBuildCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
 
 /// Build a `Stockpile` whose [pendingRichesTreasuryDelta] equals
 /// approximately [targetCash] (cash from spices at `spicesBasePrice = 50`).
@@ -113,22 +105,6 @@ AIWorldSnapshot _expandSnapshot({
   );
 }
 
-/// Home Army for [ownerId] containing [regimentCount] dummy regiment
-/// unit ids; matches the [regimentCountForPlayer] walk used by the
-/// planner.
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: 'oldWorld',
-    stationedProvinceId: 'oldWorld|capital_$ownerId',
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
-
 /// Construct a [Player] with explicit treasury and stockpile so each
 /// test can pin effective-treasury behaviour against arm B / arm C
 /// boundaries without depending on default `Player` construction
@@ -160,7 +136,7 @@ void main() {
         // a forceRebuild=true plan for an at-quota GP.
         final game = _expandGame(
           players: [_player(treasury: 0)],
-          armies: [_homeArmyWithRegiments(_gp1, 0)],
+          armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
         );
         final snapshot = _expandSnapshot(
           oldWorldProvincesOwned: 10,
@@ -197,10 +173,10 @@ void main() {
       // / `needRegimentsToExpand` legacy condition collapsed into the
       // phase planner). Treasury is set well above the cheapest cost
       // so arm C does not fire, isolating the forceRebuild flag.
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _expandGame(
         players: [_player(treasury: cheapest * 10)],
-        armies: [_homeArmyWithRegiments(_gp1, 0)],
+        armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
       );
       final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
       expect(
@@ -219,10 +195,10 @@ void main() {
       // The "hasInvadable" gate on arm A prevents force-rebuild when
       // there is no OW frontier to invade. Treasury > cheapest ensures
       // arm C also stays off.
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _expandGame(
         players: [_player(treasury: cheapest * 10)],
-        armies: [_homeArmyWithRegiments(_gp1, 0)],
+        armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
       );
       final snapshot = _expandSnapshot(invadableOw: const []);
       expect(
@@ -243,10 +219,10 @@ void main() {
       // exists. Force-rebuild must fire so the orchestrator builds the
       // missing regiments before EXPAND declare-war scoring picks the
       // next target.
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _expandGame(
         players: [_player(treasury: cheapest)],
-        armies: [_homeArmyWithRegiments(_gp1, 3)],
+        armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
       );
       final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
       expect(
@@ -266,11 +242,11 @@ void main() {
       // Boundary pin: `regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`
       // is strict less-than. A GP exactly at the floor is no longer in
       // the trap band — declare-war scoring should pick its own target.
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _expandGame(
         players: [_player(treasury: cheapest * 10)],
         armies: [
-          _homeArmyWithRegiments(
+          homeArmyWithRegimentsAtCapital(
             _gp1,
             kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
           ),
@@ -292,10 +268,10 @@ void main() {
       // Empty `invadableProvinceIdsSorted` disables arm B even with the
       // right regiment band and treasury. The planner only forces
       // builds when there is a frontier to invade.
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _expandGame(
         players: [_player(treasury: cheapest * 10)],
-        armies: [_homeArmyWithRegiments(_gp1, 3)],
+        armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
       );
       final snapshot = _expandSnapshot(invadableOw: const []);
       expect(
@@ -318,7 +294,7 @@ void main() {
         // to stockpile (and bankroll the next build pass).
         final game = _expandGame(
           players: [_player(treasury: 0)],
-          armies: [_homeArmyWithRegiments(_gp1, 20)],
+          armies: [homeArmyWithRegimentsAtCapital(_gp1, 20)],
         );
         final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
         expect(
@@ -345,7 +321,7 @@ void main() {
       // incoming riches.
       final game = _expandGame(
         players: [_player(treasury: 0)],
-        armies: [_homeArmyWithRegiments(_gp1, 0)],
+        armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
       );
       final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
       expect(
@@ -372,7 +348,7 @@ void main() {
               _player(treasury: 0),
               _player(id: _gp2, displayName: 'GP2'),
             ],
-            armies: [_homeArmyWithRegiments(_gp1, 3)],
+            armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
           );
           final snapshot = _expandSnapshot(
             invadableOw: const ['oldWorld|gp2_0'],
@@ -410,7 +386,7 @@ void main() {
               _player(treasury: 0),
               _player(id: _gp2, displayName: 'GP2'),
             ],
-            armies: [_homeArmyWithRegiments(_gp1, 3)],
+            armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
           );
           final snapshot = _expandSnapshot(
             invadableOw: const ['oldWorld|gp2_0'],
@@ -445,7 +421,7 @@ void main() {
               _player(treasury: 0),
               _player(id: _gp2, displayName: 'GP2'),
             ],
-            armies: [_homeArmyWithRegiments(_gp1, 3)],
+            armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
           );
           final snapshot = _expandSnapshot(
             invadableOw: const ['oldWorld|gp2_0'],
@@ -474,7 +450,7 @@ void main() {
         // build" branch from the spec.
         final game = _expandGame(
           players: [_player(treasury: 0)],
-          armies: [_homeArmyWithRegiments(_gp1, 3)],
+          armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
         );
         final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
         expect(
@@ -499,7 +475,7 @@ void main() {
       // pending riches) would still see treasury == 0, fall to arm C
       // only, and emit boostCargo=true / forceRebuild=false — this
       // test fails in that case.
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _expandGame(
         players: [
           _player(
@@ -507,7 +483,7 @@ void main() {
             stockpile: _stockpileWithPendingRiches(cheapest),
           ),
         ],
-        armies: [_homeArmyWithRegiments(_gp1, 3)],
+        armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
       );
       final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
       expect(
@@ -530,10 +506,10 @@ void main() {
         // Boundary pin: arm B's gate is `effectiveTreasury >= cheapest`.
         // Arm C's gate is `effectiveTreasury < cheapest`. At the equality
         // boundary, arm B fires and arm C does NOT.
-        final cheapest = _cheapestRegimentBuildCost();
+        final cheapest = cheapestRegimentBuildCost();
         final game = _expandGame(
           players: [_player(treasury: cheapest)],
-          armies: [_homeArmyWithRegiments(_gp1, 3)],
+          armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
         );
         final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
         expect(
@@ -556,7 +532,7 @@ void main() {
         // Determinism pin (issue #2509 Must-have #7). Mixed-input fixture
         // exercises both the regiment scan and the pending-riches
         // computation, so repeating the call must yield the same plan.
-        final cheapest = _cheapestRegimentBuildCost();
+        final cheapest = cheapestRegimentBuildCost();
         final game = _expandGame(
           players: [
             _player(
@@ -564,7 +540,7 @@ void main() {
               stockpile: _stockpileWithPendingRiches(cheapest ~/ 2),
             ),
           ],
-          armies: [_homeArmyWithRegiments(_gp1, 4)],
+          armies: [homeArmyWithRegimentsAtCapital(_gp1, 4)],
         );
         final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
         final first = planExpandEconomy(game: game, snapshot: snapshot);
@@ -583,7 +559,7 @@ void main() {
           _player(treasury: 0),
           _player(id: _gp2, displayName: 'GP2', treasury: 999999),
         ],
-        armies: [_homeArmyWithRegiments(_gp2, 20)],
+        armies: [homeArmyWithRegimentsAtCapital(_gp2, 20)],
       );
       final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
       expect(

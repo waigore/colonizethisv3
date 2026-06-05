@@ -38,23 +38,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _owProvGp1 = 'oldWorld|gp1_a';
 const String _owProvMinor = 'oldWorld|m1_a';
-
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: kOldWorldRegionId,
-    stationedProvinceId: _owProvGp1,
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
 
 Game _game({required int regimentCount, required int treasury}) {
   return Game(
@@ -68,7 +57,7 @@ Game _game({required int regimentCount, required int treasury}) {
       ),
       newWorld: const RegionData(provinces: []),
       armies: regimentCount > 0
-          ? [_homeArmyWithRegiments(_gp1, regimentCount)]
+          ? [homeArmyWithRegiments(_gp1, regimentCount)]
           : const [],
     ),
     players: [
