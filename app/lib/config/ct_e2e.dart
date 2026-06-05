@@ -54,3 +54,11 @@ const Key kCtE2ERegionTabNewWorldKey = Key('ct_e2e_region_tab_new_world');
 const Key kCtE2EMoveFleetDialogScrollRootKey = Key(
   'ct_e2e_move_fleet_dialog_scroll_root',
 );
+
+// ignore: public_member_api_docs
+/// Stable locator for the fleet-row **Move** action button. The naval action
+/// cluster collapses to icon-only at narrow (test-host) viewports, so the
+/// rendered button carries no `Text('Move')`; e2e helpers must locate it by
+/// this key rather than the conditionally-rendered label (Refs #2336 AC4 and
+/// the deterministic-locator rule in `colonizethis-e2e-ui-stability.mdc`).
+const Key kCtE2EFleetMoveActionKey = Key('ct_e2e_fleet_move_action');

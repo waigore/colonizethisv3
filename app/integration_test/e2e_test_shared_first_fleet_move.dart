@@ -14,8 +14,8 @@ import 'e2e_test_shared.dart';
 /// without re-decoding which branch fired (replaces ad-hoc `if`
 /// branching on the helper's side effects).
 enum E2eFirstFleetMoveOutcome {
-  /// No `Move` text descendant of [kCtE2ENavalPanelRootKey] was found; no
-  /// dialog was opened.
+  /// No keyed Move button ([kCtE2EFleetMoveActionKey]) descendant of
+  /// [kCtE2ENavalPanelRootKey] was found; no dialog was opened.
   noMoveButton,
 
   /// The move dialog opened but contained no `RadioListTile<dynamic>`
@@ -81,10 +81,11 @@ const Duration kE2eDefaultFirstFleetMoveDialogCloseTimeout =
 ///
 /// Contract:
 ///
-/// - Scopes the `Move` finder to descendants of
-///   [kCtE2ENavalPanelRootKey]. Returns
-///   [E2eFirstFleetMoveOutcome.noMoveButton] without opening a dialog when
-///   no `Move` text is present.
+/// - Scopes the keyed Move finder ([kCtE2EFleetMoveActionKey]) to descendants
+///   of [kCtE2ENavalPanelRootKey]. Returns
+///   [E2eFirstFleetMoveOutcome.noMoveButton] without opening a dialog when no
+///   keyed Move button is present (the label collapses to icon-only at narrow
+///   viewports, so the key — not the `Move` text — is authoritative).
 /// - When `Move` is tapped, waits up to [moveDialogOpenTimeout] for an
 ///   [AlertDialog] to mount
 ///   (`wait_until_move_dialog_after_tap`).
@@ -127,9 +128,11 @@ Future<E2eFirstFleetMoveOutcome> e2eAttemptFirstFleetMoveOrCancel(
 }) async {
   final phaseSw = Stopwatch()..start();
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
+  // Locate Move by stable key, not the `Move` label: the naval action cluster
+  // collapses to icon-only at narrow test-host viewports (Refs #2336).
   final moveButtons = find.descendant(
     of: navalPanelRoot,
-    matching: find.text('Move'),
+    matching: find.byKey(kCtE2EFleetMoveActionKey),
   );
   if (moveButtons.evaluate().isEmpty) {
     perf?.timing(
