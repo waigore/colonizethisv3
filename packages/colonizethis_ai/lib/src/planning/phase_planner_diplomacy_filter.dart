@@ -53,6 +53,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
+import 'planning_helpers.dart'
+    show resolvePhaseColonialPressureActive, scaleWeightedBonus;
 
 /// When `true`, `_DeclareWarTargetContext.build` flags the candidate's
 /// `colonialPressure` slot for `_declareWarSuppressedWarConcentrationScore`
@@ -80,7 +82,7 @@ import 'phase_priority_weights.dart';
 /// no order emission.
 bool resolvePhaseDiplomacyDeclareWarColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.phase == ObserverGoalPhase.colonial;
+}) => resolvePhaseColonialPressureActive(phasePlan.phase);
 
 /// When `true`, `_declareWarSuppressedDevelopPhaseScore`
 /// (`diplomatic_candidate_scoring_declare_war.dart`) returns
@@ -289,13 +291,7 @@ int declareWarColonialNwTribePriorityOverOwMinorBonus({
 int _scaleDeclareWarColonialNwTribeBonus({
   required int baseBonus,
   required double nwAcquisitionWeight,
-}) {
-  if (nwAcquisitionWeight <= 0.0) {
-    return 0;
-  }
-  final clamped = nwAcquisitionWeight > 1.0 ? 1.0 : nwAcquisitionWeight;
-  return (baseBonus * clamped).round();
-}
+}) => scaleWeightedBonus(nwAcquisitionWeight, baseBonus);
 
 /// Returns an OW declare-war additive bonus scaled by the soft-phase
 /// OW conquest weight (Refs #2847 Phase 3 diplomacy declare-war OW
@@ -322,11 +318,4 @@ int _scaleDeclareWarColonialNwTribeBonus({
 int declareWarOldWorldConquestScaledBonus({
   required int baseBonus,
   required double oldWorldConquestWeight,
-}) {
-  if (oldWorldConquestWeight <= 0.0) {
-    return 0;
-  }
-  final clamped =
-      oldWorldConquestWeight > 1.0 ? 1.0 : oldWorldConquestWeight;
-  return (baseBonus * clamped).round();
-}
+}) => scaleWeightedBonus(oldWorldConquestWeight, baseBonus);

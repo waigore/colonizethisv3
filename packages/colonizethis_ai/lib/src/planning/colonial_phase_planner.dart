@@ -208,15 +208,13 @@
 ///     across phases on the landed post-S5 dispatch path.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 import 'phase_priority_weights.dart' show isNwLockRecoveryPathEActive;
+import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in COLONIAL phase.
@@ -289,10 +287,7 @@ List<String> planColonialPeace({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.isEmpty) {
     return const [];
   }

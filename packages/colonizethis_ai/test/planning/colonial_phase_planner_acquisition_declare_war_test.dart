@@ -122,6 +122,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _tribe1 = 'tribe1';
@@ -132,38 +134,6 @@ const String _nwProv2 = 'newWorld|tribe2_b';
 const String _nwProvGp = 'newWorld|gp2_c';
 
 const String _nwTile1 = 'newWorld|tribe1_a|1|1';
-
-/// Cheapest [RegimentEconomyCatalog] build cost, matching the private
-/// `_cheapestRegimentBuildTreasuryCost` helper in
-/// `colonial_phase_planner.dart`. The catalog's `peasantLevies` row
-/// pins this at 2000 today; recomputing keeps the tests robust against
-/// rebalancing.
-int _cheapestRegimentBuildCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
-
-/// Build a Home Army for [ownerId] containing [regimentCount] dummy
-/// regiment unit ids. Matches the `regimentCountForPlayer` walk in
-/// `army_conquest_prep.dart` that counts
-/// `army.regimentUnitIds.length` summed across owned armies.
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: 'oldWorld',
-    stationedProvinceId: 'oldWorld|capital_$ownerId',
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
 
 /// Builds a `Game` for the `declareWar` arm tests.
 ///
@@ -310,13 +280,13 @@ void main() {
       // cheapest cost at 2000 today; treasury 1999 trips the gate
       // even with a standing regiment present (so the regiment-count
       // guard succeeds first).
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _declareWarGame(
         activePlayerTreasury: cheapest - 1,
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
       );
       final snapshot = _declareWarSnapshot(
@@ -344,7 +314,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProvGp, regionId: 'newWorld', ownerId: _gp2),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _gp2)],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProvGp]);
@@ -370,7 +340,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_atWar(_gp1, _tribe1)],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
@@ -400,7 +370,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
@@ -429,7 +399,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: const <DiplomacyRelation>[],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
@@ -457,7 +427,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
         diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
       );
@@ -501,7 +471,7 @@ void main() {
               ),
             ],
           ),
-          armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
           resourceByTileKey: const {_nwTile1: 'grain'},
         ),
         players: const [
@@ -545,7 +515,7 @@ void main() {
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[
           _peaceNeutral(_gp1, _tribe1),
           _peaceNeutral(_gp1, _tribe2),
@@ -579,7 +549,7 @@ void main() {
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[
           _peaceNeutral(_gp1, _tribe1),
           _peaceNeutral(_gp1, _tribe2),
@@ -615,13 +585,13 @@ void main() {
     test(
       'treasury zero with NW recovery override emits declareWar target',
       () {
-        final cheapest = _cheapestRegimentBuildCost();
+        final cheapest = cheapestRegimentBuildCost();
         final game = _declareWarGame(
           activePlayerTreasury: 0,
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           ],
-          armies: <Army>[_homeArmyWithRegiments(_gp1, 1)],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
           diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
         );
         final snapshot = _declareWarSnapshot(
@@ -658,7 +628,7 @@ void main() {
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           ],
-          armies: <Army>[_homeArmyWithRegiments(_gp1, 1)],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
           diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
         );
         final snapshot = _declareWarSnapshot(
@@ -694,7 +664,7 @@ void main() {
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           ],
-          armies: <Army>[_homeArmyWithRegiments(_gp1, 1)],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
           diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
         );
         final snapshot = _declareWarSnapshot(
