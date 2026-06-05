@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -60,6 +61,23 @@ Unit _builder(String id) => Unit(
   ownerId: supplierFeedstockId,
   locationProvinceId: 'oldWorld|s0',
 );
+
+// The supplier `iron` tile sits at (x=2, y=0) of region `oldWorld`. This live
+// tile map sets the iron tile's terrain to [ironTerrain] so the mineral-
+// eligibility terrain check can pass (hills/mountain/swamp/desert) or fail
+// (plains/forest); the other cells are hills (prospectable filler).
+Map<String, TileMapResult> _tileMapWithIronTerrain(TerrainType ironTerrain) => {
+  'oldWorld': TileMapResult(
+    width: 3,
+    height: 1,
+    grid: const [
+      ['oldWorld|s0', 'oldWorld|s0', 'oldWorld|s0'],
+    ],
+    terrainGrid: [
+      [TerrainType.hills, TerrainType.hills, ironTerrain],
+    ],
+  ),
+};
 
 void main() {
   group(
@@ -286,4 +304,137 @@ void main() {
       },
     );
   });
+
+  group(
+    'ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile'
+    ' (Refs #2847 H8-extraction terrain mineral-eligibility gate)',
+    () {
+      test('true when the co-located iron tile is on prospectable terrain '
+          '(hills)', () {
+        final game = _supplierGame(extraUnits: [_explorer('e1')]);
+        expect(
+          ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+            game,
+            supplierFeedstockId,
+            {'iron'},
+            _tileMapWithIronTerrain(TerrainType.hills),
+          ),
+          isTrue,
+        );
+      });
+
+      test('false when the co-located iron tile is on non-prospectable terrain '
+          '(plains) — localizes the residual to terrain mineral-eligibility',
+          () {
+        final game = _supplierGame(extraUnits: [_explorer('e1')]);
+        // Teeth: the resource-only co-located predicate is still true (the
+        // supplier owns an idle Explorer on the unprospected iron province),
+        // so the only discriminator is the live-terrain mineral-eligibility
+        // check the new predicate adds.
+        expect(
+          ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
+            game,
+            supplierFeedstockId,
+            {'iron'},
+          ),
+          isTrue,
+        );
+        expect(
+          ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+            game,
+            supplierFeedstockId,
+            {'iron'},
+            _tileMapWithIronTerrain(TerrainType.plains),
+          ),
+          isFalse,
+        );
+      });
+
+      test('true when tileMapByRegion is null (terrain unknown falls back to '
+          'the mineral resource on the tile)', () {
+        // With no live terrain map the eligibility check degrades to the
+        // resource-only signal, matching `isMineralEligibleTile`'s documented
+        // missing-terrain fallback, so the predicate stays equivalent to the
+        // resource-only co-located counterpart.
+        final game = _supplierGame(extraUnits: [_explorer('e1')]);
+        expect(
+          ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+            game,
+            supplierFeedstockId,
+            {'iron'},
+            null,
+          ),
+          isTrue,
+        );
+      });
+
+      test('false when the idle Explorer is in a different province', () {
+        final game = _supplierGame(
+          extraUnits: [_explorerAt('e1', 'oldWorld|s9')],
+        );
+        expect(
+          ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+            game,
+            supplierFeedstockId,
+            {'iron'},
+            _tileMapWithIronTerrain(TerrainType.hills),
+          ),
+          isFalse,
+        );
+      });
+
+      test('false when the co-located Explorer is busy (currentWork set)', () {
+        final game = _supplierGame(
+          extraUnits: [
+            _explorer(
+              'e1',
+              currentWork: const CurrentWork(
+                workTarget: kWorkTargetExplore,
+                tileKey: _newWorldIronTile,
+                totalTurns: 5,
+                remainingTurns: 3,
+              ),
+            ),
+          ],
+        );
+        expect(
+          ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+            game,
+            supplierFeedstockId,
+            {'iron'},
+            _tileMapWithIronTerrain(TerrainType.hills),
+          ),
+          isFalse,
+        );
+      });
+
+      test('false when the iron tile is already prospected', () {
+        final game = _supplierGame(
+          extraUnits: [_explorer('e1')],
+        ).copyWithSupplierProspected({_supplierIronTile});
+        expect(
+          ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+            game,
+            supplierFeedstockId,
+            {'iron'},
+            _tileMapWithIronTerrain(TerrainType.hills),
+          ),
+          isFalse,
+        );
+      });
+
+      test('false for an empty feedstock set (negative control)', () {
+        final game = _supplierGame(extraUnits: [_explorer('e1')]);
+        expect(
+          ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+            game,
+            supplierFeedstockId,
+            const <String>{},
+            _tileMapWithIronTerrain(TerrainType.hills),
+          ),
+          isFalse,
+        );
+      });
+    },
+  );
 }
