@@ -62,3 +62,20 @@ const Key kCtE2EMoveFleetDialogScrollRootKey = Key(
 /// this key rather than the conditionally-rendered label (Refs #2336 AC4 and
 /// the deterministic-locator rule in `colonizethis-e2e-ui-stability.mdc`).
 const Key kCtE2EFleetMoveActionKey = Key('ct_e2e_fleet_move_action');
+
+// ignore: public_member_api_docs
+/// Prefix for the per-destination-row keys inside [MoveFleetDialog]. The
+/// production dialog renders custom destination rows (`_MoveFleetDestinationRow`,
+/// a `CtDialogShell` body) rather than Material `RadioListTile`, so the
+/// fleet-reach e2e helpers select the first available sea destination by this
+/// key prefix (the warp destination is still located by its label text). The
+/// zero-based row index is appended so sibling row keys stay unique
+/// (Refs #2336; deterministic-locator rule in `colonizethis-e2e-ui-stability.mdc`).
+const String kCtE2EMoveFleetDestinationRowKeyPrefix =
+    'ct_e2e_move_fleet_destination_row_';
+
+// ignore: public_member_api_docs
+/// Builds the stable key for the destination row at [index] inside
+/// [MoveFleetDialog] under [CT_E2E] (Refs #2336).
+Key kCtE2EMoveFleetDestinationRowKey(int index) =>
+    Key('$kCtE2EMoveFleetDestinationRowKeyPrefix$index');

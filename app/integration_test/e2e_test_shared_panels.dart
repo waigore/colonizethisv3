@@ -526,7 +526,7 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
         await tester.tap(hit.first, warnIfMissed: false);
         await e2eWaitUntilFound(
           tester,
-          find.byType(AlertDialog),
+          e2eMoveFleetDialogFinder(),
           timeout: const Duration(seconds: 3),
           phaseName: 'wait_until_found_move_dialog_after_move_tap',
         );
@@ -538,7 +538,7 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       await tester.tap(fallbackMove, warnIfMissed: false);
       await e2eWaitUntilFound(
         tester,
-        find.byType(AlertDialog),
+        e2eMoveFleetDialogFinder(),
         timeout: const Duration(seconds: 3),
         phaseName: 'wait_until_found_move_dialog_after_move_tap_fallback',
       );
@@ -812,7 +812,7 @@ Future<void> e2ePickMoveDestinationAndConfirm(
   ensureBudget('start');
   await e2eWaitUntilFound(
     tester,
-    find.byType(AlertDialog),
+    e2eMoveFleetDialogFinder(),
     timeout: const Duration(seconds: 2),
     phaseName: 'wait_until_found_move_dialog',
   );
@@ -822,15 +822,16 @@ Future<void> e2ePickMoveDestinationAndConfirm(
   final warp = find.textContaining(warpSuffix);
   if (allowWarpDestinations && warp.evaluate().isNotEmpty) {
     final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
-    final Finder scrollable;
-    if (scrollRoot.evaluate().isNotEmpty) {
+    Finder scrollable = find.descendant(
+      of: scrollRoot,
+      matching: find.byType(Scrollable),
+    );
+    // The production [CtDialogShell] hosts its `CustomScrollView` *outside* the
+    // keyed scroll-root subtree, so fall back to the dialog's own scrollable
+    // when the keyed subtree exposes none (Refs #2336).
+    if (scrollable.evaluate().isEmpty) {
       scrollable = find.descendant(
-        of: scrollRoot,
-        matching: find.byType(Scrollable),
-      );
-    } else {
-      scrollable = find.descendant(
-        of: find.byType(AlertDialog),
+        of: e2eMoveFleetDialogFinder(),
         matching: find.byType(Scrollable),
       );
     }
@@ -869,19 +870,32 @@ Future<void> e2ePickMoveDestinationAndConfirm(
     ensureBudget('before warp tap');
     final hit = warp.hitTestable();
     expect(hit, findsWidgets);
-    // Tap the RadioListTile, not only the inner Text, so the tile's selection
-    // updates before Confirm (Linux CI / headless can miss implicit tile taps).
-    final warpTile = find.ancestor(
+    // Tap the enclosing destination row, not only the inner Text, so the row's
+    // selection updates before Confirm (Linux CI / headless can miss implicit
+    // taps). Production rows are keyed `_MoveFleetDestinationRow`
+    // ([kCtE2EMoveFleetDestinationRowKeyPrefix]); legacy widget-test fixtures
+    // use `RadioListTile<…>`. Tolerate both, then fall back to the label text.
+    final warpRow = find.ancestor(
       of: hit.first,
-      matching: find.byWidgetPredicate(
-        (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
-      ),
+      matching: find.byWidgetPredicate((w) {
+        final Key? key = w.key;
+        if (key is ValueKey &&
+            key.value is String &&
+            (key.value as String).startsWith(
+              kCtE2EMoveFleetDestinationRowKeyPrefix,
+            )) {
+          return true;
+        }
+        return w.runtimeType.toString().startsWith('RadioListTile<');
+      }),
     );
-    expect(warpTile, findsWidgets);
-    await tester.tap(warpTile.first, warnIfMissed: false);
+    await tester.tap(
+      warpRow.evaluate().isNotEmpty ? warpRow.first : hit.first,
+      warnIfMissed: false,
+    );
   } else {
     ensureBudget('sea radio');
-    final seaRadio = e2eRadioListTilesInAlertDialogs();
+    final seaRadio = e2eMoveFleetDestinationRows();
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
@@ -892,12 +906,25 @@ Future<void> e2ePickMoveDestinationAndConfirm(
     phaseName: 'wait_until_found_move_confirm',
   );
   ensureBudget('confirm');
-  final confirm = find.text(l10n.common_confirm).hitTestable();
+  // In the production [CtDialogShell] the Confirm/Cancel buttons live inside the
+  // dialog's `CustomScrollView`, so a long destination list can push Confirm
+  // below the fold (unlike pinned `AlertDialog.actions`). Scroll it into view
+  // before the hit-testable assertion so the tap lands (Refs #2336).
+  final confirmText = find.text(l10n.common_confirm);
+  if (confirmText.hitTestable().evaluate().isEmpty) {
+    try {
+      await tester.ensureVisible(confirmText.first);
+      await tester.pump();
+    } catch (_) {
+      // Already visible or no scrollable ancestor; the assertion below reports.
+    }
+  }
+  final confirm = confirmText.hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
   await e2ePumpUntil(
     tester,
-    () => find.byType(AlertDialog).evaluate().isEmpty,
+    () => e2eMoveFleetDialogFinder().evaluate().isEmpty,
     timeout: const Duration(seconds: 2),
     phaseName: 'pump_until_move_dialog_closed',
   );
@@ -978,7 +1005,7 @@ Future<void> e2eTryNavalMoveSegment(
   }
   await e2eWaitUntilFound(
     tester,
-    find.byType(AlertDialog),
+    e2eMoveFleetDialogFinder(),
     timeout: const Duration(seconds: 2),
     phaseName: 'wait_until_found_move_dialog_after_tap',
   );
@@ -990,7 +1017,7 @@ Future<void> e2eTryNavalMoveSegment(
     await tester.tap(cancel, warnIfMissed: false);
     await e2ePumpUntil(
       tester,
-      () => find.byType(AlertDialog).evaluate().isEmpty,
+      () => e2eMoveFleetDialogFinder().evaluate().isEmpty,
       timeout: const Duration(seconds: 2),
       perf: perf,
       phaseName: 'pump_until_cancel_move_dialog_closed',
@@ -1002,7 +1029,7 @@ Future<void> e2eTryNavalMoveSegment(
     );
     return;
   }
-  if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+  if (e2eMoveFleetDialogFinder().evaluate().isNotEmpty) {
     await e2ePickMoveDestinationAndConfirm(
       tester,
       l10n,
