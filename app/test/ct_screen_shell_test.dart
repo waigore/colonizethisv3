@@ -158,6 +158,54 @@ void main() {
     );
 
     testWidgets(
+      'omits the CtTopBar title band when showTitleBar is false (#2861 M2)',
+      (WidgetTester tester) async {
+        await pumpShell(
+          tester,
+          CtScreenShell(
+            title: 'Game',
+            showTitleBar: false,
+            child: const Text('Content'),
+          ),
+        );
+
+        expect(
+          find.descendant(
+            of: find.byType(CtScreenShell),
+            matching: find.byType(CtTopBar),
+          ),
+          findsNothing,
+        );
+        // The localized title text must not paint when the band is omitted.
+        expect(find.text('Game'), findsNothing);
+        // The child content still renders inside the framed shell.
+        expect(find.text('Content'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'renders the CtTopBar title band when showTitleBar is true (default)',
+      (WidgetTester tester) async {
+        await pumpShell(
+          tester,
+          CtScreenShell(
+            title: 'Game',
+            child: const Text('Content'),
+          ),
+        );
+
+        expect(
+          find.descendant(
+            of: find.byType(CtScreenShell),
+            matching: find.byType(CtTopBar),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Game'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'embedded CtTopBar renders at the 36 px contract height',
       (WidgetTester tester) async {
         await pumpShell(

@@ -37,7 +37,10 @@ The widget is wrapped in a `PopScope(canPop: false)` so the system back gesture 
 
 ```text
 +--------------------------------------------------------------+
-| CtScreenShell (title: gameScreenTitle)                       |
+| CtScreenShell (showTitleBar: !mapShellActive)               |
+|   - map shell active  -> NO title band (GameTopBar is the    |
+|     only top chrome, mockup .topbar; issue #2861 M2)         |
+|   - Flame-canvas path -> titled shell (title: gameScreenTitle)|
 | PopScope (canPop: false; intercepts Android back)            |
 |                                                              |
 |  -- pending diplomacy wrapper (when set) --                  |
@@ -118,7 +121,7 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
 
 ## Components
 
-- `CtScreenShell` (`app/lib/widgets/ct_screen_shell.dart`) — outer container with the localized `game_screenTitle`.
+- `CtScreenShell` (`app/lib/widgets/ct_screen_shell.dart`) — outer container. On the **map shell** path it is constructed with `showTitleBar: false` so no `game_screenTitle` ("Game") band paints above `GameTopBar` (mockup `.topbar` only; issue #2861 M2). On the Flame-canvas fallback path it retains the localized `game_screenTitle` title band.
 - `GameMapArea` ([`empire-overview.md`](empire-overview.md)) or `GameWidget(ColonizeThisGame())` — map vs Flame canvas branch.
 - `CtNinePatchButton` (Next turn) and `IconButton` (`Icons.menu`, pause).
 - `VictoryOverlay`, `GameStartIntroOverlay`, `OvertureDialogueOverlay`, `InterventionDialogueOverlay`, `CallToArmsDialogueOverlay`, `GameToUIBusListener`.
@@ -136,6 +139,14 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
 - Given `GameScreen` is mounted with `mapViewDataProvider != null` and `currentGameProvider != null`,
   When `GameScreen.build` runs,
   Then the widget tree contains exactly one `GameMapArea` and zero `GameWidget` instances.
+
+- Given `GameScreen` is mounted with `mapViewDataProvider != null` and `currentGameProvider != null` (the map shell is active),
+  When `GameScreen.build` runs,
+  Then the enclosing `CtScreenShell` is constructed with `showTitleBar: false`, no `CtTopBar` is rendered as a descendant of `CtScreenShell`, and the localized `game_screenTitle` ("Game") text does not appear above the in-game chrome (mockup `.topbar` only; issue #2861 M2 / R2).
+
+- Given `GameScreen` is mounted with `mapViewDataProvider == null` (the Flame-canvas fallback path),
+  When `GameScreen.build` runs,
+  Then the enclosing `CtScreenShell` is constructed with `showTitleBar: true` and renders exactly one `CtTopBar` carrying the localized `game_screenTitle` (the fallback path retains the titled shell; issue #2861 R2).
 
 - Given `GameScreen` is mounted with `currentGameProvider == game` and `game.victory != null`,
   When `GameScreen.build` runs,
