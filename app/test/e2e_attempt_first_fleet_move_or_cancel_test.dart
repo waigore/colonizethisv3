@@ -22,16 +22,20 @@
 library;
 
 // Test fixtures build the legacy `RadioListTile<int>(groupValue, onChanged)`
-// shape on purpose — `e2eAttemptFirstFleetMoveOrCancel` matches
-// `find.byType(RadioListTile<dynamic>)` which resolves the production
-// `MoveFleetDialog` widgets regardless of the newer RadioGroup-based API.
-// Mirrors the deprecation suppression in
+// shape on purpose so the helper's exact-type
+// `find.byType(RadioListTile<dynamic>)` finder can drive the confirmed /
+// cancelled branches in isolation. The production `MoveFleetDialog` renders
+// as a `CtDialogShell` with custom `_MoveFleetDestinationRow` rows (no
+// `RadioListTile`), which is why these fixtures wrap their content in a
+// `CtDialogShell` to match the dialog type the helper now waits for. Mirrors
+// the deprecation suppression in
 // `e2e_pick_move_destination_and_confirm_test.dart`.
 // ignore_for_file: deprecated_member_use
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -73,14 +77,21 @@ Widget _wrap(Widget body) => MaterialApp(
 );
 
 WidgetBuilder _emptyRadiosDialogBuilder(AppLocalizations l10n) {
-  return (context) => AlertDialog(
-    content: const Text('No destinations available.'),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: Text(l10n.common_cancel),
-      ),
-    ],
+  // Mirror the production `MoveFleetDialog`, which renders as a
+  // [CtDialogShell] (a Material `Dialog`, not an `AlertDialog`) with no
+  // `RadioListTile` destinations — so the helper's keyed dialog wait and
+  // empty-destinations cancel branch exercise the real widget shape.
+  return (context) => CtDialogShell(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('No destinations available.'),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.common_cancel),
+        ),
+      ],
+    ),
   );
 }
 
@@ -105,43 +116,47 @@ class _SeaPickHostState extends State<_SeaPickHost> {
     }
     // Build `RadioListTile<dynamic>` explicitly so the helper's
     // `find.byType(RadioListTile<dynamic>)` (exact-type match per Flutter
-    // Finder semantics) actually resolves the radios. The pre-lift inline
-    // block in `new_game_full_turn_e2e_test.dart` used the same exact-type
-    // finder; the production `MoveFleetDialog` uses `RadioListTile<_MovePick>`
-    // which the legacy block did not match (always cancelled). Refs the
-    // "Legacy quirk preserved" note on `e2eAttemptFirstFleetMoveOrCancel`.
-    return AlertDialog(
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<dynamic>(
-              title: const Text('sea zone 1'),
-              value: 0,
-              groupValue: selected,
-              onChanged: (next) {
-                taps++;
-                setState(() => selected = next);
-              },
+    // Finder semantics) actually resolves the radios and the confirmed
+    // branch can be exercised. The production `MoveFleetDialog` instead
+    // renders custom `_MoveFleetDestinationRow` widgets (no `RadioListTile`),
+    // so this finder is empty against the real dialog and the helper always
+    // takes the cancel branch. Refs the "Legacy quirk preserved" note on
+    // `e2eAttemptFirstFleetMoveOrCancel`.
+    return CtDialogShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<dynamic>(
+                  title: const Text('sea zone 1'),
+                  value: 0,
+                  groupValue: selected,
+                  onChanged: (next) {
+                    taps++;
+                    setState(() => selected = next);
+                  },
+                ),
+                RadioListTile<dynamic>(
+                  title: const Text('sea zone 2'),
+                  value: 1,
+                  groupValue: selected,
+                  onChanged: (next) {
+                    taps++;
+                    setState(() => selected = next);
+                  },
+                ),
+              ],
             ),
-            RadioListTile<dynamic>(
-              title: const Text('sea zone 2'),
-              value: 1,
-              groupValue: selected,
-              onChanged: (next) {
-                taps++;
-                setState(() => selected = next);
-              },
-            ),
-          ],
-        ),
+          ),
+          TextButton(
+            onPressed: () => setState(() => dialogOpen = false),
+            child: Text(widget.l10n.common_confirm),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => setState(() => dialogOpen = false),
-          child: Text(widget.l10n.common_confirm),
-        ),
-      ],
     );
   }
 }
@@ -177,7 +192,7 @@ void main() {
             'Helper must short-circuit without tapping or opening a dialog '
             'when no Move text descends from the naval panel root.',
       );
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(CtDialogShell), findsNothing);
     });
 
     testWidgets('emits perf timing with result=no_move_button', (
@@ -239,7 +254,7 @@ void main() {
             'via Confirm. A regression that picked the first radio would '
             'commit an invalid move and stall the dialog-close pump.',
       );
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(CtDialogShell), findsNothing);
     });
 
     testWidgets('emits perf timing with result=cancelled', (
@@ -304,7 +319,7 @@ void main() {
               'Confirm action must round-trip through tap-radio -> '
               'pump-confirm-tappable -> tap-Confirm -> dialog-close.',
         );
-        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(CtDialogShell), findsNothing);
       },
     );
 
@@ -360,21 +375,24 @@ void main() {
             _navalPanel(
               children: [
                 _MoveButton(
-                  dialogBuilder: (context) => AlertDialog(
-                    content: SingleChildScrollView(
-                      child: RadioListTile<int>(
-                        title: const Text('sea zone 1'),
-                        value: 0,
-                        groupValue: null,
-                        onChanged: (_) {},
-                      ),
+                  dialogBuilder: (context) => CtDialogShell(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SingleChildScrollView(
+                          child: RadioListTile<int>(
+                            title: const Text('sea zone 1'),
+                            value: 0,
+                            groupValue: null,
+                            onChanged: (_) {},
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(l10n.common_cancel),
+                        ),
+                      ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(l10n.common_cancel),
-                      ),
-                    ],
                   ),
                 ),
               ],
@@ -394,7 +412,7 @@ void main() {
               'switched to a subtype-aware finder would change full-turn '
               'snapshot assertions downstream.',
         );
-        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(CtDialogShell), findsNothing);
       },
     );
   });
