@@ -2,7 +2,7 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
     show ctE2eCivilianPanelSnapshot, ctE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -767,7 +767,7 @@ const int kE2eDefaultMoveFleetWarpDragProbes = 8;
 ///   (`wait_until_found_move_dialog`) before evaluating any destination
 ///   finders.
 /// - When [allowWarpDestinations] is `true` **and** a row labelled
-///   `l10n.moveFleet_warpLinkToRegion(unitsPanelRegionLabel('newWorld'))`
+///   `l10n.moveFleet_warpLinkToRegion(regionDisplayLabel('newWorld'))`
 ///   exists in the dialog: scrolls to make the warp row hit-testable using
 ///   the [MoveFleetDialog] scroll root keyed by
 ///   [kCtE2EMoveFleetDialogScrollRootKey] (or the dialog's [Scrollable] as
@@ -817,7 +817,7 @@ Future<void> e2ePickMoveDestinationAndConfirm(
     phaseName: 'wait_until_found_move_dialog',
   );
   final warpSuffix = l10n.moveFleet_warpLinkToRegion(
-    unitsPanelRegionLabel('newWorld'),
+    regionDisplayLabel('newWorld'),
   );
   final warp = find.textContaining(warpSuffix);
   if (allowWarpDestinations && warp.evaluate().isNotEmpty) {

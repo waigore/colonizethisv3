@@ -22,8 +22,8 @@ import 'civilian_units_sort.dart';
 import 'train_dialog_chrome.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
-import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
+import '../utils/region_labels.dart';
 
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
 
@@ -134,7 +134,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       return const [];
     }
     final children = <Widget>[
-      RegionSectionHeader(label: unitsPanelRegionLabel(regionId)),
+      RegionSectionHeader(label: regionDisplayLabel(regionId)),
     ];
     if (!multiOwner) {
       children.addAll(

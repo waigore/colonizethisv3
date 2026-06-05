@@ -19,8 +19,8 @@ import 'split_army_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
-import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
+import '../utils/region_labels.dart';
 
 class MilitaryUnitsPanel extends StatefulWidget {
   const MilitaryUnitsPanel({
@@ -211,7 +211,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
   ) {
     return [
       for (final group in groups) ...[
-        RegionSectionHeader(label: unitsPanelRegionLabel(group.regionKey)),
+        RegionSectionHeader(label: regionDisplayLabel(group.regionKey)),
         ..._buildProvinceLocationChildren(group, l10n),
         ..._buildSeaLocationChildren(group, l10n),
       ],
@@ -226,7 +226,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
       for (final loc in group.provinces) ...[
         LocationSectionHeader(
           label: loc.displayLabel,
-          regionLabel: unitsPanelRegionLabel(loc.regionId),
+          regionLabel: regionDisplayLabel(loc.regionId),
         ),
         for (final block in loc.armies) _buildArmyTile(block, l10n),
       ],
@@ -281,7 +281,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
       for (final loc in group.seaLocations) ...[
         LocationSectionHeader(
           label: loc.displayLabel,
-          regionLabel: unitsPanelRegionLabel(loc.regionId),
+          regionLabel: regionDisplayLabel(loc.regionId),
         ),
         for (final row in loc.rows)
           _ShipRow(

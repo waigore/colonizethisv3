@@ -11,7 +11,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/utils/naval_tree_builder.dart'
     show FleetRow, NavalTreeLocationNode, buildNavalTree, flattenNavalTree;
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 String _roleLabelFor(String typeId, AppLocalizations l10n) {
@@ -124,7 +124,7 @@ List<String> navalUnitsPanelExpectedTexts(
     // which upper-cases the label (`Text(text.toUpperCase())`). The location
     // header line below (LocationSectionHeader) renders as-is, so only the
     // region group header is upper-cased here (Refs #2336).
-    out.add(unitsPanelRegionLabel(group.regionId).toUpperCase());
+    out.add(regionDisplayLabel(group.regionId).toUpperCase());
     if (group.homeFleet != null) {
       _addFleetRowTexts(
         out: out,
@@ -137,7 +137,7 @@ List<String> navalUnitsPanelExpectedTexts(
       out.add(
         l10n.locationSection_headerLine(
           loc.displayLabel,
-          unitsPanelRegionLabel(loc.regionId),
+          regionDisplayLabel(loc.regionId),
         ),
       );
       for (final row in loc.fleets) {

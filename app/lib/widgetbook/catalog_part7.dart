@@ -700,12 +700,14 @@ RegionMapViewportSnapshot _storyMinimapViewportSnapshot(
 /// state across stories.
 final _storyMinimapInitialVisibleProvider = Provider<bool>((ref) => true);
 
-/// Story override for [RegionMinimapVisibleNotifier] that seeds itself
-/// from [_storyMinimapInitialVisibleProvider]; the production default of
-/// `true` only fires when the override is absent (which never happens in
-/// the story frame). Toggle behaviour is preserved so reviewers can flip
-/// the chrome live from inside a single story.
-class _StoryRegionMinimapVisibleNotifier extends RegionMinimapVisibleNotifier {
+/// Story override for [regionMinimapVisibleProvider]'s [StateToggleNotifier]
+/// that seeds itself from [_storyMinimapInitialVisibleProvider]; the
+/// production default of `true` only fires when the override is absent
+/// (which never happens in the story frame). Toggle behaviour is preserved
+/// so reviewers can flip the chrome live from inside a single story.
+class _StoryRegionMinimapVisibleNotifier extends StateToggleNotifier {
+  _StoryRegionMinimapVisibleNotifier() : super(true);
+
   @override
   bool build() {
     return ref.read(_storyMinimapInitialVisibleProvider);

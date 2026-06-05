@@ -18,7 +18,7 @@ bool clearTurnResolutionBlockingFlag() {
     ProviderScope.containerOf(
       ctx,
       listen: false,
-    ).read(turnResolutionBlockingProvider.notifier).setBlocking(false);
+    ).read(turnResolutionBlockingProvider.notifier).set(false);
     return true;
   } catch (_) {
     return false;

@@ -7,8 +7,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../l10n/l10n.dart';
-import '../units/shared/units_panel_region_label.dart';
 import '../../utils/map_location_resolver.dart';
+import '../../utils/region_labels.dart';
 import '../../utils/sea_zone_name_resolver.dart';
 import 'fleet_mission_label.dart';
 
@@ -323,7 +323,7 @@ void _appendNavalAtSeaFleetRow({
     seaZoneId: zoneKey,
   );
   final locationLabel =
-      '${unitsPanelRegionLabel(rowRegionId)} — $zoneLabel ${l10n.naval_units_locAtSea}';
+      '${regionDisplayLabel(rowRegionId)} — $zoneLabel ${l10n.naval_units_locAtSea}';
   final tileKey = tileKeyForNavalFleetAtSea(
     game: game,
     regionId: rowRegionId,
@@ -400,7 +400,7 @@ void _appendNavalInPortFleetRow({
   final locationKey = _navalNormalizedPortScopeForProvince(province);
   final tileKey = tileKeyForProvinceLocation(game, province);
   final locationLabel =
-      '${unitsPanelRegionLabel(rowRegionId)} — ${province.displayName ?? province.id} ${l10n.naval_units_locInPort}';
+      '${regionDisplayLabel(rowRegionId)} — ${province.displayName ?? province.id} ${l10n.naval_units_locInPort}';
   final row = FleetRow(
     fleetId: fleet.id,
     label: isHomeFleet

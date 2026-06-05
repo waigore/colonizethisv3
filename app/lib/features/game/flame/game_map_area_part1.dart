@@ -515,7 +515,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     setState(() {
       _isTurnResolving = true;
     });
-    ref.read(turnResolutionBlockingProvider.notifier).setBlocking(true);
+    ref.read(turnResolutionBlockingProvider.notifier).set(true);
     _gameMapNextTurnUiLog.i(
       'logic: next_turn_ui_map started gameId=${game.id} turn=$currentTurn '
       'turnTraceEnabled=${service.isTurnTraceEnabled}',
@@ -791,7 +791,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.game.id != widget.game.id) {
       ref.read(mapProvincePanelProvider.notifier).reset();
-      ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
+      ref.read(regionMinimapVisibleProvider.notifier).reset();
       setState(() {
         _refreshWorkTargetSelectionCache(widget.game);
         _mapViewState = widget.game.mapViewState;

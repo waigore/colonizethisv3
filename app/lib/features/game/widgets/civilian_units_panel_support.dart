@@ -50,7 +50,7 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
   if (regionId != null && provinceId != null) {
     final name =
         provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+    location = ' (${regionDisplayLabel(regionId)} — $name)';
   }
   final base = '$workLabel$location';
   final totalTurns = previewTotalTurnsForPendingWorkOrder(
@@ -174,7 +174,7 @@ class _UnitRow extends ConsumerWidget {
     if (regionId == null || provinceId == null) return '—';
     final prefixed = '$regionId|$provinceId';
     final name = provinceNames[prefixed] ?? prefixed;
-    final regionLabel = unitsPanelRegionLabel(regionId);
+    final regionLabel = regionDisplayLabel(regionId);
     return '$regionLabel — $name';
   }
 
@@ -190,7 +190,7 @@ class _UnitRow extends ConsumerWidget {
     if (regionId != null && provinceId != null) {
       final name =
           provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-      location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+      location = ' (${regionDisplayLabel(regionId)} — $name)';
     }
     final progress = cw.totalTurns > 0
         ? l10n.civilian_units_turnProgress(

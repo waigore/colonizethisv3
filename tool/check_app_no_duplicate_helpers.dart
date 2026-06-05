@@ -28,12 +28,12 @@ class _CanonicalHelper {
 }
 
 /// Removed-helper symbol that must no longer be declared anywhere under
-/// `app/lib/**` (the deduplication landed in #2185 / #2187 replaced these
-/// private duplicates with shared canonical helpers).
+/// `app/lib/**`. Covers both the private duplicates eliminated in #2185 /
+/// #2187 and public wrapper helpers replaced by a canonical helper (#3279).
 class _RemovedHelper {
   const _RemovedHelper({required this.symbol, required this.replacement});
 
-  /// Private helper name that previously lived in multiple files.
+  /// Helper name that previously lived in its own file or as a duplicate.
   final String symbol;
 
   /// Canonical replacement to suggest in the violation message.
@@ -145,6 +145,12 @@ const List<_RemovedHelper> _removedPrivateHelpers = <_RemovedHelper>[
     symbol: '_commodityDisplayName',
     replacement:
         'commodityDisplayName from app/lib/features/game/utils/commodity_ui_helpers.dart',
+  ),
+  // #3279: thin wrapper deleted; call `regionDisplayLabel` directly.
+  _RemovedHelper(
+    symbol: 'unitsPanelRegionLabel',
+    replacement:
+        'regionDisplayLabel from app/lib/features/game/utils/region_labels.dart',
   ),
 ];
 

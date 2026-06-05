@@ -120,7 +120,7 @@ Future<void> _runFlameCanvasNextTurn(
   final phaseNotifier = ValueNotifier<String>('Resolving turn...');
   var processingDialogOpen = true;
   final uiStopwatch = Stopwatch()..start();
-  ref.read(turnResolutionBlockingProvider.notifier).setBlocking(true);
+  ref.read(turnResolutionBlockingProvider.notifier).set(true);
   _gameScreenLog.i(
     'logic: next_turn_ui started gameId=${game.id} turn=$currentTurn '
     'turnTraceEnabled=${service.isTurnTraceEnabled}',
