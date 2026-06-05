@@ -1201,23 +1201,25 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// mirror of #3267's supplier-release slice, which could not release `lumber`
 /// the suppliers do not hold.
 ///
-/// **Re-pointed lever (supersedes the seller domestic `lumber`-production
-/// pointer above).** The binding precondition is now **seller `timber`
-/// holdings**: the locked seller owns no improved `timber` tile and holds zero
-/// `timber`, so neither `lumber_from_timber` (this slice) nor
-/// `castIron_from_timber_iron_coal` has feedstock. The next slice should route
-/// the locked seller's idle Builder onto an owned unimproved **`timber`** tile
-/// under the active feedstock-extraction gate (extending
-/// `regimentBuildInputFeedstockExtractionResourceIds` / the H8 build-improvement
-/// boost to include the `lumber`-recipe feedstock `timber`, not only the
-/// `fabric`-recipe feedstock `wool` / `cotton`), since improving a `timber`
-/// surface tile is itself level-0 `build_improvement` and is covered by the same
-/// `castIron`-waiver once one `lumber` is on hand. `gpFeedstockGateIdleBuilder
-/// PresentTurns` (gp3 32 / gp5 13 / gp6 59) confirms an idle Builder is
-/// available to route. Verify by confirming `gpCastIronFeedstockHeldAtTurn99`
-/// `timber` rises above 0 for gp3 / gp5 / gp6, then
-/// `gpFeedstockGateImprovementLumberAffordableTurns` rises, before expecting OW
-/// gain to move.
+/// **Re-pointed lever — now landed.** The binding precondition was **seller
+/// `timber` holdings**: the locked seller owns unimproved `timber` tiles but
+/// holds zero `timber`, so neither `lumber_from_timber` nor
+/// `castIron_from_timber_iron_coal` had feedstock. That lever is now
+/// implemented: `sellerImprovementInputFeedstockExtractionResourceIds`
+/// (`full_ai_civilian_work_selection.dart`) extends the H8 feedstock-extraction
+/// gate (via `feedstockExtractionResourceIdsForPlayer`) to the seller's own
+/// `lumber` / `castIron` improvement-input feedstock (`timber` / `iron`), not
+/// only the `fabric`-recipe feedstock `wool` / `cotton`, so the locked seller's
+/// idle Builder is routed onto its own unimproved `timber` tile (improving a
+/// `timber` surface tile is itself level-0 `build_improvement`, covered by the
+/// same `castIron`-waiver once one `lumber` is on hand), and the Old World
+/// feedstock unit reservation holds that Builder in the Old World.
+/// `gpFeedstockGateIdleBuilderPresentTurns` (gp3 32 / gp5 13 / gp6 59) confirms
+/// an idle Builder is available to route. Verify by confirming
+/// `gpCastIronFeedstockHeldAtTurn99` `timber` rises above 0 for gp3 / gp5 / gp6,
+/// then `gpFeedstockGateImprovementLumberAffordableTurns` rises, before
+/// expecting OW gain to move. The residual lever for a seller that owns **no**
+/// `timber` tile at all is feedstock-tile acquisition (further #2847 work).
 ///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
@@ -2027,7 +2029,8 @@ void main() {
               improvementLumberId,
             )) {
               feedstockGateImprovementLumberAffordableTurns[gpId] =
-                  (feedstockGateImprovementLumberAffordableTurns[gpId] ?? 0) + 1;
+                  (feedstockGateImprovementLumberAffordableTurns[gpId] ?? 0) +
+                  1;
             }
             if (_affordsBuildImprovementComponent(
               game,

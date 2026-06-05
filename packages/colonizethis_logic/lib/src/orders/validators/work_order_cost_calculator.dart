@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../ai/full_ai_civilian_work_selection.dart';
+import '../../ai/full_ai_civilian_work_feedstock_bootstrap.dart';
 import '../../constants.dart';
 import '../../world/province_lookup.dart';
 
