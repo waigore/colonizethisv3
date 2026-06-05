@@ -1,4 +1,5 @@
 import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -140,7 +141,7 @@ void main() {
           _explorer(
             'e1',
             currentWork: const CurrentWork(
-              workTarget: 'explore',
+              workTarget: kWorkTargetExplore,
               tileKey: _newWorldIronTile,
               totalTurns: 5,
               remainingTurns: 3,
