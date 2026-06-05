@@ -266,6 +266,11 @@ class GameScreen extends ConsumerWidget {
     final victory = game?.victory;
     final showOverlayButtons =
         game != null && victory == null && mapViewData == null;
+    // The in-game map shell renders its own 36 dp `GameTopBar`; the mockup
+    // shows no secondary `CtScreenShell` title band above it, so suppress it
+    // when the map shell is active (issue #2861 M2 / R2). The Flame-canvas
+    // fallback path keeps the titled shell.
+    final bool mapShellActive = game != null && mapViewData != null;
     final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
     final showIntro = game != null && !introShownIds.contains(game.id);
     final pendingDiplomacy = ref.watch(pendingDiplomacyProvider);
@@ -387,6 +392,7 @@ class GameScreen extends ConsumerWidget {
       },
       child: CtScreenShell(
         title: appL10n(context).game_screenTitle,
+        showTitleBar: !mapShellActive,
         child: content,
       ),
     );

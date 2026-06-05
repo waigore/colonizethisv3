@@ -236,41 +236,104 @@ void main() {
   });
 
   group('PlayerTurnEventsFeedToggleButton chrome', () {
+    // Resolves the bordered 28 × 22 dp toggle surface Container (the only
+    // Container in the subtree carrying a Border).
+    Container surfaceContainer(WidgetTester tester) {
+      return tester
+          .widgetList<Container>(
+            find.descendant(
+              of: find.byKey(kPlayerTurnFeedToggleButtonKey),
+              matching: find.byType(Container),
+            ),
+          )
+          .firstWhere(
+            (Container c) =>
+                c.decoration is BoxDecoration &&
+                (c.decoration as BoxDecoration).border != null,
+          );
+    }
+
     testWidgets(
-      'closed-state glyph uses Icons.newspaper_outlined with EditorialMonoclePalette.accent',
+      'surface is 28 × 22 dp, bg-deep fill, 1 dp border; glyph is not a Material Icon (M3)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           hostToggle(eventCount: 0, showFeed: false),
         );
         await tester.pump();
 
-        final Icon icon = tester.widget<Icon>(
+        final Container surface = surfaceContainer(tester);
+        expect(
+          surface.constraints,
+          equals(BoxConstraints.tightFor(width: 28, height: 22)),
+        );
+        final BoxDecoration decoration = surface.decoration as BoxDecoration;
+        expect(decoration.color, equals(EditorialMonoclePalette.bgDeep));
+        final Border border = decoration.border as Border;
+        expect(border.top.width, equals(1));
+
+        // The glyph must be the monochrome NewspaperGlyph vector, not a
+        // Material Icon at 20 dp.
+        expect(
           find.descendant(
             of: find.byKey(kPlayerTurnFeedToggleButtonKey),
             matching: find.byType(Icon),
           ),
+          findsNothing,
         );
-        expect(icon.icon, equals(Icons.newspaper_outlined));
-        expect(icon.color, equals(EditorialMonoclePalette.accent));
+        expect(
+          find.descendant(
+            of: find.byKey(kPlayerTurnFeedToggleButtonKey),
+            matching: find.byType(NewspaperGlyph),
+          ),
+          findsOneWidget,
+        );
       },
     );
 
     testWidgets(
-      'open-state glyph uses Icons.newspaper with EditorialMonoclePalette.accentBright',
+      'closed-state glyph resolves to accentDim; border resolves to --border',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          hostToggle(eventCount: 0, showFeed: false),
+        );
+        await tester.pump();
+
+        final NewspaperGlyph glyph = tester.widget<NewspaperGlyph>(
+          find.descendant(
+            of: find.byKey(kPlayerTurnFeedToggleButtonKey),
+            matching: find.byType(NewspaperGlyph),
+          ),
+        );
+        expect(glyph.size, equals(14));
+        expect(glyph.color, equals(EditorialMonoclePalette.accentDim));
+
+        final BoxDecoration decoration =
+            surfaceContainer(tester).decoration as BoxDecoration;
+        final Border border = decoration.border as Border;
+        expect(border.top.color, equals(EditorialMonoclePalette.border));
+      },
+    );
+
+    testWidgets(
+      'open-state glyph resolves to accent; border resolves to accentDim',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           hostToggle(eventCount: 3, showFeed: true),
         );
         await tester.pump();
 
-        final Icon icon = tester.widget<Icon>(
+        final NewspaperGlyph glyph = tester.widget<NewspaperGlyph>(
           find.descendant(
             of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-            matching: find.byType(Icon),
+            matching: find.byType(NewspaperGlyph),
           ),
         );
-        expect(icon.icon, equals(Icons.newspaper));
-        expect(icon.color, equals(EditorialMonoclePalette.accentBright));
+        expect(glyph.color, equals(EditorialMonoclePalette.accent));
+
+        final BoxDecoration decoration =
+            surfaceContainer(tester).decoration as BoxDecoration;
+        final Border border = decoration.border as Border;
+        expect(border.top.color, equals(EditorialMonoclePalette.accentDim));
       },
     );
 
@@ -282,21 +345,17 @@ void main() {
         );
         await tester.pump();
 
-        // The badge background is the inner Container painted with a
-        // BoxDecoration whose color resolves to
+        // The badge background is the Container wrapping the count Text,
+        // painted with a BoxDecoration whose color resolves to
         // EditorialMonoclePalette.danger at 0.95 alpha.
-        final Container badge = tester
-            .widgetList<Container>(
-              find.descendant(
-                of: find.byKey(kPlayerTurnFeedToggleButtonKey),
+        final Container badge = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.text('5'),
                 matching: find.byType(Container),
-              ),
-            )
-            .firstWhere(
-              (Container c) =>
-                  (c.decoration is BoxDecoration) &&
-                  (c.decoration as BoxDecoration).color != null,
-            );
+              )
+              .first,
+        );
         final BoxDecoration decoration = badge.decoration as BoxDecoration;
         final Color badgeColor = decoration.color!;
         final Color expected = EditorialMonoclePalette.danger.withValues(

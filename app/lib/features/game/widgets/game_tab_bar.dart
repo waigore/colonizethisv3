@@ -64,7 +64,9 @@ class GameTabBar extends StatefulWidget {
   /// Gap between region tabs (mockup `.tabbar { gap: 2px }`).
   static const double regionTabGap = 2;
 
-  /// Gap between the centered cluster and the trailing news toggle.
+  /// Leading margin (4 dp) between the cargo hold indicator and the
+  /// trailing news toggle (mockup `.news-toggle { margin-left: 4px }`,
+  /// issue #2861 M1/M3).
   static const double clusterTrailingGap = 4;
 
   /// Stable key for widget tests that pin the chrome surface.
@@ -149,84 +151,73 @@ class _GameTabBarState extends State<GameTabBar> {
             horizontal: GameTabBar.horizontalPadding,
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Region tabs are start-aligned (left in LTR); the scroll view
+              // lets them shrink on narrow viewports without overflowing
+              // (mockup `.region-tab` group, issue #2861 M1).
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: constraints.maxWidth,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _GameRegionTab(
-                              label: widget.oldWorldLabel,
-                              selected: widget.regionIndex == 0,
-                              onTap: () => widget.onRegionIndexChanged(0),
-                            ),
-                            const SizedBox(width: GameTabBar.regionTabGap),
-                            if (kCtE2EEnabled)
-                              KeyedSubtree(
-                                key: kCtE2ERegionTabNewWorldKey,
-                                child: _GameRegionTab(
-                                  label: widget.newWorldLabel,
-                                  selected: widget.regionIndex == 1,
-                                  onTap: () =>
-                                      widget.onRegionIndexChanged(1),
-                                ),
-                              )
-                            else
-                              _GameRegionTab(
-                                label: widget.newWorldLabel,
-                                selected: widget.regionIndex == 1,
-                                onTap: () => widget.onRegionIndexChanged(1),
-                              ),
-                            const SizedBox(width: 10),
-                            GestureDetector(
-                              key: kTreasuryIndicatorKey,
-                              onTap: widget.treasuryNotDefined
-                                  ? null
-                                  : () => setState(
-                                        () => _showExactTreasury =
-                                            !_showExactTreasury,
-                                      ),
-                              child: _TreasuryIndicator(
-                                treasuryLabel: treasuryLabel,
-                                deltaLabel: deltaLabel,
-                                deltaColor: deltaColor,
-                                labelStyle: monoBody.copyWith(
-                                  color: EditorialMonoclePalette.accentDim,
-                                ),
-                                deltaStyle: monoBody.copyWith(
-                                  fontSize: 10,
-                                  color: deltaColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            _CargoHoldIndicator(
-                              cargoHoldLabel: widget.cargoHoldLabel,
-                              labelStyle: monoBody.copyWith(
-                                color: EditorialMonoclePalette.muted,
-                              ),
-                            ),
-                          ],
-                        ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _GameRegionTab(
+                        label: widget.oldWorldLabel,
+                        selected: widget.regionIndex == 0,
+                        onTap: () => widget.onRegionIndexChanged(0),
                       ),
-                    );
-                  },
+                      const SizedBox(width: GameTabBar.regionTabGap),
+                      if (kCtE2EEnabled)
+                        KeyedSubtree(
+                          key: kCtE2ERegionTabNewWorldKey,
+                          child: _GameRegionTab(
+                            label: widget.newWorldLabel,
+                            selected: widget.regionIndex == 1,
+                            onTap: () => widget.onRegionIndexChanged(1),
+                          ),
+                        )
+                      else
+                        _GameRegionTab(
+                          label: widget.newWorldLabel,
+                          selected: widget.regionIndex == 1,
+                          onTap: () => widget.onRegionIndexChanged(1),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              // Trailing indicator group, end-aligned in mockup order:
+              // treasury -> cargo -> news toggle (mockup `.tabbar-spacer`
+              // separates the tabs from this group; issue #2861 M1).
+              GestureDetector(
+                key: kTreasuryIndicatorKey,
+                onTap: widget.treasuryNotDefined
+                    ? null
+                    : () => setState(
+                          () => _showExactTreasury = !_showExactTreasury,
+                        ),
+                child: _TreasuryIndicator(
+                  treasuryLabel: treasuryLabel,
+                  deltaLabel: deltaLabel,
+                  deltaColor: deltaColor,
+                  labelStyle: monoBody.copyWith(
+                    color: EditorialMonoclePalette.accentDim,
+                  ),
+                  deltaStyle: monoBody.copyWith(
+                    fontSize: 10,
+                    color: deltaColor,
+                  ),
+                ),
+              ),
+              _CargoHoldIndicator(
+                cargoHoldLabel: widget.cargoHoldLabel,
+                labelStyle: monoBody.copyWith(
+                  color: EditorialMonoclePalette.muted,
                 ),
               ),
               const SizedBox(width: GameTabBar.clusterTrailingGap),
-              Align(
-                alignment: Alignment.center,
-                child: widget.trailing,
-              ),
+              widget.trailing,
             ],
           ),
         ),
