@@ -226,13 +226,14 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
         if (seaPicks.isNotEmpty) ...[
           CtSectionLabel(l10n.moveFleet_seaZonesSection),
           const SizedBox(height: CtSpacing.s),
-          ...seaPicks.map(_row),
+          for (var i = 0; i < seaPicks.length; i++) _row(seaPicks[i], i),
         ],
         if (portPicks.isNotEmpty) ...[
           if (seaPicks.isNotEmpty) const SizedBox(height: CtSpacing.ml),
           CtSectionLabel(l10n.moveFleet_provincesDockSection),
           const SizedBox(height: CtSpacing.s),
-          ...portPicks.map(_row),
+          for (var i = 0; i < portPicks.length; i++)
+            _row(portPicks[i], seaPicks.length + i),
         ],
       ],
     );
@@ -285,8 +286,12 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
     return CtDialogShell(child: body);
   }
 
-  Widget _row(_MovePick pick) {
+  Widget _row(_MovePick pick, int index) {
     return _MoveFleetDestinationRow(
+      // Deterministic per-row key (CT_E2E only) so fleet-reach e2e helpers can
+      // select the first available destination without Material `RadioListTile`
+      // chrome (Refs #2336).
+      key: kCtE2EEnabled ? kCtE2EMoveFleetDestinationRowKey(index) : null,
       pick: pick,
       selected: identical(pick, _selected),
       onTap: () => setState(() => _selected = pick),
@@ -306,6 +311,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
 /// § Material design ban.
 class _MoveFleetDestinationRow extends StatelessWidget {
   const _MoveFleetDestinationRow({
+    super.key,
     required this.pick,
     required this.selected,
     required this.onTap,
