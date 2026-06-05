@@ -48,6 +48,7 @@ import 'colonial_phase_planner.dart'
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_naval_plans.dart';
+import 'planning_helpers.dart' show scaleWeightedBonus;
 
 /// Outcome of [resolvePhaseNavalDirective] for one player turn.
 class PhaseNavalDirectiveResolution {
@@ -166,13 +167,7 @@ double resolvePhaseNavalColonialPressureWeight({
 /// weights so external callers do not need to pre-clamp.
 int navalColonialPressureWeightBonus({
   required double colonialPressureWeight,
-}) {
-  if (colonialPressureWeight <= 0.0) {
-    return 0;
-  }
-  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
-  return (kColonialNavalWeightBonus * clamped).round();
-}
+}) => scaleWeightedBonus(colonialPressureWeight, kColonialNavalWeightBonus);
 
 /// Returns the naval-planner colonial-pressure minimum weight floor
 /// scaled by the soft-phase NW acquisition weight (Refs #2847 Phase 3
@@ -216,10 +211,7 @@ int navalColonialPressureWeightBonus({
 /// weights so external callers do not need to pre-clamp.
 int navalColonialPressureMinWeightFloor({
   required double colonialPressureWeight,
-}) {
-  if (colonialPressureWeight <= 0.0) {
-    return 0;
-  }
-  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
-  return (kColonialNavalMinWeightWhenPressure * clamped).round();
-}
+}) => scaleWeightedBonus(
+  colonialPressureWeight,
+  kColonialNavalMinWeightWhenPressure,
+);

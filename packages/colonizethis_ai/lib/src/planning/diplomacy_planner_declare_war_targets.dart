@@ -11,6 +11,7 @@
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
 import 'expand_phase_planner.dart';
+import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
 import 'planning_imports.dart';
 
 /// First minor nation that owns invadable OW land but is not yet at war, while
@@ -112,10 +113,7 @@ String? plateauOwMinorDeclareTarget({
       !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return null;
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length > 1) {
     for (final factionId in gpWars) {
       if (!isMutualBelowQuotaPlateauPeer(
@@ -169,10 +167,7 @@ String? defaultStartOwMinorDeclareTarget({
       ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
     return null;
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length > 1) {
     return null;
   }

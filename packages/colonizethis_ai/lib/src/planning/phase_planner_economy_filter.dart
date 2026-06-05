@@ -85,6 +85,7 @@ import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
+import 'planning_helpers.dart' show resolvePhaseColonialPressureActive;
 
 /// When `true`, `_runEconomyDomainPlanners` lowers the civilian work
 /// threshold to `kColonialCivilianWorkThresholdCap`, forces the
@@ -121,7 +122,7 @@ import 'phase_priority_weights.dart';
 /// no order emission.
 bool resolvePhaseEconomyColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.phase == ObserverGoalPhase.colonial;
+}) => resolvePhaseColonialPressureActive(phasePlan.phase);
 
 /// When `true`, `_runEconomyDomainPlanners` treats the active player as
 /// in the DEVELOP phase for the economy-pass civilian-work decisions:

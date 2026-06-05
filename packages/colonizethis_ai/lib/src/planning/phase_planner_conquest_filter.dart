@@ -24,6 +24,11 @@ import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_military_plans.dart';
 import 'phase_priority_weights.dart';
+import 'planning_helpers.dart'
+    show
+        resolvePhaseColonialPressureActive,
+        resolvePhaseExpandOrColonialLiteActive,
+        scaleWeightedBonus;
 
 /// Outcome of [resolvePhaseConquestInvadable] for one player turn.
 class PhaseConquestInvadableResolution {
@@ -141,7 +146,7 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
 /// scoring (issue #2509 § phase suppressions).
 bool resolvePhaseConquestColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.phase == ObserverGoalPhase.colonial;
+}) => resolvePhaseColonialPressureActive(phasePlan.phase);
 
 /// When `true`, NW invadable army-move destinations score `0` in the
 /// conquest destination scorer (legacy `shouldSuppressNewWorldDeclareWar
@@ -208,9 +213,7 @@ bool resolvePhaseConquestSuppressNwInvasionScoring({
 /// no order emission.
 bool resolvePhaseConquestExtraPassesActive({
   required PhasePlanOutcome phasePlan,
-}) =>
-    phasePlan.phase == ObserverGoalPhase.expand ||
-    phasePlan.phase == ObserverGoalPhase.colonialLite;
+}) => resolvePhaseExpandOrColonialLiteActive(phasePlan.phase);
 
 /// Advisory `[0.0, 1.0]` multiplier for NW invasion scoring (declare-war
 /// candidates against tribe/NW-owner targets, NW invasion army-move
@@ -313,10 +316,7 @@ double resolvePhaseConquestColonialPressureWeight({
 /// `PhasePlanOutcome`, snapshot, or `Game` state.
 int conquestColonialPressureMinWeightFloor({
   required double colonialPressureWeight,
-}) {
-  if (colonialPressureWeight <= 0.0) {
-    return 0;
-  }
-  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
-  return (kConquestArmyMoveMinWeightWhenColonialPressure * clamped).round();
-}
+}) => scaleWeightedBonus(
+  colonialPressureWeight,
+  kConquestArmyMoveMinWeightWhenColonialPressure,
+);

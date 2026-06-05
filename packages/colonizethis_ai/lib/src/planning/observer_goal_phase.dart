@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import 'expand_phase_planner.dart';
+import 'planning_helpers.dart';
 
 /// Observer tuning phases for Full AI (Refs #2509 S10).
 enum ObserverGoalPhase {
@@ -106,10 +107,7 @@ List<String> expandPhaseGpPeaceTargets({
       ObserverGoalPhase.expand)) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   // Minor-first: exit every GP front while uninvaded minors remain (Refs #2509).
   if (gpWars.isNotEmpty &&
       hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) &&
@@ -200,10 +198,7 @@ List<String> colonialPhaseGpPeaceTargets({
       ObserverGoalPhase.colonial)) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length <= 1) {
     return const [];
   }
@@ -248,10 +243,7 @@ List<String> developPhaseGpPeaceTargets({
   if (!isObserverDevelopPhase(snapshot: snapshot, game: game)) {
     return const [];
   }
-  return [
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
+  return gpFactionIdsAtWarWith(game, snapshot);
 }
 
 /// Critical-collapse / zero-regiment peace aggregator for all observer phases.

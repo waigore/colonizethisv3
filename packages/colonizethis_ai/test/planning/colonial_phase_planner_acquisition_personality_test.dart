@@ -86,24 +86,13 @@ import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _tribe1 = 'tribe1';
 
 const String _nwProv1 = 'newWorld|tribe1_a';
-
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: 'oldWorld',
-    stationedProvinceId: 'oldWorld|capital_$ownerId',
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
 
 OvertureState _nap(String gpId, String targetId, {int sinceTurn = 100}) =>
     OvertureState(
@@ -143,7 +132,7 @@ Game _bothValidGame({
   List<OvertureState>? overtureStates,
   List<Province>? newWorldProvinces,
 }) {
-  final armiesResolved = armies ?? <Army>[_homeArmyWithRegiments(_gp1, 1)];
+  final armiesResolved = armies ?? <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)];
   final relationsResolved =
       diplomacyRelations ?? <DiplomacyRelation>[_friendly(_gp1, _tribe1)];
   final overturesResolved =
