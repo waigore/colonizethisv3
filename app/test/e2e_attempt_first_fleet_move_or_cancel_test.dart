@@ -47,7 +47,12 @@ class _MoveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
+        // Carry the production stable key so the helper's keyed Move finder
+        // ([kCtE2EFleetMoveActionKey]) resolves the control. Production fleet
+        // rows render the Move action icon-only (no `Text('Move')`) at narrow
+        // test-host viewports, so the helper locates it by key (Refs #2336).
         return TextButton(
+          key: kCtE2EFleetMoveActionKey,
           onPressed: () {
             showDialog<void>(context: context, builder: dialogBuilder);
           },

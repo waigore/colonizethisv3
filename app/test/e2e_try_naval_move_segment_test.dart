@@ -32,16 +32,24 @@ import '../integration_test/e2e_test_shared.dart';
 const String _seaText = 'sea zone 1';
 
 class _MoveButton extends StatelessWidget {
-  const _MoveButton({this.onPressedSpy, this.dialogBuilder});
+  const _MoveButton({this.onPressedSpy, this.dialogBuilder, this.buttonKey});
 
   final void Function()? onPressedSpy;
   final Widget Function(BuildContext context)? dialogBuilder;
+
+  /// Stable key for the Move control. Non-home fleets carry the production
+  /// [kCtE2EFleetMoveActionKey] so the helper's keyed finder resolves it
+  /// (production renders the action icon-only at narrow test-host viewports —
+  /// no `Text('Move')` — so it is located by key, Refs #2336). The home fleet
+  /// has `onMoveFleet == null` in production and emits no keyed button.
+  final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
         return TextButton(
+          key: buttonKey,
           onPressed: () {
             onPressedSpy?.call();
             showDialog<void>(
@@ -71,6 +79,7 @@ ExpansionTile _fleetTile({
       _MoveButton(
         onPressedSpy: onMovePressed,
         dialogBuilder: dialogBuilder,
+        buttonKey: kCtE2EFleetMoveActionKey,
       ),
     ],
   );
