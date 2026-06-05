@@ -3,11 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../orders/bundled_civilian_work_order.dart'
-    show
-        civilianBundledWorkNeedsProvinceMoveLeg,
-        validateCivilianBundledWorkMoveLeg;
+    show validateCivilianBundledWorkMoveLeg;
 import '../orders/order_resolution_context.dart'
-    show orderResolutionContextFromView;
+    show OrderResolutionContext, orderResolutionContextFromView;
 import '../orders/order_suggestion_context.dart'
     show
         buildIncrementalCandidateValidator,
@@ -360,6 +358,32 @@ _colocatedMineralEligibleFeedstockProspectProbes({
   return probes;
 }
 
+/// True iff the bundled move-leg gate accepts [candidate] for [probe]'s
+/// Explorer. [validateCivilianBundledWorkMoveLeg] already returns
+/// `accepted()` when no province move-leg is required, so this collapses the
+/// "no move leg" and "validated move leg" branches into one flat check (Refs
+/// #2847 prospect intra-pass localization).
+bool _probeBundledMoveLegAccepted({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required _ColocatedFeedstockProspectProbe probe,
+  required WorkOrder candidate,
+  required OrderResolutionContext resolution,
+  required List<DiplomaticOrder> diplomatic,
+}) {
+  final bundled = validateCivilianBundledWorkMoveLeg(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    unit: probe.unit,
+    order: candidate,
+    resolution: resolution,
+    diplomaticOrders: diplomatic,
+  );
+  return bundled.isAccepted;
+}
+
 /// Evaluates the three post-eligibility `prospect` generation gates from
 /// `_addProspectSuggestionIfEligible` → `_allAcceptedProspectTilesInProvince`
 /// for co-located mineral-eligible feedstock tiles (Refs #2847 § H8-extraction
@@ -424,28 +448,17 @@ colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates({
       target: kWorkTargetProspect,
       targetTileKey: probe.tileKey,
     );
-    if (!bundledMoveLeg) {
-      final needsMoveLeg = civilianBundledWorkNeedsProvinceMoveLeg(
-        game,
-        probe.unit,
-        candidate,
-      );
-      if (!needsMoveLeg) {
-        bundledMoveLeg = true;
-      } else {
-        final bundled = validateCivilianBundledWorkMoveLeg(
+    if (!bundledMoveLeg &&
+        _probeBundledMoveLegAccepted(
           game: game,
           topology: topology,
           playerId: playerId,
-          unit: probe.unit,
-          order: candidate,
+          probe: probe,
+          candidate: candidate,
           resolution: resolution,
-          diplomaticOrders: diplomatic,
-        );
-        if (bundled.isAccepted) {
-          bundledMoveLeg = true;
-        }
-      }
+          diplomatic: diplomatic,
+        )) {
+      bundledMoveLeg = true;
     }
     if (!validatorAccepted &&
         isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
