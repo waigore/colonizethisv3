@@ -14,11 +14,12 @@ export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart'
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile;
+export 'src/ai/full_ai_civilian_work_feedstock_bootstrap.dart'
+    show feedstockBootstrapBuildImprovementCastIronWaived;
 export 'src/ai/full_ai_civilian_work_selection.dart'
     show
         FullAiCivilianWorkIdle,
         FullAiCivilianWorkSelectionResult,
-        feedstockBootstrapBuildImprovementCastIronWaived,
         feedstockExtractionResourceIdsForPlayer,
         kRegimentBuildInputFeedstockExtractionScoreBoost,
         peerLockRecoverySellerNeededProducibleImprovementInputs,
@@ -26,6 +27,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         regimentBuildInputFeedstockImprovementInputCost,
         selectFullAiCivilianWorkOrders,
         selfLockRecoverySellerNeededProducibleImprovementInputs,
+        sellerImprovementInputFeedstockExtractionResourceIds,
         supplierImprovementInputFeedstockExtractionResourceIds;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'

@@ -155,8 +155,7 @@ int _eScore(WorkOrder w, PlayerView view, Game game) {
   // Issue #2082: E_unknown = min(24, 3 × U), not min(24, unknown) on the tile count.
   int score = 100 + math.min(24, 3 * unknown);
   final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
-  if (provId != null &&
-      ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
+  if (provId != null && ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
     score += kExploreWorkScoreBonusNewWorld;
   }
   return score;
@@ -277,7 +276,8 @@ int _pScore(
       _tileCanHostAnyMineralInSet(tileMapByRegion, w.targetTileKey, sHigh)
       ? 95
       : 0;
-  final feedstock = w.target == kWorkTargetProspect &&
+  final feedstock =
+      w.target == kWorkTargetProspect &&
           _isUnprospectedMineralFeedstockTile(
             game,
             playerId,
@@ -641,71 +641,88 @@ Set<String> supplierImprovementInputFeedstockExtractionResourceIds(
   return feedstock;
 }
 
-/// Union of the seller-side regiment-build-input feedstock gate
-/// ([regimentBuildInputFeedstockExtractionResourceIds]) and the supplier-side
-/// improvement-input feedstock gate
-/// ([supplierImprovementInputFeedstockExtractionResourceIds]) for [playerId]
-/// (Refs #2847 § H8-extraction).
+/// Resource ids a below-quota zero-NW lock-recovery **seller** should extract so
+/// it can domestically produce the level-0 `build_improvement` inputs (`lumber`
+/// and/or `castIron`) it is **itself** short of and cannot reliably buy on
+/// seed 42 (Refs #2847 § H8-extraction seller improvement-input feedstock).
 ///
-/// The seller-side gate routes a locked seller's own Builder onto its fabric
-/// feedstock; the supplier-side gate routes an affluent supplier's idle Builder
-/// onto the `timber` / `iron` the `castIron` recipe consumes so the supplier
-/// can over-produce the improvement input a peer locked seller needs. A player
-/// matches at most one gate (the supplier gate excludes locked sellers), so the
-/// union never double-counts. Non-empty **only** under those deterministic
-/// lock-recovery conditions; the empty set for every ordinary player so callers
-/// (civilian-work selection scoring and `build_improvement` suggestion
-/// ordering) leave off-gate behaviour unchanged. Pure and deterministic over
-/// `(game, playerId)` and the static catalogs.
+/// Seller-side companion to
+/// [supplierImprovementInputFeedstockExtractionResourceIds]: where the supplier
+/// variant routes an *affluent peer's* idle Builder onto `timber` / `iron` so it
+/// can over-produce the improvement input a locked seller needs, this routes the
+/// **seller's own** idle Builder onto its own unimproved `timber` / `iron` tile
+/// so the seller's domestic improvement-input production (`economy_planner.dart`
+/// § Domestic improvement-input production) has feedstock to run. Without it the
+/// seller's `lumber_from_timber` production draws on a `timber` stockpile that
+/// stays `0`, because every idle Builder is routed to higher-scoring New World
+/// colonial work and never extracts the `timber` the recipe consumes — the
+/// mirror of the supplier residual the supplier-side gate closes.
+///
+/// Returns the production-recipe feedstock commodities (`timber` for `lumber`;
+/// `timber` + `iron` for `castIron`) of every recipe whose output is a producible
+/// improvement input the seller still needs
+/// ([selfLockRecoverySellerNeededProducibleImprovementInputs]), only when the
+/// seller owns at least one **unimproved** (`improvementLevel < 1`) tile hosting
+/// one of those feedstock resources. Returns the empty set for any player whose
+/// seller improvement-input gate is inactive — including every healthy /
+/// above-quota Great Power and every regiment-holding GP — so the +6 Old World
+/// conquest baseline GPs are never routed. Self-clears once the seller holds the
+/// improvement input, improves the feedstock tile, or owns a regiment. Pure and
+/// deterministic over `(game, playerId)` and the static
+/// `ProductionRecipesCatalog`.
+Set<String> sellerImprovementInputFeedstockExtractionResourceIds(
+  Game game,
+  String playerId,
+) {
+  final neededInputs = selfLockRecoverySellerNeededProducibleImprovementInputs(
+    game,
+    playerId,
+  );
+  if (neededInputs.isEmpty) return const <String>{};
+  final feedstock = <String>{};
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (neededInputs.contains(recipe.outputCommodityId)) {
+      feedstock.addAll(recipe.inputQuantities.keys);
+    }
+  }
+  if (feedstock.isEmpty) return const <String>{};
+  if (!_ownsUnimprovedFeedstockResourceTile(game, playerId, feedstock)) {
+    return const <String>{};
+  }
+  return feedstock;
+}
+
+/// Union of the seller-side feedstock gates and the supplier-side gate for
+/// [playerId] (Refs #2847 § H8-extraction):
+///
+/// - [regimentBuildInputFeedstockExtractionResourceIds] — routes a locked
+///   seller's Builder onto its `peasant_levies` regiment-build-input feedstock
+///   (`wool` / `cotton` for `fabric`).
+/// - [sellerImprovementInputFeedstockExtractionResourceIds] — routes the same
+///   locked seller's Builder onto the `timber` / `iron` its own level-0
+///   `build_improvement` inputs (`lumber` / `castIron`) are produced from.
+/// - [supplierImprovementInputFeedstockExtractionResourceIds] — routes an
+///   affluent supplier's Builder onto the `timber` / `iron` it over-produces a
+///   peer locked seller's improvement input from.
+///
+/// A locked seller may match **both** seller-side gates (regiment-build-input
+/// and improvement-input feedstock are distinct resource sets it legitimately
+/// needs), while the supplier gate is mutually exclusive with the seller role,
+/// so the union is over `Set` semantics and never double-counts a resource.
+/// Non-empty **only** under those deterministic lock-recovery conditions; the
+/// empty set for every ordinary player so callers (civilian-work selection
+/// scoring and `build_improvement` suggestion ordering) leave off-gate behaviour
+/// unchanged. Pure and deterministic over `(game, playerId)` and the static
+/// catalogs.
 Set<String> feedstockExtractionResourceIdsForPlayer(
   Game game,
   String playerId,
 ) {
   return <String>{
     ...regimentBuildInputFeedstockExtractionResourceIds(game, playerId),
+    ...sellerImprovementInputFeedstockExtractionResourceIds(game, playerId),
     ...supplierImprovementInputFeedstockExtractionResourceIds(game, playerId),
   };
-}
-
-/// True when level-0 `build_improvement` on an unimproved feedstock tile under
-/// the H8 feedstock-extraction gate may omit the `castIron` material input.
-///
-/// Closes the circular dependency pinned on seed 42: improving the `timber` /
-/// `iron` (or seller `wool` / `cotton`) feedstock tile costs `castIron`, but
-/// no GP holds `castIron` until that tile is improved and production runs.
-/// The waiver applies only while the gate is active, the target tile hosts an
-/// unimproved feedstock resource, and the GP holds enough `lumber` for the
-/// level-0 cost but not enough `castIron`. Once `castIron` is affordable, the
-/// full `{lumber, castIron}` cost applies. Refs #2847 H8-extraction.
-bool feedstockBootstrapBuildImprovementCastIronWaived(
-  Game game,
-  String playerId,
-  String targetTileKey,
-) {
-  final feedstockIds = feedstockExtractionResourceIdsForPlayer(game, playerId);
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  final resourceId = ws.resourceByTileKey[targetTileKey];
-  if (resourceId == null || !feedstockIds.contains(resourceId)) return false;
-  if (ws.tileState.improvementLevel(targetTileKey) >= 1) return false;
-  Player? player;
-  for (final p in game.players) {
-    if (p.id == playerId) {
-      player = p;
-      break;
-    }
-  }
-  if (player == null) return false;
-  final baseCost = workOrderCostBuildImprovement(0);
-  final castIronId = CommodityCatalog.castIron.id;
-  final castIronRequired = baseCost[castIronId] ?? 0;
-  if (castIronRequired <= 0) return false;
-  if (player.stockpile.quantityOf(castIronId) >= castIronRequired) {
-    return false;
-  }
-  final lumberId = CommodityCatalog.lumber.id;
-  final lumberRequired = baseCost[lumberId] ?? 0;
-  return player.stockpile.quantityOf(lumberId) >= lumberRequired;
 }
 
 /// True iff [playerId] holds Old World land below the observer conquest quota
@@ -1008,8 +1025,9 @@ WorkOrder? _bestPurchaseLandRow(
   Game game,
   DiplomacyFactionMembership factionMembership,
 ) {
-  final purchases =
-      candidates.where((w) => w.target == kWorkTargetPurchaseLand).toList();
+  final purchases = candidates
+      .where((w) => w.target == kWorkTargetPurchaseLand)
+      .toList();
   if (purchases.isEmpty) return null;
   var best = purchases.first;
   var bestScore = _purchaseLandWorkScore(best, game, factionMembership);
@@ -1278,10 +1296,8 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   final workOrders = <WorkOrder>[];
   final idleEvents = <FullAiCivilianWorkIdle>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
-  final feedstockExtractionResourceIds = feedstockExtractionResourceIdsForPlayer(
-    game,
-    view.playerId,
-  );
+  final feedstockExtractionResourceIds =
+      feedstockExtractionResourceIdsForPlayer(game, view.playerId);
   final reservation = _resolveOwFeedstockReservation(
     view,
     game,
