@@ -9,6 +9,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_gradients.dart';
+import '../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 
@@ -43,15 +44,15 @@ class _VictoryOverlayState extends State<VictoryOverlay> {
   Widget build(BuildContext context) {
     if (_dismissed) return const SizedBox.shrink();
     return Positioned.fill(
-      child: Container(
-        color: EditorialMonoclePalette.dialogScrim,
-        child: Center(
-          child: VictoryPanel(
-            game: widget.game,
-            victory: widget.victory,
-            bus: widget.bus,
-            onViewFinalState: () => setState(() => _dismissed = true),
-          ),
+      child: CtFullScreenDialogueShell(
+        backdrop: const SizedBox.shrink(),
+        wrapBodyInDialogShell: false,
+        padding: EdgeInsets.zero,
+        body: VictoryPanel(
+          game: widget.game,
+          victory: widget.victory,
+          bus: widget.bus,
+          onViewFinalState: () => setState(() => _dismissed = true),
         ),
       ),
     );

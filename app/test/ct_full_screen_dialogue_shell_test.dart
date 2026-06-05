@@ -156,5 +156,40 @@ void main() {
         const EdgeInsets.all(20),
       );
     });
+
+    testWidgets(
+      'wrapBodyInDialogShell false centers body without CtDialogShell',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppThemes.editorialMonocle,
+            home: Scaffold(
+              body: CtFullScreenDialogueShell(
+                wrapBodyInDialogShell: false,
+                padding: EdgeInsets.zero,
+                backdrop: const SizedBox.expand(
+                  key: backdropKey,
+                  child: Text('backdrop'),
+                ),
+                body: const SizedBox(
+                  key: bodyKey,
+                  width: 120,
+                  height: 80,
+                  child: Text('body'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(bodyKey), findsOneWidget);
+        expect(find.byType(CtDialogShell), findsNothing);
+        final Iterable<Material> scrim = tester
+            .widgetList<Material>(find.byType(Material))
+            .where((m) => m.color == EditorialMonoclePalette.dialogScrim);
+        expect(scrim, isNotEmpty);
+      },
+    );
   });
 }

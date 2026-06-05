@@ -9,9 +9,155 @@
 //
 // - The [_CtIconActionStory] dark-theme primitive preview (Refs #2914 §S8)
 //   referenced from `ctDarkThemePrimitiveDirectories` in catalog_part5.dart.
+// - [_CtScreenShellStory], [_CtPanelWithTopBarStory], and
+//   [_CtDarkScaffoldStory] shell-chrome previews (issue #3279 §5/§6).
 // - The Next Turn Confirmation (DLG60001) and Game Initializing
 //   (SHEL30001) Widgetbook stories introduced by issue #2867 S13.
 part of 'catalog.dart';
+
+/// Showcases [CtScreenShell] in both its default (no back button) and
+/// `showBackButton: true` modes so reviewers can confirm the 36 px
+/// [CtTopBar] chrome + framed body composition under the
+/// `editorialMonocle` theme (Refs #2859 R4 / S5). The host inflates the
+/// shells inside a `MaterialApp` so [Navigator.maybePop] is valid when the
+/// chevron is tapped.
+class _CtScreenShellStory extends StatelessWidget {
+  const _CtScreenShellStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppThemes.editorialMonocle,
+      home: Scaffold(
+        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        body: Row(
+          children: <Widget>[
+            Expanded(
+              child: CtScreenShell(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                title: 'Default (no back button)',
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'CtTopBar omits the leading CtBackButton when '
+                      'showBackButton is false.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: CtScreenShell(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                title: 'With back button',
+                showBackButton: true,
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'CtTopBar renders the leading CtBackButton chevron '
+                      'and wires it through to Navigator.maybePop().',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Showcases [CtPanelWithTopBar] — the shared `CtPanel` + `Column` +
+/// top-bar skeleton extracted from [CtScreenShell] and `UnitsPanelShell`
+/// (issue #3279 §5). Renders one variant with a [CtTopBar] and one with
+/// `topBar: null` so reviewers can confirm the optional title-band slot.
+/// SPEC/ui/components/ct-panel-with-top-bar.md.
+class _CtPanelWithTopBarStory extends StatelessWidget {
+  const _CtPanelWithTopBarStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Expanded(
+            child: CtPanelWithTopBar(
+              mainAxisSize: MainAxisSize.min,
+              // ignore: avoid_hardcoded_strings_in_widgets
+              topBar: CtTopBar(title: 'With top bar', showBackButton: false),
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    // ignore: avoid_hardcoded_strings_in_widgets
+                    'Inner CtPanel + Column(stretch) skeleton with a '
+                    'CtTopBar first child.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          const Expanded(
+            child: CtPanelWithTopBar(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    // ignore: avoid_hardcoded_strings_in_widgets
+                    'topBar: null omits the title band; only children are '
+                    'mounted inside the panel.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Showcases [CtDarkScaffold] — the reusable dark-chrome screen wrapper
+/// (`Scaffold` + `SafeArea` + `Column(topBar + Expanded body)`) promoted
+/// from the private `_DarkChromeShell` in [CtGameFeatureScreenShell]
+/// (issue #3279 §6). SPEC/ui/components/ct-dark-scaffold.md.
+class _CtDarkScaffoldStory extends StatelessWidget {
+  const _CtDarkScaffoldStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppThemes.editorialMonocle,
+      home: const CtDarkScaffold(
+        // ignore: avoid_hardcoded_strings_in_widgets
+        topBar: CtTopBar(title: 'CtDarkScaffold', showBackButton: false),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              'Top bar stacked above an Expanded body inside a SafeArea; '
+              'background defaults to colorScheme.surface.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Refs #2914 §S8 — preview the [CtIconAction] primitive that replaces the
 /// banned Material `IconButton` chrome across the in-game feature tree.
