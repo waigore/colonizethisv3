@@ -175,6 +175,20 @@ Orders runConquestArmyMovePlanner({
   final stalledExpansion = isObserverConquestExpansionPressure(
     snapshot.conquest.oldWorldProvincesOwned,
   );
+  // Refs #2847 § EXPAND feedstock-tile acquisition conquest army-move target
+  // bias (`SPEC/ai/economy-planner.md`). A flagged below-quota zero-NW
+  // lock-recovery seller is always below quota and therefore always on the
+  // stalled-expansion army-move path, so the conquest-target bias is computed
+  // once here and threaded into the stalled selection helpers only. It returns
+  // `null` for every player whose acquisition residual is inactive (so the +6
+  // Old World conquest baseline GPs gp1/gp2 are never redirected) and for any
+  // non-stalled caller, which never reaches the biased selection path.
+  final feedstockConquestTarget = stalledExpansion
+      ? expandSellerFeedstockTileAcquisitionTarget(
+          game: ctx.game,
+          snapshot: snapshot,
+        )
+      : null;
   final armyMoveCandidates = ctx.suggestionAPI.suggestArmyMoveOrders(
     ctx.view,
     ctx.game,
@@ -192,6 +206,7 @@ Orders runConquestArmyMovePlanner({
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
         nwInvasionWeight: nwInvasionWeight,
         oldWorldInvasionWeight: oldWorldInvasionWeight,
+        feedstockConquestTarget: feedstockConquestTarget,
       );
     }
     return ctx.orders;
@@ -213,6 +228,7 @@ Orders runConquestArmyMovePlanner({
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
         nwInvasionWeight: nwInvasionWeight,
         oldWorldInvasionWeight: oldWorldInvasionWeight,
+        feedstockConquestTarget: feedstockConquestTarget,
       );
     }
     return ctx.orders;
@@ -310,6 +326,7 @@ Orders runConquestArmyMovePlanner({
       phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
       nwInvasionWeight: nwInvasionWeight,
       oldWorldInvasionWeight: oldWorldInvasionWeight,
+      feedstockConquestTarget: feedstockConquestTarget,
     );
   }
   final selected = selectWeightedCandidate(
@@ -339,6 +356,49 @@ Orders runConquestArmyMovePlanner({
   return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, selected);
 }
 
+/// Picks the highest-scoring army move from [candidates], applying the EXPAND
+/// feedstock-tile acquisition conquest army-move target **tiebreak** (Refs
+/// #2847 § EXPAND feedstock-tile acquisition conquest army-move target bias;
+/// `SPEC/ai/economy-planner.md`).
+///
+/// Scans [candidates] tracking the highest [score]. On an **exact** score tie
+/// the candidate whose `destinationProvinceId` equals [feedstockConquestTarget]
+/// wins over a non-feedstock incumbent, so a flagged below-quota zero-NW
+/// lock-recovery seller marches the field army onto the Old World feedstock
+/// province it must acquire to source `lumber` / `castIron` domestically. The
+/// tiebreak **never overrides a strictly higher-scored destination** (it only
+/// breaks ties) and **never fires when [feedstockConquestTarget] is `null`** —
+/// `expandSellerFeedstockTileAcquisitionTarget` returns `null` for every player
+/// whose acquisition residual is inactive, so the +6 Old World conquest
+/// baseline GPs gp1/gp2 are never redirected. With [feedstockConquestTarget]
+/// `null` the selection is identical to a strict `score > best` argmax
+/// (first-in-iteration order wins ties), preserving the prior behaviour
+/// exactly. Pure and deterministic over [candidates] and [score].
+ArmyMoveOrder? selectFeedstockBiasedBestArmyMove({
+  required Iterable<ArmyMoveOrder> candidates,
+  required double Function(ArmyMoveOrder move) score,
+  required String? feedstockConquestTarget,
+}) {
+  ArmyMoveOrder? best;
+  var bestScore = -1.0;
+  var bestIsFeedstock = false;
+  for (final move in candidates) {
+    final moveScore = score(move);
+    final isFeedstock =
+        feedstockConquestTarget != null &&
+        move.destinationProvinceId == feedstockConquestTarget;
+    final beatsBest = moveScore > bestScore;
+    final winsTiebreak =
+        moveScore == bestScore && isFeedstock && !bestIsFeedstock;
+    if (beatsBest || winsTiebreak) {
+      best = move;
+      bestScore = moveScore;
+      bestIsFeedstock = isFeedstock;
+    }
+  }
+  return best;
+}
+
 Orders _applyStalledArmyMovesForAllFieldArmies({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -348,6 +408,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
   required bool phasePlanInvadableIsAuthoritative,
   required double nwInvasionWeight,
   required double oldWorldInvasionWeight,
+  required String? feedstockConquestTarget,
 }) {
   final armiesWithOrders = <String>{
     for (final m
@@ -362,10 +423,10 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
   var result = ctx.orders;
   for (final armyId in byArmy.keys.toList()..sort()) {
     final candidates = byArmy[armyId]!;
-    ArmyMoveOrder? best;
-    var bestScore = -1.0;
-    for (final move in candidates) {
-      final score = _scoreArmyMoveDestination(
+    final best = selectFeedstockBiasedBestArmyMove(
+      candidates: candidates,
+      feedstockConquestTarget: feedstockConquestTarget,
+      score: (move) => _scoreArmyMoveDestination(
         move: move,
         nationId: ctx.nationId,
         game: ctx.game,
@@ -378,12 +439,8 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
         nwInvasionWeight: nwInvasionWeight,
         oldWorldInvasionWeight: oldWorldInvasionWeight,
-      );
-      if (score > bestScore) {
-        bestScore = score;
-        best = move;
-      }
-    }
+      ),
+    );
     if (best == null) continue;
     _log.i(
       'conquest army move stalled multi nationId=${ctx.nationId} '
@@ -403,6 +460,7 @@ Orders _runStalledFrontierArmyMoveFallback({
   required bool phasePlanInvadableIsAuthoritative,
   required double nwInvasionWeight,
   required double oldWorldInvasionWeight,
+  required String? feedstockConquestTarget,
 }) {
   final playerOwnedFullProvinceIds = <String>{
     for (final e in ctx.view.provincesById.entries)
@@ -421,8 +479,7 @@ Orders _runStalledFrontierArmyMoveFallback({
         in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
       m.armyId,
   };
-  ArmyMoveOrder? best;
-  var bestScore = -1.0;
+  final acceptedCandidates = <ArmyMoveOrder>[];
   for (final army in ctx.game.worldState.armies) {
     if (army.ownerId != ctx.nationId || army.isHomeArmy) continue;
     if (armiesWithOrders.contains(army.id)) continue;
@@ -439,26 +496,27 @@ Orders _runStalledFrontierArmyMoveFallback({
         destinationProvinceId: destinationProvinceId,
       );
       if (!validator.isArmyMoveAccepted(candidate)) continue;
-      final score = _scoreArmyMoveDestination(
-        move: candidate,
-        nationId: ctx.nationId,
-        game: ctx.game,
-        topology: ctx.topology,
-        snapshot: snapshot,
-        provinceOwner: ctx.provinceOwner,
-        invadable: invadable,
-        stalledExpansion: true,
-        declaredWarTargetFactionId: declaredWarTargetFactionId,
-        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-        nwInvasionWeight: nwInvasionWeight,
-        oldWorldInvasionWeight: oldWorldInvasionWeight,
-      );
-      if (score > bestScore) {
-        bestScore = score;
-        best = candidate;
-      }
+      acceptedCandidates.add(candidate);
     }
   }
+  final best = selectFeedstockBiasedBestArmyMove(
+    candidates: acceptedCandidates,
+    feedstockConquestTarget: feedstockConquestTarget,
+    score: (candidate) => _scoreArmyMoveDestination(
+      move: candidate,
+      nationId: ctx.nationId,
+      game: ctx.game,
+      topology: ctx.topology,
+      snapshot: snapshot,
+      provinceOwner: ctx.provinceOwner,
+      invadable: invadable,
+      stalledExpansion: true,
+      declaredWarTargetFactionId: declaredWarTargetFactionId,
+      phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+      nwInvasionWeight: nwInvasionWeight,
+      oldWorldInvasionWeight: oldWorldInvasionWeight,
+    ),
+  );
   if (best == null) {
     return ctx.orders;
   }
