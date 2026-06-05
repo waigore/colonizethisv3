@@ -4,7 +4,9 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show cheapestRegimentBuildTreasuryCost;
+    show
+        cheapestRegimentBuildTreasuryCost,
+        expandSellerFeedstockTileAcquisitionTarget;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
     show kTreasuryOfferPriorityUrgent;
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -1221,6 +1223,49 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// expecting OW gain to move. The residual lever for a seller that owns **no**
 /// `timber` tile at all is feedstock-tile acquisition (further #2847 work).
 ///
+/// ## S7-D refresh (captured 2026-06-05 on merged `dev` post-#3274 —
+///     acquisition-thread localization, this slice, Refs #2847)
+///
+/// Post-#3274 (conquest army-move target bias for flagged seller feedstock
+/// province), the OW gate is unchanged (gp1/gp2 **+6** PASS; gp3 +2, gp4 +1,
+/// gp5 +1, gp6 +2 FAIL). Two new read-only counters localize whether the
+/// seller feedstock-tile **acquisition** thread (declare-war bias #3273 +
+/// army-move bias #3274) engages on seed 42:
+///
+///   * `gpFeedstockAcquisitionTargetActiveTurns` — turns where
+///     `expandSellerFeedstockTileAcquisitionTarget(game, snap)` returns a
+///     non-null conquest-reachable Old World feedstock province.
+///   * `gpFeedstockAcquisitionTargetWithFieldArmyTurns` — subset where the GP
+///     also owns a non-home field army to execute the march.
+///
+/// **Result: both counters are 0 for every GP (gp1–gp6) on all 100 turns.**
+///
+/// **Decisive localization:** the acquisition residual
+/// (`sellerNeedsImprovementInputFeedstockTileAcquisition`) is **inactive** for
+/// every failing GP on seed 42 because each already **owns** an unimproved
+/// feedstock tile (`gpUnimprovedFeedstockTileOwnedTurns` = 100 for all six GPs).
+/// The acquisition path fires only when the seller owns **no** feedstock tile at
+/// all; the failing GPs instead need to **improve** tiles they already hold
+/// (blocked on `lumber` supply per the prior refresh). The #3271–#3274 conquest-
+/// acquisition thread (detection → target pick → declare-war bias → army-move
+/// bias) is therefore **structurally present and unit-tested** but **inert on
+/// this seed** — it does not apply to the current failing-GP profile. gp3's
+/// `gpFeedstockGateImprovedTileOwnedTurns` = 0 despite 32 gate-active turns
+/// with an idle Builder confirms the break remains on the **extraction /
+/// lumber-supply** path (improve the owned tile), not on conquest acquisition.
+///
+/// **Re-pointed next slice (supersedes the acquisition-thread pointer above):**
+/// continue the **lumber-supply / owned-tile extraction** lever for gp3 / gp5 /
+/// gp6 (`gpFeedstockGateImprovementLumberAffordableTurns` gp5 = 2 / gp6 = 12 /
+/// gp3 = 0; `gpFeedstockGateImprovedTileOwnedTurns` gp5 = 49 / gp6 = 20 / gp3 =
+/// 0), **not** further conquest-acquisition bias slices (the acquisition
+/// residual never activates on this seed). The acquisition-thread counters
+/// remain in the diagnostic for seeds / GP profiles where a locked seller owns
+/// **no** feedstock tile. Verify the next extraction slice by confirming
+/// `gpFeedstockGateImprovementLumberAffordableTurns` and
+/// `gpFeedstockGateImprovedTileOwnedTurns` rise for gp3 before expecting OW
+/// gain to move.
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1316,6 +1361,30 @@ bool _hasIdleBuilderUnit(Game game, String playerId) {
     if (unit.ownerId != playerId) continue;
     if (unit.type != kUnitTypeBuilder) continue;
     if (unit.currentWork == null) return true;
+  }
+  return false;
+}
+
+/// True iff [playerId] owns at least one non-home (field) army — an army the
+/// stalled-expansion conquest army-move planner could march onto a conquest
+/// target this turn.
+///
+/// Used by the H8-extraction acquisition-thread localization (Refs #2847):
+/// when a flagged below-quota zero-NW lock-recovery seller has a non-null
+/// `expandSellerFeedstockTileAcquisitionTarget` (the post-#3273 declare-war and
+/// post-#3274 army-move bias have a feedstock province to pursue) yet never
+/// completes the acquisition, a near-zero field-army count localizes the
+/// residual to "no field army available to execute the march" (peer-war
+/// regiment attrition), distinguishing it from "army present but the
+/// march/capture never completes" downstream of the army-move bias. Mirrors
+/// the field-army filter `runConquestArmyMovePlanner` applies
+/// (`army.ownerId == playerId && !army.isHomeArmy`). Read-only scan over world
+/// armies.
+bool _hasFieldArmy(Game game, String playerId) {
+  for (final army in game.worldState.armies) {
+    if (army.ownerId != playerId) continue;
+    if (army.isHomeArmy) continue;
+    return true;
   }
   return false;
 }
@@ -1856,6 +1925,36 @@ void main() {
       final feedstockGateImprovementCastIronAffordableTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 H8-extraction acquisition-thread localization (read-only).
+      // Post-#3274 the seller feedstock-tile acquisition thread (declare-war
+      // target bias #3273 + conquest army-move target bias #3274) drives a
+      // flagged below-quota zero-NW lock-recovery seller toward the Old World
+      // feedstock province it must conquer when it owns no extractable feedstock
+      // tile of its own. These split *why* a flagged seller that still owns 0
+      // improved feedstock tiles (e.g. gp3) never completes the acquisition into
+      // its proximate stage:
+      //   * `feedstockAcquisitionTargetActiveTurns` —
+      //     `expandSellerFeedstockTileAcquisitionTarget(game, snap)` returns a
+      //     non-null conquest-reachable Old World feedstock province this turn,
+      //     so the acquisition thread engages. Zero here localizes the residual
+      //     upstream of the declare-war / army-move bias to "no conquest-
+      //     reachable feedstock target" (the needed feedstock province is never
+      //     invadable) — the bias has nothing to redirect.
+      //   * `feedstockAcquisitionTargetWithFieldArmyTurns` — subset of the above
+      //     where the GP also owns at least one non-home field army able to
+      //     execute the march. Near-zero here with a positive active count
+      //     localizes the residual to "target reachable but no field army to
+      //     march it" (peer-war regiment attrition); a high count alongside a
+      //     flat `gpFeedstockGateImprovedTileOwnedTurns` re-points the break to
+      //     march/capture completion downstream of the army-move bias. Both stay
+      //     0 by construction for the +6 baseline GPs gp1/gp2 (never flagged, so
+      //     the acquisition target is always null).
+      final feedstockAcquisitionTargetActiveTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final feedstockAcquisitionTargetWithFieldArmyTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
 
       // Refs #2924 Step 0 — world-market lock-recovery diagnostics:
       // per-GP rollups capturing (a) trade orders the AI submits each
@@ -2049,6 +2148,25 @@ void main() {
           )) {
             unimprovedFeedstockTileOwnedTurns[gpId] =
                 (unimprovedFeedstockTileOwnedTurns[gpId] ?? 0) + 1;
+          }
+          // Refs #2847 H8-extraction acquisition-thread localization
+          // (read-only). Records whether the post-#3274 seller feedstock-tile
+          // acquisition thread engages for this GP this turn (a non-null
+          // conquest-reachable feedstock target) and, when it does, whether a
+          // non-home field army is available to execute the conquest march.
+          // `expandSellerFeedstockTileAcquisitionTarget` returns null for every
+          // player whose acquisition residual is inactive, so gp1/gp2 stay 0.
+          final acquisitionTarget = expandSellerFeedstockTileAcquisitionTarget(
+            game: game,
+            snapshot: snap,
+          );
+          if (acquisitionTarget != null) {
+            feedstockAcquisitionTargetActiveTurns[gpId] =
+                (feedstockAcquisitionTargetActiveTurns[gpId] ?? 0) + 1;
+            if (_hasFieldArmy(game, gpId)) {
+              feedstockAcquisitionTargetWithFieldArmyTurns[gpId] =
+                  (feedstockAcquisitionTargetWithFieldArmyTurns[gpId] ?? 0) + 1;
+            }
           }
           if (supplierImprovementInputFeedstockExtractionResourceIds(
             game,
@@ -2471,6 +2589,10 @@ void main() {
             feedstockGateImprovementLumberAffordableTurns,
         'gpFeedstockGateImprovementCastIronAffordableTurns':
             feedstockGateImprovementCastIronAffordableTurns,
+        'gpFeedstockAcquisitionTargetActiveTurns':
+            feedstockAcquisitionTargetActiveTurns,
+        'gpFeedstockAcquisitionTargetWithFieldArmyTurns':
+            feedstockAcquisitionTargetWithFieldArmyTurns,
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
@@ -2624,6 +2746,25 @@ void main() {
           reason:
               '$gpId combined improvement-cost-affordable turns cannot exceed '
               'the castIron-component-affordable turns (combined requires both)',
+        );
+        // Refs #2847 H8-extraction acquisition-thread localization: the
+        // field-army subset is recorded only on an acquisition-target-active
+        // turn, so it can never exceed the active total, and neither counter
+        // can exceed the 100-turn run. Guards the instrumentation gating itself
+        // without pinning the (freely tunable) per-GP counts.
+        expect(
+          feedstockAcquisitionTargetWithFieldArmyTurns[gpId]!,
+          lessThanOrEqualTo(feedstockAcquisitionTargetActiveTurns[gpId]!),
+          reason:
+              '$gpId acquisition-target-with-field-army turns cannot exceed '
+              'the acquisition-target-active turns',
+        );
+        expect(
+          feedstockAcquisitionTargetActiveTurns[gpId]!,
+          lessThanOrEqualTo(100),
+          reason:
+              '$gpId acquisition-target-active turns cannot exceed the '
+              '100-turn run length',
         );
       }
     },
