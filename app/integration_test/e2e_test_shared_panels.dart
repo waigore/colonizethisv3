@@ -416,9 +416,12 @@ Future<void> e2eSplitHomeFleetOnce(
 /// - Iterates non-home fleet tiles in stable tree order; skips tiles that
 ///   are themselves the home fleet, and skips tiles that lack a
 ///   `Text` whose `data` starts with `'Fleet '`.
-/// - When a candidate tile's `Move` text is not visible, taps the tile's
-///   `Icons.expand_more` icon and waits up to 3 s
-///   (`wait_until_found_move_after_expand`) for the `Move` text to appear.
+/// - The Move control is located by its stable [kCtE2EFleetMoveActionKey],
+///   not the `Move` label, because the naval action cluster collapses to
+///   icon-only (no `Text('Move')`) at narrow viewports (Refs #2336).
+/// - When a candidate tile's keyed Move button is not in the tree (collapsed
+///   tile), taps the tile's `Icons.expand_more` icon and waits up to 3 s
+///   (`wait_until_found_move_after_expand`) for the keyed button to appear.
 /// - **Prefers** tiles whose subtitle reads as a New World location row
 ///   (per [e2eTextLooksLikeNewWorldLocationLine]): the first such tile's
 ///   hit-testable `Move` button is tapped immediately, the helper waits up
@@ -480,7 +483,14 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       if (fleetTitle.evaluate().isEmpty) {
         continue;
       }
-      var move = find.descendant(of: sub, matching: find.text('Move'));
+      // Locate the Move control by its stable key, not the `Move` label:
+      // the naval action cluster collapses to icon-only (no `Text('Move')`)
+      // at narrow test-host viewports (Refs #2336; e2e deterministic locators).
+      final moveByKey = find.descendant(
+        of: sub,
+        matching: find.byKey(kCtE2EFleetMoveActionKey),
+      );
+      var move = moveByKey;
       if (move.evaluate().isEmpty) {
         final expandIcon = find.descendant(
           of: sub,
@@ -492,12 +502,12 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
           await tester.tap(iconHit, warnIfMissed: false);
           await e2eWaitUntilFound(
             tester,
-            find.descendant(of: sub, matching: find.text('Move')),
+            moveByKey,
             timeout: const Duration(seconds: 3),
             phaseName: 'wait_until_found_move_after_expand',
           );
         }
-        move = find.descendant(of: sub, matching: find.text('Move'));
+        move = moveByKey;
       }
       if (move.evaluate().isEmpty) {
         continue;

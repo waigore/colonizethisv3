@@ -118,6 +118,7 @@ class UnitsEntityActionRow extends StatelessWidget {
           Tooltip(
             message: action.tooltip,
             child: CtNinePatchButton(
+              key: action.buttonKey,
               onPressed: action.onPressed,
               enabled: action.onPressed != null,
               padding: EdgeInsets.symmetric(
@@ -156,6 +157,7 @@ class UnitsEntityActionRow extends StatelessWidget {
         Tooltip(
           message: action.tooltip,
           child: CtNinePatchButton(
+            key: action.buttonKey,
             onPressed: action.onPressed,
             enabled: action.onPressed != null,
             // Mockup `.f-actions button { padding:3px 7px; font-size:9px; }` /
@@ -192,12 +194,19 @@ class UnitsEntityAction {
     required this.label,
     required this.onPressed,
     this.iconOnly = false,
+    this.buttonKey,
   });
 
   final String tooltip;
   final IconData icon;
   final String label;
   final VoidCallback? onPressed;
+
+  /// Stable [Key] applied to the rendered action button regardless of whether
+  /// it renders `Icon + label` or collapses to icon-only. Lets e2e helpers
+  /// locate the control deterministically when the label [Text] is suppressed
+  /// at narrow viewports (Refs #2336; `colonizethis-e2e-ui-stability.mdc`).
+  final Key? buttonKey;
 
   /// When `true`, the action button suppresses its text label and renders
   /// only the [icon] — used by the right-aligned locate control on naval
