@@ -2,7 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../orders/order_suggestion_work.dart' show suggestWorkOrders;
 import '../orders/orders_application_helpers.dart' show isMineralEligibleTile;
+import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 
@@ -189,6 +191,98 @@ bool ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTi
     if (!isExplorerUnit(unit.type)) continue;
     if (unit.currentWork != null) continue;
     if (feedstockProvinceIds.contains(unit.locationProvinceId)) return true;
+  }
+  return false;
+}
+
+/// True iff the **real** Full-AI work-order suggestion pass
+/// ([suggestWorkOrders]) emits a `prospect` candidate targeting one of
+/// [playerId]'s owned, **unprospected**, **mineral-eligible** Old World
+/// feedstock tiles in [feedstockIds] that is co-located with an **idle**
+/// Explorer (Refs #2847 § H8-extraction Old World mineral feedstock prospect
+/// localization).
+///
+/// Splits the residual one gate finer than
+/// [ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile]:
+/// that predicate proved an idle Explorer is co-located with an owned,
+/// unprospected, mineral-eligible Old World feedstock tile on every gate-active
+/// turn, yet the supplier still never prospects it. The next gates the
+/// `prospect` candidate must clear after [isMineralEligibleTile] all live
+/// **inside** the suggestion pass (`_addProspectSuggestionIfEligible` /
+/// `_allAcceptedProspectTilesInProvince`): the province `fogged`+ visibility
+/// gate, the bundled move-leg validation, and the incremental-validator
+/// acceptance (`isWorkOrderAcceptedWithValidator` — prospect material cost /
+/// visibility precheck). Running the actual pass and inspecting its output —
+/// rather than re-deriving a single gate — keeps this faithful to the live
+/// generation path and distinguishes:
+///
+///   * **true on gate turns** → the pass *does* emit the co-located feedstock
+///     `prospect` candidate (it is generated and validator-accepted), so the
+///     residual is **selection ranking** — the accepted `prospect` suggestion
+///     loses to a competing `explore` suggestion in
+///     `selectFullAiCivilianWorkOrders`, and the reserved idle Explorer never
+///     receives the prospect as its chosen order.
+///   * **false while
+///     [ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile]
+///     is true** → the pass emits **no** such `prospect` candidate despite the
+///     co-located mineral-eligible tile, so the residual is **inside
+///     generation** (the province visibility gate, the move-leg validation, or
+///     the incremental-validator material-cost / visibility precheck), not
+///     selection ranking.
+///
+/// Uses an empty [Orders] base context (matching the diagnostic's other
+/// candidate-probe call sites); read-only and deterministic over
+/// `(game, topology, view, playerId, feedstockIds, tileMapByRegion)`.
+bool suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile(
+  Game game,
+  MapTopology topology,
+  PlayerView view,
+  String playerId,
+  Set<String> feedstockIds,
+  Map<String, TileMapResult>? tileMapByRegion,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
+  // Owned, unprospected, mineral-eligible Old World feedstock tiles grouped by
+  // province — the same scan the mineral-eligibility predicate performs, but
+  // retaining the tile keys so the emitted `prospect` target can be matched.
+  final eligibleTileKeysByProvince = <String, Set<String>>{};
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    if (!kMineralResourceIds.contains(entry.value)) continue;
+    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
+    if (prospected.contains(entry.key)) continue;
+    if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    (eligibleTileKeysByProvince[provinceId] ??= <String>{}).add(entry.key);
+  }
+  if (eligibleTileKeysByProvince.isEmpty) return false;
+  // Restrict to tiles whose province hosts an idle Explorer (the precondition
+  // the mineral-eligibility predicate asserts), so this predicate's truth
+  // region is a strict refinement of that one.
+  final targetTileKeys = <String>{};
+  for (final unit in allUnitsFromWorld(ws)) {
+    if (unit.ownerId != playerId) continue;
+    if (!isExplorerUnit(unit.type)) continue;
+    if (unit.currentWork != null) continue;
+    final tiles = eligibleTileKeysByProvince[unit.locationProvinceId];
+    if (tiles != null) targetTileKeys.addAll(tiles);
+  }
+  if (targetTileKeys.isEmpty) return false;
+  final suggestions = suggestWorkOrders(
+    view,
+    game,
+    topology,
+    const Orders(),
+    tileMapByRegion: tileMapByRegion,
+  );
+  for (final suggestion in suggestions) {
+    if (suggestion.target != kWorkTargetProspect) continue;
+    if (targetTileKeys.contains(suggestion.targetTileKey)) return true;
   }
   return false;
 }

@@ -10,7 +10,8 @@ export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart'
         hasIdleExplorerUnit,
         ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
-        ownsProspectedOldWorldMineralFeedstockTile;
+        ownsProspectedOldWorldMineralFeedstockTile,
+        suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile;
 export 'src/ai/full_ai_civilian_work_selection.dart'
     show
         FullAiCivilianWorkIdle,
