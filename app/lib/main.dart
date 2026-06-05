@@ -4,6 +4,7 @@ import 'dart:io' show Directory;
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
 
@@ -46,16 +47,14 @@ Future<void> bootstrapApp({
   await openHiveBoxSafely(HiveBoxNames.games);
   await openHiveBoxSafely(HiveBoxNames.offlineQueue);
   await ensureDesktopWindowStartup();
-  // Fire-and-forget Cinzel registration for the editorial-monocle theme;
-  // failure (offline + no cache) falls back to platform serif per
-  // `preloadEditorialMonocleFonts`. Skipped under e2e to avoid network
-  // dependencies in the integration_test bootstrap. Tests inject a no-op
-  // via [preloadFonts] so the GoogleFonts asset-not-found path does not
-  // surface as a zoned error after the test completes.
+  // Await bundled Cinzel registration for the editorial-monocle theme;
+  // `preloadEditorialMonocleFonts` hard-errors when assets are missing.
+  // Skipped under e2e to avoid font bootstrap in integration_test. Tests
+  // inject a no-op via [preloadFonts] so the suite stays hermetic.
   final preload =
       preloadFonts ??
       () => preloadEditorialMonocleFonts(skipInTests: kCtE2EEnabled);
-  unawaited(preload());
+  await preload();
   runAppFn(const ProviderScope(child: AppEventHandlerScope(child: App())));
 }
 
@@ -87,6 +86,8 @@ Future<void> bootstrapForIntegrationTest() async {
 }
 
 void main() {
+  // Bundled Cinzel only — no runtime HTTP fetch to fonts.gstatic.com.
+  GoogleFonts.config.allowRuntimeFetching = false;
   runZonedGuarded(
     () async {
       await bootstrapApp(

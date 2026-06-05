@@ -280,12 +280,24 @@ rather than hard-coding `Colors.black54` / hex literals.
 | Body | `-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif` |
 | Mono | `'SF Mono', ui-monospace, Menlo, monospace` |
 
-The Flutter theme realizes Display via `GoogleFonts.cinzel(...)` on
+The Flutter theme realizes Display via `fontFamily: Cinzel` on
 `headlineMedium`, `headlineSmall`, `titleLarge`, `titleMedium`, and
-`titleSmall`; Body uses Flutter's platform default (`Roboto` on Android,
-system on iOS/desktop) so the system-ui fallback chain applies per OS; Mono
-inherits the platform-default monospace family until a dedicated style is
-needed.
+`titleSmall` in `AppThemes.editorialMonocle`; Body uses Flutter's platform
+default (`Roboto` on Android, system on iOS/desktop) so the system-ui
+fallback chain applies per OS; Mono inherits the platform-default monospace
+family until a dedicated style is needed.
+
+**Bundled Cinzel (production):** Cinzel display weights (Regular 400, Medium
+500, SemiBold 600, Bold 700) are **bundled** under `app/google_fonts/` and
+declared in `app/pubspec.yaml` (`flutter: assets:` + `fonts:`). Production
+`main()` sets `GoogleFonts.config.allowRuntimeFetching = false` and awaits
+`preloadEditorialMonocleFonts()` before `runApp`; the helper registers
+bundled variants via `GoogleFonts.pendingFonts` and **rethrows** on failure
+so startup **hard-errors** — no silent platform-serif fallback and no HTTP
+fetch to `fonts.gstatic.com`. Widgetbook host inherits the same bundled fonts
+through the `colonizethis_app` package dependency. `google_fonts` remains a
+registration helper only; runtime fetching is disabled in production and in
+the app test harness (`app/test/flutter_test_config.dart`).
 
 ### Backward compatibility
 
