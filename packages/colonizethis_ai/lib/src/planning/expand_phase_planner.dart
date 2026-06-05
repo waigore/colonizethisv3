@@ -1168,6 +1168,16 @@ bool isStalledOldWorldGpBlockerFocus({
 /// The runtime "suggestDeclareWarOrders rejects" gate noted in the issue
 /// spec is enforced at the orchestrator layer (#2509 S5) so this pure
 /// function remains free of the order-suggestion API dispatch.
+///
+/// Feedstock-tile acquisition bias (Refs #2847 § EXPAND feedstock-tile
+/// acquisition declare-war target bias; `SPEC/ai/economy-planner.md`): for a
+/// flagged below-quota zero-NW lock-recovery seller, the within-arm
+/// lexicographic tiebreak is redirected toward the faction owning the primary
+/// conquest-reachable feedstock province returned by
+/// [expandSellerFeedstockTileAcquisitionTarget] — but only when that owner is
+/// already a candidate in the arm that fires this turn. Arm precedence and
+/// every gate are unchanged, and the bias never fires for an unflagged GP, so
+/// the +6 Old World conquest baseline GPs gp1/gp2 are never redirected.
 String? planExpandDeclareWar({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -1222,13 +1232,39 @@ String? planExpandDeclareWar({
   final canAffordNewWar =
       player.treasury >= cheapestRegimentBuildTreasuryCost();
 
-  if (adjacentNewWarMinors.isNotEmpty && canAffordNewWar) {
-    final sorted = adjacentNewWarMinors.toList()..sort();
+  // Refs #2847 § EXPAND feedstock-tile acquisition declare-war target bias
+  // (`SPEC/ai/economy-planner.md`). A flagged below-quota zero-NW
+  // lock-recovery seller redirects its within-arm declare-war tiebreak toward
+  // the faction owning the primary conquest-reachable Old World feedstock
+  // province it must acquire to source `lumber` / `castIron` domestically.
+  // The bias only swaps the lexicographic pick *inside* the arm that already
+  // fires when the feedstock owner is one of that arm's candidates — it never
+  // reorders arm precedence, relaxes a gate, or fires for an unflagged GP
+  // (`expandSellerFeedstockTileAcquisitionTarget` returns `null` for every
+  // player whose acquisition residual is inactive, so the +6 Old World
+  // conquest baseline GPs gp1/gp2 are never redirected). The detection scan is
+  // computed lazily — only for an arm with two or more candidates, where a
+  // tiebreak exists to redirect.
+  String biasedArmPick(Set<String> armCandidates) {
+    final sorted = armCandidates.toList()..sort();
+    if (armCandidates.length < 2) return sorted.first;
+    final feedstockProvinceId = expandSellerFeedstockTileAcquisitionTarget(
+      game: game,
+      snapshot: snapshot,
+    );
+    if (feedstockProvinceId == null) return sorted.first;
+    final feedstockOwner = provinceOwner[feedstockProvinceId];
+    if (feedstockOwner != null && armCandidates.contains(feedstockOwner)) {
+      return feedstockOwner;
+    }
     return sorted.first;
   }
+
+  if (adjacentNewWarMinors.isNotEmpty && canAffordNewWar) {
+    return biasedArmPick(adjacentNewWarMinors);
+  }
   if (atWarMinors.isNotEmpty) {
-    final sorted = atWarMinors.toList()..sort();
-    return sorted.first;
+    return biasedArmPick(atWarMinors);
   }
 
   // Priority 3: sole GP frontier blocker on GP-only mutual-plateau front.
