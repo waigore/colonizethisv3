@@ -14,7 +14,6 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
     show
-        allUnitsFromWorld,
         hasIdleExplorerUnit,
         ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
@@ -29,6 +28,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
 import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_s7d_feedstock_helpers.dart';
 
 /// Seed-42 turn-100 EXPAND-arm S7-D diagnostic (Refs #2847).
 ///
@@ -1283,205 +1283,6 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `gpTreasuryUnderCheapestRegimentTurns` count from the #2847
 /// surface. Copy this block into a fresh comment on issue #2924
 /// when refreshing the Step 0 decision-gate evidence.
-/// True iff [playerId] owns at least one province tile that hosts a fabric
-/// feedstock resource (a member of [feedstockIds]) and is still unimproved
-/// (improvement level < 1) — i.e. a Builder target a lock-recovery seller could
-/// extract to feed the `fabricFrom*` recipes. Read-only scan over owned
-/// provinces; Refs #2847 H8-supply feedstock-stage diagnostic.
-bool _ownsUnimprovedFeedstockResourceTile(
-  Game game,
-  String playerId,
-  Set<String> feedstockIds,
-) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
-    for (final entry in byProvince.entries) {
-      final province = tryGetProvince(ws, entry.key);
-      if (province == null || province.ownerId != playerId) continue;
-      for (final tileKey in entry.value) {
-        final resourceId = ws.resourceByTileKey[tileKey];
-        if (resourceId == null || !feedstockIds.contains(resourceId)) {
-          continue;
-        }
-        if (ws.tileState.improvementLevel(tileKey) < 1) return true;
-      }
-    }
-  }
-  return false;
-}
-
-/// True iff [playerId] owns at least one province tile that hosts a fabric
-/// feedstock resource (a member of [feedstockIds]) that is already improved
-/// (improvement level >= 1) — i.e. a Builder has finished extracting the tile.
-///
-/// Companion to [_ownsUnimprovedFeedstockResourceTile] for the H8-extraction
-/// execution-gap disambiguation (Refs #2847). When the feedstock-extraction
-/// gate is active and an unimproved feedstock tile is owned all run, a near-zero
-/// improved-tile count localizes the break to the routing / Builder-availability
-/// stage (the Builder never finishes the improvement), whereas a high
-/// improved-tile count alongside a near-zero `gpFeedstockInStockpileTurns`
-/// localizes it to the extraction / transport-connectivity stage (the improved
-/// tile yields no commodity into the stockpile because it is not extraction-
-/// connected). Read-only scan over owned provinces.
-bool _ownsImprovedFeedstockResourceTile(
-  Game game,
-  String playerId,
-  Set<String> feedstockIds,
-) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
-    for (final entry in byProvince.entries) {
-      final province = tryGetProvince(ws, entry.key);
-      if (province == null || province.ownerId != playerId) continue;
-      for (final tileKey in entry.value) {
-        final resourceId = ws.resourceByTileKey[tileKey];
-        if (resourceId == null || !feedstockIds.contains(resourceId)) {
-          continue;
-        }
-        if (ws.tileState.improvementLevel(tileKey) >= 1) return true;
-      }
-    }
-  }
-  return false;
-}
-
-/// True iff [playerId] owns at least one Builder unit that currently has no
-/// work assigned (`currentWork == null`) — i.e. a Builder the Full-AI civilian
-/// work selection could route onto a feedstock tile this turn.
-///
-/// Used by the H8-extraction execution-gap disambiguation (Refs #2847): a
-/// near-zero count on feedstock-gate-active turns localizes the break to
-/// Builder availability (no free Builder to route), distinguishing it from the
-/// "Builder present but improvement never completes / extracts" cases. Read-only
-/// scan over all world units.
-bool _hasIdleBuilderUnit(Game game, String playerId) {
-  for (final unit in allUnitsFromWorld(game.worldState)) {
-    if (unit.ownerId != playerId) continue;
-    if (unit.type != kUnitTypeBuilder) continue;
-    if (unit.currentWork == null) return true;
-  }
-  return false;
-}
-
-/// True iff [playerId] owns at least one non-home (field) army — an army the
-/// stalled-expansion conquest army-move planner could march onto a conquest
-/// target this turn.
-///
-/// Used by the H8-extraction acquisition-thread localization (Refs #2847):
-/// when a flagged below-quota zero-NW lock-recovery seller has a non-null
-/// `expandSellerFeedstockTileAcquisitionTarget` (the post-#3273 declare-war and
-/// post-#3274 army-move bias have a feedstock province to pursue) yet never
-/// completes the acquisition, a near-zero field-army count localizes the
-/// residual to "no field army available to execute the march" (peer-war
-/// regiment attrition), distinguishing it from "army present but the
-/// march/capture never completes" downstream of the army-move bias. Mirrors
-/// the field-army filter `runConquestArmyMovePlanner` applies
-/// (`army.ownerId == playerId && !army.isHomeArmy`). Read-only scan over world
-/// armies.
-bool _hasFieldArmy(Game game, String playerId) {
-  for (final army in game.worldState.armies) {
-    if (army.ownerId != playerId) continue;
-    if (army.isHomeArmy) continue;
-    return true;
-  }
-  return false;
-}
-
-/// True iff [playerId]'s stockpile can afford the level-0 `build_improvement`
-/// material cost (the cost to raise an unimproved tile to level 1 — 1 lumber +
-/// 1 cast iron, `work_order_costs.dart` § `workOrderCostBuildImprovement`).
-///
-/// The Full-AI civilian work-order validator rejects any `build_improvement`
-/// candidate whose material cost the stockpile cannot cover
-/// (`work_order_validator.dart` § `_validateWorkMaterialCosts`) **before** the
-/// selection score boost (#3234) can bias it. A near-zero count on
-/// feedstock-extraction-gate-active turns therefore localizes the
-/// missing-candidate break to improvement affordability (the lumber /
-/// cast-iron deadlock) rather than tile control, visibility, or occupancy.
-/// Read-only over the player's stockpile; Refs #2847 H8-extraction.
-bool _affordsBuildImprovementLevelZero(Game game, String playerId) {
-  final player = game.playerById(playerId);
-  if (player == null) return false;
-  final cost = workOrderCostBuildImprovement(0);
-  for (final entry in cost.entries) {
-    if (player.stockpile.quantityOf(entry.key) < entry.value) return false;
-  }
-  return true;
-}
-
-/// True iff [playerId]'s stockpile holds enough of the single [commodityId]
-/// component to cover its share of the level-0 `build_improvement` material
-/// cost (`work_order_costs.dart` § `workOrderCostBuildImprovement`).
-///
-/// `_affordsBuildImprovementLevelZero` requires **every** component
-/// simultaneously (1 lumber **and** 1 cast iron). When that combined counter
-/// stays flat at zero on feedstock-extraction-gate-active turns, this
-/// per-component probe localizes the binding shortfall to the exact missing
-/// material — i.e. whether the GP is starved of `lumber`, of `castIron`, or of
-/// both — during the gate window rather than only at the turn-99 snapshot.
-/// Returns `false` if [commodityId] is not a component of the level-0 cost.
-/// Read-only over the player's stockpile; Refs #2847 H8-extraction.
-bool _affordsBuildImprovementComponent(
-  Game game,
-  String playerId,
-  String commodityId,
-) {
-  final player = game.playerById(playerId);
-  if (player == null) return false;
-  final required = workOrderCostBuildImprovement(0)[commodityId];
-  if (required == null) return false;
-  return player.stockpile.quantityOf(commodityId) >= required;
-}
-
-/// True iff [playerId] owns at least one idle Builder for which the work-order
-/// engine **accepts** a `build_improvement` on an owned unimproved feedstock
-/// tile (a member of [feedstockIds]) — i.e. `getValidWorkOrderTileKeys` (the
-/// same validator chain `suggestWorkOrders` runs) actually emits a candidate
-/// the Full-AI civilian selection could route the Builder onto this turn.
-///
-/// This is the decisive split for the H8-extraction missing-candidate
-/// hypothesis (Refs #2847): with an idle Builder present
-/// (`gpFeedstockGateIdleBuilderPresentTurns` == gate-active turns) and an
-/// unimproved feedstock tile owned (`gpUnimprovedFeedstockTileOwnedTurns` ==
-/// 100) yet `gpFeedstockGateImprovedTileOwnedTurns` == 0, a near-zero count
-/// here confirms the work-order validator suppresses the candidate before any
-/// selection boost applies (the #3234 boost only biases a candidate that
-/// exists); a high count would instead re-point the break downstream to the
-/// selection / orchestrator / phase-filter stage. Read-only —
-/// `getValidWorkOrderTileKeys` does not mutate game state.
-bool _hasValidBuildImprovementOnUnimprovedFeedstockTile(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Set<String> feedstockIds, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  for (final unit in allUnitsFromWorld(ws)) {
-    if (unit.ownerId != playerId) continue;
-    if (unit.type != kUnitTypeBuilder) continue;
-    if (unit.currentWork != null) continue;
-    final valid = getValidWorkOrderTileKeys(
-      game,
-      topology,
-      playerId,
-      unit.id,
-      kWorkTargetBuildImprovement,
-      const Orders(),
-      tileMapByRegion: tileMapByRegion,
-    );
-    for (final tileKey in valid) {
-      final resourceId = ws.resourceByTileKey[tileKey];
-      if (resourceId == null || !feedstockIds.contains(resourceId)) continue;
-      if (ws.tileState.improvementLevel(tileKey) < 1) return true;
-    }
-  }
-  return false;
-}
-
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -2086,11 +1887,11 @@ void main() {
             // Refs #2847 H8-extraction execution-gap disambiguation: split the
             // gate-active turns by Builder availability and improvement
             // completion so the next slice can target the exact stage.
-            if (_hasIdleBuilderUnit(game, gpId)) {
+            if (hasIdleBuilderUnit(game, gpId)) {
               feedstockGateIdleBuilderPresentTurns[gpId] =
                   (feedstockGateIdleBuilderPresentTurns[gpId] ?? 0) + 1;
             }
-            if (_ownsImprovedFeedstockResourceTile(
+            if (ownsImprovedFeedstockResourceTile(
               game,
               gpId,
               fabricFeedstockIds,
@@ -2103,7 +1904,7 @@ void main() {
             // candidate at all, and can the GP afford the level-0 improvement
             // cost? Splits the suppression between the validator material-cost
             // gate and the tile-control / visibility gates.
-            if (_hasValidBuildImprovementOnUnimprovedFeedstockTile(
+            if (hasValidBuildImprovementOnUnimprovedFeedstockTile(
               game,
               topo,
               gpId,
@@ -2115,14 +1916,14 @@ void main() {
                       0) +
                   1;
             }
-            if (_affordsBuildImprovementLevelZero(game, gpId)) {
+            if (affordsBuildImprovementLevelZero(game, gpId)) {
               feedstockGateImprovementCostAffordableTurns[gpId] =
                   (feedstockGateImprovementCostAffordableTurns[gpId] ?? 0) + 1;
             }
             // Per-component split of the combined affordability gate above:
             // pins which material (lumber / castIron) binds on gate-active
             // turns. Refs #2847 H8-extraction.
-            if (_affordsBuildImprovementComponent(
+            if (affordsBuildImprovementComponent(
               game,
               gpId,
               improvementLumberId,
@@ -2131,7 +1932,7 @@ void main() {
                   (feedstockGateImprovementLumberAffordableTurns[gpId] ?? 0) +
                   1;
             }
-            if (_affordsBuildImprovementComponent(
+            if (affordsBuildImprovementComponent(
               game,
               gpId,
               improvementCastIronId,
@@ -2141,7 +1942,7 @@ void main() {
                   1;
             }
           }
-          if (_ownsUnimprovedFeedstockResourceTile(
+          if (ownsUnimprovedFeedstockResourceTile(
             game,
             gpId,
             fabricFeedstockIds,
@@ -2163,7 +1964,7 @@ void main() {
           if (acquisitionTarget != null) {
             feedstockAcquisitionTargetActiveTurns[gpId] =
                 (feedstockAcquisitionTargetActiveTurns[gpId] ?? 0) + 1;
-            if (_hasFieldArmy(game, gpId)) {
+            if (hasFieldArmy(game, gpId)) {
               feedstockAcquisitionTargetWithFieldArmyTurns[gpId] =
                   (feedstockAcquisitionTargetWithFieldArmyTurns[gpId] ?? 0) + 1;
             }
@@ -2181,7 +1982,7 @@ void main() {
             final feedstockTiles =
                 supplierActiveUnimprovedCastIronFeedstockTileTurns[gpId]!;
             for (final feedstockId in castIronFeedstockIds) {
-              if (_ownsUnimprovedFeedstockResourceTile(game, gpId, {
+              if (ownsUnimprovedFeedstockResourceTile(game, gpId, {
                 feedstockId,
               })) {
                 feedstockTiles[feedstockId] =
