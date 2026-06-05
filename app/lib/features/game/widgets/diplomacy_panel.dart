@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
 import '../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
+import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
@@ -59,6 +60,10 @@ class DiplomacyPanel extends StatefulWidget {
     this.onClose,
     this.readOnly = false,
   });
+
+  /// SPEC/ui/diplomacy-panel.md — [UiScreenIds.diplomacyScreen]. Hosted by
+  /// `DiplomacyScreen`; shares its stable surface ID.
+  static const screenId = UiScreenIds.diplomacyScreen;
 
   final Game game;
   final String humanPlayerId;

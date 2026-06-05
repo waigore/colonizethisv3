@@ -256,6 +256,14 @@ rules:
     runner: dart
     script: tool/check_no_screen_in_game_widgets.dart
 
+  - rule_id: repo.app_panel_screen_id
+    group: structure
+    title: game-bearing panels must declare a static const screenId (Refs #3279)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_panel_screen_id.dart
+    pr_incremental: true
+
   - rule_id: repo.game_widgets_file_size
     group: structure
     title: app/lib/features/game/widgets files must stay at or below 700 lines
