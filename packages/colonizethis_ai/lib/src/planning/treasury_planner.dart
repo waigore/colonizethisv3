@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/ai_api.dart'
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
         oldWorldProvinceCountOwnedBy,
+        peerLockRecoverySellerNeededProducibleImprovementInputs,
         pendingTreasuryCostsForTurn,
         regimentBuildInputFeedstockImprovementInputCost,
         tradeCargoCapacityForGreatPower,
@@ -122,17 +123,23 @@ List<TradeOrder> runTreasuryPlanner({
   // SPEC/ai/treasury-planner.md § Lock-recovery seller food-surplus release.
   final isLockRecoverySeller =
       _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
-  // Refs #2847 H8-supply castIron source: the supplier release also activates
-  // when a peer lock-recovery seller is stuck one stage earlier — at the
-  // level-0 build_improvement gate whose `castIron` input the world market
-  // structurally cannot supply. Activating the release here lets an affluent
-  // supplier's over-produced `castIron` surplus reach the locked seller before
-  // the seller ever reaches the regiment build-input (fabric) stage.
-  // SPEC/ai/treasury-planner.md § Lock-recovery castIron improvement-input
-  // supplier source.
+  // Refs #2847 H8-supply (S7-D lumber re-localization): the supplier release
+  // also activates when a peer lock-recovery seller is stuck one stage earlier —
+  // at the level-0 `build_improvement` gate whose producible inputs the world
+  // market cannot supply it. On seed 42 that binding input is `lumber` (market
+  // supply is structurally thin), with `castIron` covered for the post-waiver
+  // stage; [peerLockRecoverySellerNeededProducibleImprovementInputs] reports the
+  // exact inputs a *peer* seller is short of, so activating the release here lets
+  // an affluent supplier's over-produced `lumber` / `castIron` surplus reach the
+  // locked seller before the seller ever reaches the regiment build-input
+  // (fabric) stage. SPEC/ai/treasury-planner.md § Lock-recovery castIron
+  // improvement-input supplier source.
   final regimentBuildInputMarketSupplyActive =
       _anyLockRecoverySellerNeedsRegimentBuildInput(game) ||
-          anyLockRecoverySellerNeedsCastIronImprovementInput(game);
+          peerLockRecoverySellerNeededProducibleImprovementInputs(
+            game,
+            excludePlayerId: playerId,
+          ).isNotEmpty;
   // Refs #2847 H8-extraction supply-side fix: releasing a *surplus* (stock held
   // above the GP's own consumption + production-input reserve) is selling, not
   // speculating, so the supplier role must not be gated on the supplier's own

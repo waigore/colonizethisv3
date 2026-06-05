@@ -1139,6 +1139,39 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// stay unaffected: a `lumber` supplier-release boost reuses the existing
 /// leftover-labour-only sizing argument that keeps the conquest economy intact.
 ///
+/// **Post-implementation refresh (supplier `lumber`-release slice landed).**
+/// The supplier-release set was generalized from the hardcoded
+/// `kDomesticProductionImprovementInputIds = {castIron}` to
+/// `peerLockRecoverySellerNeededProducibleImprovementInputs(...)` (now exported
+/// from `ai_api.dart`), so an affluent supplier over-produces whichever
+/// producible improvement input a peer lock-recovery seller actually binds on —
+/// `lumber` here, not the waived `castIron`. The economy- and treasury-planner
+/// triggers were generalized to match, with positive + negative-control unit
+/// coverage in `economy_planner_regiment_build_input_production_test.dart`.
+/// Re-running this diagnostic on the change produces a **byte-identical** seed-42
+/// surface: `gpImprovementInputOffersEmitted` unchanged (gp1 = 0, gp2 = 11),
+/// `gpFeedstockGateImprovementLumberAffordableTurns` /
+/// `gpFeedstockGateValidBuildImprovementCandidateTurns` unchanged
+/// (gp5 = 2, gp6 = 1, gp3 = 0), `gpImprovementInputDealsAsBuyer` unchanged
+/// (gp5 = 2, gp6 = 1, gp3 = 0), and OW gain unchanged. The release boost is
+/// therefore **correct groundwork but verified necessary-but-insufficient** on
+/// this seed: it re-prioritizes leftover supplier labour toward the binding
+/// material, but it cannot release `lumber` the suppliers do not produce/hold —
+/// gp1 stays silent (0 offers) and gp2's 11 offers are its pre-existing output,
+/// neither of which the prioritization-only boost increases.
+///
+/// **Re-pointed lever (supersedes the supplier-release pointer above).** The
+/// binding shortfall is `lumber` **production/supply capacity**, not its release
+/// prioritization. The next slice should make the locked seller domestically
+/// produce `lumber` from its own `timber` (option b above) — gp3 holds
+/// `timber` = 7 (`gpCastIronFeedstockHeldAtTurn99`), so a seller-side
+/// `lumber_from_timber` assignment removes the dependence on a thin one-offerer
+/// market — and/or raise the supplier's `timber`->`lumber` throughput so the
+/// release set has surplus to ship. Verify the same way: confirm
+/// `gpFeedstockGateImprovementLumberAffordableTurns` and
+/// `gpFeedstockGateValidBuildImprovementCandidateTurns` rise for gp3 / gp5 / gp6
+/// before expecting OW gain to move.
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
