@@ -459,6 +459,46 @@ List<String> sellerFeedstockTileAcquisitionTargetsAmongAcquirable(
   return List<String>.unmodifiable(intersection);
 }
 
+/// The single deterministic **primary** Old World feedstock-tile acquisition
+/// target province id for the flagged seller [playerId] this turn, or `null`
+/// when there is none (Refs #2847 § H8-extraction seller feedstock-tile
+/// acquisition target pick).
+///
+/// Final pick contract that builds on the intersection
+/// ([sellerFeedstockTileAcquisitionTargetsAmongAcquirable]): where the
+/// intersection narrows the topology-free feedstock candidate list to every
+/// province the planner reports as acquirable this turn, this collapses that
+/// list to the **one** province the acquisition-wiring slice should pursue, so
+/// the slice emits exactly one deterministic acquisition order per turn rather
+/// than re-deriving the choice itself. The pick is the lowest province id in the
+/// acquirable subset — the subset is already ascending-sorted, so the first
+/// element is the deterministic primary target independent of
+/// [acquirableProvinceIds] iteration order.
+///
+/// Returns `null` when the acquisition residual is inactive for [playerId] (so
+/// it is `null` for every healthy / above-quota / regiment-holding / NW-owning
+/// GP, and the +6 Old World conquest baseline GPs are never picked), when
+/// [acquirableProvinceIds] is empty, or when no feedstock candidate is
+/// acquirable this turn. **Topology-free** by construction — it derives no
+/// adjacency or reachability itself, only selecting from the planner's reported
+/// acquirable set. Pure and deterministic over
+/// `(game, playerId, acquirableProvinceIds)` and the static
+/// `ProductionRecipesCatalog`; changes no behaviour on its own, performs no I/O
+/// and no logging, and adds no `ai_victory_config.dart` constant.
+String? sellerFeedstockTileAcquisitionTarget(
+  Game game,
+  String playerId,
+  Set<String> acquirableProvinceIds,
+) {
+  final acquirable = sellerFeedstockTileAcquisitionTargetsAmongAcquirable(
+    game,
+    playerId,
+    acquirableProvinceIds,
+  );
+  if (acquirable.isEmpty) return null;
+  return acquirable.first;
+}
+
 /// Union of the seller-side feedstock gates and the supplier-side gate for
 /// [playerId] (Refs #2847 § H8-extraction):
 ///
