@@ -14,6 +14,7 @@ import 'package:colonizethis_logic/ai_api.dart'
     show
         allUnitsFromWorld,
         hasIdleExplorerUnit,
+        ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         regimentBuildInputFeedstockExtractionResourceIds,
         supplierImprovementInputFeedstockExtractionResourceIds;
@@ -1373,11 +1374,10 @@ void main() {
       //       lumber with zero castIron confirms the production-feedstock break.
       // Pure observation — no production logic changes — so the (freely
       // tunable) counts can move as later supply slices land.
-      final castIronRecipes =
-          <ProductionRecipe>[
-            for (final recipe in ProductionRecipesCatalog.all)
-              if (recipe.outputCommodityId == 'castIron') recipe,
-          ]..sort((a, b) => a.id.compareTo(b.id));
+      final castIronRecipes = <ProductionRecipe>[
+        for (final recipe in ProductionRecipesCatalog.all)
+          if (recipe.outputCommodityId == 'castIron') recipe,
+      ]..sort((a, b) => a.id.compareTo(b.id));
       final castIronProductionRecipe = castIronRecipes.isEmpty
           ? null
           : castIronRecipes.first;
@@ -1445,9 +1445,9 @@ void main() {
       // Read-only scans; freely tunable diagnostic surface.
       final supplierActiveUnimprovedCastIronFeedstockTileTurns =
           <String, Map<String, int>>{
-        for (final gpId in gpIds)
-          gpId: <String, int>{for (final id in castIronFeedstockIds) id: 0},
-      };
+            for (final gpId in gpIds)
+              gpId: <String, int>{for (final id in castIronFeedstockIds) id: 0},
+          };
       final castIronFeedstockHeldAtTurn99 = <String, Map<String, int>>{
         for (final gpId in gpIds)
           gpId: <String, int>{for (final id in castIronFeedstockIds) id: 0},
@@ -1475,12 +1475,28 @@ void main() {
       //     **downstream** of prospecting (the Builder never improves the
       //     prospected tile / cannot afford the improvement); a flat zero
       //     confirms the prospect itself never happens.
+      //   * `supplierIdleExplorerColocatedFeedstockTileTurns` — the supplier
+      //     owns an idle Explorer standing **in the same province** as an
+      //     unprospected Old World `iron` mineral feedstock tile. `prospect`
+      //     candidate generation only reaches an Explorer positioned on (or
+      //     single-hop from) the feedstock province, and the reservation holds
+      //     the lexicographically-smallest idle Explorer **without
+      //     repositioning it**. A flat zero alongside
+      //     `supplierIdleExplorerPresentTurns > 0` localizes the residual to
+      //     reservation **positioning** (no idle Explorer ever reaches the
+      //     feedstock province, so no `prospect` candidate generates); a
+      //     non-zero count instead points at candidate-generation eligibility
+      //     (mineral-tile gate / validator) or selection ranking for an
+      //     already-positioned Explorer.
       //
       // Read-only; the (freely tunable) counts can move as later slices land.
       final supplierIdleExplorerPresentTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
       final supplierProspectedMineralFeedstockTileTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final supplierIdleExplorerColocatedFeedstockTileTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
 
@@ -1751,11 +1767,9 @@ void main() {
             final feedstockTiles =
                 supplierActiveUnimprovedCastIronFeedstockTileTurns[gpId]!;
             for (final feedstockId in castIronFeedstockIds) {
-              if (_ownsUnimprovedFeedstockResourceTile(
-                game,
-                gpId,
-                {feedstockId},
-              )) {
+              if (_ownsUnimprovedFeedstockResourceTile(game, gpId, {
+                feedstockId,
+              })) {
                 feedstockTiles[feedstockId] =
                     (feedstockTiles[feedstockId] ?? 0) + 1;
               }
@@ -1774,6 +1788,15 @@ void main() {
             )) {
               supplierProspectedMineralFeedstockTileTurns[gpId] =
                   (supplierProspectedMineralFeedstockTileTurns[gpId] ?? 0) + 1;
+            }
+            if (ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
+              game,
+              gpId,
+              castIronFeedstockIds,
+            )) {
+              supplierIdleExplorerColocatedFeedstockTileTurns[gpId] =
+                  (supplierIdleExplorerColocatedFeedstockTileTurns[gpId] ?? 0) +
+                  1;
             }
           }
           if (player != null) {
@@ -2069,6 +2092,8 @@ void main() {
         'gpSupplierIdleExplorerPresentTurns': supplierIdleExplorerPresentTurns,
         'gpSupplierProspectedMineralFeedstockTileTurns':
             supplierProspectedMineralFeedstockTileTurns,
+        'gpSupplierIdleExplorerColocatedFeedstockTileTurns':
+            supplierIdleExplorerColocatedFeedstockTileTurns,
         'gpCastIronFeedstockHeldAtTurn99': castIronFeedstockHeldAtTurn99,
         'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
         'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,
