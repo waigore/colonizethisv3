@@ -25,6 +25,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         regimentBuildInputFeedstockExtractionResourceIds,
         regimentBuildInputFeedstockImprovementInputCost,
         selectFullAiCivilianWorkOrders,
+        selfLockRecoverySellerNeededProducibleImprovementInputs,
         supplierImprovementInputFeedstockExtractionResourceIds;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'

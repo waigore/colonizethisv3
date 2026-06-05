@@ -745,6 +745,79 @@ void main() {
     );
 
     test(
+      'locked seller produces lumber domestically from surplus timber when '
+      'iron is unavailable (Refs #2847 H8-extraction S7-D lumber '
+      're-localization)',
+      () {
+        // 8 timber + 0 iron: the multi-input castIron recipe is infeasible (no
+        // iron), and beyond the {timber: 2, iron: 2} castIron reserve there is
+        // surplus timber (6) for lumber_from_timber. The seller is short the
+        // binding level-0 lumber input (waived castIron), so lumber joins the
+        // seller-side domestic production set and is produced from owned timber
+        // instead of depending on the thin lumber market.
+        final game = _castIronFeedstockCoavailabilityGame(
+          treasury: threshold,
+          timber: 8,
+          iron: 0,
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.lumberFromTimber.id),
+          reason:
+              'A locked seller short the binding level-0 lumber input must '
+              'produce lumber domestically from its surplus timber.',
+        );
+      },
+    );
+
+    test(
+      'single-input lumber is excluded from the castIron feedstock reserve so '
+      'co-availability is preserved even when the seller also needs lumber '
+      '(Refs #2847 H8-extraction S7-D lumber re-localization)',
+      () {
+        // 2 timber + 2 iron: exactly one castIron run is co-available. Even
+        // though the seller is now also short lumber (so lumber is in the
+        // domestic production set), lumber is single-input and must be excluded
+        // from the feedstock reserve — otherwise it would drain the 2 timber the
+        // castIron run is assembling. The reserve withholds the timber from
+        // lumber_from_timber, and the castIron run proceeds.
+        final game = _castIronFeedstockCoavailabilityGame(
+          treasury: threshold,
+          timber: 2,
+          iron: 2,
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          lumberLabour(plan),
+          0,
+          reason:
+              'Single-input lumber must not be a reserve target; the 2 timber '
+              'stay withheld for the multi-input castIron run.',
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          reason:
+              'With timber + iron co-available the reserved feedstock lets the '
+              'boosted castIron recipe run despite the concurrent lumber need.',
+        );
+      },
+    );
+
+    test(
       'reserve-target allocation is deterministic across identical runs',
       () {
         Set<String> run() {

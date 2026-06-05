@@ -79,19 +79,20 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10 / #2847: seed-42 turn-100 gate — gp1/gp2 PASS '
-        '(+6 each). gp3 +2, gp4 +1, gp5 +1, gp6 +2 (merged dev HEAD post-#3264, '
+        '(+6 each). gp3 +2, gp4 +1, gp5 +1, gp6 +2 (merged dev HEAD post-#3267, '
         '2026-06-05 S7-D refresh). Treasury starvation is solved (failing GPs '
-        'hold ~2000+ treasury). The remaining blocker is the level-0 '
-        'build_improvement that extracts the regiment-rebuild feedstock: under '
-        'the castIron waiver (feedstockBootstrapBuildImprovementCastIronWaived) '
-        'it needs one lumber, and the validator candidate '
-        '(gpFeedstockGateValidBuildImprovementCandidateTurns gp5 2 / gp6 1 / '
-        'gp3 0) tracks lumber affordability exactly while castIron affordability '
-        'is 0 for all GPs — so lumber supply, not castIron, is the binding '
-        'material (castIron production is a downstream symptom: iron never '
-        'extracts because improving the iron tile is gated on the same lumber). '
-        'gp3-gp6 still below the >=3 OW floor; skip removal awaits the lumber '
-        'supplier-release / seller lumber-production slice (Refs #2847).',
+        'hold ~2000+ treasury). The binding material is lumber for the level-0 '
+        'build_improvement (castIron waived via '
+        'feedstockBootstrapBuildImprovementCastIronWaived). The seller-side '
+        'domestic lumber-production slice landed (the seller now produces lumber '
+        'from owned timber, not just market-absent castIron) but is verified '
+        'byte-identical on seed 42: the failing sellers hold timber=0 '
+        '(gpCastIronFeedstockHeldAtTurn99 timber/iron = 0 for gp3-gp6), so '
+        'lumber_from_timber has no feedstock to run. The re-pointed lever is '
+        'seller timber holdings — route the locked seller Builder onto an owned '
+        'unimproved timber tile (extend the H8 feedstock-extraction gate to the '
+        'lumber-recipe feedstock timber). gp3-gp6 still below the >=3 OW floor; '
+        'skip removal awaits seller timber extraction landing (Refs #2847).',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

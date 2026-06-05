@@ -741,19 +741,63 @@ Set<String> peerLockRecoverySellerNeededProducibleImprovementInputs(
   final result = <String>{};
   for (final player in game.players) {
     if (player.id == excludePlayerId) continue;
-    final cost = regimentBuildInputFeedstockImprovementInputCost(
-      game,
-      player.id,
+    result.addAll(_producibleImprovementInputsShortForPlayer(game, player));
+  }
+  return result;
+}
+
+/// Producible level-0 `build_improvement` input commodities [playerId] — a
+/// below-quota zero-NW lock-recovery seller blocked at the improvement-cost
+/// gate — is **itself** short of and can produce domestically (Refs #2847
+/// § H8-extraction seller domestic improvement-input production; S7-D lumber
+/// re-localization).
+///
+/// The seller-side companion to
+/// [peerLockRecoverySellerNeededProducibleImprovementInputs]: where the peer
+/// variant returns the producible inputs *other* lock-recovery sellers need (so
+/// an affluent supplier over-produces them for release), this returns the
+/// producible inputs the seller must produce **from its own owned feedstock**
+/// because the world market cannot reliably supply them on seed 42 — `castIron`
+/// has no market supply at all, and `lumber` market supply is structurally thin
+/// (one offerer). Both level-0 inputs are producible (`lumber` from `timber`;
+/// `castIron` from `timber` + `iron`), so each enters the set whenever the
+/// seller is **short** of it under an active improvement-cost gate.
+///
+/// Returns the empty set for any player whose improvement-cost gate is inactive
+/// (`regimentBuildInputFeedstockImprovementInputCost` empty) — including every
+/// healthy / above-quota Great Power and every regiment-holding GP — so the +6
+/// Old World conquest baseline GPs are never routed. Pure and deterministic over
+/// `(game, playerId)` and the static catalogs / cost table.
+Set<String> selfLockRecoverySellerNeededProducibleImprovementInputs(
+  Game game,
+  String playerId,
+) {
+  for (final player in game.players) {
+    if (player.id != playerId) continue;
+    return _producibleImprovementInputsShortForPlayer(game, player);
+  }
+  return const <String>{};
+}
+
+/// The producible level-0 `build_improvement` input commodities [player] is
+/// short of at its active improvement-cost gate. "Producible" means some
+/// `ProductionRecipesCatalog` recipe outputs the commodity. Returns the empty
+/// set when the gate is inactive (cost map empty). Shared core for the peer and
+/// self lock-recovery seller producible-input contracts.
+Set<String> _producibleImprovementInputsShortForPlayer(
+  Game game,
+  Player player,
+) {
+  final cost = regimentBuildInputFeedstockImprovementInputCost(game, player.id);
+  if (cost.isEmpty) return const <String>{};
+  final result = <String>{};
+  for (final entry in cost.entries) {
+    final producible = ProductionRecipesCatalog.all.any(
+      (r) => r.outputCommodityId == entry.key,
     );
-    if (cost.isEmpty) continue;
-    for (final entry in cost.entries) {
-      final producible = ProductionRecipesCatalog.all.any(
-        (r) => r.outputCommodityId == entry.key,
-      );
-      if (!producible) continue;
-      if (player.stockpile.quantityOf(entry.key) < entry.value) {
-        result.add(entry.key);
-      }
+    if (!producible) continue;
+    if (player.stockpile.quantityOf(entry.key) < entry.value) {
+      result.add(entry.key);
     }
   }
   return result;

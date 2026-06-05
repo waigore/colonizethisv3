@@ -1172,6 +1172,53 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `gpFeedstockGateValidBuildImprovementCandidateTurns` rise for gp3 / gp5 / gp6
 /// before expecting OW gain to move.
 ///
+/// **Post-implementation refresh (seller domestic `lumber`-production slice
+/// landed; captured 2026-06-05 on current `dev` HEAD post-#3267, Refs #2847).**
+/// Option (b) above is now implemented: the locked seller's domestic-production
+/// set was generalized from the market-absent `castIron`-only filter to
+/// `selfLockRecoverySellerNeededProducibleImprovementInputs(...)`, so a seller
+/// short the **binding** level-0 `lumber` input now boosts `lumber_from_timber`
+/// from its own `timber` instead of depending on the thin one-offerer market,
+/// and the single-input `lumber` output is excluded from the seller's feedstock
+/// reserve so it draws only *surplus* `timber` (preserving the multi-input
+/// `castIron` co-availability guarantee). Positive + negative-control unit
+/// coverage in `economy_planner_regiment_build_input_production_test.dart` and a
+/// logic contract test in
+/// `full_ai_civilian_work_regiment_build_input_feedstock_extraction_test.dart`;
+/// SPEC updated in `SPEC/ai/economy-planner.md` § Domestic improvement-input
+/// production.
+///
+/// This slice is **correct groundwork but verified byte-identical
+/// (necessary-but-insufficient)** on seed 42: OW gain unchanged (gp1/gp2 **+6**
+/// PASS; gp3 +2, gp4 +1, gp5 +1, gp6 +2 FAIL),
+/// `gpFeedstockGateImprovementLumberAffordableTurns` unchanged (gp5 2 / gp6 1 /
+/// gp3 0), `gpLumberHeldAtTurn99` still 0 for every failing GP. The decisive
+/// reason: **the failing sellers hold no `timber`** to convert —
+/// `gpCastIronFeedstockHeldAtTurn99` shows `timber = 0` (and `iron = 0`) for
+/// gp3 / gp4 / gp5 / gp6 at turn 99 (only the suppliers gp2 holds `timber 44`).
+/// `lumber_from_timber` therefore stays infeasible for the very GPs that bind on
+/// `lumber`, so the now-enabled domestic path has no feedstock to run — the
+/// mirror of #3267's supplier-release slice, which could not release `lumber`
+/// the suppliers do not hold.
+///
+/// **Re-pointed lever (supersedes the seller domestic `lumber`-production
+/// pointer above).** The binding precondition is now **seller `timber`
+/// holdings**: the locked seller owns no improved `timber` tile and holds zero
+/// `timber`, so neither `lumber_from_timber` (this slice) nor
+/// `castIron_from_timber_iron_coal` has feedstock. The next slice should route
+/// the locked seller's idle Builder onto an owned unimproved **`timber`** tile
+/// under the active feedstock-extraction gate (extending
+/// `regimentBuildInputFeedstockExtractionResourceIds` / the H8 build-improvement
+/// boost to include the `lumber`-recipe feedstock `timber`, not only the
+/// `fabric`-recipe feedstock `wool` / `cotton`), since improving a `timber`
+/// surface tile is itself level-0 `build_improvement` and is covered by the same
+/// `castIron`-waiver once one `lumber` is on hand. `gpFeedstockGateIdleBuilder
+/// PresentTurns` (gp3 32 / gp5 13 / gp6 59) confirms an idle Builder is
+/// available to route. Verify by confirming `gpCastIronFeedstockHeldAtTurn99`
+/// `timber` rises above 0 for gp3 / gp5 / gp6, then
+/// `gpFeedstockGateImprovementLumberAffordableTurns` rises, before expecting OW
+/// gain to move.
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate

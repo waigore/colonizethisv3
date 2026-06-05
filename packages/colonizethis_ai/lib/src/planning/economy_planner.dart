@@ -133,22 +133,24 @@ EconomyPlan runEconomyPlanner({
       : ExpandEconomyPlan.defaultPlan;
   final missingRegimentBuildInputs =
       _missingCheapestRegimentBuildInputIds(stockpile);
-  // Refs #2847 § H8-extraction castIron residual: when the improvement-input
-  // gate is active (a recovered, zero-regiment lock-recovery seller that owns
-  // an unimproved feedstock tile), the level-0 `build_improvement` material
-  // includes `castIron`, which the world market structurally cannot supply on
-  // seed 42. The seller must produce it domestically, so the producible
-  // improvement-inputs in `kDomesticProductionImprovementInputIds` join the
-  // regiment-build-input production boost. The gate self-clears for any healthy
-  // GP (gp1/gp2), so the +6 OW baseline is unaffected.
-  final improvementInputCost =
-      regimentBuildInputFeedstockImprovementInputCost(game, view.playerId);
-  final domesticImprovementInputOutputs = <String>{
-    for (final entry in improvementInputCost.entries)
-      if (kDomesticProductionImprovementInputIds.contains(entry.key) &&
-          stockpile.quantityOf(entry.key) < entry.value)
-        entry.key,
-  };
+  // Refs #2847 § H8-extraction (S7-D lumber re-localization): when the
+  // improvement-input gate is active (a recovered, zero-regiment lock-recovery
+  // seller that owns an unimproved feedstock tile), the level-0
+  // `build_improvement` material is `{lumber: 1, castIron: 1}`. `castIron` is
+  // *waived* at level 0 (`feedstockBootstrapBuildImprovementCastIronWaived`),
+  // so the *binding* input is `lumber`, and seed-42 lumber market supply is
+  // structurally thin (one offerer). The seller therefore produces **every**
+  // producible level-0 improvement input it is short of from its own owned
+  // feedstock — `lumber` from `timber` and `castIron` from `timber` + `iron` —
+  // not just the market-absent `castIron` the prior castIron-only set covered.
+  // The gate self-clears for any healthy GP (gp1/gp2), so the +6 OW baseline is
+  // unaffected. SPEC/ai/economy-planner.md § Domestic improvement-input
+  // production.
+  final domesticImprovementInputOutputs =
+      selfLockRecoverySellerNeededProducibleImprovementInputs(
+        game,
+        view.playerId,
+      );
   // Refs #2847 § H8 production allocation: the boost stages the cheapest
   // regiment's build input (`fabric`) whenever the EXPAND rebuild directive is
   // active for a zero-regiment GP that is short the input — **independent of
@@ -211,9 +213,23 @@ EconomyPlan runEconomyPlanner({
   // (`supplierReleaseImprovementInputs`) — so competing recipes cannot consume
   // the reserved `timber` / `iron` while the multi-input recipe is still
   // assembling its feedstock. The reserve is bounded to one run and
-  // self-clears when neither set targets `castIron`.
+  // self-clears when neither set targets a multi-input output.
+  //
+  // Refs #2847 § H8-extraction (S7-D lumber re-localization): the seller's own
+  // domestic production set is restricted to its *multi-input* outputs for
+  // reserve purposes. A single-input recipe (`lumber_from_timber`) has no
+  // co-availability problem, so reserving its feedstock would needlessly
+  // withhold `timber` — worse, marking the seller's `lumber` a reserve target
+  // would let the single-input recipe drain the `timber` a co-located
+  // multi-input `castIron` run is still assembling, defeating the seller's own
+  // co-availability guarantee. The peer supplier-release set is left unchanged:
+  // an affluent supplier reserves feedstock to co-accumulate its *own* released
+  // surplus run (#3267), and the seller's `supplierReleaseImprovementInputs` is
+  // always empty (locked sellers are excluded from the supplier role), so this
+  // only relaxes the seller path while preserving the supplier's release sizing
+  // and the +6 OW baseline.
   final feedstockReserveOutputIds = <String>{
-    ...domesticImprovementInputOutputs,
+    ..._multiInputImprovementOutputs(domesticImprovementInputOutputs),
     ...supplierReleaseImprovementInputs,
   };
 
@@ -439,6 +455,40 @@ List<AssignedRecipe> _allocateLabour({
     'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
   );
   return result;
+}
+
+/// The subset of [outputIds] whose lowest-`id` producing recipe consumes more
+/// than one distinct input commodity (Refs #2847 § H8-extraction feedstock
+/// co-availability; S7-D lumber re-localization). Only these multi-input
+/// outputs (e.g. `castIron` from `timber` + `iron`) can have a competing
+/// single-input recipe drain their partial feedstock, so only they need a
+/// feedstock reserve. Single-input outputs (e.g. `lumber` from `timber`) are
+/// excluded: reserving their feedstock would needlessly withhold it and, by
+/// marking them reserve targets, defeat the reserve they are meant to respect.
+/// Deterministic over the static `ProductionRecipesCatalog`; returns the empty
+/// set when [outputIds] is empty so feasibility falls back to the unreduced
+/// stockpile (behaviour-equal).
+Set<String> _multiInputImprovementOutputs(Set<String> outputIds) {
+  if (outputIds.isEmpty) return const <String>{};
+  final result = <String>{};
+  for (final outputId in outputIds) {
+    final recipe = _lowestIdRecipeProducingOutput(outputId);
+    if (recipe == null) continue;
+    if (recipe.inputQuantities.length > 1) result.add(outputId);
+  }
+  return result;
+}
+
+/// The production recipe with the lowest `id` whose output is [outputId], or
+/// `null` when no recipe produces it. Deterministic over the static
+/// `ProductionRecipesCatalog`.
+ProductionRecipe? _lowestIdRecipeProducingOutput(String outputId) {
+  ProductionRecipe? best;
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (recipe.outputCommodityId != outputId) continue;
+    if (best == null || recipe.id.compareTo(best.id) < 0) best = recipe;
+  }
+  return best;
 }
 
 /// One production run's input requirements for each output id in
