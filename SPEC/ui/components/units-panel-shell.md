@@ -33,10 +33,9 @@ Exposed constant: `UnitsPanelShell.defaultPanelConstraints = BoxConstraints(maxW
 ```text
 ConstrainedBox(panelConstraints)                 -- default 400 × 500 dp
   Padding(EdgeInsets.all(8))
-    CtPanel(padding: EdgeInsets.zero)
-      Column(min, stretch)
-        CtTopBar(title, showBackButton: false, trailing?)
-        Flexible
+    CtPanelWithTopBar(mainAxisSize: min)
+      topBar: CtTopBar(title, showBackButton: false, trailing?)
+      Flexible
           hasContent
             ? ListView(shrinkWrap, padding: listPadding, children)
             : Padding(EdgeInsets.all(24))
@@ -47,7 +46,9 @@ ConstrainedBox(panelConstraints)                 -- default 400 × 500 dp
                          fontStyle: italic))
 ```
 
-The outer 8 dp padding is a transparent gutter so the inner `CtPanel` border never touches the host edge. The `CtTopBar` always renders without the leading back button — every consumer is hosted in a side panel, bottom sheet, or rail surface that owns its own back/close affordance.
+The `CtPanel` + `Column` + top-bar skeleton is the shared
+[`CtPanelWithTopBar`](ct-panel-with-top-bar.md) (#3279 §5). The outer 8 dp
+padding is a gutter so the `CtPanel` border never touches the edge. The `CtTopBar` always renders without the leading back button — every consumer is hosted in a side panel, bottom sheet, or rail surface that owns its own back/close affordance.
 
 ---
 
@@ -107,5 +108,6 @@ Each consumer spec links back here for the chrome contract instead of redeclarin
 ## Related
 
 - Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtPanel*, § *CtTopBar*, § *Editorial-monocle palette*.
+- Shared skeleton: [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md).
 - Hosting surfaces: [`empire-overview.md`](../empire-overview.md), [`in-game-shell-narrow.md`](../in-game-shell-narrow.md), [`mobile-adaptation.md`](../mobile-adaptation.md) § 7.
 - Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.

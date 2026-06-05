@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/games_provider.dart';
+import 'ct_dark_scaffold.dart';
 import 'ct_screen_shell.dart';
 import 'game_to_ui_bus_listener.dart';
 
@@ -17,8 +18,8 @@ typedef GameFeatureBodyBuilder =
 ///   [CtScreenShell] which renders the legacy light title bar. Used by
 ///   screens that have not yet migrated to the dark editorial-monocle top
 ///   bar.
-/// * Opt-in ([topBar] non-null) — renders a [Scaffold] using the active
-///   theme's `colorScheme.surface`, stacks the supplied [topBar] above the
+/// * Opt-in ([topBar] non-null) — renders a [CtDarkScaffold] (active theme's
+///   `colorScheme.surface`) that stacks the supplied [topBar] above the
 ///   body. Screens supply the dark `CtTopBar` here when migrating to the
 ///   per-screen dark chrome (e.g. issue #2862 S1 for the production
 ///   screen). When [topBar] is provided, [title] is unused at the chrome
@@ -47,15 +48,15 @@ class CtGameFeatureScreenShell extends ConsumerWidget {
   final String? title;
 
   /// Optional opt-in dark editorial-monocle top bar (typically a
-  /// `CtTopBar`). When non-null the shell renders a [Scaffold] with this
-  /// bar above the body and skips the legacy [CtScreenShell] chrome.
+  /// `CtTopBar`). When non-null the shell renders a [CtDarkScaffold] with
+  /// this bar above the body and skips the legacy [CtScreenShell] chrome.
   final Widget? topBar;
 
   final GameFeatureBodyBuilder bodyBuilder;
   final bool showBackButton;
   final bool attachGameToUiListener;
 
-  /// Optional background colour for the dark-chrome [Scaffold]. Only
+  /// Optional background colour for the dark-chrome [CtDarkScaffold]. Only
   /// consulted when [topBar] is non-null (dark editorial-monocle chrome
   /// path). Defaults to `Theme.of(context).colorScheme.surface` — the
   /// same token the panel-style game feature screens use. Detail screens
@@ -73,7 +74,7 @@ class CtGameFeatureScreenShell extends ConsumerWidget {
 
     final Widget body = bodyBuilder(context, ref, displayGame);
     final Widget shell = topBar != null
-        ? _DarkChromeShell(
+        ? CtDarkScaffold(
             topBar: topBar!,
             body: body,
             backgroundColor: backgroundColor,
@@ -87,34 +88,5 @@ class CtGameFeatureScreenShell extends ConsumerWidget {
       return shell;
     }
     return GameToUIBusListener(gameId: game.id, child: shell);
-  }
-}
-
-class _DarkChromeShell extends StatelessWidget {
-  const _DarkChromeShell({
-    required this.topBar,
-    required this.body,
-    this.backgroundColor,
-  });
-
-  final Widget topBar;
-  final Widget body;
-  final Color? backgroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: backgroundColor ?? theme.colorScheme.surface,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            topBar,
-            Expanded(child: body),
-          ],
-        ),
-      ),
-    );
   }
 }

@@ -10,8 +10,10 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 
 | Component | File | Consumed by |
 |-----------|------|-------------|
+| `CtDarkScaffold` | [`ct-dark-scaffold.md`](ct-dark-scaffold.md) | `CtGameFeatureScreenShell` (dark-chrome path) and any dark-theme screen. |
 | `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention). |
 | `CtGameFeatureScreenShell` | [`ct-game-feature-screen-shell.md`](ct-game-feature-screen-shell.md) | `GAME20001` (production), `GAME30001` (diplomacy), `GAME40001` (technology), `GAME60001` (trade). |
+| `CtPanelWithTopBar` | [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md) | `CtScreenShell`, `UnitsPanelShell`. |
 | `CtTransferList` | [`ct-transfer-list.md`](ct-transfer-list.md) | `DLG40001` (transfer to home fleet), Split Fleet dialog, Split Army dialog. |
 | `ProductionAllocationRow` | [`production-allocation-row.md`](production-allocation-row.md) | `GAME20001` (production panel). |
 | `TrainDialogChrome` | [`train-dialog-chrome.md`](train-dialog-chrome.md) | `UNIT40001` (train civilians dialog), `UNIT50001` (train military dialog). |
