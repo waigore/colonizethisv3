@@ -584,14 +584,19 @@ mine the recipe feedstock without first raising its tile, and raising the tile
 costs `castIron` it can neither buy nor produce. This section opens a *first*
 `castIron` source.
 
-**Supplier activation trigger.** `anyLockRecoverySellerNeedsCastIronImprovementInput(game)`
-is `true` when any below-quota zero-NW lock-recovery seller's
-`regimentBuildInputFeedstockImprovementInputCost` includes a
-`kDomesticProductionImprovementInputIds` commodity (`castIron`) the seller does
-not hold. This trigger is OR-ed into the H8-supply-market supplier role
-(`regimentBuildInputMarketSupplyActive`), so the supplier release activates one
-stage earlier than the regiment build-input (fabric) gate — at the `castIron`
-improvement-input gate where seed-42 sellers actually stall.
+**Supplier activation trigger.** `peerLockRecoverySellerNeededProducibleImprovementInputs(game, excludePlayerId: playerId)`
+is non-empty when any *other* below-quota zero-NW lock-recovery seller's
+`regimentBuildInputFeedstockImprovementInputCost` includes a **producible**
+level-0 input (`lumber` and/or `castIron`) the seller does not hold. On seed 42
+the binding input is `lumber` (the level-0 cost is `{lumber: 1, castIron: 1}`,
+`castIron` is waived at level 0, and lumber market supply is structurally thin),
+with `castIron` covered for the post-waiver stage. This non-emptiness is OR-ed
+into the H8-supply-market supplier role (`regimentBuildInputMarketSupplyActive`),
+so the supplier release activates one stage earlier than the regiment build-input
+(fabric) gate — at the producible improvement-input gate where seed-42 sellers
+actually stall. (The earlier `anyLockRecoverySellerNeedsCastIronImprovementInput`
+predicate remains a `castIron`-only diagnostic accessor; the production trigger
+now tracks the full producible set so a lumber-only need also activates release.)
 
 **Supplier offer (offer side).** An affluent non-seller over-produces `castIron`
 (see [economy-planner.md](economy-planner.md) § Supplier improvement-input

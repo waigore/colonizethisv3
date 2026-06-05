@@ -21,6 +21,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         feedstockBootstrapBuildImprovementCastIronWaived,
         feedstockExtractionResourceIdsForPlayer,
         kRegimentBuildInputFeedstockExtractionScoreBoost,
+        peerLockRecoverySellerNeededProducibleImprovementInputs,
         regimentBuildInputFeedstockExtractionResourceIds,
         regimentBuildInputFeedstockImprovementInputCost,
         selectFullAiCivilianWorkOrders,

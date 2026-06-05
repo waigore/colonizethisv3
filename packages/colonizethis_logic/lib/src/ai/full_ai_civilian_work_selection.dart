@@ -623,7 +623,7 @@ Set<String> supplierImprovementInputFeedstockExtractionResourceIds(
   // feedstock-extraction gate already routes its Builder. Restricting the role
   // this way keeps it on healthy / above-quota GPs only.
   if (_isBelowQuotaZeroNwSeller(game, playerId)) return const <String>{};
-  final neededInputs = _peerLockRecoverySellerNeededProducibleImprovementInputs(
+  final neededInputs = peerLockRecoverySellerNeededProducibleImprovementInputs(
     game,
     excludePlayerId: playerId,
   );
@@ -724,11 +724,17 @@ bool _isBelowQuotaZeroNwSeller(Game game, String playerId) {
 /// at least one *other* below-quota zero-NW lock-recovery seller blocked at the
 /// improvement-cost gate (`regimentBuildInputFeedstockImprovementInputCost`
 /// non-empty). "Producible" means some `ProductionRecipesCatalog` recipe outputs
-/// the commodity, so an affluent supplier can over-produce it for release; a
-/// market-suppliable input the seller already holds (e.g. `lumber`, which the
-/// seller buys directly) is naturally excluded by the missing-stock check. Pure
-/// and deterministic over `(game)` and the static catalogs / cost table.
-Set<String> _peerLockRecoverySellerNeededProducibleImprovementInputs(
+/// the commodity, so an affluent supplier can over-produce it for release.
+///
+/// Both level-0 inputs are producible (`lumber` from `timber`; `castIron` from
+/// `timber` + `iron`), so each enters the set whenever a peer locked seller is
+/// **short** of it. On seed 42 `castIron` has no world-market supply and `lumber`
+/// market supply is structurally thin (the S7-D lumber re-localization, Refs
+/// #2847): the locked seller holds neither, so **both** join the set and an
+/// affluent supplier over-produces and releases them. An input the seller
+/// already holds is excluded by the missing-stock check. Pure and deterministic
+/// over `(game)` and the static catalogs / cost table.
+Set<String> peerLockRecoverySellerNeededProducibleImprovementInputs(
   Game game, {
   required String excludePlayerId,
 }) {
