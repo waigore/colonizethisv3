@@ -256,6 +256,22 @@ void _addExplorerWorkSuggestionsForUnit({
   return (tiles: accepted, lastReason: lastReason);
 }
 
+/// Provinces scanned for `prospect` candidates, with [unit]'s
+/// [Unit.locationProvinceId] first so the [kMaxExploreProvinceProbesPerUnit]
+/// cap still reaches a co-located mineral tile on large maps (Refs #2847).
+List<Province> _prospectProvincesSortedForExplorer({
+  required PlayerView view,
+  required Unit unit,
+}) {
+  final provinces = view.provincesById.values.toList()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  final at = unit.locationProvinceId;
+  if (at.isEmpty) return provinces;
+  final atProv = view.provincesById[at];
+  if (atProv == null) return provinces;
+  return [atProv, ...provinces.where((p) => p.id != at)];
+}
+
 void _addProspectSuggestionIfEligible({
   required PlayerView view,
   required Game game,
@@ -300,9 +316,10 @@ void _addProspectSuggestionIfEligible({
   // [buildPlayerView] already aggregates every province row into
   // [PlayerView.provincesById]; reuse that snapshot instead of scanning
   // [allProvinces] again for each explorer prospect probe (Refs #2394,
-  // SPEC/program/order-suggestions.md).
-  final provinces = view.provincesById.values.toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
+  // SPEC/program/order-suggestions.md). Probe the explorer's current province
+  // first so [kMaxExploreProvinceProbesPerUnit] still reaches co-located
+  // mineral tiles on seed-scale maps (Refs #2847).
+  final provinces = _prospectProvincesSortedForExplorer(view: view, unit: unit);
 
   var lastReason = 'no_valid_tile';
   WorkSuggestionPipeline.run(
