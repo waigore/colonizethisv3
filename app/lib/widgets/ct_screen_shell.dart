@@ -22,11 +22,18 @@ class CtScreenShell extends StatelessWidget {
     required this.title,
     required this.child,
     this.showBackButton = false,
+    this.showTitleBar = true,
   });
 
   final String title;
   final Widget child;
   final bool showBackButton;
+
+  /// When `false`, the [CtTopBar] title band is omitted so the shell frames
+  /// the [child] without a secondary title row. Used by the in-game map
+  /// shell, whose own 36 dp top bar is the only chrome the mockup shows
+  /// (issue #2861 M2 / `SPEC/ui/game-screen.md` § In-game shell title band).
+  final bool showTitleBar;
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +48,13 @@ class CtScreenShell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                CtTopBar(
-                  title: title,
-                  showBackButton: showBackButton,
-                ),
-                const SizedBox(height: CtSpacing.m),
+                if (showTitleBar) ...<Widget>[
+                  CtTopBar(
+                    title: title,
+                    showBackButton: showBackButton,
+                  ),
+                  const SizedBox(height: CtSpacing.m),
+                ],
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(

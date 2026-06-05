@@ -28,10 +28,7 @@ bool _mutualExhaustedBelowQuotaSoleGpStalemate({
           kMutualExhaustedGpRegimentMax) {
     return false;
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length != 1 || gpWars.single != order.targetFactionId) {
     return false;
   }

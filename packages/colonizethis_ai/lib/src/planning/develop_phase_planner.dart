@@ -50,11 +50,9 @@
 ///     tiles on GP-owned land, deterministically priority-ordered.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
+import 'planning_helpers.dart';
 
 /// Returns every Great Power currently at war with the active player as a
 /// deterministic ascending-sorted list of `factionId`s.
@@ -78,10 +76,7 @@ List<String> planDevelopPeace({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  return <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
+  return gpFactionIdsAtWarWith(game, snapshot);
 }
 
 /// Returns deterministic `build_improvement` work orders for the active

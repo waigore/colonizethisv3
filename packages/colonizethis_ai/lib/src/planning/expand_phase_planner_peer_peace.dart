@@ -403,10 +403,7 @@ List<String> stalledZeroRegimentGpPeaceTargets({
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
+  final targets = gpFactionIdsAtWarWith(game, snapshot);
   return targets;
 }
 
@@ -474,10 +471,7 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length != 1) {
     return const [];
   }
@@ -556,10 +550,7 @@ List<String> mutualExhaustedBelowQuotaGpStalematePeaceTargets({
   if (ownPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length != 1) {
     return const [];
   }
@@ -598,10 +589,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.isEmpty) {
     return const [];
   }
@@ -713,10 +701,8 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
       ? kUnwinnableSoleGpMinProvinceDeficit
       : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
   final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          provinceCountOwnedBy(game, factionId) >= ownOw + minLead)
-        factionId,
+    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
+      if (provinceCountOwnedBy(game, factionId) >= ownOw + minLead) factionId,
   ]..sort();
   return targets;
 }
@@ -781,10 +767,7 @@ List<String> criticalMultiFrontGpPeaceTargets({
       )) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length < 2) {
     return const [];
   }

@@ -56,6 +56,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _gp3 = 'gp3';
@@ -65,33 +67,6 @@ const String _minor1 = 'minor1';
 const String _owProvGp1 = 'oldWorld|gp1_a';
 const String _owProvMinor = 'oldWorld|m1_a';
 const String _nwProvTribe = 'newWorld|tribe1_a';
-
-/// Convenience for tests that need to know which regiment-build catalog
-/// cost gates trip; mirrors the planner's internal helper.
-int _cheapestRegimentBuildCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
-
-/// Home Army with [regimentCount] dummy regiment ids; matches the walk
-/// in `regimentCountForPlayer`.
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: kOldWorldRegionId,
-    stationedProvinceId: _owProvGp1,
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
 
 /// Game scaffold for the EXPAND-phase route.
 ///
@@ -121,7 +96,7 @@ Game _expandGame({
         ],
       ),
       newWorld: RegionData(provinces: newWorldProvinces),
-      armies: [_homeArmyWithRegiments(_gp1, regimentCount)],
+      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
     ),
     players: [
       Player(
@@ -216,7 +191,7 @@ Game _colonialGame({int regimentCount = 6, int ownTreasury = 9999}) {
           ),
         ],
       ),
-      armies: [_homeArmyWithRegiments(_gp1, regimentCount)],
+      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
     ),
     players: [
       Player(
@@ -317,7 +292,7 @@ void main() {
   // than silently failing later assertions about `planExpandDeclareWar`
   // not returning `null` from the treasury gate.
   setUpAll(() {
-    final cheapest = _cheapestRegimentBuildCost();
+    final cheapest = cheapestRegimentBuildCost();
     expect(cheapest, lessThanOrEqualTo(9999), reason: 'Treasury gate fixture');
   });
 
