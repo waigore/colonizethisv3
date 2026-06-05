@@ -385,13 +385,14 @@ This **refutes province visibility, bundled move-leg, and incremental-validator 
 
 ---
 
-## Feedstock bootstrap `castIron` waiver for level-0 `build_improvement` (Refs #2847 H8-extraction)
+## Feedstock bootstrap material waivers for level-0 `build_improvement` (Refs #2847 H8-extraction)
 
-When the feedstock-extraction gate is active and a Builder targets an **unimproved** feedstock resource tile, the order engine and work application use the **effective** material cost from `WorkOrderCostCalculator` (player-scoped), which may omit **cast iron** for the level-0 improvement while the stockpile holds enough **lumber** but not enough **cast iron** (see [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Improvement Build Costs (Builder) — H8 feedstock bootstrap). This makes feedstock-priority suggestions **affordable** on seed 42 where `gpFeedstockGateImprovementCostAffordableTurns` stayed zero solely because of the circular cast-iron dependency; it does not bypass visibility, probe budget, tech cap, or non-material validation gates.
+When the feedstock-extraction gate is active and a Builder targets an **unimproved** feedstock resource tile, the order engine and work application use the **effective** material cost from `WorkOrderCostCalculator` (player-scoped), which may omit **cast iron** while the stockpile holds enough **lumber** but not enough **cast iron**, and may additionally omit **lumber** while the stockpile holds **neither** input (see [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Improvement Build Costs (Builder) — H8 feedstock bootstrap). This makes feedstock-priority suggestions **affordable** on seed 42 where failing sellers bind on `lumber` before any feedstock tile is improved; it does not bypass visibility, probe budget, tech cap, or non-material validation gates.
 
 **Acceptance criteria**
 
-- Given the supplier-side feedstock gate active, stockpile `{lumber: 1, castIron: 0}`, and an unimproved `timber` tile as a visible `build_improvement` candidate, when `suggestWorkOrders` runs, then the emitted suggestion targets the `timber` tile (accepted under the waived cost).
+- Given the supplier-side feedstock gate active, stockpile `{lumber: 1, castIron: 0}`, and an unimproved `timber` tile as a visible `build_improvement` candidate, when `suggestWorkOrders` runs, then the emitted suggestion targets the `timber` tile (accepted under the `castIron`-waived cost).
+- Given the seller-side feedstock gate active, stockpile `{lumber: 0, castIron: 0}`, and an unimproved `timber` tile as a visible `build_improvement` candidate, when `suggestWorkOrders` runs, then the emitted suggestion targets the `timber` tile (accepted under the full bootstrap waiver).
 - Given the gate inactive and the same stockpile, when `suggestWorkOrders` runs for a lex-first `grain` tile, then no `build_improvement` suggestion is emitted if the player cannot afford `{lumber: 1, castIron: 1}` (negative control).
 
 ---

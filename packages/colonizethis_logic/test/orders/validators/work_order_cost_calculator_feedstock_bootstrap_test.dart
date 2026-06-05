@@ -54,11 +54,7 @@ Game _twoPlayerFeedstockGateGame({required Stockpile supplierStockpile}) {
         _sellerWoolTile: 'wool',
       },
       tileState: const TileMapState(
-        improvementByTile: {
-          _grainTile: 0,
-          _timberTile: 0,
-          _sellerWoolTile: 0,
-        },
+        improvementByTile: {_grainTile: 0, _timberTile: 0, _sellerWoolTile: 0},
       ),
     ),
     players: [
@@ -82,36 +78,31 @@ Game _twoPlayerFeedstockGateGame({required Stockpile supplierStockpile}) {
 
 void main() {
   group('WorkOrderCostCalculator feedstock bootstrap castIron waiver', () {
-    test(
-      'omits castIron for unimproved feedstock tile when gate active and '
-      'stockpile has lumber only',
-      () {
-        final game = _twoPlayerFeedstockGateGame(
-          supplierStockpile: const Stockpile(quantities: {'lumber': 2}),
-        );
-        expect(
-          feedstockExtractionResourceIdsForPlayer(game, _supplierId),
-          contains('timber'),
-        );
-        expect(
-          feedstockBootstrapBuildImprovementCastIronWaived(
-            game,
-            _supplierId,
-            _timberTile,
-          ),
-          isTrue,
-        );
-        final cost = WorkOrderCostCalculator(
+    test('omits castIron for unimproved feedstock tile when gate active and '
+        'stockpile has lumber only', () {
+      final game = _twoPlayerFeedstockGateGame(
+        supplierStockpile: const Stockpile(quantities: {'lumber': 2}),
+      );
+      expect(
+        feedstockExtractionResourceIdsForPlayer(game, _supplierId),
+        contains('timber'),
+      );
+      expect(
+        feedstockBootstrapBuildImprovementCastIronWaived(
           game,
-          playerId: _supplierId,
-        ).calculateCost(
-          kWorkTargetBuildImprovement,
+          _supplierId,
           _timberTile,
-          improvementLevel: 0,
-        );
-        expect(cost, equals({CommodityCatalog.lumber.id: 1}));
-      },
-    );
+        ),
+        isTrue,
+      );
+      final cost = WorkOrderCostCalculator(game, playerId: _supplierId)
+          .calculateCost(
+            kWorkTargetBuildImprovement,
+            _timberTile,
+            improvementLevel: 0,
+          );
+      expect(cost, equals({CommodityCatalog.lumber.id: 1}));
+    });
 
     test(
       'keeps full cost when castIron is already affordable (negative control)',
@@ -129,14 +120,12 @@ void main() {
           ),
           isFalse,
         );
-        final cost = WorkOrderCostCalculator(
-          game,
-          playerId: _supplierId,
-        ).calculateCost(
-          kWorkTargetBuildImprovement,
-          _timberTile,
-          improvementLevel: 0,
-        );
+        final cost = WorkOrderCostCalculator(game, playerId: _supplierId)
+            .calculateCost(
+              kWorkTargetBuildImprovement,
+              _timberTile,
+              improvementLevel: 0,
+            );
         expect(cost![CommodityCatalog.lumber.id], 1);
         expect(cost[CommodityCatalog.castIron.id], 1);
       },
@@ -156,15 +145,71 @@ void main() {
           ),
           isFalse,
         );
-        final cost = WorkOrderCostCalculator(
-          game,
-          playerId: _supplierId,
-        ).calculateCost(
-          kWorkTargetBuildImprovement,
-          _grainTile,
-          improvementLevel: 0,
-        );
+        final cost = WorkOrderCostCalculator(game, playerId: _supplierId)
+            .calculateCost(
+              kWorkTargetBuildImprovement,
+              _grainTile,
+              improvementLevel: 0,
+            );
         expect(cost![CommodityCatalog.castIron.id], 1);
+      },
+    );
+
+    test(
+      'omits lumber and castIron for unimproved feedstock tile when gate active '
+      'and stockpile has neither input (Refs #2847 lumber bootstrap)',
+      () {
+        final game = _twoPlayerFeedstockGateGame(
+          supplierStockpile: Stockpile.empty,
+        );
+        expect(
+          feedstockBootstrapBuildImprovementLumberWaived(
+            game,
+            _supplierId,
+            _timberTile,
+          ),
+          isTrue,
+        );
+        expect(
+          feedstockBootstrapBuildImprovementCastIronWaived(
+            game,
+            _supplierId,
+            _timberTile,
+          ),
+          isFalse,
+        );
+        final cost = WorkOrderCostCalculator(game, playerId: _supplierId)
+            .calculateCost(
+              kWorkTargetBuildImprovement,
+              _timberTile,
+              improvementLevel: 0,
+            );
+        expect(cost, isEmpty);
+      },
+    );
+
+    test(
+      'does not waive lumber when castIron is already affordable (negative control)',
+      () {
+        final game = _twoPlayerFeedstockGateGame(
+          supplierStockpile: const Stockpile(quantities: {'castIron': 1}),
+        );
+        expect(
+          feedstockBootstrapBuildImprovementLumberWaived(
+            game,
+            _supplierId,
+            _timberTile,
+          ),
+          isFalse,
+        );
+        final cost = WorkOrderCostCalculator(game, playerId: _supplierId)
+            .calculateCost(
+              kWorkTargetBuildImprovement,
+              _timberTile,
+              improvementLevel: 0,
+            );
+        expect(cost![CommodityCatalog.lumber.id], 1);
+        expect(cost[CommodityCatalog.castIron.id], 1);
       },
     );
   });

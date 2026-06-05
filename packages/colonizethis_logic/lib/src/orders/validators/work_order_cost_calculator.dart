@@ -39,7 +39,7 @@ class WorkOrderCostCalculator {
       roadLevel: rl,
     );
     if (base == null || playerId == null) return base;
-    return _applyFeedstockBootstrapCastIronWaiver(
+    return _applyFeedstockBootstrapWaivers(
       target: target,
       targetTileKey: targetTileKey,
       improvementLevel: improvementLevel,
@@ -47,7 +47,7 @@ class WorkOrderCostCalculator {
     );
   }
 
-  Map<String, int>? _applyFeedstockBootstrapCastIronWaiver({
+  Map<String, int>? _applyFeedstockBootstrapWaivers({
     required String target,
     required String targetTileKey,
     required int improvementLevel,
@@ -56,16 +56,13 @@ class WorkOrderCostCalculator {
     if (target != kWorkTargetBuildImprovement || improvementLevel != 0) {
       return baseCost;
     }
-    if (!feedstockBootstrapBuildImprovementCastIronWaived(
+    final effective = feedstockBootstrapBuildImprovementEffectiveCost(
       game,
       playerId!,
       targetTileKey,
-    )) {
-      return baseCost;
-    }
-    final waived = Map<String, int>.from(baseCost)
-      ..remove(CommodityCatalog.castIron.id);
-    return Map<String, int>.unmodifiable(waived);
+    );
+    if (effective.length == baseCost.length) return baseCost;
+    return effective;
   }
 
   Province? _targetProvince(String tileKey) {

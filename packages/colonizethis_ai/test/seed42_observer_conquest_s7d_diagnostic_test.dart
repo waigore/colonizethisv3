@@ -1266,6 +1266,33 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// `gpFeedstockGateImprovedTileOwnedTurns` rise for gp3 before expecting OW
 /// gain to move.
 ///
+/// ## S7-D refresh (captured 2026-06-05 — lumber bootstrap waiver slice,
+///     Refs #2847)
+///
+/// The level-0 `build_improvement` **lumber waiver** (scoped to improvement-
+/// input feedstock tiles `timber` / `iron` only — not regiment-build-input
+/// `wool` / `cotton`) waives both `lumber` and `castIron` when the seller
+/// holds neither, breaking the chicken-and-egg where improving the owned
+/// `timber` tile requires `lumber` the seller does not yet hold. Re-running
+/// this diagnostic on the change:
+///
+/// | GP | OW gain | lumber affordable | valid candidate | improved tile owned |
+/// |----|---------|------------------:|----------------:|--------------------:|
+/// | gp1 | +6 ✅ | 0 | 0 | 0 |
+/// | gp2 | +6 ✅ | 0 | 0 | 0 |
+/// | gp3 | +2 ❌ | **14** (was 0) | **14** (was 0) | **23** (was 0) |
+/// | gp4 | +1 ❌ | 0 | 0 | 0 |
+/// | gp5 | +1 ❌ | **15** (was 2) | **15** (was 2) | 35 (was 49) |
+/// | gp6 | +2 ❌ | **14** (was 12) | **14** (was 1) | **38** (was 20) |
+///
+/// **Decisive localization:** the lumber bootstrap **unblocks the owned-tile
+/// extraction path** for gp3 / gp5 / gp6 (`gpFeedstockGateImprovementLumberAffordableTurns` and `gpFeedstockGateImprovedTileOwnedTurns` rise materially; gp3 moves off the all-zero floor). OW gain is **unchanged** at the turn-100 gate (gp3 +2, gp4 +1, gp5 +1, gp6 +2) — the slice is **correct groundwork but verified necessary-but-insufficient** on seed 42, mirroring prior H8 slices. The +6 baseline (gp1 / gp2) is preserved. A broader unscoped waiver that also zero-cost-improved `wool` / `cotton` fabric feedstock **regressed gp5 OW gain to −7**; scoping to improvement-input feedstock only restored gp5 to +1.
+///
+/// **Re-pointed next slice:** downstream of the now-improving feedstock tiles —
+/// confirm `gpCastIronFeedstockHeldAtTurn99` `timber` / `iron` rise, domestic
+/// `lumber` / `castIron` production assigns, and the fabric → regiment → OW
+/// conquest chain completes before expecting OW gain to reach +3.
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
