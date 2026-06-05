@@ -110,7 +110,9 @@ void main() {
       final ctMainMenuFinder = find.byType(CtMainMenu);
       expect(ctMainMenuFinder, findsOneWidget);
       final ctMainMenu = tester.widget<CtMainMenu>(ctMainMenuFinder);
-      expect(ctMainMenu.variant, MainMenuVariant.plain);
+      // S8 (#2860): the live shell renders the mockup-matching pixelArt
+      // variant; plain remains available only as a fallback variant.
+      expect(ctMainMenu.variant, MainMenuVariant.pixelArt);
       expect(ctMainMenu.state, MainMenuState.default_);
       expect(ctMainMenu.resumeGameVisible, isFalse);
     });
