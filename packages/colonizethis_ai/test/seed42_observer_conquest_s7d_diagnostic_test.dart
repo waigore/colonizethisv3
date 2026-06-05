@@ -14,6 +14,7 @@ import 'package:colonizethis_logic/ai_api.dart'
     show
         allUnitsFromWorld,
         hasIdleExplorerUnit,
+        ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         regimentBuildInputFeedstockExtractionResourceIds,
@@ -1488,6 +1489,20 @@ void main() {
       //     non-zero count instead points at candidate-generation eligibility
       //     (mineral-tile gate / validator) or selection ranking for an
       //     already-positioned Explorer.
+      //   * `supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns` —
+      //     the supplier owns an idle Explorer co-located with an unprospected
+      //     Old World `iron` mineral feedstock tile that **also** passes the
+      //     live mineral-eligibility terrain check (`isMineralEligibleTile`
+      //     under the seed-42 `tileMapByRegion`). This is the next gate the
+      //     `prospect` candidate must clear in
+      //     `_allAcceptedProspectTilesInProvince`. Comparing it against
+      //     `supplierIdleExplorerColocatedFeedstockTileTurns` splits the
+      //     residual finer: a flat zero here while the resource-only co-located
+      //     count is non-zero localizes the break to **terrain
+      //     mineral-eligibility** at candidate generation (the owned `iron`
+      //     tile sits on non-prospectable terrain); equal non-zero counts
+      //     instead point **downstream** of eligibility (validator material
+      //     cost / visibility precheck or selection ranking).
       //
       // Read-only; the (freely tunable) counts can move as later slices land.
       final supplierIdleExplorerPresentTurns = <String, int>{
@@ -1499,6 +1514,8 @@ void main() {
       final supplierIdleExplorerColocatedFeedstockTileTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      final supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
 
       // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
       // The post-#3235 surface shows the world market never supplies fabric
@@ -1798,6 +1815,17 @@ void main() {
                   (supplierIdleExplorerColocatedFeedstockTileTurns[gpId] ?? 0) +
                   1;
             }
+            if (ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+              game,
+              gpId,
+              castIronFeedstockIds,
+              tileMap,
+            )) {
+              supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns[gpId] =
+                  (supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns[gpId] ??
+                      0) +
+                  1;
+            }
           }
           if (player != null) {
             final holdsFeedstock = fabricFeedstockIds.any(
@@ -2094,6 +2122,8 @@ void main() {
             supplierProspectedMineralFeedstockTileTurns,
         'gpSupplierIdleExplorerColocatedFeedstockTileTurns':
             supplierIdleExplorerColocatedFeedstockTileTurns,
+        'gpSupplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns':
+            supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns,
         'gpCastIronFeedstockHeldAtTurn99': castIronFeedstockHeldAtTurn99,
         'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
         'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,

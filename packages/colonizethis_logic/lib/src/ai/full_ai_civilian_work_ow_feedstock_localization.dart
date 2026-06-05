@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../orders/orders_application_helpers.dart' show isMineralEligibleTile;
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 
@@ -111,6 +112,71 @@ bool ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
     if (!kMineralResourceIds.contains(entry.value)) continue;
     if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
     if (prospected.contains(entry.key)) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    feedstockProvinceIds.add(provinceId);
+  }
+  if (feedstockProvinceIds.isEmpty) return false;
+  for (final unit in allUnitsFromWorld(ws)) {
+    if (unit.ownerId != playerId) continue;
+    if (!isExplorerUnit(unit.type)) continue;
+    if (unit.currentWork != null) continue;
+    if (feedstockProvinceIds.contains(unit.locationProvinceId)) return true;
+  }
+  return false;
+}
+
+/// True iff [playerId] owns at least one **idle** Explorer
+/// (`currentWork == null`) standing in the **same Old World province** as one
+/// of the player's owned **unprospected mineral** feedstock tiles in
+/// [feedstockIds] that **also** passes the live mineral-eligibility terrain
+/// check ([isMineralEligibleTile] under [tileMapByRegion]) (Refs #2847
+/// § H8-extraction Old World mineral feedstock prospect localization).
+///
+/// Splits the residual one gate finer than
+/// [ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile]:
+/// that predicate proved an idle Explorer is already co-located with an owned,
+/// unprospected Old World mineral feedstock province on the gate-active turns,
+/// yet the supplier still never prospects (`prospect` candidate generation
+/// returns no candidate). The next gate the `prospect` candidate must clear in
+/// `order_suggestion_work_explorer.dart` (`_allAcceptedProspectTilesInProvince`)
+/// is [isMineralEligibleTile], which — unlike the resource-only feedstock scan
+/// in the prior predicate — additionally requires the tile's **live terrain**
+/// (from [tileMapByRegion]) to be prospectable. This predicate therefore
+/// distinguishes:
+///
+///   * **true on gate turns** → the co-located feedstock tile passes the
+///     mineral-eligibility terrain check, so a `prospect` candidate *should*
+///     generate; the residual is **downstream** of eligibility (validator
+///     material cost / visibility precheck or selection ranking).
+///   * **false while
+///     [ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile]
+///     is true** → the co-located feedstock tile fails [isMineralEligibleTile]
+///     under the live terrain map (for example the owned `iron` resource sits
+///     on non-prospectable terrain), so no `prospect` candidate ever generates;
+///     the residual is **terrain mineral-eligibility** at candidate generation,
+///     not budget, positioning, or the validator.
+///
+/// Read-only and deterministic over
+/// `(game, playerId, feedstockIds, tileMapByRegion)`.
+bool ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+  Map<String, TileMapResult>? tileMapByRegion,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
+  final feedstockProvinceIds = <String>{};
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    if (!kMineralResourceIds.contains(entry.value)) continue;
+    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
+    if (prospected.contains(entry.key)) continue;
+    if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
     final province = tryGetProvince(ws, provinceId);
