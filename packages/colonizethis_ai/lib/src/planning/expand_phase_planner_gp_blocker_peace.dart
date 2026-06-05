@@ -155,10 +155,7 @@ List<String> stalledGpBlockerFocusPeaceTargets({
     final owner = provinceOwner[pid];
     return owner != null && game.minorNations.any((m) => m.id == owner);
   });
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   final blocker = primaryInvadableOldWorldGpBlocker(
     game: game,
     snapshot: snapshot,

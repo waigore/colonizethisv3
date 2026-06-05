@@ -9,6 +9,7 @@ import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_diplomacy_filter.dart';
 import 'phase_planner_dispatch.dart';
+import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
