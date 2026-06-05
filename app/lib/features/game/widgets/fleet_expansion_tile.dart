@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ct_e2e.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_spacing.dart';
@@ -106,6 +107,7 @@ class FleetExpansionTile extends StatelessWidget {
           icon: Icons.route,
           label: l10n.common_move,
           onPressed: onMoveFleet,
+          buttonKey: kCtE2EFleetMoveActionKey,
         ),
       );
     }

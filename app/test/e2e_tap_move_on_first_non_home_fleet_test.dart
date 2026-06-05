@@ -27,24 +27,41 @@ import '../integration_test/e2e_test_shared.dart';
 
 /// Mounts a Move row that opens an [AlertDialog] when tapped, mirroring the
 /// production fleet-row Move button surface (`fleet_expansion_tile.dart`).
+///
+/// The button always carries the production [kCtE2EFleetMoveActionKey] so the
+/// helper can locate it by key. When [iconOnly] is `true` it renders no
+/// `Text('Move')` — mirroring the production dense naval action cluster
+/// collapse at narrow viewports, where the label is suppressed and only the
+/// key (not the text) identifies the control (Refs #2336).
 class _MoveButton extends StatelessWidget {
-  const _MoveButton({this.onPressedSpy});
+  const _MoveButton({this.onPressedSpy, this.iconOnly = false});
 
   final void Function()? onPressedSpy;
+  final bool iconOnly;
 
   @override
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
+        void onPressed() {
+          onPressedSpy?.call();
+          showDialog<void>(
+            context: context,
+            builder: (_) => const AlertDialog(content: Text('Move dialog')),
+          );
+        }
+
+        if (iconOnly) {
+          return IconButton(
+            key: kCtE2EFleetMoveActionKey,
+            tooltip: 'Move',
+            icon: const Icon(Icons.route),
+            onPressed: onPressed,
+          );
+        }
         return TextButton(
-          onPressed: () {
-            onPressedSpy?.call();
-            showDialog<void>(
-              context: context,
-              builder: (_) =>
-                  const AlertDialog(content: Text('Move dialog')),
-            );
-          },
+          key: kCtE2EFleetMoveActionKey,
+          onPressed: onPressed,
           child: const Text('Move'),
         );
       },
@@ -58,13 +75,14 @@ ExpansionTile _fleetTile({
   required String title,
   String? subtitle,
   bool initiallyExpanded = true,
+  bool iconOnly = false,
   void Function()? onMovePressed,
 }) {
   return ExpansionTile(
     title: Text(title),
     subtitle: subtitle == null ? null : Text(subtitle),
     initiallyExpanded: initiallyExpanded,
-    children: [_MoveButton(onPressedSpy: onMovePressed)],
+    children: [_MoveButton(onPressedSpy: onMovePressed, iconOnly: iconOnly)],
   );
 }
 
@@ -266,6 +284,75 @@ void main() {
               'silently switching to a later iteration order.',
         );
         expect(secondTaps, 0);
+        expect(find.byType(AlertDialog), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'icon-only Move button (narrow viewport) tapped via stable key',
+      (tester) async {
+        // Regression for #2336: production collapses the dense naval action
+        // cluster to icon-only at narrow test-host viewports, so no
+        // `Text('Move')` renders. The helper must locate the control by
+        // [kCtE2EFleetMoveActionKey], not the label.
+        var taps = 0;
+        await tester.pumpWidget(
+          _wrap(
+            _navalPanel(
+              children: [
+                _fleetTile(
+                  title: 'Fleet 2',
+                  subtitle: 'New World — Outer Sea',
+                  iconOnly: true,
+                  onMovePressed: () => taps++,
+                ),
+              ],
+            ),
+          ),
+        );
+        expect(
+          find.text('Move'),
+          findsNothing,
+          reason: 'Sanity: the icon-only Move control renders no label, so a '
+              'text-based finder would fail — the regression this test pins.',
+        );
+        expect(
+          find.byKey(kCtE2EFleetMoveActionKey),
+          findsOneWidget,
+          reason: 'The stable key must be present on the icon-only control.',
+        );
+        expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
+        expect(taps, 1);
+        expect(find.byType(AlertDialog), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'collapsed icon-only tile expanded then keyed Move tapped',
+      (tester) async {
+        var taps = 0;
+        await tester.pumpWidget(
+          _wrap(
+            _navalPanel(
+              children: [
+                _fleetTile(
+                  title: 'Fleet 5',
+                  subtitle: 'New World — Inner Sea',
+                  initiallyExpanded: false,
+                  iconOnly: true,
+                  onMovePressed: () => taps++,
+                ),
+              ],
+            ),
+          ),
+        );
+        expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
+        expect(
+          taps,
+          1,
+          reason: 'Collapsed tiles must still be expanded and the keyed '
+              'icon-only Move tapped (Refs #2336).',
+        );
         expect(find.byType(AlertDialog), findsOneWidget);
       },
     );
