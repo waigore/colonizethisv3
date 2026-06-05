@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../orders/order_suggestion_work_tile_keys.dart'
+    show getValidWorkOrderTileKeys;
 import '../orders/orders_application_helpers.dart' show isMineralEligibleTile;
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
@@ -189,6 +191,87 @@ bool ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTi
     if (!isExplorerUnit(unit.type)) continue;
     if (unit.currentWork != null) continue;
     if (feedstockProvinceIds.contains(unit.locationProvinceId)) return true;
+  }
+  return false;
+}
+
+/// True iff [playerId] owns at least one **idle** Explorer
+/// (`currentWork == null`) standing in the **same Old World province** as one
+/// of the player's owned **unprospected mineral** feedstock tiles in
+/// [feedstockIds] that passes [isMineralEligibleTile] **and** for which the
+/// work-order engine accepts a co-located `prospect` order on that Explorer
+/// via [getValidWorkOrderTileKeys] (Refs #2847 § H8-extraction Old World
+/// mineral feedstock prospect localization).
+///
+/// Splits the residual one gate finer than
+/// [ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile]:
+/// that predicate proved the co-located feedstock tile passes the live-terrain
+/// mineral-eligibility check yet the supplier still never prospects. The next
+/// gate `_allAcceptedProspectTilesInProvince` applies after eligibility is
+/// [`isWorkOrderAcceptedWithValidator`] (visibility precheck, occupancy,
+/// duplicate-pending, and any target-specific validator rules). This predicate
+/// therefore distinguishes:
+///
+///   * **true on gate turns** → the co-located mineral-eligible feedstock tile
+///     is validator-accepted for `prospect` on an idle co-located Explorer, so
+///     a candidate *should* generate; the residual is **selection ranking** or
+///     a `suggestWorkOrders` pipeline gate outside
+///     [getValidWorkOrderTileKeys] (shared probe budget, province sweep cap,
+///     duplicate-pending early bail).
+///   * **false while
+///     [ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile]
+///     is true** → the tile passes mineral eligibility but the incremental
+///     validator rejects the `prospect` candidate (for example province/tile
+///     visibility below `fogged`, occupancy, or a stale pending order on the
+///     Explorer); the residual is **validator acceptance** at candidate
+///     generation.
+///
+/// Read-only and deterministic over
+/// `(game, topology, playerId, feedstockIds, tileMapByRegion, currentOrders)`.
+bool
+ownsIdleExplorerColocatedWithValidatorAcceptedMineralEligibleUnprospectedOldWorldFeedstockTile(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Set<String> feedstockIds,
+  Map<String, TileMapResult>? tileMapByRegion, {
+  Orders currentOrders = const Orders(),
+}) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
+  final feedstockTilesByProvince = <String, List<String>>{};
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    if (!kMineralResourceIds.contains(entry.value)) continue;
+    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
+    if (prospected.contains(entry.key)) continue;
+    if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    feedstockTilesByProvince.putIfAbsent(provinceId, () => []).add(entry.key);
+  }
+  if (feedstockTilesByProvince.isEmpty) return false;
+  for (final unit in allUnitsFromWorld(ws)) {
+    if (unit.ownerId != playerId) continue;
+    if (!isExplorerUnit(unit.type)) continue;
+    if (unit.currentWork != null) continue;
+    final tilesInProvince = feedstockTilesByProvince[unit.locationProvinceId];
+    if (tilesInProvince == null || tilesInProvince.isEmpty) continue;
+    final valid = getValidWorkOrderTileKeys(
+      game,
+      topology,
+      playerId,
+      unit.id,
+      kWorkTargetProspect,
+      currentOrders,
+      tileMapByRegion: tileMapByRegion,
+    );
+    for (final tileKey in tilesInProvince) {
+      if (valid.contains(tileKey)) return true;
+    }
   }
   return false;
 }
