@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../package_logger.dart';
 import 'editorial_monocle_palette.dart';
 
 const Color darkWood = Color(0xFF5D3A1A);
@@ -93,19 +94,19 @@ class AppThemes {
   /// Editorial-monocle dark theme: SPEC/ui/pixel-art-ui-catalog.md
   /// § Editorial-monocle palette. Tokens resolve via
   /// [EditorialMonoclePalette]; display text uses the Cinzel font family
-  /// (registered at runtime by [preloadEditorialMonocleFonts]), body text
-  /// uses Flutter's platform sans-serif default so it follows the
-  /// system-ui / -apple-system fallback chain on each OS.
+  /// (bundled under `app/google_fonts/` and registered at startup by
+  /// [preloadEditorialMonocleFonts]), body text uses Flutter's platform
+  /// sans-serif default so it follows the system-ui / -apple-system fallback
+  /// chain on each OS.
   ///
   /// The theme intentionally constructs Cinzel-styled TextStyles with
   /// `fontFamily: editorialMonocleDisplayFontFamily` directly rather than
   /// calling `GoogleFonts.cinzel(...)` at construction time. That keeps
   /// the theme constructor synchronous and hermetic (unit tests can read
-  /// the theme without triggering Google Fonts' offline HTTP fetch). The
-  /// actual font byte loading is done once at app startup via
-  /// [preloadEditorialMonocleFonts]; in production runs the font renders
-  /// as soon as the registration future resolves, with the platform
-  /// serif fallback used until then.
+  /// the theme without triggering Google Fonts registration). The bundled
+  /// font bytes are verified and registered once at app startup via
+  /// [preloadEditorialMonocleFonts]; production bootstrap awaits that call
+  /// and hard-errors when bundled Cinzel cannot be loaded.
   static ThemeData get editorialMonocle {
     final Color bg = EditorialMonoclePalette.bg;
     final Color surface = EditorialMonoclePalette.surface;
@@ -164,25 +165,41 @@ class AppThemes {
 }
 
 /// Font family applied to display / heading text styles in
-/// [AppThemes.editorialMonocle]. Matches Google Fonts' Cinzel family name.
+/// [AppThemes.editorialMonocle]. Matches the bundled Cinzel family name.
 const String editorialMonocleDisplayFontFamily = 'Cinzel';
 
-/// Trigger an asynchronous registration of the Cinzel display font via the
-/// `google_fonts` package. Call once from app startup; in tests this is a
-/// no-op (skip parameter [skipInTests] = true) so the suite stays hermetic.
+/// Display weights used across editorial-monocle UI (w500–w700 on headings).
+const List<FontWeight> _editorialMonocleCinzelWeights = <FontWeight>[
+  FontWeight.w400,
+  FontWeight.w500,
+  FontWeight.w600,
+  FontWeight.w700,
+];
+
+final _fontLog = packageLogger('font');
+
+/// Registers bundled Cinzel display weights and awaits completion.
 ///
-/// Failures are swallowed: when offline (and not cached on disk) the
-/// editorial-monocle display text falls back to the platform serif until a
-/// future run loads it. This keeps Cinzel registration completely separate
-/// from theme construction.
+/// Call once from app startup before `runApp`. In tests and e2e, pass
+/// [skipInTests] = true (or inject a no-op via `bootstrapApp.preloadFonts`)
+/// so the suite stays hermetic.
+///
+/// On failure the error is logged and rethrown so production bootstrap
+/// hard-errors instead of silently falling back to a platform serif.
 Future<void> preloadEditorialMonocleFonts({bool skipInTests = false}) async {
   if (skipInTests) return;
   try {
-    // Touching the GoogleFonts.cinzel() factory schedules the async font
-    // load. We do not await the result here; downstream renderers use the
-    // platform fallback until the registration future completes.
-    GoogleFonts.cinzel();
-  } catch (_) {
-    // Intentionally swallowed — see method docstring.
+    await GoogleFonts.pendingFonts(
+      _editorialMonocleCinzelWeights
+          .map((FontWeight weight) => GoogleFonts.cinzel(fontWeight: weight))
+          .toList(),
+    );
+  } catch (e, st) {
+    _fontLog.e(
+      'bundled Cinzel display font failed to load',
+      error: e,
+      stackTrace: st,
+    );
+    rethrow;
   }
 }

@@ -12,7 +12,7 @@
 
 | Aspect | Value | Description |
 |--------|-------|-------------|
-| `variant` | `MainMenuVariant.plain` | Always passes `plain` — the pixel-art variant is owned by the menu spec. |
+| `variant` | `MainMenuVariant.pixelArt` | Always passes `pixelArt` so the live shell renders the mockup chrome (`SHEL10002-main-menu.html`) per [`main-menu.md`](main-menu.md) § Variant rendering. `MainMenuVariant.plain` is retained in the widget API as a minimal fallback variant but is not used by the running shell. |
 | `state` | `MainMenuState.default_` | Always passes `default_`; the post-victory subtitle is owned by [`victory-overlay.md`](victory-overlay.md) follow-up flow, not by this shell. |
 | `version` | `appDisplayVersion()` | Reads `appDisplayVersion()` from `app/lib/config/app_display_strings.dart` so `CT_DEBUG_CONSOLE` formatting works unchanged. |
 | `resumeGameVisible` | `mainMenuAutoSaveAvailableProvider` | Watches `mainMenuAutoSaveAvailableProvider` from `app/lib/providers/games_provider.dart`; recomputes whenever the games box changes per [`save-load.md`](../program/save-load.md). |
@@ -36,7 +36,7 @@ The shell does not own the menu UI: visual layout, asset choices, and per-state 
 | Shell (Routes.shell)                                 |
 | +--------------------------------------------------+ |
 | | CtMainMenu                                       | |
-| |   variant: plain                                 | |
+| |   variant: pixelArt                              | |
 | |   state:   default                               | |
 | |   version: appDisplayVersion()                   | |
 | |   resumeGameVisible: <auto-save available?>      | |
@@ -100,7 +100,11 @@ All cross-screen transitions use `AppEventBus` per [`app-ui-wiring.md`](../progr
 
 - Given the app navigator is at `Routes.shell` and `mainMenuAutoSaveAvailableProvider` returns `false`,
   When `ShellScreen.build` runs,
-  Then the widget tree contains exactly one `CtMainMenu` with `variant == MainMenuVariant.plain`, `state == MainMenuState.default_`, and `resumeGameVisible == false`.
+  Then the widget tree contains exactly one `CtMainMenu` with `variant == MainMenuVariant.pixelArt`, `state == MainMenuState.default_`, and `resumeGameVisible == false`.
+
+- Given the app navigator is at `Routes.shell` (the sole production caller of `CtMainMenu`),
+  When `ShellScreen` is mounted and laid out,
+  Then the live menu renders the `pixelArt` mockup chrome — exactly one `CtCompassRose`, at least one `CtFleurDeLisOrnament`, the eyebrow blurb "A Game of Empire & Discovery" (upper-cased), and the footer Quit chip keyed `kMainMenuFooterQuitKey` — and does not fall back to the bare `plain` variant.
 
 - Given the app navigator is at `Routes.shell` and `mainMenuAutoSaveAvailableProvider` returns `true`,
   When `ShellScreen.build` runs,

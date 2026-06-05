@@ -108,14 +108,13 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart'
-    hide cheapestRegimentBuildTreasuryCost;
-import 'package:colonizethis_data/colonizethis_data.dart' as regiment_catalog
+    as regiment_catalog
     show cheapestRegimentBuildTreasuryCost;
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';
@@ -185,10 +184,7 @@ List<String> planExpandPeace({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.isEmpty) {
     return const [];
   }
@@ -356,10 +352,7 @@ bool expandIsGeographicPeerWarLockNoNwTreasuryRecovery({
   if (game.playerById(peerGpId) == null) {
     return false;
   }
-  return expandIsGeographicPeerWarLock(
-    snapshot: snapshot,
-    peerGpId: peerGpId,
-  );
+  return expandIsGeographicPeerWarLock(snapshot: snapshot, peerGpId: peerGpId);
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -516,10 +509,7 @@ String? soleAtWarGreatPowerId({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length != 1) {
     return null;
   }
@@ -807,9 +797,8 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
       ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
       : null;
   final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          factionId != invadableBlocker &&
+    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
+      if (factionId != invadableBlocker &&
           provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit)
         factionId,
   ]..sort();
@@ -890,9 +879,8 @@ List<String> quotaMetBelowQuotaAtWarPeaceTargets({
     return const [];
   }
   final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)))
+    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
+      if (isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)))
         factionId,
   ]..sort();
   return targets;
@@ -951,10 +939,7 @@ List<String> criticalOwHoldPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
+  final targets = gpFactionIdsAtWarWith(game, snapshot);
   if (targets.isEmpty) {
     return const [];
   }
@@ -1497,7 +1482,8 @@ ExpandEconomyPlan planExpandEconomy({
 
   // Arm D (Refs #2847 § H3): trap-band force rebuild without treasury
   // gate when overseas cargo recovery is futile.
-  final armD = futilityLock &&
+  final armD =
+      futilityLock &&
       regimentCount > 0 &&
       regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar &&
       hasInvadable;
@@ -2223,9 +2209,8 @@ List<String> defaultStartGpPeaceTargets({
       ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
       : null;
   final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null && factionId != invadableBlocker)
-        factionId,
+    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
+      if (factionId != invadableBlocker) factionId,
   ]..sort();
   return targets;
 }
@@ -2309,10 +2294,7 @@ List<String> nearQuotaHoldPeaceTargets({
       !isStalledOldWorldExpansion(ownOw)) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.isEmpty) {
     return const [];
   }
