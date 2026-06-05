@@ -12,9 +12,8 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   // Tests run offline; disable runtime font fetching as a defense-in-depth
   // measure so any incidental `GoogleFonts.<family>()` call surfaces a
   // missing-asset exception instead of attempting an HTTP download against
-  // `fonts.gstatic.com`. Production runtime registers Cinzel asynchronously
-  // via `preloadEditorialMonocleFonts` and `AppThemes.editorialMonocle`
-  // itself does not call GoogleFonts at construction time.
+  // `fonts.gstatic.com`. Production mirrors this in `main()` and registers
+  // bundled Cinzel via `preloadEditorialMonocleFonts` before `runApp`.
   GoogleFonts.config.allowRuntimeFetching = false;
   await MapTerrainConfig.ensureLoaded();
   await testMain();
