@@ -50,11 +50,8 @@
 ///     tiles on GP-owned land, deterministically priority-ordered.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 import 'planning_helpers.dart';
 
 /// Returns every Great Power currently at war with the active player as a

@@ -108,13 +108,11 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart'
-    hide cheapestRegimentBuildTreasuryCost;
-import 'package:colonizethis_data/colonizethis_data.dart' as regiment_catalog
+    as regiment_catalog
     show cheapestRegimentBuildTreasuryCost;
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
 
@@ -354,10 +352,7 @@ bool expandIsGeographicPeerWarLockNoNwTreasuryRecovery({
   if (game.playerById(peerGpId) == null) {
     return false;
   }
-  return expandIsGeographicPeerWarLock(
-    snapshot: snapshot,
-    peerGpId: peerGpId,
-  );
+  return expandIsGeographicPeerWarLock(snapshot: snapshot, peerGpId: peerGpId);
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -1487,7 +1482,8 @@ ExpandEconomyPlan planExpandEconomy({
 
   // Arm D (Refs #2847 § H3): trap-band force rebuild without treasury
   // gate when overseas cargo recovery is futile.
-  final armD = futilityLock &&
+  final armD =
+      futilityLock &&
       regimentCount > 0 &&
       regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar &&
       hasInvadable;

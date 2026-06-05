@@ -38,6 +38,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'test_fixtures.dart';
+import 'test_game_factories.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -53,56 +54,6 @@ Stockpile _stockpileWithPendingRiches(int targetCash) {
   const pricePerSpice = 50;
   final qty = (targetCash + pricePerSpice - 1) ~/ pricePerSpice;
   return Stockpile(quantities: {'spices': qty});
-}
-
-/// Game scaffold for EXPAND-phase economy tests. Players, armies, and
-/// (optionally) Old World provinces are passed in so each test can
-/// shape ownership, regiment counts, treasury, and stockpile
-/// independently.
-Game _expandGame({
-  int turnNumber = 50,
-  required List<Player> players,
-  List<Army> armies = const [],
-  List<Province> oldWorldProvinces = const [],
-}) {
-  return Game(
-    id: 'g-2509-expand-phase-planner-economy-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: const RegionData(),
-      armies: armies,
-    ),
-    players: players,
-  );
-}
-
-/// Snapshot tuned for EXPAND: own OW defaults to 8 (below quota of 10).
-/// Tests shape `oldWorldProvincesOwned` and `invadableProvinceIdsSorted`
-/// to exercise the outer quota gate and the "hasInvadable" arms. The
-/// planner does not re-check the phase so these tests do not need to
-/// satisfy `observerGoalPhaseFor`.
-AIWorldSnapshot _expandSnapshot({
-  List<String> invadableOw = const [],
-  int oldWorldProvincesOwned = 8,
-  String playerId = _gp1,
-  List<String> adjacentOwnerFactionIdsSorted = const [],
-  int newWorldProvincesOwned = 0,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: invadableOw,
-      adjacentOwnerFactionIdsSorted: adjacentOwnerFactionIdsSorted,
-    ),
-    colonial: ColonialSummary(newWorldProvincesOwned: newWorldProvincesOwned),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
 }
 
 /// Construct a [Player] with explicit treasury and stockpile so each
@@ -134,11 +85,12 @@ void main() {
         // the planner short-circuits before reading regiments or
         // treasury. A regression that dropped the outer gate would emit
         // a forceRebuild=true plan for an at-quota GP.
-        final game = _expandGame(
+        final game = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-economy',
           players: [_player(treasury: 0)],
           armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
         );
-        final snapshot = _expandSnapshot(
+        final snapshot = buildExpandSnapshot(
           oldWorldProvincesOwned: 10,
           invadableOw: const ['oldWorld|gp2_0'],
         );
@@ -158,8 +110,11 @@ void main() {
       // Defensive guard pin: snapshots pointing at a non-existent
       // player must not crash; the planner returns the default plan.
       // Matches the equivalent guard in `planExpandDeclareWar`.
-      final game = _expandGame(players: [_player()]);
-      final snapshot = _expandSnapshot(playerId: 'ghost-player');
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
+        players: [_player()],
+      );
+      final snapshot = buildExpandSnapshot(playerId: 'ghost-player');
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         ExpandEconomyPlan.defaultPlan,
@@ -174,11 +129,14 @@ void main() {
       // phase planner). Treasury is set well above the cheapest cost
       // so arm C does not fire, isolating the forceRebuild flag.
       final cheapest = cheapestRegimentBuildCost();
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [_player(treasury: cheapest * 10)],
         armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
       );
-      final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+      final snapshot = buildExpandSnapshot(
+        invadableOw: const ['oldWorld|gp2_0'],
+      );
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         const ExpandEconomyPlan(
@@ -196,11 +154,12 @@ void main() {
       // there is no OW frontier to invade. Treasury > cheapest ensures
       // arm C also stays off.
       final cheapest = cheapestRegimentBuildCost();
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [_player(treasury: cheapest * 10)],
         armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
       );
-      final snapshot = _expandSnapshot(invadableOw: const []);
+      final snapshot = buildExpandSnapshot(invadableOw: const []);
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         ExpandEconomyPlan.defaultPlan,
@@ -220,11 +179,14 @@ void main() {
       // missing regiments before EXPAND declare-war scoring picks the
       // next target.
       final cheapest = cheapestRegimentBuildCost();
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [_player(treasury: cheapest)],
         armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
       );
-      final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+      final snapshot = buildExpandSnapshot(
+        invadableOw: const ['oldWorld|gp2_0'],
+      );
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         const ExpandEconomyPlan(
@@ -243,7 +205,8 @@ void main() {
       // is strict less-than. A GP exactly at the floor is no longer in
       // the trap band — declare-war scoring should pick its own target.
       final cheapest = cheapestRegimentBuildCost();
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [_player(treasury: cheapest * 10)],
         armies: [
           homeArmyWithRegimentsAtCapital(
@@ -252,7 +215,9 @@ void main() {
           ),
         ],
       );
-      final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+      final snapshot = buildExpandSnapshot(
+        invadableOw: const ['oldWorld|gp2_0'],
+      );
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         ExpandEconomyPlan.defaultPlan,
@@ -269,11 +234,12 @@ void main() {
       // right regiment band and treasury. The planner only forces
       // builds when there is a frontier to invade.
       final cheapest = cheapestRegimentBuildCost();
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [_player(treasury: cheapest * 10)],
         armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
       );
-      final snapshot = _expandSnapshot(invadableOw: const []);
+      final snapshot = buildExpandSnapshot(invadableOw: const []);
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         ExpandEconomyPlan.defaultPlan,
@@ -292,11 +258,14 @@ void main() {
         // regimentCount. A GP with 20 regiments and almost no treasury
         // still benefits from boosting cargo so overseas riches deliver
         // to stockpile (and bankroll the next build pass).
-        final game = _expandGame(
+        final game = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-economy',
           players: [_player(treasury: 0)],
           armies: [homeArmyWithRegimentsAtCapital(_gp1, 20)],
         );
-        final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+        final snapshot = buildExpandSnapshot(
+          invadableOw: const ['oldWorld|gp2_0'],
+        );
         expect(
           planExpandEconomy(game: game, snapshot: snapshot),
           const ExpandEconomyPlan(
@@ -319,11 +288,14 @@ void main() {
       // treasury is below cheapest. A GP with zero regiments AND zero
       // treasury must get BOTH signals — try to rebuild AND chase
       // incoming riches.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [_player(treasury: 0)],
         armies: [homeArmyWithRegimentsAtCapital(_gp1, 0)],
       );
-      final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+      final snapshot = buildExpandSnapshot(
+        invadableOw: const ['oldWorld|gp2_0'],
+      );
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         const ExpandEconomyPlan(
@@ -339,106 +311,112 @@ void main() {
       );
     });
 
-    group('geographic peer-war lock NW futility (Refs #2847 H3 + Resource-need override)', () {
-      test(
-        'lock + trap band + zero NW + treasury<cheapest -> forceRebuild AND cargo boost',
-        () {
-          final game = _expandGame(
-            players: [
-              _player(treasury: 0),
-              _player(id: _gp2, displayName: 'GP2'),
-            ],
-            armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
-          );
-          final snapshot = _expandSnapshot(
-            invadableOw: const ['oldWorld|gp2_0'],
-            adjacentOwnerFactionIdsSorted: const [_gp2],
-          );
-          expect(
-            expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
-              game: game,
-              snapshot: snapshot,
-            ),
-            isTrue,
-          );
-          expect(
-            planExpandEconomy(game: game, snapshot: snapshot),
-            const ExpandEconomyPlan(
-              forceCheapestRegimentBuild: true,
-              boostTreasuryRecoveryCargo: true,
-            ),
-            reason:
-                'Arm D (H3) fires without treasury gate (force-rebuild under '
-                'the lock). Arm C also fires under the lock so the cargo '
-                'signal feeds the resource-need NW=0.60 weight floor in '
-                'phase_priority_weights.dart — suppressing the boost would '
-                'disable the soft-phase resource-need override (Refs #2847 '
-                '§ Resource-need overrides).',
-          );
-        },
-      );
+    group(
+      'geographic peer-war lock NW futility (Refs #2847 H3 + Resource-need override)',
+      () {
+        test(
+          'lock + trap band + zero NW + treasury<cheapest -> forceRebuild AND cargo boost',
+          () {
+            final game = buildExpandGame(
+              gameIdLabel: 'expand-phase-planner-economy',
+              players: [
+                _player(treasury: 0),
+                _player(id: _gp2, displayName: 'GP2'),
+              ],
+              armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
+            );
+            final snapshot = buildExpandSnapshot(
+              invadableOw: const ['oldWorld|gp2_0'],
+              adjacentOwners: const [_gp2],
+            );
+            expect(
+              expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+                game: game,
+                snapshot: snapshot,
+              ),
+              isTrue,
+            );
+            expect(
+              planExpandEconomy(game: game, snapshot: snapshot),
+              const ExpandEconomyPlan(
+                forceCheapestRegimentBuild: true,
+                boostTreasuryRecoveryCargo: true,
+              ),
+              reason:
+                  'Arm D (H3) fires without treasury gate (force-rebuild under '
+                  'the lock). Arm C also fires under the lock so the cargo '
+                  'signal feeds the resource-need NW=0.60 weight floor in '
+                  'phase_priority_weights.dart — suppressing the boost would '
+                  'disable the soft-phase resource-need override (Refs #2847 '
+                  '§ Resource-need overrides).',
+            );
+          },
+        );
 
-      test(
-        'lock negative: NW ownership keeps cargo boost firing when treasury low',
-        () {
-          final game = _expandGame(
-            players: [
-              _player(treasury: 0),
-              _player(id: _gp2, displayName: 'GP2'),
-            ],
-            armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
-          );
-          final snapshot = _expandSnapshot(
-            invadableOw: const ['oldWorld|gp2_0'],
-            adjacentOwnerFactionIdsSorted: const [_gp2],
-            newWorldProvincesOwned: 1,
-          );
-          expect(
-            expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
-              game: game,
-              snapshot: snapshot,
-            ),
-            isFalse,
-          );
-          expect(
-            planExpandEconomy(game: game, snapshot: snapshot),
-            const ExpandEconomyPlan(
-              forceCheapestRegimentBuild: false,
-              boostTreasuryRecoveryCargo: true,
-            ),
-            reason:
-                'Without zero NW ownership the futility predicate is false; '
-                'legacy arm C alone fires (arm B blocked by treasury).',
-          );
-        },
-      );
+        test(
+          'lock negative: NW ownership keeps cargo boost firing when treasury low',
+          () {
+            final game = buildExpandGame(
+              gameIdLabel: 'expand-phase-planner-economy',
+              players: [
+                _player(treasury: 0),
+                _player(id: _gp2, displayName: 'GP2'),
+              ],
+              armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
+            );
+            final snapshot = buildExpandSnapshot(
+              invadableOw: const ['oldWorld|gp2_0'],
+              adjacentOwners: const [_gp2],
+              newWorldProvincesOwned: 1,
+            );
+            expect(
+              expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+                game: game,
+                snapshot: snapshot,
+              ),
+              isFalse,
+            );
+            expect(
+              planExpandEconomy(game: game, snapshot: snapshot),
+              const ExpandEconomyPlan(
+                forceCheapestRegimentBuild: false,
+                boostTreasuryRecoveryCargo: true,
+              ),
+              reason:
+                  'Without zero NW ownership the futility predicate is false; '
+                  'legacy arm C alone fires (arm B blocked by treasury).',
+            );
+          },
+        );
 
-      test(
-        'H3 does not fire when adjacent owners are not a sole GP lock',
-        () {
-          final game = _expandGame(
-            players: [
-              _player(treasury: 0),
-              _player(id: _gp2, displayName: 'GP2'),
-            ],
-            armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
-          );
-          final snapshot = _expandSnapshot(
-            invadableOw: const ['oldWorld|gp2_0'],
-            adjacentOwnerFactionIdsSorted: const [_gp2, 'minor1'],
-          );
-          expect(
-            planExpandEconomy(game: game, snapshot: snapshot),
-            const ExpandEconomyPlan(
-              forceCheapestRegimentBuild: false,
-              boostTreasuryRecoveryCargo: true,
-            ),
-            reason:
-                'Two adjacent owners -> not geographic lock; legacy arm C.',
-          );
-        },
-      );
-    });
+        test(
+          'H3 does not fire when adjacent owners are not a sole GP lock',
+          () {
+            final game = buildExpandGame(
+              gameIdLabel: 'expand-phase-planner-economy',
+              players: [
+                _player(treasury: 0),
+                _player(id: _gp2, displayName: 'GP2'),
+              ],
+              armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
+            );
+            final snapshot = buildExpandSnapshot(
+              invadableOw: const ['oldWorld|gp2_0'],
+              adjacentOwners: const [_gp2, 'minor1'],
+            );
+            expect(
+              planExpandEconomy(game: game, snapshot: snapshot),
+              const ExpandEconomyPlan(
+                forceCheapestRegimentBuild: false,
+                boostTreasuryRecoveryCargo: true,
+              ),
+              reason:
+                  'Two adjacent owners -> not geographic lock; legacy arm C.',
+            );
+          },
+        );
+      },
+    );
 
     test(
       'arm B blocked by treasury -> arm C alone (reg in trap band, treasury<cheapest)',
@@ -448,11 +426,14 @@ void main() {
         // fires alone so the cargo boost still raises overseas
         // priority. This is the "boost cargo so the next turn can
         // build" branch from the spec.
-        final game = _expandGame(
+        final game = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-economy',
           players: [_player(treasury: 0)],
           armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
         );
-        final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+        final snapshot = buildExpandSnapshot(
+          invadableOw: const ['oldWorld|gp2_0'],
+        );
         expect(
           planExpandEconomy(game: game, snapshot: snapshot),
           const ExpandEconomyPlan(
@@ -476,7 +457,8 @@ void main() {
       // only, and emit boostCargo=true / forceRebuild=false — this
       // test fails in that case.
       final cheapest = cheapestRegimentBuildCost();
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [
           _player(
             treasury: 0,
@@ -485,7 +467,9 @@ void main() {
         ],
         armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
       );
-      final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+      final snapshot = buildExpandSnapshot(
+        invadableOw: const ['oldWorld|gp2_0'],
+      );
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         const ExpandEconomyPlan(
@@ -507,11 +491,14 @@ void main() {
         // Arm C's gate is `effectiveTreasury < cheapest`. At the equality
         // boundary, arm B fires and arm C does NOT.
         final cheapest = cheapestRegimentBuildCost();
-        final game = _expandGame(
+        final game = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-economy',
           players: [_player(treasury: cheapest)],
           armies: [homeArmyWithRegimentsAtCapital(_gp1, 3)],
         );
-        final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+        final snapshot = buildExpandSnapshot(
+          invadableOw: const ['oldWorld|gp2_0'],
+        );
         expect(
           planExpandEconomy(game: game, snapshot: snapshot),
           const ExpandEconomyPlan(
@@ -533,7 +520,8 @@ void main() {
         // exercises both the regiment scan and the pending-riches
         // computation, so repeating the call must yield the same plan.
         final cheapest = cheapestRegimentBuildCost();
-        final game = _expandGame(
+        final game = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-economy',
           players: [
             _player(
               treasury: cheapest ~/ 2,
@@ -542,7 +530,9 @@ void main() {
           ],
           armies: [homeArmyWithRegimentsAtCapital(_gp1, 4)],
         );
-        final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+        final snapshot = buildExpandSnapshot(
+          invadableOw: const ['oldWorld|gp2_0'],
+        );
         final first = planExpandEconomy(game: game, snapshot: snapshot);
         final second = planExpandEconomy(game: game, snapshot: snapshot);
         expect(second, first, reason: 'Same inputs -> same plan.');
@@ -554,14 +544,17 @@ void main() {
       // NOT contribute to the active player's plan. gp2 has a full
       // home army and large treasury; gp1 (active) has none of either.
       // The planner reads only gp1's state.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-economy',
         players: [
           _player(treasury: 0),
           _player(id: _gp2, displayName: 'GP2', treasury: 999999),
         ],
         armies: [homeArmyWithRegimentsAtCapital(_gp2, 20)],
       );
-      final snapshot = _expandSnapshot(invadableOw: const ['oldWorld|gp2_0']);
+      final snapshot = buildExpandSnapshot(
+        invadableOw: const ['oldWorld|gp2_0'],
+      );
       expect(
         planExpandEconomy(game: game, snapshot: snapshot),
         const ExpandEconomyPlan(

@@ -208,11 +208,8 @@
 ///     across phases on the landed post-S5 dispatch path.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
