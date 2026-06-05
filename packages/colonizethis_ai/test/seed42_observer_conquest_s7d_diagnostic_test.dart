@@ -18,6 +18,7 @@ import 'package:colonizethis_logic/ai_api.dart'
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         regimentBuildInputFeedstockExtractionResourceIds,
+        colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates,
         suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile,
         supplierImprovementInputFeedstockExtractionResourceIds;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -1534,6 +1535,12 @@ void main() {
           <String, int>{for (final gpId in gpIds) gpId: 0};
       final supplierIdleExplorerColocatedSuggestedProspectTileTurns =
           <String, int>{for (final gpId in gpIds) gpId: 0};
+      final supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final supplierIdleExplorerColocatedFeedstockProspectValidatorTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
 
       // Refs #2847 H8-supply: domestic-production feedstock-stage isolation.
       // The post-#3235 surface shows the world market never supplies fabric
@@ -1857,6 +1864,33 @@ void main() {
                       0) +
                   1;
             }
+            final intraPassGates =
+                colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates(
+                  game: game,
+                  topology: topo,
+                  view: view,
+                  playerId: gpId,
+                  feedstockIds: castIronFeedstockIds,
+                  tileMapByRegion: tileMap,
+                );
+            if (intraPassGates.provinceFoggedVisibility) {
+              supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns[gpId] =
+                  (supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns[gpId] ??
+                      0) +
+                  1;
+            }
+            if (intraPassGates.bundledMoveLeg) {
+              supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns[gpId] =
+                  (supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns[gpId] ??
+                      0) +
+                  1;
+            }
+            if (intraPassGates.validatorAccepted) {
+              supplierIdleExplorerColocatedFeedstockProspectValidatorTurns[gpId] =
+                  (supplierIdleExplorerColocatedFeedstockProspectValidatorTurns[gpId] ??
+                      0) +
+                  1;
+            }
           }
           if (player != null) {
             final holdsFeedstock = fabricFeedstockIds.any(
@@ -2157,6 +2191,12 @@ void main() {
             supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns,
         'gpSupplierIdleExplorerColocatedSuggestedProspectTileTurns':
             supplierIdleExplorerColocatedSuggestedProspectTileTurns,
+        'gpSupplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns':
+            supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns,
+        'gpSupplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns':
+            supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns,
+        'gpSupplierIdleExplorerColocatedFeedstockProspectValidatorTurns':
+            supplierIdleExplorerColocatedFeedstockProspectValidatorTurns,
         'gpCastIronFeedstockHeldAtTurn99': castIronFeedstockHeldAtTurn99,
         'gpLumberHeldAtTurn99': lumberHeldAtTurn99,
         'gpCastIronHeldAtTurn99': castIronHeldAtTurn99,
