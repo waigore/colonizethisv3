@@ -8,7 +8,8 @@ part of 'expand_phase_planner.dart';
 /// § EXPAND feedstock-tile acquisition target wiring).
 ///
 /// AI-side wiring for the topology-free logic pick contract
-/// `sellerFeedstockTileAcquisitionTarget` (`package:colonizethis_logic/ai_api.dart`).
+/// `sellerFeedstockTileAcquisitionTarget` exposed via the logic `ai_api`
+/// contract entrypoint.
 /// The logic contract intersects the seller's feedstock candidate list with a
 /// caller-supplied `acquirableProvinceIds` set and picks the lowest acquirable
 /// province id, but it cannot know which Old World provinces the EXPAND planner
