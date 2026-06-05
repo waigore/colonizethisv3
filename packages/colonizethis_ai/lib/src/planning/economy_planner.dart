@@ -177,20 +177,28 @@ EconomyPlan runEconomyPlanner({
     ...domesticImprovementInputOutputs,
   };
 
-  // Refs #2847 H8-supply castIron source: an affluent supplier over-produces
-  // the domestically-produced improvement inputs a *peer* lock-recovery seller
-  // needs (e.g. `castIron`, which has no world-market supply on seed 42) so the
+  // Refs #2847 H8-supply (S7-D lumber re-localization): an affluent supplier
+  // over-produces the *producible* level-0 `build_improvement` inputs a *peer*
+  // lock-recovery seller needs but cannot source from the market, so the
   // treasury planner can release the resulting surplus into the seller's bid.
-  // The supplier role excludes a GP that is itself a locked seller (its own
-  // self-path boost already covers it) and the boost is intentionally small so
-  // only spare labour/feedstock is consumed — the +6 OW baseline GPs are never
-  // starved. SPEC/ai/economy-planner.md § Supplier improvement-input
-  // over-production for release.
+  // On seed 42 the binding input is `lumber` (the level-0 cost is `{lumber: 1,
+  // castIron: 1}` but `castIron` is waived at level 0, and lumber market supply
+  // is structurally thin), with `castIron` covered for the post-waiver stage —
+  // [peerLockRecoverySellerNeededProducibleImprovementInputs] returns exactly
+  // the inputs a peer seller is short of (lumber and/or castIron), so the boost
+  // tracks the actual demand instead of a hard-coded `{castIron}` set that the
+  // seller does not need at level 0. The supplier role excludes a GP that is
+  // itself a locked seller (its own self-path boost already covers it) and the
+  // boost is intentionally small so only spare labour/feedstock is consumed —
+  // the +6 OW baseline GPs are never starved. SPEC/ai/economy-planner.md
+  // § Supplier improvement-input over-production for release.
   final supplierReleaseImprovementInputs =
-      (!isBelowQuotaZeroNwLockRecoverySeller(game, view.playerId) &&
-              anyLockRecoverySellerNeedsCastIronImprovementInput(game))
-          ? kDomesticProductionImprovementInputIds
-          : const <String>{};
+      isBelowQuotaZeroNwLockRecoverySeller(game, view.playerId)
+          ? const <String>{}
+          : peerLockRecoverySellerNeededProducibleImprovementInputs(
+              game,
+              excludePlayerId: view.playerId,
+            );
 
   // Refs #2847 H8-extraction feedstock co-availability: the multi-input
   // `castIron` recipe needs `timber` + `iron` together, but the single-input

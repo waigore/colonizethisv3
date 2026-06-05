@@ -79,17 +79,19 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10 / #2847: seed-42 turn-100 gate — gp1/gp2 PASS '
-        '(+6 each). gp3 +2, gp4 +1, gp5 +1, gp6 +2 (merged dev @ 0ef7919e, '
-        '2026-06-04 S7-D refresh: World Market #2924/#2994 + EXPAND universal '
-        'colonial dispatch #3179 + minor-transit routing #3224 + H8-supply wool '
-        'market/extraction #3233-#3235). Treasury starvation is solved (failing '
-        'GPs hold ~2000+ treasury); the remaining blocker is regiment-rebuild '
-        'fabric supply — feedstock-stage instrumentation shows the failing GPs '
-        'own unimproved wool/cotton tiles all 100 turns and the extraction gate '
-        'fires 29-52 turns, yet feedstock reaches the stockpile only 1 turn, so '
-        'the routed Builder never extracts the feedstock (H8-extraction). '
-        'gp3-gp6 still below the >=3 OW floor; skip removal awaits the '
-        'H8-extraction Builder-execution slice (Refs #2847).',
+        '(+6 each). gp3 +2, gp4 +1, gp5 +1, gp6 +2 (merged dev HEAD post-#3264, '
+        '2026-06-05 S7-D refresh). Treasury starvation is solved (failing GPs '
+        'hold ~2000+ treasury). The remaining blocker is the level-0 '
+        'build_improvement that extracts the regiment-rebuild feedstock: under '
+        'the castIron waiver (feedstockBootstrapBuildImprovementCastIronWaived) '
+        'it needs one lumber, and the validator candidate '
+        '(gpFeedstockGateValidBuildImprovementCandidateTurns gp5 2 / gp6 1 / '
+        'gp3 0) tracks lumber affordability exactly while castIron affordability '
+        'is 0 for all GPs — so lumber supply, not castIron, is the binding '
+        'material (castIron production is a downstream symptom: iron never '
+        'extracts because improving the iron tile is gated on the same lumber). '
+        'gp3-gp6 still below the >=3 OW floor; skip removal awaits the lumber '
+        'supplier-release / seller lumber-production slice (Refs #2847).',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

@@ -118,6 +118,8 @@ Game _castIronImprovementInputGame({
 Game _supplierCastIronSourceGame({
   required int treasury,
   bool sellerGateActive = true,
+  int sellerOwProvinces = 3,
+  int supplierIronHeld = 40,
 }) {
   const ow = 'oldWorld';
   return Game(
@@ -126,7 +128,7 @@ Game _supplierCastIronSourceGame({
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
       oldWorld: RegionData(
         provinces: [
-          for (var i = 0; i < 3; i++)
+          for (var i = 0; i < sellerOwProvinces; i++)
             Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
           for (var i = 0; i < 12; i++)
             Province(
@@ -166,7 +168,7 @@ Game _supplierCastIronSourceGame({
         stockpile: const Stockpile()
             .applyDelta(CommodityCatalog.grain.id, 80)
             .applyDelta(CommodityCatalog.timber.id, 40)
-            .applyDelta(CommodityCatalog.iron.id, 40)
+            .applyDelta(CommodityCatalog.iron.id, supplierIronHeld)
             .applyDelta(CommodityCatalog.castIron.id, 8)
             .applyDelta(CommodityCatalog.lumber.id, 8)
             .applyDelta(CommodityCatalog.paper.id, 8),
@@ -567,6 +569,90 @@ void main() {
     int lumberLabour(EconomyPlan plan) => plan.productionAssignments
         .where((a) => a.recipeId == ProductionRecipesCatalog.lumberFromTimber.id)
         .fold<int>(0, (sum, a) => sum + a.assignedLabour);
+
+    test(
+      'affluent supplier over-produces lumber when a peer lock-recovery seller '
+      'is short the binding level-0 lumber improvement input (Refs #2847 '
+      'H8-supply S7-D lumber re-localization)',
+      () {
+        // The locked seller holds zero lumber (default supplier-source game),
+        // so lumber — the binding level-0 build_improvement input (castIron is
+        // waived at level 0) — joins the supplier's peer-needed producible set.
+        // The supplier holds no `iron` (mirrors the seed-42 condition where the
+        // supplier's mineral feedstock is never prospected), so the multi-input
+        // `castIron` recipe is infeasible and lumber is the released output.
+        final game = _supplierCastIronSourceGame(
+          treasury: threshold,
+          supplierIronHeld: 0,
+        );
+        final supplierView = buildPlayerView(game, _topology, 'gp_supplier');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: supplierView,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.lumberFromTimber.id),
+          reason:
+              'A supplier that is not a locked seller must over-produce lumber '
+              'for release while a peer lock-recovery seller is short the '
+              'binding level-0 lumber improvement input.',
+        );
+      },
+    );
+
+    test(
+      'supplier lumber over-production is off when no peer is a lock-recovery '
+      'seller (negative control — +6 baseline GPs unaffected)',
+      () {
+        // Active: a below-quota seller short lumber exists, so the supplier
+        // over-produces lumber. Inactive: the would-be seller is at quota (12
+        // OW provinces), so no peer needs the input and the release boost is
+        // off. The supplier-release boost must never raise lumber labour in the
+        // inactive case above the active case.
+        final active = runEconomyPlanner(
+          game: _supplierCastIronSourceGame(
+            treasury: threshold,
+            supplierIronHeld: 0,
+          ),
+          view: buildPlayerView(
+            _supplierCastIronSourceGame(treasury: threshold, supplierIronHeld: 0),
+            _topology,
+            'gp_supplier',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        final inactive = runEconomyPlanner(
+          game: _supplierCastIronSourceGame(
+            treasury: threshold,
+            sellerOwProvinces: 12,
+            supplierIronHeld: 0,
+          ),
+          view: buildPlayerView(
+            _supplierCastIronSourceGame(
+              treasury: threshold,
+              sellerOwProvinces: 12,
+              supplierIronHeld: 0,
+            ),
+            _topology,
+            'gp_supplier',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          lumberLabour(inactive),
+          lessThanOrEqualTo(lumberLabour(active)),
+          reason:
+              'Removing the peer locked seller must not increase the supplier '
+              'lumber labour; the supplier-release boost only fires while a peer '
+              'needs the improvement input.',
+        );
+      },
+    );
 
     test(
       'reserve-target GP withholds timber from the competing lumber recipe '
