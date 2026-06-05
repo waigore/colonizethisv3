@@ -1079,6 +1079,66 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// `gpFeedstockGateImprovementCastIronAffordableTurns` rises above 0 for
 /// gp3 / gp5 / gp6 before expecting OW gain to move.
 ///
+/// ## S7-D refresh (captured 2026-06-05 on current `dev` HEAD post-#3264 —
+///     lumber re-localization, this slice, Refs #2847)
+///
+/// Re-running the diagnostic on the merged `dev` HEAD (after the gp1 Old World
+/// feedstock-prospect localization #3262 / #3263 / #3264) reproduces the prior
+/// surface at the OW gate (gp1 / gp2 = +6 PASS; gp3 = +2, gp4 = +1, gp5 = +1,
+/// gp6 = +2 FAIL) and at the feedstock affordability split
+/// (`gpFeedstockGateImprovementCastIronAffordableTurns` = 0 for every GP;
+/// `gpFeedstockGateImprovementLumberAffordableTurns` = gp5 2 / gp6 1 / gp3 0).
+/// #3262 / #3263 / #3264 therefore did **not** move this surface.
+///
+/// **Correction to the prior "`castIron` is the universal binding material"
+/// pointer (above):** the gate the next slice must actually move is the
+/// production work-order **validator** candidate
+/// (`gpFeedstockGateValidBuildImprovementCandidateTurns` = gp5 2 / gp6 1 /
+/// gp3 0), measured through `getValidWorkOrderTileKeys` — which applies the
+/// level-0 `castIron` **waiver**
+/// (`feedstockBootstrapBuildImprovementCastIronWaived`: when the feedstock-
+/// extraction gate is active and the GP holds the `lumber` share but not the
+/// `castIron` share, the level-0 `build_improvement` may omit `castIron`).
+/// The valid-candidate count tracks the **`lumber`** component exactly
+/// (gp5 2 = 2, gp6 1 = 1, gp3 0 = 0) and is independent of the `castIron`
+/// component (0 / 0 / 0): under the waiver `castIron` is **not** required to
+/// extract the feedstock tile, so `castIron`-affordability = 0 does not gate
+/// the `build_improvement` — **`lumber`** does.
+///
+/// **What `castIron` actually starves is one stage downstream.** Even where the
+/// tile is extracted, the multi-input `castIron` recipe is never assigned by any
+/// GP (`gpCastIronProductionAssignedTurns` = 0 for all six) because `iron` never
+/// reaches any stockpile (`gpCastIronFeedstockHeldAtTurn99` iron = 0 for all
+/// six; gp2 holds `timber` = 46 but `iron` = 0), even though the affluent
+/// suppliers own a prospected, unimproved `iron` feedstock tile all 59
+/// supplier-gate turns (`gpSupplierActiveUnimprovedCastIronFeedstockTileTurns`
+/// gp1 / gp2 iron = 59; `gpSupplierProspectedMineralFeedstockTileTurns`
+/// gp1 / gp2 = 59). The supplier's prospected `iron` tile is never *improved*
+/// for the same reason: improving it also costs one `lumber` (+ waived
+/// `castIron`), and only gp2 ever offers `lumber`
+/// (`gpImprovementInputOffersEmitted` gp2 = 11; gp1 = 0), of which gp5 / gp6 win
+/// a couple (`gpImprovementInputDealsAsBuyer` gp5 2 / gp6 1) and gp3 wins none
+/// (0).
+///
+/// **Re-pointed next slice (supersedes the `castIron`-supply pointer above):**
+/// the universal binding shortfall is **`lumber` supply for the level-0
+/// `build_improvement`**, not `castIron`. Both the seller's own fabric-feedstock
+/// extraction and the supplier's `iron` extraction are gated on holding one
+/// `lumber` (with `castIron` waived), and the world market under-supplies it
+/// (one offerer, gp1 silent). The next behavioural slice should make affluent
+/// suppliers **over-produce and release `lumber`** for peer locked sellers
+/// (mirroring the existing `castIron` supplier-release path, which today targets
+/// only `kDomesticProductionImprovementInputIds = {castIron}`) and / or let a
+/// locked seller domestically produce `lumber` from owned `timber`, so the
+/// waived `build_improvement` becomes affordable on more than 0-2 turns. Verify
+/// by re-running this diagnostic and confirming
+/// `gpFeedstockGateImprovementLumberAffordableTurns` and
+/// `gpFeedstockGateValidBuildImprovementCandidateTurns` rise for gp3 / gp5 / gp6
+/// (and, one stage on, `gpCastIronProductionAssignedTurns` > 0 once `iron`
+/// extracts) before expecting OW gain to move. The +6 baseline GPs (gp1 / gp2)
+/// stay unaffected: a `lumber` supplier-release boost reuses the existing
+/// leftover-labour-only sizing argument that keeps the conquest economy intact.
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
