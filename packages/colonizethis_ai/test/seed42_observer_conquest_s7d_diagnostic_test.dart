@@ -1029,6 +1029,56 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// comment on issue #2847 if the diagnostic surface shifts after a
 /// tuning slice lands.
 ///
+/// ## S7-D refresh (captured 2026-06-05 on merged `dev`, per-component
+///     affordability split — this slice, Refs #2847)
+///
+/// The level-0 `build_improvement` cost is purely material
+/// (`work_order_costs.dart` § `workOrderCostBuildImprovement(0)` = 1 `lumber` +
+/// 1 `castIron`) — there is **no** treasury or recipe-cost gate, so the
+/// combined `gpFeedstockGateImprovementCostAffordableTurns` (which requires
+/// **both** materials at once) is split into two read-only per-component
+/// counters measured on feedstock-extraction-gate-active turns:
+/// `gpFeedstockGateImprovementLumberAffordableTurns` and
+/// `gpFeedstockGateImprovementCastIronAffordableTurns`. This localizes *which*
+/// material binds during the gate window, not only at the turn-99 snapshot.
+///
+/// **Result (seed 42, turn 100; OW gate unchanged — gp1/gp2 = +6 PASS, gp3 =
+/// +2, gp4 = +1, gp5 = +1, gp6 = +2 FAIL):**
+///
+/// | GP | gate-active | valid candidate | combined affordable | lumber affordable | castIron affordable |
+/// |----|------------:|----------------:|--------------------:|------------------:|--------------------:|
+/// | gp3 | 32 | 0 | 0 | **0** | **0** |
+/// | gp5 | 13 | 2 | 0 | **2** | **0** |
+/// | gp6 | 59 | 1 | 0 | **1** | **0** |
+///
+/// (gp1/gp2/gp4 hold the gate inactive — 0 gate-active turns — so all their
+/// counters are 0 by construction; gp1/gp2 win OW without the feedstock chain.)
+///
+/// **Decisive localization:** `castIron` is the **universal binding material** —
+/// `gpFeedstockGateImprovementCastIronAffordableTurns` is **0** for every
+/// failing GP, so no GP ever holds the `castIron` share on any gate-active turn.
+/// The combined counter tracks the `castIron` component exactly (0 / 0 / 0),
+/// while the `lumber` component is occasionally satisfied (gp5 = 2, gp6 = 1,
+/// matching their valid-candidate turns). gp3 is a distinct, more severe class:
+/// it holds **neither** `lumber` nor `castIron` on **any** of its 32
+/// gate-active turns (both = 0), consistent with its flat
+/// `gpFeedstockGateValidBuildImprovementCandidateTurns` = 0.
+///
+/// **Re-pointed next slice:** the binding shortfall is **`castIron` supply**,
+/// not `lumber` and not a treasury/affordability *threshold* (treasury at
+/// turn 99 now sits at gp3 = 2029, gp4 = 2170, gp5 = 2036, gp6 = 2036 — all
+/// above `cheapestRegimentBuildTreasuryCost` = 2000, so treasury is no longer
+/// the binding constraint). The next behavioural slice must make a locked
+/// seller actually **produce or acquire its first `castIron`** (domestic
+/// `castIron` from co-available `timber` + `iron`, per the prior co-availability
+/// finding), and for gp3 additionally secure `lumber`. This split de-risks that
+/// slice by confirming `lumber` is *not* the universal blocker. Per the scope
+/// boundary, this remains the #2847 OW-conquest material-chain bootstrap (not
+/// the colonial economy / Merchant gates scoped to #2852). Verify the next
+/// slice by re-running this diagnostic and confirming
+/// `gpFeedstockGateImprovementCastIronAffordableTurns` rises above 0 for
+/// gp3 / gp5 / gp6 before expecting OW gain to move.
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1148,6 +1198,30 @@ bool _affordsBuildImprovementLevelZero(Game game, String playerId) {
     if (player.stockpile.quantityOf(entry.key) < entry.value) return false;
   }
   return true;
+}
+
+/// True iff [playerId]'s stockpile holds enough of the single [commodityId]
+/// component to cover its share of the level-0 `build_improvement` material
+/// cost (`work_order_costs.dart` § `workOrderCostBuildImprovement`).
+///
+/// `_affordsBuildImprovementLevelZero` requires **every** component
+/// simultaneously (1 lumber **and** 1 cast iron). When that combined counter
+/// stays flat at zero on feedstock-extraction-gate-active turns, this
+/// per-component probe localizes the binding shortfall to the exact missing
+/// material — i.e. whether the GP is starved of `lumber`, of `castIron`, or of
+/// both — during the gate window rather than only at the turn-99 snapshot.
+/// Returns `false` if [commodityId] is not a component of the level-0 cost.
+/// Read-only over the player's stockpile; Refs #2847 H8-extraction.
+bool _affordsBuildImprovementComponent(
+  Game game,
+  String playerId,
+  String commodityId,
+) {
+  final player = game.playerById(playerId);
+  if (player == null) return false;
+  final required = workOrderCostBuildImprovement(0)[commodityId];
+  if (required == null) return false;
+  return player.stockpile.quantityOf(commodityId) >= required;
 }
 
 /// True iff [playerId] owns at least one idle Builder for which the work-order
@@ -1623,6 +1697,23 @@ void main() {
       final feedstockGateImprovementCostAffordableTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 H8-extraction affordability localization: the level-0
+      // `build_improvement` cost is purely material (1 lumber + 1 cast iron,
+      // `work_order_costs.dart`) — no treasury or recipe gate. When the
+      // combined `gpFeedstockGateImprovementCostAffordableTurns` stays flat at
+      // zero, these per-component counters split it into its proximate
+      // shortfall: how many gate-active turns the GP holds the `lumber` share
+      // vs the `castIron` share. Pins the binding missing material during the
+      // gate window (not just at the turn-99 snapshot) so the next slice can
+      // target lumber supply, castIron supply, or both. Read-only.
+      final improvementLumberId = CommodityCatalog.lumber.id;
+      final improvementCastIronId = CommodityCatalog.castIron.id;
+      final feedstockGateImprovementLumberAffordableTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final feedstockGateImprovementCastIronAffordableTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
 
       // Refs #2924 Step 0 — world-market lock-recovery diagnostics:
       // per-GP rollups capturing (a) trade orders the AI submits each
@@ -1786,6 +1877,26 @@ void main() {
             if (_affordsBuildImprovementLevelZero(game, gpId)) {
               feedstockGateImprovementCostAffordableTurns[gpId] =
                   (feedstockGateImprovementCostAffordableTurns[gpId] ?? 0) + 1;
+            }
+            // Per-component split of the combined affordability gate above:
+            // pins which material (lumber / castIron) binds on gate-active
+            // turns. Refs #2847 H8-extraction.
+            if (_affordsBuildImprovementComponent(
+              game,
+              gpId,
+              improvementLumberId,
+            )) {
+              feedstockGateImprovementLumberAffordableTurns[gpId] =
+                  (feedstockGateImprovementLumberAffordableTurns[gpId] ?? 0) + 1;
+            }
+            if (_affordsBuildImprovementComponent(
+              game,
+              gpId,
+              improvementCastIronId,
+            )) {
+              feedstockGateImprovementCastIronAffordableTurns[gpId] =
+                  (feedstockGateImprovementCastIronAffordableTurns[gpId] ?? 0) +
+                  1;
             }
           }
           if (_ownsUnimprovedFeedstockResourceTile(
@@ -2213,6 +2324,10 @@ void main() {
             feedstockGateValidBuildImprovementCandidateTurns,
         'gpFeedstockGateImprovementCostAffordableTurns':
             feedstockGateImprovementCostAffordableTurns,
+        'gpFeedstockGateImprovementLumberAffordableTurns':
+            feedstockGateImprovementLumberAffordableTurns,
+        'gpFeedstockGateImprovementCastIronAffordableTurns':
+            feedstockGateImprovementCastIronAffordableTurns,
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
@@ -2329,6 +2444,43 @@ void main() {
           reason:
               '$gpId feedstock improvement-cost-affordable turns cannot exceed '
               'the feedstock-extraction-gate-active turns',
+        );
+        // Refs #2847 H8-extraction per-component affordability split: each
+        // per-material counter is measured only on a gate-active turn, and the
+        // combined (lumber AND castIron) counter can never exceed either
+        // component on its own. Guards the localization instrumentation without
+        // pinning the (freely tunable) per-GP counts.
+        expect(
+          feedstockGateImprovementLumberAffordableTurns[gpId]!,
+          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
+          reason:
+              '$gpId feedstock improvement-lumber-affordable turns cannot '
+              'exceed the feedstock-extraction-gate-active turns',
+        );
+        expect(
+          feedstockGateImprovementCastIronAffordableTurns[gpId]!,
+          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
+          reason:
+              '$gpId feedstock improvement-castIron-affordable turns cannot '
+              'exceed the feedstock-extraction-gate-active turns',
+        );
+        expect(
+          feedstockGateImprovementCostAffordableTurns[gpId]!,
+          lessThanOrEqualTo(
+            feedstockGateImprovementLumberAffordableTurns[gpId]!,
+          ),
+          reason:
+              '$gpId combined improvement-cost-affordable turns cannot exceed '
+              'the lumber-component-affordable turns (combined requires both)',
+        );
+        expect(
+          feedstockGateImprovementCostAffordableTurns[gpId]!,
+          lessThanOrEqualTo(
+            feedstockGateImprovementCastIronAffordableTurns[gpId]!,
+          ),
+          reason:
+              '$gpId combined improvement-cost-affordable turns cannot exceed '
+              'the castIron-component-affordable turns (combined requires both)',
         );
       }
     },
