@@ -28,6 +28,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         selectFullAiCivilianWorkOrders,
         selfLockRecoverySellerNeededProducibleImprovementInputs,
         sellerFeedstockTileAcquisitionTargetProvinceIdsSorted,
+        sellerFeedstockTileAcquisitionTargetsAmongAcquirable,
         sellerImprovementInputFeedstockExtractionResourceIds,
         sellerNeedsImprovementInputFeedstockTileAcquisition,
         supplierImprovementInputFeedstockExtractionResourceIds;

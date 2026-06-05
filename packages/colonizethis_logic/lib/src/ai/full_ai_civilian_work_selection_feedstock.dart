@@ -411,6 +411,54 @@ List<String> sellerFeedstockTileAcquisitionTargetProvinceIdsSorted(
   return List<String>.unmodifiable(sorted);
 }
 
+/// The deterministic ascending-sorted subset of the flagged seller's
+/// feedstock-tile acquisition candidate provinces
+/// ([sellerFeedstockTileAcquisitionTargetProvinceIdsSorted]) that are also
+/// **acquirable** this turn per the caller-supplied [acquirableProvinceIds]
+/// (Refs #2847 § H8-extraction seller feedstock-tile acquisition target
+/// intersection).
+///
+/// The selection contract above enumerates *which* Old World provinces host the
+/// feedstock the seller could acquire without consulting topology; this
+/// intersection narrows that candidate list to the provinces the AI-side
+/// acquisition path can actually reach this turn. [acquirableProvinceIds] is the
+/// caller's topology-derived target set — the union of the conquest
+/// (declare-war / army-reachable) and purchasable-land target province ids the
+/// AI planner computes from the combined topology — so this function stays
+/// **topology-free** by construction: it derives no adjacency or reachability
+/// itself, it only intersects the already-deterministic feedstock candidate list
+/// with the planner's reported acquirable set, completing the "intersect this
+/// candidate list with the conquest / purchasable-land target sets" step the
+/// acquisition-wiring slice needs.
+///
+/// Returns the empty list when the acquisition residual is inactive for
+/// [playerId] (so it is empty for every healthy / above-quota / regiment-holding
+/// / NW-owning GP, and the +6 Old World conquest baseline GPs are never
+/// flagged), when [acquirableProvinceIds] is empty, or when no feedstock
+/// candidate is acquirable this turn. Preserves the ascending province-id order
+/// of the candidate list (the source list is already sorted, so iteration order
+/// is independent of [acquirableProvinceIds] iteration order). Pure and
+/// deterministic over `(game, playerId, acquirableProvinceIds)` and the static
+/// `ProductionRecipesCatalog`; changes no behaviour on its own, performs no I/O
+/// and no logging, and adds no `ai_victory_config.dart` constant.
+List<String> sellerFeedstockTileAcquisitionTargetsAmongAcquirable(
+  Game game,
+  String playerId,
+  Set<String> acquirableProvinceIds,
+) {
+  if (acquirableProvinceIds.isEmpty) return const <String>[];
+  final candidates = sellerFeedstockTileAcquisitionTargetProvinceIdsSorted(
+    game,
+    playerId,
+  );
+  if (candidates.isEmpty) return const <String>[];
+  final intersection = <String>[
+    for (final id in candidates)
+      if (acquirableProvinceIds.contains(id)) id,
+  ];
+  return List<String>.unmodifiable(intersection);
+}
+
 /// Union of the seller-side feedstock gates and the supplier-side gate for
 /// [playerId] (Refs #2847 § H8-extraction):
 ///
