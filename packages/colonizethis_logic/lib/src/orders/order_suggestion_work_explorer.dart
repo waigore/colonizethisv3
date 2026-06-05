@@ -195,6 +195,15 @@ void _addExplorerWorkSuggestionsForUnit({
   required IncrementalCandidateValidator candidateValidator,
   required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
+
+  /// When `false`, this province's tile probes are exempt from the shared
+  /// per-pass [WorkSuggestionProbeBudget] — used for the Explorer's **own**
+  /// (current) province so a co-located owned mineral prospect candidate is
+  /// never starved by earlier units' explore/prospect probes draining the
+  /// shared budget (Refs #2847 § Old World mineral feedstock prospect
+  /// localization). The per-province [kMaxWorkProbeAttemptsPerUnitPerTarget]
+  /// cap still bounds the probe count.
+  bool consumeSharedBudget = true,
 }) {
   var lastReason = 'no_valid_tile';
   final sortedTiles = List<String>.from(tilesInProvince)..sort();
@@ -244,7 +253,7 @@ void _addExplorerWorkSuggestionsForUnit({
       target: kWorkTargetProspect,
       targetTileKey: tk,
     );
-    if (!workProbeBudget.consume()) {
+    if (consumeSharedBudget && !workProbeBudget.consume()) {
       break;
     }
     if (isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
@@ -320,6 +329,7 @@ void _addProspectSuggestionIfEligible({
   // first so [kMaxExploreProvinceProbesPerUnit] still reaches co-located
   // mineral tiles on seed-scale maps (Refs #2847).
   final provinces = _prospectProvincesSortedForExplorer(view: view, unit: unit);
+  final atProvinceFullId = unit.locationProvinceId;
 
   var lastReason = 'no_valid_tile';
   WorkSuggestionPipeline.run(
@@ -368,6 +378,11 @@ void _addProspectSuggestionIfEligible({
           candidateValidator: candidateValidator,
           workProbeBudget: workProbeBudget,
           tileMapByRegion: tileMapByRegion,
+          // The Explorer's own province carries the highest-value, bounded
+          // prospect candidate (a co-located owned mineral tile); exempt it
+          // from the shared per-pass budget so earlier units cannot starve it
+          // (Refs #2847). Remote provinces still consume the shared budget.
+          consumeSharedBudget: provinceIdFull != atProvinceFullId,
         );
         lastReason = scan.lastReason;
         for (final tk in scan.tiles) {
