@@ -119,6 +119,7 @@ import 'army_conquest_prep.dart' show regimentCountForPlayer;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';
+part 'expand_phase_planner_feedstock_acquisition.dart';
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in EXPAND phase.
