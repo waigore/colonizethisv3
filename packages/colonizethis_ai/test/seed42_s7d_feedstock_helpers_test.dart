@@ -9,6 +9,13 @@
 // "labour-starved" vs "labour-feasible" and "owns no feedstock tile" vs "owns a
 // feedstock tile". These tests pin their pure semantics so the counters cannot
 // silently drift.
+//
+// The `playerEffectiveLabour` / `playerRawLabourSupply` / `playerFoodOnHand`
+// helpers back the `gpCastIronLabourFoodStarvedTurns` /
+// `gpCastIronLabourPopulationBoundTurns` fork that splits a labour-infeasible
+// castIron turn into "workers exist but are unfed" (food lever) vs "too few
+// workers even if fed" (recruitment lever); their tests pin the
+// food-gated-vs-raw labour distinction the fork depends on.
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -53,6 +60,7 @@ void main() {
   final timberId = CommodityCatalog.timber.id;
   final ironId = CommodityCatalog.iron.id;
   final grainId = CommodityCatalog.grain.id;
+  final meatId = CommodityCatalog.meat.id;
 
   group('stockpileAffordsAnyProductionRecipe', () {
     test(
@@ -278,6 +286,107 @@ void main() {
         ownsFeedstockResourceTileAnyLevel(game, _playerId, const {}),
         isFalse,
       );
+    });
+  });
+
+  group('playerRawLabourSupply', () {
+    test('positive: tier-weighted population ceiling ignores food', () {
+      // 2 peasants (1 each) + 1 journeyman (6) = 8 raw labour, regardless of an
+      // empty stockpile — this is the fully-fed ceiling.
+      final game = _game(
+        workers: const WorkerPool(peasants: 2, journeymen: 1),
+      );
+      expect(playerRawLabourSupply(game, _playerId), 8);
+    });
+
+    test('positive: counts every tier (peasant/apprentice/journeyman/master)', () {
+      // 1*1 + 1*4 + 1*6 + 1*8 = 19.
+      final game = _game(
+        workers: const WorkerPool(
+          peasants: 1,
+          apprentices: 1,
+          journeymen: 1,
+          masters: 1,
+        ),
+      );
+      expect(playerRawLabourSupply(game, _playerId), 19);
+    });
+
+    test('negative: unknown player has no labour supply', () {
+      final game = _game(workers: const WorkerPool(peasants: 10));
+      expect(playerRawLabourSupply(game, 'no_such_player'), 0);
+    });
+  });
+
+  group('playerEffectiveLabour', () {
+    test('positive: fully-fed workers supply their full labour', () {
+      // 10 peasants fed by 10 grain -> 10 effective labour (no military upkeep).
+      final game = _game(
+        workers: const WorkerPool(peasants: 10),
+        stockpile: Stockpile(quantities: {grainId: 10}),
+      );
+      expect(playerEffectiveLabour(game, _playerId), 10);
+    });
+
+    test(
+      'food-starved: raw ceiling exceeds effective labour when food is short',
+      () {
+        // 10 peasants but only 3 grain -> 3 fed -> 3 effective labour, far below
+        // the raw ceiling of 10. This is the food-starved fork condition.
+        final game = _game(
+          workers: const WorkerPool(peasants: 10),
+          stockpile: Stockpile(quantities: {grainId: 3}),
+        );
+        expect(playerRawLabourSupply(game, _playerId), 10);
+        expect(playerEffectiveLabour(game, _playerId), lessThan(10));
+        expect(playerEffectiveLabour(game, _playerId), 3);
+      },
+    );
+
+    test('negative: no food means every worker strikes (zero labour)', () {
+      final game = _game(
+        workers: const WorkerPool(peasants: 10),
+        stockpile: const Stockpile(),
+      );
+      expect(playerEffectiveLabour(game, _playerId), 0);
+    });
+
+    test('negative: unknown player has no effective labour', () {
+      final game = _game(
+        workers: const WorkerPool(peasants: 10),
+        stockpile: Stockpile(quantities: {grainId: 10}),
+      );
+      expect(playerEffectiveLabour(game, 'no_such_player'), 0);
+    });
+  });
+
+  group('playerFoodOnHand', () {
+    final foodIds = {grainId, meatId};
+
+    test('positive: sums grain and meat on hand', () {
+      final game = _game(
+        stockpile: Stockpile(quantities: {grainId: 7, meatId: 5, timberId: 9}),
+      );
+      expect(playerFoodOnHand(game, _playerId, foodIds), 12);
+    });
+
+    test('negative: empty stockpile holds no food', () {
+      final game = _game(stockpile: const Stockpile());
+      expect(playerFoodOnHand(game, _playerId, foodIds), 0);
+    });
+
+    test('negative: empty food id set returns zero', () {
+      final game = _game(
+        stockpile: Stockpile(quantities: {grainId: 7, meatId: 5}),
+      );
+      expect(playerFoodOnHand(game, _playerId, const {}), 0);
+    });
+
+    test('negative: unknown player holds no food', () {
+      final game = _game(
+        stockpile: Stockpile(quantities: {grainId: 7, meatId: 5}),
+      );
+      expect(playerFoodOnHand(game, 'no_such_player', foodIds), 0);
     });
   });
 }
