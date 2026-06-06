@@ -420,10 +420,12 @@ List<AssignedRecipe> _allocateLabour({
 
   if (candidates.isEmpty) return result;
 
-  _log.d(
-    'recipe eval playerId=${config.leaderId} effectiveLabour=$effectiveLabour '
-    'candidates=${candidates.map((c) => "${c.recipe.id}:${c.score.toStringAsFixed(2)}").toList()}',
-  );
+  if (_log.debugEnabled) {
+    _log.d(
+      'recipe eval playerId=${config.leaderId} effectiveLabour=$effectiveLabour '
+      'candidates=${candidates.map((c) => "${c.recipe.id}:${c.score.toStringAsFixed(2)}").toList()}',
+    );
+  }
 
   // Sort by score descending; use seed for tie-break.
   candidates.sort((a, b) {
@@ -468,10 +470,12 @@ List<AssignedRecipe> _allocateLabour({
     );
   }
 
-  _log.d(
-    'allocation effectiveLabour=$effectiveLabour '
-    'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
-  );
+  if (_log.debugEnabled) {
+    _log.d(
+      'allocation effectiveLabour=$effectiveLabour '
+      'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
+    );
+  }
   return result;
 }
 
