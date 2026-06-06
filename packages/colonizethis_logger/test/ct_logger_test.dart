@@ -127,6 +127,27 @@ void main() {
         expect(text, contains('.000'));
       },
     );
+
+    test('debugEnabled and infoEnabled are false at warning level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.warning;
+      expect(log.debugEnabled, isFalse);
+      expect(log.infoEnabled, isFalse);
+    });
+
+    test('infoEnabled is true and debugEnabled is false at info level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.info;
+      expect(log.infoEnabled, isTrue);
+      expect(log.debugEnabled, isFalse);
+    });
+
+    test('debugEnabled is true at debug level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.debug;
+      expect(log.debugEnabled, isTrue);
+      expect(log.infoEnabled, isTrue);
+    });
   });
 
   group('prefixes', () {

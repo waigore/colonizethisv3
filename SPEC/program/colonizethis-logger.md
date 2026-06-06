@@ -75,6 +75,19 @@ CtLogger aiLogger([String? subPrefix]) =>
 // etc.
 ```
 
+### 2.6 Level-guard helpers (`debugEnabled` / `infoEnabled`)
+
+- **Purpose:** Let hot-path callers skip building a `d(...)` / `i(...)` message argument when that level is currently filtered out by the active `Logger.level` threshold. The `logger` package evaluates the message string **before** applying the level filter, so a `_log.d('… ${list.map(...).toList()}')` call on a tight per-turn path pays the full interpolation/allocation cost even when debug output is suppressed. Guarding such calls aligns with the turn-resolution budget rule's "Control logging overhead" clause.
+- **API:** `CtLogger` exposes two read-only getters that mirror the `logger` level threshold:
+
+```dart
+bool get debugEnabled => Logger.level.value <= Level.debug.value;
+bool get infoEnabled => Logger.level.value <= Level.info.value;
+```
+
+- **Semantics:** `debugEnabled` is `true` iff a `Level.debug` event would currently pass the global `Logger.level` threshold; `infoEnabled` likewise for `Level.info`. The getters are **additive and side-effect free**; they do not change emission for unguarded calls. When a level is enabled the guarded call emits identically to the unguarded form, so existing log-capture tests at the default level are unaffected.
+- **Usage:** Guard only calls whose message argument performs non-trivial work (collection mapping, list/map stringification) on per-turn or per-candidate paths; do not guard plain warn/error or one-off startup lines.
+
 ---
 
 ## 3. Package structure
@@ -146,6 +159,10 @@ const List<String> knownPrefixes = [
 - **No manual prefixing needed:** Developers call `_log.i('message')` not `_log.i('prefix: message')`.
 - **Backward compatible:** Raw `Logger()` still works; `CtLogger` is additive.
 - **Console timestamps:** Every `CtLogger` event printed through the `logger` package’s configured printer includes **exactly one** canonical `formatOperatorLogTimestamp` segment (local wall clock, fixed `.SSS`, explicit offset or `Z`), including whole-second instants (`.000`).
+- **Level-guard helpers (§2.6):**
+  - Given `Logger.level` is set to `Level.warning`, when a caller reads `CtLogger.debugEnabled` and `CtLogger.infoEnabled`, then both getters return `false`.
+  - Given `Logger.level` is set to `Level.info`, when a caller reads the getters, then `infoEnabled` returns `true` and `debugEnabled` returns `false`.
+  - Given `Logger.level` is set to `Level.debug` (or lower), when a caller reads `CtLogger.debugEnabled`, then it returns `true`.
 
 ---
 
