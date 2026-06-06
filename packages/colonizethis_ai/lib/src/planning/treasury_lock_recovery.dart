@@ -69,10 +69,11 @@ final class _LockRecoveryGameScan {
     sortedGpIds.sort();
     affluentNonSellerIds.sort();
 
-    final designatedBuyerId = !anyBrokeGreatPower || affluentNonSellerIds.isEmpty
+    final designatedBuyerId =
+        !anyBrokeGreatPower || affluentNonSellerIds.isEmpty
         ? ''
-        : affluentNonSellerIds[
-            game.worldState.turnState.turnNumber % affluentNonSellerIds.length];
+        : affluentNonSellerIds[game.worldState.turnState.turnNumber %
+              affluentNonSellerIds.length];
 
     return _LockRecoveryGameScan._(
       sortedGpIds: sortedGpIds,
@@ -98,7 +99,8 @@ bool _lockRecoverySellerNeedsRegimentBuildInput(
       regimentCountForPlayer(game, player.id) != 0) {
     return false;
   }
-  for (final entry in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+  for (final entry
+      in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
     if (player.stockpile.quantityOf(entry.key) < entry.value) {
       return true;
     }
@@ -110,10 +112,7 @@ bool _lockRecoverySellerNeedsCastIronImprovementInput(
   Game game,
   Player player,
 ) {
-  final cost = regimentBuildInputFeedstockImprovementInputCost(
-    game,
-    player.id,
-  );
+  final cost = regimentBuildInputFeedstockImprovementInputCost(game, player.id);
   if (cost.isEmpty) return false;
   for (final entry in cost.entries) {
     if (!kDomesticProductionImprovementInputIds.contains(entry.key)) {
@@ -164,11 +163,7 @@ bool _isBelowQuotaZeroNwLockRecoverySeller({
   required String playerId,
   AIWorldSnapshot? snapshot,
 }) {
-  final ow = _oldWorldProvinceCountOwnedBy(
-    game,
-    playerId,
-    snapshot: snapshot,
-  );
+  final ow = _oldWorldProvinceCountOwnedBy(game, playerId, snapshot: snapshot);
   if (ow <= 0) return false;
   if (!isBelowObserverConquestQuota(ow)) return false;
   if (_newWorldProvinceCountOwnedBy(game, playerId, snapshot: snapshot) != 0) {
@@ -184,9 +179,8 @@ bool _isBelowQuotaZeroNwLockRecoverySeller({
 bool _anyLockRecoverySellerNeedsRegimentBuildInput(
   Game game, {
   _LockRecoveryGameScan? scan,
-}) =>
-    (scan ?? _LockRecoveryGameScan.fromGame(game))
-        .anySellerNeedsRegimentBuildInput;
+}) => (scan ?? _LockRecoveryGameScan.fromGame(game))
+    .anySellerNeedsRegimentBuildInput;
 
 /// Public accessor for the below-quota zero-NW lock-recovery seller predicate
 /// (Refs #2847 H8-supply castIron source). The economy planner uses it to keep
@@ -196,12 +190,60 @@ bool isBelowQuotaZeroNwLockRecoverySeller(
   Game game,
   String playerId, {
   AIWorldSnapshot? snapshot,
-}) =>
-    _isBelowQuotaZeroNwLockRecoverySeller(
-      game: game,
-      playerId: playerId,
-      snapshot: snapshot,
-    );
+}) => _isBelowQuotaZeroNwLockRecoverySeller(
+  game: game,
+  playerId: playerId,
+  snapshot: snapshot,
+);
+
+/// True when [playerId]'s `fabric` (the cheapest regiment's build input) is
+/// withheld from the world-market offer set this turn by the regiment-rebuild
+/// offer-retention carve-out in [_applyLockRecoverySellerRegimentRebuildBids]:
+/// a below-quota zero-NW lock-recovery seller ([isBelowQuotaZeroNwLockRecoverySeller])
+/// holding **zero regiments**.
+///
+/// While the carve-out is active every `peasant_levies` build input — `fabric`
+/// among them — is removed from the offer set so it banks toward the regiment
+/// build cost instead of being sold back as surplus. A holder for which this is
+/// true therefore contributes its `fabric` to gross holdings
+/// ([otherGreatPowerFabricHeld]) yet offers none of it to the market. Pure
+/// read-only over `(game, playerId)`; mirrors the carve-out scope exactly
+/// (`isLockRecoverySeller && regimentCountForPlayer == 0`). Refs #2847 § S7-D
+/// market-fabric offer/acquisition localization.
+bool isFabricOfferRetainingLockRecoverySeller(Game game, String playerId) {
+  if (!_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId)) {
+    return false;
+  }
+  return regimentCountForPlayer(game, playerId) == 0;
+}
+
+/// Total `fabric` held by great powers other than [playerId] that is actually
+/// **offerable** to the world market this turn — the offer-side refinement of
+/// [otherGreatPowerFabricHeld]. It excludes holders whose `fabric` is withheld
+/// by the regiment-rebuild offer-retention carve-out
+/// ([isFabricOfferRetainingLockRecoverySeller]).
+///
+/// [otherGreatPowerFabricHeld] is a gross-holdings proxy — it counts `fabric`
+/// even when every holder retains it, so a positive holdings total does not
+/// imply any counterparty actually offers `fabric` a fabric-starved seller could
+/// buy. This function closes that gap: when holdings are positive
+/// ([otherGreatPowerFabricHeld] > 0) yet this offerable total is 0, the closed
+/// market door is localized to the **offer/retention layer** (every holder is
+/// itself a retaining lock-recovery seller) rather than to buyer-side
+/// acquisition; a positive offerable total instead re-points the residual to the
+/// fabric-starved seller's own buy/bid path. It remains a planner-scope offer
+/// proxy, not a full world-market offer/match simulation. Pure read-only over
+/// `game.players`; no game-state mutation. Refs #2847 § S7-D market-fabric
+/// offer/acquisition localization.
+int otherGreatPowerOfferableFabricHeld(Game game, String playerId) {
+  var total = 0;
+  for (final player in game.players) {
+    if (player.id == playerId) continue;
+    if (isFabricOfferRetainingLockRecoverySeller(game, player.id)) continue;
+    total += player.stockpile.quantityOf(CommodityCatalog.fabric.id);
+  }
+  return total;
+}
 
 /// True when any below-quota zero-NW lock-recovery seller still lacks a
 /// domestically-produced level-0 `build_improvement` input (a
@@ -215,9 +257,8 @@ bool isBelowQuotaZeroNwLockRecoverySeller(
 bool anyLockRecoverySellerNeedsCastIronImprovementInput(
   Game game, {
   _LockRecoveryGameScan? scan,
-}) =>
-    (scan ?? _LockRecoveryGameScan.fromGame(game))
-        .anySellerNeedsCastIronImprovementInput;
+}) => (scan ?? _LockRecoveryGameScan.fromGame(game))
+    .anySellerNeedsCastIronImprovementInput;
 
 bool _isAffluentDesignatedLockRecoveryBuyer({
   required Game game,
@@ -269,10 +310,7 @@ const List<String> kLockRecoveryPreferredBuyerIds = ['gp1', 'gp2'];
 /// Buyer when no GP meets [treasuryAffluenceThreshold]: rotate among
 /// [kLockRecoveryPreferredBuyerIds] present in the game, else the two
 /// richest-by-treasury GPs.
-String lockRecoveryFallbackBuyerId(
-  Game game, {
-  _LockRecoveryGameScan? scan,
-}) {
+String lockRecoveryFallbackBuyerId(Game game, {_LockRecoveryGameScan? scan}) {
   final resolved = scan ?? _LockRecoveryGameScan.fromGame(game);
   final gpIds = resolved.sortedGpIds;
   if (gpIds.isEmpty) return '';
@@ -322,8 +360,7 @@ List<String> _twoRichestGreatPowerIdsByTreasury(
 String lockRecoveryDesignatedBuyerId(
   Game game, {
   _LockRecoveryGameScan? scan,
-}) =>
-    (scan ?? _LockRecoveryGameScan.fromGame(game)).designatedBuyerId;
+}) => (scan ?? _LockRecoveryGameScan.fromGame(game)).designatedBuyerId;
 
 /// Designated buyer bids [commodityId] and does not offer it this turn.
 ///
@@ -347,8 +384,7 @@ void _applyLockRecoveryLiquidityBid({
   if (!addSyntheticBid) return;
   final pricePerUnit = game.worldMarketState.prices[commodityId] ?? 0;
   if (pricePerUnit <= 0) return;
-  final budget =
-      treasuryBudgetForBids < 0 ? 0 : treasuryBudgetForBids;
+  final budget = treasuryBudgetForBids < 0 ? 0 : treasuryBudgetForBids;
   final affordableQty = budget ~/ pricePerUnit;
   // Refs #2924 F14: lock-recovery liquidity bids use the full per-turn
   // treasury budget (after pending costs and carry-forward notional), not
