@@ -2093,6 +2093,17 @@ void main() {
       // later slices land.
       final castIronLabourPeasantRecruitMarketFabricUnofferedTurns =
           <String, int>{for (final gpId in gpIds) gpId: 0};
+      // Refs #2847 § S7-D buyer-side fabric acquisition localization: on
+      // fabric-starved peasant-recruit turns where offerable `fabric` exists
+      // (`otherGreatPowerOfferableFabricHeld > 0`), whether the starved seller
+      // emits a `fabric` bid and whether a deal fills as buyer. Read-only;
+      // counts move freely as later slices land.
+      final castIronLabourPeasantRecruitFabricBidEmittedTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final castIronLabourPeasantRecruitFabricBidAbsentTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final castIronLabourPeasantRecruitFabricDealAsBuyerTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2230,6 +2241,7 @@ void main() {
       };
 
       for (var t = 0; t < 100; t++) {
+        final fabricStarvedThisTurn = <String>{};
         // Refs #2847 H8: per-turn rebuild-readiness + cheapest-regiment input
         // availability, populated in the pre-resolution GP loop and reconciled
         // against the emitted military builds after the merge below.
@@ -2530,6 +2542,7 @@ void main() {
                   castIronLabourPeasantRecruitFabricStarvedTurns,
                   gpId,
                 );
+                fabricStarvedThisTurn.add(gpId);
                 // Refs #2847 § S7-D market-fabric localization: of those
                 // fabric-starved turns, the ones where no other great power
                 // holds any `fabric` to sell, so the recruit `fabric` can be
@@ -2693,6 +2706,26 @@ void main() {
           }
         }
 
+        // Refs #2847 § S7-D buyer-side fabric acquisition: on fabric-starved
+        // peasant-recruit turns with offerable counterparty supply, record
+        // whether the seller emitted a `fabric` bid this turn.
+        const fabricCommodityId = 'fabric';
+        for (final gpId in fabricStarvedThisTurn) {
+          if (otherGreatPowerOfferableFabricHeld(game, gpId) <= 0) continue;
+          final tradeOrders = merged.tradeOrdersByPlayerId[gpId];
+          final emittedFabricBid = tradeOrders != null &&
+              tradeOrders.any(
+                (order) =>
+                    order.type == TradeOrderType.bid &&
+                    order.commodityId == fabricCommodityId,
+              );
+          if (emittedFabricBid) {
+            bumpCounter(castIronLabourPeasantRecruitFabricBidEmittedTurns, gpId);
+          } else {
+            bumpCounter(castIronLabourPeasantRecruitFabricBidAbsentTurns, gpId);
+          }
+        }
+
         final assignments = fullAi.economyPlansByPlayerId.map(
           (pid, plan) => MapEntry(pid, plan.productionAssignments),
         );
@@ -2738,6 +2771,13 @@ void main() {
               if (castIronFeedstockIds.contains(deal.commodityId)) {
                 castIronFeedstockDealsAsBuyer[buyer] =
                     (castIronFeedstockDealsAsBuyer[buyer] ?? 0) + 1;
+              }
+              if (fabricStarvedThisTurn.contains(buyer) &&
+                  deal.commodityId == fabricCommodityId) {
+                bumpCounter(
+                  castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
+                  buyer,
+                );
               }
             }
           }
@@ -2908,6 +2948,12 @@ void main() {
             castIronLabourPeasantRecruitMarketFabricStarvedTurns,
         'gpCastIronLabourPeasantRecruitMarketFabricUnofferedTurns':
             castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+        'gpCastIronLabourPeasantRecruitFabricBidEmittedTurns':
+            castIronLabourPeasantRecruitFabricBidEmittedTurns,
+        'gpCastIronLabourPeasantRecruitFabricBidAbsentTurns':
+            castIronLabourPeasantRecruitFabricBidAbsentTurns,
+        'gpCastIronLabourPeasantRecruitFabricDealAsBuyerTurns':
+            castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
@@ -3006,6 +3052,12 @@ void main() {
             castIronLabourPeasantRecruitMarketFabricStarvedTurns,
         castIronLabourPeasantRecruitMarketFabricUnofferedTurns:
             castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+        castIronLabourPeasantRecruitFabricBidEmittedTurns:
+            castIronLabourPeasantRecruitFabricBidEmittedTurns,
+        castIronLabourPeasantRecruitFabricBidAbsentTurns:
+            castIronLabourPeasantRecruitFabricBidAbsentTurns,
+        castIronLabourPeasantRecruitFabricDealAsBuyerTurns:
+            castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
         fabricRecipeFeasibleTurns: fabricRecipeFeasibleTurns,
         fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
       );
