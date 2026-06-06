@@ -785,16 +785,18 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     phasePlan: phasePlan,
   );
 
-  final candidateDesc = filtered
-      .map(
-        (o) =>
-            '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}',
-      )
-      .toList();
-  _log.d(
-    'diplomacy eval nationId=${ctx.nationId} hiddenAgendaId=${ctx.config.hiddenAgendaId} '
-    'candidates=$candidateDesc scores=$scores',
-  );
+  if (_log.debugEnabled) {
+    final candidateDesc = filtered
+        .map(
+          (o) =>
+              '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}',
+        )
+        .toList();
+    _log.d(
+      'diplomacy eval nationId=${ctx.nationId} hiddenAgendaId=${ctx.config.hiddenAgendaId} '
+      'candidates=$candidateDesc scores=$scores',
+    );
+  }
 
   final chosen = _chooseDiplomaticOrder(
     ctx: ctx,
