@@ -73,6 +73,7 @@ export 'src/economy/world_market/treasury_bid_budget.dart'
     show carryForwardBidNotionalByPlayer, effectiveMarketPriceForCommodityId;
 export 'src/turn/pending_treasury_costs.dart' show pendingTreasuryCostsForTurn;
 export 'src/economy/worker_economy.dart' show effectiveLabourForWorkers;
+export 'src/economy/worker_action_cost.dart' show canAffordRecruitWorker;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
 export 'src/orders/order_suggestion_helpers.dart'
