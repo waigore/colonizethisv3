@@ -173,6 +173,21 @@ rules:
       SPEC/program/disallowed-ast-patterns.md.
     match:
       kind: redundant_where_to_list_where_chain
+  - id: ai_full_recipe_catalog_scan
+    message: >-
+      Do not scan the full production recipe catalog via
+      `ProductionRecipesCatalog.all` inside `packages/colonizethis_ai/lib/`.
+      Use the O(1) output index `ProductionRecipesCatalog.producing(commodityId)`
+      or the id index `ProductionRecipesCatalog.byId[recipeId]` so per-turn AI
+      planning stays off the 15s next-turn budget hot path (Refs #3288,
+      SPEC/program/disallowed-ast-patterns.md). A genuine
+      all-recipes-must-be-considered loop may suppress with an inline
+      `// ignore: disallowed_ast_ai_full_recipe_catalog_scan` and a rationale.
+    match:
+      kind: static_member_access
+      type_name: ProductionRecipesCatalog
+      member_name: all
+      relative_path_prefix: packages/colonizethis_ai/lib/
   - id: nested_world_state_copywith
     message: >-
       Do not chain `Game.copyWith(worldState: ...copyWith(...copyWith(...)))`
