@@ -2453,7 +2453,10 @@ void main() {
               if (ci.peasantRecruitAffordable) {
                 bumpCounter(castIronLabourPeasantRecruitAffordableTurns, gpId);
               } else {
-                bumpCounter(castIronLabourPeasantRecruitFabricStarvedTurns, gpId);
+                bumpCounter(
+                  castIronLabourPeasantRecruitFabricStarvedTurns,
+                  gpId,
+                );
               }
             }
             if (ci.holdsFabricFeedstock) {
@@ -2792,7 +2795,8 @@ void main() {
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
         'gpCastIronRecipeFeasibleTurns': castIronRecipeFeasibleTurns,
-        'gpCastIronRecipeLabourFeasibleTurns': castIronRecipeLabourFeasibleTurns,
+        'gpCastIronRecipeLabourFeasibleTurns':
+            castIronRecipeLabourFeasibleTurns,
         'gpCastIronFeasibleOwnsFeedstockTileTurns':
             castIronFeasibleOwnsFeedstockTileTurns,
         'gpCastIronLabourFoodStarvedTurns': castIronLabourFoodStarvedTurns,
@@ -2864,139 +2868,41 @@ void main() {
 
       // Lightweight assertion: data was actually collected. The diagnostic
       // does not pin arm-fire counts so the planner can be tuned freely
-      // in S7-T without churn here.
-      for (final gpId in gpIds) {
-        expect(
-          phaseCounts[gpId]!.values.fold<int>(0, (a, b) => a + b),
-          100,
-          reason: '$gpId phase-count total should equal turn count',
-        );
-        // Refs #2847 H8: structural invariant on the conversion-gap split.
-        // Every rebuild-ready turn with no military build is attributed to
-        // exactly one of the two mutually exclusive sub-causes, so the parts
-        // must sum to the whole. This guards the instrumentation itself
-        // without pinning the (freely tunable) per-GP counts.
-        expect(
-          rebuildReadyNoBuildMissingInputTurns[gpId]! +
-              rebuildReadyNoBuildInputsPresentTurns[gpId]!,
-          rebuildReadyNoBuildTurns[gpId],
-          reason:
-              '$gpId rebuild-ready no-build turns must split into '
-              'missing-input + inputs-present sub-causes',
-        );
-        // Refs #2847 H8-extraction: the disambiguation sub-counters are each
-        // measured only on a feedstock-gate-active turn, so neither can exceed
-        // the gate-active total. Guards the instrumentation gating itself
-        // without pinning the (freely tunable) per-GP counts.
-        expect(
-          feedstockGateIdleBuilderPresentTurns[gpId]!,
-          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
-          reason:
-              '$gpId idle-Builder-present turns cannot exceed the '
-              'feedstock-extraction-gate-active turns',
-        );
-        expect(
-          feedstockGateImprovedTileOwnedTurns[gpId]!,
-          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
-          reason:
-              '$gpId improved-feedstock-tile-owned turns cannot exceed the '
-              'feedstock-extraction-gate-active turns',
-        );
-        // Refs #2847 H8-extraction missing-candidate disambiguation: both
-        // sub-counters are measured only on a feedstock-gate-active turn, so
-        // neither can exceed the gate-active total. Guards the instrumentation
-        // gating itself without pinning the (freely tunable) per-GP counts.
-        expect(
-          feedstockGateValidBuildImprovementCandidateTurns[gpId]!,
-          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
-          reason:
-              '$gpId valid-feedstock-build_improvement-candidate turns cannot '
-              'exceed the feedstock-extraction-gate-active turns',
-        );
-        expect(
-          feedstockGateImprovementCostAffordableTurns[gpId]!,
-          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
-          reason:
-              '$gpId feedstock improvement-cost-affordable turns cannot exceed '
-              'the feedstock-extraction-gate-active turns',
-        );
-        // Refs #2847 H8-extraction per-component affordability split: each
-        // per-material counter is measured only on a gate-active turn, and the
-        // combined (lumber AND castIron) counter can never exceed either
-        // component on its own. Guards the localization instrumentation without
-        // pinning the (freely tunable) per-GP counts.
-        expect(
-          feedstockGateImprovementLumberAffordableTurns[gpId]!,
-          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
-          reason:
-              '$gpId feedstock improvement-lumber-affordable turns cannot '
-              'exceed the feedstock-extraction-gate-active turns',
-        );
-        expect(
-          feedstockGateImprovementCastIronAffordableTurns[gpId]!,
-          lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
-          reason:
-              '$gpId feedstock improvement-castIron-affordable turns cannot '
-              'exceed the feedstock-extraction-gate-active turns',
-        );
-        expect(
-          feedstockGateImprovementCostAffordableTurns[gpId]!,
-          lessThanOrEqualTo(
-            feedstockGateImprovementLumberAffordableTurns[gpId]!,
-          ),
-          reason:
-              '$gpId combined improvement-cost-affordable turns cannot exceed '
-              'the lumber-component-affordable turns (combined requires both)',
-        );
-        expect(
-          feedstockGateImprovementCostAffordableTurns[gpId]!,
-          lessThanOrEqualTo(
-            feedstockGateImprovementCastIronAffordableTurns[gpId]!,
-          ),
-          reason:
-              '$gpId combined improvement-cost-affordable turns cannot exceed '
-              'the castIron-component-affordable turns (combined requires both)',
-        );
-        // Refs #2847 H8-extraction acquisition-thread localization: the
-        // field-army subset is recorded only on an acquisition-target-active
-        // turn, so it can never exceed the active total, and neither counter
-        // can exceed the 100-turn run. Guards the instrumentation gating itself
-        // without pinning the (freely tunable) per-GP counts.
-        expect(
-          feedstockAcquisitionTargetWithFieldArmyTurns[gpId]!,
-          lessThanOrEqualTo(feedstockAcquisitionTargetActiveTurns[gpId]!),
-          reason:
-              '$gpId acquisition-target-with-field-army turns cannot exceed '
-              'the acquisition-target-active turns',
-        );
-        expect(
-          feedstockAcquisitionTargetActiveTurns[gpId]!,
-          lessThanOrEqualTo(100),
-          reason:
-              '$gpId acquisition-target-active turns cannot exceed the '
-              '100-turn run length',
-        );
-        // Refs #2847 peasant-recruit localization: the affordable and
-        // fabric-starved sub-counters partition the #3303 gate-active turns,
-        // and the gate total cannot exceed the 100-turn run. Guards the
-        // instrumentation gating itself without pinning the (freely tunable)
-        // per-GP counts.
-        expect(
-          castIronLabourPeasantRecruitAffordableTurns[gpId]! +
-              castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!,
-          castIronLabourPeasantRecruitGateTurns[gpId],
-          reason:
-              '$gpId peasant-recruit gate-active turns must split into '
-              'affordable + fabric-starved sub-causes',
-        );
-        expect(
-          castIronLabourPeasantRecruitGateTurns[gpId]!,
-          lessThanOrEqualTo(100),
-          reason:
-              '$gpId peasant-recruit gate-active turns cannot exceed the '
-              '100-turn run length',
-        );
-      }
+      // in S7-T without churn here. The structural invariants over the
+      // per-GP counter maps are asserted by the extracted support helper
+      // (kept out of this file for the non-comment line-size budget).
+      assertSeed42S7dStructuralInvariants(
+        gpIds: gpIds,
+        phaseCounts: phaseCounts,
+        rebuildReadyNoBuildTurns: rebuildReadyNoBuildTurns,
+        rebuildReadyNoBuildMissingInputTurns:
+            rebuildReadyNoBuildMissingInputTurns,
+        rebuildReadyNoBuildInputsPresentTurns:
+            rebuildReadyNoBuildInputsPresentTurns,
+        feedstockExtractionGateActiveTurns: feedstockExtractionGateActiveTurns,
+        feedstockGateIdleBuilderPresentTurns:
+            feedstockGateIdleBuilderPresentTurns,
+        feedstockGateImprovedTileOwnedTurns:
+            feedstockGateImprovedTileOwnedTurns,
+        feedstockGateValidBuildImprovementCandidateTurns:
+            feedstockGateValidBuildImprovementCandidateTurns,
+        feedstockGateImprovementCostAffordableTurns:
+            feedstockGateImprovementCostAffordableTurns,
+        feedstockGateImprovementLumberAffordableTurns:
+            feedstockGateImprovementLumberAffordableTurns,
+        feedstockGateImprovementCastIronAffordableTurns:
+            feedstockGateImprovementCastIronAffordableTurns,
+        feedstockAcquisitionTargetActiveTurns:
+            feedstockAcquisitionTargetActiveTurns,
+        feedstockAcquisitionTargetWithFieldArmyTurns:
+            feedstockAcquisitionTargetWithFieldArmyTurns,
+        castIronLabourPeasantRecruitGateTurns:
+            castIronLabourPeasantRecruitGateTurns,
+        castIronLabourPeasantRecruitAffordableTurns:
+            castIronLabourPeasantRecruitAffordableTurns,
+        castIronLabourPeasantRecruitFabricStarvedTurns:
+            castIronLabourPeasantRecruitFabricStarvedTurns,
+      );
     },
     skip:
         'Refs #2847 S7-D: long-running (~4 min) per-GP EXPAND-arm '
