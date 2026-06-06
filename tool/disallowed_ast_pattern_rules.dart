@@ -17,6 +17,7 @@ enum DisallowedAstMatchKind {
   incrementalValidatorForPlayerInLoop,
   redundantWhereToListWhereChain,
   nestedWorldStateCopyWith,
+  staticMemberAccess,
 }
 
 class DisallowedPatternRule {
@@ -41,6 +42,9 @@ class DisallowedPatternRule {
     this.linearCollectionNames = const {},
     this.linearCollectionPathPrefix,
     this.nestedCopyWithOuterArgumentName,
+    this.staticMemberTypeName,
+    this.staticMemberName,
+    this.staticMemberPathPrefix,
   });
 
   final String id;
@@ -83,6 +87,20 @@ class DisallowedPatternRule {
   /// (defaults to `worldState`). Only chains whose outermost `copyWith` passes
   /// that named argument are scanned for deeper nesting.
   final String? nestedCopyWithOuterArgumentName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: the simple
+  /// type-name prefix of the disallowed static access (for example
+  /// `ProductionRecipesCatalog` in `ProductionRecipesCatalog.all`).
+  final String? staticMemberTypeName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: the accessed
+  /// member name (for example `all`).
+  final String? staticMemberName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: path prefix
+  /// (POSIX slashes) limiting matches, for example
+  /// `packages/colonizethis_ai/lib/`.
+  final String? staticMemberPathPrefix;
 }
 
 class DisallowedAstViolation {
@@ -514,6 +532,41 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
               outerArgumentName != null && outerArgumentName.isNotEmpty
                   ? outerArgumentName
                   : 'worldState',
+        ),
+      );
+    } else if (kind == 'static_member_access') {
+      final typeName = match['type_name']?.toString();
+      final memberName = match['member_name']?.toString();
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      if (typeName == null ||
+          typeName.isEmpty ||
+          memberName == null ||
+          memberName.isEmpty ||
+          prefix == null ||
+          prefix.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.staticMemberAccess,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          staticMemberTypeName: typeName,
+          staticMemberName: memberName,
+          staticMemberPathPrefix: prefix,
         ),
       );
     } else if (kind == 'scoped_package_import_contract') {

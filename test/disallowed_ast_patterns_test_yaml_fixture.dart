@@ -121,4 +121,13 @@ rules:
       kind: nested_world_state_copywith
       relative_path_prefix: packages/colonizethis_logic/lib/
       outer_argument_name: worldState
+  - id: ai_full_recipe_catalog_scan
+    message: >-
+      Do not scan ProductionRecipesCatalog.all under
+      packages/colonizethis_ai/lib/. Use producing(commodityId) or byId index.
+    match:
+      kind: static_member_access
+      type_name: ProductionRecipesCatalog
+      member_name: all
+      relative_path_prefix: packages/colonizethis_ai/lib/
 ''';
