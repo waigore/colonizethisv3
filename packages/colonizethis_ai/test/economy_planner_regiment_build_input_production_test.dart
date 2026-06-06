@@ -281,13 +281,50 @@ Game _castIronStagingNoFabricGateGame({
 
 PhasePlanOutcome _expandForceRegimentBuildPlan({
   required bool forceCheapestRegimentBuild,
+  bool boostCastIronLabourPeasantRecruitment = false,
 }) {
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.expand,
     expandEconomyPlan: ExpandEconomyPlan(
       forceCheapestRegimentBuild: forceCheapestRegimentBuild,
       boostTreasuryRecoveryCargo: false,
+      boostCastIronLabourPeasantRecruitment: boostCastIronLabourPeasantRecruitment,
     ),
+  );
+}
+
+/// Lock-recovery seller holding one `fabric` (enough for regiment build but
+/// short the 2-`fabric` peasant recruit row) with wool feedstock for a
+/// domestic fabric run. Refs #2847 castIron-labour peasant-recruit fabric
+/// bootstrap.
+Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
+  const ow = 'oldWorld';
+  return Game(
+    id: 'g-h8-peasant-recruit-fabric',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 0; i < 3; i++)
+            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
+        ],
+      ),
+      newWorld: const RegionData(provinces: []),
+    ),
+    players: [
+      Player(
+        id: 'gp_seller',
+        displayName: 'Seller',
+        isHuman: false,
+        capitalProvinceId: '$ow|seller_0',
+        treasury: cheapestRegimentBuildTreasuryCost(),
+        stockpile: Stockpile.empty
+            .applyDelta(CommodityCatalog.grain.id, 30)
+            .applyDelta(CommodityCatalog.wool.id, 10)
+            .applyDelta(CommodityCatalog.fabric.id, fabricHeld),
+        workerPool: const WorkerPool(peasants: 4),
+      ),
+    ],
   );
 }
 
@@ -995,6 +1032,70 @@ void main() {
           reason:
               'Lifting the GP above the conquest quota must not increase '
               'castIron labour; only below-quota lock-recovery sellers stage it.',
+        );
+      },
+    );
+
+    test(
+      'castIron-labour peasant-recruit fabric boost stages fabric when one unit '
+      'is held but recruit cost is two (Refs #2847)',
+      () {
+        final game = _castIronLabourPeasantRecruitFabricStagingGame(
+          fabricHeld: 1,
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+          phasePlan: _expandForceRegimentBuildPlan(
+            forceCheapestRegimentBuild: true,
+            boostCastIronLabourPeasantRecruitment: true,
+          ),
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.fabricFromWool.id),
+          reason:
+              'One fabric is enough for regiment build but not the 2-fabric '
+              'peasant recruit row; the castIron-labour fabric boost must still '
+              'stage domestic fabric production.',
+        );
+      },
+    );
+
+    test(
+      'castIron-labour peasant-recruit fabric boost is off once fabric meets '
+      'recruit cost (negative control)',
+      () {
+        final game = _castIronLabourPeasantRecruitFabricStagingGame(fabricHeld: 2);
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final withBoost = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+          phasePlan: _expandForceRegimentBuildPlan(
+            forceCheapestRegimentBuild: true,
+            boostCastIronLabourPeasantRecruitment: true,
+          ),
+        );
+        final withoutBoost = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+          phasePlan: _expandForceRegimentBuildPlan(
+            forceCheapestRegimentBuild: true,
+          ),
+        );
+        expect(
+          _assignedRecipeIds(withBoost),
+          equals(_assignedRecipeIds(withoutBoost)),
+          reason:
+              'When fabric already meets the recruit cost the peasant-recruit '
+              'fabric boost must not change production assignments.',
         );
       },
     );
