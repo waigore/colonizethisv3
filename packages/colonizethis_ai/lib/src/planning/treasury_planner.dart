@@ -17,6 +17,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'cast_iron_labour_gate.dart'
     show
@@ -79,6 +80,7 @@ List<TradeOrder> runTreasuryPlanner({
   required Stockpile stockpile,
   required List<AssignedRecipe> productionAssignments,
   required int treasury,
+  AIWorldSnapshot? snapshot,
   Map<String, TileMapResult>? tileMapByRegion,
   MapTopology? topology,
   Orders currentOrders = const Orders(),
@@ -124,6 +126,10 @@ List<TradeOrder> runTreasuryPlanner({
   final rawTreasury = treasury < 0 ? 0 : treasury;
   final threshold = cheapestRegimentBuildTreasuryCost();
   final brokeForLockRecovery = rawTreasury < threshold;
+  final lockRecoveryScan = _LockRecoveryGameScan.fromGame(
+    game,
+    snapshot: snapshot,
+  );
 
   // Refs #2924 F17: a below-quota zero-NW lock-recovery seller releases its
   // food surplus aggressively so its trade cargo is spent selling the
@@ -135,8 +141,7 @@ List<TradeOrder> runTreasuryPlanner({
   // recovers. Dropping the safety buffer (keeping one consumption-cycle
   // reserve) lets the seller offer down to that floor each turn.
   // SPEC/ai/treasury-planner.md § Lock-recovery seller food-surplus release.
-  final isLockRecoverySeller =
-      _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+  final isLockRecoverySeller = lockRecoveryScan.isLockRecoverySeller(playerId);
   // Refs #2847 H8-supply (S7-D lumber re-localization): the supplier release
   // also activates when a peer lock-recovery seller is stuck one stage earlier —
   // at the level-0 `build_improvement` gate whose producible inputs the world
@@ -149,7 +154,7 @@ List<TradeOrder> runTreasuryPlanner({
   // (fabric) stage. SPEC/ai/treasury-planner.md § Lock-recovery castIron
   // improvement-input supplier source.
   final regimentBuildInputMarketSupplyActive =
-      _anyLockRecoverySellerNeedsRegimentBuildInput(game) ||
+      lockRecoveryScan.anySellerNeedsRegimentBuildInput ||
           peerLockRecoverySellerNeededProducibleImprovementInputs(
             game,
             excludePlayerId: playerId,
@@ -171,35 +176,18 @@ List<TradeOrder> runTreasuryPlanner({
   final isRegimentBuildInputMarketSupplier =
       regimentBuildInputMarketSupplyActive && !isLockRecoverySeller;
 
-  for (final id in trackedCommodityIds) {
-    if (richesCommodityIds.contains(id)) continue;
-    final commodity = CommodityCatalog.byId[id];
-    if (commodity == null) continue;
-    final consumption = _consumptionForecast(
-      commodityId: id,
-      commodity: commodity,
-      inputNeeds: inputNeeds,
-    );
-    final inputs = inputNeeds[id] ?? 0;
-    var safety = commodity.category == CommodityCategory.food
-        ? (isLockRecoverySeller ? 0 : consumption * 2)
-        : consumption;
-    if (isRegimentBuildInputMarketSupplier &&
-        _regimentBuildInputSupplyCommodityIds.contains(id)) {
-      safety = 0;
-    }
-    final reserve = consumption + inputs + safety;
-    final projectedQty = projected.quantityOf(id);
-    final surplus = projectedQty - reserve - (carryForwardOffers[id] ?? 0);
-    if (surplus > 0) {
-      available[id] = surplus;
-    }
-    final deficit =
-        (consumption + inputs) - projectedQty - (carryForwardBids[id] ?? 0);
-    if (deficit > 0 && _marketPriceBelowProductionCost(id, marketPrices)) {
-      need[id] = deficit;
-    }
-  }
+  _populateTreasurySurplusAndNeedMaps(
+    trackedCommodityIds: trackedCommodityIds,
+    inputNeeds: inputNeeds,
+    projected: projected,
+    carryForwardOffers: carryForwardOffers,
+    carryForwardBids: carryForwardBids,
+    marketPrices: marketPrices,
+    isLockRecoverySeller: isLockRecoverySeller,
+    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+    available: available,
+    need: need,
+  );
 
   // Refs #3122: treasury budget that bounds total bid notional this turn.
   // Mirrors the matcher-side per-buyer clamp introduced by #3115 so the
@@ -239,10 +227,12 @@ List<TradeOrder> runTreasuryPlanner({
     playerId: playerId,
     treasuryBudgetForBids: treasuryBudgetForBids,
     treasuryForecast: treasuryForecast,
+    scan: lockRecoveryScan,
   );
   final isAffluentDesignatedBuyer = _isAffluentDesignatedLockRecoveryBuyer(
     game: game,
     playerId: playerId,
+    scan: lockRecoveryScan,
   );
 
   // Refs #2924 F10: affluent GPs spend treasury on inventory ahead of strict

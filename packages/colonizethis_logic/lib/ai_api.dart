@@ -82,7 +82,7 @@ export 'src/orders/order_suggestion_helpers.dart'
         filterMoveOrdersByDiplomacy,
         getProvinceOwnerMap,
         knownDiplomaticTargetFactionIds;
-export 'src/turn/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
+export 'src/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
 export 'src/world/army_commands.dart' show applyArmySplit;
 export 'src/world/army_ids.dart' show homeArmyIdFor;
 export 'src/world/player_view.dart'

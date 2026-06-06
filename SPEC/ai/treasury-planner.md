@@ -1340,6 +1340,27 @@ criterion in the sections above is preserved unchanged.
   `ai_api.dart`) instead of a linear `game.players` scan. The absent-player
   fallback (`0`) is unchanged.
 
+### Snapshot-derived province counts
+
+- `runTreasuryPlanner` accepts an optional `AIWorldSnapshot? snapshot` threaded
+  from [economy-planner.md](economy-planner.md) and the domain-planner
+  orchestrator. When `snapshot != null` and `snapshot.playerId == playerId`,
+  lock-recovery seller detection reads
+  `snapshot.conquest.oldWorldProvincesOwned` and
+  `snapshot.colonial.newWorldProvincesOwned` instead of scanning
+  `game.worldState` for the active GP. Peer-GP lock-recovery scans still use
+  `game.worldState` / `game.players` because the snapshot holds only the
+  planning player's perception. When `snapshot` is omitted (legacy test
+  entrypoints), behaviour falls back to the prior world-state scans.
+
+### Single-pass lock-recovery aggregates
+
+- `runTreasuryPlanner` builds one `_LockRecoveryGameScan` per invocation: a single
+  `game.players` pass that precomputes sorted GP ids, the broke-GP flag, peer
+  seller bootstrap flags, per-player lock-recovery seller predicates, and the
+  designated affluent buyer rotation. Lock-recovery helpers consume the scan
+  instead of re-iterating `game.players` for each predicate.
+
 ### Determinism and budget
 
 The indices are pure functions of the static `ProductionRecipesCatalog` and the
@@ -1358,6 +1379,10 @@ turn-resolution budget.
 - Given any `Game` and `playerId`, when `_treasuryForPlayer(game, playerId)` is
   evaluated, then it returns `game.playerById(playerId)?.treasury ?? 0` (the
   matching player's treasury, or `0` when no player has that id).
+- Given `runTreasuryPlanner` inputs where `snapshot.playerId == playerId` and
+  the snapshot province counts match the authoritative `game.worldState` counts
+  for that GP, when `runTreasuryPlanner` runs with and without `snapshot`, then
+  both runs return identical `List<TradeOrder>` outputs.
 - Given identical inputs `(game, playerId, stockpile, productionAssignments,
   treasury, tileMapByRegion, topology, currentOrders)`, when
   `runTreasuryPlanner` runs twice after the index change, then both runs return

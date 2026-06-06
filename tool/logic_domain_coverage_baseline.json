@@ -1,0 +1,95 @@
+{
+  "package": "colonizethis_logic",
+  "lcovSource": "packages/colonizethis_logic/coverage/lcov.info",
+  "generatedAt": "2026-06-06T16:07:25.126496Z",
+  "unclassified": {
+    "lineHits": 267,
+    "lineTotal": 285
+  },
+  "domains": [
+    {
+      "domain": "ai",
+      "lineHits": 813,
+      "lineTotal": 868,
+      "lineCoveragePercent": 93.66,
+      "belowNinetyPercent": false
+    },
+    {
+      "domain": "combat",
+      "lineHits": 1752,
+      "lineTotal": 1887,
+      "lineCoveragePercent": 92.85,
+      "belowNinetyPercent": false
+    },
+    {
+      "domain": "debug_console",
+      "lineHits": 35,
+      "lineTotal": 35,
+      "lineCoveragePercent": 100.0,
+      "belowNinetyPercent": false
+    },
+    {
+      "domain": "diplomacy",
+      "lineHits": 1396,
+      "lineTotal": 1710,
+      "lineCoveragePercent": 81.64,
+      "belowNinetyPercent": true
+    },
+    {
+      "domain": "dossier",
+      "lineHits": 365,
+      "lineTotal": 410,
+      "lineCoveragePercent": 89.02,
+      "belowNinetyPercent": true
+    },
+    {
+      "domain": "economy",
+      "lineHits": 1288,
+      "lineTotal": 1446,
+      "lineCoveragePercent": 89.07,
+      "belowNinetyPercent": true
+    },
+    {
+      "domain": "event_bus",
+      "lineHits": 70,
+      "lineTotal": 88,
+      "lineCoveragePercent": 79.55,
+      "belowNinetyPercent": true
+    },
+    {
+      "domain": "orders",
+      "lineHits": 4394,
+      "lineTotal": 5442,
+      "lineCoveragePercent": 80.74,
+      "belowNinetyPercent": true
+    },
+    {
+      "domain": "setup",
+      "lineHits": 3715,
+      "lineTotal": 4019,
+      "lineCoveragePercent": 92.44,
+      "belowNinetyPercent": false
+    },
+    {
+      "domain": "turn",
+      "lineHits": 2174,
+      "lineTotal": 2449,
+      "lineCoveragePercent": 88.77,
+      "belowNinetyPercent": true
+    },
+    {
+      "domain": "utils",
+      "lineHits": 64,
+      "lineTotal": 68,
+      "lineCoveragePercent": 94.12,
+      "belowNinetyPercent": false
+    },
+    {
+      "domain": "world",
+      "lineHits": 3383,
+      "lineTotal": 3824,
+      "lineCoveragePercent": 88.47,
+      "belowNinetyPercent": true
+    }
+  ]
+}

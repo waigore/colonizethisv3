@@ -10,7 +10,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_relation_lookup.dart
-    line: 29
+    line: 32
     rationale: Diplomatic relation scoring inspects province ownership globally.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
@@ -39,9 +39,9 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/setup/town_capital_occupancy.dart
+  - path: packages/colonizethis_logic/lib/src/world/town_capital_tile_strip.dart
     line: 27
-    rationale: Setup occupancy uses WorldState.allProvinces() over both regions.
+    rationale: Town/capital tile-strip lookup uses WorldState.allProvinces() over both regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 

@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../diplomacy/diplomacy_relation_lookup.dart';
+import 'diplomatic_relation_lookup.dart';
 import 'game_world_mutations.dart';
 import 'naval.dart';
 import 'province_lookup.dart';

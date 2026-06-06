@@ -120,6 +120,7 @@ EconomyPlan runEconomyPlanner({
               stockpile: stockpile,
               productionAssignments: const [],
               treasury: player.treasury,
+              snapshot: snapshot,
               tileMapByRegion: tileMapByRegion,
               topology: topology,
             ),
@@ -234,7 +235,11 @@ EconomyPlan runEconomyPlanner({
   // the +6 OW baseline GPs are never starved. SPEC/ai/economy-planner.md
   // § Supplier improvement-input over-production for release.
   final supplierReleaseImprovementInputs =
-      isBelowQuotaZeroNwLockRecoverySeller(game, view.playerId)
+      isBelowQuotaZeroNwLockRecoverySeller(
+        game,
+        view.playerId,
+        snapshot: snapshot,
+      )
           ? const <String>{}
           : peerLockRecoverySellerNeededProducibleImprovementInputs(
               game,
@@ -306,6 +311,7 @@ EconomyPlan runEconomyPlanner({
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: player.treasury,
+          snapshot: snapshot,
           tileMapByRegion: tileMapByRegion,
           topology: topology,
         );
@@ -389,6 +395,10 @@ List<AssignedRecipe> _allocateLabour({
   Set<String> supplierReleaseImprovementInputIds = const {},
   Set<String> feedstockReserveOutputIds = const {},
 }) {
+  // Labour allocation scores every feasible recipe to pick the best runs, so
+  // this is an intrinsic full-catalog pass, not an output-keyed lookup that the
+  // producing()/byId index could replace (Refs #3288).
+  // ignore: disallowed_ast_ai_full_recipe_catalog_scan
   final recipes = ProductionRecipesCatalog.all;
   final agendaId = config.hiddenAgendaId;
   Stockpile virtual = stockpile;

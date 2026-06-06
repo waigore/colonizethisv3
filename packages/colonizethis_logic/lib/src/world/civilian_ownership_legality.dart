@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../diplomacy/diplomacy_resolver.dart';
+import 'faction_membership.dart';
 import 'civilian_tile_occupancy.dart';
 import 'province_lookup.dart';
 

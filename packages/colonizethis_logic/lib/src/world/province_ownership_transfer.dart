@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../diplomacy/diplomacy_resolver.dart';
+import 'faction_membership.dart';
 import 'army_migration.dart';
 import 'civilian_tile_occupancy.dart';
 import 'civilian_ownership_legality.dart';

@@ -2,8 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../setup/capital_choice.dart';
-import '../setup/town_capital_occupancy.dart';
+import 'capital_reassignment.dart';
+import 'town_capital_tile_strip.dart';
 import 'game_world_mutations.dart';
 import 'player_state_pipeline.dart';
 import 'port_seaboard_registry_key.dart';

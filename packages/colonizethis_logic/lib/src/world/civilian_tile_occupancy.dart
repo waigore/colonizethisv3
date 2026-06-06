@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../diplomacy/diplomacy_resolver.dart';
+import 'faction_membership.dart';
 import '../utils/expando_index.dart';
 import 'province_lookup.dart';
 import 'tile_key_coordinates.dart';

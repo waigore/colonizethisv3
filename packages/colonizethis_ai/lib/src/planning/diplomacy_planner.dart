@@ -310,10 +310,12 @@ DiplomacyPlannerResult? _forcedInvadableGpDeclarePlannerResultIfNeeded({
   if (target == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    '$logLabel=$target',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      '$logLabel=$target',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -381,10 +383,12 @@ DiplomacyPlannerResult? _defaultStartOwMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    'defaultStartMinor=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      'defaultStartMinor=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -411,10 +415,12 @@ DiplomacyPlannerResult? _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    'belowQuotaMinor=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      'belowQuotaMinor=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -441,10 +447,12 @@ DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    'plateauMinor=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      'plateauMinor=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -471,9 +479,11 @@ DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} target=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} target=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -490,10 +500,12 @@ DiplomacyPlannerResult? _forcedDeclareWarPlannerResult({
   required String target,
   required String logLabel,
 }) {
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    '$logLabel=$target',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      '$logLabel=$target',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -762,7 +774,9 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     pass: pass,
   );
   if (weight < 25) {
-    _log.d('diplomacy skipped nationId=${ctx.nationId} weight=$weight < 25');
+    if (_log.debugEnabled) {
+      _log.d('diplomacy skipped nationId=${ctx.nationId} weight=$weight < 25');
+    }
     return DiplomacyPlannerResult(orders: ctx.orders);
   }
 
@@ -808,10 +822,12 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     scores: scores,
   );
   if (chosen == null) return DiplomacyPlannerResult(orders: ctx.orders);
-  _log.i(
-    'diplomacy chosen nationId=${ctx.nationId} '
-    'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy chosen nationId=${ctx.nationId} '
+      'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""}',
+    );
+  }
   final nextOrders = ctx.orders.appendDiplomaticOrders(ctx.nationId, [chosen]);
   final declaredTarget = chosen.type == DiplomaticOrderType.declareWar
       ? chosen.targetFactionId

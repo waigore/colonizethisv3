@@ -315,6 +315,20 @@ rules:
     script: tool/check_logic_test_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.logic_domain_import_dag
+    group: architecture
+    title: colonizethis_logic domain imports must follow one-way DAG (Refs #3290 Phase 0)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_logic_domain_import_dag.dart
+
+  - rule_id: repo.logic_source_file_size
+    group: structure
+    title: colonizethis_logic lib/src files must stay at or below 500 physical lines (baseline grandfathered)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_logic_source_file_size.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines
