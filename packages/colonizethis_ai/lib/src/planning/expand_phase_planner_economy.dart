@@ -27,6 +27,7 @@ class ExpandEconomyPlan {
   const ExpandEconomyPlan({
     required this.forceCheapestRegimentBuild,
     required this.boostTreasuryRecoveryCargo,
+    this.boostCastIronLabourPeasantRecruitment = false,
   });
 
   /// Reusable "no override" plan returned for non-EXPAND callers, GPs
@@ -34,6 +35,7 @@ class ExpandEconomyPlan {
   static const ExpandEconomyPlan defaultPlan = ExpandEconomyPlan(
     forceCheapestRegimentBuild: false,
     boostTreasuryRecoveryCargo: false,
+    boostCastIronLabourPeasantRecruitment: false,
   );
 
   /// True when the orchestrator should drop the build-pass economy
@@ -67,22 +69,40 @@ class ExpandEconomyPlan {
   /// the cargo signal to chase incoming riches.
   final bool boostTreasuryRecoveryCargo;
 
+  /// True when the orchestrator should emit at least one peasant
+  /// [RecruitWorkerOrder] before the build pass so a lock-recovery seller
+  /// can grow raw labour toward a `castIron_from_timber_iron_coal` run
+  /// (Refs #2847 § castIron labour population-bound fork).
+  ///
+  /// Set when [forceCheapestRegimentBuild] would also be true and
+  /// [isCastIronLabourPopulationBoundForLockRecoverySeller] holds for the
+  /// active player — material inputs are on hand, every owned worker is
+  /// fed, yet the population ceiling is below one castIron run's labour.
+  final bool boostCastIronLabourPeasantRecruitment;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ExpandEconomyPlan &&
           other.forceCheapestRegimentBuild == forceCheapestRegimentBuild &&
-          other.boostTreasuryRecoveryCargo == boostTreasuryRecoveryCargo;
+          other.boostTreasuryRecoveryCargo == boostTreasuryRecoveryCargo &&
+          other.boostCastIronLabourPeasantRecruitment ==
+              boostCastIronLabourPeasantRecruitment;
 
   @override
-  int get hashCode =>
-      Object.hash(forceCheapestRegimentBuild, boostTreasuryRecoveryCargo);
+  int get hashCode => Object.hash(
+    forceCheapestRegimentBuild,
+    boostTreasuryRecoveryCargo,
+    boostCastIronLabourPeasantRecruitment,
+  );
 
   @override
   String toString() =>
       'ExpandEconomyPlan('
       'forceCheapestRegimentBuild: $forceCheapestRegimentBuild, '
-      'boostTreasuryRecoveryCargo: $boostTreasuryRecoveryCargo)';
+      'boostTreasuryRecoveryCargo: $boostTreasuryRecoveryCargo, '
+      'boostCastIronLabourPeasantRecruitment: '
+      '$boostCastIronLabourPeasantRecruitment)';
 }
 
 /// Returns the deterministic EXPAND-phase economy directive for the
@@ -219,9 +239,18 @@ ExpandEconomyPlan planExpandEconomy({
   // downstream NW scoring biases activate.
   final armC = effectiveTreasury < cheapest;
 
+  final forceRebuild = armA || armB || armD;
+  final boostCastIronLabourPeasantRecruitment =
+      forceRebuild &&
+      isCastIronLabourPopulationBoundForLockRecoverySeller(
+        game: game,
+        playerId: snapshot.playerId,
+      );
+
   return ExpandEconomyPlan(
-    forceCheapestRegimentBuild: armA || armB || armD,
+    forceCheapestRegimentBuild: forceRebuild,
     boostTreasuryRecoveryCargo: armC,
+    boostCastIronLabourPeasantRecruitment: boostCastIronLabourPeasantRecruitment,
   );
 }
 
