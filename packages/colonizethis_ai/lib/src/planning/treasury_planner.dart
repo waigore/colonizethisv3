@@ -17,7 +17,12 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'cast_iron_labour_gate.dart'
+    show
+        isCastIronLabourPeasantRecruitFabricShort,
+        isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'recipe_scoring.dart' show kShortageThreshold;
 
 // Treasury planner concern fragments (Refs #3288 file-split). Each `part of`
@@ -75,6 +80,7 @@ List<TradeOrder> runTreasuryPlanner({
   required Stockpile stockpile,
   required List<AssignedRecipe> productionAssignments,
   required int treasury,
+  AIWorldSnapshot? snapshot,
   Map<String, TileMapResult>? tileMapByRegion,
   MapTopology? topology,
   Orders currentOrders = const Orders(),
@@ -120,6 +126,10 @@ List<TradeOrder> runTreasuryPlanner({
   final rawTreasury = treasury < 0 ? 0 : treasury;
   final threshold = cheapestRegimentBuildTreasuryCost();
   final brokeForLockRecovery = rawTreasury < threshold;
+  final lockRecoveryScan = _LockRecoveryGameScan.fromGame(
+    game,
+    snapshot: snapshot,
+  );
 
   // Refs #2924 F17: a below-quota zero-NW lock-recovery seller releases its
   // food surplus aggressively so its trade cargo is spent selling the
@@ -131,8 +141,7 @@ List<TradeOrder> runTreasuryPlanner({
   // recovers. Dropping the safety buffer (keeping one consumption-cycle
   // reserve) lets the seller offer down to that floor each turn.
   // SPEC/ai/treasury-planner.md § Lock-recovery seller food-surplus release.
-  final isLockRecoverySeller =
-      _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+  final isLockRecoverySeller = lockRecoveryScan.isLockRecoverySeller(playerId);
   // Refs #2847 H8-supply (S7-D lumber re-localization): the supplier release
   // also activates when a peer lock-recovery seller is stuck one stage earlier —
   // at the level-0 `build_improvement` gate whose producible inputs the world
@@ -145,7 +154,7 @@ List<TradeOrder> runTreasuryPlanner({
   // (fabric) stage. SPEC/ai/treasury-planner.md § Lock-recovery castIron
   // improvement-input supplier source.
   final regimentBuildInputMarketSupplyActive =
-      _anyLockRecoverySellerNeedsRegimentBuildInput(game) ||
+      lockRecoveryScan.anySellerNeedsRegimentBuildInput ||
           peerLockRecoverySellerNeededProducibleImprovementInputs(
             game,
             excludePlayerId: playerId,
@@ -167,35 +176,18 @@ List<TradeOrder> runTreasuryPlanner({
   final isRegimentBuildInputMarketSupplier =
       regimentBuildInputMarketSupplyActive && !isLockRecoverySeller;
 
-  for (final id in trackedCommodityIds) {
-    if (richesCommodityIds.contains(id)) continue;
-    final commodity = CommodityCatalog.byId[id];
-    if (commodity == null) continue;
-    final consumption = _consumptionForecast(
-      commodityId: id,
-      commodity: commodity,
-      inputNeeds: inputNeeds,
-    );
-    final inputs = inputNeeds[id] ?? 0;
-    var safety = commodity.category == CommodityCategory.food
-        ? (isLockRecoverySeller ? 0 : consumption * 2)
-        : consumption;
-    if (isRegimentBuildInputMarketSupplier &&
-        _regimentBuildInputSupplyCommodityIds.contains(id)) {
-      safety = 0;
-    }
-    final reserve = consumption + inputs + safety;
-    final projectedQty = projected.quantityOf(id);
-    final surplus = projectedQty - reserve - (carryForwardOffers[id] ?? 0);
-    if (surplus > 0) {
-      available[id] = surplus;
-    }
-    final deficit =
-        (consumption + inputs) - projectedQty - (carryForwardBids[id] ?? 0);
-    if (deficit > 0 && _marketPriceBelowProductionCost(id, marketPrices)) {
-      need[id] = deficit;
-    }
-  }
+  _populateTreasurySurplusAndNeedMaps(
+    trackedCommodityIds: trackedCommodityIds,
+    inputNeeds: inputNeeds,
+    projected: projected,
+    carryForwardOffers: carryForwardOffers,
+    carryForwardBids: carryForwardBids,
+    marketPrices: marketPrices,
+    isLockRecoverySeller: isLockRecoverySeller,
+    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+    available: available,
+    need: need,
+  );
 
   // Refs #3122: treasury budget that bounds total bid notional this turn.
   // Mirrors the matcher-side per-buyer clamp introduced by #3115 so the
@@ -235,10 +227,12 @@ List<TradeOrder> runTreasuryPlanner({
     playerId: playerId,
     treasuryBudgetForBids: treasuryBudgetForBids,
     treasuryForecast: treasuryForecast,
+    scan: lockRecoveryScan,
   );
   final isAffluentDesignatedBuyer = _isAffluentDesignatedLockRecoveryBuyer(
     game: game,
     playerId: playerId,
+    scan: lockRecoveryScan,
   );
 
   // Refs #2924 F10: affluent GPs spend treasury on inventory ahead of strict
@@ -434,6 +428,17 @@ void _applyLockRecoverySellerRegimentRebuildBids({
       regimentCountForPlayer(game, playerId) != 0) {
     return;
   }
+  // Refs #2847 § castIron-labour peasant-recruit fabric staging: the recruit
+  // row costs 2 `fabric` while the regiment build input needs only 1, so a
+  // seller holding one unit clears the regiment missing-input check yet still
+  // cannot pay the recruit — wool / cotton feedstock must stay reserved until
+  // `fabric >= 2` when the population-bound castIron labour path is active.
+  final peasantRecruitFabricStaging =
+      isCastIronLabourPopulationBoundForLockRecoverySeller(
+        game: game,
+        playerId: playerId,
+      ) &&
+      isCastIronLabourPeasantRecruitFabricShort(projected);
   // Refs #2847 § H8 production allocation: offer-side input staging is
   // **treasury-independent**. The economy planner now produces the cheapest
   // regiment's build input (`fabric`) and its recipe feedstock ahead of
@@ -453,7 +458,10 @@ void _applyLockRecoverySellerRegimentRebuildBids({
       in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
     available.remove(buildInputId);
   }
-  for (final feedstockId in _regimentBuildInputFeedstockIds(projected)) {
+  for (final feedstockId in _regimentBuildInputFeedstockIds(
+    projected,
+    peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+  )) {
     available.remove(feedstockId);
   }
   // Refs #2847 § H8 bootstrap bids: market bids spend treasury (the buyer's
@@ -483,10 +491,14 @@ void _applyLockRecoverySellerRegimentRebuildBids({
     return;
   }
   final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
-    feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(projected),
+    feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(
+      projected,
+      peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+    ),
     projected: projected,
     carryForwardBids: carryForwardBids,
     need: need,
+    peasantRecruitFabricStaging: peasantRecruitFabricStaging,
   );
   if (!feedstockStillMissing) {
     _addRegimentBuildInputDirectNeed(

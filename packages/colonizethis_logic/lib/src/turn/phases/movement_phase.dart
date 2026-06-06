@@ -8,7 +8,7 @@ import '../../orders/order_resolution_context.dart';
 import '../../world/army_movement.dart';
 import '../../world/game_world_mutations.dart';
 import '../../world/movement.dart';
-import '../trace/turn_trace_runtime.dart';
+import '../../trace/turn_trace_runtime.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 import '../../world/naval_resolution.dart';

@@ -9,7 +9,10 @@ import '../constants.dart';
 
 import '../combat/military_strength.dart';
 import '../utils/expando_index.dart';
+import '../world/diplomatic_relation_lookup.dart';
 import '../world/province_lookup.dart';
+
+export '../world/diplomatic_relation_lookup.dart';
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;
@@ -192,25 +195,6 @@ String relationScoreToDisplayLabel(int score) {
   return 'Friendly';
 }
 
-/// Normalizes faction pair for lookup (consistent ordering).
-String pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
-
-/// Lazily built per [Game] instance (issue #2268 AC-4). A new [Game] from
-/// [Game.copyWith] does not share expando state with the previous instance.
-/// Routed through the shared [ExpandoIndex] utility (Refs #2836 AC 2).
-final ExpandoIndex<Game, Map<String, DiplomacyRelation>>
-_gameDiplomacyRelationsByPairKeyIndex =
-    ExpandoIndex<Game, Map<String, DiplomacyRelation>>(
-      'gameDiplomacyRelationsByPairKey',
-      (game) {
-        final map = <String, DiplomacyRelation>{};
-        for (final r in game.diplomacyRelations) {
-          map.putIfAbsent(pairKey(r.factionId1, r.factionId2), () => r);
-        }
-        return map;
-      },
-    );
-
 /// Directed GP → Minor/Tribe overture rows, keyed by `_overtureLookupKey`.
 /// Routed through the shared [ExpandoIndex] utility (Refs #2836 AC 2).
 final ExpandoIndex<Game, Map<String, OvertureState>>
@@ -228,21 +212,8 @@ _gameOvertureStatesByGpTargetIndex =
 
 String _overtureLookupKey(String gpId, String targetId) => '$gpId|$targetId';
 
-Map<String, DiplomacyRelation> _diplomacyRelationsByPairKey(Game game) =>
-    _gameDiplomacyRelationsByPairKeyIndex.get(game);
-
 Map<String, OvertureState> _overtureStatesByLookupKey(Game game) =>
     _gameOvertureStatesByGpTargetIndex.get(game);
-
-/// Returns relation for faction pair, or null if not found.
-DiplomacyRelation? getRelation(
-  Game game,
-  String factionId1,
-  String factionId2,
-) {
-  final key = pairKey(factionId1, factionId2);
-  return _diplomacyRelationsByPairKey(game)[key];
-}
 
 /// Finds the relation, passes it (or null) to [updater], and replaces or appends the result.
 List<DiplomacyRelation> upsertRelation(
@@ -289,31 +260,6 @@ bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
 /// Active FTP pair keys for world-market matching. SPEC/program/world-market-resolution.md.
 Set<String> ftpPairKeysFromGame(Game game) =>
     Set<String>.from(game.ftpPartnershipKeys);
-
-/// True when [a] and [b] are at war according to [game.diplomacyRelations].
-bool factionsAtWar(Game game, String a, String b) {
-  final rel = getRelation(game, a, b);
-  return rel?.atWar ?? false;
-}
-
-/// Undirected adjacency: for each faction id, the set of faction ids at war
-/// with it (from [game.diplomacyRelations], using [DiplomacyRelation.atWar]).
-///
-/// Used by naval visibility, naval combat conflict detection, and sea trade
-/// interception. Issue #2178 Phase A; keep in sync with [factionsAtWar].
-Map<String, Set<String>> hostileFactionsByFaction(Game game) {
-  final out = <String, Set<String>>{};
-  for (final rel in game.diplomacyRelations) {
-    if (!rel.atWar) continue;
-    out.putIfAbsent(rel.factionId1, () => <String>{}).add(rel.factionId2);
-    out.putIfAbsent(rel.factionId2, () => <String>{}).add(rel.factionId1);
-  }
-  return out;
-}
-
-/// Faction ids currently at war with [playerId] (empty if none or unknown).
-Set<String> enemiesOf(Game game, String playerId) =>
-    hostileFactionsByFaction(game)[playerId] ?? const <String>{};
 
 /// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.
 /// Used by move validator for GP and Minor/Tribe attack checks. SPEC/program/orders.md.

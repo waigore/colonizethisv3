@@ -2,6 +2,10 @@
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
+import 'cast_iron_labour_gate.dart'
+    show
+        isCastIronLabourPeasantRecruitFabricShort,
+        isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'expand_phase_planner.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
@@ -116,6 +120,7 @@ EconomyPlan runEconomyPlanner({
               stockpile: stockpile,
               productionAssignments: const [],
               treasury: player.treasury,
+              snapshot: snapshot,
               tileMapByRegion: tileMapByRegion,
               topology: topology,
             ),
@@ -184,16 +189,34 @@ EconomyPlan runEconomyPlanner({
   // The actual build order still requires the treasury cost via the
   // orchestrator's build pipeline. SPEC/ai/economy-planner.md § Regiment
   // build-input production priority.
+  // Refs #2847 § castIron labour peasant-recruit fabric bootstrap: the peasant
+  // recruit row costs 2 `fabric` while the cheapest regiment build input only
+  // requires 1, so a seller holding one unit is not in
+  // `_missingCheapestRegimentBuildInputIds` yet still cannot pay the recruit
+  // the #3303 boost emits. Stage domestic `fabric` production whenever the
+  // castIron-labour population-bound gate holds and the stockpile is short the
+  // recruit cost — **independent of** `forceCheapestRegimentBuild` / treasury
+  // so wool feedstock can accumulate across the ~31 gate turns on seed 42 even
+  // when the EXPAND rebuild directive is inactive that turn. The orchestrator
+  // recruit pass still requires `boostCastIronLabourPeasantRecruitment`.
+  final castIronLabourPeasantRecruitFabricBoost =
+      isCastIronLabourPopulationBoundForLockRecoverySeller(
+        game: game,
+        playerId: view.playerId,
+      ) &&
+      isCastIronLabourPeasantRecruitFabricShort(stockpile);
   final regimentBuildInputProductionBoost =
       (expandEconomy.forceCheapestRegimentBuild &&
           regimentCountForPlayer(game, view.playerId) == 0 &&
           missingRegimentBuildInputs.isNotEmpty) ||
       domesticImprovementInputOutputs.isNotEmpty ||
-      stageableImprovementInputs.isNotEmpty;
+      stageableImprovementInputs.isNotEmpty ||
+      castIronLabourPeasantRecruitFabricBoost;
   final boostedBuildInputOutputs = <String>{
     ...missingRegimentBuildInputs,
     ...domesticImprovementInputOutputs,
     ...stageableImprovementInputs,
+    if (castIronLabourPeasantRecruitFabricBoost) CommodityCatalog.fabric.id,
   };
 
   // Refs #2847 H8-supply (S7-D lumber re-localization): an affluent supplier
@@ -212,7 +235,11 @@ EconomyPlan runEconomyPlanner({
   // the +6 OW baseline GPs are never starved. SPEC/ai/economy-planner.md
   // § Supplier improvement-input over-production for release.
   final supplierReleaseImprovementInputs =
-      isBelowQuotaZeroNwLockRecoverySeller(game, view.playerId)
+      isBelowQuotaZeroNwLockRecoverySeller(
+        game,
+        view.playerId,
+        snapshot: snapshot,
+      )
           ? const <String>{}
           : peerLockRecoverySellerNeededProducibleImprovementInputs(
               game,
@@ -284,6 +311,7 @@ EconomyPlan runEconomyPlanner({
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: player.treasury,
+          snapshot: snapshot,
           tileMapByRegion: tileMapByRegion,
           topology: topology,
         );
@@ -367,6 +395,10 @@ List<AssignedRecipe> _allocateLabour({
   Set<String> supplierReleaseImprovementInputIds = const {},
   Set<String> feedstockReserveOutputIds = const {},
 }) {
+  // Labour allocation scores every feasible recipe to pick the best runs, so
+  // this is an intrinsic full-catalog pass, not an output-keyed lookup that the
+  // producing()/byId index could replace (Refs #3288).
+  // ignore: disallowed_ast_ai_full_recipe_catalog_scan
   final recipes = ProductionRecipesCatalog.all;
   final agendaId = config.hiddenAgendaId;
   Stockpile virtual = stockpile;

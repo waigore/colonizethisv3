@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../orders/orders_application.dart';
-import '../trace/turn_trace_runtime.dart';
+import '../../trace/turn_trace_runtime.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolver_config.dart';

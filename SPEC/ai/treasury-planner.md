@@ -421,6 +421,27 @@ the seller resumes offering its surplus. Treasury still gates the **bid** arms
 of the same carve-out (the bootstrap / feedstock / direct bids debit treasury on
 a match, so they fire only when `player.treasury >= cheapestRegimentBuildTreasuryCost()`).
 
+##### Peasant-recruit fabric feedstock reservation (Refs #2847)
+
+The castIron-labour peasant-recruit path costs **2** `fabric`
+(`WorkerActionEconomyCatalog.peasant`) while the cheapest regiment build input
+requires only **1**, so a lock-recovery seller holding exactly one `fabric`
+unit is no longer "missing" the regiment build input yet still cannot pay the
+recruit — the standard feedstock reservation self-clears and the seller resumes
+offering `wool` / `cotton`, blocking the second domestic `fabric` run the
+economy planner's castIron-labour fabric boost targets (S7-D:
+`gpCastIronLabourPeasantRecruitFabricStarvedTurns == gpCastIronLabourPeasantRecruitGateTurns`).
+
+When `isCastIronLabourPopulationBoundForLockRecoverySeller(game, playerId)` is
+`true` and `isCastIronLabourPeasantRecruitFabricShort(projected)` holds
+(`fabric` quantity strictly below 2), the feedstock reservation treats `fabric`
+as still missing for feedstock lookup and sizing: `wool` / `cotton` stays
+withheld from offers until `fabric >= 2`, then self-clears together with the
+regiment build-input reservation. Scoped to the same below-quota zero-NW
+zero-regiment population-bound seller cohort as
+economy-planner.md § Fabric staging ahead of castIron-labour peasant recruit;
+healthy regiment-holding GPs are unaffected.
+
 The reservation never weakens a healthy GP: it is gated to the below-quota
 zero-NW seller band (gp1 / gp2 are above quota) and to the zero-regiment rebuild
 case (a seller already holding regiments keeps selling feedstock). Only the
@@ -1319,6 +1340,27 @@ criterion in the sections above is preserved unchanged.
   `ai_api.dart`) instead of a linear `game.players` scan. The absent-player
   fallback (`0`) is unchanged.
 
+### Snapshot-derived province counts
+
+- `runTreasuryPlanner` accepts an optional `AIWorldSnapshot? snapshot` threaded
+  from [economy-planner.md](economy-planner.md) and the domain-planner
+  orchestrator. When `snapshot != null` and `snapshot.playerId == playerId`,
+  lock-recovery seller detection reads
+  `snapshot.conquest.oldWorldProvincesOwned` and
+  `snapshot.colonial.newWorldProvincesOwned` instead of scanning
+  `game.worldState` for the active GP. Peer-GP lock-recovery scans still use
+  `game.worldState` / `game.players` because the snapshot holds only the
+  planning player's perception. When `snapshot` is omitted (legacy test
+  entrypoints), behaviour falls back to the prior world-state scans.
+
+### Single-pass lock-recovery aggregates
+
+- `runTreasuryPlanner` builds one `_LockRecoveryGameScan` per invocation: a single
+  `game.players` pass that precomputes sorted GP ids, the broke-GP flag, peer
+  seller bootstrap flags, per-player lock-recovery seller predicates, and the
+  designated affluent buyer rotation. Lock-recovery helpers consume the scan
+  instead of re-iterating `game.players` for each predicate.
+
 ### Determinism and budget
 
 The indices are pure functions of the static `ProductionRecipesCatalog` and the
@@ -1337,6 +1379,10 @@ turn-resolution budget.
 - Given any `Game` and `playerId`, when `_treasuryForPlayer(game, playerId)` is
   evaluated, then it returns `game.playerById(playerId)?.treasury ?? 0` (the
   matching player's treasury, or `0` when no player has that id).
+- Given `runTreasuryPlanner` inputs where `snapshot.playerId == playerId` and
+  the snapshot province counts match the authoritative `game.worldState` counts
+  for that GP, when `runTreasuryPlanner` runs with and without `snapshot`, then
+  both runs return identical `List<TradeOrder>` outputs.
 - Given identical inputs `(game, playerId, stockpile, productionAssignments,
   treasury, tileMapByRegion, topology, currentOrders)`, when
   `runTreasuryPlanner` runs twice after the index change, then both runs return

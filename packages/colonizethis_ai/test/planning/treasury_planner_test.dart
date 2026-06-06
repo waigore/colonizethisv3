@@ -5,6 +5,7 @@
 /// line repo-lint ceiling).
 library;
 
+import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -681,5 +682,38 @@ void main() {
       );
       expect(a, b);
     });
+
+    test(
+      'snapshot province counts match world-state scans (Refs #3288)',
+      () {
+        final stockpile = const Stockpile().applyDelta('grain', 20);
+        final game = _lockRecoverySellerGame(stockpile: stockpile, treasury: 0);
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(oldWorldProvincesOwned: 3),
+          colonial: ColonialSummary(newWorldProvincesOwned: 0),
+          economy: EconomySummary(treasury: 0),
+          relations: {},
+        );
+        final withoutSnapshot = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 0,
+        );
+        final withSnapshot = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 0,
+          snapshot: snapshot,
+        );
+        expect(withSnapshot, withoutSnapshot);
+      },
+    );
   });
 }

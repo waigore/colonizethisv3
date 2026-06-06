@@ -73,6 +73,7 @@ export 'src/economy/world_market/treasury_bid_budget.dart'
     show carryForwardBidNotionalByPlayer, effectiveMarketPriceForCommodityId;
 export 'src/turn/pending_treasury_costs.dart' show pendingTreasuryCostsForTurn;
 export 'src/economy/worker_economy.dart' show effectiveLabourForWorkers;
+export 'src/economy/worker_action_cost.dart' show canAffordRecruitWorker;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
 export 'src/orders/order_suggestion_helpers.dart'
@@ -81,7 +82,7 @@ export 'src/orders/order_suggestion_helpers.dart'
         filterMoveOrdersByDiplomacy,
         getProvinceOwnerMap,
         knownDiplomaticTargetFactionIds;
-export 'src/turn/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
+export 'src/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
 export 'src/world/army_commands.dart' show applyArmySplit;
 export 'src/world/army_ids.dart' show homeArmyIdFor;
 export 'src/world/player_view.dart'

@@ -12,7 +12,7 @@ import 'planner_test_helpers.dart';
 
 const _nationId = 'gp_seller';
 
-Game _sellerGame() {
+Game _sellerGame({int fabricHeld = 2}) {
   return Game(
     id: 'g-peasant-recruit',
     worldState: WorldState(
@@ -35,6 +35,7 @@ Game _sellerGame() {
         displayName: 'Seller',
         isHuman: false,
         treasury: cheapestRegimentBuildTreasuryCost(),
+        stockpile: Stockpile(quantities: {'fabric': fabricHeld}),
       ),
     ],
   );
@@ -93,6 +94,51 @@ void main() {
           final recruits =
               outcome.orders.recruitWorkerOrdersByPlayerId[_nationId] ?? [];
           expect(recruits, equals(const [peasantRecruit]));
+        },
+      );
+
+      test(
+        'does not emit peasant recruit when fabric is below recruit cost',
+        () {
+          final game = _sellerGame(fabricHeld: 0);
+          final view = buildPlayerView(game, topology, _nationId);
+          final snapshot = AIWorldSnapshot.fromPlayerView(
+            view,
+            topology: topology,
+          );
+          final phasePlan = PhasePlanOutcome(
+            phase: ObserverGoalPhase.expand,
+            expandEconomyPlan: const ExpandEconomyPlan(
+              forceCheapestRegimentBuild: true,
+              boostTreasuryRecoveryCargo: false,
+              boostCastIronLabourPeasantRecruitment: true,
+            ),
+          );
+          final outcome = runDomainPlannersWithOutcome(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: kTestAiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(284704),
+            suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
+              work: [],
+              build: [regimentBuild],
+              move: [],
+              research: [],
+              navalMove: [],
+              navalMission: [],
+              recruitWorker: [peasantRecruit, peasantRecruit],
+            ),
+            economyPlan: kTestEconomyPlan,
+            phasePlan: phasePlan,
+          );
+          expect(
+            outcome.orders.recruitWorkerOrdersByPlayerId[_nationId],
+            isNull,
+          );
         },
       );
 
