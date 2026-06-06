@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
-import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
-    show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show
         cheapestRegimentBuildTreasuryCost,
@@ -2015,9 +2013,6 @@ void main() {
       final castIronLabourPeasantRecruitFabricStarvedTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
-      const peasantRecruitProbeOrder = RecruitWorkerOrder(
-        targetTier: WorkerTier.peasant,
-      );
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2430,114 +2425,60 @@ void main() {
             }
           }
           if (player != null) {
-            // Refs #2847 — localize the #3303 castIron-labour peasant-recruit
-            // boost. Measure the boost's gate predicate and, when it holds,
-            // whether the seller can actually afford the peasant recruit cost
-            // row (2 fabric). The fabric-starved subset isolates the suspected
-            // circular dependency that renders the boost a no-op.
-            if (isCastIronLabourPopulationBoundForLockRecoverySeller(
+            // Refs #2847 — per-turn castIron-labour stage localization. The
+            // measure bundles the read-only flags (the #3303 peasant-recruit
+            // gate + affordability, fabric feedstock/recipe feasibility, and
+            // the castIron material/labour/food/tile fork); the caller only
+            // applies counter bumps. The fabric-starved peasant-recruit subset
+            // isolates the suspected circular dependency that renders the
+            // #3303 boost a no-op.
+            final ci = seed42S7dCastIronLabourTurnMeasure(
               game: game,
               playerId: gpId,
-            )) {
-              castIronLabourPeasantRecruitGateTurns[gpId] =
-                  (castIronLabourPeasantRecruitGateTurns[gpId] ?? 0) + 1;
-              final canAfford = canAffordRecruitWorker(
-                player,
-                peasantRecruitProbeOrder,
-                player.workerPool,
-                player.stockpile,
-                player.treasury,
-              ).canAfford;
-              if (canAfford) {
-                castIronLabourPeasantRecruitAffordableTurns[gpId] =
-                    (castIronLabourPeasantRecruitAffordableTurns[gpId] ?? 0) + 1;
+              fabricFeedstockIds: fabricFeedstockIds,
+              fabricRecipes: fabricRecipes,
+              castIronRecipes: castIronRecipes,
+              castIronFeedstockIds: castIronFeedstockIds,
+              castIronMinLabourPerOutput: castIronMinLabourPerOutput,
+            );
+            if (ci.peasantRecruitGate) {
+              bumpCounter(castIronLabourPeasantRecruitGateTurns, gpId);
+              if (ci.peasantRecruitAffordable) {
+                bumpCounter(castIronLabourPeasantRecruitAffordableTurns, gpId);
               } else {
-                castIronLabourPeasantRecruitFabricStarvedTurns[gpId] =
-                    (castIronLabourPeasantRecruitFabricStarvedTurns[gpId] ?? 0) +
-                    1;
+                bumpCounter(castIronLabourPeasantRecruitFabricStarvedTurns, gpId);
               }
             }
-            final holdsFeedstock = fabricFeedstockIds.any(
-              (id) => player.stockpile.quantityOf(id) > 0,
-            );
-            if (holdsFeedstock) {
-              feedstockInStockpileTurns[gpId] =
-                  (feedstockInStockpileTurns[gpId] ?? 0) + 1;
+            if (ci.holdsFabricFeedstock) {
+              bumpCounter(feedstockInStockpileTurns, gpId);
             }
-            final recipeFeasible = fabricRecipes.any(
-              (recipe) => recipe.inputQuantities.entries.every(
-                (e) => player.stockpile.quantityOf(e.key) >= e.value,
-              ),
-            );
-            if (recipeFeasible) {
-              fabricRecipeFeasibleTurns[gpId] =
-                  (fabricRecipeFeasibleTurns[gpId] ?? 0) + 1;
+            if (ci.fabricRecipeFeasible) {
+              bumpCounter(fabricRecipeFeasibleTurns, gpId);
             }
-            if (stockpileAffordsAnyProductionRecipe(
-              player.stockpile,
-              castIronRecipes,
-            )) {
-              castIronRecipeFeasibleTurns[gpId] =
-                  (castIronRecipeFeasibleTurns[gpId] ?? 0) + 1;
+            if (ci.castIronMaterialFeasible) {
+              bumpCounter(castIronRecipeFeasibleTurns, gpId);
               // Split the material-feasible turns by the planner's labour gate
               // and by the staging gate's tile-ownership precondition.
-              if (stockpileAndLabourAffordAnyProductionRecipe(
-                game,
-                gpId,
-                castIronRecipes,
-              )) {
-                castIronRecipeLabourFeasibleTurns[gpId] =
-                    (castIronRecipeLabourFeasibleTurns[gpId] ?? 0) + 1;
-              } else if (castIronMinLabourPerOutput > 0) {
-                // Material-feasible but labour-infeasible: fork the cause into
-                // food-starved (fully-fed ceiling would fund a run) vs
-                // population-bound (ceiling itself below one run).
-                if (playerRawLabourSupply(game, gpId) >=
-                    castIronMinLabourPerOutput) {
-                  castIronLabourFoodStarvedTurns[gpId] =
-                      (castIronLabourFoodStarvedTurns[gpId] ?? 0) + 1;
-                } else {
-                  castIronLabourPopulationBoundTurns[gpId] =
-                      (castIronLabourPopulationBoundTurns[gpId] ?? 0) + 1;
-                }
+              if (ci.castIronLabourFeasible) {
+                bumpCounter(castIronRecipeLabourFeasibleTurns, gpId);
+              } else if (ci.castIronLabourFoodStarved) {
+                bumpCounter(castIronLabourFoodStarvedTurns, gpId);
+              } else if (ci.castIronLabourPopulationBound) {
+                bumpCounter(castIronLabourPopulationBoundTurns, gpId);
               }
-              if (ownsFeedstockResourceTileAnyLevel(
-                game,
-                gpId,
-                castIronFeedstockIds,
-              )) {
-                castIronFeasibleOwnsFeedstockTileTurns[gpId] =
-                    (castIronFeasibleOwnsFeedstockTileTurns[gpId] ?? 0) + 1;
+              if (ci.castIronOwnsFeedstockTile) {
+                bumpCounter(castIronFeasibleOwnsFeedstockTileTurns, gpId);
               }
             }
           }
           // Cache the turn-99 snapshot fields for the final rollup.
           if (t == 99) {
-            lastSnapshotFields[gpId] = <String, Object?>{
-              'oldWorldProvincesOwned': snap.conquest.oldWorldProvincesOwned,
-              'invadableProvinceCount':
-                  snap.conquest.invadableProvinceIdsSorted.length,
-              'nwInvadableCount':
-                  snap.colonial.invadableNewWorldProvinceIdsSorted.length,
-              'atWarWith': snap.threats.atWarWith.toList()..sort(),
-              'adjacentOwnerFactionIdsSorted':
-                  snap.conquest.adjacentOwnerFactionIdsSorted,
-              'treasury': player?.treasury,
-              'regimentCount': regimentCountForPlayer(game, gpId),
-              'cheapestRegimentBuildTreasuryCost':
-                  cheapestRegimentBuildTreasuryCost(),
-              // Refs #2847 H8 castIron labour-starvation corroboration: the
-              // effective (food-fed) labour, the raw (fully-fed) ceiling, and
-              // the food on hand at the terminal turn for the food-starved vs
-              // population-bound read.
-              'effectiveLabour': playerEffectiveLabour(game, gpId),
-              'rawLabourSupply': playerRawLabourSupply(game, gpId),
-              'foodOnHand': playerFoodOnHand(
-                game,
-                gpId,
-                castIronLabourFoodCommodityIds,
-              ),
-            };
+            lastSnapshotFields[gpId] = seed42S7dTurn99SnapshotFields(
+              game: game,
+              playerId: gpId,
+              snap: snap,
+              foodCommodityIds: castIronLabourFoodCommodityIds,
+            );
           }
         }
 
