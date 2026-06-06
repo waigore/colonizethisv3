@@ -161,4 +161,24 @@ class ProductionRecipesCatalog {
   static final Map<String, ProductionRecipe> byId = {
     for (final r in all) r.id: r,
   };
+
+  /// Recipes grouped by their `outputCommodityId`, preserving [all] order
+  /// within each commodity bucket.
+  ///
+  /// Built once from the static [all] list so callers that repeatedly need the
+  /// recipes producing a given commodity avoid an O(recipes) scan per lookup.
+  /// Returns an empty list for a commodity no recipe produces. Refs #3288.
+  static final Map<CommodityId, List<ProductionRecipe>> byOutputCommodityId =
+      () {
+    final byOutput = <CommodityId, List<ProductionRecipe>>{};
+    for (final r in all) {
+      (byOutput[r.outputCommodityId] ??= <ProductionRecipe>[]).add(r);
+    }
+    return byOutput;
+  }();
+
+  /// Recipes whose output is [commodityId], in [all] order. Empty when none.
+  /// O(1) lookup backed by [byOutputCommodityId]. Refs #3288.
+  static List<ProductionRecipe> producing(CommodityId commodityId) =>
+      byOutputCommodityId[commodityId] ?? const <ProductionRecipe>[];
 }
