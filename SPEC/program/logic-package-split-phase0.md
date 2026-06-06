@@ -18,7 +18,7 @@ Phase 0 deliverables (child issue C0):
 | `setup` | `world` | Allowed |
 | `world` | `setup` | **Eliminated** — capital reassignment helpers live in `world/` |
 | `diplomacy` | `world` | Allowed |
-| `world` | `diplomacy` | Deferred — 6 files; shared relation types → `world/` or `models/` in C0 follow-up |
+| `world` | `diplomacy` | **Eliminated** — `world/faction_membership.dart`, `world/diplomatic_relation_lookup.dart` |
 | `diplomacy` | `combat` | Allowed |
 | `combat` | `diplomacy` | Deferred — 3 files |
 | `economy` | `orders` | Partial — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import remains |
@@ -76,16 +76,18 @@ Phase 0 deliverables (child issue C0):
 
 ### `world ↔ diplomacy`
 
-**Wrong:** `world` → `diplomacy` (6 files)
+**Wrong:** `world` → `diplomacy` (6 files, fixed in Phase 0 slice)
 
-| Source | Import | Key symbols | Proposed destination |
-|--------|--------|-------------|---------------------|
-| `world/connectivity_resolver.dart` | `diplomacy_relation_lookup.dart` | relation helpers | `world/diplomatic_relation_view.dart` (read-only facade) |
-| `world/civilian_ownership_legality.dart` | `diplomacy_resolver.dart` | ownership legality | `world/` pure functions |
-| `world/civilian_tile_occupancy.dart` | `diplomacy_resolver.dart` | tile occupancy rules | `world/` |
-| `world/naval_mission_orders.dart` | `diplomacy_relation_lookup.dart` | relation lookup | shared facade in `world/` |
-| `world/naval_resolution.dart` | `diplomacy_relation_lookup.dart` | same | same |
-| `world/province_ownership_transfer.dart` | `diplomacy_resolver.dart` | transfer rules | `world/` |
+| Source | Import | Key symbols | Destination |
+|--------|--------|-------------|-------------|
+| `world/connectivity_resolver.dart` | `diplomacy_relation_lookup.dart` | `factionsAtWar` | `world/diplomatic_relation_lookup.dart` |
+| `world/civilian_ownership_legality.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership` | `world/faction_membership.dart` |
+| `world/civilian_tile_occupancy.dart` | `diplomacy_resolver.dart` | `isGreatPower`, `isMinorOrTribe` | `world/faction_membership.dart` |
+| `world/naval_mission_orders.dart` | `diplomacy_relation_lookup.dart` | `factionsAtWar` | `world/diplomatic_relation_lookup.dart` |
+| `world/naval_resolution.dart` | `diplomacy_relation_lookup.dart` | `hostileFactionsByFaction` | `world/diplomatic_relation_lookup.dart` |
+| `world/province_ownership_transfer.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership` | `world/faction_membership.dart` |
+
+**Correct:** `diplomacy` → `world` — `diplomacy_relation_lookup.dart` and `diplomacy_resolver.dart` re-export the shared world modules for existing consumers.
 
 ### `diplomacy ↔ combat`
 
