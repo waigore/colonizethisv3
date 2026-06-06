@@ -5,6 +5,10 @@ import 'package:path/path.dart' as p;
 const _guardedRelativePaths = <String>{
   'packages/colonizethis_logic/lib/src/orders/orders_application.dart',
   'packages/colonizethis_logic/lib/src/world/fog_resolution.dart',
+  'packages/colonizethis_logic/lib/src/world/fog_resolution_explorer_spy_decay.dart',
+  'packages/colonizethis_logic/lib/src/world/fog_resolution_province_ownership.dart',
+  'packages/colonizethis_logic/lib/src/world/fog_resolution_coastal_sea_zone.dart',
+  'packages/colonizethis_logic/lib/src/world/fog_resolution_distant_sea_zone.dart',
   'packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart',
 };
 
