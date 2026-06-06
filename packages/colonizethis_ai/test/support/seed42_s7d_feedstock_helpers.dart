@@ -4,6 +4,8 @@
 // that diagnostic test file at or below the repo non-comment line limit
 // (`repo.dart_file_non_comment_line_size`). These are pure read-only scans over
 // game state used by the H8-supply / H8-extraction stage-localization counters.
+import 'package:colonizethis_ai/src/planning/recipe_scoring.dart'
+    show feasibleRuns;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -191,6 +193,102 @@ bool stockpileAffordsAnyProductionRecipe(
       (e) => stockpile.quantityOf(e.key) >= e.value,
     );
     if (affordsAll) return true;
+  }
+  return false;
+}
+
+/// True iff [playerId] can run at least one full output run of any recipe in
+/// [recipes] given **both** its stockpile inputs **and** its current effective
+/// labour — the labour-aware analogue of [stockpileAffordsAnyProductionRecipe].
+///
+/// Mirrors the economy planner's own per-recipe feasibility test
+/// (`economy_planner.dart` § `_allocateLabour` → `feasibleRuns`) by computing
+/// `effectiveLabourForWorkers` from the same inputs the planner uses (the
+/// player's `WorkerPool` + `Stockpile`, with land-regiment and ship upkeep food
+/// reserved via `regimentTypeCountsForPlayer` / `shipTypeCountsForPlayer`) and
+/// asking whether any recipe clears `feasibleRuns(...) > 0` against the **full**
+/// effective labour for the turn.
+///
+/// Used by the H8 castIron production-allocation localization (Refs #2847 § H8;
+/// S7-D castIron production-assignment, PR #3289 follow-up). The diagnostic
+/// already tracks `gpCastIronRecipeFeasibleTurns` (material-only, via
+/// [stockpileAffordsAnyProductionRecipe]). Splitting that material-feasible set
+/// with this labour-aware counter resolves a flat
+/// `gpCastIronProductionAssignedTurns == 0` on the material-feasible turns into
+/// two distinct causes: the recipe is **labour-starved** (the seller's effective
+/// labour, after mandatory food upkeep, cannot fund even one `labourPerOutput`
+/// run, so the lever is effective-labour / food-reservation) versus the recipe
+/// is **labour-feasible yet still never assigned** (an allocation-competition /
+/// staging-gate cause downstream of raw labour). Because `feasibleRuns`
+/// incorporates the stockpile material check too, a labour-feasible turn is
+/// always a subset of a material-feasible turn. Pure read-only over
+/// `(game, playerId)`; no game-state mutation.
+bool stockpileAndLabourAffordAnyProductionRecipe(
+  Game game,
+  String playerId,
+  List<ProductionRecipe> recipes,
+) {
+  if (recipes.isEmpty) return false;
+  final player = game.playerById(playerId);
+  if (player == null) return false;
+  final effectiveLabour = effectiveLabourForWorkers(
+    workers: player.workerPool,
+    stockpile: player.stockpile,
+    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
+    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+  );
+  for (final recipe in recipes) {
+    if (feasibleRuns(
+          recipe: recipe,
+          stockpile: player.stockpile,
+          remainingLabour: effectiveLabour,
+        ) >
+        0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// True iff [playerId] owns at least one province tile hosting one of
+/// [feedstockIds] at **any** improvement level (improved or unimproved).
+///
+/// This is the tile-ownership precondition the lock-recovery-seller castIron
+/// staging gate (`full_ai_civilian_work_selection_feedstock.dart` §
+/// `selfLockRecoverySellerStageableImprovementInputs` →
+/// `_ownsFeedstockResourceTile`) applies before it stages a domestic `castIron`
+/// run: a below-quota zero-NW zero-regiment seller only stages `castIron` when
+/// it still owns a `timber` / `iron` feedstock tile to extract from. The
+/// existing [ownsUnimprovedFeedstockResourceTile] /
+/// [ownsImprovedFeedstockResourceTile] probes split by improvement level; this
+/// any-level probe mirrors the staging gate's own predicate exactly.
+///
+/// Used by the H8 castIron production-allocation localization (Refs #2847): on
+/// the castIron material-feasible turns, a flat-zero count here while the seller
+/// **holds** `timber` / `iron` commodities localizes the unfired staging gate to
+/// **tile ownership** (the seller accumulated the feedstock by trade / past
+/// extraction but no longer owns a resource tile, so the staging gate stays
+/// shut), re-pointing the next behaviour slice to broaden the gate to fire on
+/// held feedstock; a non-zero count instead clears tile ownership as the cause.
+/// Read-only scan over owned provinces.
+bool ownsFeedstockResourceTileAnyLevel(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
+    for (final entry in byProvince.entries) {
+      final province = tryGetProvince(ws, entry.key);
+      if (province == null || province.ownerId != playerId) continue;
+      for (final tileKey in entry.value) {
+        final resourceId = ws.resourceByTileKey[tileKey];
+        if (resourceId != null && feedstockIds.contains(resourceId)) {
+          return true;
+        }
+      }
+    }
   }
   return false;
 }
