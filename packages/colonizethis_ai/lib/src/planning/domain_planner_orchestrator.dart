@@ -468,6 +468,30 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   }
   emit('aiStageA');
 
+  final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
+  if (expandEconomy.boostCastIronLabourPeasantRecruitment) {
+    final recruitCandidates = ctx.suggestionAPI.suggestRecruitWorkerOrders(
+      ctx.view,
+      ctx.game,
+      ctx.topology,
+      result,
+    );
+    RecruitWorkerOrder? peasantRecruit;
+    for (final candidate in recruitCandidates) {
+      if (candidate.targetTier == WorkerTier.peasant) {
+        peasantRecruit = candidate;
+        break;
+      }
+    }
+    if (peasantRecruit != null) {
+      _log.i(
+        'castIron labour peasant recruit nationId=${ctx.nationId} '
+        'targetTier=${peasantRecruit.targetTier.name}',
+      );
+      result = result.appendRecruitWorkerOrders(ctx.nationId, [peasantRecruit]);
+    }
+  }
+
   final buildResult = _appendEconomyBuildOrders(
     ctx: ctx,
     snapshot: snapshot,

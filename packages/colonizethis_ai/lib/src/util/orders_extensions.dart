@@ -82,4 +82,15 @@ extension OrdersAppendExtension on Orders {
       list,
     ),
   );
+
+  Orders appendRecruitWorkerOrders(
+    String playerId,
+    List<RecruitWorkerOrder> list,
+  ) => copyWith(
+    recruitWorkerOrdersByPlayerId: _appendOrdersByPlayer(
+      recruitWorkerOrdersByPlayerId,
+      playerId,
+      list,
+    ),
+  );
 }
