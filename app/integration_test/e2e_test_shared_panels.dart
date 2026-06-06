@@ -305,12 +305,20 @@ Future<void> e2eSplitHomeFleetOnce(
     await e2eExpandEachExpansionTileOnce(tester);
   }
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
-  final split = find.descendant(
+  // Production fleet rows collapse Split to icon-only at E2E viewports; the
+  // widget-test pin keeps a legacy `Text('Split')` harness button as fallback.
+  final splitByKey = find.descendant(
     of: navalPanelRoot,
-    matching: find.text('Split'),
+    matching: find.byKey(kCtE2EFleetSplitActionKey),
   );
-  expect(split, findsWidgets);
-  await tester.tap(split.first, warnIfMissed: false);
+  final splitByLabel = find.descendant(
+    of: navalPanelRoot,
+    matching: find.text(l10n.common_split),
+  );
+  final split = splitByKey.evaluate().isNotEmpty ? splitByKey : splitByLabel;
+  final splitHit = split.hitTestable();
+  expect(splitHit, findsWidgets);
+  await tester.tap(splitHit.first, warnIfMissed: false);
   await e2eWaitUntilFound(
     tester,
     find.descendant(
