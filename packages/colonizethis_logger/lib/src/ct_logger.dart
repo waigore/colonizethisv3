@@ -37,6 +37,17 @@ class CtLogger {
 
   static Level get level => Logger.level;
   static set level(Level value) => Logger.level = value;
+
+  /// Whether a [Level.debug] event would currently pass the active
+  /// [Logger.level] threshold. Guard hot-path [d] calls whose message argument
+  /// eagerly builds collections/strings so the work is skipped when debug
+  /// output is filtered (Refs #3288; see SPEC/program/colonizethis-logger.md
+  /// §2.6 and the turn-resolution budget § Control logging overhead).
+  bool get debugEnabled => Logger.level.value <= Level.debug.value;
+
+  /// Whether a [Level.info] event would currently pass the active
+  /// [Logger.level] threshold. See [debugEnabled].
+  bool get infoEnabled => Logger.level.value <= Level.info.value;
 }
 
 CtLogger logicLogger([String? subPrefix]) =>
