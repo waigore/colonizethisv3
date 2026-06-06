@@ -4,9 +4,18 @@
 // that diagnostic test file at or below the repo non-comment line limit
 // (`repo.dart_file_non_comment_line_size`). These are pure read-only scans over
 // game state used by the H8-supply / H8-extraction stage-localization counters.
+import 'package:colonizethis_ai/src/perception/perception_snapshot.dart'
+    show AIWorldSnapshot;
+import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
+    show regimentCountForPlayer;
+import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
+    show isCastIronLabourPopulationBoundForLockRecoverySeller;
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
+    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_ai/src/planning/recipe_scoring.dart'
     show feasibleRuns;
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -319,6 +328,183 @@ int playerFoodOnHand(
     total += player.stockpile.quantityOf(id);
   }
   return total;
+}
+
+/// Increments the per-GP [key] entry of a `<String, int>` diagnostic [counter]
+/// by one, treating an absent entry as zero. Shared by the S7-D diagnostic to
+/// keep its many per-turn counter bumps to a single line each.
+void bumpCounter(Map<String, int> counter, String key) =>
+    counter[key] = (counter[key] ?? 0) + 1;
+
+/// Per-turn castIron-labour stage-localization measurement for one GP (Refs
+/// #2847). Pure read-only over `(game, playerId)`: bundles the boolean flags
+/// the S7-D diagnostic increments each turn so the caller only applies counter
+/// bumps. Mirrors the inline measurement it replaced exactly —
+///
+///   * `peasantRecruitGate` / `peasantRecruitAffordable` —
+///     [castIronLabourPeasantRecruitProbe] (the #3303 boost localization).
+///   * `holdsFabricFeedstock` — any [fabricFeedstockIds] held in the stockpile.
+///   * `fabricRecipeFeasible` — any [fabricRecipes] materially runnable.
+///   * `castIronMaterialFeasible` — any [castIronRecipes] materially runnable
+///     ([stockpileAffordsAnyProductionRecipe]); the labour / food / tile flags
+///     below are only meaningful (non-false) when this holds.
+///   * `castIronLabourFeasible` — material-feasible **and** labour-feasible
+///     ([stockpileAndLabourAffordAnyProductionRecipe]).
+///   * `castIronLabourFoodStarved` / `castIronLabourPopulationBound` — the
+///     material-feasible-but-labour-infeasible fork keyed on
+///     [castIronMinLabourPerOutput] vs [playerRawLabourSupply] (fully-fed
+///     ceiling would fund a run vs ceiling itself below one run); both false
+///     when [castIronMinLabourPerOutput] is not positive.
+///   * `castIronOwnsFeedstockTile` — owns a castIron feedstock tile at any
+///     level ([ownsFeedstockResourceTileAnyLevel]).
+///
+/// All flags are false for an unknown player. No game-state mutation.
+({
+  bool peasantRecruitGate,
+  bool peasantRecruitAffordable,
+  bool holdsFabricFeedstock,
+  bool fabricRecipeFeasible,
+  bool castIronMaterialFeasible,
+  bool castIronLabourFeasible,
+  bool castIronLabourFoodStarved,
+  bool castIronLabourPopulationBound,
+  bool castIronOwnsFeedstockTile,
+})
+seed42S7dCastIronLabourTurnMeasure({
+  required Game game,
+  required String playerId,
+  required Set<String> fabricFeedstockIds,
+  required List<ProductionRecipe> fabricRecipes,
+  required List<ProductionRecipe> castIronRecipes,
+  required Set<String> castIronFeedstockIds,
+  required int castIronMinLabourPerOutput,
+}) {
+  const none = (
+    peasantRecruitGate: false,
+    peasantRecruitAffordable: false,
+    holdsFabricFeedstock: false,
+    fabricRecipeFeasible: false,
+    castIronMaterialFeasible: false,
+    castIronLabourFeasible: false,
+    castIronLabourFoodStarved: false,
+    castIronLabourPopulationBound: false,
+    castIronOwnsFeedstockTile: false,
+  );
+  final player = game.playerById(playerId);
+  if (player == null) return none;
+  final recruit = castIronLabourPeasantRecruitProbe(game, playerId);
+  final holdsFabricFeedstock = fabricFeedstockIds.any(
+    (id) => player.stockpile.quantityOf(id) > 0,
+  );
+  final fabricRecipeFeasible = fabricRecipes.any(
+    (recipe) => recipe.inputQuantities.entries.every(
+      (e) => player.stockpile.quantityOf(e.key) >= e.value,
+    ),
+  );
+  final castIronMaterialFeasible = stockpileAffordsAnyProductionRecipe(
+    player.stockpile,
+    castIronRecipes,
+  );
+  var castIronLabourFeasible = false;
+  var foodStarved = false;
+  var populationBound = false;
+  var ownsTile = false;
+  if (castIronMaterialFeasible) {
+    castIronLabourFeasible = stockpileAndLabourAffordAnyProductionRecipe(
+      game,
+      playerId,
+      castIronRecipes,
+    );
+    if (!castIronLabourFeasible && castIronMinLabourPerOutput > 0) {
+      if (playerRawLabourSupply(game, playerId) >= castIronMinLabourPerOutput) {
+        foodStarved = true;
+      } else {
+        populationBound = true;
+      }
+    }
+    ownsTile = ownsFeedstockResourceTileAnyLevel(
+      game,
+      playerId,
+      castIronFeedstockIds,
+    );
+  }
+  return (
+    peasantRecruitGate: recruit.gateActive,
+    peasantRecruitAffordable: recruit.affordable,
+    holdsFabricFeedstock: holdsFabricFeedstock,
+    fabricRecipeFeasible: fabricRecipeFeasible,
+    castIronMaterialFeasible: castIronMaterialFeasible,
+    castIronLabourFeasible: castIronLabourFeasible,
+    castIronLabourFoodStarved: foodStarved,
+    castIronLabourPopulationBound: populationBound,
+    castIronOwnsFeedstockTile: ownsTile,
+  );
+}
+
+/// Builds the per-GP turn-99 snapshot field map cached for the S7-D
+/// diagnostic rollup (Refs #2847). Pure read-only construction over
+/// `(game, playerId, snap)`: the conquest/colonial/threat snapshot fields, the
+/// treasury and regiment trajectory, the cheapest-regiment treasury floor, and
+/// the castIron labour-starvation corroboration trio (effective food-fed
+/// labour, raw fully-fed ceiling, and [foodCommodityIds] on hand at the
+/// terminal turn). Extracted to keep the diagnostic test file at or below the
+/// repo non-comment line limit; no game-state mutation.
+Map<String, Object?> seed42S7dTurn99SnapshotFields({
+  required Game game,
+  required String playerId,
+  required AIWorldSnapshot snap,
+  required Set<String> foodCommodityIds,
+}) {
+  final player = game.playerById(playerId);
+  return <String, Object?>{
+    'oldWorldProvincesOwned': snap.conquest.oldWorldProvincesOwned,
+    'invadableProvinceCount': snap.conquest.invadableProvinceIdsSorted.length,
+    'nwInvadableCount': snap.colonial.invadableNewWorldProvinceIdsSorted.length,
+    'atWarWith': snap.threats.atWarWith.toList()..sort(),
+    'adjacentOwnerFactionIdsSorted': snap.conquest.adjacentOwnerFactionIdsSorted,
+    'treasury': player?.treasury,
+    'regimentCount': regimentCountForPlayer(game, playerId),
+    'cheapestRegimentBuildTreasuryCost': cheapestRegimentBuildTreasuryCost(),
+    'effectiveLabour': playerEffectiveLabour(game, playerId),
+    'rawLabourSupply': playerRawLabourSupply(game, playerId),
+    'foodOnHand': playerFoodOnHand(game, playerId, foodCommodityIds),
+  };
+}
+
+/// Read-only probe for the #3303 castIron-labour peasant-recruit boost
+/// localization (Refs #2847). Returns whether the boost's distinguishing gate
+/// predicate `isCastIronLabourPopulationBoundForLockRecoverySeller` holds for
+/// [playerId] this turn, and — when it does — whether the seller can actually
+/// pay the peasant `RecruitWorkerOrder` cost row
+/// (`WorkerActionEconomyCatalog.peasant`, which costs 2 `fabric`) via
+/// `canAffordRecruitWorker`.
+///
+/// The `affordable == false` branch (gate active yet cost unpayable) isolates
+/// the suspected circular dependency that renders the #3303 boost a structural
+/// no-op: recruiting the peasant that would grow castIron labour itself needs
+/// `fabric`, the very downstream commodity the castIron chain exists to
+/// unblock. `affordable` is `false` when the gate is inactive. Pure read-only
+/// over `(game, playerId)`; no game-state mutation.
+({bool gateActive, bool affordable}) castIronLabourPeasantRecruitProbe(
+  Game game,
+  String playerId,
+) {
+  if (!isCastIronLabourPopulationBoundForLockRecoverySeller(
+    game: game,
+    playerId: playerId,
+  )) {
+    return (gateActive: false, affordable: false);
+  }
+  final player = game.playerById(playerId);
+  if (player == null) return (gateActive: true, affordable: false);
+  final affordable = canAffordRecruitWorker(
+    player,
+    const RecruitWorkerOrder(targetTier: WorkerTier.peasant),
+    player.workerPool,
+    player.stockpile,
+    player.treasury,
+  ).canAfford;
+  return (gateActive: true, affordable: affordable);
 }
 
 /// True iff [playerId] owns at least one province tile hosting one of
