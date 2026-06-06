@@ -160,6 +160,41 @@ bool affordsBuildImprovementComponent(
   return player.stockpile.quantityOf(commodityId) >= required;
 }
 
+/// True iff [stockpile] holds enough of every input commodity to run at least
+/// one full output run of **any** recipe in [recipes] (`inputQuantities`
+/// satisfied for every key of that recipe).
+///
+/// Pure material-affordability check over a stockpile — the production-side
+/// analogue of [affordsBuildImprovementLevelZero], but for a multi-input
+/// production recipe rather than a level-0 `build_improvement`. It ignores
+/// labour capacity, structure availability, and any planner gate, so it
+/// measures only whether the **inputs** are on hand for a feasible run.
+///
+/// Used by the H8 castIron production-assignment localization (Refs #2847):
+/// the diagnostic already tracks `gpCastIronProductionAssignedTurns` (the
+/// outcome — did the economy planner actually assign a `castIron` recipe) and
+/// `gpCastIronFeedstockHeldAtTurn99` (`timber` / `iron` on hand at the terminal
+/// snapshot). A per-turn castIron **recipe-feasibility** counter built on this
+/// helper splits a flat `gpCastIronProductionAssignedTurns == 0` into two
+/// distinct causes: the recipe is **never materially feasible** (a feedstock /
+/// extraction supply gap — no turn holds both `timber` and `iron`), versus the
+/// recipe **is feasible yet never assigned** (a production-allocation / planner
+/// gate downstream of supply). Mirrors the existing inline `fabricRecipes`
+/// feasibility check so the two manufactured-input chains are measured the same
+/// way. Pure over the supplied [stockpile]; no game-state mutation.
+bool stockpileAffordsAnyProductionRecipe(
+  Stockpile stockpile,
+  List<ProductionRecipe> recipes,
+) {
+  for (final recipe in recipes) {
+    final affordsAll = recipe.inputQuantities.entries.every(
+      (e) => stockpile.quantityOf(e.key) >= e.value,
+    );
+    if (affordsAll) return true;
+  }
+  return false;
+}
+
 /// True iff [playerId] owns at least one idle Builder for which the work-order
 /// engine **accepts** a `build_improvement` on an owned unimproved feedstock
 /// tile (a member of [feedstockIds]) — i.e. `getValidWorkOrderTileKeys` (the

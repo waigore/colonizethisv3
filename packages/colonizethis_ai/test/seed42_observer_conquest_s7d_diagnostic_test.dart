@@ -1293,6 +1293,47 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// `lumber` / `castIron` production assigns, and the fabric → regiment → OW
 /// conquest chain completes before expecting OW gain to reach +3.
 ///
+/// ## S7-D refresh (captured 2026-06-06 on current `dev` HEAD — castIron
+///     production-assignment localization, this slice, Refs #2847)
+///
+/// Re-running the diagnostic on the merged `dev` HEAD (post the seller
+/// feedstock-tile acquisition thread #3271–#3276 and the lumber bootstrap
+/// waiver) confirms the prior re-pointed step is now reached: the owned-tile
+/// extraction path **works** for gp5 / gp6 — `gpFeedstockInStockpileTurns` =
+/// gp5 49 / gp6 44 (was 1) and `gpCastIronFeedstockHeldAtTurn99` shows **gp5
+/// co-holds `timber` = 71 and `iron` = 64** at turn 99 (gp6 `timber` = 214 /
+/// `iron` = 0; gp3 / gp4 still 0 / 0). OW gain is unchanged (gp1 / gp2 = +6
+/// PASS; gp3 = +2, gp4 = +1, gp5 = +1, gp6 = +2 FAIL).
+///
+/// **Decisive new localization:** `gpCastIronProductionAssignedTurns` is **0
+/// for every GP including gp5**, yet the only `castIron` recipe
+/// (`castIron_from_timber_iron_coal`) consumes only `timber` × 2 + `iron` × 2
+/// (no coal in `inputQuantities`) — so gp5's turn-99 holdings (71 / 64) make it
+/// **materially feasible**. This slice adds the missing per-turn signal,
+/// `gpCastIronRecipeFeasibleTurns` (built on the read-only pure helper
+/// `stockpileAffordsAnyProductionRecipe`, mirroring the existing inline
+/// `fabricRecipes` feasibility check), to confirm the feasibility holds across
+/// the run, not only at the terminal snapshot. A non-zero
+/// `gpCastIronRecipeFeasibleTurns` alongside `gpCastIronProductionAssignedTurns`
+/// = 0 splits the residual decisively: the `castIron` chain is no longer
+/// blocked on **feedstock supply** (the extraction lever landed) but on
+/// **production allocation** — the economy planner never assigns the feasible
+/// `castIron` recipe for the lock-recovery seller.
+///
+/// **Re-pointed next slice (supersedes the "confirm downstream production
+/// assigns" pointer above):** target **`castIron` production-recipe
+/// assignment** for a below-quota zero-NW lock-recovery seller that already
+/// holds (or can co-extract) `timber` + `iron` — i.e. make the economy
+/// planner stage the domestic `castIron` run on feasible turns (mirroring the
+/// treasury-independent `fabricFrom*` and `lumber_from_timber` staging already
+/// landed for the same gate), **not** further feedstock-extraction or
+/// supplier-release work (gp5 already co-holds both feedstocks). Verify by
+/// re-running this diagnostic and confirming `gpCastIronProductionAssignedTurns`
+/// rises above 0 for gp5 / gp6 (and, one stage on,
+/// `gpRebuildReadyNoBuildMissingInputTurns` falls) before expecting OW gain to
+/// move. The +6 baseline (gp1 / gp2) stays unaffected: they assign / hold
+/// `castIron` independently and never enter the lock-recovery seller gate.
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1694,6 +1735,17 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
       final fabricRecipeFeasibleTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      // Refs #2847 H8 castIron production-assignment localization (read-only).
+      // The castIron recipe `castIron_from_timber_iron_coal` consumes only
+      // `timber` + `iron` (no coal in `inputQuantities`), so it is materially
+      // feasible whenever both feedstocks are on hand. This counter (built on
+      // `stockpileAffordsAnyProductionRecipe`) splits a flat
+      // `gpCastIronProductionAssignedTurns == 0` into "never materially
+      // feasible" (a feedstock-supply gap) vs "feasible yet never assigned" (a
+      // production-allocation / planner gate downstream of supply).
+      final castIronRecipeFeasibleTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
       // Refs #2847 H8-extraction execution-gap disambiguation (read-only).
@@ -2109,6 +2161,13 @@ void main() {
               fabricRecipeFeasibleTurns[gpId] =
                   (fabricRecipeFeasibleTurns[gpId] ?? 0) + 1;
             }
+            if (stockpileAffordsAnyProductionRecipe(
+              player.stockpile,
+              castIronRecipes,
+            )) {
+              castIronRecipeFeasibleTurns[gpId] =
+                  (castIronRecipeFeasibleTurns[gpId] ?? 0) + 1;
+            }
           }
           // Cache the turn-99 snapshot fields for the final rollup.
           if (t == 99) {
@@ -2423,6 +2482,7 @@ void main() {
             feedstockAcquisitionTargetWithFieldArmyTurns,
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
+        'gpCastIronRecipeFeasibleTurns': castIronRecipeFeasibleTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
 
