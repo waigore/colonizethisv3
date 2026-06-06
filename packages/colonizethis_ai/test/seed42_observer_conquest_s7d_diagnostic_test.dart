@@ -1923,6 +1923,27 @@ void main() {
       final fabricRecipeFeasibleTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 § S7-D fabric circular-labour localization (read-only). The
+      // #3303/#3315 castIron-labour peasant-recruit boost stages domestic
+      // `fabric` so a lock-recovery seller can pay the 2-`fabric` peasant
+      // recruit that would grow its castIron labour. The post-#3315 refresh
+      // shows the recruit gate fires for gp5 (8 turns) yet is fabric-starved on
+      // every one (`gpCastIronLabourPeasantRecruitAffordableTurns == 0`), while
+      // `gpFabricRecipeFeasibleTurns` (material-only) is high (gp5 47) but
+      // `gpFabricProductionAssignedTurns` is ~2. This counter splits the
+      // material-feasible fabric turns by the planner's own labour gate
+      // (`feasibleRuns(...) > 0` against full `effectiveLabourForWorkers`,
+      // mirroring `gpCastIronRecipeLabourFeasibleTurns`). A near-zero count
+      // while the material count is high localizes the unbuilt recruit-fabric
+      // to **labour starvation of the fabric recipe itself** (`fabric_from_*`
+      // carries `labourPerOutput == 2`, above the seller's effective labour of
+      // 1), i.e. the recruit boost is a circular deadlock — the next lever must
+      // grow raw population by a non-`fabric` path, not stage more domestic
+      // fabric. Read-only; the (freely tunable) counts can move as later slices
+      // land.
+      final fabricRecipeLabourFeasibleTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
       // Refs #2847 H8 castIron production-assignment localization (read-only).
       // The castIron recipe `castIron_from_timber_iron_coal` consumes only
       // `timber` + `iron` (no coal in `inputQuantities`), so it is materially
@@ -2464,6 +2485,9 @@ void main() {
             }
             if (ci.fabricRecipeFeasible) {
               bumpCounter(fabricRecipeFeasibleTurns, gpId);
+              if (ci.fabricRecipeLabourFeasible) {
+                bumpCounter(fabricRecipeLabourFeasibleTurns, gpId);
+              }
             }
             if (ci.castIronMaterialFeasible) {
               bumpCounter(castIronRecipeFeasibleTurns, gpId);
@@ -2794,6 +2818,7 @@ void main() {
             feedstockAcquisitionTargetWithFieldArmyTurns,
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
+        'gpFabricRecipeLabourFeasibleTurns': fabricRecipeLabourFeasibleTurns,
         'gpCastIronRecipeFeasibleTurns': castIronRecipeFeasibleTurns,
         'gpCastIronRecipeLabourFeasibleTurns':
             castIronRecipeLabourFeasibleTurns,
@@ -2902,6 +2927,8 @@ void main() {
             castIronLabourPeasantRecruitAffordableTurns,
         castIronLabourPeasantRecruitFabricStarvedTurns:
             castIronLabourPeasantRecruitFabricStarvedTurns,
+        fabricRecipeFeasibleTurns: fabricRecipeFeasibleTurns,
+        fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
       );
     },
     skip:
