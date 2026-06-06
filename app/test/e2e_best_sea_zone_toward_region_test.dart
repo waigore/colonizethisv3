@@ -12,6 +12,7 @@ library;
 
 import 'package:colonizethis_data/colonizethis_data.dart'
     show MapTopology, TopologyEdge, TopologyNode, TopologyNodeType;
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../integration_test/e2e_test_shared_fleet_nav.dart';
@@ -65,6 +66,8 @@ MapTopology _corridorTopology() => const MapTopology(
 );
 
 void main() {
+  suppressLogsForTests();
+
   group('e2eBestSeaZoneTowardRegion', () {
     test('returns null for empty candidates', () {
       expect(
