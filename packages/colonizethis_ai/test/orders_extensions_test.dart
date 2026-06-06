@@ -1,4 +1,5 @@
 import 'package:colonizethis_ai/src/util/orders_extensions.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -27,7 +28,13 @@ void main() {
         'p2': [MoveOrder(unitId: 'm2', destinationTileKey: 'r1|b')],
       },
       workOrdersByPlayerId: {
-        'p2': [WorkOrder(unitId: 'w0', target: 'explore', targetTileKey: 't0')],
+        'p2': [
+          WorkOrder(
+            unitId: 'w0',
+            target: kWorkTargetExplore,
+            targetTileKey: 't0',
+          ),
+        ],
       },
     );
 
