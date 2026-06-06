@@ -19,7 +19,9 @@ class PlannerContext {
     required this.suggestionAPI,
     this.sameTurnPriorDiplomaticOrders,
     int? currentTurn,
-  }) : currentTurn = currentTurn ?? game.worldState.turnState.turnNumber;
+    Map<String, String?>? provinceOwner,
+  }) : currentTurn = currentTurn ?? game.worldState.turnState.turnNumber,
+       _provinceOwner = provinceOwner;
 
   final String nationId;
   final PlayerView view;
@@ -35,7 +37,17 @@ class PlannerContext {
   final Orders? sameTurnPriorDiplomaticOrders;
   final int currentTurn;
 
-  late final Map<String, String?> provinceOwner = getProvinceOwnerMap(game);
+  /// Province-owner map memo. Computed lazily on first read and threaded
+  /// across [withOrders] so the O(provinces) [getProvinceOwnerMap] scan runs
+  /// at most once per AI player turn instead of once per accumulation step
+  /// (conquest army-move passes, relocation, and move planning each rebuilt
+  /// the context previously). Province ownership is read-only during domain
+  /// planning, so the memo stays valid for the lifetime of one player turn.
+  /// Refs #3288 (eliminate redundant world-state recomputation).
+  Map<String, String?>? _provinceOwner;
+
+  Map<String, String?> get provinceOwner =>
+      _provinceOwner ??= getProvinceOwnerMap(game);
 
   PersonalityDomainWeights get domainWeights =>
       getDomainWeightsForLeader(config.personalityId);
@@ -84,5 +96,6 @@ class PlannerContext {
     suggestionAPI: suggestionAPI,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     currentTurn: currentTurn,
+    provinceOwner: _provinceOwner,
   );
 }

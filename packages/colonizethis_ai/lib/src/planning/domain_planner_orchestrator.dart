@@ -13,6 +13,7 @@ import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
+import '../util/orders_builder.dart';
 import '../util/orders_extensions.dart';
 import 'build_planner.dart';
 import 'conquest_planner.dart';
@@ -64,8 +65,7 @@ Orders runDomainPlanners({
     tileMapByRegion: tileMapByRegion,
     onStagedPlannerProgress: onStagedPlannerProgress,
     phasePlan: phasePlan,
-    recomputeTradeOrdersWithPendingCosts:
-        recomputeTradeOrdersWithPendingCosts,
+    recomputeTradeOrdersWithPendingCosts: recomputeTradeOrdersWithPendingCosts,
   ).orders;
 }
 
@@ -331,7 +331,12 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
 }) {
-  var result = ctx.orders;
+  // Refs #3288: accumulate the orchestrator-emitted economy families (work,
+  // recruit, build) into a single mutable [OrdersBuilder] and freeze once,
+  // replacing the prior chained `Orders.copyWith` appends that allocated an
+  // intermediate immutable [Orders] per family. Read-only suggestion calls
+  // observe the accumulated state via the builder's cached snapshot.
+  final ordersBuilder = OrdersBuilder.from(ctx.orders);
   final domainWeights = ctx.domainWeights;
 
   emit('suggestionPools');
@@ -339,7 +344,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ctx.view,
     ctx.game,
     ctx.topology,
-    result,
+    ordersBuilder.build(),
     tileMapByRegion: tileMapByRegion,
   );
   workCandidates = workCandidates
@@ -349,7 +354,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ctx.view,
     ctx.game,
     ctx.topology,
-    result,
+    ordersBuilder.build(),
   );
   final hasSpyWork = workCandidates.any(
     (o) =>
@@ -410,7 +415,10 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       ),
     );
     if (snapshot.colonial.newWorldProvincesOwned > 0) {
-      workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
+      workThreshold = math.min(
+        workThreshold,
+        kColonialCivilianWorkThresholdCap,
+      );
     }
   }
   // Refs #2847 H8-extraction: force the Full-AI civilian work pass on for a
@@ -461,7 +469,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       );
     }
     if (selection.workOrders.isNotEmpty) {
-      result = result.appendWorkOrders(ctx.nationId, selection.workOrders);
+      ordersBuilder.appendWorkOrders(ctx.nationId, selection.workOrders);
     }
   } else if (workCandidates.isNotEmpty) {
     _log.d('work skipped nationId=${ctx.nationId} weight below threshold');
@@ -474,7 +482,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       ctx.view,
       ctx.game,
       ctx.topology,
-      result,
+      ordersBuilder.build(),
     );
     RecruitWorkerOrder? peasantRecruit;
     for (final candidate in recruitCandidates) {
@@ -488,7 +496,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
         'castIron labour peasant recruit nationId=${ctx.nationId} '
         'targetTier=${peasantRecruit.targetTier.name}',
       );
-      result = result.appendRecruitWorkerOrders(ctx.nationId, [peasantRecruit]);
+      ordersBuilder.appendRecruitWorkerOrders(ctx.nationId, [peasantRecruit]);
     }
   }
 
@@ -497,15 +505,14 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     snapshot: snapshot,
     phasePlan: phasePlan,
     economyPlan: economyPlan,
-    orders: result,
+    ordersBuilder: ordersBuilder,
     colonialPressure: colonialPressure,
     buildCandidates: buildCandidates,
     domainEconomyWeight: domainWeights.economy,
   );
-  result = buildResult.orders;
   emit('aiStageB');
   return _EconomyDomainPlannersResult(
-    ctx: ctx.withOrders(result),
+    ctx: ctx.withOrders(ordersBuilder.build()),
     gate: EconomyGateRecord(
       workPlannerRan: runFullAiCivilianWork,
       buildPlannerRan: buildResult.buildPlannerRan,
@@ -518,22 +525,22 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
 /// Build pass outcome plus the resolved build-threshold gate decision.
 class _BuildPassResult {
   const _BuildPassResult({
-    required this.orders,
     required this.buildPlannerRan,
     required this.buildThreshold,
   });
 
-  final Orders orders;
   final bool buildPlannerRan;
   final int buildThreshold;
 }
 
+/// Appends the chosen economy build order (if any) into [ordersBuilder] and
+/// returns the build-gate decision. Refs #3288 (mutable orders accumulation).
 _BuildPassResult _appendEconomyBuildOrders({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
   required EconomyPlan economyPlan,
-  required Orders orders,
+  required OrdersBuilder ordersBuilder,
   required bool colonialPressure,
   required List<BuildUnitOrder> buildCandidates,
   required int domainEconomyWeight,
@@ -699,7 +706,6 @@ _BuildPassResult _appendEconomyBuildOrders({
       _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
     }
     return _BuildPassResult(
-      orders: orders,
       buildPlannerRan: false,
       buildThreshold: buildThreshold,
     );
@@ -756,14 +762,13 @@ _BuildPassResult _appendEconomyBuildOrders({
   );
   if (chosen == null) {
     return _BuildPassResult(
-      orders: orders,
       buildPlannerRan: true,
       buildThreshold: buildThreshold,
     );
   }
   _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
+  ordersBuilder.appendBuildOrders(ctx.nationId, [chosen]);
   return _BuildPassResult(
-    orders: orders.appendBuildOrders(ctx.nationId, [chosen]),
     buildPlannerRan: true,
     buildThreshold: buildThreshold,
   );
