@@ -442,6 +442,42 @@ zero-regiment population-bound seller cohort as
 economy-planner.md § Fabric staging ahead of castIron-labour peasant recruit;
 healthy regiment-holding GPs are unaffected.
 
+##### Peasant-recruit fabric direct bid (Refs #2847)
+
+The build-input bootstrap direct bid (§ Build-input bootstrap bid) sizes each
+missing `peasant_levies` build input to `entry.value - held`. When
+`isCastIronLabourPopulationBoundForLockRecoverySeller(game, playerId)` is
+`true` and `isCastIronLabourPeasantRecruitFabricShort(projected)` holds, the
+direct bid instead targets the peasant recruit material cost
+(`WorkerActionEconomyCatalog.peasant`, **2** `fabric`) for `fabric` — the
+regiment build input requires only **1**, so a seller holding exactly one
+unit clears the regiment missing-input check yet still cannot pay the recruit
+(S7-D: `gpCastIronLabourPeasantRecruitFabricStarvedTurns`). The bid quantity
+becomes `max(peasantFabricCost, peasantLevies.buildInputs[fabric]) - held`
+(typically `2 - held`). Scoped to the same below-quota zero-NW zero-regiment
+lock-recovery seller bootstrap gate as the regiment build-input bid; treasury,
+`bidTypeCap`, and cargo clamps are unchanged.
+
+#### Acceptance criteria (peasant-recruit fabric direct bid)
+
+- Given a below-quota zero-NW lock-recovery seller with
+  `player.treasury >= cheapestRegimentBuildTreasuryCost()`,
+  `regimentCountForPlayer(game, playerId) == 0`,
+  `isCastIronLabourPopulationBoundForLockRecoverySeller(game, playerId) == true`,
+  a projected stockpile holding exactly **1** `fabric` and enough `wool` for one
+  `fabric_from_wool` run, when `runTreasuryPlanner` runs, then it emits at least
+  one `TradeOrderType.bid` for `fabric` with `quantity >= 1`.
+- Given an otherwise identical seller holding **0** `fabric` and enough `wool`
+  for one `fabric_from_wool` run, when `runTreasuryPlanner` runs, then it emits
+  at least one `TradeOrderType.bid` for `fabric` with `quantity >= 2`.
+- Given an otherwise identical seller holding at least **2** `fabric`, when
+  `runTreasuryPlanner` runs, then it emits **no** `fabric` bid (negative control
+  — recruit cost is already met).
+- Given an otherwise identical seller that is **not**
+  population-bound for castIron labour, holding exactly **1** `fabric`, when
+  `runTreasuryPlanner` runs, then it emits **no** `fabric` bid (negative control
+  — peasant-recruit staging is inactive).
+
 The reservation never weakens a healthy GP: it is gated to the below-quota
 zero-NW seller band (gp1 / gp2 are above quota) and to the zero-regiment rebuild
 case (a seller already holding regiments keeps selling feedstock). Only the

@@ -211,16 +211,32 @@ ProductionRecipe? _lowestIdRecipeProducing(CommodityId commodityId) {
 
 /// Adds direct bids for any missing `peasant_levies` build input when no
 /// feedstock bootstrap bid is pending.
+///
+/// When [peasantRecruitFabricStaging] is true the castIron-labour peasant
+/// recruit row costs **2** `fabric` while the regiment build input requires
+/// only **1**, so a seller holding one unit is not short for the regiment yet
+/// still cannot pay the recruit — bid to the peasant material cost instead.
+/// Refs #2847 § castIron-labour peasant-recruit fabric direct bid.
 void _addRegimentBuildInputDirectNeed({
   required Stockpile projected,
   required Map<CommodityId, int> carryForwardBids,
   required Map<CommodityId, int> need,
+  bool peasantRecruitFabricStaging = false,
 }) {
   for (final input in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+    var targetQty = input.value;
+    if (peasantRecruitFabricStaging &&
+        input.key == CommodityCatalog.fabric.id) {
+      final peasantFabricCost =
+          WorkerActionEconomyCatalog.peasant.materialCosts[input.key] ?? 0;
+      if (peasantFabricCost > targetQty) {
+        targetQty = peasantFabricCost;
+      }
+    }
     final held =
         projected.quantityOf(input.key) + (carryForwardBids[input.key] ?? 0);
-    if (held < input.value) {
-      need[input.key] = input.value - held;
+    if (held < targetQty) {
+      need[input.key] = targetQty - held;
     }
   }
 }

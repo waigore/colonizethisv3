@@ -608,6 +608,9 @@ void assertSeed42S7dStructuralInvariants({
   castIronLabourPeasantRecruitMarketFabricStarvedTurns,
   required Map<String, int>
   castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+  required Map<String, int> castIronLabourPeasantRecruitFabricBidEmittedTurns,
+  required Map<String, int> castIronLabourPeasantRecruitFabricBidAbsentTurns,
+  required Map<String, int> castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
   required Map<String, int> fabricRecipeFeasibleTurns,
   required Map<String, int> fabricRecipeLabourFeasibleTurns,
 }) {
@@ -773,6 +776,41 @@ void assertSeed42S7dStructuralInvariants({
           '$gpId market-fabric-starved and market-fabric-unoffered turns are '
           'disjoint fabric-starved subsets, so their sum cannot exceed the '
           'fabric-starved total',
+    );
+    // Refs #2847 § S7-D buyer-side fabric acquisition: bid-emitted and
+    // bid-absent counters are each measured only on fabric-starved turns with
+    // offerable counterparty supply, so neither can exceed the fabric-starved
+    // total; deals-as-buyer cannot exceed bid-emitted turns on the same axis.
+    expect(
+      castIronLabourPeasantRecruitFabricBidEmittedTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId peasant-recruit fabric-bid-emitted turns cannot exceed the '
+          'fabric-starved turns',
+    );
+    expect(
+      castIronLabourPeasantRecruitFabricBidAbsentTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId peasant-recruit fabric-bid-absent turns cannot exceed the '
+          'fabric-starved turns',
+    );
+    expect(
+      castIronLabourPeasantRecruitFabricBidEmittedTurns[gpId]! +
+          castIronLabourPeasantRecruitFabricBidAbsentTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId fabric-bid-emitted and fabric-bid-absent turns are disjoint '
+          'buyer-side subsets of offerable-supply fabric-starved turns',
+    );
+    expect(
+      castIronLabourPeasantRecruitFabricDealAsBuyerTurns[gpId]!,
+      lessThanOrEqualTo(
+        castIronLabourPeasantRecruitFabricBidEmittedTurns[gpId]!,
+      ),
+      reason:
+          '$gpId peasant-recruit fabric deals-as-buyer turns cannot exceed '
+          'fabric-bid-emitted turns on the same axis',
     );
     // Refs #2847 § S7-D fabric circular-labour localization: a fabric run is
     // labour-feasible only when it is also materially feasible

@@ -309,6 +309,71 @@ void main() {
           );
         },
       );
+
+      test(
+        'emits a fabric bid for the remaining unit when fabric meets regiment '
+        'cost but not peasant recruit',
+        () {
+          final game = _populationBoundSellerGame(fabricHeld: 1, woolHeld: 20);
+          final fabricBids = _run(game)
+              .where(
+                (o) =>
+                    o.type == TradeOrderType.bid && o.commodityId == _fabricId,
+              )
+              .toList();
+          expect(
+            fabricBids,
+            isNotEmpty,
+            reason:
+                'One fabric satisfies the regiment build input but not the '
+                '2-fabric peasant recruit; the bootstrap must bid for the '
+                'remaining unit.',
+          );
+          expect(
+            fabricBids.first.quantity,
+            greaterThanOrEqualTo(1),
+          );
+        },
+      );
+
+      test(
+        'emits a fabric bid sized to the peasant recruit cost when fabric is '
+        'zero and feedstock is on hand',
+        () {
+          final game = _populationBoundSellerGame(fabricHeld: 0, woolHeld: 20);
+          final fabricBids = _run(game)
+              .where(
+                (o) =>
+                    o.type == TradeOrderType.bid && o.commodityId == _fabricId,
+              )
+              .toList();
+          expect(
+            fabricBids,
+            isNotEmpty,
+            reason:
+                'Population-bound peasant-recruit staging must bid for fabric '
+                'once feedstock is on hand.',
+          );
+          expect(
+            fabricBids.first.quantity,
+            greaterThanOrEqualTo(peasantFabricCost),
+          );
+        },
+      );
+
+      test(
+        'emits no fabric bid once peasant recruit fabric cost is met',
+        () {
+          final game = _populationBoundSellerGame(fabricHeld: 2, woolHeld: 20);
+          final fabricBids = _run(game)
+              .where(
+                (o) =>
+                    o.type == TradeOrderType.bid && o.commodityId == _fabricId,
+              )
+              .toList();
+          expect(fabricBids, isEmpty);
+        },
+      );
     },
   );
 }
