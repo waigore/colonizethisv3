@@ -1373,6 +1373,51 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// rises above 0 for gp5 before expecting OW gain to move; the +6 baseline
 /// (gp1 / gp2) stays unaffected by construction (regiment-holding gate).
 ///
+/// ## S7-D refresh (captured 2026-06-06 — castIron production-allocation fork
+///     resolved, Refs #2847, PR #3289 follow-up)
+///
+/// This slice lands the two read-only counters the prior refresh re-pointed and
+/// re-runs the diagnostic. The fork **resolves decisively to labour**, not tile
+/// ownership:
+///
+///   * `gpCastIronRecipeFeasibleTurns` (material-only): gp1 = 48, gp5 = 53,
+///     0 for every other GP — unchanged.
+///   * `gpCastIronFeasibleOwnsFeedstockTileTurns`: gp1 = 48, gp5 = 53 — **equal
+///     to the material-feasible count**, so on **every** castIron
+///     material-feasible turn the seller still owns a `timber` / `iron` resource
+///     tile. The staging gate's `_ownsFeedstockResourceTile` precondition is
+///     therefore **satisfied**; tile ownership is **not** the blocker, and
+///     broadening the staging gate to fire on held feedstock would not help.
+///   * `gpCastIronRecipeLabourFeasibleTurns`: **0 for every GP**, including
+///     gp5's 53 material-feasible turns. The castIron recipe
+///     (`labourPerOutput == 5`) is **never** labour-feasible against the
+///     seller's full `effectiveLabourForWorkers` — its effective labour, after
+///     mandatory food upkeep, never funds even one run. This is exactly the
+///     "labour-capped `feasibleRuns`" branch the prior refresh hypothesised.
+///   * `gpCastIronProductionAssignedTurns` stays 0 for every GP, now explained:
+///     the recipe is materially feasible and tile-backed but labour-starved, so
+///     the planner's own `feasibleRuns` gate never clears.
+///   * The +6 baseline is preserved (gp1 / gp2 **+6** PASS); the failing-GP gate
+///     is unchanged in kind by this read-only slice.
+///
+/// **Re-pointed next slice (supersedes the tile-ownership fork):** the binding
+/// constraint for the lock-recovery seller's first domestic `castIron` run is
+/// **effective labour**, not feedstock supply, tile ownership, or the staging
+/// boost. The next *behaviour* slice must give a below-quota zero-NW
+/// zero-regiment lock-recovery seller enough spare labour to fund one
+/// `castIron` run on a materially-feasible turn — e.g. reserving / freeing
+/// effective labour from lower-priority recipes (or a food-reservation that
+/// leaves a `labourPerOutput`-sized slice) under the same self-clearing
+/// lock-recovery-seller gate that keeps the +6 baseline GPs (gp1 / gp2,
+/// regiment-holding) out by construction. Verify by confirming
+/// `gpCastIronRecipeLabourFeasibleTurns` then `gpCastIronProductionAssignedTurns`
+/// rise above 0 for gp5 before expecting OW gain to move. Broadening the staging
+/// gate or adding feedstock supply is explicitly **not** the lever (both are
+/// already satisfied on the feasible turns). This slice is read-only diagnostic
+/// instrumentation (no behaviour change, no config constants, no gate-threshold
+/// changes; positive + negative unit tests for the two helpers in
+/// `seed42_s7d_feedstock_helpers_test.dart`).
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1785,6 +1830,37 @@ void main() {
       // feasible" (a feedstock-supply gap) vs "feasible yet never assigned" (a
       // production-allocation / planner gate downstream of supply).
       final castIronRecipeFeasibleTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      // Refs #2847 H8 castIron production-allocation localization (read-only;
+      // S7-D castIron production-assignment, PR #3289 follow-up). The staging
+      // path landed in #3289 still leaves `gpCastIronProductionAssignedTurns`
+      // flat zero for every GP, including gp5 which is materially feasible for
+      // ~53 turns (`gpCastIronRecipeFeasibleTurns`). Two read-only counters
+      // split that flat residual on the material-feasible turns:
+      //   * `castIronRecipeLabourFeasibleTurns` — the castIron recipe also
+      //     clears the planner's own labour gate (`feasibleRuns(...) > 0`
+      //     against the full `effectiveLabourForWorkers`, the same compute
+      //     `economy_planner.dart` § `_allocateLabour` runs). A near-zero count
+      //     here while `gpCastIronRecipeFeasibleTurns` is high localizes the
+      //     break to **labour starvation** (effective labour, after mandatory
+      //     food upkeep, cannot fund even one `labourPerOutput` run), moving the
+      //     lever to effective-labour / food-reservation; a count close to the
+      //     material-feasible count instead clears raw labour as the cause and
+      //     re-points downstream to allocation competition / the staging gate.
+      //   * `castIronFeasibleOwnsFeedstockTileTurns` — the seller still owns a
+      //     `timber` / `iron` feedstock resource tile at any improvement level
+      //     (the staging gate's `_ownsFeedstockResourceTile` precondition). A
+      //     flat zero here while the seller *holds* `timber` / `iron`
+      //     commodities localizes the unfired staging gate to **tile
+      //     ownership** (feedstock accumulated but no resource tile owned),
+      //     re-pointing the next behaviour slice to broaden the gate to fire on
+      //     held feedstock; a non-zero count clears tile ownership as the cause.
+      // Read-only; the (freely tunable) counts can move as later slices land.
+      final castIronRecipeLabourFeasibleTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronFeasibleOwnsFeedstockTileTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
       // Refs #2847 H8-extraction execution-gap disambiguation (read-only).
@@ -2206,6 +2282,24 @@ void main() {
             )) {
               castIronRecipeFeasibleTurns[gpId] =
                   (castIronRecipeFeasibleTurns[gpId] ?? 0) + 1;
+              // Split the material-feasible turns by the planner's labour gate
+              // and by the staging gate's tile-ownership precondition.
+              if (stockpileAndLabourAffordAnyProductionRecipe(
+                game,
+                gpId,
+                castIronRecipes,
+              )) {
+                castIronRecipeLabourFeasibleTurns[gpId] =
+                    (castIronRecipeLabourFeasibleTurns[gpId] ?? 0) + 1;
+              }
+              if (ownsFeedstockResourceTileAnyLevel(
+                game,
+                gpId,
+                castIronFeedstockIds,
+              )) {
+                castIronFeasibleOwnsFeedstockTileTurns[gpId] =
+                    (castIronFeasibleOwnsFeedstockTileTurns[gpId] ?? 0) + 1;
+              }
             }
           }
           // Cache the turn-99 snapshot fields for the final rollup.
@@ -2522,6 +2616,9 @@ void main() {
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
         'gpCastIronRecipeFeasibleTurns': castIronRecipeFeasibleTurns,
+        'gpCastIronRecipeLabourFeasibleTurns': castIronRecipeLabourFeasibleTurns,
+        'gpCastIronFeasibleOwnsFeedstockTileTurns':
+            castIronFeasibleOwnsFeedstockTileTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
 
