@@ -295,6 +295,28 @@ Rule id: `nested_world_state_copywith` (`match.kind`:
 `packages/colonizethis_logic/lib/`, `match.outer_argument_name`:
 `worldState`).
 
+### Full production-recipe-catalog scans in `colonizethis_ai`
+
+In `packages/colonizethis_ai/lib/**`, accessing the static member
+**`ProductionRecipesCatalog.all`** is disallowed. AI planning must resolve
+recipes through the O(1) indexes **`ProductionRecipesCatalog.producing(commodityId)`**
+(output index) or **`ProductionRecipesCatalog.byId[recipeId]`** (id index)
+instead of iterating the whole catalog per commodity / per turn.
+
+Rationale: per-turn AI planning runs inside the 15-second next-turn-resolution
+budget. A full `ProductionRecipesCatalog.all` scan is `O(recipes)` per lookup
+and, in hot feedstock/market loops, easily becomes `O(recipes × commodities)`
+per player per turn. The index conversions in Refs #3288 removed every
+output-keyed full scan from the economy and treasury planners; this rule
+prevents silent regression. A genuine all-recipes loop (for example labour
+allocation that must score every feasible recipe, not look one up by output)
+may suppress with an inline `// ignore: disallowed_ast_ai_full_recipe_catalog_scan`
+and a rationale comment.
+
+Rule id: `ai_full_recipe_catalog_scan` (`match.kind`: `static_member_access`,
+`match.type_name`: `ProductionRecipesCatalog`, `match.member_name`: `all`,
+`match.relative_path_prefix`: `packages/colonizethis_ai/lib/`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -529,3 +551,25 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `// ignore_for_file: disallowed_ast_nested_world_state_copywith` marker,
   **when** the disallowed AST checker runs, **then** it does not report
   that violation for `nested_world_state_copywith`.
+
+- **Given** runtime Dart source under `packages/colonizethis_ai/lib/`
+  that accesses `ProductionRecipesCatalog.all`, **when** the disallowed AST
+  checker runs, **then** it reports at least one violation for
+  `ai_full_recipe_catalog_scan` with the correct file and line.
+
+- **Given** runtime Dart source under `packages/colonizethis_ai/lib/`
+  that resolves recipes via `ProductionRecipesCatalog.producing(commodityId)`
+  or `ProductionRecipesCatalog.byId[recipeId]` instead of `.all`, **when** the
+  disallowed AST checker runs, **then** it does not report an
+  `ai_full_recipe_catalog_scan` violation for that access.
+
+- **Given** runtime Dart source outside `packages/colonizethis_ai/lib/`
+  that accesses `ProductionRecipesCatalog.all`, **when** the disallowed AST
+  checker runs, **then** it does not report an `ai_full_recipe_catalog_scan`
+  violation for that access.
+
+- **Given** runtime Dart source under `packages/colonizethis_ai/lib/`
+  that accesses `ProductionRecipesCatalog.all` with
+  `// ignore: disallowed_ast_ai_full_recipe_catalog_scan` on the violating
+  line or the line above, **when** the disallowed AST checker runs, **then**
+  it does not report that violation for `ai_full_recipe_catalog_scan`.
