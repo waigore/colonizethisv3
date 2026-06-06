@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
+import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
+    show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show
         cheapestRegimentBuildTreasuryCost,
@@ -1466,6 +1468,53 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// three helpers `playerEffectiveLabour` / `playerRawLabourSupply` /
 /// `playerFoodOnHand` in `seed42_s7d_feedstock_helpers_test.dart`).
 ///
+/// ## Refs #2847 — #3303 peasant-recruit effectiveness (circular fabric lock)
+///
+/// #3303 acted on the population-bound finding above: it wired an EXPAND
+/// orchestrator pass that emits one peasant `RecruitWorkerOrder` whenever
+/// `isCastIronLabourPopulationBoundForLockRecoverySeller` holds, so the seller
+/// can grow raw labour toward one `castIron` run. The S7-D refresh **after
+/// #3303 landed** shows it did not move the conquest gate (OW gain unchanged:
+/// gp1/gp2 +6, gp3 +2, gp4 +1, gp5 +1, gp6 +2) and that
+/// `gpCastIronRecipeLabourFeasibleTurns` / `gpCastIronProductionAssignedTurns`
+/// are **still 0 for every GP**. Three read-only counters localize why by
+/// splitting the boost's gate-active turns on peasant-recruit affordability
+/// (`canAffordRecruitWorker` against `WorkerActionEconomyCatalog.peasant`,
+/// whose cost row is **2 `fabric`**):
+///
+///   * `gpCastIronLabourPeasantRecruitGateTurns` = **gp5 = 37**, every other
+///     GP = 0. Only gp5 ever satisfies the #3303 gate: gp3/gp4/gp6 are never
+///     even castIron material-feasible (`gpCastIronRecipeFeasibleTurns == 0`),
+///     and gp1 holds regiments (the gate is scoped to `regimentCount == 0`).
+///   * `gpCastIronLabourPeasantRecruitAffordableTurns` = **0 for every GP**.
+///   * `gpCastIronLabourPeasantRecruitFabricStarvedTurns` = **gp5 = 37**
+///     (== its gate-active total).
+///
+/// **#3303 is a structural no-op.** On every turn its gate fires (gp5, 37
+/// turns) the seller cannot pay the peasant recruit's 2-`fabric` cost, so the
+/// orchestrator probes a recruit the validator must reject — raw labour never
+/// grows, the castIron run never becomes labour-feasible. This is a **circular
+/// dependency**: the peasant that would grow castIron labour is itself bought
+/// with `fabric`, the very downstream commodity the castIron → improvement →
+/// feedstock-extraction chain exists to unblock. A fabric-starved
+/// lock-recovery seller can never bootstrap out of the lock through peasant
+/// recruitment.
+///
+/// **Re-pointed next slice (supersedes the peasant-recruit hypothesis):** the
+/// labour-growth lever must not consume the scarce end-of-chain commodity.
+/// gp5 already shows `gpFabricRecipeFeasibleTurns == 48` (it can run the fabric
+/// recipe from owned cotton/wool feedstock), so a viable direction is to route
+/// a domestic `fabric` production assignment for the lock-recovery seller
+/// *before* the peasant recruit so the 2-`fabric` cost is payable from own
+/// output rather than from the (absent) market — or to grow labour through a
+/// fabric-free path. Verify by confirming
+/// `gpCastIronLabourPeasantRecruitAffordableTurns` rises above 0, then
+/// `gpCastIronRecipeLabourFeasibleTurns` and `gpCastIronProductionAssigned
+/// Turns` rise above 0 for gp5, while the gp1/gp2 +6 baseline holds. This
+/// slice is read-only diagnostic instrumentation (no behaviour change, no
+/// config constants, no gate-threshold changes; the three counters partition
+/// the gate-active turns under a structural-invariant assertion).
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1935,6 +1984,40 @@ void main() {
       final castIronLabourPopulationBoundTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 — peasant-recruit effectiveness localization for the
+      // #3303 castIron-labour boost. #3303 wired an EXPAND orchestrator pass
+      // that emits one peasant `RecruitWorkerOrder` whenever
+      // `isCastIronLabourPopulationBoundForLockRecoverySeller` holds (the
+      // lock-recovery seller is material-feasible for one castIron run yet its
+      // raw population ceiling supplies < `labourPerOutput` labour). The S7-D
+      // refresh after #3303 shows `gpCastIronRecipeLabourFeasibleTurns` is
+      // STILL 0 for every GP, i.e. the boost never makes a castIron run
+      // labour-feasible. These counters localize *why* by measuring, per GP:
+      //   * `castIronLabourPeasantRecruitGateTurns` — turns the #3303 gate
+      //     predicate itself holds (the boost's distinguishing condition);
+      //   * `castIronLabourPeasantRecruitAffordableTurns` — of those, turns the
+      //     seller can actually pay the peasant recruit cost row
+      //     (`WorkerActionEconomyCatalog.peasant`, which costs 2 `fabric`);
+      //   * `castIronLabourPeasantRecruitFabricStarvedTurns` — of those, turns
+      //     it CANNOT (the suspected circular dependency: recruiting the
+      //     peasant that would grow castIron labour itself needs `fabric`, the
+      //     very downstream commodity the castIron chain exists to unblock).
+      // If FabricStarved == GateTurns the #3303 boost is a structural no-op:
+      // every gate-active turn it probes a peasant recruit the validator must
+      // reject for want of fabric. Read-only; counts move freely as later
+      // slices land.
+      final castIronLabourPeasantRecruitGateTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronLabourPeasantRecruitAffordableTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronLabourPeasantRecruitFabricStarvedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      const peasantRecruitProbeOrder = RecruitWorkerOrder(
+        targetTier: WorkerTier.peasant,
+      );
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2347,6 +2430,33 @@ void main() {
             }
           }
           if (player != null) {
+            // Refs #2847 — localize the #3303 castIron-labour peasant-recruit
+            // boost. Measure the boost's gate predicate and, when it holds,
+            // whether the seller can actually afford the peasant recruit cost
+            // row (2 fabric). The fabric-starved subset isolates the suspected
+            // circular dependency that renders the boost a no-op.
+            if (isCastIronLabourPopulationBoundForLockRecoverySeller(
+              game: game,
+              playerId: gpId,
+            )) {
+              castIronLabourPeasantRecruitGateTurns[gpId] =
+                  (castIronLabourPeasantRecruitGateTurns[gpId] ?? 0) + 1;
+              final canAfford = canAffordRecruitWorker(
+                player,
+                peasantRecruitProbeOrder,
+                player.workerPool,
+                player.stockpile,
+                player.treasury,
+              ).canAfford;
+              if (canAfford) {
+                castIronLabourPeasantRecruitAffordableTurns[gpId] =
+                    (castIronLabourPeasantRecruitAffordableTurns[gpId] ?? 0) + 1;
+              } else {
+                castIronLabourPeasantRecruitFabricStarvedTurns[gpId] =
+                    (castIronLabourPeasantRecruitFabricStarvedTurns[gpId] ?? 0) +
+                    1;
+              }
+            }
             final holdsFeedstock = fabricFeedstockIds.any(
               (id) => player.stockpile.quantityOf(id) > 0,
             );
@@ -2732,6 +2842,12 @@ void main() {
         'gpCastIronLabourFoodStarvedTurns': castIronLabourFoodStarvedTurns,
         'gpCastIronLabourPopulationBoundTurns':
             castIronLabourPopulationBoundTurns,
+        'gpCastIronLabourPeasantRecruitGateTurns':
+            castIronLabourPeasantRecruitGateTurns,
+        'gpCastIronLabourPeasantRecruitAffordableTurns':
+            castIronLabourPeasantRecruitAffordableTurns,
+        'gpCastIronLabourPeasantRecruitFabricStarvedTurns':
+            castIronLabourPeasantRecruitFabricStarvedTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
@@ -2902,6 +3018,26 @@ void main() {
           lessThanOrEqualTo(100),
           reason:
               '$gpId acquisition-target-active turns cannot exceed the '
+              '100-turn run length',
+        );
+        // Refs #2847 peasant-recruit localization: the affordable and
+        // fabric-starved sub-counters partition the #3303 gate-active turns,
+        // and the gate total cannot exceed the 100-turn run. Guards the
+        // instrumentation gating itself without pinning the (freely tunable)
+        // per-GP counts.
+        expect(
+          castIronLabourPeasantRecruitAffordableTurns[gpId]! +
+              castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!,
+          castIronLabourPeasantRecruitGateTurns[gpId],
+          reason:
+              '$gpId peasant-recruit gate-active turns must split into '
+              'affordable + fabric-starved sub-causes',
+        );
+        expect(
+          castIronLabourPeasantRecruitGateTurns[gpId]!,
+          lessThanOrEqualTo(100),
+          reason:
+              '$gpId peasant-recruit gate-active turns cannot exceed the '
               '100-turn run length',
         );
       }
