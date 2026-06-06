@@ -151,6 +151,21 @@ EconomyPlan runEconomyPlanner({
         game,
         view.playerId,
       );
+  // Refs #2847 § H8 production allocation (S7-D castIron production-assignment,
+  // PR #3289): once a recovered lock-recovery seller improves its fabric
+  // feedstock tile, `selfLockRecoverySellerNeededProducibleImprovementInputs`
+  // goes empty (its gate keys on owning an *unimproved* `wool` / `cotton`
+  // tile), so a seller that co-holds the `castIron` feedstock (`timber` +
+  // `iron`) and runs the materially-feasible `castIron` recipe ~53 turns on
+  // seed 42 (gp5) never stages it — a production-allocation gap. This adds the
+  // **multi-input** producible improvement input (`castIron`) the seller is
+  // short of, gated on it still owning a `timber` / `iron` feedstock tile, so
+  // the domestic run is staged across the feasible window. Treasury-independent
+  // (production spends no treasury), self-clears on regiment ownership, and
+  // never routes the +6 baseline GPs (gp1 / gp2 hold regiments).
+  // SPEC/ai/economy-planner.md § Domestic improvement-input production.
+  final stageableImprovementInputs =
+      selfLockRecoverySellerStageableImprovementInputs(game, view.playerId);
   // Refs #2847 § H8 production allocation: the boost stages the cheapest
   // regiment's build input (`fabric`) whenever the EXPAND rebuild directive is
   // active for a zero-regiment GP that is short the input — **independent of
@@ -173,10 +188,12 @@ EconomyPlan runEconomyPlanner({
       (expandEconomy.forceCheapestRegimentBuild &&
           regimentCountForPlayer(game, view.playerId) == 0 &&
           missingRegimentBuildInputs.isNotEmpty) ||
-      domesticImprovementInputOutputs.isNotEmpty;
+      domesticImprovementInputOutputs.isNotEmpty ||
+      stageableImprovementInputs.isNotEmpty;
   final boostedBuildInputOutputs = <String>{
     ...missingRegimentBuildInputs,
     ...domesticImprovementInputOutputs,
+    ...stageableImprovementInputs,
   };
 
   // Refs #2847 H8-supply (S7-D lumber re-localization): an affluent supplier
@@ -230,6 +247,7 @@ EconomyPlan runEconomyPlanner({
   // and the +6 OW baseline.
   final feedstockReserveOutputIds = <String>{
     ..._multiInputImprovementOutputs(domesticImprovementInputOutputs),
+    ..._multiInputImprovementOutputs(stageableImprovementInputs),
     ...supplierReleaseImprovementInputs,
   };
 

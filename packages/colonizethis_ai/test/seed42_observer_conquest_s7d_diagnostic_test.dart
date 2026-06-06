@@ -1334,6 +1334,45 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// move. The +6 baseline (gp1 / gp2) stays unaffected: they assign / hold
 /// `castIron` independently and never enter the lock-recovery seller gate.
 ///
+/// ## S7-D refresh (captured 2026-06-06 — castIron staging path landed,
+///     Refs #2847, PR #3289)
+///
+/// The economy planner now adds
+/// `selfLockRecoverySellerStageableImprovementInputs(game, playerId)` to the
+/// domestic production boost: the producible **multi-input** level-0
+/// improvement input (`castIron`) a below-quota zero-NW lock-recovery seller
+/// (zero regiments) is short of **and still owns a `timber` / `iron` feedstock
+/// tile for**, so the seller can stage the run even after its fabric-feedstock
+/// improvement-cost gate goes inactive. Unit coverage:
+/// `self_lock_recovery_seller_stageable_improvement_inputs_test.dart` (logic)
+/// and `economy_planner_regiment_build_input_production_test.dart` (AI);
+/// SPEC updated in `SPEC/ai/economy-planner.md` § Domestic castIron staging
+/// after the fabric gate goes inactive.
+///
+/// Re-running this diagnostic on the change is **necessary-but-insufficient**
+/// on seed 42: the +6 baseline is preserved (gp1 / gp2 **+6** PASS; gp3 +2,
+/// gp4 +1, gp5 +1, gp6 +2 FAIL — OW gain identical to the pre-change capture),
+/// `gpCastIronRecipeFeasibleTurns` unchanged (gp5 = 53, gp1 = 48), and
+/// `gpCastIronProductionAssignedTurns` **stays 0 for every GP**. The staging
+/// path is correct groundwork but does not yet fire for gp5 on this seed: the
+/// binding constraint sits one stage deeper than "castIron absent from the
+/// boosted set" — either gp5's `timber` / `iron` is held without owning a
+/// resource tile on the feasible turns (so the tile-ownership gate stays shut),
+/// or the materially-feasible turns (`stockpileAffordsAnyProductionRecipe`,
+/// material-only) are not **labour**-feasible (`feasibleRuns` is labour-capped)
+/// once mandatory food production consumes the seller's small effective labour.
+///
+/// **Re-pointed next slice:** localize which of the two holds for gp5 — add a
+/// read-only counter splitting `castIronRecipeFeasibleTurns` (material) into
+/// labour-feasible vs labour-starved, and a counter for whether the seller owns
+/// a `timber` / `iron` resource tile on the feasible turns. If tile-ownership
+/// is the blocker, broaden the staging gate to fire on held feedstock (and move
+/// the gate-inactive co-availability negative controls accordingly); if labour
+/// is the blocker, the lever moves to effective-labour / food-reservation, not
+/// the production boost. Verify by confirming `gpCastIronProductionAssignedTurns`
+/// rises above 0 for gp5 before expecting OW gain to move; the +6 baseline
+/// (gp1 / gp2) stays unaffected by construction (regiment-holding gate).
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate

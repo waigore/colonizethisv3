@@ -603,6 +603,91 @@ Set<String> selfLockRecoverySellerNeededProducibleImprovementInputs(
   return const <String>{};
 }
 
+/// Producible **multi-input** level-0 `build_improvement` input commodities
+/// (`castIron`) a below-quota zero-NW lock-recovery seller should stage
+/// domestically on feasible turns **even after its fabric-feedstock
+/// improvement-cost gate goes inactive**, provided it still owns the `castIron`
+/// feedstock tiles (`timber` / `iron`) it extracts from (Refs #2847 § H8
+/// production allocation; S7-D castIron production-assignment localization,
+/// PR #3289).
+///
+/// [selfLockRecoverySellerNeededProducibleImprovementInputs] only reports the
+/// inputs while `regimentBuildInputFeedstockImprovementInputCost` is active,
+/// which is gated on the seller owning an **unimproved** `wool` / `cotton`
+/// (fabric-recipe) feedstock tile. The S7-D castIron localization pinned a
+/// residual where a recovered seller (seed-42 gp5) co-holds the `castIron`
+/// feedstock (`timber` + `iron`) and the only `castIron` recipe is materially
+/// feasible for ~53 turns, yet `castIron` production is never assigned because
+/// that fabric-tile gate has gone inactive once the fabric tile is improved —
+/// a production-allocation gap, not a feedstock-supply gap.
+///
+/// This returns `{castIron}` (and any other producible multi-input level-0
+/// improvement input) the seller is **short** of, gated on the seller being a
+/// below-quota zero-NW lock-recovery seller (`oldWorld ∈ [2, quota)`, zero New
+/// World provinces) with **zero regiments** that still **owns at least one tile
+/// hosting that recipe's feedstock** (`timber` / `iron`) at any improvement
+/// level. The tile-ownership precondition keeps the staging purposeful and
+/// scopes it to sellers that genuinely run the `extract → produce → improve`
+/// chain (so a seller owning no feedstock tile, like the gate-inactive negative
+/// controls, never stages it). The economy planner's own `feasibleRuns` check
+/// still only assigns the recipe on turns the seller actually holds enough
+/// feedstock, and the multi-input feedstock reserve preserves `timber` / `iron`
+/// co-availability. The single-input `lumber` path is intentionally excluded
+/// (already covered by the improvement-cost-gated set, and a single-input
+/// recipe has no co-availability problem). Self-clears once the seller holds
+/// the input or owns a regiment, so the +6 Old World conquest baseline GPs
+/// (gp1 / gp2, holding regiments) are never routed. Pure and deterministic over
+/// `(game, playerId)` and the static `ProductionRecipesCatalog` / work-order
+/// cost table.
+Set<String> selfLockRecoverySellerStageableImprovementInputs(
+  Game game,
+  String playerId,
+) {
+  if (_regimentCountForPlayer(game, playerId) != 0) return const <String>{};
+  if (!_isBelowQuotaZeroNwSeller(game, playerId)) return const <String>{};
+  Player? seller;
+  for (final player in game.players) {
+    if (player.id == playerId) {
+      seller = player;
+      break;
+    }
+  }
+  if (seller == null) return const <String>{};
+  final baseCost = workOrderCostBuildImprovement(0);
+  if (baseCost.isEmpty) return const <String>{};
+  final result = <String>{};
+  for (final entry in baseCost.entries) {
+    if (seller.stockpile.quantityOf(entry.key) >= entry.value) continue;
+    final recipe = _lowestIdMultiInputRecipeProducingOutput(entry.key);
+    if (recipe == null) continue;
+    if (!_ownsFeedstockResourceTile(
+      game,
+      playerId,
+      recipe.inputQuantities.keys.toSet(),
+    )) {
+      continue;
+    }
+    result.add(entry.key);
+  }
+  return result;
+}
+
+/// The production recipe with the lowest `id` whose output is [outputId] and
+/// which consumes more than one distinct input commodity (e.g.
+/// `castIron_from_timber_iron_coal`), or `null` when none exists. Single-input
+/// recipes (e.g. `lumber_from_timber`) are excluded — they have no
+/// feedstock-co-availability problem. Deterministic over the static
+/// `ProductionRecipesCatalog`.
+ProductionRecipe? _lowestIdMultiInputRecipeProducingOutput(String outputId) {
+  ProductionRecipe? best;
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (recipe.outputCommodityId != outputId) continue;
+    if (recipe.inputQuantities.length <= 1) continue;
+    if (best == null || recipe.id.compareTo(best.id) < 0) best = recipe;
+  }
+  return best;
+}
+
 /// The producible level-0 `build_improvement` input commodities [player] is
 /// short of at its active improvement-cost gate. "Producible" means some
 /// `ProductionRecipesCatalog` recipe outputs the commodity. Returns the empty
