@@ -112,6 +112,8 @@ import 'package:colonizethis_data/colonizethis_data.dart'
     show cheapestRegimentBuildTreasuryCost;
 
 import '../perception/perception_snapshot.dart';
+import 'cast_iron_labour_gate.dart'
+    show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
