@@ -7,6 +7,103 @@ part of 'treasury_planner.dart';
 // treasury-planner library), so imports, shared helpers, and visibility are
 // unchanged.
 
+/// Per-turn lock-recovery aggregates computed in one `game.players` pass (Refs
+/// #3288). Replaces repeated O(players) scans inside the treasury hot path.
+final class _LockRecoveryGameScan {
+  _LockRecoveryGameScan._({
+    required this.sortedGpIds,
+    required this.anyBrokeGreatPower,
+    required this.anySellerNeedsRegimentBuildInput,
+    required this.anySellerNeedsCastIronImprovementInput,
+    required this.isLockRecoverySellerByPlayerId,
+    required this.designatedBuyerId,
+  });
+
+  final List<String> sortedGpIds;
+  final bool anyBrokeGreatPower;
+  final bool anySellerNeedsRegimentBuildInput;
+  final bool anySellerNeedsCastIronImprovementInput;
+  final Map<String, bool> isLockRecoverySellerByPlayerId;
+  final String designatedBuyerId;
+
+  factory _LockRecoveryGameScan.fromGame(
+    Game game, {
+    AIWorldSnapshot? snapshot,
+  }) {
+    final regimentThreshold = cheapestRegimentBuildTreasuryCost();
+    final affluenceThreshold = treasuryAffluenceThreshold();
+    final sortedGpIds = <String>[];
+    var anyBrokeGreatPower = false;
+    var anySellerNeedsRegimentBuildInput = false;
+    var anySellerNeedsCastIronImprovementInput = false;
+    final isLockRecoverySellerByPlayerId = <String, bool>{};
+    final affluentNonSellerIds = <String>[];
+
+    for (final player in game.players) {
+      sortedGpIds.add(player.id);
+      if (player.treasury < regimentThreshold) {
+        anyBrokeGreatPower = true;
+      }
+      final isSeller = _isBelowQuotaZeroNwLockRecoverySeller(
+        game: game,
+        playerId: player.id,
+        snapshot: snapshot?.playerId == player.id ? snapshot : null,
+      );
+      isLockRecoverySellerByPlayerId[player.id] = isSeller;
+      if (isSeller) {
+        if (player.treasury >= regimentThreshold &&
+            regimentCountForPlayer(game, player.id) == 0) {
+          for (final entry
+              in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+            if (player.stockpile.quantityOf(entry.key) < entry.value) {
+              anySellerNeedsRegimentBuildInput = true;
+              break;
+            }
+          }
+        }
+        final cost = regimentBuildInputFeedstockImprovementInputCost(
+          game,
+          player.id,
+        );
+        if (cost.isNotEmpty) {
+          for (final entry in cost.entries) {
+            if (!kDomesticProductionImprovementInputIds.contains(entry.key)) {
+              continue;
+            }
+            if (player.stockpile.quantityOf(entry.key) < entry.value) {
+              anySellerNeedsCastIronImprovementInput = true;
+              break;
+            }
+          }
+        }
+      }
+      if (player.treasury >= affluenceThreshold && !isSeller) {
+        affluentNonSellerIds.add(player.id);
+      }
+    }
+    sortedGpIds.sort();
+    affluentNonSellerIds.sort();
+
+    final designatedBuyerId = !anyBrokeGreatPower || affluentNonSellerIds.isEmpty
+        ? ''
+        : affluentNonSellerIds[
+            game.worldState.turnState.turnNumber % affluentNonSellerIds.length];
+
+    return _LockRecoveryGameScan._(
+      sortedGpIds: sortedGpIds,
+      anyBrokeGreatPower: anyBrokeGreatPower,
+      anySellerNeedsRegimentBuildInput: anySellerNeedsRegimentBuildInput,
+      anySellerNeedsCastIronImprovementInput:
+          anySellerNeedsCastIronImprovementInput,
+      isLockRecoverySellerByPlayerId: isLockRecoverySellerByPlayerId,
+      designatedBuyerId: designatedBuyerId,
+    );
+  }
+
+  bool isLockRecoverySeller(String playerId) =>
+      isLockRecoverySellerByPlayerId[playerId] ?? false;
+}
+
 int _treasuryForPlayer(Game game, String playerId) =>
     game.playerById(playerId)?.treasury ?? 0;
 
@@ -62,26 +159,12 @@ bool _isBelowQuotaZeroNwLockRecoverySeller({
 
 /// True when any below-quota zero-NW lock-recovery seller still needs the
 /// H8 regiment build-input bootstrap path (Refs #2847 H8-supply market).
-bool _anyLockRecoverySellerNeedsRegimentBuildInput(Game game) {
-  final threshold = cheapestRegimentBuildTreasuryCost();
-  for (final player in game.players) {
-    if (!_isBelowQuotaZeroNwLockRecoverySeller(
-      game: game,
-      playerId: player.id,
-    )) {
-      continue;
-    }
-    if (player.treasury < threshold) continue;
-    if (regimentCountForPlayer(game, player.id) > 0) continue;
-    for (final entry
-        in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
-      if (player.stockpile.quantityOf(entry.key) < entry.value) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
+bool _anyLockRecoverySellerNeedsRegimentBuildInput(
+  Game game, {
+  _LockRecoveryGameScan? scan,
+}) =>
+    (scan ?? _LockRecoveryGameScan.fromGame(game))
+        .anySellerNeedsRegimentBuildInput;
 
 /// Public accessor for the below-quota zero-NW lock-recovery seller predicate
 /// (Refs #2847 H8-supply castIron source). The economy planner uses it to keep
@@ -107,65 +190,21 @@ bool isBelowQuotaZeroNwLockRecoverySeller(
 /// surplus + aligns its offer tier so the locked seller's bid can cross.
 /// Pure function of `(game)` and the static catalogs; returns `false` once no
 /// locked seller still needs the improvement input (self-clearing).
-bool anyLockRecoverySellerNeedsCastIronImprovementInput(Game game) {
-  for (final player in game.players) {
-    if (!_isBelowQuotaZeroNwLockRecoverySeller(
-      game: game,
-      playerId: player.id,
-    )) {
-      continue;
-    }
-    final cost = regimentBuildInputFeedstockImprovementInputCost(
-      game,
-      player.id,
-    );
-    if (cost.isEmpty) continue;
-    for (final entry in cost.entries) {
-      if (!kDomesticProductionImprovementInputIds.contains(entry.key)) {
-        continue;
-      }
-      if (player.stockpile.quantityOf(entry.key) < entry.value) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-/// Sorted Great Power ids for deterministic per-turn buyer rotation.
-List<String> _sortedGreatPowerIds(Game game) {
-  final ids = <String>[
-    for (final player in game.players) player.id,
-  ]..sort();
-  return ids;
-}
-
-/// True iff at least one Great Power has `player.treasury <
-/// cheapestRegimentBuildTreasuryCost()`. The lock-recovery liquidity bid is
-/// only useful when at least one broke GP needs buy-side demand for its
-/// urgent offers. Refs #2924 F12.
-bool _anyBrokeGreatPower(Game game) {
-  final threshold = cheapestRegimentBuildTreasuryCost();
-  for (final player in game.players) {
-    if (player.treasury < threshold) return true;
-  }
-  return false;
-}
+bool anyLockRecoverySellerNeedsCastIronImprovementInput(
+  Game game, {
+  _LockRecoveryGameScan? scan,
+}) =>
+    (scan ?? _LockRecoveryGameScan.fromGame(game))
+        .anySellerNeedsCastIronImprovementInput;
 
 bool _isAffluentDesignatedLockRecoveryBuyer({
   required Game game,
   required String playerId,
+  _LockRecoveryGameScan? scan,
 }) {
-  if (!_anyBrokeGreatPower(game)) return false;
-  final gpIds = _sortedGreatPowerIds(game);
-  final affluent = <String>[
-    for (final id in gpIds)
-      if (_treasuryForPlayer(game, id) >= treasuryAffluenceThreshold() &&
-          !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: id))
-        id,
-  ];
-  if (affluent.isEmpty) return false;
-  final designated = lockRecoveryDesignatedBuyerId(game);
+  final resolved = scan ?? _LockRecoveryGameScan.fromGame(game);
+  if (!resolved.anyBrokeGreatPower) return false;
+  final designated = resolved.designatedBuyerId;
   return designated.isNotEmpty && playerId == designated;
 }
 
@@ -176,8 +215,10 @@ bool isLockRecoveryLiquidityBuyer({
   required String playerId,
   required int treasuryBudgetForBids,
   required int treasuryForecast,
+  _LockRecoveryGameScan? scan,
 }) {
-  if (!_anyBrokeGreatPower(game)) return false;
+  final resolved = scan ?? _LockRecoveryGameScan.fromGame(game);
+  if (!resolved.anyBrokeGreatPower) return false;
   final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
   final pricePerUnit = game.worldMarketState.prices[liquidity] ?? 0;
   if (pricePerUnit <= 0 || treasuryBudgetForBids < pricePerUnit) {
@@ -189,16 +230,8 @@ bool isLockRecoveryLiquidityBuyer({
   if (rawTreasury < threshold && treasuryForecast >= threshold) {
     return false;
   }
-  final gpIds = _sortedGreatPowerIds(game);
-  final affluent = <String>[
-    for (final id in gpIds)
-      if (_treasuryForPlayer(game, id) >= treasuryAffluenceThreshold() &&
-          !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: id))
-        id,
-  ];
-  if (affluent.isNotEmpty) {
-    final designated = lockRecoveryDesignatedBuyerId(game);
-    return designated.isNotEmpty && playerId == designated;
+  if (resolved.designatedBuyerId.isNotEmpty) {
+    return playerId == resolved.designatedBuyerId;
   }
   // F15: when no GP is affluent, logic-phase minor auto-bids (`world_market_phase`
   // / `computeLockRecoveryMinorAutoBids`) fund liquidity-food purchases. GP buyers
@@ -214,8 +247,12 @@ const List<String> kLockRecoveryPreferredBuyerIds = ['gp1', 'gp2'];
 /// Buyer when no GP meets [treasuryAffluenceThreshold]: rotate among
 /// [kLockRecoveryPreferredBuyerIds] present in the game, else the two
 /// richest-by-treasury GPs.
-String lockRecoveryFallbackBuyerId(Game game) {
-  final gpIds = _sortedGreatPowerIds(game);
+String lockRecoveryFallbackBuyerId(
+  Game game, {
+  _LockRecoveryGameScan? scan,
+}) {
+  final resolved = scan ?? _LockRecoveryGameScan.fromGame(game);
+  final gpIds = resolved.sortedGpIds;
   if (gpIds.isEmpty) return '';
   final preferred = <String>[
     for (final id in kLockRecoveryPreferredBuyerIds)
@@ -223,15 +260,18 @@ String lockRecoveryFallbackBuyerId(Game game) {
   ];
   final buyerPool = preferred.length >= 2
       ? preferred
-      : _twoRichestGreatPowerIdsByTreasury(game);
+      : _twoRichestGreatPowerIdsByTreasury(game, scan: resolved);
   if (buyerPool.isEmpty) return '';
   if (buyerPool.length == 1) return buyerPool.first;
   final turn = game.worldState.turnState.turnNumber;
   return buyerPool[turn % buyerPool.length];
 }
 
-List<String> _twoRichestGreatPowerIdsByTreasury(Game game) {
-  final gpIds = _sortedGreatPowerIds(game);
+List<String> _twoRichestGreatPowerIdsByTreasury(
+  Game game, {
+  _LockRecoveryGameScan? scan,
+}) {
+  final gpIds = (scan ?? _LockRecoveryGameScan.fromGame(game)).sortedGpIds;
   if (gpIds.isEmpty) return const [];
   final ranked = [...gpIds]
     ..sort((a, b) {
@@ -257,21 +297,11 @@ List<String> _twoRichestGreatPowerIdsByTreasury(Game game) {
 /// Returns the empty string when no Great Power is broke — every GP is
 /// already at or above the regiment threshold and the F1–F5 / F10 paths
 /// handle the steady state without a synthetic grain bid. Refs #2924 F12.
-String lockRecoveryDesignatedBuyerId(Game game) {
-  if (!_anyBrokeGreatPower(game)) return '';
-  final gpIds = _sortedGreatPowerIds(game);
-  if (gpIds.isEmpty) return '';
-  final threshold = treasuryAffluenceThreshold();
-  final affluent = <String>[
-    for (final id in gpIds)
-      if (_treasuryForPlayer(game, id) >= threshold &&
-          !_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: id))
-        id,
-  ];
-  if (affluent.isEmpty) return '';
-  final turn = game.worldState.turnState.turnNumber;
-  return affluent[turn % affluent.length];
-}
+String lockRecoveryDesignatedBuyerId(
+  Game game, {
+  _LockRecoveryGameScan? scan,
+}) =>
+    (scan ?? _LockRecoveryGameScan.fromGame(game)).designatedBuyerId;
 
 /// Designated buyer bids [commodityId] and does not offer it this turn.
 ///

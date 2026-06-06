@@ -1332,6 +1332,14 @@ criterion in the sections above is preserved unchanged.
   planning player's perception. When `snapshot` is omitted (legacy test
   entrypoints), behaviour falls back to the prior world-state scans.
 
+### Single-pass lock-recovery aggregates
+
+- `runTreasuryPlanner` builds one `_LockRecoveryGameScan` per invocation: a single
+  `game.players` pass that precomputes sorted GP ids, the broke-GP flag, peer
+  seller bootstrap flags, per-player lock-recovery seller predicates, and the
+  designated affluent buyer rotation. Lock-recovery helpers consume the scan
+  instead of re-iterating `game.players` for each predicate.
+
 ### Determinism and budget
 
 The indices are pure functions of the static `ProductionRecipesCatalog` and the
