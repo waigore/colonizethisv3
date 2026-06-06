@@ -62,6 +62,13 @@ rules:
     runner: dart
     script: tool/check_ai_dedup_weight_scale_clamp.dart
 
+  - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
+    group: architecture
+    title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_no_repeated_production_recipes_catalog_scan.dart
+
   - rule_id: repo.dart_long_string_switches
     group: structure
     title: Long string-literal switch checks
