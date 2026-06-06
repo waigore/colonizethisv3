@@ -32,8 +32,11 @@
 // equality (the planner's `==` is hand-rolled to make this safe).
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
+    show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -589,6 +592,67 @@ void main() {
       expect(a.hashCode, b.hashCode);
       expect(a, isNot(equals(c)));
     });
+
+    test(
+      'castIron-labour peasant recruit flag without forceRebuild (Refs #2847)',
+      () {
+        const ow = 'oldWorld';
+        const tileTimber = 'oldWorld|gp1_0|2|0';
+        final base = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-economy',
+          players: [
+            _player(
+              treasury: cheapestRegimentBuildTreasuryCost(),
+              stockpile: Stockpile.empty
+                  .applyDelta(CommodityCatalog.grain.id, 30)
+                  .applyDelta(CommodityCatalog.timber.id, 2)
+                  .applyDelta(CommodityCatalog.iron.id, 2)
+                  .applyDelta(CommodityCatalog.wool.id, 10),
+            ).copyWith(workerPool: const WorkerPool(peasants: 2)),
+          ],
+          oldWorldProvinces: [
+            for (var i = 0; i < 5; i++)
+              Province(
+                id: '$ow|gp1_$i',
+                regionId: ow,
+                ownerId: _gp1,
+              ),
+          ],
+        );
+        final game = base.copyWith(
+          worldState: base.worldState.copyWith(
+            resourceByTileKey: const {tileTimber: 'timber'},
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                '$ow|gp1_0': [tileTimber],
+              },
+            },
+          ),
+        );
+        expect(
+          isCastIronLabourPopulationBoundForLockRecoverySeller(
+            game: game,
+            playerId: _gp1,
+          ),
+          isTrue,
+        );
+        final snapshot = buildExpandSnapshot(
+          invadableOw: const [],
+          oldWorldProvincesOwned: 5,
+        );
+        expect(
+          planExpandEconomy(game: game, snapshot: snapshot),
+          const ExpandEconomyPlan(
+            forceCheapestRegimentBuild: false,
+            boostTreasuryRecoveryCargo: false,
+            boostCastIronLabourPeasantRecruitment: true,
+          ),
+          reason:
+              'Population-bound castIron labour must arm the peasant-recruit '
+              'path even when no invadable frontier keeps forceRebuild false.',
+        );
+      },
+    );
 
     test(
       'ExpandEconomyPlan.defaultPlan equals an explicit all-false instance',
