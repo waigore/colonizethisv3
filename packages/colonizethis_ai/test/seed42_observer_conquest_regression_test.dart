@@ -106,12 +106,23 @@ void main() {
         'acquisition. gp4 is distinct: input-rich (inputs in stockpile 61 '
         'turns, zero-regiment only 1 turn) but locked in attritional war '
         '(gpAtWarTurnsByPeer minor1 99, tribe8 50, tribe2 45, gp3 22) and '
-        'converts few regiments into OW gains. Next levers (out of scope for a '
-        'single non-regressive slice; must hold the gp1/gp2 +6 baseline per '
-        'requirement clarification #8): castIron labour / population for gp3/'
-        'gp5/gp6 (worker growth or labour reservation) and attrition-war escape '
-        '/ OW target conversion for gp4. Skip removal awaits the diagnostic '
-        'confirming gp3-gp6 reach the >=3 OW floor (Refs #2847).',
+        'converts few regiments into OW gains. The #3303 worker-growth attempt '
+        '(recruit a peasant when castIron labour is population-bound) is now '
+        'localized as a STRUCTURAL NO-OP: its gate fires only for gp5 (37 '
+        'turns) and on EVERY one the seller cannot pay the peasant recruit cost '
+        'row of 2 fabric (gpCastIronLabourPeasantRecruitAffordableTurns == 0, '
+        'FabricStarvedTurns == 37) — a circular dependency, since the peasant '
+        'that would grow castIron labour is itself bought with fabric, the very '
+        'downstream commodity the castIron chain exists to unblock. Next levers '
+        '(out of scope for a single non-regressive slice; must hold the gp1/gp2 '
+        '+6 baseline per requirement clarification #8): a fabric-free or '
+        'fabric-self-funded labour-growth path for gp5 (it already shows '
+        'gpFabricRecipeFeasibleTurns == 48, so routing a domestic fabric '
+        'assignment before the recruit is a candidate), castIron MATERIAL '
+        'feasibility for gp3/gp6 (gpCastIronRecipeFeasibleTurns == 0), and '
+        'attrition-war escape / OW target conversion for gp4. Skip removal '
+        'awaits the diagnostic confirming gp3-gp6 reach the >=3 OW floor '
+        '(Refs #2847).',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
