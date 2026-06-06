@@ -289,6 +289,8 @@ EconomyPlan runEconomyPlanner({
     missingRegimentBuildInputIds: boostedBuildInputOutputs,
     supplierReleaseImprovementInputIds: supplierReleaseImprovementInputs,
     feedstockReserveOutputIds: feedstockReserveOutputIds,
+    castIronLabourPeasantRecruitFabricBoost:
+        castIronLabourPeasantRecruitFabricBoost,
   );
 
   final cargoPref = _cargoPreference(
@@ -394,6 +396,7 @@ List<AssignedRecipe> _allocateLabour({
   Set<String> missingRegimentBuildInputIds = const {},
   Set<String> supplierReleaseImprovementInputIds = const {},
   Set<String> feedstockReserveOutputIds = const {},
+  bool castIronLabourPeasantRecruitFabricBoost = false,
 }) {
   // Labour allocation scores every feasible recipe to pick the best runs, so
   // this is an intrinsic full-catalog pass, not an output-keyed lookup that the
@@ -411,10 +414,29 @@ List<AssignedRecipe> _allocateLabour({
   // feasibility falls back to the unreduced stockpile (behaviour-equal).
   final feedstockReserve =
       _feedstockReserveForOutputs(feedstockReserveOutputIds);
+  final labourByRecipe = <String, int>{};
+
+  if (castIronLabourPeasantRecruitFabricBoost) {
+    _assignCastIronLabourFabricPrePass(
+      virtual: virtual,
+      remainingLabour: remainingLabour,
+      feedstockReserve: feedstockReserve,
+      feedstockReserveOutputIds: feedstockReserveOutputIds,
+      labourByRecipe: labourByRecipe,
+      onStateUpdated: (nextVirtual, nextRemainingLabour) {
+        virtual = nextVirtual;
+        remainingLabour = nextRemainingLabour;
+      },
+    );
+  }
 
   // Build feasible recipes with scores. Feasible = can run at least 1 full run.
   final candidates = <ScoredRecipe>[];
   for (final recipe in recipes) {
+    if (castIronLabourPeasantRecruitFabricBoost &&
+        recipe.outputCommodityId == CommodityCatalog.fabric.id) {
+      continue;
+    }
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) continue;
     // A reserve-target recipe consumes its own reserved feedstock, so it sees
@@ -450,7 +472,7 @@ List<AssignedRecipe> _allocateLabour({
     candidates.add(ScoredRecipe(recipe: recipe, score: score));
   }
 
-  if (candidates.isEmpty) return result;
+  if (candidates.isEmpty && labourByRecipe.isEmpty) return result;
 
   if (_log.debugEnabled) {
     _log.d(
@@ -465,10 +487,6 @@ List<AssignedRecipe> _allocateLabour({
     if (c != 0) return c;
     return a.recipe.id.compareTo(b.recipe.id);
   });
-
-  virtual = stockpile;
-  remainingLabour = effectiveLabour;
-  final labourByRecipe = <String, int>{};
 
   for (final scored in candidates) {
     if (remainingLabour <= 0) break;
@@ -509,6 +527,50 @@ List<AssignedRecipe> _allocateLabour({
     );
   }
   return result;
+}
+
+/// Assigns the lowest-`id` feasible fabric recipe before the general greedy
+/// pass when the castIron-labour peasant-recruit fabric path is active, so
+/// scarce effective labour is not consumed by competing boosted recipes
+/// (`castIron`, `lumber`) on the same turn (Refs #2847).
+void _assignCastIronLabourFabricPrePass({
+  required Stockpile virtual,
+  required int remainingLabour,
+  required Map<CommodityId, int> feedstockReserve,
+  required Set<String> feedstockReserveOutputIds,
+  required Map<String, int> labourByRecipe,
+  required void Function(Stockpile virtual, int remainingLabour) onStateUpdated,
+}) {
+  final fabricId = CommodityCatalog.fabric.id;
+  final fabricRecipes = ProductionRecipesCatalog.producing(fabricId).toList()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  var nextVirtual = virtual;
+  var nextRemainingLabour = remainingLabour;
+  for (final recipe in fabricRecipes) {
+    if (nextRemainingLabour < recipe.labourPerOutput) continue;
+    final feasibilityStock =
+        feedstockReserveOutputIds.contains(recipe.outputCommodityId)
+            ? nextVirtual
+            : _stockpileWithReserve(nextVirtual, feedstockReserve);
+    final runs = feasibleRuns(
+      recipe: recipe,
+      stockpile: feasibilityStock,
+      remainingLabour: nextRemainingLabour,
+    );
+    if (runs <= 0) continue;
+    final labourUsed = runs * recipe.labourPerOutput;
+    labourByRecipe[recipe.id] = (labourByRecipe[recipe.id] ?? 0) + labourUsed;
+    nextRemainingLabour -= labourUsed;
+    for (final entry in recipe.inputQuantities.entries) {
+      nextVirtual = nextVirtual.applyDelta(entry.key, -entry.value * runs);
+    }
+    nextVirtual = nextVirtual.applyDelta(
+      recipe.outputCommodityId,
+      recipe.outputQuantity * runs,
+    );
+    onStateUpdated(nextVirtual, nextRemainingLabour);
+    return;
+  }
 }
 
 /// The subset of [outputIds] whose lowest-`id` producing recipe consumes more
