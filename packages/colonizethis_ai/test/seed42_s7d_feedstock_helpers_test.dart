@@ -57,8 +57,10 @@ Game _game({
 void main() {
   final castIron = ProductionRecipesCatalog.castIronFromTimberIronCoal;
   final lumber = ProductionRecipesCatalog.lumberFromTimber;
+  final fabricFromWool = ProductionRecipesCatalog.fabricFromWool;
   final timberId = CommodityCatalog.timber.id;
   final ironId = CommodityCatalog.iron.id;
+  final woolId = CommodityCatalog.wool.id;
   final grainId = CommodityCatalog.grain.id;
   final meatId = CommodityCatalog.meat.id;
 
@@ -211,6 +213,52 @@ void main() {
         isFalse,
       );
     });
+
+    test(
+      'positive (fabric): material on hand and effective labour covers one '
+      'fabric run (labourPerOutput 2)',
+      () {
+        // 2 peasants fed by 2 grain -> 2 effective labour; fabric_from_wool
+        // needs 2 labour and 2 wool, so feasibleRuns >= 1.
+        final game = _game(
+          workers: const WorkerPool(peasants: 2),
+          stockpile: Stockpile(quantities: {grainId: 2, woolId: 2}),
+        );
+        expect(
+          stockpileAndLabourAffordAnyProductionRecipe(game, _playerId, [
+            fabricFromWool,
+          ]),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'negative (fabric labour-starved): wool on hand but a single effective '
+      'labour is below the fabric run (the gp5 circular-fabric case)',
+      () {
+        // 1 peasant fed by 1 grain -> 1 effective labour < fabric_from_wool's
+        // labourPerOutput 2. The recruit boost that would grow castIron labour
+        // needs 2 fabric, but fabric itself cannot be produced at 1 labour:
+        // the Refs #2847 S7-D circular deadlock the new counter localizes.
+        final stockpile = Stockpile(quantities: {grainId: 1, woolId: 2});
+        final game = _game(
+          workers: const WorkerPool(peasants: 1),
+          stockpile: stockpile,
+        );
+        expect(
+          stockpileAffordsAnyProductionRecipe(stockpile, [fabricFromWool]),
+          isTrue,
+          reason: 'control: the same turn is material-feasible',
+        );
+        expect(
+          stockpileAndLabourAffordAnyProductionRecipe(game, _playerId, [
+            fabricFromWool,
+          ]),
+          isFalse,
+        );
+      },
+    );
   });
 
   group('ownsFeedstockResourceTileAnyLevel', () {
@@ -388,5 +436,70 @@ void main() {
       );
       expect(playerFoodOnHand(game, 'no_such_player', foodIds), 0);
     });
+  });
+
+  group('seed42S7dCastIronLabourTurnMeasure.fabricRecipeLabourFeasible', () {
+    ({
+      bool peasantRecruitGate,
+      bool peasantRecruitAffordable,
+      bool holdsFabricFeedstock,
+      bool fabricRecipeFeasible,
+      bool fabricRecipeLabourFeasible,
+      bool castIronMaterialFeasible,
+      bool castIronLabourFeasible,
+      bool castIronLabourFoodStarved,
+      bool castIronLabourPopulationBound,
+      bool castIronOwnsFeedstockTile,
+    })
+    measure(Game game) => seed42S7dCastIronLabourTurnMeasure(
+      game: game,
+      playerId: _playerId,
+      fabricFeedstockIds: {woolId},
+      fabricRecipes: [fabricFromWool],
+      castIronRecipes: [castIron],
+      castIronFeedstockIds: {timberId, ironId},
+      castIronMinLabourPerOutput: 5,
+    );
+
+    test('positive: fabric material- and labour-feasible at 2 labour', () {
+      final ci = measure(
+        _game(
+          workers: const WorkerPool(peasants: 2),
+          stockpile: Stockpile(quantities: {grainId: 2, woolId: 2}),
+        ),
+      );
+      expect(ci.fabricRecipeFeasible, isTrue);
+      expect(ci.fabricRecipeLabourFeasible, isTrue);
+    });
+
+    test(
+      'negative (circular deadlock): fabric material-feasible yet labour-'
+      'starved at a single effective labour',
+      () {
+        final ci = measure(
+          _game(
+            workers: const WorkerPool(peasants: 1),
+            stockpile: Stockpile(quantities: {grainId: 1, woolId: 2}),
+          ),
+        );
+        expect(ci.fabricRecipeFeasible, isTrue);
+        expect(ci.fabricRecipeLabourFeasible, isFalse);
+      },
+    );
+
+    test(
+      'subset invariant: labour-feasible is false whenever material-feasible '
+      'is false (no wool on hand)',
+      () {
+        final ci = measure(
+          _game(
+            workers: const WorkerPool(peasants: 10),
+            stockpile: Stockpile(quantities: {grainId: 10}),
+          ),
+        );
+        expect(ci.fabricRecipeFeasible, isFalse);
+        expect(ci.fabricRecipeLabourFeasible, isFalse);
+      },
+    );
   });
 }

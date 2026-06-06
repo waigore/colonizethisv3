@@ -344,6 +344,18 @@ void bumpCounter(Map<String, int> counter, String key) =>
 ///     [castIronLabourPeasantRecruitProbe] (the #3303 boost localization).
 ///   * `holdsFabricFeedstock` — any [fabricFeedstockIds] held in the stockpile.
 ///   * `fabricRecipeFeasible` — any [fabricRecipes] materially runnable.
+///   * `fabricRecipeLabourFeasible` — any [fabricRecipes] runnable against the
+///     seller's full effective labour too
+///     ([stockpileAndLabourAffordAnyProductionRecipe]). Always a subset of
+///     `fabricRecipeFeasible`. A near-zero count here while
+///     `fabricRecipeFeasible` is high localizes the unbuilt peasant-recruit
+///     `fabric` to **labour starvation of the fabric recipe itself**
+///     (`fabric_from_*` carries `labourPerOutput == 2`, above a lock-recovery
+///     seller's effective labour of 1), i.e. the #3303/#3315 peasant-recruit
+///     boost is a circular deadlock: growing castIron labour needs a peasant,
+///     the peasant needs `fabric`, and `fabric` itself needs labour the seller
+///     does not have — so the lever cannot be domestic `fabric` and must grow
+///     raw population by a non-`fabric` path.
 ///   * `castIronMaterialFeasible` — any [castIronRecipes] materially runnable
 ///     ([stockpileAffordsAnyProductionRecipe]); the labour / food / tile flags
 ///     below are only meaningful (non-false) when this holds.
@@ -363,6 +375,7 @@ void bumpCounter(Map<String, int> counter, String key) =>
   bool peasantRecruitAffordable,
   bool holdsFabricFeedstock,
   bool fabricRecipeFeasible,
+  bool fabricRecipeLabourFeasible,
   bool castIronMaterialFeasible,
   bool castIronLabourFeasible,
   bool castIronLabourFoodStarved,
@@ -383,6 +396,7 @@ seed42S7dCastIronLabourTurnMeasure({
     peasantRecruitAffordable: false,
     holdsFabricFeedstock: false,
     fabricRecipeFeasible: false,
+    fabricRecipeLabourFeasible: false,
     castIronMaterialFeasible: false,
     castIronLabourFeasible: false,
     castIronLabourFoodStarved: false,
@@ -400,6 +414,13 @@ seed42S7dCastIronLabourTurnMeasure({
       (e) => player.stockpile.quantityOf(e.key) >= e.value,
     ),
   );
+  // Labour-aware fabric feasibility (Refs #2847 § S7-D fabric circular-labour
+  // localization). A subset of `fabricRecipeFeasible`: a fabric run needs both
+  // its feedstock on hand AND `labourPerOutput` effective labour. Skipped when
+  // the cheaper material check already failed.
+  final fabricRecipeLabourFeasible =
+      fabricRecipeFeasible &&
+      stockpileAndLabourAffordAnyProductionRecipe(game, playerId, fabricRecipes);
   final castIronMaterialFeasible = stockpileAffordsAnyProductionRecipe(
     player.stockpile,
     castIronRecipes,
@@ -432,6 +453,7 @@ seed42S7dCastIronLabourTurnMeasure({
     peasantRecruitAffordable: recruit.affordable,
     holdsFabricFeedstock: holdsFabricFeedstock,
     fabricRecipeFeasible: fabricRecipeFeasible,
+    fabricRecipeLabourFeasible: fabricRecipeLabourFeasible,
     castIronMaterialFeasible: castIronMaterialFeasible,
     castIronLabourFeasible: castIronLabourFeasible,
     castIronLabourFoodStarved: foodStarved,
@@ -578,6 +600,8 @@ void assertSeed42S7dStructuralInvariants({
   required Map<String, int> castIronLabourPeasantRecruitGateTurns,
   required Map<String, int> castIronLabourPeasantRecruitAffordableTurns,
   required Map<String, int> castIronLabourPeasantRecruitFabricStarvedTurns,
+  required Map<String, int> fabricRecipeFeasibleTurns,
+  required Map<String, int> fabricRecipeLabourFeasibleTurns,
 }) {
   for (final gpId in gpIds) {
     expect(
@@ -705,6 +729,18 @@ void assertSeed42S7dStructuralInvariants({
       reason:
           '$gpId peasant-recruit gate-active turns cannot exceed the '
           '100-turn run length',
+    );
+    // Refs #2847 § S7-D fabric circular-labour localization: a fabric run is
+    // labour-feasible only when it is also materially feasible
+    // (`feasibleRuns` incorporates the input check), so the labour-feasible
+    // count can never exceed the material-feasible count. Guards the
+    // instrumentation without pinning the (freely tunable) per-GP counts.
+    expect(
+      fabricRecipeLabourFeasibleTurns[gpId]!,
+      lessThanOrEqualTo(fabricRecipeFeasibleTurns[gpId]!),
+      reason:
+          '$gpId fabric labour-feasible turns cannot exceed the fabric '
+          'material-feasible turns (labour-feasible requires material-feasible)',
     );
   }
 }
