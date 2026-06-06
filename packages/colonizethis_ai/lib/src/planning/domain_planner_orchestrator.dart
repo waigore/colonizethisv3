@@ -259,6 +259,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
             stockpile: player.stockpile,
             productionAssignments: economyPlan.productionAssignments,
             treasury: player.treasury,
+            snapshot: snapshot,
             tileMapByRegion: tileMapByRegion,
             topology: topology,
             currentOrders: ctx.orders,

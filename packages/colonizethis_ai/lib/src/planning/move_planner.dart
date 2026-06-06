@@ -21,12 +21,16 @@ Orders runMovePlanner({required PlannerContext ctx}) {
   );
   if (filtered.isEmpty) return ctx.orders;
   final weight = ctx.resolveMilitaryEconomyWeight();
-  _log.d(
-    'move eval nationId=${ctx.nationId} weight=$weight '
-    'filteredCount=${filtered.length}',
-  );
+  if (_log.debugEnabled) {
+    _log.d(
+      'move eval nationId=${ctx.nationId} weight=$weight '
+      'filteredCount=${filtered.length}',
+    );
+  }
   if (weight < 20) {
-    _log.d('move skipped nationId=${ctx.nationId} weight < 20');
+    if (_log.debugEnabled) {
+      _log.d('move skipped nationId=${ctx.nationId} weight < 20');
+    }
     return ctx.orders;
   }
   final selected = selectWeightedCandidate(
@@ -42,10 +46,12 @@ Orders runMovePlanner({required PlannerContext ctx}) {
     },
   );
   if (selected == null) return ctx.orders;
-  _log.i(
-    'move chosen nationId=${ctx.nationId} '
-    'unitId=${selected.unitId} destinationTileKey=${selected.destinationTileKey}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'move chosen nationId=${ctx.nationId} '
+      'unitId=${selected.unitId} destinationTileKey=${selected.destinationTileKey}',
+    );
+  }
   return ctx.orders.appendMoveOrders(ctx.nationId, [selected]);
 }
 
@@ -60,7 +66,9 @@ Orders runArmyMovePlanner({
     ctx.orders,
   );
   if (armyMoveCandidates.isEmpty) {
-    _log.d('army move eval nationId=${ctx.nationId} candidatesCount=0');
+    if (_log.debugEnabled) {
+      _log.d('army move eval nationId=${ctx.nationId} candidatesCount=0');
+    }
     return ctx.orders;
   }
   final filtered = filterArmyMoveOrdersByDiplomacy(
@@ -69,7 +77,9 @@ Orders runArmyMovePlanner({
     armyMoveCandidates,
   );
   if (filtered.isEmpty) {
-    _log.d('army move filtered empty nationId=${ctx.nationId}');
+    if (_log.debugEnabled) {
+      _log.d('army move filtered empty nationId=${ctx.nationId}');
+    }
     return ctx.orders;
   }
   final weight = ctx.resolveMilitaryEconomyWeight();
@@ -78,15 +88,19 @@ Orders runArmyMovePlanner({
       ? 10
       : 20;
   if (weight < minWeight) {
-    _log.d(
-      'army move skipped nationId=${ctx.nationId} weight=$weight < $minWeight',
-    );
+    if (_log.debugEnabled) {
+      _log.d(
+        'army move skipped nationId=${ctx.nationId} weight=$weight < $minWeight',
+      );
+    }
     return ctx.orders;
   }
-  _log.d(
-    'army move eval nationId=${ctx.nationId} weight=$weight '
-    'filteredCount=${filtered.length}',
-  );
+  if (_log.debugEnabled) {
+    _log.d(
+      'army move eval nationId=${ctx.nationId} weight=$weight '
+      'filteredCount=${filtered.length}',
+    );
+  }
   final selected = selectWeightedCandidate(
     candidates: filtered,
     seed: ctx.seeds.militarySeed + 2000,
@@ -99,9 +113,11 @@ Orders runArmyMovePlanner({
     },
   );
   if (selected == null) return ctx.orders;
-  _log.i(
-    'army move chosen nationId=${ctx.nationId} '
-    'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'army move chosen nationId=${ctx.nationId} '
+      'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId}',
+    );
+  }
   return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, selected);
 }

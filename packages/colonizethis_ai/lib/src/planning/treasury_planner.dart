@@ -17,6 +17,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'recipe_scoring.dart' show kShortageThreshold;
 
@@ -75,6 +76,7 @@ List<TradeOrder> runTreasuryPlanner({
   required Stockpile stockpile,
   required List<AssignedRecipe> productionAssignments,
   required int treasury,
+  AIWorldSnapshot? snapshot,
   Map<String, TileMapResult>? tileMapByRegion,
   MapTopology? topology,
   Orders currentOrders = const Orders(),
@@ -131,8 +133,11 @@ List<TradeOrder> runTreasuryPlanner({
   // recovers. Dropping the safety buffer (keeping one consumption-cycle
   // reserve) lets the seller offer down to that floor each turn.
   // SPEC/ai/treasury-planner.md § Lock-recovery seller food-surplus release.
-  final isLockRecoverySeller =
-      _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+  final isLockRecoverySeller = _isBelowQuotaZeroNwLockRecoverySeller(
+    game: game,
+    playerId: playerId,
+    snapshot: snapshot,
+  );
   // Refs #2847 H8-supply (S7-D lumber re-localization): the supplier release
   // also activates when a peer lock-recovery seller is stuck one stage earlier —
   // at the level-0 `build_improvement` gate whose producible inputs the world

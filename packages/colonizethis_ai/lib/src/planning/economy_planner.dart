@@ -116,6 +116,7 @@ EconomyPlan runEconomyPlanner({
               stockpile: stockpile,
               productionAssignments: const [],
               treasury: player.treasury,
+              snapshot: snapshot,
               tileMapByRegion: tileMapByRegion,
               topology: topology,
             ),
@@ -212,7 +213,11 @@ EconomyPlan runEconomyPlanner({
   // the +6 OW baseline GPs are never starved. SPEC/ai/economy-planner.md
   // § Supplier improvement-input over-production for release.
   final supplierReleaseImprovementInputs =
-      isBelowQuotaZeroNwLockRecoverySeller(game, view.playerId)
+      isBelowQuotaZeroNwLockRecoverySeller(
+        game,
+        view.playerId,
+        snapshot: snapshot,
+      )
           ? const <String>{}
           : peerLockRecoverySellerNeededProducibleImprovementInputs(
               game,
@@ -284,6 +289,7 @@ EconomyPlan runEconomyPlanner({
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: player.treasury,
+          snapshot: snapshot,
           tileMapByRegion: tileMapByRegion,
           topology: topology,
         );

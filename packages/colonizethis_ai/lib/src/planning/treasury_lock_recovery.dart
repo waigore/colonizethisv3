@@ -10,7 +10,25 @@ part of 'treasury_planner.dart';
 int _treasuryForPlayer(Game game, String playerId) =>
     game.playerById(playerId)?.treasury ?? 0;
 
-int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
+int _oldWorldProvinceCountOwnedBy(
+  Game game,
+  String playerId, {
+  AIWorldSnapshot? snapshot,
+}) {
+  if (snapshot != null && snapshot.playerId == playerId) {
+    return snapshot.conquest.oldWorldProvincesOwned;
+  }
+  return oldWorldProvinceCountOwnedBy(game, playerId);
+}
+
+int _newWorldProvinceCountOwnedBy(
+  Game game,
+  String playerId, {
+  AIWorldSnapshot? snapshot,
+}) {
+  if (snapshot != null && snapshot.playerId == playerId) {
+    return snapshot.colonial.newWorldProvincesOwned;
+  }
   var count = 0;
   for (final province in game.worldState.newWorld.provinces) {
     if (province.ownerId == playerId) count++;
@@ -25,11 +43,18 @@ int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
 bool _isBelowQuotaZeroNwLockRecoverySeller({
   required Game game,
   required String playerId,
+  AIWorldSnapshot? snapshot,
 }) {
-  final ow = oldWorldProvinceCountOwnedBy(game, playerId);
+  final ow = _oldWorldProvinceCountOwnedBy(
+    game,
+    playerId,
+    snapshot: snapshot,
+  );
   if (ow <= 0) return false;
   if (!isBelowObserverConquestQuota(ow)) return false;
-  if (_newWorldProvinceCountOwnedBy(game, playerId) != 0) return false;
+  if (_newWorldProvinceCountOwnedBy(game, playerId, snapshot: snapshot) != 0) {
+    return false;
+  }
   // Mid-below-quota EXPAND band (seed-42 gp3–gp6); excludes minimal
   // single-province test fixtures that are not Path F lock-recovery sellers.
   return ow >= 2;
@@ -62,8 +87,16 @@ bool _anyLockRecoverySellerNeedsRegimentBuildInput(Game game) {
 /// (Refs #2847 H8-supply castIron source). The economy planner uses it to keep
 /// the supplier `castIron` over-production off for a GP that is itself a locked
 /// seller (its own self-path boost already covers it).
-bool isBelowQuotaZeroNwLockRecoverySeller(Game game, String playerId) =>
-    _isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId);
+bool isBelowQuotaZeroNwLockRecoverySeller(
+  Game game,
+  String playerId, {
+  AIWorldSnapshot? snapshot,
+}) =>
+    _isBelowQuotaZeroNwLockRecoverySeller(
+      game: game,
+      playerId: playerId,
+      snapshot: snapshot,
+    );
 
 /// True when any below-quota zero-NW lock-recovery seller still lacks a
 /// domestically-produced level-0 `build_improvement` input (a

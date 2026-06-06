@@ -196,7 +196,9 @@ Orders runConquestArmyMovePlanner({
     ctx.orders,
   );
   if (armyMoveCandidates.isEmpty) {
-    _log.d('conquest army move nationId=${ctx.nationId} candidatesCount=0');
+    if (_log.debugEnabled) {
+      _log.d('conquest army move nationId=${ctx.nationId} candidatesCount=0');
+    }
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
         ctx: ctx,
@@ -218,7 +220,9 @@ Orders runConquestArmyMovePlanner({
     draftOrders: ctx.orders,
   );
   if (filtered.isEmpty) {
-    _log.d('conquest army move filtered empty nationId=${ctx.nationId}');
+    if (_log.debugEnabled) {
+      _log.d('conquest army move filtered empty nationId=${ctx.nationId}');
+    }
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
         ctx: ctx,
@@ -283,9 +287,11 @@ Orders runConquestArmyMovePlanner({
     weight = colonialPressureFloor;
   }
   if (weight < 10) {
-    _log.d(
-      'conquest army move skipped nationId=${ctx.nationId} weight=$weight',
-    );
+    if (_log.debugEnabled) {
+      _log.d(
+        'conquest army move skipped nationId=${ctx.nationId} weight=$weight',
+      );
+    }
     return ctx.orders;
   }
   // Under stalled-expansion (Refs #2509 EXPAND / COLONIAL-lite hot path) a
@@ -348,11 +354,13 @@ Orders runConquestArmyMovePlanner({
     ),
   );
   if (selected == null) return ctx.orders;
-  _log.i(
-    'conquest army move chosen nationId=${ctx.nationId} '
-    'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId} '
-    'declaredWarTarget=$declaredWarTargetFactionId',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'conquest army move chosen nationId=${ctx.nationId} '
+      'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId} '
+      'declaredWarTarget=$declaredWarTargetFactionId',
+    );
+  }
   return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, selected);
 }
 
@@ -442,10 +450,12 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
       ),
     );
     if (best == null) continue;
-    _log.i(
-      'conquest army move stalled multi nationId=${ctx.nationId} '
-      'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
-    );
+    if (_log.infoEnabled) {
+      _log.i(
+        'conquest army move stalled multi nationId=${ctx.nationId} '
+        'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
+      );
+    }
     result = applyArmyMoveOrderForPlayer(result, ctx.nationId, best);
     armiesWithOrders.add(best.armyId);
   }
@@ -520,10 +530,12 @@ Orders _runStalledFrontierArmyMoveFallback({
   if (best == null) {
     return ctx.orders;
   }
-  _log.i(
-    'conquest army move stalled fallback nationId=${ctx.nationId} '
-    'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'conquest army move stalled fallback nationId=${ctx.nationId} '
+      'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
+    );
+  }
   return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, best);
 }
 
