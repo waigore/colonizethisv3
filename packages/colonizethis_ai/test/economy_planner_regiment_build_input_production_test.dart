@@ -1076,6 +1076,41 @@ void main() {
     );
 
     test(
+      'castIron-labour fabric pre-pass wins over castIron when labour is tight '
+      '(Refs #2847)',
+      () {
+        final base = _castIronLabourPeasantRecruitFabricStagingGame(
+          fabricHeld: 0,
+        );
+        final game = base.copyWith(
+          players: [
+            base.players.first.copyWith(
+              workerPool: const WorkerPool(peasants: 4),
+            ),
+          ],
+        );
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.fabricFromWool.id),
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          isNot(contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id)),
+          reason:
+              'With only four effective labour the fabric pre-pass must '
+              'consume two before castIron can claim the full five.',
+        );
+      },
+    );
+
+    test(
       'castIron-labour peasant-recruit fabric boost is off once fabric meets '
       'recruit cost (negative control)',
       () {

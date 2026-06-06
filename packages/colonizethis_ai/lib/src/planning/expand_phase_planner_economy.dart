@@ -240,8 +240,10 @@ ExpandEconomyPlan planExpandEconomy({
   final armC = effectiveTreasury < cheapest;
 
   final forceRebuild = armA || armB || armD;
+  // Treasury-independent like the economy-planner fabric staging path: the
+  // recruit must be eligible on population-bound gate turns even when the
+  // EXPAND rebuild directive is inactive (no invadable frontier that turn).
   final boostCastIronLabourPeasantRecruitment =
-      forceRebuild &&
       isCastIronLabourPopulationBoundForLockRecoverySeller(
         game: game,
         playerId: snapshot.playerId,
