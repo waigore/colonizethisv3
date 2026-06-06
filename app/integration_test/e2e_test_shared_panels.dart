@@ -846,6 +846,66 @@ Key? _e2eBestSeaZoneRowKeyTowardNewWorld() {
   return kCtE2EMoveFleetDestinationSeaZoneRowKey(best);
 }
 
+/// Picks a sea-zone move destination, preferring the adjacent zone that makes
+/// BFS progress toward the New World (Refs #2336 AC6/AC7).
+///
+/// When the live naval snapshot exposes the combined topology and the dialog
+/// tags its sea-zone rows with `kCtE2EMoveFleetDestinationSeaZoneRowKey`, the
+/// topology-best row is tapped (scrolling it into view first when needed).
+/// Falls back to `e2eMoveFleetDestinationRows().first` when the snapshot/keys
+/// are unavailable (e.g. the widget-test fixtures), preserving the legacy
+/// contract pinned by
+/// `app/test/e2e_pick_move_destination_and_confirm_test.dart`.
+///
+/// Extracted from `e2ePickMoveDestinationAndConfirm` to keep control-flow
+/// nesting within the repo-lint depth budget (Refs #2336).
+Future<void> _e2eTapSeaZoneDestinationTowardNewWorld(
+  WidgetTester tester,
+) async {
+  final towardKey = _e2eBestSeaZoneRowKeyTowardNewWorld();
+  if (towardKey == null) {
+    final seaRadio = e2eMoveFleetDestinationRows();
+    expect(seaRadio, findsWidgets);
+    await tester.tap(seaRadio.first, warnIfMissed: false);
+    return;
+  }
+  final towardRow = find.byKey(towardKey);
+  if (towardRow.hitTestable().evaluate().isEmpty) {
+    await _e2eScrollSeaZoneRowIntoView(tester, towardRow);
+  }
+  final towardHit = towardRow.hitTestable();
+  await tester.tap(
+    (towardHit.evaluate().isNotEmpty ? towardHit : towardRow).first,
+    warnIfMissed: false,
+  );
+}
+
+/// Scrolls [towardRow] into view within the move-fleet dialog's scrollable when
+/// one is present; a no-op when the row is already visible or has no scrollable
+/// ancestor (Refs #2336).
+Future<void> _e2eScrollSeaZoneRowIntoView(
+  WidgetTester tester,
+  Finder towardRow,
+) async {
+  final dialogScrollable = find.descendant(
+    of: e2eMoveFleetDialogFinder(),
+    matching: find.byType(Scrollable),
+  );
+  if (dialogScrollable.evaluate().isEmpty) {
+    return;
+  }
+  try {
+    await tester.scrollUntilVisible(
+      towardRow.first,
+      120,
+      scrollable: dialogScrollable.first,
+    );
+  } catch (_) {
+    // Row may already be visible or have no scrollable ancestor; the
+    // hit-testable resolve below still taps from a sane position.
+  }
+}
+
 Future<void> e2ePickMoveDestinationAndConfirm(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -948,45 +1008,7 @@ Future<void> e2ePickMoveDestinationAndConfirm(
     );
   } else {
     ensureBudget('sea radio');
-    // Topology-guided destination pick (Refs #2336 AC6/AC7): when the live
-    // naval snapshot exposes the combined topology and the dialog tags its
-    // sea-zone rows with `kCtE2EMoveFleetDestinationSeaZoneRowKey`, choose the
-    // adjacent sea zone that makes BFS progress toward the New World instead of
-    // the alphabetically-first row. Falls back to `seaRadio.first` when the
-    // snapshot/keys are unavailable (e.g. the widget-test fixtures), preserving
-    // the legacy contract pinned by
-    // `app/test/e2e_pick_move_destination_and_confirm_test.dart`.
-    final towardKey = _e2eBestSeaZoneRowKeyTowardNewWorld();
-    if (towardKey != null) {
-      final towardRow = find.byKey(towardKey);
-      if (towardRow.hitTestable().evaluate().isEmpty) {
-        final dialogScrollable = find.descendant(
-          of: e2eMoveFleetDialogFinder(),
-          matching: find.byType(Scrollable),
-        );
-        if (dialogScrollable.evaluate().isNotEmpty) {
-          try {
-            await tester.scrollUntilVisible(
-              towardRow.first,
-              120,
-              scrollable: dialogScrollable.first,
-            );
-          } catch (_) {
-            // Row may already be visible or have no scrollable ancestor; the
-            // hit-testable resolve below still taps from a sane position.
-          }
-        }
-      }
-      final towardHit = towardRow.hitTestable();
-      await tester.tap(
-        (towardHit.evaluate().isNotEmpty ? towardHit : towardRow).first,
-        warnIfMissed: false,
-      );
-    } else {
-      final seaRadio = e2eMoveFleetDestinationRows();
-      expect(seaRadio, findsWidgets);
-      await tester.tap(seaRadio.first, warnIfMissed: false);
-    }
+    await _e2eTapSeaZoneDestinationTowardNewWorld(tester);
   }
   await e2eWaitUntilFound(
     tester,
