@@ -1,4 +1,7 @@
-import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart';
+import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
+    show
+        isCastIronLabourPeasantRecruitFabricShort,
+        isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -140,5 +143,29 @@ void main() {
         );
       },
     );
+  });
+
+  group('isCastIronLabourPeasantRecruitFabricShort (Refs #2847)', () {
+    test('true when fabric is below the peasant recruit cost of 2', () {
+      expect(
+        isCastIronLabourPeasantRecruitFabricShort(
+          const Stockpile(quantities: {'fabric': 1}),
+        ),
+        isTrue,
+      );
+      expect(
+        isCastIronLabourPeasantRecruitFabricShort(Stockpile.empty),
+        isTrue,
+      );
+    });
+
+    test('false when fabric meets the peasant recruit cost of 2', () {
+      expect(
+        isCastIronLabourPeasantRecruitFabricShort(
+          const Stockpile(quantities: {'fabric': 2}),
+        ),
+        isFalse,
+      );
+    });
   });
 }

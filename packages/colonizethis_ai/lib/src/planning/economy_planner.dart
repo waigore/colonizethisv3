@@ -2,6 +2,10 @@
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
+import 'cast_iron_labour_gate.dart'
+    show
+        isCastIronLabourPeasantRecruitFabricShort,
+        isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'expand_phase_planner.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
@@ -185,16 +189,34 @@ EconomyPlan runEconomyPlanner({
   // The actual build order still requires the treasury cost via the
   // orchestrator's build pipeline. SPEC/ai/economy-planner.md § Regiment
   // build-input production priority.
+  // Refs #2847 § castIron labour peasant-recruit fabric bootstrap: the peasant
+  // recruit row costs 2 `fabric` while the cheapest regiment build input only
+  // requires 1, so a seller holding one unit is not in
+  // `_missingCheapestRegimentBuildInputIds` yet still cannot pay the recruit
+  // the #3303 boost emits. Stage domestic `fabric` production whenever the
+  // castIron-labour population-bound gate holds and the stockpile is short the
+  // recruit cost — **independent of** `forceCheapestRegimentBuild` / treasury
+  // so wool feedstock can accumulate across the ~31 gate turns on seed 42 even
+  // when the EXPAND rebuild directive is inactive that turn. The orchestrator
+  // recruit pass still requires `boostCastIronLabourPeasantRecruitment`.
+  final castIronLabourPeasantRecruitFabricBoost =
+      isCastIronLabourPopulationBoundForLockRecoverySeller(
+        game: game,
+        playerId: view.playerId,
+      ) &&
+      isCastIronLabourPeasantRecruitFabricShort(stockpile);
   final regimentBuildInputProductionBoost =
       (expandEconomy.forceCheapestRegimentBuild &&
           regimentCountForPlayer(game, view.playerId) == 0 &&
           missingRegimentBuildInputs.isNotEmpty) ||
       domesticImprovementInputOutputs.isNotEmpty ||
-      stageableImprovementInputs.isNotEmpty;
+      stageableImprovementInputs.isNotEmpty ||
+      castIronLabourPeasantRecruitFabricBoost;
   final boostedBuildInputOutputs = <String>{
     ...missingRegimentBuildInputs,
     ...domesticImprovementInputOutputs,
     ...stageableImprovementInputs,
+    if (castIronLabourPeasantRecruitFabricBoost) CommodityCatalog.fabric.id,
   };
 
   // Refs #2847 H8-supply (S7-D lumber re-localization): an affluent supplier

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:colonizethis_logic/ai_api.dart' show canAffordRecruitWorker;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
@@ -493,11 +494,27 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       }
     }
     if (peasantRecruit != null) {
-      _log.i(
-        'castIron labour peasant recruit nationId=${ctx.nationId} '
-        'targetTier=${peasantRecruit.targetTier.name}',
-      );
-      ordersBuilder.appendRecruitWorkerOrders(ctx.nationId, [peasantRecruit]);
+      final player = ctx.game.playerById(ctx.nationId);
+      final affordable = player != null &&
+          canAffordRecruitWorker(
+            player,
+            peasantRecruit,
+            player.workerPool,
+            player.stockpile,
+            player.treasury,
+          ).canAfford;
+      if (affordable) {
+        _log.i(
+          'castIron labour peasant recruit nationId=${ctx.nationId} '
+          'targetTier=${peasantRecruit.targetTier.name}',
+        );
+        ordersBuilder.appendRecruitWorkerOrders(ctx.nationId, [peasantRecruit]);
+      } else {
+        _log.d(
+          'castIron labour peasant recruit deferred nationId=${ctx.nationId} '
+          'reason=fabric_short',
+        );
+      }
     }
   }
 

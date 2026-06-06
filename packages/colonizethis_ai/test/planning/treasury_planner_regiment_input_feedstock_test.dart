@@ -12,13 +12,19 @@
 /// carve-out is active.
 library;
 
+import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
+    show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 const _fabricId = 'fabric';
 const _woolId = 'wool';
+const _playerId = 'gp1';
+const _tileTimber = 'oldWorld|p0|2|0';
 
 Game _lockRecoverySellerGame({
   required int treasury,
@@ -197,4 +203,112 @@ void main() {
       expect(_run(game), equals(_run(game)));
     });
   });
+
+  group(
+    'castIron-labour peasant-recruit fabric feedstock reservation (Refs #2847)',
+    () {
+      final threshold = cheapestRegimentBuildTreasuryCost();
+      const peasantFabricCost = 2;
+
+      Game _populationBoundSellerGame({
+        required int fabricHeld,
+        int woolHeld = 20,
+      }) {
+        var stockpile = Stockpile.empty
+            .applyDelta(CommodityCatalog.timber.id, 2)
+            .applyDelta(CommodityCatalog.iron.id, 2)
+            .applyDelta(CommodityCatalog.grain.id, 10);
+        if (woolHeld > 0) {
+          stockpile = stockpile.applyDelta(_woolId, woolHeld);
+        }
+        if (fabricHeld > 0) {
+          stockpile = stockpile.applyDelta(_fabricId, fabricHeld);
+        }
+        return Game(
+          id: 'g-peasant-recruit-feedstock',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 5; i++)
+                  Province(
+                    id: 'oldWorld|p$i',
+                    regionId: kRegionOldWorld,
+                    ownerId: _playerId,
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(provinces: []),
+            resourceByTileKey: const {_tileTimber: 'timber'},
+            tileKeysByRegionAndProvince: const {
+              kRegionOldWorld: {
+                'oldWorld|p0': [_tileTimber],
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: _playerId,
+              displayName: 'Seller',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|p0',
+              stockpile: stockpile,
+              treasury: threshold,
+              workerPool: const WorkerPool(peasants: 2),
+            ),
+          ],
+          worldMarketState: WorldMarketState.withDefaultPrices(const {
+            'grain': 10,
+            _woolId: 20,
+            _fabricId: 40,
+          }),
+        );
+      }
+
+      test('fixture is population-bound with fabric below recruit cost', () {
+        final game = _populationBoundSellerGame(fabricHeld: 1);
+        expect(
+          isCastIronLabourPopulationBoundForLockRecoverySeller(
+            game: game,
+            playerId: _playerId,
+          ),
+          isTrue,
+        );
+        expect(
+          RegimentEconomyCatalog.peasantLevies.buildInputs[_fabricId],
+          1,
+          reason: 'regiment build input met at fabric=1',
+        );
+        expect(peasantFabricCost, greaterThan(1));
+      });
+
+      test(
+        'withholds wool when fabric meets regiment cost but not peasant recruit',
+        () {
+          final game = _populationBoundSellerGame(fabricHeld: 1);
+          expect(
+            _woolOffers(_run(game)),
+            isEmpty,
+            reason:
+                'One fabric satisfies the regiment build input but not the '
+                '2-fabric peasant recruit; wool must stay reserved for the '
+                'second domestic fabric run.',
+          );
+        },
+      );
+
+      test(
+        'resumes offering wool once fabric meets peasant recruit cost of 2',
+        () {
+          final game = _populationBoundSellerGame(fabricHeld: 2);
+          expect(
+            _woolOffers(_run(game)),
+            isNotEmpty,
+            reason:
+                'Peasant-recruit fabric staging self-clears at fabric >= 2.',
+          );
+        },
+      );
+    },
+  );
 }
