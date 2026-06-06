@@ -250,6 +250,77 @@ bool stockpileAndLabourAffordAnyProductionRecipe(
   return false;
 }
 
+/// Effective labour available to [playerId] this turn — the labour that
+/// **food-fed** workers actually supply after mandatory food upkeep, computed
+/// exactly as the economy planner does (`effectiveLabourForWorkers` over the
+/// player's `WorkerPool` + `Stockpile`, with land-regiment and ship upkeep food
+/// reserved first via `regimentTypeCountsForPlayer` /
+/// `shipTypeCountsForPlayer`). Unfed workers strike and contribute no labour, so
+/// this can be far below the raw population ceiling
+/// ([playerRawLabourSupply]).
+///
+/// Companion to [stockpileAndLabourAffordAnyProductionRecipe] (Refs #2847 § H8;
+/// S7-D castIron production-allocation). That boolean only reports *whether* any
+/// recipe clears `feasibleRuns > 0`; this returns the underlying scalar so a
+/// labour-starvation counter can compare it directly against a recipe's
+/// `labourPerOutput`. Pure read-only over `(game, playerId)`; no mutation.
+int playerEffectiveLabour(Game game, String playerId) {
+  final player = game.playerById(playerId);
+  if (player == null) return 0;
+  return effectiveLabourForWorkers(
+    workers: player.workerPool,
+    stockpile: player.stockpile,
+    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
+    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+  );
+}
+
+/// Raw (food-ungated) labour supply ceiling for [playerId] — the labour every
+/// owned worker would contribute if **all** were fed
+/// (`WorkerPool.labourSupplyPerTurn`, the tier-weighted population sum). Unlike
+/// [playerEffectiveLabour] it ignores food upkeep and the strike gate, so it is
+/// the population ceiling against which a food shortfall is measured.
+///
+/// Used by the H8 castIron labour-starvation sub-cause split (Refs #2847): on a
+/// material-feasible but labour-infeasible castIron turn
+/// (`gpCastIronRecipeFeasibleTurns` high, `gpCastIronRecipeLabourFeasibleTurns`
+/// zero), comparing this ceiling against the recipe's `labourPerOutput` forks
+/// the cause into **food-starved** (ceiling >= one run, but
+/// [playerEffectiveLabour] < one run, so workers exist yet too few are fed — the
+/// next lever is food supply / food-reservation) versus **population-bound**
+/// (ceiling itself < one run, so even fully fed the seller lacks the workers —
+/// the next lever is worker growth / recruitment). Pure read-only.
+int playerRawLabourSupply(Game game, String playerId) {
+  final player = game.playerById(playerId);
+  if (player == null) return 0;
+  return player.workerPool.labourSupplyPerTurn;
+}
+
+/// Total quantity of the [foodCommodityIds] (e.g. `grain` + `meat`) held in
+/// [playerId]'s stockpile — the food on hand to feed workers after land-military
+/// and navy upkeep claim their share (`economy_consumption.dart` order:
+/// military -> navy -> workers Masters->Journeymen->Apprentices->Peasants).
+///
+/// Used by the H8 castIron labour-starvation snapshot (Refs #2847): captured at
+/// the terminal turn alongside [playerEffectiveLabour] /
+/// [playerRawLabourSupply], a near-zero food balance on a food-starved seller
+/// corroborates the food-supply lever over the recruitment lever. Returns 0 for
+/// an empty id set or an unknown player. Pure read-only over the stockpile.
+int playerFoodOnHand(
+  Game game,
+  String playerId,
+  Set<String> foodCommodityIds,
+) {
+  if (foodCommodityIds.isEmpty) return 0;
+  final player = game.playerById(playerId);
+  if (player == null) return 0;
+  var total = 0;
+  for (final id in foodCommodityIds) {
+    total += player.stockpile.quantityOf(id);
+  }
+  return total;
+}
+
 /// True iff [playerId] owns at least one province tile hosting one of
 /// [feedstockIds] at **any** improvement level (improved or unimproved).
 ///
