@@ -166,11 +166,13 @@ BuildUnitOrder? pickBuildOrder({
     return 1.0 + cargoBonus + militaryBonus + personalityBonus;
   }).toList();
 
-  _log.d(
-    'build scores nationId=$nationId '
-    'candidateCount=${buildCandidates.length} '
-    'scores=$scores',
-  );
+  if (_log.debugEnabled) {
+    _log.d(
+      'build scores nationId=$nationId '
+      'candidateCount=${buildCandidates.length} '
+      'scores=$scores',
+    );
+  }
 
   return selectWeightedCandidate(
         candidates: candidates,
