@@ -16,6 +16,8 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_ai/src/planning/recipe_scoring.dart'
     show feasibleRuns;
+import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
+    show kTreasuryOfferPriorityUrgent, otherGreatPowerOfferableFabricHeld;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -608,6 +610,9 @@ void assertSeed42S7dStructuralInvariants({
   castIronLabourPeasantRecruitMarketFabricStarvedTurns,
   required Map<String, int>
   castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+  required Map<String, int> castIronLabourPeasantRecruitFabricBidEmittedTurns,
+  required Map<String, int> castIronLabourPeasantRecruitFabricBidAbsentTurns,
+  required Map<String, int> castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
   required Map<String, int> fabricRecipeFeasibleTurns,
   required Map<String, int> fabricRecipeLabourFeasibleTurns,
 }) {
@@ -774,6 +779,41 @@ void assertSeed42S7dStructuralInvariants({
           'disjoint fabric-starved subsets, so their sum cannot exceed the '
           'fabric-starved total',
     );
+    // Refs #2847 § S7-D buyer-side fabric acquisition: bid-emitted and
+    // bid-absent counters are each measured only on fabric-starved turns with
+    // offerable counterparty supply, so neither can exceed the fabric-starved
+    // total; deals-as-buyer cannot exceed bid-emitted turns on the same axis.
+    expect(
+      castIronLabourPeasantRecruitFabricBidEmittedTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId peasant-recruit fabric-bid-emitted turns cannot exceed the '
+          'fabric-starved turns',
+    );
+    expect(
+      castIronLabourPeasantRecruitFabricBidAbsentTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId peasant-recruit fabric-bid-absent turns cannot exceed the '
+          'fabric-starved turns',
+    );
+    expect(
+      castIronLabourPeasantRecruitFabricBidEmittedTurns[gpId]! +
+          castIronLabourPeasantRecruitFabricBidAbsentTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId fabric-bid-emitted and fabric-bid-absent turns are disjoint '
+          'buyer-side subsets of offerable-supply fabric-starved turns',
+    );
+    expect(
+      castIronLabourPeasantRecruitFabricDealAsBuyerTurns[gpId]!,
+      lessThanOrEqualTo(
+        castIronLabourPeasantRecruitFabricBidEmittedTurns[gpId]!,
+      ),
+      reason:
+          '$gpId peasant-recruit fabric deals-as-buyer turns cannot exceed '
+          'fabric-bid-emitted turns on the same axis',
+    );
     // Refs #2847 § S7-D fabric circular-labour localization: a fabric run is
     // labour-feasible only when it is also materially feasible
     // (`feasibleRuns` incorporates the input check), so the labour-feasible
@@ -786,6 +826,134 @@ void assertSeed42S7dStructuralInvariants({
           '$gpId fabric labour-feasible turns cannot exceed the fabric '
           'material-feasible turns (labour-feasible requires material-feasible)',
     );
+  }
+}
+
+/// Tallies the per-GP submitted trade-order counters for one turn from the
+/// merged order list the resolver will apply (Refs #2924 Step 0). Mirrors the
+/// inline scan it replaced: each offer bumps [tradeOfferCount] (plus
+/// [tradeUrgentOfferCount] / [improvementInputOffersEmitted] /
+/// [castIronFeedstockOffersEmitted] where the order qualifies); each bid bumps
+/// [tradeBidCount] (plus the regiment- / improvement-input and castIron-
+/// feedstock bid counters where the commodity matches). Carry-forward
+/// world-market re-injections are excluded by construction — the caller passes
+/// only the AI-emitted merged orders. Read-only over the supplied maps except
+/// for the counter bumps. Extracted to keep the diagnostic test file at or
+/// below the repo non-comment line limit.
+void recordSeed42S7dTradeOrderCounters({
+  required List<String> gpIds,
+  required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
+  required Set<String> regimentInputCommodityIds,
+  required Set<String> improvementInputCommodityIds,
+  required Set<String> castIronFeedstockIds,
+  required Map<String, int> tradeOfferCount,
+  required Map<String, int> tradeUrgentOfferCount,
+  required Map<String, int> tradeBidCount,
+  required Map<String, int> improvementInputOffersEmitted,
+  required Map<String, int> castIronFeedstockOffersEmitted,
+  required Map<String, int> regimentInputBidsEmitted,
+  required Map<String, int> improvementInputBidsEmitted,
+  required Map<String, int> castIronFeedstockBidsEmitted,
+}) {
+  for (final gpId in gpIds) {
+    final tradeOrders = tradeOrdersByPlayerId[gpId];
+    if (tradeOrders == null) continue;
+    for (final order in tradeOrders) {
+      _recordSeed42S7dTradeOrderCounter(
+        gpId: gpId,
+        order: order,
+        regimentInputCommodityIds: regimentInputCommodityIds,
+        improvementInputCommodityIds: improvementInputCommodityIds,
+        castIronFeedstockIds: castIronFeedstockIds,
+        tradeOfferCount: tradeOfferCount,
+        tradeUrgentOfferCount: tradeUrgentOfferCount,
+        tradeBidCount: tradeBidCount,
+        improvementInputOffersEmitted: improvementInputOffersEmitted,
+        castIronFeedstockOffersEmitted: castIronFeedstockOffersEmitted,
+        regimentInputBidsEmitted: regimentInputBidsEmitted,
+        improvementInputBidsEmitted: improvementInputBidsEmitted,
+        castIronFeedstockBidsEmitted: castIronFeedstockBidsEmitted,
+      );
+    }
+  }
+}
+
+/// Records the per-GP counter bumps for a single merged [order] (Refs #2924
+/// Step 0). Extracted from [recordSeed42S7dTradeOrderCounters] so the scan loop
+/// stays within the repo control-flow nesting-depth limit; behavior is
+/// identical to the inline offer/bid handling it replaced. Read-only over the
+/// supplied sets except for the counter bumps.
+void _recordSeed42S7dTradeOrderCounter({
+  required String gpId,
+  required TradeOrder order,
+  required Set<String> regimentInputCommodityIds,
+  required Set<String> improvementInputCommodityIds,
+  required Set<String> castIronFeedstockIds,
+  required Map<String, int> tradeOfferCount,
+  required Map<String, int> tradeUrgentOfferCount,
+  required Map<String, int> tradeBidCount,
+  required Map<String, int> improvementInputOffersEmitted,
+  required Map<String, int> castIronFeedstockOffersEmitted,
+  required Map<String, int> regimentInputBidsEmitted,
+  required Map<String, int> improvementInputBidsEmitted,
+  required Map<String, int> castIronFeedstockBidsEmitted,
+}) {
+  if (order.type == TradeOrderType.offer) {
+    bumpCounter(tradeOfferCount, gpId);
+    if (order.priority >= kTreasuryOfferPriorityUrgent) {
+      bumpCounter(tradeUrgentOfferCount, gpId);
+    }
+    if (improvementInputCommodityIds.contains(order.commodityId)) {
+      bumpCounter(improvementInputOffersEmitted, gpId);
+    }
+    if (castIronFeedstockIds.contains(order.commodityId)) {
+      bumpCounter(castIronFeedstockOffersEmitted, gpId);
+    }
+    return;
+  }
+  if (order.type != TradeOrderType.bid) return;
+  bumpCounter(tradeBidCount, gpId);
+  if (regimentInputCommodityIds.contains(order.commodityId)) {
+    bumpCounter(regimentInputBidsEmitted, gpId);
+  }
+  if (improvementInputCommodityIds.contains(order.commodityId)) {
+    bumpCounter(improvementInputBidsEmitted, gpId);
+  }
+  if (castIronFeedstockIds.contains(order.commodityId)) {
+    bumpCounter(castIronFeedstockBidsEmitted, gpId);
+  }
+}
+
+/// Records buyer-side `fabric` bid emission for the S7-D peasant-recruit
+/// localization (Refs #2847 § buyer-side fabric acquisition). On each
+/// fabric-starved gp this turn with offerable counterparty fabric supply
+/// (`otherGreatPowerOfferableFabricHeld > 0`), bumps [emittedTurns] when the gp
+/// emitted a `fabric` bid in [tradeOrdersByPlayerId], else [absentTurns].
+/// Read-only over `(game, tradeOrdersByPlayerId)` except the counter bumps;
+/// extracted to keep the diagnostic test file at or below the repo non-comment
+/// line limit.
+void recordSeed42S7dFabricBidCounters({
+  required Game game,
+  required Set<String> fabricStarvedThisTurn,
+  required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
+  required Map<String, int> emittedTurns,
+  required Map<String, int> absentTurns,
+}) {
+  const fabricCommodityId = 'fabric';
+  for (final gpId in fabricStarvedThisTurn) {
+    if (otherGreatPowerOfferableFabricHeld(game, gpId) <= 0) continue;
+    final tradeOrders = tradeOrdersByPlayerId[gpId];
+    final emittedFabricBid = tradeOrders != null &&
+        tradeOrders.any(
+          (order) =>
+              order.type == TradeOrderType.bid &&
+              order.commodityId == fabricCommodityId,
+        );
+    if (emittedFabricBid) {
+      bumpCounter(emittedTurns, gpId);
+    } else {
+      bumpCounter(absentTurns, gpId);
+    }
   }
 }
 

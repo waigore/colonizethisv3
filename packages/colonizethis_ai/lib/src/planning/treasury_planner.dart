@@ -505,6 +505,7 @@ void _applyLockRecoverySellerRegimentRebuildBids({
       projected: projected,
       carryForwardBids: carryForwardBids,
       need: need,
+      peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     );
   }
 }
