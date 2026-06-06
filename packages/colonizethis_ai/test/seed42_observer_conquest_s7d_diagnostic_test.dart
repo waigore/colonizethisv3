@@ -1418,6 +1418,54 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// changes; positive + negative unit tests for the two helpers in
 /// `seed42_s7d_feedstock_helpers_test.dart`).
 ///
+/// ## S7-D refresh (captured 2026-06-06 — castIron labour-starvation sub-cause
+///     fork resolved: population-bound, not food-starved; Refs #2847)
+///
+/// The prior refresh re-pointed the behaviour lever to "effective labour" but
+/// left the *sub-cause* open: is the labour shortfall a **food** problem
+/// (workers exist but too few are fed) or a **population** problem (too few
+/// workers even if all fed)? Its hypothesised lever — "reserve / free effective
+/// labour from lower-priority recipes, or a food-reservation" — assumed the
+/// former. This slice adds two read-only counters
+/// (`gpCastIronLabourFoodStarvedTurns` vs `gpCastIronLabourPopulationBoundTurns`,
+/// a partition of the material-feasible-but-labour-infeasible turns, forked on
+/// whether the food-ungated ceiling `playerRawLabourSupply` would itself fund one
+/// `castIron` run of `castIronMinLabourPerOutput == 5`) plus a turn-99
+/// effective-labour / raw-supply / food-on-hand snapshot. The fork resolves
+/// **decisively to population**, and **falsifies the food hypothesis**:
+///
+///   * `gpCastIronLabourFoodStarvedTurns` = **0 for every GP** — on no
+///     material-feasible turn would feeding more workers reach one run.
+///   * `gpCastIronLabourPopulationBoundTurns` = gp1 = 48, gp5 = 53 (**equal to
+///     the full material-feasible count**) — on *every* such turn the seller's
+///     fully-fed labour ceiling is itself below `labourPerOutput == 5`.
+///   * Turn-99 snapshot: every GP has `effectiveLabour == rawLabourSupply`
+///     (so **all** workers are already fed — food is not gating labour) while
+///     that ceiling is tiny: gp5 = **1**, gp1 / gp2 / gp3 / gp4 = **2**, far
+///     below 5. Food on hand is simultaneously **abundant** (gp5 = 289,
+///     gp3 = 203, gp6 = 193), confirming the seller is drowning in food yet
+///     starved of *workers*, not food.
+///
+/// **Re-pointed next slice (supersedes the food-reservation hypothesis):** the
+/// binding constraint is the lock-recovery seller's **worker population**, not
+/// food supply, feedstock, tile ownership, or recipe competition. A below-quota
+/// zero-NW zero-regiment seller holds only ~1-2 total labour against the
+/// `castIron` recipe's 5, with surplus food and idle feedstock — so neither
+/// freeing labour from other recipes (there is almost none to free) nor a
+/// food-reservation (food is not the gate) can ever clear `feasibleRuns > 0`.
+/// The next *behaviour* slice must grow the seller's labour pool — e.g. convert
+/// the abundant food into worker growth / peasant recruitment for the same
+/// self-clearing lock-recovery-seller cohort — until the fully-fed ceiling
+/// reaches `castIronMinLabourPerOutput`, gated to exclude the regiment-holding
+/// +6 baseline GPs (gp1 / gp2) by construction. Verify by confirming
+/// `gpCastIronLabourPopulationBoundTurns` falls as `rawLabourSupply` rises past
+/// 5, then `gpCastIronRecipeLabourFeasibleTurns` and
+/// `gpCastIronProductionAssignedTurns` rise above 0 for gp5. This slice is
+/// read-only diagnostic instrumentation (no behaviour change, no config
+/// constants, no gate-threshold changes; positive + negative unit tests for the
+/// three helpers `playerEffectiveLabour` / `playerRawLabourSupply` /
+/// `playerFoodOnHand` in `seed42_s7d_feedstock_helpers_test.dart`).
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1863,6 +1911,45 @@ void main() {
       final castIronFeasibleOwnsFeedstockTileTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 H8 castIron labour-starvation sub-cause split (read-only).
+      // `gpCastIronRecipeLabourFeasibleTurns == 0` while
+      // `gpCastIronRecipeFeasibleTurns` / `gpCastIronFeasibleOwnsFeedstockTile
+      // Turns` are high decisively localized the binding constraint to
+      // effective labour (the seller can never fund one `castIron`
+      // `labourPerOutput` run after mandatory food upkeep). These two counters
+      // fork *why* effective labour falls short on those material-feasible
+      // turns so the next behaviour slice can pick the correct lever:
+      //   * `castIronLabourFoodStarvedTurns` — the raw (food-ungated) labour
+      //     ceiling (`playerRawLabourSupply`) **would** fund one run if every
+      //     worker were fed, but `playerEffectiveLabour` does not: workers exist
+      //     yet too few are food-fed. Lever: food supply / food-reservation.
+      //   * `castIronLabourPopulationBoundTurns` — even the fully-fed ceiling is
+      //     below one run's `labourPerOutput`: the seller simply lacks workers.
+      //     Lever: worker growth / recruitment, not food.
+      // Counted only on castIron material-feasible but labour-infeasible turns,
+      // so the two are a partition of (recipeFeasible AND NOT labourFeasible).
+      // Read-only; the (freely tunable) counts can move as later slices land.
+      final castIronLabourFoodStarvedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronLabourPopulationBoundTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      // Minimum `labourPerOutput` across the castIron recipes — the cheapest
+      // single run's effective-labour requirement, used as the food-starved /
+      // population-bound fork threshold above.
+      final castIronMinLabourPerOutput = castIronRecipes.isEmpty
+          ? 0
+          : castIronRecipes
+                .map((recipe) => recipe.labourPerOutput)
+                .reduce((a, b) => a < b ? a : b);
+      // Food commodities (grain + meat) consumed by worker upkeep
+      // (`economy_consumption.dart`), summed for the turn-99 food-on-hand
+      // snapshot that corroborates the food-starved lever.
+      final castIronLabourFoodCommodityIds = <String>{
+        CommodityCatalog.grain.id,
+        CommodityCatalog.meat.id,
+      };
       // Refs #2847 H8-extraction execution-gap disambiguation (read-only).
       // Both are gated on a feedstock-extraction-gate-active turn so they split
       // the 29-52 gate-active turns into the proximate failure stage:
@@ -2291,6 +2378,18 @@ void main() {
               )) {
                 castIronRecipeLabourFeasibleTurns[gpId] =
                     (castIronRecipeLabourFeasibleTurns[gpId] ?? 0) + 1;
+              } else if (castIronMinLabourPerOutput > 0) {
+                // Material-feasible but labour-infeasible: fork the cause into
+                // food-starved (fully-fed ceiling would fund a run) vs
+                // population-bound (ceiling itself below one run).
+                if (playerRawLabourSupply(game, gpId) >=
+                    castIronMinLabourPerOutput) {
+                  castIronLabourFoodStarvedTurns[gpId] =
+                      (castIronLabourFoodStarvedTurns[gpId] ?? 0) + 1;
+                } else {
+                  castIronLabourPopulationBoundTurns[gpId] =
+                      (castIronLabourPopulationBoundTurns[gpId] ?? 0) + 1;
+                }
               }
               if (ownsFeedstockResourceTileAnyLevel(
                 game,
@@ -2317,6 +2416,17 @@ void main() {
               'regimentCount': regimentCountForPlayer(game, gpId),
               'cheapestRegimentBuildTreasuryCost':
                   cheapestRegimentBuildTreasuryCost(),
+              // Refs #2847 H8 castIron labour-starvation corroboration: the
+              // effective (food-fed) labour, the raw (fully-fed) ceiling, and
+              // the food on hand at the terminal turn for the food-starved vs
+              // population-bound read.
+              'effectiveLabour': playerEffectiveLabour(game, gpId),
+              'rawLabourSupply': playerRawLabourSupply(game, gpId),
+              'foodOnHand': playerFoodOnHand(
+                game,
+                gpId,
+                castIronLabourFoodCommodityIds,
+              ),
             };
           }
         }
@@ -2619,6 +2729,10 @@ void main() {
         'gpCastIronRecipeLabourFeasibleTurns': castIronRecipeLabourFeasibleTurns,
         'gpCastIronFeasibleOwnsFeedstockTileTurns':
             castIronFeasibleOwnsFeedstockTileTurns,
+        'gpCastIronLabourFoodStarvedTurns': castIronLabourFoodStarvedTurns,
+        'gpCastIronLabourPopulationBoundTurns':
+            castIronLabourPopulationBoundTurns,
+        'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
 
