@@ -1287,6 +1287,61 @@ override) is pinned separately in
 `seed42_observer_nw_lock_recovery_declare_war_regression_test.dart` and the
 unit tests in `phase-planner-architecture.md` § Path E.
 
+## Internal lookup indices (Refs #3288)
+
+`runTreasuryPlanner` is inside the measured 15-second next-turn resolution span
+(`.cursor/rules/colonizethis-turn-resolution-budget.mdc`). Two hot-path lookups
+are served from precomputed indices instead of linear scans. This is a
+**performance-only** change: the emitted `List<TradeOrder>` is byte-for-byte
+identical to the pre-index behaviour for the same inputs, so every acceptance
+criterion in the sections above is preserved unchanged.
+
+### Recipe-by-output index
+
+- The planner finds production recipes by their **output commodity** in four
+  helpers (`_marketPriceBelowProductionCost`, `_regimentBuildInputFeedstockIds`,
+  `_lowestIdRecipeProducing`, `_feedstockQuantityForOneMissingBuildInputRun`).
+- These read `ProductionRecipesCatalog.producing(commodityId)` — an O(1) lookup
+  backed by the static `ProductionRecipesCatalog.byOutputCommodityId`
+  (`packages/colonizethis_data`) — instead of scanning
+  `ProductionRecipesCatalog.all` and filtering by `outputCommodityId`.
+- `byOutputCommodityId` preserves the `all` ordering within each commodity
+  bucket, so `_lowestIdRecipeProducing` (lowest-`id` selection) and the
+  feedstock set/`needed`-quantity computations yield the same results as the
+  prior full scan. The catalog is `static final` (process-lifetime constant), so
+  the index never goes stale.
+
+### O(1) player point lookup
+
+- `_treasuryForPlayer(game, playerId)` returns
+  `game.playerById(playerId)?.treasury ?? 0`, using the existing O(1)
+  `GamePlayerLookup.playerById` index (`colonizethis_logic`, exported via
+  `ai_api.dart`) instead of a linear `game.players` scan. The absent-player
+  fallback (`0`) is unchanged.
+
+### Determinism and budget
+
+The indices are pure functions of the static `ProductionRecipesCatalog` and the
+per-`Game` player index. Identical planner inputs yield identical outputs; no
+hot-path logging is added. Per-turn cost for these lookups drops from
+`O(recipes)` / `O(players)` per call to amortised O(1), inside the 15-second
+turn-resolution budget.
+
+### Acceptance criteria (Refs #3288)
+
+- Given the static `ProductionRecipesCatalog`, when
+  `ProductionRecipesCatalog.producing(c)` is called for any commodity id `c`,
+  then it returns exactly the recipes in `ProductionRecipesCatalog.all` whose
+  `outputCommodityId == c`, in `all` order, and an empty list when no recipe
+  produces `c`.
+- Given any `Game` and `playerId`, when `_treasuryForPlayer(game, playerId)` is
+  evaluated, then it returns `game.playerById(playerId)?.treasury ?? 0` (the
+  matching player's treasury, or `0` when no player has that id).
+- Given identical inputs `(game, playerId, stockpile, productionAssignments,
+  treasury, tileMapByRegion, topology, currentOrders)`, when
+  `runTreasuryPlanner` runs twice after the index change, then both runs return
+  identical `List<TradeOrder>` outputs (determinism preserved).
+
 ## Out of scope for this SPEC slice
 
 The following remain under remaining `#2994` subtasks:
