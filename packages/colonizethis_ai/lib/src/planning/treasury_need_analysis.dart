@@ -84,6 +84,49 @@ Map<CommodityId, int> _inputNeedsFromAssignments(
   return needs;
 }
 
+void _populateTreasurySurplusAndNeedMaps({
+  required Iterable<CommodityId> trackedCommodityIds,
+  required Map<CommodityId, int> inputNeeds,
+  required Stockpile projected,
+  required Map<CommodityId, int> carryForwardOffers,
+  required Map<CommodityId, int> carryForwardBids,
+  required Map<CommodityId, int> marketPrices,
+  required bool isLockRecoverySeller,
+  required bool isRegimentBuildInputMarketSupplier,
+  required Map<CommodityId, int> available,
+  required Map<CommodityId, int> need,
+}) {
+  for (final id in trackedCommodityIds) {
+    if (richesCommodityIds.contains(id)) continue;
+    final commodity = CommodityCatalog.byId[id];
+    if (commodity == null) continue;
+    final consumption = _consumptionForecast(
+      commodityId: id,
+      commodity: commodity,
+      inputNeeds: inputNeeds,
+    );
+    final inputs = inputNeeds[id] ?? 0;
+    var safety = commodity.category == CommodityCategory.food
+        ? (isLockRecoverySeller ? 0 : consumption * 2)
+        : consumption;
+    if (isRegimentBuildInputMarketSupplier &&
+        _regimentBuildInputSupplyCommodityIds.contains(id)) {
+      safety = 0;
+    }
+    final reserve = consumption + inputs + safety;
+    final projectedQty = projected.quantityOf(id);
+    final surplus = projectedQty - reserve - (carryForwardOffers[id] ?? 0);
+    if (surplus > 0) {
+      available[id] = surplus;
+    }
+    final deficit =
+        (consumption + inputs) - projectedQty - (carryForwardBids[id] ?? 0);
+    if (deficit > 0 && _marketPriceBelowProductionCost(id, marketPrices)) {
+      need[id] = deficit;
+    }
+  }
+}
+
 /// Returns prior-turn offer-side fill rate (`0.0`–`1.0`) for [commodityId] from
 /// [state.lastTurnActivity]. Returns `1.0` when no activity exists or
 /// `totalOfferQuantity <= 0`, matching the "no prior data → assume fully
