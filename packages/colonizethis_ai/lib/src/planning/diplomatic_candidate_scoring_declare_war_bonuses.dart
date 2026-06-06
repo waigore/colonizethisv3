@@ -40,11 +40,13 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
       .contains(ctx.order.targetFactionId)) {
     s += _owConquestDeclareWarBonus(ctx, 15);
   }
-  _log.d(
-    'diplomacy warDesire nationId=${ctx.nationId} '
-    'targetFactionId=${ctx.order.targetFactionId} '
-    'warDesire=$warDesire desiredTerritory=$desiredTerritory',
-  );
+  if (_log.debugEnabled) {
+    _log.d(
+      'diplomacy warDesire nationId=${ctx.nationId} '
+      'targetFactionId=${ctx.order.targetFactionId} '
+      'warDesire=$warDesire desiredTerritory=$desiredTerritory',
+    );
+  }
   return s;
 }
 

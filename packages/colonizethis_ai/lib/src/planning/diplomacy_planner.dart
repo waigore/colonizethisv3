@@ -560,10 +560,12 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
         targetFactionId: peaceTarget,
       ),
   ];
-  _log.i(
-    'diplomacy forced offerPeace nationId=${ctx.nationId} '
-    'targets=${peaceOrders.map((o) => o.targetFactionId).toList()}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced offerPeace nationId=${ctx.nationId} '
+      'targets=${peaceOrders.map((o) => o.targetFactionId).toList()}',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, peaceOrders),
   );
