@@ -9,7 +9,7 @@ import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
-import '../turn/turn_seed_constants.dart';
+import '../turn_resolution_seeds.dart';
 import 'game_world_mutations.dart';
 import 'naval.dart';
 import 'naval_coastal_visibility.dart';

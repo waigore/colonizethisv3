@@ -13,7 +13,7 @@ import '../combat_phase_helpers.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolver_config.dart';
-import '../turn_seed_constants.dart';
+import '../../turn_resolution_seeds.dart';
 
 void _emitPreBattleDialogueForConflicts(
   Game state,

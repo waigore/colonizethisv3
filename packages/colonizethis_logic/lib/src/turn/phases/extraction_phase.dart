@@ -9,7 +9,7 @@ import '../../economy/sea_transport.dart';
 import '../../world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
-import '../turn_seed_constants.dart';
+import '../../turn_resolution_seeds.dart';
 
 /// Extraction phase: connectivity, land/overseas extraction, interception.
 ///

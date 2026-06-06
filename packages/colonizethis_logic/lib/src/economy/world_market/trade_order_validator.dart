@@ -18,7 +18,7 @@ import '../../diplomacy/diplomacy_subsidies_relations_resolver.dart'
 import '../../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
 import '../../constants.dart';
 import '../../orders/order_projections.dart' show projectOrderEffects;
-import '../../orders/order_validation_result.dart';
+import '../../validation/order_validation_result.dart';
 import 'sellable_quantity.dart' show offerCapByCommodityId;
 import 'treasury_bid_budget.dart'
     show
