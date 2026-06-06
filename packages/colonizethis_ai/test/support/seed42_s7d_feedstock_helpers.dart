@@ -420,7 +420,11 @@ seed42S7dCastIronLabourTurnMeasure({
   // the cheaper material check already failed.
   final fabricRecipeLabourFeasible =
       fabricRecipeFeasible &&
-      stockpileAndLabourAffordAnyProductionRecipe(game, playerId, fabricRecipes);
+      stockpileAndLabourAffordAnyProductionRecipe(
+        game,
+        playerId,
+        fabricRecipes,
+      );
   final castIronMaterialFeasible = stockpileAffordsAnyProductionRecipe(
     player.stockpile,
     castIronRecipes,
@@ -600,7 +604,10 @@ void assertSeed42S7dStructuralInvariants({
   required Map<String, int> castIronLabourPeasantRecruitGateTurns,
   required Map<String, int> castIronLabourPeasantRecruitAffordableTurns,
   required Map<String, int> castIronLabourPeasantRecruitFabricStarvedTurns,
-  required Map<String, int> castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+  required Map<String, int>
+  castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+  required Map<String, int>
+  castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
   required Map<String, int> fabricRecipeFeasibleTurns,
   required Map<String, int> fabricRecipeLabourFeasibleTurns,
 }) {
@@ -742,6 +749,30 @@ void assertSeed42S7dStructuralInvariants({
       reason:
           '$gpId peasant-recruit market-fabric-starved turns cannot exceed '
           'the fabric-starved turns (market-starved requires fabric-starved)',
+    );
+    // Refs #2847 § S7-D market-fabric offer/acquisition localization: the
+    // market-fabric-unoffered counter is also a subset of the fabric-starved
+    // turns (gate active AND recruit unpayable AND holders present yet none
+    // offerable), AND it is mutually exclusive with the market-fabric-starved
+    // counter (one requires `otherGreatPowerFabricHeld <= 0`, the other
+    // `> 0`), so the two offer-side subsets together cannot exceed the
+    // fabric-starved total. Guards the instrumentation gating itself without
+    // pinning the (freely tunable) per-GP counts.
+    expect(
+      castIronLabourPeasantRecruitMarketFabricUnofferedTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId peasant-recruit market-fabric-unoffered turns cannot exceed '
+          'the fabric-starved turns (unoffered requires fabric-starved)',
+    );
+    expect(
+      castIronLabourPeasantRecruitMarketFabricStarvedTurns[gpId]! +
+          castIronLabourPeasantRecruitMarketFabricUnofferedTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId market-fabric-starved and market-fabric-unoffered turns are '
+          'disjoint fabric-starved subsets, so their sum cannot exceed the '
+          'fabric-starved total',
     );
     // Refs #2847 § S7-D fabric circular-labour localization: a fabric run is
     // labour-feasible only when it is also materially feasible

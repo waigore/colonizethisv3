@@ -10,7 +10,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
         cheapestRegimentBuildTreasuryCost,
         expandSellerFeedstockTileAcquisitionTarget;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
-    show kTreasuryOfferPriorityUrgent;
+    show kTreasuryOfferPriorityUrgent, otherGreatPowerOfferableFabricHeld;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
@@ -2080,6 +2080,19 @@ void main() {
       // freely as later slices land.
       final castIronLabourPeasantRecruitMarketFabricStarvedTurns =
           <String, int>{for (final gpId in gpIds) gpId: 0};
+      // Refs #2847 § S7-D market-fabric offer/acquisition localization: the
+      // complementary subset of the fabric-starved turns where other great
+      // powers DO hold `fabric` (so this is not market-starved) yet none of it
+      // is offerable — every holder is itself a below-quota zero-NW zero-
+      // regiment lock-recovery seller withholding its `fabric` by the regiment-
+      // rebuild offer-retention carve-out (`otherGreatPowerOfferableFabricHeld
+      // <= 0` while `otherGreatPowerFabricHeld > 0`). A high count here forks
+      // the residual onto the offer/retention layer (no counterparty offers
+      // `fabric`); a low count with holdings present instead re-points it to the
+      // starved seller's own buy/bid path. Read-only; counts move freely as
+      // later slices land.
+      final castIronLabourPeasantRecruitMarketFabricUnofferedTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2526,6 +2539,15 @@ void main() {
                     castIronLabourPeasantRecruitMarketFabricStarvedTurns,
                     gpId,
                   );
+                } else if (otherGreatPowerOfferableFabricHeld(game, gpId) <=
+                    0) {
+                  // Holders exist but every one withholds its `fabric` via the
+                  // regiment-rebuild offer-retention carve-out — the market door
+                  // is closed at the offer/retention layer, not at holdings.
+                  bumpCounter(
+                    castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+                    gpId,
+                  );
                 }
               }
             }
@@ -2884,6 +2906,8 @@ void main() {
             castIronLabourPeasantRecruitFabricStarvedTurns,
         'gpCastIronLabourPeasantRecruitMarketFabricStarvedTurns':
             castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+        'gpCastIronLabourPeasantRecruitMarketFabricUnofferedTurns':
+            castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
@@ -2980,6 +3004,8 @@ void main() {
             castIronLabourPeasantRecruitFabricStarvedTurns,
         castIronLabourPeasantRecruitMarketFabricStarvedTurns:
             castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+        castIronLabourPeasantRecruitMarketFabricUnofferedTurns:
+            castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
         fabricRecipeFeasibleTurns: fabricRecipeFeasibleTurns,
         fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
       );
