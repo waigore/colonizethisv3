@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart'
     show
+        GamePlayerLookup,
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
@@ -572,8 +573,7 @@ bool _marketPriceBelowProductionCost(
   final marketPrice = marketPrices[commodityId];
   if (marketPrice == null) return true;
   var bestCost = double.infinity;
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (recipe.outputCommodityId != commodityId) continue;
+  for (final recipe in ProductionRecipesCatalog.producing(commodityId)) {
     var inputCost = 0.0;
     for (final entry in recipe.inputQuantities.entries) {
       final inputPrice = marketPrices[entry.key] ?? 0;
@@ -798,12 +798,8 @@ CommodityId _lockRecoveryLiquidityCommodity(WorldMarketState state) {
   return foods.isNotEmpty ? foods.first : 'grain';
 }
 
-int _treasuryForPlayer(Game game, String playerId) {
-  for (final player in game.players) {
-    if (player.id == playerId) return player.treasury;
-  }
-  return 0;
-}
+int _treasuryForPlayer(Game game, String playerId) =>
+    game.playerById(playerId)?.treasury ?? 0;
 
 int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
   var count = 0;
@@ -849,8 +845,8 @@ Set<CommodityId> _regimentBuildInputFeedstockIds(Stockpile projected) {
   };
   if (missingInputs.isEmpty) return const <CommodityId>{};
   final feedstock = <CommodityId>{};
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (missingInputs.contains(recipe.outputCommodityId)) {
+  for (final buildInputId in missingInputs) {
+    for (final recipe in ProductionRecipesCatalog.producing(buildInputId)) {
       feedstock.addAll(recipe.inputQuantities.keys);
     }
   }
@@ -1000,8 +996,7 @@ void _addImprovementInputProductionFeedstockNeed({
 /// `ProductionRecipesCatalog`.
 ProductionRecipe? _lowestIdRecipeProducing(CommodityId commodityId) {
   ProductionRecipe? best;
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (recipe.outputCommodityId != commodityId) continue;
+  for (final recipe in ProductionRecipesCatalog.producing(commodityId)) {
     if (best == null || recipe.id.compareTo(best.id) < 0) {
       best = recipe;
     }
@@ -1034,8 +1029,7 @@ int _feedstockQuantityForOneMissingBuildInputRun(
   var needed = 0;
   for (final entry in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
     if (projected.quantityOf(entry.key) >= entry.value) continue;
-    for (final recipe in ProductionRecipesCatalog.all) {
-      if (recipe.outputCommodityId != entry.key) continue;
+    for (final recipe in ProductionRecipesCatalog.producing(entry.key)) {
       final perRun = recipe.inputQuantities[feedstockId];
       if (perRun != null && perRun > needed) {
         needed = perRun;

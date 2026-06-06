@@ -99,6 +99,54 @@ void main() {
         isFalse,
       );
     });
+
+    group('byOutputCommodityId index (Refs #3288)', () {
+      test('producing(c) matches a full scan of all by outputCommodityId', () {
+        final outputs = ProductionRecipesCatalog.all
+            .map((r) => r.outputCommodityId)
+            .toSet();
+        for (final commodityId in outputs) {
+          final expected = ProductionRecipesCatalog.all
+              .where((r) => r.outputCommodityId == commodityId)
+              .toList();
+          expect(
+            ProductionRecipesCatalog.producing(commodityId),
+            equals(expected),
+            reason: 'producing($commodityId) must equal the filtered all-scan',
+          );
+        }
+      });
+
+      test('producing preserves all-list order within a commodity bucket', () {
+        // fabric is produced by two recipes; order must follow `all`.
+        expect(
+          ProductionRecipesCatalog.producing(CommodityCatalog.fabric.id),
+          equals(<ProductionRecipe>[
+            ProductionRecipesCatalog.fabricFromWool,
+            ProductionRecipesCatalog.fabricFromCotton,
+          ]),
+        );
+      });
+
+      test('producing returns empty list for an unproduced commodity', () {
+        expect(
+          ProductionRecipesCatalog.producing(CommodityCatalog.grain.id),
+          isEmpty,
+        );
+        expect(
+          ProductionRecipesCatalog.producing('not_a_real_commodity'),
+          isEmpty,
+        );
+      });
+
+      test('byOutputCommodityId covers every recipe exactly once', () {
+        final indexed = ProductionRecipesCatalog.byOutputCommodityId.values
+            .expand((recipes) => recipes)
+            .toList();
+        expect(indexed.length, ProductionRecipesCatalog.all.length);
+        expect(indexed.toSet(), ProductionRecipesCatalog.all.toSet());
+      });
+    });
   });
 }
 
