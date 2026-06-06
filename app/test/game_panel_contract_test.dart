@@ -1,6 +1,7 @@
 // Refs #3279 — verifies the shared GamePanelMixin / GamePanelConfig contract
 // is adopted by the fully-shaped game-bearing panels.
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +25,8 @@ Game _minimalGame() {
 }
 
 void main() {
+  suppressLogsForTests();
+
   group('GamePanelMixin contract (Refs #3279)', () {
     final game = _minimalGame();
     final bus = AppEventBus.create();
