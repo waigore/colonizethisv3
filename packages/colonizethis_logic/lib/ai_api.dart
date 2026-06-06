@@ -30,6 +30,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         regimentBuildInputFeedstockImprovementInputCost,
         selectFullAiCivilianWorkOrders,
         selfLockRecoverySellerNeededProducibleImprovementInputs,
+        selfLockRecoverySellerStageableImprovementInputs,
         sellerFeedstockTileAcquisitionTarget,
         sellerFeedstockTileAcquisitionTargetProvinceIdsSorted,
         sellerFeedstockTileAcquisitionTargetsAmongAcquirable,

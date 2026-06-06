@@ -225,6 +225,60 @@ Game _castIronFeedstockCoavailabilityGame({
   );
 }
 
+/// A below-quota zero-NW lock-recovery seller whose **fabric** improvement-cost
+/// gate is inactive — it owns a `castIron`-feedstock (`timber`) tile but **no**
+/// unimproved `wool` / `cotton` tile — yet co-holds `timber` + `iron` so the
+/// `castIron_from_timber_iron_coal` recipe is materially feasible. This is the
+/// seed-42 gp5 profile after its fabric feedstock tile has been improved: the
+/// prior `selfLockRecoverySellerNeededProducibleImprovementInputs` set is empty
+/// here, so only the new stageable path can assign the domestic castIron run.
+/// Refs #2847 § H8 production allocation (S7-D castIron, PR #3289). When
+/// [ownsFeedstockTile] is false the timber tile is removed (the seller no longer
+/// owns castIron feedstock to extract), so the staging gate self-clears
+/// (negative control). [owProvinces] >= the conquest quota lifts the seller out
+/// of the lock-recovery band (negative control).
+Game _castIronStagingNoFabricGateGame({
+  required int treasury,
+  bool ownsFeedstockTile = true,
+  int owProvinces = 3,
+}) {
+  const ow = 'oldWorld';
+  return Game(
+    id: 'g-h8-castiron-staging',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 0; i < owProvinces; i++)
+            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
+        ],
+      ),
+      newWorld: const RegionData(provinces: []),
+      // Owns a `timber` feedstock tile but NO `wool` / `cotton` tile, so the
+      // fabric improvement-cost gate is inactive and the prior self-need helper
+      // is empty — isolating the new stageable path.
+      resourceByTileKey: ownsFeedstockTile
+          ? const {'oldWorld|seller_0|2|0': 'timber'}
+          : const {},
+    ),
+    players: [
+      Player(
+        id: 'gp_seller',
+        displayName: 'Seller',
+        isHuman: false,
+        capitalProvinceId: '$ow|seller_0',
+        treasury: treasury,
+        // Holds timber + iron (castIron feedstock) but zero castIron.
+        stockpile: const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, 30)
+            .applyDelta(CommodityCatalog.timber.id, 30)
+            .applyDelta(CommodityCatalog.iron.id, 10),
+        workerPool: const WorkerPool(peasants: 12),
+      ),
+    ],
+  );
+}
+
 PhasePlanOutcome _expandForceRegimentBuildPlan({
   required bool forceCheapestRegimentBuild,
 }) {
@@ -837,6 +891,111 @@ void main() {
         }
 
         expect(run(), equals(run()));
+      },
+    );
+
+    test(
+      'lock-recovery seller stages castIron when it co-holds timber + iron and '
+      'owns a feedstock tile even after the fabric improvement gate goes '
+      'inactive (Refs #2847 H8 production allocation — S7-D castIron, PR #3289)',
+      () {
+        final game = _castIronStagingNoFabricGateGame(treasury: threshold);
+        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final plan = runEconomyPlanner(
+          game: game,
+          view: view,
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          _assignedRecipeIds(plan),
+          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          reason:
+              'A recovered lock-recovery seller that no longer owns an '
+              'unimproved fabric tile but still co-holds timber + iron and owns '
+              'a feedstock tile must stage the feasible castIron run.',
+        );
+      },
+    );
+
+    test(
+      'castIron staging is off once the seller owns no feedstock tile '
+      '(negative control — staging requires an owned feedstock tile)',
+      () {
+        final active = runEconomyPlanner(
+          game: _castIronStagingNoFabricGateGame(treasury: threshold),
+          view: buildPlayerView(
+            _castIronStagingNoFabricGateGame(treasury: threshold),
+            _topology,
+            'gp_seller',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        final inactive = runEconomyPlanner(
+          game: _castIronStagingNoFabricGateGame(
+            treasury: threshold,
+            ownsFeedstockTile: false,
+          ),
+          view: buildPlayerView(
+            _castIronStagingNoFabricGateGame(
+              treasury: threshold,
+              ownsFeedstockTile: false,
+            ),
+            _topology,
+            'gp_seller',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          castIronLabour(inactive),
+          lessThanOrEqualTo(castIronLabour(active)),
+          reason:
+              'Removing the owned feedstock tile must not increase castIron '
+              'labour; the stageable boost only fires while the seller owns a '
+              'castIron feedstock tile.',
+        );
+      },
+    );
+
+    test(
+      'castIron staging is off for an above-quota GP (negative control — '
+      '+6 baseline GPs unaffected)',
+      () {
+        final belowQuota = runEconomyPlanner(
+          game: _castIronStagingNoFabricGateGame(treasury: threshold),
+          view: buildPlayerView(
+            _castIronStagingNoFabricGateGame(treasury: threshold),
+            _topology,
+            'gp_seller',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        final aboveQuota = runEconomyPlanner(
+          game: _castIronStagingNoFabricGateGame(
+            treasury: threshold,
+            owProvinces: 12,
+          ),
+          view: buildPlayerView(
+            _castIronStagingNoFabricGateGame(
+              treasury: threshold,
+              owProvinces: 12,
+            ),
+            _topology,
+            'gp_seller',
+          ),
+          config: config,
+          seeds: seeds,
+        );
+        expect(
+          castIronLabour(aboveQuota),
+          lessThanOrEqualTo(castIronLabour(belowQuota)),
+          reason:
+              'Lifting the GP above the conquest quota must not increase '
+              'castIron labour; only below-quota lock-recovery sellers stage it.',
+        );
       },
     );
   });
