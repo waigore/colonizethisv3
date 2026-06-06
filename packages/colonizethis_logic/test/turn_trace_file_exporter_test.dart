@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:colonizethis_logic/src/turn/trace/turn_trace_contracts.dart';
-import 'package:colonizethis_logic/src/turn/trace/turn_trace_file_exporter.dart';
+import 'package:colonizethis_logic/src/trace/turn_trace_contracts.dart';
+import 'package:colonizethis_logic/src/trace/turn_trace_file_exporter.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {

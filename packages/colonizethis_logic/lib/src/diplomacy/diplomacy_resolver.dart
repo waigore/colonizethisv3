@@ -10,7 +10,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../turn/turn_resolution_result.dart';
+import '../world/faction_membership.dart';
 import '../world/province_lookup.dart';
+
+export '../world/faction_membership.dart';
 import 'alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'ftp_resolver.dart';
@@ -30,58 +33,6 @@ export 'intervention_resolver.dart'
     show applyInterventionChoice, needsInterventionChoice;
 
 final diploLog = logicLog;
-
-/// O(1) faction classification snapshot for diplomacy hot paths (Refs #2268 AC-6).
-/// Rebuild when [Game.players], [Game.minorNations], or [Game.tribes] membership
-/// changes in the same phase (for example Join Empire absorption).
-final class DiplomacyFactionMembership {
-  DiplomacyFactionMembership._(this.greatPowerIds, this.minorOrTribeIds);
-
-  factory DiplomacyFactionMembership.from(Game game) {
-    final gp = <String>{};
-    for (final p in game.players) {
-      gp.add(p.id);
-    }
-    final minorTribe = <String>{};
-    for (final m in game.minorNations) {
-      minorTribe.add(m.id);
-    }
-    for (final t in game.tribes) {
-      minorTribe.add(t.id);
-    }
-    return DiplomacyFactionMembership._(gp, minorTribe);
-  }
-
-  final Set<String> greatPowerIds;
-  final Set<String> minorOrTribeIds;
-
-  bool isGreatPower(String factionId) => greatPowerIds.contains(factionId);
-
-  bool isMinorOrTribe(String factionId) => minorOrTribeIds.contains(factionId);
-}
-
-bool isMinorOrTribe(
-  Game game,
-  String factionId, {
-  DiplomacyFactionMembership? factionMembership,
-}) {
-  if (factionMembership != null) {
-    return factionMembership.isMinorOrTribe(factionId);
-  }
-  return game.minorNations.any((m) => m.id == factionId) ||
-      game.tribes.any((t) => t.id == factionId);
-}
-
-bool isGreatPower(
-  Game game,
-  String factionId, {
-  DiplomacyFactionMembership? factionMembership,
-}) {
-  if (factionMembership != null) {
-    return factionMembership.isGreatPower(factionId);
-  }
-  return game.playerById(factionId) != null;
-}
 
 /// Target GP is "nearly defeated" for Join Empire: ≤3 provinces and does not hold its original capital tile province. SPEC/game/diplomacy.md.
 bool isGreatPowerNearlyDefeatedForJoinEmpire(

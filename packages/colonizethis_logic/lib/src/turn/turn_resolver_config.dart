@@ -3,8 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart' show GameEvent;
-import 'trace/turn_trace_contracts.dart';
-import 'trace/turn_trace_runtime.dart';
+import '../trace/turn_trace_contracts.dart';
+import '../trace/turn_trace_runtime.dart';
 import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
 

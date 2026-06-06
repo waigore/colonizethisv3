@@ -40,6 +40,8 @@ import 'check_land_province_bucket_keys.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
 import 'check_logic_work_target_switch.dart';
 import 'check_logic_test_file_size.dart';
+import 'check_logic_domain_import_dag.dart';
+import 'check_logic_source_file_size.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
 import 'check_ai_planner_context.dart';
@@ -784,6 +786,10 @@ int? _tryRunDartRuleInProcess({
       // scans the entire tree when no changed-file baseline is provided and
       // narrows to changed files when CI supplies an incremental baseline.
       return runCheckLogicTestFileSize(repoRoot, targetFiles: incrementalPaths);
+    case 'repo.logic_domain_import_dag':
+      return runCheckLogicDomainImportDag(repoRoot);
+    case 'repo.logic_source_file_size':
+      return runCheckLogicSourceFileSize(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,

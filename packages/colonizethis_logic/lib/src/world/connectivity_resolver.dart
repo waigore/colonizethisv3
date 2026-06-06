@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../utils/graph_traversal.dart';
-import '../diplomacy/diplomacy_relation_lookup.dart';
+import 'diplomatic_relation_lookup.dart';
 import 'connectivity_blockade_target.dart';
 import 'port_seaboard_registry_key.dart';
 import 'province_traversal.dart';

@@ -8,7 +8,7 @@ import 'turn_resolution_events.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
-import 'trace/turn_trace_contracts.dart';
+import '../trace/turn_trace_contracts.dart';
 
 /// Runs full turn phase sequence; may return early for pending diplomacy.
 TurnResolutionResult runTurnResolutionPipeline({

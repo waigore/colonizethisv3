@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import '../constants.dart';
-import '../turn/trace/turn_trace_runtime.dart';
+import '../trace/turn_trace_runtime.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 import 'unit_lookup.dart';
