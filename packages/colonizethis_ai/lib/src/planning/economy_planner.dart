@@ -503,11 +503,11 @@ Set<String> _multiInputImprovementOutputs(Set<String> outputIds) {
 
 /// The production recipe with the lowest `id` whose output is [outputId], or
 /// `null` when no recipe produces it. Deterministic over the static
-/// `ProductionRecipesCatalog`.
+/// `ProductionRecipesCatalog`; uses the O(1) `producing` index instead of an
+/// O(recipes) full-catalog scan (Refs #3288 step 5).
 ProductionRecipe? _lowestIdRecipeProducingOutput(String outputId) {
   ProductionRecipe? best;
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (recipe.outputCommodityId != outputId) continue;
+  for (final recipe in ProductionRecipesCatalog.producing(outputId)) {
     if (best == null || recipe.id.compareTo(best.id) < 0) best = recipe;
   }
   return best;
@@ -519,18 +519,15 @@ ProductionRecipe? _lowestIdRecipeProducingOutput(String outputId) {
 /// improvement input needs so single-input competitors (`lumber_from_timber`)
 /// cannot drain it before the multi-input recipe accumulates a full run
 /// (Refs #2847 H8-extraction feedstock co-availability). Deterministic: the
-/// lowest-`id` recipe is chosen per output, and the catalog is iterated in a
-/// fixed order. Returns an empty map when [outputIds] is empty.
+/// lowest-`id` recipe is chosen per output via the O(1) `producing` index
+/// (Refs #3288 step 5) and reserve accumulation is order-independent. Returns
+/// an empty map when [outputIds] is empty.
 Map<CommodityId, int> _feedstockReserveForOutputs(Set<String> outputIds) {
   if (outputIds.isEmpty) return const {};
   final reserve = <CommodityId, int>{};
-  final seenOutputs = <String>{};
-  final sorted = [...ProductionRecipesCatalog.all]
-    ..sort((a, b) => a.id.compareTo(b.id));
-  for (final recipe in sorted) {
-    final out = recipe.outputCommodityId;
-    if (!outputIds.contains(out)) continue;
-    if (!seenOutputs.add(out)) continue;
+  for (final out in outputIds) {
+    final recipe = _lowestIdRecipeProducingOutput(out);
+    if (recipe == null) continue;
     for (final entry in recipe.inputQuantities.entries) {
       reserve[entry.key] = (reserve[entry.key] ?? 0) + entry.value;
     }
