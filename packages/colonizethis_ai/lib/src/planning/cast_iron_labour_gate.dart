@@ -60,3 +60,20 @@ bool isCastIronLabourPopulationBoundForLockRecoverySeller({
   final rawLabour = player.workerPool.labourSupplyPerTurn;
   return rawLabour < recipe.labourPerOutput && effectiveLabour == rawLabour;
 }
+
+/// True when [stockpile] holds less than the peasant
+/// [RecruitWorkerOrder] `fabric` material cost
+/// ([WorkerActionEconomyCatalog.peasant] = 2) while the castIron-labour
+/// peasant-recruitment path is active.
+///
+/// Regiment build only requires 1 `fabric`, so a seller holding exactly one
+/// unit is not short for [RegimentEconomyCatalog.peasantLevies] yet still
+/// cannot pay the 2-`fabric` peasant recruit row — the #3303 circular-fabric
+/// lock the S7-D diagnostic localized for gp5 (Refs #2847).
+bool isCastIronLabourPeasantRecruitFabricShort(Stockpile stockpile) {
+  final required =
+      WorkerActionEconomyCatalog.peasant.materialCosts[CommodityCatalog.fabric.id] ??
+      0;
+  if (required <= 0) return false;
+  return stockpile.quantityOf(CommodityCatalog.fabric.id) < required;
+}
