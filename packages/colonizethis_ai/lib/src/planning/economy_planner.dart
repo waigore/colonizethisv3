@@ -367,6 +367,10 @@ List<AssignedRecipe> _allocateLabour({
   Set<String> supplierReleaseImprovementInputIds = const {},
   Set<String> feedstockReserveOutputIds = const {},
 }) {
+  // Labour allocation scores every feasible recipe to pick the best runs, so
+  // this is an intrinsic full-catalog pass, not an output-keyed lookup that the
+  // producing()/byId index could replace (Refs #3288).
+  // ignore: disallowed_ast_ai_full_recipe_catalog_scan
   final recipes = ProductionRecipesCatalog.all;
   final agendaId = config.hiddenAgendaId;
   Stockpile virtual = stockpile;

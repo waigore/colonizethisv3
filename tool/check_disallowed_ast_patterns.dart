@@ -573,6 +573,24 @@ bool _isSimpleReceiverRemoveAtZeroPattern(
   return arg0.value == 0;
 }
 
+bool _isStaticMemberAccessPattern(
+  PrefixedIdentifier node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final typeName = rule.staticMemberTypeName;
+  final memberName = rule.staticMemberName;
+  final prefix = rule.staticMemberPathPrefix;
+  if (typeName == null || memberName == null || prefix == null) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  return node.prefix.name == typeName && node.identifier.name == memberName;
+}
+
 bool _isUnprefixedProvinceIdStringLiteralInvocation(
   MethodInvocation node,
   DisallowedPatternRule rule,
@@ -716,6 +734,19 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       }
     }
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.staticMemberAccess) {
+        continue;
+      }
+      if (_isStaticMemberAccessPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitPrefixedIdentifier(node);
   }
 
   @override
