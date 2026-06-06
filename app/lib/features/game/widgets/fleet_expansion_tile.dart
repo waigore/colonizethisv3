@@ -118,6 +118,7 @@ class FleetExpansionTile extends StatelessWidget {
           icon: Icons.call_split,
           label: l10n.common_split,
           onPressed: onSplitFleet,
+          buttonKey: kCtE2EFleetSplitActionKey,
         ),
       );
     }
