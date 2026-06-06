@@ -7,10 +7,54 @@
 // pure material-affordability semantics (every input commodity satisfied for at
 // least one recipe in the list) so the counter cannot silently drift.
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'support/seed42_s7d_feedstock_helpers.dart';
+
+const _playerId = 'gp1';
+const _tileTimber = 'oldWorld|p0|0|0';
+
+Game _playerGame({
+  required String ownerId,
+  Stockpile stockpile = const Stockpile(),
+  WorkerPool workers = const WorkerPool(peasants: 1),
+  Map<String, String> resourceByTileKey = const {_tileTimber: 'timber'},
+  int improvementLevel = 0,
+}) {
+  return Game(
+    id: 'g',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: 'oldWorld|p0',
+            regionId: kRegionOldWorld,
+            ownerId: ownerId,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      resourceByTileKey: resourceByTileKey,
+      tileState: TileMapState(
+        improvementByTile: improvementLevel > 0
+            ? {_tileTimber: improvementLevel}
+            : const {},
+      ),
+    ),
+    players: [
+      Player(
+        id: _playerId,
+        displayName: 'GP',
+        isHuman: false,
+        stockpile: stockpile,
+        workerPool: workers,
+      ),
+    ],
+  );
+}
 
 void main() {
   final castIron = ProductionRecipesCatalog.castIronFromTimberIronCoal;
@@ -77,6 +121,61 @@ void main() {
       expect(
         stockpileAffordsAnyProductionRecipe(stockpile, [castIron]),
         isFalse,
+      );
+    });
+  });
+
+  group('ownsFeedstockResourceTileAtAnyLevel', () {
+    test('positive: owned improved feedstock tile counts', () {
+      final game = _playerGame(ownerId: _playerId, improvementLevel: 1);
+      expect(
+        ownsFeedstockResourceTileAtAnyLevel(game, _playerId, {timberId}),
+        isTrue,
+      );
+    });
+
+    test('negative: feedstock tile owned by another player', () {
+      final game = _playerGame(ownerId: 'gp2');
+      expect(
+        ownsFeedstockResourceTileAtAnyLevel(game, _playerId, {timberId}),
+        isFalse,
+      );
+    });
+  });
+
+  group('productionRecipeFeasibleRunsForPlayer', () {
+    test('positive: material and labour both sufficient', () {
+      final grainId = CommodityCatalog.grain.id;
+      final game = _playerGame(
+        ownerId: _playerId,
+        stockpile: Stockpile(
+          quantities: {timberId: 2, ironId: 2, grainId: 5},
+        ),
+        workers: const WorkerPool(peasants: 5),
+      );
+      expect(
+        productionRecipeFeasibleRunsForPlayer(
+          game: game,
+          playerId: _playerId,
+          recipe: castIron,
+        ),
+        greaterThan(0),
+      );
+    });
+
+    test('negative: material affordable yet labour cannot fund one run', () {
+      final game = _playerGame(
+        ownerId: _playerId,
+        stockpile: Stockpile(quantities: {timberId: 2, ironId: 2}),
+        workers: const WorkerPool(),
+      );
+      expect(
+        productionRecipeFeasibleRunsForPlayer(
+          game: game,
+          playerId: _playerId,
+          recipe: castIron,
+        ),
+        0,
       );
     });
   });

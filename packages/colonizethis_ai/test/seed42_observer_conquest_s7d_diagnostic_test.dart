@@ -1373,6 +1373,42 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// rises above 0 for gp5 before expecting OW gain to move; the +6 baseline
 /// (gp1 / gp2) stays unaffected by construction (regiment-holding gate).
 ///
+/// ## S7-D refresh (captured 2026-06-06 — castIron labour / tile-ownership
+///     localization counters, Refs #2847, PR #3289 follow-up)
+///
+/// Added read-only counters `gpCastIronRecipeLabourFeasibleTurns`,
+/// `gpCastIronRecipeLabourStarvedTurns`, and
+/// `gpCastIronRecipeFeasibleTileOwnedTurns` (helpers in
+/// `seed42_s7d_feedstock_helpers.dart`: `productionRecipeFeasibleRunsForPlayer`,
+/// `ownsFeedstockResourceTileAtAnyLevel`). Re-running this diagnostic on the
+/// change localizes the gp5 residual **decisively**:
+///
+/// | GP | material feasible | labour feasible | labour starved | tile owned on feasible |
+/// |----|-------------------|-----------------|----------------|------------------------|
+/// | gp5 | 53 | **0** | **53** | **53** |
+/// | gp1 | 48 | 0 | 48 | 48 |
+///
+/// OW gate unchanged (+6 baseline preserved): gp1/gp2 = **+6** PASS; gp3 +2,
+/// gp4 +1, gp5 +1, gp6 +2 FAIL. `gpCastIronProductionAssignedTurns` stays **0**
+/// for every GP.
+///
+/// **Decisive localization for gp5:** every materially-feasible turn is also
+/// **labour-starved** (`feasibleRuns(castIron) == 0` with post-consumption
+/// effective labour), while the seller **owns a `timber` / `iron` feedstock tile
+/// on all 53 feasible turns** — tile-ownership is **not** why the PR #3289
+/// staging path fails to fire. Broadening the staging gate to held feedstock
+/// without tile ownership would be the wrong lever.
+///
+/// **Re-pointed next slice:** target **effective-labour / food-reservation** so
+/// the lock-recovery seller can assign at least one `castIron` run on its
+/// materially-feasible turns (e.g. reserve labour for the staged recipe ahead
+/// of lower-priority production, or relax food-consumption labour drain under
+/// the zero-regiment lock-recovery trigger). Verify by confirming
+/// `gpCastIronRecipeLabourFeasibleTurns` and
+/// `gpCastIronProductionAssignedTurns` rise above 0 for gp5 before expecting
+/// OW gain to move; the +6 baseline (gp1 / gp2) stays unaffected by
+/// construction (regiment-holding gate).
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1785,6 +1821,19 @@ void main() {
       // feasible" (a feedstock-supply gap) vs "feasible yet never assigned" (a
       // production-allocation / planner gate downstream of supply).
       final castIronRecipeFeasibleTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      // Refs #2847 castIron staging localization (read-only): on turns where the
+      // castIron recipe is materially feasible, split labour-feasible vs
+      // labour-starved (`feasibleRuns` with post-consumption effective labour)
+      // and count whether the seller owns a `timber` / `iron` feedstock tile.
+      final castIronRecipeLabourFeasibleTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronRecipeLabourStarvedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronRecipeFeasibleTileOwnedTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
       // Refs #2847 H8-extraction execution-gap disambiguation (read-only).
@@ -2206,6 +2255,28 @@ void main() {
             )) {
               castIronRecipeFeasibleTurns[gpId] =
                   (castIronRecipeFeasibleTurns[gpId] ?? 0) + 1;
+              if (ownsFeedstockResourceTileAtAnyLevel(
+                game,
+                gpId,
+                castIronFeedstockIds,
+              )) {
+                castIronRecipeFeasibleTileOwnedTurns[gpId] =
+                    (castIronRecipeFeasibleTileOwnedTurns[gpId] ?? 0) + 1;
+              }
+              if (castIronProductionRecipe != null) {
+                final labourRuns = productionRecipeFeasibleRunsForPlayer(
+                  game: game,
+                  playerId: gpId,
+                  recipe: castIronProductionRecipe,
+                );
+                if (labourRuns > 0) {
+                  castIronRecipeLabourFeasibleTurns[gpId] =
+                      (castIronRecipeLabourFeasibleTurns[gpId] ?? 0) + 1;
+                } else {
+                  castIronRecipeLabourStarvedTurns[gpId] =
+                      (castIronRecipeLabourStarvedTurns[gpId] ?? 0) + 1;
+                }
+              }
             }
           }
           // Cache the turn-99 snapshot fields for the final rollup.
@@ -2522,6 +2593,10 @@ void main() {
         'gpFeedstockInStockpileTurns': feedstockInStockpileTurns,
         'gpFabricRecipeFeasibleTurns': fabricRecipeFeasibleTurns,
         'gpCastIronRecipeFeasibleTurns': castIronRecipeFeasibleTurns,
+        'gpCastIronRecipeLabourFeasibleTurns': castIronRecipeLabourFeasibleTurns,
+        'gpCastIronRecipeLabourStarvedTurns': castIronRecipeLabourStarvedTurns,
+        'gpCastIronRecipeFeasibleTileOwnedTurns':
+            castIronRecipeFeasibleTileOwnedTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
 

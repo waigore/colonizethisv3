@@ -4,6 +4,8 @@
 // that diagnostic test file at or below the repo non-comment line limit
 // (`repo.dart_file_non_comment_line_size`). These are pure read-only scans over
 // game state used by the H8-supply / H8-extraction stage-localization counters.
+import 'package:colonizethis_ai/src/planning/recipe_scoring.dart'
+    show feasibleRuns;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -193,6 +195,59 @@ bool stockpileAffordsAnyProductionRecipe(
     if (affordsAll) return true;
   }
   return false;
+}
+
+/// True iff [playerId] owns at least one province tile that hosts a feedstock
+/// resource (a member of [feedstockIds]) at **any** improvement level — the
+/// tile-ownership predicate `selfLockRecoverySellerStageableImprovementInputs`
+/// applies before staging domestic `castIron` production (Refs #2847 S7-D
+/// castIron staging localization). Companion to
+/// [ownsUnimprovedFeedstockResourceTile] / [ownsImprovedFeedstockResourceTile],
+/// which split the same ownership question by improvement stage. Read-only scan
+/// over `resourceByTileKey`.
+bool ownsFeedstockResourceTileAtAnyLevel(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) {
+  if (feedstockIds.isEmpty) return false;
+  final ws = game.worldState;
+  for (final entry in ws.resourceByTileKey.entries) {
+    if (!feedstockIds.contains(entry.value)) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(ws, provinceId);
+    if (province == null || province.ownerId != playerId) continue;
+    return true;
+  }
+  return false;
+}
+
+/// Max full runs of [recipe] [playerId] could assign this turn given its
+/// stockpile and post-consumption effective labour — the economy planner's
+/// `feasibleRuns` gate on the unreserved stockpile (Refs #2847 S7-D castIron
+/// production-assignment localization). When
+/// [stockpileAffordsAnyProductionRecipe] is true for the same recipe yet this
+/// returns 0, the residual is labour-starvation rather than a feedstock gap.
+/// Pure and read-only over `(game, playerId, recipe)`.
+int productionRecipeFeasibleRunsForPlayer({
+  required Game game,
+  required String playerId,
+  required ProductionRecipe recipe,
+}) {
+  final player = game.playerById(playerId);
+  if (player == null) return 0;
+  final effectiveLabour = effectiveLabourForWorkers(
+    workers: player.workerPool,
+    stockpile: player.stockpile,
+    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
+    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+  );
+  return feasibleRuns(
+    recipe: recipe,
+    stockpile: player.stockpile,
+    remainingLabour: effectiveLabour,
+  );
 }
 
 /// True iff [playerId] owns at least one idle Builder for which the work-order
