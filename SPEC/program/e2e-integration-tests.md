@@ -25,6 +25,7 @@
 | `kCtE2ERegionTabNewWorldKey` | Map HUD: **New World** region `CtChoiceChip` (Keyed subtree for e2e taps / finders). |
 | `kCtE2EMoveFleetDialogScrollRootKey` | `MoveFleetDialog` scroll body (`SingleChildScrollView` child); fleet e2e uses bounded drags within a strict UI-response time cap (see Determinism). |
 | `kCtE2EFleetMoveActionKey` | Fleet-row **Move** action button (`fleet_expansion_tile.dart` via `UnitsEntityAction.buttonKey`). The dense naval action cluster collapses to **icon-only** (no `Text('Move')`) at narrow test-host viewports, so fleet e2e helpers locate Move by this key, not the label (Refs #2336). |
+| `kCtE2EFleetSplitActionKey` | Fleet-row **Split** action button (same wiring as Move). `e2eSplitHomeFleetOnce` locates Split by this key when icon-only (Refs #2336 AC4 H8). |
 | `kCtE2EMoveFleetDestinationRowKey(index)` | Per-destination-row keys inside `MoveFleetDialog` (`_MoveFleetDestinationRow`, prefix `ct_e2e_move_fleet_destination_row_`). Production rows are custom (no Material `RadioListTile`); fleet-reach helpers select destinations by this key prefix (Refs #2336). |
 | `kGameMapNextTurnButtonKey` | Next-turn control on the map HUD (`game_screen_shared.dart`). |
 | `ctE2eLastPanelSnapshot` | Province overlay: updated while open with valid `selectedTileKey`; cleared when closed. Separate **civilian / naval / production** snapshot updaters in `ct_e2e_last_panel_snapshot.dart` for those panels. |

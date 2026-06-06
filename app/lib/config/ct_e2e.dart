@@ -64,6 +64,14 @@ const Key kCtE2EMoveFleetDialogScrollRootKey = Key(
 const Key kCtE2EFleetMoveActionKey = Key('ct_e2e_fleet_move_action');
 
 // ignore: public_member_api_docs
+/// Stable locator for the fleet-row **Split** action button. Like Move, Split
+/// collapses to icon-only at narrow test-host viewports, so
+/// `e2eSplitHomeFleetOnce` locates Split by this key rather than the label
+/// (Refs #2336 AC4 H8; deterministic-locator rule in
+/// `colonizethis-e2e-ui-stability.mdc`).
+const Key kCtE2EFleetSplitActionKey = Key('ct_e2e_fleet_split_action');
+
+// ignore: public_member_api_docs
 /// Prefix for the per-destination-row keys inside [MoveFleetDialog]. The
 /// production dialog renders custom destination rows (`_MoveFleetDestinationRow`,
 /// a `CtDialogShell` body) rather than Material `RadioListTile`, so the
