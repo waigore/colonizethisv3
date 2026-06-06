@@ -18,6 +18,10 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'cast_iron_labour_gate.dart'
+    show
+        isCastIronLabourPeasantRecruitFabricShort,
+        isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'recipe_scoring.dart' show kShortageThreshold;
 
 // Treasury planner concern fragments (Refs #3288 file-split). Each `part of`
@@ -434,6 +438,17 @@ void _applyLockRecoverySellerRegimentRebuildBids({
       regimentCountForPlayer(game, playerId) != 0) {
     return;
   }
+  // Refs #2847 § castIron-labour peasant-recruit fabric staging: the recruit
+  // row costs 2 `fabric` while the regiment build input needs only 1, so a
+  // seller holding one unit clears the regiment missing-input check yet still
+  // cannot pay the recruit — wool / cotton feedstock must stay reserved until
+  // `fabric >= 2` when the population-bound castIron labour path is active.
+  final peasantRecruitFabricStaging =
+      isCastIronLabourPopulationBoundForLockRecoverySeller(
+        game: game,
+        playerId: playerId,
+      ) &&
+      isCastIronLabourPeasantRecruitFabricShort(projected);
   // Refs #2847 § H8 production allocation: offer-side input staging is
   // **treasury-independent**. The economy planner now produces the cheapest
   // regiment's build input (`fabric`) and its recipe feedstock ahead of
@@ -453,7 +468,10 @@ void _applyLockRecoverySellerRegimentRebuildBids({
       in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
     available.remove(buildInputId);
   }
-  for (final feedstockId in _regimentBuildInputFeedstockIds(projected)) {
+  for (final feedstockId in _regimentBuildInputFeedstockIds(
+    projected,
+    peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+  )) {
     available.remove(feedstockId);
   }
   // Refs #2847 § H8 bootstrap bids: market bids spend treasury (the buyer's
@@ -483,10 +501,14 @@ void _applyLockRecoverySellerRegimentRebuildBids({
     return;
   }
   final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
-    feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(projected),
+    feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(
+      projected,
+      peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+    ),
     projected: projected,
     carryForwardBids: carryForwardBids,
     need: need,
+    peasantRecruitFabricStaging: peasantRecruitFabricStaging,
   );
   if (!feedstockStillMissing) {
     _addRegimentBuildInputDirectNeed(

@@ -295,10 +295,12 @@ PhasePlanOutcome _expandForceRegimentBuildPlan({
 
 /// Lock-recovery seller holding one `fabric` (enough for regiment build but
 /// short the 2-`fabric` peasant recruit row) with wool feedstock for a
-/// domestic fabric run. Refs #2847 castIron-labour peasant-recruit fabric
-/// bootstrap.
+/// domestic fabric run, castIron material-feasible yet labour-population-bound
+/// (2 peasants < castIron run labour). Refs #2847 castIron-labour peasant-recruit
+/// fabric bootstrap.
 Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
   const ow = 'oldWorld';
+  const tileTimber = 'oldWorld|seller_0|2|0';
   return Game(
     id: 'g-h8-peasant-recruit-fabric',
     worldState: WorldState(
@@ -310,6 +312,12 @@ Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
         ],
       ),
       newWorld: const RegionData(provinces: []),
+      resourceByTileKey: const {tileTimber: 'timber'},
+      tileKeysByRegionAndProvince: const {
+        ow: {
+          '$ow|seller_0': [tileTimber],
+        },
+      },
     ),
     players: [
       Player(
@@ -320,9 +328,11 @@ Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
         treasury: cheapestRegimentBuildTreasuryCost(),
         stockpile: Stockpile.empty
             .applyDelta(CommodityCatalog.grain.id, 30)
+            .applyDelta(CommodityCatalog.timber.id, 2)
+            .applyDelta(CommodityCatalog.iron.id, 2)
             .applyDelta(CommodityCatalog.wool.id, 10)
             .applyDelta(CommodityCatalog.fabric.id, fabricHeld),
-        workerPool: const WorkerPool(peasants: 4),
+        workerPool: const WorkerPool(peasants: 2),
       ),
     ],
   );

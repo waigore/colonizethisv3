@@ -1723,6 +1723,13 @@ void main() {
       final castIronRecipeIds = <String>{
         for (final recipe in castIronRecipes) recipe.id,
       };
+      final fabricRecipeIds = <String>{
+        ProductionRecipesCatalog.fabricFromWool.id,
+        ProductionRecipesCatalog.fabricFromCotton.id,
+      };
+      final fabricProductionAssignedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
       final castIronFeedstockBidsEmitted = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
@@ -2538,6 +2545,13 @@ void main() {
             castIronProductionAssignedTurns[gpId] =
                 (castIronProductionAssignedTurns[gpId] ?? 0) + 1;
           }
+          if (plan != null &&
+              plan.productionAssignments.any(
+                (a) => fabricRecipeIds.contains(a.recipeId),
+              )) {
+            fabricProductionAssignedTurns[gpId] =
+                (fabricProductionAssignedTurns[gpId] ?? 0) + 1;
+          }
         }
 
         // Refs #2924 Step 0 — count submitted trade orders per GP
@@ -2731,6 +2745,7 @@ void main() {
         'gpCastIronFeedstockBidsEmitted': castIronFeedstockBidsEmitted,
         'gpCastIronFeedstockDealsAsBuyer': castIronFeedstockDealsAsBuyer,
         'gpCastIronProductionAssignedTurns': castIronProductionAssignedTurns,
+        'gpFabricProductionAssignedTurns': fabricProductionAssignedTurns,
         'gpSupplierFeedstockExtractionGateActiveTurns':
             supplierFeedstockExtractionGateActiveTurns,
         'gpSupplierActiveUnimprovedCastIronFeedstockTileTurns':

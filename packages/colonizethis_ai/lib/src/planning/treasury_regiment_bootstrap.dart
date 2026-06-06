@@ -19,12 +19,25 @@ part of 'treasury_planner.dart';
 /// surplus. Pure function of the projected [Stockpile] and the static
 /// `RegimentEconomyCatalog` / `ProductionRecipesCatalog`; returns the empty
 /// set once every build input is on hand (the reservation self-clears).
-Set<CommodityId> _regimentBuildInputFeedstockIds(Stockpile projected) {
+///
+/// When [peasantRecruitFabricStaging] is true and the stockpile is short the
+/// peasant recruit's 2-`fabric` cost (Refs #2847 § castIron-labour peasant
+/// recruit), `fabric` is treated as missing even when the regiment build input
+/// (1 `fabric`) is already on hand so feedstock is not sold before the second
+/// domestic run completes.
+Set<CommodityId> _regimentBuildInputFeedstockIds(
+  Stockpile projected, {
+  bool peasantRecruitFabricStaging = false,
+}) {
   final missingInputs = <CommodityId>{
     for (final entry
         in RegimentEconomyCatalog.peasantLevies.buildInputs.entries)
       if (projected.quantityOf(entry.key) < entry.value) entry.key,
   };
+  if (peasantRecruitFabricStaging &&
+      isCastIronLabourPeasantRecruitFabricShort(projected)) {
+    missingInputs.add(CommodityCatalog.fabric.id);
+  }
   if (missingInputs.isEmpty) return const <CommodityId>{};
   final feedstock = <CommodityId>{};
   for (final buildInputId in missingInputs) {
@@ -37,8 +50,14 @@ Set<CommodityId> _regimentBuildInputFeedstockIds(Stockpile projected) {
 
 /// Build-input feedstock ids ordered so Old World lock-recovery sellers extract
 /// wool before cotton (seed-42), then alphabetically for determinism.
-List<CommodityId> _sortedRegimentBuildInputFeedstockIds(Stockpile projected) {
-  return _regimentBuildInputFeedstockIds(projected).toList()
+List<CommodityId> _sortedRegimentBuildInputFeedstockIds(
+  Stockpile projected, {
+  bool peasantRecruitFabricStaging = false,
+}) {
+  return _regimentBuildInputFeedstockIds(
+    projected,
+    peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+  ).toList()
     ..sort((a, b) {
       if (a == CommodityCatalog.wool.id) return -1;
       if (b == CommodityCatalog.wool.id) return 1;
@@ -54,10 +73,14 @@ bool _addRegimentBuildInputFeedstockBootstrapNeed({
   required Stockpile projected,
   required Map<CommodityId, int> carryForwardBids,
   required Map<CommodityId, int> need,
+  bool peasantRecruitFabricStaging = false,
 }) {
   for (final feedstockId in feedstockCandidates) {
-    final qtyNeeded =
-        _feedstockQuantityForOneMissingBuildInputRun(feedstockId, projected);
+    final qtyNeeded = _feedstockQuantityForOneMissingBuildInputRun(
+      feedstockId,
+      projected,
+      peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+    );
     if (qtyNeeded <= 0) continue;
     final held =
         projected.quantityOf(feedstockId) + (carryForwardBids[feedstockId] ?? 0);
@@ -206,8 +229,9 @@ void _addRegimentBuildInputDirectNeed({
 /// `peasant_levies` build input via a production recipe consuming [feedstockId].
 int _feedstockQuantityForOneMissingBuildInputRun(
   CommodityId feedstockId,
-  Stockpile projected,
-) {
+  Stockpile projected, {
+  bool peasantRecruitFabricStaging = false,
+}) {
   var needed = 0;
   for (final entry in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
     if (projected.quantityOf(entry.key) >= entry.value) continue;
@@ -217,6 +241,41 @@ int _feedstockQuantityForOneMissingBuildInputRun(
         needed = perRun;
       }
     }
+  }
+  if (peasantRecruitFabricStaging) {
+    needed = _maxInt(
+      needed,
+      _feedstockQuantityForPeasantRecruitFabricStaging(
+        feedstockId,
+        projected,
+      ),
+    );
+  }
+  return needed;
+}
+
+int _maxInt(int a, int b) => a >= b ? a : b;
+
+/// Feedstock units required to domestically produce the remaining `fabric` for
+/// a peasant recruit (2 total) when the regiment build input (1) may already
+/// be on hand. Refs #2847 § castIron-labour peasant-recruit fabric staging.
+int _feedstockQuantityForPeasantRecruitFabricStaging(
+  CommodityId feedstockId,
+  Stockpile projected,
+) {
+  if (!isCastIronLabourPeasantRecruitFabricShort(projected)) return 0;
+  final fabricId = CommodityCatalog.fabric.id;
+  final required =
+      WorkerActionEconomyCatalog.peasant.materialCosts[fabricId] ?? 0;
+  if (required <= 0) return 0;
+  final missingFabric = required - projected.quantityOf(fabricId);
+  if (missingFabric <= 0) return 0;
+  var needed = 0;
+  for (final recipe in ProductionRecipesCatalog.producing(fabricId)) {
+    final perRun = recipe.inputQuantities[feedstockId];
+    if (perRun == null) continue;
+    final total = perRun * missingFabric;
+    if (total > needed) needed = total;
   }
   return needed;
 }
