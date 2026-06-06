@@ -14,6 +14,7 @@ import '../../../core/services/game_service.dart' show GameMapData;
 import 'game_map_area_state_logic.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'per_player_work_target_selection_cache.dart';
+import 'province_action_state_calculator.dart';
 import 'province_detail_panel_slide_transition.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
@@ -83,38 +84,19 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       mapData = null;
     }
     final topology = mapData?.combinedTopology;
-    final hiddenState = GameMapAreaStateLogic.kHiddenExplorerInlineActionState;
-    final exploreState = panel.selectedTileKey == null
-        ? hiddenState
-        : GameMapAreaStateLogic.provinceExploreActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: panel.selectedTileKey!,
-            selectedRegion: region,
-            workTargetSelectionCache: workTargetSelectionCache,
-          );
-    final prospectState = panel.selectedTileKey == null
-        ? hiddenState
-        : GameMapAreaStateLogic.provinceProspectActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: panel.selectedTileKey!,
-            playerView: playerView,
-            topology: topology,
-            currentOrders: draftOrders,
-            tileMapByRegion: mapData?.tileMapByRegion,
-          );
-    final hiddenBuilderState =
-        GameMapAreaStateLogic.kHiddenBuilderInlineActionState;
-    final buildImprovementState = panel.selectedTileKey == null
-        ? hiddenBuilderState
-        : GameMapAreaStateLogic.provinceBuildImprovementActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: panel.selectedTileKey!,
-            playerView: playerView,
-            workTargetSelectionCache: workTargetSelectionCache,
-          );
+    final actionStates = ProvinceActionStateCalculator.compute(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      selectedTileKey: panel.selectedTileKey,
+      region: region,
+      playerView: playerView,
+      currentOrders: draftOrders,
+      workTargetSelectionCache: workTargetSelectionCache,
+      mapData: mapData,
+    );
+    final exploreState = actionStates.explore;
+    final prospectState = actionStates.prospect;
+    final buildImprovementState = actionStates.buildImprovement;
     Widget overlay = ProvinceSeaZoneDetailOverlay(
       game: game,
       region: region,

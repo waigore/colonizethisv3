@@ -22,8 +22,8 @@ import 'split_fleet_dialog.dart';
 import 'transfer_to_home_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
-import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
+import '../utils/region_labels.dart';
 
 class NavalUnitsPanel extends StatefulWidget {
   const NavalUnitsPanel({
@@ -543,7 +543,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       hasContent: hasAny,
       listChildren: [
         for (final group in tree) ...[
-          RegionSectionHeader(label: unitsPanelRegionLabel(group.regionId)),
+          RegionSectionHeader(label: regionDisplayLabel(group.regionId)),
           if (group.homeFleet != null)
             FleetExpansionTile(
               row: group.homeFleet!,
@@ -571,7 +571,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           for (final loc in group.locations) ...[
             LocationSectionHeader(
               label: loc.displayLabel,
-              regionLabel: unitsPanelRegionLabel(loc.regionId),
+              regionLabel: regionDisplayLabel(loc.regionId),
             ),
             for (final row in loc.fleets)
               FleetExpansionTile(

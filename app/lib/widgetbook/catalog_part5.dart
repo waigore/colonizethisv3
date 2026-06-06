@@ -280,6 +280,14 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
         builder: (context) => const _CtScreenShellStory(),
       ),
       WidgetbookUseCase(
+        name: 'CtPanelWithTopBar — shared panel skeleton',
+        builder: (context) => const _CtPanelWithTopBarStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtDarkScaffold — top bar over expanded body',
+        builder: (context) => const _CtDarkScaffoldStory(),
+      ),
+      WidgetbookUseCase(
         name: 'CtDropdown — chevron rotation',
         builder: (context) => const _CtDropdownStory(),
       ),
@@ -809,8 +817,9 @@ class _CtBackButtonStoryState extends State<_CtBackButtonStory> {
   }
 }
 
-// _CtIconActionStory is hosted in catalog_part8.dart to keep this part file
-// under the 1000-line repo-lint cap (`repo.part_unit_size`).
+// _CtIconActionStory, _CtScreenShellStory, _CtPanelWithTopBarStory, and
+// _CtDarkScaffoldStory are hosted in catalog_part8.dart to keep this part
+// file under the 1000-line repo-lint cap (`repo.part_unit_size`).
 
 class _CtTopBarStory extends StatelessWidget {
   const _CtTopBarStory();
@@ -861,66 +870,6 @@ class _CtTopBarStory extends StatelessWidget {
             backButtonEnabled: false,
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Showcases [CtScreenShell] in both its default (no back button) and
-/// `showBackButton: true` modes so reviewers can confirm the 36 px
-/// [CtTopBar] chrome + framed body composition under the
-/// `editorialMonocle` theme (Refs #2859 R4 / S5). The host inflates the
-/// shells inside a `MaterialApp` so [Navigator.maybePop] is valid when the
-/// chevron is tapped.
-class _CtScreenShellStory extends StatelessWidget {
-  const _CtScreenShellStory();
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        body: Row(
-          children: <Widget>[
-            Expanded(
-              child: CtScreenShell(
-                // ignore: avoid_hardcoded_strings_in_widgets
-                title: 'Default (no back button)',
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      // ignore: avoid_hardcoded_strings_in_widgets
-                      'CtTopBar omits the leading CtBackButton when '
-                      'showBackButton is false.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: CtScreenShell(
-                // ignore: avoid_hardcoded_strings_in_widgets
-                title: 'With back button',
-                showBackButton: true,
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      // ignore: avoid_hardcoded_strings_in_widgets
-                      'CtTopBar renders the leading CtBackButton chevron '
-                      'and wires it through to Navigator.maybePop().',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

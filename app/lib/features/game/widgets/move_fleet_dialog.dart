@@ -14,9 +14,9 @@ import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../utils/map_location_resolver.dart';
+import '../utils/region_labels.dart';
 import '../utils/sea_zone_name_resolver.dart';
 import 'chrome/ct_nine_patch_button.dart';
-import 'units/shared/units_panel_region_label.dart';
 
 sealed class _MovePick {
   const _MovePick();
@@ -108,7 +108,7 @@ List<_MovePick> _buildNavalMovePicks({
 
   for (final z in topo.adjacentSeaZoneIds) {
     final zReg = regionIdForSeaZone(topology, z) ?? fleetSeaRegion;
-    final regLabel = unitsPanelRegionLabel(zReg);
+    final regLabel = regionDisplayLabel(zReg);
     final cross = zReg != fleetSeaRegion;
     final isWarp = isWarpZoneSeaZone(topology, z);
     final zoneLabel = seaZoneDisplayName(

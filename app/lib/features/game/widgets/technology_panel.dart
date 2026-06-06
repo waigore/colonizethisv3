@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_brass_divider.dart';
@@ -37,6 +38,10 @@ class TechnologyPanel extends StatelessWidget {
     this.currentOrders = const Orders(),
     this.onOrdersChanged,
   });
+
+  /// SPEC/ui/technology-panel.md — [UiScreenIds.technologyScreen]. Hosted by
+  /// `TechnologyScreen`; shares its stable surface ID.
+  static const screenId = UiScreenIds.technologyScreen;
 
   final Game game;
   final Player player;

@@ -25,12 +25,15 @@ import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
@@ -87,6 +90,20 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'NavalUnitsPanel': (
     actual: NavalUnitsPanel.screenId,
     expected: UiScreenIds.navalUnitsPanel,
+  ),
+  // Bindings added in #3279: game-bearing panels reuse their host screen's
+  // stable surface ID (the panel is the body of the route-host screen).
+  'DiplomacyPanel': (
+    actual: DiplomacyPanel.screenId,
+    expected: UiScreenIds.diplomacyScreen,
+  ),
+  'ProductionPanel': (
+    actual: ProductionPanel.screenId,
+    expected: UiScreenIds.productionScreen,
+  ),
+  'TechnologyPanel': (
+    actual: TechnologyPanel.screenId,
+    expected: UiScreenIds.technologyScreen,
   ),
   'TrainCiviliansDialog': (
     actual: TrainCiviliansDialog.screenId,

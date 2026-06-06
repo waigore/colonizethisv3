@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -76,6 +77,10 @@ class ProductionPanel extends StatelessWidget {
     this.labourCallbacks,
     this.canEditLabour = false,
   });
+
+  /// SPEC/ui/production-panel.md — [UiScreenIds.productionScreen]. Hosted by
+  /// `ProductionScreen`; shares its stable surface ID.
+  static const screenId = UiScreenIds.productionScreen;
 
   final Game game;
   final Player player;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'ct_panel.dart';
+import 'ct_panel_with_top_bar.dart';
 import 'ct_spacing.dart';
 import 'ct_top_bar.dart';
 
@@ -43,29 +43,25 @@ class CtScreenShell extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(CtSpacing.m),
-          child: CtPanel(
-            padding: EdgeInsets.zero,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                if (showTitleBar) ...<Widget>[
-                  CtTopBar(
+          child: CtPanelWithTopBar(
+            topBar: showTitleBar
+                ? CtTopBar(
                     title: title,
                     showBackButton: showBackButton,
+                  )
+                : null,
+            children: <Widget>[
+              if (showTitleBar) const SizedBox(height: CtSpacing.m),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: CtSpacing.m,
                   ),
-                  const SizedBox(height: CtSpacing.m),
-                ],
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: CtSpacing.m,
-                    ),
-                    child: child,
-                  ),
+                  child: child,
                 ),
-                const SizedBox(height: CtSpacing.m),
-              ],
-            ),
+              ),
+              const SizedBox(height: CtSpacing.m),
+            ],
           ),
         ),
       ),

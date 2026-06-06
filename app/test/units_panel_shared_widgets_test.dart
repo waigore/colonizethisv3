@@ -5,8 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/location_section_header.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_section_header.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_row_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
@@ -16,14 +16,14 @@ import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 void main() {
   suppressLogsForTests();
 
-  group('unitsPanelRegionLabel', () {
+  group('regionDisplayLabel', () {
     test('maps known region ids', () {
-      expect(unitsPanelRegionLabel('oldWorld'), 'Old World');
-      expect(unitsPanelRegionLabel('newWorld'), 'New World');
+      expect(regionDisplayLabel('oldWorld'), 'Old World');
+      expect(regionDisplayLabel('newWorld'), 'New World');
     });
 
     test('passes through unknown ids', () {
-      expect(unitsPanelRegionLabel('custom'), 'custom');
+      expect(regionDisplayLabel('custom'), 'custom');
     });
   });
 

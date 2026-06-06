@@ -11,7 +11,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `VictoryOverlay` | `StatefulWidget` | `game` (`Game`), `victory` (`VictoryState`), `bus` (`AppEventBus`) | Full-screen `--dialog-scrim` wash with centered `VictoryPanel`. Owns `_dismissed` so "View final state" hides the overlay without a route change. |
+| `VictoryOverlay` | `StatefulWidget` | `game` (`Game`), `victory` (`VictoryState`), `bus` (`AppEventBus`) | Full-screen `--dialog-scrim` wash with centered `VictoryPanel` via [`CtFullScreenDialogueShell`](../components/ct-full-screen-dialogue-shell.md) (`wrapBodyInDialogShell: false`). Owns `_dismissed` so "View final state" hides the overlay without a route change. |
 | `VictoryPanel` | `StatelessWidget` | `game`, `victory`, `bus`, `onViewFinalState` (`VoidCallback?`, optional) | Presentational brass-bordered panel (2px `--accent` border + asymmetric corner brackets + `surface-lite → bg-deep` vertical gradient). Resolves winner display name and victory-type label. |
 
 Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
@@ -44,7 +44,7 @@ Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
 +--------------------------------------------------------------+
 ```
 
-- Outer: `Positioned.fill` → `Container(color: EditorialMonoclePalette.dialogScrim)` → `Center` → outer `Padding(24)` → `VictoryPanel`.
+- Outer: `Positioned.fill` → [`CtFullScreenDialogueShell`](../components/ct-full-screen-dialogue-shell.md) (`wrapBodyInDialogShell: false`, `padding: EdgeInsets.zero`) → centered `VictoryPanel`.
 - Scrim color resolves through `EditorialMonoclePalette.dialogScrim` (canonical `--dialog-scrim` token; see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Dialog scrim).
 - Panel container: 2px solid `--accent` border, `surface-lite → bg-deep` vertical gradient (`CtGradients.victoryPanelGradient`), inner padding `24` logical px, max-width `460`, intrinsic-min height. Two `--accent` asymmetric corner brackets — top-left (1.5px borders, ~20x24 box, 4px inset) and bottom-right (1.5px borders, ~20x24 box, 4px inset) at 0.7 alpha.
 - Laurel row: three Unicode glyphs in `--accent` at 0.6 alpha — `☜` `☆` `☞` (or visually equivalent decorative cluster) rendered with the display font.

@@ -8,7 +8,7 @@ This composite is **not** a screen and has **no** stable screen ID. It is the ca
 
 ## Purpose
 
-Hosts game-bound feature screens with three guarantees: a live-game swap via `currentGameProvider`, optional `GameToUIBusListener` wiring, and a two-chrome-path body host (legacy `CtScreenShell` or dark `Scaffold` + `topBar`). Callers compose only the body; the shell owns the rest (issue [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9).
+Hosts game-bound feature screens with three guarantees: a live-game swap via `currentGameProvider`, optional `GameToUIBusListener` wiring, and a two-chrome-path body host (legacy `CtScreenShell` or dark `CtDarkScaffold` + `topBar`). Callers compose only the body; the shell owns the rest (issue [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9; dark path extracted to the reusable `CtDarkScaffold` in [#3279](https://github.com/waigore/colonizethisv3/issues/3279) §6).
 
 ---
 
@@ -19,7 +19,7 @@ Hosts game-bound feature screens with three guarantees: a live-game swap via `cu
 | `game` | `Game` | yes | — | Initial game snapshot supplied by the route. Always passed to `bodyBuilder` unless a same-id live game is available. |
 | `bodyBuilder` | `GameFeatureBodyBuilder` | yes | — | Signature `Widget Function(BuildContext context, WidgetRef ref, Game displayGame)`. Receives the resolved `displayGame` (live snapshot when present, otherwise `game`). |
 | `title` | `String?` | conditional | — | Required when `topBar == null` (legacy `CtScreenShell` chrome path). Ignored when `topBar` is provided. |
-| `topBar` | `Widget?` | conditional | — | Required when `title == null`. When supplied, the shell renders a dark `Scaffold` + `SafeArea` + `Column` body host with the top bar above the body. Typically a `CtTopBar`. |
+| `topBar` | `Widget?` | conditional | — | Required when `title == null`. When supplied, the shell renders a dark `CtDarkScaffold` (`Scaffold` + `SafeArea` + `Column`) body host with the top bar above the body. Typically a `CtTopBar`. |
 | `showBackButton` | `bool` | no | `true` | Forwarded to the legacy `CtScreenShell`. No effect on the dark-chrome path. |
 | `attachGameToUiListener` | `bool` | no | `true` | When `true`, the body is wrapped in `GameToUIBusListener(gameId: game.id, child: shell)`. |
 
@@ -33,11 +33,12 @@ Invariant (assertion): `topBar != null || title != null`. When both are supplied
 
 ```text
 GameToUIBusListener(gameId: game.id)?                 -- when attachGameToUiListener == true
-  Scaffold(backgroundColor: colorScheme.surface)
-    SafeArea
-      Column(crossAxisAlignment: stretch)
-        topBar                                        -- supplied CtTopBar
-        Expanded(child: bodyBuilder(context, ref, displayGame))
+  CtDarkScaffold(backgroundColor: colorScheme.surface)
+    Scaffold
+      SafeArea
+        Column(crossAxisAlignment: stretch)
+          topBar                                      -- supplied CtTopBar
+          Expanded(child: bodyBuilder(context, ref, displayGame))
 ```
 
 ### Legacy-chrome path (`topBar == null`, `title` required)
@@ -56,7 +57,7 @@ In both paths `displayGame` is the live `currentGameProvider` value when its `id
 
 1. **Live-game swap.** When `attachGameToUiListener == true`, the shell watches `currentGameProvider`. If the live value is non-null and `live.id == game.id`, `displayGame == live`; else `displayGame == game`.
 2. **Listener gating.** When `attachGameToUiListener == false`, the shell skips both the `currentGameProvider` watch (`displayGame == game` always) and the surrounding `GameToUIBusListener` wrapper.
-3. **Chrome is non-overlapping.** Exactly one of (`_DarkChromeShell`, `CtScreenShell`) is mounted. The dark path uses `Theme.of(context).colorScheme.surface` for the `Scaffold` background so the surface inherits the active theme (`AppThemes.editorialMonocle` in production per `colonizethis-ui-design.mdc` § *Dark theme*).
+3. **Chrome is non-overlapping.** Exactly one of (`CtDarkScaffold`, `CtScreenShell`) is mounted. The dark path uses `Theme.of(context).colorScheme.surface` for the `Scaffold` background so the surface inherits the active theme (`AppThemes.editorialMonocle` in production per `colonizethis-ui-design.mdc` § *Dark theme*).
 4. **No chrome of its own.** The shell paints no borders, dividers, or titles; the supplied `topBar` or `CtScreenShell` owns all chrome.
 5. **Listener wraps outermost.** When attached, `GameToUIBusListener` wraps the entire chrome subtree so back navigation and inbound events see the listener.
 
@@ -68,8 +69,8 @@ The composite has no internal state. Variants are driven entirely by `topBar` an
 
 | Variant | `topBar` | `attachGameToUiListener` | Chrome |
 |---------|----------|--------------------------|--------|
-| Dark + live | non-null | `true` | `_DarkChromeShell` inside `GameToUIBusListener` |
-| Dark, no listener | non-null | `false` | `_DarkChromeShell` directly (Widgetbook) |
+| Dark + live | non-null | `true` | `CtDarkScaffold` inside `GameToUIBusListener` |
+| Dark, no listener | non-null | `false` | `CtDarkScaffold` directly (Widgetbook) |
 | Legacy + live | `null` | `true` | `CtScreenShell` inside `GameToUIBusListener` |
 | Legacy, no listener | `null` | `false` | `CtScreenShell` directly (Widgetbook) |
 
@@ -94,11 +95,11 @@ Each consumer spec links back here for the live-game-swap, listener-gating, and 
 
 - **Given** a `CtGameFeatureScreenShell` mounted with `topBar != null` and `attachGameToUiListener == true`,
   **When** the widget tree settles,
-  **Then** exactly one `_DarkChromeShell` is mounted in the subtree, exactly one `GameToUIBusListener` is mounted with `gameId == game.id`, and the legacy `CtScreenShell` is **not** mounted in the subtree.
+  **Then** exactly one `CtDarkScaffold` is mounted in the subtree, exactly one `GameToUIBusListener` is mounted with `gameId == game.id`, and the legacy `CtScreenShell` is **not** mounted in the subtree.
 
 - **Given** a `CtGameFeatureScreenShell` mounted with `topBar == null` and `title == 'Diplomacy'`,
   **When** the widget tree settles,
-  **Then** exactly one `CtScreenShell` is mounted in the subtree with `title == 'Diplomacy'` and the `_DarkChromeShell` is **not** mounted in the subtree.
+  **Then** exactly one `CtScreenShell` is mounted in the subtree with `title == 'Diplomacy'` and the `CtDarkScaffold` is **not** mounted in the subtree.
 
 - **Given** a `CtGameFeatureScreenShell` constructed with both `topBar == null` and `title == null`,
   **When** the constructor runs in a `--enable-asserts` build,
@@ -129,5 +130,6 @@ Each consumer spec links back here for the live-game-swap, listener-gating, and 
 
 - Catalog reference: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtTopBar*, § *CtScreenShell*, § *Editorial-monocle palette*.
 - Listener helper: [`app/lib/widgets/game_to_ui_bus_listener.dart`](../../../app/lib/widgets/game_to_ui_bus_listener.dart).
+- Dark chrome: [`ct-dark-scaffold.md`](ct-dark-scaffold.md) (`app/lib/widgets/ct_dark_scaffold.dart`).
 - Legacy chrome: [`app/lib/widgets/ct_screen_shell.dart`](../../../app/lib/widgets/ct_screen_shell.dart).
 - Tracking issue: [#2914](https://github.com/waigore/issues/2914) S9 (component spec authoring).

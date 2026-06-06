@@ -14,7 +14,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_sort.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 const Map<String, String> _workTargetLabels = {
@@ -62,7 +62,7 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
   if (regionId != null && provinceId != null) {
     final name =
         provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+    location = ' (${regionDisplayLabel(regionId)} — $name)';
   }
   final base = '$workLabel$location';
   final totalTurns = previewTotalTurnsForPendingWorkOrder(
@@ -147,7 +147,7 @@ String _locationLabel(
   if (regionId == null || provinceId == null) return '—';
   final prefixed = '$regionId|$provinceId';
   final name = provinceNames[prefixed] ?? prefixed;
-  final regionLabel = unitsPanelRegionLabel(regionId);
+  final regionLabel = regionDisplayLabel(regionId);
   return '$regionLabel — $name';
 }
 
@@ -167,7 +167,7 @@ String _assignedToLabelNonPending(
   if (regionId != null && provinceId != null) {
     final name =
         provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+    location = ' (${regionDisplayLabel(regionId)} — $name)';
   }
   final progress = cw.totalTurns > 0
       ? l10n.civilian_units_turnProgress(
@@ -340,7 +340,7 @@ List<String> civilianUnitsPanelExpectedTexts(
     // under the dark editorial-monocle theme (Refs #2859 R9 / #2866 S1-S3),
     // which upper-cases the label (`Text(text.toUpperCase())`). The expected
     // mirror must upper-case to match the rendered Text.data (Refs #2336).
-    out.add(unitsPanelRegionLabel('oldWorld').toUpperCase());
+    out.add(regionDisplayLabel('oldWorld').toUpperCase());
     for (final u in scopedOw) {
       _addUnitRowTexts(
         out: out,
@@ -363,7 +363,7 @@ List<String> civilianUnitsPanelExpectedTexts(
   if (scopedNw.isNotEmpty) {
     // Upper-cased to match the RegionSectionHeader -> CtSectionLabel render
     // (see oldWorld header above; Refs #2859 R9 / #2866 S1-S3 / #2336).
-    out.add(unitsPanelRegionLabel('newWorld').toUpperCase());
+    out.add(regionDisplayLabel('newWorld').toUpperCase());
     for (final u in scopedNw) {
       _addUnitRowTexts(
         out: out,
