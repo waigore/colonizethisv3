@@ -61,5 +61,29 @@ void main() {
       expect(next.nationId, ctx.nationId);
       expect(next.currentTurn, 3);
     });
+
+    test('withOrders carries the provinceOwner memo (Refs #3288)', () {
+      // First access computes and caches the province-owner map; the memo is
+      // threaded into the withOrders-derived context so the O(provinces)
+      // scan is not repeated per accumulation step.
+      final owners = ctx.provinceOwner;
+      final next = ctx.withOrders(const Orders());
+      expect(identical(next.provinceOwner, owners), isTrue);
+    });
+
+    test('a fresh context computes its own provinceOwner (Refs #3288)', () {
+      final fresh = buildTestPlannerContext(
+        game: ctx.game,
+        topology: ctx.topology,
+        config: const AIConfig(
+          leaderId: 'napoleon',
+          personalityId: 'napoleon',
+          hiddenAgendaId: 'warmonger',
+        ),
+        primaryGoal: StrategicGoal.conquer,
+      );
+      // No memo passed in -> getter still resolves a valid (empty) map.
+      expect(fresh.provinceOwner, isEmpty);
+    });
   });
 }
