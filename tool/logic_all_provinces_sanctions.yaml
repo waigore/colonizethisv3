@@ -22,14 +22,14 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 219
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_army_move.dart
+    line: 33
     rationale: Army move destination candidates need global province ownership snapshot when per-pass player-owned province ids are not supplied.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 341
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_army_move.dart
+    line: 155
     rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
