@@ -87,3 +87,21 @@ const String kCtE2EMoveFleetDestinationRowKeyPrefix =
 /// [MoveFleetDialog] under [CT_E2E] (Refs #2336).
 Key kCtE2EMoveFleetDestinationRowKey(int index) =>
     Key('$kCtE2EMoveFleetDestinationRowKeyPrefix$index');
+
+// ignore: public_member_api_docs
+/// Prefix for the per-sea-zone destination-row keys inside [MoveFleetDialog].
+/// Unlike [kCtE2EMoveFleetDestinationRowKeyPrefix] (which appends a positional
+/// index), this prefix encodes the underlying sea-zone topology id so the
+/// fleet-reach e2e helper can select a *specific* adjacent sea zone — the one
+/// that makes BFS progress toward the New World warp — instead of the
+/// alphabetically-first row. Only sea-zone rows carry this key; port rows do
+/// not (Refs #2336 AC6/AC7 fleet-reach navigation; deterministic-locator rule
+/// in `colonizethis-e2e-ui-stability.mdc`).
+const String kCtE2EMoveFleetDestinationSeaZoneRowKeyPrefix =
+    'ct_e2e_move_fleet_sea_zone_row_';
+
+// ignore: public_member_api_docs
+/// Builds the stable key for the sea-zone destination row whose topology id is
+/// [seaZoneId] inside [MoveFleetDialog] under [CT_E2E] (Refs #2336).
+Key kCtE2EMoveFleetDestinationSeaZoneRowKey(String seaZoneId) =>
+    Key('$kCtE2EMoveFleetDestinationSeaZoneRowKeyPrefix$seaZoneId');

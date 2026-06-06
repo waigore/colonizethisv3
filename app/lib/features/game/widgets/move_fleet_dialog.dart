@@ -287,7 +287,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
   }
 
   Widget _row(_MovePick pick, int index) {
-    return _MoveFleetDestinationRow(
+    final row = _MoveFleetDestinationRow(
       // Deterministic per-row key (CT_E2E only) so fleet-reach e2e helpers can
       // select the first available destination without Material `RadioListTile`
       // chrome (Refs #2336).
@@ -298,6 +298,18 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       onLocate: () => pick.emitLocate(widget.bus, widget.game),
       locateTooltip: appL10n(context).moveFleet_locateOnMap,
     );
+    // Additionally expose sea-zone rows by their topology id (CT_E2E only) so
+    // the fleet-reach helper can tap the adjacent sea zone that makes BFS
+    // progress toward the New World warp rather than the alphabetically-first
+    // row. Wrapping in a `KeyedSubtree` keeps the inner row's positional key
+    // (and rendered chrome) unchanged (Refs #2336 AC6/AC7).
+    if (kCtE2EEnabled && pick is _PickSeaZone) {
+      return KeyedSubtree(
+        key: kCtE2EMoveFleetDestinationSeaZoneRowKey(pick.seaZoneId),
+        child: row,
+      );
+    }
+    return row;
   }
 }
 
