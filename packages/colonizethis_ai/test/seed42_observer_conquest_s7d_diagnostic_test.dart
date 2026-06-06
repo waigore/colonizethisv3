@@ -10,7 +10,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
         cheapestRegimentBuildTreasuryCost,
         expandSellerFeedstockTileAcquisitionTarget;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
-    show kTreasuryOfferPriorityUrgent, otherGreatPowerOfferableFabricHeld;
+    show otherGreatPowerOfferableFabricHeld;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
@@ -2670,61 +2670,32 @@ void main() {
         // Carry-forward bids/offers re-injected by the world-market
         // phase are not counted here; this metric reflects what the
         // AI actively emits each turn.
-        for (final gpId in gpIds) {
-          final tradeOrders = merged.tradeOrdersByPlayerId[gpId];
-          if (tradeOrders == null) continue;
-          for (final order in tradeOrders) {
-            if (order.type == TradeOrderType.offer) {
-              tradeOfferCount[gpId] = (tradeOfferCount[gpId] ?? 0) + 1;
-              if (order.priority >= kTreasuryOfferPriorityUrgent) {
-                tradeUrgentOfferCount[gpId] =
-                    (tradeUrgentOfferCount[gpId] ?? 0) + 1;
-              }
-              if (improvementInputCommodityIds.contains(order.commodityId)) {
-                improvementInputOffersEmitted[gpId] =
-                    (improvementInputOffersEmitted[gpId] ?? 0) + 1;
-              }
-              if (castIronFeedstockIds.contains(order.commodityId)) {
-                castIronFeedstockOffersEmitted[gpId] =
-                    (castIronFeedstockOffersEmitted[gpId] ?? 0) + 1;
-              }
-            } else if (order.type == TradeOrderType.bid) {
-              tradeBidCount[gpId] = (tradeBidCount[gpId] ?? 0) + 1;
-              if (regimentInputCommodityIds.contains(order.commodityId)) {
-                regimentInputBidsEmitted[gpId] =
-                    (regimentInputBidsEmitted[gpId] ?? 0) + 1;
-              }
-              if (improvementInputCommodityIds.contains(order.commodityId)) {
-                improvementInputBidsEmitted[gpId] =
-                    (improvementInputBidsEmitted[gpId] ?? 0) + 1;
-              }
-              if (castIronFeedstockIds.contains(order.commodityId)) {
-                castIronFeedstockBidsEmitted[gpId] =
-                    (castIronFeedstockBidsEmitted[gpId] ?? 0) + 1;
-              }
-            }
-          }
-        }
+        recordSeed42S7dTradeOrderCounters(
+          gpIds: gpIds,
+          tradeOrdersByPlayerId: merged.tradeOrdersByPlayerId,
+          regimentInputCommodityIds: regimentInputCommodityIds,
+          improvementInputCommodityIds: improvementInputCommodityIds,
+          castIronFeedstockIds: castIronFeedstockIds,
+          tradeOfferCount: tradeOfferCount,
+          tradeUrgentOfferCount: tradeUrgentOfferCount,
+          tradeBidCount: tradeBidCount,
+          improvementInputOffersEmitted: improvementInputOffersEmitted,
+          castIronFeedstockOffersEmitted: castIronFeedstockOffersEmitted,
+          regimentInputBidsEmitted: regimentInputBidsEmitted,
+          improvementInputBidsEmitted: improvementInputBidsEmitted,
+          castIronFeedstockBidsEmitted: castIronFeedstockBidsEmitted,
+        );
 
         // Refs #2847 § S7-D buyer-side fabric acquisition: on fabric-starved
         // peasant-recruit turns with offerable counterparty supply, record
         // whether the seller emitted a `fabric` bid this turn.
-        const fabricCommodityId = 'fabric';
-        for (final gpId in fabricStarvedThisTurn) {
-          if (otherGreatPowerOfferableFabricHeld(game, gpId) <= 0) continue;
-          final tradeOrders = merged.tradeOrdersByPlayerId[gpId];
-          final emittedFabricBid = tradeOrders != null &&
-              tradeOrders.any(
-                (order) =>
-                    order.type == TradeOrderType.bid &&
-                    order.commodityId == fabricCommodityId,
-              );
-          if (emittedFabricBid) {
-            bumpCounter(castIronLabourPeasantRecruitFabricBidEmittedTurns, gpId);
-          } else {
-            bumpCounter(castIronLabourPeasantRecruitFabricBidAbsentTurns, gpId);
-          }
-        }
+        recordSeed42S7dFabricBidCounters(
+          game: game,
+          fabricStarvedThisTurn: fabricStarvedThisTurn,
+          tradeOrdersByPlayerId: merged.tradeOrdersByPlayerId,
+          emittedTurns: castIronLabourPeasantRecruitFabricBidEmittedTurns,
+          absentTurns: castIronLabourPeasantRecruitFabricBidAbsentTurns,
+        );
 
         final assignments = fullAi.economyPlansByPlayerId.map(
           (pid, plan) => MapEntry(pid, plan.productionAssignments),
@@ -2773,7 +2744,7 @@ void main() {
                     (castIronFeedstockDealsAsBuyer[buyer] ?? 0) + 1;
               }
               if (fabricStarvedThisTurn.contains(buyer) &&
-                  deal.commodityId == fabricCommodityId) {
+                  deal.commodityId == 'fabric') {
                 bumpCounter(
                   castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
                   buyer,
