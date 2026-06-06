@@ -51,30 +51,15 @@ final class _LockRecoveryGameScan {
       );
       isLockRecoverySellerByPlayerId[player.id] = isSeller;
       if (isSeller) {
-        if (player.treasury >= regimentThreshold &&
-            regimentCountForPlayer(game, player.id) == 0) {
-          for (final entry
-              in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
-            if (player.stockpile.quantityOf(entry.key) < entry.value) {
-              anySellerNeedsRegimentBuildInput = true;
-              break;
-            }
-          }
-        }
-        final cost = regimentBuildInputFeedstockImprovementInputCost(
+        if (_lockRecoverySellerNeedsRegimentBuildInput(
           game,
-          player.id,
-        );
-        if (cost.isNotEmpty) {
-          for (final entry in cost.entries) {
-            if (!kDomesticProductionImprovementInputIds.contains(entry.key)) {
-              continue;
-            }
-            if (player.stockpile.quantityOf(entry.key) < entry.value) {
-              anySellerNeedsCastIronImprovementInput = true;
-              break;
-            }
-          }
+          player,
+          regimentThreshold: regimentThreshold,
+        )) {
+          anySellerNeedsRegimentBuildInput = true;
+        }
+        if (_lockRecoverySellerNeedsCastIronImprovementInput(game, player)) {
+          anySellerNeedsCastIronImprovementInput = true;
         }
       }
       if (player.treasury >= affluenceThreshold && !isSeller) {
@@ -102,6 +87,43 @@ final class _LockRecoveryGameScan {
 
   bool isLockRecoverySeller(String playerId) =>
       isLockRecoverySellerByPlayerId[playerId] ?? false;
+}
+
+bool _lockRecoverySellerNeedsRegimentBuildInput(
+  Game game,
+  Player player, {
+  required int regimentThreshold,
+}) {
+  if (player.treasury < regimentThreshold ||
+      regimentCountForPlayer(game, player.id) != 0) {
+    return false;
+  }
+  for (final entry in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+    if (player.stockpile.quantityOf(entry.key) < entry.value) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _lockRecoverySellerNeedsCastIronImprovementInput(
+  Game game,
+  Player player,
+) {
+  final cost = regimentBuildInputFeedstockImprovementInputCost(
+    game,
+    player.id,
+  );
+  if (cost.isEmpty) return false;
+  for (final entry in cost.entries) {
+    if (!kDomesticProductionImprovementInputIds.contains(entry.key)) {
+      continue;
+    }
+    if (player.stockpile.quantityOf(entry.key) < entry.value) {
+      return true;
+    }
+  }
+  return false;
 }
 
 int _treasuryForPlayer(Game game, String playerId) =>

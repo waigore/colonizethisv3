@@ -172,35 +172,18 @@ List<TradeOrder> runTreasuryPlanner({
   final isRegimentBuildInputMarketSupplier =
       regimentBuildInputMarketSupplyActive && !isLockRecoverySeller;
 
-  for (final id in trackedCommodityIds) {
-    if (richesCommodityIds.contains(id)) continue;
-    final commodity = CommodityCatalog.byId[id];
-    if (commodity == null) continue;
-    final consumption = _consumptionForecast(
-      commodityId: id,
-      commodity: commodity,
-      inputNeeds: inputNeeds,
-    );
-    final inputs = inputNeeds[id] ?? 0;
-    var safety = commodity.category == CommodityCategory.food
-        ? (isLockRecoverySeller ? 0 : consumption * 2)
-        : consumption;
-    if (isRegimentBuildInputMarketSupplier &&
-        _regimentBuildInputSupplyCommodityIds.contains(id)) {
-      safety = 0;
-    }
-    final reserve = consumption + inputs + safety;
-    final projectedQty = projected.quantityOf(id);
-    final surplus = projectedQty - reserve - (carryForwardOffers[id] ?? 0);
-    if (surplus > 0) {
-      available[id] = surplus;
-    }
-    final deficit =
-        (consumption + inputs) - projectedQty - (carryForwardBids[id] ?? 0);
-    if (deficit > 0 && _marketPriceBelowProductionCost(id, marketPrices)) {
-      need[id] = deficit;
-    }
-  }
+  _populateTreasurySurplusAndNeedMaps(
+    trackedCommodityIds: trackedCommodityIds,
+    inputNeeds: inputNeeds,
+    projected: projected,
+    carryForwardOffers: carryForwardOffers,
+    carryForwardBids: carryForwardBids,
+    marketPrices: marketPrices,
+    isLockRecoverySeller: isLockRecoverySeller,
+    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+    available: available,
+    need: need,
+  );
 
   // Refs #3122: treasury budget that bounds total bid notional this turn.
   // Mirrors the matcher-side per-buyer clamp introduced by #3115 so the
