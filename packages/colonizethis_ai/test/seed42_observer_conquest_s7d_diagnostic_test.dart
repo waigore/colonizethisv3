@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
+import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
+    show otherGreatPowerFabricHeld;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show
         cheapestRegimentBuildTreasuryCost,
@@ -1513,6 +1515,27 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// config constants, no gate-threshold changes; the three counters partition
 /// the gate-active turns under a structural-invariant assertion).
 ///
+/// **Market-fabric localization (post-#3317 re-point):** the #3317 refresh
+/// re-pointed the next slice toward a *non-`fabric`* labour-growth path, but
+/// the `WorkerActionEconomyCatalog` shows no such row exists — the peasant
+/// recruit is the only raw-population-growth action and it is `fabric`-gated
+/// (apprentice/journeyman/master merely *convert* an existing peasant). The
+/// only remaining lever to pay the 2-`fabric` recruit cost without producing
+/// it is to *buy* it, so `gpCastIronLabourPeasantRecruitMarketFabricStarvedTurns`
+/// refines the fabric-starved turns to those where **no other great power
+/// holds any `fabric` either** (`otherGreatPowerFabricHeld <= 0`). The seed-42
+/// run shows gp5 = **0 of 8** fabric-starved turns are market-starved: other
+/// great powers DO hold `fabric` on every one of gp5's fabric-starved turns,
+/// so the market door is **not** closed at the holdings level — the held
+/// `fabric` simply is not reaching the seller (labour-bound holders keep it
+/// for their own use rather than offering it). This rules out the "create
+/// `fabric` supply / rules-level bootstrap" framing and re-points the next
+/// slice onto the **offer / acquisition** path: held-but-unoffered `fabric`
+/// vs offered-but-unbid/unmatched. Read-only instrumentation (no behaviour
+/// change, no config constants, no gate-threshold changes; the new counter is
+/// a strict refinement of the fabric-starved turns under a structural-invariant
+/// assertion).
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -2041,6 +2064,22 @@ void main() {
       final castIronLabourPeasantRecruitFabricStarvedTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 § S7-D market-fabric localization (post-#3317 re-point). Of
+      // the fabric-starved peasant-recruit turns above, the subset where NO
+      // other great power holds any `fabric` either — so the seller can
+      // neither *produce* the 2-`fabric` recruit cost (the #3317
+      // circular-labour deadlock: `fabric_from_*` needs 2 labour, the seller
+      // has 1) NOR *buy* it from the world market. The peasant recruit is the
+      // only raw-population-growth row in `WorkerActionEconomyCatalog`
+      // (apprentice/journeyman/master consume an existing peasant), and it is
+      // `fabric`-gated, so there is no non-`fabric` worker-action lever. When
+      // this counter equals `castIronLabourPeasantRecruitFabricStarvedTurns`,
+      // the market door is closed on every fabric-starved turn too, which
+      // re-points the next slice off "find a non-`fabric` recruit row" (none
+      // exists) and onto a rules-level bootstrap. Read-only; counts move
+      // freely as later slices land.
+      final castIronLabourPeasantRecruitMarketFabricStarvedTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2478,6 +2517,16 @@ void main() {
                   castIronLabourPeasantRecruitFabricStarvedTurns,
                   gpId,
                 );
+                // Refs #2847 § S7-D market-fabric localization: of those
+                // fabric-starved turns, the ones where no other great power
+                // holds any `fabric` to sell, so the recruit `fabric` can be
+                // neither produced nor bought.
+                if (otherGreatPowerFabricHeld(game, gpId) <= 0) {
+                  bumpCounter(
+                    castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+                    gpId,
+                  );
+                }
               }
             }
             if (ci.holdsFabricFeedstock) {
@@ -2833,6 +2882,8 @@ void main() {
             castIronLabourPeasantRecruitAffordableTurns,
         'gpCastIronLabourPeasantRecruitFabricStarvedTurns':
             castIronLabourPeasantRecruitFabricStarvedTurns,
+        'gpCastIronLabourPeasantRecruitMarketFabricStarvedTurns':
+            castIronLabourPeasantRecruitMarketFabricStarvedTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
@@ -2927,6 +2978,8 @@ void main() {
             castIronLabourPeasantRecruitAffordableTurns,
         castIronLabourPeasantRecruitFabricStarvedTurns:
             castIronLabourPeasantRecruitFabricStarvedTurns,
+        castIronLabourPeasantRecruitMarketFabricStarvedTurns:
+            castIronLabourPeasantRecruitMarketFabricStarvedTurns,
         fabricRecipeFeasibleTurns: fabricRecipeFeasibleTurns,
         fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
       );
