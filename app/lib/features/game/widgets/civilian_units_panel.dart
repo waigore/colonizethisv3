@@ -19,6 +19,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
 import 'civilian_units_sort.dart';
+import 'game_panel_contract.dart';
 import 'train_dialog_chrome.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
@@ -29,7 +30,7 @@ import '../utils/region_labels.dart';
 
 part 'civilian_units_panel_support.dart';
 
-class CivilianUnitsPanel extends ConsumerStatefulWidget {
+class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
   const CivilianUnitsPanel({
     super.key,
     required this.game,
@@ -50,12 +51,15 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
   /// SPEC/ui/civilian-units-panel.md — [UiScreenIds.civilianUnitsPanel].
   static const screenId = UiScreenIds.civilianUnitsPanel;
 
+  @override
   final Game game;
+  @override
   final String humanPlayerId;
 
   /// When set, lists civilians for every id (global observe). Otherwise [humanPlayerId] only.
   final Set<String>? civilianOwnerIds;
 
+  @override
   final AppEventBus bus;
 
   /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
@@ -83,6 +87,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
   final String? buildImprovementShortcutTargetTileKey;
 
   /// When true, work assign/cancel and train are disabled (observe mode).
+  @override
   final bool readOnly;
 
   @override

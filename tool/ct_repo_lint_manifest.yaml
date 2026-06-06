@@ -264,6 +264,14 @@ rules:
     script: tool/check_app_panel_screen_id.dart
     pr_incremental: true
 
+  - rule_id: repo.app_game_panel_mixin
+    group: structure
+    title: fully-shaped game panels must adopt the shared GamePanelMixin contract (Refs #3279)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_game_panel_mixin.dart
+    pr_incremental: true
+
   - rule_id: repo.game_widgets_file_size
     group: structure
     title: app/lib/features/game/widgets files must stay at or below 700 lines

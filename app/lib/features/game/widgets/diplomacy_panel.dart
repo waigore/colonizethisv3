@@ -17,6 +17,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_radius.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'diplomacy_order_helpers.dart';
+import 'game_panel_contract.dart';
 import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
 
@@ -49,7 +50,7 @@ const double kDiplomacyRowNarrowMaxWidth = 500.0;
 const String kDiplomacyRowBodyKeyPrefix = 'diplomacyRowBody:';
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
-class DiplomacyPanel extends StatefulWidget {
+class DiplomacyPanel extends StatefulWidget with GamePanelMixin {
   const DiplomacyPanel({
     super.key,
     required this.game,
@@ -65,12 +66,16 @@ class DiplomacyPanel extends StatefulWidget {
   /// `DiplomacyScreen`; shares its stable surface ID.
   static const screenId = UiScreenIds.diplomacyScreen;
 
+  @override
   final Game game;
+  @override
   final String humanPlayerId;
   final MapTopology topology;
   final Orders currentOrders;
+  @override
   final AppEventBus bus;
   final VoidCallback? onClose;
+  @override
   final bool readOnly;
 
   @override

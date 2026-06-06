@@ -16,6 +16,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'fleet_expansion_tile.dart';
+import 'game_panel_contract.dart';
 import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
@@ -25,7 +26,7 @@ import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
-class NavalUnitsPanel extends StatefulWidget {
+class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
   const NavalUnitsPanel({
     super.key,
     required this.game,
@@ -44,8 +45,11 @@ class NavalUnitsPanel extends StatefulWidget {
   /// SPEC/ui/naval-units-panel.md — [UiScreenIds.navalUnitsPanel].
   static const screenId = UiScreenIds.navalUnitsPanel;
 
+  @override
   final Game game;
+  @override
   final String humanPlayerId;
+  @override
   final AppEventBus bus;
   final MapTopology topology;
   final Orders draftOrders;
@@ -54,6 +58,7 @@ class NavalUnitsPanel extends StatefulWidget {
   final String? locationScopeKey;
   final String? initialSelectedFleetId;
   final String? tileScopeTileKey;
+  @override
   final bool readOnly;
 
   @override
