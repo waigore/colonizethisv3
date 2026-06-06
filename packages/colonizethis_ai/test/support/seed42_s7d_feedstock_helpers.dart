@@ -859,30 +859,68 @@ void recordSeed42S7dTradeOrderCounters({
     final tradeOrders = tradeOrdersByPlayerId[gpId];
     if (tradeOrders == null) continue;
     for (final order in tradeOrders) {
-      if (order.type == TradeOrderType.offer) {
-        bumpCounter(tradeOfferCount, gpId);
-        if (order.priority >= kTreasuryOfferPriorityUrgent) {
-          bumpCounter(tradeUrgentOfferCount, gpId);
-        }
-        if (improvementInputCommodityIds.contains(order.commodityId)) {
-          bumpCounter(improvementInputOffersEmitted, gpId);
-        }
-        if (castIronFeedstockIds.contains(order.commodityId)) {
-          bumpCounter(castIronFeedstockOffersEmitted, gpId);
-        }
-      } else if (order.type == TradeOrderType.bid) {
-        bumpCounter(tradeBidCount, gpId);
-        if (regimentInputCommodityIds.contains(order.commodityId)) {
-          bumpCounter(regimentInputBidsEmitted, gpId);
-        }
-        if (improvementInputCommodityIds.contains(order.commodityId)) {
-          bumpCounter(improvementInputBidsEmitted, gpId);
-        }
-        if (castIronFeedstockIds.contains(order.commodityId)) {
-          bumpCounter(castIronFeedstockBidsEmitted, gpId);
-        }
-      }
+      _recordSeed42S7dTradeOrderCounter(
+        gpId: gpId,
+        order: order,
+        regimentInputCommodityIds: regimentInputCommodityIds,
+        improvementInputCommodityIds: improvementInputCommodityIds,
+        castIronFeedstockIds: castIronFeedstockIds,
+        tradeOfferCount: tradeOfferCount,
+        tradeUrgentOfferCount: tradeUrgentOfferCount,
+        tradeBidCount: tradeBidCount,
+        improvementInputOffersEmitted: improvementInputOffersEmitted,
+        castIronFeedstockOffersEmitted: castIronFeedstockOffersEmitted,
+        regimentInputBidsEmitted: regimentInputBidsEmitted,
+        improvementInputBidsEmitted: improvementInputBidsEmitted,
+        castIronFeedstockBidsEmitted: castIronFeedstockBidsEmitted,
+      );
     }
+  }
+}
+
+/// Records the per-GP counter bumps for a single merged [order] (Refs #2924
+/// Step 0). Extracted from [recordSeed42S7dTradeOrderCounters] so the scan loop
+/// stays within the repo control-flow nesting-depth limit; behavior is
+/// identical to the inline offer/bid handling it replaced. Read-only over the
+/// supplied sets except for the counter bumps.
+void _recordSeed42S7dTradeOrderCounter({
+  required String gpId,
+  required TradeOrder order,
+  required Set<String> regimentInputCommodityIds,
+  required Set<String> improvementInputCommodityIds,
+  required Set<String> castIronFeedstockIds,
+  required Map<String, int> tradeOfferCount,
+  required Map<String, int> tradeUrgentOfferCount,
+  required Map<String, int> tradeBidCount,
+  required Map<String, int> improvementInputOffersEmitted,
+  required Map<String, int> castIronFeedstockOffersEmitted,
+  required Map<String, int> regimentInputBidsEmitted,
+  required Map<String, int> improvementInputBidsEmitted,
+  required Map<String, int> castIronFeedstockBidsEmitted,
+}) {
+  if (order.type == TradeOrderType.offer) {
+    bumpCounter(tradeOfferCount, gpId);
+    if (order.priority >= kTreasuryOfferPriorityUrgent) {
+      bumpCounter(tradeUrgentOfferCount, gpId);
+    }
+    if (improvementInputCommodityIds.contains(order.commodityId)) {
+      bumpCounter(improvementInputOffersEmitted, gpId);
+    }
+    if (castIronFeedstockIds.contains(order.commodityId)) {
+      bumpCounter(castIronFeedstockOffersEmitted, gpId);
+    }
+    return;
+  }
+  if (order.type != TradeOrderType.bid) return;
+  bumpCounter(tradeBidCount, gpId);
+  if (regimentInputCommodityIds.contains(order.commodityId)) {
+    bumpCounter(regimentInputBidsEmitted, gpId);
+  }
+  if (improvementInputCommodityIds.contains(order.commodityId)) {
+    bumpCounter(improvementInputBidsEmitted, gpId);
+  }
+  if (castIronFeedstockIds.contains(order.commodityId)) {
+    bumpCounter(castIronFeedstockBidsEmitted, gpId);
   }
 }
 
