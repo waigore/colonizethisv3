@@ -61,6 +61,33 @@ bool isCastIronLabourPopulationBoundForLockRecoverySeller({
   return rawLabour < recipe.labourPerOutput && effectiveLabour == rawLabour;
 }
 
+/// Total `fabric` held in the stockpiles of every great power **other than**
+/// [playerId] this turn — the gross world-market `fabric` supply a
+/// fabric-starved lock-recovery seller could, in principle, buy the 2-`fabric`
+/// peasant-recruit cost from.
+///
+/// The peasant recruit is the only raw-population-growth row in
+/// [WorkerActionEconomyCatalog] (apprentice/journeyman/master each *consume* an
+/// existing peasant rather than grow the population) and it costs 2 `fabric`. A
+/// below-quota zero-NW zero-regiment lock-recovery seller cannot produce that
+/// `fabric` itself — `fabric_from_*` carries `labourPerOutput == 2`, above the
+/// seller's effective labour of 1 (the #3317 circular-labour deadlock) — so the
+/// only remaining lever to grow raw labour is to *buy* the `fabric`. This sums
+/// the `fabric` other great powers hold as a gross-availability proxy: a value
+/// of 0 means no counterparty holds any `fabric` to sell, closing the market
+/// door too and leaving a rules-level bootstrap as the only remaining
+/// raw-population-growth lever. It is a holdings proxy, not a full world-market
+/// offer/match simulation. Pure read-only over `game.players`; no game-state
+/// mutation.
+int otherGreatPowerFabricHeld(Game game, String playerId) {
+  var total = 0;
+  for (final player in game.players) {
+    if (player.id == playerId) continue;
+    total += player.stockpile.quantityOf(CommodityCatalog.fabric.id);
+  }
+  return total;
+}
+
 /// True when [stockpile] holds less than the peasant
 /// [RecruitWorkerOrder] `fabric` material cost
 /// ([WorkerActionEconomyCatalog.peasant] = 2) while the castIron-labour
