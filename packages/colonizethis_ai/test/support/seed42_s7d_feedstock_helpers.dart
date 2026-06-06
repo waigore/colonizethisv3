@@ -600,6 +600,7 @@ void assertSeed42S7dStructuralInvariants({
   required Map<String, int> castIronLabourPeasantRecruitGateTurns,
   required Map<String, int> castIronLabourPeasantRecruitAffordableTurns,
   required Map<String, int> castIronLabourPeasantRecruitFabricStarvedTurns,
+  required Map<String, int> castIronLabourPeasantRecruitMarketFabricStarvedTurns,
   required Map<String, int> fabricRecipeFeasibleTurns,
   required Map<String, int> fabricRecipeLabourFeasibleTurns,
 }) {
@@ -729,6 +730,18 @@ void assertSeed42S7dStructuralInvariants({
       reason:
           '$gpId peasant-recruit gate-active turns cannot exceed the '
           '100-turn run length',
+    );
+    // Refs #2847 § S7-D market-fabric localization: the market-fabric-starved
+    // counter is a strict refinement of the fabric-starved turns (gate active
+    // AND recruit unpayable AND no other GP holds fabric), so it can never
+    // exceed the fabric-starved total. Guards the instrumentation gating
+    // itself without pinning the (freely tunable) per-GP counts.
+    expect(
+      castIronLabourPeasantRecruitMarketFabricStarvedTurns[gpId]!,
+      lessThanOrEqualTo(castIronLabourPeasantRecruitFabricStarvedTurns[gpId]!),
+      reason:
+          '$gpId peasant-recruit market-fabric-starved turns cannot exceed '
+          'the fabric-starved turns (market-starved requires fabric-starved)',
     );
     // Refs #2847 § S7-D fabric circular-labour localization: a fabric run is
     // labour-feasible only when it is also materially feasible
