@@ -94,6 +94,7 @@ class DiplomacyRowData {
     this.powerScore,
     this.playerPowerScore,
     required this.pendingOrderTypes,
+    this.pendingOvertureStage,
     this.activeSubsidyPerTurn,
     this.pendingGrantAmount,
     this.pendingSubsidyAmount,
@@ -104,7 +105,7 @@ class DiplomacyRowData {
   final FactionKind kind;
   final DiplomacyRelation? relation;
   final OvertureState? overture;
-  final List<DiplomaticOrder> actions;
+  final List<DiplomaticPanelAction> actions;
 
   /// Great Power power score (SPEC/game/diplomacy.md). Only set for GP rows.
   final int? powerScore;
@@ -114,6 +115,9 @@ class DiplomacyRowData {
 
   /// Set of DiplomaticOrderType that are currently pending for this target faction.
   final Set<DiplomaticOrderType> pendingOrderTypes;
+
+  /// When an [establishOverture] order is pending, the queued overture stage.
+  final OvertureStage? pendingOvertureStage;
 
   /// Active £/turn subsidy from the human GP to this row's faction (`Game.subsidyStates`).
   final int? activeSubsidyPerTurn;
@@ -157,7 +161,6 @@ List<DiplomacyRowData> buildDiplomacyRows(
   String humanPlayerId,
   Orders currentOrders,
 ) {
-  const suggestionApi = DefaultOrderSuggestionAPI();
   final view = buildPlayerView(game, topology, humanPlayerId);
   final discoveredIds = <String>{
     ...view.diplomacyByOtherId.keys,
@@ -168,15 +171,18 @@ List<DiplomacyRowData> buildDiplomacyRows(
     ),
   };
   final currentTurn = game.worldState.turnState.turnNumber;
-  final suggestions = suggestionApi.suggestDiplomaticOrders(
-    view,
-    game,
-    topology,
-    currentOrders,
-  );
-  final actionsByTarget = <String, List<DiplomaticOrder>>{};
-  for (final order in suggestions) {
-    actionsByTarget.putIfAbsent(order.targetFactionId, () => []).add(order);
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final actionsByTarget = <String, List<DiplomaticPanelAction>>{};
+  for (final id in discoveredIds) {
+    if (id == humanPlayerId) continue;
+    actionsByTarget[id] = enumerateDiplomaticPanelActionsForTarget(
+      game: game,
+      topology: topology,
+      playerId: humanPlayerId,
+      targetId: id,
+      currentOrders: currentOrders,
+      factionMembership: factionMembership,
+    );
   }
 
   final gpIds = <String>[];
@@ -205,10 +211,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
   });
 
   final pendingByTarget = <String, Set<DiplomaticOrderType>>{};
+  final pendingOvertureStageByTarget = <String, OvertureStage>{};
   final pendingList =
       currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
   for (final o in pendingList) {
     pendingByTarget.putIfAbsent(o.targetFactionId, () => {}).add(o.type);
+    if (o.type == DiplomaticOrderType.establishOverture &&
+        o.overtureStage != null) {
+      pendingOvertureStageByTarget[o.targetFactionId] = o.overtureStage!;
+    }
   }
 
   String displayNameFor(String id) {
@@ -236,10 +247,11 @@ List<DiplomacyRowData> buildDiplomacyRows(
             view.diplomacyByOtherId[id] ??
             _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
+        actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
         powerScore: greatPowerPowerScore(game, id),
         playerPowerScore: playerPower,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        pendingOvertureStage: pendingOvertureStageByTarget[id],
         activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyAmount: econ.subsidy,
@@ -258,10 +270,11 @@ List<DiplomacyRowData> buildDiplomacyRows(
             view.diplomacyByOtherId[id] ??
             _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
+        actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        pendingOvertureStage: pendingOvertureStageByTarget[id],
         activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyAmount: econ.subsidy,
@@ -280,10 +293,11 @@ List<DiplomacyRowData> buildDiplomacyRows(
             view.diplomacyByOtherId[id] ??
             _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
+        actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        pendingOvertureStage: pendingOvertureStageByTarget[id],
         activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyAmount: econ.subsidy,

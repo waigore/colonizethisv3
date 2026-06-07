@@ -197,6 +197,49 @@ void main() {
       }
     });
 
+    test('AC-6: minor row enumerates all overture stages with disabled reasons', () {
+      final minorId = gameWithFactions.minorNations.first.id;
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        const Orders(),
+      );
+      final minorRow = rows.firstWhere((r) => r.factionId == minorId);
+      final overtureActions = minorRow.actions
+          .where((a) => a.order.type == DiplomaticOrderType.establishOverture)
+          .toList();
+      expect(overtureActions, hasLength(4));
+      final disabled = overtureActions.where((a) => !a.enabled).toList();
+      expect(disabled, isNotEmpty);
+      for (final action in disabled) {
+        expect(action.rejectionReason, isNotNull);
+        expect(action.rejectionReason, isNotEmpty);
+      }
+    });
+
+    test('AC-10: GP row keeps invalid Offer Peace action in matrix', () {
+      final otherGp = gameWithFactions.players.firstWhere(
+        (p) => p.id != humanPlayerId,
+      );
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        const Orders(),
+      );
+      final gpRow = rows.firstWhere((r) => r.factionId == otherGp.id);
+      final offerPeace = gpRow.actions.firstWhere(
+        (a) => a.order.type == DiplomaticOrderType.offerPeace,
+      );
+      expect(offerPeace.enabled, isFalse);
+      expect(offerPeace.rejectionReason, isNotEmpty);
+      final ftp = gpRow.actions.firstWhere(
+        (a) => a.order.type == DiplomaticOrderType.establishFtp,
+      );
+      expect(ftp.enabled, isFalse);
+    });
+
     test('pendingOrderTypes reflects submitted diplomatic orders', () {
       final otherGp = gameWithFactions.players.firstWhere(
         (p) => p.id != humanPlayerId,

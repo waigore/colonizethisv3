@@ -336,6 +336,25 @@ void main() {
       },
     );
 
+    testWidgets('AC-6/AC-10: overture and FTP buttons shown disabled when invalid', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      expect(find.text('Consulate'), findsWidgets);
+      expect(find.text('Embassy'), findsWidgets);
+      expect(find.text('Establish FTP'), findsWidgets);
+      expect(find.text('Offer Peace'), findsWidgets);
+    });
+
     testWidgets('AC: Action buttons present for factions', (
       WidgetTester tester,
     ) async {
@@ -915,12 +934,27 @@ void main() {
           humanPlayerId,
           const Orders(),
         );
-        final hasTribe = rows.any((r) => r.kind == FactionKind.tribe);
-        if (!hasTribe) return;
+        final tribeRows =
+            rows.where((r) => r.kind == FactionKind.tribe).toList();
+        if (tribeRows.isEmpty) return;
+        final tribeRow = tribeRows.first;
 
-        final tribeText = find.text('Tribe').first;
+        final tribeText = find.descendant(
+          of: find.byKey(
+            ValueKey('$kDiplomacyRowBodyKeyPrefix${tribeRow.factionId}'),
+          ),
+          matching: find.text('Tribe'),
+        );
+        await tester.scrollUntilVisible(
+          tribeText,
+          120,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pump();
         final container = tester.widget<Container>(
-          find.ancestor(of: tribeText, matching: find.byType(Container)).first,
+          find
+              .ancestor(of: tribeText, matching: find.byType(Container))
+              .first,
         );
         final decoration = container.decoration as BoxDecoration;
         expect(

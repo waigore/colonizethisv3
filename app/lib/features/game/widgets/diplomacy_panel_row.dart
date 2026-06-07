@@ -49,7 +49,14 @@ class _DiplomacyRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: _buildInfoColumn(context)),
-        _buildActionButtons(),
+        // Full action matrices can exceed one run; [Flexible] caps the
+        // trailing cluster to remaining row width so [Wrap] can flow.
+        Flexible(
+          child: Align(
+            alignment: Alignment.topRight,
+            child: _buildActionButtons(),
+          ),
+        ),
       ],
     );
   }
@@ -57,9 +64,7 @@ class _DiplomacyRow extends StatelessWidget {
   // SPEC/ui/diplomacy-panel.md § Responsive layout (narrow ≤ 500 dp): info
   // column stacks above the action cluster; cluster aligns leading-edge.
   Widget _buildNarrowBody(BuildContext context) {
-    final bool hasActions =
-        !readOnly &&
-        (data.actions.isNotEmpty || data.pendingOrderTypes.isNotEmpty);
+    final bool hasActions = !readOnly && data.actions.isNotEmpty;
     return Column(
       key: _bodyKey,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,23 +243,33 @@ class _DiplomacyRow extends StatelessWidget {
       spacing: 6,
       runSpacing: 6,
       children: [
-        for (final order in data.actions)
-          if (!data.pendingOrderTypes.contains(order.type))
-            _ActionButton(order: order, onPressed: () => onAction(order)),
-        for (final orderType in data.pendingOrderTypes)
-          _ActionButton(
-            order: DiplomaticOrder(
-              type: orderType,
-              targetFactionId: data.factionId,
+        for (final action in data.actions)
+          if (_isActionPending(action))
+            _ActionButton(
+              order: action.order,
+              onPressed: () {},
+              isPending: true,
+              onCancel: () => onAction(action.order),
+            )
+          else
+            _ActionButton(
+              order: action.order,
+              enabled: action.enabled,
+              rejectionReason: action.rejectionReason,
+              onPressed: action.enabled ? () => onAction(action.order) : null,
             ),
-            onPressed: () {},
-            isPending: true,
-            onCancel: () => onAction(
-              DiplomaticOrder(type: orderType, targetFactionId: data.factionId),
-            ),
-          ),
       ],
     );
+  }
+
+  bool _isActionPending(DiplomaticPanelAction action) {
+    if (!data.pendingOrderTypes.contains(action.order.type)) {
+      return false;
+    }
+    if (action.order.type == DiplomaticOrderType.establishOverture) {
+      return data.pendingOvertureStage == action.order.overtureStage;
+    }
+    return true;
   }
 
   Widget _kindChip(BuildContext context, FactionKind kind) {
@@ -278,12 +293,16 @@ class _ActionButton extends StatelessWidget {
     required this.onPressed,
     this.isPending = false,
     this.onCancel,
+    this.enabled = true,
+    this.rejectionReason,
   });
 
   final DiplomaticOrder order;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isPending;
   final VoidCallback? onCancel;
+  final bool enabled;
+  final String? rejectionReason;
 
   /// SPEC/ui/diplomacy-panel.md § Action button styling — destructive
   /// `Declare War` action resolves both the button outline and the
@@ -304,14 +323,20 @@ class _ActionButton extends StatelessWidget {
     // Refs #2914 S7.
     final TextStyle labelStyle =
         theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    return SizedBox(
+    final Widget button = SizedBox(
       height: 32,
       child: CtNinePatchButton(
         onPressed: isPending ? onCancel : onPressed,
+        enabled: isPending || enabled,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         dangerVariant: _isWarVariant,
         child: Text(label, style: labelStyle),
       ),
     );
+    final String? reason = rejectionReason;
+    if (!isPending && !enabled && reason != null && reason.isNotEmpty) {
+      return Tooltip(message: reason, child: button);
+    }
+    return button;
   }
 }
