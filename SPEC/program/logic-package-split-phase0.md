@@ -32,7 +32,7 @@ Phase 0 deliverables (child issue C0):
 | `turn` | `world` | Allowed |
 | `world` | `turn` | **Eliminated** — `turn_resolution_seeds.dart` and `trace/` hoisted to `lib/src/` |
 | `diplomacy` | `ai` | Allowed (becomes `diplomacy` → `ai_contracts` after Phase 4) |
-| `ai` | `diplomacy` | Deferred — 2 files |
+| `ai` | `diplomacy` | **Eliminated** — `DiplomacyFactionMembership` / `isMinorOrTribe` consumed from `world/faction_membership.dart` |
 
 ## Edge pair enumerations (wrong-direction symbols)
 
@@ -70,13 +70,13 @@ Phase 0 deliverables (child issue C0):
 
 ### `orders ↔ turn`
 
-**Wrong:** `orders` → `turn` (3 files)
+**Wrong:** `orders` → `turn` (1 file remaining; 2 trace consumers fixed)
 
-| Source | Import | Symbols | Proposed destination |
-|--------|--------|---------|---------------------|
-| `orders/orders_application.dart` | `turn/trace/turn_trace_runtime.dart` | `TurnTraceRuntime` | `lib/src/trace/` (hoisted; import path updated) |
-| `orders/orders_application_context.dart` | same | same | same |
-| `orders/order_projections.dart` | `turn/turn_resolver.dart` | `resolveTurnForGame`, `requireTurnResolutionComplete` | Invert: callback injection or move projections to `turn/` |
+| Source | Import | Symbols | Destination | Status |
+|--------|--------|---------|-------------|--------|
+| `orders/orders_application.dart` | `lib/src/trace/turn_trace_runtime.dart` | `TurnTraceRuntime` | `lib/src/trace/` (hoisted; now imported directly) | Fixed |
+| `orders/orders_application_context.dart` | same | same | same | Fixed |
+| `orders/order_projections.dart` | `turn/turn_resolver.dart` | `resolveTurnForGame`, `requireTurnResolutionComplete` | Invert: callback injection or move projections to `turn/` | Deferred (grandfathered) |
 
 ### `world ↔ diplomacy`
 
@@ -120,12 +120,14 @@ Phase 0 deliverables (child issue C0):
 
 ### `diplomacy ↔ ai`
 
-**Wrong:** `ai` → `diplomacy` (2 files); **allowed:** `diplomacy/intervention_resolver.dart` → `ai/ai_control.dart`
+**Wrong:** `ai` → `diplomacy` (2 files, fixed in Phase 0 slice); **allowed:** `diplomacy/intervention_resolver.dart` → `ai/ai_control.dart`
 
-| Source | Import | Proposed fix |
-|--------|--------|--------------|
-| `ai/full_ai_civilian_work_selection.dart` | `diplomacy_resolver.dart` | Inject legality predicate from `ai_contracts` consumer |
-| `ai/simple_ai_heuristics.dart` | `diplomacy_resolver.dart` | same |
+Both AI files consumed only `DiplomacyFactionMembership` (and the top-level `isMinorOrTribe` helper), which already live in the leaf module `world/faction_membership.dart` (`diplomacy_resolver.dart` merely re-exports them). Retargeting the imports to the world module removes the wrong-direction edge with no behavior change.
+
+| Source | Import | Symbols used | Destination |
+|--------|--------|--------------|-------------|
+| `ai/full_ai_civilian_work_selection.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership`, `isMinorOrTribe` | `world/faction_membership.dart` |
+| `ai/simple_ai_heuristics.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership` | `world/faction_membership.dart` |
 
 ## AI contracts file set (Phase 0 planning, D1)
 

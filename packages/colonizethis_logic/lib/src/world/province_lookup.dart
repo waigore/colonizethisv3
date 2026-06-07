@@ -1,7 +1,7 @@
 import 'dart:collection' show UnmodifiableMapView;
 
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show Province, ProvinceId, RegionData, Unit, WorldState;
+    show Game, Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../constants.dart';
 import '../utils/expando_index.dart';
@@ -421,4 +421,16 @@ extension WorldStateProvinceLookup on WorldState {
       kRegionNewWorld: List<Province>.from(newWorld.provinces),
     };
   }
+}
+
+/// Old World provinces owned by [factionId] (observer conquest / survival peace).
+///
+/// Pure world/province lookup with no diplomacy dependency; lives in `world/`
+/// so leaf-layer consumers (and `colonizethis_world` after extraction) do not
+/// import the diplomacy domain (Refs #3290 Phase 0 — `ai → diplomacy` edge).
+int oldWorldProvinceCountOwnedBy(Game game, String factionId) {
+  return game.worldState
+      .provincesForRegion(kRegionOldWorld)
+      .where((p) => p.ownerId == factionId)
+      .length;
 }
