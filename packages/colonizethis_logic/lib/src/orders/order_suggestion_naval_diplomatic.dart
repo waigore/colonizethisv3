@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
+import '../diplomacy/known_diplomatic_targets.dart';
 import 'package:colonizethis_world/src/world/naval.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
@@ -10,7 +11,6 @@ import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
-import 'order_suggestion_helpers.dart';
 
 // Naval and diplomatic order-suggestion families share this library's imports
 // and the private [_effectiveOrderResolutionContext] helper below. The naval

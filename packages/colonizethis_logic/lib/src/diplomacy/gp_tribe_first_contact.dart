@@ -2,9 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 
-import '../orders/order_suggestion_helpers.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
+import 'known_diplomatic_targets.dart';
 
 /// Outcome of applying GP–Tribe first-contact relations for one human GP.
 /// SPEC/game/diplomacy.md § GP–Tribe first contact (issue #3341).
