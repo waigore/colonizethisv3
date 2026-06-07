@@ -10,8 +10,8 @@ import '../../economy/world_market/first_right_credits.dart';
 import '../../economy/world_market/lock_recovery_minor_bids.dart';
 import '../../economy/world_market/price_discovery.dart';
 import '../../economy/world_market/purchased_tile_index.dart';
-import '../../world/connectivity_resolver.dart';
-import '../../world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 

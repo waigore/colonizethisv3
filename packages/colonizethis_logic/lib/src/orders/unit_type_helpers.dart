@@ -2,7 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show Game, Orders, WorldState;
 
 import '../constants.dart';
-import '../world/unit_lookup.dart' show allUnitsFromWorld;
+import 'package:colonizethis_world/src/world/unit_lookup.dart' show allUnitsFromWorld;
 
 /// Shared unit-type and work-target predicates for orders. SPEC/program/orders.md § Work orders.
 /// Used by WorkOrderValidator and OrderEngine for dev-exclusive tile tracking.

@@ -1,10 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../event_bus/game_event_bus.dart';
-import '../game_events.dart' show GameEvent;
-import '../trace/turn_trace_contracts.dart';
-import '../trace/turn_trace_runtime.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
+import 'package:colonizethis_world/src/game_events.dart' show GameEvent;
+import 'package:colonizethis_world/src/trace/turn_trace_contracts.dart';
+import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
 

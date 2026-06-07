@@ -3,9 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../logging.dart';
-import '../world/connectivity_resolver.dart';
-import '../world/province_lookup.dart';
-import '../world/tile_key_coordinates.dart';
+import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Per-faction extraction for non-Great-Power factions (Minor Nations and
 /// Tribes). Mirrors the per-tile formula in

@@ -31,7 +31,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' show Game;
 
 import '../../diplomacy/diplomacy_resolver.dart'
     show DiplomacyFactionMembership;
-import '../../world/province_lookup.dart' show WorldStateProvinceLookup;
+import 'package:colonizethis_world/src/world/province_lookup.dart' show WorldStateProvinceLookup;
 
 /// Per-tile attribution record returned by [PurchasedTileIndex].
 ///

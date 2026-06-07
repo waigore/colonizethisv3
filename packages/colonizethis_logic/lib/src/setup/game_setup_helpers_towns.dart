@@ -5,8 +5,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/province_lookup.dart';
-import '../world/tile_key_coordinates.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 import 'game_setup_context.dart';
 import 'game_setup_town_tile_ranking.dart';
 

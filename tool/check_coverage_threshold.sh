@@ -11,7 +11,7 @@ THRESHOLD="${1:-90}"
 shift || true
 
 if [ $# -eq 0 ]; then
-  TARGETS=(packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map app ctdev)
+  TARGETS=(packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_world packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map app ctdev)
 else
   TARGETS=("$@")
 fi

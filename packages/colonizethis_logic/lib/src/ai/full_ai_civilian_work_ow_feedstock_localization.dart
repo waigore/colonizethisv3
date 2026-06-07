@@ -13,9 +13,9 @@ import '../orders/order_suggestion_context.dart'
 import '../orders/order_suggestion_work.dart' show suggestWorkOrders;
 import '../orders/order_visibility.dart' show provinceHasAtLeastVisibility;
 import '../orders/orders_application_helpers.dart' show isMineralEligibleTile;
-import '../world/player_view.dart';
-import '../world/province_lookup.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
 /// Per-gate pass signals for a co-located mineral-eligible feedstock `prospect`
 /// probe (Refs #2847 § H8-extraction prospect intra-pass localization).

@@ -4,8 +4,8 @@ import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_logic/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_logic/src/orders/order_validators.dart';
 import 'package:colonizethis_logic/src/orders/validator_bundle.dart';
-import 'package:colonizethis_logic/src/world/player_view.dart';
-import 'package:colonizethis_logic/src/world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../test_fixtures.dart';

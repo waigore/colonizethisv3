@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../ai/full_ai_civilian_work_feedstock_bootstrap.dart';
 import '../../constants.dart';
-import '../../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 
 /// Calculates work order material costs. Reduces duplication between validation and projection.
 /// SPEC/program/orders.md § Work orders. Used by OrderEngine for work-order cost validation and projection.

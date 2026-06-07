@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../economy/world_market/trade_order_suggester.dart';
-import '../world/player_view.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
 import 'order_resolution_context.dart';
 
 /// Abstract order suggestion API for AI. SPEC/program/order-engine.md, ai-systems-impl.md.

@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
-import '../world/player_view.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 

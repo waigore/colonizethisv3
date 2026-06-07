@@ -10,7 +10,7 @@ import '../economy/world_market/treasury_bid_budget.dart'
     show treasuryAvailableForBidsByPlayer;
 import 'order_suggestion.dart' as suggestion;
 import 'order_suggestion_api.dart';
-import '../world/player_view.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
 import 'order_resolution_context.dart';
 
 /// Default implementation of [OrderSuggestionAPI] using the top-level suggest* functions.

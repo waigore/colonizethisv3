@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../economy/economy_riches_to_treasury.dart';
 import '../../economy/world_market/purchased_tile_index.dart';
 import '../../economy/world_market/purchased_tile_riches.dart';
-import '../../world/player_state_pipeline.dart';
+import 'package:colonizethis_world/src/world/player_state_pipeline.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 

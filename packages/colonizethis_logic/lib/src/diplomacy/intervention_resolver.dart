@@ -3,13 +3,13 @@ import 'dart:math' show Random;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/ai_control.dart';
+import 'package:colonizethis_world/src/world/ai_control.dart';
 import 'diplomacy_relation_lookup.dart';
 import '../combat/conflict_detection.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
-import '../turn/turn_resolution_result.dart';
-import '../world/province_lookup.dart';
+import 'diplomacy_phase_result.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
 import 'overture_resolver.dart';

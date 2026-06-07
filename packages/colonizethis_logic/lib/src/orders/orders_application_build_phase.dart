@@ -4,10 +4,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../economy/projected_cost_engine.dart';
 import '../economy/sea_transport.dart';
-import '../world/army_movement.dart';
-import '../world/game_world_mutations.dart';
-import '../world/naval.dart';
-import '../world/ship_instance_allocate.dart';
+import 'package:colonizethis_world/src/world/army_movement.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/naval.dart';
+import 'package:colonizethis_world/src/world/ship_instance_allocate.dart';
 import 'build_spawn_province.dart';
 import 'orders_application_context.dart';
 
