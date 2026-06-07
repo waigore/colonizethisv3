@@ -1,9 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:test/test.dart';
 
 Game _gpMinorGame() {
   const ow = 'oldWorld';
