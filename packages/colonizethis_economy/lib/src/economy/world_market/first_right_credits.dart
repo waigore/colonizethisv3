@@ -1,0 +1,235 @@
+/// First-right-of-refusal **treasury-credit aggregation (D4)** for the
+/// world market phase.
+///
+/// SPEC: [SPEC/game/world-market-first-right-of-refusal.md § Treasury
+/// transfer (D4)](
+/// ../../../../../../SPEC/game/world-market-first-right-of-refusal.md) and
+/// [SPEC/program/world-market-resolution.md § First right of refusal](
+/// ../../../../../../SPEC/program/world-market-resolution.md). Authority:
+/// issue [#2992](https://github.com/waigore/colonizethisv3/issues/2992) (D4).
+///
+/// This helper closes the loop on the FRR design:
+///
+/// - **D1** ([purchased_tile_index.dart]) builds the per-tile attribution
+///   index used by both the matcher and this helper.
+/// - **D2** ([deal_matcher.dart]) emits `FilledDeal.sellerOriginTileKey`
+///   for every offer-attributed deal, regardless of whether the buyer
+///   was the owning GP or a different Great Power.
+/// - **D3** ([first_right_profit.dart]) computes the per-deal profit
+///   credit `filledQuantity * pricePerUnit * profitRate(relationScore)`.
+/// - **D4** (this file) iterates the matcher's `List<FilledDeal>` and
+///   aggregates the **overseas-profit credits** per **owning Great Power**
+///   for the subset of deals where the buyer is **not** the owning GP
+///   (the no-bid path per the GDD). The phase handler applies those
+///   credits to player treasuries; the remainder of the buyer's payment
+///   is the minor/tribe treasury sink per
+///   `SPEC/game/world-market.md` Requirement 9.
+///
+/// The aggregation is intentionally a pure function:
+///
+/// - Deterministic for a fixed `(filledDeals, purchasedTileIndex,
+///   relationScoreFor)` tuple, including iteration order of the result
+///   map's entries (insertion order matches the first emission per
+///   owning GP).
+/// - No logger calls, no RNG, and no `Game` access — safe to call inside
+///   the 15-second next-turn-resolution budget per
+///   `SPEC/program/turn-resolution-phases.md` § Determinism.
+library;
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'first_right_profit.dart';
+import 'purchased_tile_index.dart';
+
+/// Per-deal credit record produced by [computeFirstRightCredits].
+///
+/// Wraps the source [FilledDeal] together with the resolved owning GP
+/// id, the source minor/tribe id, and the [FirstRightProfit] returned
+/// by [computeFirstRightProfit]. Callers (phase handler, Deal Book UI)
+/// consume either the per-deal records or the aggregated treasury map
+/// on [FirstRightCreditsResult].
+class FirstRightDealCredit {
+  const FirstRightDealCredit({
+    required this.deal,
+    required this.owningGpId,
+    required this.sourceFactionId,
+    required this.relationScore,
+    required this.profit,
+  });
+
+  /// The matcher-emitted deal that triggered the FRR overseas-profit
+  /// credit. The deal's `buyerFactionId` is guaranteed to differ from
+  /// [owningGpId] (the owning-GP-wins path is handled by D2 / FRR
+  /// pre-pass matches, not by D4).
+  final FilledDeal deal;
+
+  /// Great Power id credited with the overseas profit cut for this
+  /// deal. Always different from `deal.buyerFactionId` and from
+  /// `deal.sellerFactionId`.
+  final String owningGpId;
+
+  /// Minor or tribe id that owns the underlying purchased province at
+  /// resolution time. Used to look up the owning GP's hidden 0–100
+  /// relation score via the caller-supplied `relationScoreFor`.
+  final String sourceFactionId;
+
+  /// Relation score sampled at credit-computation time (0–100, already
+  /// clamped at the diplomacy source per `SPEC/game/diplomacy.md`
+  /// § Relation Model).
+  final int relationScore;
+
+  /// Per-deal profit envelope produced by [computeFirstRightProfit].
+  /// `profit.profitTreasury == 0.0` is a valid record — it preserves
+  /// the audit trail when relation score is zero or `profitRate`
+  /// clamps to zero defensively.
+  final FirstRightProfit profit;
+
+  /// Treasury units credited to [owningGpId] for this deal. Equal to
+  /// `profit.profitTreasury`; exposed here as a convenience for the
+  /// phase-handler aggregation loop.
+  double get profitTreasury => profit.profitTreasury;
+
+  @override
+  String toString() =>
+      'FirstRightDealCredit(deal: $deal, owningGp: $owningGpId, '
+      'source: $sourceFactionId, relation: $relationScore, '
+      'profit: $profit)';
+}
+
+/// Aggregated result of [computeFirstRightCredits].
+///
+/// [creditedDeals] preserves the matcher's emission order so callers can
+/// reproduce per-deal audit trails (Deal Book UI, observer traces).
+/// [treasuryCreditByGpId] aggregates the overseas-profit credits for
+/// each owning GP; the phase handler applies these credits to player
+/// treasuries (the remainder of the buyer's payment is the minor/tribe
+/// sink per the GDD).
+///
+/// `treasuryCreditByGpId` is an unmodifiable map; insertion order of
+/// its entries matches the order in which each owning GP first appears
+/// in [creditedDeals].
+class FirstRightCreditsResult {
+  const FirstRightCreditsResult({
+    required this.creditedDeals,
+    required this.treasuryCreditByGpId,
+  });
+
+  /// Empty result. Returned when the input deal list is empty, the
+  /// purchased-tile index is empty, or no deal is FRR-eligible.
+  static const FirstRightCreditsResult empty = FirstRightCreditsResult(
+    creditedDeals: <FirstRightDealCredit>[],
+    treasuryCreditByGpId: <String, double>{},
+  );
+
+  /// Per-deal credit records in matcher emission order (deals without
+  /// a non-zero `profitTreasury` are still included so callers can
+  /// surface every FRR-eligible deal in the Deal Book — see also
+  /// `SPEC/game/world-market-first-right-of-refusal.md` § Rules).
+  final List<FirstRightDealCredit> creditedDeals;
+
+  /// Treasury credits to apply to owning GPs, keyed by GP id.
+  final Map<String, double> treasuryCreditByGpId;
+
+  /// Convenience: total overseas-profit treasury credited across every
+  /// owning GP for this aggregation. Phase handlers and observer
+  /// traces use this for top-line economic accounting.
+  double get totalProfitTreasury {
+    var total = 0.0;
+    for (final amount in treasuryCreditByGpId.values) {
+      total += amount;
+    }
+    return total;
+  }
+}
+
+/// Aggregates First Right of Refusal overseas-profit credits across a
+/// matcher-emitted list of [FilledDeal]s.
+///
+/// For every deal whose `sellerOriginTileKey` resolves to a
+/// purchased-tile attribution in [purchasedTileIndex] and whose
+/// `buyerFactionId` is **different** from the attribution's owning GP,
+/// this function:
+///
+/// 1. Resolves the owning GP id and the source minor/tribe id from the
+///    [PurchasedTileAttribution].
+/// 2. Calls [relationScoreFor] to read the owning GP's 0–100 hidden
+///    relation score with the source faction at resolution time.
+/// 3. Computes the per-deal credit via [computeFirstRightProfit]
+///    (`relationScore`, `filledQuantity`, `pricePerUnit`).
+/// 4. Adds the profit to the owning GP's running treasury credit in
+///    [FirstRightCreditsResult.treasuryCreditByGpId] (insertion order
+///    matches the first deal that mentions each owning GP).
+///
+/// Deals whose `sellerOriginTileKey` is `null`, deals whose tile key
+/// does **not** resolve in the index, deals where the buyer **is** the
+/// owning GP (including the FRR-match path emitted by D2), and deals
+/// where `quantity <= 0` or `pricePerUnit <= 0` are skipped — D4 is
+/// strictly the **other-buyer overseas-profit** path per the GDD.
+///
+/// [relationScoreFor] receives `(owningGpId, sourceFactionId)` and
+/// must return the owning GP's clamped 0–100 relation score with the
+/// source faction. Callers typically wire this to
+/// `getRelation(game, owningGpId, sourceFactionId)?.score ?? 0`.
+///
+/// Returns [FirstRightCreditsResult.empty] when [filledDeals] is empty
+/// or [purchasedTileIndex] is `null` / empty.
+FirstRightCreditsResult computeFirstRightCredits({
+  required Iterable<FilledDeal> filledDeals,
+  required PurchasedTileIndex? purchasedTileIndex,
+  required int Function(String owningGpId, String sourceFactionId)
+  relationScoreFor,
+}) {
+  if (purchasedTileIndex == null || purchasedTileIndex.isEmpty) {
+    return FirstRightCreditsResult.empty;
+  }
+  final dealsList = filledDeals is List<FilledDeal>
+      ? filledDeals
+      : filledDeals.toList(growable: false);
+  if (dealsList.isEmpty) return FirstRightCreditsResult.empty;
+
+  final creditedDeals = <FirstRightDealCredit>[];
+  final treasuryByGp = <String, double>{};
+
+  for (final deal in dealsList) {
+    final tileKey = deal.sellerOriginTileKey;
+    if (tileKey == null || tileKey.isEmpty) continue;
+    final attribution = purchasedTileIndex.attributionForTileKey(tileKey);
+    if (attribution == null) continue;
+    final owningGpId = attribution.owningGpId;
+    if (owningGpId.isEmpty) continue;
+    if (deal.buyerFactionId == owningGpId) continue;
+    if (deal.quantity <= 0 || deal.pricePerUnit <= 0.0) continue;
+
+    final relationScore = relationScoreFor(
+      owningGpId,
+      attribution.sourceFactionId,
+    );
+    final profit = computeFirstRightProfit(
+      relationScore: relationScore,
+      filledQuantity: deal.quantity,
+      pricePerUnit: deal.pricePerUnit,
+    );
+
+    creditedDeals.add(
+      FirstRightDealCredit(
+        deal: deal,
+        owningGpId: owningGpId,
+        sourceFactionId: attribution.sourceFactionId,
+        relationScore: relationScore,
+        profit: profit,
+      ),
+    );
+    if (profit.profitTreasury > 0.0) {
+      treasuryByGp[owningGpId] =
+          (treasuryByGp[owningGpId] ?? 0.0) + profit.profitTreasury;
+    } else {
+      treasuryByGp.putIfAbsent(owningGpId, () => 0.0);
+    }
+  }
+
+  if (creditedDeals.isEmpty) return FirstRightCreditsResult.empty;
+  return FirstRightCreditsResult(
+    creditedDeals: List.unmodifiable(creditedDeals),
+    treasuryCreditByGpId: Map.unmodifiable(treasuryByGp),
+  );
+}

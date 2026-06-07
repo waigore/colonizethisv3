@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
-import '../../economy/projected_cost_engine.dart';
+import 'package:colonizethis_economy/src/economy/projected_cost_engine.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
@@ -50,6 +50,7 @@ class WorkOrderValidationContext {
   final Set<String> civilianDraftMoveUnitIds;
   final List<DiplomaticOrder> diplomaticOrders;
   final MapTopology? topology;
+
   /// When set, avoids repeated linear faction classification in tile occupancy
   /// checks (Refs #2394).
   final DiplomacyFactionMembership? factionMembership;
@@ -111,10 +112,7 @@ class WorkOrderValidator extends StatefulValidator {
             ownerId: ownerId,
           ),
           () => _validateDevExclusiveWorkTarget(o, unit!.type),
-          () => _validateMaterialAndTechRules(
-            o,
-            province?.fortLevel ?? 0,
-          ),
+          () => _validateMaterialAndTechRules(o, province?.fortLevel ?? 0),
           () {
             if (!workOrderVisibilityOk(
               _context.view,
@@ -371,16 +369,14 @@ class WorkOrderValidator extends StatefulValidator {
     required int improvementLevel,
     required int fortLevel,
     required int roadLevel,
-  }) => WorkOrderCostCalculator(
-    _context.game,
-    playerId: _context.playerId,
-  ).calculateCost(
-    target,
-    tileKey,
-    improvementLevel: improvementLevel,
-    fortLevel: fortLevel,
-    roadLevel: roadLevel,
-  );
+  }) => WorkOrderCostCalculator(_context.game, playerId: _context.playerId)
+      .calculateCost(
+        target,
+        tileKey,
+        improvementLevel: improvementLevel,
+        fortLevel: fortLevel,
+        roadLevel: roadLevel,
+      );
 
   bool _hasInsufficientStockpileForCost(Map<String, int> costMap) =>
       !ProjectedCostEngine.canAffordWorkMaterialCost(stockpileState, costMap);
@@ -408,14 +404,15 @@ class WorkOrderValidator extends StatefulValidator {
   void _applyProjectedWorkCost(WorkOrder o) {
     if (_applyProjectedPurchaseLandCost(o)) return;
     if (_skipsProjectedCost(o.target)) return;
-    final costMap = WorkOrderCostCalculator(
-      _context.game,
-      playerId: _context.playerId,
-    ).calculateCost(
-      o.target,
-      o.targetTileKey,
-      improvementLevel: _improvementLevelForCost(o),
-    );
+    final costMap =
+        WorkOrderCostCalculator(
+          _context.game,
+          playerId: _context.playerId,
+        ).calculateCost(
+          o.target,
+          o.targetTileKey,
+          improvementLevel: _improvementLevelForCost(o),
+        );
     if (costMap == null) return;
     _applyProjectedCostMap(costMap);
   }
@@ -431,7 +428,10 @@ class WorkOrderValidator extends StatefulValidator {
       target == kWorkTargetStealTech || target == kWorkTargetCounterSpy;
 
   void _applyProjectedCostMap(Map<String, int> costMap) {
-    if (!ProjectedCostEngine.canAffordWorkMaterialCost(stockpileState, costMap)) {
+    if (!ProjectedCostEngine.canAffordWorkMaterialCost(
+      stockpileState,
+      costMap,
+    )) {
       return;
     }
     stockpileState = ProjectedCostEngine.deductWorkMaterialCost(

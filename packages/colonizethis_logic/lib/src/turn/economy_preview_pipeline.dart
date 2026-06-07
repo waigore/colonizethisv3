@@ -2,10 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../economy/projected_cost_engine.dart';
+import 'package:colonizethis_economy/src/economy/projected_cost_engine.dart';
 import '../orders/validators/work_order_cost_calculator.dart';
-import '../economy/economy_preview_stockpile_phase.dart';
-import '../economy/worker_action_cost.dart';
+import 'package:colonizethis_economy/src/economy/economy_preview_stockpile_phase.dart';
+import 'package:colonizethis_economy/src/economy/worker_action_cost.dart';
 import 'package:colonizethis_world/src/world/player_state_pipeline.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';
@@ -174,15 +174,13 @@ Game _applyPendingMaterialWorkOrderCostsForPreview({
         continue;
       }
       final province = game.worldState.tryGetProvince(u.locationProvinceId);
-      final cost = WorkOrderCostCalculator(
-        game,
-        playerId: player.id,
-      ).calculateCost(
-        target,
-        targetTileKey,
-        improvementLevel: tileState.improvementLevel(targetTileKey),
-        fortLevel: province?.fortLevel ?? 0,
-      );
+      final cost = WorkOrderCostCalculator(game, playerId: player.id)
+          .calculateCost(
+            target,
+            targetTileKey,
+            improvementLevel: tileState.improvementLevel(targetTileKey),
+            fortLevel: province?.fortLevel ?? 0,
+          );
       if (cost == null) {
         continue;
       }

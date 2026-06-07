@@ -343,6 +343,13 @@ rules:
     runner: dart
     script: tool/check_combat_no_logic_deps.dart
 
+  - rule_id: repo.economy_no_logic_deps
+    group: architecture
+    title: colonizethis_economy must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_economy_no_logic_deps.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines

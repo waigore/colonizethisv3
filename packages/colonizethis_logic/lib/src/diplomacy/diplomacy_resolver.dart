@@ -23,8 +23,9 @@ import 'overture_resolver.dart';
 import 'war_resolver.dart';
 
 export 'diplomacy_relation_lookup.dart';
-export 'diplomacy_subsidies_relations_resolver.dart'
-    show kWorldMarketBaselineBidTypeCap, tradeSlotsForGp, worldMarketBidTypeCap;
+export 'package:colonizethis_economy/src/economy/world_market/bid_type_cap.dart'
+    show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
+export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
 export 'ftp_resolver.dart'
     show aiGpAcceptsFtp, breakFtpOnEmbassyLoss, breakFtpOnWar;
 export 'diplomacy_relation_lookup.dart'

@@ -4,7 +4,8 @@
 /// depend on narrow contracts only.
 library;
 
-export 'package:colonizethis_world/src/world/ai_control.dart' show isAiControlled;
+export 'package:colonizethis_world/src/world/ai_control.dart'
+    show isAiControlled;
 export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart'
     show
         ColocatedFeedstockProspectIntraPassGates,
@@ -61,19 +62,23 @@ export 'src/orders/incremental_candidate_validator.dart'
     show IncrementalCandidateValidator;
 export 'src/orders/order_suggestion_move_army.dart'
     show armyMoveCandidateDestinationProvinceIds;
-export 'package:colonizethis_world/src/world/movement.dart' show neighborProvinceIdsInRegion;
-export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart'
+export 'package:colonizethis_world/src/world/movement.dart'
+    show neighborProvinceIdsInRegion;
+export 'package:colonizethis_economy/src/economy/world_market/bid_type_cap.dart'
     show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
-export 'src/economy/economy_riches_to_treasury.dart'
+export 'package:colonizethis_economy/src/economy/economy_riches_to_treasury.dart'
     show pendingRichesTreasuryDelta;
-export 'src/economy/sea_transport.dart' show cargoHoldsForHomeFleet;
-export 'src/economy/trade_cargo_capacity.dart'
+export 'package:colonizethis_economy/src/economy/sea_transport.dart'
+    show cargoHoldsForHomeFleet;
+export 'package:colonizethis_economy/src/economy/trade_cargo_capacity.dart'
     show tradeCargoCapacityForGreatPower;
-export 'src/economy/world_market/treasury_bid_budget.dart'
+export 'package:colonizethis_economy/src/economy/world_market/treasury_bid_budget.dart'
     show carryForwardBidNotionalByPlayer, effectiveMarketPriceForCommodityId;
 export 'src/turn/pending_treasury_costs.dart' show pendingTreasuryCostsForTurn;
-export 'src/economy/worker_economy.dart' show effectiveLabourForWorkers;
-export 'src/economy/worker_action_cost.dart' show canAffordRecruitWorker;
+export 'package:colonizethis_economy/src/economy/worker_economy.dart'
+    show effectiveLabourForWorkers;
+export 'package:colonizethis_economy/src/economy/worker_action_cost.dart'
+    show canAffordRecruitWorker;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
 export 'src/orders/order_suggestion_helpers.dart'
@@ -82,8 +87,10 @@ export 'src/orders/order_suggestion_helpers.dart'
         filterMoveOrdersByDiplomacy,
         getProvinceOwnerMap,
         knownDiplomaticTargetFactionIds;
-export 'package:colonizethis_world/src/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
-export 'package:colonizethis_world/src/world/army_commands.dart' show applyArmySplit;
+export 'package:colonizethis_world/src/trace/turn_trace_contracts.dart'
+    show TurnTraceAiSection;
+export 'package:colonizethis_world/src/world/army_commands.dart'
+    show applyArmySplit;
 export 'package:colonizethis_world/src/world/army_ids.dart' show homeArmyIdFor;
 export 'package:colonizethis_world/src/world/player_view.dart'
     show PlayerView, VisibilityLevel, buildPlayerView;
@@ -91,7 +98,8 @@ export 'package:colonizethis_world/src/world/sea_reachable_provinces.dart'
     show
         reachableNonOwnedProvinceDistancesViaSeas,
         reachableNonOwnedProvinceIdsViaSeas;
-export 'package:colonizethis_world/src/world/province_lookup.dart' show allProvinces;
+export 'package:colonizethis_world/src/world/province_lookup.dart'
+    show allProvinces;
 export 'package:colonizethis_world/src/world/unit_lookup.dart'
     show
         WorldStateUnitLookup,

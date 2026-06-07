@@ -17,6 +17,7 @@ workspace:
   - packages/colonizethis_logic
   - packages/colonizethis_world
   - packages/colonizethis_combat
+  - packages/colonizethis_economy
   - packages/colonizethis_ai
   - packages/colonizethis_debug_console
   - packages/colonizethis_map

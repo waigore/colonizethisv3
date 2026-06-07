@@ -1,4 +1,4 @@
-import '../economy/worker_action_cost.dart';
+import 'package:colonizethis_economy/src/economy/worker_action_cost.dart';
 import 'orders_application_context.dart';
 
 /// Worker pool sub-phase of Build / work (phase 12).

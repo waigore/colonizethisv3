@@ -4,9 +4,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart' show GamePlayerLookup;
 import '../diplomacy/diplomacy_resolver.dart' show worldMarketBidTypeCap;
-import '../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
-import '../economy/world_market/trade_order_suggester.dart';
-import '../economy/world_market/treasury_bid_budget.dart'
+import 'package:colonizethis_economy/src/economy/sea_transport.dart'
+    show cargoHoldsForHomeFleet;
+import 'package:colonizethis_economy/src/economy/world_market/trade_order_suggester.dart';
+import 'package:colonizethis_economy/src/economy/world_market/treasury_bid_budget.dart'
     show treasuryAvailableForBidsByPlayer;
 import 'order_suggestion.dart' as suggestion;
 import 'order_suggestion_api.dart';

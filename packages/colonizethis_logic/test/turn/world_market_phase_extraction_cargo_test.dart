@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/economy/sea_transport.dart';
+import 'package:colonizethis_economy/src/economy/sea_transport.dart';
 import 'package:colonizethis_logic/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_logic/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_logic/src/turn/turn_resolver_config.dart';
