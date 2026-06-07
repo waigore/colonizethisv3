@@ -1574,6 +1574,7 @@ void main() {
       final tileMap = init.tileMapByRegion;
 
       final gpIds = [for (var i = 1; i <= 6; i++) 'gp$i'];
+      Map<String, int> zeroPerGp() => {for (final gpId in gpIds) gpId: 0};
       final owStart = <String, int>{
         for (final gpId in gpIds)
           gpId: game.worldState.oldWorld.provinces
@@ -1607,9 +1608,7 @@ void main() {
       final atWarTurnsByPeer = <String, Map<String, int>>{
         for (final gpId in gpIds) gpId: <String, int>{},
       };
-      final treasuryUnderCheapestTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final treasuryUnderCheapestTurns = zeroPerGp();
       final lastSnapshotFields = <String, Map<String, Object?>>{};
 
       // Refs #2847 regiment-accumulation surface (post-#2924 / World
@@ -1623,15 +1622,9 @@ void main() {
       // apart "the build order is never emitted/accepted" from "regiments
       // are built but immediately lost in the peer-war zero-sum churn".
       final regimentPeak = <String, int>{for (final gpId in gpIds) gpId: 0};
-      final regimentTurnsAtZero = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final treasuryAtOrAboveCheapestTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final militaryBuildOrdersEmitted = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final regimentTurnsAtZero = zeroPerGp();
+      final treasuryAtOrAboveCheapestTurns = zeroPerGp();
+      final militaryBuildOrdersEmitted = zeroPerGp();
 
       // Refs #2847 H8 conversion-gap isolation. The headline H8 finding is
       // that `forceCheapestRegimentBuild` fires 85-100 turns while
@@ -1649,21 +1642,11 @@ void main() {
       // unit of fabric, so fabric availability is the proximate input gate.
       final cheapestRegimentInputs =
           RegimentEconomyCatalog.peasantLevies.buildInputs;
-      final fabricInStockpileTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final rebuildReadyTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final rebuildReadyNoBuildTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final rebuildReadyNoBuildMissingInputTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final rebuildReadyNoBuildInputsPresentTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final fabricInStockpileTurns = zeroPerGp();
+      final rebuildReadyTurns = zeroPerGp();
+      final rebuildReadyNoBuildTurns = zeroPerGp();
+      final rebuildReadyNoBuildMissingInputTurns = zeroPerGp();
+      final rebuildReadyNoBuildInputsPresentTurns = zeroPerGp();
       // Cheapest-regiment input commodity ids (e.g. fabric) and the bid /
       // fill counters that prove whether the #3226 lock-recovery build-input
       // bid carve-out actually secures the input from the world market. A
@@ -1671,12 +1654,8 @@ void main() {
       // world-market *supply* (no seller / no production feedstock) rather
       // than the planner failing to bid.
       final regimentInputCommodityIds = cheapestRegimentInputs.keys.toSet();
-      final regimentInputBidsEmitted = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final regimentInputDealsAsBuyer = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final regimentInputBidsEmitted = zeroPerGp();
+      final regimentInputDealsAsBuyer = zeroPerGp();
 
       // Refs #2847 H8-extraction supply-side localization. The level-0
       // `build_improvement` material (lumber + cast iron) is the prerequisite a
@@ -2104,6 +2083,19 @@ void main() {
           <String, int>{for (final gpId in gpIds) gpId: 0};
       final castIronLabourPeasantRecruitFabricDealAsBuyerTurns =
           <String, int>{for (final gpId in gpIds) gpId: 0};
+      // Refs #2847 § castIron market-supply wall: on feedstock-extraction
+      // gate-active turns, whether any *other* faction offered `castIron` (the
+      // manufactured level-0 `build_improvement` input) on the world market —
+      // i.e. whether the seller's direct-acquisition branch had any supply to
+      // bid against. A flat-zero present count across the run proves the
+      // direct castIron purchase path is permanently closed (every GP consumes
+      // its castIron for Old World military builds), leaving only the
+      // labour-walled domestic run. Read-only; counts move freely as later
+      // supply slices land.
+      final castIronMarketOfferPresentTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final castIronMarketOfferAbsentTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2242,6 +2234,10 @@ void main() {
 
       for (var t = 0; t < 100; t++) {
         final fabricStarvedThisTurn = <String>{};
+        // Refs #2847 § castIron market-supply wall: GPs whose feedstock-
+        // extraction gate is active this turn, scanned post-merge for castIron
+        // market-offer presence/absence.
+        final feedstockGateActiveThisTurn = <String>{};
         // Refs #2847 H8: per-turn rebuild-readiness + cheapest-regiment input
         // availability, populated in the pre-resolution GP loop and reconciled
         // against the emitted military builds after the merge below.
@@ -2333,6 +2329,7 @@ void main() {
                 gpId,
               ).isNotEmpty;
           if (feedstockGateActive) {
+            feedstockGateActiveThisTurn.add(gpId);
             feedstockExtractionGateActiveTurns[gpId] =
                 (feedstockExtractionGateActiveTurns[gpId] ?? 0) + 1;
             // Refs #2847 H8-extraction execution-gap disambiguation: split the
@@ -2697,6 +2694,18 @@ void main() {
           absentTurns: castIronLabourPeasantRecruitFabricBidAbsentTurns,
         );
 
+        // Refs #2847 § castIron market-supply wall: on the feedstock-extraction
+        // gate-active turns, record whether any other faction offered castIron
+        // (the manufactured level-0 build_improvement input) this turn.
+        recordSeed42S7dCastIronMarketOfferCounters(
+          feedstockGateActiveThisTurn: feedstockGateActiveThisTurn,
+          tradeOrdersByPlayerId: merged.tradeOrdersByPlayerId,
+          castIronCommodityId:
+              castIronProductionRecipe?.outputCommodityId ?? 'castIron',
+          presentTurns: castIronMarketOfferPresentTurns,
+          absentTurns: castIronMarketOfferAbsentTurns,
+        );
+
         final assignments = fullAi.economyPlansByPlayerId.map(
           (pid, plan) => MapEntry(pid, plan.productionAssignments),
         );
@@ -2925,6 +2934,8 @@ void main() {
             castIronLabourPeasantRecruitFabricBidAbsentTurns,
         'gpCastIronLabourPeasantRecruitFabricDealAsBuyerTurns':
             castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
+        'gpCastIronMarketOfferPresentTurns': castIronMarketOfferPresentTurns,
+        'gpCastIronMarketOfferAbsentTurns': castIronMarketOfferAbsentTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
@@ -3031,6 +3042,8 @@ void main() {
             castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
         fabricRecipeFeasibleTurns: fabricRecipeFeasibleTurns,
         fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
+        castIronMarketOfferPresentTurns: castIronMarketOfferPresentTurns,
+        castIronMarketOfferAbsentTurns: castIronMarketOfferAbsentTurns,
       );
     },
     skip:
