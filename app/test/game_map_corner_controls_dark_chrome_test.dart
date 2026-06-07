@@ -32,12 +32,13 @@ void main() {
   // Intentionally do not stub the asset bundle here: when the icon PNGs
   // are absent the inner StrictAssetIcon throws via its errorBuilder. We
   // assert chrome via the AnimatedContainer decoration and via the icon
-  // tint (ColorFiltered + StrictAssetIcon args) without forcing image
-  // decoding. The widget tree is still constructed end-to-end.
+  // glyph args (StrictAssetIcon size) without forcing image decoding, and
+  // assert the glyph is full-colour pixel art (no ColorFiltered srcIn tint
+  // per M6 / S15). The widget tree is still constructed end-to-end.
   group(
     'GameMapCornerControls dark editorial-monocle chrome (Refs #2861 S4)',
     () {
-      testWidgets('positive: default state — gradient surface + 32 dp size + 1 px border in the canonical token', (
+      testWidgets('positive: default state — gradient surface + 32 dp size + 1 px border + full-colour glyph (no srcIn tint)', (
         WidgetTester tester,
       ) async {
         await tester.pumpWidget(
@@ -73,16 +74,14 @@ void main() {
         expect(border.left.color, EditorialMonoclePalette.border);
         expect(border.right.color, EditorialMonoclePalette.border);
 
-        // Glyph tint resolves through ColorFiltered to --accent-dim.
-        final ColorFiltered tint = tester.widget(
-          find.descendant(of: baseFinder, matching: find.byType(ColorFiltered)),
-        );
+        // M6 / S15: glyph renders as full-colour pixel art — no ColorFiltered
+        // srcIn tint collapsing the asset to a single accent colour.
         expect(
-          tint.colorFilter,
-          ColorFilter.mode(
-            EditorialMonoclePalette.accentDim,
-            BlendMode.srcIn,
+          find.descendant(
+            of: baseFinder,
+            matching: find.byType(ColorFiltered),
           ),
+          findsNothing,
         );
 
         // Icon size matches mockup `.corner-btn img { 22 × 22 }`.
@@ -96,7 +95,7 @@ void main() {
         expect(icon.height, GameMapCornerControls.iconSize);
       });
 
-      testWidgets('positive: hover lifts border to --accent-dim and glyph to --accent-bright', (
+      testWidgets('positive: hover lifts border to --accent-dim and leaves the full-colour glyph unrecoloured', (
         WidgetTester tester,
       ) async {
         await tester.pumpWidget(
@@ -130,15 +129,14 @@ void main() {
         final hoveredBorder = hoveredDecoration.border as Border;
         expect(hoveredBorder.top.color, EditorialMonoclePalette.accentDim);
 
-        final ColorFiltered hoveredTint = tester.widget(
-          find.descendant(of: baseFinder, matching: find.byType(ColorFiltered)),
-        );
+        // M6 / S15: hover affordance lives on the border only — the glyph is
+        // never wrapped in a ColorFiltered srcIn tint in any state.
         expect(
-          hoveredTint.colorFilter,
-          ColorFilter.mode(
-            EditorialMonoclePalette.accentBright,
-            BlendMode.srcIn,
+          find.descendant(
+            of: baseFinder,
+            matching: find.byType(ColorFiltered),
           ),
+          findsNothing,
         );
 
         // Move the pointer away — chrome returns to the default state.
@@ -205,15 +203,14 @@ void main() {
         );
         final border = (container.decoration as BoxDecoration).border as Border;
         expect(border.top.color, EditorialMonoclePalette.border);
-        final ColorFiltered tint = tester.widget(
-          find.descendant(of: homeFinder, matching: find.byType(ColorFiltered)),
-        );
+        // M6 / S15: disabled glyph still renders in native full colour — no
+        // ColorFiltered srcIn tint over the asset.
         expect(
-          tint.colorFilter,
-          ColorFilter.mode(
-            EditorialMonoclePalette.accentDim,
-            BlendMode.srcIn,
+          find.descendant(
+            of: homeFinder,
+            matching: find.byType(ColorFiltered),
           ),
+          findsNothing,
         );
       });
 
