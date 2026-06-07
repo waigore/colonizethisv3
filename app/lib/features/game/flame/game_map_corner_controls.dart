@@ -108,12 +108,14 @@ class GameMapCornerControls extends StatelessWidget {
 /// (`SPEC/ui/mockups/GAME10001-game-screen.html`): the surface paints a
 /// vertical `--surface-lite` → `--bg-deep` gradient via
 /// [CtGradients.railButtonGradient]; a 1 px `--border` outline shifts to
-/// `--accent-dim` on hover or press; the glyph cycles
-/// `--accent-dim` (default) → `--accent-bright` (hover) →
-/// `--accent-bright` (pressed). When [onTap] is `null` the button paints
-/// at the canonical 0.4 disabled opacity (shared convention with
-/// `CtBackButton` / `CtNinePatchButton` / `CtToggleSwitch`) and ignores
-/// pointer input.
+/// `--accent-dim` on hover or press. The glyph is a full-colour
+/// `StrictAssetIcon` (mockup `.corner-btn img` has no colour filter); it is
+/// **not** wrapped in a `ColorFiltered` / `BlendMode.srcIn` tint, so the
+/// multi-colour pixel art renders natively and is unchanged across
+/// interaction states (hover/press affordance lives on the border only).
+/// When [onTap] is `null` the button paints at the canonical 0.4 disabled
+/// opacity (shared convention with `CtBackButton` / `CtNinePatchButton` /
+/// `CtToggleSwitch`) and ignores pointer input.
 class _MapCornerIconButton extends StatefulWidget {
   const _MapCornerIconButton({
     required this.buttonKey,
@@ -167,12 +169,6 @@ class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
     return EditorialMonoclePalette.border;
   }
 
-  Color get _iconColor {
-    if (!_enabled) return EditorialMonoclePalette.accentDim;
-    if (_pressed || _hovered) return EditorialMonoclePalette.accentBright;
-    return EditorialMonoclePalette.accentDim;
-  }
-
   @override
   Widget build(BuildContext context) {
     final buttonSize = widget.narrow
@@ -195,13 +191,10 @@ class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
               border: Border.all(color: _borderColor, width: 1),
             ),
             child: Center(
-              child: ColorFiltered(
-                colorFilter: ColorFilter.mode(_iconColor, BlendMode.srcIn),
-                child: StrictAssetIcon(
-                  assetPath: widget.assetPath,
-                  width: GameMapCornerControls.iconSize,
-                  height: GameMapCornerControls.iconSize,
-                ),
+              child: StrictAssetIcon(
+                assetPath: widget.assetPath,
+                width: GameMapCornerControls.iconSize,
+                height: GameMapCornerControls.iconSize,
               ),
             ),
           ),
