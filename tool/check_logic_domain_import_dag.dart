@@ -50,6 +50,11 @@ const _forbiddenEdges = <(String, String)>{
   ('economy', 'orders'),
   ('orders', 'turn'),
   ('ai', 'diplomacy'),
+  // `diplomacy` is a mid-layer domain; the `turn` orchestrator sits above it.
+  // The shared overture/FTP/intervention/call-to-arms value types now live in
+  // `diplomacy/diplomacy_phase_result.dart`, so `turn` depends on `diplomacy`
+  // one-way and `diplomacy` must not import `turn/` (Refs #3290 Phase 0).
+  ('diplomacy', 'turn'),
 };
 
 /// Grandfathered violations documented in SPEC/program/logic-package-split-phase0.md
