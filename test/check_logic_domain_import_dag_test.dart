@@ -36,7 +36,46 @@ void noop() {}
 
   test('documents grandfather allowlist entries for deferred C0 edges', () {
     final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(allowlist, contains('combat->diplomacy:combat/naval_combat_resolver.dart'));
+    expect(allowlist, contains('orders->turn:orders/order_projections.dart'));
     expect(allowlist, contains('ai->diplomacy:ai/simple_ai_heuristics.dart'));
+  });
+
+  test('combat->diplomacy edge is fully eliminated (no grandfather entries)', () {
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(
+      allowlist.where((e) => e.startsWith('combat->diplomacy:')),
+      isEmpty,
+    );
+  });
+
+  test('world->combat and world->dossier leaf edges are enforced + eliminated', () {
+    final forbidden = logicDomainImportForbiddenEdgesForTests();
+    expect(forbidden, contains('world->combat'));
+    expect(forbidden, contains('world->dossier'));
+
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(allowlist.where((e) => e.startsWith('world->combat:')), isEmpty);
+    expect(allowlist.where((e) => e.startsWith('world->dossier:')), isEmpty);
+  });
+
+  test('fails when a new forbidden world->combat import appears', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_combat_fail_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+      '${temp.path}/packages/colonizethis_logic/lib/src/world/bad_combat.dart',
+    )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../combat/naval_combat_resolver.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
   });
 }

@@ -4,7 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../diplomacy/diplomacy_resolver.dart';
+import '../world/faction_membership.dart';
 import '../world/game_world_mutations.dart';
 import 'conflict_detection.dart';
 

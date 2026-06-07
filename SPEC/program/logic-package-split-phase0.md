@@ -20,7 +20,11 @@ Phase 0 deliverables (child issue C0):
 | `diplomacy` | `world` | Allowed |
 | `world` | `diplomacy` | **Eliminated** — `world/faction_membership.dart`, `world/diplomatic_relation_lookup.dart` |
 | `diplomacy` | `combat` | Allowed |
-| `combat` | `diplomacy` | Deferred — 3 files |
+| `combat` | `diplomacy` | **Eliminated** — relation/war + faction-membership lookups retargeted to `world/diplomatic_relation_lookup.dart` and `world/faction_membership.dart` |
+| `combat` | `world` | Allowed |
+| `world` | `combat` | **Eliminated** — `naval_resolution` (combat orchestration) relocated from `world/` to `turn/` |
+| `diplomacy` | `dossier` | Allowed (`dossier/` folds into `colonizethis_diplomacy` at extraction) |
+| `world` | `dossier` | **Eliminated** — `naval_resolution` (dossier/dialogue side-effects) relocated from `world/` to `turn/` |
 | `economy` | `orders` | Partial — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import remains |
 | `orders` | `economy` | Allowed |
 | `turn` | `orders` | Allowed |
@@ -89,15 +93,30 @@ Phase 0 deliverables (child issue C0):
 
 **Correct:** `diplomacy` → `world` — `diplomacy_relation_lookup.dart` and `diplomacy_resolver.dart` re-export the shared world modules for existing consumers.
 
+### `world ↔ combat` and `world ↔ dossier`
+
+**Wrong:** `world` → `combat` (1 import) and `world` → `dossier` (2 imports), all in the single file `world/naval_resolution.dart`, fixed in Phase 0 slice.
+
+`naval_resolution` is not leaf-layer code: it orchestrates naval combat via `combat/naval_combat_resolver.dart` and emits dossier evidence + dialogue side-effects via `dossier/evidence_rules.dart` and `dossier/event_dialogue.dart`. Those targets sit **above** the `colonizethis_world` leaf (`combat` is its own package; `dossier` folds into `colonizethis_diplomacy`). The fix relocates the library (and its `part` fragments) up to the orchestrator layer rather than hoisting symbols down.
+
+| Source | Import | Symbols used | Resolution |
+|--------|--------|--------------|------------|
+| `world/naval_resolution.dart` | `combat/naval_combat_resolver.dart` | `detectNavalConflicts`, `resolveSeaBattle`, `applyNavalBattleResults`, … | Move file to `turn/naval_resolution.dart` (+ `_helpers`/`_move`/`_battle` parts) |
+| `world/naval_resolution.dart` | `dossier/evidence_rules.dart`, `dossier/event_dialogue.dart` | naval-victory dossier + dialogue builders | same relocation |
+
+**Correct:** `turn` → `combat` / `dossier` / `world` — all already allowed; the two turn-phase consumers (`naval_interception_turn_phase.dart`, `movement_phase.dart`) now import `turn/naval_resolution.dart`. Leaf-layer `world/fog_resolution.dart` reaches the re-exported coastal-visibility helpers directly via `world/naval_coastal_visibility.dart`.
+
 ### `diplomacy ↔ combat`
 
-**Wrong:** `combat` → `diplomacy` (3 files)
+**Wrong:** `combat` → `diplomacy` (3 files, fixed in Phase 0 slice)
 
-| Source | Import | Key symbols | Proposed destination |
-|--------|--------|-------------|---------------------|
-| `combat/military_attack_economy.dart` | `diplomacy_resolver.dart` | war/ownership checks | `world/` or invert via `combat` callbacks |
-| `combat/naval_combat_resolver.dart` | `diplomacy_relation_lookup.dart` | relation at war | `world/diplomatic_relation_view.dart` |
-| `combat/unopposed_province_capture.dart` | `diplomacy_relation_lookup.dart` | same | same |
+| Source | Import | Key symbols | Destination |
+|--------|--------|-------------|-------------|
+| `combat/military_attack_economy.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership`, `isGreatPower` | `world/faction_membership.dart` |
+| `combat/naval_combat_resolver.dart` | `diplomacy_relation_lookup.dart` | `hostileFactionsByFaction` | `world/diplomatic_relation_lookup.dart` |
+| `combat/unopposed_province_capture.dart` | `diplomacy_relation_lookup.dart` | `factionsAtWar` | `world/diplomatic_relation_lookup.dart` |
+
+**Correct:** `diplomacy` → `combat` — unchanged; `diplomacy_relation_lookup.dart` still imports `combat/military_strength.dart` for power-score aggregation.
 
 ### `diplomacy ↔ ai`
 

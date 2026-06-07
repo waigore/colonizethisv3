@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'game_world_mutations.dart';
 import 'naval.dart';
-import 'naval_resolution.dart'
+import 'naval_coastal_visibility.dart'
     show
         canonicalSeaZoneTileBucketKey,
         coastalLandTileKeysFromNavalPresenceAtSea,

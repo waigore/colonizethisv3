@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../diplomacy/diplomacy_relation_lookup.dart';
+import '../world/diplomatic_relation_lookup.dart';
 import '../world/province_lookup.dart';
 import '../world/province_ownership_transfer.dart';
 

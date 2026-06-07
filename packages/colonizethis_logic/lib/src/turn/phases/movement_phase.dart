@@ -11,7 +11,7 @@ import '../../world/movement.dart';
 import '../../trace/turn_trace_runtime.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
-import '../../world/naval_resolution.dart';
+import '../naval_resolution.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/province_traversal.dart';
