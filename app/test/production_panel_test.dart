@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/production_allocation_row.dart';
 import 'package:colonizethis_app/features/game/widgets/production_allocation_row_chrome.dart';
@@ -155,6 +156,50 @@ void main() {
       await pumpSettleCapped(tester);
       expect(find.text('Breakdown'), findsOneWidget);
     });
+
+    testWidgets(
+      'Available header Breakdown renders as CtActionTextButton (Refs #2862 S10b / C11)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(player: fullPlayer, onOpenCommodityBreakdown: () {}),
+        );
+        await pumpSettleCapped(tester);
+
+        final breakdownFinder = find.widgetWithText(
+          CtActionTextButton,
+          'Breakdown',
+        );
+        expect(breakdownFinder, findsOneWidget);
+        final breakdown = tester.widget<CtActionTextButton>(breakdownFinder);
+        expect(breakdown.label, 'Breakdown');
+        expect(breakdown.onPressed, isNotNull);
+        expect(breakdown.enabled, isTrue);
+      },
+    );
+
+    testWidgets(
+      'negative: Available header Breakdown does not render as CtNinePatchButton '
+      '(Refs #2862 S10b / C11)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(player: fullPlayer, onOpenCommodityBreakdown: () {}),
+        );
+        await pumpSettleCapped(tester);
+
+        final ninePatchBreakdown = find.byWidgetPredicate((Widget w) {
+          if (w is! CtNinePatchButton) return false;
+          final child = w.child;
+          return child is Text && child.data == 'Breakdown';
+        });
+        expect(
+          ninePatchBreakdown,
+          findsNothing,
+          reason:
+              'Available header Breakdown must use CtActionTextButton per '
+              '#2862 C11, not a CtNinePatchButton labelled "Breakdown".',
+        );
+      },
+    );
 
     testWidgets('Available subpanel shows commodity groups', (
       WidgetTester tester,

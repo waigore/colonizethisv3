@@ -66,6 +66,22 @@ class CtGradients {
     ],
   );
 
+  /// Compact gradient for neutral panel-header **action** text buttons
+  /// (`CtActionTextButton`), mirroring the mockup `.action-btn` rule
+  /// `linear-gradient(180deg, var(--surface-lite), var(--bg-deep))` in
+  /// `SPEC/ui/mockups/GAME20001-production-panel.html` (line 39). The bottom
+  /// edge sinks to the deeper `--bg-deep` tone (vs [buttonGradient]'s
+  /// `--surface`) so the lighter, brass-bracket-free action button still
+  /// reads as a pressable surface against the panel header. Refs #2862 S10.
+  static LinearGradient get actionButtonGradient => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      EditorialMonoclePalette.surfaceLite,
+      EditorialMonoclePalette.bgDeep,
+    ],
+  );
+
   /// Vertical gradient for framed sections such as `CtPanel` and
   /// `CtDialogShell`. Matches the button gradient for a single canonical
   /// surface family but uses the deeper `--bg` tone at the bottom to set

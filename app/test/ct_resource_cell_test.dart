@@ -3,6 +3,7 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -211,5 +212,144 @@ void main() {
       expect(name.maxLines, 1);
       expect(tester.takeException(), isNull);
     });
+  });
+
+  group('CtResourceCell compact typography (Refs #2862 S9 / C9–C10)', () {
+    Future<void> pumpFixedWidth(
+      WidgetTester tester,
+      Widget cell, {
+      required double width,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.editorialMonocle,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(width: width, child: cell),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    RenderParagraph paragraphFor(WidgetTester tester, String text) {
+      return tester.renderObject<RenderParagraph>(
+        find.descendant(
+          of: find.byType(CtResourceCell),
+          matching: find.text(text),
+        ),
+      );
+    }
+
+    testWidgets(
+      'name + quantity render at the compact ~10 px mockup size; delta at ~9 px',
+      (tester) async {
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Grain',
+            quantity: 1240,
+            delta: 45,
+          ),
+          width: 240,
+        );
+
+        final Text name = tester.widget<Text>(find.text('Grain'));
+        final Text qty = tester.widget<Text>(find.text('1,240'));
+        final Text delta = tester.widget<Text>(find.text('+45'));
+        expect(name.style?.fontSize, CtResourceCell.nameFontSize);
+        expect(qty.style?.fontSize, CtResourceCell.quantityFontSize);
+        expect(delta.style?.fontSize, CtResourceCell.deltaFontSize);
+        // The delta is one step smaller than the quantity per the mockup.
+        expect(
+          CtResourceCell.deltaFontSize,
+          lessThan(CtResourceCell.quantityFontSize),
+        );
+      },
+    );
+
+    testWidgets(
+      'canonical commodity names render in full (no ellipsis clipping) at a '
+      'representative grid cell width, even with a delta present',
+      (tester) async {
+        for (final name in const <String>[
+          'Cast Iron',
+          'Sugar Cane',
+          'Refined Sugar',
+        ]) {
+          await pumpFixedWidth(
+            tester,
+            CtResourceCell(
+              iconBuilder: tinyIcon,
+              name: name,
+              quantity: 430,
+              delta: -20,
+            ),
+            // Wide enough that the compact name + intrinsic qty/delta cluster
+            // all fit; the legacy flex-share trailing cluster would have
+            // squeezed the name into ellipsis at this width.
+            width: 320,
+          );
+
+          expect(
+            paragraphFor(tester, name).didExceedMaxLines,
+            isFalse,
+            reason: '"$name" must render in full without ellipsis clipping '
+                'per #2862 C9.',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'name keeps the same width and visibility with vs without a delta '
+      '(delta-stable name column, C10)',
+      (tester) async {
+        const name = 'Iron';
+        const width = 220.0;
+
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(iconBuilder: tinyIcon, name: name, quantity: 430),
+          width: width,
+        );
+        final noDeltaParagraph = paragraphFor(tester, name);
+        final noDeltaExceeded = noDeltaParagraph.didExceedMaxLines;
+        final noDeltaGlyphWidth = noDeltaParagraph.getMaxIntrinsicWidth(
+          double.infinity,
+        );
+
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: name,
+            quantity: 430,
+            delta: -20,
+          ),
+          width: width,
+        );
+        final withDeltaParagraph = paragraphFor(tester, name);
+        final withDeltaExceeded = withDeltaParagraph.didExceedMaxLines;
+        final withDeltaGlyphWidth = withDeltaParagraph.getMaxIntrinsicWidth(
+          double.infinity,
+        );
+
+        // The name is fully visible (no ellipsis) whether or not a delta is
+        // present, and the laid-out glyph width is identical — adding a delta
+        // does not push the name into ellipsis (C10).
+        expect(noDeltaExceeded, isFalse);
+        expect(withDeltaExceeded, isFalse);
+        expect(
+          withDeltaGlyphWidth,
+          noDeltaGlyphWidth,
+          reason: 'Adding a +N / -N delta must not shrink the rendered name '
+              'per #2862 C10.',
+        );
+      },
+    );
   });
 }
