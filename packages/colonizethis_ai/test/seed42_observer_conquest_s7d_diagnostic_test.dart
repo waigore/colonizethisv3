@@ -1536,6 +1536,56 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// a strict refinement of the fabric-starved turns under a structural-invariant
 /// assertion).
 ///
+/// ## S7-D refresh (captured 2026-06-07 on current `dev` HEAD — castIron-feedstock
+///     order-matching gap surfaced but localized OFF the critical path; this
+///     slice, Refs #2847)
+///
+/// Re-running the diagnostic on the merged `dev` HEAD surfaces a **new** market
+/// state the prior refreshes did not have, and resolves where it sits on the
+/// chain. OW gain: gp1 = +6, gp2 = +6 (PASS); gp3 = +1, gp4 = +2, gp5 = −7,
+/// gp6 = +10 (FAIL) — gp5/gp6 are the peer-war-variance pair (gp5 cornered this
+/// run); gp3/gp4 are the stable below-quota failures. The +6 baseline holds.
+///
+///   * **Suppliers now OFFER the castIron feedstock.**
+///     `gpCastIronFeedstockOffersEmitted` = **gp1 89 / gp2 24 / gp5 46 / gp6 33**
+///     (`timber` / `iron`) — the supplier feedstock-extraction routing landed,
+///     so the historical "no holder has a `timber` / `iron` surplus to release"
+///     finding is now **stale**. gp1 ends the run holding `timber` 133 / `iron`
+///     118; gp5 `timber` 27 / `iron` 35.
+///   * **Yet the locked seller's feedstock bids fill nothing.**
+///     `gpCastIronFeedstockBidsEmitted` = gp3 14 / gp6 2, but
+///     `gpCastIronFeedstockDealsAsBuyer` = **0 for every GP**. With offers now
+///     present, the residual is a `timber` / `iron` offer/bid **priority-tier
+///     mismatch** (the same class `_alignBuildInputSupplyOfferTiers` already
+///     fixes for the `lumber` / `castIron` improvement inputs, which DO cross —
+///     gp3's improvement-input bids fill 15/15).
+///   * **But that order-matching gap is OFF the critical path.** New counter
+///     `gpCastIronFeedstockExtractionLabourFutileTurns` records the
+///     feedstock-extraction-gate-active turns whose fully-fed raw labour ceiling
+///     is below the castIron `labourPerOutput` (5). For gp3 this equals the full
+///     gate-active total (raw labour ceiling 2): on **every** such turn, even a
+///     fully-filled `timber` / `iron` bid could not yield a labour-feasible
+///     castIron run. So aligning the feedstock offer tier (or any further
+///     supplier-release work) would only let gp3 **hoard unusable feedstock** —
+///     it cannot move the OW gate while the seller stays population-bound.
+///
+/// **Re-pointed next slice (supersedes the castIron market-supply / offer-tier
+/// candidates):** the feedstock supply and order-matching levers are now
+/// confirmed dead ends for the stable failures — `timber` / `iron` are offered,
+/// and even filling the bids leaves the castIron recipe labour-infeasible. The
+/// binding constraint remains the lock-recovery seller's **worker population**
+/// (raw labour ceiling 1-2 vs castIron's 5 / fabric's 2), consistent with the
+/// population-bound conclusion above; the only raw-population-growth action
+/// (peasant recruit) is `fabric`-gated and the seller's `fabric` is itself
+/// labour-walled (the circular deadlock). The next *behaviour* lever must grow
+/// the seller's labour pool without consuming the scarce end-of-chain `fabric`,
+/// under the same self-clearing lock-recovery-seller gate that keeps the +6
+/// baseline GPs out. This slice is read-only diagnostic instrumentation (no
+/// behaviour change, no config constants, no gate-threshold changes; a positive
+/// + negative + boundary unit test for the helper
+/// `castIronFeedstockExtractionLabourFutile` and a structural-invariant
+/// assertion bounding the counter by the gate-active total).
+///
 /// ## Refs #2924 Step 0 — world-market lock-recovery metrics
 ///
 /// The same run now also emits a separate
@@ -1914,6 +1964,27 @@ void main() {
         for (final recipe in fabricRecipes) ...recipe.inputQuantities.keys,
       };
       final feedstockExtractionGateActiveTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      // Refs #2847 § S7-D castIron-feedstock order-matching off-critical path
+      // (read-only). Affluent suppliers now *offer* `timber` / `iron`
+      // (`gpCastIronFeedstockOffersEmitted` non-zero — supplier feedstock
+      // extraction landed), yet a below-quota zero-NW lock-recovery seller's
+      // castIron-feedstock bids still fill 0 deals
+      // (`gpCastIronFeedstockDealsAsBuyer == 0`, a `timber` / `iron` offer-tier
+      // mismatch). This counter records the feedstock-extraction-gate-active
+      // turns on which the seller's fully-fed raw labour ceiling is below the
+      // castIron `labourPerOutput`, so even a *fully filled* feedstock bid could
+      // not yield a labour-feasible domestic castIron run. A count equal to
+      // `gpFeedstockExtractionGateActiveTurns` proves the order-matching gap is
+      // **off the critical path** — closing it (offer-tier alignment / supplier
+      // release) cannot move the gate while the seller stays population-bound —
+      // and re-points the next behaviour lever to worker-population growth.
+      // Generalises `gpCastIronLabourPopulationBoundTurns` (measured only on
+      // castIron material-feasible turns, which gp3 never reaches) to the gate
+      // turns where the seller is still bidding the feedstock. Read-only; the
+      // (freely tunable) counts can move as later slices land.
+      final castIronFeedstockExtractionLabourFutileTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
       final unimprovedFeedstockTileOwnedTurns = <String, int>{
@@ -2388,6 +2459,20 @@ void main() {
               feedstockGateImprovementCastIronAffordableTurns[gpId] =
                   (feedstockGateImprovementCastIronAffordableTurns[gpId] ?? 0) +
                   1;
+            }
+            // Refs #2847 § S7-D castIron-feedstock order-matching off-critical
+            // path: on a gate-active turn whose fully-fed raw labour ceiling is
+            // below the castIron `labourPerOutput`, even a fully-filled
+            // `timber` / `iron` feedstock bid could not yield a labour-feasible
+            // domestic castIron run, so the order-matching gap is not on the
+            // critical path — the binding constraint stays worker population.
+            if (castIronFeedstockExtractionLabourFutile(
+              game,
+              gpId,
+              castIronMinLabourPerOutput,
+            )) {
+              castIronFeedstockExtractionLabourFutileTurns[gpId] =
+                  (castIronFeedstockExtractionLabourFutileTurns[gpId] ?? 0) + 1;
             }
           }
           if (ownsUnimprovedFeedstockResourceTile(
@@ -2936,6 +3021,8 @@ void main() {
             castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
         'gpCastIronMarketOfferPresentTurns': castIronMarketOfferPresentTurns,
         'gpCastIronMarketOfferAbsentTurns': castIronMarketOfferAbsentTurns,
+        'gpCastIronFeedstockExtractionLabourFutileTurns':
+            castIronFeedstockExtractionLabourFutileTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
@@ -3044,6 +3131,8 @@ void main() {
         fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
         castIronMarketOfferPresentTurns: castIronMarketOfferPresentTurns,
         castIronMarketOfferAbsentTurns: castIronMarketOfferAbsentTurns,
+        castIronFeedstockExtractionLabourFutileTurns:
+            castIronFeedstockExtractionLabourFutileTurns,
       );
     },
     skip:

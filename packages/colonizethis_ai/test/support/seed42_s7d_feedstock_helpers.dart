@@ -331,6 +331,40 @@ int playerFoodOnHand(Game game, String playerId, Set<String> foodCommodityIds) {
   return total;
 }
 
+/// True iff [playerId]'s fully-fed raw labour ceiling ([playerRawLabourSupply])
+/// is **below** [castIronMinLabourPerOutput] — i.e. even if the locked seller
+/// won every `timber` / `iron` deal its castIron-feedstock bids chase (or
+/// extracted that feedstock outright), the only `castIron` recipe still could
+/// not run a single output against its labour ceiling.
+///
+/// The S7-D castIron-feedstock order-matching counters
+/// (`gpCastIronFeedstockBidsEmitted` high, `gpCastIronFeedstockDealsAsBuyer`
+/// zero) show a below-quota zero-NW lock-recovery seller bidding `timber` /
+/// `iron` for a domestic `castIron` run whose bids never cross, now that
+/// affluent suppliers finally *offer* the feedstock
+/// (`gpCastIronFeedstockOffersEmitted` non-zero — the historical "no surplus to
+/// release" finding is stale once the supplier feedstock-extraction routing
+/// landed). This helper backs the counter that proves that order-matching gap is
+/// **off the critical path**: with a raw labour ceiling below `castIron`'s
+/// `labourPerOutput` (5), filling the feedstock bids could never yield a
+/// labour-feasible `castIron` run, so the binding constraint remains the
+/// seller's worker population — not feedstock supply or offer-tier alignment. It
+/// generalises `gpCastIronLabourPopulationBoundTurns` (measured only on castIron
+/// *material*-feasible turns, which a seller that never holds both feedstocks —
+/// e.g. gp3 — never reaches) to the feedstock-extraction-gate-active turns where
+/// the seller is still *bidding* the feedstock. Returns `false` when
+/// [castIronMinLabourPerOutput] is not positive (no recipe means the labour
+/// ceiling is trivially sufficient). Pure read-only over `(game, playerId)`; no
+/// game-state mutation.
+bool castIronFeedstockExtractionLabourFutile(
+  Game game,
+  String playerId,
+  int castIronMinLabourPerOutput,
+) {
+  if (castIronMinLabourPerOutput <= 0) return false;
+  return playerRawLabourSupply(game, playerId) < castIronMinLabourPerOutput;
+}
+
 /// Increments the per-GP [key] entry of a `<String, int>` diagnostic [counter]
 /// by one, treating an absent entry as zero. Shared by the S7-D diagnostic to
 /// keep its many per-turn counter bumps to a single line each.
@@ -617,6 +651,7 @@ void assertSeed42S7dStructuralInvariants({
   required Map<String, int> fabricRecipeLabourFeasibleTurns,
   required Map<String, int> castIronMarketOfferPresentTurns,
   required Map<String, int> castIronMarketOfferAbsentTurns,
+  required Map<String, int> castIronFeedstockExtractionLabourFutileTurns,
 }) {
   for (final gpId in gpIds) {
     expect(
@@ -840,6 +875,18 @@ void assertSeed42S7dStructuralInvariants({
       reason:
           '$gpId castIron market-offer present + absent turns must partition '
           'the feedstock-extraction-gate-active turns',
+    );
+    // Refs #2847 § S7-D castIron-feedstock order-matching off-critical path:
+    // the labour-futile counter is measured only on a feedstock-extraction-
+    // gate-active turn (raw labour ceiling below the castIron labourPerOutput),
+    // so it can never exceed the gate-active total. Guards the instrumentation
+    // gating itself without pinning the (freely tunable) per-GP counts.
+    expect(
+      castIronFeedstockExtractionLabourFutileTurns[gpId]!,
+      lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
+      reason:
+          '$gpId castIron-feedstock-extraction labour-futile turns cannot '
+          'exceed the feedstock-extraction-gate-active turns',
     );
   }
 }
