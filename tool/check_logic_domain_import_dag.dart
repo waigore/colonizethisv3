@@ -63,8 +63,6 @@ const _grandfatherAllowlist = <String>{
   // caller-computed projected treasury delta (Refs #3290,
   // SPEC/program/logic-package-split-phase0.md § economy ↔ orders).
   'orders->turn:orders/order_projections.dart',
-  'ai->diplomacy:ai/full_ai_civilian_work_selection.dart',
-  'ai->diplomacy:ai/simple_ai_heuristics.dart',
 };
 
 void main() {
@@ -134,7 +132,9 @@ String? _domainForSrcRelativePath(String relativePath) {
 
 String? _resolveImportTargetDomain(String fromRelativeFile, String importPath) {
   if (importPath.startsWith('package:colonizethis_logic/src/')) {
-    final remainder = importPath.substring('package:colonizethis_logic/src/'.length);
+    final remainder = importPath.substring(
+      'package:colonizethis_logic/src/'.length,
+    );
     return _domainFromResolvedPath(remainder);
   }
   if (!importPath.startsWith('../') && !importPath.startsWith('./')) {
