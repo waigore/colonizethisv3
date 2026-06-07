@@ -4,34 +4,40 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/naval_combat_resolver.dart';
 import '../constants.dart';
-import 'diplomatic_relation_lookup.dart';
+import '../world/diplomatic_relation_lookup.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 import '../turn_resolution_seeds.dart';
-import 'game_world_mutations.dart';
-import 'naval.dart';
-import 'naval_coastal_visibility.dart';
-import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
-import 'topology_helpers.dart';
+import '../world/game_world_mutations.dart';
+import '../world/naval.dart';
+import '../world/naval_coastal_visibility.dart';
+import '../world/province_lookup.dart' hide landTileKeysForProvinceBucket;
+import '../world/topology_helpers.dart';
 
-export 'naval_coastal_visibility.dart'
+export '../world/naval_coastal_visibility.dart'
     show
         canonicalSeaZoneTileBucketKey,
         coastalLandTileKeysFromNavalPresenceAtSea,
         landTileKeysForProvinceBucket,
         revealProvinceTilesForPlayer,
         revealTilesAfterMoveToSeaZone;
-export 'naval_mission_orders.dart' show applyNavalMissionOrders;
+export '../world/naval_mission_orders.dart' show applyNavalMissionOrders;
 
 // Naval resolution concern fragments (Refs #3290 Phase-0 file-split). Each
 // `part of` fragment shares this library's imports and library-private scope,
 // so the move is behaviour-preserving — symbols, visibility, and helper
-// sharing (e.g. [_NavalMoveOutcome], [_fleetIndexById]) are unchanged. Splits a
-// 553-line file (one of the >500-line files Phase-0 calls out) into cohesive
-// files each well under the 500-line target ahead of the `colonizethis_world`
-// leaf-package extraction (Phase 1).
+// sharing (e.g. [_NavalMoveOutcome], [_fleetIndexById]) are unchanged.
+//
+// This library lives under `turn/` (not `world/`) because it orchestrates
+// naval combat and dossier/dialogue side-effects: it depends on `combat/`
+// (`naval_combat_resolver.dart`) and `dossier/` which sit above the
+// `colonizethis_world` leaf layer. Hosting it here eliminates the
+// `world -> combat` and `world -> dossier` wrong-direction edges enumerated in
+// #3290 Phase-0 ahead of the `colonizethis_world` leaf-package extraction
+// (Phase 1); leaf-layer fog code reaches the re-exported coastal-visibility
+// helpers directly via `world/naval_coastal_visibility.dart`.
 part 'naval_resolution_helpers.dart';
 part 'naval_resolution_move.dart';
 part 'naval_resolution_battle.dart';

@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../event_bus/game_event_bus.dart';
 import '../../game_events.dart';
-import '../../world/naval_resolution.dart';
+import '../naval_resolution.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 
