@@ -16,7 +16,7 @@
 //     before reviewers lose the dark-theme review surface.
 //  2. The `Full availability` story pumps without exceptions in the
 //     editorial-monocle Widgetbook host, and the Available **Breakdown**
-//     `CtNinePatchButton` is mounted (text `Breakdown` per
+//     `CtActionTextButton` is mounted (text `Breakdown` per
 //     `production_breakdown` l10n). Without the SPEC § Widgetbook
 //     ProviderScope wiring the `onOpenCommodityBreakdown` callback would
 //     be `null` and the button would not render.
@@ -30,9 +30,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 WidgetbookUseCase _useCase(
   List<WidgetbookNode> directories, {
@@ -124,7 +124,7 @@ void main() {
           );
 
           final breakdownButton = find.widgetWithText(
-            CtNinePatchButton,
+            CtActionTextButton,
             'Breakdown',
           );
           expect(
@@ -133,8 +133,8 @@ void main() {
             reason:
                 'SPEC/ui/production-panel.md § Widgetbook requires '
                 'production stories to wire ProviderScope + preview helpers '
-                'so the Available "Breakdown" CtNinePatchButton renders '
-                '(onOpenCommodityBreakdown != null). Refs #2862 S6.',
+                'so the Available "Breakdown" CtActionTextButton renders '
+                '(onOpenCommodityBreakdown != null). Refs #2862 S6 / S10.',
           );
         },
       );
@@ -167,7 +167,7 @@ void main() {
           );
 
           final breakdownButton = find.widgetWithText(
-            CtNinePatchButton,
+            CtActionTextButton,
             'Breakdown',
           );
           expect(breakdownButton, findsOneWidget);
