@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../logging.dart';
-import '../turn/turn_resolution_result.dart';
+import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_resolver.dart' show DiplomacyFactionMembership;
 import 'overture_resolver.dart';
