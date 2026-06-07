@@ -21,6 +21,10 @@ Phase 0 deliverables (child issue C0):
 | `world` | `diplomacy` | **Eliminated** — `world/faction_membership.dart`, `world/diplomatic_relation_lookup.dart` |
 | `diplomacy` | `combat` | Allowed |
 | `combat` | `diplomacy` | **Eliminated** — relation/war + faction-membership lookups retargeted to `world/diplomatic_relation_lookup.dart` and `world/faction_membership.dart` |
+| `combat` | `world` | Allowed |
+| `world` | `combat` | **Eliminated** — `naval_resolution` (combat orchestration) relocated from `world/` to `turn/` |
+| `diplomacy` | `dossier` | Allowed (`dossier/` folds into `colonizethis_diplomacy` at extraction) |
+| `world` | `dossier` | **Eliminated** — `naval_resolution` (dossier/dialogue side-effects) relocated from `world/` to `turn/` |
 | `economy` | `orders` | Partial — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import remains |
 | `orders` | `economy` | Allowed |
 | `turn` | `orders` | Allowed |
@@ -88,6 +92,19 @@ Phase 0 deliverables (child issue C0):
 | `world/province_ownership_transfer.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership` | `world/faction_membership.dart` |
 
 **Correct:** `diplomacy` → `world` — `diplomacy_relation_lookup.dart` and `diplomacy_resolver.dart` re-export the shared world modules for existing consumers.
+
+### `world ↔ combat` and `world ↔ dossier`
+
+**Wrong:** `world` → `combat` (1 import) and `world` → `dossier` (2 imports), all in the single file `world/naval_resolution.dart`, fixed in Phase 0 slice.
+
+`naval_resolution` is not leaf-layer code: it orchestrates naval combat via `combat/naval_combat_resolver.dart` and emits dossier evidence + dialogue side-effects via `dossier/evidence_rules.dart` and `dossier/event_dialogue.dart`. Those targets sit **above** the `colonizethis_world` leaf (`combat` is its own package; `dossier` folds into `colonizethis_diplomacy`). The fix relocates the library (and its `part` fragments) up to the orchestrator layer rather than hoisting symbols down.
+
+| Source | Import | Symbols used | Resolution |
+|--------|--------|--------------|------------|
+| `world/naval_resolution.dart` | `combat/naval_combat_resolver.dart` | `detectNavalConflicts`, `resolveSeaBattle`, `applyNavalBattleResults`, … | Move file to `turn/naval_resolution.dart` (+ `_helpers`/`_move`/`_battle` parts) |
+| `world/naval_resolution.dart` | `dossier/evidence_rules.dart`, `dossier/event_dialogue.dart` | naval-victory dossier + dialogue builders | same relocation |
+
+**Correct:** `turn` → `combat` / `dossier` / `world` — all already allowed; the two turn-phase consumers (`naval_interception_turn_phase.dart`, `movement_phase.dart`) now import `turn/naval_resolution.dart`. Leaf-layer `world/fog_resolution.dart` reaches the re-exported coastal-visibility helpers directly via `world/naval_coastal_visibility.dart`.
 
 ### `diplomacy ↔ combat`
 

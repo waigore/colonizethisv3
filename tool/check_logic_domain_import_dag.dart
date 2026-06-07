@@ -1,5 +1,4 @@
 // Enforces one-way domain import boundaries inside colonizethis_logic (Refs #3290 Phase 0).
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -35,10 +34,18 @@ const _neutralTopLevelFiles = <String>{
 };
 
 /// Forbidden (fromDomain, toDomain) pairs for the target package DAG.
+///
+/// `world` is the leaf layer: `combat`, `economy`, and `diplomacy` (which the
+/// `dossier` directory folds into) all sit above it, so `world` must not import
+/// any of them. `dossier` is tracked as a distinct forbidden target because it
+/// is a separate `lib/src` directory today even though it merges into the
+/// `colonizethis_diplomacy` package at extraction time (Refs #3290).
 const _forbiddenEdges = <(String, String)>{
   ('world', 'turn'),
   ('world', 'setup'),
   ('world', 'diplomacy'),
+  ('world', 'combat'),
+  ('world', 'dossier'),
   ('combat', 'diplomacy'),
   ('economy', 'orders'),
   ('orders', 'turn'),
