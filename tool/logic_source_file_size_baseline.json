@@ -1,9 +1,4 @@
 [
-  "packages/colonizethis_logic/lib/src/ai/full_ai_civilian_work_selection_feedstock.dart",
   "packages/colonizethis_logic/lib/src/economy/world_market/deal_matcher.dart",
-  "packages/colonizethis_logic/lib/src/orders/incremental_candidate_validator.dart",
-  "packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart",
-  "packages/colonizethis_logic/lib/src/setup/game_setup_create.dart",
-  "packages/colonizethis_logic/lib/src/setup/locked_province_assigner.dart",
-  "packages/colonizethis_logic/lib/src/world/fog_resolution.dart"
+  "packages/colonizethis_logic/lib/src/orders/incremental_candidate_validator.dart"
 ]
