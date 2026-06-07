@@ -26,9 +26,17 @@ The player can view all **discovered** factions (Great Powers, Minor Nations, Tr
 
 ## Discovered factions
 
-A faction is **discovered** iff the player has a **diplomatic relation** with that faction (i.e. a `DiplomacyRelation` exists between player and faction). Relations are only possible when the faction is discovered. At game start: same-region (GP–GP, GP–Minor) relations are initialized; cross-region (GP–Tribe) are not, so Tribes appear when the player first gains a relation (e.g. after establishing consulate).
+A faction is **discovered** for the human player when its id appears in the canonical discovery set produced by `knownDiplomaticTargetFactionIds` (`packages/colonizethis_logic/lib/order_suggestion_api.dart`, normative rules in [order-suggestions.md](../program/order-suggestions.md) § Diplomatic orders (visibility)). That helper unions three sources, so a faction is discovered when **any** of the following holds:
 
-- **List contents:** All GPs (except the player), all Minors, and only Tribes that are discovered.
+1. A `DiplomacyRelation` exists between the human player and that faction.
+2. The human player has **non-`unknown` tile visibility** (fogged or fully visible) in a province owned by that faction.
+3. The faction is a **Tribe** whose New-World province is **sea-reachable** from the player's anchor provinces/units (colonial intel, Refs #2509).
+
+This decouples discovery from the relation table alone. At game start same-region (GP–GP, GP–Minor) relations are initialized, so Great Powers and Minor Nations are discovered immediately; cross-region (GP–Tribe) relations are **not** initialized, so a Tribe becomes discovered the first time the player gains tile visibility into, or sea-reachability to, that tribe's territory — **not** only after establishing a consulate.
+
+**First-contact standing.** When a Tribe is discovered before a GP–Tribe relation exists, `syncGpTribeFirstContact` (`applyGpTribeFirstContactRelations` in logic) persists `AT_PEACE`, score `50`, Neutral on the same turn index, and enqueues the first-contact herald (`OVL80001`, [`tribe-first-contact-overlay.md`](tribe-first-contact-overlay.md)). Until sync runs, the panel still surfaces the same default standing for display (`RelationState.atPeace`, score `50`, `RelationLevel.neutral`).
+
+- **List contents:** All GPs (except the player), all Minors, and only Tribes that are discovered (per the rules above).
 - **Grouping:** Sections by type — Great Powers, Minor Nations, Tribes.
 - **Sort:** Great Powers by **military power** (desc), then by **number of provinces** (desc). Minors and Tribes: implementation-defined (e.g. by name or id).
 
@@ -51,13 +59,25 @@ The top bar applies to both wide and narrow viewports; mobile adaptation does no
 
 ## Section headings
 
-Faction rows are grouped into three sections in this order: **Great Powers**, **Minor Nations**, **Tribes**. Each non-empty section is preceded by a heading rendered per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.section-head`:
+Faction rows are grouped into three sections in this order: **Great Powers**, **Minor Nations**, **Tribes**. Each section heading is **always rendered** (subject to the mode-bar filter — see § Mode bar (filter)), **even when the section has no rows**. This decouples heading visibility from discovery so the player always sees the three faction categories and understands that more factions may appear (notably Tribes, which are discovered during play). Each heading is rendered per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.section-head`:
 
 - Display font (`Cinzel` / `Iowan Old Style` per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette font stacks); `font-weight: 600`; small positive letter-spacing.
 - Text color `--accent`.
 - 2 px bottom border in `--accent-dim` spanning the heading container width.
 
 The heading is otherwise an inert label (no tap target).
+
+### Empty-section placeholder copy
+
+When a visible section has no rows, the panel renders a single muted-italic placeholder line beneath the heading (matches the mockup `.empty` style — `--muted` colour, italic). The copy is:
+
+| Section | Empty placeholder copy (l10n key) |
+|---------|-----------------------------------|
+| Great Powers | `No Great Powers discovered yet.` (`diplomacy_panel_noGreatPowers`) |
+| Minor Nations | `No Minor Nations discovered yet.` (`diplomacy_panel_noMinorNations`) |
+| Tribes | `No tribes contacted yet.` (`diplomacy_panel_noTribes`) |
+
+In practice the Great Powers and Minor Nations sections are populated from game start (same-region relations are initialized), so their placeholders are edge-case fallbacks; the Tribes placeholder is the common case until first tribe contact. The previously documented single global empty message (`diplomacy_panel_noFactions`) is superseded by these per-section placeholders.
 
 ---
 
@@ -67,7 +87,10 @@ The heading is otherwise an inert label (no tap target).
 - **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR) rendered via the **relation state badge** (see § Relation state badge), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** a **power comparison percentage** is shown — a derived display only, not a new data field. See **Power comparison percentage (Great Power rows only)** below.
 - **Type badge colors (editorial-monocle dark theme):** The type badge uses mono font and the canonical [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette tokens per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-badge`. Great Power rows use `--accent-dim` background with `--bg-deep` foreground; Minor Nation rows use `--muted` background with `--bg-deep` foreground; Tribe rows are **outlined** — transparent background, `--muted` border and `--muted` foreground. No hardcoded Material chrome colors are permitted.
 - **Outgoing economic diplomacy (list row only):** On the **same row**, below the relation line, when the human Great Power has **active or pending** economic diplomacy toward this faction (receiver-centric copy): **Active subsidy:** `Outgoing subsidy: £N/turn to {displayName}` when `Game.subsidyStates` has `payerId` = human GP and `targetId` = this row’s faction. **Pending grant:** `Pending grant aid: £N (resolves end of turn)` when current-turn orders include `grantAid` toward this faction. **Pending subsidy:** `Pending subsidy: £N/turn (resolves end of turn)` when current-turn orders include `setSubsidy` toward this faction. Omit each line when not applicable. Do **not** duplicate this block on the Diplomacy Detail screen for current product (list row is the source of truth).
-- **Right:** **Available diplomatic actions** for the player toward that faction. Actions are those explicitly in SPEC/game/diplomacy.md and SPEC/program/orders.md: Declare War, Offer Peace, Alliance (GP only), Establish Overture (stage), **Grant Aid**, **Set Subsidy** as **separate** buttons when each is valid. Grant Aid requires Embassy; Set Subsidy requires Consulate or Embassy — hide or omit a button when its preconditions are not met. Only show actions that are **valid** per the diplomatic order validator (same rules as order submission). Any counterparty that is a valid target for aid/subsidy per game rules (Great Power, Minor, or Tribe) uses the same button rules.
+- **Right:** **Diplomatic action buttons** for the player toward that faction. The panel enumerates the full action matrix per faction type via `enumerateDiplomaticPanelActionsForTarget` (`packages/colonizethis_logic/lib/order_suggestion_api.dart`), probing each candidate with the same incremental diplomatic validator used for order submission. **Every applicable action is always rendered**; actions that fail validation appear as **disabled** `CtNinePatchButton` controls with validator rejection text in a `Tooltip` (not hidden). Matrix per faction type:
+  - **Great Power row:** Declare War, Offer Peace, Alliance, Establish Overture stages (Consulate, Embassy, NAP, Join Empire as separate buttons), Establish FTP, Grant Aid, Set Subsidy.
+  - **Minor Nation / Tribe row:** Declare War, Offer Peace, Establish Overture stages (Consulate, Embassy, NAP, Join Empire), Grant Aid, Set Subsidy.
+  - **Enabled** when the probe accepts; **disabled** with rejection reason when it rejects. Pending orders still replace the matching button with a **Cancel** affordance per § Submitting an action.
 
 ### Power comparison percentage (Great Power rows only)
 
@@ -196,7 +219,7 @@ The faction-row body adapts to a single normative breakpoint per [mockups/GAME30
 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
-| Diplomatic action button | Valid per validator | Confirm (+ parameter dialogs) → adds/cancels draft diplomatic order | Pending shows **Cancel** label. |
+| Diplomatic action button | Enabled per validator probe | Confirm (+ parameter dialogs) → adds/cancels draft diplomatic order | Pending shows **Cancel** label; disabled buttons show rejection `Tooltip`. |
 | Row Details | Always | Opens detail route | See diplomacy-detail spec. |
 
 ---
@@ -222,7 +245,7 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 
 In addition, a **mobile viewport** use case must render the panel inside the shared [mobileViewport](../program/app-ui-wiring.md) frame (360 × 640 dp `MediaQuery` size from `app/lib/widgetbook/catalog.dart`) so the `≤ 500 dp` narrow row variant from [§ Responsive layout](#responsive-layout) is reviewable without window resizing. This satisfies the "any other screen with responsive variants" clause from [mobile-adaptation.md](mobile-adaptation.md) § 6 (Widgetbook verification) for the diplomacy surface listed under [`Refs #2870`](https://github.com/waigore/colonizethisv3/issues/2870) R22.
 
-Finally, an **empty-state** use case named `No factions discovered (empty state)` must render the panel against a `Game` whose human player has no diplomacy relations with any other faction (no other Great Power, Minor Nation, or Tribe). The story exposes the `diplomacy_panel_noFactions` copy under the editorial-monocle dark chrome inherited from the Widgetbook host theme (`AppThemes.editorialMonocle`), so reviewers can validate the empty-state layout without scripting a custom save. The fixture is a stable widget catalog asset — not a runtime debug toggle — so its layout cannot regress silently when `buildDiplomacyRows` is changed.
+Finally, an **empty-state** use case named `No factions discovered (empty state)` must render the panel against a `Game` whose human player has no diplomacy relations with any other faction (no other Great Power, Minor Nation, or Tribe). Because section headings are now always rendered (§ Section headings), the story exposes all three headings (`Great Powers`, `Minor Nations`, `Tribes`) and their per-section empty placeholders — including the canonical `No tribes contacted yet.` (`diplomacy_panel_noTribes`) copy — under the editorial-monocle dark chrome inherited from the Widgetbook host theme (`AppThemes.editorialMonocle`), so reviewers can validate the empty-state layout without scripting a custom save. The fixture is a stable widget catalog asset — not a runtime debug toggle — so its layout cannot regress silently when `buildDiplomacyRows` is changed.
 
 ---
 
@@ -235,7 +258,7 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 - **Top bar back affordance:** **Given** the Diplomacy screen is pushed over a prior route, **when** the user taps the `CtBackButton` inside the `CtTopBar`, **then** `Navigator.maybePop()` runs and the prior route regains focus (same shell-level pop semantics as the legacy chrome).
 - Given the user is in-game and taps the dove icon in the toolbar, the UI opens the Diplomacy panel as a full-page screen.
 - Given the Diplomacy panel is open, it lists only discovered factions, grouped as Great Powers, Minor Nations, Tribes; GPs sorted by military power then province count.
-- Given a faction row, the panel shows current relation state (Peace/War) and the **one-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden score per SPEC/game/diplomacy.md § Player-facing relation display; it does **not** show the numeric relation score. For Minor/Tribe it shows overture stage. For Great Powers it shows the **power comparison percentage** (see § Power comparison percentage) instead of the absolute score: `+N%` rendered in `--danger` (red) when the GP is stronger than the human player, `0%` or `−N%` rendered in `--success` (green) when the GP is at or below the human player's score. To the right it shows only valid diplomatic actions for that faction.
+- Given a faction row, the panel shows current relation state (Peace/War) and the **one-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden score per SPEC/game/diplomacy.md § Player-facing relation display; it does **not** show the numeric relation score. For Minor/Tribe it shows overture stage. For Great Powers it shows the **power comparison percentage** (see § Power comparison percentage) instead of the absolute score: `+N%` rendered in `--danger` (red) when the GP is stronger than the human player, `0%` or `−N%` rendered in `--success` (green) when the GP is at or below the human player's score. To the right it shows the full diplomatic action matrix for that faction type; invalid actions render as disabled buttons with validator rejection tooltips (§ Per-faction row).
 - Given a Great Power row where `gpPowerScore = 110` and `playerPowerScore = 100`, when the row is rendered, then the power-comparison text is `+10%` and the text color resolves to `--danger` (red) per § Power comparison percentage.
 - Given a Great Power row where `gpPowerScore = 78` and `playerPowerScore = 100`, when the row is rendered, then the power-comparison text is `−22%` (using the U+2212 minus sign) and the text color resolves to `--success` (green) per § Power comparison percentage.
 - Given a Great Power row where `playerPowerScore = 0`, when the row is rendered, then the percentage computation uses `max(playerPowerScore, 1)` so no division-by-zero error occurs and a finite percentage value is shown.
@@ -272,4 +295,18 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 
 - **Mobile-viewport Widgetbook story renders narrow rows:** Given the Diplomacy Panel `Mobile viewport — narrow rows (≤ 500 dp)` Widgetbook use case is mounted in a `WidgetTester`, when the builder pumps inside the shared 360 × 640 dp `mobileViewport` frame, then `WidgetTester.takeException()` returns `null` and at least one faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is a `Column` (the `≤ 500 dp` narrow variant per § Responsive layout), demonstrating the responsive contract is reviewable from Widgetbook without resizing the host window (Refs #2870 R22 / S9).
 
-- **Empty-state Widgetbook story renders no-factions copy:** Given the Diplomacy Panel `No factions discovered (empty state)` Widgetbook use case is mounted in a `WidgetTester` under `AppThemes.editorialMonocle`, when the builder pumps the fixture `Game` whose human player has no other discovered factions and no diplomacy relations, then `WidgetTester.takeException()` returns `null`, `buildDiplomacyRows` returns an empty list, `find.text('No other factions discovered yet.')` resolves to exactly one widget (the localized `diplomacy_panel_noFactions` copy), and no `_DiplomacySectionHeader` widget is in the tree (so the panel does not paint a `Great Powers` / `Minor Nations` / `Tribes` heading when no factions are discovered). Refs #2863 S7.
+- **Always-visible section headings:** Given the diplomacy panel is open with the mode-bar filter set to `all`, when the panel renders, then a `_DiplomacySectionHeader` is present for each of `Great Powers`, `Minor Nations`, and `Tribes` regardless of whether those sections have any rows. Refs #3341.
+- **Empty Tribes placeholder copy:** Given the diplomacy panel is open and no tribe has been contacted (the Tribes section has no rows), when the panel renders, then the `Tribes` heading is present and exactly one widget shows the copy `No tribes contacted yet.` (`diplomacy_panel_noTribes`) beneath it, and no tribe faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is in the tree. Refs #3341.
+- **Empty-state Widgetbook story renders headings + tribe placeholder:** Given the Diplomacy Panel `No factions discovered (empty state)` Widgetbook use case is mounted in a `WidgetTester` under `AppThemes.editorialMonocle`, when the builder pumps the fixture `Game` whose human player has no other discovered factions and no diplomacy relations, then `WidgetTester.takeException()` returns `null`, `buildDiplomacyRows` returns an empty list, the three section headings (`Great Powers`, `Minor Nations`, `Tribes`) are each present, `find.text('No tribes contacted yet.')` resolves to exactly one widget (the localized `diplomacy_panel_noTribes` copy), and no faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is in the tree. Refs #2863 S7 / #3341.
+
+- **Discovery via tile visibility (no prior relation):** Given the human player has non-`unknown` tile visibility in a province owned by a Tribe `T` and **no** `DiplomacyRelation` with `T`, when `buildDiplomacyRows` runs, then the returned rows include exactly one row whose `factionId == T` and `kind == FactionKind.tribe`, and that row's `relation` is non-null with `state == RelationState.atPeace`, `score == 50`, and `level == RelationLevel.neutral`. Refs #3341.
+
+- **Discovery does not depend solely on relation table (consulate fix):** Given a Tribe `T` is discovered for the human player by tile visibility or sea-reachability (per § Discovered factions) and `T` has no game-setup `DiplomacyRelation` with the player, when the Diplomacy panel renders, then the Tribe row for `T` is present under the `Tribes` section (the previously documented "tribes appear only after establishing a consulate" behavior no longer governs discovery). Refs #3341.
+
+- **No spurious discovery (negative):** Given the human player has no `DiplomacyRelation`, no non-`unknown` tile visibility into any other faction's province, and no sea-reachable Tribe province, when `buildDiplomacyRows` runs, then it returns an empty list (no synthesized rows are added for undiscovered factions). Refs #3341.
+
+- **Overture buttons shown disabled (AC-6):** Given a Minor or Tribe row at overture stage `none` and no pending diplomatic orders, when the panel renders action buttons, then `Consulate`, `Embassy`, `NAP`, and `Join Empire` buttons are all present; only `Consulate` (or the next validator-valid stage) is enabled; disabled stages expose non-empty rejection text via `Tooltip`. Refs #3341.
+
+- **GP overture + FTP buttons (AC-7 / AC-8):** Given a Great Power row at peace with no overture, when action buttons render, then Consulate/Embassy/NAP/Join Empire and `Establish FTP` buttons are all present; the validator-valid next overture stage (typically Consulate) is enabled and the rest are disabled with rejection text. Refs #3341.
+
+- **Disabled not hidden (AC-10):** Given any faction row where Declare War, Offer Peace, Alliance, or economic actions fail validation, when the panel renders, then those actions appear as disabled `CtNinePatchButton` widgets (not omitted from the tree). Refs #3341.

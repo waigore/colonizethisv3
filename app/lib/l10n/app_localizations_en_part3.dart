@@ -556,6 +556,15 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get diplomacy_panel_noFactions => 'No other factions discovered yet.';
 
   @override
+  String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
+
+  @override
+  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
+
+  @override
+  String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
+
+  @override
   String diplomacy_panel_powerScore(int score) {
     return 'Power: $score';
   }

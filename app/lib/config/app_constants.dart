@@ -22,6 +22,8 @@ const String kMainMenuBackgroundAsset =
 const String kDialogueGameIntroAsset = 'assets/dialogue/game_intro.yarn';
 const String kDialogueInterventionAsset = 'assets/dialogue/intervention.yarn';
 const String kDialogueOvertureAsset = 'assets/dialogue/overture.yarn';
+const String kDialogueTribeFirstContactAsset =
+    'assets/dialogue/tribe_first_contact.yarn';
 
 /// Map terrain config asset loaded at app startup.
 const String kMapTerrainTilesetsAsset = 'assets/data/map_terrain_tilesets.json';
