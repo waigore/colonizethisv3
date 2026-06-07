@@ -62,7 +62,7 @@ export 'src/orders/incremental_candidate_validator.dart'
 export 'src/orders/order_suggestion_move_army.dart'
     show armyMoveCandidateDestinationProvinceIds;
 export 'package:colonizethis_world/src/world/movement.dart' show neighborProvinceIdsInRegion;
-export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart'
+export 'src/economy/world_market/bid_type_cap.dart'
     show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
 export 'src/economy/economy_riches_to_treasury.dart'
     show pendingRichesTreasuryDelta;

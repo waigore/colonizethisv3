@@ -3,8 +3,8 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart' show GamePlayerLookup;
-import '../diplomacy/diplomacy_resolver.dart' show worldMarketBidTypeCap;
 import '../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
+import '../economy/world_market/bid_type_cap.dart' show worldMarketBidTypeCap;
 import '../economy/world_market/trade_order_suggester.dart';
 import '../economy/world_market/treasury_bid_budget.dart'
     show treasuryAvailableForBidsByPlayer;
