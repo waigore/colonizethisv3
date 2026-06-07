@@ -4,7 +4,7 @@ import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/sea_reachable_provinces.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/world_constants.dart';
 
 /// Faction ids the player may target with diplomatic suggestions.
 ///

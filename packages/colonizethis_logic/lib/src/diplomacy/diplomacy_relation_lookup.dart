@@ -5,7 +5,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 
 import 'package:colonizethis_combat/src/combat/military_strength.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';

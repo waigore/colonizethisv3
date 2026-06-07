@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 import '../dossier/evidence_rules.dart';
 import '../logging.dart';
 import 'diplomacy_phase_result.dart';

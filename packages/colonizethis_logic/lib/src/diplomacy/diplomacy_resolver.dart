@@ -8,7 +8,7 @@ library;
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 import 'diplomacy_phase_result.dart';
 import 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
