@@ -1175,20 +1175,14 @@ void recordSeed42S7dCastIronLabourCounters({
     } else {
       bumpCounter(castIronLabourPeasantRecruitFabricStarvedTurns, gpId);
       fabricStarvedThisTurn.add(gpId);
-      // Refs #2847 § S7-D market-fabric localization: of those fabric-starved
-      // turns, the ones where no other great power holds any `fabric` to sell,
-      // so the recruit `fabric` can be neither produced nor bought.
-      if (otherGreatPowerFabricHeld(game, gpId) <= 0) {
-        bumpCounter(castIronLabourPeasantRecruitMarketFabricStarvedTurns, gpId);
-      } else if (otherGreatPowerOfferableFabricHeld(game, gpId) <= 0) {
-        // Holders exist but every one withholds its `fabric` via the
-        // regiment-rebuild offer-retention carve-out — the market door is
-        // closed at the offer/retention layer, not at holdings.
-        bumpCounter(
-          castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
-          gpId,
-        );
-      }
+      recordSeed42S7dPeasantRecruitFabricMarketSubCause(
+        game: game,
+        gpId: gpId,
+        marketFabricStarvedTurns:
+            castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+        marketFabricUnofferedTurns:
+            castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+      );
     }
   }
   if (ci.holdsFabricFeedstock) {
@@ -1204,15 +1198,70 @@ void recordSeed42S7dCastIronLabourCounters({
     bumpCounter(castIronRecipeFeasibleTurns, gpId);
     // Split the material-feasible turns by the planner's labour gate and by the
     // staging gate's tile-ownership precondition.
-    if (ci.castIronLabourFeasible) {
-      bumpCounter(castIronRecipeLabourFeasibleTurns, gpId);
-    } else if (ci.castIronLabourFoodStarved) {
-      bumpCounter(castIronLabourFoodStarvedTurns, gpId);
-    } else if (ci.castIronLabourPopulationBound) {
-      bumpCounter(castIronLabourPopulationBoundTurns, gpId);
-    }
+    recordSeed42S7dCastIronLabourFork(
+      gpId: gpId,
+      castIronLabourFeasible: ci.castIronLabourFeasible,
+      castIronLabourFoodStarved: ci.castIronLabourFoodStarved,
+      castIronLabourPopulationBound: ci.castIronLabourPopulationBound,
+      castIronRecipeLabourFeasibleTurns: castIronRecipeLabourFeasibleTurns,
+      castIronLabourFoodStarvedTurns: castIronLabourFoodStarvedTurns,
+      castIronLabourPopulationBoundTurns: castIronLabourPopulationBoundTurns,
+    );
     if (ci.castIronOwnsFeedstockTile) {
       bumpCounter(castIronFeasibleOwnsFeedstockTileTurns, gpId);
     }
+  }
+}
+
+/// Records the peasant-recruit fabric-starved market sub-cause split for [gpId]
+/// (Refs #2847 § S7-D market-fabric localization).
+///
+/// Of the fabric-starved recruit turns, bumps [marketFabricStarvedTurns] when no
+/// other great power holds any `fabric` to sell (the recruit `fabric` can be
+/// neither produced nor bought), else bumps [marketFabricUnofferedTurns] when
+/// holders exist but every one withholds its `fabric` via the regiment-rebuild
+/// offer-retention carve-out (the market door is closed at the offer/retention
+/// layer, not at holdings). Read-only over `game` except the counter bumps.
+void recordSeed42S7dPeasantRecruitFabricMarketSubCause({
+  required Game game,
+  required String gpId,
+  required Map<String, int> marketFabricStarvedTurns,
+  required Map<String, int> marketFabricUnofferedTurns,
+}) {
+  if (otherGreatPowerFabricHeld(game, gpId) <= 0) {
+    bumpCounter(marketFabricStarvedTurns, gpId);
+    return;
+  }
+  if (otherGreatPowerOfferableFabricHeld(game, gpId) <= 0) {
+    bumpCounter(marketFabricUnofferedTurns, gpId);
+  }
+}
+
+/// Records the castIron material-feasible labour fork for [gpId] (Refs #2847
+/// § S7-D).
+///
+/// On a material-feasible turn, bumps exactly one of the three labour-stage
+/// counters following the planner's labour-gate precedence: labour-feasible,
+/// else food-starved, else population-bound. A material-feasible turn that is
+/// none of these (e.g. another labour gate) bumps no labour-stage counter.
+void recordSeed42S7dCastIronLabourFork({
+  required String gpId,
+  required bool castIronLabourFeasible,
+  required bool castIronLabourFoodStarved,
+  required bool castIronLabourPopulationBound,
+  required Map<String, int> castIronRecipeLabourFeasibleTurns,
+  required Map<String, int> castIronLabourFoodStarvedTurns,
+  required Map<String, int> castIronLabourPopulationBoundTurns,
+}) {
+  if (castIronLabourFeasible) {
+    bumpCounter(castIronRecipeLabourFeasibleTurns, gpId);
+    return;
+  }
+  if (castIronLabourFoodStarved) {
+    bumpCounter(castIronLabourFoodStarvedTurns, gpId);
+    return;
+  }
+  if (castIronLabourPopulationBound) {
+    bumpCounter(castIronLabourPopulationBoundTurns, gpId);
   }
 }
