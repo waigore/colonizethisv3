@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/ai_control.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_phase_result.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';

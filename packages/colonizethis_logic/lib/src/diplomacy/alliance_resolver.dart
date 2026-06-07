@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';

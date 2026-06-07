@@ -210,6 +210,20 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - `colonizethis_economy/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.economy_no_logic_deps`).
 - Economy-domain tests live under `packages/colonizethis_economy/test/` and reach ≥90% line coverage; `colonizethis_logic` remains a **dev_dependency** of `colonizethis_economy` for integration fixtures.
 
+### `diplomacy` / `dossier` → `lib/src/constants.dart`
+
+**Wrong:** `diplomacy` / `dossier` → `../constants.dart` (10 files, eliminated)
+
+The monolith `constants.dart` re-exports `GamePlayerLookup` and region ids from `colonizethis_world`. Ten diplomacy/dossier files imported it only for those world symbols (extension methods on `Game` are used implicitly, so static analysis does not flag the import as unused). The fix retargets each file to its real `colonizethis_world` source:
+
+| Source file | Symbols used | Destination |
+|-------------|--------------|-------------|
+| `diplomacy/diplomacy_resolver.dart`, `overture_resolver.dart`, `ftp_resolver.dart`, `alliance_resolver.dart`, `intervention_resolver.dart`, `diplomacy_relation_lookup.dart`, `diplomacy_subsidies_relations_resolver.dart`, `dossier/evidence_rules.dart` | `GamePlayerLookup` (`playerById`, …) | `package:colonizethis_world/src/game_player_lookup.dart` |
+| `diplomacy/known_diplomatic_targets.dart`, `dossier/event_dialogue.dart` | `kRegionNewWorld` | `package:colonizethis_world/src/world_constants.dart` |
+| `dossier/event_dialogue.dart` | `GamePlayerLookup` | `package:colonizethis_world/src/game_player_lookup.dart` |
+
+`dossier/` folds into `colonizethis_diplomacy` at extraction; decoupling from `constants.dart` is a Phase 2 prerequisite so the new package depends only on `colonizethis_world`, `colonizethis_combat`, `colonizethis_models`, `colonizethis_data`, and `colonizethis_logger`. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `../constants.dart` under `diplomacy/` or `dossier/`).
+
 ## Phase 1 slice — `colonizethis_combat` (Refs #3290 C1)
 
 **Given** the `colonizethis_world` leaf on `dev`, **when** the `colonizethis_combat` package is extracted, **then**:
