@@ -1020,6 +1020,10 @@
   "@gameStartIntroOverlay_title": {
     "description": "Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001)."
   },
+  "tribeFirstContactOverlay_title": "First Contact",
+  "@tribeFirstContactOverlay_title": {
+    "description": "Display-font title for the tribe first-contact herald overlay (OVL80001)."
+  },
   "game_overture_loadError": "Could not load overture dialogue: {error}",
   "@game_overture_loadError": {
     "description": "Error shown when overture dialogue fails to load.",

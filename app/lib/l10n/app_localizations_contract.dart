@@ -616,6 +616,9 @@ abstract class AppLocalizations {
   /// Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001).
   String get gameStartIntroOverlay_title;
 
+  /// Display-font title for the tribe first-contact herald overlay (OVL80001).
+  String get tribeFirstContactOverlay_title;
+
   /// Error shown when overture dialogue fails to load.
   String game_overture_loadError(String error);
 

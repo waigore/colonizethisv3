@@ -28,6 +28,8 @@ import '../dialogue/call_to_arms_dialogue_overlay.dart';
 import '../dialogue/game_start_intro_overlay.dart';
 import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
+import '../dialogue/tribe_first_contact_overlay.dart';
+import '../dialogue/tribe_first_contact_sync.dart';
 import 'exit_confirm_dialog.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
@@ -273,6 +275,9 @@ class GameScreen extends ConsumerWidget {
     final bool mapShellActive = game != null && mapViewData != null;
     final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
     final showIntro = game != null && !introShownIds.contains(game.id);
+    final heraldQueue = ref.watch(tribeFirstContactHeraldQueueProvider);
+    final pendingHerald =
+        heraldQueue.isNotEmpty ? heraldQueue.first : null;
     final pendingDiplomacy = ref.watch(pendingDiplomacyProvider);
     final turnResolutionBlocking = ref.watch(turnResolutionBlockingProvider);
     Widget content = Stack(
@@ -313,13 +318,29 @@ class GameScreen extends ConsumerWidget {
     );
 
     if (game != null) {
-      content = GameToUIBusListener(gameId: game.id, child: content);
+      content = TribeFirstContactSyncListener(
+        child: GameToUIBusListener(gameId: game.id, child: content),
+      );
     }
 
     if (showIntro) {
       content = GameStartIntroOverlay(
         onDismissed: () {
           ref.read(gameIdsWithIntroShownProvider.notifier).markShown(game.id);
+        },
+        child: content,
+      );
+    }
+
+    if (!showIntro && game != null && pendingHerald != null) {
+      content = TribeFirstContactOverlay(
+        tribeName: pendingHerald.tribeName,
+        capitalName: pendingHerald.capitalName,
+        onDismissed: () {
+          ref
+              .read(tribeFirstContactHeraldsShownProvider.notifier)
+              .markShown(game.id, pendingHerald.tribeId);
+          ref.read(tribeFirstContactHeraldQueueProvider.notifier).dequeueHead();
         },
         child: content,
       );

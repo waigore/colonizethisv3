@@ -34,7 +34,7 @@ A faction is **discovered** for the human player when its id appears in the cano
 
 This decouples discovery from the relation table alone. At game start same-region (GP–GP, GP–Minor) relations are initialized, so Great Powers and Minor Nations are discovered immediately; cross-region (GP–Tribe) relations are **not** initialized, so a Tribe becomes discovered the first time the player gains tile visibility into, or sea-reachability to, that tribe's territory — **not** only after establishing a consulate.
 
-**First-contact standing (panel display).** A discovered faction that has **no** `DiplomacyRelation` record yet is surfaced with the default neutral first-contact standing: `RelationState.atPeace`, `score = 50`, `RelationLevel.neutral` (the same default used for game-start Minor relations). This is the relation summary the row renders until a persisted relation is created. The persisted game-state auto-creation of this relation and the first-contact herald overlay are tracked separately (issue #3341 follow-up) and do not change this panel display contract.
+**First-contact standing.** When a Tribe is discovered before a GP–Tribe relation exists, `syncGpTribeFirstContact` (`applyGpTribeFirstContactRelations` in logic) persists `AT_PEACE`, score `50`, Neutral on the same turn index, and enqueues the first-contact herald (`OVL80001`, [`tribe-first-contact-overlay.md`](tribe-first-contact-overlay.md)). Until sync runs, the panel still surfaces the same default standing for display (`RelationState.atPeace`, score `50`, `RelationLevel.neutral`).
 
 - **List contents:** All GPs (except the player), all Minors, and only Tribes that are discovered (per the rules above).
 - **Grouping:** Sections by type — Great Powers, Minor Nations, Tribes.
