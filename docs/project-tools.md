@@ -310,7 +310,7 @@ tool/compare_e2e_timing.sh .cursor/e2e-timing/summary_dev.md .cursor/e2e-timing/
 tool/compare_e2e_timing.sh baseline.md after.md --min-reduction-pct 25
 ```
 
-Paste the script output into the PR description for AC8–AC9 evidence.
+Paste the script output into the PR description for AC8–AC9 evidence. Recorded baseline (`b1488584`) vs post-refactor medians for the #2336 campaign: [docs/e2e-timing-2336-ac8.md](e2e-timing-2336-ac8.md) and `test/fixtures/e2e_timing/{baseline,after}_summary.md`.
 
 ---
 
