@@ -362,12 +362,12 @@ void _runTradeOrderPhase(
     }
     return;
   }
-  // The projected non-bid treasury delta is a `turn`-layer dry-run
-  // (`projectOrderEffects` calls `resolveTurnForGame`). The order engine sits
-  // above `colonizethis_economy`, so it computes the projection here and hands
-  // the resulting delta to the (economy-local) context builder, keeping
-  // `economy` free of any `orders`/`turn` import per
-  // `SPEC/program/logic-package-split-phase0.md` § economy ↔ orders.
+  // The projected non-bid treasury delta is a turn-layer dry-run via the neutral
+  // `lib/src/projections/` module (`projectOrderEffects` calls
+  // `resolveTurnForGame`). The order engine sits above `colonizethis_economy`,
+  // so it computes the projection here and hands the resulting delta to the
+  // (economy-local) context builder, keeping `economy` free of any `orders`/
+  // `turn` import per `SPEC/program/logic-package-split-phase0.md`.
   final projected = projectOrderEffects(
     game: game,
     orders: stagedOrders,

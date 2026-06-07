@@ -3,9 +3,9 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../turn/turn_resolver.dart';
 import '../world/unit_lookup.dart';
 import 'projected_effects.dart';
-import '../turn/turn_resolver.dart';
 
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.
 /// Dry-run of resolveTurnForGame; no world state mutation.

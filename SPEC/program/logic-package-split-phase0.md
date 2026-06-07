@@ -28,7 +28,7 @@ Phase 0 deliverables (child issue C0):
 | `economy` | `orders` | **Eliminated** — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import removed by inverting `tradeOrderValidationContextFromGame` (caller-computed `projectedTreasuryDelta`) |
 | `orders` | `economy` | Allowed |
 | `turn` | `orders` | Allowed |
-| `orders` | `turn` | Deferred — 1 file; trace runtime hoisted to `lib/src/trace/` (`orders_application*.dart` clean) but `order_projections.dart` still imports `turn_resolver` |
+| `orders` | `turn` | **Eliminated** — trace runtime hoisted to `lib/src/trace/`; `projectOrderEffects` dry-run hoisted to `lib/src/projections/` |
 | `turn` | `world` | Allowed |
 | `world` | `turn` | **Eliminated** — `turn_resolution_seeds.dart` and `trace/` hoisted to `lib/src/` |
 | `diplomacy` | `ai` | Allowed (becomes `diplomacy` → `ai_contracts` after Phase 4) |
@@ -70,13 +70,13 @@ Phase 0 deliverables (child issue C0):
 
 ### `orders ↔ turn`
 
-**Wrong:** `orders` → `turn` (1 file remaining; 2 trace consumers fixed)
+**Wrong:** `orders` → `turn` (eliminated)
 
 | Source | Import | Symbols | Destination | Status |
 |--------|--------|---------|-------------|--------|
 | `orders/orders_application.dart` | `lib/src/trace/turn_trace_runtime.dart` | `TurnTraceRuntime` | `lib/src/trace/` (hoisted; now imported directly) | Fixed |
 | `orders/orders_application_context.dart` | same | same | same | Fixed |
-| `orders/order_projections.dart` | `turn/turn_resolver.dart` | `resolveTurnForGame`, `requireTurnResolutionComplete` | Invert: callback injection or move projections to `turn/` | Deferred (grandfathered) |
+| `orders/order_projections.dart` | `turn/turn_resolver.dart` | `resolveTurnForGame`, `requireTurnResolutionComplete` | `lib/src/projections/order_projections.dart` (neutral module; may import `turn/`) | Fixed |
 
 ### `world ↔ diplomacy`
 
