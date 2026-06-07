@@ -11,11 +11,15 @@
 /// `isFabricOfferRetainingLockRecoverySeller` mirrors that carve-out scope.
 library;
 
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
+    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
     show
         isFabricOfferRetainingLockRecoverySeller,
         otherGreatPowerOfferableFabricHeld;
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -87,6 +91,63 @@ void main() {
         reason: 'The retention targets the zero-regiment rebuild gap only.',
       );
     });
+
+    test(
+      'population-bound peasant-fabric path retains fabric even with a regiment',
+      () {
+        // Mirrors cast_iron_labour_gate_test population-bound fixture: timber +
+        // iron + coal on hand, one peasant (labour-walled castIron), fabric < 2.
+        final game = Game(
+          id: 'g-offerable-fabric-pop-bound',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 5; i++)
+                  Province(
+                    id: 'oldWorld|p$i',
+                    regionId: kRegionOldWorld,
+                    ownerId: 'gp5',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(provinces: []),
+            resourceByTileKey: const {'oldWorld|p0|2|0': 'timber'},
+            tileKeysByRegionAndProvince: const {
+              kRegionOldWorld: {
+                'oldWorld|p0': ['oldWorld|p0|2|0'],
+              },
+            },
+            armies: [
+              const Army(
+                id: 'army-gp5',
+                ownerId: 'gp5',
+                regionId: kRegionOldWorld,
+                stationedProvinceId: 'oldWorld|p0',
+                regimentUnitIds: ['reg-1'],
+              ),
+            ],
+          ),
+          players: [
+            Player(
+              id: 'gp5',
+              displayName: 'gp5',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|p0',
+              treasury: cheapestRegimentBuildTreasuryCost(),
+              workerPool: const WorkerPool(peasants: 2),
+              stockpile: Stockpile.empty
+                  .applyDelta('timber', 2)
+                  .applyDelta('iron', 2)
+                  .applyDelta('coal', 1)
+                  .applyDelta(CommodityCatalog.fabric.id, 1)
+                  .applyDelta('grain', 10),
+            ),
+          ],
+        );
+        expect(isFabricOfferRetainingLockRecoverySeller(game, 'gp5'), isTrue);
+      },
+    );
 
     test('negative: quota-met GP is not a lock-recovery seller', () {
       final game = _game([(id: 'gp5', ow: 12, fabric: 5, regiment: false)]);

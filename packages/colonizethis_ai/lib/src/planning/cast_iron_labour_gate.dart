@@ -104,3 +104,64 @@ bool isCastIronLabourPeasantRecruitFabricShort(Stockpile stockpile) {
   if (required <= 0) return false;
   return stockpile.quantityOf(CommodityCatalog.fabric.id) < required;
 }
+
+/// True when [playerId] is a below-quota zero-NW lock-recovery seller in the
+/// castIron-labour peasant-recruit fabric market path: population-bound for
+/// domestic `castIron` production and short the 2-`fabric` peasant recruit
+/// cost. Unlike the zero-regiment rebuild bootstrap, this predicate does **not**
+/// require `regimentCount == 0` — a seller holding regiments can still need
+/// market `fabric` to grow raw labour (Refs #2847 § labour-infeasible fabric
+/// market path).
+bool isCastIronLabourPeasantRecruitFabricMarketPathActive({
+  required Game game,
+  required String playerId,
+  required Stockpile projected,
+}) {
+  if (!isCastIronLabourPopulationBoundForLockRecoverySeller(
+    game: game,
+    playerId: playerId,
+  )) {
+    return false;
+  }
+  return isCastIronLabourPeasantRecruitFabricShort(projected);
+}
+
+/// True when at least one `fabric_from_*` recipe is materially feasible for
+/// [playerId] yet **no** such recipe can run one full output given the GP's
+/// effective labour (`labourPerOutput` exceeds remaining labour). On seed 42
+/// the failing lock-recovery sellers hold `wool` / `cotton` on many turns but
+/// `fabric_from_*` needs `labourPerOutput == 2` while effective labour is `1`
+/// — domestic conversion is dead and the peasant-recruit path must buy `fabric`
+/// from the world market instead (Refs #2847 § #3317 circular-labour deadlock).
+bool isDomesticFabricProductionLabourInfeasible({
+  required Game game,
+  required String playerId,
+}) {
+  final player = game.playerById(playerId);
+  if (player == null) return false;
+
+  final effectiveLabour = effectiveLabourForWorkers(
+    workers: player.workerPool,
+    stockpile: player.stockpile,
+    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
+    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+  );
+  final fabricId = CommodityCatalog.fabric.id;
+  var anyMaterialFeasible = false;
+  for (final recipe in ProductionRecipesCatalog.producing(fabricId)) {
+    final materialFeasible = recipe.inputQuantities.entries.every(
+      (e) => player.stockpile.quantityOf(e.key) >= e.value,
+    );
+    if (!materialFeasible) continue;
+    anyMaterialFeasible = true;
+    if (feasibleRuns(
+          recipe: recipe,
+          stockpile: player.stockpile,
+          remainingLabour: effectiveLabour,
+        ) >
+        0) {
+      return false;
+    }
+  }
+  return anyMaterialFeasible;
+}

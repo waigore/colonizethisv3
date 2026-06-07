@@ -14,6 +14,7 @@ final class _LockRecoveryGameScan {
     required this.sortedGpIds,
     required this.anyBrokeGreatPower,
     required this.anySellerNeedsRegimentBuildInput,
+    required this.anySellerNeedsCastIronLabourPeasantRecruitFabric,
     required this.anySellerNeedsCastIronImprovementInput,
     required this.isLockRecoverySellerByPlayerId,
     required this.designatedBuyerId,
@@ -22,6 +23,7 @@ final class _LockRecoveryGameScan {
   final List<String> sortedGpIds;
   final bool anyBrokeGreatPower;
   final bool anySellerNeedsRegimentBuildInput;
+  final bool anySellerNeedsCastIronLabourPeasantRecruitFabric;
   final bool anySellerNeedsCastIronImprovementInput;
   final Map<String, bool> isLockRecoverySellerByPlayerId;
   final String designatedBuyerId;
@@ -35,6 +37,7 @@ final class _LockRecoveryGameScan {
     final sortedGpIds = <String>[];
     var anyBrokeGreatPower = false;
     var anySellerNeedsRegimentBuildInput = false;
+    var anySellerNeedsCastIronLabourPeasantRecruitFabric = false;
     var anySellerNeedsCastIronImprovementInput = false;
     final isLockRecoverySellerByPlayerId = <String, bool>{};
     final affluentNonSellerIds = <String>[];
@@ -58,6 +61,12 @@ final class _LockRecoveryGameScan {
         )) {
           anySellerNeedsRegimentBuildInput = true;
         }
+        if (_lockRecoverySellerNeedsCastIronLabourPeasantRecruitFabric(
+          game,
+          player,
+        )) {
+          anySellerNeedsCastIronLabourPeasantRecruitFabric = true;
+        }
         if (_lockRecoverySellerNeedsCastIronImprovementInput(game, player)) {
           anySellerNeedsCastIronImprovementInput = true;
         }
@@ -79,6 +88,8 @@ final class _LockRecoveryGameScan {
       sortedGpIds: sortedGpIds,
       anyBrokeGreatPower: anyBrokeGreatPower,
       anySellerNeedsRegimentBuildInput: anySellerNeedsRegimentBuildInput,
+      anySellerNeedsCastIronLabourPeasantRecruitFabric:
+          anySellerNeedsCastIronLabourPeasantRecruitFabric,
       anySellerNeedsCastIronImprovementInput:
           anySellerNeedsCastIronImprovementInput,
       isLockRecoverySellerByPlayerId: isLockRecoverySellerByPlayerId,
@@ -88,6 +99,17 @@ final class _LockRecoveryGameScan {
 
   bool isLockRecoverySeller(String playerId) =>
       isLockRecoverySellerByPlayerId[playerId] ?? false;
+}
+
+bool _lockRecoverySellerNeedsCastIronLabourPeasantRecruitFabric(
+  Game game,
+  Player player,
+) {
+  return isCastIronLabourPeasantRecruitFabricMarketPathActive(
+    game: game,
+    playerId: player.id,
+    projected: player.stockpile,
+  );
 }
 
 bool _lockRecoverySellerNeedsRegimentBuildInput(
@@ -213,6 +235,15 @@ bool isBelowQuotaZeroNwLockRecoverySeller(
 bool isFabricOfferRetainingLockRecoverySeller(Game game, String playerId) {
   if (!_isBelowQuotaZeroNwLockRecoverySeller(game: game, playerId: playerId)) {
     return false;
+  }
+  final player = game.playerById(playerId);
+  if (player != null &&
+      isCastIronLabourPeasantRecruitFabricMarketPathActive(
+        game: game,
+        playerId: playerId,
+        projected: player.stockpile,
+      )) {
+    return true;
   }
   return regimentCountForPlayer(game, playerId) == 0;
 }
