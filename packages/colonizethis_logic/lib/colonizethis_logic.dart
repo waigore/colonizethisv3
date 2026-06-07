@@ -40,15 +40,7 @@ export 'src/turn/turn_resolver.dart';
 export 'src/turn/turn_news_digest.dart';
 
 // Combat
-export 'src/combat/battle_general_assignment.dart';
-export 'src/combat/combat_mode_selection.dart';
-export 'src/combat/combat_resolver.dart';
-export 'src/combat/combat_resolver_probabilistic.dart';
-export 'src/combat/conflict_detection.dart';
-export 'src/combat/military_strength.dart';
-export 'src/combat/naval_combat_resolver.dart';
-export 'src/combat/quick_battle_input_builder.dart';
-export 'src/combat/quick_battle_resolver.dart';
+export 'package:colonizethis_combat/colonizethis_combat.dart';
 
 // Economy
 export 'src/economy/build_cost.dart';

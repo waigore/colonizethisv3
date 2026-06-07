@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/src/combat/combat_loss_profile.dart';
+import 'package:colonizethis_combat/src/combat/combat_loss_profile.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {

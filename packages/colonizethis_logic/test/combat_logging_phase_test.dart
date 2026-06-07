@@ -113,13 +113,13 @@ void main() {
           isTrue,
         );
         expect(
-          combat.any((m) => m.contains('logic: combat engagement')),
+          combat.any((m) => m.contains('combat: combat engagement')),
           isTrue,
         );
         expect(
           combat.any(
             (m) =>
-                m.contains('logic: combat battle_apply') &&
+                m.contains('combat: combat battle_apply') &&
                 m.contains('mode=autoResolve'),
           ),
           isTrue,
@@ -240,7 +240,7 @@ void main() {
           isTrue,
         );
         expect(
-          combat.any((m) => m.contains('logic: combat engagement')),
+          combat.any((m) => m.contains('combat: combat engagement')),
           isFalse,
         );
       },

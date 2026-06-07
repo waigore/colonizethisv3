@@ -172,6 +172,16 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - `colonizethis_world/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.world_no_logic_deps`).
 - World-domain tests live under `packages/colonizethis_world/test/`; `colonizethis_logic` remains a **dev_dependency** of `colonizethis_world` for integration fixtures until later phases shrink that surface.
 
+## Phase 1 slice — `colonizethis_combat` (Refs #3290 C1)
+
+**Given** the `colonizethis_world` leaf on `dev`, **when** the `colonizethis_combat` package is extracted, **then**:
+
+- `packages/colonizethis_combat` owns `combat/` (land + naval resolution, conflict detection, quick-battle, general assignment, military strength/attack economy) and depends only on `colonizethis_world`, `colonizethis_models`, `colonizethis_data`, `colonizethis_logger`.
+- `colonizethis_logic` depends on `colonizethis_combat` and re-exports `package:colonizethis_combat/colonizethis_combat.dart` from its barrel for backward compatibility; the `turn/` and `diplomacy/` consumers import combat via `package:colonizethis_combat/...`.
+- `colonizethis_combat/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.combat_no_logic_deps`).
+- `colonizethis_combat` uses exactly one logger with the distinct `combat` prefix (`combatLog`); land-combat log lines emitted from the package carry the `combat:` prefix, while turn-orchestrated combat-phase lines emitted from `colonizethis_logic` keep the `logic:` prefix.
+- Combat-domain tests live under `packages/colonizethis_combat/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_combat` for integration fixtures.
+
 ## Acceptance criteria (Phase 0 / C0)
 
 - **Given** the monolith on `dev`, **when** `repo.logic_domain_import_dag` runs, **then** zero imports match forbidden pairs outside the documented grandfather allowlist.

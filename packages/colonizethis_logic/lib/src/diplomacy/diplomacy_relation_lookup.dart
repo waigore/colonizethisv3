@@ -7,7 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 
-import '../combat/military_strength.dart';
+import 'package:colonizethis_combat/src/combat/military_strength.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
