@@ -3,14 +3,10 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
-import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
-    show otherGreatPowerFabricHeld;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show
         cheapestRegimentBuildTreasuryCost,
         expandSellerFeedstockTileAcquisitionTarget;
-import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
-    show otherGreatPowerOfferableFabricHeld;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
@@ -2148,12 +2144,15 @@ void main() {
       // (`otherGreatPowerOfferableFabricHeld > 0`), whether the starved seller
       // emits a `fabric` bid and whether a deal fills as buyer. Read-only;
       // counts move freely as later slices land.
-      final castIronLabourPeasantRecruitFabricBidEmittedTurns =
-          <String, int>{for (final gpId in gpIds) gpId: 0};
-      final castIronLabourPeasantRecruitFabricBidAbsentTurns =
-          <String, int>{for (final gpId in gpIds) gpId: 0};
-      final castIronLabourPeasantRecruitFabricDealAsBuyerTurns =
-          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final castIronLabourPeasantRecruitFabricBidEmittedTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronLabourPeasantRecruitFabricBidAbsentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronLabourPeasantRecruitFabricDealAsBuyerTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
       // Refs #2847 § castIron market-supply wall: on feedstock-extraction
       // gate-active turns, whether any *other* faction offered `castIron` (the
       // manufactured level-0 `build_improvement` input) on the world market —
@@ -2163,10 +2162,12 @@ void main() {
       // its castIron for Old World military builds), leaving only the
       // labour-walled domestic run. Read-only; counts move freely as later
       // supply slices land.
-      final castIronMarketOfferPresentTurns =
-          <String, int>{for (final gpId in gpIds) gpId: 0};
-      final castIronMarketOfferAbsentTurns =
-          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final castIronMarketOfferPresentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final castIronMarketOfferAbsentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2615,61 +2616,33 @@ void main() {
               castIronFeedstockIds: castIronFeedstockIds,
               castIronMinLabourPerOutput: castIronMinLabourPerOutput,
             );
-            if (ci.peasantRecruitGate) {
-              bumpCounter(castIronLabourPeasantRecruitGateTurns, gpId);
-              if (ci.peasantRecruitAffordable) {
-                bumpCounter(castIronLabourPeasantRecruitAffordableTurns, gpId);
-              } else {
-                bumpCounter(
+            recordSeed42S7dCastIronLabourCounters(
+              game: game,
+              gpId: gpId,
+              ci: ci,
+              fabricStarvedThisTurn: fabricStarvedThisTurn,
+              castIronLabourPeasantRecruitGateTurns:
+                  castIronLabourPeasantRecruitGateTurns,
+              castIronLabourPeasantRecruitAffordableTurns:
+                  castIronLabourPeasantRecruitAffordableTurns,
+              castIronLabourPeasantRecruitFabricStarvedTurns:
                   castIronLabourPeasantRecruitFabricStarvedTurns,
-                  gpId,
-                );
-                fabricStarvedThisTurn.add(gpId);
-                // Refs #2847 § S7-D market-fabric localization: of those
-                // fabric-starved turns, the ones where no other great power
-                // holds any `fabric` to sell, so the recruit `fabric` can be
-                // neither produced nor bought.
-                if (otherGreatPowerFabricHeld(game, gpId) <= 0) {
-                  bumpCounter(
-                    castIronLabourPeasantRecruitMarketFabricStarvedTurns,
-                    gpId,
-                  );
-                } else if (otherGreatPowerOfferableFabricHeld(game, gpId) <=
-                    0) {
-                  // Holders exist but every one withholds its `fabric` via the
-                  // regiment-rebuild offer-retention carve-out — the market door
-                  // is closed at the offer/retention layer, not at holdings.
-                  bumpCounter(
-                    castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
-                    gpId,
-                  );
-                }
-              }
-            }
-            if (ci.holdsFabricFeedstock) {
-              bumpCounter(feedstockInStockpileTurns, gpId);
-            }
-            if (ci.fabricRecipeFeasible) {
-              bumpCounter(fabricRecipeFeasibleTurns, gpId);
-              if (ci.fabricRecipeLabourFeasible) {
-                bumpCounter(fabricRecipeLabourFeasibleTurns, gpId);
-              }
-            }
-            if (ci.castIronMaterialFeasible) {
-              bumpCounter(castIronRecipeFeasibleTurns, gpId);
-              // Split the material-feasible turns by the planner's labour gate
-              // and by the staging gate's tile-ownership precondition.
-              if (ci.castIronLabourFeasible) {
-                bumpCounter(castIronRecipeLabourFeasibleTurns, gpId);
-              } else if (ci.castIronLabourFoodStarved) {
-                bumpCounter(castIronLabourFoodStarvedTurns, gpId);
-              } else if (ci.castIronLabourPopulationBound) {
-                bumpCounter(castIronLabourPopulationBoundTurns, gpId);
-              }
-              if (ci.castIronOwnsFeedstockTile) {
-                bumpCounter(castIronFeasibleOwnsFeedstockTileTurns, gpId);
-              }
-            }
+              castIronLabourPeasantRecruitMarketFabricStarvedTurns:
+                  castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+              castIronLabourPeasantRecruitMarketFabricUnofferedTurns:
+                  castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+              feedstockInStockpileTurns: feedstockInStockpileTurns,
+              fabricRecipeFeasibleTurns: fabricRecipeFeasibleTurns,
+              fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
+              castIronRecipeFeasibleTurns: castIronRecipeFeasibleTurns,
+              castIronRecipeLabourFeasibleTurns:
+                  castIronRecipeLabourFeasibleTurns,
+              castIronLabourFoodStarvedTurns: castIronLabourFoodStarvedTurns,
+              castIronLabourPopulationBoundTurns:
+                  castIronLabourPopulationBoundTurns,
+              castIronFeasibleOwnsFeedstockTileTurns:
+                  castIronFeasibleOwnsFeedstockTileTurns,
+            );
           }
           // Cache the turn-99 snapshot fields for the final rollup.
           if (t == 99) {
