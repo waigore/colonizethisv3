@@ -33,8 +33,8 @@ sanctions:
     rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
-  - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall.dart
-    line: 453
+  - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall_terminal.dart
+    line: 110
     rationale: Capital fall logic scans province ownership across regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
