@@ -116,6 +116,20 @@ const String kE2eDefaultExpectPanelTextsSnapshotReaderPhase =
 ///   instead of a confusing `null!` cast deeper in the builder.
 /// - Calls [e2eCollectTextPreorder] on the panel root element to populate
 ///   `actual`, then compares with `orderedEquals(buildExpected())`.
+/// - When [ignoreActualTexts] is non-empty, every collected text equal to
+///   one of its entries is dropped from `actual` **before** the ordered
+///   comparison. This normalizes away **host-width-dependent** decorative
+///   labels that the canonical mirror intentionally omits — specifically the
+///   dense fleet-action labels (`Move` / `Split`) on the naval panel, which
+///   render as icon-only at the narrow macOS test host but as `Icon + Text`
+///   on the wider Linux desktop integration host (the dense action cluster
+///   crosses the `UnitsEntityActionRow` icon-only breakpoint at the realized
+///   1280-wide viewport). Filtering is **narrow and order-preserving** (it
+///   removes only the named labels and keeps `orderedEquals` over everything
+///   else), so it is not the broad/contains weakening
+///   `colonizethis-e2e-ui-stability.mdc` cautions against; it keeps the
+///   assertion deterministic across hosts without weakening any other line
+///   (Refs GitHub #2336 AC6 — `full_turn` naval-panel host portability).
 /// - When [buildAlternativeExpected] is non-`null`, the assertion uses
 ///   `anyOf(orderedEquals(buildExpected()), orderedEquals(buildAlternativeExpected()))`
 ///   so panels that can settle in either of two deterministic variants
@@ -143,6 +157,7 @@ Future<void> e2eExpectPanelTextsMatchSnapshot(
       kE2eDefaultExpectPanelTextsSnapshotReaderPhase,
   E2ePerfLog? perf,
   List<String> Function()? buildAlternativeExpected,
+  List<String> ignoreActualTexts = const [],
 }) async {
   await e2eWaitUntilFound(
     tester,
@@ -166,11 +181,14 @@ Future<void> e2eExpectPanelTextsMatchSnapshot(
         'expecting rendered texts; a null snapshot indicates the panel did '
         'not finish priming its CtE2e* mirror before the assertion ran.',
   );
-  final actual = <String>[];
+  final collected = <String>[];
   e2eCollectTextPreorder(
     tester.element(find.byKey(panelRootKey)),
-    actual,
+    collected,
   );
+  final actual = ignoreActualTexts.isEmpty
+      ? collected
+      : collected.where((t) => !ignoreActualTexts.contains(t)).toList();
   if (buildAlternativeExpected == null) {
     expect(actual, orderedEquals(buildExpected()));
     return;
