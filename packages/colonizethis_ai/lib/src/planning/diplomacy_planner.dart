@@ -557,22 +557,23 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
     return null;
   }
-  // When a phase plan is threaded through (the canonical post-S5
-  // production path) the GP-only `planExpandPeace` adapter does not carry
-  // the below-quota minor / tribe distraction peace the no-`phasePlan`
-  // `collectStalledGreatPowerPeaceTargets` fallback emits. Union the
-  // distraction targets back in so the production EXPAND / COLONIAL-lite
-  // path restores the distraction-peace pivot (Refs #2509 S5; #2847
-  // § H5 — seed-42 gp4 tribe-dilution stall).
+  // When a phase plan is threaded through (the canonical post-S5 production
+  // path) the GP-only `planExpandPeace` adapter drops every survival /
+  // expand-ratchet / peer-stalled peace decider the no-`phasePlan`
+  // `collectStalledGreatPowerPeaceTargets` fallback emits. Union the full
+  // fallback back in via [productionPeaceTargetsFromPhasePlan] (Refs #2509
+  // S5; #2847 § H5 tribe-distraction + § H6 ratchet/survival restoration).
   final peaceTargets = phasePlan != null
-      ? (<String>{
-          ...gpPeaceTargetsFromPhasePlan(phasePlan),
-          ...distractionPeaceTargetsFromPhasePlan(phasePlan),
-        }.toList()..sort())
+      ? productionPeaceTargetsFromPhasePlan(
+          game: ctx.game,
+          snapshot: snapshot,
+          phasePlan: phasePlan,
+        )
       : collectStalledGreatPowerPeaceTargets(
           game: ctx.game,
           snapshot: snapshot,
-        );
+        ).toList()
+        ..sort();
   if (peaceTargets.isEmpty) {
     return null;
   }

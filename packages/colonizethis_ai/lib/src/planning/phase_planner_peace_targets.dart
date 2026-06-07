@@ -14,6 +14,11 @@
 /// `diplomacy_planner_peace_targets.dart` host was deleted in S1.
 library;
 
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../perception/perception_snapshot.dart';
+import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 
@@ -63,4 +68,50 @@ List<String> distractionPeaceTargetsFromPhasePlan(PhasePlanOutcome outcome) {
     case ObserverGoalPhase.develop:
       return const <String>[];
   }
+}
+
+/// Below-quota peer-stalled GP peace absent from the GP-only `planExpandPeace`
+/// adapter (Refs #2847 § H6).
+///
+/// Scoped to [belowQuotaPeerGpPeaceTargets] only — the seed-42 gp5↔gp6
+/// mutual-plateau distraction pivot. Broader
+/// [expandRatchetGreatPowerPeaceTargets] and full
+/// [collectStalledGreatPowerPeaceTargets] unions regressed the gp4 +3 / gp6
+/// +10 baselines held by H5 (H6 verification).
+List<String> belowQuotaPeerGpPeaceTargetsForProduction({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required PhasePlanOutcome phasePlan,
+}) {
+  switch (phasePlan.phase) {
+    case ObserverGoalPhase.expand:
+    case ObserverGoalPhase.colonialLite:
+      return belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot);
+    case ObserverGoalPhase.colonial:
+    case ObserverGoalPhase.develop:
+      return const <String>[];
+  }
+}
+
+/// Returns the sorted union of production diplomacy peace targets when a
+/// [PhasePlanOutcome] is threaded through (Refs #2847 § H6).
+///
+/// Unions the phase-plan GP peace adapter, the H5 distraction slot, and the
+/// below-quota peer-stalled GP peace pivot that the post-S5 `planExpandPeace`
+/// adapter alone dropped from the production path.
+List<String> productionPeaceTargetsFromPhasePlan({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required PhasePlanOutcome phasePlan,
+}) {
+  return <String>{
+    ...gpPeaceTargetsFromPhasePlan(phasePlan),
+    ...distractionPeaceTargetsFromPhasePlan(phasePlan),
+    ...belowQuotaPeerGpPeaceTargetsForProduction(
+      game: game,
+      snapshot: snapshot,
+      phasePlan: phasePlan,
+    ),
+  }.toList()
+    ..sort();
 }
