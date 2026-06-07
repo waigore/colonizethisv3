@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:logger/logger.dart';
 
 void main() {
@@ -220,7 +220,7 @@ void main() {
       final line = capturedEvents
           .where((e) => e.level == Level.info)
           .map((e) => e.message.toString())
-          .firstWhere((m) => m.contains('logic: event=DiplomacyChangeEvent'));
+          .firstWhere((m) => m.contains('world: event=DiplomacyChangeEvent'));
       expect(line, contains('turn=2'));
       expect(line, contains('actorId=gp1'));
       expect(line, contains('targetId=gp2'));
@@ -246,7 +246,7 @@ void main() {
       final line = capturedEvents
           .where((e) => e.level == Level.info)
           .map((e) => e.message.toString())
-          .firstWhere((m) => m.contains('logic: event=OrderRejectedEvent'));
+          .firstWhere((m) => m.contains('world: event=OrderRejectedEvent'));
       expect(line, contains('truncated=true'));
     });
   });
