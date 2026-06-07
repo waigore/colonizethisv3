@@ -13,6 +13,7 @@ import '../world/diplomatic_relation_lookup.dart';
 import '../world/province_lookup.dart';
 
 export '../world/diplomatic_relation_lookup.dart';
+export '../world/province_lookup.dart' show oldWorldProvinceCountOwnedBy;
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;
@@ -43,14 +44,6 @@ Map<String, int> _provinceCountsByOwner(Game game) =>
 /// Returns the number of provinces owned by [factionId] (Minor or Tribe) in [game].
 int provinceCountOwnedBy(Game game, String factionId) {
   return _provinceCountsByOwner(game)[factionId] ?? 0;
-}
-
-/// Old World provinces owned by [factionId] (observer conquest / survival peace).
-int oldWorldProvinceCountOwnedBy(Game game, String factionId) {
-  return game.worldState
-      .provincesForRegion(kRegionOldWorld)
-      .where((p) => p.ownerId == factionId)
-      .length;
 }
 
 /// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
