@@ -346,6 +346,16 @@ void main() {
         outcome.expandPeaceTargetFactionIdsSorted,
         planExpandPeace(game: game, snapshot: snapshot),
       );
+      // Distraction-peace slot sources the below-quota tribe distraction
+      // decider only (Refs #2847 § H5 — the minor decider stays confined
+      // to the no-phasePlan fallback to protect multi-minor conquest).
+      expect(
+        outcome.expandDistractionPeaceTargetFactionIdsSorted,
+        belowQuotaRegimentThinTribeDistractionPeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        ),
+      );
       expect(
         outcome.expandEconomyPlan,
         planExpandEconomy(game: game, snapshot: snapshot),

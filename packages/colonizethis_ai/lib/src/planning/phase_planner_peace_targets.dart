@@ -35,3 +35,32 @@ List<String> gpPeaceTargetsFromPhasePlan(PhasePlanOutcome outcome) {
       return outcome.developPeaceTargetFactionIdsSorted;
   }
 }
+
+/// Returns the phase-specific minor / tribe distraction peace targets for
+/// [outcome] (Refs #2847 § H5).
+///
+/// EXPAND and COLONIAL-lite surface
+/// [PhasePlanOutcome.expandDistractionPeaceTargetFactionIdsSorted] — the
+/// below-quota regiment-thin minor / tribe distraction `offerPeace` set
+/// that the Great-Power-only [gpPeaceTargetsFromPhasePlan] adapter does
+/// not carry. COLONIAL and DEVELOP have no distraction-peace concept in
+/// the phase plan and return `const []` (their peace decisions are
+/// covered by `colonialPeaceTargetFactionIdsSorted` /
+/// `developPeaceTargetFactionIdsSorted`).
+///
+/// The diplomacy planner unions this with [gpPeaceTargetsFromPhasePlan]
+/// so the production phase-plan path emits the same distraction peace the
+/// no-`phasePlan` `collectStalledGreatPowerPeaceTargets` fallback carries
+/// (restoring the path that regressed when the S5 GP-only EXPAND peace
+/// adapter took over; Refs #2509 S5, #2847 § H5). The list is already
+/// ascending-sorted and de-duplicated by the dispatcher.
+List<String> distractionPeaceTargetsFromPhasePlan(PhasePlanOutcome outcome) {
+  switch (outcome.phase) {
+    case ObserverGoalPhase.expand:
+    case ObserverGoalPhase.colonialLite:
+      return outcome.expandDistractionPeaceTargetFactionIdsSorted;
+    case ObserverGoalPhase.colonial:
+    case ObserverGoalPhase.develop:
+      return const <String>[];
+  }
+}

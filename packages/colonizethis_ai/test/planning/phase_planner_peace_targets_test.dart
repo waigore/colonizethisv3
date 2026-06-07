@@ -62,4 +62,57 @@ void main() {
       );
     });
   });
+
+  group('distractionPeaceTargetsFromPhasePlan (Refs #2847 § H5)', () {
+    test('EXPAND routes expandDistractionPeaceTargetFactionIdsSorted', () {
+      const outcome = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        expandDistractionPeaceTargetFactionIdsSorted: ['minor_b', 'tribe_a'],
+      );
+      expect(
+        distractionPeaceTargetsFromPhasePlan(outcome),
+        ['minor_b', 'tribe_a'],
+      );
+    });
+
+    test('COLONIAL-lite routes the expand distraction slot', () {
+      const outcome = PhasePlanOutcome(
+        phase: ObserverGoalPhase.colonialLite,
+        expandDistractionPeaceTargetFactionIdsSorted: ['tribe_z'],
+      );
+      expect(distractionPeaceTargetsFromPhasePlan(outcome), ['tribe_z']);
+    });
+
+    test('COLONIAL and DEVELOP carry no distraction peace', () {
+      const colonial = PhasePlanOutcome(
+        phase: ObserverGoalPhase.colonial,
+        // Distraction slot is EXPAND-only; even if populated it is ignored
+        // outside EXPAND / COLONIAL-lite.
+        expandDistractionPeaceTargetFactionIdsSorted: ['tribe_a'],
+      );
+      const develop = PhasePlanOutcome(
+        phase: ObserverGoalPhase.develop,
+        expandDistractionPeaceTargetFactionIdsSorted: ['tribe_a'],
+      );
+      expect(distractionPeaceTargetsFromPhasePlan(colonial), isEmpty);
+      expect(distractionPeaceTargetsFromPhasePlan(develop), isEmpty);
+    });
+
+    test('default EXPAND outcome yields an empty distraction list', () {
+      expect(
+        distractionPeaceTargetsFromPhasePlan(PhasePlanOutcome.defaultExpand),
+        isEmpty,
+      );
+    });
+
+    test('GP peace and distraction peace are carried on separate slots', () {
+      const outcome = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        expandPeaceTargetFactionIdsSorted: ['gp3'],
+        expandDistractionPeaceTargetFactionIdsSorted: ['tribe_a'],
+      );
+      expect(gpPeaceTargetsFromPhasePlan(outcome), ['gp3']);
+      expect(distractionPeaceTargetsFromPhasePlan(outcome), ['tribe_a']);
+    });
+  });
 }

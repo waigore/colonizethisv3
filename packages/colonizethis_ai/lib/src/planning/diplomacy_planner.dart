@@ -49,6 +49,7 @@ export 'expand_phase_planner.dart'
         stalledFocusMinorTarget,
         belowQuotaActiveMinorWarTarget,
         atWarGpDistractionTribePeaceTargets,
+        belowQuotaRegimentThinTribeDistractionPeaceTargets,
         stalledExpansionDistractionPeaceTargets,
         criticalWeakGpSurvivalPeaceTargets,
         weakHoldingsInvadableBlockerPeaceTargets,
@@ -556,8 +557,18 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
     return null;
   }
+  // When a phase plan is threaded through (the canonical post-S5
+  // production path) the GP-only `planExpandPeace` adapter does not carry
+  // the below-quota minor / tribe distraction peace the no-`phasePlan`
+  // `collectStalledGreatPowerPeaceTargets` fallback emits. Union the
+  // distraction targets back in so the production EXPAND / COLONIAL-lite
+  // path restores the distraction-peace pivot (Refs #2509 S5; #2847
+  // § H5 — seed-42 gp4 tribe-dilution stall).
   final peaceTargets = phasePlan != null
-      ? gpPeaceTargetsFromPhasePlan(phasePlan)
+      ? (<String>{
+          ...gpPeaceTargetsFromPhasePlan(phasePlan),
+          ...distractionPeaceTargetsFromPhasePlan(phasePlan),
+        }.toList()..sort())
       : collectStalledGreatPowerPeaceTargets(
           game: ctx.game,
           snapshot: snapshot,

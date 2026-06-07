@@ -111,6 +111,7 @@ class PhasePlanOutcome {
     required this.phase,
     this.expandDeclareWarTargetFactionId,
     this.expandPeaceTargetFactionIdsSorted = const <String>[],
+    this.expandDistractionPeaceTargetFactionIdsSorted = const <String>[],
     this.expandEconomyPlan = ExpandEconomyPlan.defaultPlan,
     this.expandMilitaryPlan = ExpandMilitaryPlan.defaultPlan,
     this.expandGpOnlyInvadableFrontierActive = false,
@@ -141,8 +142,31 @@ class PhasePlanOutcome {
   final String? expandDeclareWarTargetFactionId;
 
   /// EXPAND peace targets from `planExpandPeace`. Same population
-  /// matrix as [expandDeclareWarTargetFactionId].
+  /// matrix as [expandDeclareWarTargetFactionId]. Great-Power-only by
+  /// construction (`planExpandPeace` filters [ThreatSummary.atWarWith]
+  /// to [Game.playerById] members); minor / tribe distraction peace is
+  /// carried separately on [expandDistractionPeaceTargetFactionIdsSorted].
   final List<String> expandPeaceTargetFactionIdsSorted;
+
+  /// EXPAND below-quota tribe distraction peace targets (Refs #2847
+  /// § H5). Sourced from
+  /// [belowQuotaRegimentThinTribeDistractionPeaceTargets] — the at-war
+  /// tribes owning no invadable OW frontier province, for a regiment-thin
+  /// below-quota GP, sorted ascending. Same population matrix as
+  /// [expandDeclareWarTargetFactionId] (EXPAND / COLONIAL-lite only;
+  /// empty for COLONIAL / DEVELOP).
+  ///
+  /// Carried separately from [expandPeaceTargetFactionIdsSorted] so the
+  /// Great-Power-only contract of `planExpandPeace` stays intact while
+  /// the production diplomacy path
+  /// (`diplomacy_planner.dart` `_stalledPeacePlannerResultIfNeeded` via
+  /// `distractionPeaceTargetsFromPhasePlan`) still emits the
+  /// distraction `offerPeace` orders the no-`phasePlan`
+  /// `collectStalledGreatPowerPeaceTargets` fallback already carries.
+  /// Restores the distraction-peace pivot to the production phase-plan
+  /// path it regressed out of when the S5 GP-only `planExpandPeace`
+  /// adapter took over (Refs #2509 S5; #2847 § H5).
+  final List<String> expandDistractionPeaceTargetFactionIdsSorted;
 
   /// EXPAND economy directive from `planExpandEconomy`. Same population
   /// matrix as [expandDeclareWarTargetFactionId]; defaults to
@@ -267,6 +291,8 @@ class PhasePlanOutcome {
       'expandDeclareWarTargetFactionId: $expandDeclareWarTargetFactionId, '
       'expandPeaceTargetFactionIdsSorted: '
       '$expandPeaceTargetFactionIdsSorted, '
+      'expandDistractionPeaceTargetFactionIdsSorted: '
+      '$expandDistractionPeaceTargetFactionIdsSorted, '
       'expandEconomyPlan: $expandEconomyPlan, '
       'expandMilitaryPlan: $expandMilitaryPlan, '
       'expandGpOnlyInvadableFrontierActive: '
@@ -379,6 +405,8 @@ PhasePlanOutcome _expandOutcome({
       game: game,
       snapshot: snapshot,
     ),
+    expandDistractionPeaceTargetFactionIdsSorted:
+        _expandDistractionPeaceTargets(game: game, snapshot: snapshot),
     expandEconomyPlan: expandEconomyPlan,
     expandMilitaryPlan: planExpandMilitary(
       game: game,
@@ -415,6 +443,8 @@ PhasePlanOutcome _colonialLiteOutcome({
       game: game,
       snapshot: snapshot,
     ),
+    expandDistractionPeaceTargetFactionIdsSorted:
+        _expandDistractionPeaceTargets(game: game, snapshot: snapshot),
     expandEconomyPlan: expandEconomyPlan,
     expandMilitaryPlan: planExpandMilitary(
       game: game,
@@ -530,6 +560,26 @@ PhasePlanOutcome _developOutcome({
     ),
   );
 }
+
+/// EXPAND below-quota tribe distraction peace for the production
+/// phase-plan path (Refs #2847 § H5).
+///
+/// Sources [belowQuotaRegimentThinTribeDistractionPeaceTargets] only —
+/// the regiment-thin below-quota tribe-distraction pivot that releases a
+/// thin GP from non-frontier tribe wars (seed-42 gp4). The sibling
+/// [belowQuotaMultiMinorDistractionPeaceTargets] is **not** unioned here:
+/// it splits a regiment-thin GP off all but one *minor* front, which
+/// throws away the productive multi-minor conquest the gp3 / gp6
+/// baselines depend on, so the minor distraction pivot stays confined to
+/// the no-`phasePlan` `collectStalledGreatPowerPeaceTargets` fallback
+/// where it originated. The returned list is already ascending-sorted.
+List<String> _expandDistractionPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) => belowQuotaRegimentThinTribeDistractionPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 ({
   bool gpOnlyInvadableFrontierActive,
