@@ -36,7 +36,15 @@ void noop() {}
 
   test('documents grandfather allowlist entries for deferred C0 edges', () {
     final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(allowlist, contains('combat->diplomacy:combat/naval_combat_resolver.dart'));
+    expect(allowlist, contains('orders->turn:orders/order_projections.dart'));
     expect(allowlist, contains('ai->diplomacy:ai/simple_ai_heuristics.dart'));
+  });
+
+  test('combat->diplomacy edge is fully eliminated (no grandfather entries)', () {
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(
+      allowlist.where((e) => e.startsWith('combat->diplomacy:')),
+      isEmpty,
+    );
   });
 }

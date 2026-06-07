@@ -52,9 +52,6 @@ const _grandfatherAllowlist = <String>{
   'orders->turn:orders/order_projections.dart',
   'orders->turn:orders/orders_application.dart',
   'orders->turn:orders/orders_application_context.dart',
-  'combat->diplomacy:combat/military_attack_economy.dart',
-  'combat->diplomacy:combat/naval_combat_resolver.dart',
-  'combat->diplomacy:combat/unopposed_province_capture.dart',
   'ai->diplomacy:ai/full_ai_civilian_work_selection.dart',
   'ai->diplomacy:ai/simple_ai_heuristics.dart',
 };

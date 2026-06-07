@@ -20,7 +20,7 @@ Phase 0 deliverables (child issue C0):
 | `diplomacy` | `world` | Allowed |
 | `world` | `diplomacy` | **Eliminated** — `world/faction_membership.dart`, `world/diplomatic_relation_lookup.dart` |
 | `diplomacy` | `combat` | Allowed |
-| `combat` | `diplomacy` | Deferred — 3 files |
+| `combat` | `diplomacy` | **Eliminated** — relation/war + faction-membership lookups retargeted to `world/diplomatic_relation_lookup.dart` and `world/faction_membership.dart` |
 | `economy` | `orders` | Partial — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import remains |
 | `orders` | `economy` | Allowed |
 | `turn` | `orders` | Allowed |
@@ -91,13 +91,15 @@ Phase 0 deliverables (child issue C0):
 
 ### `diplomacy ↔ combat`
 
-**Wrong:** `combat` → `diplomacy` (3 files)
+**Wrong:** `combat` → `diplomacy` (3 files, fixed in Phase 0 slice)
 
-| Source | Import | Key symbols | Proposed destination |
-|--------|--------|-------------|---------------------|
-| `combat/military_attack_economy.dart` | `diplomacy_resolver.dart` | war/ownership checks | `world/` or invert via `combat` callbacks |
-| `combat/naval_combat_resolver.dart` | `diplomacy_relation_lookup.dart` | relation at war | `world/diplomatic_relation_view.dart` |
-| `combat/unopposed_province_capture.dart` | `diplomacy_relation_lookup.dart` | same | same |
+| Source | Import | Key symbols | Destination |
+|--------|--------|-------------|-------------|
+| `combat/military_attack_economy.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership`, `isGreatPower` | `world/faction_membership.dart` |
+| `combat/naval_combat_resolver.dart` | `diplomacy_relation_lookup.dart` | `hostileFactionsByFaction` | `world/diplomatic_relation_lookup.dart` |
+| `combat/unopposed_province_capture.dart` | `diplomacy_relation_lookup.dart` | `factionsAtWar` | `world/diplomatic_relation_lookup.dart` |
+
+**Correct:** `diplomacy` → `combat` — unchanged; `diplomacy_relation_lookup.dart` still imports `combat/military_strength.dart` for power-score aggregation.
 
 ### `diplomacy ↔ ai`
 
