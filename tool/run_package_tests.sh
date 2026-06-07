@@ -15,7 +15,7 @@ export SUPPRESS_IMAGE_VIEWER="${SUPPRESS_IMAGE_VIEWER:-1}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-ALL_PKGS=(colonizethis_models colonizethis_data colonizethis_save colonizethis_map colonizethis_world colonizethis_logic colonizethis_ai)
+ALL_PKGS=(colonizethis_models colonizethis_data colonizethis_save colonizethis_map colonizethis_world colonizethis_combat colonizethis_logic colonizethis_ai)
 
 # ---- read package filter ---------------------------------------------------
 if [ -n "${PACKAGES_TO_TEST:-}" ]; then
@@ -126,13 +126,13 @@ done
 echo ""
 
 gate_pkgs=()
-for pkg in colonizethis_logic colonizethis_map colonizethis_ai; do
+for pkg in colonizethis_logic colonizethis_map colonizethis_ai colonizethis_combat; do
   if printf '%s\n' "${PKGS[@]}" | grep -qxF "$pkg"; then
     gate_pkgs+=("packages/$pkg")
   fi
 done
 if [ ${#gate_pkgs[@]} -gt 0 ]; then
-  echo "=== Coverage gate (logic/map/ai >= 90%) ==="
+  echo "=== Coverage gate (logic/map/ai/combat >= 90%) ==="
   "$ROOT/tool/check_coverage_threshold.sh" 90 "${gate_pkgs[@]}"
 fi
 

@@ -97,6 +97,8 @@ jobs:
               - 'packages/colonizethis_map/**'
             pkg_world:
               - 'packages/colonizethis_world/**'
+            pkg_combat:
+              - 'packages/colonizethis_combat/**'
             pkg_logic:
               - 'packages/colonizethis_logic/**'
             pkg_ai:
@@ -112,6 +114,7 @@ jobs:
             --changed-save="${{ steps.filter.outputs.pkg_save }}" \
             --changed-map="${{ steps.filter.outputs.pkg_map }}" \
             --changed-world="${{ steps.filter.outputs.pkg_world }}" \
+            --changed-combat="${{ steps.filter.outputs.pkg_combat }}" \
             --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
             --changed-ai="${{ steps.filter.outputs.pkg_ai }}" \
             | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)))")

@@ -1,10 +1,10 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 import 'package:colonizethis_world/src/world/army_migration.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
@@ -137,7 +137,7 @@ Game resolveBattleContext(
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
     );
-    logicLog.d(
+    combatLog.d(
       'combat engagement regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
       'attackerFactionId=${attacker.side.factionId} result=${outcome.result.name} '
       'attCasualties=${outcome.attackerCasualties.length} '
@@ -218,7 +218,7 @@ Game resolveBattleContext(
       }
     }
   }
-  logicLog.i(
+  combatLog.i(
     'combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
     'mode=autoResolve provinceFlipped=${post.provinceChangedOwner} '
     'casualtiesApplied=${allCasualties.length} ownerAfter=$ownerAfter',

@@ -1,14 +1,19 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-/// Filters captured [LogEvent]s for the `logic: combat` logger prefix.
+/// Filters captured [LogEvent]s for combat-domain logger lines.
 ///
-/// Combat-logging tests assert against ordered lines emitted under that prefix
-/// (engagement, battle_apply, battle_start, conflict_detection, ...). Centralised
-/// so split test files share one filter rather than duplicate it.
+/// After the `colonizethis_combat` package extraction (Refs #3290 Phase 1),
+/// combat-resolution lines emitted from that package carry the `combat:` prefix
+/// (e.g. `combat: combat engagement`), while turn-orchestrated combat-phase
+/// lines emitted from `colonizethis_logic` keep the `logic:` prefix
+/// (e.g. `logic: combat conflict_detection`). This filter matches both so split
+/// test files share one filter rather than duplicate it.
 List<String> combatMessages(List<LogEvent> events) => [
   for (final e in events)
-    if (e.message.contains('logic: combat')) e.message,
+    if (e.message.contains('logic: combat') ||
+        e.message.contains('combat: combat'))
+      e.message,
 ];
 
 /// Holder for combat-logging test capture state.
