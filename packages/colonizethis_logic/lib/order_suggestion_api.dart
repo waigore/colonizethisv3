@@ -11,5 +11,13 @@ export 'src/orders/order_resolution_context.dart'
         OrderResolutionContext,
         buildOrderResolutionContext,
         orderResolutionContextFromView;
+export 'src/orders/diplomatic_panel_actions.dart'
+    show
+        DiplomaticPanelAction,
+        diplomaticPanelActionCandidates,
+        enumerateDiplomaticPanelActionsForTarget,
+        kDiplomaticPanelOvertureStages;
 export 'src/orders/order_suggestion_helpers.dart'
     show knownDiplomaticTargetFactionIds;
+export 'src/diplomacy/gp_tribe_first_contact.dart'
+    show GpTribeFirstContactResult, applyGpTribeFirstContactRelations;

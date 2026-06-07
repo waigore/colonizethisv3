@@ -69,6 +69,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |
 | `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | TBD | — | draft |
 | `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | TBD | — | draft |
+| `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
 | `SYS10001` | Debug log viewer | — | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | — | draft |
 | `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | TBD | — | draft |
 

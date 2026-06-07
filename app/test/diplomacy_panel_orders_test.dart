@@ -67,39 +67,45 @@ void main() {
         .setMockMessageHandler('flutter/assets', null);
   });
 
-  testWidgets('DiplomacyPanel shows empty state when no factions discovered', (
-    WidgetTester tester,
-  ) async {
-    const humanId = 'solo';
-    final game = Game(
-      id: 'solo_game',
-      worldState: const WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-      ),
-      players: const [
-        Player(id: humanId, displayName: 'Only', isHuman: true, treasury: 0),
-      ],
-    );
+  testWidgets(
+    'DiplomacyPanel shows always-visible section headings + tribe placeholder '
+    'when no factions discovered',
+    (WidgetTester tester) async {
+      const humanId = 'solo';
+      final game = Game(
+        id: 'solo_game',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: humanId, displayName: 'Only', isHuman: true, treasury: 0),
+        ],
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: DiplomacyPanel(
-            game: game,
-            humanPlayerId: humanId,
-            topology: MapTopology(),
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: MapTopology(),
+              currentOrders: const Orders(),
+              bus: AppEventBus.create(),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('No other factions discovered yet.'), findsOneWidget);
-  });
+      // SPEC/ui/diplomacy-panel.md § Section headings (Refs #3341).
+      expect(find.text('Great Powers'), findsOneWidget);
+      expect(find.text('Minor Nations'), findsOneWidget);
+      expect(find.text('Tribes'), findsOneWidget);
+      expect(find.text('No tribes contacted yet.'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'DiplomacyPanel confirm action emits AppendDiplomaticOrderRequestedEvent',

@@ -40,6 +40,7 @@ const Map<String, String> _expectedConstants = {
   'quickBattleScreen': UiScreenIds.quickBattleScreen,
   'quickBattleResultDialog': UiScreenIds.quickBattleResultDialog,
   'gameStartIntroOverlay': UiScreenIds.gameStartIntroOverlay,
+  'tribeFirstContactOverlay': UiScreenIds.tribeFirstContactOverlay,
   'victoryOverlay': UiScreenIds.victoryOverlay,
   'overtureDialogueOverlay': UiScreenIds.overtureDialogueOverlay,
   'callToArmsDialogueOverlay': UiScreenIds.callToArmsDialogueOverlay,

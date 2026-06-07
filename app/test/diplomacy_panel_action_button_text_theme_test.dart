@@ -3,6 +3,9 @@
 // `AppThemes.editorialMonocle.textTheme` rather than a hard-coded
 // `const TextStyle(fontSize: 12)` literal.
 //
+// `_ActionButton` lives in `diplomacy_panel_row.dart` (extracted from
+// `diplomacy_panel.dart`).
+//
 // SPEC:
 //  * `SPEC/ui/pixel-art-ui-catalog.md` § *Editorial-monocle palette* —
 //    canonical TextTheme contract (M3 dark slot table).
@@ -25,24 +28,24 @@ void main() {
   suppressLogsForTests();
 
   group(
-    'diplomacy_panel.dart _ActionButton routes caption through TextTheme '
+    'diplomacy_panel_row.dart _ActionButton routes caption through TextTheme '
     '(Refs #2914 S7 regression guard)',
     () {
-      late final String diplomacyPanelSource;
+      late final String diplomacyPanelRowSource;
 
       setUpAll(() {
         // `flutter test` runs from the package root (`app/`); the source
         // path is therefore relative to that working directory.
         final File source =
-            File('lib/features/game/widgets/diplomacy_panel.dart');
+            File('lib/features/game/widgets/diplomacy_panel_row.dart');
         expect(
           source.existsSync(),
           isTrue,
           reason:
-              'Expected `app/lib/features/game/widgets/diplomacy_panel.dart` '
+              'Expected `app/lib/features/game/widgets/diplomacy_panel_row.dart` '
               'to exist; running directory is `${Directory.current.path}`.',
         );
-        diplomacyPanelSource = source.readAsStringSync();
+        diplomacyPanelRowSource = source.readAsStringSync();
       });
 
       test(
@@ -57,10 +60,10 @@ void main() {
           r'fontSize:\s*12\s*\)',
         );
         expect(
-          slotFallback.hasMatch(diplomacyPanelSource),
+          slotFallback.hasMatch(diplomacyPanelRowSource),
           isTrue,
           reason:
-              'Expected `_ActionButton.build` in `diplomacy_panel.dart` to '
+              'Expected `_ActionButton.build` in `diplomacy_panel_row.dart` to '
               'resolve its caption text style via '
               '`theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)` '
               '(Refs #2914 S7). If the slot was intentionally changed, '
@@ -79,13 +82,13 @@ void main() {
           r'style:\s*const\s+TextStyle\s*\(\s*fontSize:\s*\d+',
         );
         final Iterable<RegExpMatch> matches =
-            inlineHardCoded.allMatches(diplomacyPanelSource);
+            inlineHardCoded.allMatches(diplomacyPanelRowSource);
         expect(
           matches,
           isEmpty,
           reason:
               'Found ${matches.length} `style: const TextStyle(fontSize: N)` '
-              'literal(s) in `diplomacy_panel.dart`. Each must route through '
+              'literal(s) in `diplomacy_panel_row.dart`. Each must route through '
               '`Theme.of(context).textTheme.<slot> ?? const TextStyle(...)` '
               'per Refs #2914 S7 so font, weight, and colour flow from '
               '`AppThemes.editorialMonocle`. Offending occurrences: '

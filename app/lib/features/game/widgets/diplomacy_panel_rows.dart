@@ -94,6 +94,7 @@ class DiplomacyRowData {
     this.powerScore,
     this.playerPowerScore,
     required this.pendingOrderTypes,
+    this.pendingOvertureStage,
     this.activeSubsidyPerTurn,
     this.pendingGrantAmount,
     this.pendingSubsidyAmount,
@@ -104,7 +105,7 @@ class DiplomacyRowData {
   final FactionKind kind;
   final DiplomacyRelation? relation;
   final OvertureState? overture;
-  final List<DiplomaticOrder> actions;
+  final List<DiplomaticPanelAction> actions;
 
   /// Great Power power score (SPEC/game/diplomacy.md). Only set for GP rows.
   final int? powerScore;
@@ -114,6 +115,9 @@ class DiplomacyRowData {
 
   /// Set of DiplomaticOrderType that are currently pending for this target faction.
   final Set<DiplomaticOrderType> pendingOrderTypes;
+
+  /// When an [establishOverture] order is pending, the queued overture stage.
+  final OvertureStage? pendingOvertureStage;
 
   /// Active £/turn subsidy from the human GP to this row's faction (`Game.subsidyStates`).
   final int? activeSubsidyPerTurn;
@@ -125,26 +129,60 @@ class DiplomacyRowData {
   final int? pendingSubsidyAmount;
 }
 
+/// Default neutral first-contact standing surfaced for a discovered faction
+/// that has no persisted [DiplomacyRelation] yet. SPEC/ui/diplomacy-panel.md
+/// § Discovered factions → First-contact standing: `AT_PEACE`, score `50`,
+/// level `Neutral` (the same default used for game-start Minor relations).
+/// The `DiplomacyRelation` constructor already defaults to these values; the
+/// turn fields are pinned to the current turn so history-derived UI stays
+/// deterministic.
+DiplomacyRelation _defaultFirstContactRelation(
+  String humanPlayerId,
+  String factionId,
+  int currentTurn,
+) => DiplomacyRelation(
+  factionId1: humanPlayerId,
+  factionId2: factionId,
+  sinceTurn: currentTurn,
+  lastInteractionTurn: currentTurn,
+);
+
 /// Builds list of discovered factions and their available actions.
-/// Discovered = has a relation with the player. SPEC/ui/diplomacy-panel.md.
+///
+/// Discovery follows `knownDiplomaticTargetFactionIds`
+/// (SPEC/ui/diplomacy-panel.md § Discovered factions): an existing
+/// [DiplomacyRelation], non-`unknown` tile visibility into a faction-owned
+/// province, or a sea-reachable New-World Tribe province (colonial intel).
+/// A discovered faction without a persisted relation is surfaced with the
+/// default neutral first-contact standing.
 List<DiplomacyRowData> buildDiplomacyRows(
   Game game,
   MapTopology topology,
   String humanPlayerId,
   Orders currentOrders,
 ) {
-  const suggestionApi = DefaultOrderSuggestionAPI();
   final view = buildPlayerView(game, topology, humanPlayerId);
-  final discoveredIds = view.diplomacyByOtherId.keys.toList();
-  final suggestions = suggestionApi.suggestDiplomaticOrders(
-    view,
-    game,
-    topology,
-    currentOrders,
-  );
-  final actionsByTarget = <String, List<DiplomaticOrder>>{};
-  for (final order in suggestions) {
-    actionsByTarget.putIfAbsent(order.targetFactionId, () => []).add(order);
+  final discoveredIds = <String>{
+    ...view.diplomacyByOtherId.keys,
+    ...knownDiplomaticTargetFactionIds(
+      view: view,
+      game: game,
+      topology: topology,
+    ),
+  };
+  final currentTurn = game.worldState.turnState.turnNumber;
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final actionsByTarget = <String, List<DiplomaticPanelAction>>{};
+  for (final id in discoveredIds) {
+    if (id == humanPlayerId) continue;
+    actionsByTarget[id] = enumerateDiplomaticPanelActionsForTarget(
+      game: game,
+      topology: topology,
+      playerId: humanPlayerId,
+      targetId: id,
+      currentOrders: currentOrders,
+      factionMembership: factionMembership,
+    );
   }
 
   final gpIds = <String>[];
@@ -173,10 +211,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
   });
 
   final pendingByTarget = <String, Set<DiplomaticOrderType>>{};
+  final pendingOvertureStageByTarget = <String, OvertureStage>{};
   final pendingList =
       currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
   for (final o in pendingList) {
     pendingByTarget.putIfAbsent(o.targetFactionId, () => {}).add(o.type);
+    if (o.type == DiplomaticOrderType.establishOverture &&
+        o.overtureStage != null) {
+      pendingOvertureStageByTarget[o.targetFactionId] = o.overtureStage!;
+    }
   }
 
   String displayNameFor(String id) {
@@ -200,12 +243,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
         factionId: id,
         displayName: displayNameFor(id),
         kind: FactionKind.greatPower,
-        relation: view.diplomacyByOtherId[id],
+        relation:
+            view.diplomacyByOtherId[id] ??
+            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
+        actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
         powerScore: greatPowerPowerScore(game, id),
         playerPowerScore: playerPower,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        pendingOvertureStage: pendingOvertureStageByTarget[id],
         activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyAmount: econ.subsidy,
@@ -220,12 +266,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
         factionId: id,
         displayName: displayNameFor(id),
         kind: FactionKind.minor,
-        relation: view.diplomacyByOtherId[id],
+        relation:
+            view.diplomacyByOtherId[id] ??
+            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
+        actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        pendingOvertureStage: pendingOvertureStageByTarget[id],
         activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyAmount: econ.subsidy,
@@ -240,12 +289,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
         factionId: id,
         displayName: displayNameFor(id),
         kind: FactionKind.tribe,
-        relation: view.diplomacyByOtherId[id],
+        relation:
+            view.diplomacyByOtherId[id] ??
+            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
+        actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        pendingOvertureStage: pendingOvertureStageByTarget[id],
         activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyAmount: econ.subsidy,

@@ -592,9 +592,11 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
       // Renders the panel against a Game whose human player has no
       // diplomacy relations with any other faction (no other Great
       // Power, Minor Nation, or Tribe), so `buildDiplomacyRows` returns
-      // an empty list and the panel paints the
-      // `diplomacy_panel_noFactions` empty-state copy under the
-      // editorial-monocle dark chrome. Refs #2863 S7.
+      // an empty list and the panel paints the three always-visible
+      // section headings plus their per-section empty placeholders —
+      // including the `diplomacy_panel_noTribes` ("No tribes contacted
+      // yet.") copy — under the editorial-monocle dark chrome.
+      // Refs #2863 S7 / #3341.
       WidgetbookUseCase(
         name: 'No factions discovered (empty state)',
         builder: (context) {
@@ -657,9 +659,9 @@ const String _diplomacyPanelEmptyHumanPlayerId = 'gp1';
 /// Minimal `Game` for the Diplomacy Panel empty-state Widgetbook story:
 /// a single human-controlled Great Power with no other discovered
 /// factions and no diplomacy relations, so `buildDiplomacyRows` returns
-/// an empty list and the panel paints the `diplomacy_panel_noFactions`
-/// empty-state copy. SPEC/ui/diplomacy-panel.md § Widgetbook empty
-/// state.
+/// an empty list and the panel paints the three always-visible section
+/// headings plus the `diplomacy_panel_noTribes` empty placeholder copy.
+/// SPEC/ui/diplomacy-panel.md § Widgetbook empty state.
 final Game _diplomacyPanelEmptyGame = () {
   const ow = 'oldWorld';
   final p1 = Province(

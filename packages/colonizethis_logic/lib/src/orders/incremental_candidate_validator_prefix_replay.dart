@@ -199,4 +199,53 @@ extension IncrementalCandidateValidatorPrefixReplay
         .result
         .isAccepted;
   }
+
+  /// Like [isDiplomaticAccepted] but returns the full [OrderValidationResult]
+  /// so UI layers can surface validator rejection text on disabled controls.
+  OrderValidationResult probeDiplomaticOrder(DiplomaticOrder candidate) {
+    final player = _player();
+    if (player == null) {
+      return OrderValidationResult.rejected('Player not found');
+    }
+    if (_cachedDiplomaticPrefixReplaySucceeded == false) {
+      return OrderValidationResult.rejected(
+        'Previous invalid diplomatic order in prefix',
+      );
+    }
+    final economy = _projectEconomyAfterAcceptedBuildAndWorkOrders(player);
+    final membership = _factionMembership();
+
+    if (_cachedPostDiplomaticPrefixState == null) {
+      final prefixValidator = DiplomaticOrderValidator(
+        game: game,
+        playerId: playerId,
+        initialTreasury: economy.treasury,
+        factionMembership: membership,
+      );
+      for (final existing in diplomaticOrders) {
+        final result = prefixValidator.validate(
+          existing,
+          previousRejected: false,
+        );
+        if (!result.result.isAccepted) {
+          _cachedDiplomaticPrefixReplaySucceeded = false;
+          return result.result;
+        }
+      }
+      _cachedDiplomaticPrefixReplaySucceeded = true;
+      _cachedPostDiplomaticPrefixState = prefixValidator
+          .capturePrefixCheckpoint();
+    }
+
+    final checkpoint = _cachedPostDiplomaticPrefixState!;
+    final candidateValidator = DiplomaticOrderValidator.fromPrefixCheckpoint(
+      game: game,
+      playerId: playerId,
+      checkpoint: checkpoint,
+      factionMembership: membership,
+    );
+    return candidateValidator
+        .validate(candidate, previousRejected: false)
+        .result;
+  }
 }

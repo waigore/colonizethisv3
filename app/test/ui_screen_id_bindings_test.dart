@@ -16,6 +16,7 @@ import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_ov
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
@@ -132,6 +133,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'GameStartIntroOverlay': (
     actual: GameStartIntroOverlay.screenId,
     expected: UiScreenIds.gameStartIntroOverlay,
+  ),
+  'TribeFirstContactOverlay': (
+    actual: TribeFirstContactOverlay.screenId,
+    expected: UiScreenIds.tribeFirstContactOverlay,
   ),
   'VictoryOverlay': (
     actual: VictoryOverlay.screenId,
