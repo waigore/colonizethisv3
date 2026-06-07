@@ -26,9 +26,8 @@ import 'package:hive/hive.dart';
 /// [GameMapEmpireLeftRail] (issue #2861 S3 / R4).
 ///
 /// Asserts the rail buttons paint a 36 × 36 dp surface with the canonical
-/// dark gradient + border tokens and a 24 × 24 dp icon glyph tinted in the
-/// editorial-monocle accent token cycle (`--accent-dim` default,
-/// `--accent` hover, `--accent-bright` pressed). Also pins the no-light-hex
+/// dark gradient + border tokens and a 24 × 24 dp full-colour icon glyph
+/// without a `srcIn` tint (issue #2861 S14 / M5). Also pins the no-light-hex
 /// rule documented in `SPEC/ui/empire-buttons.md` § Styling.
 void main() {
   suppressLogsForTests();
@@ -208,32 +207,31 @@ void main() {
     );
   });
 
-  testWidgets('Idle rail button tints icon glyph with --accent-dim', (
+  testWidgets('Rail button icon glyphs render without srcIn ColorFiltered tint', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(railScaffold());
     await tester.pumpAndSettle();
 
-    final filterFinder = find.descendant(
-      of: find.byKey(kEmpireProductionButtonKey),
-      matching: find.byType(ColorFiltered),
-    );
-    expect(filterFinder, findsOneWidget);
-    final filtered = tester.widget<ColorFiltered>(filterFinder);
-    final filter = filtered.colorFilter;
-    expect(
-      filter,
-      equals(
-        ColorFilter.mode(
-          EditorialMonoclePalette.accentDim,
-          BlendMode.srcIn,
-        ),
-      ),
-      reason: 'Idle rail button must tint icon glyph with --accent-dim',
-    );
+    for (final key in railButtonKeys) {
+      final filterFinder = find.descendant(
+        of: find.byKey(key),
+        matching: find.byType(ColorFiltered),
+      );
+      expect(
+        filterFinder,
+        findsNothing,
+        reason: 'Rail button $key must not apply a srcIn tint over the icon',
+      );
+      final iconFinder = find.descendant(
+        of: find.byKey(key),
+        matching: find.byType(StrictAssetIcon),
+      );
+      expect(iconFinder, findsOneWidget);
+    }
   });
 
-  testWidgets('Hover tints icon glyph with --accent', (
+  testWidgets('Hover lifts border but does not add icon glyph tint', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(railScaffold());
@@ -252,18 +250,20 @@ void main() {
       of: find.byKey(kEmpireProductionButtonKey),
       matching: find.byType(ColorFiltered),
     );
-    final filtered = tester.widget<ColorFiltered>(filterFinder);
-    final filter = filtered.colorFilter;
     expect(
-      filter,
-      equals(
-        ColorFilter.mode(
-          EditorialMonoclePalette.accent,
-          BlendMode.srcIn,
-        ),
-      ),
-      reason: 'Hover should tint the icon glyph with --accent',
+      filterFinder,
+      findsNothing,
+      reason: 'Hover affordance must not recolour the icon glyph via srcIn tint',
     );
+    final containerFinder = find.descendant(
+      of: find.byKey(kEmpireProductionButtonKey),
+      matching: find.byType(AnimatedContainer),
+    );
+    final border =
+        (tester.widget<AnimatedContainer>(containerFinder).decoration
+                as BoxDecoration)
+            .border as Border;
+    expect(border.top.color, EditorialMonoclePalette.accentDim);
   });
 
   testWidgets('Rail buttons render with 3 dp vertical gaps between them', (
