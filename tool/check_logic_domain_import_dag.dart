@@ -57,10 +57,6 @@ const _forbiddenEdges = <(String, String)>{
 const _grandfatherAllowlist = <String>{
   'economy->orders:economy/world_market/trade_order_validator.dart',
   'orders->turn:orders/order_projections.dart',
-  'orders->turn:orders/orders_application.dart',
-  'orders->turn:orders/orders_application_context.dart',
-  'ai->diplomacy:ai/full_ai_civilian_work_selection.dart',
-  'ai->diplomacy:ai/simple_ai_heuristics.dart',
 };
 
 void main() {
@@ -130,7 +126,9 @@ String? _domainForSrcRelativePath(String relativePath) {
 
 String? _resolveImportTargetDomain(String fromRelativeFile, String importPath) {
   if (importPath.startsWith('package:colonizethis_logic/src/')) {
-    final remainder = importPath.substring('package:colonizethis_logic/src/'.length);
+    final remainder = importPath.substring(
+      'package:colonizethis_logic/src/'.length,
+    );
     return _domainFromResolvedPath(remainder);
   }
   if (!importPath.startsWith('../') && !importPath.startsWith('./')) {

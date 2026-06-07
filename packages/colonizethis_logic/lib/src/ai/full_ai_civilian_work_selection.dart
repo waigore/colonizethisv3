@@ -4,8 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/build_rail_work_rules.dart';
+import '../world/faction_membership.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
