@@ -69,6 +69,22 @@ class CtResourceCell extends StatelessWidget {
   /// (`.r-delta { margin-left: 2px }` in the mockup).
   static const double quantityToDeltaGap = 2;
 
+  /// Name + quantity font size in logical px. Matches the mockup
+  /// `.resource-cell` `font-size: clamp(9px, 1.3vw, 10px)` ceiling so the
+  /// compact cells fit canonical commodity / worker names in full within the
+  /// 3-column / 2-column Available grid (Refs #2862 S9 / C9).
+  static const double nameFontSize = 10;
+
+  /// Quantity font size in logical px. Shares the mockup `.r-qty`
+  /// `clamp(9px, 1.3vw, 10px)` ceiling with [nameFontSize].
+  static const double quantityFontSize = 10;
+
+  /// Delta font size in logical px. Matches the mockup `.r-delta`
+  /// `font-size: clamp(8px, 1.1vw, 9px)` ceiling — one step smaller than the
+  /// quantity so the trailing cluster stays at minimal intrinsic width and a
+  /// name that fits without a delta still fits with one (Refs #2862 S9 / C10).
+  static const double deltaFontSize = 9;
+
   /// Returns the formatted delta string for the supplied [delta] per R10.
   /// Returns `null` if the delta region should not be laid out.
   static String? formattedDeltaText(int? delta) {
@@ -106,37 +122,85 @@ class CtResourceCell extends StatelessWidget {
   TextStyle _nameStyle(BuildContext context) {
     final TextStyle base =
         Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    return base.copyWith(color: EditorialMonoclePalette.fg);
+    return base.copyWith(
+      color: EditorialMonoclePalette.fg,
+      fontSize: nameFontSize,
+    );
   }
 
-  TextStyle _monoStyle(BuildContext context, {required Color color}) {
+  TextStyle _monoStyle(
+    BuildContext context, {
+    required Color color,
+    required double fontSize,
+  }) {
     final TextStyle base =
         Theme.of(context).textTheme.labelMedium ?? const TextStyle(fontSize: 12);
     return base.copyWith(
       color: color,
+      fontSize: fontSize,
       fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
       fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
     );
   }
 
-  /// Trailing monospace text slot wrapped in `Flexible(fit: loose)` with
-  /// `TextOverflow.ellipsis` and `softWrap: false`. Used for both the quantity
-  /// and the optional delta so the catalog cell fits gracefully when the
-  /// column slot is narrower than the cell's natural content width
-  /// (e.g. mobile 360 dp inside the 3-col Available grid for #2862).
-  Widget _flexibleMonoText(
+  /// A single trailing monospace [Text] (ellipsizing, one line). Kept as a
+  /// distinct widget per value so the quantity and delta remain individually
+  /// findable / colour-assertable, while [_trailingCluster] composes them.
+  Widget _monoText(
     BuildContext context, {
     required String text,
     required Color color,
+    required double fontSize,
+  }) {
+    return Text(
+      text,
+      style: _monoStyle(context, color: color, fontSize: fontSize),
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  /// Builds the trailing quantity + optional delta as **one** loose [Flexible]
+  /// cluster (see [build]). Presenting quantity+delta as a single flex child of
+  /// the outer [Row] keeps the [Expanded] name column's flex share constant
+  /// whether or not a delta is shown, so the rendered name keeps the same width
+  /// with vs without a `+N` / `-N` delta (Refs #2862 S9 / C10). Inside the
+  /// cluster each value is itself a loose [Flexible] so they ellipsize as a
+  /// last resort at pathologically narrow widths instead of overflowing.
+  Widget _trailingCluster(
+    BuildContext context, {
+    required String quantityText,
+    required String? deltaText,
+    required Color? deltaTextColor,
   }) {
     return Flexible(
       fit: FlexFit.loose,
-      child: Text(
-        text,
-        style: _monoStyle(context, color: color),
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
-        softWrap: false,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Flexible(
+            fit: FlexFit.loose,
+            child: _monoText(
+              context,
+              text: quantityText,
+              color: EditorialMonoclePalette.accentDim,
+              fontSize: quantityFontSize,
+            ),
+          ),
+          if (deltaText != null) ...<Widget>[
+            const SizedBox(width: quantityToDeltaGap),
+            Flexible(
+              fit: FlexFit.loose,
+              child: _monoText(
+                context,
+                text: deltaText,
+                color: deltaTextColor!,
+                fontSize: deltaFontSize,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -174,19 +238,12 @@ class CtResourceCell extends StatelessWidget {
               ),
             ),
             const SizedBox(width: itemGap),
-            _flexibleMonoText(
+            _trailingCluster(
               context,
-              text: formatQuantity(quantity),
-              color: EditorialMonoclePalette.accentDim,
+              quantityText: formatQuantity(quantity),
+              deltaText: deltaText,
+              deltaTextColor: deltaTextColor,
             ),
-            if (deltaText != null) ...<Widget>[
-              const SizedBox(width: quantityToDeltaGap),
-              _flexibleMonoText(
-                context,
-                text: deltaText,
-                color: deltaTextColor!,
-              ),
-            ],
           ],
         ),
       ),

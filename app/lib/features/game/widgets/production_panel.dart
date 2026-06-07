@@ -7,12 +7,12 @@ import '../../../config/constants.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
+import 'chrome/ct_action_text_button.dart';
 import 'chrome/ct_danger_text_button.dart';
 import 'production_allocation_row.dart';
 import 'production_allocation_row_chrome.dart';
@@ -410,9 +410,9 @@ class _AvailableSubpanel extends StatelessWidget {
           ),
         ),
         if (onOpenCommodityBreakdown != null)
-          CtNinePatchButton(
+          CtActionTextButton(
             onPressed: onOpenCommodityBreakdown,
-            child: Text(l10n.production_breakdown),
+            label: l10n.production_breakdown,
           ),
       ],
     );
