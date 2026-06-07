@@ -3,7 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../../config/constants.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/observe_session_provider.dart';
@@ -25,6 +27,10 @@ String tribeCapitalDisplayName(Game game, Tribe tribe) {
 /// Applies persisted GP–Tribe first-contact relations and enqueues heralds
 /// for tribes not yet announced this session.
 void syncGpTribeFirstContact(WidgetRef ref, Game game) {
+  // Widget tests and Widgetbook mount GameScreen without opening the Hive
+  // games box; skip sync until persistence is available.
+  if (!Hive.isBoxOpen(HiveBoxNames.games)) return;
+
   final shell = ref.read(shellPlayerContextProvider);
   final humanPlayerId =
       shell.panelPlayerId ?? resolveShellPanelPlayerId(shell, game);
