@@ -51,13 +51,25 @@ The top bar applies to both wide and narrow viewports; mobile adaptation does no
 
 ## Section headings
 
-Faction rows are grouped into three sections in this order: **Great Powers**, **Minor Nations**, **Tribes**. Each non-empty section is preceded by a heading rendered per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.section-head`:
+Faction rows are grouped into three sections in this order: **Great Powers**, **Minor Nations**, **Tribes**. Each section heading is **always rendered** (subject to the mode-bar filter — see § Mode bar (filter)), **even when the section has no rows**. This decouples heading visibility from discovery so the player always sees the three faction categories and understands that more factions may appear (notably Tribes, which are discovered during play). Each heading is rendered per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.section-head`:
 
 - Display font (`Cinzel` / `Iowan Old Style` per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette font stacks); `font-weight: 600`; small positive letter-spacing.
 - Text color `--accent`.
 - 2 px bottom border in `--accent-dim` spanning the heading container width.
 
 The heading is otherwise an inert label (no tap target).
+
+### Empty-section placeholder copy
+
+When a visible section has no rows, the panel renders a single muted-italic placeholder line beneath the heading (matches the mockup `.empty` style — `--muted` colour, italic). The copy is:
+
+| Section | Empty placeholder copy (l10n key) |
+|---------|-----------------------------------|
+| Great Powers | `No Great Powers discovered yet.` (`diplomacy_panel_noGreatPowers`) |
+| Minor Nations | `No Minor Nations discovered yet.` (`diplomacy_panel_noMinorNations`) |
+| Tribes | `No tribes contacted yet.` (`diplomacy_panel_noTribes`) |
+
+In practice the Great Powers and Minor Nations sections are populated from game start (same-region relations are initialized), so their placeholders are edge-case fallbacks; the Tribes placeholder is the common case until first tribe contact. The previously documented single global empty message (`diplomacy_panel_noFactions`) is superseded by these per-section placeholders.
 
 ---
 
@@ -222,7 +234,7 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 
 In addition, a **mobile viewport** use case must render the panel inside the shared [mobileViewport](../program/app-ui-wiring.md) frame (360 × 640 dp `MediaQuery` size from `app/lib/widgetbook/catalog.dart`) so the `≤ 500 dp` narrow row variant from [§ Responsive layout](#responsive-layout) is reviewable without window resizing. This satisfies the "any other screen with responsive variants" clause from [mobile-adaptation.md](mobile-adaptation.md) § 6 (Widgetbook verification) for the diplomacy surface listed under [`Refs #2870`](https://github.com/waigore/colonizethisv3/issues/2870) R22.
 
-Finally, an **empty-state** use case named `No factions discovered (empty state)` must render the panel against a `Game` whose human player has no diplomacy relations with any other faction (no other Great Power, Minor Nation, or Tribe). The story exposes the `diplomacy_panel_noFactions` copy under the editorial-monocle dark chrome inherited from the Widgetbook host theme (`AppThemes.editorialMonocle`), so reviewers can validate the empty-state layout without scripting a custom save. The fixture is a stable widget catalog asset — not a runtime debug toggle — so its layout cannot regress silently when `buildDiplomacyRows` is changed.
+Finally, an **empty-state** use case named `No factions discovered (empty state)` must render the panel against a `Game` whose human player has no diplomacy relations with any other faction (no other Great Power, Minor Nation, or Tribe). Because section headings are now always rendered (§ Section headings), the story exposes all three headings (`Great Powers`, `Minor Nations`, `Tribes`) and their per-section empty placeholders — including the canonical `No tribes contacted yet.` (`diplomacy_panel_noTribes`) copy — under the editorial-monocle dark chrome inherited from the Widgetbook host theme (`AppThemes.editorialMonocle`), so reviewers can validate the empty-state layout without scripting a custom save. The fixture is a stable widget catalog asset — not a runtime debug toggle — so its layout cannot regress silently when `buildDiplomacyRows` is changed.
 
 ---
 
@@ -272,4 +284,6 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 
 - **Mobile-viewport Widgetbook story renders narrow rows:** Given the Diplomacy Panel `Mobile viewport — narrow rows (≤ 500 dp)` Widgetbook use case is mounted in a `WidgetTester`, when the builder pumps inside the shared 360 × 640 dp `mobileViewport` frame, then `WidgetTester.takeException()` returns `null` and at least one faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is a `Column` (the `≤ 500 dp` narrow variant per § Responsive layout), demonstrating the responsive contract is reviewable from Widgetbook without resizing the host window (Refs #2870 R22 / S9).
 
-- **Empty-state Widgetbook story renders no-factions copy:** Given the Diplomacy Panel `No factions discovered (empty state)` Widgetbook use case is mounted in a `WidgetTester` under `AppThemes.editorialMonocle`, when the builder pumps the fixture `Game` whose human player has no other discovered factions and no diplomacy relations, then `WidgetTester.takeException()` returns `null`, `buildDiplomacyRows` returns an empty list, `find.text('No other factions discovered yet.')` resolves to exactly one widget (the localized `diplomacy_panel_noFactions` copy), and no `_DiplomacySectionHeader` widget is in the tree (so the panel does not paint a `Great Powers` / `Minor Nations` / `Tribes` heading when no factions are discovered). Refs #2863 S7.
+- **Always-visible section headings:** Given the diplomacy panel is open with the mode-bar filter set to `all`, when the panel renders, then a `_DiplomacySectionHeader` is present for each of `Great Powers`, `Minor Nations`, and `Tribes` regardless of whether those sections have any rows. Refs #3341.
+- **Empty Tribes placeholder copy:** Given the diplomacy panel is open and no tribe has been contacted (the Tribes section has no rows), when the panel renders, then the `Tribes` heading is present and exactly one widget shows the copy `No tribes contacted yet.` (`diplomacy_panel_noTribes`) beneath it, and no tribe faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is in the tree. Refs #3341.
+- **Empty-state Widgetbook story renders headings + tribe placeholder:** Given the Diplomacy Panel `No factions discovered (empty state)` Widgetbook use case is mounted in a `WidgetTester` under `AppThemes.editorialMonocle`, when the builder pumps the fixture `Game` whose human player has no other discovered factions and no diplomacy relations, then `WidgetTester.takeException()` returns `null`, `buildDiplomacyRows` returns an empty list, the three section headings (`Great Powers`, `Minor Nations`, `Tribes`) are each present, `find.text('No tribes contacted yet.')` resolves to exactly one widget (the localized `diplomacy_panel_noTribes` copy), and no faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is in the tree. Refs #2863 S7 / #3341.

@@ -362,21 +362,28 @@ void main() {
     });
 
 
-    testWidgets('AC: Empty state when no factions discovered', (
-      WidgetTester tester,
-    ) async {
-      await _bindTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildPanel(
-          game: gameWithNoDiscovered,
-          humanPlayerId: 'gp1',
-          topology: const MapTopology(nodes: [], edges: []),
-        ),
-      );
-      await _pumpPanelBuilt(tester);
+    testWidgets(
+      'AC-1: Empty state shows all three section headings + tribe placeholder',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithNoDiscovered,
+            humanPlayerId: 'gp1',
+            topology: const MapTopology(nodes: [], edges: []),
+          ),
+        );
+        await _pumpPanelBuilt(tester);
 
-      expect(find.text('No other factions discovered yet.'), findsOneWidget);
-    });
+        // SPEC/ui/diplomacy-panel.md § Section headings (Refs #3341):
+        // headings are always rendered even when their sections are empty.
+        expect(find.text('Great Powers'), findsOneWidget);
+        expect(find.text('Minor Nations'), findsOneWidget);
+        expect(find.text('Tribes'), findsOneWidget);
+        // The Tribes empty placeholder copy (diplomacy_panel_noTribes).
+        expect(find.text('No tribes contacted yet.'), findsOneWidget);
+      },
+    );
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
       await _bindTallTestSurface(tester);

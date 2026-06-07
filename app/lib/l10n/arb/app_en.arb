@@ -2396,6 +2396,18 @@
   "@diplomacy_panel_noFactions": {
     "description": "Empty diplomacy list before any factions are discovered."
   },
+  "diplomacy_panel_noGreatPowers": "No Great Powers discovered yet.",
+  "@diplomacy_panel_noGreatPowers": {
+    "description": "Placeholder copy under the Great Powers section heading when no Great Power has been discovered yet."
+  },
+  "diplomacy_panel_noMinorNations": "No Minor Nations discovered yet.",
+  "@diplomacy_panel_noMinorNations": {
+    "description": "Placeholder copy under the Minor Nations section heading when no Minor Nation has been discovered yet."
+  },
+  "diplomacy_panel_noTribes": "No tribes contacted yet.",
+  "@diplomacy_panel_noTribes": {
+    "description": "Placeholder copy under the Tribes section heading when no tribe has been contacted yet."
+  },
   "diplomacy_panel_powerScore": "Power: {score}",
   "@diplomacy_panel_powerScore": {
     "description": "Great power military/economic score label in diplomacy row.",

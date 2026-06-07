@@ -141,47 +141,58 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         vertical: CtSpacing.m,
       ),
       children: [
-        if (showGps && gps.isNotEmpty) ...[
+        // SPEC/ui/diplomacy-panel.md § Section headings: each section
+        // heading is always rendered (subject to the mode-bar filter),
+        // even when the section has no rows. An empty visible section
+        // renders placeholder copy beneath its heading.
+        if (showGps) ...[
           _sectionHeader(context, l10n.diplomacy_section_greatPowers),
-          ...gps.map(
-            (r) => _DiplomacyRow(
-              data: r,
-              onAction: _submitOrDialog,
-              onTap: () => _openDetail(r),
-              readOnly: widget.readOnly,
+          if (gps.isEmpty)
+            _emptySectionPlaceholder(
+              context,
+              l10n.diplomacy_panel_noGreatPowers,
+            )
+          else
+            ...gps.map(
+              (r) => _DiplomacyRow(
+                data: r,
+                onAction: _submitOrDialog,
+                onTap: () => _openDetail(r),
+                readOnly: widget.readOnly,
+              ),
             ),
-          ),
         ],
-        if (showMinors && minors.isNotEmpty) ...[
+        if (showMinors) ...[
           _sectionHeader(context, l10n.diplomacy_section_minorNations),
-          ...minors.map(
-            (r) => _DiplomacyRow(
-              data: r,
-              onAction: _submitOrDialog,
-              onTap: () => _openDetail(r),
-              readOnly: widget.readOnly,
+          if (minors.isEmpty)
+            _emptySectionPlaceholder(
+              context,
+              l10n.diplomacy_panel_noMinorNations,
+            )
+          else
+            ...minors.map(
+              (r) => _DiplomacyRow(
+                data: r,
+                onAction: _submitOrDialog,
+                onTap: () => _openDetail(r),
+                readOnly: widget.readOnly,
+              ),
             ),
-          ),
         ],
-        if (showTribes && tribes.isNotEmpty) ...[
+        if (showTribes) ...[
           _sectionHeader(context, l10n.diplomacy_section_tribes),
-          ...tribes.map(
-            (r) => _DiplomacyRow(
-              data: r,
-              onAction: _submitOrDialog,
-              onTap: () => _openDetail(r),
-              readOnly: widget.readOnly,
+          if (tribes.isEmpty)
+            _emptySectionPlaceholder(context, l10n.diplomacy_panel_noTribes)
+          else
+            ...tribes.map(
+              (r) => _DiplomacyRow(
+                data: r,
+                onAction: _submitOrDialog,
+                onTap: () => _openDetail(r),
+                readOnly: widget.readOnly,
+              ),
             ),
-          ),
         ],
-        if (rows.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(CtSpacing.xxl),
-            child: Text(
-              l10n.diplomacy_panel_noFactions,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ),
       ],
     );
 
@@ -201,6 +212,27 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
 
   Widget _sectionHeader(BuildContext context, String title) {
     return _DiplomacySectionHeader(title: title);
+  }
+
+  /// Placeholder copy rendered beneath an empty (but always-visible)
+  /// section heading. SPEC/ui/diplomacy-panel.md § Section headings —
+  /// muted italic text using the editorial-monocle `--muted` token
+  /// (matches the mockup `.empty` style), e.g. the Tribes section before
+  /// any tribe has been contacted shows "No tribes contacted yet.".
+  Widget _emptySectionPlaceholder(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: CtSpacing.s,
+        vertical: CtSpacing.m,
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: EditorialMonoclePalette.muted,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    );
   }
 
   void _submitOrDialog(DiplomaticOrder order) {

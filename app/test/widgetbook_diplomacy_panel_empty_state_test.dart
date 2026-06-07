@@ -10,10 +10,11 @@
 //     it surfaces here in CI before reviewers lose the empty-state
 //     story for the diplomacy surface).
 //  2. The builder mounts without exceptions under the editorial-monocle
-//     theme, surfaces the `diplomacy_panel_noFactions` copy ("No other
-//     factions discovered yet."), and renders no faction-row bodies or
-//     section headings (the panel is genuinely empty when the fixture
-//     `Game` has no discovered factions).
+//     theme, surfaces the three always-visible section headings
+//     (Great Powers / Minor Nations / Tribes) and the
+//     `diplomacy_panel_noTribes` copy ("No tribes contacted yet.")
+//     beneath the Tribes heading, and renders no faction-row bodies
+//     (the fixture `Game` has no discovered factions). Refs #3341.
 
 import 'dart:ui' as ui;
 
@@ -103,8 +104,8 @@ void main() {
 
     testWidgets(
       'builder pumps under editorialMonocle without exceptions and renders '
-      'the diplomacy_panel_noFactions copy with no faction rows or section '
-      'headers',
+      'the three always-visible section headings plus the '
+      'diplomacy_panel_noTribes copy with no faction rows',
       (WidgetTester tester) async {
         // Give the panel a generous surface so the empty-state padding
         // and the bottom mode bar both fit within the test viewport
@@ -139,22 +140,48 @@ void main() {
           isNull,
           reason:
               'Empty-state story must pump without exceptions per '
-              'SPEC/ui/diplomacy-panel.md § Widgetbook and the new AC '
-              '"Empty-state Widgetbook story renders no-factions copy".',
+              'SPEC/ui/diplomacy-panel.md § Widgetbook and the AC '
+              '"Empty-state Widgetbook story renders headings + tribe '
+              'placeholder".',
         );
 
-        // Positive: the localized empty-state copy from
-        // `diplomacy_panel_noFactions` ("No other factions discovered
-        // yet.") must render exactly once.
+        // Positive 1: the three section headings are always rendered,
+        // even when their sections are empty (SPEC § Section headings,
+        // Refs #3341).
         expect(
-          find.text('No other factions discovered yet.'),
+          find.text('Great Powers'),
           findsOneWidget,
           reason:
-              'Empty-state story must surface the diplomacy_panel_noFactions '
-              'l10n copy when no factions are discovered.',
+              'Empty-state story must paint the "Great Powers" section '
+              'heading even when no Great Power is discovered.',
+        );
+        expect(
+          find.text('Minor Nations'),
+          findsOneWidget,
+          reason:
+              'Empty-state story must paint the "Minor Nations" section '
+              'heading even when no Minor Nation is discovered.',
+        );
+        expect(
+          find.text('Tribes'),
+          findsOneWidget,
+          reason:
+              'Empty-state story must paint the "Tribes" section heading '
+              'even when no tribe is contacted.',
         );
 
-        // Negative regression guard 1: no faction-row body should be in
+        // Positive 2: the localized Tribes empty placeholder copy from
+        // `diplomacy_panel_noTribes` ("No tribes contacted yet.") must
+        // render exactly once beneath the Tribes heading.
+        expect(
+          find.text('No tribes contacted yet.'),
+          findsOneWidget,
+          reason:
+              'Empty-state story must surface the diplomacy_panel_noTribes '
+              'l10n copy when no tribe is contacted.',
+        );
+
+        // Negative regression guard: no faction-row body should be in
         // the tree (rows is empty → no `_DiplomacyRow` keyed bodies).
         final Finder rowBodyFinder = find.byWidgetPredicate(
           (Widget w) {
@@ -171,31 +198,6 @@ void main() {
           reason:
               'Empty-state story must not paint any faction-row body when '
               'no factions are discovered (rows must be empty).',
-        );
-
-        // Negative regression guard 2: no section heading copy should
-        // be in the tree (no `Great Powers` / `Minor Nations` / `Tribes`
-        // headings when no factions are discovered).
-        expect(
-          find.text('Great Powers'),
-          findsNothing,
-          reason:
-              'Empty-state story must not paint a "Great Powers" section '
-              'heading when no factions are discovered.',
-        );
-        expect(
-          find.text('Minor Nations'),
-          findsNothing,
-          reason:
-              'Empty-state story must not paint a "Minor Nations" section '
-              'heading when no factions are discovered.',
-        );
-        expect(
-          find.text('Tribes'),
-          findsNothing,
-          reason:
-              'Empty-state story must not paint a "Tribes" section heading '
-              'when no factions are discovered.',
         );
       },
     );
