@@ -373,6 +373,16 @@ bool castIronFeedstockExtractionLabourFutile(
 void bumpCounter(Map<String, int> counter, String key) =>
     counter[key] = (counter[key] ?? 0) + 1;
 
+/// Builds a fresh zero-initialised per-GP `<String, int>` diagnostic counter
+/// map keyed by every id in [gpIds]. Shared by the S7-D diagnostic to keep its
+/// many counter declarations to a single line each (the inline
+/// `{for (final gpId in gpIds) gpId: 0}` literal otherwise wraps to three
+/// physical lines per counter, pushing the test file over the repo non-comment
+/// line limit).
+Map<String, int> zeroPerGpCounter(List<String> gpIds) => {
+  for (final gpId in gpIds) gpId: 0,
+};
+
 /// Per-turn castIron-labour stage-localization measurement for one GP (Refs
 /// #2847). Pure read-only over `(game, playerId)`: bundles the boolean flags
 /// the S7-D diagnostic increments each turn so the caller only applies counter

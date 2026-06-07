@@ -1724,18 +1724,10 @@ void main() {
       final improvementInputCommodityIds = workOrderCostBuildImprovement(
         0,
       ).keys.toSet();
-      final improvementInputOffersEmitted = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final improvementInputBidsEmitted = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final improvementInputDealsAsBuyer = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final improvementInputHeldAtTurn99 = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final improvementInputOffersEmitted = zeroPerGpCounter(gpIds);
+      final improvementInputBidsEmitted = zeroPerGpCounter(gpIds);
+      final improvementInputDealsAsBuyer = zeroPerGpCounter(gpIds);
+      final improvementInputHeldAtTurn99 = zeroPerGpCounter(gpIds);
 
       // Refs #2847 H8-extraction castIron residual localization (post-#3241).
       // The level-0 `build_improvement` material is `lumber + castIron`. #3241
@@ -1777,27 +1769,13 @@ void main() {
         ProductionRecipesCatalog.fabricFromWool.id,
         ProductionRecipesCatalog.fabricFromCotton.id,
       };
-      final fabricProductionAssignedTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final castIronFeedstockBidsEmitted = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final castIronFeedstockOffersEmitted = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final castIronFeedstockDealsAsBuyer = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final castIronProductionAssignedTurns = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final lumberHeldAtTurn99 = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
-      final castIronHeldAtTurn99 = <String, int>{
-        for (final gpId in gpIds) gpId: 0,
-      };
+      final fabricProductionAssignedTurns = zeroPerGpCounter(gpIds);
+      final castIronFeedstockBidsEmitted = zeroPerGpCounter(gpIds);
+      final castIronFeedstockOffersEmitted = zeroPerGpCounter(gpIds);
+      final castIronFeedstockDealsAsBuyer = zeroPerGpCounter(gpIds);
+      final castIronProductionAssignedTurns = zeroPerGpCounter(gpIds);
+      final lumberHeldAtTurn99 = zeroPerGpCounter(gpIds);
+      final castIronHeldAtTurn99 = zeroPerGpCounter(gpIds);
       // Refs #2847 H8-extraction supplier feedstock: per-GP count of turns the
       // supplier-side castIron feedstock extraction gate is active
       // (`supplierImprovementInputFeedstockExtractionResourceIds` non-empty) —
