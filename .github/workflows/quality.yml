@@ -176,6 +176,7 @@ jobs:
           fi
           CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
           echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
+          # head closes the pipe early; GNU sed exits 4 under pipefail — do not fail the job.
           echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20 || true
           dart pub get >/dev/null
           PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
