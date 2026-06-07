@@ -293,4 +293,31 @@ void noop() {}
     );
     expect(code, 1);
   });
+
+  test(
+    'diplomacy and dossier do not import logic constants barrel (Refs #3290 Phase 2)',
+    () {
+      final violations = <String>[];
+      for (final domain in ['diplomacy', 'dossier']) {
+        final domainDir = Directory(
+          'packages/colonizethis_logic/lib/src/$domain',
+        );
+        if (!domainDir.existsSync()) continue;
+        for (final entity in domainDir.listSync(recursive: true)) {
+          if (entity is! File || !entity.path.endsWith('.dart')) continue;
+          final content = entity.readAsStringSync();
+          if (content.contains("import '../constants.dart';")) {
+            violations.add(entity.path);
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'diplomacy/dossier must import world symbols directly, not '
+            'lib/src/constants.dart',
+      );
+    },
+  );
 }

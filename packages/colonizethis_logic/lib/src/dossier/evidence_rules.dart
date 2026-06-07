@@ -5,7 +5,7 @@
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 
 /// Human Great Power ids (observers for whom we store evidence).
