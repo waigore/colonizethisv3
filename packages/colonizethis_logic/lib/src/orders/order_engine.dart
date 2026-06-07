@@ -2,13 +2,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'order_projections.dart';
 import '../diplomacy/diplomacy_resolver.dart';
+import '../projections/order_projections.dart';
+import '../projections/projected_effects.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import '../constants.dart';
 import 'order_resolution_context.dart';
-import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
 import '../economy/world_market/trade_order_validator.dart';
