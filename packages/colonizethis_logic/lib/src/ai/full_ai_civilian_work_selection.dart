@@ -11,6 +11,7 @@ import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 
 part 'full_ai_civilian_work_selection_feedstock.dart';
+part 'full_ai_civilian_work_selection_feedstock_acquisition.dart';
 part 'full_ai_civilian_work_selection_explore_prospect.dart';
 part 'full_ai_civilian_work_selection_build_purchase.dart';
 part 'full_ai_civilian_work_selection_unit_paths.dart';
