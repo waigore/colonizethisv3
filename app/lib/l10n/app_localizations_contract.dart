@@ -616,6 +616,9 @@ abstract class AppLocalizations {
   /// Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001).
   String get gameStartIntroOverlay_title;
 
+  /// Display-font title for the tribe first-contact herald overlay (OVL80001).
+  String get tribeFirstContactOverlay_title;
+
   /// Error shown when overture dialogue fails to load.
   String game_overture_loadError(String error);
 
@@ -1350,6 +1353,18 @@ abstract class AppLocalizations {
 
   /// Empty diplomacy list before any factions are discovered.
   String get diplomacy_panel_noFactions;
+
+  /// Placeholder copy under the Great Powers section heading when no Great
+  /// Power has been discovered yet.
+  String get diplomacy_panel_noGreatPowers;
+
+  /// Placeholder copy under the Minor Nations section heading when no Minor
+  /// Nation has been discovered yet.
+  String get diplomacy_panel_noMinorNations;
+
+  /// Placeholder copy under the Tribes section heading when no tribe has
+  /// been contacted yet.
+  String get diplomacy_panel_noTribes;
 
   /// Great power military/economic score label in diplomacy row.
   String diplomacy_panel_powerScore(int score);

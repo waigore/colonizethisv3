@@ -189,6 +189,9 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get gameStartIntroOverlay_title => 'A New World Awaits';
 
   @override
+  String get tribeFirstContactOverlay_title => 'First Contact';
+
+  @override
   String game_overture_loadError(String error) {
     return 'Could not load overture dialogue: $error';
   }

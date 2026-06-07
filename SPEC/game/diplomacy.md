@@ -21,6 +21,7 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 ### GP–GP Rules
 
+- **Overture chain (GP→GP):** Same four-stage chain as GP→Minor/Tribe: Trade Consulate → Embassy → Non-Aggression Pact → Join Empire. Each stage is a separate **Establish Overture** order; the target GP accepts or rejects at turn resolution. **Diplomatic Expertise** tech gates Embassy (and foreign civilian work) for **Minor/Tribe** targets only — GP→GP Embassy is **not** expertise-gated in current product (`establish_overture_validator.dart`). Grant Aid / Set Subsidy on GP rows require embassy-tier overture (`hasEmbassy`), same as Minors/Tribes.
 - **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
 - **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
 - **Alliances:** Offer/accept between GPs. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that is **allied** (`RelationLevel.allied`, `AT_PEACE`) with the **declared-upon** GP receives exactly **one** call to arms per aggressor–defender pair for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app UI; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** relation score between ally and defended GP drops by **20** (clamped 0–100), alliance ends (level no longer Allied; if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused`. Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
@@ -34,6 +35,10 @@ For current product, a Great Power is treated as **nearly defeated** when **both
 - The target **no longer controls its original capital province** (its `capitalProvinceId` in world state is not owned by that faction at the time the Join Empire overture is resolved).
 
 When these conditions hold, other Great Powers that meet the tech and overture requirements may offer **Join Empire** to that target.
+
+### GP–Tribe first contact
+
+GP–Tribe pairs are **not** initialized at game start. When a human GP discovers a Tribe via `knownDiplomaticTargetFactionIds` (tile visibility or sea-reachable colonial intel), `applyGpTribeFirstContactRelations` persists `AT_PEACE`, score `50`, Neutral with `sinceTurn` = current turn. The app presents the first-contact herald once per `(gameId, tribeId)` per session (`OVL80001`). See [`tribe-first-contact-overlay.md`](../ui/tribe-first-contact-overlay.md).
 
 ### GP–Minor Rules
 
