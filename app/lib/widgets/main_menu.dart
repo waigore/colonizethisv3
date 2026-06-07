@@ -64,6 +64,23 @@ const String kMainMenuFooterQuitKey = 'main_menu_footer_quit';
 /// 48 dp primary wood-panel buttons per AC 9.
 const double kMainMenuFooterQuitMinHeight = 44;
 
+/// Maximum rendered width (logical pixels) of the `pixelArt` variant footer
+/// Quit chip. Mirrors the upper bound of the mockup
+/// `.quit-btn { min-width: clamp(100px, 30%, 160px) }` rule so the chip
+/// never stretches to the full primary wood-panel button width and reads as
+/// a visibly smaller, secondary control (issue #2860 S9). Combined with the
+/// existing `minWidth` floor this keeps the chip in the
+/// `[120, kMainMenuFooterQuitMaxWidth]` band, centred in the footer.
+const double kMainMenuFooterQuitMaxWidth = 160;
+
+/// Label font size (logical pixels) of the `pixelArt` variant footer Quit
+/// chip. Mirrors the lower bound of the mockup
+/// `.quit-btn { font-size: clamp(12px, 1.8vw, 14px) }` rule and is smaller
+/// than the primary wood-panel button label size (the dark-theme
+/// `titleSmall` slot, 14 dp) so the chip reads as typographically smaller
+/// and faded relative to the primary buttons (issue #2860 S9).
+const double kMainMenuFooterQuitFontSize = 12;
+
 /// Stable `Key` value for the left ornamental scroll bracket flanking the
 /// `pixelArt` buttons region. Mirrors the mockup
 /// `SPEC/ui/mockups/SHEL10002-main-menu.html` `.buttons-region::before` rule
@@ -615,6 +632,7 @@ class _FooterQuitButtonState extends State<_FooterQuitButton> {
             constraints: const BoxConstraints(
               minHeight: kMainMenuFooterQuitMinHeight,
               minWidth: 120,
+              maxWidth: kMainMenuFooterQuitMaxWidth,
             ),
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -649,6 +667,12 @@ class _FooterQuitButtonState extends State<_FooterQuitButton> {
                     style: baseStyle.copyWith(
                       color: foreground,
                       fontFamily: editorialMonocleDisplayFontFamily,
+                      fontSize: kMainMenuFooterQuitFontSize,
+                      // Kept at 1.4 (distinct from the wood-panel button
+                      // letter-spacing constants) so the narrow/wide button
+                      // letter-spacing ACs do not pick up the Quit chip
+                      // label; ≈0.1em at the 12 dp chip font per mockup
+                      // `.quit-btn { letter-spacing: 0.1em }`.
                       letterSpacing: 1.4,
                       fontWeight: FontWeight.w600,
                     ),
