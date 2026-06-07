@@ -666,4 +666,76 @@ void main() {
       expect(absent['gp4'], 0);
     });
   });
+
+  group('recordSeed42S7dFabricMarketOfferCounters (Refs #2847)', () {
+    final fabricId = CommodityCatalog.fabric.id;
+
+    TradeOrder offer(String id) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.offer,
+      quantity: 1,
+      priority: 1,
+    );
+    TradeOrder bid(String id) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.bid,
+      quantity: 1,
+      priority: 1,
+    );
+
+    test(
+      'positive: another faction offers fabric => present bumped, absent not',
+      () {
+        final present = <String, int>{'gp3': 0};
+        final absent = <String, int>{'gp3': 0};
+        recordSeed42S7dFabricMarketOfferCounters(
+          fabricMarketPathActiveThisTurn: {'gp3'},
+          tradeOrdersByPlayerId: {
+            'gp1': [offer(fabricId)],
+            'gp3': [bid(fabricId)],
+          },
+          presentTurns: present,
+          absentTurns: absent,
+        );
+        expect(present['gp3'], 1);
+        expect(absent['gp3'], 0);
+      },
+    );
+
+    test(
+      'negative: no other faction offers fabric => absent bumped, present not',
+      () {
+        final present = <String, int>{'gp3': 0};
+        final absent = <String, int>{'gp3': 0};
+        recordSeed42S7dFabricMarketOfferCounters(
+          fabricMarketPathActiveThisTurn: {'gp3'},
+          tradeOrdersByPlayerId: {
+            'gp3': [offer(fabricId)],
+            'gp1': [bid(fabricId)],
+            'gp2': [offer(CommodityCatalog.timber.id)],
+          },
+          presentTurns: present,
+          absentTurns: absent,
+        );
+        expect(present['gp3'], 0);
+        expect(absent['gp3'], 1);
+      },
+    );
+
+    test('gates strictly on the active set — inactive GPs are untouched', () {
+      final present = <String, int>{'gp3': 0, 'gp5': 0};
+      final absent = <String, int>{'gp3': 0, 'gp5': 0};
+      recordSeed42S7dFabricMarketOfferCounters(
+        fabricMarketPathActiveThisTurn: {'gp3'},
+        tradeOrdersByPlayerId: {
+          'gp2': [offer(fabricId)],
+        },
+        presentTurns: present,
+        absentTurns: absent,
+      );
+      expect(present['gp3'], 1);
+      expect(present['gp5'], 0);
+      expect(absent['gp5'], 0);
+    });
+  });
 }
