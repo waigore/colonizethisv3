@@ -178,6 +178,46 @@ Game _gameWithNoDiscoveredFactions() {
   );
 }
 
+/// Fixture for the discovery-via-visibility ACs (Refs #3341): the human GP
+/// `gp1` has fully-visible tile sight into a New-World province owned by Tribe
+/// `t1` but holds **no** `DiplomacyRelation` with the tribe. Per
+/// SPEC/ui/diplomacy-panel.md § Discovered factions, the panel must discover
+/// the tribe via `knownDiplomaticTargetFactionIds` and surface the default
+/// neutral first-contact standing.
+Game _gameWithTribeDiscoveredByVisibility() {
+  const nw = 'newWorld';
+  const ow = 'oldWorld';
+  final tribeProvince = Province(
+    id: '$nw|t1prov',
+    regionId: nw,
+    displayName: 'Tribe Land',
+    ownerId: 't1',
+  );
+  final homeProvince = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'Home',
+    ownerId: 'gp1',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+    oldWorld: RegionData(provinces: [homeProvince], units: const []),
+    newWorld: RegionData(provinces: [tribeProvince], units: const []),
+    playerVisibilityByTile: const {
+      'gp1': {'newWorld|t1prov|0|0': 'fullyVisible'},
+    },
+    playerProspectedTiles: const {},
+  );
+  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+  return Game(
+    id: 'tribe-visibility',
+    worldState: world,
+    players: const [player],
+    tribes: const [Tribe(id: 't1', displayName: 'Tribe One')],
+    diplomacyRelations: const [],
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -385,6 +425,36 @@ void main() {
       },
     );
 
+    testWidgets(
+      'AC-5 (Refs #3341): tribe discovered by visibility renders under Tribes '
+      'with no prior relation (no empty placeholder)',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: _gameWithTribeDiscoveredByVisibility(),
+            humanPlayerId: 'gp1',
+            topology: const MapTopology(nodes: [], edges: []),
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        expect(find.text('Tribes'), findsOneWidget);
+        expect(
+          find.text('Tribe One'),
+          findsOneWidget,
+          reason: 'Discovered tribe row must render under the Tribes section.',
+        );
+        expect(
+          find.text('No tribes contacted yet.'),
+          findsNothing,
+          reason:
+              'The empty Tribes placeholder must not show once a tribe is '
+              'discovered.',
+        );
+      },
+    );
+
     testWidgets('panel is scrollable', (WidgetTester tester) async {
       await _bindTallTestSurface(tester);
       await tester.pumpWidget(
@@ -424,6 +494,36 @@ void main() {
       );
       expect(rows, isEmpty);
     });
+
+    test(
+      'AC (Refs #3341): discovers a tribe via tile visibility with no prior '
+      'relation, surfacing AT_PEACE / 50 / neutral first-contact standing',
+      () {
+        final rows = buildDiplomacyRows(
+          _gameWithTribeDiscoveredByVisibility(),
+          const MapTopology(nodes: [], edges: []),
+          'gp1',
+          const Orders(),
+        );
+        final tribeRows = rows
+            .where((r) => r.kind == FactionKind.tribe)
+            .toList();
+        expect(
+          tribeRows,
+          hasLength(1),
+          reason:
+              'Tribe owning a visible province must be discovered even '
+              'without a game-setup DiplomacyRelation (SPEC § Discovered '
+              'factions).',
+        );
+        final tribe = tribeRows.single;
+        expect(tribe.factionId, 't1');
+        expect(tribe.relation, isNotNull);
+        expect(tribe.relation!.state, RelationState.atPeace);
+        expect(tribe.relation!.score, 50);
+        expect(tribe.relation!.level, RelationLevel.neutral);
+      },
+    );
 
     test('returns GP rows sorted by military power then province count', () {
       final rows = buildDiplomacyRows(

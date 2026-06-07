@@ -26,9 +26,17 @@ The player can view all **discovered** factions (Great Powers, Minor Nations, Tr
 
 ## Discovered factions
 
-A faction is **discovered** iff the player has a **diplomatic relation** with that faction (i.e. a `DiplomacyRelation` exists between player and faction). Relations are only possible when the faction is discovered. At game start: same-region (GP–GP, GP–Minor) relations are initialized; cross-region (GP–Tribe) are not, so Tribes appear when the player first gains a relation (e.g. after establishing consulate).
+A faction is **discovered** for the human player when its id appears in the canonical discovery set produced by `knownDiplomaticTargetFactionIds` (`packages/colonizethis_logic/lib/order_suggestion_api.dart`, normative rules in [order-suggestions.md](../program/order-suggestions.md) § Diplomatic orders (visibility)). That helper unions three sources, so a faction is discovered when **any** of the following holds:
 
-- **List contents:** All GPs (except the player), all Minors, and only Tribes that are discovered.
+1. A `DiplomacyRelation` exists between the human player and that faction.
+2. The human player has **non-`unknown` tile visibility** (fogged or fully visible) in a province owned by that faction.
+3. The faction is a **Tribe** whose New-World province is **sea-reachable** from the player's anchor provinces/units (colonial intel, Refs #2509).
+
+This decouples discovery from the relation table alone. At game start same-region (GP–GP, GP–Minor) relations are initialized, so Great Powers and Minor Nations are discovered immediately; cross-region (GP–Tribe) relations are **not** initialized, so a Tribe becomes discovered the first time the player gains tile visibility into, or sea-reachability to, that tribe's territory — **not** only after establishing a consulate.
+
+**First-contact standing (panel display).** A discovered faction that has **no** `DiplomacyRelation` record yet is surfaced with the default neutral first-contact standing: `RelationState.atPeace`, `score = 50`, `RelationLevel.neutral` (the same default used for game-start Minor relations). This is the relation summary the row renders until a persisted relation is created. The persisted game-state auto-creation of this relation and the first-contact herald overlay are tracked separately (issue #3341 follow-up) and do not change this panel display contract.
+
+- **List contents:** All GPs (except the player), all Minors, and only Tribes that are discovered (per the rules above).
 - **Grouping:** Sections by type — Great Powers, Minor Nations, Tribes.
 - **Sort:** Great Powers by **military power** (desc), then by **number of provinces** (desc). Minors and Tribes: implementation-defined (e.g. by name or id).
 
@@ -287,3 +295,9 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 - **Always-visible section headings:** Given the diplomacy panel is open with the mode-bar filter set to `all`, when the panel renders, then a `_DiplomacySectionHeader` is present for each of `Great Powers`, `Minor Nations`, and `Tribes` regardless of whether those sections have any rows. Refs #3341.
 - **Empty Tribes placeholder copy:** Given the diplomacy panel is open and no tribe has been contacted (the Tribes section has no rows), when the panel renders, then the `Tribes` heading is present and exactly one widget shows the copy `No tribes contacted yet.` (`diplomacy_panel_noTribes`) beneath it, and no tribe faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is in the tree. Refs #3341.
 - **Empty-state Widgetbook story renders headings + tribe placeholder:** Given the Diplomacy Panel `No factions discovered (empty state)` Widgetbook use case is mounted in a `WidgetTester` under `AppThemes.editorialMonocle`, when the builder pumps the fixture `Game` whose human player has no other discovered factions and no diplomacy relations, then `WidgetTester.takeException()` returns `null`, `buildDiplomacyRows` returns an empty list, the three section headings (`Great Powers`, `Minor Nations`, `Tribes`) are each present, `find.text('No tribes contacted yet.')` resolves to exactly one widget (the localized `diplomacy_panel_noTribes` copy), and no faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is in the tree. Refs #2863 S7 / #3341.
+
+- **Discovery via tile visibility (no prior relation):** Given the human player has non-`unknown` tile visibility in a province owned by a Tribe `T` and **no** `DiplomacyRelation` with `T`, when `buildDiplomacyRows` runs, then the returned rows include exactly one row whose `factionId == T` and `kind == FactionKind.tribe`, and that row's `relation` is non-null with `state == RelationState.atPeace`, `score == 50`, and `level == RelationLevel.neutral`. Refs #3341.
+
+- **Discovery does not depend solely on relation table (consulate fix):** Given a Tribe `T` is discovered for the human player by tile visibility or sea-reachability (per § Discovered factions) and `T` has no game-setup `DiplomacyRelation` with the player, when the Diplomacy panel renders, then the Tribe row for `T` is present under the `Tribes` section (the previously documented "tribes appear only after establishing a consulate" behavior no longer governs discovery). Refs #3341.
+
+- **No spurious discovery (negative):** Given the human player has no `DiplomacyRelation`, no non-`unknown` tile visibility into any other faction's province, and no sea-reachable Tribe province, when `buildDiplomacyRows` runs, then it returns an empty list (no synthesized rows are added for undiscovered factions). Refs #3341.

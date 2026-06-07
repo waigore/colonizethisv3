@@ -125,8 +125,32 @@ class DiplomacyRowData {
   final int? pendingSubsidyAmount;
 }
 
+/// Default neutral first-contact standing surfaced for a discovered faction
+/// that has no persisted [DiplomacyRelation] yet. SPEC/ui/diplomacy-panel.md
+/// § Discovered factions → First-contact standing: `AT_PEACE`, score `50`,
+/// level `Neutral` (the same default used for game-start Minor relations).
+/// The `DiplomacyRelation` constructor already defaults to these values; the
+/// turn fields are pinned to the current turn so history-derived UI stays
+/// deterministic.
+DiplomacyRelation _defaultFirstContactRelation(
+  String humanPlayerId,
+  String factionId,
+  int currentTurn,
+) => DiplomacyRelation(
+  factionId1: humanPlayerId,
+  factionId2: factionId,
+  sinceTurn: currentTurn,
+  lastInteractionTurn: currentTurn,
+);
+
 /// Builds list of discovered factions and their available actions.
-/// Discovered = has a relation with the player. SPEC/ui/diplomacy-panel.md.
+///
+/// Discovery follows `knownDiplomaticTargetFactionIds`
+/// (SPEC/ui/diplomacy-panel.md § Discovered factions): an existing
+/// [DiplomacyRelation], non-`unknown` tile visibility into a faction-owned
+/// province, or a sea-reachable New-World Tribe province (colonial intel).
+/// A discovered faction without a persisted relation is surfaced with the
+/// default neutral first-contact standing.
 List<DiplomacyRowData> buildDiplomacyRows(
   Game game,
   MapTopology topology,
@@ -135,7 +159,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
 ) {
   const suggestionApi = DefaultOrderSuggestionAPI();
   final view = buildPlayerView(game, topology, humanPlayerId);
-  final discoveredIds = view.diplomacyByOtherId.keys.toList();
+  final discoveredIds = <String>{
+    ...view.diplomacyByOtherId.keys,
+    ...knownDiplomaticTargetFactionIds(
+      view: view,
+      game: game,
+      topology: topology,
+    ),
+  };
+  final currentTurn = game.worldState.turnState.turnNumber;
   final suggestions = suggestionApi.suggestDiplomaticOrders(
     view,
     game,
@@ -200,7 +232,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         factionId: id,
         displayName: displayNameFor(id),
         kind: FactionKind.greatPower,
-        relation: view.diplomacyByOtherId[id],
+        relation:
+            view.diplomacyByOtherId[id] ??
+            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
         actions: actionsByTarget[id] ?? [],
         powerScore: greatPowerPowerScore(game, id),
@@ -220,7 +254,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         factionId: id,
         displayName: displayNameFor(id),
         kind: FactionKind.minor,
-        relation: view.diplomacyByOtherId[id],
+        relation:
+            view.diplomacyByOtherId[id] ??
+            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
         actions: actionsByTarget[id] ?? [],
         powerScore: null,
@@ -240,7 +276,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         factionId: id,
         displayName: displayNameFor(id),
         kind: FactionKind.tribe,
-        relation: view.diplomacyByOtherId[id],
+        relation:
+            view.diplomacyByOtherId[id] ??
+            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
         overture: getOverture(game, humanPlayerId, id),
         actions: actionsByTarget[id] ?? [],
         powerScore: null,
