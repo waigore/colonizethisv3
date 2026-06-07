@@ -31,7 +31,7 @@ Phase 0 deliverables (child issue C0):
 | `orders` | `turn` | **Eliminated** — trace runtime hoisted to `lib/src/trace/`; `projectOrderEffects` dry-run hoisted to `lib/src/projections/` |
 | `turn` | `world` | Allowed |
 | `world` | `turn` | **Eliminated** — `turn_resolution_seeds.dart` and `trace/` hoisted to `lib/src/` |
-| `diplomacy` | `ai` | Allowed (becomes `diplomacy` → `ai_contracts` after Phase 4) |
+| `diplomacy` | `ai` | **Eliminated** — `isAiControlled` relocated to `world/ai_control.dart` (a `diplomacy` → `ai_contracts` edge would close the `ai_contracts` → `orders` → `diplomacy` → `ai_contracts` cycle) |
 | `ai` | `diplomacy` | **Eliminated** — `DiplomacyFactionMembership` / `isMinorOrTribe` consumed from `world/faction_membership.dart` |
 | `turn` | `diplomacy` | Allowed — orchestrator `TurnResolutionResult` variants consume diplomacy phase value types |
 | `diplomacy` | `turn` | **Eliminated** — overture/FTP/intervention/call-to-arms offer + decision types and `DiplomacyPhaseResult` moved to `diplomacy/diplomacy_phase_result.dart`; `turn/turn_resolution_result.dart` imports + re-exports them |
@@ -122,14 +122,15 @@ Phase 0 deliverables (child issue C0):
 
 ### `diplomacy ↔ ai`
 
-**Wrong:** `ai` → `diplomacy` (2 files, fixed in Phase 0 slice); **allowed:** `diplomacy/intervention_resolver.dart` → `ai/ai_control.dart`
+Both directions are eliminated. The `ai/` set becomes `colonizethis_ai_contracts` (Phase 4), which depends on `orders` → `diplomacy`; so `diplomacy` → `ai` would close the cycle `ai_contracts` → `orders` → `diplomacy` → `ai_contracts`.
 
-Both AI files consumed only `DiplomacyFactionMembership` (and the top-level `isMinorOrTribe` helper), which already live in the leaf module `world/faction_membership.dart` (`diplomacy_resolver.dart` merely re-exports them). Retargeting the imports to the world module removes the wrong-direction edge with no behavior change.
+**`ai` → `diplomacy`** (2 files): consumed only `DiplomacyFactionMembership` / `isMinorOrTribe`, retargeted to the leaf `world/faction_membership.dart` (no behavior change). **`diplomacy` → `ai`** (1 file): the sole crossing symbol is the pure player-control query `isAiControlled` (reads `Game.aiControlByGpId` / `Player.isHuman` only), relocated down to `world/ai_control.dart`; both domains consume it via `world/` one-way. `ai_api.dart` re-exports it from the new path, so `colonizethis_ai` is unchanged.
 
 | Source | Import | Symbols used | Destination |
 |--------|--------|--------------|-------------|
 | `ai/full_ai_civilian_work_selection.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership`, `isMinorOrTribe` | `world/faction_membership.dart` |
 | `ai/simple_ai_heuristics.dart` | `diplomacy_resolver.dart` | `DiplomacyFactionMembership` | `world/faction_membership.dart` |
+| `diplomacy/intervention_resolver.dart` | `ai/ai_control.dart` | `isAiControlled` | `world/ai_control.dart` |
 
 ### `diplomacy ↔ turn`
 
@@ -150,7 +151,7 @@ Types relocated to `diplomacy/diplomacy_phase_result.dart`: `OvertureOffer`, `Ov
 
 ## AI contracts file set (Phase 0 planning, D1)
 
-Five root planner files under `lib/src/ai/` (not eight): `ai_planner.dart`, `ai_control.dart`, `sim_game_ai.dart`, `simple_ai_heuristics.dart`, `full_ai_civilian_work_selection.dart`. Satellite `full_ai_civilian_work_*` part files stay colocated until Phase 4 move to `colonizethis_ai_contracts`.
+Four root planner files under `lib/src/ai/`: `ai_planner.dart`, `sim_game_ai.dart`, `simple_ai_heuristics.dart`, `full_ai_civilian_work_selection.dart`. (`ai_control.dart` was retired in Phase 0: its sole helper `isAiControlled` moved to `world/ai_control.dart`.) Satellite `full_ai_civilian_work_*` part files stay colocated until Phase 4 move to `colonizethis_ai_contracts`.
 
 ## CI scaffolding (Phase 0)
 
@@ -179,4 +180,5 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - **Given** wrong-direction `world→turn` and `world→setup` symbols above, **when** the graph is scanned, **then** no `world` file imports `turn/` or `setup/`.
 - **Given** `economy/world_market/trade_order_validator.dart`, **when** the graph is scanned, **then** the file imports no `orders/` symbol and `repo.logic_domain_import_dag` carries no `economy->orders` grandfather entry.
 - **Given** the four diplomacy resolvers (`overture_resolver.dart`, `intervention_resolver.dart`, `diplomacy_resolver.dart`, `ftp_resolver.dart`), **when** `repo.logic_domain_import_dag` runs, **then** no `diplomacy` file imports `turn/`, `diplomacy->turn` is a forbidden edge, and `repo.logic_domain_import_dag` carries no `diplomacy->turn` grandfather entry.
+- **Given** the `diplomacy/` source files, **when** `repo.logic_domain_import_dag` runs, **then** no `diplomacy` file imports `ai/`, `diplomacy->ai` is a forbidden edge, and `repo.logic_domain_import_dag` carries no `diplomacy->ai` grandfather entry.
 - **Given** a `Game` with `Player.treasury == 175`, empty staged orders (no bids) and `projectedTreasuryDelta == -50`, **when** `tradeOrderValidationContextFromGame(game, playerId, stagedOrders: <empty>, projectedTreasuryDelta: -50)` builds the context, **then** `TradeOrderValidationContext.treasuryBudgetForBids == 125` (`max(0, 175 − max(0, 50))`).

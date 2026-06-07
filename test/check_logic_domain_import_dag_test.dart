@@ -201,4 +201,33 @@ void noop() {}
     );
     expect(code, 1);
   });
+
+  test('diplomacy->ai edge is enforced and fully eliminated (Refs #3290)', () {
+    final forbidden = logicDomainImportForbiddenEdgesForTests();
+    expect(forbidden, contains('diplomacy->ai'));
+
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(allowlist.where((e) => e.startsWith('diplomacy->ai:')), isEmpty);
+  });
+
+  test('fails when a new forbidden diplomacy->ai import appears', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_dipl_ai_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+      '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_ai.dart',
+    )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../ai/ai_planner.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
+  });
 }
