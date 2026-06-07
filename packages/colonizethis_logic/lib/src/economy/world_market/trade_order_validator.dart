@@ -16,8 +16,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../diplomacy/diplomacy_subsidies_relations_resolver.dart'
     show worldMarketBidTypeCap;
 import '../../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
-import '../../constants.dart';
-import '../../orders/order_projections.dart' show projectOrderEffects;
 import '../../validation/order_validation_result.dart';
 import 'sellable_quantity.dart' show offerCapByCommodityId;
 import 'treasury_bid_budget.dart'
@@ -115,41 +113,39 @@ class TradeOrderValidationContext {
 /// Builds a [TradeOrderValidationContext] from live [Game] state for order
 /// submission and [OrderEngine] validation.
 ///
-/// When [stagedOrders] and [topology] are supplied, the treasury bid budget
-/// subtracts projected non-bid deficits via `projectOrderEffects` (same
-/// composition as the Trade UI per `SPEC/ui/trade-screen.md` § treasury bid
-/// cap). Otherwise the budget is raw treasury only.
+/// When [stagedOrders] and [projectedTreasuryDelta] are supplied, the treasury
+/// bid budget subtracts projected non-bid deficits (same composition as the
+/// Trade UI per `SPEC/ui/trade-screen.md` § treasury bid cap). The caller
+/// supplies [projectedTreasuryDelta] — the signed net treasury change for the
+/// turn under the staged orders (the `projectOrderEffects(...).treasuryDelta`
+/// dry-run, which is a `turn`-layer operation and so is computed by the order
+/// engine / UI rather than here, keeping `colonizethis_economy` free of any
+/// `orders`/`turn` dependency per `SPEC/program/logic-package-split-phase0.md`
+/// § economy ↔ orders). The non-bid contribution is reconstructed by adding
+/// this player's running bid spend back to [projectedTreasuryDelta]. When
+/// either argument is omitted the budget is raw treasury only.
 TradeOrderValidationContext tradeOrderValidationContextFromGame(
   Game game,
   String playerId, {
   Orders? stagedOrders,
-  data.MapTopology? topology,
-  Map<String, data.TileMapResult>? tileMapByRegion,
+  int? projectedTreasuryDelta,
 }) {
   final rules = data.ResourceRules.defaultRules;
   var treasuryBudget = treasuryAvailableForBidsByPlayer(
     game: game,
     playerId: playerId,
   );
-  if (stagedOrders != null && topology != null) {
-    final projected = projectOrderEffects(
-      game: game,
-      orders: stagedOrders,
-      topology: topology,
-      tileMapByRegion: tileMapByRegion ?? const {},
-      playerId: playerId,
-    );
+  if (stagedOrders != null && projectedTreasuryDelta != null) {
     final int bidSpend = stagedBidTotalSpendByPlayer(
       orders: stagedOrders,
       playerId: playerId,
       game: game,
       resourceRules: rules,
     );
-    final int projectedDelta = projected.treasuryDelta ?? 0;
     treasuryBudget = treasuryAvailableForBidsByPlayer(
       game: game,
       playerId: playerId,
-      projectedNonBidTreasuryDelta: projectedDelta + bidSpend,
+      projectedNonBidTreasuryDelta: projectedTreasuryDelta + bidSpend,
     );
   }
   return TradeOrderValidationContext(

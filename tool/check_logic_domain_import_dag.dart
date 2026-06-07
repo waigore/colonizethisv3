@@ -55,10 +55,14 @@ const _forbiddenEdges = <(String, String)>{
 /// Grandfathered violations documented in SPEC/program/logic-package-split-phase0.md
 /// until the matching C0 follow-up lands. Format: `fromDomain->toDomain:relative/import/path`.
 const _grandfatherAllowlist = <String>{
-  'economy->orders:economy/world_market/trade_order_validator.dart',
+  // `orders -> turn` remains only for the projection dry-run, which still
+  // imports `turn/turn_resolver.dart` (deferred inversion). The trace-runtime
+  // imports in `orders_application*.dart` were already hoisted to the neutral
+  // `lib/src/trace/` module, and the `economy -> orders` projection import was
+  // removed by inverting `tradeOrderValidationContextFromGame` to receive a
+  // caller-computed projected treasury delta (Refs #3290,
+  // SPEC/program/logic-package-split-phase0.md § economy ↔ orders).
   'orders->turn:orders/order_projections.dart',
-  'orders->turn:orders/orders_application.dart',
-  'orders->turn:orders/orders_application_context.dart',
   'ai->diplomacy:ai/full_ai_civilian_work_selection.dart',
   'ai->diplomacy:ai/simple_ai_heuristics.dart',
 };

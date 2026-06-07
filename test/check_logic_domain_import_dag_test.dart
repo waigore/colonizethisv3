@@ -48,6 +48,43 @@ void noop() {}
     );
   });
 
+  test('economy->orders edge is enforced and fully eliminated (Refs #3290)', () {
+    final forbidden = logicDomainImportForbiddenEdgesForTests();
+    expect(forbidden, contains('economy->orders'));
+
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(allowlist.where((e) => e.startsWith('economy->orders:')), isEmpty);
+  });
+
+  test('orders->turn grandfather is trimmed to the single deferred projection '
+      'file (orders_application* hoisted to lib/src/trace/)', () {
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    final ordersToTurn =
+        allowlist.where((e) => e.startsWith('orders->turn:')).toSet();
+    expect(ordersToTurn, {'orders->turn:orders/order_projections.dart'});
+  });
+
+  test('fails when a new forbidden economy->orders import appears', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_econ_fail_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+      '${temp.path}/packages/colonizethis_logic/lib/src/economy/bad_orders.dart',
+    )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../orders/order_projections.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
+  });
+
   test('world->combat and world->dossier leaf edges are enforced + eliminated', () {
     final forbidden = logicDomainImportForbiddenEdgesForTests();
     expect(forbidden, contains('world->combat'));
