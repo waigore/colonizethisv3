@@ -38,7 +38,7 @@ void main() {
     expect(result.exitCode, 0, reason: '${result.stderr}\n${result.stdout}');
     final out = result.stdout as String;
     expect(out, contains('## Aggregate (sum of per-test medians)'));
-    expect(out, contains('| Suite total | 270.00s | 175.00s |'));
+    expect(out, contains('| Suite total | 554.65s | 77.20s |'));
     expect(out, contains('**AC9 (25% aggregate reduction):** PASS'));
   });
 
@@ -60,13 +60,13 @@ void main() {
     );
     final result = await Process.run(
       'bash',
-      [compareScript, baseline, after, '--min-reduction-pct', '50'],
+      [compareScript, baseline, after, '--min-reduction-pct', '95'],
       runInShell: false,
     );
     expect(result.exitCode, 0, reason: '${result.stderr}\n${result.stdout}');
     expect(
       result.stdout as String,
-      contains('**AC9 (50% aggregate reduction):** FAIL'),
+      contains('**AC9 (95% aggregate reduction):** FAIL'),
     );
   });
 }

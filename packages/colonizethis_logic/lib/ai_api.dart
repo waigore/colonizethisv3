@@ -81,12 +81,13 @@ export 'package:colonizethis_economy/src/economy/worker_action_cost.dart'
     show canAffordRecruitWorker;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
+export 'src/diplomacy/known_diplomatic_targets.dart'
+    show knownDiplomaticTargetFactionIds;
 export 'src/orders/order_suggestion_helpers.dart'
     show
         filterArmyMoveOrdersByDiplomacy,
         filterMoveOrdersByDiplomacy,
-        getProvinceOwnerMap,
-        knownDiplomaticTargetFactionIds;
+        getProvinceOwnerMap;
 export 'package:colonizethis_world/src/trace/turn_trace_contracts.dart'
     show TurnTraceAiSection;
 export 'package:colonizethis_world/src/world/army_commands.dart'
