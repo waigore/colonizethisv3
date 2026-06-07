@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
+import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
+    show isCastIronLabourPeasantRecruitFabricMarketPathActive;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show
         cheapestRegimentBuildTreasuryCost,
@@ -2168,6 +2170,16 @@ void main() {
       final castIronMarketOfferAbsentTurns = <String, int>{
         for (final gpId in gpIds) gpId: 0,
       };
+      // Refs #2847 § fabric offer-side split: on peasant-recruit fabric market
+      // path-active turns, whether any *other* faction emitted a `fabric` sell
+      // offer in trade orders (the trade-order emission layer between
+      // offerable-holdings proxy and buyer-side bid/deal counters).
+      final fabricMarketOfferPresentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final fabricMarketOfferAbsentTurns = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2306,6 +2318,9 @@ void main() {
 
       for (var t = 0; t < 100; t++) {
         final fabricStarvedThisTurn = <String>{};
+        // Refs #2847 § fabric offer-side split: GPs whose castIron-labour
+        // peasant-recruit fabric market path is active this turn.
+        final fabricMarketPathActiveThisTurn = <String>{};
         // Refs #2847 § castIron market-supply wall: GPs whose feedstock-
         // extraction gate is active this turn, scanned post-merge for castIron
         // market-offer presence/absence.
@@ -2616,6 +2631,13 @@ void main() {
               castIronFeedstockIds: castIronFeedstockIds,
               castIronMinLabourPerOutput: castIronMinLabourPerOutput,
             );
+            if (isCastIronLabourPeasantRecruitFabricMarketPathActive(
+              game: game,
+              playerId: gpId,
+              projected: player.stockpile,
+            )) {
+              fabricMarketPathActiveThisTurn.add(gpId);
+            }
             recordSeed42S7dCastIronLabourCounters(
               game: game,
               gpId: gpId,
@@ -2750,6 +2772,16 @@ void main() {
           tradeOrdersByPlayerId: merged.tradeOrdersByPlayerId,
           emittedTurns: castIronLabourPeasantRecruitFabricBidEmittedTurns,
           absentTurns: castIronLabourPeasantRecruitFabricBidAbsentTurns,
+        );
+
+        // Refs #2847 § fabric offer-side split: on peasant-recruit fabric
+        // market-path-active turns, record whether any other faction offered
+        // `fabric` in trade orders this turn.
+        recordSeed42S7dFabricMarketOfferCounters(
+          fabricMarketPathActiveThisTurn: fabricMarketPathActiveThisTurn,
+          tradeOrdersByPlayerId: merged.tradeOrdersByPlayerId,
+          presentTurns: fabricMarketOfferPresentTurns,
+          absentTurns: fabricMarketOfferAbsentTurns,
         );
 
         // Refs #2847 § castIron market-supply wall: on the feedstock-extraction
@@ -2994,6 +3026,8 @@ void main() {
             castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
         'gpCastIronMarketOfferPresentTurns': castIronMarketOfferPresentTurns,
         'gpCastIronMarketOfferAbsentTurns': castIronMarketOfferAbsentTurns,
+        'gpFabricMarketOfferPresentTurns': fabricMarketOfferPresentTurns,
+        'gpFabricMarketOfferAbsentTurns': fabricMarketOfferAbsentTurns,
         'gpCastIronFeedstockExtractionLabourFutileTurns':
             castIronFeedstockExtractionLabourFutileTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,

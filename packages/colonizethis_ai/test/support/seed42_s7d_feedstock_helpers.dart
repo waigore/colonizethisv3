@@ -1076,6 +1076,51 @@ void recordSeed42S7dCastIronMarketOfferCounters({
   }
 }
 
+/// Records `fabric` market-offer presence/absence for the S7-D peasant-recruit
+/// fabric localization (Refs #2847 § fabric offer-side split).
+///
+/// On each gp whose castIron-labour peasant-recruit fabric market path is
+/// active this turn ([fabricMarketPathActiveThisTurn]), scans
+/// [tradeOrdersByPlayerId] for any *other* faction emitting a `fabric` offer
+/// and bumps [presentTurns] when one exists, else [absentTurns].
+///
+/// Complements [otherGreatPowerFabricHeld] (gross holdings) and
+/// [otherGreatPowerOfferableFabricHeld] (planner-scope offerable proxy): a
+/// positive holdings / offerable total with a flat-zero [presentTurns] across
+/// the run localizes the closed market door to the **trade-order emission**
+/// layer (holders retain `fabric` in stockpile but never emit a sell offer)
+/// rather than to buyer-side bid/match. Read-only over the supplied maps except
+/// the counter bumps; extracted to keep the diagnostic test file at or below
+/// the repo non-comment line limit.
+void recordSeed42S7dFabricMarketOfferCounters({
+  required Set<String> fabricMarketPathActiveThisTurn,
+  required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
+  required Map<String, int> presentTurns,
+  required Map<String, int> absentTurns,
+}) {
+  const fabricCommodityId = 'fabric';
+  for (final gpId in fabricMarketPathActiveThisTurn) {
+    var offeredByOther = false;
+    for (final entry in tradeOrdersByPlayerId.entries) {
+      if (entry.key == gpId) continue;
+      final offeredFabric = entry.value.any(
+        (order) =>
+            order.type == TradeOrderType.offer &&
+            order.commodityId == fabricCommodityId,
+      );
+      if (offeredFabric) {
+        offeredByOther = true;
+        break;
+      }
+    }
+    if (offeredByOther) {
+      bumpCounter(presentTurns, gpId);
+    } else {
+      bumpCounter(absentTurns, gpId);
+    }
+  }
+}
+
 /// True iff [playerId] owns at least one idle Builder for which the work-order
 /// engine **accepts** a `build_improvement` on an owned unimproved feedstock
 /// tile (a member of [feedstockIds]) — i.e. `getValidWorkOrderTileKeys` (the
