@@ -458,6 +458,12 @@ becomes `max(peasantFabricCost, peasantLevies.buildInputs[fabric]) - held`
 lock-recovery seller bootstrap gate as the regiment build-input bid; treasury,
 `bidTypeCap`, and cargo clamps are unchanged.
 
+##### Labour-infeasible domestic fabric market path (Refs #2847)
+
+When `isCastIronLabourPeasantRecruitFabricMarketPathActive(game, playerId, projected)` holds and `isDomesticFabricProductionLabourInfeasible(game, playerId) == true` (at least one `fabric_from_*` recipe is materially feasible yet `labourPerOutput` exceeds effective labour), the planner **skips** feedstock bootstrap bids (`wool` / `cotton`) and emits a direct `fabric` bid sized to the peasant recruit material cost instead. Domestic conversion cannot unblock the #3317 circular-labour deadlock on seed 42; the world-market purchase path is the remaining lever.
+
+The peasant-recruit fabric market path does **not** require `regimentCount == 0`. A population-bound seller holding regiments may still need market `fabric` to grow raw labour. `anySellerNeedsCastIronLabourPeasantRecruitFabric` in the lock-recovery scan activates affluent supplier `fabric` release (same H8-supply market machinery as the zero-regiment rebuild path). `isFabricOfferRetainingLockRecoverySeller` also retains `fabric` for population-bound sellers short the 2-`fabric` peasant cost even when `regimentCount > 0`.
+
 #### Acceptance criteria (peasant-recruit fabric direct bid)
 
 - Given a below-quota zero-NW lock-recovery seller with
@@ -477,6 +483,14 @@ lock-recovery seller bootstrap gate as the regiment build-input bid; treasury,
   population-bound for castIron labour, holding exactly **1** `fabric`, when
   `runTreasuryPlanner` runs, then it emits **no** `fabric` bid (negative control
   — peasant-recruit staging is inactive).
+- Given a below-quota zero-NW lock-recovery seller with recovered treasury,
+  `regimentCountForPlayer(game, playerId) > 0`,
+  `isCastIronLabourPeasantRecruitFabricMarketPathActive == true`,
+  `isDomesticFabricProductionLabourInfeasible(game, playerId) == true`, and a
+  projected stockpile holding **0** `fabric` with `wool` on hand, when
+  `runTreasuryPlanner` runs, then it emits a `TradeOrderType.bid` for `fabric`
+  and emits **no** `wool` bid.
+- Given the same seller and inputs except `isDomesticFabricProductionLabourInfeasible == false`, when `runTreasuryPlanner` runs, then it may emit a `wool` feedstock bid before the `fabric` bid (existing feedstock-first ordering preserved).
 
 The reservation never weakens a healthy GP: it is gated to the below-quota
 zero-NW seller band (gp1 / gp2 are above quota) and to the zero-regiment rebuild

@@ -13,7 +13,9 @@
 library;
 
 import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
-    show isCastIronLabourPopulationBoundForLockRecoverySeller;
+    show
+        isCastIronLabourPopulationBoundForLockRecoverySeller,
+        isDomesticFabricProductionLabourInfeasible;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -372,6 +374,76 @@ void main() {
               )
               .toList();
           expect(fabricBids, isEmpty);
+        },
+      );
+
+      test(
+        'labour-infeasible domestic fabric bids fabric directly, not wool '
+        'feedstock',
+        () {
+          final game = _populationBoundSellerGame(
+            fabricHeld: 0,
+            woolHeld: 20,
+          ).copyWith(
+            players: [
+              _populationBoundSellerGame(fabricHeld: 0, woolHeld: 20)
+                  .players
+                  .first
+                  .copyWith(workerPool: const WorkerPool(peasants: 1)),
+            ],
+          );
+          expect(
+            isDomesticFabricProductionLabourInfeasible(
+              game: game,
+              playerId: _playerId,
+            ),
+            isTrue,
+          );
+          final bids = _run(game)
+              .where((o) => o.type == TradeOrderType.bid)
+              .toList();
+          expect(
+            bids.where((o) => o.commodityId == _woolId),
+            isEmpty,
+            reason: 'Feedstock bids cannot unblock labour-walled fabric runs.',
+          );
+          expect(
+            bids.where((o) => o.commodityId == _fabricId),
+            isNotEmpty,
+          );
+        },
+      );
+
+      test(
+        'population-bound seller with a regiment still emits a fabric bid when '
+        'domestic fabric is labour-infeasible',
+        () {
+          final base = _populationBoundSellerGame(fabricHeld: 1, woolHeld: 20);
+          final game = base.copyWith(
+            worldState: base.worldState.copyWith(
+              armies: [
+                const Army(
+                  id: 'army-seller',
+                  ownerId: _playerId,
+                  regionId: kRegionOldWorld,
+                  stationedProvinceId: 'oldWorld|p0',
+                  regimentUnitIds: ['reg-1'],
+                ),
+              ],
+            ),
+            players: [
+              base.players.first.copyWith(
+                workerPool: const WorkerPool(peasants: 1),
+              ),
+            ],
+          );
+          final fabricBids = _run(game)
+              .where(
+                (o) =>
+                    o.type == TradeOrderType.bid && o.commodityId == _fabricId,
+              )
+              .toList();
+          expect(fabricBids, isNotEmpty);
         },
       );
     },
