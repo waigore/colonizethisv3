@@ -201,9 +201,9 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
 ///
 /// Mirrors the mockup `.empire-btn` contract (`SPEC/ui/mockups/GAME10001-game-screen.html`):
 /// gradient surface from `--surface-lite` → `--bg-deep`, 1 dp `--border`
-/// outline, and an icon glyph that cycles `--accent-dim` (default) →
-/// `--accent` (hover) → `--accent-bright` (pressed). Border lifts to
-/// `--accent-dim` on hover.
+/// outline, and a full-colour `StrictAssetIcon` glyph at 24 × 24 dp with no
+/// `srcIn` tint. Border lifts to `--accent-dim` on hover/press; the icon
+/// colours are unchanged across interaction states.
 class _EmpireRailButton extends StatefulWidget {
   const _EmpireRailButton({
     required this.buttonKey,
@@ -247,12 +247,6 @@ class _EmpireRailButtonState extends State<_EmpireRailButton> {
     return EditorialMonoclePalette.border;
   }
 
-  Color get _iconColor {
-    if (_pressed) return EditorialMonoclePalette.accentBright;
-    if (_hovered) return EditorialMonoclePalette.accent;
-    return EditorialMonoclePalette.accentDim;
-  }
-
   @override
   Widget build(BuildContext context) {
     final buttonSize = widget.narrow
@@ -275,16 +269,10 @@ class _EmpireRailButtonState extends State<_EmpireRailButton> {
               border: Border.all(color: _borderColor, width: 1),
             ),
             child: Center(
-              child: ColorFiltered(
-                colorFilter: ColorFilter.mode(
-                  _iconColor,
-                  BlendMode.srcIn,
-                ),
-                child: StrictAssetIcon(
-                  assetPath: widget.iconAsset,
-                  width: GameMapEmpireLeftRail.iconSize,
-                  height: GameMapEmpireLeftRail.iconSize,
-                ),
+              child: StrictAssetIcon(
+                assetPath: widget.iconAsset,
+                width: GameMapEmpireLeftRail.iconSize,
+                height: GameMapEmpireLeftRail.iconSize,
               ),
             ),
           ),
