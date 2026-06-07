@@ -615,6 +615,8 @@ void assertSeed42S7dStructuralInvariants({
   required Map<String, int> castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
   required Map<String, int> fabricRecipeFeasibleTurns,
   required Map<String, int> fabricRecipeLabourFeasibleTurns,
+  required Map<String, int> castIronMarketOfferPresentTurns,
+  required Map<String, int> castIronMarketOfferAbsentTurns,
 }) {
   for (final gpId in gpIds) {
     expect(
@@ -826,6 +828,19 @@ void assertSeed42S7dStructuralInvariants({
           '$gpId fabric labour-feasible turns cannot exceed the fabric '
           'material-feasible turns (labour-feasible requires material-feasible)',
     );
+    // Refs #2847 § castIron market-supply wall: every feedstock-extraction
+    // gate-active turn is classified as exactly one of castIron-offer-present
+    // or castIron-offer-absent, so the two partition the gate-active total.
+    // Guards the instrumentation gating itself without pinning the (freely
+    // tunable) per-GP counts.
+    expect(
+      castIronMarketOfferPresentTurns[gpId]! +
+          castIronMarketOfferAbsentTurns[gpId]!,
+      feedstockExtractionGateActiveTurns[gpId],
+      reason:
+          '$gpId castIron market-offer present + absent turns must partition '
+          'the feedstock-extraction-gate-active turns',
+    );
   }
 }
 
@@ -951,6 +966,60 @@ void recordSeed42S7dFabricBidCounters({
         );
     if (emittedFabricBid) {
       bumpCounter(emittedTurns, gpId);
+    } else {
+      bumpCounter(absentTurns, gpId);
+    }
+  }
+}
+
+/// Records castIron market-offer presence/absence for the S7-D
+/// feedstock-extraction localization (Refs #2847 § castIron market-supply
+/// wall). On each gp whose regiment-build-input feedstock-extraction gate is
+/// active this turn ([feedstockGateActiveThisTurn]), scans
+/// [tradeOrdersByPlayerId] for any *other* faction emitting a
+/// [castIronCommodityId] offer this turn and bumps [presentTurns] when one
+/// exists, else [absentTurns].
+///
+/// The level-0 `build_improvement` cost a locked seller must clear to extract
+/// its fabric feedstock requires one unit of the manufactured `castIron`
+/// (`work_order_costs.dart` § `workOrderCostBuildImprovement`). The treasury
+/// planner's direct-acquisition branch
+/// (`treasury_regiment_bootstrap.dart` Pass 1 → `_marketHasStandingOfferSupplyFromOthers`)
+/// only bids `castIron` directly when some other Great Power offers it;
+/// otherwise it falls back to bidding the production feedstock (`timber` +
+/// `iron`) for a domestic run. A flat-zero [presentTurns] across the run proves
+/// the direct-acquisition branch is permanently closed — every Great Power
+/// consumes its `castIron` for Old World military builds and never offers a
+/// surplus (corroborated by `gpCastIronHeldAtTurn99 == 0` for every GP) — so
+/// the only remaining path to the improvement input is the domestic castIron
+/// run, which the labour-aware `gpCastIronRecipeLabourFeasibleTurns == 0`
+/// counter shows is itself labour-walled (`castIron` `labourPerOutput` exceeds
+/// a lock-recovery seller's effective labour). Read-only over the supplied maps
+/// except the counter bumps; extracted to keep the diagnostic test file at or
+/// below the repo non-comment line limit.
+void recordSeed42S7dCastIronMarketOfferCounters({
+  required Set<String> feedstockGateActiveThisTurn,
+  required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
+  required String castIronCommodityId,
+  required Map<String, int> presentTurns,
+  required Map<String, int> absentTurns,
+}) {
+  for (final gpId in feedstockGateActiveThisTurn) {
+    var offeredByOther = false;
+    for (final entry in tradeOrdersByPlayerId.entries) {
+      if (entry.key == gpId) continue;
+      final offeredCastIron = entry.value.any(
+        (order) =>
+            order.type == TradeOrderType.offer &&
+            order.commodityId == castIronCommodityId,
+      );
+      if (offeredCastIron) {
+        offeredByOther = true;
+        break;
+      }
+    }
+    if (offeredByOther) {
+      bumpCounter(presentTurns, gpId);
     } else {
       bumpCounter(absentTurns, gpId);
     }
