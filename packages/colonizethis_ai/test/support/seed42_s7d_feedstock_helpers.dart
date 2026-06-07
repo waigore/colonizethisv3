@@ -11,7 +11,9 @@ import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
     show ObserverGoalPhase;
 import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
-    show isCastIronLabourPopulationBoundForLockRecoverySeller;
+    show
+        isCastIronLabourPopulationBoundForLockRecoverySeller,
+        otherGreatPowerFabricHeld;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_ai/src/planning/recipe_scoring.dart'
@@ -331,6 +333,40 @@ int playerFoodOnHand(Game game, String playerId, Set<String> foodCommodityIds) {
   return total;
 }
 
+/// True iff [playerId]'s fully-fed raw labour ceiling ([playerRawLabourSupply])
+/// is **below** [castIronMinLabourPerOutput] — i.e. even if the locked seller
+/// won every `timber` / `iron` deal its castIron-feedstock bids chase (or
+/// extracted that feedstock outright), the only `castIron` recipe still could
+/// not run a single output against its labour ceiling.
+///
+/// The S7-D castIron-feedstock order-matching counters
+/// (`gpCastIronFeedstockBidsEmitted` high, `gpCastIronFeedstockDealsAsBuyer`
+/// zero) show a below-quota zero-NW lock-recovery seller bidding `timber` /
+/// `iron` for a domestic `castIron` run whose bids never cross, now that
+/// affluent suppliers finally *offer* the feedstock
+/// (`gpCastIronFeedstockOffersEmitted` non-zero — the historical "no surplus to
+/// release" finding is stale once the supplier feedstock-extraction routing
+/// landed). This helper backs the counter that proves that order-matching gap is
+/// **off the critical path**: with a raw labour ceiling below `castIron`'s
+/// `labourPerOutput` (5), filling the feedstock bids could never yield a
+/// labour-feasible `castIron` run, so the binding constraint remains the
+/// seller's worker population — not feedstock supply or offer-tier alignment. It
+/// generalises `gpCastIronLabourPopulationBoundTurns` (measured only on castIron
+/// *material*-feasible turns, which a seller that never holds both feedstocks —
+/// e.g. gp3 — never reaches) to the feedstock-extraction-gate-active turns where
+/// the seller is still *bidding* the feedstock. Returns `false` when
+/// [castIronMinLabourPerOutput] is not positive (no recipe means the labour
+/// ceiling is trivially sufficient). Pure read-only over `(game, playerId)`; no
+/// game-state mutation.
+bool castIronFeedstockExtractionLabourFutile(
+  Game game,
+  String playerId,
+  int castIronMinLabourPerOutput,
+) {
+  if (castIronMinLabourPerOutput <= 0) return false;
+  return playerRawLabourSupply(game, playerId) < castIronMinLabourPerOutput;
+}
+
 /// Increments the per-GP [key] entry of a `<String, int>` diagnostic [counter]
 /// by one, treating an absent entry as zero. Shared by the S7-D diagnostic to
 /// keep its many per-turn counter bumps to a single line each.
@@ -617,6 +653,7 @@ void assertSeed42S7dStructuralInvariants({
   required Map<String, int> fabricRecipeLabourFeasibleTurns,
   required Map<String, int> castIronMarketOfferPresentTurns,
   required Map<String, int> castIronMarketOfferAbsentTurns,
+  required Map<String, int> castIronFeedstockExtractionLabourFutileTurns,
 }) {
   for (final gpId in gpIds) {
     expect(
@@ -841,6 +878,18 @@ void assertSeed42S7dStructuralInvariants({
           '$gpId castIron market-offer present + absent turns must partition '
           'the feedstock-extraction-gate-active turns',
     );
+    // Refs #2847 § S7-D castIron-feedstock order-matching off-critical path:
+    // the labour-futile counter is measured only on a feedstock-extraction-
+    // gate-active turn (raw labour ceiling below the castIron labourPerOutput),
+    // so it can never exceed the gate-active total. Guards the instrumentation
+    // gating itself without pinning the (freely tunable) per-GP counts.
+    expect(
+      castIronFeedstockExtractionLabourFutileTurns[gpId]!,
+      lessThanOrEqualTo(feedstockExtractionGateActiveTurns[gpId]!),
+      reason:
+          '$gpId castIron-feedstock-extraction labour-futile turns cannot '
+          'exceed the feedstock-extraction-gate-active turns',
+    );
   }
 }
 
@@ -958,7 +1007,8 @@ void recordSeed42S7dFabricBidCounters({
   for (final gpId in fabricStarvedThisTurn) {
     if (otherGreatPowerOfferableFabricHeld(game, gpId) <= 0) continue;
     final tradeOrders = tradeOrdersByPlayerId[gpId];
-    final emittedFabricBid = tradeOrders != null &&
+    final emittedFabricBid =
+        tradeOrders != null &&
         tradeOrders.any(
           (order) =>
               order.type == TradeOrderType.bid &&
@@ -1071,4 +1121,147 @@ bool hasValidBuildImprovementOnUnimprovedFeedstockTile(
     }
   }
   return false;
+}
+
+/// Applies the per-turn castIron-labour stage-localization counter bumps for one
+/// GP from a [seed42S7dCastIronLabourTurnMeasure] result [ci] (Refs #2847).
+///
+/// Mirrors the inline counter cascade it replaced exactly: the #3303
+/// peasant-recruit gate / affordability split (adding fabric-starved GPs to
+/// [fabricStarvedThisTurn] and forking the market-fabric-starved vs
+/// market-fabric-unoffered sub-causes off `game`), the fabric feedstock /
+/// recipe feasibility counters, and the castIron material / labour-fork /
+/// owns-feedstock-tile counters. Extracted to keep the diagnostic test file at
+/// or below the repo non-comment line limit
+/// (`repo.dart_file_non_comment_line_size`); read-only over `game` except the
+/// supplied counter-map / set bumps.
+void recordSeed42S7dCastIronLabourCounters({
+  required Game game,
+  required String gpId,
+  required ({
+    bool peasantRecruitGate,
+    bool peasantRecruitAffordable,
+    bool holdsFabricFeedstock,
+    bool fabricRecipeFeasible,
+    bool fabricRecipeLabourFeasible,
+    bool castIronMaterialFeasible,
+    bool castIronLabourFeasible,
+    bool castIronLabourFoodStarved,
+    bool castIronLabourPopulationBound,
+    bool castIronOwnsFeedstockTile,
+  })
+  ci,
+  required Set<String> fabricStarvedThisTurn,
+  required Map<String, int> castIronLabourPeasantRecruitGateTurns,
+  required Map<String, int> castIronLabourPeasantRecruitAffordableTurns,
+  required Map<String, int> castIronLabourPeasantRecruitFabricStarvedTurns,
+  required Map<String, int>
+  castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+  required Map<String, int>
+  castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+  required Map<String, int> feedstockInStockpileTurns,
+  required Map<String, int> fabricRecipeFeasibleTurns,
+  required Map<String, int> fabricRecipeLabourFeasibleTurns,
+  required Map<String, int> castIronRecipeFeasibleTurns,
+  required Map<String, int> castIronRecipeLabourFeasibleTurns,
+  required Map<String, int> castIronLabourFoodStarvedTurns,
+  required Map<String, int> castIronLabourPopulationBoundTurns,
+  required Map<String, int> castIronFeasibleOwnsFeedstockTileTurns,
+}) {
+  if (ci.peasantRecruitGate) {
+    bumpCounter(castIronLabourPeasantRecruitGateTurns, gpId);
+    if (ci.peasantRecruitAffordable) {
+      bumpCounter(castIronLabourPeasantRecruitAffordableTurns, gpId);
+    } else {
+      bumpCounter(castIronLabourPeasantRecruitFabricStarvedTurns, gpId);
+      fabricStarvedThisTurn.add(gpId);
+      recordSeed42S7dPeasantRecruitFabricMarketSubCause(
+        game: game,
+        gpId: gpId,
+        marketFabricStarvedTurns:
+            castIronLabourPeasantRecruitMarketFabricStarvedTurns,
+        marketFabricUnofferedTurns:
+            castIronLabourPeasantRecruitMarketFabricUnofferedTurns,
+      );
+    }
+  }
+  if (ci.holdsFabricFeedstock) {
+    bumpCounter(feedstockInStockpileTurns, gpId);
+  }
+  if (ci.fabricRecipeFeasible) {
+    bumpCounter(fabricRecipeFeasibleTurns, gpId);
+    if (ci.fabricRecipeLabourFeasible) {
+      bumpCounter(fabricRecipeLabourFeasibleTurns, gpId);
+    }
+  }
+  if (ci.castIronMaterialFeasible) {
+    bumpCounter(castIronRecipeFeasibleTurns, gpId);
+    // Split the material-feasible turns by the planner's labour gate and by the
+    // staging gate's tile-ownership precondition.
+    recordSeed42S7dCastIronLabourFork(
+      gpId: gpId,
+      castIronLabourFeasible: ci.castIronLabourFeasible,
+      castIronLabourFoodStarved: ci.castIronLabourFoodStarved,
+      castIronLabourPopulationBound: ci.castIronLabourPopulationBound,
+      castIronRecipeLabourFeasibleTurns: castIronRecipeLabourFeasibleTurns,
+      castIronLabourFoodStarvedTurns: castIronLabourFoodStarvedTurns,
+      castIronLabourPopulationBoundTurns: castIronLabourPopulationBoundTurns,
+    );
+    if (ci.castIronOwnsFeedstockTile) {
+      bumpCounter(castIronFeasibleOwnsFeedstockTileTurns, gpId);
+    }
+  }
+}
+
+/// Records the peasant-recruit fabric-starved market sub-cause split for [gpId]
+/// (Refs #2847 § S7-D market-fabric localization).
+///
+/// Of the fabric-starved recruit turns, bumps [marketFabricStarvedTurns] when no
+/// other great power holds any `fabric` to sell (the recruit `fabric` can be
+/// neither produced nor bought), else bumps [marketFabricUnofferedTurns] when
+/// holders exist but every one withholds its `fabric` via the regiment-rebuild
+/// offer-retention carve-out (the market door is closed at the offer/retention
+/// layer, not at holdings). Read-only over `game` except the counter bumps.
+void recordSeed42S7dPeasantRecruitFabricMarketSubCause({
+  required Game game,
+  required String gpId,
+  required Map<String, int> marketFabricStarvedTurns,
+  required Map<String, int> marketFabricUnofferedTurns,
+}) {
+  if (otherGreatPowerFabricHeld(game, gpId) <= 0) {
+    bumpCounter(marketFabricStarvedTurns, gpId);
+    return;
+  }
+  if (otherGreatPowerOfferableFabricHeld(game, gpId) <= 0) {
+    bumpCounter(marketFabricUnofferedTurns, gpId);
+  }
+}
+
+/// Records the castIron material-feasible labour fork for [gpId] (Refs #2847
+/// § S7-D).
+///
+/// On a material-feasible turn, bumps exactly one of the three labour-stage
+/// counters following the planner's labour-gate precedence: labour-feasible,
+/// else food-starved, else population-bound. A material-feasible turn that is
+/// none of these (e.g. another labour gate) bumps no labour-stage counter.
+void recordSeed42S7dCastIronLabourFork({
+  required String gpId,
+  required bool castIronLabourFeasible,
+  required bool castIronLabourFoodStarved,
+  required bool castIronLabourPopulationBound,
+  required Map<String, int> castIronRecipeLabourFeasibleTurns,
+  required Map<String, int> castIronLabourFoodStarvedTurns,
+  required Map<String, int> castIronLabourPopulationBoundTurns,
+}) {
+  if (castIronLabourFeasible) {
+    bumpCounter(castIronRecipeLabourFeasibleTurns, gpId);
+    return;
+  }
+  if (castIronLabourFoodStarved) {
+    bumpCounter(castIronLabourFoodStarvedTurns, gpId);
+    return;
+  }
+  if (castIronLabourPopulationBound) {
+    bumpCounter(castIronLabourPopulationBoundTurns, gpId);
+  }
 }
