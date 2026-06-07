@@ -502,4 +502,83 @@ void main() {
       },
     );
   });
+
+  group('recordSeed42S7dCastIronMarketOfferCounters', () {
+    final castIronId = CommodityCatalog.castIron.id;
+
+    TradeOrder offer(String id) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.offer,
+      quantity: 1,
+      priority: 1,
+    );
+    TradeOrder bid(String id) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.bid,
+      quantity: 1,
+      priority: 1,
+    );
+
+    test(
+      'positive: another faction offers castIron => present bumped, absent not',
+      () {
+        final present = <String, int>{'gp3': 0};
+        final absent = <String, int>{'gp3': 0};
+        recordSeed42S7dCastIronMarketOfferCounters(
+          feedstockGateActiveThisTurn: {'gp3'},
+          tradeOrdersByPlayerId: {
+            'gp1': [offer(castIronId)],
+            'gp3': [bid(castIronId)],
+          },
+          castIronCommodityId: castIronId,
+          presentTurns: present,
+          absentTurns: absent,
+        );
+        expect(present['gp3'], 1);
+        expect(absent['gp3'], 0);
+      },
+    );
+
+    test(
+      'negative: no other faction offers castIron (only own offer + others\' '
+      'bids / unrelated offers) => absent bumped, present not',
+      () {
+        final present = <String, int>{'gp3': 0};
+        final absent = <String, int>{'gp3': 0};
+        recordSeed42S7dCastIronMarketOfferCounters(
+          feedstockGateActiveThisTurn: {'gp3'},
+          tradeOrdersByPlayerId: {
+            // The seller's own castIron offer must not count as supply.
+            'gp3': [offer(castIronId)],
+            // Other GPs bid castIron (demand, not supply) or offer a
+            // different commodity — neither is releasable castIron supply.
+            'gp1': [bid(castIronId), offer(timberId)],
+            'gp2': [offer(ironId)],
+          },
+          castIronCommodityId: castIronId,
+          presentTurns: present,
+          absentTurns: absent,
+        );
+        expect(present['gp3'], 0);
+        expect(absent['gp3'], 1);
+      },
+    );
+
+    test('gates strictly on the active set — inactive GPs are untouched', () {
+      final present = <String, int>{'gp3': 0, 'gp4': 0};
+      final absent = <String, int>{'gp3': 0, 'gp4': 0};
+      recordSeed42S7dCastIronMarketOfferCounters(
+        feedstockGateActiveThisTurn: {'gp3'},
+        tradeOrdersByPlayerId: {
+          'gp1': [offer(castIronId)],
+        },
+        castIronCommodityId: castIronId,
+        presentTurns: present,
+        absentTurns: absent,
+      );
+      expect(present['gp3'], 1);
+      expect(present['gp4'], 0);
+      expect(absent['gp4'], 0);
+    });
+  });
 }

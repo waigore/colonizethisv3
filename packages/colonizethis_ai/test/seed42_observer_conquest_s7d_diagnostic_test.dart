@@ -2104,6 +2104,19 @@ void main() {
           <String, int>{for (final gpId in gpIds) gpId: 0};
       final castIronLabourPeasantRecruitFabricDealAsBuyerTurns =
           <String, int>{for (final gpId in gpIds) gpId: 0};
+      // Refs #2847 § castIron market-supply wall: on feedstock-extraction
+      // gate-active turns, whether any *other* faction offered `castIron` (the
+      // manufactured level-0 `build_improvement` input) on the world market —
+      // i.e. whether the seller's direct-acquisition branch had any supply to
+      // bid against. A flat-zero present count across the run proves the
+      // direct castIron purchase path is permanently closed (every GP consumes
+      // its castIron for Old World military builds), leaving only the
+      // labour-walled domestic run. Read-only; counts move freely as later
+      // supply slices land.
+      final castIronMarketOfferPresentTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
+      final castIronMarketOfferAbsentTurns =
+          <String, int>{for (final gpId in gpIds) gpId: 0};
       // Minimum `labourPerOutput` across the castIron recipes — the cheapest
       // single run's effective-labour requirement, used as the food-starved /
       // population-bound fork threshold above.
@@ -2242,6 +2255,10 @@ void main() {
 
       for (var t = 0; t < 100; t++) {
         final fabricStarvedThisTurn = <String>{};
+        // Refs #2847 § castIron market-supply wall: GPs whose feedstock-
+        // extraction gate is active this turn, scanned post-merge for castIron
+        // market-offer presence/absence.
+        final feedstockGateActiveThisTurn = <String>{};
         // Refs #2847 H8: per-turn rebuild-readiness + cheapest-regiment input
         // availability, populated in the pre-resolution GP loop and reconciled
         // against the emitted military builds after the merge below.
@@ -2333,6 +2350,7 @@ void main() {
                 gpId,
               ).isNotEmpty;
           if (feedstockGateActive) {
+            feedstockGateActiveThisTurn.add(gpId);
             feedstockExtractionGateActiveTurns[gpId] =
                 (feedstockExtractionGateActiveTurns[gpId] ?? 0) + 1;
             // Refs #2847 H8-extraction execution-gap disambiguation: split the
@@ -2697,6 +2715,18 @@ void main() {
           absentTurns: castIronLabourPeasantRecruitFabricBidAbsentTurns,
         );
 
+        // Refs #2847 § castIron market-supply wall: on the feedstock-extraction
+        // gate-active turns, record whether any other faction offered castIron
+        // (the manufactured level-0 build_improvement input) this turn.
+        recordSeed42S7dCastIronMarketOfferCounters(
+          feedstockGateActiveThisTurn: feedstockGateActiveThisTurn,
+          tradeOrdersByPlayerId: merged.tradeOrdersByPlayerId,
+          castIronCommodityId:
+              castIronProductionRecipe?.outputCommodityId ?? 'castIron',
+          presentTurns: castIronMarketOfferPresentTurns,
+          absentTurns: castIronMarketOfferAbsentTurns,
+        );
+
         final assignments = fullAi.economyPlansByPlayerId.map(
           (pid, plan) => MapEntry(pid, plan.productionAssignments),
         );
@@ -2925,6 +2955,8 @@ void main() {
             castIronLabourPeasantRecruitFabricBidAbsentTurns,
         'gpCastIronLabourPeasantRecruitFabricDealAsBuyerTurns':
             castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
+        'gpCastIronMarketOfferPresentTurns': castIronMarketOfferPresentTurns,
+        'gpCastIronMarketOfferAbsentTurns': castIronMarketOfferAbsentTurns,
         'castIronMinLabourPerOutput': castIronMinLabourPerOutput,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
@@ -3031,6 +3063,8 @@ void main() {
             castIronLabourPeasantRecruitFabricDealAsBuyerTurns,
         fabricRecipeFeasibleTurns: fabricRecipeFeasibleTurns,
         fabricRecipeLabourFeasibleTurns: fabricRecipeLabourFeasibleTurns,
+        castIronMarketOfferPresentTurns: castIronMarketOfferPresentTurns,
+        castIronMarketOfferAbsentTurns: castIronMarketOfferAbsentTurns,
       );
     },
     skip:
