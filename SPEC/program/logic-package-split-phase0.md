@@ -224,6 +224,20 @@ The monolith `constants.dart` re-exports `GamePlayerLookup` and region ids from 
 
 `dossier/` folds into `colonizethis_diplomacy` at extraction; decoupling from `constants.dart` is a Phase 2 prerequisite so the new package depends only on `colonizethis_world`, `colonizethis_combat`, `colonizethis_models`, `colonizethis_data`, and `colonizethis_logger`. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `../constants.dart` under `diplomacy/` or `dossier/`).
 
+### `diplomacy` / `dossier` logging decoupling from `logicLog`
+
+**Wrong:** `diplomacy` / `dossier` → `colonizethis_logic` core logging (3 files, eliminated)
+
+Three files logged via the `colonizethis_logic` core `logicLog` (`CtLogger('logic')`), which would force the future `colonizethis_diplomacy` package to depend on the thin logic core just for logging. The fix introduces a single diplomacy-domain logger `diploLog` (`CtLogger('diplomacy')`) in `diplomacy/diplomacy_logging.dart`, mirroring the one-logger-per-package convention already used by `combatLog` (`combat:`) and `economyLog` (`economy:`). Diplomacy/dossier log lines now carry the `diplomacy:` prefix instead of `logic:`; this is the same prefix migration combat performed at extraction and is the only behavioural change (structural logging move, no logic change).
+
+| Source file | Symbol | Before | After |
+|-------------|--------|--------|-------|
+| `diplomacy/diplomacy_resolver.dart` | `diploLog` | `final diploLog = logicLog;` (imports `src/logging.dart`) | imports + re-exports `diplomacy/diplomacy_logging.dart` (`diploLog`) |
+| `diplomacy/ftp_resolver.dart` | `logicLog.i` | imports `../logging.dart` | `diploLog.i` from `diplomacy_logging.dart` (redundant inline `logic:` prefix dropped) |
+| `dossier/evidence_rules.dart` | `logicLog.d` | imports `src/logging.dart` | `diploLog.d` from `../diplomacy/diplomacy_logging.dart` |
+
+All other diplomacy files (`alliance_resolver.dart`, `overture_resolver.dart`, `war_resolver.dart`, `intervention_resolver_call_to_arms.dart`, `diplomacy_subsidies_relations_resolver.dart`) already consumed `diploLog` via `diplomacy_resolver.dart`; the re-export keeps them unchanged. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `src/logging.dart`, `package_logger.dart`, `../logging.dart`, `../package_logger.dart`, or the `colonizethis_logic` barrel under `diplomacy/` or `dossier/`).
+
 ## Phase 1 slice — `colonizethis_combat` (Refs #3290 C1)
 
 **Given** the `colonizethis_world` leaf on `dev`, **when** the `colonizethis_combat` package is extracted, **then**:
