@@ -1,7 +1,9 @@
 import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
     show
+        isCastIronLabourPeasantRecruitFabricMarketPathActive,
         isCastIronLabourPeasantRecruitFabricShort,
         isCastIronLabourPopulationBoundForLockRecoverySeller,
+        isDomesticFabricProductionLabourInfeasible,
         otherGreatPowerFabricHeld;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -144,6 +146,106 @@ void main() {
         );
       },
     );
+  });
+
+  group('isDomesticFabricProductionLabourInfeasible (Refs #2847)', () {
+    test('positive: material-feasible fabric recipe with labour below one run', () {
+      final game = _lockRecoverySellerGame(
+        workerPool: const WorkerPool(peasants: 1),
+        stockpile: Stockpile.empty
+            .applyDelta('timber', 2)
+            .applyDelta('iron', 2)
+            .applyDelta('coal', 1)
+            .applyDelta('wool', 5)
+            .applyDelta('grain', 10),
+      );
+      expect(
+        isDomesticFabricProductionLabourInfeasible(
+          game: game,
+          playerId: _playerId,
+        ),
+        isTrue,
+      );
+    });
+
+    test('negative: enough labour to run at least one fabric recipe', () {
+      final game = _lockRecoverySellerGame(
+        workerPool: const WorkerPool(peasants: 2),
+        stockpile: Stockpile.empty
+            .applyDelta('timber', 2)
+            .applyDelta('iron', 2)
+            .applyDelta('coal', 1)
+            .applyDelta('wool', 5)
+            .applyDelta('grain', 20),
+      );
+      expect(
+        isDomesticFabricProductionLabourInfeasible(
+          game: game,
+          playerId: _playerId,
+        ),
+        isFalse,
+      );
+    });
+
+    test('negative: no material-feasible fabric recipe', () {
+      final game = _lockRecoverySellerGame(
+        workerPool: const WorkerPool(peasants: 1),
+        stockpile: Stockpile.empty
+            .applyDelta('timber', 2)
+            .applyDelta('iron', 2)
+            .applyDelta('coal', 1)
+            .applyDelta('grain', 10),
+      );
+      expect(
+        isDomesticFabricProductionLabourInfeasible(
+          game: game,
+          playerId: _playerId,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('isCastIronLabourPeasantRecruitFabricMarketPathActive (Refs #2847)', () {
+    test('true for population-bound seller short peasant fabric cost', () {
+      final game = _lockRecoverySellerGame(
+        workerPool: const WorkerPool(peasants: 2),
+        stockpile: Stockpile.empty
+            .applyDelta('timber', 2)
+            .applyDelta('iron', 2)
+            .applyDelta('coal', 1)
+            .applyDelta('fabric', 1)
+            .applyDelta('grain', 10),
+      );
+      expect(
+        isCastIronLabourPeasantRecruitFabricMarketPathActive(
+          game: game,
+          playerId: _playerId,
+          projected: game.players.first.stockpile,
+        ),
+        isTrue,
+      );
+    });
+
+    test('false when fabric meets peasant recruit cost', () {
+      final game = _lockRecoverySellerGame(
+        workerPool: const WorkerPool(peasants: 2),
+        stockpile: Stockpile.empty
+            .applyDelta('timber', 2)
+            .applyDelta('iron', 2)
+            .applyDelta('coal', 1)
+            .applyDelta('fabric', 2)
+            .applyDelta('grain', 10),
+      );
+      expect(
+        isCastIronLabourPeasantRecruitFabricMarketPathActive(
+          game: game,
+          playerId: _playerId,
+          projected: game.players.first.stockpile,
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('isCastIronLabourPeasantRecruitFabricShort (Refs #2847)', () {

@@ -21,8 +21,9 @@ import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'cast_iron_labour_gate.dart'
     show
+        isCastIronLabourPeasantRecruitFabricMarketPathActive,
         isCastIronLabourPeasantRecruitFabricShort,
-        isCastIronLabourPopulationBoundForLockRecoverySeller;
+        isDomesticFabricProductionLabourInfeasible;
 import 'recipe_scoring.dart' show kShortageThreshold;
 
 // Treasury planner concern fragments (Refs #3288 file-split). Each `part of`
@@ -155,6 +156,7 @@ List<TradeOrder> runTreasuryPlanner({
   // improvement-input supplier source.
   final regimentBuildInputMarketSupplyActive =
       lockRecoveryScan.anySellerNeedsRegimentBuildInput ||
+          lockRecoveryScan.anySellerNeedsCastIronLabourPeasantRecruitFabric ||
           peerLockRecoverySellerNeededProducibleImprovementInputs(
             game,
             excludePlayerId: playerId,
@@ -424,21 +426,25 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   required Map<CommodityId, int> need,
   required Map<CommodityId, int> available,
 }) {
-  if (!isLockRecoverySeller ||
-      regimentCountForPlayer(game, playerId) != 0) {
+  if (!isLockRecoverySeller) {
     return;
   }
+  final zeroRegimentRebuildPath = regimentCountForPlayer(game, playerId) == 0;
   // Refs #2847 § castIron-labour peasant-recruit fabric staging: the recruit
   // row costs 2 `fabric` while the regiment build input needs only 1, so a
   // seller holding one unit clears the regiment missing-input check yet still
   // cannot pay the recruit — wool / cotton feedstock must stay reserved until
   // `fabric >= 2` when the population-bound castIron labour path is active.
   final peasantRecruitFabricStaging =
-      isCastIronLabourPopulationBoundForLockRecoverySeller(
+      isCastIronLabourPeasantRecruitFabricMarketPathActive(
         game: game,
         playerId: playerId,
-      ) &&
-      isCastIronLabourPeasantRecruitFabricShort(projected);
+        projected: projected,
+      );
+  final castIronLabourPeasantRecruitMarketPath = peasantRecruitFabricStaging;
+  if (!zeroRegimentRebuildPath && !castIronLabourPeasantRecruitMarketPath) {
+    return;
+  }
   // Refs #2847 § H8 production allocation: offer-side input staging is
   // **treasury-independent**. The economy planner now produces the cheapest
   // regiment's build input (`fabric`) and its recipe feedstock ahead of
@@ -454,15 +460,17 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // build input is on hand (feedstock self-clear), so the +6 OW baseline GPs
   // (gp1 / gp2) are never affected. SPEC/ai/treasury-planner.md
   // § Produced build-input retention + § Build-input feedstock reservation.
-  for (final buildInputId
-      in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
-    available.remove(buildInputId);
-  }
-  for (final feedstockId in _regimentBuildInputFeedstockIds(
-    projected,
-    peasantRecruitFabricStaging: peasantRecruitFabricStaging,
-  )) {
-    available.remove(feedstockId);
+  if (zeroRegimentRebuildPath || castIronLabourPeasantRecruitMarketPath) {
+    for (final buildInputId
+        in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
+      available.remove(buildInputId);
+    }
+    for (final feedstockId in _regimentBuildInputFeedstockIds(
+      projected,
+      peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+    )) {
+      available.remove(feedstockId);
+    }
   }
   // Refs #2847 § H8 bootstrap bids: market bids spend treasury (the buyer's
   // notional is debited on a match), so the build-input / feedstock / direct
@@ -471,6 +479,46 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // the regiment cost. SPEC/ai/treasury-planner.md § Lock-recovery seller
   // regiment build-input bootstrap.
   if (rawTreasury < threshold) {
+    return;
+  }
+  if (castIronLabourPeasantRecruitMarketPath &&
+      isDomesticFabricProductionLabourInfeasible(
+        game: game,
+        playerId: playerId,
+      )) {
+    // Domestic `fabric_from_*` is material-feasible yet labour-walled
+    // (`labourPerOutput == 2` > effective labour). Feedstock bids cannot unblock
+    // the peasant recruit — buy finished `fabric` from affluent suppliers instead
+    // (Refs #2847 § labour-infeasible fabric market path).
+    _addRegimentBuildInputDirectNeed(
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      need: need,
+      peasantRecruitFabricStaging: true,
+    );
+    return;
+  }
+  if (!zeroRegimentRebuildPath) {
+    // Peasant-recruit fabric path with labour-feasible domestic conversion:
+    // feedstock / direct bids only (no zero-regiment improvement-input chain).
+    final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
+      feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(
+        projected,
+        peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+      ),
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      need: need,
+      peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+    );
+    if (!feedstockStillMissing) {
+      _addRegimentBuildInputDirectNeed(
+        projected: projected,
+        carryForwardBids: carryForwardBids,
+        need: need,
+        peasantRecruitFabricStaging: peasantRecruitFabricStaging,
+      );
+    }
     return;
   }
   // Refs #2847 H8-extraction: improvement-input prerequisite. The seller's
