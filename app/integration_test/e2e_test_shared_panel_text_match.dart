@@ -143,6 +143,15 @@ Future<void> e2eExpectNavalPanelMatchesE2eSnapshot(
           fleetTilesExpanded: false,
         )
       : null,
+  // The dense fleet-action cluster (Move / Split / Locate) renders Move and
+  // Split icon-only at the narrow macOS test host but as Icon + Text on the
+  // wider Linux desktop integration host, so the canonical icon-only mirror
+  // (which omits these labels) would spuriously fail on Linux. Normalize the
+  // two host-width-dependent labels out of the collected texts so the
+  // assertion is deterministic across hosts; Locate is always icon-only and
+  // Combine is a non-dense top-level action the mirror keeps (Refs GitHub
+  // #2336 AC6).
+  ignoreActualTexts: [l10n.common_move, l10n.common_split],
 );
 
 /// Asserts the wide [ProductionPanel] rendered tree matches
