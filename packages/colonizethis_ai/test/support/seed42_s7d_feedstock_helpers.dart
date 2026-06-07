@@ -373,6 +373,16 @@ bool castIronFeedstockExtractionLabourFutile(
 void bumpCounter(Map<String, int> counter, String key) =>
     counter[key] = (counter[key] ?? 0) + 1;
 
+/// Builds a fresh zero-initialised per-GP `<String, int>` diagnostic counter
+/// map keyed by every id in [gpIds]. Shared by the S7-D diagnostic to keep its
+/// many counter declarations to a single line each (the inline
+/// `{for (final gpId in gpIds) gpId: 0}` literal otherwise wraps to three
+/// physical lines per counter, pushing the test file over the repo non-comment
+/// line limit).
+Map<String, int> zeroPerGpCounter(List<String> gpIds) => {
+  for (final gpId in gpIds) gpId: 0,
+};
+
 /// Per-turn castIron-labour stage-localization measurement for one GP (Refs
 /// #2847). Pure read-only over `(game, playerId)`: bundles the boolean flags
 /// the S7-D diagnostic increments each turn so the caller only applies counter
@@ -1064,6 +1074,51 @@ void recordSeed42S7dCastIronMarketOfferCounters({
             order.commodityId == castIronCommodityId,
       );
       if (offeredCastIron) {
+        offeredByOther = true;
+        break;
+      }
+    }
+    if (offeredByOther) {
+      bumpCounter(presentTurns, gpId);
+    } else {
+      bumpCounter(absentTurns, gpId);
+    }
+  }
+}
+
+/// Records `fabric` market-offer presence/absence for the S7-D peasant-recruit
+/// fabric localization (Refs #2847 § fabric offer-side split).
+///
+/// On each gp whose castIron-labour peasant-recruit fabric market path is
+/// active this turn ([fabricMarketPathActiveThisTurn]), scans
+/// [tradeOrdersByPlayerId] for any *other* faction emitting a `fabric` offer
+/// and bumps [presentTurns] when one exists, else [absentTurns].
+///
+/// Complements [otherGreatPowerFabricHeld] (gross holdings) and
+/// [otherGreatPowerOfferableFabricHeld] (planner-scope offerable proxy): a
+/// positive holdings / offerable total with a flat-zero [presentTurns] across
+/// the run localizes the closed market door to the **trade-order emission**
+/// layer (holders retain `fabric` in stockpile but never emit a sell offer)
+/// rather than to buyer-side bid/match. Read-only over the supplied maps except
+/// the counter bumps; extracted to keep the diagnostic test file at or below
+/// the repo non-comment line limit.
+void recordSeed42S7dFabricMarketOfferCounters({
+  required Set<String> fabricMarketPathActiveThisTurn,
+  required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
+  required Map<String, int> presentTurns,
+  required Map<String, int> absentTurns,
+}) {
+  const fabricCommodityId = 'fabric';
+  for (final gpId in fabricMarketPathActiveThisTurn) {
+    var offeredByOther = false;
+    for (final entry in tradeOrdersByPlayerId.entries) {
+      if (entry.key == gpId) continue;
+      final offeredFabric = entry.value.any(
+        (order) =>
+            order.type == TradeOrderType.offer &&
+            order.commodityId == fabricCommodityId,
+      );
+      if (offeredFabric) {
         offeredByOther = true;
         break;
       }
