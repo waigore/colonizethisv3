@@ -8,12 +8,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 
 import '../combat/military_strength.dart';
-import '../utils/expando_index.dart';
-import '../world/diplomatic_relation_lookup.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/utils/expando_index.dart';
+import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 
-export '../world/diplomatic_relation_lookup.dart';
-export '../world/province_lookup.dart' show oldWorldProvinceCountOwnedBy;
+export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
+export 'package:colonizethis_world/src/world/province_lookup.dart' show oldWorldProvinceCountOwnedBy;
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;

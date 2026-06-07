@@ -2,8 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
-import '../world/player_view.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';

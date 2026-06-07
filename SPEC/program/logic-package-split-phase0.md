@@ -143,6 +143,15 @@ Five root planner files under `lib/src/ai/` (not eight): `ai_planner.dart`, `ai_
 
 Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, etc.) are added when packages are created in Phases 1–4.
 
+## Phase 1 slice — `colonizethis_world` (Refs #3290 C1)
+
+**Given** Phase 0 prerequisites on `dev`, **when** the `colonizethis_world` package is extracted, **then**:
+
+- `packages/colonizethis_world` owns `world/`, `utils/`, `event_bus/`, hoisted `trace/`, `game_events.dart`, `logic_validation_exception.dart`, and `game_player_lookup` / `world_constants` helpers.
+- `colonizethis_logic` depends on `colonizethis_world` and re-exports `package:colonizethis_world/colonizethis_world.dart` from its barrel for backward compatibility.
+- `colonizethis_world/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.world_no_logic_deps`).
+- World-domain tests live under `packages/colonizethis_world/test/`; `colonizethis_logic` remains a **dev_dependency** of `colonizethis_world` for integration fixtures until later phases shrink that surface.
+
 ## Acceptance criteria (Phase 0 / C0)
 
 - **Given** the monolith on `dev`, **when** `repo.logic_domain_import_dag` runs, **then** zero imports match forbidden pairs outside the documented grandfather allowlist.

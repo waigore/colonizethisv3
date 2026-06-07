@@ -2,10 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../trace/turn_trace_runtime.dart';
-import '../world/army_ids.dart';
-import '../world/army_movement.dart';
-import '../world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
+import 'package:colonizethis_world/src/world/army_ids.dart';
+import 'package:colonizethis_world/src/world/army_movement.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 
 final ordersApplicationLog = logicLog;
 

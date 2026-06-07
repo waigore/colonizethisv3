@@ -10,10 +10,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../turn/turn_resolution_result.dart';
-import '../world/faction_membership.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/faction_membership.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 
-export '../world/faction_membership.dart';
+export 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'ftp_resolver.dart';

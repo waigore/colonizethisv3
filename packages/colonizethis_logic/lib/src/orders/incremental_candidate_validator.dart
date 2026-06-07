@@ -26,7 +26,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../economy/economy_riches_to_treasury.dart';
-import '../world/player_view.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';

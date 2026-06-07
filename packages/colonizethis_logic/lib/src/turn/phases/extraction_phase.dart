@@ -2,11 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
-import '../../world/connectivity_resolver.dart';
+import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import '../../economy/economy_extraction.dart';
 import '../../economy/resource_extractor.dart';
 import '../../economy/sea_transport.dart';
-import '../../world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 import '../../turn_resolution_seeds.dart';

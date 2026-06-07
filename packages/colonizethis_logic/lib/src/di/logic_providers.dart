@@ -1,6 +1,6 @@
 import 'package:riverpod/riverpod.dart';
 
-import '../event_bus/game_event_bus.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
 import '../orders/order_suggestion_api.dart';
 import '../orders/order_suggestion_api_impl.dart';
 

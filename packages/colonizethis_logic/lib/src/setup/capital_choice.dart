@@ -4,13 +4,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/capital_reassignment.dart';
-import '../world/game_world_mutations.dart';
-import '../world/province_lookup.dart';
-import '../world/player_state_pipeline.dart';
+import 'package:colonizethis_world/src/world/capital_reassignment.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/player_state_pipeline.dart';
 import 'setup_exceptions.dart';
 
-export '../world/capital_reassignment.dart'
+export 'package:colonizethis_world/src/world/capital_reassignment.dart'
     show
         applyGreatPowerCapitalProvinceTownDevelopment,
         pickCapitalProvinceIdForReassignment,

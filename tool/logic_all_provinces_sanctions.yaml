@@ -3,7 +3,7 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_logic/lib/src/world/player_view.dart
+  - path: packages/colonizethis_world/lib/src/world/player_view.dart
     line: 89
     rationale: Player view aggregates province-level facts across both regions.
     spec: SPEC/program/logic-dual-region-province-access.md
@@ -33,13 +33,13 @@ sanctions:
     rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
-  - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall_terminal.dart
+  - path: packages/colonizethis_world/lib/src/world/capital_and_gp_fall_terminal.dart
     line: 110
     rationale: Capital fall logic scans province ownership across regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/world/town_capital_tile_strip.dart
+  - path: packages/colonizethis_world/lib/src/world/town_capital_tile_strip.dart
     line: 27
     rationale: Town/capital tile-strip lookup uses WorldState.allProvinces() over both regions.
     spec: SPEC/program/logic-dual-region-province-access.md

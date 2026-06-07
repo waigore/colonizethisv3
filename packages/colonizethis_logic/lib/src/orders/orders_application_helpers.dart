@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/tile_key_coordinates.dart' as tile_key_coordinates;
+import 'package:colonizethis_world/src/world/tile_key_coordinates.dart' as tile_key_coordinates;
 import 'build_rail_work_rules.dart';
 
 /// Canonical tile-key coordinate parser for `regionId|provinceId|x|y`.

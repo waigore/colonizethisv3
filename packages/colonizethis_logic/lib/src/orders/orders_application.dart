@@ -6,18 +6,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
-import '../world/game_world_mutations.dart';
-import '../world/player_view.dart';
-import '../world/province_lookup.dart';
-import '../world/tile_control.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/tile_control.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'orders_application_build_phase.dart';
 import 'orders_application_completed_work.dart';
 import 'orders_application_context.dart';
 import 'orders_application_helpers.dart';
 import 'orders_application_work_phase.dart';
 import 'orders_application_worker_pool_phase.dart';
-import '../trace/turn_trace_runtime.dart';
+import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 
 /// Order application helpers for build and work phases.
 /// SPEC/program/orders.md

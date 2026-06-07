@@ -61,7 +61,7 @@ export 'src/orders/incremental_candidate_validator.dart'
     show IncrementalCandidateValidator;
 export 'src/orders/order_suggestion_move_army.dart'
     show armyMoveCandidateDestinationProvinceIds;
-export 'src/world/movement.dart' show neighborProvinceIdsInRegion;
+export 'package:colonizethis_world/src/world/movement.dart' show neighborProvinceIdsInRegion;
 export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart'
     show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
 export 'src/economy/economy_riches_to_treasury.dart'
@@ -82,17 +82,17 @@ export 'src/orders/order_suggestion_helpers.dart'
         filterMoveOrdersByDiplomacy,
         getProvinceOwnerMap,
         knownDiplomaticTargetFactionIds;
-export 'src/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
-export 'src/world/army_commands.dart' show applyArmySplit;
-export 'src/world/army_ids.dart' show homeArmyIdFor;
-export 'src/world/player_view.dart'
+export 'package:colonizethis_world/src/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
+export 'package:colonizethis_world/src/world/army_commands.dart' show applyArmySplit;
+export 'package:colonizethis_world/src/world/army_ids.dart' show homeArmyIdFor;
+export 'package:colonizethis_world/src/world/player_view.dart'
     show PlayerView, VisibilityLevel, buildPlayerView;
-export 'src/world/sea_reachable_provinces.dart'
+export 'package:colonizethis_world/src/world/sea_reachable_provinces.dart'
     show
         reachableNonOwnedProvinceDistancesViaSeas,
         reachableNonOwnedProvinceIdsViaSeas;
-export 'src/world/province_lookup.dart' show allProvinces;
-export 'src/world/unit_lookup.dart'
+export 'package:colonizethis_world/src/world/province_lookup.dart' show allProvinces;
+export 'package:colonizethis_world/src/world/unit_lookup.dart'
     show
         WorldStateUnitLookup,
         allUnitsFromWorld,

@@ -5,9 +5,9 @@ import 'package:path/path.dart' as p;
 /// Canonical dual-region province iteration lives here; all other logic `lib/src`
 /// code should prefer `allProvinces` / `WorldState.allProvinces()` (GitHub #2071).
 const _canonicalProvinceRelativePath =
-    'packages/colonizethis_logic/lib/src/world/province_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/province_lookup.dart';
 const _canonicalUnitRelativePath =
-    'packages/colonizethis_logic/lib/src/world/unit_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
 const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
 

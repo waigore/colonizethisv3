@@ -4,10 +4,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/army_migration.dart';
-import '../world/game_world_mutations.dart';
-import '../world/province_lookup.dart';
-import '../world/province_ownership_transfer.dart';
+import 'package:colonizethis_world/src/world/army_migration.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
 import 'conflict_detection.dart';
 
 part 'quick_battle_resolver_engine.dart';

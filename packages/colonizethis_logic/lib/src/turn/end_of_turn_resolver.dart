@@ -8,9 +8,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
-import '../world/fog_resolution.dart';
-import '../world/game_world_mutations.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/fog_resolution.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 import '../turn_resolution_seeds.dart';
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,

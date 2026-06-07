@@ -42,6 +42,7 @@ import 'check_logic_work_target_switch.dart';
 import 'check_logic_test_file_size.dart';
 import 'check_logic_domain_import_dag.dart';
 import 'check_logic_source_file_size.dart';
+import 'check_world_no_logic_deps.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
 import 'check_ai_planner_context.dart';
@@ -790,6 +791,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicDomainImportDag(repoRoot);
     case 'repo.logic_source_file_size':
       return runCheckLogicSourceFileSize(repoRoot);
+    case 'repo.world_no_logic_deps':
+      return runCheckWorldNoLogicDeps(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,

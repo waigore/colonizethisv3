@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/player_view.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
 import 'order_suggestion_context.dart';
 
 /// Suggests research orders for [view.playerId] based on unlocked tech and

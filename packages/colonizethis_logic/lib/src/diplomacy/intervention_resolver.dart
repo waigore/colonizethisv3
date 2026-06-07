@@ -9,7 +9,7 @@ import '../combat/conflict_detection.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
 import 'overture_resolver.dart';

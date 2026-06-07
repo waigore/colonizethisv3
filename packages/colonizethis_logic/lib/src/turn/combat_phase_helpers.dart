@@ -12,9 +12,9 @@ import '../combat/quick_battle_input_builder.dart';
 import '../combat/quick_battle_resolver.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
-import '../event_bus/game_event_bus.dart';
-import '../game_events.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
+import 'package:colonizethis_world/src/game_events.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 import '../turn_resolution_seeds.dart';
 
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.

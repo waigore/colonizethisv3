@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
-import '../../world/tile_control.dart';
+import 'package:colonizethis_world/src/world/tile_control.dart';
 import '../order_validation_result.dart';
 
 /// Shared inputs for per-target work order validation steps that run before

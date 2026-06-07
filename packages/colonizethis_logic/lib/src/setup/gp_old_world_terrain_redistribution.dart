@@ -5,7 +5,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'town_capital_occupancy.dart';
 
 /// Salt for deterministic tie-breaks when assigning Hamilton +1 remainders.
