@@ -18,7 +18,7 @@ QuickBattleResult _finishAndLogQuickBattleResult({
     mutableGuns: mutableGuns,
     useVirtualEmplaced: useVirtualEmplaced,
   );
-  logicLog.d(
+  combatLog.d(
     'quick_battle end winner=${result.winner.name} '
     'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
   );

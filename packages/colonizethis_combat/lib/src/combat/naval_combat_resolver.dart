@@ -2,7 +2,7 @@
 // Interception and retreat: SPEC/game/ships-and-naval.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
@@ -408,7 +408,7 @@ NavalBattleResult resolveSeaBattle(
     outcome = NavalBattleOutcome.side1Victory;
   }
 
-  logicLog.d(
+  combatLog.d(
     'naval battle zone=${battle.seaZoneId} side1=${battle.side1.ownerId} side2=${battle.side2.ownerId} '
     'outcome=${outcome.name} retreat1=$side1Retreated retreat2=$side2Retreated',
   );

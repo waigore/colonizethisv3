@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/army_migration.dart';
@@ -37,7 +37,7 @@ QuickBattleResult resolveQuickBattle(
   QuickBattleInput input, {
   List<QuickBattleRoundActions>? roundActions,
 }) {
-  logicLog.d(
+  combatLog.d(
     'quick_battle start province=${input.provinceId} '
     'seed=${input.seed} rounds=${input.maxRounds}',
   );

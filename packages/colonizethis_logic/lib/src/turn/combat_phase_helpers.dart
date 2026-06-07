@@ -4,12 +4,12 @@
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../combat/battle_general_assignment.dart';
-import '../combat/combat_resolver.dart';
-import '../combat/conflict_detection.dart';
-import '../combat/military_attack_economy.dart';
-import '../combat/quick_battle_input_builder.dart';
-import '../combat/quick_battle_resolver.dart';
+import 'package:colonizethis_combat/src/combat/battle_general_assignment.dart';
+import 'package:colonizethis_combat/src/combat/combat_resolver.dart';
+import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
+import 'package:colonizethis_combat/src/combat/military_attack_economy.dart';
+import 'package:colonizethis_combat/src/combat/quick_battle_input_builder.dart';
+import 'package:colonizethis_combat/src/combat/quick_battle_resolver.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
