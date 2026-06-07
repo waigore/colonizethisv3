@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../economy/economy_production.dart';
+import 'package:colonizethis_economy/src/economy/economy_production.dart';
 import 'package:colonizethis_world/src/world/player_state_pipeline.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';

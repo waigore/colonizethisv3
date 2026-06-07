@@ -13,6 +13,7 @@ dependencies:
   riverpod: ^3.2.1
   colonizethis_logger:
   colonizethis_combat:
+  colonizethis_economy:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:

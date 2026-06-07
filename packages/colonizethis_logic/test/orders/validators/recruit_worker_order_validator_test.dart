@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/economy/worker_action_cost.dart';
+import 'package:colonizethis_economy/src/economy/worker_action_cost.dart';
 import 'package:colonizethis_logic/src/orders/validators/recruit_worker_order_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';

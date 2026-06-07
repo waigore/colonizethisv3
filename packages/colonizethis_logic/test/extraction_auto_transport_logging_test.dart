@@ -8,7 +8,7 @@ import 'extraction_auto_transport_test_fixtures.dart';
 
 List<String> _autoTransportMessages(List<LogEvent> events) => [
   for (final e in events)
-    if (e.message.contains('logic: extraction auto_transport')) e.message,
+    if (e.message.contains('economy: extraction auto_transport')) e.message,
 ];
 
 void main() {

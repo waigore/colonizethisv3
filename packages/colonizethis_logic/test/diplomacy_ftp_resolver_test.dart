@@ -1,5 +1,5 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/src/economy/world_market/deal_matcher.dart';
+import 'package:colonizethis_economy/src/economy/world_market/deal_matcher.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -29,16 +29,8 @@ Game _gpGameWithEmbassyPair({
       ),
     ],
     overtureStates: const [
-      OvertureState(
-        gpId: 'gp1',
-        targetId: 'gp2',
-        stage: OvertureStage.embassy,
-      ),
-      OvertureState(
-        gpId: 'gp2',
-        targetId: 'gp1',
-        stage: OvertureStage.embassy,
-      ),
+      OvertureState(gpId: 'gp1', targetId: 'gp2', stage: OvertureStage.embassy),
+      OvertureState(gpId: 'gp2', targetId: 'gp1', stage: OvertureStage.embassy),
     ],
     ftpPartnershipKeys: existingFtpKeys,
   );
@@ -138,11 +130,7 @@ void main() {
         pending.game,
         orders,
         ftpDecisions: const [
-          FtpDecision(
-            proposerGpId: 'gp1',
-            targetGpId: 'gp2',
-            accepted: true,
-          ),
+          FtpDecision(proposerGpId: 'gp1', targetGpId: 'gp2', accepted: true),
         ],
       ).game;
       expect(hasFtpPartnership(accepted, 'gp1', 'gp2'), isTrue);
@@ -216,10 +204,7 @@ void main() {
             'buyerFtp': [matcherBid('timber', 10, priority: 1)],
             'buyerOther': [matcherBid('timber', 10, priority: 1)],
           },
-          tradeCapacityByFactionId: const {
-            'buyerFtp': 20,
-            'buyerOther': 20,
-          },
+          tradeCapacityByFactionId: const {'buyerFtp': 20, 'buyerOther': 20},
           ftpPairKeys: ftpKeys,
         ),
       );

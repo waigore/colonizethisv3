@@ -158,10 +158,7 @@ void _runOrderValidationPhases({
           refreshBundleBefore: true,
           run: (v) => _runBuildPhase(v, state, builds),
         ),
-        (
-          refreshBundleBefore: true,
-          run: (v) => _runWorkPhase(v, state, works),
-        ),
+        (refreshBundleBefore: true, run: (v) => _runWorkPhase(v, state, works)),
         (
           refreshBundleBefore: true,
           run: (v) => _runDiplomaticPhase(v, state, diplomatic),
@@ -334,8 +331,7 @@ void _runNavalPhase(
     state.results,
     navals,
     state.rejected,
-    (o, prev) =>
-        v.navalValidator.validateNavalMove(o, previousRejected: prev),
+    (o, prev) => v.navalValidator.validateNavalMove(o, previousRejected: prev),
   );
   state.rejected = _appendValidationResults(
     state.results,

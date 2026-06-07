@@ -243,6 +243,36 @@ void noop() {}
     expect(allowlist.where((e) => e.startsWith('diplomacy->ai:')), isEmpty);
   });
 
+  test('diplomacy->orders edge is enforced and fully eliminated (Refs #3290)',
+      () {
+    final forbidden = logicDomainImportForbiddenEdgesForTests();
+    expect(forbidden, contains('diplomacy->orders'));
+
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(allowlist.where((e) => e.startsWith('diplomacy->orders:')), isEmpty);
+  });
+
+  test('fails when a new forbidden diplomacy->orders import appears', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_dipl_orders_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+      '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_orders.dart',
+    )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../orders/order_suggestion_helpers.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
+  });
+
   test('fails when a new forbidden diplomacy->ai import appears', () {
     final temp = Directory.systemTemp.createTempSync('logic_dag_dipl_ai_');
     addTearDown(() => temp.deleteSync(recursive: true));

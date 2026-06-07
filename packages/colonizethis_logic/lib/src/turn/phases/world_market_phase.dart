@@ -3,13 +3,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../diplomacy/diplomacy_relation_lookup.dart'
     show ftpPairKeysFromGame, getRelation;
-import '../../economy/non_gp_extraction.dart';
-import '../../economy/sea_transport.dart';
-import '../../economy/world_market/deal_matcher.dart';
-import '../../economy/world_market/first_right_credits.dart';
-import '../../economy/world_market/lock_recovery_minor_bids.dart';
-import '../../economy/world_market/price_discovery.dart';
-import '../../economy/world_market/purchased_tile_index.dart';
+import 'package:colonizethis_economy/src/economy/non_gp_extraction.dart';
+import 'package:colonizethis_economy/src/economy/sea_transport.dart';
+import 'package:colonizethis_economy/src/economy/world_market/deal_matcher.dart';
+import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
+import 'package:colonizethis_economy/src/economy/world_market/lock_recovery_minor_bids.dart';
+import 'package:colonizethis_economy/src/economy/world_market/price_discovery.dart';
+import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_index.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
@@ -191,12 +191,12 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       player.id,
       fleetsById: fleetsByIdStartOfPhase,
     );
-    final shippedByExtraction =
-        extractionTonnageByPlayerId[player.id] ?? 0;
+    final shippedByExtraction = extractionTonnageByPlayerId[player.id] ?? 0;
     final tradeCapacity = homeFleetHolds - shippedByExtraction;
     tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
-    treasuryBudgetByBuyerFactionId[player.id] =
-        player.treasury > 0 ? player.treasury : 0;
+    treasuryBudgetByBuyerFactionId[player.id] = player.treasury > 0
+        ? player.treasury
+        : 0;
   }
   for (final minorId in lockRecoveryMinorBidsByFactionId.keys) {
     tradeCapacityByFactionId[minorId] = kLockRecoveryMinorBidCargoCapacity;
@@ -325,10 +325,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     priorPrices: priorMarket.prices,
     newPrices: newPrices,
   );
-  _attachMatcherNotes(
-    activity: activity,
-    matchResult: matchResult,
-  );
+  _attachMatcherNotes(activity: activity, matchResult: matchResult);
   _attachDropNotes(
     activity: activity,
     notesByCommodity: carryForwardValidation.dropNotesByCommodity,

@@ -64,6 +64,15 @@ const _forbiddenEdges = <(String, String)>{
   // `diplomacy/diplomacy_phase_result.dart`, so `turn` depends on `diplomacy`
   // one-way and `diplomacy` must not import `turn/` (Refs #3290 Phase 0).
   ('diplomacy', 'turn'),
+  // `orders` sits above `diplomacy` (the `colonizethis_orders` package depends
+  // on `colonizethis_diplomacy`), so `diplomacy` must not import `orders/`. The
+  // sole crossing symbol (`knownDiplomaticTargetFactionIds`, used by
+  // `diplomacy/gp_tribe_first_contact.dart`) is a diplomacy-domain visibility
+  // helper; it now lives in `diplomacy/known_diplomatic_targets.dart` and is
+  // re-exported by `order_suggestion_api.dart` / `ai_api.dart`, so the public
+  // surface is preserved and this edge is eliminated and forbidden
+  // (Refs #3290 Phase 2 prerequisite for the colonizethis_diplomacy extraction).
+  ('diplomacy', 'orders'),
   // `ai` (the `colonizethis_ai_contracts` file set) sits above `diplomacy`:
   // after Phase 4 `ai_contracts` depends on `orders`, which depends on
   // `diplomacy`. A `diplomacy -> ai` import would therefore close the cycle

@@ -36,6 +36,8 @@ Phase 0 deliverables (child issue C0):
 | `ai` | `diplomacy` | **Eliminated** — `DiplomacyFactionMembership` / `isMinorOrTribe` consumed from `world/faction_membership.dart` |
 | `turn` | `diplomacy` | Allowed — orchestrator `TurnResolutionResult` variants consume diplomacy phase value types |
 | `diplomacy` | `turn` | **Eliminated** — overture/FTP/intervention/call-to-arms offer + decision types and `DiplomacyPhaseResult` moved to `diplomacy/diplomacy_phase_result.dart`; `turn/turn_resolution_result.dart` imports + re-exports them |
+| `orders` | `diplomacy` | Allowed — order suggesters consume diplomacy relation/visibility helpers |
+| `diplomacy` | `orders` | **Eliminated** — `knownDiplomaticTargetFactionIds` (diplomacy-domain visibility helper) moved from `orders/order_suggestion_helpers.dart` to `diplomacy/known_diplomatic_targets.dart` |
 
 ## Edge pair enumerations (wrong-direction symbols)
 
@@ -82,6 +84,18 @@ Phase 0 deliverables (child issue C0):
 | `economy/sea_transport.dart` | `diplomacy/diplomacy_relation_lookup.dart` | `enemiesOf` | `package:colonizethis_world/src/world/diplomatic_relation_lookup.dart` (already a `colonizethis_world` symbol) | Fixed |
 
 `ai_api.dart` and the `colonizethis_logic` barrel now expose `worldMarketBidTypeCap` / `kWorldMarketBaselineBidTypeCap` from the economy file, preserving the public surface for AI/order/UI consumers. The edge is enforced by `repo.logic_domain_import_dag` (`economy->diplomacy` forbidden pair, no grandfather entry).
+
+### `diplomacy → orders`
+
+**Wrong:** `diplomacy` → `orders` (1 file, eliminated)
+
+`orders` sits above `diplomacy` in the target DAG (the `colonizethis_orders` package depends on `colonizethis_diplomacy`), so a `diplomacy → orders` import would push `diplomacy` above the orders layer and block the `colonizethis_diplomacy` extraction. The sole crossing symbol was `knownDiplomaticTargetFactionIds`, a diplomacy-domain visibility helper (it derives targetable faction ids from relations, tile visibility, and sea-reachable New World provinces) that happened to live in the orders helpers file. It depends only on `world/`/`models`/`data`/`constants`, so it relocates cleanly into the diplomacy domain.
+
+| Source file | Import | Symbols | Destination | Status |
+|-------------|--------|---------|-------------|--------|
+| `diplomacy/gp_tribe_first_contact.dart` | `orders/order_suggestion_helpers.dart` | `knownDiplomaticTargetFactionIds` | `diplomacy/known_diplomatic_targets.dart` | Fixed |
+
+**Correct:** `orders` → `diplomacy` — `orders/order_suggestion_naval_diplomatic.dart` (the diplomatic order suggesters) imports `knownDiplomaticTargetFactionIds` one-way from `diplomacy/known_diplomatic_targets.dart`. `order_suggestion_api.dart` and `ai_api.dart` re-export the symbol from the diplomacy path, so the public surface for AI/order/UI consumers is unchanged.
 
 ### `orders ↔ turn`
 
@@ -185,6 +199,17 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - `colonizethis_world/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.world_no_logic_deps`).
 - World-domain tests live under `packages/colonizethis_world/test/`; `colonizethis_logic` remains a **dev_dependency** of `colonizethis_world` for integration fixtures until later phases shrink that surface.
 
+## Phase 1 slice — `colonizethis_economy` (Refs #3290 C1)
+
+**Given** the `colonizethis_world` leaf on `dev`, **when** the `colonizethis_economy` package is extracted, **then**:
+
+- `packages/colonizethis_economy` owns `economy/` (extraction, production, consumption, world-market) and depends only on `colonizethis_world`, `colonizethis_models`, `colonizethis_data`, `colonizethis_logger`.
+- `worldMarketBidTypeCap` / `kWorldMarketBaselineBidTypeCap` live in `economy/world_market/bid_type_cap.dart` (not `diplomacy/`).
+- `OrderValidationResult` and trade-validation types live in `colonizethis_economy`; `colonizethis_logic` re-exports them for backward compatibility.
+- `colonizethis_logic` depends on `colonizethis_economy` and re-exports `package:colonizethis_economy/colonizethis_economy.dart` from its barrel.
+- `colonizethis_economy/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.economy_no_logic_deps`).
+- Economy-domain tests live under `packages/colonizethis_economy/test/` and reach ≥90% line coverage; `colonizethis_logic` remains a **dev_dependency** of `colonizethis_economy` for integration fixtures.
+
 ## Phase 1 slice — `colonizethis_combat` (Refs #3290 C1)
 
 **Given** the `colonizethis_world` leaf on `dev`, **when** the `colonizethis_combat` package is extracted, **then**:
@@ -204,4 +229,5 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - **Given** `economy/world_market/trade_order_validator.dart`, **when** the graph is scanned, **then** the file imports no `orders/` symbol and `repo.logic_domain_import_dag` carries no `economy->orders` grandfather entry.
 - **Given** the four diplomacy resolvers (`overture_resolver.dart`, `intervention_resolver.dart`, `diplomacy_resolver.dart`, `ftp_resolver.dart`), **when** `repo.logic_domain_import_dag` runs, **then** no `diplomacy` file imports `turn/`, `diplomacy->turn` is a forbidden edge, and `repo.logic_domain_import_dag` carries no `diplomacy->turn` grandfather entry.
 - **Given** the `diplomacy/` source files, **when** `repo.logic_domain_import_dag` runs, **then** no `diplomacy` file imports `ai/`, `diplomacy->ai` is a forbidden edge, and `repo.logic_domain_import_dag` carries no `diplomacy->ai` grandfather entry.
+- **Given** the `diplomacy/` source files, **when** `repo.logic_domain_import_dag` runs, **then** no `diplomacy` file imports `orders/`, `diplomacy->orders` is a forbidden edge, and `repo.logic_domain_import_dag` carries no `diplomacy->orders` grandfather entry.
 - **Given** a `Game` with `Player.treasury == 175`, empty staged orders (no bids) and `projectedTreasuryDelta == -50`, **when** `tradeOrderValidationContextFromGame(game, playerId, stagedOrders: <empty>, projectedTreasuryDelta: -50)` builds the context, **then** `TradeOrderValidationContext.treasuryBudgetForBids == 125` (`max(0, 175 − max(0, 50))`).

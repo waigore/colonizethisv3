@@ -2,8 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../economy/projected_cost_engine.dart';
-import '../economy/sea_transport.dart';
+import 'package:colonizethis_economy/src/economy/projected_cost_engine.dart';
+import 'package:colonizethis_economy/src/economy/sea_transport.dart';
 import 'package:colonizethis_world/src/world/army_movement.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/naval.dart';
@@ -14,7 +14,7 @@ import 'orders_application_context.dart';
 /// Home-fleet ship spawn when capital has a seaboard port (naval build slice, #1618).
 class _NavalBuildSession {
   _NavalBuildSession(this._game, this._topology)
-      : _fleetById = fleetsByIdForWorld(_game.worldState);
+    : _fleetById = fleetsByIdForWorld(_game.worldState);
 
   Game _game;
   final MapTopology _topology;
@@ -50,8 +50,9 @@ class _NavalBuildSession {
     // for this player and create a fresh one — same semantics as the legacy
     // `indexWhere((f) => f.id == ... && f.ownerId == ...)` predicate.
     final mapped = _fleetById[homeFleetId];
-    final Fleet? existingFleet =
-        (mapped != null && mapped.ownerId == player.id) ? mapped : null;
+    final Fleet? existingFleet = (mapped != null && mapped.ownerId == player.id)
+        ? mapped
+        : null;
     var nextSeq = ws.nextShipInstanceSeq;
     final inferred = inferNextShipInstanceSeqFromFleets(ws.fleets);
     if (nextSeq < inferred) nextSeq = inferred;
@@ -83,10 +84,7 @@ class _NavalBuildSession {
       _fleetById[homeFleetId] = newFleet;
     }
     _game = _game.updateWorldState(
-      (ws) => ws.copyWith(
-        fleets: nextFleets,
-        nextShipInstanceSeq: nextSeq,
-      ),
+      (ws) => ws.copyWith(fleets: nextFleets, nextShipInstanceSeq: nextSeq),
     );
   }
 
@@ -168,9 +166,7 @@ BuildWorkState _applyAffordableBuildUnitOrder({
     game: current.game,
   );
   if (category == BuildUnitCategory.civilian && civilianTileKey == null) {
-    throw StateError(
-      '$kCivilianCapitalTileMissingReason: player=${player.id}',
-    );
+    throw StateError('$kCivilianCapitalTileMissingReason: player=${player.id}');
   }
 
   final newUnit = Unit(
@@ -255,9 +251,7 @@ BuildWorkState runBuildPhase(BuildWorkState state) {
       if (category == BuildUnitCategory.naval) {
         naval?.rebase(current.game);
         naval?.spawnHomeFleetShipIfEligible(player, order);
-        current = naval != null
-            ? current.copyWith(game: naval.game)
-            : current;
+        current = naval != null ? current.copyWith(game: naval.game) : current;
         continue;
       }
 

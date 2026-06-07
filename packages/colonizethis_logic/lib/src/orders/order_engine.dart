@@ -11,7 +11,7 @@ import '../constants.dart';
 import 'order_resolution_context.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
-import '../economy/world_market/trade_order_validator.dart';
+import 'package:colonizethis_economy/src/economy/world_market/trade_order_validator.dart';
 import 'unit_type_helpers.dart';
 export 'validator_bundle.dart'
     show
