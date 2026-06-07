@@ -48,6 +48,15 @@ const _forbiddenEdges = <(String, String)>{
   ('world', 'dossier'),
   ('combat', 'diplomacy'),
   ('economy', 'orders'),
+  // `economy` and `diplomacy` are leaf peers above `world`: `economy` depends
+  // on `world` only, while `diplomacy` depends on `world`/`combat`. An
+  // `economy -> diplomacy` import would push `economy` above the diplomacy
+  // layer and block its leaf extraction. The sole crossing symbol
+  // (`worldMarketBidTypeCap` / `kWorldMarketBaselineBidTypeCap`) now lives in
+  // `economy/world_market/bid_type_cap.dart`; `DiplomacyFactionMembership` and
+  // `enemiesOf` were already `colonizethis_world` symbols re-exported by
+  // diplomacy, so this edge is eliminated and forbidden (Refs #3290 Phase 1).
+  ('economy', 'diplomacy'),
   ('orders', 'turn'),
   ('ai', 'diplomacy'),
   // `diplomacy` is a mid-layer domain; the `turn` orchestrator sits above it.

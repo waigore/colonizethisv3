@@ -202,6 +202,39 @@ void noop() {}
     expect(code, 1);
   });
 
+  test('economy->diplomacy edge is enforced and fully eliminated (Refs #3290)',
+      () {
+    final forbidden = logicDomainImportForbiddenEdgesForTests();
+    expect(forbidden, contains('economy->diplomacy'));
+
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(
+      allowlist.where((e) => e.startsWith('economy->diplomacy:')),
+      isEmpty,
+    );
+  });
+
+  test('fails when a new forbidden economy->diplomacy import appears', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_econ_dipl_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+      '${temp.path}/packages/colonizethis_logic/lib/src/economy/bad_diplomacy.dart',
+    )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../diplomacy/diplomacy_resolver.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
+  });
+
   test('diplomacy->ai edge is enforced and fully eliminated (Refs #3290)', () {
     final forbidden = logicDomainImportForbiddenEdgesForTests();
     expect(forbidden, contains('diplomacy->ai'));
