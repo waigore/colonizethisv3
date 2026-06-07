@@ -769,6 +769,7 @@ Future<void> expectPanelTextsMatchSnapshot(
       kE2eDefaultExpectPanelTextsSnapshotReaderPhase,
   E2ePerfLog? perf,
   List<String> Function()? buildAlternativeExpected,
+  List<String> ignoreActualTexts = const [],
 }) => e2eExpectPanelTextsMatchSnapshot(
   tester,
   panelRootKey: panelRootKey,
@@ -780,6 +781,7 @@ Future<void> expectPanelTextsMatchSnapshot(
   snapshotReaderPhaseName: snapshotReaderPhaseName,
   perf: perf,
   buildAlternativeExpected: buildAlternativeExpected,
+  ignoreActualTexts: ignoreActualTexts,
 );
 
 /// Stable public name for [e2eExpectCivilianPanelMatchesE2eSnapshot] so the

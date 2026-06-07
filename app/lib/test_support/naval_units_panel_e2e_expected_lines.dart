@@ -33,11 +33,19 @@ void _addFleetRowTexts({
     out.add(l10n.naval_units_homeFleetChip);
   }
   // UnitsEntityActionRow (dense): trailing Move / Split / Locate cluster.
-  // On the 1280×720 E2E host the action cluster is narrower than
-  // `_denseIconOnlyBreakpoint`, so Move and Split render icon-only (no `Text`
-  // labels in preorder traversal) for every fleet row, including Home Fleet
-  // (Split + icon-only Locate). Locate is always icon-only. Refs #2866 S8 R25
-  // + R27; GitHub #2336 panel-text mirror drift / AC6.
+  // Whether Move and Split render as `Icon + Text` or collapse to icon-only
+  // depends on the realized action-cluster width vs `_denseIconOnlyBreakpoint`
+  // (70 dp × actionCount), which is HOST-DEPENDENT: at the narrow macOS test
+  // host the cluster falls below the breakpoint (icon-only, no `Text` labels in
+  // preorder), but on the wider Linux desktop integration host (real
+  // `IntegrationTestWidgetsFlutterBinding`, 1280-wide view at DPR 1.0) the
+  // cluster clears the breakpoint and Move/Split render their text labels.
+  // This mirror is the canonical ICON-ONLY variant and never emits the Move /
+  // Split labels; the integration assertion normalizes those two host-width-
+  // dependent labels out of the collected texts via
+  // `e2eExpectNavalPanelMatchesE2eSnapshot`'s `ignoreActualTexts` so it passes
+  // on both hosts. Locate is always icon-only. Refs #2866 S8 R25 + R27; GitHub
+  // #2336 panel-text mirror drift / AC6.
   out.add(row.locationLabel);
   out.add(l10n.naval_units_mission(row.missionLabel));
   if (row.draftNavalMoveLine != null) {
