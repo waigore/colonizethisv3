@@ -348,7 +348,7 @@ Rules 1–2 are intrinsic to the order. Rules 3–4 are computed from the submit
 
 ### Bid type cap helper
 
-`worldMarketBidTypeCap(Game game, String playerId)` lives in `packages/colonizethis_logic/lib/src/diplomacy/diplomacy_subsidies_relations_resolver.dart` next to `tradeSlotsForGp` ([diplomacy-resolution.md](diplomacy-resolution.md)):
+`worldMarketBidTypeCap(Game game, String playerId)` lives in `packages/colonizethis_logic/lib/src/economy/world_market/bid_type_cap.dart` (a pure world-market helper with no diplomacy-domain dependency, Refs #3290). Per-target trade-agreement slots remain governed by `tradeSlotsForGp` in `diplomacy_subsidies_relations_resolver.dart` ([diplomacy-resolution.md](diplomacy-resolution.md)):
 
 - `0` only when [playerId] is not a known player (`Game.playerById` returns `null`).
 - `kWorldMarketBaselineBidTypeCap` (= **1**) when the player exists and has no embassy (`OvertureStage.embassy` or stronger) with **any** target faction. This baseline keeps the global market liquid for every Great Power — including EXPAND-phase GPs that are structurally blocked from emitting NW-only `establishOverture` orders (`SPEC/ai/phase-planner-architecture.md` § EXPAND planner suppressions) — so treasury can still redistribute through legitimate trade per [world-market.md](../game/world-market.md) § Bid type cap.

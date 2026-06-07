@@ -56,7 +56,7 @@ class TradeSuggestionContext {
 
   /// `0 / 3 / 6` cap on distinct bid commodities for this player this turn.
   /// Pre-computed via `worldMarketBidTypeCap` in
-  /// `packages/colonizethis_logic/lib/src/diplomacy/diplomacy_subsidies_relations_resolver.dart`.
+  /// `packages/colonizethis_logic/lib/src/economy/world_market/bid_type_cap.dart`.
   final int bidTypeCap;
 
   /// Cross-commodity cargo budget for this player's bids this turn (units).

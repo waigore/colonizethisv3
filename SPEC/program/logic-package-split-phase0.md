@@ -27,6 +27,7 @@ Phase 0 deliverables (child issue C0):
 | `world` | `dossier` | **Eliminated** — `naval_resolution` (dossier/dialogue side-effects) relocated from `world/` to `turn/` |
 | `economy` | `orders` | **Eliminated** — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import removed by inverting `tradeOrderValidationContextFromGame` (caller-computed `projectedTreasuryDelta`) |
 | `orders` | `economy` | Allowed |
+| `economy` | `diplomacy` | **Eliminated** — `worldMarketBidTypeCap` / `kWorldMarketBaselineBidTypeCap` moved to `economy/world_market/bid_type_cap.dart`; `DiplomacyFactionMembership` and `enemiesOf` retargeted to their `world/` source files |
 | `turn` | `orders` | Allowed |
 | `orders` | `turn` | **Eliminated** — trace runtime hoisted to `lib/src/trace/`; `projectOrderEffects` dry-run hoisted to `lib/src/projections/` |
 | `turn` | `world` | Allowed |
@@ -69,6 +70,18 @@ Phase 0 deliverables (child issue C0):
 |--------|---------|-------------|--------|
 | `orders/order_validation_result.dart` | `OrderValidationResult`, `OrderValidationStatus` | `lib/src/validation/order_validation_result.dart` | Fixed |
 | `orders/order_projections.dart` | `projectOrderEffects` | Inverted — the order engine computes `projectOrderEffects(...).treasuryDelta` and passes it as `tradeOrderValidationContextFromGame`'s `projectedTreasuryDelta`; the economy builder adds back `stagedBidTotalSpendByPlayer`. | Fixed |
+
+### `economy → diplomacy`
+
+**Wrong:** `economy` → `diplomacy` (eliminated)
+
+| Source file | Import | Symbols | Destination | Status |
+|-------------|--------|---------|-------------|--------|
+| `economy/world_market/trade_order_validator.dart` | `diplomacy/diplomacy_subsidies_relations_resolver.dart` | `worldMarketBidTypeCap` | `economy/world_market/bid_type_cap.dart` (pure world-market helper relocated into the economy domain; `tradeSlotsForGp` stays in diplomacy) | Fixed |
+| `economy/world_market/purchased_tile_index.dart` | `diplomacy/diplomacy_resolver.dart` | `DiplomacyFactionMembership` | `package:colonizethis_world/src/world/faction_membership.dart` (the class already lived in `colonizethis_world`; diplomacy only re-exported it) | Fixed |
+| `economy/sea_transport.dart` | `diplomacy/diplomacy_relation_lookup.dart` | `enemiesOf` | `package:colonizethis_world/src/world/diplomatic_relation_lookup.dart` (already a `colonizethis_world` symbol) | Fixed |
+
+`ai_api.dart` and the `colonizethis_logic` barrel now expose `worldMarketBidTypeCap` / `kWorldMarketBaselineBidTypeCap` from the economy file, preserving the public surface for AI/order/UI consumers. The edge is enforced by `repo.logic_domain_import_dag` (`economy->diplomacy` forbidden pair, no grandfather entry).
 
 ### `orders ↔ turn`
 

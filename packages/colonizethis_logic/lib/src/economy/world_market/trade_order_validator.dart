@@ -13,8 +13,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../diplomacy/diplomacy_subsidies_relations_resolver.dart'
-    show worldMarketBidTypeCap;
+import 'bid_type_cap.dart' show worldMarketBidTypeCap;
 import '../../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
 import '../../validation/order_validation_result.dart';
 import 'sellable_quantity.dart' show offerCapByCommodityId;
@@ -83,7 +82,7 @@ class TradeOrderValidationContext {
 
   /// `0 / 3 / 6` cap on distinct bid commodities for this player this turn.
   /// Pre-computed via `worldMarketBidTypeCap` in
-  /// `packages/colonizethis_logic/lib/src/diplomacy/diplomacy_subsidies_relations_resolver.dart`.
+  /// `packages/colonizethis_logic/lib/src/economy/world_market/bid_type_cap.dart`.
   final int bidTypeCap;
 
   /// Cross-commodity cargo budget for this player's bids this turn (units).

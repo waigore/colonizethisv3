@@ -29,7 +29,7 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart' show Game;
 
-import '../../diplomacy/diplomacy_resolver.dart'
+import 'package:colonizethis_world/src/world/faction_membership.dart'
     show DiplomacyFactionMembership;
 import 'package:colonizethis_world/src/world/province_lookup.dart' show WorldStateProvinceLookup;
 
