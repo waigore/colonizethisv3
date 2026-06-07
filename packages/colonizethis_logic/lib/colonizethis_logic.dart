@@ -4,11 +4,9 @@ library colonizethis_logic;
 // Root
 export 'package:colonizethis_models/colonizethis_models.dart'
     show AssignedRecipe;
+export 'package:colonizethis_world/colonizethis_world.dart';
 export 'order_suggestion_api.dart';
 export 'src/constants.dart';
-export 'src/logic_validation_exception.dart';
-export 'src/event_bus/game_event_bus.dart';
-export 'src/game_events.dart';
 export 'src/turn_to_year.dart';
 
 // Setup — GitHub #2201: these setup/dossier/world lines stay public for package
@@ -37,9 +35,6 @@ export 'src/setup/setup_exceptions.dart';
 export 'src/turn/economy_debt_rules.dart';
 export 'src/turn/pending_treasury_costs.dart';
 export 'src/turn/research_resolver.dart';
-export 'src/trace/turn_trace_contracts.dart';
-export 'src/trace/turn_trace_file_exporter.dart';
-export 'src/trace/turn_trace_runtime.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';
 export 'src/turn/turn_news_digest.dart';
@@ -102,27 +97,3 @@ export 'src/diplomacy/diplomacy_resolver.dart';
 // Dossier (evidence rules, event dialogue)
 export 'src/dossier/evidence_rules.dart';
 export 'src/dossier/event_dialogue.dart';
-
-// World
-export 'src/world/army_commands.dart';
-export 'src/world/army_ids.dart';
-export 'src/world/army_migration.dart';
-export 'src/world/army_movement.dart';
-export 'src/world/capital_reassignment_fatal.dart';
-export 'src/world/capital_and_gp_fall.dart';
-export 'src/world/connectivity_resolver.dart';
-export 'src/world/unit_lookup.dart';
-export 'src/world/minor_military_parity.dart';
-export 'src/world/movement.dart';
-export 'src/world/naval.dart';
-export 'src/world/naval_fleet_commands.dart';
-export 'src/world/fog_resolution.dart'
-    show
-        applyCoastalSeaZoneFullVisibility,
-        applyCoastalSeaZoneFullVisibilityForProvinceTargets;
-export 'src/world/player_state_pipeline.dart';
-export 'src/world/player_view.dart';
-export 'src/world/province_ownership_transfer.dart';
-export 'src/world/province_lookup.dart';
-export 'src/world/sea_zone_identity.dart';
-export 'src/world/tile_control.dart';

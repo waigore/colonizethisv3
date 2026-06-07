@@ -95,6 +95,8 @@ jobs:
               - 'packages/colonizethis_save/**'
             pkg_map:
               - 'packages/colonizethis_map/**'
+            pkg_world:
+              - 'packages/colonizethis_world/**'
             pkg_logic:
               - 'packages/colonizethis_logic/**'
             pkg_ai:
@@ -109,6 +111,7 @@ jobs:
             --changed-data="${{ steps.filter.outputs.pkg_data }}" \
             --changed-save="${{ steps.filter.outputs.pkg_save }}" \
             --changed-map="${{ steps.filter.outputs.pkg_map }}" \
+            --changed-world="${{ steps.filter.outputs.pkg_world }}" \
             --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
             --changed-ai="${{ steps.filter.outputs.pkg_ai }}" \
             | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)))")
@@ -121,6 +124,10 @@ jobs:
           channel: stable
           flutter-version: '3.41.9'
           cache: true
+
+      - name: Resolve workspace for app test selector
+        if: steps.filter.outputs.tests == 'true'
+        run: dart pub get
 
       # Selector contract per SPEC/program/ci-app-selective-tests.md:
       #   - The selector binary is a pure function of `--changed-files` and
@@ -173,7 +180,9 @@ jobs:
           fi
           CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
           echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
-          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20
+          # head closes the pipe early; GNU sed exits 4 under pipefail — do not fail the job.
+          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20 || true
+          dart pub get >/dev/null
           PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
           echo "Selector plan: $PLAN"
           MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")

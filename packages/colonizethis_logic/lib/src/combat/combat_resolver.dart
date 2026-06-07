@@ -5,10 +5,10 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/army_migration.dart';
-import '../world/province_lookup.dart';
-import '../world/province_ownership_transfer.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/army_migration.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
 import 'combat_constants.dart';
 import 'combat_engagement.dart';

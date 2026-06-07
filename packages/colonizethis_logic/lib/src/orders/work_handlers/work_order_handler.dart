@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../constants.dart';
 import '../../economy/projected_cost_engine.dart';
 import '../orders_application_context.dart';
-import '../../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 
 abstract class WorkOrderHandler {
   const WorkOrderHandler();

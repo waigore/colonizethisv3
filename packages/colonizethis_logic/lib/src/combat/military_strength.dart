@@ -5,7 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
 /// Military strength aggregation for display (e.g., Game Overview tab).
 /// SPEC/program/military-strength.md.

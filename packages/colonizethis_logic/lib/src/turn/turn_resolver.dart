@@ -2,11 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../event_bus/game_event_bus.dart';
-import '../game_events.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
+import 'package:colonizethis_world/src/game_events.dart';
 import '../orders/order_engine.dart';
 import '../orders/order_merge.dart';
-import '../world/army_migration.dart';
+import 'package:colonizethis_world/src/world/army_migration.dart';
 export 'economy_preview_pipeline.dart'
     show
         applyEconomyPhasesForPreview,
@@ -17,8 +17,8 @@ import 'turn_order_acceptance.dart';
 import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
-import '../trace/turn_trace_contracts.dart';
-import '../trace/turn_trace_runtime.dart';
+import 'package:colonizethis_world/src/trace/turn_trace_contracts.dart';
+import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 export 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
 export 'turn_resolver_config.dart';

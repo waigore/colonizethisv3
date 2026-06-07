@@ -13,10 +13,10 @@ import '../orders/draft_orders_mutations.dart';
 import '../orders/order_suggestion.dart';
 import '../orders/order_resolution_context.dart';
 import '../orders/order_suggestion_context.dart';
-import '../world/army_migration.dart';
-import '../world/faction_membership.dart';
-import '../world/player_view.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/army_migration.dart';
+import 'package:colonizethis_world/src/world/faction_membership.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for

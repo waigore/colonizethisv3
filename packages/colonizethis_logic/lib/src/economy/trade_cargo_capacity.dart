@@ -9,7 +9,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/connectivity_resolver.dart';
+import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'resource_extractor.dart';
 import 'sea_transport.dart';
 

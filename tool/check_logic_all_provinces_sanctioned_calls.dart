@@ -5,7 +5,7 @@ import 'package:yaml/yaml.dart';
 
 /// Canonical dual-region province iteration; definitions live here only.
 const _canonicalProvinceLookupRelativePath =
-    'packages/colonizethis_logic/lib/src/world/province_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/province_lookup.dart';
 
 const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
 const _sanctionsYamlRelative = 'tool/logic_all_provinces_sanctions.yaml';

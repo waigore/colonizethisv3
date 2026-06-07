@@ -3,10 +3,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
-import '../world/player_view.dart';
-import '../world/province_lookup.dart';
-import '../world/sea_reachable_provinces.dart';
-import '../world/tile_key_coordinates.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/sea_reachable_provinces.dart';
+import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Shared helpers for order suggestion. SPEC/ai/ai-architecture.md.
 /// Used by order_suggestion and AI planners.

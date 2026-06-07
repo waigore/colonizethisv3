@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../utils/graph_traversal.dart';
+import 'package:colonizethis_world/src/utils/graph_traversal.dart';
 import 'capital_choice.dart';
 import 'game_setup_topology.dart';
 import 'locked_province_assigner.dart';

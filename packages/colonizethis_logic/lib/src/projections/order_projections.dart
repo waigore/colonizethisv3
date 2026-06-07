@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../turn/turn_resolver.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'projected_effects.dart';
 
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.

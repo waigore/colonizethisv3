@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/province_lookup.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';

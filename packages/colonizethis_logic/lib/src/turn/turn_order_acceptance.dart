@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../event_bus/game_event_bus.dart';
-import '../game_events.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
+import 'package:colonizethis_world/src/game_events.dart';
 import '../orders/order_engine.dart';
 
 /// Filters [orders] by validation [results] (consuming via [idxBox]).

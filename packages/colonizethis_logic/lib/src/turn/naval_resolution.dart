@@ -4,26 +4,26 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/naval_combat_resolver.dart';
 import '../constants.dart';
-import '../world/diplomatic_relation_lookup.dart';
+import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
-import '../event_bus/game_event_bus.dart';
-import '../game_events.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
+import 'package:colonizethis_world/src/game_events.dart';
 import '../turn_resolution_seeds.dart';
-import '../world/game_world_mutations.dart';
-import '../world/naval.dart';
-import '../world/naval_coastal_visibility.dart';
-import '../world/province_lookup.dart' hide landTileKeysForProvinceBucket;
-import '../world/topology_helpers.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/naval.dart';
+import 'package:colonizethis_world/src/world/naval_coastal_visibility.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart' hide landTileKeysForProvinceBucket;
+import 'package:colonizethis_world/src/world/topology_helpers.dart';
 
-export '../world/naval_coastal_visibility.dart'
+export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
     show
         canonicalSeaZoneTileBucketKey,
         coastalLandTileKeysFromNavalPresenceAtSea,
         landTileKeysForProvinceBucket,
         revealProvinceTilesForPlayer,
         revealTilesAfterMoveToSeaZone;
-export '../world/naval_mission_orders.dart' show applyNavalMissionOrders;
+export 'package:colonizethis_world/src/world/naval_mission_orders.dart' show applyNavalMissionOrders;
 
 // Naval resolution concern fragments (Refs #3290 Phase-0 file-split). Each
 // `part of` fragment shares this library's imports and library-private scope,

@@ -50,6 +50,11 @@ const _forbiddenEdges = <(String, String)>{
   ('economy', 'orders'),
   ('orders', 'turn'),
   ('ai', 'diplomacy'),
+  // `diplomacy` is a mid-layer domain; the `turn` orchestrator sits above it.
+  // The shared overture/FTP/intervention/call-to-arms value types now live in
+  // `diplomacy/diplomacy_phase_result.dart`, so `turn` depends on `diplomacy`
+  // one-way and `diplomacy` must not import `turn/` (Refs #3290 Phase 0).
+  ('diplomacy', 'turn'),
   // `ai` (the `colonizethis_ai_contracts` file set) sits above `diplomacy`:
   // after Phase 4 `ai_contracts` depends on `orders`, which depends on
   // `diplomacy`. A `diplomacy -> ai` import would therefore close the cycle

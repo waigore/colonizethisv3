@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 /// across the order-suggestion / turn-resolution call chain (Refs #2836 AC 2;
 /// SPEC/program/order-suggestions.md § Throughput bounds).
 const _canonicalUnitRelativePath =
-    'packages/colonizethis_logic/lib/src/world/unit_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
 const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
 

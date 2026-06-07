@@ -1,10 +1,10 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/army_migration.dart';
-import '../world/civilian_ownership_legality.dart';
-import '../world/game_world_mutations.dart';
-import '../world/province_lookup.dart';
-import '../world/province_ownership_transfer.dart';
+import 'package:colonizethis_world/src/world/army_migration.dart';
+import 'package:colonizethis_world/src/world/civilian_ownership_legality.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
 import 'diplomacy_relation_lookup.dart';
 
 /// Join-Empire absorption shared between minor/tribe and GP targets.

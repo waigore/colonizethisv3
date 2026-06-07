@@ -2,12 +2,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/game_world_mutations.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'orders_application_helpers.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
-import '../world/naval.dart';
+import 'package:colonizethis_world/src/world/naval.dart';
 import 'build_rail_work_rules.dart';
 import 'orders_application_context.dart';
 import 'purchase_land_work_completion.dart';

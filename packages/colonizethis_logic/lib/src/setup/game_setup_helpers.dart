@@ -2,10 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/province_lookup.dart';
-import '../world/unit_lookup.dart';
-import '../world/naval.dart';
-import '../world/ship_instance_allocate.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/naval.dart';
+import 'package:colonizethis_world/src/world/ship_instance_allocate.dart';
 import 'game_setup_context.dart';
 import 'game_setup_create.dart';
 import 'game_setup_helpers_towns.dart';

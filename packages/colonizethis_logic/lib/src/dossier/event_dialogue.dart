@@ -7,8 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/movement.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/movement.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'evidence_rules.dart';
 
 /// Era names for dialogue (SPEC/ai/dialogue-and-mood.md: discovery | earlyModern | imperial | industrial).

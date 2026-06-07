@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/player_view.dart';
-import '../world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
 
 /// Prefixed province ids whose land tile keys show mixed unknown vs known
 /// visibility for [view] (see [isPartiallyRevealedProvinceLandTilesForPlayer]).

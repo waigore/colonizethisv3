@@ -34,6 +34,7 @@ CORE_PACKAGES = [
     "colonizethis_data",
     "colonizethis_save",
     "colonizethis_map",
+    "colonizethis_world",
     "colonizethis_logic",
     "colonizethis_ai",
 ]
@@ -112,6 +113,7 @@ SHORT_TO_FULL: dict[str, str] = {
     "data": "colonizethis_data",
     "save": "colonizethis_save",
     "map": "colonizethis_map",
+    "world": "colonizethis_world",
     "logic": "colonizethis_logic",
     "ai": "colonizethis_ai",
 }

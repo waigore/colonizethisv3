@@ -1,11 +1,11 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/province_visibility_index.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/province_visibility_index.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import '../dossier/event_dialogue.dart';
-import '../event_bus/game_event_bus.dart';
-import '../game_events.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
+import 'package:colonizethis_world/src/game_events.dart';
 
 /// Emits game events after turn resolution phases. SPEC/program/game-events.md.
 /// Keeps turn_resolver switch thin by moving event emission here.

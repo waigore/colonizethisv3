@@ -7,9 +7,9 @@ import '../ai/full_ai_civilian_work_selection.dart'
     show feedstockExtractionResourceIdsForPlayer;
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
-import '../world/player_view.dart';
-import '../world/province_lookup.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'bundled_civilian_work_order.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';

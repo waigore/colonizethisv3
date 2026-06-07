@@ -15,6 +15,7 @@ dependencies:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:
+  colonizethis_world:
 
 dev_dependencies:
   colonizethis_exception_lint:

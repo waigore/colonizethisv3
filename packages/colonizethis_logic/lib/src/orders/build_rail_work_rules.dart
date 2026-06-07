@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-import '../world/tile_key_coordinates.dart';
+import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Terrain and tech rules for Rail Builder `build_rail`. SPEC/game/tech-tree-transport.md,
 /// SPEC/game/extraction-and-improvements.md, SPEC/program/orders.md.

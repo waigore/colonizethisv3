@@ -5,17 +5,17 @@ import '../../constants.dart';
 import '../../orders/bundled_civilian_work_order.dart';
 import '../../orders/draft_orders_mutations.dart';
 import '../../orders/order_resolution_context.dart';
-import '../../world/army_movement.dart';
-import '../../world/game_world_mutations.dart';
-import '../../world/movement.dart';
-import '../../trace/turn_trace_runtime.dart';
+import 'package:colonizethis_world/src/world/army_movement.dart';
+import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/src/world/movement.dart';
+import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 import '../naval_resolution.dart';
-import '../../world/player_view.dart';
-import '../../world/province_lookup.dart';
-import '../../world/province_traversal.dart';
-import '../../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_traversal.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
 Game runMovementPhase(
   Game game,

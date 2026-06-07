@@ -3,10 +3,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
-import '../world/naval.dart';
-import '../world/player_view.dart';
-import '../world/province_lookup.dart';
-import '../world/topology_helpers.dart';
+import 'package:colonizethis_world/src/world/naval.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';

@@ -2,9 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../diplomacy/diplomacy_resolver.dart';
-import '../../world/naval.dart';
-import '../../world/province_lookup.dart';
-import '../../world/topology_helpers.dart';
+import 'package:colonizethis_world/src/world/naval.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import '../order_validation_result.dart';
 
 /// Validates naval move and naval mission orders for a single player.

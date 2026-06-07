@@ -329,6 +329,13 @@ rules:
     runner: dart
     script: tool/check_logic_source_file_size.dart
 
+  - rule_id: repo.world_no_logic_deps
+    group: architecture
+    title: colonizethis_world must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_world_no_logic_deps.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines

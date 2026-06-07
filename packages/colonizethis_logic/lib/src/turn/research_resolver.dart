@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
-import '../world/player_view.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
 import 'economy_debt_rules.dart';
 import 'economy_tech_effects.dart';
 import 'research_rules.dart';

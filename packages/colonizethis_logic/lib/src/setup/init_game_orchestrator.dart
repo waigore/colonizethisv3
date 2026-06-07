@@ -10,8 +10,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'hidden_agenda_assignment.dart';
 import '../constants.dart';
-import '../world/province_lookup.dart';
-import '../world/unit_lookup.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'effective_setup_seed.dart';
 import 'game_setup.dart';
 import 'setup_exceptions.dart';
