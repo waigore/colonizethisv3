@@ -320,4 +320,45 @@ void noop() {}
       );
     },
   );
+
+  test(
+    'diplomacy and dossier do not import logic core logging (Refs #3290 Phase 2)',
+    () {
+      // The diplomacy/dossier trees fold into colonizethis_diplomacy, which must
+      // depend only on world/combat/models/data/logger — not on the thin
+      // colonizethis_logic core. Logging therefore goes through the
+      // diplomacy-domain logger (diploLog), not the logic-core logicLog.
+      const forbiddenLoggingImports = <String>[
+        "import 'package:colonizethis_logic/src/logging.dart';",
+        "import 'package:colonizethis_logic/package_logger.dart';",
+        "import '../logging.dart';",
+        "import '../package_logger.dart';",
+        "import 'package:colonizethis_logic/colonizethis_logic.dart';",
+      ];
+      final violations = <String>[];
+      for (final domain in ['diplomacy', 'dossier']) {
+        final domainDir = Directory(
+          'packages/colonizethis_logic/lib/src/$domain',
+        );
+        if (!domainDir.existsSync()) continue;
+        for (final entity in domainDir.listSync(recursive: true)) {
+          if (entity is! File || !entity.path.endsWith('.dart')) continue;
+          final content = entity.readAsStringSync();
+          for (final bad in forbiddenLoggingImports) {
+            if (content.contains(bad)) {
+              violations.add('${entity.path}: $bad');
+            }
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'diplomacy/dossier must log via the diplomacy-domain logger '
+            '(diploLog in diplomacy/diplomacy_logging.dart), not the '
+            'colonizethis_logic core logicLog',
+      );
+    },
+  );
 }

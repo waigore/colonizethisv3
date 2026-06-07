@@ -2,7 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/game_player_lookup.dart';
 import '../dossier/evidence_rules.dart';
-import '../logging.dart';
+import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_resolver.dart' show DiplomacyFactionMembership;
@@ -78,7 +78,7 @@ Game _addFtpPartnership(
     toFactionId: targetGpId,
     wasAiInitiator: isAiControlledForEvidence(next, proposerGpId),
   );
-  logicLog.i('logic: diplomacy ftp formed $proposerGpId-$targetGpId');
+  diploLog.i('diplomacy ftp formed $proposerGpId-$targetGpId');
   return next;
 }
 
@@ -110,8 +110,8 @@ Game clearFtpPartnerships(
       reason: reason,
     );
   }
-  logicLog.i(
-    'logic: diplomacy ftp cleared count=${keysToRemove.length} reason=$reason',
+  diploLog.i(
+    'diplomacy ftp cleared count=${keysToRemove.length} reason=$reason',
   );
   return next;
 }

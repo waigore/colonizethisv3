@@ -5,10 +5,10 @@
 /// relation modifiers, score update.
 library;
 
-import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/game_player_lookup.dart';
+import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
@@ -32,8 +32,7 @@ export 'diplomacy_relation_lookup.dart'
     show ftpPairKeysFromGame, hasEmbassyOverture, hasFtpPartnership;
 export 'intervention_resolver.dart'
     show applyInterventionChoice, needsInterventionChoice;
-
-final diploLog = logicLog;
+export 'diplomacy_logging.dart' show diploLog;
 
 /// Target GP is "nearly defeated" for Join Empire: ≤3 provinces and does not hold its original capital tile province. SPEC/game/diplomacy.md.
 bool isGreatPowerNearlyDefeatedForJoinEmpire(
