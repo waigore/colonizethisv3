@@ -24,7 +24,7 @@ const _domains = <String>{
 
 /// Shared modules that may be imported from any domain without counting as a
 /// cross-domain edge (hoisted prerequisites for package split).
-const _neutralTopLevelDirs = <String>{'trace', 'validation'};
+const _neutralTopLevelDirs = <String>{'projections', 'trace', 'validation'};
 
 const _neutralTopLevelFiles = <String>{
   'turn_resolution_seeds.dart',
@@ -55,8 +55,10 @@ const _forbiddenEdges = <(String, String)>{
 /// Grandfathered violations documented in SPEC/program/logic-package-split-phase0.md
 /// until the matching C0 follow-up lands. Format: `fromDomain->toDomain:relative/import/path`.
 const _grandfatherAllowlist = <String>{
-  'economy->orders:economy/world_market/trade_order_validator.dart',
-  'orders->turn:orders/order_projections.dart',
+  // Phase 0 C0: all documented wrong-direction edges are eliminated. The
+  // projection dry-run (`projectOrderEffects`) lives in the neutral
+  // `lib/src/projections/` module (like `trace/` and `validation/`), so
+  // `orders` no longer imports `turn/` directly (Refs #3290).
 };
 
 void main() {

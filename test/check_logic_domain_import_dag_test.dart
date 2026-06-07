@@ -34,15 +34,68 @@ void noop() {}
     expect(code, 1);
   });
 
-  test('documents grandfather allowlist entries for deferred C0 edges', () {
+  test('Phase 0 C0 grandfather allowlist is empty (all deferred edges eliminated)',
+      () {
     final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(allowlist, contains('orders->turn:orders/order_projections.dart'));
-    expect(
-      allowlist,
-      contains(
-        'economy->orders:economy/world_market/trade_order_validator.dart',
-      ),
+    expect(allowlist, isEmpty);
+  });
+
+  test('economy->orders edge is enforced and fully eliminated (Refs #3290)', () {
+    final forbidden = logicDomainImportForbiddenEdgesForTests();
+    expect(forbidden, contains('economy->orders'));
+
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(allowlist.where((e) => e.startsWith('economy->orders:')), isEmpty);
+  });
+
+  test('orders->turn edge is enforced and fully eliminated (Refs #3290)', () {
+    final forbidden = logicDomainImportForbiddenEdgesForTests();
+    expect(forbidden, contains('orders->turn'));
+
+    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+    expect(allowlist.where((e) => e.startsWith('orders->turn:')), isEmpty);
+  });
+
+  test('fails when a new forbidden orders->turn import appears', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_orders_turn_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+      '${temp.path}/packages/colonizethis_logic/lib/src/orders/bad_turn.dart',
+    )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../turn/turn_resolver.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
     );
+    expect(code, 1);
+  });
+
+  test('fails when a new forbidden economy->orders import appears', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_econ_fail_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+      '${temp.path}/packages/colonizethis_logic/lib/src/economy/bad_orders.dart',
+    )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../orders/order_engine.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
   });
 
   test(

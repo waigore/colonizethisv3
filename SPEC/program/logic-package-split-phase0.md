@@ -25,10 +25,10 @@ Phase 0 deliverables (child issue C0):
 | `world` | `combat` | **Eliminated** — `naval_resolution` (combat orchestration) relocated from `world/` to `turn/` |
 | `diplomacy` | `dossier` | Allowed (`dossier/` folds into `colonizethis_diplomacy` at extraction) |
 | `world` | `dossier` | **Eliminated** — `naval_resolution` (dossier/dialogue side-effects) relocated from `world/` to `turn/` |
-| `economy` | `orders` | Partial — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import remains |
+| `economy` | `orders` | **Eliminated** — `OrderValidationResult` moved to `lib/src/validation/`; `projectOrderEffects` import removed by inverting `tradeOrderValidationContextFromGame` (caller-computed `projectedTreasuryDelta`) |
 | `orders` | `economy` | Allowed |
 | `turn` | `orders` | Allowed |
-| `orders` | `turn` | Deferred — 3 files; trace runtime hoisted to `lib/src/trace/` but projections still import `turn_resolver` |
+| `orders` | `turn` | **Eliminated** — trace runtime hoisted to `lib/src/trace/`; `projectOrderEffects` dry-run hoisted to `lib/src/projections/` |
 | `turn` | `world` | Allowed |
 | `world` | `turn` | **Eliminated** — `turn_resolution_seeds.dart` and `trace/` hoisted to `lib/src/` |
 | `diplomacy` | `ai` | Allowed (becomes `diplomacy` → `ai_contracts` after Phase 4) |
@@ -61,22 +61,22 @@ Phase 0 deliverables (child issue C0):
 
 ### `economy ↔ orders`
 
-**Wrong:** `economy` → `orders` (2 imports in `trade_order_validator.dart`)
+**Wrong:** `economy` → `orders` (eliminated)
 
 | Import | Symbols | Destination | Status |
 |--------|---------|-------------|--------|
 | `orders/order_validation_result.dart` | `OrderValidationResult`, `OrderValidationStatus` | `lib/src/validation/order_validation_result.dart` | Fixed |
-| `orders/order_projections.dart` | `projectOrderEffects` | Extract dry-run API to `lib/src/order_projection_api.dart` (depends on `turn`) | Deferred |
+| `orders/order_projections.dart` | `projectOrderEffects` | Inverted — the order engine computes `projectOrderEffects(...).treasuryDelta` and passes it as `tradeOrderValidationContextFromGame`'s `projectedTreasuryDelta`; the economy builder adds back `stagedBidTotalSpendByPlayer`. | Fixed |
 
 ### `orders ↔ turn`
 
-**Wrong:** `orders` → `turn` (1 file remaining; 2 trace consumers fixed)
+**Wrong:** `orders` → `turn` (eliminated)
 
 | Source | Import | Symbols | Destination | Status |
 |--------|--------|---------|-------------|--------|
 | `orders/orders_application.dart` | `lib/src/trace/turn_trace_runtime.dart` | `TurnTraceRuntime` | `lib/src/trace/` (hoisted; now imported directly) | Fixed |
 | `orders/orders_application_context.dart` | same | same | same | Fixed |
-| `orders/order_projections.dart` | `turn/turn_resolver.dart` | `resolveTurnForGame`, `requireTurnResolutionComplete` | Invert: callback injection or move projections to `turn/` | Deferred (grandfathered) |
+| `orders/order_projections.dart` | `turn/turn_resolver.dart` | `resolveTurnForGame`, `requireTurnResolutionComplete` | `lib/src/projections/order_projections.dart` (neutral module; may import `turn/`) | Fixed |
 
 ### `world ↔ diplomacy`
 
@@ -149,3 +149,5 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - **Given** the files listed in `tool/logic_source_file_size_baseline.json` (the remaining grandfathered offenders, trimmed as Phase 0 decomposes them below 500 lines), **when** `repo.logic_source_file_size` runs, **then** those paths are ignored and any other `lib/src` file above 500 physical lines fails.
 - **Given** logic package tests with coverage, **when** `dart run tool/logic_domain_coverage_baseline.dart` runs, **then** it writes/updates `tool/logic_domain_coverage_baseline.json` with per-domain line percentages.
 - **Given** wrong-direction `world→turn` and `world→setup` symbols above, **when** the graph is scanned, **then** no `world` file imports `turn/` or `setup/`.
+- **Given** `economy/world_market/trade_order_validator.dart`, **when** the graph is scanned, **then** the file imports no `orders/` symbol and `repo.logic_domain_import_dag` carries no `economy->orders` grandfather entry.
+- **Given** a `Game` with `Player.treasury == 175`, empty staged orders (no bids) and `projectedTreasuryDelta == -50`, **when** `tradeOrderValidationContextFromGame(game, playerId, stagedOrders: <empty>, projectedTreasuryDelta: -50)` builds the context, **then** `TradeOrderValidationContext.treasuryBudgetForBids == 125` (`max(0, 175 − max(0, 50))`).

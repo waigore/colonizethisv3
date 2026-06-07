@@ -104,5 +104,44 @@ void main() {
         expect(ctxA.treasuryBudgetForBids, ctxB.treasuryBudgetForBids);
       },
     );
+
+    test('caller-supplied projectedTreasuryDelta reduces the budget by the '
+        'projected non-bid deficit (Refs #3290 economy->orders inversion)', () {
+      // The economy builder no longer runs projectOrderEffects itself; the
+      // order engine passes the projected treasury delta. With no staged bids
+      // (bidSpend == 0) and a projected deficit of -50, the budget is
+      // max(0, 175 - max(0, 50)) == 125.
+      final game = buildTreasuryBidBudgetGame(treasury: 175);
+      final ctx = tradeOrderValidationContextFromGame(
+        game,
+        humanPlayerId,
+        stagedOrders: humanOrdersWith(const <TradeOrder>[]),
+        projectedTreasuryDelta: -50,
+      );
+      expect(ctx.treasuryBudgetForBids, 125);
+    });
+
+    test('caller-supplied non-negative projectedTreasuryDelta leaves the raw '
+        'treasury budget unchanged (income does not raise the budget)', () {
+      final game = buildTreasuryBidBudgetGame(treasury: 175);
+      final ctx = tradeOrderValidationContextFromGame(
+        game,
+        humanPlayerId,
+        stagedOrders: humanOrdersWith(const <TradeOrder>[]),
+        projectedTreasuryDelta: 40,
+      );
+      expect(ctx.treasuryBudgetForBids, 175);
+    });
+
+    test('omitting projectedTreasuryDelta keeps the raw-treasury budget even '
+        'when staged orders are supplied', () {
+      final game = buildTreasuryBidBudgetGame(treasury: 175);
+      final ctx = tradeOrderValidationContextFromGame(
+        game,
+        humanPlayerId,
+        stagedOrders: humanOrdersWith(const <TradeOrder>[]),
+      );
+      expect(ctx.treasuryBudgetForBids, 175);
+    });
   });
 }
