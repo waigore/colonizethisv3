@@ -5,8 +5,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/ai_control.dart';
 import '../world/army_migration.dart';
-import 'ai_control.dart';
 import 'simple_ai_heuristics.dart';
 
 /// Generates orders for a single AI-controlled GP. Deterministic given game

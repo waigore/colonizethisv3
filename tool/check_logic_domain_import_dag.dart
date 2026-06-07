@@ -50,6 +50,13 @@ const _forbiddenEdges = <(String, String)>{
   ('economy', 'orders'),
   ('orders', 'turn'),
   ('ai', 'diplomacy'),
+  // `ai` (the `colonizethis_ai_contracts` file set) sits above `diplomacy`:
+  // after Phase 4 `ai_contracts` depends on `orders`, which depends on
+  // `diplomacy`. A `diplomacy -> ai` import would therefore close the cycle
+  // `ai_contracts -> orders -> diplomacy -> ai_contracts`. The sole crossing
+  // symbol (`isAiControlled`) now lives in `world/ai_control.dart`, so this
+  // edge is eliminated and forbidden (Refs #3290 Phase 0).
+  ('diplomacy', 'ai'),
 };
 
 /// Grandfathered violations documented in SPEC/program/logic-package-split-phase0.md
