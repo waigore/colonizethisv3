@@ -1,4 +1,5 @@
 import 'goal_manager.dart';
+import 'growth_stage_builder_relocation.dart';
 import 'planning_imports.dart';
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
@@ -20,11 +21,29 @@ Orders runMovePlanner({required PlannerContext ctx}) {
     moveCandidates,
   );
   if (filtered.isEmpty) return ctx.orders;
+  // Refs #3371 AC14: keep growth-stage bootstrap Builders under the growth-
+  // stage relocation's authority so this generic weighted move planner does
+  // not thrash them across owned provinces before they settle to improve a
+  // feedstock tile. Empty (flag off / no feedstock stage), so the flag-off
+  // default is unchanged.
+  final reservedBuilders = growthStageReservedBuilderUnitIds(
+    game: ctx.game,
+    view: ctx.view,
+    playerId: ctx.nationId,
+    growthStagePlannerEnabled: ctx.growthStagePlannerEnabled,
+  );
+  final candidates = reservedBuilders.isEmpty
+      ? filtered
+      : filtered
+            .where((m) => !reservedBuilders.contains(m.unitId))
+            .toList(growable: false);
+  if (candidates.isEmpty) return ctx.orders;
   final weight = ctx.resolveMilitaryEconomyWeight();
   if (_log.debugEnabled) {
     _log.d(
       'move eval nationId=${ctx.nationId} weight=$weight '
-      'filteredCount=${filtered.length}',
+      'filteredCount=${candidates.length} '
+      'reservedBuilders=${reservedBuilders.length}',
     );
   }
   if (weight < 20) {
@@ -34,7 +53,7 @@ Orders runMovePlanner({required PlannerContext ctx}) {
     return ctx.orders;
   }
   final selected = selectWeightedCandidate(
-    candidates: filtered,
+    candidates: candidates,
     seed: ctx.seeds.militarySeed,
     score: (m) {
       final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);

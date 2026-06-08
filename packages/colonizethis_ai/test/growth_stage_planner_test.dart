@@ -1,159 +1,20 @@
 // Growth-stage planner (Refs #3371). SPEC/ai/growth-stage-planner.md.
+// Economy, scoring, and recruitment ACs. Builder relocation / anti-thrash ACs
+// live in growth_stage_planner_relocation_test.dart to respect per-file limits.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/growth_stage_builder_relocation.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_work_priorities.dart';
-import 'package:colonizethis_ai/src/planning/domain_planner_orchestrator.dart';
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/perception/summary_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'domain_planner_test_fake_api.dart';
-
-const _topology = MapTopology(nodes: [], edges: []);
-const _config = AIConfig(
-  leaderId: 'victoria',
-  personalityId: 'victoria',
-  hiddenAgendaId: 'peacemaker',
-);
-final _seeds = AISeedBundle.fromTurnSeed(3371);
-
-Game _gameWith(Player player) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: const RegionData(provinces: [], units: []),
-    newWorld: const RegionData(provinces: [], units: []),
-  ),
-  players: [player],
-);
-
-OrderSuggestionAPI _fakeApi({
-  List<RecruitWorkerOrder> recruit = const [],
-  List<BuildUnitOrder> build = const [],
-}) {
-  return FakeOrderSuggestionAPIForDomainPlannerTests(
-    work: const [],
-    build: build,
-    move: const [],
-    research: const [],
-    navalMove: const [],
-    navalMission: const [],
-    recruitWorker: recruit,
-  );
-}
-
-int _labourForRecipe(EconomyPlan plan, String recipeId) {
-  for (final a in plan.productionAssignments) {
-    if (a.recipeId == recipeId) return a.assignedLabour;
-  }
-  return 0;
-}
-
-Game _bootstrapFabricGame() {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g-3371-ac1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {'$ow|p0|1|0': 'wool'},
-    ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: false,
-        capitalProvinceId: '$ow|p0',
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 40)
-            .applyDelta(CommodityCatalog.wool.id, 10),
-        workerPool: const WorkerPool(peasants: 4),
-      ),
-    ],
-  );
-}
-
-Game _matureCastIronGame({int castIronHeld = 0}) {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g-3371-ac2',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1'),
-          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {
-        '$ow|p0|1|0': 'timber',
-        '$ow|p1|1|0': 'iron',
-      },
-      tileState: const TileMapState(
-        improvementByTile: {
-          '$ow|p0|1|0': 1,
-          '$ow|p1|1|0': 1,
-        },
-      ),
-      playerProspectedTiles: const {
-        'gp1': {'$ow|p1|1|0'},
-      },
-    ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: false,
-        capitalProvinceId: '$ow|p0',
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 80)
-            .applyDelta(CommodityCatalog.timber.id, 30)
-            .applyDelta(CommodityCatalog.iron.id, 10)
-            .applyDelta(CommodityCatalog.castIron.id, castIronHeld),
-        workerPool: const WorkerPool(peasants: 12),
-      ),
-    ],
-  );
-}
-
-AIWorldSnapshot _atWarSnapshot(String playerId) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(
-      atWarWith: ['gp2'],
-      neighborProvincesHostile: 1,
-      capitalThreatened: false,
-    ),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 2,
-      provincesToVictory: 29,
-      invadableProvinceIdsSorted: ['oldWorld|enemy'],
-    ),
-    economy: const EconomySummary(
-      workerCount: 4,
-      treasury: 100,
-      ownProvinceCount: 2,
-    ),
-    relations: const {},
-  );
-}
+import 'growth_stage_planner_test_support.dart';
 
 void main() {
   group('GrowthStage.compute — AC10 determinism', () {
     test('identical inputs yield identical priorities', () {
-      final game = _bootstrapFabricGame();
+      final game = bootstrapFabricGame();
       final a = GrowthStage.compute(game, 'gp1');
       final b = GrowthStage.compute(game, 'gp1');
       expect(a.workerGrowthPriority, b.workerGrowthPriority);
@@ -165,17 +26,17 @@ void main() {
 
   group('runEconomyPlanner growth-stage — AC1 bootstrap worker growth', () {
     test('fabric recipe receives the most labour', () {
-      final game = _bootstrapFabricGame();
-      final view = buildPlayerView(game, _topology, 'gp1');
+      final game = bootstrapFabricGame();
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         growthStagePlannerEnabled: true,
       );
 
-      final fabricLabour = _labourForRecipe(
+      final fabricLabour = labourForRecipe(
         plan,
         ProductionRecipesCatalog.fabricFromWool.id,
       );
@@ -197,18 +58,18 @@ void main() {
 
   group('runEconomyPlanner growth-stage — AC2 infrastructure', () {
     test('assigns labour to castIron when mature and inputs on hand', () {
-      final game = _matureCastIronGame();
-      final view = buildPlayerView(game, _topology, 'gp1');
+      final game = matureCastIronGame();
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         growthStagePlannerEnabled: true,
       );
 
       expect(
-        _labourForRecipe(
+        labourForRecipe(
           plan,
           ProductionRecipesCatalog.castIronFromTimberIronCoal.id,
         ),
@@ -221,7 +82,7 @@ void main() {
     test('high castIron stockpile dampens castIron recipe score', () {
       const workers = WorkerPool(peasants: 12);
       const agenda = 'peacemaker';
-      final matureStage = GrowthStage.compute(_matureCastIronGame(), 'gp1');
+      final matureStage = GrowthStage.compute(matureCastIronGame(), 'gp1');
       final stockLow = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 80)
           .applyDelta(CommodityCatalog.timber.id, 30)
@@ -248,11 +109,11 @@ void main() {
 
   group('GrowthStage — AC6 at-war military floor', () {
     test('at-war GP with 4 labour has militaryPriority 0.3', () {
-      final game = _bootstrapFabricGame();
+      final game = bootstrapFabricGame();
       final stage = GrowthStage.compute(
         game,
         'gp1',
-        snapshot: _atWarSnapshot('gp1'),
+        snapshot: atWarSnapshot('gp1'),
       );
       expect(stage.militaryPriority, kAtWarMilitaryFloor);
     });
@@ -283,17 +144,17 @@ void main() {
           ),
         ],
       );
-      final view = buildPlayerView(game, _topology, 'gp1');
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: _config,
-        seeds: _seeds,
-        snapshot: _atWarSnapshot('gp1'),
+        config: kTestConfig,
+        seeds: kTestSeeds,
+        snapshot: atWarSnapshot('gp1'),
         growthStagePlannerEnabled: true,
       );
 
-      final bronzeLabour = _labourForRecipe(
+      final bronzeLabour = labourForRecipe(
         plan,
         ProductionRecipesCatalog.bronzeFromCopperTin.id,
       );
@@ -357,7 +218,7 @@ void main() {
   group('runRecruitmentPlanner growth-stage — AC4 bootstrap build suppression',
       () {
     test('suppresses regiment builds when military priority is low', () {
-      final game = _gameWith(
+      final game = gameWithPlayer(
         Player(
           id: 'gp1',
           displayName: 'A',
@@ -366,8 +227,8 @@ void main() {
           stockpile: const Stockpile().applyDelta(CommodityCatalog.grain.id, 30),
         ),
       );
-      final view = buildPlayerView(game, _topology, 'gp1');
-      final api = _fakeApi(
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
+      final api = buildFakeApi(
         build: const [
           BuildUnitOrder(
             unitType: 'peasant_levies',
@@ -381,8 +242,8 @@ void main() {
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api,
         growthStagePlannerEnabled: true,
@@ -567,22 +428,22 @@ void main() {
           ),
         ],
       );
-      final snapshot = _atWarSnapshot('gp1');
+      final snapshot = atWarSnapshot('gp1');
       final stage = GrowthStage.compute(game, 'gp1', snapshot: snapshot);
       expect(growthStageSuppressesMilitaryBuilds(stage), isFalse);
 
-      final view = buildPlayerView(game, _topology, 'gp1');
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         snapshot: snapshot,
         growthStagePlannerEnabled: true,
       );
 
       expect(
-        _labourForRecipe(
+        labourForRecipe(
           plan,
           ProductionRecipesCatalog.bronzeFromCopperTin.id,
         ),
@@ -594,10 +455,10 @@ void main() {
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
-        suggestionApi: _fakeApi(
+        suggestionApi: buildFakeApi(
           build: const [
             BuildUnitOrder(
               unitType: 'peasant_levies',
@@ -613,194 +474,10 @@ void main() {
     });
   });
 
-  group('growth-stage Builder relocation — AC7 feedstock province', () {
-    const ow = 'oldWorld';
-    const pGrain = '$ow|p_grain';
-    const pWool = '$ow|p_wool';
-    const tileGrain = '$pGrain|0|0';
-    const tileWool = '$pWool|0|0';
-
-    final twoProvinceTopology = MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p_grain',
-          regionId: ow,
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'p_wool',
-          regionId: ow,
-          type: TopologyNodeType.province,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p_grain', id2: 'p_wool')],
-    );
-
-    Game relocationGame() => Game(
-      id: 'g-3371-reloc',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(
-          provinces: [
-            Province(id: pGrain, regionId: ow, ownerId: 'gp1'),
-            Province(id: pWool, regionId: ow, ownerId: 'gp1'),
-          ],
-          units: [
-            Unit(
-              id: 'b1',
-              type: kUnitTypeBuilder,
-              ownerId: 'gp1',
-              locationProvinceId: pGrain,
-              tileKey: tileGrain,
-              status: UnitStatus.idle,
-            ),
-          ],
-        ),
-        newWorld: const RegionData(),
-        resourceByTileKey: const {tileGrain: 'grain', tileWool: 'wool'},
-        playerVisibilityByTile: const {
-          'gp1': {tileGrain: 'fullyVisible', tileWool: 'fullyVisible'},
-        },
-        tileKeysByRegionAndProvince: {
-          ow: {
-            pGrain: [tileGrain],
-            pWool: [tileWool],
-          },
-        },
-      ),
-      players: [
-        Player(
-          id: 'gp1',
-          displayName: 'GP1',
-          isHuman: false,
-          capitalProvinceId: pGrain,
-          stockpile: const Stockpile(),
-          workerPool: const WorkerPool(peasants: 4),
-        ),
-      ],
-    );
-
-    test('ownedFabricFeedstockProvinceIdsSorted finds wool province only', () {
-      final ids = ownedFabricFeedstockProvinceIdsSorted(
-        relocationGame(),
-        'gp1',
-      );
-      expect(ids, [pWool]);
-    });
-
-    test(
-      'suggestGrowthStageBuilderFeedstockRelocation moves Builder to wool province',
-      () {
-        final game = relocationGame();
-        final view = buildPlayerView(game, twoProvinceTopology, 'gp1');
-        final stage = GrowthStage.compute(game, 'gp1');
-        final pref = growthStageFeedstockPreference(
-          game: game,
-          playerId: 'gp1',
-          stage: stage,
-          growthStagePlannerEnabled: true,
-        );
-        final move = suggestGrowthStageBuilderFeedstockRelocation(
-          game: game,
-          view: view,
-          topology: twoProvinceTopology,
-          currentOrders: const Orders(),
-          suggestionAPI: const DefaultOrderSuggestionAPI(),
-          stage: stage,
-          feedstockPreference: pref,
-          growthStagePlannerEnabled: true,
-        );
-        expect(move, isNotNull);
-        expect(move!.unitId, 'b1');
-        expect(Unit.provinceIdFromTileKey(move.destinationTileKey), pWool);
-      },
-    );
-
-    test('returns null when Builder already co-located with wool', () {
-      final game = relocationGame();
-      final ws = game.worldState;
-      final relocatedBuilder = ws.oldWorld.units.single.copyWith(
-        locationProvinceId: pWool,
-        tileKey: tileWool,
-      );
-      final coLocated = Game(
-        id: game.id,
-        worldState: WorldState(
-          turnState: ws.turnState,
-          oldWorld: RegionData(
-            provinces: ws.oldWorld.provinces,
-            units: [relocatedBuilder],
-          ),
-          newWorld: ws.newWorld,
-          resourceByTileKey: ws.resourceByTileKey,
-          playerVisibilityByTile: ws.playerVisibilityByTile,
-          tileKeysByRegionAndProvince: ws.tileKeysByRegionAndProvince,
-        ),
-        players: game.players,
-      );
-      final view = buildPlayerView(coLocated, twoProvinceTopology, 'gp1');
-      final stage = GrowthStage.compute(coLocated, 'gp1');
-      final pref = growthStageFeedstockPreference(
-        game: coLocated,
-        playerId: 'gp1',
-        stage: stage,
-        growthStagePlannerEnabled: true,
-      );
-      final move = suggestGrowthStageBuilderFeedstockRelocation(
-        game: coLocated,
-        view: view,
-        topology: twoProvinceTopology,
-        currentOrders: const Orders(),
-        suggestionAPI: const DefaultOrderSuggestionAPI(),
-        stage: stage,
-        feedstockPreference: pref,
-        growthStagePlannerEnabled: true,
-      );
-      expect(move, isNull);
-    });
-
-    test('orchestrator emits relocation before work (move/work XOR)', () {
-      final game = relocationGame();
-      final view = buildPlayerView(game, twoProvinceTopology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(
-        view,
-        topology: twoProvinceTopology,
-      );
-      final outcome = runDomainPlannersWithOutcome(
-        game: game,
-        topology: twoProvinceTopology,
-        nationId: 'gp1',
-        view: view,
-        snapshot: snapshot,
-        config: _config,
-        primaryGoal: StrategicGoal.expand,
-        seeds: _seeds,
-        suggestionAPI: const DefaultOrderSuggestionAPI(),
-        economyPlan: const EconomyPlan(
-          productionAssignments: [],
-          cargoPreference: CargoPreference.none,
-        ),
-        growthStagePlannerEnabled: true,
-      );
-      final moves = outcome.orders.moveOrdersByPlayerId['gp1'] ?? const [];
-      expect(
-        moves.where((m) => m.unitId == 'b1'),
-        isNotEmpty,
-        reason: 'bootstrap Builder should relocate toward wool province',
-      );
-      final work = outcome.orders.workOrdersByPlayerId['gp1'] ?? const [];
-      expect(
-        work.where((w) => w.unitId == 'b1'),
-        isEmpty,
-        reason: 'relocated Builder must not receive work same turn',
-      );
-    });
-  });
-
   group('peasantRecruitScoreScale — AC12 recruitment modulation', () {
     test('bootstrap scale exceeds mature scale; mature respects floor', () {
-      final bootstrap = GrowthStage.compute(_bootstrapFabricGame(), 'gp1');
-      final mature = GrowthStage.compute(_matureCastIronGame(), 'gp1');
+      final bootstrap = GrowthStage.compute(bootstrapFabricGame(), 'gp1');
+      final mature = GrowthStage.compute(matureCastIronGame(), 'gp1');
 
       final bootstrapScale = peasantRecruitScoreScale(bootstrap);
       final matureScale = peasantRecruitScoreScale(mature);
@@ -841,7 +518,7 @@ void main() {
       );
     }
 
-    OrderSuggestionAPI api() => _fakeApi(
+    OrderSuggestionAPI api() => buildFakeApi(
       recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
       build: const [
         BuildUnitOrder(
@@ -854,15 +531,15 @@ void main() {
 
     test('reserves scarce fabric: peasant recruit dropped, regiment kept', () {
       final game = militaryReadyGame(fabricHeld: 1);
-      final view = buildPlayerView(game, _topology, 'gp1');
-      final snapshot = _atWarSnapshot('gp1');
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
+      final snapshot = atWarSnapshot('gp1');
 
       final plan = runRecruitmentPlanner(
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api(),
         growthStagePlannerEnabled: true,
@@ -879,15 +556,15 @@ void main() {
 
     test('abundant fabric: peasant recruit not reservation-rejected', () {
       final game = militaryReadyGame(fabricHeld: kReserveTarget);
-      final view = buildPlayerView(game, _topology, 'gp1');
-      final snapshot = _atWarSnapshot('gp1');
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
+      final snapshot = atWarSnapshot('gp1');
 
       final plan = runRecruitmentPlanner(
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api(),
         growthStagePlannerEnabled: true,
@@ -903,15 +580,15 @@ void main() {
 
     test('flag off: no reservation rejection', () {
       final game = militaryReadyGame(fabricHeld: 1);
-      final view = buildPlayerView(game, _topology, 'gp1');
-      final snapshot = _atWarSnapshot('gp1');
+      final view = buildPlayerView(game, kTestTopology, 'gp1');
+      final snapshot = atWarSnapshot('gp1');
 
       final plan = runRecruitmentPlanner(
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: _config,
-        seeds: _seeds,
+        config: kTestConfig,
+        seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api(),
         growthStagePlannerEnabled: false,

@@ -119,6 +119,42 @@ province so the feedstock build routing above can fire on the following turn
 (or same turn after the move resolves). AC7 seed-42 calibration may require
 additional tuning once relocation is active end-to-end.
 
+### Builder move reservation (anti-thrash)
+
+The generic weighted move planner (`runMovePlanner`) picks one idle unit per
+turn at weighted random and scores own-territory destinations at `1.0`, so it
+repeatedly relocates idle Builders between owned provinces. Combined with the
+growth-stage relocation [MoveOrder] above, the two planners ping-pong a
+bootstrap GP's Builders so they never stay in a feedstock province long enough
+for `selectFullAiCivilianWorkOrders` to assign the feedstock
+`build_improvement` — on seed 42 gp3's Builders thrash for the whole bootstrap
+window and never improve any of its owned `wool` tiles, so the `wool → fabric`
+chain never starts.
+
+While a feedstock stage is active (`growthStageFeedstockPreference` requests
+fabric or infrastructure feedstock), the growth-stage relocation is the **sole**
+mover of that GP's Builders:
+`growthStageReservedBuilderUnitIds(game, view, playerId)` returns the GP's idle
+(`currentWork == null`) Builder unit ids, and `runMovePlanner` drops every move
+candidate for a reserved Builder before weighted selection. The growth-stage
+relocation still emits the one targeted Builder→fabric-province move per turn,
+so Builders converge on feedstock provinces and settle to build, instead of
+oscillating. Empty when the flag is off or no feedstock stage is active (a
+mature GP, whose `workerGrowthPriority`/`infrastructurePriority` have decayed,
+moves Builders freely), so the flag-off default and mature-GP behaviour are
+unchanged.
+
+- **AC14 (positive — bootstrap Builders reserved):** Given a GP under the
+  growth-stage planner with `growthStageFeedstockPreference` requesting fabric
+  feedstock (`workerGrowthPriority > 0.3`, `fabric < kReserveTarget`) and at
+  least one idle Builder, when `growthStageReservedBuilderUnitIds` is computed,
+  then the result contains every idle Builder's unit id, and `runMovePlanner`
+  emits no generic move order for those Builders.
+- **AC14 (negative — flag off / mature GP not reserved):** Given the same GP
+  but with `growthStagePlannerEnabled == false`, or a mature GP whose feedstock
+  preference is empty, when `growthStageReservedBuilderUnitIds` is computed,
+  then the result is empty and `runMovePlanner` may relocate Builders as before.
+
 ## Recruitment modulation
 
 Peasant-recruit scaling: `max(kRecruitmentFloor, workerGrowthPriority)`. Exported as `peasantRecruitScoreScale(stage)` for tests.
@@ -180,12 +216,13 @@ first in EXPAND/COLONIAL). Flag-off behaviour is unchanged.
 - `strategic_ai.dart` / `full_ai_planner.dart` — thread `growthStagePlannerEnabled` into economy and domain planners for end-to-end simulation (AC7).
 - `domain_planner_orchestrator.dart` — growth-stage military build suppression in `_appendEconomyBuildOrders`; H8 castIron-labour peasant recruit skipped when the flag is on.
 - `growth_stage_work_priorities.dart` — `growthStageFeedstockPreference` computes the fabric / infrastructure feedstock resource-id sets; `prioritizeWorkOrdersForGrowthStage` reorders civilian candidates (superseded by the scoring boost below, retained for ordering stability).
-- `growth_stage_builder_relocation.dart` — `ownedFabricFeedstockProvinceIdsSorted`, `suggestGrowthStageBuilderFeedstockRelocation` (orchestrator pre-work slice).
+- `growth_stage_builder_relocation.dart` — `ownedFabricFeedstockProvinceIdsSorted`, `suggestGrowthStageBuilderFeedstockRelocation` (orchestrator pre-work slice), `growthStageReservedBuilderUnitIds` (anti-thrash reservation).
+- `move_planner.dart` — `runMovePlanner` drops generic move candidates for growth-stage reserved bootstrap Builders (AC14).
 - `full_ai_civilian_work_selection.dart` / `_build_purchase.dart` — `selectFullAiCivilianWorkOrders` accepts the two feedstock sets and applies `kGrowthStageFabricFeedstockScoreBoost` / `kGrowthStageInfraFeedstockScoreBoost` in `_buildImprovementWorkScore` so a co-located Builder selects the fabric (then infrastructure) feedstock tile.
 
 ## Acceptance criteria (issue #3371)
 
-AC1–AC6, AC10–AC13: unit tests in `growth_stage_planner_test.dart`. AC7: `seed42_growth_stage_conquest_regression_test.dart` (skipped until calibration). AC9 H8 removal: follow-up after AC7 passes with flag default on.
+AC1–AC6, AC10–AC14: unit tests in `growth_stage_planner_test.dart`. AC7: `seed42_growth_stage_conquest_regression_test.dart` (skipped until calibration). AC9 H8 removal: follow-up after AC7 passes with flag default on.
 
 - **AC13 (positive — military fabric reservation):** Given a GP with `militaryPriority >= kMilitaryBuildSuppressionThreshold`, treasury ≥ the cheapest regiment build cost, fabric held `< kReserveTarget`, and a fabric-consuming military build candidate on offer, when `runRecruitmentPlanner` runs under the growth-stage system, then every peasant-tier (fabric-costing) recruit candidate is rejected with reason `kRecruitmentRejectMilitaryFabricReservation` and no peasant recruit order is emitted.
 - **AC13 (negative — no reservation when fabric is abundant):** Given the same GP but holding `fabric >= kReserveTarget`, when `runRecruitmentPlanner` runs, then peasant-tier recruit candidates are not reservation-rejected (worker growth continues).

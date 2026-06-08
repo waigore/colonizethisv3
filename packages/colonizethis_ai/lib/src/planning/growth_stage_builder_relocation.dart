@@ -33,6 +33,54 @@ List<String> ownedFabricFeedstockProvinceIdsSorted(
   return List<String>.unmodifiable(sorted);
 }
 
+/// Idle Builder unit ids the growth-stage planner keeps under its **own**
+/// relocation authority while [playerId] is in a feedstock (bootstrap /
+/// infrastructure) stage, so the generic weighted move planner
+/// (`runMovePlanner`) does not relocate them across owned provinces before they
+/// settle to improve a `wool`/`cotton`/`timber`/`iron`/`coal` tile
+/// (Refs #3371 AC14 — Builder anti-thrash).
+///
+/// Without this reservation the generic move planner picks one idle unit per
+/// turn at weighted random and, scoring own-territory destinations at 1.0,
+/// repeatedly shuffles bootstrap Builders between owned provinces. Combined
+/// with the growth-stage relocation [MoveOrder] (which pulls a Builder toward a
+/// fabric-feedstock province), the two planners ping-pong the same Builders so
+/// they never stay put long enough for `selectFullAiCivilianWorkOrders` to
+/// assign the feedstock `build_improvement` — the seed-42 gp3 fabric chain
+/// never starts.
+///
+/// Returns the idle (`currentWork == null`) Builders owned by [playerId] when a
+/// feedstock stage is active (the [growthStageFeedstockPreference] requests
+/// fabric or infrastructure feedstock). Returns the empty set when the flag is
+/// off or no feedstock stage is active, so the flag-off default and mature-GP
+/// behaviour are unchanged. Pure and deterministic over `(game, view)`.
+Set<String> growthStageReservedBuilderUnitIds({
+  required Game game,
+  required PlayerView view,
+  required String playerId,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+}) {
+  if (!growthStagePlannerEnabled) return const <String>{};
+  final stage = GrowthStage.compute(game, playerId);
+  final preference = growthStageFeedstockPreference(
+    game: game,
+    playerId: playerId,
+    stage: stage,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
+  );
+  if (preference.fabricFeedstockResourceIds.isEmpty &&
+      preference.infraFeedstockResourceIds.isEmpty) {
+    return const <String>{};
+  }
+  final reserved = <String>{};
+  for (final unit in view.ownUnits) {
+    if (unit.type != kUnitTypeBuilder) continue;
+    if (unit.currentWork != null) continue;
+    reserved.add(unit.id);
+  }
+  return reserved;
+}
+
 bool _builderProvinceHostsUnimprovedFabricFeedstock({
   required Game game,
   required String playerId,
