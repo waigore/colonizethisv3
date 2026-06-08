@@ -411,9 +411,9 @@ class SimGameController {
       ),
     );
     TurnTraceFileExporter(
-      rootDirectory: turnTraceRootDirectory,
-      pruningEnabled: false,
-    )
+          rootDirectory: turnTraceRootDirectory,
+          pruningEnabled: false,
+        )
         .export(document)
         .then((file) {
           _ctdevSimLog.d(
@@ -696,6 +696,7 @@ class SimGameController {
               ? const {}
               : {playerId: List.of(mission)},
         ),
+        projector: projectOrderEffects,
       );
 
       final results = engine.validatePlayerOrdersWithContext(

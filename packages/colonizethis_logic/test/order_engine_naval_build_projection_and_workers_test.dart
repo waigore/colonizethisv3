@@ -45,7 +45,7 @@ void main() {
             ),
           ],
         );
-        final engine = OrderEngine();
+        final engine = OrderEngine(projector: projectOrderEffects);
         engine.addBuildOrder(
           'p1',
           BuildUnitOrder(

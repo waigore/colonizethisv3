@@ -33,6 +33,10 @@ export 'package:colonizethis_economy/colonizethis_economy.dart';
 
 // Orders
 export 'src/orders/orders.dart';
+// Order-effects dry-run projector (concrete impl lives in the neutral core
+// `projections/` module because it runs the turn resolver; the orders barrel
+// only exposes the injectable typedef + ProjectedEffects value type). Refs #3290 C2.
+export 'src/projections/order_projections.dart';
 export 'src/orders/civilian_projected_tile.dart';
 export 'src/orders/validators/work_order_cost_calculator.dart';
 export 'src/orders/order_suggestion.dart'

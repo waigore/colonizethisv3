@@ -184,7 +184,7 @@ void main() {
         players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
 
-      final engine = OrderEngine();
+      final engine = OrderEngine(projector: projectOrderEffects);
       final effects = engine.projectedEffects(game, topology, 'p1');
       expect(effects.workerCount, isNotNull);
     });
@@ -237,7 +237,7 @@ void main() {
           ),
           players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         );
-        final engine = OrderEngine();
+        final engine = OrderEngine(projector: projectOrderEffects);
         engine.addMoveOrder(
           'p1',
           const MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
@@ -273,7 +273,7 @@ void main() {
         players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final turnBefore = game.worldState.turnState.turnNumber;
-      final engine = OrderEngine();
+      final engine = OrderEngine(projector: projectOrderEffects);
       engine.projectedEffects(game, topology, 'p1');
       expect(game.worldState.turnState.turnNumber, turnBefore);
     });
