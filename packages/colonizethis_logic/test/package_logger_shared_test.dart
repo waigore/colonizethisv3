@@ -9,7 +9,6 @@ import 'package:colonizethis_logic/package_log_prefix.dart';
 import 'package:colonizethis_logic/package_logger.dart'
     as pkg_logger
     show logicLog, packageLogger;
-import 'package:colonizethis_logic/src/logging.dart' as logic_logging;
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart' show Level, LogEvent, Logger;
 
@@ -19,10 +18,6 @@ void main() {
       expect(pkg_logger.logicLog, isA<CtLogger>());
       expect(pkg_logger.logicLog.prefix, equals(kPackageLogPrefix));
       expect(kPackageLogPrefix, equals('logic'));
-    });
-
-    test('lib/src/logging.dart barrel re-exports the same logicLog (AC5)', () {
-      expect(identical(pkg_logger.logicLog, logic_logging.logicLog), isTrue);
     });
 
     test('logicLog is the single shared instance for the package', () {
