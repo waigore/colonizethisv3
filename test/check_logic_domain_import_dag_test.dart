@@ -34,19 +34,24 @@ void noop() {}
     expect(code, 1);
   });
 
-  test('Phase 0 C0 grandfather allowlist is empty (all deferred edges eliminated)',
-      () {
-    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(allowlist, isEmpty);
-  });
+  test(
+    'Phase 0 C0 grandfather allowlist is empty (all deferred edges eliminated)',
+    () {
+      final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+      expect(allowlist, isEmpty);
+    },
+  );
 
-  test('economy->orders edge is enforced and fully eliminated (Refs #3290)', () {
-    final forbidden = logicDomainImportForbiddenEdgesForTests();
-    expect(forbidden, contains('economy->orders'));
+  test(
+    'economy->orders edge is enforced and fully eliminated (Refs #3290)',
+    () {
+      final forbidden = logicDomainImportForbiddenEdgesForTests();
+      expect(forbidden, contains('economy->orders'));
 
-    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(allowlist.where((e) => e.startsWith('economy->orders:')), isEmpty);
-  });
+      final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+      expect(allowlist.where((e) => e.startsWith('economy->orders:')), isEmpty);
+    },
+  );
 
   test('orders->turn edge is enforced and fully eliminated (Refs #3290)', () {
     final forbidden = logicDomainImportForbiddenEdgesForTests();
@@ -61,8 +66,8 @@ void noop() {}
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File(
-      '${temp.path}/packages/colonizethis_logic/lib/src/orders/bad_turn.dart',
-    )
+        '${temp.path}/packages/colonizethis_logic/lib/src/orders/bad_turn.dart',
+      )
       ..createSync(recursive: true)
       ..writeAsStringSync("""
 import '../turn/turn_resolver.dart';
@@ -82,8 +87,8 @@ void noop() {}
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File(
-      '${temp.path}/packages/colonizethis_logic/lib/src/economy/bad_orders.dart',
-    )
+        '${temp.path}/packages/colonizethis_logic/lib/src/economy/bad_orders.dart',
+      )
       ..createSync(recursive: true)
       ..writeAsStringSync("""
 import '../orders/order_engine.dart';
@@ -139,21 +144,24 @@ void noop() {}
     expect(code, 1);
   });
 
-  test('diplomacy->turn edge is enforced and fully eliminated (Refs #3290)', () {
-    final forbidden = logicDomainImportForbiddenEdgesForTests();
-    expect(forbidden, contains('diplomacy->turn'));
+  test(
+    'diplomacy->turn edge is enforced and fully eliminated (Refs #3290)',
+    () {
+      final forbidden = logicDomainImportForbiddenEdgesForTests();
+      expect(forbidden, contains('diplomacy->turn'));
 
-    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(allowlist.where((e) => e.startsWith('diplomacy->turn:')), isEmpty);
-  });
+      final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+      expect(allowlist.where((e) => e.startsWith('diplomacy->turn:')), isEmpty);
+    },
+  );
 
   test('fails when a new forbidden diplomacy->turn import appears', () {
     final temp = Directory.systemTemp.createTempSync('logic_dag_dipl_turn_');
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File(
-      '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_turn.dart',
-    )
+        '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_turn.dart',
+      )
       ..createSync(recursive: true)
       ..writeAsStringSync("""
 import '../turn/turn_resolution_result.dart';
@@ -202,25 +210,27 @@ void noop() {}
     expect(code, 1);
   });
 
-  test('economy->diplomacy edge is enforced and fully eliminated (Refs #3290)',
-      () {
-    final forbidden = logicDomainImportForbiddenEdgesForTests();
-    expect(forbidden, contains('economy->diplomacy'));
+  test(
+    'economy->diplomacy edge is enforced and fully eliminated (Refs #3290)',
+    () {
+      final forbidden = logicDomainImportForbiddenEdgesForTests();
+      expect(forbidden, contains('economy->diplomacy'));
 
-    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(
-      allowlist.where((e) => e.startsWith('economy->diplomacy:')),
-      isEmpty,
-    );
-  });
+      final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+      expect(
+        allowlist.where((e) => e.startsWith('economy->diplomacy:')),
+        isEmpty,
+      );
+    },
+  );
 
   test('fails when a new forbidden economy->diplomacy import appears', () {
     final temp = Directory.systemTemp.createTempSync('logic_dag_econ_dipl_');
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File(
-      '${temp.path}/packages/colonizethis_logic/lib/src/economy/bad_diplomacy.dart',
-    )
+        '${temp.path}/packages/colonizethis_logic/lib/src/economy/bad_diplomacy.dart',
+      )
       ..createSync(recursive: true)
       ..writeAsStringSync("""
 import '../diplomacy/diplomacy_resolver.dart';
@@ -243,22 +253,27 @@ void noop() {}
     expect(allowlist.where((e) => e.startsWith('diplomacy->ai:')), isEmpty);
   });
 
-  test('diplomacy->orders edge is enforced and fully eliminated (Refs #3290)',
-      () {
-    final forbidden = logicDomainImportForbiddenEdgesForTests();
-    expect(forbidden, contains('diplomacy->orders'));
+  test(
+    'diplomacy->orders edge is enforced and fully eliminated (Refs #3290)',
+    () {
+      final forbidden = logicDomainImportForbiddenEdgesForTests();
+      expect(forbidden, contains('diplomacy->orders'));
 
-    final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
-    expect(allowlist.where((e) => e.startsWith('diplomacy->orders:')), isEmpty);
-  });
+      final allowlist = logicDomainImportDagGrandfatherAllowlistForTests();
+      expect(
+        allowlist.where((e) => e.startsWith('diplomacy->orders:')),
+        isEmpty,
+      );
+    },
+  );
 
   test('fails when a new forbidden diplomacy->orders import appears', () {
     final temp = Directory.systemTemp.createTempSync('logic_dag_dipl_orders_');
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File(
-      '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_orders.dart',
-    )
+        '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_orders.dart',
+      )
       ..createSync(recursive: true)
       ..writeAsStringSync("""
 import '../orders/order_suggestion_helpers.dart';
@@ -278,8 +293,8 @@ void noop() {}
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File(
-      '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_ai.dart',
-    )
+        '${temp.path}/packages/colonizethis_logic/lib/src/diplomacy/bad_ai.dart',
+      )
       ..createSync(recursive: true)
       ..writeAsStringSync("""
 import '../ai/ai_planner.dart';
@@ -339,9 +354,7 @@ void noop() {}
         "import '../../../constants.dart' show",
         "import 'package:colonizethis_logic/src/constants.dart';",
       ];
-      final ordersDir = Directory(
-        'packages/colonizethis_logic/lib/src/orders',
-      );
+      final ordersDir = Directory('packages/colonizethis_logic/lib/src/orders');
       final violations = <String>[];
       if (ordersDir.existsSync()) {
         for (final entity in ordersDir.listSync(recursive: true)) {
@@ -365,6 +378,45 @@ void noop() {}
       );
     },
   );
+
+  test('orders does not import the neutral projections core (Refs #3290 C2)', () {
+    // The orders tree extracts into colonizethis_orders. The dry-run
+    // projector (projectOrderEffects) runs the turn resolver and lives in the
+    // neutral lib/src/projections/ core module, which sits above the orders
+    // domain. order_engine.dart therefore consumes it via an injected
+    // OrderEffectsProjector and the ProjectedEffects type from
+    // orders/projected_effects.dart, never importing the core module.
+    const forbiddenProjectionImports = <String>[
+      "import '../projections/order_projections.dart';",
+      "import '../projections/projected_effects.dart';",
+      "import '../../projections/order_projections.dart';",
+      "import '../../projections/projected_effects.dart';",
+      "import 'package:colonizethis_logic/src/projections/order_projections.dart';",
+      "import 'package:colonizethis_logic/src/projections/projected_effects.dart';",
+    ];
+    final ordersDir = Directory('packages/colonizethis_logic/lib/src/orders');
+    final violations = <String>[];
+    if (ordersDir.existsSync()) {
+      for (final entity in ordersDir.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        final content = entity.readAsStringSync();
+        for (final bad in forbiddenProjectionImports) {
+          if (content.contains(bad)) {
+            violations.add('${entity.path}: $bad');
+          }
+        }
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason:
+          'orders/ must consume the dry-run via an injected '
+          'OrderEffectsProjector and ProjectedEffects from '
+          'orders/projected_effects.dart, not the neutral '
+          'lib/src/projections/ core module',
+    );
+  });
 
   test(
     'turn_resolution_seeds is turn-owned, not a neutral core file (Refs #3290 C3)',

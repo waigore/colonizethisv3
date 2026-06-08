@@ -2,8 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
-import '../projections/order_projections.dart';
-import '../projections/projected_effects.dart';
+import 'order_effects_projector.dart';
+export 'order_effects_projector.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'package:colonizethis_world/src/game_player_lookup.dart';
@@ -92,11 +92,18 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
   OrderEngine({
     Orders initialOrders = const Orders(),
     OrderValidatorFactory? validatorFactory,
+    OrderEffectsProjector? projector,
   }) : _orders = copyInitialOrdersForEngine(initialOrders),
-       _validatorFactory = validatorFactory ?? _defaultOrderValidatorFactory;
+       _validatorFactory = validatorFactory ?? _defaultOrderValidatorFactory,
+       _projector = projector;
 
   Orders _orders;
   final OrderValidatorFactory _validatorFactory;
+
+  /// Injected dry-run projector (Refs #3290 C2). `null` when the engine is
+  /// constructed without one; required only by [projectedEffects] and trade-
+  /// order validation. SPEC/program/order-engine.md § Injected projector seam.
+  final OrderEffectsProjector? _projector;
 
   Orders get orders => copyOrdersSnapshotForEngine(_orders);
 
@@ -274,6 +281,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
 
     _runOrderValidationPhases(
       validatorFactory: _validatorFactory,
+      projector: _projector,
       orders: _orders,
       state: state,
       game: game,
@@ -316,7 +324,14 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         'projectedEffects called with no tileMapByRegion; expected extraction will be zero',
       );
     }
-    return projectOrderEffects(
+    final projector = _projector;
+    if (projector == null) {
+      throw StateError(
+        'OrderEngine.projectedEffects requires an injected OrderEffectsProjector; '
+        'construct OrderEngine(projector: projectOrderEffects).',
+      );
+    }
+    return projector(
       game: game,
       orders: copyOrdersSnapshotForEngine(_orders),
       topology: topology,

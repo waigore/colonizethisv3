@@ -53,7 +53,7 @@ void main() {
           stockpile: Stockpile(quantities: {CommodityCatalog.timber.id: 10}),
         ),
       );
-      final engine = OrderEngine()
+      final engine = OrderEngine(projector: projectOrderEffects)
         ..addTradeOrderWithContext(
           game,
           _topology,
@@ -88,7 +88,7 @@ void main() {
           ),
         ],
       );
-      final engine = OrderEngine()
+      final engine = OrderEngine(projector: projectOrderEffects)
         ..addTradeOrderWithContext(
           game,
           _topology,
@@ -110,10 +110,9 @@ void main() {
 
       expect(results, hasLength(2));
       expect(results.every((r) => !r.isAccepted), isTrue);
-      expect(
-        results.map((r) => r.reason).toSet(),
-        {TradeOrderRejectionReasons.mutualExclusion},
-      );
+      expect(results.map((r) => r.reason).toSet(), {
+        TradeOrderRejectionReasons.mutualExclusion,
+      });
     });
 
     test('rejects offer exceeding available stockpile', () {
@@ -125,12 +124,13 @@ void main() {
           stockpile: Stockpile(quantities: {CommodityCatalog.timber.id: 3}),
         ),
       );
-      final result = OrderEngine().addTradeOrderWithContext(
-        game,
-        _topology,
-        'gp1',
-        validatorOffer(CommodityCatalog.timber.id, 10),
-      );
+      final result = OrderEngine(projector: projectOrderEffects)
+          .addTradeOrderWithContext(
+            game,
+            _topology,
+            'gp1',
+            validatorOffer(CommodityCatalog.timber.id, 10),
+          );
 
       expect(result.isAccepted, isFalse);
       expect(result.reason, TradeOrderRejectionReasons.offerExceedsStockpile);
@@ -149,7 +149,7 @@ void main() {
             stockpile: Stockpile.empty,
           ),
         );
-        final engine = OrderEngine();
+        final engine = OrderEngine(projector: projectOrderEffects);
         final firstResult = engine.addTradeOrderWithContext(
           game,
           _topology,
@@ -167,39 +167,36 @@ void main() {
       },
     );
 
-    test(
-      'rejects second distinct-commodity bid when no embassy (baseline bid '
-      'type cap == 1 exhausted; Refs #2924)',
-      () {
-        final game = _gameWith(
-          player: Player(
-            id: 'gp1',
-            displayName: 'GP1',
-            isHuman: true,
-            treasury: 500,
-            stockpile: Stockpile.empty,
-          ),
-        );
-        final engine = OrderEngine();
-        engine.addTradeOrderWithContext(
-          game,
-          _topology,
-          'gp1',
-          validatorBid(CommodityCatalog.timber.id, 1),
-        );
-        final secondResult = engine.addTradeOrderWithContext(
-          game,
-          _topology,
-          'gp1',
-          validatorBid(CommodityCatalog.iron.id, 1),
-        );
+    test('rejects second distinct-commodity bid when no embassy (baseline bid '
+        'type cap == 1 exhausted; Refs #2924)', () {
+      final game = _gameWith(
+        player: Player(
+          id: 'gp1',
+          displayName: 'GP1',
+          isHuman: true,
+          treasury: 500,
+          stockpile: Stockpile.empty,
+        ),
+      );
+      final engine = OrderEngine(projector: projectOrderEffects);
+      engine.addTradeOrderWithContext(
+        game,
+        _topology,
+        'gp1',
+        validatorBid(CommodityCatalog.timber.id, 1),
+      );
+      final secondResult = engine.addTradeOrderWithContext(
+        game,
+        _topology,
+        'gp1',
+        validatorBid(CommodityCatalog.iron.id, 1),
+      );
 
-        expect(secondResult.isAccepted, isFalse);
-        expect(
-          secondResult.reason,
-          TradeOrderRejectionReasons.bidTypeCapExceeded,
-        );
-      },
-    );
+      expect(secondResult.isAccepted, isFalse);
+      expect(
+        secondResult.reason,
+        TradeOrderRejectionReasons.bidTypeCapExceeded,
+      );
+    });
   });
 }
