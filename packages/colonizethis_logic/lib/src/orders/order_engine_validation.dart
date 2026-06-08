@@ -72,6 +72,7 @@ class _OrderValidationRunState {
 /// maps (Refs #2836 AC 3; SPEC/program/logic-validator-units-params.md).
 void _runOrderValidationPhases({
   required OrderValidatorFactory validatorFactory,
+  required OrderEffectsProjector? projector,
   required Orders orders,
   required _OrderValidationRunState state,
   required Game game,
@@ -177,6 +178,7 @@ void _runOrderValidationPhases({
             topology,
             copyOrdersSnapshotForEngine(orders),
             tileMapByRegion,
+            projector,
           ),
         ),
       ];
@@ -350,6 +352,7 @@ void _runTradeOrderPhase(
   MapTopology topology,
   Orders stagedOrders,
   Map<String, TileMapResult>? tileMapByRegion,
+  OrderEffectsProjector? projector,
 ) {
   if (tradeOrders.isEmpty) return;
   if (state.rejected) {
@@ -358,13 +361,22 @@ void _runTradeOrderPhase(
     }
     return;
   }
-  // The projected non-bid treasury delta is a turn-layer dry-run via the neutral
-  // `lib/src/projections/` module (`projectOrderEffects` calls
-  // `resolveTurnForGame`). The order engine sits above `colonizethis_economy`,
-  // so it computes the projection here and hands the resulting delta to the
-  // (economy-local) context builder, keeping `economy` free of any `orders`/
-  // `turn` import per `SPEC/program/logic-package-split-phase0.md`.
-  final projected = projectOrderEffects(
+  // The projected non-bid treasury delta is a turn-layer dry-run
+  // (`projectOrderEffects` calls `resolveTurnForGame`) that lives in the neutral
+  // `lib/src/projections/` core module — above the `orders` domain. The engine
+  // therefore receives it as an injected [OrderEffectsProjector] (Refs #3290
+  // C2) and hands the resulting delta to the (economy-local) context builder,
+  // keeping both `orders` free of any `projections`/`turn` import and `economy`
+  // free of any `orders`/`turn` import per
+  // `SPEC/program/logic-package-split-phase0.md`.
+  if (projector == null) {
+    throw StateError(
+      'OrderEngine trade-order validation requires an injected '
+      'OrderEffectsProjector; construct OrderEngine(projector: '
+      'projectOrderEffects).',
+    );
+  }
+  final projected = projector(
     game: game,
     orders: stagedOrders,
     topology: topology,

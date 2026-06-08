@@ -6,6 +6,7 @@ import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
 import 'package:colonizethis_world/src/game_events.dart';
 import '../orders/order_engine.dart';
 import '../orders/order_merge.dart';
+import '../projections/order_projections.dart';
 import 'package:colonizethis_world/src/world/army_migration.dart';
 export 'economy_preview_pipeline.dart'
     show
@@ -132,7 +133,10 @@ TurnResolutionResult validateOrdersAndResolveTurn({
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
   TurnTraceRuntime? turnTraceRuntime,
 }) {
-  final engine = OrderEngine(initialOrders: orders);
+  final engine = OrderEngine(
+    initialOrders: orders,
+    projector: projectOrderEffects,
+  );
   final filtered = filterAcceptedOrdersForAllPlayers(
     engine: engine,
     game: game,

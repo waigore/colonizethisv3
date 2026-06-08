@@ -27,11 +27,13 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       return;
     }
     ref.read(currentGameProvider.notifier).setGame(nextGame);
-    ref.read(gameServiceProvider).saveGame(
-      ref
-          .read(observeSessionProvider.notifier)
-          .prepareGameForPersistence(nextGame),
-    );
+    ref
+        .read(gameServiceProvider)
+        .saveGame(
+          ref
+              .read(observeSessionProvider.notifier)
+              .prepareGameForPersistence(nextGame),
+        );
     _showSnackBar(ShowSnackBarEvent(message: result.message));
   }
 
@@ -46,14 +48,22 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         });
       }),
       bus.on<SetObserveModeGlobalEvent>().listen((_) {
-        _unlessTurnResolutionBlocksSession(ref, 'SetObserveModeGlobalEvent', () {
-          applySetObserveModeGlobal(ref);
-        });
+        _unlessTurnResolutionBlocksSession(
+          ref,
+          'SetObserveModeGlobalEvent',
+          () {
+            applySetObserveModeGlobal(ref);
+          },
+        );
       }),
       bus.on<SetObserveModePlayerEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'SetObserveModePlayerEvent', () {
-          applySetObserveModePlayer(ref, e.targetPlayerId);
-        });
+        _unlessTurnResolutionBlocksSession(
+          ref,
+          'SetObserveModePlayerEvent',
+          () {
+            applySetObserveModePlayer(ref, e.targetPlayerId);
+          },
+        );
       }),
       bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
@@ -110,7 +120,10 @@ extension _SessionCommands on _AppEventHandlerScopeState {
                   .read(gameServiceProvider)
                   .getMapData(game.id)
                   ?.tileMapByRegion;
-              final engine = OrderEngine(initialOrders: next);
+              final engine = OrderEngine(
+                initialOrders: next,
+                projector: projectOrderEffects,
+              );
               civilianWorkUpsertValidationPassCountForTests += 1;
               final results = engine.validatePlayerOrdersWithContext(
                 game,
@@ -154,11 +167,13 @@ extension _SessionCommands on _AppEventHandlerScopeState {
             if (game == null) return;
             final newGame = clearUnitCurrentWork(game, e.unitId);
             ref.read(currentGameProvider.notifier).setGame(newGame);
-            ref.read(gameServiceProvider).saveGame(
-              ref
-                  .read(observeSessionProvider.notifier)
-                  .prepareGameForPersistence(newGame),
-            );
+            ref
+                .read(gameServiceProvider)
+                .saveGame(
+                  ref
+                      .read(observeSessionProvider.notifier)
+                      .prepareGameForPersistence(newGame),
+                );
           },
         );
       }),
@@ -293,7 +308,10 @@ extension _SessionCommands on _AppEventHandlerScopeState {
             e.humanPlayerId,
             e.moveOrder,
           );
-          final engine = OrderEngine(initialOrders: next);
+          final engine = OrderEngine(
+            initialOrders: next,
+            projector: projectOrderEffects,
+          );
           final results = engine.validatePlayerOrdersWithContext(
             g,
             topo,
@@ -517,11 +535,13 @@ extension _SessionCommands on _AppEventHandlerScopeState {
             return;
           }
           ref.read(currentGameProvider.notifier).setGame(updated);
-          ref.read(gameServiceProvider).saveGame(
-            ref
-                .read(observeSessionProvider.notifier)
-                .prepareGameForPersistence(updated),
-          );
+          ref
+              .read(gameServiceProvider)
+              .saveGame(
+                ref
+                    .read(observeSessionProvider.notifier)
+                    .prepareGameForPersistence(updated),
+              );
           _logEvent.i('combat: set default combat mode to ${e.mode.name}');
         });
       }),
