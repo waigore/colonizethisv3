@@ -580,6 +580,89 @@ class _BuildPassResult {
 
 /// Appends the chosen economy build order (if any) into [ordersBuilder] and
 /// returns the build-gate decision. Refs #3288 (mutable orders accumulation).
+/// Computes the base economy build-order threshold for the build pass.
+///
+/// Extracted from [_appendEconomyBuildOrders] to keep that orchestrator slice
+/// within the repo function-size budget; behaviour is unchanged. The threshold
+/// starts from the agenda-adjusted base, tightens under EXPAND quota pressure
+/// (and the GP-blocker focus sub-cap), then applies the dispatched colonial
+/// build-order cap when present.
+///
+/// Refs #2509 S5: the colonial cap is derived from the dispatched phase plan
+/// instead of the legacy `colonialBuildOrderThresholdCap(snapshot.colonial)`.
+/// COLONIAL phase entry is itself gated on `hasColonialAcquisitionTargets` via
+/// `observerGoalPhaseFor`, so the phase-derived `int?` is field-equal to the
+/// legacy single reachable arm (see `SPEC/ai/phase-planner-dispatch.md`
+/// § Orchestrator economy build colonial-cap slice).
+int _computeBaseBuildThreshold({
+  required PlannerContext ctx,
+  required PhasePlanOutcome phasePlan,
+  required AIWorldSnapshot snapshot,
+  required bool expandQuotaPressure,
+}) {
+  var buildThreshold =
+      30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
+  if (expandQuotaPressure) {
+    buildThreshold = math.min(buildThreshold, 15);
+  }
+  if (expandQuotaPressure &&
+      resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: phasePlan)) {
+    buildThreshold = math.min(buildThreshold, 8);
+  }
+  final colonialBuildCap = resolvePhaseEconomyColonialBuildOrderThresholdCap(
+    phasePlan: phasePlan,
+    colonial: snapshot.colonial,
+  );
+  if (colonialBuildCap != null) {
+    buildThreshold = math.min(buildThreshold, colonialBuildCap);
+  }
+  return buildThreshold;
+}
+
+/// Computes the stalled-expansion minimum regiment floor for the build pass.
+///
+/// Extracted from [_appendEconomyBuildOrders] to keep that orchestrator slice
+/// within the repo function-size budget; behaviour is unchanged (the floor is
+/// raised for an at-war GP blocker province deficit and the critically-weak /
+/// below-quota rebuild bands, then pinned to 1 on a zero-regiment rebuild).
+int _computeMinRegimentFloor({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required bool atWarWithGpBlocker,
+  required String? gpBlocker,
+  required bool criticallyWeakNoGpWar,
+  required bool criticallyWeakBelowQuota,
+  required bool needRegimentsToExpand,
+  required bool belowQuotaZeroRegimentsRebuild,
+}) {
+  var minRegimentFloor = atWarWithGpBlocker
+      ? kStalledMinRegimentCountWhenGpBlockerAtWar
+      : kStalledMinRegimentCountWhenAtWar;
+  if (atWarWithGpBlocker && gpBlocker != null) {
+    final deficit =
+        provinceCountOwnedBy(ctx.game, gpBlocker) -
+        snapshot.conquest.oldWorldProvincesOwned;
+    if (deficit > 0) {
+      minRegimentFloor +=
+          deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
+    }
+  }
+  if (criticallyWeakNoGpWar &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakNoGpWar) {
+    minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakNoGpWar;
+  }
+  if (criticallyWeakBelowQuota &&
+      (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
+      minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakBelowQuota) {
+    minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakBelowQuota;
+  }
+  if (belowQuotaZeroRegimentsRebuild) {
+    minRegimentFloor = 1;
+  }
+  return minRegimentFloor;
+}
+
 _BuildPassResult _appendEconomyBuildOrders({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -618,42 +701,12 @@ _BuildPassResult _appendEconomyBuildOrders({
         playerId: ctx.nationId,
       );
 
-  var buildThreshold =
-      30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
-  if (expandQuotaPressure) {
-    buildThreshold = math.min(buildThreshold, 15);
-  }
-  if (expandQuotaPressure &&
-      resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: phasePlan)) {
-    buildThreshold = math.min(buildThreshold, 8);
-  }
-  // Refs #2509 S5: derive the colonial build-order threshold cap from
-  // the dispatched phase plan instead of calling the legacy
-  // `colonialBuildOrderThresholdCap(snapshot.colonial)` (previously in
-  // the now-deleted `colonial_pressure.dart`). The legacy helper had
-  // two arms keyed on `hasColonialAcquisitionTargets(colonial)`, but
-  // the orchestrator only invoked it inside the outer
-  // `if (colonialPressure)` guard, where `colonialPressure` is the
-  // dispatched `resolvePhaseEconomyColonialPressureActive` (active
-  // only under COLONIAL). COLONIAL phase entry is itself gated on
-  // `hasColonialAcquisitionTargets` via `observerGoalPhaseFor`, so the
-  // first legacy arm was the only reachable arm — the second
-  // (no-acquisition fallback) arm required
-  // `!hasColonialAcquisitionTargets`, which is structurally
-  // unreachable inside the orchestrator's COLONIAL-pressure branch.
-  // The fallback constant has since been retired from `colonizethis_data`
-  // (Refs #2509) and the phase-derived `int?` collapses to the single-arm
-  // form, field-equal to the legacy compute at this call site across
-  // every reachable `(ObserverGoalPhase, ColonialSummary)` pair (see
-  // `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build
-  // colonial-cap slice).
-  final colonialBuildCap = resolvePhaseEconomyColonialBuildOrderThresholdCap(
+  var buildThreshold = _computeBaseBuildThreshold(
+    ctx: ctx,
     phasePlan: phasePlan,
-    colonial: snapshot.colonial,
+    snapshot: snapshot,
+    expandQuotaPressure: expandQuotaPressure,
   );
-  if (colonialBuildCap != null) {
-    buildThreshold = math.min(buildThreshold, colonialBuildCap);
-  }
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
   final observerQuotaPressure = expandQuotaPressure;
   final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
@@ -708,31 +761,16 @@ _BuildPassResult _appendEconomyBuildOrders({
   );
   final atWarWithGpBlocker =
       gpBlocker != null && snapshot.threats.atWarWith.contains(gpBlocker);
-  var minRegimentFloor = atWarWithGpBlocker
-      ? kStalledMinRegimentCountWhenGpBlockerAtWar
-      : kStalledMinRegimentCountWhenAtWar;
-  if (atWarWithGpBlocker && gpBlocker != null) {
-    final deficit =
-        provinceCountOwnedBy(ctx.game, gpBlocker) -
-        snapshot.conquest.oldWorldProvincesOwned;
-    if (deficit > 0) {
-      minRegimentFloor +=
-          deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
-    }
-  }
-  if (criticallyWeakNoGpWar &&
-      snapshot.threats.atWarWith.isNotEmpty &&
-      minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakNoGpWar) {
-    minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakNoGpWar;
-  }
-  if (criticallyWeakBelowQuota &&
-      (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
-      minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakBelowQuota) {
-    minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakBelowQuota;
-  }
-  if (belowQuotaZeroRegimentsRebuild) {
-    minRegimentFloor = 1;
-  }
+  final minRegimentFloor = _computeMinRegimentFloor(
+    ctx: ctx,
+    snapshot: snapshot,
+    atWarWithGpBlocker: atWarWithGpBlocker,
+    gpBlocker: gpBlocker,
+    criticallyWeakNoGpWar: criticallyWeakNoGpWar,
+    criticallyWeakBelowQuota: criticallyWeakBelowQuota,
+    needRegimentsToExpand: needRegimentsToExpand,
+    belowQuotaZeroRegimentsRebuild: belowQuotaZeroRegimentsRebuild,
+  );
   var forceRegimentRebuild =
       !suppressMilitaryBuilds &&
       (expandQuotaPressure || criticallyWeakBelowQuota) &&
