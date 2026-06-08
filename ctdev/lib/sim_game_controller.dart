@@ -1,9 +1,9 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/src/ai/ai_planner.dart'
+import 'package:colonizethis_ai_contracts/src/ai/ai_planner.dart'
     show generateOrdersForGame, generateOrdersForPlayer;
-import 'package:colonizethis_logic/src/ai/sim_game_ai.dart'
+import 'package:colonizethis_ai_contracts/src/ai/sim_game_ai.dart'
     show defaultSimGameAi;
 import 'package:colonizethis_setup/colonizethis_setup.dart'
     show assignHiddenAgendasForGame;

@@ -24,7 +24,8 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart'
+    show sellerNeedsImprovementInputFeedstockTileAcquisition;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/ai/ai_planner.dart';
-import 'package:colonizethis_logic/src/ai/simple_ai_heuristics.dart';
+import 'package:colonizethis_ai_contracts/src/ai/ai_planner.dart';
+import 'package:colonizethis_ai_contracts/src/ai/simple_ai_heuristics.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';

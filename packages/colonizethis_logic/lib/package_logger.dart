@@ -11,8 +11,9 @@ CtLogger packageLogger([String? subPrefix]) {
 
 /// Shared package-level [CtLogger] for `colonizethis_logic` source files.
 ///
-/// `lib/src/**` should import [logicLog] via `package:colonizethis_logic/src/logging.dart`
-/// (Refs #2391 AC5) instead of importing this file directly.
+/// `lib/src/**` should import [logicLog] from
+/// `package:colonizethis_logic/package_logger.dart` (Refs #2391 AC5; enforced by
+/// `repo.logic_dedup_logger`) instead of re-declaring a private logger.
 ///
 /// Every `lib/src/**/*.dart` file that previously declared a private
 /// `final _log = packageLogger();` should import and reuse [logicLog] instead.
