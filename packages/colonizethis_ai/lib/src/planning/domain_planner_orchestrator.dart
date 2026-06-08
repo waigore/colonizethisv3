@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show BuildUnitCategory, buildUnitCategoryForUnitType;
 import 'package:colonizethis_logic/ai_api.dart' show canAffordRecruitWorker;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
@@ -17,6 +19,7 @@ import '../perception/perception_snapshot.dart';
 import '../util/orders_builder.dart';
 import '../util/orders_extensions.dart';
 import 'build_planner.dart';
+import 'growth_stage.dart';
 import 'conquest_planner.dart';
 import 'growth_stage.dart';
 import 'growth_stage_work_priorities.dart';
@@ -99,6 +102,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   Orders? sameTurnPriorDiplomaticOrders,
   PhasePlanOutcome? phasePlan,
   bool recomputeTradeOrdersWithPendingCosts = false,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
@@ -121,6 +125,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
   );
 
   final economyResult = _runEconomyDomainPlanners(
@@ -335,6 +340,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
 }) {
+  final growthStagePlannerEnabled = ctx.growthStagePlannerEnabled;
   // Refs #3288: accumulate the orchestrator-emitted economy families (work,
   // recruit, build) into a single mutable [OrdersBuilder] and freeze once,
   // replacing the prior chained `Orders.copyWith` appends that allocated an
@@ -427,7 +433,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   }
   // Refs #3371: growth-stage economy scoring coexists with H8 civilian-work
   // feedstock routing until AC9 replaces it with priority-vector scoring.
-  final growthStage = kGrowthStagePlannerEnabled
+  final growthStage = growthStagePlannerEnabled
       ? GrowthStage.compute(ctx.game, ctx.nationId, snapshot: snapshot)
       : null;
   final feedstockExtractionActive =
@@ -493,7 +499,8 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   final growthStagePeasantRecruit =
       growthStage != null && growthStage.workerGrowthPriority > 0.1;
   if (growthStagePeasantRecruit ||
-      expandEconomy.boostCastIronLabourPeasantRecruitment) {
+      (!growthStagePlannerEnabled &&
+          expandEconomy.boostCastIronLabourPeasantRecruitment)) {
     final recruitCandidates = ctx.suggestionAPI.suggestRecruitWorkerOrders(
       ctx.view,
       ctx.game,
@@ -519,7 +526,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
           ).canAfford;
       if (affordable) {
         _log.i(
-          kGrowthStagePlannerEnabled
+          growthStagePeasantRecruit
               ? 'growth-stage peasant recruit nationId=${ctx.nationId} '
                     'workerGrowth=${growthStage!.workerGrowthPriority.toStringAsFixed(2)}'
               : 'castIron labour peasant recruit nationId=${ctx.nationId} '
@@ -528,7 +535,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
         ordersBuilder.appendRecruitWorkerOrders(ctx.nationId, [peasantRecruit]);
       } else {
         _log.d(
-          kGrowthStagePlannerEnabled
+          growthStagePeasantRecruit
               ? 'growth-stage peasant recruit deferred nationId=${ctx.nationId} '
                     'reason=unaffordable'
               : 'castIron labour peasant recruit deferred nationId=${ctx.nationId} '
@@ -583,6 +590,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   required List<BuildUnitOrder> buildCandidates,
   required int domainEconomyWeight,
 }) {
+  final growthStagePlannerEnabled = ctx.growthStagePlannerEnabled;
   // Refs #2509 S5: derive below-quota OW build-pass routing from the
   // dispatched phase plan instead of recomputing
   // `isStalledOldWorldExpansion(ow)` / `isBelowObserverConquestQuota(ow)`
@@ -592,11 +600,11 @@ _BuildPassResult _appendEconomyBuildOrders({
   // slice). The EXPAND regiment-rebuild directive comes from
   // `expandEconomyPlanFromPhasePlan` (already computed once in
   // `runPhasePlanners`).
-  final growthStage = kGrowthStagePlannerEnabled
+  final growthStage = growthStagePlannerEnabled
       ? GrowthStage.compute(ctx.game, ctx.nationId, snapshot: snapshot)
       : null;
-  final suppressMilitaryBuilds = growthStage != null &&
-      growthStage.militaryPriority < kMilitaryBuildSuppressionThreshold;
+  final suppressMilitaryBuilds =
+      growthStage != null && growthStageSuppressesMilitaryBuilds(growthStage);
 
   final expandQuotaPressure = resolvePhaseEconomyExpandQuotaPressureActive(
     phasePlan: phasePlan,
@@ -746,9 +754,31 @@ _BuildPassResult _appendEconomyBuildOrders({
     'buildCandidatesCount=${buildCandidates.length} '
     'regimentCount=$regimentCount forceRegimentRebuild=$forceRegimentRebuild',
   );
-  if (buildCandidates.isEmpty ||
+  var candidatesForGate = buildCandidates;
+  if (growthStagePlannerEnabled) {
+    final stage = GrowthStage.compute(
+      ctx.game,
+      ctx.nationId,
+      snapshot: snapshot,
+    );
+    if (growthStageSuppressesMilitaryBuilds(stage)) {
+      candidatesForGate = buildCandidates
+          .where((order) {
+            final category = buildUnitCategoryForUnitType(order.unitType);
+            return category != BuildUnitCategory.military &&
+                category != BuildUnitCategory.naval;
+          })
+          .toList();
+      _log.d(
+        'growth_stage military build suppressed nationId=${ctx.nationId} '
+        'militaryPriority=${stage.militaryPriority}',
+      );
+    }
+  }
+
+  if (candidatesForGate.isEmpty ||
       (domainEconomyWeight < buildThreshold && !forceRegimentRebuild)) {
-    if (buildCandidates.isNotEmpty) {
+    if (candidatesForGate.isNotEmpty) {
       _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
     }
     return _BuildPassResult(
@@ -756,15 +786,11 @@ _BuildPassResult _appendEconomyBuildOrders({
       buildThreshold: buildThreshold,
     );
   }
-  var candidatesForBuild = suppressMilitaryBuilds
-      ? buildCandidates
-            .where((o) => !RegimentEconomyCatalog.byId.containsKey(o.unitType))
-            .toList()
-      : buildCandidates;
+  var candidatesForBuild = candidatesForGate;
   if (suppressMilitaryBuilds && candidatesForBuild.isEmpty) {
     _log.d(
       'build suppressed nationId=${ctx.nationId} '
-      'militaryPriority=${growthStage.militaryPriority.toStringAsFixed(2)}',
+      'militaryPriority=${growthStage!.militaryPriority.toStringAsFixed(2)}',
     );
     return _BuildPassResult(
       buildPlannerRan: false,

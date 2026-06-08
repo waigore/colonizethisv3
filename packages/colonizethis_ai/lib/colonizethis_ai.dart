@@ -21,6 +21,7 @@ export 'src/planning/growth_stage.dart'
         GrowthStage,
         categoryPriorityForOutput,
         kAtWarMilitaryFloor,
+        growthStageSuppressesMilitaryBuilds,
         kGrowthStagePlannerEnabled,
         kMilitaryBuildSuppressionThreshold,
         kRecruitmentFloor,

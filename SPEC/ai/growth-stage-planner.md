@@ -96,8 +96,10 @@ When `militaryPriority < kMilitaryBuildSuppressionThreshold`, `runRecruitmentPla
 - `economy_planner.dart` — `_allocateLabour`, optional `growthStagePlannerEnabled` parameter.
 - `recruitment_planner.dart` — build suppression, peasant scale helper.
 - `recipe_scoring.dart` — `stageScaledRecipeScore`.
+- `strategic_ai.dart` / `full_ai_planner.dart` — thread `growthStagePlannerEnabled` into economy and domain planners for end-to-end simulation (AC7).
+- `domain_planner_orchestrator.dart` — growth-stage military build suppression in `_appendEconomyBuildOrders`; H8 castIron-labour peasant recruit skipped when the flag is on.
 - `growth_stage_work_priorities.dart` — reorders civilian work candidates to prefer feedstock `build_improvement` during bootstrap / infrastructure stages when the flag is on. Full `selectFullAiCivilianWorkOrders` scoring integration remains follow-up for AC7 calibration.
 
 ## Acceptance criteria (issue #3371)
 
-AC1–AC6, AC10–AC12: unit tests in `growth_stage_planner_test.dart`. AC7 seed-42 regression and AC9 H8 removal: follow-up after calibration with flag default on.
+AC1–AC6, AC10–AC12: unit tests in `growth_stage_planner_test.dart`. AC7: `seed42_growth_stage_conquest_regression_test.dart` (skipped until calibration). AC9 H8 removal: follow-up after AC7 passes with flag default on.
