@@ -18,6 +18,7 @@ dependencies:
   hive: ^2.2.3
   colonizethis_ai: any
   colonizethis_logic: any
+  colonizethis_setup: any
   colonizethis_models: any
   colonizethis_data: any
   colonizethis_map: any
