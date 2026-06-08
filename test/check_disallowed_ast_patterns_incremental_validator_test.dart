@@ -9,7 +9,9 @@ rules:
     message: no per-loop validator
     match:
       kind: incremental_validator_for_player_in_loop
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
+      relative_path_prefixes:
+        - packages/colonizethis_logic/lib/src/
+        - packages/colonizethis_orders/lib/src/
 ''';
 
 void main() {
