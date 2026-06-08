@@ -7,6 +7,7 @@ import 'cast_iron_labour_gate.dart'
         isCastIronLabourPeasantRecruitFabricShort,
         isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'expand_phase_planner.dart' hide cheapestRegimentBuildTreasuryCost;
+import 'growth_stage.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
@@ -64,6 +65,7 @@ EconomyPlan runEconomyPlanner({
   Map<String, TileMapResult>? tileMapByRegion,
   MapTopology? topology,
   bool skipTradeOrderGeneration = false,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
@@ -278,6 +280,14 @@ EconomyPlan runEconomyPlanner({
     ...supplierReleaseImprovementInputs,
   };
 
+  final growthStage = growthStagePlannerEnabled
+      ? GrowthStage.compute(
+          game,
+          view.playerId,
+          snapshot: snapshot,
+        )
+      : null;
+
   final assignments = _allocateLabour(
     stockpile: stockpile,
     workers: workers,
@@ -285,12 +295,22 @@ EconomyPlan runEconomyPlanner({
     config: config,
     seeds: seeds,
     militaryRebuildCrisis: militaryRebuildCrisis,
-    regimentBuildInputProductionBoost: regimentBuildInputProductionBoost,
-    missingRegimentBuildInputIds: boostedBuildInputOutputs,
-    supplierReleaseImprovementInputIds: supplierReleaseImprovementInputs,
-    feedstockReserveOutputIds: feedstockReserveOutputIds,
-    castIronLabourPeasantRecruitFabricBoost:
-        castIronLabourPeasantRecruitFabricBoost,
+    regimentBuildInputProductionBoost: growthStagePlannerEnabled
+        ? false
+        : regimentBuildInputProductionBoost,
+    missingRegimentBuildInputIds: growthStagePlannerEnabled
+        ? const <String>{}
+        : boostedBuildInputOutputs,
+    supplierReleaseImprovementInputIds: growthStagePlannerEnabled
+        ? const <String>{}
+        : supplierReleaseImprovementInputs,
+    feedstockReserveOutputIds: growthStagePlannerEnabled
+        ? const <String>{}
+        : feedstockReserveOutputIds,
+    castIronLabourPeasantRecruitFabricBoost: growthStagePlannerEnabled
+        ? false
+        : castIronLabourPeasantRecruitFabricBoost,
+    growthStage: growthStage,
   );
 
   final cargoPref = _cargoPreference(
@@ -397,6 +417,7 @@ List<AssignedRecipe> _allocateLabour({
   Set<String> supplierReleaseImprovementInputIds = const {},
   Set<String> feedstockReserveOutputIds = const {},
   bool castIronLabourPeasantRecruitFabricBoost = false,
+  GrowthStage? growthStage,
 }) {
   // Labour allocation scores every feasible recipe to pick the best runs, so
   // this is an intrinsic full-catalog pass, not an output-keyed lookup that the
@@ -453,22 +474,37 @@ List<AssignedRecipe> _allocateLabour({
     );
     if (runs <= 0) continue;
 
-    var score = scoreRecipe(
-      recipe: recipe,
-      stockpile: virtual,
-      workers: workers,
-      agendaId: agendaId,
-    );
-    if (militaryRebuildCrisis && _isMilitaryInputRecipe(recipe)) {
-      score += 40;
-    }
-    if (regimentBuildInputProductionBoost &&
-        missingRegimentBuildInputIds.contains(recipe.outputCommodityId)) {
-      score += kRegimentBuildInputProductionScoreBoost;
-    }
-    if (supplierReleaseImprovementInputIds.contains(recipe.outputCommodityId)) {
-      score += kSupplierBuildInputReleaseProductionScoreBoost;
-    }
+    final score = growthStage != null
+        ? stageScaledRecipeScore(
+            recipe: recipe,
+            stockpile: virtual,
+            workers: workers,
+            agendaId: agendaId,
+            stage: growthStage,
+          )
+        : () {
+            var legacy = scoreRecipe(
+              recipe: recipe,
+              stockpile: virtual,
+              workers: workers,
+              agendaId: agendaId,
+            );
+            if (militaryRebuildCrisis && _isMilitaryInputRecipe(recipe)) {
+              legacy += 40;
+            }
+            if (regimentBuildInputProductionBoost &&
+                missingRegimentBuildInputIds.contains(
+                  recipe.outputCommodityId,
+                )) {
+              legacy += kRegimentBuildInputProductionScoreBoost;
+            }
+            if (supplierReleaseImprovementInputIds.contains(
+              recipe.outputCommodityId,
+            )) {
+              legacy += kSupplierBuildInputReleaseProductionScoreBoost;
+            }
+            return legacy;
+          }();
     candidates.add(ScoredRecipe(recipe: recipe, score: score));
   }
 
