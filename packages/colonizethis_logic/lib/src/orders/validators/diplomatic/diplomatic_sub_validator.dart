@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../../diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 import '../../order_validation_result.dart';
 
 /// Per-`DiplomaticOrderType` validator extracted from

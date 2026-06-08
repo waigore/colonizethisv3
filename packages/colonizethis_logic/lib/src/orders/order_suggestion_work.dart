@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../ai/full_ai_civilian_work_selection.dart'
     show feedstockExtractionResourceIdsForPlayer;
 import '../constants.dart';
-import '../diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';

@@ -1,10 +1,10 @@
 // SPEC/game/tile-map-and-generation.md § Great Power starting grain (bootstrap).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/world_constants.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 import 'town_capital_occupancy.dart';
@@ -70,7 +70,7 @@ applyGreatPowerStartingGrainBootstrap({
   final terrain = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
   if (terrain == null || resGrid == null) {
-    logicLog.i(
+    setupLog.i(
       'skip Great Power grain bootstrap (missing terrain or resource grid)',
     );
     return (

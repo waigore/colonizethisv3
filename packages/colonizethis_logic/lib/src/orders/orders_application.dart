@@ -4,8 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../dossier/event_dialogue.dart';
-import '../dossier/evidence_rules.dart';
+import 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
+import 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';

@@ -2,10 +2,10 @@
 // SPEC/program/game-setup-pipeline.md § 7d.dev.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/world_constants.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
@@ -108,7 +108,7 @@ MinorTribeStartingDevelopmentResult applyMinorTribeStartingDevelopment({
   }
   final result = <String, List<String>>{};
   if (maxTilesPerCapital == 0) {
-    logicLog.i('skip minor/tribe starting development (count=0)');
+    setupLog.i('skip minor/tribe starting development (count=0)');
     return MinorTribeStartingDevelopmentResult(
       game: game,
       developedTileKeysByFactionId: result,
@@ -133,7 +133,7 @@ MinorTribeStartingDevelopmentResult applyMinorTribeStartingDevelopment({
     final capital = faction.capital;
     if (capital == null) continue;
     if (capital.regionId != faction.expectedRegion) {
-      logicLog.w(
+      setupLog.w(
         'logic:setup minor/tribe ${faction.id} capital region '
         '"${capital.regionId}" != expected "${faction.expectedRegion}"; skipping development',
       );
@@ -149,7 +149,7 @@ MinorTribeStartingDevelopmentResult applyMinorTribeStartingDevelopment({
       maxTiles: maxTilesPerCapital,
     );
     if (picked.isEmpty) {
-      logicLog.d(
+      setupLog.d(
         'logic:setup minor/tribe ${faction.id} no eligible developed tiles in '
         'capital province ${capital.provinceId}',
       );
@@ -164,7 +164,7 @@ MinorTribeStartingDevelopmentResult applyMinorTribeStartingDevelopment({
     totalDeveloped += picked.length;
   }
 
-  logicLog.i(
+  setupLog.i(
     'logic:setup minor/tribe starting development applied '
     'factions=${result.length} tiles=$totalDeveloped maxPerCapital=$maxTilesPerCapital',
   );

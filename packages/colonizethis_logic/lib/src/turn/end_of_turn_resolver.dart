@@ -7,7 +7,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../dossier/event_dialogue.dart';
+import 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
 import 'package:colonizethis_world/src/world/fog_resolution.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';

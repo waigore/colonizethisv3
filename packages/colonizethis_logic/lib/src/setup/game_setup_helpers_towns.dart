@@ -4,7 +4,7 @@ import 'dart:collection';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/world_constants.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 import 'game_setup_context.dart';

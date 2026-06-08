@@ -18,7 +18,7 @@ export 'src/orders/diplomatic_panel_actions.dart'
         diplomaticPanelActionCandidates,
         enumerateDiplomaticPanelActionsForTarget,
         kDiplomaticPanelOvertureStages;
-export 'src/diplomacy/known_diplomatic_targets.dart'
+export 'package:colonizethis_diplomacy/src/diplomacy/known_diplomatic_targets.dart'
     show knownDiplomaticTargetFactionIds;
-export 'src/diplomacy/gp_tribe_first_contact.dart'
+export 'package:colonizethis_diplomacy/src/diplomacy/gp_tribe_first_contact.dart'
     show GpTribeFirstContactResult, applyGpTribeFirstContactRelations;

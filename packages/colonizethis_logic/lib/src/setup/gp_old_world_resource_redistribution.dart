@@ -3,10 +3,10 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/world_constants.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
@@ -65,7 +65,7 @@ applyGreatPowerOldWorldResourceRedistribution({
   final terrain = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
   if (terrain == null || resGrid == null) {
-    logicLog.i(
+    setupLog.i(
       'skip GP Old World resource redistribution (missing terrain or resource grid)',
     );
     return (game: game, tileMap: tileMapOldWorld, fairnessScore: 0);
@@ -140,7 +140,7 @@ applyGreatPowerOldWorldResourceRedistribution({
     resourceSet: resourceSet,
   );
 
-  logicLog.i(
+  setupLog.i(
     'GP Old World resource redistribution complete fairnessMaxAbsDev=$fairness',
   );
 

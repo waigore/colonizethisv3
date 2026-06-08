@@ -3,12 +3,6 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_relation_lookup.dart
-    line: 33
-    rationale: Diplomatic relation scoring inspects province ownership globally.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
     line: 68
     rationale: Work tile prefilter collects owned province ids via all provinces when
@@ -55,11 +49,5 @@ sanctions:
   - path: packages/colonizethis_logic/lib/src/setup/initial_visibility.dart
     line: 96
     rationale: Initial visibility setup walks all province rows.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/diplomacy/faction_absorption_engine.dart
-    line: 51
-    rationale: Faction absorption scans province state via WorldState.allProvinces().
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278

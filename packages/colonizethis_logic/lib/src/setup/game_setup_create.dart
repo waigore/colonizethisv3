@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
-import '../diplomacy/diplomacy_relation_lookup.dart';
+import 'package:colonizethis_world/src/world_constants.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart';
 import 'package:colonizethis_world/src/world/army_migration.dart';
 import 'capital_choice.dart';
 import 'game_setup_context.dart';

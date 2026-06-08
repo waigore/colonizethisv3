@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_economy/src/economy/economy_riches_to_treasury.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';

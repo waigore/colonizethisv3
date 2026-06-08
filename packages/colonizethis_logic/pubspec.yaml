@@ -14,6 +14,7 @@ dependencies:
   colonizethis_logger:
   colonizethis_combat:
   colonizethis_economy:
+  colonizethis_diplomacy:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:

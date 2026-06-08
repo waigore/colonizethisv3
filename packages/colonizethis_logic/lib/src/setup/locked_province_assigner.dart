@@ -2,7 +2,7 @@
 
 import 'dart:math';
 
-import 'package:colonizethis_logic/src/logging.dart' show logicLog;
+import 'setup_logging.dart' show setupLog;
 
 part 'locked_province_assigner_graph.dart';
 part 'locked_province_assigner_engine.dart';

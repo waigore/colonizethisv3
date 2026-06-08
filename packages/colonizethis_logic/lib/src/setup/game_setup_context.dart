@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/src/logging.dart';
+import 'setup_logging.dart';
 
-/// Same runtime prefix as [logicLog]; kept for readable call sites in setup.
-final gameSetupLog = logicLog;
+/// Alias of the setup-domain [setupLog]; kept for readable call sites in setup.
+final gameSetupLog = setupLog;

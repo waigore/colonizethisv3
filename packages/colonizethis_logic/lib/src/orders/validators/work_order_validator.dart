@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 import 'package:colonizethis_economy/src/economy/projected_cost_engine.dart';
-import '../../diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
