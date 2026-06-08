@@ -15,7 +15,7 @@ export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart'
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile;
-export 'src/ai/full_ai_civilian_work_feedstock_bootstrap.dart'
+export 'src/orders/feedstock_bootstrap_cost.dart'
     show
         feedstockBootstrapBuildImprovementCastIronWaived,
         feedstockBootstrapBuildImprovementEffectiveCost,
