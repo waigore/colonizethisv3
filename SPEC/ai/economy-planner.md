@@ -8,6 +8,8 @@
 
 The economy planner chooses **production assignments** (which recipes receive how much labour) and a **cargo preference** (whether to favour more cargo capacity this turn). It runs once per AI-controlled Great Power per turn, before or as part of domain planning. Output feeds turn resolution (production phase) and optionally the naval planner (join home fleet vs missions).
 
+**Growth-stage prioritization (Refs #3371):** When `growthStagePlannerEnabled` is true, recipe ranking uses the dampen-and-bias model in [growth-stage-planner.md](growth-stage-planner.md) and the H8 reactive boost sections below are disabled. When false (default), legacy H8 behaviour applies unchanged.
+
 ---
 
 ## Inputs

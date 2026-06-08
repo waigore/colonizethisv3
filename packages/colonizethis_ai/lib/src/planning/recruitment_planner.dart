@@ -4,6 +4,8 @@
 
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
+import '../perception/perception_snapshot.dart';
+import 'growth_stage.dart';
 import 'observer_goal_phase.dart';
 import 'planning_imports.dart';
 
@@ -49,6 +51,11 @@ const String kRecruitmentRejectInsufficientWorkers = 'Insufficient workers';
 /// above the (deficit-aware) soft luxury cap defined in
 /// `SPEC/game/workers-and-population.md` Requirement #10.
 const String kRecruitmentRejectSoftLuxuryCap = 'Soft luxury cap exceeded';
+
+/// Stable rejection reason: growth-stage military priority is below the build
+/// suppression threshold (Refs #3371).
+const String kRecruitmentRejectMilitaryBuildSuppressed =
+    'Military build suppressed';
 
 /// One dropped candidate from [runRecruitmentPlanner]. Refs #2692 S8.
 class RejectedRecruitmentSuggestion {
@@ -110,9 +117,11 @@ RecruitmentPlan runRecruitmentPlanner({
   required AIConfig config,
   required AISeedBundle seeds,
   required ObserverGoalPhase goalPhase,
-  required OrderSuggestionAPI suggestionApi,
+  required   OrderSuggestionAPI suggestionApi,
   MapTopology? topology,
   EconomyPlan? economyPlanHint,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  AIWorldSnapshot? snapshot,
 }) {
   final playerId = view.playerId;
   final player = game.playerById(playerId);
@@ -122,6 +131,12 @@ RecruitmentPlan runRecruitmentPlanner({
   }
 
   final mapTopology = topology ?? const MapTopology(nodes: [], edges: []);
+
+  final growthStage = growthStagePlannerEnabled
+      ? GrowthStage.compute(game, playerId, snapshot: snapshot)
+      : null;
+  final suppressMilitaryBuilds = growthStage != null &&
+      growthStage.militaryPriority < kMilitaryBuildSuppressionThreshold;
 
   final recruitCandidates = suggestionApi.suggestRecruitWorkerOrders(
     view,
@@ -181,6 +196,15 @@ RecruitmentPlan runRecruitmentPlanner({
 
   void processBuilds() {
     for (final candidate in buildCandidates) {
+      if (suppressMilitaryBuilds && _buildConsumesPeasant(candidate)) {
+        rejected.add(
+          RejectedRecruitmentSuggestion(
+            reason: kRecruitmentRejectMilitaryBuildSuppressed,
+            targetTier: candidate.unitType,
+          ),
+        );
+        continue;
+      }
       final outcome = _evaluateBuildCandidate(candidate, state);
       switch (outcome) {
         case _CandidateOutcome.accepted:
