@@ -142,6 +142,7 @@ rules:
         - packages/colonizethis_logic/lib/src/
         - packages/colonizethis_orders/lib/src/
         - packages/colonizethis_turn/lib/src/
+        - packages/colonizethis_ai_contracts/lib/src/
   - id: prohibited_linear_units_armies_fleets_lookup
     message: >-
       Do not perform linear scans on `.units`, `.armies`, or `.fleets` via
@@ -161,6 +162,7 @@ rules:
         - packages/colonizethis_logic/lib/src/
         - packages/colonizethis_orders/lib/src/
         - packages/colonizethis_turn/lib/src/
+        - packages/colonizethis_ai_contracts/lib/src/
   - id: prohibited_incremental_validator_per_item
     message: >-
       Do not call `IncrementalCandidateValidator.forPlayer` or
@@ -175,6 +177,7 @@ rules:
         - packages/colonizethis_logic/lib/src/
         - packages/colonizethis_orders/lib/src/
         - packages/colonizethis_turn/lib/src/
+        - packages/colonizethis_ai_contracts/lib/src/
   - id: redundant_where_to_list_where_chain
     message: >-
       Do not chain `.where(...).toList().where(...)`; the intermediate

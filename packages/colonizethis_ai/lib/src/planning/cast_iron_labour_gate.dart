@@ -6,10 +6,7 @@
 // is below one run because the raw population ceiling itself is too small
 // (all workers fed — not a food-starvation case).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
+import 'planning_imports.dart';
 import 'recipe_scoring.dart' show feasibleRuns;
 
 const String kCastIronCommodityId = 'castIron';

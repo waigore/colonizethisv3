@@ -13,6 +13,7 @@ dependencies:
   colonizethis_logger:
   colonizethis_data:
   colonizethis_logic:
+  colonizethis_ai_contracts:
   colonizethis_models:
 
 dev_dependencies:

@@ -23,6 +23,7 @@ workspace:
   - packages/colonizethis_orders
   - packages/colonizethis_turn
   - packages/colonizethis_ai
+  - packages/colonizethis_ai_contracts
   - packages/colonizethis_debug_console
   - packages/colonizethis_map
   - packages/colonizethis_test
