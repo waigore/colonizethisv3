@@ -14,11 +14,11 @@
 
 ## Canonical providers
 
-| Provider | Package | Default |
-|----------|---------|---------|
-| `orderSuggestionApiProvider` | `colonizethis_logic` | `DefaultOrderSuggestionAPI` |
-| `gameEventBusProvider` | `colonizethis_logic` | `DefaultGameEventBus` |
-| `tileMapRegionGeneratorProvider` | `colonizethis_map` | `defaultTileMapRegionGenerator` |
+| Provider | Declared in | Default | Default impl source |
+|----------|-------------|---------|---------------------|
+| `orderSuggestionApiProvider` | `colonizethis_logic` | `DefaultOrderSuggestionAPI` | `colonizethis_orders` |
+| `gameEventBusProvider` | `colonizethis_logic` | `DefaultGameEventBus` | `colonizethis_world` (event bus) |
+| `tileMapRegionGeneratorProvider` | `colonizethis_map` | `defaultTileMapRegionGenerator` | `colonizethis_map` |
 
 Import DI from secondary libraries (avoid pulling Riverpod into consumers that do not need it):
 
@@ -27,6 +27,17 @@ Import DI from secondary libraries (avoid pulling Riverpod into consumers that d
 - `package:colonizethis_ai/di.dart` (re-exports logic providers used by AI tests)
 
 The main package barrels (`colonizethis_logic.dart`, `colonizethis_map.dart`) do **not** export these providers.
+
+---
+
+## Post-split provider aggregation (Refs #3290)
+
+After the `colonizethis_logic` domain split, `colonizethis_logic` is a thin core whose `src/di/logic_providers.dart` acts as the **cross-package provider aggregator**: the provider declarations stay in `colonizethis_logic`, but their concrete defaults are imported from the split domain packages.
+
+- `orderSuggestionApiProvider` → `DefaultOrderSuggestionAPI` from `colonizethis_orders`.
+- `gameEventBusProvider` → `DefaultGameEventBus` from `colonizethis_world` (the `event_bus/` domain is folded into `colonizethis_world`; there is no standalone `colonizethis_event_bus` package).
+
+Consumer import paths are unchanged by the split (F6): `app/`, `colonizethis_ai`, and tooling continue to read these providers via `package:colonizethis_logic/di.dart`. The thin core remains the single aggregation point, so providers spanning the split packages are **not** distributed into the individual domain packages.
 
 ---
 
