@@ -8,6 +8,7 @@
 import 'dart:io';
 
 import 'package:colonizethis_logic/src/setup/game_setup_context.dart';
+import 'package:colonizethis_logic/src/setup/setup_constants.dart';
 import 'package:colonizethis_logic/src/setup/setup_logging.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart' show Level, LogEvent, Logger;
@@ -25,6 +26,10 @@ void main() {
 
     test('gameSetupLog is an alias of the shared setupLog', () {
       expect(identical(gameSetupLog, setupLog), isTrue);
+    });
+
+    test('kDefaultSeaFraction is defined in setup_constants', () {
+      expect(kDefaultSeaFraction, equals(0.6));
     });
 
     test('setupLog emits messages with the `setup:` prefix', () {
@@ -72,6 +77,27 @@ void main() {
         reason:
             'setup/ must use setupLog (setup_logging.dart), not the core '
             'logicLog: $offenders',
+      );
+    });
+
+    test('no lib/src/setup source imports the core constants barrel', () {
+      final setupDir = Directory('lib/src/setup');
+      final offenders = <String>[];
+      for (final entity in setupDir.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        if (entity.path.endsWith('setup_constants.dart')) continue;
+        final content = entity.readAsStringSync();
+        if (content.contains('../constants.dart') ||
+            content.contains("colonizethis_logic/src/constants.dart")) {
+          offenders.add(entity.path);
+        }
+      }
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'setup/ must use setup_constants.dart and colonizethis_world '
+            'world_constants, not the core constants barrel: $offenders',
       );
     });
   });
