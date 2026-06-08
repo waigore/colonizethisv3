@@ -1,5 +1,4 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
@@ -10,6 +9,7 @@ import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import '../constants.dart';
 import 'order_resolution_context.dart';
 import 'order_validation_result.dart';
+import 'orders_logging.dart';
 export 'order_validation_result.dart';
 import 'package:colonizethis_economy/src/economy/world_market/trade_order_validator.dart';
 import 'unit_type_helpers.dart';
@@ -126,7 +126,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
     _appendOrder(playerId, order, getter, updater);
-    logicLog.d('validating orders with context player=$playerId');
+    ordersLog.d('validating orders with context player=$playerId');
     final results = validatePlayerOrdersWithContext(
       game,
       topology,
@@ -142,7 +142,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       // cascade rejections ("Previous invalid"), while preserving first-cause
       // rejection logging for debugging. Refs #2237 AC3.
       if (r.reason != previousInvalidOrderResult.reason) {
-        logicLog.w(
+        ordersLog.w(
           '$orderLabel order rejected player=$playerId reason=${r.reason}',
         );
       }
@@ -312,7 +312,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
   }) {
     final tileMaps = tileMapByRegion ?? <String, TileMapResult>{};
     if (tileMaps.isEmpty) {
-      logicLog.d(
+      ordersLog.d(
         'projectedEffects called with no tileMapByRegion; expected extraction will be zero',
       );
     }

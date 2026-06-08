@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import '../orders_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
@@ -164,7 +164,7 @@ bool applyStandardWorkOrder({
 
   deductMaterialCost(cost);
   final totalTurns = config.totalTurnsFn();
-  logicLog.d(
+  ordersLog.d(
     'work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns',
   );
   updateUnit(
@@ -191,13 +191,13 @@ bool shouldSkipBuildFortForMissingTech({
 }) {
   final fortLevel = province?.fortLevel ?? 0;
   if (fortLevel == 1 && techUnlocked?[kTechIdMineEngineering] != true) {
-    logicLog.d(
+    ordersLog.d(
       'build_fort skipped - Mine Engineering required for fort level 2',
     );
     return true;
   }
   if (fortLevel == 2 && techUnlocked?[kTechIdModernForts] != true) {
-    logicLog.d('build_fort skipped - Modern Forts required for fort level 3');
+    ordersLog.d('build_fort skipped - Modern Forts required for fort level 3');
     return true;
   }
   return false;
@@ -214,7 +214,7 @@ bool shouldSkipBuildRailForInvalidTerrainOrTech({
     terrain: terrain,
   );
   if (railReason == null) return false;
-  logicLog.d('build_rail skipped - $railReason');
+  ordersLog.d('build_rail skipped - $railReason');
   return true;
 }
 

@@ -1,15 +1,15 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
+import 'orders_logging.dart';
 
 export 'package:colonizethis_diplomacy/src/diplomacy/overture_stage_helpers.dart';
 
-final orderSuggestionLog = packageLogger('order_suggestion');
+final orderSuggestionLog = CtLogger('orders.order_suggestion');
 
 bool _orderSuggestionTrackWorkOrderAcceptanceProbes = false;
 int _orderSuggestionWorkOrderAcceptanceProbeCount = 0;
