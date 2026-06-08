@@ -98,9 +98,24 @@ void main() {
       expect(second.game.diplomacyRelations.length, 1);
     });
 
-    test('negative: undiscovered tribe gets no relation', () {
+    test('negative: game with no tribes returns empty result', () {
       final game = _gameWithoutGpTribeRelation();
       final view = buildPlayerView(game, _topology, 'gp1');
+      final noTribes = game.copyWith(tribes: const []);
+
+      final result = applyGpTribeFirstContactRelations(
+        game: noTribes,
+        gpId: 'gp1',
+        view: view,
+        topology: _topology,
+      );
+
+      expect(result.newlyContactedTribeIds, isEmpty);
+      expect(identical(result.game, noTribes), isTrue);
+    });
+
+    test('negative: undiscovered tribe gets no relation', () {
+      final game = _gameWithoutGpTribeRelation();
 
       final hiddenGame = game.copyWith(
         worldState: game.worldState.copyWith(
