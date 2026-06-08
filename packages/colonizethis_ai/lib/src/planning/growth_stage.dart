@@ -4,7 +4,7 @@ import '../perception/perception_snapshot.dart';
 import 'planning_imports.dart';
 
 /// When true, growth-stage scoring replaces H8 reactive boosts in the economy
-/// planner. Default off until AC7 calibration (Refs #3371).
+/// planner. Default off until AC7 seed-42 calibration passes (Refs #3371).
 const bool kGrowthStagePlannerEnabled = false;
 
 /// Effective labour at which worker growth priority reaches ~0.

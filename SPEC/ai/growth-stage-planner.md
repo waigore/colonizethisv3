@@ -96,7 +96,7 @@ When `militaryPriority < kMilitaryBuildSuppressionThreshold`, `runRecruitmentPla
 - `economy_planner.dart` — `_allocateLabour`, optional `growthStagePlannerEnabled` parameter.
 - `recruitment_planner.dart` — build suppression, peasant scale helper.
 - `recipe_scoring.dart` — `stageScaledRecipeScore`.
-- Civilian work priority modulation: follow-up slice (not in initial flag-off default path).
+- `growth_stage_work_priorities.dart` — reorders civilian work candidates to prefer feedstock `build_improvement` during bootstrap / infrastructure stages when the flag is on. Full `selectFullAiCivilianWorkOrders` scoring integration remains follow-up for AC7 calibration.
 
 ## Acceptance criteria (issue #3371)
 

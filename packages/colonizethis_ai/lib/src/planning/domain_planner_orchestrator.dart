@@ -18,6 +18,8 @@ import '../util/orders_builder.dart';
 import '../util/orders_extensions.dart';
 import 'build_planner.dart';
 import 'conquest_planner.dart';
+import 'growth_stage.dart';
+import 'growth_stage_work_priorities.dart';
 import 'diplomacy_planner.dart';
 import 'domain_planner_outcome.dart';
 import 'move_planner.dart';
@@ -423,12 +425,11 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       );
     }
   }
-  // Refs #2847 H8-extraction: force the Full-AI civilian work pass on for a
-  // locked seller routing its own fabric feedstock, AND for an affluent
-  // supplier routing its `timber` / `iron` so it can over-produce the
-  // `castIron` improvement input a peer locked seller needs (supplier feedstock
-  // extraction). Both gates only read whether their feedstock set is non-empty;
-  // no duplicate regiment-count logic and no new config constant.
+  // Refs #3371: growth-stage economy scoring coexists with H8 civilian-work
+  // feedstock routing until AC9 replaces it with priority-vector scoring.
+  final growthStage = kGrowthStagePlannerEnabled
+      ? GrowthStage.compute(ctx.game, ctx.nationId, snapshot: snapshot)
+      : null;
   final feedstockExtractionActive =
       regimentBuildInputFeedstockExtractionResourceIds(
         ctx.game,
@@ -438,21 +439,31 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
         ctx.game,
         ctx.nationId,
       ).isNotEmpty;
+  final growthStageCivilianWork = growthStage != null;
   final runFullAiCivilianWork =
       developPhase ||
       ctx.primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
       colonialPressure ||
       snapshot.colonial.newWorldProvincesOwned > 0 ||
-      feedstockExtractionActive;
+      feedstockExtractionActive ||
+      growthStageCivilianWork;
   _log.d(
     'work eval nationId=${ctx.nationId} workThreshold=$workThreshold '
     'domainWeights.economy=${domainWeights.economy} primaryGoal=${ctx.primaryGoal} '
     'workCandidatesCount=${workCandidates.length}',
   );
   if (runFullAiCivilianWork) {
+    final prioritizedWorkCandidates = growthStage != null
+        ? prioritizeWorkOrdersForGrowthStage(
+            workCandidates: workCandidates,
+            game: ctx.game,
+            playerId: ctx.nationId,
+            stage: growthStage,
+          )
+        : workCandidates;
     final selection = selectFullAiCivilianWorkOrders(
-      workSuggestions: workCandidates,
+      workSuggestions: prioritizedWorkCandidates,
       view: ctx.view,
       game: ctx.game,
       tileMapByRegion: tileMapByRegion,
@@ -479,7 +490,10 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   emit('aiStageA');
 
   final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
-  if (expandEconomy.boostCastIronLabourPeasantRecruitment) {
+  final growthStagePeasantRecruit =
+      growthStage != null && growthStage.workerGrowthPriority > 0.1;
+  if (growthStagePeasantRecruit ||
+      expandEconomy.boostCastIronLabourPeasantRecruitment) {
     final recruitCandidates = ctx.suggestionAPI.suggestRecruitWorkerOrders(
       ctx.view,
       ctx.game,
@@ -505,14 +519,20 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
           ).canAfford;
       if (affordable) {
         _log.i(
-          'castIron labour peasant recruit nationId=${ctx.nationId} '
-          'targetTier=${peasantRecruit.targetTier.name}',
+          kGrowthStagePlannerEnabled
+              ? 'growth-stage peasant recruit nationId=${ctx.nationId} '
+                    'workerGrowth=${growthStage!.workerGrowthPriority.toStringAsFixed(2)}'
+              : 'castIron labour peasant recruit nationId=${ctx.nationId} '
+                    'targetTier=${peasantRecruit.targetTier.name}',
         );
         ordersBuilder.appendRecruitWorkerOrders(ctx.nationId, [peasantRecruit]);
       } else {
         _log.d(
-          'castIron labour peasant recruit deferred nationId=${ctx.nationId} '
-          'reason=fabric_short',
+          kGrowthStagePlannerEnabled
+              ? 'growth-stage peasant recruit deferred nationId=${ctx.nationId} '
+                    'reason=unaffordable'
+              : 'castIron labour peasant recruit deferred nationId=${ctx.nationId} '
+                    'reason=fabric_short',
         );
       }
     }
@@ -572,6 +592,12 @@ _BuildPassResult _appendEconomyBuildOrders({
   // slice). The EXPAND regiment-rebuild directive comes from
   // `expandEconomyPlanFromPhasePlan` (already computed once in
   // `runPhasePlanners`).
+  final growthStage = kGrowthStagePlannerEnabled
+      ? GrowthStage.compute(ctx.game, ctx.nationId, snapshot: snapshot)
+      : null;
+  final suppressMilitaryBuilds = growthStage != null &&
+      growthStage.militaryPriority < kMilitaryBuildSuppressionThreshold;
+
   final expandQuotaPressure = resolvePhaseEconomyExpandQuotaPressureActive(
     phasePlan: phasePlan,
   );
@@ -699,7 +725,8 @@ _BuildPassResult _appendEconomyBuildOrders({
   if (belowQuotaZeroRegimentsRebuild) {
     minRegimentFloor = 1;
   }
-  final forceRegimentRebuild =
+  var forceRegimentRebuild =
+      !suppressMilitaryBuilds &&
       (expandQuotaPressure || criticallyWeakBelowQuota) &&
       (snapshot.threats.atWarWith.isNotEmpty ||
           needRegimentsToExpand ||
@@ -708,9 +735,10 @@ _BuildPassResult _appendEconomyBuildOrders({
           belowQuotaZeroRegimentsRebuild ||
           expandEconomy.forceCheapestRegimentBuild) &&
       regimentCount < minRegimentFloor;
-  if (forceRegimentRebuild ||
-      atWarWithGpBlocker ||
-      expandEconomy.forceCheapestRegimentBuild) {
+  if (!suppressMilitaryBuilds &&
+      (forceRegimentRebuild ||
+          atWarWithGpBlocker ||
+          expandEconomy.forceCheapestRegimentBuild)) {
     buildThreshold = 0;
   }
   _log.d(
@@ -728,7 +756,21 @@ _BuildPassResult _appendEconomyBuildOrders({
       buildThreshold: buildThreshold,
     );
   }
-  var candidatesForBuild = buildCandidates;
+  var candidatesForBuild = suppressMilitaryBuilds
+      ? buildCandidates
+            .where((o) => !RegimentEconomyCatalog.byId.containsKey(o.unitType))
+            .toList()
+      : buildCandidates;
+  if (suppressMilitaryBuilds && candidatesForBuild.isEmpty) {
+    _log.d(
+      'build suppressed nationId=${ctx.nationId} '
+      'militaryPriority=${growthStage.militaryPriority.toStringAsFixed(2)}',
+    );
+    return _BuildPassResult(
+      buildPlannerRan: false,
+      buildThreshold: buildThreshold,
+    );
+  }
   if (forceRegimentRebuild && !firstNavalTransportBootstrap) {
     final regimentsOnly = buildCandidates
         .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))

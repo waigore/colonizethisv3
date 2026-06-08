@@ -1,6 +1,7 @@
 // Growth-stage planner (Refs #3371). SPEC/ai/growth-stage-planner.md.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/growth_stage_work_priorities.dart';
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/perception/summary_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -391,6 +392,60 @@ void main() {
         plan.rejected.first.reason,
         kRecruitmentRejectMilitaryBuildSuppressed,
       );
+    });
+  });
+
+  group('prioritizeWorkOrdersForGrowthStage — bootstrap feedstock', () {
+    test('wool build_improvement sorts before build_port', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g-3371-work',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {
+            '$ow|p0|1|0': 'wool',
+            '$ow|p0|2|0': 'timber',
+          },
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: false,
+            capitalProvinceId: '$ow|p0',
+            stockpile: const Stockpile(),
+            workerPool: const WorkerPool(peasants: 4),
+          ),
+        ],
+      );
+      final stage = GrowthStage.compute(game, 'gp1');
+      const candidates = [
+        WorkOrder(
+          unitId: 'u1',
+          target: kWorkTargetBuildPort,
+          targetTileKey: '$ow|p0|2|0',
+        ),
+        WorkOrder(
+          unitId: 'u1',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: '$ow|p0|1|0',
+        ),
+      ];
+      final ordered = prioritizeWorkOrdersForGrowthStage(
+        workCandidates: candidates,
+        game: game,
+        playerId: 'gp1',
+        stage: stage,
+        growthStagePlannerEnabled: true,
+      );
+      expect(ordered.first.target, kWorkTargetBuildImprovement);
+      expect(ordered.first.targetTileKey, '$ow|p0|1|0');
     });
   });
 
