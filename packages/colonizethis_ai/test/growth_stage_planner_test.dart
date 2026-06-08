@@ -4,6 +4,8 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_builder_relocation.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_work_priorities.dart';
 import 'package:colonizethis_ai/src/planning/domain_planner_orchestrator.dart';
+import 'package:colonizethis_ai/src/planning/move_planner.dart';
+import 'package:colonizethis_ai/src/planning/planner_context.dart';
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/perception/summary_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -923,5 +925,210 @@ void main() {
         isNot(contains(kRecruitmentRejectMilitaryFabricReservation)),
       );
     });
+  });
+
+  group('growthStageReservedBuilderUnitIds — AC14 Builder anti-thrash', () {
+    const ow = 'oldWorld';
+    const pGrain = '$ow|p_grain';
+    const pWool = '$ow|p_wool';
+    const tileGrain = '$pGrain|0|0';
+    const tileWool = '$pWool|0|0';
+
+    final twoProvinceTopology = MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'p_grain',
+          regionId: ow,
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 'p_wool',
+          regionId: ow,
+          type: TopologyNodeType.province,
+        ),
+      ],
+      edges: const [TopologyEdge(id1: 'p_grain', id2: 'p_wool')],
+    );
+
+    // Bootstrap GP: 4 peasants (low labour -> workerGrowthPriority high), zero
+    // fabric, an owned unimproved wool tile -> fabric feedstock stage active.
+    Game bootstrapGame() => Game(
+      id: 'g-3371-ac14',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: pGrain, regionId: ow, ownerId: 'gp1'),
+            Province(id: pWool, regionId: ow, ownerId: 'gp1'),
+          ],
+          units: [
+            Unit(
+              id: 'b1',
+              type: kUnitTypeBuilder,
+              ownerId: 'gp1',
+              locationProvinceId: pGrain,
+              tileKey: tileGrain,
+              status: UnitStatus.idle,
+            ),
+          ],
+        ),
+        newWorld: const RegionData(),
+        resourceByTileKey: const {tileGrain: 'grain', tileWool: 'wool'},
+        playerVisibilityByTile: const {
+          'gp1': {tileGrain: 'fullyVisible', tileWool: 'fullyVisible'},
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {
+            pGrain: [tileGrain],
+            pWool: [tileWool],
+          },
+        },
+      ),
+      players: [
+        Player(
+          id: 'gp1',
+          displayName: 'GP1',
+          isHuman: false,
+          capitalProvinceId: pGrain,
+          stockpile: const Stockpile(),
+          workerPool: const WorkerPool(peasants: 4),
+        ),
+      ],
+    );
+
+    // Mature GP: high labour and 5 improved timber tiles + fabric reserve full,
+    // so both fabric and infrastructure feedstock preferences are inactive.
+    Game matureGame() {
+      const tiles = [
+        '$ow|p0|0|0',
+        '$ow|p0|1|0',
+        '$ow|p0|2|0',
+        '$ow|p0|3|0',
+        '$ow|p0|4|0',
+      ];
+      return Game(
+        id: 'g-3371-ac14-mature',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1'),
+            ],
+            units: [
+              Unit(
+                id: 'b1',
+                type: kUnitTypeBuilder,
+                ownerId: 'gp1',
+                locationProvinceId: '$ow|p0',
+                tileKey: tiles.first,
+                status: UnitStatus.idle,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: {for (final t in tiles) t: 'timber'},
+          tileState: TileMapState(
+            improvementByTile: {for (final t in tiles) t: 1},
+          ),
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: false,
+            capitalProvinceId: '$ow|p0',
+            stockpile: const Stockpile().applyDelta(
+              CommodityCatalog.fabric.id,
+              kReserveTarget,
+            ),
+            workerPool: const WorkerPool(peasants: 30),
+          ),
+        ],
+      );
+    }
+
+    test('positive: bootstrap idle Builder is reserved', () {
+      final game = bootstrapGame();
+      final view = buildPlayerView(game, twoProvinceTopology, 'gp1');
+      final reserved = growthStageReservedBuilderUnitIds(
+        game: game,
+        view: view,
+        playerId: 'gp1',
+        growthStagePlannerEnabled: true,
+      );
+      expect(reserved, contains('b1'));
+    });
+
+    test('negative: flag off returns empty', () {
+      final game = bootstrapGame();
+      final view = buildPlayerView(game, twoProvinceTopology, 'gp1');
+      final reserved = growthStageReservedBuilderUnitIds(
+        game: game,
+        view: view,
+        playerId: 'gp1',
+        growthStagePlannerEnabled: false,
+      );
+      expect(reserved, isEmpty);
+    });
+
+    test('negative: mature GP (no feedstock stage) returns empty', () {
+      final game = matureGame();
+      final view = buildPlayerView(
+        game,
+        const MapTopology(nodes: [], edges: []),
+        'gp1',
+      );
+      final reserved = growthStageReservedBuilderUnitIds(
+        game: game,
+        view: view,
+        playerId: 'gp1',
+        growthStagePlannerEnabled: true,
+      );
+      expect(reserved, isEmpty);
+    });
+
+    test(
+      'runMovePlanner suppresses reserved Builder move when flag on; '
+      'emits it when flag off',
+      () {
+        final game = bootstrapGame();
+        final view = buildPlayerView(game, twoProvinceTopology, 'gp1');
+        final api = FakeOrderSuggestionAPIForDomainPlannerTests(
+          work: const [],
+          build: const [],
+          move: const [MoveOrder(unitId: 'b1', destinationTileKey: tileWool)],
+          research: const [],
+          navalMove: const [],
+          navalMission: const [],
+        );
+        PlannerContext ctx({required bool enabled}) => PlannerContext(
+          nationId: 'gp1',
+          view: view,
+          game: game,
+          topology: twoProvinceTopology,
+          orders: const Orders(),
+          config: _config,
+          primaryGoal: StrategicGoal.expand,
+          seeds: _seeds,
+          suggestionAPI: api,
+          growthStagePlannerEnabled: enabled,
+        );
+
+        final ordersOn = runMovePlanner(ctx: ctx(enabled: true));
+        expect(
+          ordersOn.moveOrdersByPlayerId['gp1'] ?? const <MoveOrder>[],
+          isEmpty,
+          reason: 'reserved bootstrap Builder must not get a generic move',
+        );
+
+        final ordersOff = runMovePlanner(ctx: ctx(enabled: false));
+        expect(
+          (ordersOff.moveOrdersByPlayerId['gp1'] ?? const <MoveOrder>[])
+              .map((m) => m.unitId),
+          contains('b1'),
+          reason: 'flag off: generic move planner relocates Builder as before',
+        );
+      },
+    );
   });
 }
