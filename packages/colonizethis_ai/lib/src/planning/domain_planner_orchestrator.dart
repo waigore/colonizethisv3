@@ -511,6 +511,50 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   }
   emit('aiStageA');
 
+  _appendEconomyPeasantRecruit(
+    ctx: ctx,
+    phasePlan: phasePlan,
+    growthStage: growthStage,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
+    ordersBuilder: ordersBuilder,
+  );
+
+  final buildResult = _appendEconomyBuildOrders(
+    ctx: ctx,
+    snapshot: snapshot,
+    phasePlan: phasePlan,
+    economyPlan: economyPlan,
+    ordersBuilder: ordersBuilder,
+    colonialPressure: colonialPressure,
+    buildCandidates: buildCandidates,
+    domainEconomyWeight: domainWeights.economy,
+  );
+  emit('aiStageB');
+  return _EconomyDomainPlannersResult(
+    ctx: ctx.withOrders(ordersBuilder.build()),
+    gate: EconomyGateRecord(
+      workPlannerRan: runFullAiCivilianWork,
+      buildPlannerRan: buildResult.buildPlannerRan,
+      workThreshold: workThreshold,
+      buildThreshold: buildResult.buildThreshold,
+    ),
+  );
+}
+
+/// Appends a single peasant recruit-worker order into [ordersBuilder] when the
+/// growth-stage worker-growth priority (Refs #3371) or the legacy castIron
+/// labour expand boost authorizes it and the GP can afford it.
+///
+/// Extracted verbatim from [_runEconomyDomainPlanners] to keep that
+/// orchestrator slice within the repo function-size budget; behaviour is
+/// unchanged.
+void _appendEconomyPeasantRecruit({
+  required PlannerContext ctx,
+  required PhasePlanOutcome phasePlan,
+  required GrowthStage? growthStage,
+  required bool growthStagePlannerEnabled,
+  required OrdersBuilder ordersBuilder,
+}) {
   final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
   final growthStagePeasantRecruit =
       growthStage != null && growthStage.workerGrowthPriority > 0.1;
@@ -560,27 +604,6 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
       }
     }
   }
-
-  final buildResult = _appendEconomyBuildOrders(
-    ctx: ctx,
-    snapshot: snapshot,
-    phasePlan: phasePlan,
-    economyPlan: economyPlan,
-    ordersBuilder: ordersBuilder,
-    colonialPressure: colonialPressure,
-    buildCandidates: buildCandidates,
-    domainEconomyWeight: domainWeights.economy,
-  );
-  emit('aiStageB');
-  return _EconomyDomainPlannersResult(
-    ctx: ctx.withOrders(ordersBuilder.build()),
-    gate: EconomyGateRecord(
-      workPlannerRan: runFullAiCivilianWork,
-      buildPlannerRan: buildResult.buildPlannerRan,
-      workThreshold: workThreshold,
-      buildThreshold: buildResult.buildThreshold,
-    ),
-  );
 }
 
 /// Build pass outcome plus the resolved build-threshold gate decision.
