@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'diplomacy_planner.dart';
 import 'observer_goal_phase.dart';
 import 'planning_imports.dart';
+import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 import 'strategic_ai.dart';
 
 final _log = packageLogger();
@@ -44,6 +45,7 @@ StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
   Orders? sameTurnPriorDiplomaticOrders,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
@@ -88,6 +90,7 @@ StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
     onMood: onMood,
     onStagedPlannerProgress: onStagedPlannerProgress,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
   );
   return traced;
 }
@@ -116,6 +119,7 @@ FullAIResult generateOrdersForGameFullAI(
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   final totalStopwatch = Stopwatch()..start();
   var planningGame = game;
@@ -159,6 +163,7 @@ FullAIResult generateOrdersForGameFullAI(
       onMood: onMood,
       onStagedPlannerProgress: onStagedPlannerProgress,
       sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+      growthStagePlannerEnabled: growthStagePlannerEnabled,
     );
     _log.i(
       'full_ai player_complete gameId=${game.id} playerId=$playerId '

@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
+import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 
 /// Shared inputs for domain planners (Refs #2521 AC1).
 class PlannerContext {
@@ -18,6 +19,7 @@ class PlannerContext {
     required this.seeds,
     required this.suggestionAPI,
     this.sameTurnPriorDiplomaticOrders,
+    this.growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
     int? currentTurn,
     Map<String, String?>? provinceOwner,
   }) : currentTurn = currentTurn ?? game.worldState.turnState.turnNumber,
@@ -35,6 +37,9 @@ class PlannerContext {
 
   /// Declare-war orders from earlier Full AI players this turn (Refs #2509).
   final Orders? sameTurnPriorDiplomaticOrders;
+
+  /// When true, growth-stage economy scoring replaces H8 reactive boosts (Refs #3371).
+  final bool growthStagePlannerEnabled;
   final int currentTurn;
 
   /// Province-owner map memo. Computed lazily on first read and threaded
@@ -95,6 +100,7 @@ class PlannerContext {
     seeds: seeds,
     suggestionAPI: suggestionAPI,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
     currentTurn: currentTurn,
     provinceOwner: _provinceOwner,
   );

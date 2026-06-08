@@ -70,6 +70,8 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   required PlayerView view,
   required Game game,
   Map<String, TileMapResult>? tileMapByRegion,
+  Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
+  Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
 }) {
   final byUnit = <String, List<WorkOrder>>{};
   for (final w in workSuggestions) {
@@ -109,6 +111,10 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
       workOrders: workOrders,
       idleEvents: idleEvents,
       feedstockExtractionResourceIds: feedstockExtractionResourceIds,
+      growthStageFabricFeedstockResourceIds:
+          growthStageFabricFeedstockResourceIds,
+      growthStageInfraFeedstockResourceIds:
+          growthStageInfraFeedstockResourceIds,
       reservation: reservation,
     );
   }

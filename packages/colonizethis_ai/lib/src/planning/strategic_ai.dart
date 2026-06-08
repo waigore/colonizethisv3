@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'army_conquest_prep.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
+import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
@@ -77,6 +78,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
   Orders? sameTurnPriorDiplomaticOrders,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
@@ -174,6 +176,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     tileMapByRegion: tileMapByRegion,
     topology: topology,
     skipTradeOrderGeneration: true,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
@@ -191,6 +194,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     phasePlan: phasePlan,
     recomputeTradeOrdersWithPendingCosts: true,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
   );
   // Trade orders are merged into [Orders.tradeOrdersByPlayerId] inside the
   // domain orchestrator (Refs #2994 F7) so all orchestrator callers see the

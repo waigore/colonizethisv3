@@ -14,6 +14,8 @@ void _appendBuilderPathResult({
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
   Set<String> feedstockExtractionResourceIds = const <String>{},
+  Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
+  Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
 }) {
   final chosen =
       _bestBuildImprovementRow(
@@ -21,6 +23,10 @@ void _appendBuilderPathResult({
         game,
         playerId: playerId,
         feedstockExtractionResourceIds: feedstockExtractionResourceIds,
+        growthStageFabricFeedstockResourceIds:
+            growthStageFabricFeedstockResourceIds,
+        growthStageInfraFeedstockResourceIds:
+            growthStageInfraFeedstockResourceIds,
       ) ??
       _pickLexicographic(w);
   if (chosen != null) {
@@ -152,6 +158,8 @@ void _appendSelectionForUnitId({
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
   Set<String> feedstockExtractionResourceIds = const <String>{},
+  Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
+  Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
   _OwFeedstockReservation reservation = _OwFeedstockReservation.none,
 }) {
   final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
@@ -200,6 +208,10 @@ void _appendSelectionForUnitId({
       workOrders: workOrders,
       idleEvents: idleEvents,
       feedstockExtractionResourceIds: feedstockExtractionResourceIds,
+      growthStageFabricFeedstockResourceIds:
+          growthStageFabricFeedstockResourceIds,
+      growthStageInfraFeedstockResourceIds:
+          growthStageInfraFeedstockResourceIds,
     );
     return;
   }
