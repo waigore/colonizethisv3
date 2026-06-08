@@ -142,6 +142,37 @@ double peasantRecruitScoreScale(GrowthStage stage) {
   return scaled < kRecruitmentFloor ? kRecruitmentFloor : scaled;
 }
 
+/// True when a GP should reserve its scarce `fabric` to fund a regiment build
+/// instead of spending it on the fabric-costing peasant-recruit worker action
+/// (Refs #3371 AC13).
+///
+/// Targets the seed-42 gp3 failure mode: a below-quota GP at war with treasury
+/// at or above the cheapest regiment cost and an invadable frontier holds the
+/// treasury to rebuild but never sources the lone `fabric` build input because
+/// the peasant-recruit action (`materialCosts: {fabric: 2}`) drains the same
+/// scarce fabric first. Reservation is active only when:
+///
+/// - military builds are **not** suppressed (`militaryPriority >=
+///   kMilitaryBuildSuppressionThreshold`), so a pure bootstrap GP keeps growing
+///   workers;
+/// - the GP can already afford the cheapest regiment
+///   (`treasury >= cheapestRegimentTreasuryCost`); and
+/// - `fabric` is scarce (`fabricHeld < kReserveTarget`) — a mature GP with full
+///   fabric reserves keeps recruiting peasants.
+///
+/// Pure and deterministic given its inputs.
+bool growthStageReservesFabricForMilitary({
+  required GrowthStage stage,
+  required int treasury,
+  required int fabricHeld,
+  required int cheapestRegimentTreasuryCost,
+}) {
+  if (stage.militaryPriority < kMilitaryBuildSuppressionThreshold) return false;
+  if (treasury < cheapestRegimentTreasuryCost) return false;
+  if (fabricHeld >= kReserveTarget) return false;
+  return true;
+}
+
 /// Category priority for a recipe output under [stage].
 double categoryPriorityForOutput(String outputId, GrowthStage stage) {
   final fabricId = CommodityCatalog.fabric.id;
