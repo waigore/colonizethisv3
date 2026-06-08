@@ -93,11 +93,52 @@ List<String> belowQuotaPeerGpPeaceTargetsForProduction({
   }
 }
 
-/// Returns the sorted union of production diplomacy peace targets when a
-/// [PhasePlanOutcome] is threaded through (Refs #2847 § H6).
+/// Zero-regiment all-faction survival peace absent from the GP-only
+/// `planExpandPeace` adapter and the zero-OW-only distraction slot (Refs
+/// #2847 § H7).
 ///
-/// Unions the phase-plan GP peace adapter, the H5 distraction slot, and the
-/// below-quota peer-stalled GP peace pivot that the post-S5 `planExpandPeace`
+/// Surfaces [stalledZeroRegimentAllFactionPeaceTargets] — the below-quota,
+/// stalled, **zero-regiment** survival pivot that peaces every at-war
+/// minor / tribe (including tribes that already hold Old World provinces
+/// stripped from the collapsing Great Power). The post-S5 production path
+/// dropped it: [gpPeaceTargetsFromPhasePlan] is Great-Power-only and
+/// [distractionPeaceTargetsFromPhasePlan] carries only the zero-OW
+/// [belowQuotaRegimentThinTribeDistractionPeaceTargets] slot, so a
+/// below-quota Great Power overrun to zero regiments by OW-owning tribes
+/// (seed-42 gp5 attrition collapse) stays at war with its overrunners on
+/// the production path and bleeds its remaining Old World provinces.
+///
+/// The triple gate ([isBelowObserverConquestQuota] +
+/// [isStalledOldWorldExpansion] + zero standing regiments) excludes the
+/// regiment-holding / at-or-above-quota baseline Great Powers by
+/// construction, so this slot cannot peace a winning GP off its conquests
+/// (the broad [expandRatchetGreatPowerPeaceTargets] / full
+/// [collectStalledGreatPowerPeaceTargets] unions that regressed gp6 +10 ->
+/// +2 are deliberately not added). EXPAND / COLONIAL-lite only.
+List<String> zeroRegimentSurvivalPeaceTargetsForProduction({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required PhasePlanOutcome phasePlan,
+}) {
+  switch (phasePlan.phase) {
+    case ObserverGoalPhase.expand:
+    case ObserverGoalPhase.colonialLite:
+      return stalledZeroRegimentAllFactionPeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      );
+    case ObserverGoalPhase.colonial:
+    case ObserverGoalPhase.develop:
+      return const <String>[];
+  }
+}
+
+/// Returns the sorted union of production diplomacy peace targets when a
+/// [PhasePlanOutcome] is threaded through (Refs #2847 § H6 / § H7).
+///
+/// Unions the phase-plan GP peace adapter, the H5 distraction slot, the
+/// below-quota peer-stalled GP peace pivot (§ H6), and the zero-regiment
+/// all-faction survival pivot (§ H7) that the post-S5 `planExpandPeace`
 /// adapter alone dropped from the production path.
 List<String> productionPeaceTargetsFromPhasePlan({
   required Game game,
@@ -108,6 +149,11 @@ List<String> productionPeaceTargetsFromPhasePlan({
     ...gpPeaceTargetsFromPhasePlan(phasePlan),
     ...distractionPeaceTargetsFromPhasePlan(phasePlan),
     ...belowQuotaPeerGpPeaceTargetsForProduction(
+      game: game,
+      snapshot: snapshot,
+      phasePlan: phasePlan,
+    ),
+    ...zeroRegimentSurvivalPeaceTargetsForProduction(
       game: game,
       snapshot: snapshot,
       phasePlan: phasePlan,
