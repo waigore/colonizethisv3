@@ -24,19 +24,21 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
     show
         FullAiCivilianWorkIdle,
         FullAiCivilianWorkSelectionResult,
-        feedstockExtractionResourceIdsForPlayer,
         kRegimentBuildInputFeedstockExtractionScoreBoost,
-        peerLockRecoverySellerNeededProducibleImprovementInputs,
-        regimentBuildInputFeedstockExtractionResourceIds,
-        regimentBuildInputFeedstockImprovementInputCost,
         selectFullAiCivilianWorkOrders,
-        selfLockRecoverySellerNeededProducibleImprovementInputs,
         selfLockRecoverySellerStageableImprovementInputs,
         sellerFeedstockTileAcquisitionTarget,
         sellerFeedstockTileAcquisitionTargetProvinceIdsSorted,
         sellerFeedstockTileAcquisitionTargetsAmongAcquirable,
+        sellerNeedsImprovementInputFeedstockTileAcquisition;
+export 'src/orders/feedstock_extraction_targets.dart'
+    show
+        feedstockExtractionResourceIdsForPlayer,
+        peerLockRecoverySellerNeededProducibleImprovementInputs,
+        regimentBuildInputFeedstockExtractionResourceIds,
+        regimentBuildInputFeedstockImprovementInputCost,
+        selfLockRecoverySellerNeededProducibleImprovementInputs,
         sellerImprovementInputFeedstockExtractionResourceIds,
-        sellerNeedsImprovementInputFeedstockTileAcquisition,
         supplierImprovementInputFeedstockExtractionResourceIds;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'
