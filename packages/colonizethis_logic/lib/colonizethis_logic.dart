@@ -14,22 +14,8 @@ export 'src/turn_to_year.dart';
 // removing them would force broad `src/` imports in tests without shrinking
 // runtime surface meaningfully.
 
-// Setup
-export 'src/setup/capital_choice.dart';
-export 'src/setup/game_setup.dart';
-export 'src/setup/setup_validation_exception.dart';
-export 'src/setup/gp_old_world_resource_redistribution.dart';
-export 'src/setup/gp_old_world_terrain_redistribution.dart';
-export 'src/setup/gp_starting_grain.dart';
-export 'src/setup/minor_tribe_starting_development.dart';
-export 'src/setup/town_capital_occupancy.dart';
-export 'src/setup/effective_setup_seed.dart';
-export 'src/setup/init_game_orchestrator.dart';
-export 'src/setup/warp_zone_generator.dart';
-export 'src/setup/province_assignment.dart';
-export 'src/setup/gp_land_connectivity_repair.dart';
-export 'src/setup/province_name_fallback.dart';
-export 'src/setup/setup_exceptions.dart';
+// Setup (Refs #3290 — colonizethis_setup package; re-exported for backward compat)
+export 'package:colonizethis_setup/colonizethis_setup.dart';
 
 // Turn
 export 'src/turn/economy_debt_rules.dart';

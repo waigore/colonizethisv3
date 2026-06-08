@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/src/setup/locked_province_assigner.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Five-province topology: only `m` from mandatory `a`; at depth 2 from `m`,

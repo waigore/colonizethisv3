@@ -25,9 +25,6 @@ export 'package:colonizethis_world/colonizethis_world.dart'
         kRegionNewWorld,
         kRegionOldWorld;
 
-/// Default sea fraction for map generation (0.6 = 60% sea, 40% land).
-const double kDefaultSeaFraction = 0.6;
-
 /// Work target string constants for work orders. Used across order suggestion,
 /// validation, and application to avoid hardcoded string literals.
 const String kWorkTargetStealTech = 'steal_tech';

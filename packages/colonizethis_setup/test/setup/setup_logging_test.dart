@@ -7,9 +7,9 @@
 
 import 'dart:io';
 
-import 'package:colonizethis_logic/src/setup/game_setup_context.dart';
-import 'package:colonizethis_logic/src/setup/setup_constants.dart';
-import 'package:colonizethis_logic/src/setup/setup_logging.dart';
+import 'package:colonizethis_setup/src/setup/game_setup_context.dart';
+import 'package:colonizethis_setup/src/setup/setup_constants.dart';
+import 'package:colonizethis_setup/src/setup/setup_logging.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart' show Level, LogEvent, Logger;
 

@@ -5,7 +5,7 @@ import 'package:colonizethis_logic/src/ai/ai_planner.dart'
     show generateOrdersForGame, generateOrdersForPlayer;
 import 'package:colonizethis_logic/src/ai/sim_game_ai.dart'
     show defaultSimGameAi;
-import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart'
+import 'package:colonizethis_setup/colonizethis_setup.dart'
     show assignHiddenAgendasForGame;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:ctdev/package_logger.dart';
