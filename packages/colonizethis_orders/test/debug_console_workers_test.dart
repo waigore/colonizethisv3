@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/debug_console_api.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
