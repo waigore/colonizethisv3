@@ -419,6 +419,55 @@ void noop() {}
   });
 
   test(
+    'turn_resolution_seeds is turn-owned, not a neutral core file (Refs #3290 C3)',
+    () {
+      final neutralFiles = logicDomainImportNeutralTopLevelFilesForTests();
+      expect(neutralFiles, isNot(contains('turn_resolution_seeds.dart')));
+
+      final relocated = File(
+        'packages/colonizethis_logic/lib/src/turn/turn_resolution_seeds.dart',
+      );
+      expect(
+        relocated.existsSync(),
+        isTrue,
+        reason: 'turn_resolution_seeds.dart must live in the turn/ domain',
+      );
+
+      final oldNeutral = File(
+        'packages/colonizethis_logic/lib/src/turn_resolution_seeds.dart',
+      );
+      expect(
+        oldNeutral.existsSync(),
+        isFalse,
+        reason:
+            'turn_resolution_seeds.dart must no longer live in the neutral '
+            'lib/src/ core root',
+      );
+    },
+  );
+
+  test('fails when world imports the now turn-owned seeds (Refs #3290 C3)', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dag_world_seeds_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    File(
+        '${temp.path}/packages/colonizethis_logic/lib/src/world/bad_seeds.dart',
+      )
+      ..createSync(recursive: true)
+      ..writeAsStringSync("""
+import '../turn/turn_resolution_seeds.dart';
+void noop() {}
+""");
+
+    final code = runCheckLogicDomainImportDag(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
+  });
+
+  test(
     'diplomacy and dossier do not import logic core logging (Refs #3290 Phase 2)',
     () {
       // The diplomacy/dossier trees fold into colonizethis_diplomacy, which must
