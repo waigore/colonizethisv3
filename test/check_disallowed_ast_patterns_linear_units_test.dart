@@ -41,7 +41,7 @@ Army? bad(WorldState ws, String id) {
 }
 ''';
       final violations = findDisallowedAstViolations(
-        'packages/colonizethis_logic/lib/src/orders/x.dart',
+        'packages/colonizethis_orders/lib/src/orders/x.dart',
         src,
         rules,
       );

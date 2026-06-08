@@ -48,7 +48,7 @@ Full hybrid AI in `colonizethis_ai` generates orders via behavior trees, utility
 **Trust (interpretation A):** Tentative rows use **engine-aligned incremental probes** vs **human orders + `aiPrefixSoFar`** ([order-suggestions.md](order-suggestions.md) § Incremental candidate validation, [order-engine.md](order-engine.md)). Headline invariants on the emitted AI set: **≤1** civilian work per civilian; treasury/resources sufficient for emitted rows. **Partial output:** bounded search may stop early with the feasible subset already selected.
 
 ### Order Merge
-Combined human + AI orders into deterministic list for turn resolution using **`mergeOrderLists(humanOrders:, aiOrders:)`** in `packages/colonizethis_logic/lib/src/orders/order_merge.dart` (human wins on conflicts; stable ordering per file contract):
+Combined human + AI orders into deterministic list for turn resolution using **`mergeOrderLists(humanOrders:, aiOrders:)`** in `packages/colonizethis_orders/lib/src/orders/order_merge.dart` (human wins on conflicts; stable ordering per file contract):
 - Stable ordering (player id → unit id → order type).
 - Human-controlled units cannot receive AI orders; AI emits at most one order per unit.
 - All merged orders validated; invalid orders dropped without breaking determinism.

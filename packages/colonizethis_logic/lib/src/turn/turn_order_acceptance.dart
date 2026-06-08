@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
 import 'package:colonizethis_world/src/game_events.dart';
-import '../orders/order_engine.dart';
+import 'package:colonizethis_orders/src/orders/order_engine.dart';
 
 /// Filters [orders] by validation [results] (consuming via [idxBox]).
 void filterOrderList<T>(

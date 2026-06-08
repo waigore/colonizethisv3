@@ -12,7 +12,7 @@ void main() {
     p.join(
       repoRoot,
       'packages',
-      'colonizethis_logic',
+      'colonizethis_orders',
       'lib',
       'src',
       'orders',
@@ -33,7 +33,7 @@ void main() {
     p.join(
       repoRoot,
       'packages',
-      'colonizethis_logic',
+      'colonizethis_orders',
       'lib',
       'src',
       'orders',

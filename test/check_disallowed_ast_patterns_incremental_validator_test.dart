@@ -34,7 +34,7 @@ void f() {
 }
 ''';
       final violations = findDisallowedAstViolations(
-        'packages/colonizethis_logic/lib/src/orders/x.dart',
+        'packages/colonizethis_orders/lib/src/orders/x.dart',
         src,
         rules,
       );
@@ -56,7 +56,7 @@ void f(List<String> ids) {
 }
 ''';
       final violations = findDisallowedAstViolations(
-        'packages/colonizethis_logic/lib/src/orders/x.dart',
+        'packages/colonizethis_orders/lib/src/orders/x.dart',
         src,
         rules,
       );
@@ -76,7 +76,7 @@ void f() {
 ''';
       expect(
         findDisallowedAstViolations(
-          'packages/colonizethis_logic/lib/src/orders/x.dart',
+          'packages/colonizethis_orders/lib/src/orders/x.dart',
           src,
           rules,
         ),
@@ -94,7 +94,7 @@ void f(IncrementalCandidateValidator v, Orders o) {
 ''';
       expect(
         findDisallowedAstViolations(
-          'packages/colonizethis_logic/lib/src/orders/x.dart',
+          'packages/colonizethis_orders/lib/src/orders/x.dart',
           src,
           rules,
         ),

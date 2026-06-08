@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../orders/orders_application.dart';
+import 'package:colonizethis_orders/src/orders/orders_application.dart';
 import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';

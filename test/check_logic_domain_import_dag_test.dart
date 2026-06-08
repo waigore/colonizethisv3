@@ -66,7 +66,7 @@ void noop() {}
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File(
-        '${temp.path}/packages/colonizethis_logic/lib/src/orders/bad_turn.dart',
+        '${temp.path}/packages/colonizethis_orders/lib/src/orders/bad_turn.dart',
       )
       ..createSync(recursive: true)
       ..writeAsStringSync("""
@@ -354,7 +354,7 @@ void noop() {}
         "import '../../../constants.dart' show",
         "import 'package:colonizethis_logic/src/constants.dart';",
       ];
-      final ordersDir = Directory('packages/colonizethis_logic/lib/src/orders');
+      final ordersDir = Directory('packages/colonizethis_orders/lib/src/orders');
       final violations = <String>[];
       if (ordersDir.existsSync()) {
         for (final entity in ordersDir.listSync(recursive: true)) {
@@ -394,7 +394,7 @@ void noop() {}
       "import 'package:colonizethis_logic/src/projections/order_projections.dart';",
       "import 'package:colonizethis_logic/src/projections/projected_effects.dart';",
     ];
-    final ordersDir = Directory('packages/colonizethis_logic/lib/src/orders');
+    final ordersDir = Directory('packages/colonizethis_orders/lib/src/orders');
     final violations = <String>[];
     if (ordersDir.existsSync()) {
       for (final entity in ordersDir.listSync(recursive: true)) {

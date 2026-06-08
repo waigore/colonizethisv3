@@ -38,6 +38,8 @@ CORE_PACKAGES = [
     "colonizethis_combat",
     "colonizethis_economy",
     "colonizethis_diplomacy",
+    "colonizethis_setup",
+    "colonizethis_orders",
     "colonizethis_logic",
     "colonizethis_ai",
 ]

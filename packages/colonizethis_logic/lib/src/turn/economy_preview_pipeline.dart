@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'package:colonizethis_economy/src/economy/projected_cost_engine.dart';
-import '../orders/validators/work_order_cost_calculator.dart';
+import 'package:colonizethis_orders/src/orders/validators/work_order_cost_calculator.dart';
 import 'package:colonizethis_economy/src/economy/economy_preview_stockpile_phase.dart';
 import 'package:colonizethis_economy/src/economy/worker_action_cost.dart';
 import 'package:colonizethis_world/src/world/player_state_pipeline.dart';
