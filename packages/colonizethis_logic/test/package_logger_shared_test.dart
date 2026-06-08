@@ -35,6 +35,11 @@ void main() {
       },
     );
 
+    test('packageLogger(subPrefix) nests prefix under kPackageLogPrefix', () {
+      final sub = pkg_logger.packageLogger('order_suggestion');
+      expect(sub.prefix, equals('$kPackageLogPrefix.order_suggestion'));
+    });
+
     test('logicLog emits messages with the `logic:` prefix', () {
       final captured = <LogEvent>[];
       void listener(LogEvent e) => captured.add(e);
