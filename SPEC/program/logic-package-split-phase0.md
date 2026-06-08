@@ -31,7 +31,7 @@ Phase 0 deliverables (child issue C0):
 | `turn` | `orders` | Allowed |
 | `orders` | `turn` | **Eliminated** — trace runtime hoisted to `lib/src/trace/`; `projectOrderEffects` dry-run hoisted to `lib/src/projections/` |
 | `turn` | `world` | Allowed |
-| `world` | `turn` | **Eliminated** — `turn_resolution_seeds.dart` and `trace/` hoisted to `lib/src/` |
+| `world` | `turn` | **Eliminated** — `trace/` hoisted to `lib/src/`; `turn_resolution_seeds.dart` since relocated into `turn/` (turn-owned, see C3 prerequisite below) |
 | `diplomacy` | `ai` | **Eliminated** — `isAiControlled` relocated to `world/ai_control.dart` (a `diplomacy` → `ai_contracts` edge would close the `ai_contracts` → `orders` → `diplomacy` → `ai_contracts` cycle) |
 | `ai` | `diplomacy` | **Eliminated** — `DiplomacyFactionMembership` / `isMinorOrTribe` consumed from `world/faction_membership.dart` |
 | `turn` | `diplomacy` | Allowed — orchestrator `TurnResolutionResult` variants consume diplomacy phase value types |
@@ -49,7 +49,7 @@ Phase 0 deliverables (child issue C0):
 |-------------|--------|--------------|-------------|
 | `world/movement.dart` | `turn/trace/turn_trace_runtime.dart` | `TurnTraceRuntime` callbacks | `lib/src/trace/turn_trace_runtime.dart` (shared trace buffer) |
 | `world/army_movement.dart` | same | same | same |
-| `world/naval_resolution.dart` | `turn/turn_seed_constants.dart` | `kTurnResolutionSeedMix`, LCG constants | `lib/src/turn_resolution_seeds.dart` |
+| `world/naval_resolution.dart` | `turn/turn_seed_constants.dart` | `kTurnResolutionSeedMix`, LCG constants | `lib/src/turn_resolution_seeds.dart` (later relocated into `turn/` — see C3 prerequisite below, after `naval_resolution` moved to `turn/`) |
 
 **Correct:** `turn` → `world` (34 files) — unchanged; orchestrator consumes world helpers.
 
@@ -253,6 +253,20 @@ The fix retargets each `orders/` file (and the part files that share a retargete
 
 `lib/src/constants.dart` keeps re-exporting `orders/order_work_constants.dart` and the world/models convenience symbols, so external consumers (`package:colonizethis_logic` barrel, `app/`, `ctdev/`, AI via `ai_api.dart`) keep their import paths and symbols unchanged — only the in-package `orders/` source tree is decoupled. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `../constants.dart` / `../../constants.dart` / `../../../constants.dart` under `orders/`).
 
+### `turn_resolution_seeds` ownership (Refs #3290 C3 prerequisite)
+
+**Wrong (stale neutral hoist):** `turn_resolution_seeds.dart` parked in the neutral `lib/src/` core root with no remaining non-turn consumer.
+
+`turn_resolution_seeds.dart` (`kTurnResolutionSeedMix`, `kTurnResolutionLcg*`) was hoisted from `turn/` to the neutral `lib/src/` core root during Phase 0 solely to break a `world → turn` edge while `world/naval_resolution.dart` consumed the seeds. The `world ↔ combat`/`dossier` slice subsequently relocated `naval_resolution` (and its `part` fragments) up into `turn/`, so every remaining importer of the seeds now lives in the `turn/` domain (`naval_resolution.dart`, `end_of_turn_resolver.dart`, `combat_phase_helpers.dart`, `phases/combat_phase.dart`, `phases/extraction_phase.dart`). The neutral hoist is therefore stale.
+
+The seeds are turn-resolution constants and belong to the `turn` domain, which extracts into `colonizethis_turn` (C3). Keeping them in the neutral `lib/src/` core would force `colonizethis_turn` to depend on the thin `colonizethis_logic` core for its own seed constants. The fix relocates the file into the domain that owns it and drops the neutral-file exception so the import DAG models true ownership.
+
+| Source | Before | After | Status |
+|--------|--------|-------|--------|
+| `turn_resolution_seeds.dart` (5 turn importers) | `lib/src/turn_resolution_seeds.dart` (neutral core file; allowlisted in `_neutralTopLevelFiles`) | `lib/src/turn/turn_resolution_seeds.dart` (turn domain; removed from `_neutralTopLevelFiles`) | Fixed |
+
+The file is not part of the public barrel and has no external (`app/`, `ctdev/`, AI) consumers, so no re-export shim is needed and the public surface is unchanged. Enforced by `test/check_logic_domain_import_dag_test.dart`: `turn_resolution_seeds.dart` is no longer in the neutral set, the file lives under `turn/`, and a `world → turn/turn_resolution_seeds.dart` import is now a forbidden `world->turn` edge.
+
 ### `diplomacy` / `dossier` logging decoupling from `logicLog`
 
 **Wrong:** `diplomacy` / `dossier` → `colonizethis_logic` core logging (3 files, eliminated)
@@ -292,3 +306,5 @@ All other diplomacy files (`alliance_resolver.dart`, `overture_resolver.dart`, `
 - **Given** a consumer importing `package:colonizethis_logic/colonizethis_logic.dart` or `package:colonizethis_logic/src/constants.dart`, **when** it references `kWorkTargetExplore` or `kMineralResourceIds`, **then** the symbols resolve unchanged because `lib/src/constants.dart` re-exports `orders/order_work_constants.dart` (`identical(constants.kMineralResourceIds, order_work_constants.kMineralResourceIds) == true`).
 - **Given** every `*.dart` file under `packages/colonizethis_logic/lib/src/orders/` (recursive), **when** `test/check_logic_domain_import_dag_test.dart` scans their import directives, **then** none imports the neutral logic core `constants.dart` via `import '../constants.dart';`, `import '../../constants.dart';`, or `import '../../../constants.dart';` (orders consumes order constants from `orders/order_work_constants.dart` and world/models symbols from `colonizethis_world` / `colonizethis_models` directly).
 - **Given** the retargeted `orders/` source tree, **when** `dart analyze lib` runs on `colonizethis_logic`, **then** it reports no new errors or warnings versus the pre-change baseline (the order constants resolve via `orders/order_work_constants.dart`, `GamePlayerLookup` via `package:colonizethis_world/src/game_player_lookup.dart`, region/grid constants via `package:colonizethis_world/src/world_constants.dart`, and `kUnitType*` via `package:colonizethis_models/colonizethis_models.dart`).
+- **Given** the `colonizethis_logic` source tree, **when** `logicDomainImportNeutralTopLevelFilesForTests()` is read, **then** the set does not contain `turn_resolution_seeds.dart`, the file exists at `packages/colonizethis_logic/lib/src/turn/turn_resolution_seeds.dart`, and no file remains at `packages/colonizethis_logic/lib/src/turn_resolution_seeds.dart` (the seeds are turn-owned, not a neutral core file).
+- **Given** a synthetic `world/` file that imports `../turn/turn_resolution_seeds.dart`, **when** `runCheckLogicDomainImportDag` scans the tree, **then** it returns exit code `1` because the now turn-owned seeds make this a forbidden `world->turn` edge.

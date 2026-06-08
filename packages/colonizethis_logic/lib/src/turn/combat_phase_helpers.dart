@@ -15,7 +15,7 @@ import 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
 import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
 import 'package:colonizethis_world/src/game_events.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
-import '../turn_resolution_seeds.dart';
+import 'turn_resolution_seeds.dart';
 
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
 Game runOneLandBattle(

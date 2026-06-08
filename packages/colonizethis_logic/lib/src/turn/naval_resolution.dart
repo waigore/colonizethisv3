@@ -9,7 +9,7 @@ import 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';
 import 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
 import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
 import 'package:colonizethis_world/src/game_events.dart';
-import '../turn_resolution_seeds.dart';
+import 'turn_resolution_seeds.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/naval.dart';
 import 'package:colonizethis_world/src/world/naval_coastal_visibility.dart';

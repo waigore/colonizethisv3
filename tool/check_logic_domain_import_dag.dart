@@ -27,7 +27,11 @@ const _domains = <String>{
 const _neutralTopLevelDirs = <String>{'projections', 'trace', 'validation'};
 
 const _neutralTopLevelFiles = <String>{
-  'turn_resolution_seeds.dart',
+  // `turn_resolution_seeds.dart` was previously hoisted here to break a
+  // `world -> turn` edge while `naval_resolution` lived in `world/`. That file
+  // has since relocated into `turn/`, so the seeds are now turn-owned and live
+  // at `turn/turn_resolution_seeds.dart` (Refs #3290 C3 prerequisite); they are
+  // no longer a neutral core file.
   'constants.dart',
   'game_events.dart',
   'logic_validation_exception.dart',
@@ -190,3 +194,7 @@ Set<String> logicDomainImportDagGrandfatherAllowlistForTests() =>
 /// Test helper: list forbidden edges as JSON-friendly strings.
 List<String> logicDomainImportForbiddenEdgesForTests() =>
     _forbiddenEdges.map((e) => '${e.$1}->${e.$2}').toList(growable: false);
+
+/// Test helper: the neutral (non-domain) top-level core files.
+Set<String> logicDomainImportNeutralTopLevelFilesForTests() =>
+    Set<String>.from(_neutralTopLevelFiles);
