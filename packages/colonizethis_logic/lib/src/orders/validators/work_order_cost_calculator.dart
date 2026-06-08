@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../ai/full_ai_civilian_work_feedstock_bootstrap.dart';
 import '../../constants.dart';
+import '../feedstock_bootstrap_cost.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 
 /// Calculates work order material costs. Reduces duplication between validation and projection.

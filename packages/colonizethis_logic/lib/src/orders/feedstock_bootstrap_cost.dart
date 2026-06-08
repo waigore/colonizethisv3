@@ -1,7 +1,15 @@
+/// Work-order material-cost waivers for the H8 feedstock bootstrap.
+///
+/// Lives in `orders/` because these helpers compute effective `build_improvement`
+/// material cost (consumed by `WorkOrderCostCalculator`); they consume
+/// `feedstock_extraction_targets.dart` from the same domain. Relocated out of
+/// `src/ai/` to keep the orders -> ai import edge one-way. Refs #3290; #2847 § H8.
+library;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../orders/feedstock_extraction_targets.dart';
+import 'feedstock_extraction_targets.dart';
 
 bool _isFeedstockBootstrapTarget(
   Game game,
