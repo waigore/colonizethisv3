@@ -477,7 +477,9 @@ List<String> stalledZeroRegimentGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isZeroRegimentSurvivalOwContext(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return const [];
   }
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
@@ -584,10 +586,9 @@ List<String> stalledZeroRegimentAllFactionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isZeroRegimentSurvivalOwContext(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return const [];
   }
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {

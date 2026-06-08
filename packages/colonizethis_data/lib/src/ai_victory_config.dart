@@ -101,6 +101,14 @@ bool isStalledOldWorldExpansion(int oldWorldProvincesOwned) =>
     oldWorldProvincesOwned > 0 &&
     oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold;
 
+/// True when zero-regiment survival peace may engage: below the observer
+/// conquest quota and either in the stalled OW band or at terminal attrition
+/// collapse (zero OW holdings; Refs #2847 § H8).
+bool isZeroRegimentSurvivalOwContext(int oldWorldProvincesOwned) =>
+    isBelowObserverConquestQuota(oldWorldProvincesOwned) &&
+    (isStalledOldWorldExpansion(oldWorldProvincesOwned) ||
+        oldWorldProvincesOwned == 0);
+
 /// Goal penalties while Old World holdings remain at the observer start size.
 const int kStalledDiplomacyGoalPenalty = 55;
 
