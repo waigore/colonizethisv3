@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'order_work_constants.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 
 /// Returns deterministic assign-time total turns for a pending civilian work

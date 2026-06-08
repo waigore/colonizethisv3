@@ -322,6 +322,51 @@ void noop() {}
   );
 
   test(
+    'orders does not import the neutral logic constants core (Refs #3290 Phase 2)',
+    () {
+      // The orders tree extracts into colonizethis_orders, which must depend on
+      // colonizethis_world / colonizethis_economy / colonizethis_diplomacy /
+      // colonizethis_models / colonizethis_data — not on the thin
+      // colonizethis_logic core. Order/work constants come from the
+      // orders-domain order_work_constants.dart; world/models convenience
+      // symbols come from colonizethis_world / colonizethis_models directly.
+      const forbiddenConstantsImports = <String>[
+        "import '../constants.dart';",
+        "import '../../constants.dart';",
+        "import '../../../constants.dart';",
+        "import '../constants.dart' show",
+        "import '../../constants.dart' show",
+        "import '../../../constants.dart' show",
+        "import 'package:colonizethis_logic/src/constants.dart';",
+      ];
+      final ordersDir = Directory(
+        'packages/colonizethis_logic/lib/src/orders',
+      );
+      final violations = <String>[];
+      if (ordersDir.existsSync()) {
+        for (final entity in ordersDir.listSync(recursive: true)) {
+          if (entity is! File || !entity.path.endsWith('.dart')) continue;
+          final content = entity.readAsStringSync();
+          for (final bad in forbiddenConstantsImports) {
+            if (content.contains(bad)) {
+              violations.add('${entity.path}: $bad');
+            }
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'orders/ must import order constants from '
+            'orders/order_work_constants.dart and world/models symbols from '
+            'colonizethis_world / colonizethis_models directly, not the neutral '
+            'lib/src/constants.dart core',
+      );
+    },
+  );
+
+  test(
     'diplomacy and dossier do not import logic core logging (Refs #3290 Phase 2)',
     () {
       // The diplomacy/dossier trees fold into colonizethis_diplomacy, which must

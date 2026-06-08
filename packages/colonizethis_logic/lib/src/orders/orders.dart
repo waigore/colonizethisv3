@@ -6,6 +6,7 @@ export 'draft_orders_mutations.dart';
 export 'incremental_candidate_validator.dart';
 export 'order_engine.dart';
 export 'order_merge.dart';
+export 'order_work_constants.dart';
 export '../projections/order_projections.dart';
 export 'order_suggestion.dart';
 export 'order_suggestion_api.dart';

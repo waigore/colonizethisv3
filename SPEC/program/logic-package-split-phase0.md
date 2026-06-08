@@ -224,6 +224,35 @@ The monolith `constants.dart` re-exports `GamePlayerLookup` and region ids from 
 
 `dossier/` folds into `colonizethis_diplomacy` at extraction; decoupling from `constants.dart` is a Phase 2 prerequisite so the new package depends only on `colonizethis_world`, `colonizethis_combat`, `colonizethis_models`, `colonizethis_data`, and `colonizethis_logger`. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `../constants.dart` under `diplomacy/` or `dossier/`).
 
+### `orders` order/work constant ownership (Refs #3290, Phase 2 prerequisite)
+
+The order/work-domain constants (`kWorkTarget*`, `kMineralResourceIds`, `kProspectableByTerrainType`, `isProspectableTerrain`, `isProspectableTerrainId`) previously lived in the neutral `lib/src/constants.dart` core. They are order-domain values consumed by `orders/` (29 files), `ai/`, and `turn/`. They now live in the `orders` domain at `lib/src/orders/order_work_constants.dart` (the future `colonizethis_orders` package owns them), keeping the neutral core thin.
+
+`lib/src/constants.dart` re-exports `orders/order_work_constants.dart`, so existing `package:colonizethis_logic/src/constants.dart` and `package:colonizethis_logic` barrel consumers keep their import paths and symbols unchanged (back-compat preserved). The `orders/orders.dart` barrel also exports `order_work_constants.dart` so the orders domain is self-contained for extraction. The world/models convenience re-exports (`GamePlayerLookup`, `kRegion*`, `kGridNeighborsCardinal4`, `kUnitType*`) stay in `constants.dart` as a neutral re-export shim.
+
+| Symbols | Before | After | Status |
+|---------|--------|-------|--------|
+| `kWorkTarget*`, `kMineralResourceIds`, `kProspectableByTerrainType`, `isProspectableTerrain`, `isProspectableTerrainId` | declared in `lib/src/constants.dart` (neutral core) | declared in `orders/order_work_constants.dart` (orders domain); `constants.dart` re-exports | Fixed |
+
+The `repo.work_target_constants` lint (`tool/check_work_target_constants.dart`) derives its canonical work-target ids from the definition file, so its source-of-truth path moves with the constants: it now reads `orders/order_work_constants.dart` (not the `constants.dart` re-export shim). The shim and the `orders/order_work_constants_test.dart` ownership test (which asserts each constant against its raw canonical literal) are exempt from the raw-literal gate alongside the definition file.
+
+### `orders` → `lib/src/constants.dart`
+
+**Wrong:** `orders` → `../constants.dart` (28 files, eliminated)
+
+The neutral `lib/src/constants.dart` sits in the thin `colonizethis_logic` core, which sits **above** the domain packages (it re-exports them). Twenty-eight `orders/` files imported `../constants.dart` for two disjoint symbol groups: the order/work-domain constants (`kWorkTarget*`, `kMineralResourceIds`, prospectability helpers) and the world/models convenience re-exports (`GamePlayerLookup`, `kRegionNewWorld`/`kRegionOldWorld`, `kGridNeighborsCardinal4`, `kUnitType*`). Both groups created a wrong-direction `orders → core` edge — the order constants via a self-referential round-trip (the core only re-exports them from `orders/order_work_constants.dart`), the world/models symbols by masking the allowed `orders → world` / `orders → models` edges behind the core shim. This blocks the `colonizethis_orders` extraction (the package cannot depend on the thin core for its own constants).
+
+The fix retargets each `orders/` file (and the part files that share a retargeted library's scope) to its real source:
+
+| Symbols | Destination |
+|---------|-------------|
+| `kWorkTarget*`, `kMineralResourceIds`, `kProspectableByTerrainType`, `isProspectableTerrain`, `isProspectableTerrainId` | `orders/order_work_constants.dart` (same domain; relative import) |
+| `GamePlayerLookup` (`playerById`, `fleetById`, …) | `package:colonizethis_world/src/game_player_lookup.dart` |
+| `kRegionNewWorld`, `kRegionOldWorld`, `kGridNeighborsCardinal4` | `package:colonizethis_world/src/world_constants.dart` |
+| `kUnitTypeBuilder`, `kUnitTypeEngineer`, `kUnitTypeMerchant`, … | `package:colonizethis_models/colonizethis_models.dart` |
+
+`lib/src/constants.dart` keeps re-exporting `orders/order_work_constants.dart` and the world/models convenience symbols, so external consumers (`package:colonizethis_logic` barrel, `app/`, `ctdev/`, AI via `ai_api.dart`) keep their import paths and symbols unchanged — only the in-package `orders/` source tree is decoupled. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `../constants.dart` / `../../constants.dart` / `../../../constants.dart` under `orders/`).
+
 ### `diplomacy` / `dossier` logging decoupling from `logicLog`
 
 **Wrong:** `diplomacy` / `dossier` → `colonizethis_logic` core logging (3 files, eliminated)
@@ -259,3 +288,7 @@ All other diplomacy files (`alliance_resolver.dart`, `overture_resolver.dart`, `
 - **Given** the `diplomacy/` source files, **when** `repo.logic_domain_import_dag` runs, **then** no `diplomacy` file imports `ai/`, `diplomacy->ai` is a forbidden edge, and `repo.logic_domain_import_dag` carries no `diplomacy->ai` grandfather entry.
 - **Given** the `diplomacy/` source files, **when** `repo.logic_domain_import_dag` runs, **then** no `diplomacy` file imports `orders/`, `diplomacy->orders` is a forbidden edge, and `repo.logic_domain_import_dag` carries no `diplomacy->orders` grandfather entry.
 - **Given** a `Game` with `Player.treasury == 175`, empty staged orders (no bids) and `projectedTreasuryDelta == -50`, **when** `tradeOrderValidationContextFromGame(game, playerId, stagedOrders: <empty>, projectedTreasuryDelta: -50)` builds the context, **then** `TradeOrderValidationContext.treasuryBudgetForBids == 125` (`max(0, 175 − max(0, 50))`).
+- **Given** the `colonizethis_logic` source tree, **when** the order/work constant definitions (`kWorkTargetExplore`, `kMineralResourceIds`, `isProspectableTerrainId`, …) are located, **then** they are declared in `lib/src/orders/order_work_constants.dart` (the `orders` domain) and **not** declared in the neutral `lib/src/constants.dart`.
+- **Given** a consumer importing `package:colonizethis_logic/colonizethis_logic.dart` or `package:colonizethis_logic/src/constants.dart`, **when** it references `kWorkTargetExplore` or `kMineralResourceIds`, **then** the symbols resolve unchanged because `lib/src/constants.dart` re-exports `orders/order_work_constants.dart` (`identical(constants.kMineralResourceIds, order_work_constants.kMineralResourceIds) == true`).
+- **Given** every `*.dart` file under `packages/colonizethis_logic/lib/src/orders/` (recursive), **when** `test/check_logic_domain_import_dag_test.dart` scans their import directives, **then** none imports the neutral logic core `constants.dart` via `import '../constants.dart';`, `import '../../constants.dart';`, or `import '../../../constants.dart';` (orders consumes order constants from `orders/order_work_constants.dart` and world/models symbols from `colonizethis_world` / `colonizethis_models` directly).
+- **Given** the retargeted `orders/` source tree, **when** `dart analyze lib` runs on `colonizethis_logic`, **then** it reports no new errors or warnings versus the pre-change baseline (the order constants resolve via `orders/order_work_constants.dart`, `GamePlayerLookup` via `package:colonizethis_world/src/game_player_lookup.dart`, region/grid constants via `package:colonizethis_world/src/world_constants.dart`, and `kUnitType*` via `package:colonizethis_models/colonizethis_models.dart`).

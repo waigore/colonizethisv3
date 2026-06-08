@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../constants.dart';
+import '../order_work_constants.dart';
 import '../orders_application_helpers.dart';
 import '../purchase_land_work_completion.dart';
 import 'explore_work_handler.dart';

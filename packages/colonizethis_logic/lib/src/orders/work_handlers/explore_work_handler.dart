@@ -1,7 +1,7 @@
 import '../orders_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../constants.dart';
+import '../order_work_constants.dart';
 
 bool tryApplyExploreWorkOrder({
   required Game game,

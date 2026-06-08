@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'package:colonizethis_world/src/world_constants.dart';
 import 'package:colonizethis_economy/src/economy/projected_cost_engine.dart';
 import 'package:colonizethis_economy/src/economy/sea_transport.dart';
 import 'package:colonizethis_world/src/world/army_movement.dart';

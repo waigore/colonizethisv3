@@ -1,7 +1,13 @@
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show Game, Orders, WorldState;
+    show
+        Game,
+        Orders,
+        WorldState,
+        kUnitTypeBuilder,
+        kUnitTypeEngineer,
+        kUnitTypeMerchant;
 
-import '../constants.dart';
+import 'order_work_constants.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart' show allUnitsFromWorld;
 
 /// Shared unit-type and work-target predicates for orders. SPEC/program/orders.md § Work orders.
