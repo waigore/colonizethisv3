@@ -9,13 +9,15 @@ const _canonicalProvinceLookupRelativePath =
 
 /// Production source trees scanned for broad `allProvinces(` call sites.
 ///
-/// Includes the `colonizethis_orders` mid-layer package: the order-suggestion
-/// sources that legitimately walk all provinces were extracted there from the
-/// `colonizethis_logic` monolith (Refs #3290) and stay sanctioned via the same
-/// allowlist.
+/// Includes the `colonizethis_orders` mid-layer package and the
+/// `colonizethis_turn` orchestrator package: the sources that legitimately walk
+/// all provinces (order suggestions, turn news digest) were extracted there from
+/// the `colonizethis_logic` monolith (Refs #3290) and stay sanctioned via the
+/// same allowlist.
 const _scanDirsRelative = <String>[
   'packages/colonizethis_logic/lib/src',
   'packages/colonizethis_orders/lib/src',
+  'packages/colonizethis_turn/lib/src',
 ];
 const _sanctionsYamlRelative = 'tool/logic_all_provinces_sanctions.yaml';
 

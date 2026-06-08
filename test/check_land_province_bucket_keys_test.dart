@@ -28,7 +28,7 @@ void f(WorldState ws, String regionId, String fullProvinceId) {
 ''';
       final violations = findLandProvinceBucketKeyViolations(
         relativePath:
-            'packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart',
+            'packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart',
         source: src,
       );
       expect(violations, isNotEmpty);

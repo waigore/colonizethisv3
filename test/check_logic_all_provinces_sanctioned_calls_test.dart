@@ -20,6 +20,9 @@ import '../tool/check_logic_all_provinces_sanctioned_calls.dart';
     Directory(
       p.join(tempDir.path, 'packages/colonizethis_orders/lib/src'),
     ).createSync(recursive: true);
+    Directory(
+      p.join(tempDir.path, 'packages/colonizethis_turn/lib/src'),
+    ).createSync(recursive: true);
 
     final yamlFile = File(
       p.join(tempDir.path, 'tool/logic_all_provinces_sanctions.yaml'),

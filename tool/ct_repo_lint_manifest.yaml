@@ -371,6 +371,13 @@ rules:
     runner: dart
     script: tool/check_orders_no_logic_deps.dart
 
+  - rule_id: repo.turn_no_logic_deps
+    group: architecture
+    title: colonizethis_turn must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 3)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_turn_no_logic_deps.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines
