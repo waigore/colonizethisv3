@@ -90,14 +90,14 @@ void main() {
         final combat = capture.combat;
         expect(
           combat.any(
-            (m) => m.contains('logic: combat conflict_detection start'),
+            (m) => m.contains('turn: combat conflict_detection start'),
           ),
           isTrue,
         );
         expect(
           combat.any(
             (m) =>
-                m.contains('logic: combat conflict_detection end') &&
+                m.contains('turn: combat conflict_detection end') &&
                 m.contains('battleContexts=1'),
           ),
           isTrue,
@@ -105,7 +105,7 @@ void main() {
         expect(
           combat.any(
             (m) =>
-                m.contains('logic: combat battle_start') &&
+                m.contains('turn: combat battle_start') &&
                 m.contains('attackerSides=1') &&
                 m.contains('attackerUnitsTotal=1') &&
                 m.contains('mode=autoResolve'),
@@ -128,7 +128,7 @@ void main() {
           capture.events.any(
             (e) =>
                 e.level == Level.info &&
-                e.message.contains('logic: phase combat start'),
+                e.message.contains('turn: phase combat start'),
           ),
           isTrue,
         );
@@ -136,7 +136,7 @@ void main() {
           capture.events.any(
             (e) =>
                 e.level == Level.info &&
-                e.message.contains('logic: phase combat end'),
+                e.message.contains('turn: phase combat end'),
           ),
           isTrue,
         );
@@ -225,7 +225,7 @@ void main() {
         expect(
           combat.any(
             (m) =>
-                m.contains('logic: combat battle_start') &&
+                m.contains('turn: combat battle_start') &&
                 m.contains('mode=quickBattle'),
           ),
           isTrue,
@@ -233,7 +233,7 @@ void main() {
         expect(
           combat.any(
             (m) =>
-                m.contains('logic: combat battle_apply') &&
+                m.contains('turn: combat battle_apply') &&
                 m.contains('mode=quickBattle') &&
                 m.contains('winner='),
           ),
@@ -299,13 +299,13 @@ void main() {
         expect(
           combat.any(
             (m) =>
-                m.contains('logic: combat conflict_detection end') &&
+                m.contains('turn: combat conflict_detection end') &&
                 m.contains('battleContexts=0'),
           ),
           isTrue,
         );
         expect(
-          combat.any((m) => m.contains('logic: combat battle_start')),
+          combat.any((m) => m.contains('turn: combat battle_start')),
           isFalse,
         );
       },

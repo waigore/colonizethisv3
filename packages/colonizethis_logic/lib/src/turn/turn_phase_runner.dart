@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/src/logging.dart';
+import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'turn_news_digest.dart';
@@ -17,7 +17,7 @@ TurnResolutionResult runTurnResolutionPipeline({
 }) {
   if (gameAtResolutionStart.calendarCampaignHalted) {
     final turn = gameAtResolutionStart.worldState.turnState.turnNumber;
-    logicLog.i('turn $turn resolve skipped (calendar halted)');
+    turnLog.i('turn $turn resolve skipped (calendar halted)');
     emitPlayerDiscoveryEvents(
       gameAtResolutionStart,
       gameAtResolutionStart,
@@ -29,10 +29,7 @@ TurnResolutionResult runTurnResolutionPipeline({
       start: gameAtResolutionStart,
       end: gameAtResolutionStart,
     );
-    return TurnResolutionComplete(
-      news.game,
-      turnNewsDigest: news.digest,
-    );
+    return TurnResolutionComplete(news.game, turnNewsDigest: news.digest);
   }
   var acc = TurnPipelineState(game: gameAtResolutionStart);
   final turn = acc.game.worldState.turnState.turnNumber;
@@ -52,7 +49,7 @@ TurnResolutionResult runTurnResolutionPipeline({
     if (i < phaseIndex) continue;
     config.turnTraceRuntime?.clearPhaseOrderEvents();
     config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
-    logicLog.i('phase ${phase.name} start');
+    turnLog.i('phase ${phase.name} start');
     final beforeState = config.onTurnTracePhase == null
         ? null
         : acc.game.toJson();
@@ -81,11 +78,11 @@ TurnResolutionResult runTurnResolutionPipeline({
         );
         acc = pipeline;
     }
-    logicLog.i('phase ${phase.name} end');
+    turnLog.i('phase ${phase.name} end');
     config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.end);
   }
 
-  logicLog.i('turn $turn resolve end');
+  turnLog.i('turn $turn resolve end');
   emitPlayerDiscoveryEvents(
     gameAtResolutionStart,
     acc.game,

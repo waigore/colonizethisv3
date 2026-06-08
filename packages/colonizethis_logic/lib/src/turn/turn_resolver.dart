@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
@@ -282,7 +282,7 @@ TurnResolutionResult resolveTurnForGameWithConfig({
   required TurnResolverConfig config,
 }) {
   final turn = game.worldState.turnState.turnNumber;
-  logicLog.i('turn $turn resolve start');
+  turnLog.i('turn $turn resolve start');
   final state = ensureMilitaryArmiesForGame(game);
   final gameAtResolutionStart = state;
   return runTurnResolutionPipeline(
