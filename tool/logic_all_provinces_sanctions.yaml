@@ -22,13 +22,13 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
 
-  - path: packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
     line: 78
     rationale: Turn news digest summarizes changes across all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
     line: 197
     rationale: Turn news digest second pass over all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md

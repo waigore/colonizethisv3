@@ -40,6 +40,7 @@ CORE_PACKAGES = [
     "colonizethis_diplomacy",
     "colonizethis_setup",
     "colonizethis_orders",
+    "colonizethis_turn",
     "colonizethis_logic",
     "colonizethis_ai",
 ]
@@ -122,6 +123,7 @@ SHORT_TO_FULL: dict[str, str] = {
     "combat": "colonizethis_combat",
     "economy": "colonizethis_economy",
     "diplomacy": "colonizethis_diplomacy",
+    "turn": "colonizethis_turn",
     "logic": "colonizethis_logic",
     "ai": "colonizethis_ai",
 }

@@ -9,7 +9,7 @@ const _guardedRelativePaths = <String>{
   'packages/colonizethis_world/lib/src/world/fog_resolution_province_ownership.dart',
   'packages/colonizethis_world/lib/src/world/fog_resolution_coastal_sea_zone.dart',
   'packages/colonizethis_world/lib/src/world/fog_resolution_distant_sea_zone.dart',
-  'packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart',
+  'packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart',
 };
 
 final RegExp _localProvinceLookupPattern = RegExp(

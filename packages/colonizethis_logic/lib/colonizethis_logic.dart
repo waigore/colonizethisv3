@@ -17,13 +17,11 @@ export 'src/turn_to_year.dart';
 // Setup (Refs #3290 — colonizethis_setup package; re-exported for backward compat)
 export 'package:colonizethis_setup/colonizethis_setup.dart';
 
-// Turn
-export 'src/turn/economy_debt_rules.dart';
-export 'src/turn/pending_treasury_costs.dart';
-export 'src/turn/research_resolver.dart';
-export 'src/turn/turn_resolution_result.dart';
-export 'src/turn/turn_resolver.dart';
-export 'src/turn/turn_news_digest.dart';
+// Turn (Refs #3290 C3 — colonizethis_turn package; re-exported for backward
+// compat). The turn barrel also re-exports the order-effects dry-run projector
+// (`projectOrderEffects`), which runs the turn resolver and now lives in the
+// turn package.
+export 'package:colonizethis_turn/colonizethis_turn.dart';
 
 // Combat
 export 'package:colonizethis_combat/colonizethis_combat.dart';
@@ -33,9 +31,6 @@ export 'package:colonizethis_economy/colonizethis_economy.dart';
 
 // Orders (Refs #3290 — colonizethis_orders package; re-exported for backward compat)
 export 'package:colonizethis_orders/colonizethis_orders.dart';
-// Order-effects dry-run projector (concrete impl lives in the neutral core
-// `projections/` module because it runs the turn resolver). Refs #3290 C2.
-export 'src/projections/order_projections.dart';
 export 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart';
 export 'package:colonizethis_orders/src/orders/validators/work_order_cost_calculator.dart';
 export 'package:colonizethis_orders/src/orders/order_suggestion.dart'

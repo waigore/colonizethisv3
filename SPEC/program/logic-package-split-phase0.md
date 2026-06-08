@@ -334,6 +334,18 @@ The `turn_logging.dart` logger is not part of the public barrel and has no exter
 - `colonizethis_combat` uses exactly one logger with the distinct `combat` prefix (`combatLog`); land-combat log lines emitted from the package carry the `combat:` prefix, while turn-orchestrated combat-phase lines emitted from the `turn/` domain carry the `turn:` prefix (migrated from `logic:` by the C3 turn logging-decoupling prerequisite).
 - Combat-domain tests live under `packages/colonizethis_combat/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_combat` for integration fixtures.
 
+## Phase 3 slice — `colonizethis_turn` (Refs #3290 C3)
+
+**Given** the `colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, and `colonizethis_orders` packages on `dev`, **when** the `colonizethis_turn` orchestrator package is extracted, **then**:
+
+- `packages/colonizethis_turn` owns `turn/` (phase pipeline, phase handler registry, turn resolver and config, naval/research/end-of-turn resolvers, economy preview/tech/debt rules, pending treasury costs, news digest, resolution seeds, and the `phases/` + `trace`-facing handlers) and depends only on `colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_orders`, `colonizethis_models`, `colonizethis_data`, `colonizethis_logger`.
+- The neutral `projections/` module (`order_projections.dart`, the `projectOrderEffects` dry-run projector) moves into `colonizethis_turn` because it runs the turn resolver and is mutually dependent with `turn/turn_resolver.dart`; `colonizethis_logic` re-exports it via the turn barrel, and `colonizethis_orders` still consumes the dry-run through the injected `OrderEffectsProjector` seam (no `orders → turn` edge).
+- A `colonizethis_turn` `src/constants.dart` re-export shim mirrors the historical logic-core shim (`GamePlayerLookup`, region/grid constants from `colonizethis_world`; `kUnitType*` from `colonizethis_models`; order/work constants from `colonizethis_orders`), so the moved `turn/` source keeps its `../constants.dart` import paths and introduces no new dependency edge.
+- `colonizethis_logic` depends on `colonizethis_turn` and re-exports `package:colonizethis_turn/colonizethis_turn.dart` from its barrel for backward compatibility; `ai_api.dart` re-exports `pendingTreasuryCostsForTurn` from the turn package path unchanged for `colonizethis_ai`.
+- `colonizethis_turn/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.turn_no_logic_deps`).
+- `colonizethis_turn` uses exactly one logger with the distinct `turn` prefix (`turnLog`); turn-domain log lines carry the `turn:` prefix (migrated from `logic:` by the C3 turn logging-decoupling prerequisite).
+- Turn-domain and turn-orchestrator integration tests (including `resolveTurnForGame`, research-phase, economy-preview, and turn-trace suites) live under `packages/colonizethis_turn/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_turn` for the full game barrel, and `colonizethis_world` / `colonizethis_economy` gain a `colonizethis_turn` **dev_dependency** for the few turn-domain integration tests retained beside their leaf code.
+
 ## Acceptance criteria (Phase 0 / C0)
 
 - **Given** the monolith on `dev`, **when** `repo.logic_domain_import_dag` runs, **then** zero imports match forbidden pairs outside the documented grandfather allowlist.

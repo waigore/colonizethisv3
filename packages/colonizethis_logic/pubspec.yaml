@@ -17,6 +17,7 @@ dependencies:
   colonizethis_diplomacy:
   colonizethis_setup:
   colonizethis_orders:
+  colonizethis_turn:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:

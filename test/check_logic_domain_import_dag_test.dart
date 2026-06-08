@@ -424,8 +424,11 @@ void noop() {}
       final neutralFiles = logicDomainImportNeutralTopLevelFilesForTests();
       expect(neutralFiles, isNot(contains('turn_resolution_seeds.dart')));
 
+      // Refs #3290 C3: the turn domain was extracted into the standalone
+      // colonizethis_turn package, so turn_resolution_seeds.dart now lives in
+      // that package's turn/ tree, not in the colonizethis_logic core.
       final relocated = File(
-        'packages/colonizethis_logic/lib/src/turn/turn_resolution_seeds.dart',
+        'packages/colonizethis_turn/lib/src/turn/turn_resolution_seeds.dart',
       );
       expect(
         relocated.existsSync(),

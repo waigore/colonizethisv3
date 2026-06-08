@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/turn/economy_tech_effects.dart';
+import 'package:colonizethis_turn/src/turn/economy_tech_effects.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {

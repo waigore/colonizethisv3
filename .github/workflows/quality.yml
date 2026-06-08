@@ -103,6 +103,8 @@ jobs:
               - 'packages/colonizethis_economy/**'
             pkg_diplomacy:
               - 'packages/colonizethis_diplomacy/**'
+            pkg_turn:
+              - 'packages/colonizethis_turn/**'
             pkg_logic:
               - 'packages/colonizethis_logic/**'
             pkg_ai:
@@ -121,6 +123,7 @@ jobs:
             --changed-combat="${{ steps.filter.outputs.pkg_combat }}" \
             --changed-economy="${{ steps.filter.outputs.pkg_economy }}" \
             --changed-diplomacy="${{ steps.filter.outputs.pkg_diplomacy }}" \
+            --changed-turn="${{ steps.filter.outputs.pkg_turn }}" \
             --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
             --changed-ai="${{ steps.filter.outputs.pkg_ai }}" \
             | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)))")

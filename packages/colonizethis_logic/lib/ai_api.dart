@@ -77,7 +77,8 @@ export 'package:colonizethis_economy/src/economy/trade_cargo_capacity.dart'
     show tradeCargoCapacityForGreatPower;
 export 'package:colonizethis_economy/src/economy/world_market/treasury_bid_budget.dart'
     show carryForwardBidNotionalByPlayer, effectiveMarketPriceForCommodityId;
-export 'src/turn/pending_treasury_costs.dart' show pendingTreasuryCostsForTurn;
+export 'package:colonizethis_turn/src/turn/pending_treasury_costs.dart'
+    show pendingTreasuryCostsForTurn;
 export 'package:colonizethis_economy/src/economy/worker_economy.dart'
     show effectiveLabourForWorkers;
 export 'package:colonizethis_economy/src/economy/worker_action_cost.dart'
