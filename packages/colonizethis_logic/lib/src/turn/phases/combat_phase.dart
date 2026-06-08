@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import '../turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_combat/src/combat/battle_general_assignment.dart';
@@ -76,7 +76,7 @@ Game runCombatPhase(
   final preBattleDialogueSeed =
       (game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix);
   state = applyUnopposedProvinceCaptures(state, orders);
-  logicLog.i('combat conflict_detection start turn=$turn');
+  turnLog.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
   if (onDialogue != null && battles.isNotEmpty) {
     _emitPreBattleDialogueForConflicts(
@@ -87,7 +87,7 @@ Game runCombatPhase(
       onDialogue,
     );
   }
-  logicLog.i(
+  turnLog.i(
     'combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
   final combatGeneralLedger = CombatPhaseGeneralLedger();

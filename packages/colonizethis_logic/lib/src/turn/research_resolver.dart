@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -119,7 +119,7 @@ void _applyResearchOrderIfValid({
 }) {
   final slots = player.researchSlots ?? defaultResearchSlots;
   if (slots <= 0) {
-    logicLog.i(
+    turnLog.i(
       'research apply turn=$turn playerId=${player.id} '
       'orders=${playerOrders.length} skipped=true reason=no_research_slots',
     );
@@ -204,7 +204,7 @@ void _applyResearchOrderIfValid({
   final nextProgress = progress.isNotEmpty ? progress : const <String, int>{};
 
   final treasuryDelta = treasury - player.treasury;
-  logicLog.i(
+  turnLog.i(
     'research apply turn=$turn playerId=${player.id} '
     'orders=${playerOrders.length} treasuryDelta=$treasuryDelta '
     'completedTechs=${toUnlock.length} inProgressTechs=${nextProgress.length}',
@@ -226,10 +226,10 @@ void _applyResearchOrderIfValid({
 Game resolveResearchPhase(Game game, Orders orders) {
   final turn = game.worldState.turnState.turnNumber;
   final researchByPlayer = orders.researchOrdersByPlayerId;
-  logicLog.i('research phase start turn=$turn');
+  turnLog.i('research phase start turn=$turn');
 
   if (researchByPlayer.isEmpty) {
-    logicLog.i('research phase end turn=$turn playersWithOrders=0');
+    turnLog.i('research phase end turn=$turn playersWithOrders=0');
     return game;
   }
 
@@ -261,7 +261,9 @@ Game resolveResearchPhase(Game game, Orders orders) {
     updatedPlayers.add(resolved.updatedPlayer!);
   }
 
-  logicLog.i('research phase end turn=$turn playersWithOrders=$playersWithOrders');
+  turnLog.i(
+    'research phase end turn=$turn playersWithOrders=$playersWithOrders',
+  );
   return state.copyWith(
     players: updatedPlayers,
     dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...extraEvidence],

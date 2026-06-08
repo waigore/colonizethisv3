@@ -3,7 +3,7 @@
 // Called from turn_resolver.resolveTurnForGame.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -26,7 +26,7 @@ Game runEndOfTurnPhase(
   final winnerId = findMilitaryVictoryWinner(game);
   if (winnerId != null) {
     final turnNumber = game.worldState.turnState.turnNumber;
-    logicLog.i('military victory set winner=$winnerId turn=$turnNumber');
+    turnLog.i('military victory set winner=$winnerId turn=$turnNumber');
     return game.copyWith(
       victory: VictoryState(
         winnerPlayerId: winnerId,
@@ -73,7 +73,7 @@ Game runEndOfTurnPhase(
   );
 
   if (haltAfterCalendar) {
-    logicLog.i(
+    turnLog.i(
       'calendar campaign halt at turn=$currentTurn '
       '(year ${mapping.yearAtTurn(currentTurn)})',
     );

@@ -296,6 +296,24 @@ Three files logged via the `colonizethis_logic` core `logicLog` (`CtLogger('logi
 
 All other diplomacy files (`alliance_resolver.dart`, `overture_resolver.dart`, `war_resolver.dart`, `intervention_resolver_call_to_arms.dart`, `diplomacy_subsidies_relations_resolver.dart`) already consumed `diploLog` via `diplomacy_resolver.dart`; the re-export keeps them unchanged. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `src/logging.dart`, `package_logger.dart`, `../logging.dart`, `../package_logger.dart`, or the `colonizethis_logic` barrel under `diplomacy/` or `dossier/`).
 
+### `turn` logging decoupling from `logicLog` (Refs #3290 C3 prerequisite)
+
+**Wrong:** `turn` → `colonizethis_logic` core logging (7 files, eliminated)
+
+Seven `turn/` files logged via the `colonizethis_logic` core `logicLog` (`CtLogger('logic')`), which would force the future `colonizethis_turn` package to depend on the thin logic core just for logging. The fix introduces a single turn-domain logger `turnLog` (`CtLogger('turn')`) in `turn/turn_logging.dart`, mirroring the one-logger-per-package convention already used by `ordersLog` (`orders:`), `combatLog` (`combat:`), `economyLog` (`economy:`), and `diploLog` (`diplomacy:`). Turn-orchestrator log lines (including the turn-orchestrated combat-phase lines previously emitted from the core) now carry the `turn:` prefix instead of `logic:`; this is the same prefix migration combat/orders/diplomacy performed at extraction and is the only behavioural change (structural logging move, no logic change).
+
+| Source file | Symbol | Before | After |
+|-------------|--------|--------|-------|
+| `turn/combat_phase_helpers.dart` | `turnLog.i` | imports `src/logging.dart` (`logicLog`) | `turnLog` from `turn_logging.dart` |
+| `turn/end_of_turn_resolver.dart` | `turnLog.i` | imports `src/logging.dart` (`logicLog`) | `turnLog` from `turn_logging.dart` |
+| `turn/naval_resolution.dart` | `turnLog.d` | imports `src/logging.dart` (`logicLog`) | `turnLog` from `turn_logging.dart` |
+| `turn/phases/combat_phase.dart` | `turnLog.i` | imports `src/logging.dart` (`logicLog`) | `turnLog` from `../turn_logging.dart` |
+| `turn/research_resolver.dart` | `turnLog.i` | imports `src/logging.dart` (`logicLog`) | `turnLog` from `turn_logging.dart` |
+| `turn/turn_phase_runner.dart` | `turnLog.i` | imports `src/logging.dart` (`logicLog`) | `turnLog` from `turn_logging.dart` |
+| `turn/turn_resolver.dart` | `turnLog.i` | imports `src/logging.dart` (`logicLog`) | `turnLog` from `turn_logging.dart` |
+
+The `turn_logging.dart` logger is not part of the public barrel and has no external (`app/`, `ctdev/`, AI) consumers, so no re-export shim is needed and the public API surface is unchanged. Enforced by `test/check_logic_domain_import_dag_test.dart` (no `src/logging.dart`, `package_logger.dart`, `../logging.dart`, `../../logging.dart`, `../package_logger.dart`, `../../package_logger.dart`, the `colonizethis_logic` barrel, or any `logicLog` reference under `turn/`) and pinned by `packages/colonizethis_logic/test/turn/turn_logging_test.dart`.
+
 ## Phase 1 slice — `colonizethis_combat` (Refs #3290 C1)
 
 **Given** the `colonizethis_world` leaf on `dev`, **when** the `colonizethis_combat` package is extracted, **then**:
@@ -303,7 +321,7 @@ All other diplomacy files (`alliance_resolver.dart`, `overture_resolver.dart`, `
 - `packages/colonizethis_combat` owns `combat/` (land + naval resolution, conflict detection, quick-battle, general assignment, military strength/attack economy) and depends only on `colonizethis_world`, `colonizethis_models`, `colonizethis_data`, `colonizethis_logger`.
 - `colonizethis_logic` depends on `colonizethis_combat` and re-exports `package:colonizethis_combat/colonizethis_combat.dart` from its barrel for backward compatibility; the `turn/` and `diplomacy/` consumers import combat via `package:colonizethis_combat/...`.
 - `colonizethis_combat/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.combat_no_logic_deps`).
-- `colonizethis_combat` uses exactly one logger with the distinct `combat` prefix (`combatLog`); land-combat log lines emitted from the package carry the `combat:` prefix, while turn-orchestrated combat-phase lines emitted from `colonizethis_logic` keep the `logic:` prefix.
+- `colonizethis_combat` uses exactly one logger with the distinct `combat` prefix (`combatLog`); land-combat log lines emitted from the package carry the `combat:` prefix, while turn-orchestrated combat-phase lines emitted from the `turn/` domain carry the `turn:` prefix (migrated from `logic:` by the C3 turn logging-decoupling prerequisite).
 - Combat-domain tests live under `packages/colonizethis_combat/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_combat` for integration fixtures.
 
 ## Acceptance criteria (Phase 0 / C0)
@@ -324,3 +342,5 @@ All other diplomacy files (`alliance_resolver.dart`, `overture_resolver.dart`, `
 - **Given** the `colonizethis_logic` source tree, **when** `logicDomainImportNeutralTopLevelFilesForTests()` is read, **then** the set does not contain `turn_resolution_seeds.dart`, the file exists at `packages/colonizethis_logic/lib/src/turn/turn_resolution_seeds.dart`, and no file remains at `packages/colonizethis_logic/lib/src/turn_resolution_seeds.dart` (the seeds are turn-owned, not a neutral core file).
 - **Given** a synthetic `world/` file that imports `../turn/turn_resolution_seeds.dart`, **when** `runCheckLogicDomainImportDag` scans the tree, **then** it returns exit code `1` because the now turn-owned seeds make this a forbidden `world->turn` edge.
 - **Given** every `*.dart` file under `packages/colonizethis_logic/lib/src/orders/` (recursive), **when** `test/check_logic_domain_import_dag_test.dart` scans their import directives, **then** none imports the neutral core projection module via `import '../projections/order_projections.dart';` or `import '../projections/projected_effects.dart';` (the order engine consumes the dry-run via an injected `OrderEffectsProjector` and the `ProjectedEffects` type from `orders/projected_effects.dart`).
+- **Given** the `turn/` source tree, **when** `turn/turn_logging.dart` is read, **then** it declares a single shared `turnLog` whose `prefix == 'turn'` (`CtLogger('turn')`), and emitting `turnLog.i('m')` produces a log line containing `turn: m`.
+- **Given** every `*.dart` file under `packages/colonizethis_logic/lib/src/turn/` (recursive) except `turn/turn_logging.dart`, **when** `test/check_logic_domain_import_dag_test.dart` scans their content, **then** none imports the core logging (`package:colonizethis_logic/src/logging.dart`, `package:colonizethis_logic/package_logger.dart`, `../logging.dart`, `../../logging.dart`, `../package_logger.dart`, `../../package_logger.dart`, or the `colonizethis_logic` barrel) and none references the symbol `logicLog` (turn logs via the turn-domain `turnLog`).
