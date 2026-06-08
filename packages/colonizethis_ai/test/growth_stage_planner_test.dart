@@ -809,4 +809,119 @@ void main() {
       expect(matureScale, greaterThanOrEqualTo(kRecruitmentFloor));
     });
   });
+
+  group('runRecruitmentPlanner growth-stage — AC13 military fabric reservation',
+      () {
+    Game militaryReadyGame({required int fabricHeld}) {
+      const ow = 'oldWorld';
+      return Game(
+        id: 'g-3371-ac13',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: false,
+            capitalProvinceId: '$ow|p0',
+            treasury: 2500,
+            stockpile: Stockpile()
+                .applyDelta(CommodityCatalog.grain.id, 40)
+                .applyDelta(CommodityCatalog.fabric.id, fabricHeld),
+            workerPool: const WorkerPool(peasants: 4),
+          ),
+        ],
+      );
+    }
+
+    OrderSuggestionAPI api() => _fakeApi(
+      recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
+      build: const [
+        BuildUnitOrder(
+          unitType: 'peasant_levies',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p0',
+        ),
+      ],
+    );
+
+    test('reserves scarce fabric: peasant recruit dropped, regiment kept', () {
+      final game = militaryReadyGame(fabricHeld: 1);
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final snapshot = _atWarSnapshot('gp1');
+
+      final plan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: _seeds,
+        goalPhase: ObserverGoalPhase.expand,
+        suggestionApi: api(),
+        growthStagePlannerEnabled: true,
+        snapshot: snapshot,
+      );
+
+      expect(plan.recruitOrders, isEmpty);
+      expect(plan.buildUnitOrders, isNotEmpty);
+      expect(
+        plan.rejected.map((r) => r.reason),
+        contains(kRecruitmentRejectMilitaryFabricReservation),
+      );
+    });
+
+    test('abundant fabric: peasant recruit not reservation-rejected', () {
+      final game = militaryReadyGame(fabricHeld: kReserveTarget);
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final snapshot = _atWarSnapshot('gp1');
+
+      final plan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: _seeds,
+        goalPhase: ObserverGoalPhase.expand,
+        suggestionApi: api(),
+        growthStagePlannerEnabled: true,
+        snapshot: snapshot,
+      );
+
+      expect(plan.recruitOrders, isNotEmpty);
+      expect(
+        plan.rejected.map((r) => r.reason),
+        isNot(contains(kRecruitmentRejectMilitaryFabricReservation)),
+      );
+    });
+
+    test('flag off: no reservation rejection', () {
+      final game = militaryReadyGame(fabricHeld: 1);
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final snapshot = _atWarSnapshot('gp1');
+
+      final plan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: _seeds,
+        goalPhase: ObserverGoalPhase.expand,
+        suggestionApi: api(),
+        growthStagePlannerEnabled: false,
+        snapshot: snapshot,
+      );
+
+      expect(
+        plan.rejected.map((r) => r.reason),
+        isNot(contains(kRecruitmentRejectMilitaryFabricReservation)),
+      );
+    });
+  });
 }

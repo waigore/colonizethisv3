@@ -50,6 +50,7 @@ export 'src/planning/recruitment_planner.dart'
         RejectedRecruitmentSuggestion,
         kRecruitmentRejectInsufficientWorkers,
         kRecruitmentRejectMilitaryBuildSuppressed,
+        kRecruitmentRejectMilitaryFabricReservation,
         kRecruitmentRejectSoftLuxuryCap,
         runRecruitmentPlanner;
 export 'src/social/hidden_agenda.dart';
