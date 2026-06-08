@@ -188,7 +188,7 @@ Four root planner files under `lib/src/ai/`: `ai_planner.dart`, `sim_game_ai.dar
 | `repo.logic_source_file_size` | `lib/src/**/*.dart` ≤500 physical lines; grandfather baseline for remaining offenders |
 | `tool/logic_domain_coverage_baseline.dart` | Regenerate per-domain coverage JSON (operator/CI diagnostic) |
 
-Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, etc.) are added when packages are created in Phases 1–4.
+Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, etc.) are added when packages are created in Phases 1–4 (e.g. `repo.ai_contracts_no_logic_deps` at C4).
 
 ## Phase 1 slice — `colonizethis_world` (Refs #3290 C1)
 
@@ -345,6 +345,17 @@ The `turn_logging.dart` logger is not part of the public barrel and has no exter
 - `colonizethis_turn/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.turn_no_logic_deps`).
 - `colonizethis_turn` uses exactly one logger with the distinct `turn` prefix (`turnLog`); turn-domain log lines carry the `turn:` prefix (migrated from `logic:` by the C3 turn logging-decoupling prerequisite).
 - Turn-domain and turn-orchestrator integration tests (including `resolveTurnForGame`, research-phase, economy-preview, and turn-trace suites) live under `packages/colonizethis_turn/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_turn` for the full game barrel, and `colonizethis_world` / `colonizethis_economy` gain a `colonizethis_turn` **dev_dependency** for the few turn-domain integration tests retained beside their leaf code.
+
+## Phase 4 slice — `colonizethis_ai_contracts` (Refs #3290 C4)
+
+**Given** the `colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_orders`, and `colonizethis_turn` packages on `dev`, **when** the `colonizethis_ai_contracts` package is extracted, **then**:
+
+- `packages/colonizethis_ai_contracts` owns the `src/ai/` file set (simple/full civilian-work selection and its `part` fragments, order generation, the sim-game default AI) and depends only on `colonizethis_world`, `colonizethis_orders`, `colonizethis_models`, `colonizethis_data`, `colonizethis_logger`.
+- A `colonizethis_ai_contracts` `src/constants.dart` re-export shim mirrors the historical logic-core shim (`GamePlayerLookup`, region/grid constants from `colonizethis_world`; `kUnitType*` from `colonizethis_models`; order/work constants from `colonizethis_orders`), so the moved `src/ai/` source keeps its `../constants.dart` import paths and introduces no new dependency edge.
+- `colonizethis_logic` no longer owns or re-exports `src/ai/`; `ai_api.dart` drops the AI planning re-exports. `colonizethis_ai` depends on `colonizethis_ai_contracts` and consumes the planning symbols through the narrow `planning_imports.dart` re-export hub (a `show` surface mirroring the symbols `ai_api.dart` previously provided), so AI planners are unchanged.
+- `colonizethis_ai_contracts/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.ai_contracts_no_logic_deps`), and `colonizethis_logic` must not depend on `colonizethis_ai_contracts` (preserves the forbidden `logic -> ai` direction).
+- `colonizethis_ai_contracts` uses exactly one logger with the distinct `ai_contracts` prefix (`aiContractsLog`); AI-contract log lines carry the `ai_contracts:` prefix.
+- AI-contract tests live under `packages/colonizethis_ai_contracts/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_ai_contracts` for integration fixtures.
 
 ## Acceptance criteria (Phase 0 / C0)
 

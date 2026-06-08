@@ -9,18 +9,20 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show
         cheapestRegimentBuildTreasuryCost,
         expandSellerFeedstockTileAcquisitionTarget;
-import 'package:colonizethis_data/colonizethis_data.dart'
-    hide cheapestRegimentBuildTreasuryCost;
-import 'package:colonizethis_logger/colonizethis_logger.dart';
-import 'package:colonizethis_logic/ai_api.dart'
+import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart'
     show
         hasIdleExplorerUnit,
         ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
-        regimentBuildInputFeedstockExtractionResourceIds,
         colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates,
-        suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile,
+        suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/ai_api.dart'
+    show
+        regimentBuildInputFeedstockExtractionResourceIds,
         supplierImprovementInputFeedstockExtractionResourceIds;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

@@ -14,7 +14,6 @@
 /// `diplomacy_planner_peace_targets.dart` host was deleted in S1.
 library;
 
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';

@@ -6,31 +6,11 @@ library;
 
 export 'package:colonizethis_world/src/world/ai_control.dart'
     show isAiControlled;
-export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart'
-    show
-        ColocatedFeedstockProspectIntraPassGates,
-        colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates,
-        hasIdleExplorerUnit,
-        ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
-        ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
-        ownsProspectedOldWorldMineralFeedstockTile,
-        suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile;
 export 'package:colonizethis_orders/src/orders/feedstock_bootstrap_cost.dart'
     show
         feedstockBootstrapBuildImprovementCastIronWaived,
         feedstockBootstrapBuildImprovementEffectiveCost,
         feedstockBootstrapBuildImprovementLumberWaived;
-export 'src/ai/full_ai_civilian_work_selection.dart'
-    show
-        FullAiCivilianWorkIdle,
-        FullAiCivilianWorkSelectionResult,
-        kRegimentBuildInputFeedstockExtractionScoreBoost,
-        selectFullAiCivilianWorkOrders,
-        selfLockRecoverySellerStageableImprovementInputs,
-        sellerFeedstockTileAcquisitionTarget,
-        sellerFeedstockTileAcquisitionTargetProvinceIdsSorted,
-        sellerFeedstockTileAcquisitionTargetsAmongAcquirable,
-        sellerNeedsImprovementInputFeedstockTileAcquisition;
 export 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart'
     show
         feedstockExtractionResourceIdsForPlayer,
@@ -40,7 +20,6 @@ export 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart
         selfLockRecoverySellerNeededProducibleImprovementInputs,
         sellerImprovementInputFeedstockExtractionResourceIds,
         supplierImprovementInputFeedstockExtractionResourceIds;
-export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'
     show
         GamePlayerLookup,

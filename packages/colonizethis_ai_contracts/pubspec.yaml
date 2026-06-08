@@ -1,5 +1,5 @@
-name: colonizethis_orders
-description: Order engine, suggestion APIs, validation, and debug-console order surfaces for Colonize This.
+name: colonizethis_ai_contracts
+description: Deterministic AI planning heuristics (simple/full civilian work, order generation) for Colonize This.
 version: 0.0.1
 publish_to: none
 repository: https://github.com/colonizethisv3/colonizethisv3
@@ -14,13 +14,11 @@ dependencies:
   colonizethis_data:
   colonizethis_models:
   colonizethis_world:
-  colonizethis_diplomacy:
-  colonizethis_economy:
+  colonizethis_orders:
 
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
-  colonizethis_ai_contracts:
   colonizethis_logic:
   colonizethis_test:
   coverage: ^1.15.0
