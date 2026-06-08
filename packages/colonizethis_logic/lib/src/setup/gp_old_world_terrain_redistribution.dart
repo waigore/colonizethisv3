@@ -1,7 +1,7 @@
 // SPEC/game/tile-map-and-generation.md; SPEC/program/game-setup-pipeline.md (§7d.terrain).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -193,7 +193,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
   final terrainGrid = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
   if (terrainGrid == null || resGrid == null) {
-    logicLog.i(
+    setupLog.i(
       'skip GP Old World terrain redistribution (missing terrain or resource grid)',
     );
     return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
@@ -215,7 +215,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
     forbidden: forbidden,
   );
   if (tiles.isEmpty) {
-    logicLog.i('GP Old World terrain redistribution: no eligible GP land tiles');
+    setupLog.i('GP Old World terrain redistribution: no eligible GP land tiles');
     return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
   }
 
@@ -252,7 +252,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
   }
 
   if (sequence.length != tiles.length) {
-    logicLog.e(
+    setupLog.e(
       'logic: GP OW terrain redistribution internal length mismatch '
       'seq=${sequence.length} tiles=${tiles.length} — leaving map unchanged',
     );
@@ -292,7 +292,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
     achieved: achieved,
   );
 
-  logicLog.i(
+  setupLog.i(
     'GP Old World terrain redistribution complete '
     'eligibleTiles=${tiles.length} fairnessMaxAbsFracDev=$fairness '
     '(diagnostic; setup does not fail on terrain fairness)',

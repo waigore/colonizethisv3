@@ -4,7 +4,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'setup_logging.dart';
 
 /// Picks one representative sea zone per map edge (top, bottom, left, right).
 /// Returns a map of edge name ('top', 'bottom', 'left', 'right') to sea zone id.
@@ -87,7 +87,7 @@ List<WarpLink> generateWarpZones({
     ..sort();
 
   if (commonEdges.isEmpty) {
-    logicLog.d('warp zones: no common edges with sea zones, skipping');
+    setupLog.d('warp zones: no common edges with sea zones, skipping');
     return [];
   }
 
@@ -103,7 +103,7 @@ List<WarpLink> generateWarpZones({
     );
   }
 
-  logicLog.d(
+  setupLog.d(
     'warp zones: ${links.length} links on edges ${commonEdges.join(", ")}',
   );
   return links;

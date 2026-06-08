@@ -312,6 +312,6 @@ final class _LockedAssignerEngine {
   void _traceDfs(String msg) {
     if (!_kTraceLockedAssignerDfs) return;
     final line = 'logic: locked_assign_dfs #${traceSeq[0]++} $msg';
-    logicLog.i(line);
+    setupLog.i(line);
   }
 }
