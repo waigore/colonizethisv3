@@ -103,7 +103,7 @@ For each filled deal that is FRR-eligible:
   GP-on-GP transactions. Pure, no logger calls, no RNG.
 - **Data sources already on dev:**
   `WorldState.purchasedTilesByTileKey` (set by `purchase_land` work
-  completion in `packages/colonizethis_logic/lib/src/orders/purchase_land_work_completion.dart`)
+  completion in `packages/colonizethis_orders/lib/src/orders/purchase_land_work_completion.dart`)
   and `WorldState.tileKeysByRegionAndProvince` (game-setup seeded
   region/province tile bucket map).
 - **D2 (priority override in deal matching) is implemented** in

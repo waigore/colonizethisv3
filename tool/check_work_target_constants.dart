@@ -13,7 +13,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// `lib/src/constants.dart` only re-exports them, so it no longer carries the
 /// definitions this check parses.
 const _workTargetConstantsRelPath =
-    'packages/colonizethis_logic/lib/src/orders/order_work_constants.dart';
+    'packages/colonizethis_orders/lib/src/orders/order_work_constants.dart';
 
 /// Neutral re-export shim that still exposes the constants to consumers.
 /// Excluded from scanning so its `export` line is never treated as usage.
@@ -24,7 +24,7 @@ const _workTargetConstantsShimRelPath =
 /// their raw string literals (Refs #3290). Like the definition source, it must
 /// reference the raw literals to verify them, so it is exempt from the gate.
 const _workTargetConstantsOwnershipTestRelPath =
-    'packages/colonizethis_logic/test/orders/order_work_constants_test.dart';
+    'packages/colonizethis_orders/test/orders/order_work_constants_test.dart';
 
 const _excludedPaths = <String>{
   _workTargetConstantsRelPath,

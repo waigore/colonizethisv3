@@ -21,4 +21,4 @@ export 'package:colonizethis_world/colonizethis_world.dart'
         kGridNeighborsCardinal4,
         kRegionNewWorld,
         kRegionOldWorld;
-export 'orders/order_work_constants.dart';
+export 'package:colonizethis_orders/src/orders/order_work_constants.dart';

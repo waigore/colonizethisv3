@@ -169,7 +169,7 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 
 **Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`_OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
 
-**Manifest:** `packages/colonizethis_logic/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
+**Manifest:** `packages/colonizethis_orders/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
 
 **CI / workflow:** `melos run codegen_order_engine` regenerates output; `melos run codegen_verify` (runs `tool/verify_order_engine_codegen.sh`) must pass on PRs — committed `order_engine.g.dart` must match the generator.
 

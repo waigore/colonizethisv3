@@ -16,6 +16,7 @@ dependencies:
   colonizethis_economy:
   colonizethis_diplomacy:
   colonizethis_setup:
+  colonizethis_orders:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:

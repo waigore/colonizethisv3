@@ -15,7 +15,7 @@ export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart'
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile;
-export 'src/orders/feedstock_bootstrap_cost.dart'
+export 'package:colonizethis_orders/src/orders/feedstock_bootstrap_cost.dart'
     show
         feedstockBootstrapBuildImprovementCastIronWaived,
         feedstockBootstrapBuildImprovementEffectiveCost,
@@ -31,7 +31,7 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         sellerFeedstockTileAcquisitionTargetProvinceIdsSorted,
         sellerFeedstockTileAcquisitionTargetsAmongAcquirable,
         sellerNeedsImprovementInputFeedstockTileAcquisition;
-export 'src/orders/feedstock_extraction_targets.dart'
+export 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart'
     show
         feedstockExtractionResourceIdsForPlayer,
         peerLockRecoverySellerNeededProducibleImprovementInputs,
@@ -61,9 +61,9 @@ export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.d
         shipCountForFaction;
 export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart'
     show DiplomacyFactionMembership;
-export 'src/orders/incremental_candidate_validator.dart'
+export 'package:colonizethis_orders/src/orders/incremental_candidate_validator.dart'
     show IncrementalCandidateValidator;
-export 'src/orders/order_suggestion_move_army.dart'
+export 'package:colonizethis_orders/src/orders/order_suggestion_move_army.dart'
     show armyMoveCandidateDestinationProvinceIds;
 export 'package:colonizethis_world/src/world/movement.dart'
     show neighborProvinceIdsInRegion;
@@ -82,11 +82,11 @@ export 'package:colonizethis_economy/src/economy/worker_economy.dart'
     show effectiveLabourForWorkers;
 export 'package:colonizethis_economy/src/economy/worker_action_cost.dart'
     show canAffordRecruitWorker;
-export 'src/orders/draft_orders_mutations.dart'
+export 'package:colonizethis_orders/src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
 export 'package:colonizethis_diplomacy/src/diplomacy/known_diplomatic_targets.dart'
     show knownDiplomaticTargetFactionIds;
-export 'src/orders/order_suggestion_helpers.dart'
+export 'package:colonizethis_orders/src/orders/order_suggestion_helpers.dart'
     show
         filterArmyMoveOrdersByDiplomacy,
         filterMoveOrdersByDiplomacy,

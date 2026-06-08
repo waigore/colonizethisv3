@@ -383,20 +383,23 @@ bool _isRedundantWhereToListWhereChainPattern(MethodInvocation node) {
   return true;
 }
 
+bool _pathUnderAnyPrefix(String relativePath, List<String> prefixes) {
+  if (prefixes.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  return prefixes.any((prefix) => slashPath.startsWith(prefix));
+}
+
 bool _isLinearCollectionWhereFirstOrNullPattern(
   PropertyAccess node,
   DisallowedPatternRule rule,
   String relativePath,
 ) {
-  final prefix = rule.linearCollectionPathPrefix;
-  if (prefix == null || prefix.isEmpty) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
     return false;
   }
   if (rule.linearCollectionNames.isEmpty) {
-    return false;
-  }
-  final slashPath = relativePath.replaceAll('\\', '/');
-  if (!slashPath.startsWith(prefix)) {
     return false;
   }
   if (node.propertyName.name != 'firstOrNull') {
@@ -444,12 +447,7 @@ bool _isIncrementalValidatorForPlayerInLoopPattern(
   DisallowedPatternRule rule,
   String relativePath,
 ) {
-  final prefix = rule.linearCollectionPathPrefix;
-  if (prefix == null || prefix.isEmpty) {
-    return false;
-  }
-  final slashPath = relativePath.replaceAll('\\', '/');
-  if (!slashPath.startsWith(prefix)) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
     return false;
   }
   if (node is InstanceCreationExpression) {
@@ -478,7 +476,7 @@ bool _isIncrementalValidatorForPlayerInLoopPattern(
 /// True when [node] is a `copyWith(...)` invocation that anchors a chain
 /// **three or more** `copyWith` levels deep through the configured outer
 /// named argument (default `worldState`). The detection is structural and
-/// path-scoped to [DisallowedPatternRule.linearCollectionPathPrefix]:
+/// path-scoped to [DisallowedPatternRule.linearCollectionPathPrefixes]:
 ///
 /// * Level 1: `<expr>.copyWith(<outerArgName>: <inner>)`.
 /// * Level 2: `<inner>` is a `<expr2>.copyWith(<args2>)` invocation.
@@ -493,12 +491,7 @@ bool _isNestedWorldStateCopyWithChain(
   DisallowedPatternRule rule,
   String relativePath,
 ) {
-  final prefix = rule.linearCollectionPathPrefix;
-  if (prefix == null || prefix.isEmpty) {
-    return false;
-  }
-  final slashPath = relativePath.replaceAll('\\', '/');
-  if (!slashPath.startsWith(prefix)) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
     return false;
   }
   if (node.methodName.name != 'copyWith') {

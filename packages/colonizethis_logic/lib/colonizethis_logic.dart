@@ -31,15 +31,14 @@ export 'package:colonizethis_combat/colonizethis_combat.dart';
 // Economy
 export 'package:colonizethis_economy/colonizethis_economy.dart';
 
-// Orders
-export 'src/orders/orders.dart';
+// Orders (Refs #3290 — colonizethis_orders package; re-exported for backward compat)
+export 'package:colonizethis_orders/colonizethis_orders.dart';
 // Order-effects dry-run projector (concrete impl lives in the neutral core
-// `projections/` module because it runs the turn resolver; the orders barrel
-// only exposes the injectable typedef + ProjectedEffects value type). Refs #3290 C2.
+// `projections/` module because it runs the turn resolver). Refs #3290 C2.
 export 'src/projections/order_projections.dart';
-export 'src/orders/civilian_projected_tile.dart';
-export 'src/orders/validators/work_order_cost_calculator.dart';
-export 'src/orders/order_suggestion.dart'
+export 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart';
+export 'package:colonizethis_orders/src/orders/validators/work_order_cost_calculator.dart';
+export 'package:colonizethis_orders/src/orders/order_suggestion.dart'
     show
         AvailableWorkTargetsForUnit,
         getAvailableWorkTargetsForUnit,
@@ -49,8 +48,8 @@ export 'src/orders/order_suggestion.dart'
         orderSuggestionWorkOrderAcceptanceProbeCountForTests,
         resetIncrementalCandidateValidatorBuildCountForTests,
         setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
-export 'src/orders/per_player_work_target_selection_cache.dart';
-export 'src/orders/unit_type_helpers.dart'
+export 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+export 'package:colonizethis_orders/src/orders/unit_type_helpers.dart'
     show devExclusiveReservedTileKeysForPlayer;
 
 // Diplomacy

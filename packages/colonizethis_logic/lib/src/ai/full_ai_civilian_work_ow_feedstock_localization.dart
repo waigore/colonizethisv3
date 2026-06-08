@@ -2,17 +2,20 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../orders/bundled_civilian_work_order.dart'
+import 'package:colonizethis_orders/src/orders/bundled_civilian_work_order.dart'
     show validateCivilianBundledWorkMoveLeg;
-import '../orders/order_resolution_context.dart'
+import 'package:colonizethis_orders/src/orders/order_resolution_context.dart'
     show OrderResolutionContext, orderResolutionContextFromView;
-import '../orders/order_suggestion_context.dart'
+import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart'
     show
         buildIncrementalCandidateValidator,
         isWorkOrderAcceptedWithValidator;
-import '../orders/order_suggestion_work.dart' show suggestWorkOrders;
-import '../orders/order_visibility.dart' show provinceHasAtLeastVisibility;
-import '../orders/orders_application_helpers.dart' show isMineralEligibleTile;
+import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart'
+    show suggestWorkOrders;
+import 'package:colonizethis_orders/src/orders/order_visibility.dart'
+    show provinceHasAtLeastVisibility;
+import 'package:colonizethis_orders/src/orders/orders_application_helpers.dart'
+    show isMineralEligibleTile;
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';

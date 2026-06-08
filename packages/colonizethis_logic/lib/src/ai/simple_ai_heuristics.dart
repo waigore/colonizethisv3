@@ -9,10 +9,10 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../orders/draft_orders_mutations.dart';
-import '../orders/order_suggestion.dart';
-import '../orders/order_resolution_context.dart';
-import '../orders/order_suggestion_context.dart';
+import 'package:colonizethis_orders/src/orders/draft_orders_mutations.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion.dart';
+import 'package:colonizethis_orders/src/orders/order_resolution_context.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_world/src/world/army_migration.dart';
 import 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
