@@ -21,7 +21,6 @@ import '../util/orders_extensions.dart';
 import 'build_planner.dart';
 import 'growth_stage.dart';
 import 'conquest_planner.dart';
-import 'growth_stage.dart';
 import 'growth_stage_work_priorities.dart';
 import 'diplomacy_planner.dart';
 import 'domain_planner_outcome.dart';
@@ -545,7 +544,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
         _log.i(
           growthStagePeasantRecruit
               ? 'growth-stage peasant recruit nationId=${ctx.nationId} '
-                    'workerGrowth=${growthStage!.workerGrowthPriority.toStringAsFixed(2)}'
+                    'workerGrowth=${growthStage.workerGrowthPriority.toStringAsFixed(2)}'
               : 'castIron labour peasant recruit nationId=${ctx.nationId} '
                     'targetTier=${peasantRecruit.targetTier.name}',
         );
@@ -845,7 +844,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   if (suppressMilitaryBuilds && candidatesForBuild.isEmpty) {
     _log.d(
       'build suppressed nationId=${ctx.nationId} '
-      'militaryPriority=${growthStage!.militaryPriority.toStringAsFixed(2)}',
+      'militaryPriority=${growthStage.militaryPriority.toStringAsFixed(2)}',
     );
     return _BuildPassResult(
       buildPlannerRan: false,
