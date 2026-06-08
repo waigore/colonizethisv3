@@ -4,10 +4,10 @@
 // SPEC/ai/dialogue-and-mood.md, SPEC/program/ai-events-and-dossier.md.
 
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'event_dialogue_test_support.dart';
+import 'support/event_dialogue_test_support.dart';
 
 void main() {
   group('dialogueEventsForLandBattleResult', () {

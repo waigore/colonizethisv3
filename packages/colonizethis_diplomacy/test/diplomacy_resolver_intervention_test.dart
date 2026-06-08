@@ -1,7 +1,8 @@
-import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdPropaganda;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('intervention helpers', () {
