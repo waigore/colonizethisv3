@@ -507,4 +507,45 @@ void noop() {}
       );
     },
   );
+
+  test('turn does not import the logic core logging (Refs #3290 C3)', () {
+    // The turn/ tree extracts into colonizethis_turn, which must depend only on
+    // world/combat/economy/diplomacy/orders/models/data/logger — not on the
+    // thin colonizethis_logic core. Logging therefore goes through the
+    // turn-domain logger (turnLog in turn/turn_logging.dart), not the
+    // logic-core logicLog.
+    const forbiddenLoggingImports = <String>[
+      "import 'package:colonizethis_logic/src/logging.dart';",
+      "import 'package:colonizethis_logic/package_logger.dart';",
+      "import '../logging.dart';",
+      "import '../../logging.dart';",
+      "import '../package_logger.dart';",
+      "import '../../package_logger.dart';",
+      "import 'package:colonizethis_logic/colonizethis_logic.dart';",
+    ];
+    final turnDir = Directory('packages/colonizethis_logic/lib/src/turn');
+    final violations = <String>[];
+    if (turnDir.existsSync()) {
+      for (final entity in turnDir.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        if (entity.path.endsWith('turn_logging.dart')) continue;
+        final content = entity.readAsStringSync();
+        for (final bad in forbiddenLoggingImports) {
+          if (content.contains(bad)) {
+            violations.add('${entity.path}: $bad');
+          }
+        }
+        if (content.contains('logicLog')) {
+          violations.add('${entity.path}: references logicLog');
+        }
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason:
+          'turn/ must log via the turn-domain logger (turnLog in '
+          'turn/turn_logging.dart), not the colonizethis_logic core logicLog',
+    );
+  });
 }

@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/logging.dart';
+import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_combat/src/combat/naval_combat_resolver.dart';
@@ -13,7 +13,8 @@ import 'turn_resolution_seeds.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/naval.dart';
 import 'package:colonizethis_world/src/world/naval_coastal_visibility.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart' hide landTileKeysForProvinceBucket;
+import 'package:colonizethis_world/src/world/province_lookup.dart'
+    hide landTileKeysForProvinceBucket;
 import 'package:colonizethis_world/src/world/topology_helpers.dart';
 
 export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
@@ -23,7 +24,8 @@ export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
         landTileKeysForProvinceBucket,
         revealProvinceTilesForPlayer,
         revealTilesAfterMoveToSeaZone;
-export 'package:colonizethis_world/src/world/naval_mission_orders.dart' show applyNavalMissionOrders;
+export 'package:colonizethis_world/src/world/naval_mission_orders.dart'
+    show applyNavalMissionOrders;
 
 // Naval resolution concern fragments (Refs #3290 Phase-0 file-split). Each
 // `part of` fragment shares this library's imports and library-private scope,
@@ -111,10 +113,8 @@ Game applyNavalMovesAndShipReveal(
   }
 
   return game.updateWorldState(
-    (ws) => ws.copyWith(
-      fleets: fleets,
-      playerVisibilityByTile: visibilityByTile,
-    ),
+    (ws) =>
+        ws.copyWith(fleets: fleets, playerVisibilityByTile: visibilityByTile),
   );
 }
 
@@ -128,7 +128,7 @@ Game runNavalInterceptionCombatPhase(
   GameEventBus? eventBus,
 }) {
   var battles = detectNavalConflicts(game);
-  logicLog.d('naval phase detected battles=${battles.length}');
+  turnLog.d('naval phase detected battles=${battles.length}');
   final movedFleetIds = <String>{
     for (final list in navalMoveOrdersByPlayerId.values)
       for (final order in list) order.fleetId,
@@ -141,7 +141,7 @@ Game runNavalInterceptionCombatPhase(
       (game.globalGameSeed ?? 0) ^
       (game.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
-  logicLog.d('naval phase after interception battles=${battles.length}');
+  turnLog.d('naval phase after interception battles=${battles.length}');
   seed =
       (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
       kTurnResolutionLcgMask;
@@ -191,7 +191,7 @@ Game runNavalInterceptionCombatPhase(
       retreatDestinationSide1: retreatZoneSide1,
       retreatDestinationSide2: retreatZoneSide2,
     );
-    logicLog.d(
+    turnLog.d(
       'naval phase battle zone=${battle.seaZoneId} outcome=${result.outcome.name} '
       'side1Retreated=${result.side1Retreated} side2Retreated=${result.side2Retreated}',
     );

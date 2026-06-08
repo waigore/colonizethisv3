@@ -1,7 +1,7 @@
 // Helpers for the combat phase: apply one land battle (quick or auto-resolve), evidence, dialogue.
 // SPEC/program/turn-resolution-phase-details.md § Combat. Called from turn_resolver._runCombatPhase.
 
-import 'package:colonizethis_logic/src/logging.dart';
+import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_combat/src/combat/battle_general_assignment.dart';
@@ -36,7 +36,7 @@ Game runOneLandBattle(
     0,
     (s, a) => s + a.unitIds.length,
   );
-  logicLog.i(
+  turnLog.i(
     'combat battle_start turn=$turn battleIndex=$battleIndex '
     'regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
     'defenderFactionId=${ctx.defenderFactionId} attackerSides=${ctx.attackers.length} '
@@ -59,7 +59,7 @@ Game runOneLandBattle(
         qbResult.provinceFlips &&
         qbResult.winner == QuickBattleWinner.attacker &&
         ctx.attackers.isNotEmpty;
-    logicLog.i(
+    turnLog.i(
       'combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
       'mode=quickBattle winner=${qbResult.winner.name} provinceFlipped=$qbFlipped '
       'attCasualties=${qbResult.attackerCasualties.length} '
