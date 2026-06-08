@@ -3,7 +3,7 @@ library order_suggestion_work;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../ai/full_ai_civilian_work_selection.dart'
+import 'feedstock_extraction_targets.dart'
     show feedstockExtractionResourceIdsForPlayer;
 import '../constants.dart';
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';

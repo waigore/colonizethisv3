@@ -5,10 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../orders/build_rail_work_rules.dart';
+import '../orders/feedstock_extraction_targets.dart';
 import 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
 part 'full_ai_civilian_work_selection_feedstock.dart';
 part 'full_ai_civilian_work_selection_feedstock_acquisition.dart';

@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'full_ai_civilian_work_selection.dart';
+import '../orders/feedstock_extraction_targets.dart';
 
 bool _isFeedstockBootstrapTarget(
   Game game,
