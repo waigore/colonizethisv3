@@ -116,7 +116,8 @@ province with an unimproved `wool`/`cotton` tile, the orchestrator emits one
 On seed 42, gp3/gp5 start with Builders in a grain-only province while `wool`
 tiles sit in other owned provinces; this slice routes a Builder onto the wool
 province so the feedstock build routing above can fire on the following turn
-(or same turn after the move resolves).
+(or same turn after the move resolves). AC7 seed-42 calibration may require
+additional tuning once relocation is active end-to-end.
 
 ## Recruitment modulation
 
