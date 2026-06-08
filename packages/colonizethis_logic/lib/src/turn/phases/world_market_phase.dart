@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../diplomacy/diplomacy_relation_lookup.dart'
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart'
     show ftpPairKeysFromGame, getRelation;
 import 'package:colonizethis_economy/src/economy/non_gp_extraction.dart';
 import 'package:colonizethis_economy/src/economy/sea_transport.dart';

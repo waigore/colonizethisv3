@@ -9,7 +9,7 @@ import 'package:colonizethis_logic/src/orders/validators/move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/naval_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/recruit_worker_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_validator.dart';
-import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'test_fixtures.dart';

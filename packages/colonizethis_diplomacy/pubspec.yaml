@@ -1,5 +1,5 @@
-name: colonizethis_logic
-description: Game rules, turn resolution, victory, validation for Colonize This.
+name: colonizethis_diplomacy
+description: Diplomacy, overture, intervention, war, and dossier resolution for Colonize This.
 version: 0.0.1
 publish_to: none
 repository: https://github.com/colonizethisv3/colonizethisv3
@@ -10,21 +10,18 @@ environment:
 
 dependencies:
   logger: ^2.0.2
-  riverpod: ^3.2.1
   colonizethis_logger:
-  colonizethis_combat:
-  colonizethis_economy:
-  colonizethis_diplomacy:
   colonizethis_data:
-  colonizethis_map:
   colonizethis_models:
   colonizethis_world:
+  colonizethis_combat:
+  colonizethis_economy:
 
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
+  colonizethis_logic:
   colonizethis_test:
   coverage: ^1.15.0
   custom_lint: 0.8.1
-  json_schema: ^5.2.2
   test: 1.30.0

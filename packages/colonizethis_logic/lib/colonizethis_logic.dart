@@ -64,8 +64,8 @@ export 'src/orders/unit_type_helpers.dart'
     show devExclusiveReservedTileKeysForPlayer;
 
 // Diplomacy
-export 'src/diplomacy/diplomacy_resolver.dart';
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 
 // Dossier (evidence rules, event dialogue)
-export 'src/dossier/evidence_rules.dart';
-export 'src/dossier/event_dialogue.dart';
+export 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';
+export 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';

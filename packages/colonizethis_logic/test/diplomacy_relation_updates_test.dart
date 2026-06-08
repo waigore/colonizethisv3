@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_logic/src/diplomacy/diplomacy_relation_lookup.dart';
-import 'package:colonizethis_logic/src/diplomacy/diplomacy_relation_updates.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_updates.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 

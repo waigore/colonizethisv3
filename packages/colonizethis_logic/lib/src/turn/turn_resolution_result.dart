@@ -17,9 +17,9 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../diplomacy/diplomacy_phase_result.dart';
+import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_phase_result.dart';
 
-export '../diplomacy/diplomacy_phase_result.dart';
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_phase_result.dart';
 
 /// Sealed result of turn resolution: complete or pending human input.
 ///

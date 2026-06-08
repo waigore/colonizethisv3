@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../dossier/evidence_rules.dart';
+import 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'economy_debt_rules.dart';
 import 'economy_tech_effects.dart';

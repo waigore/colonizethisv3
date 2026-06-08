@@ -47,7 +47,7 @@ export 'src/constants.dart'
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand,
         kWorkTargetStealTech;
-export 'src/diplomacy/diplomacy_relation_lookup.dart'
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart'
     show
         getOverture,
         getRelation,
@@ -57,7 +57,8 @@ export 'src/diplomacy/diplomacy_relation_lookup.dart'
         provinceCountOwnedBy,
         relationScoreMinFriendly,
         shipCountForFaction;
-export 'src/diplomacy/diplomacy_resolver.dart' show DiplomacyFactionMembership;
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart'
+    show DiplomacyFactionMembership;
 export 'src/orders/incremental_candidate_validator.dart'
     show IncrementalCandidateValidator;
 export 'src/orders/order_suggestion_move_army.dart'
@@ -81,7 +82,7 @@ export 'package:colonizethis_economy/src/economy/worker_action_cost.dart'
     show canAffordRecruitWorker;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
-export 'src/diplomacy/known_diplomatic_targets.dart'
+export 'package:colonizethis_diplomacy/src/diplomacy/known_diplomatic_targets.dart'
     show knownDiplomaticTargetFactionIds;
 export 'src/orders/order_suggestion_helpers.dart'
     show

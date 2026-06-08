@@ -15,7 +15,7 @@ export SUPPRESS_IMAGE_VIEWER="${SUPPRESS_IMAGE_VIEWER:-1}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-ALL_PKGS=(colonizethis_models colonizethis_data colonizethis_save colonizethis_map colonizethis_world colonizethis_combat colonizethis_economy colonizethis_logic colonizethis_ai)
+ALL_PKGS=(colonizethis_models colonizethis_data colonizethis_save colonizethis_map colonizethis_world colonizethis_combat colonizethis_economy colonizethis_diplomacy colonizethis_logic colonizethis_ai)
 
 # ---- read package filter ---------------------------------------------------
 if [ -n "${PACKAGES_TO_TEST:-}" ]; then
