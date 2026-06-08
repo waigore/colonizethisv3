@@ -37,8 +37,8 @@ int runCheckLogicWorkTargetSwitch(
   if (scanFiles == null) {
     logE(
       'check_logic_work_target_switch: scoped paths not found '
-      '(expected `packages/colonizethis_logic/lib/src/orders/work_handlers/` '
-      'and `packages/colonizethis_logic/lib/src/orders/order_visibility.dart`).',
+      '(expected `packages/colonizethis_orders/lib/src/orders/work_handlers/` '
+      'and `packages/colonizethis_orders/lib/src/orders/order_visibility.dart`).',
     );
     return 1;
   }
@@ -94,7 +94,7 @@ List<File>? _collectScanFiles(String repoRoot) {
     p.join(
       repoRoot,
       'packages',
-      'colonizethis_logic',
+      'colonizethis_orders',
       'lib',
       'src',
       'orders',
@@ -105,7 +105,7 @@ List<File>? _collectScanFiles(String repoRoot) {
     p.join(
       repoRoot,
       'packages',
-      'colonizethis_logic',
+      'colonizethis_orders',
       'lib',
       'src',
       'orders',

@@ -2,9 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
-import '../../orders/bundled_civilian_work_order.dart';
-import '../../orders/draft_orders_mutations.dart';
-import '../../orders/order_resolution_context.dart';
+import 'package:colonizethis_orders/src/orders/bundled_civilian_work_order.dart';
+import 'package:colonizethis_orders/src/orders/draft_orders_mutations.dart';
+import 'package:colonizethis_orders/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_world/src/world/army_movement.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/movement.dart';

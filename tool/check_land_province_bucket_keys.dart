@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 const _guardedRelativePaths = <String>{
-  'packages/colonizethis_logic/lib/src/orders/orders_application.dart',
+  'packages/colonizethis_orders/lib/src/orders/orders_application.dart',
   'packages/colonizethis_world/lib/src/world/fog_resolution.dart',
   'packages/colonizethis_world/lib/src/world/fog_resolution_explorer_spy_decay.dart',
   'packages/colonizethis_world/lib/src/world/fog_resolution_province_ownership.dart',

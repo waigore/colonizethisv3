@@ -4,15 +4,15 @@ library;
 
 export 'package:colonizethis_economy/src/economy/world_market/trade_order_suggester.dart'
     show TradeOrderSuggester, TradeSuggestionContext, TradeSuggestionResult;
-export 'src/orders/order_suggestion_api.dart';
-export 'src/orders/order_suggestion_api_impl.dart'
+export 'package:colonizethis_orders/src/orders/order_suggestion_api.dart';
+export 'package:colonizethis_orders/src/orders/order_suggestion_api_impl.dart'
     show DefaultOrderSuggestionAPI;
-export 'src/orders/order_resolution_context.dart'
+export 'package:colonizethis_orders/src/orders/order_resolution_context.dart'
     show
         OrderResolutionContext,
         buildOrderResolutionContext,
         orderResolutionContextFromView;
-export 'src/orders/diplomatic_panel_actions.dart'
+export 'package:colonizethis_orders/src/orders/diplomatic_panel_actions.dart'
     show
         DiplomaticPanelAction,
         diplomaticPanelActionCandidates,
