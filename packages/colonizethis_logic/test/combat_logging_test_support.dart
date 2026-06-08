@@ -5,13 +5,15 @@ import 'package:logger/logger.dart';
 ///
 /// After the `colonizethis_combat` package extraction (Refs #3290 Phase 1),
 /// combat-resolution lines emitted from that package carry the `combat:` prefix
-/// (e.g. `combat: combat engagement`), while turn-orchestrated combat-phase
-/// lines emitted from `colonizethis_logic` keep the `logic:` prefix
-/// (e.g. `logic: combat conflict_detection`). This filter matches both so split
-/// test files share one filter rather than duplicate it.
+/// (e.g. `combat: combat engagement`). After the turn-domain logging decouple
+/// (Refs #3290 C3 prerequisite), turn-orchestrated combat-phase lines emitted
+/// from `colonizethis_logic` carry the `turn:` prefix
+/// (e.g. `turn: combat conflict_detection`) instead of the former `logic:`
+/// prefix. This filter matches both so split test files share one filter rather
+/// than duplicate it.
 List<String> combatMessages(List<LogEvent> events) => [
   for (final e in events)
-    if (e.message.contains('logic: combat') ||
+    if (e.message.contains('turn: combat') ||
         e.message.contains('combat: combat'))
       e.message,
 ];

@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdCropRotation;
 List<String> _researchMessages(List<LogEvent> events) => [
       for (final e in events)
-        if (e.message.contains('logic: research')) e.message,
+        if (e.message.contains('turn: research')) e.message,
     ];
 
 void main() {
@@ -46,14 +46,14 @@ void main() {
       final lines = _researchMessages(capturedEvents);
       expect(
         lines.any(
-          (m) => m.contains('logic: research phase start') && m.contains('turn=7'),
+          (m) => m.contains('turn: research phase start') && m.contains('turn=7'),
         ),
         isTrue,
       );
       expect(
         lines.any(
           (m) =>
-              m.contains('logic: research phase end') &&
+              m.contains('turn: research phase end') &&
               m.contains('turn=7') &&
               m.contains('playersWithOrders=0'),
         ),
@@ -95,7 +95,7 @@ void main() {
       expect(
         lines.any(
           (m) =>
-              m.contains('logic: research apply') &&
+              m.contains('turn: research apply') &&
               m.contains('turn=3') &&
               m.contains('playerId=p1') &&
               m.contains('orders=1'),
@@ -105,7 +105,7 @@ void main() {
       expect(
         lines.any(
           (m) =>
-              m.contains('logic: research phase end') &&
+              m.contains('turn: research phase end') &&
               m.contains('turn=3') &&
               m.contains('playersWithOrders=1'),
         ),
