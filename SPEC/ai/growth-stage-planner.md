@@ -127,6 +127,30 @@ Peasant-recruit scaling: `max(kRecruitmentFloor, workerGrowthPriority)`. Exporte
 
 When `militaryPriority < kMilitaryBuildSuppressionThreshold`, `runRecruitmentPlanner` rejects all regiment and naval build candidates. At-war floor (0.3) keeps at-war GPs above the threshold.
 
+## Military fabric reservation (AC13)
+
+A below-quota GP that is military-relevant but **fabric-scarce** must not drain
+its scarce `fabric` on the peasant-recruit worker action
+(`WorkerActionEconomyCatalog.peasant`, `materialCosts: {fabric: 2}`) when that
+same fabric is the lone missing input for a regiment build. This targets the
+seed-42 gp3 failure mode (treasury ≥ cheapest regiment cost, an invadable
+frontier, 0 regiments, "missing only the lone fabric build input it can never
+source").
+
+`growthStageReservesFabricForMilitary(stage, treasury, fabricHeld, cheapestRegimentTreasuryCost)`
+returns true when **all** hold:
+
+- `stage.militaryPriority >= kMilitaryBuildSuppressionThreshold` (builds are not suppressed);
+- `treasury >= cheapestRegimentTreasuryCost` (a regiment is already affordable); and
+- `fabricHeld < kReserveTarget` (fabric is scarce — a mature GP with full reserves keeps recruiting).
+
+When the reservation is active **and** at least one fabric-consuming
+military/naval build candidate is on offer this turn, `runRecruitmentPlanner`
+rejects every fabric-costing recruit candidate (only the peasant tier carries a
+fabric cost) with reason `kRecruitmentRejectMilitaryFabricReservation`, so the
+GP's scarce fabric is preserved to fund the regiment build pass (which runs
+first in EXPAND/COLONIAL). Flag-off behaviour is unchanged.
+
 ## Coexistence flag
 
 `growthStagePlannerEnabled` (default **false**). When false, legacy H8 behaviour in `economy-planner.md` is unchanged. When true, growth-stage scoring replaces H8 boosts; H8 code removal is AC9 after AC7 calibration.
@@ -161,4 +185,7 @@ When `militaryPriority < kMilitaryBuildSuppressionThreshold`, `runRecruitmentPla
 
 ## Acceptance criteria (issue #3371)
 
-AC1–AC6, AC10–AC12: unit tests in `growth_stage_planner_test.dart`. AC7: `seed42_growth_stage_conquest_regression_test.dart` (skipped until calibration). AC9 H8 removal: follow-up after AC7 passes with flag default on.
+AC1–AC6, AC10–AC13: unit tests in `growth_stage_planner_test.dart`. AC7: `seed42_growth_stage_conquest_regression_test.dart` (skipped until calibration). AC9 H8 removal: follow-up after AC7 passes with flag default on.
+
+- **AC13 (positive — military fabric reservation):** Given a GP with `militaryPriority >= kMilitaryBuildSuppressionThreshold`, treasury ≥ the cheapest regiment build cost, fabric held `< kReserveTarget`, and a fabric-consuming military build candidate on offer, when `runRecruitmentPlanner` runs under the growth-stage system, then every peasant-tier (fabric-costing) recruit candidate is rejected with reason `kRecruitmentRejectMilitaryFabricReservation` and no peasant recruit order is emitted.
+- **AC13 (negative — no reservation when fabric is abundant):** Given the same GP but holding `fabric >= kReserveTarget`, when `runRecruitmentPlanner` runs, then peasant-tier recruit candidates are not reservation-rejected (worker growth continues).
