@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
