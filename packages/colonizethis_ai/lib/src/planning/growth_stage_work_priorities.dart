@@ -15,6 +15,56 @@ const Set<String> _kInfrastructureFeedstockResourceIds = {
   'coal',
 };
 
+/// Infrastructure feedstock resources (castIron / lumber inputs), excluding the
+/// fabric feedstock which is routed at a higher priority during bootstrap.
+const Set<String> _kInfraOnlyFeedstockResourceIds = {'timber', 'iron', 'coal'};
+
+/// Growth-stage feedstock resource-id preference for civilian build routing
+/// (Refs #3371 AC1/AC2). Returns which feedstock resources a GP should route an
+/// idle Builder onto this turn, split into the high-priority **fabric** chain
+/// (`wool` / `cotton`) and the lower-priority **infrastructure** chain
+/// (`timber` / `iron` / `coal`). Empty sets when the growth-stage planner is off
+/// or the GP has no active growth need, so legacy routing is unchanged.
+class GrowthStageFeedstockPreference {
+  const GrowthStageFeedstockPreference({
+    required this.fabricFeedstockResourceIds,
+    required this.infraFeedstockResourceIds,
+  });
+
+  final Set<String> fabricFeedstockResourceIds;
+  final Set<String> infraFeedstockResourceIds;
+
+  static const none = GrowthStageFeedstockPreference(
+    fabricFeedstockResourceIds: <String>{},
+    infraFeedstockResourceIds: <String>{},
+  );
+}
+
+/// Computes the [GrowthStageFeedstockPreference] for one GP from its growth
+/// [stage] and current fabric reserve. Fabric feedstock is requested while the
+/// GP still needs worker growth and holds less than [kReserveTarget] fabric;
+/// infrastructure feedstock is requested while infrastructure priority is high.
+GrowthStageFeedstockPreference growthStageFeedstockPreference({
+  required Game game,
+  required String playerId,
+  required GrowthStage stage,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+}) {
+  if (!growthStagePlannerEnabled) return GrowthStageFeedstockPreference.none;
+  final player = game.playerById(playerId);
+  if (player == null) return GrowthStageFeedstockPreference.none;
+  final fabricHeld = player.stockpile.quantityOf(CommodityCatalog.fabric.id);
+  final wantsFabric =
+      stage.workerGrowthPriority > 0.3 && fabricHeld < kReserveTarget;
+  final wantsInfra = stage.infrastructurePriority > 0.3;
+  return GrowthStageFeedstockPreference(
+    fabricFeedstockResourceIds:
+        wantsFabric ? _kFabricFeedstockResourceIds : const <String>{},
+    infraFeedstockResourceIds:
+        wantsInfra ? _kInfraOnlyFeedstockResourceIds : const <String>{},
+  );
+}
+
 /// Reorders [workCandidates] so bootstrap / infrastructure-stage GPs prefer
 /// feedstock `build_improvement` tiles before other civilian work (Refs #3371).
 List<WorkOrder> prioritizeWorkOrdersForGrowthStage({

@@ -235,4 +235,99 @@ void main() {
       },
     );
   });
+
+  group('growth-stage feedstock build routing (Refs #3371 AC1/AC2)', () {
+    const playerId = 'gp1';
+    const grainTile = 'oldWorld|p1|0|0';
+    const woolTile = 'oldWorld|p1|1|0';
+    const timberTile = 'oldWorld|p1|2|0';
+
+    Game gameWith(Map<String, String> resourceByTileKey) => Game(
+      id: 'g',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        resourceByTileKey: resourceByTileKey,
+      ),
+      players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
+    );
+
+    PlayerView viewWith(Game game) => PlayerView(
+      playerId: playerId,
+      player: game.players.single,
+      ownUnitsById: {
+        'b1': Unit(
+          id: 'b1',
+          type: kUnitTypeBuilder,
+          ownerId: playerId,
+          locationProvinceId: 'oldWorld|p1',
+        ),
+      },
+      provincesById: const {},
+      visibilityByTile: const {},
+      prospectedTiles: const {},
+      diplomacyByOtherId: const {},
+    );
+
+    const grainSuggestion = WorkOrder(
+      unitId: 'b1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: grainTile,
+    );
+    const woolSuggestion = WorkOrder(
+      unitId: 'b1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: woolTile,
+    );
+    const timberSuggestion = WorkOrder(
+      unitId: 'b1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: timberTile,
+    );
+
+    test('negative: without growth-stage sets, lex-first grain tile wins', () {
+      final game = gameWith({grainTile: 'grain', woolTile: 'wool'});
+      final r = selectFullAiCivilianWorkOrders(
+        workSuggestions: const [grainSuggestion, woolSuggestion],
+        view: viewWith(game),
+        game: game,
+      );
+      expect(r.workOrders.single.targetTileKey, grainTile);
+    });
+
+    test('positive: fabric feedstock set routes Builder to wool over grain', () {
+      final game = gameWith({grainTile: 'grain', woolTile: 'wool'});
+      final r = selectFullAiCivilianWorkOrders(
+        workSuggestions: const [grainSuggestion, woolSuggestion],
+        view: viewWith(game),
+        game: game,
+        growthStageFabricFeedstockResourceIds: const {'wool', 'cotton'},
+      );
+      expect(r.workOrders.single.targetTileKey, woolTile);
+    });
+
+    test('positive: fabric feedstock outranks infrastructure feedstock', () {
+      final game = gameWith({woolTile: 'wool', timberTile: 'timber'});
+      final r = selectFullAiCivilianWorkOrders(
+        workSuggestions: const [timberSuggestion, woolSuggestion],
+        view: viewWith(game),
+        game: game,
+        growthStageFabricFeedstockResourceIds: const {'wool', 'cotton'},
+        growthStageInfraFeedstockResourceIds: const {'timber', 'iron', 'coal'},
+      );
+      expect(r.workOrders.single.targetTileKey, woolTile);
+    });
+
+    test('positive: infrastructure feedstock set routes Builder to timber', () {
+      final game = gameWith({grainTile: 'grain', timberTile: 'timber'});
+      final r = selectFullAiCivilianWorkOrders(
+        workSuggestions: const [grainSuggestion, timberSuggestion],
+        view: viewWith(game),
+        game: game,
+        growthStageInfraFeedstockResourceIds: const {'timber', 'iron', 'coal'},
+      );
+      expect(r.workOrders.single.targetTileKey, timberTile);
+    });
+  });
 }

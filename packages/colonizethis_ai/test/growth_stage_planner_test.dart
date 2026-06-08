@@ -449,6 +449,78 @@ void main() {
     });
   });
 
+  group('growthStageFeedstockPreference — bootstrap routing (AC1/AC2)', () {
+    Game gameFor({
+      required int peasants,
+      int fabric = 0,
+    }) {
+      const ow = 'oldWorld';
+      return Game(
+        id: 'g-3371-feedstock',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(
+            provinces: [Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1')],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: false,
+            capitalProvinceId: '$ow|p0',
+            stockpile: Stockpile(
+              quantities: {CommodityCatalog.fabric.id: fabric},
+            ),
+            workerPool: WorkerPool(peasants: peasants),
+          ),
+        ],
+      );
+    }
+
+    test('bootstrap GP requests fabric feedstock (wool/cotton)', () {
+      final game = gameFor(peasants: 4);
+      final stage = GrowthStage.compute(game, 'gp1');
+      final pref = growthStageFeedstockPreference(
+        game: game,
+        playerId: 'gp1',
+        stage: stage,
+        growthStagePlannerEnabled: true,
+      );
+      expect(pref.fabricFeedstockResourceIds, containsAll(['wool', 'cotton']));
+      expect(
+        pref.infraFeedstockResourceIds,
+        containsAll(['timber', 'iron', 'coal']),
+      );
+    });
+
+    test('fabric-saturated GP no longer requests fabric feedstock', () {
+      final game = gameFor(peasants: 4, fabric: kReserveTarget);
+      final stage = GrowthStage.compute(game, 'gp1');
+      final pref = growthStageFeedstockPreference(
+        game: game,
+        playerId: 'gp1',
+        stage: stage,
+        growthStagePlannerEnabled: true,
+      );
+      expect(pref.fabricFeedstockResourceIds, isEmpty);
+    });
+
+    test('disabled flag yields no feedstock preference', () {
+      final game = gameFor(peasants: 4);
+      final stage = GrowthStage.compute(game, 'gp1');
+      final pref = growthStageFeedstockPreference(
+        game: game,
+        playerId: 'gp1',
+        stage: stage,
+        growthStagePlannerEnabled: false,
+      );
+      expect(pref.fabricFeedstockResourceIds, isEmpty);
+      expect(pref.infraFeedstockResourceIds, isEmpty);
+    });
+  });
+
   group('runEconomyPlanner growth-stage — AC3 military unlocks at maturity', () {
     test('assigns military-input labour and does not suppress builds', () {
       const ow = 'oldWorld';

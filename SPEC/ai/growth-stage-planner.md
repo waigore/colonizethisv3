@@ -64,6 +64,49 @@ stageScaledScore = categoryPriority × (scoreRecipe(...) + kStagePriorityBias)
 
 When `growthStagePlannerEnabled == true`, `_allocateLabour` ranks by `stageScaledScore` and **disables** all H8 reactive boosts (`kRegimentBuildInputProductionScoreBoost`, supplier release, castIron-labour fabric pre-pass).
 
+## Civilian work feedstock routing
+
+When `growthStagePlannerEnabled == true`, the orchestrator passes a per-GP
+**feedstock resource-id preference** into `selectFullAiCivilianWorkOrders` so an
+idle Builder improves the right feedstock tile first. `growthStageFeedstockPreference(game, playerId, stage)` returns two sets:
+
+| Set | Resources | Active when |
+|-----|-----------|-------------|
+| fabric feedstock | `wool`, `cotton` | `workerGrowthPriority > 0.3` **and** `fabric < kReserveTarget` |
+| infrastructure feedstock | `timber`, `iron`, `coal` | `infrastructurePriority > 0.3` |
+
+Inside `_buildImprovementWorkScore`, an unimproved tile hosting a fabric
+feedstock resource gains `kGrowthStageFabricFeedstockScoreBoost` (700); an
+infrastructure feedstock tile gains `kGrowthStageInfraFeedstockScoreBoost` (520).
+Fabric outranks infrastructure so a bootstrap GP secures the `wool → fabric →
+peasant upkeep` chain before castIron/lumber. Both boosts exceed the New World
+resource bonuses; the fabric boost also exceeds the H8 extraction boost (600).
+Empty sets (flag off, fabric saturated, or no growth need) leave legacy routing
+unchanged, so the flag-off default is byte-for-byte identical.
+
+### AC1/AC2 behaviour
+
+- Given a Builder whose candidate set holds an unimproved `wool` tile and an
+  unimproved `grain` tile, when selection runs with the fabric feedstock set,
+  then the emitted work order targets the `wool` tile (AC1).
+- Given both a `wool` and a `timber` unimproved candidate with both feedstock
+  sets supplied, when selection runs, then the emitted order targets `wool`
+  (fabric outranks infrastructure).
+- Given the fabric feedstock set is empty (flag off or `fabric >= kReserveTarget`),
+  when selection runs, then routing falls back to the legacy lexicographic /
+  extractable-resource scoring (negative case).
+
+### Known limitation — builder relocation (AC7 blocker)
+
+`build_improvement` candidates are scoped to the **Builder's current province**.
+On seed 42, gp3/gp5 start with Builders in a province whose only unimproved
+resource is `grain`; their `wool` tiles are in **other** owned provinces, so no
+`wool` candidate is ever suggested and the feedstock boost has nothing to rank.
+Establishing fabric for these GPs therefore additionally requires **relocating an
+idle Builder to a fabric-feedstock province** before building — a civilian
+move-planning slice tracked as the next step for AC7. The routing above is the
+prerequisite that selects `wool` once the Builder is co-located with such a tile.
+
 ## Recruitment modulation
 
 Peasant-recruit scaling: `max(kRecruitmentFloor, workerGrowthPriority)`. Exported as `peasantRecruitScoreScale(stage)` for tests.
@@ -90,6 +133,8 @@ When `militaryPriority < kMilitaryBuildSuppressionThreshold`, `runRecruitmentPla
 | `kMinCategoryFloor` | 0.1 |
 | `kRecruitmentFloor` | 0.25 |
 | `kMilitaryBuildSuppressionThreshold` | 0.2 |
+| `kGrowthStageFabricFeedstockScoreBoost` | 700 |
+| `kGrowthStageInfraFeedstockScoreBoost` | 520 |
 
 ## Integration
 
@@ -98,7 +143,8 @@ When `militaryPriority < kMilitaryBuildSuppressionThreshold`, `runRecruitmentPla
 - `recipe_scoring.dart` — `stageScaledRecipeScore`.
 - `strategic_ai.dart` / `full_ai_planner.dart` — thread `growthStagePlannerEnabled` into economy and domain planners for end-to-end simulation (AC7).
 - `domain_planner_orchestrator.dart` — growth-stage military build suppression in `_appendEconomyBuildOrders`; H8 castIron-labour peasant recruit skipped when the flag is on.
-- `growth_stage_work_priorities.dart` — reorders civilian work candidates to prefer feedstock `build_improvement` during bootstrap / infrastructure stages when the flag is on. Full `selectFullAiCivilianWorkOrders` scoring integration remains follow-up for AC7 calibration.
+- `growth_stage_work_priorities.dart` — `growthStageFeedstockPreference` computes the fabric / infrastructure feedstock resource-id sets; `prioritizeWorkOrdersForGrowthStage` reorders civilian candidates (superseded by the scoring boost below, retained for ordering stability).
+- `full_ai_civilian_work_selection.dart` / `_build_purchase.dart` — `selectFullAiCivilianWorkOrders` accepts the two feedstock sets and applies `kGrowthStageFabricFeedstockScoreBoost` / `kGrowthStageInfraFeedstockScoreBoost` in `_buildImprovementWorkScore` so a co-located Builder selects the fabric (then infrastructure) feedstock tile. Builder relocation to a feedstock province (when none is co-located) is the remaining AC7 slice.
 
 ## Acceptance criteria (issue #3371)
 

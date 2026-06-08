@@ -468,11 +468,28 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
             stage: growthStage,
           )
         : workCandidates;
+    // Refs #3371 AC1/AC2: route bootstrap/infrastructure Builders onto fabric
+    // (then infrastructure) feedstock tiles inside the per-unit selection. The
+    // candidate reorder above is re-sorted lexicographically per unit by the
+    // selector, so the binding signal is the feedstock resource-id preference
+    // threaded into the build-improvement scoring below.
+    final feedstockPreference = growthStage != null
+        ? growthStageFeedstockPreference(
+            game: ctx.game,
+            playerId: ctx.nationId,
+            stage: growthStage,
+            growthStagePlannerEnabled: growthStagePlannerEnabled,
+          )
+        : GrowthStageFeedstockPreference.none;
     final selection = selectFullAiCivilianWorkOrders(
       workSuggestions: prioritizedWorkCandidates,
       view: ctx.view,
       game: ctx.game,
       tileMapByRegion: tileMapByRegion,
+      growthStageFabricFeedstockResourceIds:
+          feedstockPreference.fabricFeedstockResourceIds,
+      growthStageInfraFeedstockResourceIds:
+          feedstockPreference.infraFeedstockResourceIds,
     );
     for (final w in selection.workOrders) {
       final unitType = ctx.view.ownUnitsById[w.unitId]?.type ?? 'unknown';
