@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show BuildUnitCategory, buildUnitCategoryForUnitType;
 import 'package:colonizethis_logic/ai_api.dart' show canAffordRecruitWorker;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
@@ -17,6 +19,7 @@ import '../perception/perception_snapshot.dart';
 import '../util/orders_builder.dart';
 import '../util/orders_extensions.dart';
 import 'build_planner.dart';
+import 'growth_stage.dart';
 import 'conquest_planner.dart';
 import 'diplomacy_planner.dart';
 import 'domain_planner_outcome.dart';
@@ -97,6 +100,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   Orders? sameTurnPriorDiplomaticOrders,
   PhasePlanOutcome? phasePlan,
   bool recomputeTradeOrdersWithPendingCosts = false,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
@@ -128,6 +132,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     emit: emit,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
   );
   ctx = economyResult.ctx;
   final economyGate = economyResult.gate;
@@ -332,6 +337,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   // Refs #3288: accumulate the orchestrator-emitted economy families (work,
   // recruit, build) into a single mutable [OrdersBuilder] and freeze once,
@@ -479,7 +485,8 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   emit('aiStageA');
 
   final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
-  if (expandEconomy.boostCastIronLabourPeasantRecruitment) {
+  if (!growthStagePlannerEnabled &&
+      expandEconomy.boostCastIronLabourPeasantRecruitment) {
     final recruitCandidates = ctx.suggestionAPI.suggestRecruitWorkerOrders(
       ctx.view,
       ctx.game,
@@ -527,6 +534,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     colonialPressure: colonialPressure,
     buildCandidates: buildCandidates,
     domainEconomyWeight: domainWeights.economy,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
   );
   emit('aiStageB');
   return _EconomyDomainPlannersResult(
@@ -562,6 +570,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   required bool colonialPressure,
   required List<BuildUnitOrder> buildCandidates,
   required int domainEconomyWeight,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
 }) {
   // Refs #2509 S5: derive below-quota OW build-pass routing from the
   // dispatched phase plan instead of recomputing
@@ -718,9 +727,31 @@ _BuildPassResult _appendEconomyBuildOrders({
     'buildCandidatesCount=${buildCandidates.length} '
     'regimentCount=$regimentCount forceRegimentRebuild=$forceRegimentRebuild',
   );
-  if (buildCandidates.isEmpty ||
+  var candidatesForGate = buildCandidates;
+  if (growthStagePlannerEnabled) {
+    final stage = GrowthStage.compute(
+      ctx.game,
+      ctx.nationId,
+      snapshot: snapshot,
+    );
+    if (growthStageSuppressesMilitaryBuilds(stage)) {
+      candidatesForGate = buildCandidates
+          .where((order) {
+            final category = buildUnitCategoryForUnitType(order.unitType);
+            return category != BuildUnitCategory.military &&
+                category != BuildUnitCategory.naval;
+          })
+          .toList();
+      _log.d(
+        'growth_stage military build suppressed nationId=${ctx.nationId} '
+        'militaryPriority=${stage.militaryPriority}',
+      );
+    }
+  }
+
+  if (candidatesForGate.isEmpty ||
       (domainEconomyWeight < buildThreshold && !forceRegimentRebuild)) {
-    if (buildCandidates.isNotEmpty) {
+    if (candidatesForGate.isNotEmpty) {
       _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
     }
     return _BuildPassResult(
@@ -728,7 +759,7 @@ _BuildPassResult _appendEconomyBuildOrders({
       buildThreshold: buildThreshold,
     );
   }
-  var candidatesForBuild = buildCandidates;
+  var candidatesForBuild = candidatesForGate;
   if (forceRegimentRebuild && !firstNavalTransportBootstrap) {
     final regimentsOnly = buildCandidates
         .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))

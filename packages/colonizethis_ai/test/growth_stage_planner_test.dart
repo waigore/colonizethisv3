@@ -394,6 +394,96 @@ void main() {
     });
   });
 
+  group('runEconomyPlanner growth-stage — AC3 military unlocks at maturity', () {
+    test('assigns military-input labour and does not suppress builds', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g-3371-ac3',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {
+            '$ow|p0|1|0': 'timber',
+            '$ow|p0|2|0': 'iron',
+          },
+          tileState: const TileMapState(
+            improvementByTile: {
+              '$ow|p0|1|0': 1,
+              '$ow|p0|2|0': 1,
+            },
+          ),
+          playerProspectedTiles: const {
+            'gp1': {'$ow|p0|2|0'},
+          },
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: false,
+            capitalProvinceId: '$ow|p0',
+            treasury: 2500,
+            stockpile: const Stockpile()
+                .applyDelta(CommodityCatalog.grain.id, 80)
+                .applyDelta(CommodityCatalog.fabric.id, 6)
+                .applyDelta(CommodityCatalog.castIron.id, 6)
+                .applyDelta(CommodityCatalog.copper.id, 10)
+                .applyDelta(CommodityCatalog.tin.id, 10),
+            workerPool: const WorkerPool(peasants: 12),
+          ),
+        ],
+      );
+      final snapshot = _atWarSnapshot('gp1');
+      final stage = GrowthStage.compute(game, 'gp1', snapshot: snapshot);
+      expect(growthStageSuppressesMilitaryBuilds(stage), isFalse);
+
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final plan = runEconomyPlanner(
+        game: game,
+        view: view,
+        config: _config,
+        seeds: _seeds,
+        snapshot: snapshot,
+        growthStagePlannerEnabled: true,
+      );
+
+      expect(
+        _labourForRecipe(
+          plan,
+          ProductionRecipesCatalog.bronzeFromCopperTin.id,
+        ),
+        greaterThan(0),
+        reason: 'mature at-war GP should assign military-input labour',
+      );
+
+      final recruitPlan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: _seeds,
+        goalPhase: ObserverGoalPhase.expand,
+        suggestionApi: _fakeApi(
+          build: const [
+            BuildUnitOrder(
+              unitType: 'peasant_levies',
+              isMilitary: true,
+              spawnProvinceId: '$ow|p0',
+            ),
+          ],
+        ),
+        growthStagePlannerEnabled: true,
+        snapshot: snapshot,
+      );
+      expect(recruitPlan.buildUnitOrders, isNotEmpty);
+    });
+  });
+
   group('peasantRecruitScoreScale — AC12 recruitment modulation', () {
     test('bootstrap scale exceeds mature scale; mature respects floor', () {
       final bootstrap = GrowthStage.compute(_bootstrapFabricGame(), 'gp1');

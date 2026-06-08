@@ -130,6 +130,12 @@ class GrowthStage {
   }
 }
 
+/// True when growth-stage military priority is below the build-suppression
+/// threshold (Refs #3371 AC4).
+bool growthStageSuppressesMilitaryBuilds(GrowthStage stage) {
+  return stage.militaryPriority < kMilitaryBuildSuppressionThreshold;
+}
+
 /// Peasant-recruit action score scale (Refs #3371 AC12).
 double peasantRecruitScoreScale(GrowthStage stage) {
   final scaled = stage.workerGrowthPriority;
