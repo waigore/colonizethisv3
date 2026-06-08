@@ -300,7 +300,7 @@ All other diplomacy files (`alliance_resolver.dart`, `overture_resolver.dart`, `
 
 **Given** the `colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, and `colonizethis_diplomacy` packages on `dev`, **when** the `colonizethis_orders` package is extracted, **then**:
 
-- `packages/colonizethis_orders` owns `orders/` (engine, suggestion APIs, validation, application) and `debug_console/` (supported-id lists for the debug console contract) and depends only on `colonizethis_world`, `colonizethis_diplomacy`, `colonizethis_economy`, `colonizethis_models`, `colonizethis_data`, `colonizethis_logger`.
+- `packages/colonizethis_orders` owns `orders/` (engine, suggestion APIs, validation, application) and `debug_console/` (supported-id lists for the debug-console contract) and depends only on `colonizethis_world`, `colonizethis_diplomacy`, `colonizethis_economy`, `colonizethis_models`, `colonizethis_data`, `colonizethis_logger`.
 - `colonizethis_logic` depends on `colonizethis_orders` and re-exports `package:colonizethis_orders/colonizethis_orders.dart` from its barrel for backward compatibility; `ai_api.dart`, `order_suggestion_api.dart`, and `debug_console_api.dart` re-export the narrow contract surfaces from the orders package paths unchanged for `colonizethis_ai` / `colonizethis_debug_console`.
 - `colonizethis_orders/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.orders_no_logic_deps`).
 - `colonizethis_orders` uses exactly one logger with the distinct `orders` prefix (`ordersLog`); order-domain log lines carry the `orders:` prefix.
