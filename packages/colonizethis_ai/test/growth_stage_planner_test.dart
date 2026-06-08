@@ -1,7 +1,9 @@
 // Growth-stage planner (Refs #3371). SPEC/ai/growth-stage-planner.md.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/growth_stage_builder_relocation.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_work_priorities.dart';
+import 'package:colonizethis_ai/src/planning/domain_planner_orchestrator.dart';
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/perception/summary_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -608,6 +610,190 @@ void main() {
         snapshot: snapshot,
       );
       expect(recruitPlan.buildUnitOrders, isNotEmpty);
+    });
+  });
+
+  group('growth-stage Builder relocation — AC7 feedstock province', () {
+    const ow = 'oldWorld';
+    const pGrain = '$ow|p_grain';
+    const pWool = '$ow|p_wool';
+    const tileGrain = '$pGrain|0|0';
+    const tileWool = '$pWool|0|0';
+
+    final twoProvinceTopology = MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'p_grain',
+          regionId: ow,
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 'p_wool',
+          regionId: ow,
+          type: TopologyNodeType.province,
+        ),
+      ],
+      edges: const [TopologyEdge(id1: 'p_grain', id2: 'p_wool')],
+    );
+
+    Game relocationGame() => Game(
+      id: 'g-3371-reloc',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: pGrain, regionId: ow, ownerId: 'gp1'),
+            Province(id: pWool, regionId: ow, ownerId: 'gp1'),
+          ],
+          units: [
+            Unit(
+              id: 'b1',
+              type: kUnitTypeBuilder,
+              ownerId: 'gp1',
+              locationProvinceId: pGrain,
+              tileKey: tileGrain,
+              status: UnitStatus.idle,
+            ),
+          ],
+        ),
+        newWorld: const RegionData(),
+        resourceByTileKey: const {tileGrain: 'grain', tileWool: 'wool'},
+        playerVisibilityByTile: const {
+          'gp1': {tileGrain: 'fullyVisible', tileWool: 'fullyVisible'},
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {
+            pGrain: [tileGrain],
+            pWool: [tileWool],
+          },
+        },
+      ),
+      players: [
+        Player(
+          id: 'gp1',
+          displayName: 'GP1',
+          isHuman: false,
+          capitalProvinceId: pGrain,
+          stockpile: const Stockpile(),
+          workerPool: const WorkerPool(peasants: 4),
+        ),
+      ],
+    );
+
+    test('ownedFabricFeedstockProvinceIdsSorted finds wool province only', () {
+      final ids = ownedFabricFeedstockProvinceIdsSorted(
+        relocationGame(),
+        'gp1',
+      );
+      expect(ids, [pWool]);
+    });
+
+    test(
+      'suggestGrowthStageBuilderFeedstockRelocation moves Builder to wool province',
+      () {
+        final game = relocationGame();
+        final view = buildPlayerView(game, twoProvinceTopology, 'gp1');
+        final stage = GrowthStage.compute(game, 'gp1');
+        final pref = growthStageFeedstockPreference(
+          game: game,
+          playerId: 'gp1',
+          stage: stage,
+          growthStagePlannerEnabled: true,
+        );
+        final move = suggestGrowthStageBuilderFeedstockRelocation(
+          game: game,
+          view: view,
+          topology: twoProvinceTopology,
+          currentOrders: const Orders(),
+          suggestionAPI: const DefaultOrderSuggestionAPI(),
+          stage: stage,
+          feedstockPreference: pref,
+          growthStagePlannerEnabled: true,
+        );
+        expect(move, isNotNull);
+        expect(move!.unitId, 'b1');
+        expect(Unit.provinceIdFromTileKey(move.destinationTileKey), pWool);
+      },
+    );
+
+    test('returns null when Builder already co-located with wool', () {
+      final game = relocationGame();
+      final ws = game.worldState;
+      final relocatedBuilder = ws.oldWorld.units.single.copyWith(
+        locationProvinceId: pWool,
+        tileKey: tileWool,
+      );
+      final coLocated = Game(
+        id: game.id,
+        worldState: WorldState(
+          turnState: ws.turnState,
+          oldWorld: RegionData(
+            provinces: ws.oldWorld.provinces,
+            units: [relocatedBuilder],
+          ),
+          newWorld: ws.newWorld,
+          resourceByTileKey: ws.resourceByTileKey,
+          playerVisibilityByTile: ws.playerVisibilityByTile,
+          tileKeysByRegionAndProvince: ws.tileKeysByRegionAndProvince,
+        ),
+        players: game.players,
+      );
+      final view = buildPlayerView(coLocated, twoProvinceTopology, 'gp1');
+      final stage = GrowthStage.compute(coLocated, 'gp1');
+      final pref = growthStageFeedstockPreference(
+        game: coLocated,
+        playerId: 'gp1',
+        stage: stage,
+        growthStagePlannerEnabled: true,
+      );
+      final move = suggestGrowthStageBuilderFeedstockRelocation(
+        game: coLocated,
+        view: view,
+        topology: twoProvinceTopology,
+        currentOrders: const Orders(),
+        suggestionAPI: const DefaultOrderSuggestionAPI(),
+        stage: stage,
+        feedstockPreference: pref,
+        growthStagePlannerEnabled: true,
+      );
+      expect(move, isNull);
+    });
+
+    test('orchestrator emits relocation before work (move/work XOR)', () {
+      final game = relocationGame();
+      final view = buildPlayerView(game, twoProvinceTopology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(
+        view,
+        topology: twoProvinceTopology,
+      );
+      final outcome = runDomainPlannersWithOutcome(
+        game: game,
+        topology: twoProvinceTopology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: _config,
+        primaryGoal: StrategicGoal.expand,
+        seeds: _seeds,
+        suggestionAPI: const DefaultOrderSuggestionAPI(),
+        economyPlan: const EconomyPlan(
+          productionAssignments: [],
+          cargoPreference: CargoPreference.none,
+        ),
+        growthStagePlannerEnabled: true,
+      );
+      final moves = outcome.orders.moveOrdersByPlayerId['gp1'] ?? const [];
+      expect(
+        moves.where((m) => m.unitId == 'b1'),
+        isNotEmpty,
+        reason: 'bootstrap Builder should relocate toward wool province',
+      );
+      final work = outcome.orders.workOrdersByPlayerId['gp1'] ?? const [];
+      expect(
+        work.where((w) => w.unitId == 'b1'),
+        isEmpty,
+        reason: 'relocated Builder must not receive work same turn',
+      );
     });
   });
 

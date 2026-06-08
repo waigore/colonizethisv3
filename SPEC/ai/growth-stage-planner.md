@@ -96,16 +96,28 @@ unchanged, so the flag-off default is byte-for-byte identical.
   when selection runs, then routing falls back to the legacy lexicographic /
   extractable-resource scoring (negative case).
 
-### Known limitation — builder relocation (AC7 blocker)
+### Builder relocation (fabric feedstock)
 
 `build_improvement` candidates are scoped to the **Builder's current province**.
-On seed 42, gp3/gp5 start with Builders in a province whose only unimproved
-resource is `grain`; their `wool` tiles are in **other** owned provinces, so no
-`wool` candidate is ever suggested and the feedstock boost has nothing to rank.
-Establishing fabric for these GPs therefore additionally requires **relocating an
-idle Builder to a fabric-feedstock province** before building — a civilian
-move-planning slice tracked as the next step for AC7. The routing above is the
-prerequisite that selects `wool` once the Builder is co-located with such a tile.
+When the fabric feedstock preference is active but no idle Builder sits in a
+province with an unimproved `wool`/`cotton` tile, the orchestrator emits one
+**growth-stage Builder relocation** [MoveOrder] before civilian work selection:
+
+1. `ownedFabricFeedstockProvinceIdsSorted` lists owned provinces hosting
+   unimproved fabric feedstock (ascending province id).
+2. `suggestGrowthStageBuilderFeedstockRelocation` picks the lowest-id idle
+   Builder not already in such a province (no pending draft move/work) and
+   moves it to the lowest-id target province via a validated
+   `suggestMoveOrders` candidate, preferring a destination tile that hosts
+   `wool`/`cotton` (lexicographic tile key).
+3. The relocation is appended to draft orders **before** work selection; work
+   candidates for that `unitId` are stripped so move/work XOR holds.
+
+On seed 42, gp3/gp5 start with Builders in a grain-only province while `wool`
+tiles sit in other owned provinces; this slice routes a Builder onto the wool
+province so the feedstock build routing above can fire on the following turn
+(or same turn after the move resolves). AC7 seed-42 calibration may require
+additional tuning once relocation is active end-to-end.
 
 ## Recruitment modulation
 
@@ -144,7 +156,8 @@ When `militaryPriority < kMilitaryBuildSuppressionThreshold`, `runRecruitmentPla
 - `strategic_ai.dart` / `full_ai_planner.dart` — thread `growthStagePlannerEnabled` into economy and domain planners for end-to-end simulation (AC7).
 - `domain_planner_orchestrator.dart` — growth-stage military build suppression in `_appendEconomyBuildOrders`; H8 castIron-labour peasant recruit skipped when the flag is on.
 - `growth_stage_work_priorities.dart` — `growthStageFeedstockPreference` computes the fabric / infrastructure feedstock resource-id sets; `prioritizeWorkOrdersForGrowthStage` reorders civilian candidates (superseded by the scoring boost below, retained for ordering stability).
-- `full_ai_civilian_work_selection.dart` / `_build_purchase.dart` — `selectFullAiCivilianWorkOrders` accepts the two feedstock sets and applies `kGrowthStageFabricFeedstockScoreBoost` / `kGrowthStageInfraFeedstockScoreBoost` in `_buildImprovementWorkScore` so a co-located Builder selects the fabric (then infrastructure) feedstock tile. Builder relocation to a feedstock province (when none is co-located) is the remaining AC7 slice.
+- `growth_stage_builder_relocation.dart` — `ownedFabricFeedstockProvinceIdsSorted`, `suggestGrowthStageBuilderFeedstockRelocation` (orchestrator pre-work slice).
+- `full_ai_civilian_work_selection.dart` / `_build_purchase.dart` — `selectFullAiCivilianWorkOrders` accepts the two feedstock sets and applies `kGrowthStageFabricFeedstockScoreBoost` / `kGrowthStageInfraFeedstockScoreBoost` in `_buildImprovementWorkScore` so a co-located Builder selects the fabric (then infrastructure) feedstock tile.
 
 ## Acceptance criteria (issue #3371)
 

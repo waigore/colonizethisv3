@@ -21,6 +21,7 @@ import '../util/orders_extensions.dart';
 import 'build_planner.dart';
 import 'growth_stage.dart';
 import 'conquest_planner.dart';
+import 'growth_stage_builder_relocation.dart';
 import 'growth_stage_work_priorities.dart';
 import 'diplomacy_planner.dart';
 import 'domain_planner_outcome.dart';
@@ -480,6 +481,30 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
             growthStagePlannerEnabled: growthStagePlannerEnabled,
           )
         : GrowthStageFeedstockPreference.none;
+    if (growthStage != null) {
+      final relocation = suggestGrowthStageBuilderFeedstockRelocation(
+        game: ctx.game,
+        view: ctx.view,
+        topology: ctx.topology,
+        currentOrders: ordersBuilder.build(),
+        suggestionAPI: ctx.suggestionAPI,
+        stage: growthStage,
+        feedstockPreference: feedstockPreference,
+        growthStagePlannerEnabled: growthStagePlannerEnabled,
+      );
+      if (relocation != null) {
+        _log.i(
+          'growth_stage_builder_relocate nationId=${ctx.nationId} '
+          'unitId=${relocation.unitId} '
+          'destinationTileKey=${relocation.destinationTileKey}',
+        );
+        ordersBuilder.appendMoveOrders(ctx.nationId, [relocation]);
+        final movedUnitIds = {relocation.unitId};
+        workCandidates = workCandidates
+            .where((w) => !movedUnitIds.contains(w.unitId))
+            .toList();
+      }
+    }
     final selection = selectFullAiCivilianWorkOrders(
       workSuggestions: prioritizedWorkCandidates,
       view: ctx.view,
