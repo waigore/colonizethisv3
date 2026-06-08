@@ -227,4 +227,145 @@ void main() {
       );
     });
   });
+
+  group('zeroRegimentSurvivalPeaceTargetsForProduction (Refs #2847 § H7)', () {
+    // A below-quota Great Power (gp5) overrun by `tribe1`, which now holds an
+    // Old World province stripped from gp5 — so the zero-OW-only distraction
+    // slot does NOT peace it; only the zero-regiment survival slot can.
+    Game buildCollapseGame({required int ownedOw, required int regiments}) {
+      return Game(
+        id: 'g-h7-survival-${ownedOw}_$regiments',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < ownedOw; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|tribe1_0',
+                regionId: 'oldWorld',
+                ownerId: 'tribe1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            if (regiments > 0)
+              Army(
+                id: 'gp5_army',
+                ownerId: 'gp5',
+                regionId: 'oldWorld',
+                stationedProvinceId: 'oldWorld|gp5_0',
+                regimentUnitIds: List<String>.unmodifiable(
+                  List<String>.generate(regiments, (i) => 'u_gp5_${i + 1}'),
+                ),
+                isHomeArmy: true,
+              ),
+          ],
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+        ],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'tribe1',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+    }
+
+    AIWorldSnapshot snapshotFor({required int ownedOw}) => AIWorldSnapshot(
+      playerId: 'gp5',
+      threats: const ThreatSummary(atWarWith: ['tribe1']),
+      opportunities: const OpportunitySummary(),
+      conquest: ConquestSummary(oldWorldProvincesOwned: ownedOw),
+      colonial: const ColonialSummary(),
+      economy: const EconomySummary(),
+      relations: const {},
+    );
+
+    test('EXPAND peaces the OW-owning tribe overrunning a zero-regiment GP', () {
+      final game = buildCollapseGame(ownedOw: 5, regiments: 0);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        zeroRegimentSurvivalPeaceTargetsForProduction(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 5),
+          phasePlan: outcome,
+        ),
+        ['tribe1'],
+      );
+    });
+
+    test('does not fire when the GP still holds a standing regiment', () {
+      final game = buildCollapseGame(ownedOw: 5, regiments: 1);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        zeroRegimentSurvivalPeaceTargetsForProduction(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 5),
+          phasePlan: outcome,
+        ),
+        isEmpty,
+        reason:
+            'Regiment-holding / winning Great Powers (gp1/gp2/gp4/gp6) must be '
+            'excluded by the zero-regiment survival gate (Refs #2847 § H7).',
+      );
+    });
+
+    test('does not fire at or above the conquest quota', () {
+      final game = buildCollapseGame(ownedOw: 10, regiments: 0);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        zeroRegimentSurvivalPeaceTargetsForProduction(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 10),
+          phasePlan: outcome,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('COLONIAL and DEVELOP carry no survival peace', () {
+      final game = buildCollapseGame(ownedOw: 5, regiments: 0);
+      for (final phase in [
+        ObserverGoalPhase.colonial,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          zeroRegimentSurvivalPeaceTargetsForProduction(
+            game: game,
+            snapshot: snapshotFor(ownedOw: 5),
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isEmpty,
+        );
+      }
+    });
+
+    test('productionPeaceTargetsFromPhasePlan unions the survival slot', () {
+      final game = buildCollapseGame(ownedOw: 5, regiments: 0);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        productionPeaceTargetsFromPhasePlan(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 5),
+          phasePlan: outcome,
+        ),
+        contains('tribe1'),
+        reason:
+            'The zero-regiment all-faction survival peace must survive in the '
+            'production union so a collapsing below-quota GP can peace the '
+            'OW-owning tribes overrunning it (Refs #2847 § H7).',
+      );
+    });
+  });
 }
