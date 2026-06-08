@@ -93,6 +93,34 @@ List<String> belowQuotaPeerGpPeaceTargetsForProduction({
   }
 }
 
+/// Zero-regiment Great Power survival peace absent from the GP-only
+/// `planExpandPeace` adapter (Refs #2847 § H8).
+///
+/// Surfaces [stalledZeroRegimentGpPeaceTargets] — the below-quota,
+/// stalled-or-collapsed, **zero-regiment** GP survival pivot that peaces
+/// every at-war Great Power so a collapsing GP can stop bleeding OW provinces
+/// to peer attrition wars (seed-42 gp5↔gp6). H7 restored the minor/tribe
+/// companion arm only; the GP arm stayed on the no-`phasePlan`
+/// `collectStalledGreatPowerPeaceTargets` fallback until this slot.
+///
+/// The triple gate ([isZeroRegimentSurvivalOwContext] + zero standing
+/// regiments) excludes regiment-holding / at-or-above-quota baseline Great
+/// Powers by construction. EXPAND / COLONIAL-lite only.
+List<String> zeroRegimentGpSurvivalPeaceTargetsForProduction({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required PhasePlanOutcome phasePlan,
+}) {
+  switch (phasePlan.phase) {
+    case ObserverGoalPhase.expand:
+    case ObserverGoalPhase.colonialLite:
+      return stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
+    case ObserverGoalPhase.colonial:
+    case ObserverGoalPhase.develop:
+      return const <String>[];
+  }
+}
+
 /// Zero-regiment all-faction survival peace absent from the GP-only
 /// `planExpandPeace` adapter and the zero-OW-only distraction slot (Refs
 /// #2847 § H7).
@@ -134,12 +162,13 @@ List<String> zeroRegimentSurvivalPeaceTargetsForProduction({
 }
 
 /// Returns the sorted union of production diplomacy peace targets when a
-/// [PhasePlanOutcome] is threaded through (Refs #2847 § H6 / § H7).
+/// [PhasePlanOutcome] is threaded through (Refs #2847 § H6 / § H7 / § H8).
 ///
 /// Unions the phase-plan GP peace adapter, the H5 distraction slot, the
-/// below-quota peer-stalled GP peace pivot (§ H6), and the zero-regiment
-/// all-faction survival pivot (§ H7) that the post-S5 `planExpandPeace`
-/// adapter alone dropped from the production path.
+/// below-quota peer-stalled GP peace pivot (§ H6), the zero-regiment
+/// all-faction survival pivot (§ H7), and the zero-regiment GP survival
+/// pivot (§ H8) that the post-S5 `planExpandPeace` adapter alone dropped
+/// from the production path.
 List<String> productionPeaceTargetsFromPhasePlan({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -154,6 +183,11 @@ List<String> productionPeaceTargetsFromPhasePlan({
       phasePlan: phasePlan,
     ),
     ...zeroRegimentSurvivalPeaceTargetsForProduction(
+      game: game,
+      snapshot: snapshot,
+      phasePlan: phasePlan,
+    ),
+    ...zeroRegimentGpSurvivalPeaceTargetsForProduction(
       game: game,
       snapshot: snapshot,
       phasePlan: phasePlan,

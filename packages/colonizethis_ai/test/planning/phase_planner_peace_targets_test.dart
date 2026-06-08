@@ -367,5 +367,139 @@ void main() {
             'OW-owning tribes overrunning it (Refs #2847 § H7).',
       );
     });
+
+    test('fires at terminal attrition collapse (ownOw == 0)', () {
+      final game = buildCollapseGame(ownedOw: 0, regiments: 0);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        zeroRegimentSurvivalPeaceTargetsForProduction(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 0),
+          phasePlan: outcome,
+        ),
+        ['tribe1'],
+        reason:
+            'Terminal attrition collapse must still peace overrunners when '
+            'isStalledOldWorldExpansion is false at ownOw == 0 (Refs #2847 § H8).',
+      );
+    });
+  });
+
+  group('zeroRegimentGpSurvivalPeaceTargetsForProduction (Refs #2847 § H8)', () {
+    Game buildGpCollapseGame({required int ownedOw, required int regiments}) {
+      return Game(
+        id: 'g-h8-gp-survival-${ownedOw}_$regiments',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < ownedOw; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|gp6_0',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            if (regiments > 0)
+              Army(
+                id: 'gp5_army',
+                ownerId: 'gp5',
+                regionId: 'oldWorld',
+                stationedProvinceId: ownedOw > 0 ? 'oldWorld|gp5_0' : 'oldWorld|gp6_0',
+                regimentUnitIds: List<String>.unmodifiable(
+                  List<String>.generate(regiments, (i) => 'u_gp5_${i + 1}'),
+                ),
+                isHomeArmy: true,
+              ),
+          ],
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+    }
+
+    AIWorldSnapshot snapshotFor({required int ownedOw}) => AIWorldSnapshot(
+      playerId: 'gp5',
+      threats: const ThreatSummary(atWarWith: ['gp6']),
+      opportunities: const OpportunitySummary(),
+      conquest: ConquestSummary(oldWorldProvincesOwned: ownedOw),
+      colonial: const ColonialSummary(),
+      economy: const EconomySummary(),
+      relations: const {},
+    );
+
+    test('EXPAND peaces the at-war GP peer when zero regiments', () {
+      final game = buildGpCollapseGame(ownedOw: 5, regiments: 0);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        zeroRegimentGpSurvivalPeaceTargetsForProduction(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 5),
+          phasePlan: outcome,
+        ),
+        ['gp6'],
+      );
+    });
+
+    test('does not fire when the GP still holds a standing regiment', () {
+      final game = buildGpCollapseGame(ownedOw: 5, regiments: 1);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        zeroRegimentGpSurvivalPeaceTargetsForProduction(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 5),
+          phasePlan: outcome,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('fires at terminal attrition collapse (ownOw == 0)', () {
+      final game = buildGpCollapseGame(ownedOw: 0, regiments: 0);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        zeroRegimentGpSurvivalPeaceTargetsForProduction(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 0),
+          phasePlan: outcome,
+        ),
+        ['gp6'],
+      );
+    });
+
+    test('productionPeaceTargetsFromPhasePlan unions the GP survival slot', () {
+      final game = buildGpCollapseGame(ownedOw: 5, regiments: 0);
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+      expect(
+        productionPeaceTargetsFromPhasePlan(
+          game: game,
+          snapshot: snapshotFor(ownedOw: 5),
+          phasePlan: outcome,
+        ),
+        contains('gp6'),
+        reason:
+            'The zero-regiment GP survival peace must survive in the '
+            'production union so gp5 can peace gp6 during attrition collapse '
+            '(Refs #2847 § H8).',
+      );
+    });
   });
 }
