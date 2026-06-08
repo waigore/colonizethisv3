@@ -2,7 +2,7 @@
 //
 // Prints every DFS branch (tabu skip, greedy prune, try_push with full owner map,
 // pop_backtrack, capital restart) for the AC-14 hand-tuned 4-node topology.
-import 'package:colonizethis_logic/src/setup/locked_province_assigner.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 
 const _ac14Neighbours = <String, Set<String>>{
   'a': {'c', 'd'},

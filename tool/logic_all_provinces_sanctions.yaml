@@ -45,9 +45,3 @@ sanctions:
     rationale: getProvinceOwnerMap walks all provinces once per diplomacy filter pass.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2509
-
-  - path: packages/colonizethis_logic/lib/src/setup/initial_visibility.dart
-    line: 96
-    rationale: Initial visibility setup walks all province rows.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278

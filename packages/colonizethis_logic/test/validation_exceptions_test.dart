@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/src/logic_validation_exception.dart';
-import 'package:colonizethis_logic/src/setup/setup_validation_exception.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_world/src/world/capital_reassignment_fatal.dart';
 
 void main() {

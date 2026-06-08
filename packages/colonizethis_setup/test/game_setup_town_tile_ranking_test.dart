@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/src/setup/game_setup_town_tile_ranking.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {

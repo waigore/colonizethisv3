@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/src/setup/locked_province_assigner.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Five-province topology: only `m` from mandatory `a`; at depth 2 from `m`,
@@ -45,6 +45,37 @@ void main() {
           neighbours: const {},
           land: const {'a', 'b'},
           residualsSortedDesc: const [1],
+        ),
+        false,
+      );
+    });
+
+    test('matches residuals to islands in descending size order', () {
+      expect(
+        islandResidualsFeasibleGreedy(
+          unassignedOnLand: {'a', 'b', 'c'},
+          neighbours: const {
+            'a': {'b'},
+            'b': {'a'},
+            'c': {},
+          },
+          land: const {'a', 'b', 'c'},
+          residualsSortedDesc: const [2, 1],
+        ),
+        true,
+      );
+    });
+
+    test('returns false when no island is large enough for a residual', () {
+      expect(
+        islandResidualsFeasibleGreedy(
+          unassignedOnLand: {'a', 'b'},
+          neighbours: const {
+            'a': {'b'},
+            'b': {'a'},
+          },
+          land: const {'a', 'b'},
+          residualsSortedDesc: const [3],
         ),
         false,
       );
