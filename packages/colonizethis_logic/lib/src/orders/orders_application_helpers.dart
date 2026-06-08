@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import 'order_work_constants.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart' as tile_key_coordinates;
 import 'build_rail_work_rules.dart';
 

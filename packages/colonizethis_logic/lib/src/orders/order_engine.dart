@@ -6,7 +6,7 @@ import '../projections/order_projections.dart';
 import '../projections/projected_effects.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';
-import '../constants.dart';
+import 'package:colonizethis_world/src/game_player_lookup.dart';
 import 'order_resolution_context.dart';
 import 'order_validation_result.dart';
 import 'orders_logging.dart';
