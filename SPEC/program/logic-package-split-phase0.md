@@ -234,6 +234,8 @@ The order/work-domain constants (`kWorkTarget*`, `kMineralResourceIds`, `kProspe
 |---------|--------|-------|--------|
 | `kWorkTarget*`, `kMineralResourceIds`, `kProspectableByTerrainType`, `isProspectableTerrain`, `isProspectableTerrainId` | declared in `lib/src/constants.dart` (neutral core) | declared in `orders/order_work_constants.dart` (orders domain); `constants.dart` re-exports | Fixed |
 
+The `repo.work_target_constants` lint (`tool/check_work_target_constants.dart`) derives its canonical work-target ids from the definition file, so its source-of-truth path moves with the constants: it now reads `orders/order_work_constants.dart` (not the `constants.dart` re-export shim). The shim and the `orders/order_work_constants_test.dart` ownership test (which asserts each constant against its raw canonical literal) are exempt from the raw-literal gate alongside the definition file.
+
 ### `diplomacy` / `dossier` logging decoupling from `logicLog`
 
 **Wrong:** `diplomacy` / `dossier` → `colonizethis_logic` core logging (3 files, eliminated)
