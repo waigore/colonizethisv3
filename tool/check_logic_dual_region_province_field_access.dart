@@ -2,14 +2,19 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Canonical dual-region province iteration lives here; all other logic `lib/src`
+/// Canonical dual-region province iteration lives here; all other world `lib/src`
 /// code should prefer `allProvinces` / `WorldState.allProvinces()` (GitHub #2071).
 const _canonicalProvinceRelativePath =
     'packages/colonizethis_world/lib/src/world/province_lookup.dart';
 const _canonicalUnitRelativePath =
     'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
-const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
+/// Post-split scan root (Refs #3290): world domain code moved out of the monolith.
+const _scanDirRelative = 'packages/colonizethis_world/lib/src';
+
+/// Exposed for tests verifying the post-split scan root.
+String logicDualRegionProvinceFieldAccessScanDirForTests() =>
+    _scanDirRelative;
 
 /// Keep direct dual-region field access rare; budget tracks the smallest value
 /// confirmed achievable by the audit recorded in
@@ -42,7 +47,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
   final root = p.normalize(repoRoot);
   final scanRoot = Directory(p.join(root, _scanDirRelative));
   if (!scanRoot.existsSync()) {
-    logE('ERROR: Expected logic lib tree missing: $_scanDirRelative');
+    logE('ERROR: Expected world lib tree missing: $_scanDirRelative');
     return 1;
   }
 
@@ -75,7 +80,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
 
   if (hits.length <= _maxMatchingLinesOutsideCanonical) {
     logI(
-      'Logic dual-region province field access check passed '
+      'World dual-region province field access check passed '
       '(${hits.length}/$_maxMatchingLinesOutsideCanonical lines outside '
       '$_canonicalProvinceRelativePath and $_canonicalUnitRelativePath).',
     );

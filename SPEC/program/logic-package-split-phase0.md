@@ -198,6 +198,7 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - `colonizethis_logic` depends on `colonizethis_world` and re-exports `package:colonizethis_world/colonizethis_world.dart` from its barrel for backward compatibility.
 - `colonizethis_world/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.world_no_logic_deps`).
 - World-domain tests live under `packages/colonizethis_world/test/`; `colonizethis_logic` remains a **dev_dependency** of `colonizethis_world` for integration fixtures until later phases shrink that surface.
+- `repo.logic_dual_region_province_field_access` scans `packages/colonizethis_world/lib/src/**` (canonical lookup files excluded) so dual-region field-access policy follows the extracted world package.
 
 ## Phase 1 slice — `colonizethis_economy` (Refs #3290 C1)
 

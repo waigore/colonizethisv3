@@ -571,7 +571,7 @@ rules:
 
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
-    title: colonizethis_logic limits direct oldWorld/newWorld province list access
+    title: colonizethis_world limits direct oldWorld/newWorld province list access
     spec: SPEC/program/logic-dual-region-province-access.md
     runner: dart
     script: tool/check_logic_dual_region_province_field_access.dart
