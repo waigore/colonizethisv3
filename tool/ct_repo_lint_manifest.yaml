@@ -406,6 +406,13 @@ rules:
     runner: dart
     script: tool/check_domain_package_test_file_size.dart
 
+  - rule_id: repo.domain_package_dead_files
+    group: architecture
+    title: split domain packages must have no unreferenced lib/src files (Refs #3290)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_domain_package_dead_files.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines
