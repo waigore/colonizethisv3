@@ -399,6 +399,13 @@ rules:
     runner: dart
     script: tool/check_domain_package_import_dag.dart
 
+  - rule_id: repo.domain_package_test_file_size
+    group: structure
+    title: split domain-package test files must stay at or below 400 physical lines (Refs #3290)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_domain_package_test_file_size.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines

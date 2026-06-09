@@ -209,7 +209,7 @@ Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, e
 - `OrderValidationResult` and trade-validation types live in `colonizethis_economy`; `colonizethis_logic` re-exports them for backward compatibility.
 - `colonizethis_logic` depends on `colonizethis_economy` and re-exports `package:colonizethis_economy/colonizethis_economy.dart` from its barrel.
 - `colonizethis_economy/lib/**` imports no `package:colonizethis_logic/**` symbol (`repo.economy_no_logic_deps`).
-- Economy-domain tests live under `packages/colonizethis_economy/test/` and reach ≥90% line coverage; `colonizethis_logic` remains a **dev_dependency** of `colonizethis_economy` for integration fixtures.
+- Economy-domain tests live under `packages/colonizethis_economy/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_economy` for integration fixtures.
 
 ### `diplomacy` / `dossier` → `lib/src/constants.dart`
 
@@ -399,6 +399,26 @@ Leaf peers `combat` and `economy` intentionally have no mutual edge.
 - **Given** a synthetic `colonizethis_economy/lib` file importing `package:colonizethis_combat/...`, **when** `runCheckDomainPackageImportDag` scans the tree, **then** it returns exit code `1` (forbidden leaf-peer edge).
 - **Given** any `packages/colonizethis_<domain>/lib` tree is missing, **when** `runCheckDomainPackageImportDag` runs, **then** it returns exit code `1`.
 - **Given** the canonical DAG, **when** `domainPackageDagForTests()` is read, **then** the graph is acyclic and each package's allowed set equals its production `dependencies` domain entries.
+
+## Domain-package test file size gate (Refs #3290)
+
+After test migration, each split domain package owns its test suite under `packages/colonizethis_<domain>/test/**`. `repo.domain_package_test_file_size` (`tool/check_domain_package_test_file_size.dart`) enforces the same **400 physical-line** cap already applied to `packages/colonizethis_logic/test/**` by `repo.logic_test_file_size`, scanning all eight domain packages (`world`, `combat`, `economy`, `diplomacy`, `setup`, `orders`, `turn`, `ai_contracts`).
+
+### Acceptance criteria (domain-package test file size)
+
+- **Given** the post-split domain packages on `dev`, **when** `repo.domain_package_test_file_size` scans every `packages/colonizethis_<domain>/test/**` tree, **then** each `.dart` file is at or below 400 physical lines and the rule exits `0`.
+- **Given** a synthetic `packages/colonizethis_world/test/huge_test.dart` with 401 physical lines, **when** `runCheckDomainPackageTestFileSize` scans the tree, **then** it returns exit code `1` and lists the offending path.
+- **Given** any `packages/colonizethis_<domain>/test` directory is missing, **when** `runCheckDomainPackageTestFileSize` runs, **then** it returns exit code `1`.
+
+## Domain-package coverage gates (Refs #3290)
+
+`tool/run_package_tests.sh` enforces **≥90% line coverage** for split logic-domain packages when that package is included in `PACKAGES_TO_TEST` / the CI shard plan: `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_setup`, `colonizethis_orders`, `colonizethis_turn`, and `colonizethis_ai_contracts`, alongside `colonizethis_logic`, `colonizethis_map`, and `colonizethis_ai`. The default target list in `tool/check_coverage_threshold.sh` includes `colonizethis_turn` and `colonizethis_ai_contracts` when invoked without explicit directories. **`colonizethis_world`** remains listed in the default target set but is **not** wired into the `run_package_tests.sh` 90% gate until its standalone package coverage reaches ≥90% (currently below threshold after extraction; follow-up tests required).
+
+### Acceptance criteria (domain-package coverage gates)
+
+- **Given** `PACKAGES_TO_TEST=colonizethis_economy` and a fresh `packages/colonizethis_economy/coverage/lcov.info` from `dart test --coverage`, **when** `tool/run_package_tests.sh` completes, **then** it invokes `tool/check_coverage_threshold.sh 90 packages/colonizethis_economy` and fails when line coverage is below 90%.
+- **Given** `tool/check_coverage_threshold.sh` is invoked with no directory arguments after a full package test run, **when** the script evaluates default targets, **then** `packages/colonizethis_turn` and `packages/colonizethis_ai_contracts` are included alongside the other split domain packages.
+- **Given** `colonizethis_world` standalone line coverage is below 90%, **when** `tool/run_package_tests.sh` runs with `PACKAGES_TO_TEST=colonizethis_world`, **then** the script does **not** invoke the 90% gate for `packages/colonizethis_world` (deferred until coverage uplift lands).
 
 ## Acceptance criteria (Phase 0 / C0)
 
