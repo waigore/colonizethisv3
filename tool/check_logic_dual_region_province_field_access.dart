@@ -9,12 +9,37 @@ const _canonicalProvinceRelativePath =
 const _canonicalUnitRelativePath =
     'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
-/// Post-split scan root (Refs #3290): world domain code moved out of the monolith.
-const _scanDirRelative = 'packages/colonizethis_world/lib/src';
+/// Production source trees scanned for direct `oldWorld`/`newWorld` region-field
+/// access.
+///
+/// Post-split (Refs #3290) the world domain code — including the canonical
+/// `province_lookup.dart` / `unit_lookup.dart` and every consumer that walked
+/// `oldWorld`/`newWorld` lists directly — moved out of the `colonizethis_logic`
+/// monolith into the eight split domain packages. Several budget-0 migration
+/// sites recorded in the audit history of
+/// `SPEC/program/logic-dual-region-province-access.md` now live in
+/// `colonizethis_setup` (`game_setup_helpers_bootstrap.dart`,
+/// `game_setup_helpers_naming.dart`) and `colonizethis_orders`
+/// (`orders_application.dart`), so scanning only `colonizethis_world/lib/src`
+/// would let those packages reintroduce direct dual-region field access without
+/// tripping the gate. The checker therefore scans all split domain package
+/// source trees (plus the thin `colonizethis_logic` core) where a direct
+/// `oldWorld`/`newWorld` access could regress.
+const _scanDirsRelative = <String>[
+  'packages/colonizethis_world/lib/src',
+  'packages/colonizethis_combat/lib/src',
+  'packages/colonizethis_economy/lib/src',
+  'packages/colonizethis_diplomacy/lib/src',
+  'packages/colonizethis_setup/lib/src',
+  'packages/colonizethis_orders/lib/src',
+  'packages/colonizethis_turn/lib/src',
+  'packages/colonizethis_ai_contracts/lib/src',
+  'packages/colonizethis_logic/lib/src',
+];
 
-/// Exposed for tests verifying the post-split scan root.
-String logicDualRegionProvinceFieldAccessScanDirForTests() =>
-    _scanDirRelative;
+/// Exposed for tests verifying the post-split scan roots.
+List<String> logicDualRegionProvinceFieldAccessScanDirsForTests() =>
+    List<String>.unmodifiable(_scanDirsRelative);
 
 /// Keep direct dual-region field access rare; budget tracks the smallest value
 /// confirmed achievable by the audit recorded in
@@ -45,44 +70,54 @@ int runCheckLogicDualRegionProvinceFieldAccess(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final root = p.normalize(repoRoot);
-  final scanRoot = Directory(p.join(root, _scanDirRelative));
-  if (!scanRoot.existsSync()) {
-    logE('ERROR: Expected world lib tree missing: $_scanDirRelative');
-    return 1;
+  final scanRoots = <Directory>[];
+  for (final relative in _scanDirsRelative) {
+    final dir = Directory(p.join(root, relative));
+    if (!dir.existsSync()) {
+      logE('ERROR: Expected domain lib tree missing: $relative');
+      return 1;
+    }
+    scanRoots.add(dir);
   }
 
   final hits = <LogicDualRegionProvinceFieldHit>[];
-  for (final entity in scanRoot.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) continue;
-    final fullPath = p.normalize(entity.path);
-    if (!fullPath.endsWith('.dart')) continue;
-    if (_generatedSuffix.hasMatch(fullPath)) continue;
-    final relative = p.relative(fullPath, from: root);
-    final normalizedRelative = p.normalize(relative);
-    if (normalizedRelative == _canonicalProvinceRelativePath ||
-        normalizedRelative == _canonicalUnitRelativePath) {
-      continue;
-    }
+  for (final scanRoot in scanRoots) {
+    for (final entity in scanRoot.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is! File) continue;
+      final fullPath = p.normalize(entity.path);
+      if (!fullPath.endsWith('.dart')) continue;
+      if (_generatedSuffix.hasMatch(fullPath)) continue;
+      final relative = p.relative(fullPath, from: root);
+      final normalizedRelative = p.normalize(relative);
+      if (normalizedRelative == _canonicalProvinceRelativePath ||
+          normalizedRelative == _canonicalUnitRelativePath) {
+        continue;
+      }
 
-    final lines = entity.readAsLinesSync();
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      if (logicDualRegionProvinceFieldAccessLineMatches(line)) {
-        hits.add(
-          LogicDualRegionProvinceFieldHit(
-            path: p.normalize(relative),
-            line: i + 1,
-          ),
-        );
+      final lines = entity.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        if (logicDualRegionProvinceFieldAccessLineMatches(line)) {
+          hits.add(
+            LogicDualRegionProvinceFieldHit(
+              path: p.normalize(relative),
+              line: i + 1,
+            ),
+          );
+        }
       }
     }
   }
 
   if (hits.length <= _maxMatchingLinesOutsideCanonical) {
     logI(
-      'World dual-region province field access check passed '
-      '(${hits.length}/$_maxMatchingLinesOutsideCanonical lines outside '
-      '$_canonicalProvinceRelativePath and $_canonicalUnitRelativePath).',
+      'Dual-region province field access check passed across split domain '
+      'packages (${hits.length}/$_maxMatchingLinesOutsideCanonical lines '
+      'outside $_canonicalProvinceRelativePath and '
+      '$_canonicalUnitRelativePath).',
     );
     return 0;
   }
