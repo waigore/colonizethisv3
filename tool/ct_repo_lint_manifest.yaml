@@ -329,6 +329,13 @@ rules:
     runner: dart
     script: tool/check_logic_source_file_size.dart
 
+  - rule_id: repo.logic_reduced_surface
+    group: architecture
+    title: colonizethis_logic must stay a thin re-export core of at most 15 source files (Refs #3290 Phase 4)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_logic_reduced_surface.dart
+
   - rule_id: repo.world_no_logic_deps
     group: architecture
     title: colonizethis_world must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)

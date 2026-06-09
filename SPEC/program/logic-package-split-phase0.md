@@ -357,6 +357,16 @@ The `turn_logging.dart` logger is not part of the public barrel and has no exter
 - `colonizethis_ai_contracts` uses exactly one logger with the distinct `ai_contracts` prefix (`aiContractsLog`); AI-contract log lines carry the `ai_contracts:` prefix.
 - AI-contract tests live under `packages/colonizethis_ai_contracts/test/` and reach ≥90% line coverage (enforced by the package coverage gate); `colonizethis_logic` remains a **dev_dependency** of `colonizethis_ai_contracts` for integration fixtures.
 
+## Phase 4 thin-core surface gate (Refs #3290 C4)
+
+After all domain packages are extracted, `colonizethis_logic` is a thin re-export core (constants/logging seams, `turn_to_year.dart`, cross-package DI providers, the public re-export barrel `colonizethis_logic.dart`, and the narrow contract libraries `ai_api.dart`, `order_suggestion_api.dart`, `debug_console_api.dart`, `di.dart`). The epic AC caps this surface at **15 source files** so domain code cannot creep back into the monolith. `repo.logic_reduced_surface` (`tool/check_logic_reduced_surface.dart`) counts non-generated `*.dart` files under `packages/colonizethis_logic/lib/` (recursive) and fails when the count exceeds 15.
+
+### Acceptance criteria (Phase 4 / C4 — thin core surface)
+
+- **Given** the post-split `colonizethis_logic` package on `dev`, **when** `repo.logic_reduced_surface` counts non-generated `*.dart` files under `packages/colonizethis_logic/lib/` (recursive, excluding `*.g.dart` / `*.freezed.dart` / `*.mocks.dart`), **then** the count is at most 15 and the rule exits `0`.
+- **Given** a `colonizethis_logic/lib/` tree containing 16 or more non-generated `*.dart` source files, **when** `runCheckLogicReducedSurface` scans the tree, **then** it returns exit code `1` and lists the offending source files.
+- **Given** the `colonizethis_logic/lib/` tree is missing, **when** `runCheckLogicReducedSurface` runs, **then** it returns exit code `1`.
+
 ## Acceptance criteria (Phase 0 / C0)
 
 - **Given** the monolith on `dev`, **when** `repo.logic_domain_import_dag` runs, **then** zero imports match forbidden pairs outside the documented grandfather allowlist.
