@@ -367,6 +367,38 @@ After all domain packages are extracted, `colonizethis_logic` is a thin re-expor
 - **Given** a `colonizethis_logic/lib/` tree containing 16 or more non-generated `*.dart` source files, **when** `runCheckLogicReducedSurface` scans the tree, **then** it returns exit code `1` and lists the offending source files.
 - **Given** the `colonizethis_logic/lib/` tree is missing, **when** `runCheckLogicReducedSurface` runs, **then** it returns exit code `1`.
 
+## Package-level domain DAG gate (Refs #3290)
+
+The Phase 0 `repo.logic_domain_import_dag` rule scanned the monolith's
+`packages/colonizethis_logic/lib/src/<domain>/` folders. After extraction those
+folders live in their own packages, so that rule no longer observes any
+cross-domain edge. `repo.domain_package_import_dag`
+(`tool/check_domain_package_import_dag.dart`) re-establishes the strict one-way
+DAG at the package boundary: each domain package's `lib/` may only `import` or
+`export` `package:colonizethis_<domain>` for domains in its canonical downstream
+set (mirrors production `dependencies`; generated files excluded).
+
+| Package | Allowed domain dependencies |
+|---------|-----------------------------|
+| `world` | (none — leaf) |
+| `combat` | `world` |
+| `economy` | `world` |
+| `diplomacy` | `world`, `combat`, `economy` |
+| `setup` | `world`, `diplomacy` |
+| `orders` | `world`, `diplomacy`, `economy` |
+| `turn` | `world`, `combat`, `economy`, `diplomacy`, `orders` |
+| `ai_contracts` | `world`, `orders` |
+
+Leaf peers `combat` and `economy` intentionally have no mutual edge.
+
+### Acceptance criteria (package-level DAG)
+
+- **Given** the post-split domain packages on `dev`, **when** `repo.domain_package_import_dag` scans each `packages/colonizethis_<domain>/lib/` tree, **then** every `package:colonizethis_<domain>` import/export resolves to an allowed downstream package and the rule exits `0`.
+- **Given** a synthetic `colonizethis_world/lib` file importing `package:colonizethis_turn/...`, **when** `runCheckDomainPackageImportDag` scans the tree, **then** it returns exit code `1` (forbidden back-edge from a leaf to the orchestrator).
+- **Given** a synthetic `colonizethis_economy/lib` file importing `package:colonizethis_combat/...`, **when** `runCheckDomainPackageImportDag` scans the tree, **then** it returns exit code `1` (forbidden leaf-peer edge).
+- **Given** any `packages/colonizethis_<domain>/lib` tree is missing, **when** `runCheckDomainPackageImportDag` runs, **then** it returns exit code `1`.
+- **Given** the canonical DAG, **when** `domainPackageDagForTests()` is read, **then** the graph is acyclic and each package's allowed set equals its production `dependencies` domain entries.
+
 ## Acceptance criteria (Phase 0 / C0)
 
 - **Given** the monolith on `dev`, **when** `repo.logic_domain_import_dag` runs, **then** zero imports match forbidden pairs outside the documented grandfather allowlist.
