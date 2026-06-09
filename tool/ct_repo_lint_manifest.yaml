@@ -36,7 +36,7 @@ rules:
 
   - rule_id: repo.logic_dedup_logger
     group: architecture
-    title: colonizethis_logic must use shared logicLog (Refs #2391)
+    title: split logic-domain packages must use a shared package logger (Refs #2391, #3290)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_logic_dedup_logger.dart
