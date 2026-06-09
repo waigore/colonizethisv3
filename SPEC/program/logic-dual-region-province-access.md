@@ -1,6 +1,6 @@
 # Logic package: dual-region province field access (repo lint)
 
-**SPEC/program** — Enforces GitHub [#2071](https://github.com/waigore/colonizethis/issues/2071) guidance: avoid scattered direct dual-region field access (`RegionData.provinces` / `RegionData.units`) via `worldState.oldWorld` / `worldState.newWorld` in `colonizethis_world` production sources (post-split scan root; Refs #3290).
+**SPEC/program** — Enforces GitHub [#2071](https://github.com/waigore/colonizethis/issues/2071) guidance: avoid scattered direct dual-region field access (`RegionData.provinces` / `RegionData.units`) via `worldState.oldWorld` / `worldState.newWorld` across the split logic-domain package production sources (`colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_setup`, `colonizethis_orders`, `colonizethis_turn`, `colonizethis_ai_contracts`, plus the thin `colonizethis_logic` core; post-split scan roots, Refs #3290). The budget-0 migration sites recorded in **Audit history** moved into `colonizethis_setup` and `colonizethis_orders` when the monolith was split, so a world-only scan would no longer guard them.
 
 ## Policy
 
@@ -8,7 +8,7 @@
 - **Canonical implementation (units):** `packages/colonizethis_world/lib/src/world/unit_lookup.dart` may use `oldWorld.units` and `newWorld.units` to implement `allUnits`, `WorldState.allUnits()`, region-scoped lookup, and related helpers.
 - **Canonical region updates:** Prefer `WorldState.updateRegionById(...)` (for one-region updates) and `WorldState.mapBothRegions(...)` / `WorldState.mapBothRegionUnits(...)` (for two-region updates) over inline `if (regionId == oldWorld)` or `copyWith(oldWorld: ...)/copyWith(newWorld: ...)` branching in `lib/src/**`.
 - **Region-scoped lookups:** Prefer `WorldState.provincesForRegion(regionId)` (canonical helper in `world/province_lookup.dart`) over hand-rolled `if (regionId == kRegionOldWorld) return ws.oldWorld.provinces` branching in `lib/src/**`.
-- **Elsewhere under** `packages/colonizethis_world/lib/src/**`: prefer `allProvinces(world)` / `allUnits(world)` or the related `WorldState` lookup extension methods so dual-region iteration stays centralized.
+- **Elsewhere under any scanned split domain package** `lib/src/**` (`colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_setup`, `colonizethis_orders`, `colonizethis_turn`, `colonizethis_ai_contracts`, and the thin `colonizethis_logic` core): prefer `allProvinces(world)` / `allUnits(world)` or the related `WorldState` lookup extension methods so dual-region iteration stays centralized.
 - **Exceptions:** Old-World–only rules (e.g. military victory province counts, GP Old World redistribution) may still touch `oldWorld.provinces` directly when the GDD scope is explicitly Old World only. Such sites are counted toward the **global line budget** below so the total stays small and reviewable.
 
 ## CI rule
@@ -17,7 +17,7 @@
 |-------|--------|
 | `rule_id` | `repo.logic_dual_region_province_field_access` |
 | Checker | `tool/check_logic_dual_region_province_field_access.dart` |
-| Scan root | `packages/colonizethis_world/lib/src/` (non-generated `.dart` only) |
+| Scan roots | `packages/colonizethis_world/lib/src/`, `packages/colonizethis_combat/lib/src/`, `packages/colonizethis_economy/lib/src/`, `packages/colonizethis_diplomacy/lib/src/`, `packages/colonizethis_setup/lib/src/`, `packages/colonizethis_orders/lib/src/`, `packages/colonizethis_turn/lib/src/`, `packages/colonizethis_ai_contracts/lib/src/`, `packages/colonizethis_logic/lib/src/` (non-generated `.dart` only). A missing tree fails the check. |
 | Excluded files | `packages/colonizethis_world/lib/src/world/province_lookup.dart`, `packages/colonizethis_world/lib/src/world/unit_lookup.dart` |
 | Budget | At most **0** physical source lines (total) outside the excluded files may contain `oldWorld.provinces`, `newWorld.provinces`, `oldWorld.units`, `newWorld.units`, `copyWith(oldWorld: ...)`, `copyWith(newWorld: ...)`, or manual `if (regionId == kRegionOldWorld)` / `else if (regionId == kRegionOldWorld)` branching. |
 
@@ -32,8 +32,9 @@ Raising the budget requires a SPEC update in this file and a maintainer-reviewed
 
 ## Acceptance criteria
 
-- Given the repository at `dev` with `packages/colonizethis_world/lib/src/**` sources, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_dual_region_province_field_access`, then the checker counts matching lines outside `province_lookup.dart` and `unit_lookup.dart` and the run passes when the count is at most 0.
-- Given a contributor adds a 1st matching line outside `province_lookup.dart` and `unit_lookup.dart` without updating the budget in this SPEC and the checker constant, when repo lint runs, then the run fails and lists each `path:line` hit.
+- Given the repository at `dev` with the split domain package sources (`colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_setup`, `colonizethis_orders`, `colonizethis_turn`, `colonizethis_ai_contracts`, and the `colonizethis_logic` core) `lib/src/**`, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_dual_region_province_field_access`, then the checker counts matching lines across all scan roots outside `province_lookup.dart` and `unit_lookup.dart` and the run passes when the count is at most 0.
+- Given a contributor adds a 1st matching line in any scanned split domain package (for example `colonizethis_setup` or `colonizethis_orders`) outside `province_lookup.dart` and `unit_lookup.dart` without updating the budget in this SPEC and the checker constant, when repo lint runs, then the run fails and lists each `path:line` hit.
+- Given any one of the scanned split domain package `lib/src` trees is absent, when repo lint runs, then the checker fails fast and reports the missing tree.
 
 ## `allProvinces(` call-site sanction gate (Refs **#2278**)
 
