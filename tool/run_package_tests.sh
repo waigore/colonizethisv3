@@ -126,13 +126,13 @@ done
 echo ""
 
 gate_pkgs=()
-for pkg in colonizethis_logic colonizethis_map colonizethis_ai colonizethis_ai_contracts colonizethis_combat colonizethis_economy colonizethis_diplomacy colonizethis_setup colonizethis_orders colonizethis_turn; do
+for pkg in colonizethis_logic colonizethis_map colonizethis_ai colonizethis_ai_contracts colonizethis_world colonizethis_combat colonizethis_economy colonizethis_diplomacy colonizethis_setup colonizethis_orders colonizethis_turn; do
   if printf '%s\n' "${PKGS[@]}" | grep -qxF "$pkg"; then
     gate_pkgs+=("packages/$pkg")
   fi
 done
 if [ ${#gate_pkgs[@]} -gt 0 ]; then
-  echo "=== Coverage gate (logic/map/ai + split domain packages >= 90%; world deferred) ==="
+  echo "=== Coverage gate (logic/map/ai + split domain packages >= 90%) ==="
   "$ROOT/tool/check_coverage_threshold.sh" 90 "${gate_pkgs[@]}"
 fi
 
