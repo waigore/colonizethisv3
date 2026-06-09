@@ -410,6 +410,17 @@ After test migration, each split domain package owns its test suite under `packa
 - **Given** a synthetic `packages/colonizethis_world/test/huge_test.dart` with 401 physical lines, **when** `runCheckDomainPackageTestFileSize` scans the tree, **then** it returns exit code `1` and lists the offending path.
 - **Given** any `packages/colonizethis_<domain>/test` directory is missing, **when** `runCheckDomainPackageTestFileSize` runs, **then** it returns exit code `1`.
 
+## Domain-package source file size gate (Refs #3290)
+
+The Phase 0 `repo.logic_source_file_size` rule decomposed every monolith `lib/src` file above 500 physical lines (the grandfather baseline `tool/logic_source_file_size_baseline.json` is now empty). After extraction those decomposed files live in their own packages, so `repo.logic_source_file_size` only observes the thin `colonizethis_logic` core and no longer guards the moved source. `repo.domain_package_source_file_size` (`tool/check_domain_package_source_file_size.dart`) re-applies the same **500 physical-line** cap to every `packages/colonizethis_<domain>/lib/src/**` tree across the eight extracted packages (`world`, `combat`, `economy`, `diplomacy`, `setup`, `orders`, `turn`, `ai_contracts`), so the decomposition cannot silently regress. Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, `*.gen.dart`) are excluded.
+
+### Acceptance criteria (domain-package source file size)
+
+- **Given** the post-split domain packages on `dev`, **when** `repo.domain_package_source_file_size` scans every `packages/colonizethis_<domain>/lib/src/**` tree, **then** each non-generated `.dart` file is at or below 500 physical lines and the rule exits `0`.
+- **Given** a synthetic `packages/colonizethis_world/lib/src/huge.dart` with 501 physical lines, **when** `runCheckDomainPackageSourceFileSize` scans the tree, **then** it returns exit code `1` and lists the offending path with `501 physical lines > 500`.
+- **Given** a generated `packages/colonizethis_world/lib/src/huge.g.dart` with 501 physical lines, **when** `runCheckDomainPackageSourceFileSize` scans the tree, **then** the generated file is ignored and the rule exits `0`.
+- **Given** any `packages/colonizethis_<domain>/lib/src` directory is missing, **when** `runCheckDomainPackageSourceFileSize` runs, **then** it returns exit code `1`.
+
 ## Domain-package coverage gates (Refs #3290)
 
 `tool/run_package_tests.sh` enforces **≥90% line coverage** for every split logic-domain package when that package is included in `PACKAGES_TO_TEST` / the CI shard plan: `colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_setup`, `colonizethis_orders`, `colonizethis_turn`, and `colonizethis_ai_contracts`, alongside `colonizethis_logic`, `colonizethis_map`, and `colonizethis_ai`. The default target list in `tool/check_coverage_threshold.sh` includes `colonizethis_turn` and `colonizethis_ai_contracts` when invoked without explicit directories. **`colonizethis_world`** is now wired into the `run_package_tests.sh` 90% gate: its standalone package coverage was lifted to ≥90% after extraction, so it is gated at the same threshold as the other split domain packages (no remaining deferral).
