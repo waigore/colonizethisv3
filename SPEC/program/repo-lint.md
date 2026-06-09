@@ -66,6 +66,7 @@
 | `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
 | `tool/check_logic_dual_region_province_field_access.dart` | Caps direct `oldWorld/newWorld` `provinces` / `units` references in `packages/colonizethis_world/lib/src/**` outside canonical lookup files (`province_lookup.dart`, `unit_lookup.dart`) (GitHub #2071; post-split scan root Refs #3290); rule `repo.logic_dual_region_province_field_access` — see `SPEC/program/logic-dual-region-province-access.md` |
 | `tool/check_logic_dead_files.dart` | Unreferenced `lib/src` scan for `colonizethis_logic`; rule `repo.logic_dead_files` — see subsection below |
+| `tool/check_domain_package_dead_files.dart` | Workspace-wide unreferenced `lib/src` scan for the eight split logic-domain packages (`world`, `combat`, `economy`, `diplomacy`, `setup`, `orders`, `turn`, `ai_contracts`); rule `repo.domain_package_dead_files` (Refs #3290) — see subsection below |
 | `tool/check_logic_dedup_logger.dart` | Forbid private `final _log = packageLogger();` declarations under `packages/colonizethis_logic/lib/src/**` (Refs #2391, Pattern 1); files MUST consume the shared `logicLog` from `package:colonizethis_logic/package_logger.dart`; rule `repo.logic_dedup_logger` |
 | `tool/check_ai_dedup_gp_wars_filter.dart` | Forbid inline GP-wars filter comprehensions (`for (final … in <expr>.atWarWith) … playerById(…) != null`) under `packages/colonizethis_ai/lib/**` outside the canonical helper file `src/planning/planning_helpers.dart`; planner/filter code MUST call the shared `gpFactionIdsAtWarWith(game, snapshot)` helper (Refs #3278); rule `repo.ai_dedup_gp_wars_filter` |
 | `tool/check_ai_dedup_weight_scale_clamp.dart` | Forbid the inline weight-scale clamp idiom (`<= 0.0) { return 0; }` guard + `final clamped = X > 1.0 ? 1.0 : X;` + `return (Y * clamped).round();`) under `packages/colonizethis_ai/lib/**` outside the canonical helper file `src/planning/planning_helpers.dart`; filter/scoring code MUST call the shared `scaleWeightedBonus(weight, baseConstant)` helper (Refs #3278); rule `repo.ai_dedup_weight_scale_clamp` |
@@ -105,6 +106,25 @@
 **Deferred paths:** `lib/src/ai/ai_planner.dart` and `lib/src/ai/sim_game_ai.dart` are temporarily exempt in `tool/check_logic_dead_files.dart` until product wiring or deletion is decided (issue #2201); the checker still lists them in the pass message when they are the only findings.
 
 **Consumer note:** The root barrel may export setup/dossier/world modules that are not referenced by `app/` or `colonizethis_ai/` today; that keeps tests on a single `package:colonizethis_logic/colonizethis_logic.dart` import. Narrowing those exports is optional maintenance, not required for the dead-file rule.
+
+### `repo.domain_package_dead_files` (split domain-package `lib/src` orphans)
+
+**Goal (Refs #3290):** Extend dead-file detection to the eight extracted logic-domain packages (`colonizethis_world`, `colonizethis_combat`, `colonizethis_economy`, `colonizethis_diplomacy`, `colonizethis_setup`, `colonizethis_orders`, `colonizethis_turn`, `colonizethis_ai_contracts`) so an orphaned `lib/src` file in any of them fails CI, the same way `repo.logic_dead_files` protects the thin `colonizethis_logic` core.
+
+**Why workspace-wide (vs. the intra-package `repo.logic_dead_files` model):** After the split, a domain `lib/src` file is frequently consumed by a *different* package — for example `colonizethis_turn` re-exporting `package:colonizethis_world/src/world/...`, the thin `colonizethis_logic` barrel re-exporting domain src through `ai_api.dart` / `order_suggestion_api.dart` / `colonizethis_logic.dart`, or `app/lib` importing a domain src path directly. Intra-package reachability alone would mislabel these public files as dead, so liveness is resolved across the whole workspace.
+
+**Predicate:** `tool/check_domain_package_dead_files.dart` collects every non-test `.dart` file under the consumer roots (`packages/*/lib`, `app/lib`, `ctdev/lib`, `tool`). Every such file that lives **outside** the eight domain `lib/src` trees is an **anchor root**. Reachability follows parsed `import` / `export` / `part` directives (resolving workspace `package:<pkg>/...` URIs to `packages/<pkg>/lib/...` and relative paths) transitively. A domain `lib/src` file is **dead** when no anchor root reaches it through that directive graph.
+
+**Test imports:** Files under any `test/` or `integration_test/` directory are excluded from the consumer roots, so a domain `lib/src` file used only by tests is still treated as dead (mirrors `repo.logic_dead_files`).
+
+**Missing-tree guard:** If any of the eight `packages/colonizethis_<domain>/lib/src` trees is absent, the checker exits `1` (the split is incomplete or a package was misnamed).
+
+**Acceptance criteria:**
+
+- **Given** the post-split domain packages on `dev`, **when** `repo.domain_package_dead_files` scans every `packages/colonizethis_<domain>/lib/src` tree, **then** every `lib/src` file is reachable from at least one non-test anchor root and the rule exits `0`.
+- **Given** a `packages/colonizethis_world/lib/src` file that no non-test consumer imports, exports, or includes via `part`, **when** `repo.domain_package_dead_files` runs, **then** the rule lists that file under `packages/colonizethis_world/lib/src` and exits `1`.
+- **Given** a domain `lib/src` file consumed only through a cross-package re-export (for example `colonizethis_turn` `export 'package:colonizethis_world/src/world/...'`), **when** `repo.domain_package_dead_files` runs, **then** that file is treated as live and the rule exits `0`.
+- **Given** a workspace where one of the eight `packages/colonizethis_<domain>/lib/src` trees is missing, **when** `repo.domain_package_dead_files` runs, **then** the rule reports `Missing domain src tree` and exits `1`.
 
 ## Rule IDs and groups
 
