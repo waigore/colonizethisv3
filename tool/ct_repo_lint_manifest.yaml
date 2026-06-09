@@ -392,6 +392,13 @@ rules:
     runner: dart
     script: tool/check_ai_contracts_no_logic_deps.dart
 
+  - rule_id: repo.domain_package_import_dag
+    group: architecture
+    title: split domain packages must follow the one-way dependency DAG in lib/ (Refs #3290)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_domain_package_import_dag.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines
@@ -564,7 +571,7 @@ rules:
 
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
-    title: colonizethis_logic limits direct oldWorld/newWorld province list access
+    title: colonizethis_world limits direct oldWorld/newWorld province list access
     spec: SPEC/program/logic-dual-region-province-access.md
     runner: dart
     script: tool/check_logic_dual_region_province_field_access.dart
