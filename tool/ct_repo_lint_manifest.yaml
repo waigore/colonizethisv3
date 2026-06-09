@@ -606,7 +606,7 @@ rules:
 
   - rule_id: repo.logic_units_by_id_rebuild
     group: architecture
-    title: colonizethis_logic must use WorldState.allUnitsById, not unitsByIdFromWorld( (Refs #2836)
+    title: split domain packages must use WorldState.allUnitsById, not unitsByIdFromWorld( (Refs #2836, #3290)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_logic_units_by_id_rebuild.dart
