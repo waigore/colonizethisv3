@@ -14,9 +14,3 @@ sanctions:
     rationale: Turn news digest second pass over all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_orders/lib/src/orders/order_suggestion_work.dart
-    line: 43
-    rationale: merchantPurchaseLandCandidateTileKeys walks all provinces once per suggestWorkOrders pass when merchants are present (foreign-owned resource tiles).
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2394

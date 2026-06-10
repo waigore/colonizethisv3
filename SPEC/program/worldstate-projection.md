@@ -31,11 +31,9 @@ site uses the result for membership/count only. AI sites reach the projection
 through the narrow contract — `package:colonizethis_logic/ai_api.dart`
 re-exports `ProvinceOwnerCache`, `kRegionOldWorld`, and `kRegionNewWorld` at the
 `colonizethis_world` barrel level — preserving the one-way decoupling boundary
-(`colonizethis-logic-ai-decoupling.mdc`).
-
-Per-region accessors group by the region a province was visited in
-(`kRegionOldWorld` first, then `kRegionNewWorld`), exactly matching the migrated
-`world.oldWorld.provinces` / `world.newWorld.provinces` lists.
+(`colonizethis-logic-ai-decoupling.mdc`). Per-region accessors group by the
+region a province was visited in (old-world first, then new-world; see
+Determinism contract below).
 
 - **Slice 1 — `colonizethis_orders` full-world fallbacks** (`allProvinces(world)
   .where((p) => p.ownerId == playerId)` → `provincesOwnedBy`):
@@ -104,6 +102,16 @@ Per-region accessors group by the region a province was visited in
   and `townTileKeys` becomes `ProvinceOwnerCache.of(world)
   .provincesOwnedBy(playerId)`. Both collected sets are order-insensitive, so
   the result is identical to the prior scan.
+- **Slice 14 — `colonizethis_orders` merchant purchase-land scan:**
+  `merchantPurchaseLandCandidateTileKeys` (`order_suggestion_work.dart`, the
+  sole sanctioned `allProvinces(` site in that file) iterated every province —
+  including unowned ones — to collect resource tiles in non-player-owned
+  provinces. It now iterates `ownerIds` (skipping `Game.players` ids) and each
+  owner's `provincesOwnedBy(ownerId)`. The union of those lists is exactly the
+  non-null, non-player owners' provinces (`null` owners are excluded, matching
+  the prior `ownerId == null` skip); the result is sorted before return, so the
+  pre-sort iteration order is irrelevant. The matching
+  `tool/logic_all_provinces_sanctions.yaml` entry is removed.
 
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
@@ -221,6 +229,13 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
   owned-province set, **then** that set equals `{ p.id for p in
   ProvinceOwnerCache.of(world).provincesOwnedBy('p1') }`, equal to the
   pre-migration both-region `provinces.where((p) => p.ownerId == 'p1')` scan.
+- **Given** a `Game` whose minor `m1` and tribe `t1` each own a resource tile
+  and whose great power `p1` (a `Game.players` entry) also owns a resource tile
+  (slice 14), **when** `merchantPurchaseLandCandidateTileKeys` runs, **then** the
+  returned tile-key set excludes `p1`'s tile and equals the pre-migration
+  `allProvinces` scan that skipped `null` and player owners (the `m1` and `t1`
+  tiles), equal to the union of `provincesOwnedBy(ownerId)` over
+  `ProvinceOwnerCache.of(game.worldState).ownerIds` excluding `Game.players` ids.
 
 ## `ProvinceOwnerCache`
 
