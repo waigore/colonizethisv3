@@ -1,11 +1,98 @@
 /// Explicit logic surface consumed by `colonizethis_ai`.
 ///
 /// This library intentionally avoids exporting the full logic barrel so AI can
-/// depend on narrow contracts only.
+/// depend on narrow contracts only (see `colonizethis-logic-ai-decoupling.mdc`).
+///
+/// SPEC: SPEC/program/logic-package-barrel-contracts.md (Refs #3393 Phase 3 —
+/// AI API narrowing). Enforced by repo-lint rule `repo.ai_api_narrow_surface`.
+///
+/// Narrowing rules:
+/// - Sibling-domain symbols are re-exported through the domain **barrel**
+///   (`package:colonizethis_<domain>/colonizethis_<domain>.dart`) whenever that
+///   barrel already publishes the owning file — never through a deep `src/` path.
+/// - The remaining deep `src/` exports are for symbols the domain barrel does
+///   not (yet) publish; each is grouped and justified at the bottom of this file
+///   and stays deep only until a future Phase 1 barrel-bypass slice promotes the
+///   file into its domain barrel.
 library;
 
-export 'package:colonizethis_world/src/world/ai_control.dart'
-    show isAiControlled;
+// colonizethis_world (barrel-level re-exports).
+export 'package:colonizethis_world/colonizethis_world.dart'
+    show
+        PlayerView,
+        TurnTraceAiSection,
+        VisibilityLevel,
+        WorldStateUnitLookup,
+        allProvinces,
+        allUnitsFromWorld,
+        applyArmySplit,
+        buildPlayerView,
+        homeArmyIdFor,
+        isAiControlled,
+        neighborProvinceIdsInRegion,
+        regimentTypeCountsForPlayer,
+        shipTypeCountsForPlayer,
+        unitsByIdFromWorld;
+
+// colonizethis_orders (barrel-level re-exports).
+export 'package:colonizethis_orders/colonizethis_orders.dart'
+    show
+        IncrementalCandidateValidator,
+        applyArmyMoveOrderForPlayer,
+        armyMoveCandidateDestinationProvinceIds,
+        filterArmyMoveOrdersByDiplomacy,
+        filterMoveOrdersByDiplomacy,
+        getProvinceOwnerMap;
+
+// colonizethis_economy (barrel-level re-exports).
+export 'package:colonizethis_economy/colonizethis_economy.dart'
+    show
+        canAffordRecruitWorker,
+        cargoHoldsForHomeFleet,
+        carryForwardBidNotionalByPlayer,
+        effectiveLabourForWorkers,
+        effectiveMarketPriceForCommodityId,
+        kWorldMarketBaselineBidTypeCap,
+        pendingRichesTreasuryDelta,
+        tradeCargoCapacityForGreatPower,
+        worldMarketBidTypeCap;
+
+// colonizethis_diplomacy (barrel-level re-exports).
+export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show
+        DiplomacyFactionMembership,
+        getOverture,
+        getRelation,
+        greatPowerPowerScore,
+        joinEmpireCostForMinorOrTribe,
+        knownDiplomaticTargetFactionIds,
+        oldWorldProvinceCountOwnedBy,
+        provinceCountOwnedBy,
+        relationScoreMinFriendly,
+        shipCountForFaction;
+
+// colonizethis_turn (barrel-level re-exports).
+export 'package:colonizethis_turn/colonizethis_turn.dart'
+    show pendingTreasuryCostsForTurn;
+
+// colonizethis_logic local constants. `src/constants.dart` is owned by this thin
+// logic package itself (not a sibling domain package), so there is no domain
+// barrel to route through; this remains a package-local relative export.
+export 'src/constants.dart'
+    show
+        GamePlayerLookup,
+        kMineralResourceIds,
+        kWorkTargetBuildImprovement,
+        kWorkTargetCounterSpy,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech;
+
+// Justified deep `src/` exports — no domain-barrel alternative (Refs #3393
+// Phase 3). Each symbol below is required by `colonizethis_ai` but is not yet
+// published by its domain package barrel, so a deep `src/` export is the only
+// available contract surface. These stay deep until a Phase 1 barrel-bypass
+// slice promotes the owning file into the domain barrel; `repo.ai_api_narrow_surface`
+// permits them precisely because the barrel does not re-export these files.
 export 'package:colonizethis_orders/src/orders/feedstock_bootstrap_cost.dart'
     show
         feedstockBootstrapBuildImprovementCastIronWaived,
@@ -20,74 +107,7 @@ export 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart
         selfLockRecoverySellerNeededProducibleImprovementInputs,
         sellerImprovementInputFeedstockExtractionResourceIds,
         supplierImprovementInputFeedstockExtractionResourceIds;
-export 'src/constants.dart'
-    show
-        GamePlayerLookup,
-        kMineralResourceIds,
-        kWorkTargetBuildImprovement,
-        kWorkTargetCounterSpy,
-        kWorkTargetPurchaseLand,
-        kWorkTargetStealTech;
-export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart'
-    show
-        getOverture,
-        getRelation,
-        greatPowerPowerScore,
-        joinEmpireCostForMinorOrTribe,
-        oldWorldProvinceCountOwnedBy,
-        provinceCountOwnedBy,
-        relationScoreMinFriendly,
-        shipCountForFaction;
-export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart'
-    show DiplomacyFactionMembership;
-export 'package:colonizethis_orders/src/orders/incremental_candidate_validator.dart'
-    show IncrementalCandidateValidator;
-export 'package:colonizethis_orders/src/orders/order_suggestion_move_army.dart'
-    show armyMoveCandidateDestinationProvinceIds;
-export 'package:colonizethis_world/src/world/movement.dart'
-    show neighborProvinceIdsInRegion;
-export 'package:colonizethis_economy/src/economy/world_market/bid_type_cap.dart'
-    show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
-export 'package:colonizethis_economy/src/economy/economy_riches_to_treasury.dart'
-    show pendingRichesTreasuryDelta;
-export 'package:colonizethis_economy/src/economy/sea_transport.dart'
-    show cargoHoldsForHomeFleet;
-export 'package:colonizethis_economy/src/economy/trade_cargo_capacity.dart'
-    show tradeCargoCapacityForGreatPower;
-export 'package:colonizethis_economy/src/economy/world_market/treasury_bid_budget.dart'
-    show carryForwardBidNotionalByPlayer, effectiveMarketPriceForCommodityId;
-export 'package:colonizethis_turn/src/turn/pending_treasury_costs.dart'
-    show pendingTreasuryCostsForTurn;
-export 'package:colonizethis_economy/src/economy/worker_economy.dart'
-    show effectiveLabourForWorkers;
-export 'package:colonizethis_economy/src/economy/worker_action_cost.dart'
-    show canAffordRecruitWorker;
-export 'package:colonizethis_orders/src/orders/draft_orders_mutations.dart'
-    show applyArmyMoveOrderForPlayer;
-export 'package:colonizethis_diplomacy/src/diplomacy/known_diplomatic_targets.dart'
-    show knownDiplomaticTargetFactionIds;
-export 'package:colonizethis_orders/src/orders/order_suggestion_helpers.dart'
-    show
-        filterArmyMoveOrdersByDiplomacy,
-        filterMoveOrdersByDiplomacy,
-        getProvinceOwnerMap;
-export 'package:colonizethis_world/src/trace/turn_trace_contracts.dart'
-    show TurnTraceAiSection;
-export 'package:colonizethis_world/src/world/army_commands.dart'
-    show applyArmySplit;
-export 'package:colonizethis_world/src/world/army_ids.dart' show homeArmyIdFor;
-export 'package:colonizethis_world/src/world/player_view.dart'
-    show PlayerView, VisibilityLevel, buildPlayerView;
 export 'package:colonizethis_world/src/world/sea_reachable_provinces.dart'
     show
         reachableNonOwnedProvinceDistancesViaSeas,
         reachableNonOwnedProvinceIdsViaSeas;
-export 'package:colonizethis_world/src/world/province_lookup.dart'
-    show allProvinces;
-export 'package:colonizethis_world/src/world/unit_lookup.dart'
-    show
-        WorldStateUnitLookup,
-        allUnitsFromWorld,
-        regimentTypeCountsForPlayer,
-        shipTypeCountsForPlayer,
-        unitsByIdFromWorld;
