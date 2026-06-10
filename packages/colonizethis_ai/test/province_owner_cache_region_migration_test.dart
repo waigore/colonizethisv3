@@ -22,11 +22,9 @@ bool _manualAnyMinorOwnsOldWorld(Game game) =>
 
 /// New (slice 7) `anyMinorOwnsOldWorld` predicate: projection-backed.
 bool _projectionAnyMinorOwnsOldWorld(Game game) => game.minorNations.any(
-  (m) =>
-      ProvinceOwnerCache.of(game.worldState).ownsAnyInRegion(
-        m.id,
-        kRegionOldWorld,
-      ),
+  (m) => ProvinceOwnerCache.of(
+    game.worldState,
+  ).ownsAnyInRegion(m.id, kRegionOldWorld),
 );
 
 void main() {
@@ -163,6 +161,71 @@ void main() {
         _projectionAnyMinorOwnsOldWorld(game),
         _manualAnyMinorOwnsOldWorld(game),
       );
+    });
+  });
+
+  // Refs #3393 Phase 6b (slice 10) — `planColonialCivilian` iterates the active
+  // player's owned New World provinces. The migration replaces the
+  // `world.newWorld.provinces.where((p) => p.ownerId == playerId)` scan with
+  // `ProvinceOwnerCache.provincesOwnedByInRegion(playerId, kRegionNewWorld)`.
+  // These tests pin the projection set equals the prior per-region owner scan.
+  group('planColonialCivilian owned-NW-province slice-10 migration', () {
+    WorldState buildWorld() => const WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: 'oldWorld|a', regionId: 'oldWorld', ownerId: 'gp1'),
+        ],
+      ),
+      newWorld: RegionData(
+        provinces: [
+          Province(id: 'newWorld|a', regionId: 'newWorld', ownerId: 'gp1'),
+          Province(id: 'newWorld|b', regionId: 'newWorld', ownerId: 'gp2'),
+          Province(id: 'newWorld|c', regionId: 'newWorld', ownerId: 'gp1'),
+        ],
+      ),
+    );
+
+    Set<String> manualOwnedNewWorldProvinceIds(WorldState world, String id) => {
+      for (final p in world.newWorld.provinces)
+        if (p.ownerId == id) p.id,
+    };
+
+    Set<String> projectionOwnedNewWorldProvinceIds(
+      WorldState world,
+      String id,
+    ) => {
+      for (final p in ProvinceOwnerCache.of(
+        world,
+      ).provincesOwnedByInRegion(id, kRegionNewWorld))
+        p.id,
+    };
+
+    test(
+      'projection set equals the prior newWorld owner scan for an owner',
+      () {
+        final world = buildWorld();
+
+        expect(
+          projectionOwnedNewWorldProvinceIds(world, 'gp1'),
+          manualOwnedNewWorldProvinceIds(world, 'gp1'),
+        );
+        expect(projectionOwnedNewWorldProvinceIds(world, 'gp1'), {
+          'newWorld|a',
+          'newWorld|c',
+        });
+      },
+    );
+
+    test('projection set is empty for a player owning no NW provinces', () {
+      final world = buildWorld();
+
+      // gp3 owns nothing; the OW-only owner is excluded from the NW region set.
+      expect(
+        projectionOwnedNewWorldProvinceIds(world, 'gp3'),
+        manualOwnedNewWorldProvinceIds(world, 'gp3'),
+      );
+      expect(projectionOwnedNewWorldProvinceIds(world, 'gp3'), isEmpty);
     });
   });
 }
