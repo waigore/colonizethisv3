@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show Province, WorldState;
 
 import 'package:colonizethis_world/src/utils/expando_index.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart'
+    show allProvinces;
 
 /// Read-only projection of province ownership over a single [WorldState].
 ///
@@ -49,10 +51,7 @@ class ProvinceOwnerCache {
       (provincesByOwner[owner] ??= <Province>[]).add(province);
     }
 
-    for (final province in world.oldWorld.provinces) {
-      visit(province);
-    }
-    for (final province in world.newWorld.provinces) {
+    for (final province in allProvinces(world)) {
       visit(province);
     }
 
