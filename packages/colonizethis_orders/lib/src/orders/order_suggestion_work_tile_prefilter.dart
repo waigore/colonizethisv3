@@ -49,10 +49,10 @@ Set<String> rawCandidateTilesForWorkTarget({
   Set<String>? exploreProvinceScope,
   Map<String, TileMapResult>? tileMapByRegion,
 
-  /// When non-null, must match the ids produced by scanning [allProvinces] for
-  /// provinces owned by [playerId] (same as the default path). Callers that
-  /// invoke this repeatedly in one suggestion pass should supply a shared set
-  /// to avoid O(targets × provinces) rescans (Refs #2394).
+  /// When non-null, must match the ids of provinces owned by [playerId] (same
+  /// as the default path, which reads them from [ProvinceOwnerCache]). Callers
+  /// that invoke this repeatedly in one suggestion pass should supply a shared
+  /// set to avoid O(targets × provinces) rescans (Refs #2394).
   Set<String>? playerOwnedProvinceIds,
 
   /// When non-null, [kWorkTargetPurchaseLand] prefilter reuses this snapshot
@@ -64,8 +64,8 @@ Set<String> rawCandidateTilesForWorkTarget({
   final ownedProvinceIds =
       playerOwnedProvinceIds ??
       <String>{
-        for (final p in allProvinces(world))
-          if (p.ownerId == playerId) p.id,
+        for (final p in ProvinceOwnerCache.of(world).provincesOwnedBy(playerId))
+          p.id,
       };
   return _preFilterWorkTargetTiles(
     game: game,

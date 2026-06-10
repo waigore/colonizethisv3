@@ -172,6 +172,54 @@ void main() {
       expect(withCache, withoutCache);
     });
 
+    test('fallback owned-province scan derives its set from ProvinceOwnerCache '
+        '(Phase 6b)', () {
+      final game = game0();
+      final topology = topology0();
+      final army = game.worldState.armies.firstWhere((a) => a.id == 'field_a');
+      final cacheOwned = <String>{
+        for (final p in ProvinceOwnerCache.of(
+          game.worldState,
+        ).provincesOwnedBy(gp))
+          toFullProvinceId(p.regionId, p.id),
+      };
+      final fallback = armyMoveCandidateDestinationProvinceIds(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        army: army,
+      );
+      final suppliedFromCache = armyMoveCandidateDestinationProvinceIds(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        army: army,
+        playerOwnedFullProvinceIds: cacheOwned,
+      );
+      expect(fallback, suppliedFromCache);
+      expect(cacheOwned, contains(nw));
+      expect(fallback, contains(nw));
+    });
+
+    test('fallback yields no owned destinations when ProvinceOwnerCache has '
+        'none for the player (Phase 6b negative)', () {
+      final game = game0();
+      final topology = topology0();
+      final army = game.worldState.armies.firstWhere((a) => a.id == 'field_a');
+      const foreign = 'gpX';
+      expect(
+        ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(foreign),
+        isEmpty,
+      );
+      final fallback = armyMoveCandidateDestinationProvinceIds(
+        game: game,
+        topology: topology,
+        playerId: foreign,
+        army: army,
+      );
+      expect(fallback, isEmpty);
+    });
+
     test(
       'still proposes alternate destination when draft has prior army move',
       () {

@@ -20,12 +20,53 @@ turn-resolution semantics.
 
 ## Scope (Phase 6a — projection component)
 
-This slice adds the **read-only projection component only**. Migrating the
-~49 redundant-scan call sites (Phase 6b) and the `run_observer_game`
-before/after profiling against the 15 s budget (Phase 6c) are tracked as
-follow-up slices of the same umbrella and are **out of scope here**. Because
-this slice adds no call to the projection from any existing resolution path,
-it is behaviour-neutral by construction.
+Phase 6a adds the **read-only projection component only**. The
+`run_observer_game` before/after profiling against the 15 s budget (Phase 6c)
+is tracked as a follow-up slice of the same umbrella and is **out of scope
+here**. Because Phase 6a adds no call to the projection from any existing
+resolution path, it is behaviour-neutral by construction.
+
+## Scope (Phase 6b — first call-site migrations)
+
+Phase 6b begins migrating redundant full-province owner scans to
+`ProvinceOwnerCache`. Each migrated site previously scanned **every** province
+(`allProvinces(world).where((p) => p.ownerId == playerId)`) to collect the
+caller's owned provinces; each now reads the same set from
+`ProvinceOwnerCache.of(world).provincesOwnedBy(playerId)`.
+
+Migrations in this slice are **behaviour-preserving**: every migrated site
+collects results into a `Set` (membership-only; iteration order irrelevant),
+and `provincesOwnedBy(playerId)` returns exactly the provinces whose
+`ownerId == playerId` (a non-null owner). The migrated sites are the
+owned-province fallback branches in `colonizethis_orders`:
+
+- `armyMoveCandidateDestinationProvinceIds` (`order_suggestion_army_move.dart`)
+  — fallback when no `playerOwnedFullProvinceIds` set is supplied.
+- `armyMovePickerDestinations` (`order_suggestion_army_move.dart`) — fallback
+  when neither `playerOwnedFullProvinceIds` nor a resolution snapshot is
+  supplied.
+- `rawCandidateTilesForWorkTarget` (`order_suggestion_work_tile_prefilter.dart`)
+  — fallback when no `playerOwnedProvinceIds` set is supplied.
+
+Only full-region scans are migrated; per-region scans
+(`provincesForRegion(...)`) are **not** migrated to this whole-world projection
+in this slice. Migrating the remaining call sites and the Phase 6c profiling
+remain follow-up slices of the umbrella.
+
+### Phase 6b acceptance criteria
+
+- **Given** a `Game` whose player `p1` owns one old-world and one new-world
+  province and supplies no `playerOwnedFullProvinceIds`, **when**
+  `armyMoveCandidateDestinationProvinceIds` runs, **then** its returned
+  destinations include both owned full province ids (minus the army's current
+  province), identical to the pre-migration `allProvinces` scan.
+- **Given** the same `Game` and a non-home army of `p1`, **when**
+  `armyMovePickerDestinations` runs with no `playerOwnedFullProvinceIds` and no
+  `resolution`, **then** the owned-province seed set equals the set produced by
+  the pre-migration `allProvinces` owner scan.
+- **Given** the same `Game` and no `playerOwnedProvinceIds`, **when**
+  `rawCandidateTilesForWorkTarget` runs, **then** the owned-province ids it
+  derives equal `{p.id for p in ProvinceOwnerCache.of(world).provincesOwnedBy('p1')}`.
 
 ## `ProvinceOwnerCache`
 
