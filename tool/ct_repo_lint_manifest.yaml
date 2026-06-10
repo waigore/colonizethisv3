@@ -48,6 +48,13 @@ rules:
     runner: dart
     script: tool/check_domain_package_logger_dedup.dart
 
+  - rule_id: repo.models_file_size
+    group: structure
+    title: colonizethis_models lib/src files must stay at or below 500 non-comment lines (baseline grandfathered) (Refs #3393 Phase 5)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_models_file_size.dart
+
   - rule_id: repo.ai_planner_context
     group: architecture
     title: colonizethis_ai domain planners must use PlannerContext (Refs #2521)
