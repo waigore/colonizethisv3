@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show Province, WorldState;
 
 import 'package:colonizethis_world/src/utils/expando_index.dart';
+import 'package:colonizethis_world/src/world/province_lookup.dart'
+    show WorldStateProvinceLookup;
 import 'package:colonizethis_world/src/world_constants.dart'
     show kRegionNewWorld, kRegionOldWorld;
 
@@ -60,10 +62,10 @@ class ProvinceOwnerCache {
           .add(province);
     }
 
-    for (final province in world.oldWorld.provinces) {
+    for (final province in world.provincesForRegion(kRegionOldWorld)) {
       visit(province, kRegionOldWorld);
     }
-    for (final province in world.newWorld.provinces) {
+    for (final province in world.provincesForRegion(kRegionNewWorld)) {
       visit(province, kRegionNewWorld);
     }
 
