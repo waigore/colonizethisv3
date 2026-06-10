@@ -44,12 +44,16 @@ CapitalReassignmentEligibility evaluateCapitalReassignmentEligibility({
     );
   }
 
-  final ownedInRegion = region.provinces
-      .where(
-        (p) =>
-            p.ownerId == playerId &&
-            (excludedProvinceId == null || p.id != excludedProvinceId),
-      )
+  // Phase 6b slice 15 (SPEC/program/worldstate-projection.md; Refs #3393):
+  // this eligibility check runs per player/minor/tribe each end-of-turn
+  // reassignment pass, so the prior `region.provinces.where((p) => p.ownerId
+  // == playerId ...)` rescanned the whole region list per falling faction.
+  // [ProvinceOwnerCache.provincesOwnedByInRegion] preserves the region's
+  // `RegionData.provinces` order, so the remaining `excludedProvinceId`
+  // filter yields an identical id list to the prior compound-predicate scan.
+  final ownedInRegion = ProvinceOwnerCache.of(state.worldState)
+      .provincesOwnedByInRegion(playerId, regionId)
+      .where((p) => excludedProvinceId == null || p.id != excludedProvinceId)
       .map((p) => p.id)
       .toList(growable: false);
   if (ownedInRegion.isEmpty) {

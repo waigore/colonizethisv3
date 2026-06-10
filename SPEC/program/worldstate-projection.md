@@ -112,6 +112,16 @@ Determinism contract below).
   the prior `ownerId == null` skip); the result is sorted before return, so the
   pre-sort iteration order is irrelevant. The matching
   `tool/logic_all_provinces_sanctions.yaml` entry is removed.
+- **Slice 15 — `colonizethis_world` capital-reassignment eligibility:**
+  `evaluateCapitalReassignmentEligibility` (`capital_and_gp_fall.dart`), run per
+  player/minor/tribe each end-of-turn reassignment pass, replaced its
+  `region.provinces.where((p) => p.ownerId == playerId && (excludedProvinceId ==
+  null || p.id != excludedProvinceId))` compound-predicate scan with
+  `ProvinceOwnerCache.of(world).provincesOwnedByInRegion(playerId, regionId)`
+  followed by the retained `excludedProvinceId` filter. The per-region accessor
+  preserves `RegionData.provinces` order, so the resulting owned-province id
+  list is identical to the prior scan. The `region_not_found` guard
+  (`regionDataForId`) is retained.
 
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
@@ -236,6 +246,24 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
   `allProvinces` scan that skipped `null` and player owners (the `m1` and `t1`
   tiles), equal to the union of `provincesOwnedBy(ownerId)` over
   `ProvinceOwnerCache.of(game.worldState).ownerIds` excluding `Game.players` ids.
+- **Given** a `Game` whose player `p1` owns old-world provinces `oldWorld|P2`
+  and `oldWorld|P1` (in that list order) and no new-world provinces (slice 15),
+  **when** `evaluateCapitalReassignmentEligibility(state, playerId: 'p1',
+  regionId: kRegionOldWorld, ...)` runs, **then** `ownedProvinceIdsInRegion`
+  equals `['oldWorld|P2', 'oldWorld|P1']`, equal to
+  `[for (p in ProvinceOwnerCache.of(world).provincesOwnedByInRegion('p1',
+  kRegionOldWorld)) p.id]` and to the pre-migration
+  `region.provinces.where((p) => p.ownerId == 'p1')` scan.
+- **Given** the same `Game` (slice 15), **when**
+  `evaluateCapitalReassignmentEligibility` runs for `p1` with
+  `excludedProvinceId: 'oldWorld|P2'`, **then** `ownedProvinceIdsInRegion`
+  equals `['oldWorld|P1']` (the excluded province is filtered out after the
+  projection lookup), equal to the pre-migration compound-predicate scan.
+- **Given** a `Game` whose player `p1` owns no province in `kRegionOldWorld`
+  (slice 15), **when** `evaluateCapitalReassignmentEligibility(state,
+  playerId: 'p1', regionId: kRegionOldWorld, ...)` runs, **then** it returns
+  `eligible == false` with `reasonCode == 'no_owned_provinces_in_region'`,
+  equal to the pre-migration scan returning an empty owned list.
 
 ## `ProvinceOwnerCache`
 
