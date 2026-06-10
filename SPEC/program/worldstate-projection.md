@@ -98,6 +98,11 @@ Per-region accessors group by the region a province was visited in
   `originalRegion.provinces.any`; `applyGreatPowerFall` reads
   `ownerOf(prevCapitalId)` and iterates `provincesOwnedBy(playerId)` for the
   port-province hold check instead of building a full `allProvinces` owner map.
+- **Slice 12 — `colonizethis_ai` `globalNewWorldHasNonGpOwnership`:** the
+  per-call `world.newWorld.provinces` owner scan (`observer_goal_phase.dart`,
+  COLONIAL-lite phase guard) becomes unowned NW provinces via
+  `unownedProvinces` plus non-GP `ownerIds` with
+  `ownsAnyInRegion(id, kRegionNewWorld)`.
 
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
@@ -204,6 +209,12 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
   evaluates the port hold check, **then** it skips the fall, equal to
   `provincesOwnedBy('p1').any((p) => portsByProvince.containsKey(p.id))` and
   to the pre-migration `allProvinces` owner-map iteration.
+- **Given** a `Game` whose tribe `t1` owns `newWorld|a` (slice 12), **when**
+  `globalNewWorldHasNonGpOwnership(game)` runs, **then** it returns `true`,
+  equal to the pre-migration `newWorld.provinces` owner scan.
+- **Given** a `Game` whose every NW province is owned by some GP (slice 12),
+  **when** `globalNewWorldHasNonGpOwnership(game)` runs, **then** it returns
+  `false`, equal to the pre-migration scan.
 
 ## `ProvinceOwnerCache`
 

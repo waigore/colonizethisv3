@@ -5,6 +5,8 @@
 // (`package:colonizethis_logic/ai_api.dart`) return exactly the per-region
 // owner sets the prior `world.<region>.provinces.any/where` scans produced.
 
+import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
+    show globalNewWorldHasNonGpOwnership;
 import 'package:colonizethis_logic/ai_api.dart'
     show ProvinceOwnerCache, kRegionNewWorld, kRegionOldWorld;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -226,6 +228,82 @@ void main() {
         manualOwnedNewWorldProvinceIds(world, 'gp3'),
       );
       expect(projectionOwnedNewWorldProvinceIds(world, 'gp3'), isEmpty);
+    });
+  });
+
+  // Refs #3393 Phase 6b (slice 12) — `globalNewWorldHasNonGpOwnership` scans
+  // every NW province once per COLONIAL-lite phase guard. The migration reads
+  // unowned NW provinces and non-GP NW owners from `ProvinceOwnerCache`.
+  group('globalNewWorldHasNonGpOwnership slice-12 migration', () {
+    Game gameWithNwProvinces({
+      required List<Province> nwProvinces,
+      List<Player> players = const [
+        Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+        Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+      ],
+      List<MinorNation> minorNations = const [],
+      List<Tribe> tribes = const [],
+    }) => Game(
+      id: 'slice12-nw-ownership',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 120),
+        oldWorld: const RegionData(),
+        newWorld: RegionData(provinces: nwProvinces),
+      ),
+      players: players,
+      minorNations: minorNations,
+      tribes: tribes,
+    );
+
+    bool manualGlobalNewWorldHasNonGpOwnership(Game game) {
+      bool isGreatPower(String ownerId) =>
+          game.players.any((player) => player.id == ownerId);
+
+      for (final p in game.worldState.newWorld.provinces) {
+        final owner = p.ownerId;
+        if (owner == null || owner.isEmpty) return true;
+        if (!isGreatPower(owner)) return true;
+      }
+      return false;
+    }
+
+    void expectParity(Game game) {
+      expect(
+        globalNewWorldHasNonGpOwnership(game),
+        manualGlobalNewWorldHasNonGpOwnership(game),
+      );
+    }
+
+    test('true when a tribe owns a NW province', () {
+      final game = gameWithNwProvinces(
+        nwProvinces: const [
+          Province(id: 'newWorld|a', regionId: 'newWorld', ownerId: 'tribe1'),
+        ],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+      );
+      expectParity(game);
+      expect(globalNewWorldHasNonGpOwnership(game), isTrue);
+    });
+
+    test('true when a NW province is unowned', () {
+      final game = gameWithNwProvinces(
+        nwProvinces: const [
+          Province(id: 'newWorld|a', regionId: 'newWorld'),
+        ],
+      );
+      expectParity(game);
+      expect(globalNewWorldHasNonGpOwnership(game), isTrue);
+    });
+
+    test('false when every NW province is GP-owned', () {
+      final game = gameWithNwProvinces(
+        nwProvinces: const [
+          Province(id: 'newWorld|a', regionId: 'newWorld', ownerId: 'gp1'),
+          Province(id: 'newWorld|b', regionId: 'newWorld', ownerId: 'gp2'),
+        ],
+      );
+      expectParity(game);
+      expect(globalNewWorldHasNonGpOwnership(game), isFalse);
     });
   });
 }
