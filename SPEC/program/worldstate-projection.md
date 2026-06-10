@@ -35,42 +35,46 @@ re-exports `ProvinceOwnerCache`, `kRegionOldWorld`, and `kRegionNewWorld` at the
 `colonizethis_world` barrel level — preserving the one-way decoupling boundary
 (`colonizethis-logic-ai-decoupling.mdc`).
 
-**Slice 1 — `colonizethis_orders` full-world fallbacks** (each previously
-`allProvinces(world).where((p) => p.ownerId == playerId)` → `provincesOwnedBy`):
-`armyMoveCandidateDestinationProvinceIds`, `armyMovePickerDestinations`, and
-`rawCandidateTilesForWorkTarget`.
-
-**Slice 2 — `colonizethis_diplomacy` full-world scans:** `provinceCountOwnedBy`
-now reads `countOwnedBy(factionId)`, dropping a duplicate per-`Game`
-`ExpandoIndex`; `_sortedFullProvinceIdsOwnedBy` derives its (re-sorted) seed ids
-from `provincesOwnedBy(ownerId)`.
-
-**Slice 3 — `colonizethis_ai` full-world scans** in `computeWarDesireScore`,
-evaluated per (nation, target faction) pair: `_resourceNeedBonus` and
-`_invasionCapacityAdjustment` read `provincesOwnedBy(factionId)`.
-
-**Slice 4 — `colonizethis_ai` per-region scans.** Per-minor old-world `.any`
-checks (`_minorOwnsOldWorldProvinces`, `minorsHoldOldWorldProvinces`,
-`hasUninvadedOldWorldMinor`, both gathers in
-`diplomacy_planner_declare_war_targets.dart`) →
-`ownsAnyInRegion(minorId, kRegionOldWorld)`; `_newWorldProvinceCountOwnedBy`
-(`treasury_lock_recovery.dart`) → `countOwnedByInRegion(playerId, kRegionNewWorld)`.
-
 Per-region accessors group by the region a province was visited in
 (`kRegionOldWorld` first, then `kRegionNewWorld`), exactly matching the migrated
 `world.oldWorld.provinces` / `world.newWorld.provinces` lists.
 
-**Slice 5 — shared per-region count helpers.** `oldWorldProvinceCountOwnedBy`
-(`province_lookup.dart`, `colonizethis_world`) →
-`countOwnedByInRegion(factionId, kRegionOldWorld)`. As the single definition
-called per faction/offerer by `war_resolver`, the expand/colonial phase
-planners, the treasury planner, and the feedstock gates, this one migration
-removes the redundant Old-World rescan from every caller.
-`_newWorldProvinceCountOwnedBy` (`feedstock_extraction_targets.dart`,
-`colonizethis_orders`) → `countOwnedByInRegion(playerId, kRegionNewWorld)`.
-Counts are order-insensitive, so each result is identical to the prior
-`provincesForRegion(...).where((p) => p.ownerId == id).length`. Phase 6c
-profiling and the remaining call sites stay follow-up slices of the umbrella.
+- **Slice 1 — `colonizethis_orders` full-world fallbacks** (`allProvinces(world)
+  .where((p) => p.ownerId == playerId)` → `provincesOwnedBy`):
+  `armyMoveCandidateDestinationProvinceIds`, `armyMovePickerDestinations`,
+  `rawCandidateTilesForWorkTarget`.
+- **Slice 2 — `colonizethis_diplomacy`:** `provinceCountOwnedBy` →
+  `countOwnedBy(factionId)` (drops a duplicate per-`Game` `ExpandoIndex`);
+  `_sortedFullProvinceIdsOwnedBy` seeds its re-sorted ids from
+  `provincesOwnedBy(ownerId)`.
+- **Slice 3 — `colonizethis_ai` `computeWarDesireScore`** (per nation × target
+  faction): `_resourceNeedBonus` and `_invasionCapacityAdjustment` read
+  `provincesOwnedBy(factionId)`.
+- **Slice 4 — `colonizethis_ai` per-region scans:** old-world `.any` checks
+  (`_minorOwnsOldWorldProvinces`, `minorsHoldOldWorldProvinces`,
+  `hasUninvadedOldWorldMinor`, declare-war-target gathers) →
+  `ownsAnyInRegion(minorId, kRegionOldWorld)`; `_newWorldProvinceCountOwnedBy`
+  (`treasury_lock_recovery.dart`) →
+  `countOwnedByInRegion(playerId, kRegionNewWorld)`.
+- **Slice 5 — shared per-region count helpers:** `oldWorldProvinceCountOwnedBy`
+  (`province_lookup.dart`) → `countOwnedByInRegion(factionId, kRegionOldWorld)`
+  — the single definition called per faction by `war_resolver`, expand/colonial
+  planners, the treasury planner, and feedstock gates, so one migration removes
+  the Old-World rescan from every caller; `_newWorldProvinceCountOwnedBy`
+  (`feedstock_extraction_targets.dart`) →
+  `countOwnedByInRegion(playerId, kRegionNewWorld)`. Counts are order-insensitive.
+- **Slice 6 — full-world owner map:** `getProvinceOwnerMap`
+  (`order_suggestion_helpers.dart`) — the `allProvinces(world)` walk run once per
+  diplomacy-filter pass / AI-planner call — builds its full-province-id→owner map
+  from the memoised cache by iterating the non-empty `ownerIds` and each owner's
+  `provincesOwnedBy(ownerId)`. The union is exactly the provinces with a
+  non-null, non-empty `ownerId` (unowned `null` owners live in
+  `unownedProvinces`; an empty-string owner is skipped, matching the prior
+  `isNotEmpty` filter); province ids are unique full ids so the map is identical
+  regardless of per-owner order. The matching
+  `tool/logic_all_provinces_sanctions.yaml` entry is removed.
+
+Phase 6c profiling and the remaining call sites stay follow-up slices.
 
 ### Phase 6b acceptance criteria
 
@@ -124,6 +128,13 @@ profiling and the remaining call sites stay follow-up slices of the umbrella.
   runs for each, **then** it returns `2` for `gp1` and `0` for `gp2`, equal to
   `ProvinceOwnerCache.of(game.worldState).countOwnedByInRegion(id, kRegionOldWorld)`
   and to the pre-migration `world.oldWorld.provinces` owner count.
+- **Given** a `Game` whose faction `gp1` owns one old-world province and one
+  new-world province, faction `gp2` owns one old-world province, and one
+  province is unowned (slice 6), **when** `getProvinceOwnerMap(game)` is read,
+  **then** it returns exactly `{ <gp1 old id>: 'gp1', <gp1 new id>: 'gp1',
+  <gp2 old id>: 'gp2' }`, equal to
+  `{ p.id: ownerId for ownerId in ProvinceOwnerCache.of(game.worldState).ownerIds
+  for p in provincesOwnedBy(ownerId) }`, and excludes the unowned province.
 
 ## `ProvinceOwnerCache`
 
@@ -161,20 +172,13 @@ constructs an unmemoised instance for direct/test use.
 
 ### Public surface
 
-- `String? ownerOf(String fullProvinceId)` — owner id of the province, or
-  `null` when the province is unowned or absent.
-- `bool isOwnedBy(String fullProvinceId, String ownerId)`.
-- `List<Province> provincesOwnedBy(String ownerId)` — unmodifiable; empty when
-  the owner controls no province.
-- `int countOwnedBy(String ownerId)`.
-- `List<Province> provincesOwnedByInRegion(String ownerId, String regionId)` —
-  unmodifiable; the owner's provinces in `regionId` only, in region list order.
-- `bool ownsAnyInRegion(String ownerId, String regionId)`.
-- `int countOwnedByInRegion(String ownerId, String regionId)`.
-- `List<String> ownerIds` — unmodifiable; distinct non-null owners,
-  first-seen order.
-- `List<Province> unownedProvinces` — unmodifiable; provinces with
-  `ownerId == null`, iteration order.
+Accessors (full doc comments live on the class): `ownerOf(fullProvinceId)`,
+`isOwnedBy(fullProvinceId, ownerId)`, `provincesOwnedBy(ownerId)`,
+`countOwnedBy(ownerId)`, `provincesOwnedByInRegion(ownerId, regionId)`,
+`ownsAnyInRegion(ownerId, regionId)`, `countOwnedByInRegion(ownerId, regionId)`.
+List accessors return unmodifiable, possibly empty views. `ownerIds` lists
+distinct non-null owners in first-seen order; `unownedProvinces` lists provinces
+with `ownerId == null` in iteration order.
 
 ## Acceptance criteria
 
