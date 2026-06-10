@@ -33,6 +33,7 @@ applyProvinceOwnershipChangeVisibility(
     game.worldState,
     regionId,
     canonicalId,
+    allowLocalIdFallback: true,
   );
   if (tileKeys.isEmpty) {
     return (

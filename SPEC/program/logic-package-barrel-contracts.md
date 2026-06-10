@@ -66,8 +66,8 @@ The `colonizethis_world` barrel publishes the world-state helper files that `col
 
 - Newly published in full: `world/game_world_mutations.dart`, `world/province_visibility_index.dart`, `world/province_traversal.dart`, `world/topology_helpers.dart`, `world/naval_mission_orders.dart`, `world/faction_membership.dart`.
 - Published with a `hide` carve-out for a duplicate symbol:
-  - `world/naval_coastal_visibility.dart` hides `landTileKeysForProvinceBucket` (also defined in the already-published `world/province_lookup.dart`; the latter remains the single public source).
   - `world/tile_key_coordinates.dart` hides `parseTileKeyCoordinates` (also published by the `colonizethis_orders` barrel as a thin forwarder to this canonical implementation; the orders barrel remains the single public source for the combined `colonizethis_logic` barrel).
+- Single canonical definition (Refs #3403 Phase 1): `landTileKeysForProvinceBucket` is defined only in `world/province_lookup.dart`. The former duplicate in `world/naval_coastal_visibility.dart` was removed; the canonical function takes an opt-in `allowLocalIdFallback` flag (default `false`, strict full-id only) that naval/fog ship-reveal callers pass `true` to preserve the legacy/fixture local-id bucket fallback. Because there is no longer a second definition, `world/naval_coastal_visibility.dart` re-exports (barrel and `naval_resolution.dart`) no longer carry a `hide`/`show` carve-out for this symbol.
 - Intentionally still partial: `world/fog_resolution.dart` remains a `show`-restricted export (coastal-visibility helpers only); its internal fog-decay helpers stay package-internal and are consumed by `colonizethis_turn` via a deep import.
 
 ### `colonizethis_orders → colonizethis_world` slice

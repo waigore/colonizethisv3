@@ -123,8 +123,100 @@ void main() {
         'oldWorld|p1',
       );
       expect(keys, ['oldWorld|p1|0|0', 'oldWorld|p1|1|0']);
+      // Mutating the result must not affect the source bucket.
+      keys.add('mutation');
+      expect(
+        landTileKeysForProvinceBucket(world, 'oldWorld', 'oldWorld|p1'),
+        ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
+      );
       expect(
         landTileKeysForProvinceBucket(world, 'oldWorld', 'oldWorld|p2'),
+        isEmpty,
+      );
+    });
+
+    test('landTileKeysForProvinceBucket is strict full-id only by default', () {
+      // Legacy/fixture bucket keyed by local id only; the default (strict)
+      // lookup must not fall back to it (Refs #3403 Phase 1).
+      final legacy = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        tileKeysByRegionAndProvince: const {
+          'oldWorld': {
+            'p1': ['oldWorld|p1|0|0'],
+          },
+        },
+      );
+      expect(
+        landTileKeysForProvinceBucket(legacy, 'oldWorld', 'oldWorld|p1'),
+        isEmpty,
+      );
+    });
+
+    test('landTileKeysForProvinceBucket opt-in fallback resolves local-id bucket', () {
+      final legacy = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        tileKeysByRegionAndProvince: const {
+          'oldWorld': {
+            'p1': ['oldWorld|p1|0|0'],
+          },
+        },
+      );
+      expect(
+        landTileKeysForProvinceBucket(
+          legacy,
+          'oldWorld',
+          'oldWorld|p1',
+          allowLocalIdFallback: true,
+        ),
+        ['oldWorld|p1|0|0'],
+      );
+    });
+
+    test('landTileKeysForProvinceBucket fallback never shadows a full-id bucket', () {
+      final mixed = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        tileKeysByRegionAndProvince: const {
+          'oldWorld': {
+            'oldWorld|p1': ['oldWorld|p1|0|0'],
+            'p1': ['oldWorld|p1|9|9'],
+          },
+        },
+      );
+      expect(
+        landTileKeysForProvinceBucket(
+          mixed,
+          'oldWorld',
+          'oldWorld|p1',
+          allowLocalIdFallback: true,
+        ),
+        ['oldWorld|p1|0|0'],
+      );
+    });
+
+    test('landTileKeysForProvinceBucket fallback returns empty when neither bucket exists', () {
+      final empty = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        tileKeysByRegionAndProvince: const {'oldWorld': {}},
+      );
+      expect(
+        landTileKeysForProvinceBucket(
+          empty,
+          'oldWorld',
+          'oldWorld|p1',
+          allowLocalIdFallback: true,
+        ),
+        isEmpty,
+      );
+      expect(
+        landTileKeysForProvinceBucket(empty, 'oldWorld', 'oldWorld|p1'),
         isEmpty,
       );
     });
