@@ -64,6 +64,15 @@ ConnectivityResult _connectedTilesForPlayer({
   final connected = <String>{capitalKey};
   final pathCap = <String, int>{};
   pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey, portInfo);
+
+  // Road rule: a tile may expand connectivity when it carries a road/rail or a
+  // port. Shared by both propagation passes so the rule has a single source;
+  // the second (port-expansion) pass intentionally omits the capital seed since
+  // the capital tile is already connected after the first pass. SPEC/game/
+  // capital-and-connectivity.md § Connectivity (Game Rule).
+  bool expandsViaRoadOrPort(String tileKey) =>
+      (tileState.roadLevel(tileKey) > 0) || portInfo.containsKey(tileKey);
+
   _runConnectivityPropagation(
     queue: Queue<String>()..add(capitalKey),
     connected: connected,
@@ -74,9 +83,7 @@ ConnectivityResult _connectedTilesForPlayer({
     provinceIdsByType: provinceIdsByType,
     ownedProvinceIds: owned,
     canExpandFrom: (tileKey) =>
-        (tileKey == capitalKey) ||
-        (tileState.roadLevel(tileKey) > 0) ||
-        portInfo.containsKey(tileKey),
+        (tileKey == capitalKey) || expandsViaRoadOrPort(tileKey),
   );
 
   // Port connection rule: (1) capital on seaboard → ports reachable via sea-path (BFS S–S); (2) else only ports reachable by road/rail from capital. SPEC/game/capital-and-connectivity § Port connection to capital, Sea paths.
@@ -121,8 +128,7 @@ ConnectivityResult _connectedTilesForPlayer({
     tileMapByRegion: tileMapByRegion,
     provinceIdsByType: provinceIdsByType,
     ownedProvinceIds: owned,
-    canExpandFrom: (tileKey) =>
-        (tileState.roadLevel(tileKey) > 0) || portInfo.containsKey(tileKey),
+    canExpandFrom: expandsViaRoadOrPort,
   );
 
   // SPEC § Blockade: no tiles in a blockaded port province contribute; remove any tile in such a province (except capital province: its tiles remain when it is blockaded, only sea connectivity is severed).

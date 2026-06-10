@@ -27,31 +27,31 @@ WorldState updateArmyStation(
   final unitsByRegion = worldState.mutableUnitListsByRegion();
   final relocated = _relocateArmyRegiments(
     regimentUnitIds: army.regimentUnitIds,
-    owUnits: unitsByRegion[kRegionOldWorld]!,
-    nwUnits: unitsByRegion[kRegionNewWorld]!,
+    ow: unitsByRegion[kRegionOldWorld]!,
+    nw: unitsByRegion[kRegionNewWorld]!,
     destinationProvinceId: destinationProvinceId,
     destinationRegionId: regionId,
   );
   return _worldStateWithUpdatedArmyAndUnits(
     worldState,
     armies,
-    relocated.owUnits,
-    relocated.nwUnits,
+    relocated.ow,
+    relocated.nw,
   );
 }
 
-({List<Unit> owUnits, List<Unit> nwUnits}) _relocateArmyRegiments({
+RegionUnitLists _relocateArmyRegiments({
   required List<String> regimentUnitIds,
-  required List<Unit> owUnits,
-  required List<Unit> nwUnits,
+  required List<Unit> ow,
+  required List<Unit> nw,
   required String destinationProvinceId,
   required String destinationRegionId,
 }) {
-  var lists = (owUnits: owUnits, nwUnits: nwUnits);
+  var lists = (ow: ow, nw: nw);
   for (final rid in regimentUnitIds) {
     final updated = _moveRegimentToProvince(
-      owUnits: lists.owUnits,
-      nwUnits: lists.nwUnits,
+      ow: lists.ow,
+      nw: lists.nw,
       regimentUnitId: rid,
       destinationProvinceId: destinationProvinceId,
       destinationRegionId: destinationRegionId,
@@ -95,30 +95,30 @@ Army? _armyById(List<Army> armies, String armyId) {
   return null;
 }
 
-({List<Unit> owUnits, List<Unit> nwUnits}) _moveRegimentToProvince({
-  required List<Unit> owUnits,
-  required List<Unit> nwUnits,
+RegionUnitLists _moveRegimentToProvince({
+  required List<Unit> ow,
+  required List<Unit> nw,
   required String regimentUnitId,
   required String destinationProvinceId,
   required String destinationRegionId,
 }) {
-  final indices = _regimentIndices(owUnits, nwUnits, regimentUnitId);
-  if (_bothMissing(indices)) return (owUnits: owUnits, nwUnits: nwUnits);
+  final indices = _regimentIndices(ow, nw, regimentUnitId);
+  if (_bothMissing(indices)) return (ow: ow, nw: nw);
 
   final inOldWorld = _isOldWorldIndex(indices.owIdx);
   final sourceRegion = _sourceRegionForIndex(inOldWorld);
   if (sourceRegion == destinationRegionId) {
     return _relocateRegimentInSameRegion(
-      owUnits: owUnits,
-      nwUnits: nwUnits,
+      ow: ow,
+      nw: nw,
       regimentUnitId: regimentUnitId,
       destinationProvinceId: destinationProvinceId,
       inOldWorld: inOldWorld,
     );
   }
   return _relocateRegimentAcrossRegions(
-    owUnits: owUnits,
-    nwUnits: nwUnits,
+    ow: ow,
+    nw: nw,
     owIdx: indices.owIdx,
     nwIdx: indices.nwIdx,
     destinationProvinceId: destinationProvinceId,
@@ -154,53 +154,53 @@ bool _isOldWorldIndex(int owIdx) => owIdx >= 0;
 String _sourceRegionForIndex(bool inOldWorld) =>
     inOldWorld ? kRegionOldWorld : kRegionNewWorld;
 
-({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentInSameRegion({
-  required List<Unit> owUnits,
-  required List<Unit> nwUnits,
+RegionUnitLists _relocateRegimentInSameRegion({
+  required List<Unit> ow,
+  required List<Unit> nw,
   required String regimentUnitId,
   required String destinationProvinceId,
   required bool inOldWorld,
 }) {
   if (inOldWorld) {
     return _relocateRegimentInOldWorld(
-      owUnits,
-      nwUnits,
+      ow,
+      nw,
       regimentUnitId,
       destinationProvinceId,
     );
   }
   return _relocateRegimentInNewWorld(
-    owUnits,
-    nwUnits,
+    ow,
+    nw,
     regimentUnitId,
     destinationProvinceId,
   );
 }
 
-({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentInOldWorld(
-  List<Unit> owUnits,
-  List<Unit> nwUnits,
+RegionUnitLists _relocateRegimentInOldWorld(
+  List<Unit> ow,
+  List<Unit> nw,
   String regimentUnitId,
   String destinationProvinceId,
 ) => (
-  owUnits: owUnits
+  ow: ow
       .map(
         (u) => u.id == regimentUnitId
             ? u.copyWith(locationProvinceId: destinationProvinceId)
             : u,
       )
       .toList(),
-  nwUnits: nwUnits,
+  nw: nw,
 );
 
-({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentInNewWorld(
-  List<Unit> owUnits,
-  List<Unit> nwUnits,
+RegionUnitLists _relocateRegimentInNewWorld(
+  List<Unit> ow,
+  List<Unit> nw,
   String regimentUnitId,
   String destinationProvinceId,
 ) => (
-  owUnits: owUnits,
-  nwUnits: nwUnits
+  ow: ow,
+  nw: nw
       .map(
         (u) => u.id == regimentUnitId
             ? u.copyWith(locationProvinceId: destinationProvinceId)
@@ -209,19 +209,19 @@ String _sourceRegionForIndex(bool inOldWorld) =>
       .toList(),
 );
 
-({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentAcrossRegions({
-  required List<Unit> owUnits,
-  required List<Unit> nwUnits,
+RegionUnitLists _relocateRegimentAcrossRegions({
+  required List<Unit> ow,
+  required List<Unit> nw,
   required int owIdx,
   required int nwIdx,
   required String destinationProvinceId,
   required String destinationRegionId,
   required bool inOldWorld,
 }) {
-  final unit = inOldWorld ? owUnits.removeAt(owIdx) : nwUnits.removeAt(nwIdx);
+  final unit = inOldWorld ? ow.removeAt(owIdx) : nw.removeAt(nwIdx);
   final moved = unit.copyWith(locationProvinceId: destinationProvinceId);
   if (destinationRegionId == kRegionOldWorld) {
-    return (owUnits: [...owUnits, moved], nwUnits: nwUnits);
+    return (ow: [...ow, moved], nw: nw);
   }
-  return (owUnits: owUnits, nwUnits: [...nwUnits, moved]);
+  return (ow: ow, nw: [...nw, moved]);
 }

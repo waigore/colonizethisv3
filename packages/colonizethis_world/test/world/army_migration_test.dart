@@ -204,6 +204,39 @@ void main() {
       final next = updateArmyStation(world, 'missing', 'oldWorld|p1');
       expect(next, same(world));
     });
+
+    test('relocates multiple regiments across regions in one call', () {
+      // Two regiments in the same field army crossing regions exercises the
+      // `_relocateArmyRegiments` accumulation loop, where each pass threads the
+      // shared `RegionUnitLists` (ow, nw) pair into the next (Refs #3403
+      // Phase 3 — shared region-unit-list type).
+      final game = ensureMilitaryArmiesForGame(
+        _game(
+          oldWorldUnits: [
+            _regiment('r1', locationProvinceId: 'oldWorld|front'),
+            _regiment('r2', locationProvinceId: 'oldWorld|front'),
+          ],
+        ),
+      );
+      final fieldId = game.worldState.armies
+          .firstWhere((a) => !a.isHomeArmy)
+          .id;
+      final next = updateArmyStation(
+        game.worldState,
+        fieldId,
+        'newWorld|beach',
+      );
+      final army = next.armies.firstWhere((a) => a.id == fieldId);
+      expect(army.regionId, 'newWorld');
+      // Both regiments moved out of the old world and into the new world.
+      expect(next.oldWorld.units.any((u) => u.id == 'r1'), isFalse);
+      expect(next.oldWorld.units.any((u) => u.id == 'r2'), isFalse);
+      final movedIds = next.newWorld.units
+          .where((u) => u.locationProvinceId == 'newWorld|beach')
+          .map((u) => u.id)
+          .toSet();
+      expect(movedIds, containsAll(<String>['r1', 'r2']));
+    });
   });
 
   group('reconcileArmiesAfterUnitsChanged', () {
