@@ -26,7 +26,7 @@ int previewTotalTurnsForPendingWorkOrder({
         Unit.provinceIdFromTileKey(order.targetTileKey) ??
         unit.locationProvinceId;
     final fortLevel =
-        tryGetProvince(game.worldState, provinceId)?.fortLevel ?? 0;
+        game.worldState.tryGetProvince(provinceId)?.fortLevel ?? 0;
     return max(1, totalTurnsForWork(order.target, fortLevel: fortLevel));
   }
   if (order.target == kWorkTargetBuildImprovement) {

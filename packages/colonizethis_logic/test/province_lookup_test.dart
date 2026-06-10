@@ -1,3 +1,8 @@
+// Intentionally exercises the @Deprecated top-level province-lookup wrappers to
+// keep them covered while they delegate to the WorldState extension methods
+// during the deprecation window (Refs #3403 Phase 1, Step 2).
+// ignore_for_file: deprecated_member_use
+
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

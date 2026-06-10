@@ -65,7 +65,7 @@ class GameMapAreaFleetDraftProjection {
     }) {
       if (move.isDock) {
         final pid = move.destinationPortProvinceId!;
-        final p = tryGetProvince(game.worldState, pid);
+        final p = game.worldState.tryGetProvince(pid);
         if (p == null) {
           return null;
         }
@@ -129,7 +129,7 @@ class GameMapAreaFleetDraftProjection {
     }) {
       if (move.isDock) {
         final pid = move.destinationPortProvinceId!;
-        final p = tryGetProvince(game.worldState, pid);
+        final p = game.worldState.tryGetProvince(pid);
         if (p != null) {
           final localProvinceId = ct_models.ProvinceId.localIdFrom(p.id);
           return 'port:${p.regionId}|$localProvinceId';
@@ -150,7 +150,7 @@ class GameMapAreaFleetDraftProjection {
         );
       }
       if (f.inPortAtProvinceId != null) {
-        final p = tryGetProvince(game.worldState, f.inPortAtProvinceId!);
+        final p = game.worldState.tryGetProvince(f.inPortAtProvinceId!);
         if (p != null) {
           final localProvinceId = ct_models.ProvinceId.localIdFrom(p.id);
           return 'port:${p.regionId}|$localProvinceId';
@@ -182,7 +182,7 @@ class GameMapAreaFleetDraftProjection {
         );
       }
       if (f.inPortAtProvinceId != null) {
-        final p = tryGetProvince(game.worldState, f.inPortAtProvinceId!);
+        final p = game.worldState.tryGetProvince(f.inPortAtProvinceId!);
         if (p == null) {
           return null;
         }

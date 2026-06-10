@@ -159,57 +159,56 @@ String toFullProvinceId(String regionId, String provinceId) {
 
 /// Region-scoped lookup: returns the province in [regionId] with local id [localId]. Looks only in that region.
 /// Throws [StateError] if the region is unknown or the province is not found.
+///
+/// Deprecated: use the [WorldStateProvinceLookup.getProvinceByRegion] extension
+/// method (`world.getProvinceByRegion(regionId, localId)`) — the single province
+/// lookup API surface (Refs #3403 Phase 1, Step 2). This standalone wrapper now
+/// delegates to the extension and is scheduled for removal after one release cycle.
+@Deprecated(
+  'Use the WorldState extension method world.getProvinceByRegion(regionId, localId). Refs #3403.',
+)
 Province getProvinceByRegion(
   WorldState world,
   String regionId,
   String localId,
-) {
-  final region = _regionForId(world, regionId);
-  if (region == null) {
-    throw StateError(
-      'Unknown region "$regionId" for province $regionId|$localId',
-    );
-  }
-  final p = _findProvinceInRegion(region, regionId, localId);
-  if (p == null) {
-    throw StateError(
-      'Province not found: $regionId|$localId in region "$regionId"',
-    );
-  }
-  return p;
-}
+) => world.getProvinceByRegion(regionId, localId);
 
 /// Optional region-scoped lookup: province in [regionId] with local id [localId], or null.
+///
+/// Deprecated: use the [WorldStateProvinceLookup.tryGetProvinceByRegion]
+/// extension method (`world.tryGetProvinceByRegion(regionId, localId)`)
+/// (Refs #3403 Phase 1, Step 2). Scheduled for removal after one release cycle.
+@Deprecated(
+  'Use the WorldState extension method world.tryGetProvinceByRegion(regionId, localId). Refs #3403.',
+)
 Province? tryGetProvinceByRegion(
   WorldState world,
   String regionId,
   String localId,
-) {
-  final region = _regionForId(world, regionId);
-  if (region == null) return null;
-  return _findProvinceInRegion(region, regionId, localId);
-}
+) => world.tryGetProvinceByRegion(regionId, localId);
 
 /// Returns the province for [fullProvinceId]. Requires full disambiguated id (regionId|localId);
 /// resolution is region-scoped. Throws [StateError] if id is not prefixed or province is not found.
-Province getProvince(WorldState world, String fullProvinceId) {
-  final resolved = resolveToFullProvinceId(world, fullProvinceId);
-  return getProvinceByRegion(
-    world,
-    ProvinceId.regionIdFrom(resolved),
-    ProvinceId.localIdFrom(resolved),
-  );
-}
+///
+/// Deprecated: use the [WorldStateProvinceLookup.getProvince] extension method
+/// (`world.getProvince(fullProvinceId)`) (Refs #3403 Phase 1, Step 2). Scheduled
+/// for removal after one release cycle.
+@Deprecated(
+  'Use the WorldState extension method world.getProvince(fullProvinceId). Refs #3403.',
+)
+Province getProvince(WorldState world, String fullProvinceId) =>
+    world.getProvince(fullProvinceId);
 
 /// Optional lookup by full id. Requires prefixed id; non-prefixed returns null. Region-scoped.
-Province? tryGetProvince(WorldState world, String fullProvinceId) {
-  if (!ProvinceId.isPrefixed(fullProvinceId)) return null;
-  return tryGetProvinceByRegion(
-    world,
-    ProvinceId.regionIdFrom(fullProvinceId),
-    ProvinceId.localIdFrom(fullProvinceId),
-  );
-}
+///
+/// Deprecated: use the [WorldStateProvinceLookup.tryGetProvince] extension method
+/// (`world.tryGetProvince(fullProvinceId)`) (Refs #3403 Phase 1, Step 2).
+/// Scheduled for removal after one release cycle.
+@Deprecated(
+  'Use the WorldState extension method world.tryGetProvince(fullProvinceId). Refs #3403.',
+)
+Province? tryGetProvince(WorldState world, String fullProvinceId) =>
+    world.tryGetProvince(fullProvinceId);
 
 /// Resolves a province row for transfer paths that accept either a prefixed id
 /// or a legacy short [Province.id] (tests and some fixtures).
@@ -218,7 +217,7 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
 /// keys and timer maps.
 ({Province province, String canonicalProvinceId})?
 resolveProvinceRowForOwnershipTransfer(WorldState world, String provinceKey) {
-  final prefixed = tryGetProvince(world, provinceKey);
+  final prefixed = world.tryGetProvince(provinceKey);
   if (prefixed != null) {
     return (province: prefixed, canonicalProvinceId: prefixed.id);
   }

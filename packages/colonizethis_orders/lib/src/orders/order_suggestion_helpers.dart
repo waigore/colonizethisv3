@@ -42,7 +42,7 @@ int merchantPurchaseLandCandidateSortRank({
   final provId = Unit.provinceIdFromTileKey(tileKey);
   if (provId == null || provId.isEmpty) return 90;
   final regionId = ProvinceId.regionIdFrom(provId);
-  final ownerId = tryGetProvince(game.worldState, provId)?.ownerId;
+  final ownerId = game.worldState.tryGetProvince(provId)?.ownerId;
   if (ownerId == null || ownerId.isEmpty) return 80;
   final playerIds = {for (final p in game.players) p.id};
   if (playerIds.contains(ownerId)) return 70;
