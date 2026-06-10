@@ -4,8 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world_constants.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'town_capital_occupancy.dart';
 
 /// Salt for deterministic tie-breaks when assigning Hamilton +1 remainders.
@@ -196,13 +195,21 @@ applyGreatPowerOldWorldTerrainRedistribution({
     setupLog.i(
       'skip GP Old World terrain redistribution (missing terrain or resource grid)',
     );
-    return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
+    return (
+      game: game,
+      tileMap: tileMapOldWorld,
+      fairnessMaxAbsFracDeviation: 0,
+    );
   }
 
   final gpIdsSorted = game.players.map((p) => p.id).toList();
   final gpIds = gpIdsSorted.toSet();
   if (gpIdsSorted.isEmpty) {
-    return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
+    return (
+      game: game,
+      tileMap: tileMapOldWorld,
+      fairnessMaxAbsFracDeviation: 0,
+    );
   }
 
   final ownerByLocal = _ownerByLocalProvinceId(game);
@@ -215,12 +222,21 @@ applyGreatPowerOldWorldTerrainRedistribution({
     forbidden: forbidden,
   );
   if (tiles.isEmpty) {
-    setupLog.i('GP Old World terrain redistribution: no eligible GP land tiles');
-    return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
+    setupLog.i(
+      'GP Old World terrain redistribution: no eligible GP land tiles',
+    );
+    return (
+      game: game,
+      tileMap: tileMapOldWorld,
+      fairnessMaxAbsFracDeviation: 0,
+    );
   }
 
   final wByGp = _eligibleLandCountsByGp(tiles, gpIdsSorted);
-  final nTGlobal = _countTerrainOnEligibleTiles(map: tileMapOldWorld, tiles: tiles);
+  final nTGlobal = _countTerrainOnEligibleTiles(
+    map: tileMapOldWorld,
+    tiles: tiles,
+  );
 
   final targetByGpTerrain = <String, Map<TerrainType, int>>{
     for (final g in gpIdsSorted) g: <TerrainType, int>{},
@@ -256,7 +272,11 @@ applyGreatPowerOldWorldTerrainRedistribution({
       'logic: GP OW terrain redistribution internal length mismatch '
       'seq=${sequence.length} tiles=${tiles.length} — leaving map unchanged',
     );
-    return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
+    return (
+      game: game,
+      tileMap: tileMapOldWorld,
+      fairnessMaxAbsFracDeviation: 0,
+    );
   }
 
   final nextTerrain = <List<TerrainType?>>[

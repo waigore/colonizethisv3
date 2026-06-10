@@ -9,11 +9,9 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'hidden_agenda_assignment.dart';
-import 'package:colonizethis_world/src/world_constants.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'setup_constants.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'effective_setup_seed.dart';
 import 'game_setup.dart';
 import 'setup_exceptions.dart';
@@ -216,12 +214,15 @@ InitGameResult runInitGame({
   );
 }
 
-({List<WarpLink> warpLinks, GameSetupResult setupResult}) _runLockedFullInitPipeline({
+({List<WarpLink> warpLinks, GameSetupResult setupResult})
+_runLockedFullInitPipeline({
   required GameSetupConfig config,
   required InitGameOptions options,
   required int effectiveSeed,
 }) {
-  setupLog.d('init game generating OW+NW maps (locked partition + setup retries)');
+  setupLog.d(
+    'init game generating OW+NW maps (locked partition + setup retries)',
+  );
   const maxPipelineAttempts = 64;
   for (var pipelineTry = 0; pipelineTry < maxPipelineAttempts; pipelineTry++) {
     final mapSeed = effectiveSeed + pipelineTry * 100003;
@@ -292,7 +293,8 @@ InitGameResult runInitGame({
   );
 }
 
-({List<WarpLink> warpLinks, GameSetupResult setupResult}) _runFreeformInitPipeline({
+({List<WarpLink> warpLinks, GameSetupResult setupResult})
+_runFreeformInitPipeline({
   required GameSetupConfig config,
   required InitGameOptions options,
   required int effectiveSeed,
@@ -344,7 +346,10 @@ InitGameResult runInitGame({
       final nw = generateRegion(
         params: paramsNW,
         numProvinces: config.numProvincesNewWorld,
-        numContinents: config.continentCount.clamp(1, config.numProvincesNewWorld),
+        numContinents: config.continentCount.clamp(
+          1,
+          config.numProvincesNewWorld,
+        ),
         regionId: kRegionNewWorld,
         resourceRules: ResourceRules.defaultRules,
       );

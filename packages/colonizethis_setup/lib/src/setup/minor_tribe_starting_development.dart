@@ -5,8 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world_constants.dart';
-import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
 
@@ -102,8 +101,7 @@ MinorTribeStartingDevelopmentResult applyMinorTribeStartingDevelopment({
   if (maxTilesPerCapital < 0) {
     throw SetupConfigConstraintException(
       code: 'minor_tribe_starting_development_negative_count',
-      details:
-          'maxTilesPerCapital must be >= 0; got $maxTilesPerCapital',
+      details: 'maxTilesPerCapital must be >= 0; got $maxTilesPerCapital',
     );
   }
   final result = <String, List<String>>{};

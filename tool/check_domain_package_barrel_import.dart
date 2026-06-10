@@ -36,6 +36,8 @@ const Map<String, Set<String>> _enforcedConsumerTargets = {
   'combat': {'world'},
   'economy': {'world'},
   'logic': {'orders', 'world'},
+  'diplomacy': {'world'},
+  'setup': {'diplomacy', 'world'},
 };
 
 final RegExp _deepImport = RegExp(

@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
@@ -33,7 +33,10 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
 }) {
   final tribeIds = {for (final t in game.tribes) t.id};
   if (tribeIds.isEmpty) {
-    return GpTribeFirstContactResult(game: game, newlyContactedTribeIds: const []);
+    return GpTribeFirstContactResult(
+      game: game,
+      newlyContactedTribeIds: const [],
+    );
   }
 
   final known = knownDiplomaticTargetFactionIds(
@@ -68,7 +71,10 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
   }
 
   if (newlyContacted.isEmpty) {
-    return GpTribeFirstContactResult(game: game, newlyContactedTribeIds: const []);
+    return GpTribeFirstContactResult(
+      game: game,
+      newlyContactedTribeIds: const [],
+    );
   }
 
   newlyContacted.sort();
