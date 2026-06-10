@@ -2,9 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_work_constants.dart';
-import 'package:colonizethis_world/src/game_player_lookup.dart';
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'build_rail_work_rules.dart';
 import 'orders_application_helpers.dart';
 
@@ -51,10 +49,10 @@ Set<String> rawCandidateTilesForWorkTarget({
   Set<String>? exploreProvinceScope,
   Map<String, TileMapResult>? tileMapByRegion,
 
-  /// When non-null, must match the ids produced by scanning [allProvinces] for
-  /// provinces owned by [playerId] (same as the default path). Callers that
-  /// invoke this repeatedly in one suggestion pass should supply a shared set
-  /// to avoid O(targets × provinces) rescans (Refs #2394).
+  /// When non-null, must match the ids of provinces owned by [playerId] (same
+  /// as the default path, which reads them from [ProvinceOwnerCache]). Callers
+  /// that invoke this repeatedly in one suggestion pass should supply a shared
+  /// set to avoid O(targets × provinces) rescans (Refs #2394).
   Set<String>? playerOwnedProvinceIds,
 
   /// When non-null, [kWorkTargetPurchaseLand] prefilter reuses this snapshot
@@ -66,8 +64,8 @@ Set<String> rawCandidateTilesForWorkTarget({
   final ownedProvinceIds =
       playerOwnedProvinceIds ??
       <String>{
-        for (final p in allProvinces(world))
-          if (p.ownerId == playerId) p.id,
+        for (final p in ProvinceOwnerCache.of(world).provincesOwnedBy(playerId))
+          p.id,
       };
   return _preFilterWorkTargetTiles(
     game: game,

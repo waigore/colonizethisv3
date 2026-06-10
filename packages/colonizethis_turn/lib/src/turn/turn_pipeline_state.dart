@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'turn_resolution_result.dart';
 
 /// Immutable carry-over between economy and combat phases (feeding coverage,

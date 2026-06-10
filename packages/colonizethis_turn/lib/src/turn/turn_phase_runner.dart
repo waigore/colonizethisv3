@@ -8,7 +8,7 @@ import 'turn_resolution_events.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
-import 'package:colonizethis_world/src/trace/turn_trace_contracts.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Runs full turn phase sequence; may return early for pending diplomacy.
 TurnResolutionResult runTurnResolutionPipeline({

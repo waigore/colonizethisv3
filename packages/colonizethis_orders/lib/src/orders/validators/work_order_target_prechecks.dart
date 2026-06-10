@@ -2,9 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../order_work_constants.dart';
-import 'package:colonizethis_world/src/game_player_lookup.dart';
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
-import 'package:colonizethis_world/src/world/tile_control.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import '../order_validation_result.dart';
 
 /// Shared inputs for per-target work order validation steps that run before

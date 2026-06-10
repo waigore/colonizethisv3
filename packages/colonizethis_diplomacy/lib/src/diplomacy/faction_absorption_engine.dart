@@ -4,6 +4,7 @@ import 'package:colonizethis_world/src/world/army_migration.dart';
 import 'package:colonizethis_world/src/world/civilian_ownership_legality.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_owner_cache.dart';
 import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
 import 'diplomacy_relation_lookup.dart';
 
@@ -47,10 +48,14 @@ abstract final class FactionAbsorptionEngine {
 enum _AbsorptionKind { minorOrTribe, greatPower }
 
 List<String> _sortedFullProvinceIdsOwnedBy(Game game, String ownerId) {
-  final ids = <String>[];
-  for (final p in game.worldState.allProvinces()) {
-    if (p.ownerId == ownerId) ids.add(p.id);
-  }
+  // Reads the owned provinces from the shared read-only ProvinceOwnerCache
+  // projection (Phase 6b, SPEC/program/worldstate-projection.md; Refs #3393)
+  // instead of a full-world `allProvinces` owner scan. The result is sorted, so
+  // the projection's iteration order is irrelevant to the returned ids.
+  final ids = ProvinceOwnerCache.of(game.worldState)
+      .provincesOwnedBy(ownerId)
+      .map((p) => p.id)
+      .toList();
   ids.sort();
   return ids;
 }

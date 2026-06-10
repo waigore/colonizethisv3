@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import '../../order_validation_result.dart';
 import 'diplomatic_sub_validator.dart';
 import 'join_empire_validator.dart';
@@ -39,7 +39,8 @@ DiplomaticSubValidator establishOvertureSubValidator(
   }
 
   final currentStage =
-      getOverture(ctx.game, ctx.playerId, targetId)?.stage ?? OvertureStage.none;
+      getOverture(ctx.game, ctx.playerId, targetId)?.stage ??
+      OvertureStage.none;
 
   return switch (stage) {
     OvertureStage.tradeConsulate => _validateTradeConsulate(
@@ -78,11 +79,7 @@ bool _isMinorTribeOrGreatPower(
       targetId,
       factionMembership: ctx.factionMembership,
     ) ||
-    isGreatPower(
-      ctx.game,
-      targetId,
-      factionMembership: ctx.factionMembership,
-    );
+    isGreatPower(ctx.game, targetId, factionMembership: ctx.factionMembership);
 
 ({OrderValidationResult result, int treasury}) _validateTradeConsulate(
   DiplomaticSubValidatorContext ctx,

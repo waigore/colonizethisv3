@@ -2,13 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import '../turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_combat/src/combat/battle_general_assignment.dart';
-import 'package:colonizethis_combat/src/combat/combat_mode_selection.dart';
-import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_combat/src/combat/unopposed_province_capture.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_world/src/game_events.dart';
-import 'package:colonizethis_world/src/world/capital_and_gp_fall.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import '../combat_phase_helpers.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';

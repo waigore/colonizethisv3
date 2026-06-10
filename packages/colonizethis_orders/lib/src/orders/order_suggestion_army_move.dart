@@ -30,10 +30,10 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   if (playerOwnedFullProvinceIds != null) {
     out.addAll(playerOwnedFullProvinceIds);
   } else {
-    for (final p in allProvinces(game.worldState)) {
-      if (p.ownerId == playerId) {
-        out.add(toFullProvinceId(p.regionId, p.id));
-      }
+    for (final p in ProvinceOwnerCache.of(
+      game.worldState,
+    ).provincesOwnedBy(playerId)) {
+      out.add(toFullProvinceId(p.regionId, p.id));
     }
   }
   out.remove(fromFull);
@@ -93,7 +93,7 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// war) passes [OrderEngine] validation. SPEC/ui/military-units-panel.md.
 ///
 /// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
-/// skips the fallback owned-province [allProvinces] scan and reuses the
+/// skips the fallback owned-province [ProvinceOwnerCache] lookup and reuses the
 /// provided set (Refs #2394).
 ///
 /// When [resolution] is provided (same contract as
@@ -152,8 +152,10 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
                 if (e.value.ownerId == playerId) e.key,
             }
           : <String>{
-              for (final p in allProvinces(game.worldState))
-                if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+              for (final p in ProvinceOwnerCache.of(
+                game.worldState,
+              ).provincesOwnedBy(playerId))
+                toFullProvinceId(p.regionId, p.id),
             });
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,

@@ -1,7 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_economy/src/economy/worker_action_cost.dart';
-import '../order_validation_result.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 
 import 'stateful_validator.dart';
 

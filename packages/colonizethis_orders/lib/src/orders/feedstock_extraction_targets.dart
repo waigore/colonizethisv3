@@ -1,10 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'package:colonizethis_world/src/game_player_lookup.dart';
-import 'package:colonizethis_world/src/world_constants.dart';
 
 // Feedstock-extraction resource-id gates for the below-quota zero-NW
 // lock-recovery seller / supplier roles (Refs #2847 § H8-extraction).

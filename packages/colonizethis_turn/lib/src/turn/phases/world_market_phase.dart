@@ -4,8 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
     show ftpPairKeysFromGame, getRelation;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
-import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 

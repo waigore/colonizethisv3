@@ -6,11 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'feedstock_extraction_targets.dart'
     show feedstockExtractionResourceIdsForPlayer;
 import 'order_work_constants.dart';
-import 'package:colonizethis_world/src/game_player_lookup.dart';
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'bundled_civilian_work_order.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
