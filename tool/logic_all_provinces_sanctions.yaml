@@ -4,7 +4,7 @@
 version: 1
 sanctions:
   - path: packages/colonizethis_orders/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 69
+    line: 67
     rationale: Work tile prefilter collects owned province ids via all provinces when
       callers do not supply a shared owned-province set.
     spec: SPEC/program/logic-dual-region-province-access.md
@@ -23,25 +23,25 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
-    line: 78
+    line: 76
     rationale: Turn news digest summarizes changes across all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
-    line: 197
+    line: 195
     rationale: Turn news digest second pass over all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_orders/lib/src/orders/order_suggestion_work.dart
-    line: 47
+    line: 43
     rationale: merchantPurchaseLandCandidateTileKeys walks all provinces once per suggestWorkOrders pass when merchants are present (foreign-owned resource tiles).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_orders/lib/src/orders/order_suggestion_helpers.dart
-    line: 80
+    line: 78
     rationale: getProvinceOwnerMap walks all provinces once per diplomacy filter pass.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2509
