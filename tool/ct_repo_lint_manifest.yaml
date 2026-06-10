@@ -495,7 +495,7 @@ rules:
 
   - rule_id: repo.orders_dedup_map_clones
     group: architecture
-    title: Orders module stockpile-quantities clones must use Stockpile.copyQuantities()
+    title: Orders module map clones must use Stockpile.copyQuantities() / copyUnitsById()
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_dedup_map_clones.dart

@@ -172,18 +172,12 @@ BuildWorkState _applyAffordableBuildUnitOrder({
     tileKey: category == BuildUnitCategory.civilian ? civilianTileKey : null,
   );
 
-  var work = current.work;
-  if (regionId == kRegionNewWorld) {
-    work = work.copyWith(
-      newUnitsById: Map<String, Unit>.from(work.newUnitsById)
-        ..[newUnit.id] = newUnit,
-    );
-  } else {
-    work = work.copyWith(
-      oldUnitsById: Map<String, Unit>.from(work.oldUnitsById)
-        ..[newUnit.id] = newUnit,
-    );
-  }
+  final oldWorld = regionId != kRegionNewWorld;
+  final work = current.work.withUnitsByIdForRegion(
+    oldWorld,
+    copyUnitsById(current.work.unitsByIdForRegion(oldWorld))
+      ..[newUnit.id] = newUnit,
+  );
 
   var nextGame = current.game;
   if (category == BuildUnitCategory.military) {

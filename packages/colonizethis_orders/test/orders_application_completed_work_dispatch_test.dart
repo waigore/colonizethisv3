@@ -54,8 +54,7 @@ void main() {
         ],
       );
       final work = WorkOrderState(
-        oldUnitsById: {unit.id: unit},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
         tileState: tileState,
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},
@@ -127,8 +126,7 @@ void main() {
         ],
       );
       final work = WorkOrderState(
-        oldUnitsById: {unit.id: unit},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
         tileState: tileState,
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},
@@ -189,8 +187,7 @@ void main() {
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final work = WorkOrderState(
-        oldUnitsById: {unit.id: unit},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
         tileState: TileMapState(),
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},
@@ -245,8 +242,7 @@ void main() {
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final work = WorkOrderState(
-        oldUnitsById: {unit.id: unit},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
         tileState: TileMapState(),
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},

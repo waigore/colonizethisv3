@@ -75,8 +75,7 @@ void main() {
 
       final merchant = game.worldState.oldWorld.units.single;
       final work = WorkOrderState(
-        oldUnitsById: {merchant.id: merchant},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {merchant.id: merchant}, newWorld: const {}),
         tileState: game.worldState.tileState,
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},
@@ -104,9 +103,7 @@ void main() {
       expect(applied, isTrue);
       expect(context.treasury, 500);
       expect(context.purchasedTilesByTileKey.containsKey(tileKey), isFalse);
-      final updatedMerchant =
-          context.state.work.newUnitsById['merchant1'] ??
-          context.state.work.oldUnitsById['merchant1'];
+      final updatedMerchant = context.state.work.unitById('merchant1');
       expect(updatedMerchant, isNotNull);
       expect(updatedMerchant!.status, UnitStatus.working);
       expect(updatedMerchant.tileKey, tileKey);
@@ -122,8 +119,7 @@ void main() {
         buildOrders: const {},
         workOrders: const {},
         work: WorkOrderState(
-          oldUnitsById: const {},
-          newUnitsById: const {},
+          unitsById: (oldWorld: const {}, newWorld: const {}),
           tileState: game.worldState.tileState,
           visibilityByTile: const {},
           portsByProvinceSeaboard: const {},
