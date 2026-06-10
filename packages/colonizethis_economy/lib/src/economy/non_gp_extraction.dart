@@ -2,9 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_resource_constants.dart';
+import 'game_lookup_helpers.dart';
+import 'tile_extraction_yield.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Per-faction extraction for non-Great-Power factions (Minor Nations and
@@ -51,10 +52,8 @@ Map<String, Map<CommodityId, int>> computeNonGreatPowerExtraction({
     'tribes=${game.tribes.length}',
   );
 
-  final provincesByFullId = <String, Province>{
-    for (final p in allProvinces(game.worldState)) p.id: p,
-  };
-  final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
+  final provincesByFullId = buildProvinceIndex(game);
+  final portTileKeys = collectPortTileKeys(game);
 
   final out = <String, Map<CommodityId, int>>{};
 
@@ -162,10 +161,8 @@ Map<String, List<TradeOrder>> computeNonGreatPowerAutoOffers({
     return const <String, List<TradeOrder>>{};
   }
 
-  final provincesByFullId = <String, Province>{
-    for (final p in allProvinces(game.worldState)) p.id: p,
-  };
-  final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
+  final provincesByFullId = buildProvinceIndex(game);
+  final portTileKeys = collectPortTileKeys(game);
   final richesIds = richesCommodityIds.toSet();
 
   final out = <String, List<TradeOrder>>{};
@@ -298,38 +295,23 @@ _NonGpTileContribution? _computeNonGpTileContribution({
   final townTileIsPort =
       townTileKey != null && portTileKeys.contains(townTileKey);
 
-  final improvementLevel = game.worldState.tileState
-      .improvementLevel(tileKey)
-      .clamp(0, 4);
-  final roadLevel = game.worldState.tileState.roadLevel(tileKey);
-  final isPort = portTileKeys.contains(tileKey);
-  final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
-  final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
-
   // Non-GP tech cap is the package-wide default (1) for every resource: Minors
-  // and Tribes do not research tech.
-  const techCap = defaultExtractionCap;
-  final production = (improvementLevel < techCap ? improvementLevel : techCap)
-      .clamp(0, 4);
-  var effective = (production < pathCap ? production : pathCap).clamp(0, 4);
-
+  // and Tribes do not research tech. The remaining production / transport /
+  // town-development math is shared with the GP helper via
+  // computeEffectiveTileYield so the two stay provably in lockstep.
   final isCapitalProvince = provinceId == factionCapitalProvinceId;
   final usesRoadRule = connectedByRoadRule.contains(tileKey);
-  if (isCapitalProvince) {
-    effective =
-        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
-          0,
-          4,
-        );
-  } else if (!usesRoadRule && townTileIsPort) {
-    // Town rule only (non-capital) with connected port town applies town cap;
-    // mirrors the GP branch in resource_extractor.dart.
-    effective =
-        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
-          0,
-          4,
-        );
-  }
+  final effective = computeEffectiveTileYield(
+    tileState: game.worldState.tileState,
+    tileKey: tileKey,
+    techCap: defaultExtractionCap,
+    townDevelopmentCap: townDevelopmentCap,
+    townTileIsPort: townTileIsPort,
+    isCapitalProvince: isCapitalProvince,
+    usesRoadRule: usesRoadRule,
+    portTileKeys: portTileKeys,
+    pathTransportCap: pathTransportCap,
+  );
   if (effective <= 0) {
     return null;
   }

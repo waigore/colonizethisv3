@@ -19,18 +19,19 @@ import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'treasury_bid_budget.dart' show effectiveMarketPriceForCommodityId;
+import 'world_market_context_base.dart';
 
 /// Inputs for one [TradeOrderSuggester.suggest] pass.
 ///
 /// All fields are pre-computed by the caller. The suggester never touches
 /// the `Game` directly — keeping it pure makes it trivially reusable from
 /// `OrderSuggestionAPI`, the AI planner, and tests without mocking.
-class TradeSuggestionContext {
+class TradeSuggestionContext extends WorldMarketContextBase {
   const TradeSuggestionContext({
-    required this.playerId,
-    required this.bidTypeCap,
-    required this.tradeCargoCapacity,
-    this.availableStockpileByCommodityId = const <CommodityId, int>{},
+    required super.playerId,
+    required super.bidTypeCap,
+    required super.tradeCargoCapacity,
+    super.availableStockpileByCommodityId,
     this.commodityNeedByCommodityId = const <CommodityId, int>{},
     this.treasuryBudgetForBids = 1 << 30,
     this.worldMarketState = const WorldMarketState(),
@@ -47,28 +48,6 @@ class TradeSuggestionContext {
 
   /// Default bid priority. Same rationale as [defaultOfferPriority].
   static const int defaultBidPriority = 5;
-
-  /// Submitting faction id. Informational; the suggester does no
-  /// cross-player checks.
-  final String playerId;
-
-  /// `0 / 3 / 6` cap on distinct bid commodities for this player this turn.
-  /// Pre-computed via `worldMarketBidTypeCap` in
-  /// `packages/colonizethis_logic/lib/src/economy/world_market/bid_type_cap.dart`.
-  final int bidTypeCap;
-
-  /// Cross-commodity cargo budget for this player's bids this turn (units).
-  /// Per `SPEC/game/world-market.md` § Cargo:
-  /// `max(0, totalHomeFleetCargoHolds - overseasExtractionActualTonnage)`.
-  final int tradeCargoCapacity;
-
-  /// Per-commodity quantity available to **offer** this turn, after committed
-  /// industry allocation has been subtracted from the projected
-  /// post-production stockpile (`stockpile[id] - industryAllocation[id]`,
-  /// clamped at 0). Same semantics as
-  /// `TradeOrderValidationContext.availableStockpileByCommodityId`. Riches
-  /// commodities are ignored even if present (rule 2).
-  final Map<CommodityId, int> availableStockpileByCommodityId;
 
   /// Per-commodity projected deficit in units the player wants to acquire
   /// this turn (forecast consumption + production inputs minus projected
