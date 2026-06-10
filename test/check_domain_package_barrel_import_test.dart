@@ -109,6 +109,46 @@ void main() {
     expect(offenders, isEmpty);
   });
 
+  test('combat barrel publishes the turn-consumed combat files', () {
+    // Promoted by the `turn -> combat` slice (Refs #3393 Phase 1): these combat
+    // files are now consumed through the barrel by turn.
+    final closure = barrelPublishedSrcFiles(Directory.current.path, 'combat');
+    expect(closure, contains('src/combat/military_attack_economy.dart'));
+    expect(closure, contains('src/combat/unopposed_province_capture.dart'));
+  });
+
+  test('orders barrel publishes the turn-consumed orders files', () {
+    // Promoted by the `turn -> orders` slice (Refs #3393 Phase 1): these orders
+    // files are now consumed through the barrel by turn.
+    final closure = barrelPublishedSrcFiles(Directory.current.path, 'orders');
+    expect(closure, contains('src/orders/bundled_civilian_work_order.dart'));
+    expect(
+      closure,
+      contains('src/orders/validators/work_order_cost_calculator.dart'),
+    );
+  });
+
+  test('no turn lib file deep-imports the promoted combat/orders files', () {
+    final turnLib = Directory(
+      p.join(Directory.current.path, 'packages', 'colonizethis_turn', 'lib'),
+    );
+    const promoted = <String>[
+      'package:colonizethis_combat/src/combat/military_attack_economy.dart',
+      'package:colonizethis_combat/src/combat/unopposed_province_capture.dart',
+      'package:colonizethis_orders/src/orders/bundled_civilian_work_order.dart',
+      'package:colonizethis_orders/src/orders/validators/work_order_cost_calculator.dart',
+    ];
+    final offenders = <String>[];
+    for (final entity in turnLib.listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (promoted.any((deep) => content.contains("import '$deep'"))) {
+        offenders.add(p.relative(entity.path, from: Directory.current.path));
+      }
+    }
+    expect(offenders, isEmpty);
+  });
+
   test('barrelPublishedSrcFiles resolves direct and nested re-exports', () {
     final temp = Directory.systemTemp.createTempSync('barrel_closure_');
     addTearDown(() => temp.deleteSync(recursive: true));

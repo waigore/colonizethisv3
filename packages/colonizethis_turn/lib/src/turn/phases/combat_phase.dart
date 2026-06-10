@@ -3,7 +3,6 @@ import '../turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_combat/colonizethis_combat.dart';
-import 'package:colonizethis_combat/src/combat/unopposed_province_capture.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../combat_phase_helpers.dart';

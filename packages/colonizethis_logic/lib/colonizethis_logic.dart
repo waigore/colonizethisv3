@@ -32,7 +32,9 @@ export 'package:colonizethis_economy/colonizethis_economy.dart';
 // Orders (Refs #3290 — colonizethis_orders package; re-exported for backward compat)
 export 'package:colonizethis_orders/colonizethis_orders.dart';
 export 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart';
-export 'package:colonizethis_orders/src/orders/validators/work_order_cost_calculator.dart';
+// `validators/work_order_cost_calculator.dart` is now published by the
+// `colonizethis_orders` barrel (Refs #3393 Phase 1 `turn → orders` slice), so it
+// is re-exported transitively above; the prior deep re-export here was redundant.
 export 'package:colonizethis_orders/src/orders/order_suggestion.dart'
     show
         AvailableWorkTargetsForUnit,
