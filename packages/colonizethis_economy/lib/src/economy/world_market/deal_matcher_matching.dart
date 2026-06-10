@@ -7,6 +7,72 @@ part of 'deal_matcher.dart';
 // These are top-level private functions sharing the parent library's scope via
 // `part`, so visibility and behaviour are unchanged (Refs #3290 Phase 0).
 
+/// Executes one offer↔bid match attempt shared by the First Right of Refusal
+/// pass and the integer-priority tier passes (issue #3396 cluster 3).
+///
+/// The exhaustion guard, cargo-left lookup, `_min3` desired-quantity clamp,
+/// treasury affordability clamp + truncation flagging, `FilledDeal` emission,
+/// and the `offer`/`bid`/`remainingCargo`/`remainingTreasury` state mutation
+/// are identical across both call sites; only the emitted `FilledDeal` flag
+/// differs. [isFirstRight] sets `isFirstRightOfRefusalMatch` (FRR pass);
+/// otherwise [ftp] sets `isFtpMatch` (tier pass). The two flags are mutually
+/// exclusive — an FRR deal never carries the FTP flag — preserving the exact
+/// `FilledDeal` shape (and JSON) emitted before the de-duplication.
+///
+/// Returns the matched quantity (0 when nothing matched).
+int _attemptMatch({
+  required _OrderState offer,
+  required _OrderState bid,
+  required CommodityId commodityId,
+  required double pricePerUnit,
+  required Map<String, int> remainingCargo,
+  required Map<String, int> remainingTreasury,
+  required List<FilledDeal> filledOut,
+  required bool isFirstRight,
+  bool ftp = false,
+}) {
+  if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
+  final cargoLeft = remainingCargo[bid.factionId] ?? 0;
+  if (cargoLeft <= 0) return 0;
+  final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
+  if (desiredQty <= 0) return 0;
+  final maxAffordable = _maxAffordableQuantity(
+    bid: bid,
+    pricePerUnit: pricePerUnit,
+    remainingTreasury: remainingTreasury,
+  );
+  final matchQty = desiredQty <= maxAffordable ? desiredQty : maxAffordable;
+  if (matchQty <= 0) {
+    if (pricePerUnit > 0 && desiredQty > 0) bid.treasuryTruncated = true;
+    return 0;
+  }
+  if (matchQty < desiredQty && pricePerUnit > 0) {
+    bid.treasuryTruncated = true;
+  }
+  filledOut.add(
+    FilledDeal(
+      sellerFactionId: offer.factionId,
+      buyerFactionId: bid.factionId,
+      commodityId: commodityId,
+      quantity: matchQty,
+      pricePerUnit: pricePerUnit,
+      isFtpMatch: isFirstRight ? false : ftp,
+      isFirstRightOfRefusalMatch: isFirstRight,
+      sellerOriginTileKey: offer.order.originTileKey,
+    ),
+  );
+  offer.remaining -= matchQty;
+  bid.remaining -= matchQty;
+  remainingCargo[bid.factionId] = cargoLeft - matchQty;
+  _decrementTreasury(
+    bid: bid,
+    matchQty: matchQty,
+    pricePerUnit: pricePerUnit,
+    remainingTreasury: remainingTreasury,
+  );
+  return matchQty;
+}
+
 /// Runs the First Right of Refusal absolute-priority pass for one
 /// commodity per `SPEC/game/world-market-first-right-of-refusal.md` and
 /// `SPEC/program/world-market-resolution.md` § Step B (absolute-priority
@@ -37,48 +103,6 @@ int _runFirstRightMatching({
   if (commodityOffers.isEmpty || commodityBids.isEmpty) return 0;
   var filledQuantity = 0;
 
-  int attemptFrrMatch(_OrderState offer, _OrderState bid) {
-    if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
-    final cargoLeft = remainingCargo[bid.factionId] ?? 0;
-    if (cargoLeft <= 0) return 0;
-    final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
-    if (desiredQty <= 0) return 0;
-    final maxAffordable = _maxAffordableQuantity(
-      bid: bid,
-      pricePerUnit: pricePerUnit,
-      remainingTreasury: remainingTreasury,
-    );
-    final matchQty = desiredQty <= maxAffordable ? desiredQty : maxAffordable;
-    if (matchQty <= 0) {
-      if (pricePerUnit > 0 && desiredQty > 0) bid.treasuryTruncated = true;
-      return 0;
-    }
-    if (matchQty < desiredQty && pricePerUnit > 0) {
-      bid.treasuryTruncated = true;
-    }
-    filledOut.add(
-      FilledDeal(
-        sellerFactionId: offer.factionId,
-        buyerFactionId: bid.factionId,
-        commodityId: commodityId,
-        quantity: matchQty,
-        pricePerUnit: pricePerUnit,
-        isFirstRightOfRefusalMatch: true,
-        sellerOriginTileKey: offer.order.originTileKey,
-      ),
-    );
-    offer.remaining -= matchQty;
-    bid.remaining -= matchQty;
-    remainingCargo[bid.factionId] = cargoLeft - matchQty;
-    _decrementTreasury(
-      bid: bid,
-      matchQty: matchQty,
-      pricePerUnit: pricePerUnit,
-      remainingTreasury: remainingTreasury,
-    );
-    return matchQty;
-  }
-
   for (final offer in commodityOffers) {
     if (offer.remaining <= 0) continue;
     final originTileKey = offer.order.originTileKey;
@@ -95,7 +119,16 @@ int _runFirstRightMatching({
       if (offer.remaining <= 0) break;
       if (bid.factionId != owningGpId) continue;
       if (bid.remaining <= 0) continue;
-      filledQuantity += attemptFrrMatch(offer, bid);
+      filledQuantity += _attemptMatch(
+        offer: offer,
+        bid: bid,
+        commodityId: commodityId,
+        pricePerUnit: pricePerUnit,
+        remainingCargo: remainingCargo,
+        remainingTreasury: remainingTreasury,
+        filledOut: filledOut,
+        isFirstRight: true,
+      );
     }
   }
 
@@ -142,48 +175,6 @@ int _runTierMatching({
   bool ftpEligible(_OrderState offer, _OrderState bid) =>
       ftpPairKeys.contains(DealMatcher.pairKey(offer.factionId, bid.factionId));
 
-  int attemptMatch(_OrderState offer, _OrderState bid, {required bool ftp}) {
-    if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
-    final cargoLeft = remainingCargo[bid.factionId] ?? 0;
-    if (cargoLeft <= 0) return 0;
-    final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
-    if (desiredQty <= 0) return 0;
-    final maxAffordable = _maxAffordableQuantity(
-      bid: bid,
-      pricePerUnit: pricePerUnit,
-      remainingTreasury: remainingTreasury,
-    );
-    final matchQty = desiredQty <= maxAffordable ? desiredQty : maxAffordable;
-    if (matchQty <= 0) {
-      if (pricePerUnit > 0 && desiredQty > 0) bid.treasuryTruncated = true;
-      return 0;
-    }
-    if (matchQty < desiredQty && pricePerUnit > 0) {
-      bid.treasuryTruncated = true;
-    }
-    filledOut.add(
-      FilledDeal(
-        sellerFactionId: offer.factionId,
-        buyerFactionId: bid.factionId,
-        commodityId: commodityId,
-        quantity: matchQty,
-        pricePerUnit: pricePerUnit,
-        isFtpMatch: ftp,
-        sellerOriginTileKey: offer.order.originTileKey,
-      ),
-    );
-    offer.remaining -= matchQty;
-    bid.remaining -= matchQty;
-    remainingCargo[bid.factionId] = cargoLeft - matchQty;
-    _decrementTreasury(
-      bid: bid,
-      matchQty: matchQty,
-      pricePerUnit: pricePerUnit,
-      remainingTreasury: remainingTreasury,
-    );
-    return matchQty;
-  }
-
   // Pass 1: FTP-eligible matches only.
   for (final offer in tierOffers) {
     if (offer.remaining <= 0) continue;
@@ -191,7 +182,17 @@ int _runTierMatching({
       if (offer.remaining <= 0) break;
       if (bid.remaining <= 0) continue;
       if (!ftpEligible(offer, bid)) continue;
-      filledQuantity += attemptMatch(offer, bid, ftp: true);
+      filledQuantity += _attemptMatch(
+        offer: offer,
+        bid: bid,
+        commodityId: commodityId,
+        pricePerUnit: pricePerUnit,
+        remainingCargo: remainingCargo,
+        remainingTreasury: remainingTreasury,
+        filledOut: filledOut,
+        isFirstRight: false,
+        ftp: true,
+      );
     }
   }
 
@@ -201,7 +202,17 @@ int _runTierMatching({
     for (final bid in tierBids) {
       if (offer.remaining <= 0) break;
       if (bid.remaining <= 0) continue;
-      filledQuantity += attemptMatch(offer, bid, ftp: ftpEligible(offer, bid));
+      filledQuantity += _attemptMatch(
+        offer: offer,
+        bid: bid,
+        commodityId: commodityId,
+        pricePerUnit: pricePerUnit,
+        remainingCargo: remainingCargo,
+        remainingTreasury: remainingTreasury,
+        filledOut: filledOut,
+        isFirstRight: false,
+        ftp: ftpEligible(offer, bid),
+      );
     }
   }
 

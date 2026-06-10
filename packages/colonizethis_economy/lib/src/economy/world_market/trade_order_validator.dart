@@ -17,6 +17,7 @@ import 'bid_type_cap.dart' show worldMarketBidTypeCap;
 import '../sea_transport.dart' show cargoHoldsForHomeFleet;
 import 'package:colonizethis_economy/src/validation/order_validation_result.dart';
 import 'sellable_quantity.dart' show offerCapByCommodityId;
+import 'world_market_context_base.dart';
 import 'treasury_bid_budget.dart'
     show
         effectiveMarketPriceForCommodityId,
@@ -64,38 +65,16 @@ abstract final class TradeOrderRejectionReasons {
 /// All fields are pre-computed by the caller. The validator never touches
 /// the `Game` directly — keeping it pure makes it trivially reusable from
 /// the order engine, AI planner, and tests without mocking.
-class TradeOrderValidationContext {
+class TradeOrderValidationContext extends WorldMarketContextBase {
   TradeOrderValidationContext({
-    required this.playerId,
-    required this.bidTypeCap,
-    required this.tradeCargoCapacity,
-    required this.availableStockpileByCommodityId,
+    required super.playerId,
+    required super.bidTypeCap,
+    required super.tradeCargoCapacity,
+    required super.availableStockpileByCommodityId,
     required this.treasuryBudgetForBids,
     this.worldMarketState = const WorldMarketState(),
     data.ResourceRules? resourceRules,
   }) : resourceRules = resourceRules ?? data.ResourceRules.defaultRules;
-
-  /// Submitting faction id. Informational; the validator does no cross-player
-  /// checks.
-  final String playerId;
-
-  /// `0 / 3 / 6` cap on distinct bid commodities for this player this turn.
-  /// Pre-computed via `worldMarketBidTypeCap` in
-  /// `packages/colonizethis_logic/lib/src/economy/world_market/bid_type_cap.dart`.
-  final int bidTypeCap;
-
-  /// Cross-commodity cargo budget for this player's bids this turn (units).
-  /// Per `SPEC/game/world-market.md` § Cargo:
-  /// `max(0, totalHomeFleetCargoHolds - overseasExtractionActualTonnage)`.
-  /// Wired by the phase handler (Issue B / #2990).
-  final int tradeCargoCapacity;
-
-  /// Per-commodity quantity available to **offer** this turn, after committed
-  /// industry allocation has been subtracted from the projected
-  /// post-production stockpile (`stockpile[id] - industryAllocation[id]`,
-  /// clamped at 0). Missing entries are treated as `0`. Riches commodities
-  /// should not be present (they are rejected by rule 2 anyway).
-  final Map<CommodityId, int> availableStockpileByCommodityId;
 
   /// Maximum `Σ (quantity × effectiveMarketPrice)` across admitted bids this
   /// turn (`SPEC/game/world-market.md` § Treasury budget for bids).
