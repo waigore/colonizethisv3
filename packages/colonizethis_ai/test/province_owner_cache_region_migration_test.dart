@@ -306,4 +306,63 @@ void main() {
       expect(globalNewWorldHasNonGpOwnership(game), isFalse);
     });
   });
+
+  // Refs #3393 Phase 6b (slice 13) — `planDevelopCivilian` seeds its
+  // owned-province set by scanning both regions
+  // (`[oldWorld, newWorld].provinces.where((p) => p.ownerId == playerId)`).
+  // The migration replaces that scan with
+  // `ProvinceOwnerCache.provincesOwnedBy(playerId)` (all regions). These tests
+  // pin the projection set equals the prior both-region owner scan.
+  group('planDevelopCivilian owned-province slice-13 migration', () {
+    WorldState buildWorld() => const WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 145),
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: 'oldWorld|a', regionId: 'oldWorld', ownerId: 'gp1'),
+          Province(id: 'oldWorld|b', regionId: 'oldWorld', ownerId: 'gp2'),
+          Province(id: 'oldWorld|c', regionId: 'oldWorld'),
+        ],
+      ),
+      newWorld: RegionData(
+        provinces: [
+          Province(id: 'newWorld|a', regionId: 'newWorld', ownerId: 'gp1'),
+          Province(id: 'newWorld|b', regionId: 'newWorld', ownerId: 'gp2'),
+        ],
+      ),
+    );
+
+    Set<String> manualOwnedProvinceIds(WorldState world, String id) => {
+      for (final region in <RegionData>[world.oldWorld, world.newWorld])
+        for (final p in region.provinces)
+          if (p.ownerId == id) p.id,
+    };
+
+    Set<String> projectionOwnedProvinceIds(WorldState world, String id) => {
+      for (final p in ProvinceOwnerCache.of(world).provincesOwnedBy(id)) p.id,
+    };
+
+    test('projection set equals the prior both-region owner scan', () {
+      final world = buildWorld();
+
+      expect(
+        projectionOwnedProvinceIds(world, 'gp1'),
+        manualOwnedProvinceIds(world, 'gp1'),
+      );
+      expect(projectionOwnedProvinceIds(world, 'gp1'), {
+        'oldWorld|a',
+        'newWorld|a',
+      });
+    });
+
+    test('projection set is empty for a player owning no provinces', () {
+      final world = buildWorld();
+
+      // gp3 owns nothing; unowned provinces (null ownerId) never match an id.
+      expect(
+        projectionOwnedProvinceIds(world, 'gp3'),
+        manualOwnedProvinceIds(world, 'gp3'),
+      );
+      expect(projectionOwnedProvinceIds(world, 'gp3'), isEmpty);
+    });
+  });
 }

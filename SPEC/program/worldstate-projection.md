@@ -9,27 +9,25 @@ umbrella (Refs #3393). Companion to `SPEC/program/turn-resolution.md`,
 ## Motivation
 
 Domain packages repeatedly recompute the same deterministic ownership
-groupings by scanning every province
-(`provincesForRegion(...).where((p) => p.ownerId == playerId)`,
-`allProvinces().where(...)`). These uncapped global scans inside per-player /
-per-target loops are a recognised next-turn-budget risk
+groupings via per-province scans
+(`provincesForRegion(...).where((p) => p.ownerId == playerId)`) inside
+per-player / per-target loops — a recognised next-turn-budget risk
 (`colonizethis-turn-resolution-budget.mdc` § "Duplicate global scans"). A
-read-only projection that memoises these groupings once per turn-resolution
-pass removes the redundant scans without changing turn-resolution semantics.
+read-only projection memoising these groupings once per turn-resolution pass
+removes the redundant scans without changing semantics.
 
 ## Scope (Phase 6a — projection component)
 
-Phase 6a adds the **read-only projection component only**; the
+Phase 6a adds the **read-only projection component only** and is
+behaviour-neutral by construction (no resolution path calls it); the
 `run_observer_game` 15 s-budget profiling (Phase 6c) is a follow-up slice.
-Phase 6a is behaviour-neutral by construction (no resolution path calls it).
 
 ## Scope (Phase 6b — call-site migrations)
 
 Phase 6b migrates redundant owner scans to `ProvinceOwnerCache`. Every
-migration is **behaviour-preserving**: the projection accessors return exactly
-the provinces whose non-null `ownerId == id` (a `null` owner never equals an
-id), and each migrated site uses the result for membership/count only
-(iteration order irrelevant or re-sorted). AI sites reach the projection
+migration is **behaviour-preserving**: accessors return exactly the provinces
+whose non-null `ownerId == id` (a `null` owner never equals an id), and each
+site uses the result for membership/count only. AI sites reach the projection
 through the narrow contract — `package:colonizethis_logic/ai_api.dart`
 re-exports `ProvinceOwnerCache`, `kRegionOldWorld`, and `kRegionNewWorld` at the
 `colonizethis_world` barrel level — preserving the one-way decoupling boundary
@@ -58,10 +56,10 @@ Per-region accessors group by the region a province was visited in
   `countOwnedByInRegion(playerId, kRegionNewWorld)`.
 - **Slice 5 — shared per-region count helpers:** `oldWorldProvinceCountOwnedBy`
   (`province_lookup.dart`) → `countOwnedByInRegion(factionId, kRegionOldWorld)`
-  (single definition called per faction by `war_resolver`, expand/colonial
-  planners, the treasury planner, and feedstock gates);
+  (one definition called per faction by `war_resolver`, expand/colonial
+  planners, treasury planner, feedstock gates);
   `_newWorldProvinceCountOwnedBy` (`feedstock_extraction_targets.dart`) →
-  `countOwnedByInRegion(playerId, kRegionNewWorld)`. Counts are order-insensitive.
+  `countOwnedByInRegion(playerId, kRegionNewWorld)`.
 - **Slice 6 — full-world owner map:** `getProvinceOwnerMap`
   (`order_suggestion_helpers.dart`) builds its full-province-id→owner map from
   the cache by iterating `ownerIds` and each owner's `provincesOwnedBy`. The
@@ -86,23 +84,26 @@ Per-region accessors group by the region a province was visited in
   `findMilitaryVictoryWinner` (`end_of_turn_resolver.dart`), run every
   end-of-turn, replaced its full `provincesForRegion(kRegionOldWorld)`
   owner-count scan with a `game.players` loop reading
-  `ProvinceOwnerCache.of(game.worldState)
-  .countOwnedByInRegion(player.id, kRegionOldWorld)`, keeping the 31-province
-  threshold and the lexicographically-smallest-GP tiebreak. Behaviour-preserving:
-  player ids are non-empty so empty-string/`null` owners never count, and only
-  Great Powers (`game.players`) were ever eligible winners.
+  `countOwnedByInRegion(player.id, kRegionOldWorld)`, keeping the 31-province
+  threshold and lexicographically-smallest-GP tiebreak. Only Great Powers
+  (`game.players`) were ever eligible winners.
 - **Slice 10 — `colonizethis_ai` `planColonialCivilian`:** owned-NW-province
   scan → `provincesOwnedByInRegion(playerId, kRegionNewWorld)`.
-- **Slice 11 — `colonizethis_world` capital/GP terminal fall:** faction terminal
-  fall reads `ownsAnyInRegion(factionId, originalRegionId)` instead of
-  `originalRegion.provinces.any`; `applyGreatPowerFall` reads
-  `ownerOf(prevCapitalId)` and iterates `provincesOwnedBy(playerId)` for the
-  port-province hold check instead of building a full `allProvinces` owner map.
+- **Slice 11 — `colonizethis_world` capital/GP terminal fall:** terminal fall
+  reads `ownsAnyInRegion(factionId, originalRegionId)`; `applyGreatPowerFall`
+  reads `ownerOf(prevCapitalId)` and iterates `provincesOwnedBy(playerId)` for
+  the port-hold check instead of a full `allProvinces` owner map.
 - **Slice 12 — `colonizethis_ai` `globalNewWorldHasNonGpOwnership`:** the
   per-call `world.newWorld.provinces` owner scan (`observer_goal_phase.dart`,
   COLONIAL-lite phase guard) becomes unowned NW provinces via
   `unownedProvinces` plus non-GP `ownerIds` with
   `ownsAnyInRegion(id, kRegionNewWorld)`.
+- **Slice 13 — `colonizethis_ai` `planDevelopCivilian`:** the per-player
+  both-region `[oldWorld, newWorld].provinces.where((p) => p.ownerId ==
+  playerId)` scan (`develop_phase_planner.dart`) that seeds `ownedProvinceIds`
+  and `townTileKeys` becomes `ProvinceOwnerCache.of(world)
+  .provincesOwnedBy(playerId)`. Both collected sets are order-insensitive, so
+  the result is identical to the prior scan.
 
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
@@ -215,6 +216,11 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
 - **Given** a `Game` whose every NW province is owned by some GP (slice 12),
   **when** `globalNewWorldHasNonGpOwnership(game)` runs, **then** it returns
   `false`, equal to the pre-migration scan.
+- **Given** a `Game` whose player `p1` owns one old-world and one new-world
+  province (slice 13), **when** `planDevelopCivilian` derives its
+  owned-province set, **then** that set equals `{ p.id for p in
+  ProvinceOwnerCache.of(world).provincesOwnedBy('p1') }`, equal to the
+  pre-migration both-region `provinces.where((p) => p.ownerId == 'p1')` scan.
 
 ## `ProvinceOwnerCache`
 
