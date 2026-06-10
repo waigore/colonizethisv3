@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import '../world_constants.dart';
 import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 import 'province_lookup.dart';
+import 'region_unit_lists.dart';
 import 'topology_helpers.dart';
 import 'unit_lookup.dart';
 
@@ -89,7 +90,7 @@ bool _hasSingleResolvedFromNode(List<TopologyNode> fromNodes) {
   return true;
 }
 
-({List<Unit> ow, List<Unit> nw}) _replaceCivilianUnitInSameRegion(
+RegionUnitLists _replaceCivilianUnitInSameRegion(
   List<Unit> ow,
   List<Unit> nw,
   String srcRegion,
@@ -102,7 +103,7 @@ bool _hasSingleResolvedFromNode(List<TopologyNode> fromNodes) {
   return (ow: ow, nw: nw.map((x) => x.id == unitId ? moved : x).toList());
 }
 
-({List<Unit> ow, List<Unit> nw}) _moveCivilianUnitAcrossRegions(
+RegionUnitLists _moveCivilianUnitAcrossRegions(
   List<Unit> ow,
   List<Unit> nw,
   String unitId,
@@ -117,7 +118,7 @@ bool _hasSingleResolvedFromNode(List<TopologyNode> fromNodes) {
   return (ow: ow, nw: [...nw, moved]);
 }
 
-({List<Unit> ow, List<Unit> nw}) _applyCivilianMoveToWorkingUnitLists({
+RegionUnitLists _applyCivilianMoveToWorkingUnitLists({
   required List<Unit> ow,
   required List<Unit> nw,
   required String unitId,
@@ -196,7 +197,7 @@ _applyCivilianMoveOrders(
   return _withListsAndTotals(ow, nw, totals);
 }
 
-({List<Unit> ow, List<Unit> nw}) _initialUnitListsForCivilianMoves(Game game) {
+RegionUnitLists _initialUnitListsForCivilianMoves(Game game) {
   final unitsByRegion = game.worldState.mutableUnitListsByRegion();
   return (
     ow: unitsByRegion[kRegionOldWorld]!,
