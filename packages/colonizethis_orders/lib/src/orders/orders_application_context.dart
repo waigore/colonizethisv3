@@ -15,11 +15,28 @@ const int counterSpyKillChanceCapPercent = 30;
 /// Per-turn chance (0–1) that a spy on steal_tech work successfully steals one tech from target.
 const double spyTechStealChance = 0.08;
 
+/// Old- and new-world unit-by-id snapshots for the work pipeline, folded into a
+/// single record so callers never branch on a separate `isOldWorld` boolean to
+/// pick one of two parallel maps (Refs #3404). The `oldWorld` field holds the
+/// [kRegionOldWorld] units; `newWorld` holds [kRegionNewWorld] (`new` is a Dart
+/// keyword, so the fields are named `oldWorld` / `newWorld`).
+typedef WorkUnitsById = ({
+  Map<String, Unit> oldWorld,
+  Map<String, Unit> newWorld,
+});
+
+/// Canonical mutable clone of a `Map<String, Unit>` snapshot for the orders work
+/// pipeline. Centralises the raw unit-by-id map clone into one call site so the
+/// pattern is not repeated (Refs #3404; enforced by
+/// `repo.orders_dedup_map_clones`). Returns a mutable copy so existing callers
+/// can keep mutating the snapshot in place.
+Map<String, Unit> copyUnitsById(Map<String, Unit> source) =>
+    <String, Unit>{...source};
+
 /// Immutable work-phase scratch (copy-on-write updates per #1958).
 class WorkOrderState {
   const WorkOrderState({
-    required this.oldUnitsById,
-    required this.newUnitsById,
+    required this.unitsById,
     required this.tileState,
     required this.visibilityByTile,
     required this.portsByProvinceSeaboard,
@@ -29,8 +46,7 @@ class WorkOrderState {
     this.updatedPlayers = const [],
   });
 
-  final Map<String, Unit> oldUnitsById;
-  final Map<String, Unit> newUnitsById;
+  final WorkUnitsById unitsById;
   final TileMapState tileState;
   final Map<String, Map<String, String>> visibilityByTile;
   final Map<String, String> portsByProvinceSeaboard;
@@ -39,9 +55,32 @@ class WorkOrderState {
   final List<Province> newProvinces;
   final List<Player> updatedPlayers;
 
+  /// Unit-id snapshot for the requested region: [oldWorld] `true` selects the
+  /// [kRegionOldWorld] map, `false` the [kRegionNewWorld] map.
+  Map<String, Unit> unitsByIdForRegion(bool oldWorld) =>
+      oldWorld ? unitsById.oldWorld : unitsById.newWorld;
+
+  /// Copy with [units] replacing the requested region's unit-id snapshot.
+  WorkOrderState withUnitsByIdForRegion(bool oldWorld, Map<String, Unit> units) =>
+      copyWith(
+        unitsById: oldWorld
+            ? (oldWorld: units, newWorld: unitsById.newWorld)
+            : (oldWorld: unitsById.oldWorld, newWorld: units),
+      );
+
+  /// The unit with [unitId] looked up across both region snapshots, or `null`.
+  Unit? unitById(String unitId) =>
+      unitsById.oldWorld[unitId] ?? unitsById.newWorld[unitId];
+
+  /// Region id ([kRegionOldWorld] / [kRegionNewWorld]) that [unitId] belongs to;
+  /// defaults to [kRegionNewWorld] when absent from the old-world snapshot.
+  String regionIdForUnitId(String unitId) =>
+      unitsById.oldWorld.containsKey(unitId)
+      ? kRegionOldWorld
+      : kRegionNewWorld;
+
   WorkOrderState copyWith({
-    Map<String, Unit>? oldUnitsById,
-    Map<String, Unit>? newUnitsById,
+    WorkUnitsById? unitsById,
     TileMapState? tileState,
     Map<String, Map<String, String>>? visibilityByTile,
     Map<String, String>? portsByProvinceSeaboard,
@@ -51,8 +90,7 @@ class WorkOrderState {
     List<Player>? updatedPlayers,
   }) {
     return WorkOrderState(
-      oldUnitsById: oldUnitsById ?? this.oldUnitsById,
-      newUnitsById: newUnitsById ?? this.newUnitsById,
+      unitsById: unitsById ?? this.unitsById,
       tileState: tileState ?? this.tileState,
       visibilityByTile: visibilityByTile ?? this.visibilityByTile,
       portsByProvinceSeaboard:

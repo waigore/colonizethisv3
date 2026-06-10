@@ -64,11 +64,9 @@ Game applyBuildAndWorkOrders(
   final initialProvincesByRegion = game.worldState
       .mutableProvinceListsByRegion();
   final work = WorkOrderState(
-    oldUnitsById: Map<String, Unit>.from(
-      unitsByIdFromRegion(game.worldState.oldWorld),
-    ),
-    newUnitsById: Map<String, Unit>.from(
-      unitsByIdFromRegion(game.worldState.newWorld),
+    unitsById: (
+      oldWorld: copyUnitsById(unitsByIdFromRegion(game.worldState.oldWorld)),
+      newWorld: copyUnitsById(unitsByIdFromRegion(game.worldState.newWorld)),
     ),
     tileState: game.worldState.tileState,
     visibilityByTile: Map<String, Map<String, String>>.from(
@@ -127,8 +125,8 @@ Game applyBuildAndWorkOrders(
     kRegionNewWorld: state.work.newProvinces,
   };
   final unitsByRegion = <String, List<Unit>>{
-    kRegionOldWorld: state.work.oldUnitsById.values.toList(),
-    kRegionNewWorld: state.work.newUnitsById.values.toList(),
+    kRegionOldWorld: state.work.unitsById.oldWorld.values.toList(),
+    kRegionNewWorld: state.work.unitsById.newWorld.values.toList(),
   };
   var nextWorldState = state.game.worldState.copyWith(
     tileState: state.work.tileState,
@@ -216,12 +214,10 @@ BuildWorkState _processWorkUnits(
   List<Province> Function() getProvinces,
   WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
 ) {
-  final unitsById = oldWorldUnits
-      ? Map<String, Unit>.from(s.work.oldUnitsById)
-      : Map<String, Unit>.from(s.work.newUnitsById);
-  var current = oldWorldUnits
-      ? s.copyWith(work: s.work.copyWith(oldUnitsById: unitsById))
-      : s.copyWith(work: s.work.copyWith(newUnitsById: unitsById));
+  final unitsById = copyUnitsById(s.work.unitsByIdForRegion(oldWorldUnits));
+  var current = s.copyWith(
+    work: s.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
+  );
   final rand = s.game.globalGameSeed != null
       ? Random(
           s.game.globalGameSeed! +
@@ -274,9 +270,9 @@ BuildWorkState _processWorkUnits(
       oldWorldUnits: oldWorldUnits,
     );
   }
-  return oldWorldUnits
-      ? current.copyWith(work: current.work.copyWith(oldUnitsById: unitsById))
-      : current.copyWith(work: current.work.copyWith(newUnitsById: unitsById));
+  return current.copyWith(
+    work: current.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
+  );
 }
 
 BuildWorkState _resolveCounterSpyTick(
@@ -330,9 +326,9 @@ BuildWorkState _resolveCounterSpyTick(
     ordersApplicationLog.d('work cancelled unit=$toRemove reason=unit dead');
   }
   unitsById.remove(toRemove);
-  return oldWorldUnits
-      ? s.copyWith(work: s.work.copyWith(oldUnitsById: unitsById))
-      : s.copyWith(work: s.work.copyWith(newUnitsById: unitsById));
+  return s.copyWith(
+    work: s.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
+  );
 }
 
 BuildWorkState _advanceWorkUnitTick(
@@ -361,16 +357,16 @@ BuildWorkState _advanceWorkUnitTick(
       );
     }
     unitsById[unitKey] = cancelUnitWork(u, restoredTile: u.tileKey);
-    return oldWorldUnits
-        ? next.copyWith(work: next.work.copyWith(oldUnitsById: unitsById))
-        : next.copyWith(work: next.work.copyWith(newUnitsById: unitsById));
+    return next.copyWith(
+      work: next.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
+    );
   }
   unitsById[unitKey] = u.copyWith(
     currentWork: cw.copyWith(remainingTurns: nextRemaining),
   );
-  return oldWorldUnits
-      ? s.copyWith(work: s.work.copyWith(oldUnitsById: unitsById))
-      : s.copyWith(work: s.work.copyWith(newUnitsById: unitsById));
+  return s.copyWith(
+    work: s.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
+  );
 }
 
 BuildWorkState _resolveStealTechCompletion(

@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Orders module whose stockpile-quantities snapshot clones must delegate to the
-/// canonical `Stockpile.copyQuantities()` helper instead of inlining
-/// `Map<String, int>.from(<stockpile>.quantities)` (Refs #3404).
+/// Orders module whose snapshot clones must delegate to canonical helpers
+/// instead of inlining raw `Map<...>.from(...)` clones (Refs #3404):
+/// - stockpile-quantities clones use `Stockpile.copyQuantities()` rather than
+///   `Map<String, int>.from(<stockpile>.quantities)`.
+/// - unit-by-id clones use `copyUnitsById(...)` rather than
+///   `Map<String, Unit>.from(...)`.
 const _ordersLibDir = 'packages/colonizethis_orders/lib/src/orders';
 
 /// Matches a raw clone of a stockpile quantities map, e.g.
@@ -12,6 +15,20 @@ const _ordersLibDir = 'packages/colonizethis_orders/lib/src/orders';
 final RegExp _rawQuantitiesClonePattern = RegExp(
   r'Map<\s*String\s*,\s*int\s*>\.from\([^)]*\.quantities\)',
 );
+
+/// Matches a raw clone of a unit-by-id map, e.g.
+/// `Map<String, Unit>.from(work.oldUnitsById)`. The canonical
+/// `copyUnitsById(...)` helper uses a spread literal, so it does not match.
+final RegExp _rawUnitsClonePattern = RegExp(
+  r'Map<\s*String\s*,\s*Unit\s*>\.from\(',
+);
+
+/// True when [line] is a pure comment line (`//`, `///`, or a `*` doc/block
+/// continuation), so a pattern mentioned in prose is not flagged.
+bool _isCommentLine(String line) {
+  final trimmed = line.trimLeft();
+  return trimmed.startsWith('//') || trimmed.startsWith('*');
+}
 
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
 int runCheckOrdersDedupMapClones(
@@ -48,9 +65,10 @@ int runCheckOrdersDedupMapClones(
   }
 
   logE(
-    'ERROR: Found raw stockpile-quantities map clones in the orders module. '
-    'Use Stockpile.copyQuantities() instead of '
-    'Map<String, int>.from(<stockpile>.quantities).',
+    'ERROR: Found raw map clones in the orders module. Use '
+    'Stockpile.copyQuantities() instead of '
+    'Map<String, int>.from(<stockpile>.quantities), and copyUnitsById(...) '
+    'instead of Map<String, Unit>.from(...).',
   );
   for (final v in violations) {
     logE('${v.path}:${v.line} ${v.message}');
@@ -69,7 +87,9 @@ List<OrdersDedupMapCloneViolation> findOrdersDedupMapCloneViolations({
   final lines = source.split('\n');
   final violations = <OrdersDedupMapCloneViolation>[];
   for (var i = 0; i < lines.length; i++) {
-    if (_rawQuantitiesClonePattern.hasMatch(lines[i])) {
+    final line = lines[i];
+    if (_isCommentLine(line)) continue;
+    if (_rawQuantitiesClonePattern.hasMatch(line)) {
       violations.add(
         OrdersDedupMapCloneViolation(
           path: relativePath,
@@ -77,6 +97,17 @@ List<OrdersDedupMapCloneViolation> findOrdersDedupMapCloneViolations({
           message:
               'Raw stockpile quantities clone detected; call '
               'Stockpile.copyQuantities() instead.',
+        ),
+      );
+    }
+    if (_rawUnitsClonePattern.hasMatch(line)) {
+      violations.add(
+        OrdersDedupMapCloneViolation(
+          path: relativePath,
+          line: i + 1,
+          message:
+              'Raw unit-by-id map clone detected; call copyUnitsById(...) '
+              'instead.',
         ),
       );
     }

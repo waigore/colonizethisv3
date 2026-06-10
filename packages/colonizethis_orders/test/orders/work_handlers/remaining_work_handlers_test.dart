@@ -36,8 +36,7 @@ void main() {
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final work = WorkOrderState(
-        oldUnitsById: {spy.id: spy},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {spy.id: spy}, newWorld: const {}),
         tileState: game.worldState.tileState,
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},
@@ -63,8 +62,7 @@ void main() {
       );
       expect(handler.tryApply(context, order, spy, tileKey, true), isTrue);
       final u =
-          context.state.work.oldUnitsById['spy1'] ??
-          context.state.work.newUnitsById['spy1'];
+          context.state.work.unitById('spy1');
       expect(u?.currentWork?.workTarget, kWorkTargetStealTech);
     });
   });
@@ -95,8 +93,7 @@ void main() {
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final work = WorkOrderState(
-        oldUnitsById: {spy.id: spy},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {spy.id: spy}, newWorld: const {}),
         tileState: game.worldState.tileState,
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},
@@ -122,8 +119,7 @@ void main() {
       );
       expect(handler.tryApply(context, order, spy, tileKey, true), isTrue);
       final u =
-          context.state.work.oldUnitsById['spy2'] ??
-          context.state.work.newUnitsById['spy2'];
+          context.state.work.unitById('spy2');
       expect(u?.currentWork?.workTarget, kWorkTargetCounterSpy);
     });
   });
@@ -155,8 +151,7 @@ void main() {
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final work = WorkOrderState(
-        oldUnitsById: {'ex1': explorer},
-        newUnitsById: const {},
+        unitsById: (oldWorld: {'ex1': explorer}, newWorld: const {}),
         tileState: game.worldState.tileState,
         visibilityByTile: const {},
         portsByProvinceSeaboard: const {},
