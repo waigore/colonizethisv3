@@ -103,14 +103,11 @@ Determinism contract below).
   .provincesOwnedBy(playerId)`. Both collected sets are order-insensitive, so
   the result is identical to the prior scan.
 - **Slice 14 — `colonizethis_orders` merchant purchase-land scan:**
-  `merchantPurchaseLandCandidateTileKeys` (`order_suggestion_work.dart`, the
-  sole sanctioned `allProvinces(` site in that file) iterated every province —
-  including unowned ones — to collect resource tiles in non-player-owned
-  provinces. It now iterates `ownerIds` (skipping `Game.players` ids) and each
-  owner's `provincesOwnedBy(ownerId)`. The union of those lists is exactly the
-  non-null, non-player owners' provinces (`null` owners are excluded, matching
-  the prior `ownerId == null` skip); the result is sorted before return, so the
-  pre-sort iteration order is irrelevant. The matching
+  `merchantPurchaseLandCandidateTileKeys` (`order_suggestion_work.dart`) now
+  iterates `ownerIds` (skipping `Game.players` ids) and each owner's
+  `provincesOwnedBy(ownerId)` instead of the sole sanctioned `allProvinces(`
+  scan. The union equals the prior non-null, non-player provinces; the result is
+  sorted before return, so iteration order is irrelevant. The matching
   `tool/logic_all_provinces_sanctions.yaml` entry is removed.
 - **Slice 15 — `colonizethis_world` capital-reassignment eligibility:**
   `evaluateCapitalReassignmentEligibility` (`capital_and_gp_fall.dart`), run per
@@ -122,6 +119,15 @@ Determinism contract below).
   preserves `RegionData.provinces` order, so the resulting owned-province id
   list is identical to the prior scan. The `region_not_found` guard
   (`regionDataForId`) is retained.
+- **Slice 16 — `colonizethis_world` coastal sea-zone fog visibility:**
+  `_applyCoastalFullVisibilityForGpPlayerInRegion`
+  (`fog_resolution_coastal_sea_zone.dart`, run per GP player × per region each
+  end-of-turn `applyCoastalSeaZoneFullVisibility` pass) replaced its
+  `regionData.provinces.where((p) => p.ownerId == playerId)` rescan with
+  `ProvinceOwnerCache.of(game.worldState).provincesOwnedByInRegion(playerId,
+  regionId)`. The per-region accessor preserves `RegionData.provinces` order, so
+  the iterated owned-province ids — and the resulting fully-visible sea-zone tile
+  set — are identical to the prior scan (behaviour-preserving).
 
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
@@ -264,6 +270,16 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
   playerId: 'p1', regionId: kRegionOldWorld, ...)` runs, **then** it returns
   `eligible == false` with `reasonCode == 'no_owned_provinces_in_region'`,
   equal to the pre-migration scan returning an empty owned list.
+- **Given** a `Game` whose GP `gp1` owns an old-world coastal province adjacent
+  to sea zone `s1`, and `gp1`'s `s1` tiles start `fogged` (slice 16), **when**
+  `applyCoastalSeaZoneFullVisibility(game, ...)` runs, **then** every `s1` tile
+  becomes `fullyVisible` for `gp1`, equal to driving the per-region owned set
+  from `ProvinceOwnerCache.of(game.worldState).provincesOwnedByInRegion('gp1',
+  kRegionOldWorld)` and to the pre-migration `regionData.provinces.where((p) =>
+  p.ownerId == 'gp1')` scan.
+- **Given** a `Game` whose GP `gp1` owns no province adjacent to sea zone `s1`
+  (slice 16), **when** `applyCoastalSeaZoneFullVisibility(game, ...)` runs,
+  **then** `gp1`'s `s1` tiles stay `fogged`, equal to the pre-migration scan.
 
 ## `ProvinceOwnerCache`
 
