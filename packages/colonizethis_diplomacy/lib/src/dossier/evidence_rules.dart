@@ -4,7 +4,7 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/game_player_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import '../diplomacy/diplomacy_logging.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 

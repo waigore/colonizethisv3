@@ -1,11 +1,10 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/game_player_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
-import 'diplomacy_resolver.dart' show DiplomacyFactionMembership;
 import 'overture_resolver.dart';
 
 /// Result of processing FTP proposals in the Diplomacy phase.
@@ -45,11 +44,7 @@ bool aiGpAcceptsFtp(Game game, String proposerGpId, String targetGpId) {
   return true;
 }
 
-bool _canFormFtp(
-  Game game,
-  String proposerGpId,
-  String targetGpId,
-) {
+bool _canFormFtp(Game game, String proposerGpId, String targetGpId) {
   if (hasFtpPartnership(game, proposerGpId, targetGpId)) return false;
   if (factionsAtWar(game, proposerGpId, targetGpId)) return false;
   if (!hasEmbassyOverture(game, proposerGpId, targetGpId)) return false;

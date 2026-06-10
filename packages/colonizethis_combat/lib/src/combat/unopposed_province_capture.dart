@@ -2,8 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Applies immediate province flips when a Great Power army moves into an
 /// enemy-owned province that has no defending combat units (and no third-party
@@ -37,9 +36,9 @@ Game applyUnopposedProvinceCaptures(Game game, Orders orders) {
                 order.destinationProvinceId,
               );
         if (!provinceById.containsKey(destFull)) continue;
-        movedGpIdsByProvince.putIfAbsent(destFull, () => <String>{}).add(
-          factionId,
-        );
+        movedGpIdsByProvince
+            .putIfAbsent(destFull, () => <String>{})
+            .add(factionId);
       }
     }
 
@@ -51,20 +50,18 @@ Game applyUnopposedProvinceCaptures(Game game, Orders orders) {
       if (ownerId == null || ownerId.isEmpty) continue;
 
       final movers = movedGpIdsByProvince[provinceId]!;
-      final eligibleAttackers = movers
-          .where(
-            (fid) =>
-                fid != ownerId && factionsAtWar(state, fid, ownerId),
-          )
-          .toList()
-        ..sort();
+      final eligibleAttackers =
+          movers
+              .where(
+                (fid) => fid != ownerId && factionsAtWar(state, fid, ownerId),
+              )
+              .toList()
+            ..sort();
       if (eligibleAttackers.isEmpty) continue;
 
       final unitsInProvince = unitsByProvince[provinceId] ?? const <Unit>[];
       final ownerCombatCount = unitsInProvince
-          .where(
-            (u) => u.ownerId == ownerId && canUnitInitiateCombat(u.type),
-          )
+          .where((u) => u.ownerId == ownerId && canUnitInitiateCombat(u.type))
           .length;
       if (ownerCombatCount > 0) continue;
 

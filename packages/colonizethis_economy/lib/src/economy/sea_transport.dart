@@ -5,7 +5,7 @@ import 'package:logger/logger.dart';
 
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart'
     show enemiesOf;
-import 'package:colonizethis_world/src/world/naval.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 /// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).

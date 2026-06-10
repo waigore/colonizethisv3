@@ -1,11 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world/army_migration.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_world/src/world/civilian_ownership_legality.dart';
-import 'package:colonizethis_world/src/world/game_world_mutations.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
-import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
 import 'diplomacy_relation_lookup.dart';
 
 /// Join-Empire absorption shared between minor/tribe and GP targets.
@@ -52,10 +48,9 @@ List<String> _sortedFullProvinceIdsOwnedBy(Game game, String ownerId) {
   // projection (Phase 6b, SPEC/program/worldstate-projection.md; Refs #3393)
   // instead of a full-world `allProvinces` owner scan. The result is sorted, so
   // the projection's iteration order is irrelevant to the returned ids.
-  final ids = ProvinceOwnerCache.of(game.worldState)
-      .provincesOwnedBy(ownerId)
-      .map((p) => p.id)
-      .toList();
+  final ids = ProvinceOwnerCache.of(
+    game.worldState,
+  ).provincesOwnedBy(ownerId).map((p) => p.id).toList();
   ids.sort();
   return ids;
 }

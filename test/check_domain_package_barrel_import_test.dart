@@ -67,6 +67,13 @@ void main() {
       pairs['orders'],
       containsAll(<String>{'diplomacy', 'economy', 'world'}),
     );
+    // Promoted by the combat/economy/logic -> sibling slice (Refs #3393 Phase 1).
+    expect(pairs['combat'], containsAll(<String>{'world'}));
+    expect(pairs['economy'], containsAll(<String>{'world'}));
+    expect(pairs['logic'], containsAll(<String>{'orders', 'world'}));
+    // Promoted by the diplomacy/setup -> sibling slice (Refs #3393 Phase 1).
+    expect(pairs['diplomacy'], containsAll(<String>{'world'}));
+    expect(pairs['setup'], containsAll(<String>{'diplomacy', 'world'}));
   });
 
   test('passes for the real post-migration domain packages', () {
@@ -144,6 +151,156 @@ void main() {
       final content = entity.readAsStringSync();
       if (promoted.any((deep) => content.contains("import '$deep'"))) {
         offenders.add(p.relative(entity.path, from: Directory.current.path));
+      }
+    }
+    expect(offenders, isEmpty);
+  });
+
+  test('world barrel publishes the combat/economy/logic-consumed files', () {
+    // Promoted by the combat/economy/logic -> world slice (Refs #3393 Phase 1):
+    // these world files are now consumed through the barrel by combat, economy,
+    // and logic.
+    final closure = barrelPublishedSrcFiles(Directory.current.path, 'world');
+    expect(closure, contains('src/game_player_lookup.dart'));
+    expect(closure, contains('src/world/province_lookup.dart'));
+    expect(closure, contains('src/world/unit_lookup.dart'));
+    expect(closure, contains('src/world/connectivity_resolver.dart'));
+    expect(closure, contains('src/world/player_state_pipeline.dart'));
+    expect(closure, contains('src/event_bus/game_event_bus.dart'));
+  });
+
+  test('orders barrel publishes the logic-consumed order-suggestion files', () {
+    // Promoted by the logic -> orders slice (Refs #3393 Phase 1).
+    final closure = barrelPublishedSrcFiles(Directory.current.path, 'orders');
+    expect(closure, contains('src/orders/order_suggestion_api.dart'));
+    expect(closure, contains('src/orders/order_suggestion_api_impl.dart'));
+  });
+
+  test(
+    'no combat/economy/logic lib file deep-imports the promoted sibling files',
+    () {
+      const promotedByConsumer = <String, List<String>>{
+        'combat': [
+          'package:colonizethis_world/src/game_player_lookup.dart',
+          'package:colonizethis_world/src/world/province_lookup.dart',
+          'package:colonizethis_world/src/world/unit_lookup.dart',
+          'package:colonizethis_world/src/world/army_migration.dart',
+          'package:colonizethis_world/src/world/province_ownership_transfer.dart',
+          'package:colonizethis_world/src/world/faction_membership.dart',
+          'package:colonizethis_world/src/world/game_world_mutations.dart',
+        ],
+        'economy': [
+          'package:colonizethis_world/src/world/player_state_pipeline.dart',
+          'package:colonizethis_world/src/world/connectivity_resolver.dart',
+          'package:colonizethis_world/src/world/province_lookup.dart',
+          'package:colonizethis_world/src/world/faction_membership.dart',
+          'package:colonizethis_world/src/world/naval.dart',
+        ],
+        'logic': [
+          'package:colonizethis_world/src/event_bus/game_event_bus.dart',
+          'package:colonizethis_orders/src/orders/order_suggestion_api.dart',
+          'package:colonizethis_orders/src/orders/order_suggestion_api_impl.dart',
+        ],
+      };
+      final offenders = <String>[];
+      for (final entry in promotedByConsumer.entries) {
+        final libDir = Directory(
+          p.join(
+            Directory.current.path,
+            'packages',
+            'colonizethis_${entry.key}',
+            'lib',
+          ),
+        );
+        for (final entity in libDir.listSync(recursive: true)) {
+          if (entity is! File || !entity.path.endsWith('.dart')) continue;
+          final content = entity.readAsStringSync();
+          if (entry.value.any((deep) => content.contains("import '$deep'"))) {
+            offenders.add(
+              p.relative(entity.path, from: Directory.current.path),
+            );
+          }
+        }
+      }
+      expect(offenders, isEmpty);
+    },
+  );
+
+  test(
+    'world/diplomacy barrels publish the diplomacy/setup-consumed files',
+    () {
+      // Promoted by the diplomacy -> world and setup -> {world, diplomacy}
+      // slice (Refs #3393 Phase 1): these files are now consumed through the
+      // owning domain barrel by diplomacy and setup.
+      final worldClosure = barrelPublishedSrcFiles(
+        Directory.current.path,
+        'world',
+      );
+      expect(worldClosure, contains('src/game_player_lookup.dart'));
+      expect(worldClosure, contains('src/world_constants.dart'));
+      expect(worldClosure, contains('src/world/province_lookup.dart'));
+      expect(worldClosure, contains('src/world/unit_lookup.dart'));
+      expect(worldClosure, contains('src/world/game_world_mutations.dart'));
+      expect(worldClosure, contains('src/world/army_migration.dart'));
+      expect(worldClosure, contains('src/world/player_view.dart'));
+      expect(worldClosure, contains('src/world/province_owner_cache.dart'));
+      expect(worldClosure, contains('src/world/player_state_pipeline.dart'));
+
+      final diplomacyClosure = barrelPublishedSrcFiles(
+        Directory.current.path,
+        'diplomacy',
+      );
+      expect(
+        diplomacyClosure,
+        contains('src/diplomacy/diplomacy_relation_lookup.dart'),
+      );
+    },
+  );
+
+  test('no diplomacy/setup lib file deep-imports the promoted sibling files', () {
+    const promotedByConsumer = <String, List<String>>{
+      'diplomacy': [
+        'package:colonizethis_world/src/game_player_lookup.dart',
+        'package:colonizethis_world/src/world/province_lookup.dart',
+        'package:colonizethis_world/src/world/faction_membership.dart',
+        'package:colonizethis_world/src/world/army_migration.dart',
+        'package:colonizethis_world/src/world/game_world_mutations.dart',
+        'package:colonizethis_world/src/world/province_owner_cache.dart',
+        'package:colonizethis_world/src/world/province_ownership_transfer.dart',
+        'package:colonizethis_world/src/world/player_view.dart',
+        'package:colonizethis_world/src/world/movement.dart',
+        'package:colonizethis_world/src/world/ai_control.dart',
+        'package:colonizethis_world/src/world_constants.dart',
+      ],
+      'setup': [
+        'package:colonizethis_world/src/world_constants.dart',
+        'package:colonizethis_world/src/world/province_lookup.dart',
+        'package:colonizethis_world/src/world/unit_lookup.dart',
+        'package:colonizethis_world/src/world/game_world_mutations.dart',
+        'package:colonizethis_world/src/world/player_state_pipeline.dart',
+        'package:colonizethis_world/src/world/player_view.dart',
+        'package:colonizethis_world/src/world/naval.dart',
+        'package:colonizethis_world/src/world/ship_instance_allocate.dart',
+        'package:colonizethis_world/src/world/army_migration.dart',
+        'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart',
+      ],
+    };
+    final offenders = <String>[];
+    for (final entry in promotedByConsumer.entries) {
+      final libDir = Directory(
+        p.join(
+          Directory.current.path,
+          'packages',
+          'colonizethis_${entry.key}',
+          'lib',
+        ),
+      );
+      for (final entity in libDir.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        final content = entity.readAsStringSync();
+        if (entry.value.any((deep) => content.contains("import '$deep'"))) {
+          offenders.add(p.relative(entity.path, from: Directory.current.path));
+        }
       }
     }
     expect(offenders, isEmpty);

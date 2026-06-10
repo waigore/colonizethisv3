@@ -1,7 +1,7 @@
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world/player_state_pipeline.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Extraction and auto-transport helpers.
 /// SPEC/game/extraction-and-improvements.md
