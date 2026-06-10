@@ -37,37 +37,39 @@ re-exports `ProvinceOwnerCache`, `kRegionOldWorld`, and `kRegionNewWorld` at the
 
 **Slice 1 — `colonizethis_orders` full-world fallbacks** (each previously
 `allProvinces(world).where((p) => p.ownerId == playerId)` → `provincesOwnedBy`):
-`armyMoveCandidateDestinationProvinceIds`, `armyMovePickerDestinations`
-(`order_suggestion_army_move.dart`), and `rawCandidateTilesForWorkTarget`
-(`order_suggestion_work_tile_prefilter.dart`).
+`armyMoveCandidateDestinationProvinceIds`, `armyMovePickerDestinations`, and
+`rawCandidateTilesForWorkTarget`.
 
 **Slice 2 — `colonizethis_diplomacy` full-world scans:** `provinceCountOwnedBy`
-(`diplomacy_relation_lookup.dart`) now reads `countOwnedBy(factionId)`, dropping
-a duplicate per-`Game` `ExpandoIndex`; `_sortedFullProvinceIdsOwnedBy`
-(`faction_absorption_engine.dart`) derives its (re-sorted) seed ids from
-`provincesOwnedBy(ownerId)`.
+now reads `countOwnedBy(factionId)`, dropping a duplicate per-`Game`
+`ExpandoIndex`; `_sortedFullProvinceIdsOwnedBy` derives its (re-sorted) seed ids
+from `provincesOwnedBy(ownerId)`.
 
-**Slice 3 — `colonizethis_ai` full-world scans** in `computeWarDesireScore`
-(`war_desire_calculator.dart`), evaluated per (nation, target faction) pair:
-`_resourceNeedBonus` and `_invasionCapacityAdjustment` read
-`provincesOwnedBy(factionId)`.
+**Slice 3 — `colonizethis_ai` full-world scans** in `computeWarDesireScore`,
+evaluated per (nation, target faction) pair: `_resourceNeedBonus` and
+`_invasionCapacityAdjustment` read `provincesOwnedBy(factionId)`.
 
-**Slice 4 — `colonizethis_ai` per-region scans.** High-traffic per-region owner
-checks evaluated **per minor nation** in diplomacy/expansion planning replace
-whole-region rescans (`world.<region>.provinces.any/where((p) => p.ownerId ==
-id)`) with the per-region accessors:
-
-- `_minorOwnsOldWorldProvinces` (`diplomatic_candidate_scoring.dart`),
-  `minorsHoldOldWorldProvinces` (`diplomatic_candidate_scoring_declare_war.dart`),
-  `hasUninvadedOldWorldMinor` (`expand_phase_planner.dart`), and both minor
-  candidate gathers in `diplomacy_planner_declare_war_targets.dart` →
-  `ownsAnyInRegion(minorId, kRegionOldWorld)`.
-- `_newWorldProvinceCountOwnedBy` (`treasury_lock_recovery.dart`) →
-  `countOwnedByInRegion(playerId, kRegionNewWorld)`.
+**Slice 4 — `colonizethis_ai` per-region scans.** Per-minor old-world `.any`
+checks (`_minorOwnsOldWorldProvinces`, `minorsHoldOldWorldProvinces`,
+`hasUninvadedOldWorldMinor`, both gathers in
+`diplomacy_planner_declare_war_targets.dart`) →
+`ownsAnyInRegion(minorId, kRegionOldWorld)`; `_newWorldProvinceCountOwnedBy`
+(`treasury_lock_recovery.dart`) → `countOwnedByInRegion(playerId, kRegionNewWorld)`.
 
 Per-region accessors group by the region a province was visited in
 (`kRegionOldWorld` first, then `kRegionNewWorld`), exactly matching the migrated
-`world.oldWorld.provinces` / `world.newWorld.provinces` lists. Phase 6c
+`world.oldWorld.provinces` / `world.newWorld.provinces` lists.
+
+**Slice 5 — shared per-region count helpers.** `oldWorldProvinceCountOwnedBy`
+(`province_lookup.dart`, `colonizethis_world`) →
+`countOwnedByInRegion(factionId, kRegionOldWorld)`. As the single definition
+called per faction/offerer by `war_resolver`, the expand/colonial phase
+planners, the treasury planner, and the feedstock gates, this one migration
+removes the redundant Old-World rescan from every caller.
+`_newWorldProvinceCountOwnedBy` (`feedstock_extraction_targets.dart`,
+`colonizethis_orders`) → `countOwnedByInRegion(playerId, kRegionNewWorld)`.
+Counts are order-insensitive, so each result is identical to the prior
+`provincesForRegion(...).where((p) => p.ownerId == id).length`. Phase 6c
 profiling and the remaining call sites stay follow-up slices of the umbrella.
 
 ### Phase 6b acceptance criteria
@@ -117,6 +119,11 @@ profiling and the remaining call sites stay follow-up slices of the umbrella.
   snapshot, **then** it returns `2` for `p1` and `0` for `p2`, equal to
   `ProvinceOwnerCache.of(game.worldState).countOwnedByInRegion(id, kRegionNewWorld)`
   and to the pre-migration `world.newWorld.provinces` owner count.
+- **Given** a `Game` whose faction `gp1` owns two old-world provinces and
+  faction `gp2` owns none (slice 5), **when** `oldWorldProvinceCountOwnedBy`
+  runs for each, **then** it returns `2` for `gp1` and `0` for `gp2`, equal to
+  `ProvinceOwnerCache.of(game.worldState).countOwnedByInRegion(id, kRegionOldWorld)`
+  and to the pre-migration `world.oldWorld.provinces` owner count.
 
 ## `ProvinceOwnerCache`
 

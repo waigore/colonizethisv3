@@ -35,7 +35,7 @@ const _sellerWoolTile = 'oldWorld|gp2-p0|0|0';
 /// for [_supplierId] when [sellerOw] is below the conquest quota (the default).
 /// When [sellerOw] is at the quota, no peer needs the improvement input and the
 /// supplier gate is empty (negative control).
-Game _game({int sellerOw = 5, int supplierCastIron = 0}) {
+Game _game({int sellerOw = 5, int supplierCastIron = 0, int sellerNw = 0}) {
   const supplierOw = kObserverConquestMinOwProvincesPerGp;
   final provinces = <Province>[
     for (var i = 0; i < supplierOw; i++)
@@ -51,6 +51,17 @@ Game _game({int sellerOw = 5, int supplierCastIron = 0}) {
         ownerId: _sellerId,
       ),
   ];
+  // Optional New World provinces owned by the seller. A below-quota seller that
+  // owns any New World province is no longer a zero-NW lock-recovery seller, so
+  // its (and the peer supplier's) feedstock gate must deactivate.
+  final newWorldProvinces = <Province>[
+    for (var i = 0; i < sellerNw; i++)
+      Province(
+        id: 'newWorld|gp2-n$i',
+        regionId: kRegionNewWorld,
+        ownerId: _sellerId,
+      ),
+  ];
   final builder = Unit(
     id: 'b1',
     type: kUnitTypeBuilder,
@@ -61,7 +72,7 @@ Game _game({int sellerOw = 5, int supplierCastIron = 0}) {
   final world = WorldState(
     turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
     oldWorld: RegionData(provinces: provinces, units: [builder]),
-    newWorld: const RegionData(),
+    newWorld: RegionData(provinces: newWorldProvinces),
     playerVisibilityByTile: const {
       _supplierId: {
         _supplierGrainTile: 'fullyVisible',
@@ -321,6 +332,34 @@ void main() {
         expect(first, equals(second));
         expect(first.single, _supplierTimberTile);
       });
+
+      // Refs #3393 Phase 6b (slice 5) — `_newWorldProvinceCountOwnedBy` now
+      // reads `ProvinceOwnerCache.countOwnedByInRegion(playerId,
+      // kRegionNewWorld)`. The non-zero branch must still short-circuit the
+      // zero-NW lock-recovery seller gate: when the seller owns a New World
+      // province, the peer-supplier feedstock gate deactivates (negative
+      // control proving the migrated count is behaviour-preserving).
+      test(
+        'seller owning a New World province deactivates the feedstock gate '
+        '(projection-backed new-world count)',
+        () {
+          // Sanity: zero New World provinces keeps the gate active.
+          expect(
+            feedstockExtractionResourceIdsForPlayer(_game(), _supplierId),
+            containsAll(<String>['timber', 'iron']),
+          );
+
+          final game = _game(sellerNw: 1);
+          expect(
+            feedstockExtractionResourceIdsForPlayer(game, _supplierId),
+            isEmpty,
+            reason:
+                'a below-quota seller owning a New World province is no longer '
+                'a zero-NW lock-recovery seller, so the peer-supplier gate '
+                'must empty',
+          );
+        },
+      );
     },
   );
 
