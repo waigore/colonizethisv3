@@ -48,6 +48,13 @@ rules:
     runner: dart
     script: tool/check_domain_package_logger_dedup.dart
 
+  - rule_id: repo.ai_api_narrow_surface
+    group: architecture
+    title: ai_api.dart must re-export sibling-domain symbols through domain barrels, not barrel-bypassing deep src/ paths (Refs #3393 Phase 3)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_ai_api_narrow_surface.dart
+
   - rule_id: repo.ai_planner_context
     group: architecture
     title: colonizethis_ai domain planners must use PlannerContext (Refs #2521)
