@@ -5,6 +5,7 @@ import '../world_constants.dart';
 import 'army_ids.dart';
 import 'game_world_mutations.dart';
 import 'province_lookup.dart';
+import 'region_unit_lists.dart';
 import 'unit_lookup.dart';
 
 part 'army_migration_relocation.dart';
