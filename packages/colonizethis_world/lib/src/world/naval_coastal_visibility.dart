@@ -4,7 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../world_constants.dart';
 import 'naval.dart';
 import 'player_view.dart';
-import 'province_lookup.dart' show toFullProvinceId;
+import 'province_lookup.dart'
+    show landTileKeysForProvinceBucket, toFullProvinceId;
 import 'sea_zone_identity.dart';
 import 'tile_key_coordinates.dart';
 
@@ -24,24 +25,6 @@ String canonicalSeaZoneTileBucketKey(
   String regionId,
   String seaZoneTopologyId,
 ) => canonicalizeSeaZoneId(regionId: regionId, seaZoneId: seaZoneTopologyId);
-
-/// [tileKeysByRegionAndProvince] normally keys land provinces by full id
-/// (`regionId|localId`); some fixtures or legacy maps key by **local** id only.
-/// Ship reveal and dock visibility must resolve tiles using whichever bucket exists.
-List<String> landTileKeysForProvinceBucket(
-  WorldState ws,
-  String regionId,
-  String fullProvinceId,
-) {
-  final byProv = ws.tileKeysByRegionAndProvince[regionId];
-  if (byProv == null) return const [];
-  final byFull = byProv[fullProvinceId];
-  if (byFull != null && byFull.isNotEmpty) {
-    return byFull;
-  }
-  final localId = ProvinceId.localIdFrom(fullProvinceId);
-  return byProv[localId] ?? const [];
-}
 
 Set<String> _coastalTileKeysAdjacentToSeaZone({
   required List<String> provinceTileKeys,
@@ -81,6 +64,7 @@ Map<String, Map<String, String>> revealProvinceTilesForPlayer(
     game.worldState,
     regionId,
     fullProvinceId,
+    allowLocalIdFallback: true,
   );
   if (tileKeys.isEmpty) return visibilityByTile;
   final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
@@ -124,6 +108,7 @@ Map<String, Map<String, String>> revealTilesAfterMoveToSeaZone({
       game.worldState,
       destRegionId,
       fullProvinceId,
+      allowLocalIdFallback: true,
     );
     final coastalTileKeys = _coastalTileKeysAdjacentToSeaZone(
       provinceTileKeys: provinceTileKeys,
@@ -178,6 +163,7 @@ Set<String> coastalLandTileKeysFromNavalPresenceAtSea(
         ws,
         destRegionId,
         fullProvinceId,
+        allowLocalIdFallback: true,
       );
       out.addAll(
         _coastalTileKeysAdjacentToSeaZone(

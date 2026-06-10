@@ -24,11 +24,10 @@ export 'package:colonizethis_world/src/world/unit_lookup.dart';
 export 'package:colonizethis_world/src/world/minor_military_parity.dart';
 export 'package:colonizethis_world/src/world/movement.dart';
 export 'package:colonizethis_world/src/world/naval.dart';
-// `landTileKeysForProvinceBucket` is also defined in `province_lookup.dart`
-// (already published); keep that as the public symbol and hide the duplicate
-// here to avoid an ambiguous export (Refs #3393 Phase 1).
-export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
-    hide landTileKeysForProvinceBucket;
+// `landTileKeysForProvinceBucket` is the single canonical definition in
+// `province_lookup.dart` (Refs #3403 Phase 1); the former duplicate here was
+// removed, so this barrel re-export no longer needs a `hide` carve-out.
+export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart';
 export 'package:colonizethis_world/src/world/naval_fleet_commands.dart';
 export 'package:colonizethis_world/src/world/naval_mission_orders.dart';
 export 'package:colonizethis_world/src/world/fog_resolution.dart'

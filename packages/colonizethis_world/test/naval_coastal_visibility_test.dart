@@ -46,51 +46,12 @@ void main() {
     });
   });
 
-  group('landTileKeysForProvinceBucket', () {
-    test('returns the full-id bucket when present', () {
-      final ws = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        tileKeysByRegionAndProvince: const {
-          ow: {
-            fullPid: ['$ow|p1|0|0', '$ow|p1|1|0'],
-          },
-        },
-      );
-
-      expect(
-        landTileKeysForProvinceBucket(ws, ow, fullPid),
-        ['$ow|p1|0|0', '$ow|p1|1|0'],
-      );
-    });
-
-    test('falls back to the local-id bucket when full-id bucket is missing', () {
-      final ws = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        tileKeysByRegionAndProvince: const {
-          ow: {
-            'p1': ['$ow|p1|0|0'],
-          },
-        },
-      );
-
-      expect(landTileKeysForProvinceBucket(ws, ow, fullPid), ['$ow|p1|0|0']);
-    });
-
-    test('returns empty when neither full nor local bucket exists', () {
-      final ws = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        tileKeysByRegionAndProvince: const {ow: {}},
-      );
-
-      expect(landTileKeysForProvinceBucket(ws, ow, fullPid), isEmpty);
-    });
-  });
+  // `landTileKeysForProvinceBucket` moved to the canonical
+  // `province_lookup.dart` (Refs #3403 Phase 1). Strict + opt-in
+  // `allowLocalIdFallback` behaviour is covered in
+  // `test/world/province_lookup_standalone_test.dart`. The naval reveal paths
+  // below still exercise the fallback transitively via
+  // `revealProvinceTilesForPlayer` (local-id bucket case).
 
   group('revealProvinceTilesForPlayer', () {
     test('upgrades all province land tiles to fullyVisible for the player', () {
@@ -140,6 +101,23 @@ void main() {
 
       expect(out[player]!['$ow|p1|0|0'], VisibilityLevel.fullyVisible.name);
       expect(out[enemy]!['$ow|p1|0|0'], VisibilityLevel.fogged.name);
+    });
+
+    test('resolves a legacy local-id keyed bucket (fallback path)', () {
+      // Fixture/legacy map keyed by local id only; the naval reveal path opts
+      // into the canonical helper's `allowLocalIdFallback` (Refs #3403 Phase 1).
+      final game = gameWithBuckets(
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            'p1': ['$ow|p1|0|0'],
+          },
+        },
+      );
+      final initial = <String, Map<String, String>>{};
+
+      final out = revealProvinceTilesForPlayer(game, initial, player, fullPid);
+
+      expect(out[player]!['$ow|p1|0|0'], VisibilityLevel.fullyVisible.name);
     });
   });
 

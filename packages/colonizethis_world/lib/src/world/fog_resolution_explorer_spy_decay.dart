@@ -29,6 +29,7 @@ applySpyRevealTimerDecay(Game game) {
         world,
         ProvinceId.regionIdFrom(provinceId),
         provinceId,
+        allowLocalIdFallback: true,
       ),
     );
     if (newByProvince.isNotEmpty) nextSpyTimers[playerId] = newByProvince;

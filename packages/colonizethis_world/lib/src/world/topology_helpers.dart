@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'package:colonizethis_world/src/utils/expando_index.dart';
+import 'package:colonizethis_world/src/utils/graph_traversal.dart';
 
 /// Topology helpers shared by movement and connectivity. SPEC/game/map-topology.md.
 ///
@@ -27,6 +28,39 @@ Set<String> _computeSeaZoneNodeIds(MapTopology topology) {
     if (n.type == TopologyNodeType.seaZone) out.add(n.id);
   }
   return UnmodifiableSetView<String>(out);
+}
+
+Map<String, TopologyNodeType> _computeNodeTypeById(MapTopology topology) {
+  final out = <String, TopologyNodeType>{
+    for (final n in topology.nodes) n.id: n.type,
+  };
+  return Map<String, TopologyNodeType>.unmodifiable(out);
+}
+
+Map<String, Set<String>> _computeAdjacency(MapTopology topology) {
+  final mutable = <String, Set<String>>{};
+  for (final e in topology.edges) {
+    mutable.putIfAbsent(e.id1, () => <String>{}).add(e.id2);
+    mutable.putIfAbsent(e.id2, () => <String>{}).add(e.id1);
+  }
+  return Map<String, Set<String>>.unmodifiable({
+    for (final entry in mutable.entries)
+      entry.key: UnmodifiableSetView<String>(entry.value),
+  });
+}
+
+Map<String, Set<String>> _computeSeaZoneAdjacency(MapTopology topology) {
+  final seaZoneIds = seaZoneNodeIds(topology);
+  final mutable = <String, Set<String>>{};
+  for (final e in topology.edges) {
+    if (!seaZoneIds.contains(e.id1) || !seaZoneIds.contains(e.id2)) continue;
+    mutable.putIfAbsent(e.id1, () => <String>{}).add(e.id2);
+    mutable.putIfAbsent(e.id2, () => <String>{}).add(e.id1);
+  }
+  return Map<String, Set<String>>.unmodifiable({
+    for (final entry in mutable.entries)
+      entry.key: UnmodifiableSetView<String>(entry.value),
+  });
 }
 
 Map<String, Set<String>> _computeProvinceNodeIdsByRegion(MapTopology topology) {
@@ -59,6 +93,24 @@ final ExpandoIndex<MapTopology, Set<String>> _seaZoneNodeIdsCache =
       'topology.seaZoneNodeIds',
       _computeSeaZoneNodeIds,
     );
+
+final ExpandoIndex<MapTopology, Map<String, TopologyNodeType>>
+_nodeTypeByIdCache = ExpandoIndex<MapTopology, Map<String, TopologyNodeType>>(
+  'topology.nodeTypeById',
+  _computeNodeTypeById,
+);
+
+final ExpandoIndex<MapTopology, Map<String, Set<String>>> _adjacencyCache =
+    ExpandoIndex<MapTopology, Map<String, Set<String>>>(
+      'topology.adjacency',
+      _computeAdjacency,
+    );
+
+final ExpandoIndex<MapTopology, Map<String, Set<String>>>
+_seaZoneAdjacencyCache = ExpandoIndex<MapTopology, Map<String, Set<String>>>(
+  'topology.seaZoneAdjacency',
+  _computeSeaZoneAdjacency,
+);
 
 final ExpandoIndex<MapTopology, bool> _topologyUsesPrefixedIdsCache =
     ExpandoIndex<MapTopology, bool>(
@@ -99,6 +151,27 @@ bool topologyUsesPrefixedIds(MapTopology topology) =>
 Set<String> seaZoneNodeIds(MapTopology topology) =>
     _seaZoneNodeIdsCache.get(topology);
 
+/// Node id -> [TopologyNodeType] for every node in [topology]. Cached per
+/// topology instance; the returned map is unmodifiable. Shared by topology-graph
+/// BFS so hot paths avoid rebuilding the type index per call (Refs #3403
+/// Phase 2).
+Map<String, TopologyNodeType> topologyNodeTypeById(MapTopology topology) =>
+    _nodeTypeByIdCache.get(topology);
+
+/// Full undirected adjacency (`nodeId -> neighbour ids`) for every edge in
+/// [topology], regardless of node type. Cached per topology instance; the outer
+/// map and each neighbour set are unmodifiable. Neighbour-set iteration follows
+/// `topology.edges` insertion order so BFS over this index stays deterministic
+/// (Refs #3403 Phase 2).
+Map<String, Set<String>> topologyAdjacency(MapTopology topology) =>
+    _adjacencyCache.get(topology);
+
+/// Undirected adjacency restricted to sea-zone-to-sea-zone (S–S) edges. Cached
+/// per topology instance; unmodifiable. Backs [seaZonesReachableBySeaPath]
+/// (Refs #3403 Phase 2).
+Map<String, Set<String>> seaZoneAdjacency(MapTopology topology) =>
+    _seaZoneAdjacencyCache.get(topology);
+
 /// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology].
 /// SPEC/game/map-topology.md, capital-and-connectivity § Sea paths.
 ///
@@ -109,28 +182,12 @@ Set<String> seaZonesReachableBySeaPath(
   Set<String> startSeaZoneIds, {
   void Function()? onDequeue,
 }) {
-  final seaZoneIds = seaZoneNodeIds(topology);
-  final neighbours = <String, Set<String>>{};
-  for (final e in topology.edges) {
-    final a = e.id1;
-    final b = e.id2;
-    if (seaZoneIds.contains(a) && seaZoneIds.contains(b)) {
-      neighbours.putIfAbsent(a, () => {}).add(b);
-      neighbours.putIfAbsent(b, () => {}).add(a);
-    }
-  }
-  final reachable = Set<String>.from(startSeaZoneIds);
-  final queue = Queue<String>()..addAll(startSeaZoneIds);
-  while (queue.isNotEmpty) {
-    final z = queue.removeFirst();
-    onDequeue?.call();
-    for (final n in neighbours[z] ?? {}) {
-      if (reachable.contains(n)) continue;
-      reachable.add(n);
-      queue.add(n);
-    }
-  }
-  return reachable;
+  return breadthFirstReachableInSubgraph<String>(
+    startSeaZoneIds,
+    seaZoneAdjacency(topology),
+    seaZoneNodeIds(topology),
+    onDequeue: onDequeue,
+  );
 }
 
 /// Sea zone ids adjacent to province [provinceNodeId] in topology (P–S edges).
