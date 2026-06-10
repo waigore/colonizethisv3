@@ -91,12 +91,13 @@ Per-region accessors group by the region a province was visited in
   threshold and the lexicographically-smallest-GP tiebreak. Behaviour-preserving:
   player ids are non-empty so empty-string/`null` owners never count, and only
   Great Powers (`game.players`) were ever eligible winners.
-- **Slice 10 — `colonizethis_ai` `planColonialCivilian`:** the per-player
-  `world.newWorld.provinces.where((p) => p.ownerId == playerId)` owned-NW-province
-  scan (`colonial_phase_planner_naval.dart`) reads
-  `ProvinceOwnerCache.of(world).provincesOwnedByInRegion(playerId,
-  kRegionNewWorld)`. The collected province-id and town-tile-key sets are
-  order-insensitive, so the result is identical to the prior scan.
+- **Slice 10 — `colonizethis_ai` `planColonialCivilian`:** owned-NW-province
+  scan → `provincesOwnedByInRegion(playerId, kRegionNewWorld)`.
+- **Slice 11 — `colonizethis_world` capital/GP terminal fall:** faction terminal
+  fall reads `ownsAnyInRegion(factionId, originalRegionId)` instead of
+  `originalRegion.provinces.any`; `applyGreatPowerFall` reads
+  `ownerOf(prevCapitalId)` and iterates `provincesOwnedBy(playerId)` for the
+  port-province hold check instead of building a full `allProvinces` owner map.
 
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
@@ -188,13 +189,21 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
   **when** `findMilitaryVictoryWinner(game)` runs, **then** it returns `null`,
   equal to the pre-migration scan (only Great Powers at the 31-province
   threshold win).
-- **Given** a `Game` whose player `p1` owns two New World provinces and a
-  non-`p1` player owns the rest (slice 10), **when** the owned-NW-province set
-  in `planColonialCivilian` is derived, **then** it equals
-  `{ p.id for p in ProvinceOwnerCache.of(world).provincesOwnedByInRegion('p1',
-  kRegionNewWorld) }`, equal to the pre-migration
-  `world.newWorld.provinces.where((p) => p.ownerId == 'p1')` scan, and is empty
-  for a player owning no New World province.
+- **Given** a `Game` whose player `p1` owns two New World provinces (slice 10),
+  **when** `planColonialCivilian` derives the owned-NW-province set, **then** it
+  equals `{ p.id for p in ProvinceOwnerCache.of(world)
+  .provincesOwnedByInRegion('p1', kRegionNewWorld) }`.
+- **Given** a `Game` whose minor `m1` still owns `oldWorld|m2` while its
+  previous capital `oldWorld|mcap` is owned by `p2` (slice 11), **when**
+  `_applyTerminalFallForFaction` evaluates the original-region hold check,
+  **then** it returns without falling, equal to
+  `ProvinceOwnerCache.of(game.worldState).ownsAnyInRegion('m1', kRegionOldWorld)`
+  and to the pre-migration `originalRegion.provinces.any` scan.
+- **Given** a `Game` whose GP `p1` owns port province `oldWorld|port` and lost
+  capital `oldWorld|cap` to `p2` (slice 11), **when** `applyGreatPowerFall`
+  evaluates the port hold check, **then** it skips the fall, equal to
+  `provincesOwnedBy('p1').any((p) => portsByProvince.containsKey(p.id))` and
+  to the pre-migration `allProvinces` owner-map iteration.
 
 ## `ProvinceOwnerCache`
 

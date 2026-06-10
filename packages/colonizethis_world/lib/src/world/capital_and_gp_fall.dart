@@ -8,6 +8,7 @@ import 'game_world_mutations.dart';
 import 'player_state_pipeline.dart';
 import 'port_seaboard_registry_key.dart';
 import 'province_lookup.dart';
+import 'province_owner_cache.dart';
 import 'capital_reassignment_fatal.dart';
 
 part 'capital_and_gp_fall_reassignment.dart';

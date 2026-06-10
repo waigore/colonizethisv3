@@ -67,9 +67,9 @@ Game _applyTerminalFallForFaction({
   final originalRegionId = ProvinceId.regionIdFrom(previousCapitalId);
   final originalRegion = regionDataForId(game.worldState, originalRegionId);
   if (originalRegion == null) return game;
-  final hasProvinceInOriginalRegion = originalRegion.provinces.any(
-    (p) => p.ownerId == factionId,
-  );
+  final hasProvinceInOriginalRegion = ProvinceOwnerCache.of(
+    game.worldState,
+  ).ownsAnyInRegion(factionId, originalRegionId);
   if (hasProvinceInOriginalRegion) return game;
 
   RegionData transferRegion(RegionData region) {
@@ -106,9 +106,7 @@ Game applyGreatPowerFall(
 ) {
   var game = state;
 
-  final provinceOwnerById = <String, String?>{
-    for (final p in allProvinces(game.worldState)) p.id: p.ownerId,
-  };
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
 
   final portsByProvince = <String, List<String>>{};
   game.worldState.portsByProvinceSeaboard.forEach((key, _) {
@@ -122,17 +120,18 @@ Game applyGreatPowerFall(
     final prevCapitalId = previousCapitalByPlayer[playerId];
     if (prevCapitalId == null || prevCapitalId.isEmpty) continue;
 
-    final prevCapitalOwner = provinceOwnerById[prevCapitalId];
+    final prevCapitalOwner = ownerCache.ownerOf(prevCapitalId);
     if (prevCapitalOwner == null || prevCapitalOwner == playerId) {
       continue;
     }
 
     var hasPortProvince = false;
-    provinceOwnerById.forEach((provId, ownerId) {
-      if (ownerId == playerId && portsByProvince.containsKey(provId)) {
+    for (final p in ownerCache.provincesOwnedBy(playerId)) {
+      if (portsByProvince.containsKey(p.id)) {
         hasPortProvince = true;
+        break;
       }
-    });
+    }
     if (hasPortProvince) continue;
 
     final conquerorId = prevCapitalOwner;
