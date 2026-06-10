@@ -41,7 +41,10 @@ void _writeTargetPackage(
 void main() {
   test('enforced boundaries only reference known migrated targets', () {
     final pairs = enforcedConsumerTargetsForTests();
-    expect(pairs['turn'], containsAll(<String>{'economy', 'diplomacy'}));
+    expect(
+      pairs['turn'],
+      containsAll(<String>{'economy', 'diplomacy', 'world'}),
+    );
   });
 
   test('passes for the real post-migration domain packages', () {
@@ -68,6 +71,66 @@ void main() {
     expect(closure, contains('src/economy/economy_production.dart'));
     expect(closure, contains('src/economy/world_market/deal_matcher.dart'));
     expect(closure, isNot(contains('src/economy/secret_internal.dart')));
+  });
+
+  test('show/hide re-exports are not treated as fully published', () {
+    final temp = Directory.systemTemp.createTempSync('barrel_combinator_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final lib = p.join(temp.path, 'packages', 'colonizethis_world', 'lib');
+    // The barrel re-exports `fog_resolution.dart` with a `show` combinator
+    // (multi-line, mirroring the real world barrel), so only a subset of its
+    // symbols is published and the file must not count as fully published.
+    _writeFile(
+      p.join(lib, 'colonizethis_world.dart'),
+      "library colonizethis_world;\n"
+      "export 'src/world/movement.dart';\n"
+      "export 'src/world/fog_resolution.dart'\n"
+      "    show\n"
+      "        applyCoastalSeaZoneFullVisibility;\n",
+    );
+    _writeFile(p.join(lib, 'src', 'world', 'movement.dart'), '// published\n');
+    _writeFile(
+      p.join(lib, 'src', 'world', 'fog_resolution.dart'),
+      '// partially published\n',
+    );
+
+    final closure = barrelPublishedSrcFiles(temp.path, 'world');
+    expect(closure, contains('src/world/movement.dart'));
+    expect(closure, isNot(contains('src/world/fog_resolution.dart')));
+  });
+
+  test('allows a deep import of a show-restricted re-exported file', () {
+    final temp = Directory.systemTemp.createTempSync('barrel_combinator_ok_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final worldLib = p.join(temp.path, 'packages', 'colonizethis_world', 'lib');
+    _writeFile(
+      p.join(worldLib, 'colonizethis_world.dart'),
+      "library colonizethis_world;\n"
+      "export 'src/world/fog_resolution.dart' show applyCoastalSeaZoneFullVisibility;\n",
+    );
+    _writeFile(
+      p.join(worldLib, 'src', 'world', 'fog_resolution.dart'),
+      '// partially published\n',
+    );
+    for (final sibling in const ['economy', 'diplomacy']) {
+      Directory(
+        p.join(temp.path, 'packages', 'colonizethis_$sibling', 'lib'),
+      ).createSync(recursive: true);
+    }
+    final turnLib = Directory(
+      p.join(temp.path, 'packages', 'colonizethis_turn', 'lib'),
+    )..createSync(recursive: true);
+    // Deep import of the only-partially-published file is allowed.
+    File(p.join(turnLib.path, 'end_of_turn.dart')).writeAsStringSync(
+      "import 'package:colonizethis_world/src/world/fog_resolution.dart';\n",
+    );
+
+    final code = runCheckDomainPackageBarrelImport(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 0);
   });
 
   test('fails on a deep import that bypasses an existing barrel export', () {

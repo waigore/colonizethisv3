@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world/minor_military_parity.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 

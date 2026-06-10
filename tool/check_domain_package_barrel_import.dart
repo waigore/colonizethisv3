@@ -15,6 +15,15 @@
 // migrated. New boundaries are added to [_enforcedConsumerTargets] as later
 // Phase 1 slices land. Only `import` directives are checked; deliberate narrow
 // `export` re-exports of a single internal file are out of scope.
+//
+// Combinator-aware publication: a barrel `export` carrying a `show`/`hide`
+// combinator only publishes a subset of its target file's symbols, so the file
+// is treated as **not** fully published and deep imports of it remain allowed
+// (a consumer may legitimately need a symbol the barrel withholds). For example
+// `colonizethis_world` re-exports `fog_resolution.dart` with a `show` of only
+// the coastal-visibility helpers, so `colonizethis_turn` keeps a deep import for
+// the internal fog-decay helpers. Only combinator-free (full) re-exports count
+// toward the published closure.
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -22,7 +31,7 @@ import 'package:path/path.dart' as p;
 /// Consumer domain package -> set of target domain packages whose barrel-bypass
 /// deep imports are forbidden. Extended per migrated boundary (Refs #3393).
 const Map<String, Set<String>> _enforcedConsumerTargets = {
-  'turn': {'economy', 'diplomacy'},
+  'turn': {'economy', 'diplomacy', 'world'},
 };
 
 final RegExp _deepImport = RegExp(
@@ -31,9 +40,16 @@ final RegExp _deepImport = RegExp(
 );
 
 final RegExp _exportDirective = RegExp(
-  r"^\s*export\s+'([^']+)'",
+  r"^\s*export\s+'([^']+)'([^;]*);",
   multiLine: true,
 );
+
+final RegExp _exportCombinator = RegExp(r'\b(show|hide)\b');
+
+/// True when an `export` directive's trailing text carries a `show`/`hide`
+/// combinator, meaning it only re-exports a subset of the target file.
+bool _hasExportCombinator(String exportTail) =>
+    _exportCombinator.hasMatch(exportTail);
 
 bool _isGenerated(String path) =>
     path.endsWith('.g.dart') ||
@@ -81,6 +97,9 @@ Set<String> barrelPublishedSrcFiles(String repoRoot, String target) {
     for (final match in _exportDirective.allMatches(content)) {
       final resolved = _resolveSamePackageUri(target, current, match.group(1)!);
       if (resolved == null) continue;
+      // A `show`/`hide` re-export publishes only a subset of the file; treat it
+      // as not fully published so deep imports of it remain allowed.
+      if (_hasExportCombinator(match.group(2)!)) continue;
       if (resolved.startsWith('src/')) published.add(resolved);
       worklist.add(resolved);
     }

@@ -2,9 +2,7 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world/game_world_mutations.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/province_visibility_index.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Builds digest lines and world-state tracking updates for the completed turn.
 /// [start] is game at resolution entry (after military ensure); [end] is final
