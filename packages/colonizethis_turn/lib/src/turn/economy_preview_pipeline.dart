@@ -3,7 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_orders/src/orders/validators/work_order_cost_calculator.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show WorkOrderCostCalculator;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'phases/consumption_phase.dart';
 import 'phases/extraction_phase.dart';
