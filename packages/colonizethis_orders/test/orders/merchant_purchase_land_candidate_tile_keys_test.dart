@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_helpers.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
@@ -127,6 +126,59 @@ void main() {
           expect(keys[i - 1].compareTo(keys[i]), lessThanOrEqualTo(0));
         }
       }
+    });
+
+    test('matches projection union over non-player owners (slice 14)', () {
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      const gp = 'gp1';
+      const minor = 'minor1';
+      const tribe = 'tribe1';
+      const pPlayer = '$ow|p_owned';
+      const pMinor = '$ow|p_minor';
+      const pTribe = '$nw|p_tribe';
+      final oldProvinces = [
+        Province(id: pPlayer, regionId: ow, ownerId: gp),
+        Province(id: pMinor, regionId: ow, ownerId: minor),
+      ];
+      final newProvinces = [
+        Province(id: pTribe, regionId: nw, ownerId: tribe),
+      ];
+      const tkPlayer = '$pPlayer|0|0';
+      const tkMinor = '$pMinor|0|0';
+      const tkTribe = '$pTribe|1|1';
+      final game = TestFixtures.minimalGame(
+        id: 'g-merchant-projection-parity',
+        players: const [Player(id: gp, displayName: 'GP', isHuman: true)],
+        oldWorld: RegionData(provinces: oldProvinces, units: const []),
+        newWorld: RegionData(provinces: newProvinces, units: const []),
+        tribes: const [Tribe(id: tribe, displayName: 'T')],
+        tileKeysByRegionAndProvince: {
+          ow: {pPlayer: [tkPlayer], pMinor: [tkMinor]},
+          nw: {pTribe: [tkTribe]},
+        },
+        resourceByTileKey: {tkPlayer: 'grain', tkMinor: 'grain', tkTribe: 'iron'},
+      );
+      final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+      const devExclusive = <String>{};
+
+      final keys = merchantPurchaseLandCandidateTileKeys(
+        game: game,
+        tileKeysByRegion: tileKeysByRegion,
+        devExclusiveReservedTiles: devExclusive,
+      );
+
+      // Positive: matches the pre-#3393 allProvinces scan (null + player skip).
+      final reference = _referencePurchaseLandTileKeys(
+        game: game,
+        tileKeysByRegion: tileKeysByRegion,
+        devExclusiveReservedTiles: devExclusive,
+      );
+      expect(keys.toSet(), reference.toSet());
+
+      // Negative: the player-owned (GP) resource tile is never a candidate.
+      expect(keys, isNot(contains(tkPlayer)));
+      expect(keys.toSet(), {tkMinor, tkTribe});
     });
 
     test('excludes dev-exclusive reserved tiles like legacy path', () {

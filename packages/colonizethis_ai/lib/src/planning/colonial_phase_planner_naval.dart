@@ -703,8 +703,9 @@ List<WorkOrder> planColonialCivilian({
 
   final ownedNwProvinceIds = <String>{};
   final townTileKeys = <String>{};
-  for (final province in world.newWorld.provinces) {
-    if (province.ownerId != playerId) continue;
+  for (final province in ProvinceOwnerCache.of(
+    world,
+  ).provincesOwnedByInRegion(playerId, kRegionNewWorld)) {
     ownedNwProvinceIds.add(province.id);
     final townTileKey = province.townTileKey;
     if (townTileKey != null && townTileKey.isNotEmpty) {

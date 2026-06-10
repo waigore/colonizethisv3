@@ -20,6 +20,7 @@ library;
 export 'package:colonizethis_world/colonizethis_world.dart'
     show
         PlayerView,
+        ProvinceOwnerCache,
         TurnTraceAiSection,
         VisibilityLevel,
         WorldStateUnitLookup,
@@ -29,6 +30,8 @@ export 'package:colonizethis_world/colonizethis_world.dart'
         buildPlayerView,
         homeArmyIdFor,
         isAiControlled,
+        kRegionNewWorld,
+        kRegionOldWorld,
         neighborProvinceIdsInRegion,
         regimentTypeCountsForPlayer,
         shipTypeCountsForPlayer,

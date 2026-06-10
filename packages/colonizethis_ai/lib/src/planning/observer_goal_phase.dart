@@ -23,14 +23,13 @@ enum ObserverGoalPhase {
 
 /// Whether any `newWorld|` province is unowned or owned by a non-GP faction.
 bool globalNewWorldHasNonGpOwnership(Game game) {
-  for (final p in game.worldState.newWorld.provinces) {
-    final owner = p.ownerId;
-    if (owner == null || owner.isEmpty) {
-      return true;
-    }
-    if (game.playerById(owner) == null) {
-      return true;
-    }
+  final cache = ProvinceOwnerCache.of(game.worldState);
+  for (final p in cache.unownedProvinces) {
+    if (p.regionId == kRegionNewWorld) return true;
+  }
+  for (final ownerId in cache.ownerIds) {
+    if (!cache.ownsAnyInRegion(ownerId, kRegionNewWorld)) continue;
+    if (ownerId.isEmpty || game.playerById(ownerId) == null) return true;
   }
   return false;
 }

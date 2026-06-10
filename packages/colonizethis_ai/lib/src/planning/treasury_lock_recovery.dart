@@ -169,11 +169,13 @@ int _newWorldProvinceCountOwnedBy(
   if (snapshot != null && snapshot.playerId == playerId) {
     return snapshot.colonial.newWorldProvincesOwned;
   }
-  var count = 0;
-  for (final province in game.worldState.newWorld.provinces) {
-    if (province.ownerId == playerId) count++;
-  }
-  return count;
+  // Phase 6b (SPEC/program/worldstate-projection.md; Refs #3393): read the
+  // owned new-world province count from the memoised projection instead of
+  // rescanning every new-world province. Behaviour-preserving: counts only
+  // provinces whose non-null `ownerId == playerId`.
+  return ProvinceOwnerCache.of(
+    game.worldState,
+  ).countOwnedByInRegion(playerId, kRegionNewWorld);
 }
 
 /// Below-quota GPs with zero NW provinces and at least one OW province

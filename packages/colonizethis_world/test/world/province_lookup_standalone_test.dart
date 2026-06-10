@@ -1,5 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_owner_cache.dart';
+import 'package:colonizethis_world/src/world_constants.dart'
+    show kRegionOldWorld;
 import 'package:colonizethis_test/test.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
@@ -268,6 +271,36 @@ void main() {
       );
       expect(oldWorldProvinceCountOwnedBy(game, 'gp1'), 2);
       expect(oldWorldProvinceCountOwnedBy(game, 'gp2'), 0);
+    });
+
+    // Refs #3393 Phase 6b (slice 5) — behaviour-preserving migration onto
+    // `ProvinceOwnerCache.countOwnedByInRegion`. The projection-backed count
+    // equals both the prior `world.oldWorld.provinces` owner scan and the
+    // cache accessor for the same faction id.
+    test('matches the projection accessor and the prior old-world scan', () {
+      final world = _world();
+      final game = Game(
+        id: 'g',
+        worldState: world,
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+      );
+      final cache = ProvinceOwnerCache.of(world);
+
+      int manualOldWorldCount(String id) =>
+          world.oldWorld.provinces.where((p) => p.ownerId == id).length;
+
+      for (final id in ['gp1', 'gp2', 'unowned']) {
+        expect(
+          oldWorldProvinceCountOwnedBy(game, id),
+          cache.countOwnedByInRegion(id, kRegionOldWorld),
+          reason: 'projection-backed count for $id',
+        );
+        expect(
+          oldWorldProvinceCountOwnedBy(game, id),
+          manualOldWorldCount(id),
+          reason: 'matches prior old-world owner scan for $id',
+        );
+      }
     });
   });
 }

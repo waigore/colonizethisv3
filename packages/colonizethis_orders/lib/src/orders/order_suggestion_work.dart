@@ -30,8 +30,12 @@ part 'order_suggestion_work_merchant.dart';
 /// resource, excluding development-exclusive tiles.
 ///
 /// Built once per [suggestWorkOrders] pass when any merchant unit is present so
-/// each merchant does not rescan [allProvinces] (Refs #2394,
-/// SPEC/program/order-suggestions.md).
+/// each merchant does not rescan ownership (Refs #2394, #3393,
+/// SPEC/program/order-suggestions.md, SPEC/program/worldstate-projection.md).
+///
+/// Reads non-player owners from the memoised [ProvinceOwnerCache] instead of
+/// walking every province (including unowned ones); the returned list is sorted
+/// before return, so the pre-sort iteration order is irrelevant.
 List<String> merchantPurchaseLandCandidateTileKeys({
   required Game game,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
@@ -39,16 +43,19 @@ List<String> merchantPurchaseLandCandidateTileKeys({
 }) {
   final resourceByTile = game.worldState.resourceByTileKey;
   final playerIds = {for (final p in game.players) p.id};
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
   final out = <String>[];
-  for (final province in allProvinces(game.worldState)) {
-    final ownerId = province.ownerId;
-    if (ownerId == null || playerIds.contains(ownerId)) continue;
-    final regionId = province.regionId;
-    final tiles = tileKeysByRegion[regionId]?[province.id] ?? const <String>[];
-    for (final tk in tiles) {
-      if (resourceByTile[tk] == null) continue;
-      if (devExclusiveReservedTiles.contains(tk)) continue;
-      out.add(tk);
+  for (final ownerId in ownerCache.ownerIds) {
+    if (playerIds.contains(ownerId)) continue;
+    for (final province in ownerCache.provincesOwnedBy(ownerId)) {
+      final regionId = province.regionId;
+      final tiles =
+          tileKeysByRegion[regionId]?[province.id] ?? const <String>[];
+      for (final tk in tiles) {
+        if (resourceByTile[tk] == null) continue;
+        if (devExclusiveReservedTiles.contains(tk)) continue;
+        out.add(tk);
+      }
     }
   }
   out.sort((a, b) {

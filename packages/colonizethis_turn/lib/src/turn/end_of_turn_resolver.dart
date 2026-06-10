@@ -123,23 +123,15 @@ void _emitEraChangeDialogue(
 /// Returns the id of a Great Power that controls 31+ Old World provinces, or null.
 String? findMilitaryVictoryWinner(Game game) {
   const int requiredProvinces = 31;
-  final countsByOwner = <String, int>{};
-  for (final province in game.worldState.provincesForRegion(kRegionOldWorld)) {
-    final ownerId = province.ownerId;
-    if (ownerId == null || ownerId.isEmpty) continue;
-    countsByOwner.update(ownerId, (v) => v + 1, ifAbsent: () => 1);
-  }
-
-  final gpIds = game.players.map((p) => p.id).toSet();
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
   String? winnerId;
-  for (final entry in countsByOwner.entries) {
-    final ownerId = entry.key;
-    final count = entry.value;
-    if (!gpIds.contains(ownerId)) continue;
-    if (count >= requiredProvinces) {
-      if (winnerId == null || ownerId.compareTo(winnerId) < 0) {
-        winnerId = ownerId;
-      }
+  for (final player in game.players) {
+    if (ownerCache.countOwnedByInRegion(player.id, kRegionOldWorld) <
+        requiredProvinces) {
+      continue;
+    }
+    if (winnerId == null || player.id.compareTo(winnerId) < 0) {
+      winnerId = player.id;
     }
   }
   return winnerId;

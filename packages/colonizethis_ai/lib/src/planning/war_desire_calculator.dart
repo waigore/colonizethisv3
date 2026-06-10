@@ -53,8 +53,8 @@ int _resourceNeedBonus(Game game, String nationId, String targetFactionId) {
   }
   final targetResourceIds = <String>{};
   final byRegion = game.worldState.tileKeysByRegionAndProvince;
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId != targetFactionId) continue;
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
+  for (final p in ownerCache.provincesOwnedBy(targetFactionId)) {
     final tiles = byRegion[p.regionId]?[p.id] ?? const <String>[];
     for (final tileKey in tiles) {
       final resource = game.worldState.resourceByTileKey[tileKey];
@@ -102,12 +102,15 @@ int _invasionCapacityAdjustment(
     score += 10;
   }
 
-  final ownRegionIds = allProvinces(
-    game.worldState,
-  ).where((p) => p.ownerId == nationId).map((p) => p.regionId).toSet();
-  final targetRegionIds = allProvinces(
-    game.worldState,
-  ).where((p) => p.ownerId == targetFactionId).map((p) => p.regionId).toSet();
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
+  final ownRegionIds = ownerCache
+      .provincesOwnedBy(nationId)
+      .map((p) => p.regionId)
+      .toSet();
+  final targetRegionIds = ownerCache
+      .provincesOwnedBy(targetFactionId)
+      .map((p) => p.regionId)
+      .toSet();
   final requiresOverseas = targetRegionIds.any(
     (id) => !ownRegionIds.contains(id),
   );
