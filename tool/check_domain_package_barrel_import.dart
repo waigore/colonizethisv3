@@ -33,6 +33,9 @@ import 'package:path/path.dart' as p;
 const Map<String, Set<String>> _enforcedConsumerTargets = {
   'turn': {'combat', 'diplomacy', 'economy', 'orders', 'world'},
   'orders': {'diplomacy', 'economy', 'world'},
+  'combat': {'world'},
+  'economy': {'world'},
+  'logic': {'orders', 'world'},
 };
 
 final RegExp _deepImport = RegExp(

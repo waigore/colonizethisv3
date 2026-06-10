@@ -10,7 +10,7 @@
 library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Builds a province-by-full-id index for [game]'s current world state.
 ///

@@ -6,7 +6,7 @@ import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
-import 'package:colonizethis_world/src/world/game_world_mutations.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'military_strength.dart';
 
 /// Mission factor for Patrol interception probability.

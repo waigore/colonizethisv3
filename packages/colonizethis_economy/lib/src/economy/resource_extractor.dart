@@ -5,8 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
 import 'tile_extraction_yield.dart';
-import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Per-player extraction totals: land (same region as capital) vs overseas.
