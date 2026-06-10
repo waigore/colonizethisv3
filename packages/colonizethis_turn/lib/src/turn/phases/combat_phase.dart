@@ -6,7 +6,7 @@ import 'package:colonizethis_combat/src/combat/battle_general_assignment.dart';
 import 'package:colonizethis_combat/src/combat/combat_mode_selection.dart';
 import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
 import 'package:colonizethis_combat/src/combat/unopposed_province_capture.dart';
-import 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/src/game_events.dart';
 import 'package:colonizethis_world/src/world/capital_and_gp_fall.dart';
 import '../combat_phase_helpers.dart';

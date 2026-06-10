@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import 'package:colonizethis_world/src/world/province_visibility_index.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';
-import 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
 import 'package:colonizethis_world/src/game_events.dart';
 
