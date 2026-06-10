@@ -88,16 +88,22 @@ TileMapState propagateRoadToAdjacentCapitalOrPort({
   return current;
 }
 
-typedef _CompletedWorkHandler =
-    BuildWorkState Function(
-      BuildWorkState s,
-      Unit u,
+/// Bundles the six values every completed-work handler needs so each handler is
+/// a single-argument `(CompletedWorkContext) -> BuildWorkState` closure instead
+/// of repeating the wide positional signature in every function (Refs #3404).
+typedef CompletedWorkContext =
+    ({
+      BuildWorkState state,
+      Unit unit,
       CurrentWork cw,
       List<Province> Function() getProvinces,
       WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
       BuildWorkState Function(BuildWorkState, Unit, String)
       applyExploreCompletion,
-    );
+    });
+
+typedef _CompletedWorkHandler =
+    BuildWorkState Function(CompletedWorkContext ctx);
 
 BuildWorkState dispatchCompletedWorkTarget(
   BuildWorkState s,
@@ -112,24 +118,20 @@ BuildWorkState dispatchCompletedWorkTarget(
   );
   final handler = _completedWorkTargetHandlers[cw.workTarget];
   if (handler == null) return s;
-  return handler(
-    s,
-    u,
-    cw,
-    getProvinces,
-    replaceProvinces,
-    applyExploreCompletion,
-  );
+  return handler((
+    state: s,
+    unit: u,
+    cw: cw,
+    getProvinces: getProvinces,
+    replaceProvinces: replaceProvinces,
+    applyExploreCompletion: applyExploreCompletion,
+  ));
 }
 
-BuildWorkState _completedWorkBuildImprovement(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkBuildImprovement(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final cw = ctx.cw;
   final level = s.work.tileState.improvementLevel(cw.tileKey);
   var work = s.work.copyWith(
     tileState: s.work.tileState.setImprovement(
@@ -170,14 +172,11 @@ BuildWorkState _completedWorkBuildImprovement(
   return s.copyWith(game: game, work: work);
 }
 
-BuildWorkState _completedWorkUpgradeTown(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkUpgradeTown(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final getProvinces = ctx.getProvinces;
+  final replaceProvinces = ctx.replaceProvinces;
   final provinces = getProvinces();
   var replaced = false;
   final next = provinces.map((p) {
@@ -193,29 +192,19 @@ BuildWorkState _completedWorkUpgradeTown(
   return s.copyWith(work: replaceProvinces(s.work, next));
 }
 
-BuildWorkState _completedWorkExplore(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
-  return applyExploreCompletion(
-    s,
+BuildWorkState _completedWorkExplore(CompletedWorkContext ctx) {
+  final u = ctx.unit;
+  return ctx.applyExploreCompletion(
+    ctx.state,
     u,
     ProvinceId.regionIdFrom(u.locationProvinceId),
   );
 }
 
-BuildWorkState _completedWorkBuildRoad(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkBuildRoad(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final cw = ctx.cw;
   final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
   final player = s.game.playerById(u.ownerId);
   final hasRoadConstruction =
@@ -237,14 +226,10 @@ BuildWorkState _completedWorkBuildRoad(
   return s.copyWith(work: s.work.copyWith(tileState: tileState));
 }
 
-BuildWorkState _completedWorkBuildPort(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkBuildPort(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final cw = ctx.cw;
   if (s.topology == null) {
     return s;
   }
@@ -269,14 +254,11 @@ BuildWorkState _completedWorkBuildPort(
   );
 }
 
-BuildWorkState _completedWorkBuildFort(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkBuildFort(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final getProvinces = ctx.getProvinces;
+  final replaceProvinces = ctx.replaceProvinces;
   final provinces = getProvinces();
   var replaced = false;
   final nextProvinces = provinces.map((p) {
@@ -310,14 +292,10 @@ BuildWorkState _completedWorkBuildFort(
   return s.copyWith(work: work);
 }
 
-BuildWorkState _completedWorkBuildRail(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkBuildRail(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final cw = ctx.cw;
   final player = s.game.playerById(u.ownerId);
   final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
   final terrain = terrainTypeForTileKey(s.tileMapByRegion, cw.tileKey);
@@ -339,23 +317,12 @@ BuildWorkState _completedWorkBuildRail(
   return s;
 }
 
-BuildWorkState _completedWorkNoop(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) => s;
+BuildWorkState _completedWorkNoop(CompletedWorkContext ctx) => ctx.state;
 
-BuildWorkState _completedWorkProspect(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkProspect(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final cw = ctx.cw;
   if (!isMineralEligibleTile(s.game, s.tileMapByRegion, cw.tileKey)) {
     return s;
   }
@@ -374,14 +341,10 @@ BuildWorkState _completedWorkProspect(
   return s.copyWith(game: s.game.withWorldState(ws));
 }
 
-BuildWorkState _completedWorkPurchaseLand(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  List<Province> Function() getProvinces,
-  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
-) {
+BuildWorkState _completedWorkPurchaseLand(CompletedWorkContext ctx) {
+  final s = ctx.state;
+  final u = ctx.unit;
+  final cw = ctx.cw;
   final player = s.game.playerById(u.ownerId);
   if (player == null) {
     return s;
