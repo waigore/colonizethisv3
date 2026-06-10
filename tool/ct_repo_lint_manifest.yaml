@@ -493,6 +493,13 @@ rules:
     runner: dart
     script: tool/check_land_province_bucket_keys.dart
 
+  - rule_id: repo.land_tile_keys_single_definition
+    group: architecture
+    title: landTileKeysForProvinceBucket has a single canonical definition and no hide workaround (Refs #3403 Phase 1)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_land_tile_keys_single_definition.dart
+
   - rule_id: repo.app_ct_loading_indicator
     group: ui_structure
     title: app/lib must use CtLoadingIndicator instead of raw CircularProgressIndicator

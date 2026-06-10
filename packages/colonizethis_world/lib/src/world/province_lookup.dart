@@ -231,16 +231,35 @@ resolveProvinceRowForOwnershipTransfer(WorldState world, String provinceKey) {
 
 /// Returns land tile keys for a province bucket using canonical full province id.
 ///
-/// This helper intentionally does not fall back to local-only ids. Callers must
-/// pass `regionId|localId` to keep multi-region lookups deterministic.
+/// By default this helper resolves the **full id** bucket only
+/// (`regionId|localId`) to keep multi-region lookups deterministic, and returns
+/// a fresh mutable copy of the bucket (or an empty list when absent).
+///
+/// Pass [allowLocalIdFallback] `true` only for naval/fog ship-reveal and dock
+/// visibility paths that must also resolve fixtures or legacy maps whose
+/// `tileKeysByRegionAndProvince[regionId]` bucket is keyed by **local** id
+/// (`localId`) when the full-id bucket is missing or empty. The fallback never
+/// shadows a present full-id bucket: a non-empty full-id bucket always wins.
+/// This is the single canonical definition (Refs #3403 Phase 1) — the former
+/// duplicate in `naval_coastal_visibility.dart` routed its fallback callers
+/// here.
 List<String> landTileKeysForProvinceBucket(
   WorldState world,
   String regionId,
-  String fullProvinceId,
-) {
-  return List<String>.from(
-    world.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? const [],
-  );
+  String fullProvinceId, {
+  bool allowLocalIdFallback = false,
+}) {
+  final byProvince = world.tileKeysByRegionAndProvince[regionId];
+  if (byProvince == null) return const [];
+  final byFull = byProvince[fullProvinceId];
+  if (byFull != null && byFull.isNotEmpty) {
+    return List<String>.from(byFull);
+  }
+  if (allowLocalIdFallback) {
+    final byLocal = byProvince[ProvinceId.localIdFrom(fullProvinceId)];
+    if (byLocal != null) return List<String>.from(byLocal);
+  }
+  return byFull == null ? const [] : List<String>.from(byFull);
 }
 
 /// Province lookup helpers on [WorldState] to avoid repeatedly passing the world state.

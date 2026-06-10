@@ -10,7 +10,6 @@ export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
     show
         canonicalSeaZoneTileBucketKey,
         coastalLandTileKeysFromNavalPresenceAtSea,
-        landTileKeysForProvinceBucket,
         revealProvinceTilesForPlayer,
         revealTilesAfterMoveToSeaZone;
 export 'package:colonizethis_world/src/world/naval_mission_orders.dart'

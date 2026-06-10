@@ -6,11 +6,10 @@ import 'naval.dart';
 import 'naval_coastal_visibility.dart'
     show
         canonicalSeaZoneTileBucketKey,
-        coastalLandTileKeysFromNavalPresenceAtSea,
-        landTileKeysForProvinceBucket;
+        coastalLandTileKeysFromNavalPresenceAtSea;
 import 'fog_spy_reveal_decay.dart';
 import 'player_view.dart';
-import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
+import 'province_lookup.dart';
 import 'province_traversal.dart';
 import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
