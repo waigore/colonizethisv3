@@ -2,9 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_resource_constants.dart';
+import 'game_lookup_helpers.dart';
+import 'tile_extraction_yield.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Per-faction extraction for non-Great-Power factions (Minor Nations and
@@ -51,69 +52,41 @@ Map<String, Map<CommodityId, int>> computeNonGreatPowerExtraction({
     'tribes=${game.tribes.length}',
   );
 
-  final provincesByFullId = <String, Province>{
-    for (final p in allProvinces(game.worldState)) p.id: p,
-  };
-  final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
+  final provincesByFullId = buildProvinceIndex(game);
+  final portTileKeys = collectPortTileKeys(game);
 
   final out = <String, Map<CommodityId, int>>{};
 
-  void runForFaction({
-    required String factionId,
-    required String? capitalProvinceId,
-    required String? capitalRegionId,
-  }) {
-    if (capitalProvinceId == null || capitalRegionId == null) {
-      return;
-    }
-    final cr = connectivityByFactionId[factionId];
-    if (cr == null) {
-      return;
-    }
-    final connected = cr.connected;
-    if (connected.isEmpty) {
-      return;
-    }
-    final pathTransportCap = cr.pathTransportCap;
-    final roadRuleTiles = cr.connectedByRoadRule;
-
-    final totals = <CommodityId, int>{};
-    for (final tileKey in connected) {
-      final contribution = _computeNonGpTileContribution(
-        game: game,
-        tileMapByRegion: tileMapByRegion,
-        factionCapitalProvinceId: capitalProvinceId,
-        factionCapitalRegionId: capitalRegionId,
-        tileKey: tileKey,
-        connectedTileKeys: connected,
-        pathTransportCap: pathTransportCap,
-        connectedByRoadRule: roadRuleTiles,
-        portTileKeys: portTileKeys,
-        provincesByFullId: provincesByFullId,
-      );
-      if (contribution == null) continue;
-      totals[contribution.commodityId] =
-          (totals[contribution.commodityId] ?? 0) + contribution.units;
-    }
-    if (totals.isNotEmpty) {
-      out[factionId] = totals;
-    }
-  }
-
-  for (final minor in game.minorNations) {
-    runForFaction(
-      factionId: minor.id,
-      capitalProvinceId: minor.capitalProvinceId,
-      capitalRegionId: minor.capitalTile?.regionId,
-    );
-  }
-  for (final tribe in game.tribes) {
-    runForFaction(
-      factionId: tribe.id,
-      capitalProvinceId: tribe.capitalProvinceId,
-      capitalRegionId: tribe.capitalTile?.regionId,
-    );
-  }
+  _forEachNonGpFaction(
+    game: game,
+    connectivityByFactionId: connectivityByFactionId,
+    onFaction:
+        ({
+          required factionId,
+          required capitalProvinceId,
+          required capitalRegionId,
+          required connectivity,
+        }) {
+          final totals = <CommodityId, int>{};
+          _forEachNonGpTileContribution(
+            game: game,
+            tileMapByRegion: tileMapByRegion,
+            capitalProvinceId: capitalProvinceId,
+            capitalRegionId: capitalRegionId,
+            connectivity: connectivity,
+            portTileKeys: portTileKeys,
+            provincesByFullId: provincesByFullId,
+            sortTileKeys: false,
+            onContribution: (tileKey, contribution) {
+              totals[contribution.commodityId] =
+                  (totals[contribution.commodityId] ?? 0) + contribution.units;
+            },
+          );
+          if (totals.isNotEmpty) {
+            out[factionId] = totals;
+          }
+        },
+  );
 
   final totalUnits = out.values.fold<int>(
     0,
@@ -162,68 +135,48 @@ Map<String, List<TradeOrder>> computeNonGreatPowerAutoOffers({
     return const <String, List<TradeOrder>>{};
   }
 
-  final provincesByFullId = <String, Province>{
-    for (final p in allProvinces(game.worldState)) p.id: p,
-  };
-  final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
+  final provincesByFullId = buildProvinceIndex(game);
+  final portTileKeys = collectPortTileKeys(game);
   final richesIds = richesCommodityIds.toSet();
 
   final out = <String, List<TradeOrder>>{};
 
-  void runForFaction({
-    required String factionId,
-    required String? capitalProvinceId,
-    required String? capitalRegionId,
-  }) {
-    if (capitalProvinceId == null || capitalRegionId == null) return;
-    final cr = connectivityByFactionId[factionId];
-    if (cr == null) return;
-    final connected = cr.connected;
-    if (connected.isEmpty) return;
-    final orders = <TradeOrder>[];
-    final sortedTileKeys = connected.toList()..sort();
-    for (final tileKey in sortedTileKeys) {
-      final contribution = _computeNonGpTileContribution(
-        game: game,
-        tileMapByRegion: tileMapByRegion,
-        factionCapitalProvinceId: capitalProvinceId,
-        factionCapitalRegionId: capitalRegionId,
-        tileKey: tileKey,
-        connectedTileKeys: connected,
-        pathTransportCap: cr.pathTransportCap,
-        connectedByRoadRule: cr.connectedByRoadRule,
-        portTileKeys: portTileKeys,
-        provincesByFullId: provincesByFullId,
-      );
-      if (contribution == null) continue;
-      if (richesIds.contains(contribution.commodityId)) continue;
-      orders.add(
-        TradeOrder(
-          commodityId: contribution.commodityId,
-          type: TradeOrderType.offer,
-          quantity: contribution.units,
-          priority: 1,
-          originTileKey: tileKey,
-        ),
-      );
-    }
-    if (orders.isNotEmpty) out[factionId] = orders;
-  }
-
-  for (final minor in game.minorNations) {
-    runForFaction(
-      factionId: minor.id,
-      capitalProvinceId: minor.capitalProvinceId,
-      capitalRegionId: minor.capitalTile?.regionId,
-    );
-  }
-  for (final tribe in game.tribes) {
-    runForFaction(
-      factionId: tribe.id,
-      capitalProvinceId: tribe.capitalProvinceId,
-      capitalRegionId: tribe.capitalTile?.regionId,
-    );
-  }
+  _forEachNonGpFaction(
+    game: game,
+    connectivityByFactionId: connectivityByFactionId,
+    onFaction:
+        ({
+          required factionId,
+          required capitalProvinceId,
+          required capitalRegionId,
+          required connectivity,
+        }) {
+          final orders = <TradeOrder>[];
+          _forEachNonGpTileContribution(
+            game: game,
+            tileMapByRegion: tileMapByRegion,
+            capitalProvinceId: capitalProvinceId,
+            capitalRegionId: capitalRegionId,
+            connectivity: connectivity,
+            portTileKeys: portTileKeys,
+            provincesByFullId: provincesByFullId,
+            sortTileKeys: true,
+            onContribution: (tileKey, contribution) {
+              if (richesIds.contains(contribution.commodityId)) return;
+              orders.add(
+                TradeOrder(
+                  commodityId: contribution.commodityId,
+                  type: TradeOrderType.offer,
+                  quantity: contribution.units,
+                  priority: 1,
+                  originTileKey: tileKey,
+                ),
+              );
+            },
+          );
+          if (orders.isNotEmpty) out[factionId] = orders;
+        },
+  );
 
   final totalOffers = out.values.fold<int>(0, (s, l) => s + l.length);
   economyLog.d(
@@ -231,6 +184,103 @@ Map<String, List<TradeOrder>> computeNonGreatPowerAutoOffers({
     'orders=$totalOffers',
   );
   return out;
+}
+
+/// Visits each minor nation and tribe that has a capital and non-empty
+/// connectivity, invoking [onFaction] with the resolved capital ids and
+/// [ConnectivityResult]. Shared by [computeNonGreatPowerExtraction] and
+/// [computeNonGreatPowerAutoOffers] so the faction loop is not duplicated.
+void _forEachNonGpFaction({
+  required Game game,
+  required Map<String, ConnectivityResult> connectivityByFactionId,
+  required void Function({
+    required String factionId,
+    required String capitalProvinceId,
+    required String capitalRegionId,
+    required ConnectivityResult connectivity,
+  })
+  onFaction,
+}) {
+  void visit({
+    required String factionId,
+    required String? capitalProvinceId,
+    required String? capitalRegionId,
+  }) {
+    if (capitalProvinceId == null || capitalRegionId == null) return;
+    final cr = connectivityByFactionId[factionId];
+    if (cr == null || cr.connected.isEmpty) return;
+    onFaction(
+      factionId: factionId,
+      capitalProvinceId: capitalProvinceId,
+      capitalRegionId: capitalRegionId,
+      connectivity: cr,
+    );
+  }
+
+  for (final minor in game.minorNations) {
+    visit(
+      factionId: minor.id,
+      capitalProvinceId: minor.capitalProvinceId,
+      capitalRegionId: minor.capitalTile?.regionId,
+    );
+  }
+  for (final tribe in game.tribes) {
+    visit(
+      factionId: tribe.id,
+      capitalProvinceId: tribe.capitalProvinceId,
+      capitalRegionId: tribe.capitalTile?.regionId,
+    );
+  }
+}
+
+/// Tile keys for a non-GP pass. Extraction preserves [ConnectivityResult.connected]
+/// insertion order; auto-offers sort ascending for deterministic offer lists.
+Iterable<String> _nonGpTileKeysInPassOrder(
+  Set<String> connected, {
+  required bool sorted,
+}) {
+  if (sorted) {
+    return connected.toList()..sort();
+  }
+  return connected;
+}
+
+/// Walks connected tiles for one non-GP faction and invokes [onContribution]
+/// for each tile that yields units. Shared by extraction (aggregate totals)
+/// and auto-offers (per-tile orders); [sortTileKeys] selects the pass ordering.
+void _forEachNonGpTileContribution({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required String capitalProvinceId,
+  required String capitalRegionId,
+  required ConnectivityResult connectivity,
+  required Set<String> portTileKeys,
+  required Map<String, Province> provincesByFullId,
+  required bool sortTileKeys,
+  required void Function(String tileKey, _NonGpTileContribution contribution)
+  onContribution,
+}) {
+  final tileKeys = _nonGpTileKeysInPassOrder(
+    connectivity.connected,
+    sorted: sortTileKeys,
+  );
+  for (final tileKey in tileKeys) {
+    final contribution = _computeNonGpTileContribution(
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      factionCapitalProvinceId: capitalProvinceId,
+      factionCapitalRegionId: capitalRegionId,
+      tileKey: tileKey,
+      connectedTileKeys: connectivity.connected,
+      pathTransportCap: connectivity.pathTransportCap,
+      connectedByRoadRule: connectivity.connectedByRoadRule,
+      portTileKeys: portTileKeys,
+      provincesByFullId: provincesByFullId,
+    );
+    if (contribution != null) {
+      onContribution(tileKey, contribution);
+    }
+  }
 }
 
 /// Single-commodity contribution from one connected tile owned by a non-GP
@@ -298,38 +348,23 @@ _NonGpTileContribution? _computeNonGpTileContribution({
   final townTileIsPort =
       townTileKey != null && portTileKeys.contains(townTileKey);
 
-  final improvementLevel = game.worldState.tileState
-      .improvementLevel(tileKey)
-      .clamp(0, 4);
-  final roadLevel = game.worldState.tileState.roadLevel(tileKey);
-  final isPort = portTileKeys.contains(tileKey);
-  final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
-  final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
-
   // Non-GP tech cap is the package-wide default (1) for every resource: Minors
-  // and Tribes do not research tech.
-  const techCap = defaultExtractionCap;
-  final production = (improvementLevel < techCap ? improvementLevel : techCap)
-      .clamp(0, 4);
-  var effective = (production < pathCap ? production : pathCap).clamp(0, 4);
-
+  // and Tribes do not research tech. The remaining production / transport /
+  // town-development math is shared with the GP helper via
+  // computeEffectiveTileYield so the two stay provably in lockstep.
   final isCapitalProvince = provinceId == factionCapitalProvinceId;
   final usesRoadRule = connectedByRoadRule.contains(tileKey);
-  if (isCapitalProvince) {
-    effective =
-        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
-          0,
-          4,
-        );
-  } else if (!usesRoadRule && townTileIsPort) {
-    // Town rule only (non-capital) with connected port town applies town cap;
-    // mirrors the GP branch in resource_extractor.dart.
-    effective =
-        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
-          0,
-          4,
-        );
-  }
+  final effective = computeEffectiveTileYield(
+    tileState: game.worldState.tileState,
+    tileKey: tileKey,
+    techCap: defaultExtractionCap,
+    townDevelopmentCap: townDevelopmentCap,
+    townTileIsPort: townTileIsPort,
+    isCapitalProvince: isCapitalProvince,
+    usesRoadRule: usesRoadRule,
+    portTileKeys: portTileKeys,
+    pathTransportCap: pathTransportCap,
+  );
   if (effective <= 0) {
     return null;
   }

@@ -3,6 +3,8 @@ import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_resource_constants.dart';
+import 'game_lookup_helpers.dart';
+import 'tile_extraction_yield.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
@@ -54,16 +56,14 @@ Map<String, ExtractionTotals> computeExtraction({
   Set<String>? restrictToTileKeys,
 }) {
   economyLog.d('extraction compute start players=${game.players.length}');
-  final provincesByFullId = <String, Province>{
-    for (final p in allProvinces(game.worldState)) p.id: p,
-  };
+  final provincesByFullId = buildProvinceIndex(game);
+  final portTileKeys = collectPortTileKeys(game);
   final out = <String, ExtractionTotals>{};
   for (final player in game.players) {
     final cr = connectivityResult[player.id];
     final connected = cr?.connected ?? const <String>{};
     final pathTransportCap = cr?.pathTransportCap ?? const <String, int>{};
     final roadRuleTiles = cr?.connectedByRoadRule ?? const <String>{};
-    final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
     final cap = player.capitalTile;
     final capitalRegionId = cap?.regionId;
 
@@ -201,35 +201,19 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   final townTileIsPort =
       townTileKey != null && portTileKeys.contains(townTileKey);
 
-  final improvementLevel = game.worldState.tileState
-      .improvementLevel(tileKey)
-      .clamp(0, 4);
-  final roadLevel = game.worldState.tileState.roadLevel(tileKey);
-  final isPort = portTileKeys.contains(tileKey);
-  final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
-  final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
-
-  final production = (improvementLevel < techCap ? improvementLevel : techCap)
-      .clamp(0, 4);
-  var effective = (production < pathCap ? production : pathCap).clamp(0, 4);
-
   final isCapitalProvince = provinceId == player.capitalProvinceId;
   final usesRoadRule = connectedByRoadRule.contains(tileKey);
-  if (isCapitalProvince) {
-    effective =
-        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
-          0,
-          4,
-        );
-  } else if (!usesRoadRule && townTileIsPort) {
-    // Town rule only (non-capital) with connected port town applies town cap.
-    effective =
-        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
-          0,
-          4,
-        );
-  }
-  final effectiveCapped = effective;
+  final effectiveCapped = computeEffectiveTileYield(
+    tileState: game.worldState.tileState,
+    tileKey: tileKey,
+    techCap: techCap,
+    townDevelopmentCap: townDevelopmentCap,
+    townTileIsPort: townTileIsPort,
+    isCapitalProvince: isCapitalProvince,
+    usesRoadRule: usesRoadRule,
+    portTileKeys: portTileKeys,
+    pathTransportCap: pathTransportCap,
+  );
   if (effectiveCapped <= 0) {
     return null;
   }
