@@ -10,6 +10,25 @@ import 'package:colonizethis_logic/ai_api.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+/// Old (pre-migration) `anyMinorOwnsOldWorld` predicate from
+/// `computeDiplomaticCandidateScores`: a nested O(provinces x minors) scan.
+bool _manualAnyMinorOwnsOldWorld(Game game) =>
+    game.worldState.oldWorld.provinces.any(
+      (p) =>
+          p.ownerId != null &&
+          p.ownerId!.isNotEmpty &&
+          game.minorNations.any((m) => m.id == p.ownerId),
+    );
+
+/// New (slice 7) `anyMinorOwnsOldWorld` predicate: projection-backed.
+bool _projectionAnyMinorOwnsOldWorld(Game game) => game.minorNations.any(
+  (m) =>
+      ProvinceOwnerCache.of(game.worldState).ownsAnyInRegion(
+        m.id,
+        kRegionOldWorld,
+      ),
+);
+
 void main() {
   group('ProvinceOwnerCache per-region AI migration', () {
     WorldState buildWorld() => WorldState(
@@ -68,6 +87,82 @@ void main() {
         manualNewWorldCount(world, 'gp1'),
       );
       expect(cache.countOwnedByInRegion('gp1', kRegionNewWorld), 0);
+    });
+  });
+
+  group('anyMinorOwnsOldWorld slice-7 migration', () {
+    Game gameWith({
+      required String oldWorldOwner,
+      required String newWorldMinorOwner,
+    }) => Game(
+      id: 'g-slice7',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: oldWorldOwner.isEmpty ? null : oldWorldOwner,
+            ),
+            const Province(
+              id: 'oldWorld|p2',
+              regionId: 'oldWorld',
+              ownerId: 'gp1',
+            ),
+          ],
+        ),
+        newWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'newWorld|n1',
+              regionId: 'newWorld',
+              ownerId: newWorldMinorOwner,
+            ),
+          ],
+        ),
+      ),
+      players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+      minorNations: const [
+        MinorNation(id: 'minor1', displayName: 'M1'),
+        MinorNation(id: 'minor2', displayName: 'M2'),
+      ],
+    );
+
+    test('returns true when a minor owns an old-world province', () {
+      final game = gameWith(
+        oldWorldOwner: 'minor1',
+        newWorldMinorOwner: 'minor2',
+      );
+
+      expect(_projectionAnyMinorOwnsOldWorld(game), isTrue);
+      expect(
+        _projectionAnyMinorOwnsOldWorld(game),
+        _manualAnyMinorOwnsOldWorld(game),
+      );
+    });
+
+    test('returns false when only a non-minor owns old-world provinces', () {
+      // Old-world provinces are owned by gp1 only; minor2 owns a new-world
+      // province but no old-world province.
+      final game = gameWith(oldWorldOwner: 'gp1', newWorldMinorOwner: 'minor2');
+
+      expect(_projectionAnyMinorOwnsOldWorld(game), isFalse);
+      expect(
+        _projectionAnyMinorOwnsOldWorld(game),
+        _manualAnyMinorOwnsOldWorld(game),
+      );
+    });
+
+    test('returns false for an empty/unowned old-world province', () {
+      // `oldWorld|p1` is unowned (null); the other old-world province is gp1's.
+      final game = gameWith(oldWorldOwner: '', newWorldMinorOwner: 'minor2');
+
+      expect(_projectionAnyMinorOwnsOldWorld(game), isFalse);
+      expect(
+        _projectionAnyMinorOwnsOldWorld(game),
+        _manualAnyMinorOwnsOldWorld(game),
+      );
     });
   });
 }

@@ -64,15 +64,24 @@ Per-region accessors group by the region a province was visited in
   (`feedstock_extraction_targets.dart`) →
   `countOwnedByInRegion(playerId, kRegionNewWorld)`. Counts are order-insensitive.
 - **Slice 6 — full-world owner map:** `getProvinceOwnerMap`
-  (`order_suggestion_helpers.dart`) — the `allProvinces(world)` walk run once per
-  diplomacy-filter pass / AI-planner call — builds its full-province-id→owner map
-  from the memoised cache by iterating the non-empty `ownerIds` and each owner's
+  (`order_suggestion_helpers.dart`) builds its full-province-id→owner map from
+  the memoised cache by iterating `ownerIds` and each owner's
   `provincesOwnedBy(ownerId)`. The union is exactly the provinces with a
-  non-null, non-empty `ownerId` (unowned `null` owners live in
-  `unownedProvinces`; an empty-string owner is skipped, matching the prior
-  `isNotEmpty` filter); province ids are unique full ids so the map is identical
-  regardless of per-owner order. The matching
+  non-null, non-empty `ownerId` (matching the prior `isNotEmpty` filter); ids
+  are unique so the map is order-independent. The matching
   `tool/logic_all_provinces_sanctions.yaml` entry is removed.
+
+- **Slice 7 — `colonizethis_ai` `anyMinorOwnsOldWorld`:** the nested
+  `game.worldState.oldWorld.provinces.any((p) => p.ownerId != null &&
+  p.ownerId!.isNotEmpty && game.minorNations.any((m) => m.id == p.ownerId))`
+  predicate in `computeDiplomaticCandidateScores`
+  (`diplomatic_candidate_scoring.dart`) — an O(provinces × minors) nested scan
+  recomputed once per nation per diplomacy-scoring pass — becomes
+  `game.minorNations.any((m) => _minorOwnsOldWorldProvinces(game, m.id))`, where
+  the existing helper reads `ProvinceOwnerCache.ownsAnyInRegion(minorId,
+  kRegionOldWorld)`. Behaviour-preserving: "some old-world province is owned by
+  a minor" is logically equal to "some minor owns an old-world province"; minor
+  ids are non-empty so an empty/`null` owner never matches.
 
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
@@ -128,6 +137,18 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
   runs for each, **then** it returns `2` for `gp1` and `0` for `gp2`, equal to
   `ProvinceOwnerCache.of(game.worldState).countOwnedByInRegion(id, kRegionOldWorld)`
   and to the pre-migration `world.oldWorld.provinces` owner count.
+- **Given** a `Game` whose minor `m1` owns one old-world province, minor `m2`
+  owns only a new-world province, and a non-minor `gp1` owns another old-world
+  province (slice 7), **when** the `anyMinorOwnsOldWorld` predicate
+  `game.minorNations.any((m) => ProvinceOwnerCache.of(game.worldState)
+  .ownsAnyInRegion(m.id, kRegionOldWorld))` is evaluated, **then** it returns
+  `true`, equal to the pre-migration nested
+  `oldWorld.provinces.any((p) => p.ownerId is a minor id)` scan.
+- **Given** a `Game` whose only old-world owner is a non-minor `gp1` and whose
+  minors `m1`/`m2` own only new-world provinces (or an empty-string owner sits
+  in the old world) (slice 7), **when** the `anyMinorOwnsOldWorld` predicate is
+  evaluated, **then** it returns `false`, equal to the pre-migration nested
+  `oldWorld.provinces.any` scan.
 - **Given** a `Game` whose faction `gp1` owns one old-world province and one
   new-world province, faction `gp2` owns one old-world province, and one
   province is unowned (slice 6), **when** `getProvinceOwnerMap(game)` is read,
