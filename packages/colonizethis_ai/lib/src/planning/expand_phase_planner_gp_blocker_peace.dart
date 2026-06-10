@@ -66,12 +66,7 @@ String? stalledStrongerGpBlockerPeaceTarget({
     return null;
   }
   if (gpBlockerFocus) {
-    final anyMinorOwnsOw = game.worldState.oldWorld.provinces.any(
-      (p) =>
-          p.ownerId != null &&
-          p.ownerId!.isNotEmpty &&
-          game.minorNations.any((m) => m.id == p.ownerId),
-    );
+    final anyMinorOwnsOw = _anyMinorOwnsOldWorldProvince(game);
     if (!anyMinorOwnsOw) {
       return null;
     }

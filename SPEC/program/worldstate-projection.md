@@ -83,6 +83,22 @@ Per-region accessors group by the region a province was visited in
   a minor" is logically equal to "some minor owns an old-world province"; minor
   ids are non-empty so an empty/`null` owner never matches.
 
+- **Slice 8 — `colonizethis_ai` EXPAND-phase peace deciders:** the three
+  remaining `O(provinces × minors)` nested old-world owner scans
+  (`game.worldState.oldWorld.provinces.any((p) => p.ownerId is a minor id)`),
+  recomputed per EXPAND-phase peace decider in
+  `expand_phase_planner_peer_peace.dart` (`belowQuotaPeerGpPeaceTargets`),
+  `expand_phase_planner_peace_targets.dart` (`canPivotFromSoleGpWarAfterPeace`),
+  and `expand_phase_planner_gp_blocker_peace.dart`
+  (`stalledStrongerGpBlockerPeaceTarget`), become a single shared
+  `_anyMinorOwnsOldWorldProvince(game)` helper that reads
+  `game.minorNations.any((m) => ProvinceOwnerCache.of(game.worldState)
+  .ownsAnyInRegion(m.id, kRegionOldWorld))` — the same migration applied to
+  `diplomatic_candidate_scoring.dart` in slice 7. Behaviour-preserving: "some
+  old-world province is owned by a minor" is logically equal to "some minor owns
+  an old-world province"; minor ids are non-empty so an empty/`null` owner never
+  matches.
+
 Phase 6c profiling and the remaining call sites stay follow-up slices.
 
 ### Phase 6b acceptance criteria
@@ -149,6 +165,19 @@ Phase 6c profiling and the remaining call sites stay follow-up slices.
   in the old world) (slice 7), **when** the `anyMinorOwnsOldWorld` predicate is
   evaluated, **then** it returns `false`, equal to the pre-migration nested
   `oldWorld.provinces.any` scan.
+- **Given** a `Game` whose minor `m1` owns one old-world province, minor `m2`
+  owns only a new-world province, and a non-minor `gp1` owns another old-world
+  province (slice 8), **when** the shared
+  `_anyMinorOwnsOldWorldProvince(game)` helper used by
+  `belowQuotaPeerGpPeaceTargets`, `canPivotFromSoleGpWarAfterPeace`, and
+  `stalledStrongerGpBlockerPeaceTarget` is evaluated, **then** it returns
+  `true`, equal to `game.minorNations.any((m) => ProvinceOwnerCache
+  .of(game.worldState).ownsAnyInRegion(m.id, kRegionOldWorld))` and to the
+  pre-migration nested `oldWorld.provinces.any` scan.
+- **Given** a `Game` whose only old-world owner is a non-minor `gp1` and whose
+  minors `m1`/`m2` own only new-world provinces (slice 8), **when**
+  `_anyMinorOwnsOldWorldProvince(game)` is evaluated, **then** it returns
+  `false`, equal to the pre-migration nested `oldWorld.provinces.any` scan.
 - **Given** a `Game` whose faction `gp1` owns one old-world province and one
   new-world province, faction `gp2` owns one old-world province, and one
   province is unowned (slice 6), **when** `getProvinceOwnerMap(game)` is read,

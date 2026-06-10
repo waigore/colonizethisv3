@@ -55,12 +55,7 @@ bool canPivotFromSoleGpWarAfterPeace({
       kObserverConquestMinOwProvincesPerGp) {
     return true;
   }
-  final minorsOnMap = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
-  );
+  final minorsOnMap = _anyMinorOwnsOldWorldProvince(game);
   if (minorsOnMap) {
     return true;
   }

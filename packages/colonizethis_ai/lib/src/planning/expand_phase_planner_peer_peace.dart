@@ -133,12 +133,7 @@ List<String> belowQuotaPeerGpPeaceTargets({
   if (!isBelowObserverConquestQuota(ownOw)) {
     return const [];
   }
-  final minorsOnMap = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
-  );
+  final minorsOnMap = _anyMinorOwnsOldWorldProvince(game);
   final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
     game: game,
     snapshot: snapshot,
