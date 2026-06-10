@@ -279,8 +279,9 @@ final class _DeclareWarTargetContext {
     final hasInvadableMinorOwner = invadableOwners.any(
       (id) => game.minorNations.any((m) => m.id == id),
     );
+    final ownerCache = ProvinceOwnerCache.of(game.worldState);
     final minorsHoldOldWorldProvinces = game.minorNations.any(
-      (m) => game.worldState.oldWorld.provinces.any((p) => p.ownerId == m.id),
+      (m) => ownerCache.ownsAnyInRegion(m.id, kRegionOldWorld),
     );
     final atWarInvadableOwMinor = snapshot.threats.atWarWith.any(
       (factionId) =>

@@ -73,14 +73,25 @@ bool playerHasPendingWorkOrderForUnit(
 
 /// Builds a map from full province id (regionId|localId) to owner faction id.
 /// Used by AI to filter move orders by diplomacy.
+///
+/// Reads the memoised [ProvinceOwnerCache] owner groupings instead of rescanning
+/// every province on each diplomacy-filter pass (Phase 6b slice 6,
+/// SPEC/program/worldstate-projection.md). Behaviour-preserving: the union of
+/// `provincesOwnedBy(ownerId)` over the non-empty [ProvinceOwnerCache.ownerIds]
+/// is exactly the set of provinces with a non-null, non-empty `ownerId`, with
+/// unowned (`null`) and empty-string owners excluded as before; province ids are
+/// unique full ids, so the resulting map is identical regardless of per-owner
+/// visiting order.
 Map<String, String> getProvinceOwnerMap(Game game) {
+  final cache = ProvinceOwnerCache.of(game.worldState);
   final out = <String, String>{};
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
+  for (final ownerId in cache.ownerIds) {
+    if (ownerId.isEmpty) continue;
+    for (final p in cache.provincesOwnedBy(ownerId)) {
       final key = ProvinceId.isPrefixed(p.id)
           ? p.id
           : ProvinceId.full(p.regionId, p.id);
-      out[key] = p.ownerId!;
+      out[key] = ownerId;
     }
   }
   return out;

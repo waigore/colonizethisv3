@@ -145,14 +145,13 @@ List<WorkOrder> planDevelopCivilian({
 
   final ownedProvinceIds = <String>{};
   final townTileKeys = <String>{};
-  for (final region in <RegionData>[world.oldWorld, world.newWorld]) {
-    for (final province in region.provinces) {
-      if (province.ownerId != playerId) continue;
-      ownedProvinceIds.add(province.id);
-      final townTileKey = province.townTileKey;
-      if (townTileKey != null && townTileKey.isNotEmpty) {
-        townTileKeys.add(townTileKey);
-      }
+  for (final province in ProvinceOwnerCache.of(
+    world,
+  ).provincesOwnedBy(playerId)) {
+    ownedProvinceIds.add(province.id);
+    final townTileKey = province.townTileKey;
+    if (townTileKey != null && townTileKey.isNotEmpty) {
+      townTileKeys.add(townTileKey);
     }
   }
   if (ownedProvinceIds.isEmpty) {

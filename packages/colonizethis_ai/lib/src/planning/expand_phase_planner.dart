@@ -466,15 +466,33 @@ bool hasUninvadedOldWorldMinor({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
   for (final minor in game.minorNations) {
     if (snapshot.threats.atWarWith.contains(minor.id)) {
       continue;
     }
-    if (game.worldState.oldWorld.provinces.any((p) => p.ownerId == minor.id)) {
+    if (ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld)) {
       return true;
     }
   }
   return false;
+}
+
+/// Whether any minor nation still owns at least one Old World province.
+///
+/// Phase 6b (SPEC/program/worldstate-projection.md slice 8; Refs #3393):
+/// replaces the `O(provinces x minors)` nested old-world owner scan
+/// (`game.worldState.oldWorld.provinces.any((p) => p.ownerId is a minor id)`)
+/// recomputed per EXPAND-phase peace decider with the memoised
+/// [ProvinceOwnerCache] via `ownsAnyInRegion(minorId, kRegionOldWorld)`.
+/// Behaviour-preserving: "some old-world province is owned by a minor" is
+/// logically equal to "some minor owns an old-world province"; minor ids are
+/// non-empty, so an empty/`null` owner never equals a minor id.
+bool _anyMinorOwnsOldWorldProvince(Game game) {
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
+  return game.minorNations.any(
+    (m) => ownerCache.ownsAnyInRegion(m.id, kRegionOldWorld),
+  );
 }
 
 /// Returns the `factionId` of the sole Great Power the active player is at

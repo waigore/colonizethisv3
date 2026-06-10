@@ -4,9 +4,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart'
     show
         GamePlayerLookup,
+        ProvinceOwnerCache,
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
+        kRegionNewWorld,
         oldWorldProvinceCountOwnedBy,
         peerLockRecoverySellerNeededProducibleImprovementInputs,
         pendingTreasuryCostsForTurn,

@@ -70,5 +70,91 @@ void main() {
       expect(eligibility.reasonCode, 'no_owned_provinces_in_region');
       expect(eligibility.candidateProvinceId, isNull);
     });
+
+    // Phase 6b slice 15 (SPEC/program/worldstate-projection.md; Refs #3393):
+    // the owned-province lookup now reads ProvinceOwnerCache; these assert the
+    // migration is behaviour-preserving against the projection and the prior
+    // `region.provinces.where((p) => p.ownerId == ...)` scan order.
+    test(
+      'ownedProvinceIdsInRegion matches projection in region list order',
+      () {
+        final game = Game(
+          id: 'g-cap-projection-parity',
+          worldState: const WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|P2',
+                  regionId: 'oldWorld',
+                  ownerId: 'p1',
+                ),
+                Province(
+                  id: 'oldWorld|P1',
+                  regionId: 'oldWorld',
+                  ownerId: 'p1',
+                ),
+                Province(
+                  id: 'oldWorld|P3',
+                  regionId: 'oldWorld',
+                  ownerId: 'p2',
+                ),
+              ],
+            ),
+            newWorld: RegionData(),
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+
+        final eligibility = evaluateCapitalReassignmentEligibility(
+          state: game,
+          playerId: 'p1',
+          regionId: kRegionOldWorld,
+          regionTopology: const MapTopology(),
+        );
+
+        final projectionIds = ProvinceOwnerCache.of(game.worldState)
+            .provincesOwnedByInRegion('p1', kRegionOldWorld)
+            .map((p) => p.id)
+            .toList();
+        final legacyScanIds = game.worldState.oldWorld.provinces
+            .where((p) => p.ownerId == 'p1')
+            .map((p) => p.id)
+            .toList();
+
+        expect(eligibility.ownedProvinceIdsInRegion, ['oldWorld|P2', 'oldWorld|P1']);
+        expect(eligibility.ownedProvinceIdsInRegion, projectionIds);
+        expect(eligibility.ownedProvinceIdsInRegion, legacyScanIds);
+      },
+    );
+
+    test('excludedProvinceId is filtered out after the projection lookup', () {
+      final game = Game(
+        id: 'g-cap-excluded',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+          ),
+          newWorld: RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+
+      final eligibility = evaluateCapitalReassignmentEligibility(
+        state: game,
+        playerId: 'p1',
+        regionId: kRegionOldWorld,
+        regionTopology: const MapTopology(),
+        excludedProvinceId: 'oldWorld|P2',
+      );
+
+      expect(eligibility.eligible, isTrue);
+      expect(eligibility.ownedProvinceIdsInRegion, ['oldWorld|P1']);
+      expect(eligibility.candidateProvinceId, 'oldWorld|P1');
+    });
   });
 }

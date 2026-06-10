@@ -50,11 +50,15 @@ List<int> computeDiplomaticCandidateScores({
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;
   final currentTurn = game.worldState.turnState.turnNumber;
-  final anyMinorOwnsOldWorld = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
+  // Phase 6b (SPEC/program/worldstate-projection.md slice 7; Refs #3393):
+  // replace the O(provinces x minors) nested old-world owner scan with the
+  // memoised projection via the existing `_minorOwnsOldWorldProvinces` helper
+  // (`ProvinceOwnerCache.ownsAnyInRegion(minorId, kRegionOldWorld)`).
+  // Behaviour-preserving: the result is true iff some minor owns a non-empty
+  // old-world province — exactly the prior `oldWorld.provinces.any` predicate
+  // (minor ids are non-empty, and an empty/`null` owner never equals a minor id).
+  final anyMinorOwnsOldWorld = game.minorNations.any(
+    (m) => _minorOwnsOldWorldProvinces(game, m.id),
   );
   final warDesireByTarget = <String, int>{};
   int warDesireForTarget(String targetFactionId, int relationScore) {
@@ -169,7 +173,9 @@ List<int> computeDiplomaticCandidateScores({
 }
 
 bool _minorOwnsOldWorldProvinces(Game game, String minorId) =>
-    game.worldState.oldWorld.provinces.any((p) => p.ownerId == minorId);
+    ProvinceOwnerCache.of(
+      game.worldState,
+    ).ownsAnyInRegion(minorId, kRegionOldWorld);
 
 Set<String> _activeOldWorldMinorConflictIds({
   required Game game,

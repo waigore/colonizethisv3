@@ -27,10 +27,9 @@ int regimentCountForPlayer(Game game, String playerId) {
 }
 
 int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
-  return game.worldState
-      .provincesForRegion(kRegionNewWorld)
-      .where((p) => p.ownerId == playerId)
-      .length;
+  return ProvinceOwnerCache.of(
+    game.worldState,
+  ).countOwnedByInRegion(playerId, kRegionNewWorld);
 }
 
 /// Resource ids a below-quota zero-NW lock-recovery seller should extract to

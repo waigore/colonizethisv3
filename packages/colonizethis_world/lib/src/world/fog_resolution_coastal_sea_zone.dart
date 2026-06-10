@@ -16,16 +16,25 @@ void _fullyVisibleAllTilesInSeaZoneBuckets(
   }
 }
 
+// Phase 6b slice 16 (SPEC/program/worldstate-projection.md; Refs #3393): this
+// helper runs per GP player x per region each end-of-turn fog pass, so the prior
+// `regionData.provinces.where((p) => p.ownerId == playerId)` rescan walked the
+// whole region province list once per (player, region). [ProvinceOwnerCache
+// .provincesOwnedByInRegion] preserves the region's `RegionData.provinces`
+// order, so the iterated province ids are identical to the prior scan
+// (behaviour-preserving).
 void _applyCoastalFullVisibilityForGpPlayerInRegion({
   required String playerId,
   required String regionId,
-  required RegionData regionData,
+  required ProvinceOwnerCache ownerCache,
   required MapTopology regionTopology,
   required Map<String, List<String>> regionTileKeys,
   required Map<String, String> vis,
 }) {
-  for (final province in regionData.provinces) {
-    if (province.ownerId != playerId) continue;
+  for (final province in ownerCache.provincesOwnedByInRegion(
+    playerId,
+    regionId,
+  )) {
     final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
       regionTopology,
       province.id,
@@ -52,6 +61,7 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
   final gpIds = game.players.map((p) => p.id).toSet();
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final result = _mutableGpVisibilityCopy(visibilityAfterFogDecay);
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
 
   forEachWorldRegion(game.worldState, (regionId, regionData) {
     final regionTileKeys = tileKeysByRegion[regionId];
@@ -68,7 +78,7 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
       action: (playerId, vis) => _applyCoastalFullVisibilityForGpPlayerInRegion(
         playerId: playerId,
         regionId: regionId,
-        regionData: regionData,
+        ownerCache: ownerCache,
         regionTopology: regionTopology,
         regionTileKeys: regionTileKeys,
         vis: vis,

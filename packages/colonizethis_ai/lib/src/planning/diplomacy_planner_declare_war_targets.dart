@@ -82,10 +82,11 @@ String? belowQuotaUninvadedMinorDeclareTarget({
       !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return null;
   }
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
   final candidates = <String>{
     for (final minor in game.minorNations)
       if (!snapshot.threats.atWarWith.contains(minor.id) &&
-          game.worldState.oldWorld.provinces.any((p) => p.ownerId == minor.id))
+          ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld))
         minor.id,
   };
   if (candidates.isEmpty) {
@@ -197,14 +198,12 @@ String? defaultStartOwMinorDeclareTarget({
     }
   }
   if (candidates.isEmpty) {
+    final ownerCache = ProvinceOwnerCache.of(game.worldState);
     for (final minor in game.minorNations) {
       if (snapshot.threats.atWarWith.contains(minor.id)) {
         continue;
       }
-      final ownsOw = game.worldState.oldWorld.provinces.any(
-        (p) => p.ownerId == minor.id,
-      );
-      if (ownsOw) {
+      if (ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld)) {
         candidates.add(minor.id);
       }
     }
