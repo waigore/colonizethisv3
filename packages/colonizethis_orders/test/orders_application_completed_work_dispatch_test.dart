@@ -161,5 +161,128 @@ void main() {
 
       expect(next.work.tileState.roadLevel(tileKey), 0);
     });
+
+    test('upgrade_town threads getProvinces/replaceProvinces through the '
+        'CompletedWorkContext record', () {
+      final unit = Unit(
+        id: 'u1',
+        type: kUnitTypeBuilder,
+        ownerId: 'p1',
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+      );
+      const province = Province(
+        id: provinceId,
+        regionId: ow,
+        ownerId: 'p1',
+        townDevelopmentLevel: 0,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: const [province], units: [unit]),
+          newWorld: const RegionData(),
+          tileState: TileMapState(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final work = WorkOrderState(
+        oldUnitsById: {unit.id: unit},
+        newUnitsById: const {},
+        tileState: TileMapState(),
+        visibilityByTile: const {},
+        portsByProvinceSeaboard: const {},
+        purchasedTilesByTileKey: const {},
+        oldProvinces: const [province],
+        newProvinces: const [],
+      );
+      final state = BuildWorkState(
+        game: game,
+        buildOrders: const {},
+        workOrders: const {},
+        tileMapByRegion: const {},
+        work: work,
+      );
+      const cw = CurrentWork(
+        workTarget: kWorkTargetUpgradeTown,
+        tileKey: tileKey,
+        totalTurns: 1,
+        remainingTurns: 0,
+      );
+
+      final next = dispatchCompletedWorkTarget(
+        state,
+        unit,
+        cw,
+        () => game.worldState.oldWorld.provinces,
+        (w, p) => w.copyWith(oldProvinces: p),
+        (s, u, regionId) => s,
+      );
+
+      expect(next.work.oldProvinces.single.townDevelopmentLevel, 1);
+    });
+
+    test('explore invokes the applyExploreCompletion closure with the unit '
+        'region via the CompletedWorkContext record', () {
+      final unit = Unit(
+        id: 'u1',
+        type: kUnitTypeExplorer,
+        ownerId: 'p1',
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(units: [unit]),
+          newWorld: const RegionData(),
+          tileState: TileMapState(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final work = WorkOrderState(
+        oldUnitsById: {unit.id: unit},
+        newUnitsById: const {},
+        tileState: TileMapState(),
+        visibilityByTile: const {},
+        portsByProvinceSeaboard: const {},
+        purchasedTilesByTileKey: const {},
+        oldProvinces: const [],
+        newProvinces: const [],
+      );
+      final state = BuildWorkState(
+        game: game,
+        buildOrders: const {},
+        workOrders: const {},
+        tileMapByRegion: const {},
+        work: work,
+      );
+      const cw = CurrentWork(
+        workTarget: kWorkTargetExplore,
+        tileKey: tileKey,
+        totalTurns: 1,
+        remainingTurns: 0,
+      );
+
+      String? capturedRegionId;
+      final next = dispatchCompletedWorkTarget(
+        state,
+        unit,
+        cw,
+        () => game.worldState.oldWorld.provinces,
+        (w, p) => w.copyWith(oldProvinces: p),
+        (s, u, regionId) {
+          capturedRegionId = regionId;
+          return s;
+        },
+      );
+
+      expect(capturedRegionId, ow);
+      expect(identical(next, state), isTrue);
+    });
   });
 }
