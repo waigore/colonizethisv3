@@ -10,7 +10,7 @@ import 'package:colonizethis_world/src/game_player_lookup.dart';
 import 'package:colonizethis_combat/src/combat/military_strength.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/province_owner_cache.dart';
 
 export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 export 'package:colonizethis_world/src/world/province_lookup.dart' show oldWorldProvinceCountOwnedBy;
@@ -23,28 +23,17 @@ const int overtureEmbassyCost = 1000;
 const int joinEmpireBaseCost = 5000;
 const int joinEmpirePerProvinceCost = 2000;
 
-/// Lazily built per [Game] instance (issue #2268 AC-5). A new [Game] from
-/// [Game.copyWith] does not share expando state with the previous instance.
-/// Routed through the shared [ExpandoIndex] utility so all `colonizethis_logic`
-/// per-[Game] caches share one invalidation contract (Refs #2836 AC 2).
-final ExpandoIndex<Game, Map<String, int>> _gameProvinceCountsByOwnerIndex =
-    ExpandoIndex<Game, Map<String, int>>('gameProvinceCountsByOwner', (game) {
-      final built = <String, int>{};
-      for (final p in allProvinces(game.worldState)) {
-        final oid = p.ownerId;
-        if (oid == null) continue;
-        built[oid] = (built[oid] ?? 0) + 1;
-      }
-      return built;
-    });
-
-Map<String, int> _provinceCountsByOwner(Game game) =>
-    _gameProvinceCountsByOwnerIndex.get(game);
-
-/// Returns the number of provinces owned by [factionId] (Minor or Tribe) in [game].
-int provinceCountOwnedBy(Game game, String factionId) {
-  return _provinceCountsByOwner(game)[factionId] ?? 0;
-}
+/// Returns the number of provinces owned by [factionId] (Minor or Tribe) in
+/// [game].
+///
+/// Reads the count from the shared read-only [ProvinceOwnerCache] projection
+/// (memoised per [WorldState] identity) instead of recomputing a separate
+/// per-[Game] province-count scan — consolidating onto the single ownership
+/// projection (Phase 6b, SPEC/program/worldstate-projection.md; Refs #3393).
+/// Counts only provinces whose non-null `ownerId == factionId`, identical to
+/// the prior full-world `allProvinces` scan.
+int provinceCountOwnedBy(Game game, String factionId) =>
+    ProvinceOwnerCache.of(game.worldState).countOwnedBy(factionId);
 
 /// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
 const int powerScoreProvinceWeight = 10;

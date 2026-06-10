@@ -48,6 +48,21 @@ owned-province fallback branches in `colonizethis_orders`:
 - `rawCandidateTilesForWorkTarget` (`order_suggestion_work_tile_prefilter.dart`)
   — fallback when no `playerOwnedProvinceIds` set is supplied.
 
+A second Phase 6b slice migrates the remaining **full-world** owner scans in
+`colonizethis_diplomacy` onto the same projection:
+
+- `provinceCountOwnedBy` (`diplomacy_relation_lookup.dart`) — previously backed
+  by a **separate** per-`Game` `ExpandoIndex` that scanned every province to
+  build an owner→count map. It now reads
+  `ProvinceOwnerCache.of(game.worldState).countOwnedBy(factionId)`, removing the
+  duplicate projection. Both count only provinces with a non-null
+  `ownerId == factionId`, so every consumer (`greatPowerPowerScore`,
+  `joinEmpireCostForMinorOrTribe`) is behaviour-preserved.
+- `_sortedFullProvinceIdsOwnedBy` (`faction_absorption_engine.dart`) — the
+  Join-Empire absorption province-transfer seed. It now derives ids from
+  `ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(ownerId)`; the result
+  is sorted, so the projection's iteration order does not affect the output.
+
 Only full-region scans are migrated; per-region scans
 (`provincesForRegion(...)`) are **not** migrated to this whole-world projection
 in this slice. Migrating the remaining call sites and the Phase 6c profiling
@@ -67,6 +82,16 @@ remain follow-up slices of the umbrella.
 - **Given** the same `Game` and no `playerOwnedProvinceIds`, **when**
   `rawCandidateTilesForWorkTarget` runs, **then** the owned-province ids it
   derives equal `{p.id for p in ProvinceOwnerCache.of(world).provincesOwnedBy('p1')}`.
+- **Given** a `Game` whose faction `m1` owns one old-world province and one
+  new-world province and whose faction `m2` owns none, **when**
+  `provinceCountOwnedBy(game, 'm1')` and `provinceCountOwnedBy(game, 'm2')` are
+  read, **then** they return `2` and `0`, equal to
+  `ProvinceOwnerCache.of(game.worldState).countOwnedBy(...)` for the same ids.
+- **Given** a `Game` whose absorbed faction `m1` owns provinces
+  `oldWorld|b` and `newWorld|a` (and other factions own the rest), **when**
+  the absorption seed `_sortedFullProvinceIdsOwnedBy(game, 'm1')` is computed,
+  **then** it returns `['newWorld|a', 'oldWorld|b']` (ascending id order),
+  equal to the pre-migration `allProvinces` owner scan.
 
 ## `ProvinceOwnerCache`
 
