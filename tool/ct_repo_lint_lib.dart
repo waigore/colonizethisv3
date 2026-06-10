@@ -45,6 +45,7 @@ import 'check_logic_source_file_size.dart';
 import 'check_world_no_logic_deps.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
+import 'check_domain_package_logger_dedup.dart';
 import 'check_ai_planner_context.dart';
 import 'check_logic_all_provinces_sanctioned_calls.dart';
 import 'check_logic_dual_region_province_field_access.dart';
@@ -841,6 +842,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicDeadFiles(repoRoot);
     case 'repo.logic_dedup_logger':
       return runCheckLogicDedupLogger(repoRoot);
+    case 'repo.domain_package_logger_dedup':
+      return runCheckDomainPackageLoggerDedup(repoRoot);
     case 'repo.ai_planner_context':
       return runCheckAiPlannerContext(repoRoot);
     case 'repo.screen_registry_active_paths':

@@ -104,6 +104,18 @@ void main() {
       expect(packageLogger('ct').prefix, 'logger.ct');
     });
 
+    test('domainPackageLogger uses the bare prefix when no subPrefix', () {
+      expect(domainPackageLogger('combat').prefix, 'combat');
+    });
+
+    test('domainPackageLogger uses the bare prefix when subPrefix is empty', () {
+      expect(domainPackageLogger('combat', '').prefix, 'combat');
+    });
+
+    test('domainPackageLogger composes prefix.subPrefix when subPrefix set', () {
+      expect(domainPackageLogger('economy', 'trade').prefix, 'economy.trade');
+    });
+
     test(
       'CtLoggerConsolePrinter output contains exactly one canonical timestamp',
       () async {
