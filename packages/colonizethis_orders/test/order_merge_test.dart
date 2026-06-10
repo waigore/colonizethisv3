@@ -335,6 +335,80 @@ void main() {
       expect(merged.tradeOrdersByPlayerId['gp1']!.single.commodityId, 'timber');
     });
 
+    test('diplomatic merge drops AI order duplicating human (type,target)', () {
+      final human = Orders(
+        diplomaticOrdersByPlayerId: {
+          'p1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'p2',
+            ),
+          ],
+        },
+      );
+      final ai = Orders(
+        diplomaticOrdersByPlayerId: {
+          'p1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'p2',
+            ),
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'p3',
+            ),
+          ],
+        },
+      );
+      final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);
+      final orders = merged.diplomaticOrdersByPlayerId['p1']!;
+      expect(orders, hasLength(2), reason: 'human p2 + AI p3 only');
+      expect(orders.first.targetFactionId, 'p2', reason: 'human stays first');
+      expect(
+        orders.where((o) => o.targetFactionId == 'p2'),
+        hasLength(1),
+        reason: 'AI duplicate of (declareWar,p2) dropped',
+      );
+      expect(orders.any((o) => o.targetFactionId == 'p3'), isTrue);
+    });
+
+    test('build merge appends AI after human, capped at combined count', () {
+      final human = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'peasant_levies',
+              isMilitary: true,
+              spawnProvinceId: 'oldWorld|H1',
+            ),
+            BuildUnitOrder(
+              unitType: 'peasant_levies',
+              isMilitary: true,
+              spawnProvinceId: 'oldWorld|H2',
+            ),
+          ],
+        },
+      );
+      final ai = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'peasant_levies',
+              isMilitary: true,
+              spawnProvinceId: 'oldWorld|A1',
+            ),
+          ],
+        },
+      );
+      final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);
+      final builds = merged.buildUnitOrdersByPlayerId['p1']!;
+      expect(builds.map((o) => o.spawnProvinceId).toList(), [
+        'oldWorld|H1',
+        'oldWorld|H2',
+        'oldWorld|A1',
+      ]);
+    });
+
     test('merge uses stable player ordering', () {
       final human = Orders(
         moveOrdersByPlayerId: {

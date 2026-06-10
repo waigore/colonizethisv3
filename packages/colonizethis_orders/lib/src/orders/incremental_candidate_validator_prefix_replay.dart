@@ -49,9 +49,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     final snap = _cachedPostRecruitWorkerPrefixEconomy!;
     final candidateValidator = RecruitWorkerOrderValidator.withProjectedEconomy(
       player: player,
-      stockpile: Stockpile(
-        quantities: Map<String, int>.from(snap.stockpile.quantities),
-      ),
+      stockpile: Stockpile(quantities: snap.stockpile.copyQuantities()),
       treasury: snap.treasury,
       workerPool: snap.workers,
     );
@@ -101,7 +99,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     }
     final snap = _cachedPostBuildPrefixEconomy!;
     final candidateStockpile = Stockpile(
-      quantities: Map<String, int>.from(snap.stockpile.quantities),
+      quantities: snap.stockpile.copyQuantities(),
     );
     final candidateValidator = BuildOrderValidator.withProjectedEconomy(
       game: game,
@@ -144,9 +142,7 @@ extension IncrementalCandidateValidatorPrefixReplay
       tileMapByRegion: tileMapByRegion,
       civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
       devExclusiveTiles: Set<String>.from(prefix.devExclusive),
-      stockpile: Stockpile(
-        quantities: Map<String, int>.from(prefix.stockpile.quantities),
-      ),
+      stockpile: Stockpile(quantities: prefix.stockpile.copyQuantities()),
       treasury: prefix.treasury,
       factionMembership: _factionMembership(),
       initialSeenUnitIds: prefix.seenUnitIds,

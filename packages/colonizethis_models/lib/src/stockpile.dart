@@ -20,6 +20,15 @@ class Stockpile {
   /// Returns the quantity for a given [commodityId], or 0 if absent.
   int quantityOf(CommodityId commodityId) => quantities[commodityId] ?? 0;
 
+  /// Returns a fresh **mutable** copy of [quantities].
+  ///
+  /// Canonical clone for snapshot boundaries that need to mutate the result in
+  /// place (e.g. incremental candidate validation deducting work costs). This
+  /// is the single sanctioned replacement for the raw
+  /// `Map<String, int>.from(stockpile.quantities)` pattern; it deliberately
+  /// returns a growable, modifiable map rather than an unmodifiable view.
+  Map<CommodityId, int> copyQuantities() => Map<CommodityId, int>.from(quantities);
+
   /// Returns a new [Stockpile] with [delta] applied for [commodityId].
   ///
   /// Negative deltas are allowed; quantities are clamped at 0.

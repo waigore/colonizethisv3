@@ -14,41 +14,56 @@ Orders mergeOrderLists({
   if (aiOrders == null || _isEmpty(aiOrders)) return humanOrders;
 
   final merged = Orders(
-    moveOrdersByPlayerId: _mergeMoveOrders(
+    moveOrdersByPlayerId: _mergeOrders(
       humanOrders.moveOrdersByPlayerId,
       aiOrders.moveOrdersByPlayerId,
+      MergeStrategy.conflictKey,
+      keyOf: (o) => o.unitId,
     ),
-    armyMoveOrdersByPlayerId: _mergeArmyMoveOrders(
+    armyMoveOrdersByPlayerId: _mergeOrders(
       humanOrders.armyMoveOrdersByPlayerId,
       aiOrders.armyMoveOrdersByPlayerId,
+      MergeStrategy.conflictKey,
+      keyOf: (o) => o.armyId,
     ),
-    buildUnitOrdersByPlayerId: _mergeBuildOrders(
+    buildUnitOrdersByPlayerId: _mergeOrders(
       humanOrders.buildUnitOrdersByPlayerId,
       aiOrders.buildUnitOrdersByPlayerId,
+      MergeStrategy.countCap,
     ),
-    workOrdersByPlayerId: _mergeWorkOrders(
+    workOrdersByPlayerId: _mergeOrders(
       humanOrders.workOrdersByPlayerId,
       aiOrders.workOrdersByPlayerId,
+      MergeStrategy.conflictKey,
+      keyOf: (o) => o.unitId,
     ),
-    diplomaticOrdersByPlayerId: _mergeDiplomaticOrders(
+    diplomaticOrdersByPlayerId: _mergeOrders(
       humanOrders.diplomaticOrdersByPlayerId,
       aiOrders.diplomaticOrdersByPlayerId,
+      MergeStrategy.compositeKey,
+      keyOf: (o) => '${o.type.name}|${o.targetFactionId}',
     ),
-    researchOrdersByPlayerId: _mergeResearchOrders(
+    researchOrdersByPlayerId: _mergeOrders(
       humanOrders.researchOrdersByPlayerId,
       aiOrders.researchOrdersByPlayerId,
+      MergeStrategy.replacePerPlayer,
     ),
-    navalMoveOrdersByPlayerId: _mergeNavalMoveOrders(
+    navalMoveOrdersByPlayerId: _mergeOrders(
       humanOrders.navalMoveOrdersByPlayerId,
       aiOrders.navalMoveOrdersByPlayerId,
+      MergeStrategy.conflictKey,
+      keyOf: (o) => o.fleetId,
     ),
-    navalMissionOrdersByPlayerId: _mergeNavalMissionOrders(
+    navalMissionOrdersByPlayerId: _mergeOrders(
       humanOrders.navalMissionOrdersByPlayerId,
       aiOrders.navalMissionOrdersByPlayerId,
+      MergeStrategy.conflictKey,
+      keyOf: (o) => o.fleetId,
     ),
-    tradeOrdersByPlayerId: _mergeTradeOrders(
+    tradeOrdersByPlayerId: _mergeOrders(
       humanOrders.tradeOrdersByPlayerId,
       aiOrders.tradeOrdersByPlayerId,
+      MergeStrategy.replacePerPlayer,
     ),
   );
   return merged;
@@ -65,144 +80,95 @@ bool _isEmpty(Orders o) =>
     o.navalMissionOrdersByPlayerId.isEmpty &&
     o.tradeOrdersByPlayerId.isEmpty;
 
-Map<String, List<MoveOrder>> _mergeMoveOrders(
-  Map<String, List<MoveOrder>> human,
-  Map<String, List<MoveOrder>> ai,
-) =>
-    _mergeByConflictKey(human, ai, (o) => o.unitId);
+/// Per-player merge strategy for one order-type list.
+///
+/// All strategies merge per `playerId` with human precedence; they differ only
+/// in how an AI order is admitted alongside the human list for that player.
+enum MergeStrategy {
+  /// AI order admitted only when its [keyOf] value does not collide with any
+  /// human order for the same player (single-field conflict key; human wins).
+  /// Used by move, army-move, work, and naval move/mission orders.
+  conflictKey,
 
-Map<String, List<ArmyMoveOrder>> _mergeArmyMoveOrders(
-  Map<String, List<ArmyMoveOrder>> human,
-  Map<String, List<ArmyMoveOrder>> ai,
-) =>
-    _mergeByConflictKey(human, ai, (o) => o.armyId);
+  /// Same dedup semantics as [conflictKey] but the [keyOf] value is a composite
+  /// of several fields (e.g. `type.name|targetFactionId`). Used by diplomatic
+  /// orders, where a player may hold one order per (type, target) pair.
+  compositeKey,
 
-Map<String, List<BuildUnitOrder>> _mergeBuildOrders(
-  Map<String, List<BuildUnitOrder>> human,
-  Map<String, List<BuildUnitOrder>> ai,
-) {
-  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<BuildUnitOrder>>{};
-  for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    final humanCount = humanList.length;
-    final aiCount = aiList.length;
-    final merged = [...humanList];
-    for (var i = 0; i < aiCount && merged.length < humanCount + aiCount; i++) {
-      merged.add(aiList[i]);
-    }
-    if (merged.isNotEmpty) result[playerId] = merged;
-  }
-  return result;
+  /// AI orders appended after the human list for the same player, capped at
+  /// `humanCount + aiCount` total. Used by build orders (no conflict key:
+  /// human and AI builds coexist up to the combined count).
+  countCap,
+
+  /// The human list replaces the AI list wholesale per player: human list wins
+  /// when non-empty, otherwise the AI list is used. Used by research and trade
+  /// orders (Refs #2994 F7, #2924 world-market path).
+  replacePerPlayer,
 }
 
-Map<String, List<WorkOrder>> _mergeWorkOrders(
-  Map<String, List<WorkOrder>> human,
-  Map<String, List<WorkOrder>> ai,
-) =>
-    _mergeByConflictKey(human, ai, (o) => o.unitId);
-
-Map<String, List<DiplomaticOrder>> _mergeDiplomaticOrders(
-  Map<String, List<DiplomaticOrder>> human,
-  Map<String, List<DiplomaticOrder>> ai,
-) {
-  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<DiplomaticOrder>>{};
-  final humanTargetsWithType = <String>{};
-  for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    humanTargetsWithType.clear();
-    for (final o in humanList) {
-      humanTargetsWithType.add('${o.type.name}|${o.targetFactionId}');
-    }
-    final merged = [...humanList];
-    for (final o in aiList) {
-      final key = '${o.type.name}|${o.targetFactionId}';
-      if (!humanTargetsWithType.contains(key)) {
-        merged.add(o);
-        humanTargetsWithType.add(key);
-      }
-    }
-    if (merged.isNotEmpty) result[playerId] = merged;
-  }
-  return result;
-}
-
-Map<String, List<ResearchOrder>> _mergeResearchOrders(
-  Map<String, List<ResearchOrder>> human,
-  Map<String, List<ResearchOrder>> ai,
-) {
-  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<ResearchOrder>>{};
-  for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    if (humanList.isNotEmpty) {
-      result[playerId] = humanList;
-    } else if (aiList.isNotEmpty) {
-      result[playerId] = aiList;
-    }
-  }
-  return result;
-}
-
-Map<String, List<NavalMoveOrder>> _mergeNavalMoveOrders(
-  Map<String, List<NavalMoveOrder>> human,
-  Map<String, List<NavalMoveOrder>> ai,
-) =>
-    _mergeByConflictKey(human, ai, (o) => o.fleetId);
-
-Map<String, List<NavalMissionOrder>> _mergeNavalMissionOrders(
-  Map<String, List<NavalMissionOrder>> human,
-  Map<String, List<NavalMissionOrder>> ai,
-) =>
-    _mergeByConflictKey(human, ai, (o) => o.fleetId);
-
-/// Human trade orders for a player replace AI trade for that player (Refs
-/// #2994 F7, #2924 world-market path).
-Map<String, List<TradeOrder>> _mergeTradeOrders(
-  Map<String, List<TradeOrder>> human,
-  Map<String, List<TradeOrder>> ai,
-) {
-  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<TradeOrder>>{};
-  for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    if (humanList.isNotEmpty) {
-      result[playerId] = humanList;
-    } else if (aiList.isNotEmpty) {
-      result[playerId] = aiList;
-    }
-  }
-  return result;
-}
-
-Map<String, List<T>> _mergeByConflictKey<T>(
+/// Unified per-order-type merge. Combines human + AI per-player lists with
+/// human precedence according to [strategy].
+///
+/// [keyOf] is required for [MergeStrategy.conflictKey] and
+/// [MergeStrategy.compositeKey] and ignored otherwise.
+Map<String, List<T>> _mergeOrders<T>(
   Map<String, List<T>> human,
   Map<String, List<T>> ai,
-  String Function(T) conflictKey,
-) {
+  MergeStrategy strategy, {
+  String Function(T)? keyOf,
+}) {
   final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
   final result = <String, List<T>>{};
-  final humanKeys = <String>{};
+  final seenKeys = <String>{};
   for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    humanKeys.clear();
-    for (final o in humanList) {
-      humanKeys.add(conflictKey(o));
-    }
-    final merged = List<T>.from(humanList);
-    for (final o in aiList) {
-      if (!humanKeys.contains(conflictKey(o))) {
-        merged.add(o);
-        humanKeys.add(conflictKey(o));
-      }
-    }
+    final humanList = human[playerId] ?? const [];
+    final aiList = ai[playerId] ?? const [];
+    final merged = _mergeForPlayer(
+      humanList,
+      aiList,
+      strategy,
+      keyOf,
+      seenKeys,
+    );
     if (merged.isNotEmpty) result[playerId] = merged;
   }
   return result;
+}
+
+List<T> _mergeForPlayer<T>(
+  List<T> humanList,
+  List<T> aiList,
+  MergeStrategy strategy,
+  String Function(T)? keyOf,
+  Set<String> seenKeys,
+) {
+  switch (strategy) {
+    case MergeStrategy.replacePerPlayer:
+      if (humanList.isNotEmpty) return humanList;
+      if (aiList.isNotEmpty) return aiList;
+      return const [];
+    case MergeStrategy.countCap:
+      final cap = humanList.length + aiList.length;
+      final merged = [...humanList];
+      for (var i = 0; i < aiList.length && merged.length < cap; i++) {
+        merged.add(aiList[i]);
+      }
+      return merged;
+    case MergeStrategy.conflictKey:
+    case MergeStrategy.compositeKey:
+      final key = keyOf!;
+      seenKeys.clear();
+      for (final o in humanList) {
+        seenKeys.add(key(o));
+      }
+      final merged = List<T>.from(humanList);
+      for (final o in aiList) {
+        final k = key(o);
+        if (!seenKeys.contains(k)) {
+          merged.add(o);
+          seenKeys.add(k);
+        }
+      }
+      return merged;
+  }
 }
