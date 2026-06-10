@@ -500,6 +500,13 @@ rules:
     runner: dart
     script: tool/check_land_tile_keys_single_definition.dart
 
+  - rule_id: repo.orders_dedup_map_clones
+    group: architecture
+    title: Orders module stockpile-quantities clones must use Stockpile.copyQuantities()
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_dedup_map_clones.dart
+
   - rule_id: repo.app_ct_loading_indicator
     group: ui_structure
     title: app/lib must use CtLoadingIndicator instead of raw CircularProgressIndicator

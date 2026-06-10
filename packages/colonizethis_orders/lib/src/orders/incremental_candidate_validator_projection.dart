@@ -90,7 +90,7 @@ extension IncrementalCandidateValidatorProjection
     if (works.isEmpty) {
       final proj = (
         stockpile: Stockpile(
-          quantities: Map<String, int>.from(afterBuild.stockpile.quantities),
+          quantities: afterBuild.stockpile.copyQuantities(),
         ),
         treasury: afterBuild.treasury,
         seenUnitIds: <String>{},
@@ -127,7 +127,7 @@ extension IncrementalCandidateValidatorProjection
     }
     final proj = (
       stockpile: Stockpile(
-        quantities: Map<String, int>.from(workValidator.stockpile.quantities),
+        quantities: workValidator.stockpile.copyQuantities(),
       ),
       treasury: workValidator.treasury,
       seenUnitIds: {for (final w in works) w.unitId},
