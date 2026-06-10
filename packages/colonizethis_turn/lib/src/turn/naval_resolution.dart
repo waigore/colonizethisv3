@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_combat/src/combat/naval_combat_resolver.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'turn_resolution_seeds.dart';

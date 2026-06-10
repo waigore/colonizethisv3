@@ -1,4 +1,4 @@
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'diplomatic_sub_validator.dart';
 
 /// Type-specific validator for [DiplomaticOrderType.setSubsidy] orders.

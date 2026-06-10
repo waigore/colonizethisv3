@@ -5,10 +5,9 @@ import 'order_effects_projector.dart';
 export 'order_effects_projector.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'order_resolution_context.dart';
-import 'order_validation_result.dart';
 import 'orders_logging.dart';
 export 'order_validation_result.dart';
-import 'package:colonizethis_economy/src/economy/world_market/trade_order_validator.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'unit_type_helpers.dart';
 export 'validator_bundle.dart'
     show

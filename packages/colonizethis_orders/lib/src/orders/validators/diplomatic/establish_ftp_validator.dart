@@ -1,4 +1,4 @@
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'diplomatic_sub_validator.dart';
 
 /// Type-specific validator for [DiplomaticOrderType.establishFtp] orders.
@@ -16,10 +16,7 @@ DiplomaticSubValidator establishFtpSubValidator(
     targetId,
     factionMembership: ctx.factionMembership,
   )) {
-    return rejectDiplomaticSub(
-      'FTP target must be a Great Power',
-      treasury,
-    );
+    return rejectDiplomaticSub('FTP target must be a Great Power', treasury);
   }
   if (relation?.atWar ?? false) {
     return rejectDiplomaticSub(

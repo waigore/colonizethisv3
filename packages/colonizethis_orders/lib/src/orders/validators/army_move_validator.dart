@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../order_validation_result.dart';
 import '../order_visibility.dart';
@@ -81,7 +81,11 @@ class ArmyMoveValidator {
 
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership) &&
+        isMinorOrTribe(
+          game,
+          destOwnerId,
+          factionMembership: factionMembership,
+        ) &&
         !canAttackWithWarOrDeclaring(
           game,
           playerId,

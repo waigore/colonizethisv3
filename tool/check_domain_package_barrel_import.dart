@@ -31,8 +31,8 @@ import 'package:path/path.dart' as p;
 /// Consumer domain package -> set of target domain packages whose barrel-bypass
 /// deep imports are forbidden. Extended per migrated boundary (Refs #3393).
 const Map<String, Set<String>> _enforcedConsumerTargets = {
-  'turn': {'economy', 'diplomacy', 'world'},
-  'orders': {'world'},
+  'turn': {'combat', 'diplomacy', 'economy', 'orders', 'world'},
+  'orders': {'diplomacy', 'economy', 'world'},
 };
 
 final RegExp _deepImport = RegExp(

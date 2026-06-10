@@ -55,9 +55,18 @@ void main() {
     final pairs = enforcedConsumerTargetsForTests();
     expect(
       pairs['turn'],
-      containsAll(<String>{'economy', 'diplomacy', 'world'}),
+      containsAll(<String>{
+        'combat',
+        'diplomacy',
+        'economy',
+        'orders',
+        'world',
+      }),
     );
-    expect(pairs['orders'], containsAll(<String>{'world'}));
+    expect(
+      pairs['orders'],
+      containsAll(<String>{'diplomacy', 'economy', 'world'}),
+    );
   });
 
   test('passes for the real post-migration domain packages', () {
@@ -175,6 +184,35 @@ void main() {
     );
     expect(code, 1);
   });
+
+  test(
+    'fails on an orders -> diplomacy deep import that bypasses the barrel',
+    () {
+      final temp = Directory.systemTemp.createTempSync('barrel_orders_diplo_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeTargetPackage(
+        temp.path,
+        'diplomacy',
+        published: 'diplomacy/diplomacy_resolver.dart',
+        subBarrelPublished: 'dossier/event_dialogue.dart',
+        hidden: 'diplomacy/internal_only.dart',
+      );
+      final ordersLib = Directory(
+        p.join(temp.path, 'packages', 'colonizethis_orders', 'lib'),
+      )..createSync(recursive: true);
+      File(p.join(ordersLib.path, 'validator.dart')).writeAsStringSync(
+        "import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';\n",
+      );
+      _ensureEnforcedConsumerDirs(temp.path);
+
+      final code = runCheckDomainPackageBarrelImport(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
+      expect(code, 1);
+    },
+  );
 
   test('allows a deep import of a file the barrel does not publish', () {
     final temp = Directory.systemTemp.createTempSync('barrel_bypass_ok_');
