@@ -1,15 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart'
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
     show ftpPairKeysFromGame, getRelation;
-import 'package:colonizethis_economy/src/economy/non_gp_extraction.dart';
-import 'package:colonizethis_economy/src/economy/sea_transport.dart';
-import 'package:colonizethis_economy/src/economy/world_market/deal_matcher.dart';
-import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
-import 'package:colonizethis_economy/src/economy/world_market/lock_recovery_minor_bids.dart';
-import 'package:colonizethis_economy/src/economy/world_market/price_discovery.dart';
-import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_index.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'package:colonizethis_world/src/world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
