@@ -72,3 +72,60 @@ specific hand-written library file.
   with that workspace root, then the checker still exits non-zero and reports
   `big.dart` as over the non-comment line limit, because no keyed waiver data is
   loaded.
+
+## colonizethis_models 500 non-comment-line gate (Refs #3393)
+
+`colonizethis_models` holds the shared value-model surface consumed by every
+other package, so it carries a **tighter 500 non-comment-line cap** under a
+dedicated rule, mirroring `repo.domain_package_source_file_size` (500 physical
+lines) for the split domain packages.
+
+| Artifact | Role |
+|----------|------|
+| `tool/check_models_file_size.dart` | Walker, counter (reuses `countNonCommentLinesFromSource`), CLI |
+| `tool/ct_repo_lint_manifest.yaml` | Registers rule `repo.models_file_size` |
+
+### Scan scope and measurement
+
+- The checker walks `packages/colonizethis_models/lib/src/**` recursively and
+  considers only `*.dart` files, skipping generated suffixes (`.g.dart`,
+  `.freezed.dart`, `.mocks.dart`, `.gen.dart`).
+- **Failure threshold:** strictly **greater than 500** non-comment lines fails
+  the file (500 inclusive passes), using the same `countNonCommentLinesFromSource`
+  algorithm as the repository-wide gate.
+
+### Grandfathered baseline (scope wiring, not a per-line waiver)
+
+- Phase 5 split the three largest hand-written offenders (`app_events.dart`,
+  `world_market.dart`, `orders.dart`) into `part` files below the cap.
+- `game.dart` (554 non-comment lines) is dominated by the single `Game`
+  aggregate class, which cannot be reduced under the cap by simple `part`
+  extraction; it is recorded in `modelsFileSizeGrandfatheredForTests` as a
+  documented baseline pending a follow-up API-shaping split. The checker asserts
+  each grandfathered path still exists so the allowlist cannot silently rot.
+
+### Acceptance criteria
+
+- Given the repository root as cwd, when the System runs
+  `runCheckModelsFileSize`, then the checker exits zero because every
+  non-grandfathered `colonizethis_models/lib/src` Dart file is at or below 500
+  non-comment lines.
+
+- Given a temporary workspace whose only models source file is a hand-written
+  `packages/colonizethis_models/lib/src/huge.dart` with more than 500
+  non-comment lines and an empty grandfather list, when the System runs
+  `runCheckModelsFileSize`, then the checker exits non-zero and names
+  `huge.dart` with a count strictly greater than 500.
+
+- Given a temporary workspace whose only models source file ends with `.g.dart`
+  and exceeds 500 non-comment lines with an empty grandfather list, when the
+  System runs `runCheckModelsFileSize`, then the checker exits zero and does not
+  list that file.
+
+- Given a temporary workspace whose over-cap models file is listed in the
+  grandfather allowlist, when the System runs `runCheckModelsFileSize`, then the
+  checker exits zero and does not list that file.
+
+- Given a grandfather allowlist entry that names a file which does not exist in
+  the workspace, when the System runs `runCheckModelsFileSize`, then the checker
+  exits non-zero and reports a stale grandfather entry for that path.

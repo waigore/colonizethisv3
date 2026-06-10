@@ -442,6 +442,14 @@ rules:
     script: tool/check_dart_file_non_comment_line_size.dart
     pr_incremental: true
 
+  - rule_id: repo.models_file_size
+    group: structure
+    title: colonizethis_models lib/src files must stay at or below 500 non-comment lines (Refs #3393)
+    spec: SPEC/program/dart-file-non-comment-line-size.md
+    runner: dart
+    script: tool/check_models_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
     title: Province WorkOrder targetTileKey literals use full tile shape
