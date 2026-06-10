@@ -53,7 +53,7 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 
 Scope and predicate:
 
-- The rule carries an explicit set of enforced **consumer → target** boundaries. It covers `turn → {economy, diplomacy, world}` — `economy`/`diplomacy` migrated by the Phase 1 lead slice and `world` migrated by the `turn → world` slice — and grows as later Phase 1 slices migrate `combat`, `orders`, and the `orders → world` deep imports. Boundaries not yet migrated are intentionally **not** enforced so the rule stays green while Phase 1 lands incrementally.
+- The rule carries an explicit set of enforced **consumer → target** boundaries. It covers `turn → {economy, diplomacy, world}` — `economy`/`diplomacy` migrated by the Phase 1 lead slice and `world` migrated by the `turn → world` slice — and `orders → {world}`, migrated by the `orders → world` slice. It grows as later Phase 1 slices migrate the remaining `combat`/`orders` sibling boundaries. Boundaries not yet migrated are intentionally **not** enforced so the rule stays green while Phase 1 lands incrementally.
 - For each enforced target, the rule resolves the target domain barrel's transitive `export` closure (following `package:` and relative `export` directives within that package's `lib/`) to the set of published `lib/src/...` files.
 - **Combinator-aware publication.** A barrel `export` directive that carries a `show`/`hide` combinator publishes only a subset of its target file's symbols, so the file is treated as **not fully published** and deep imports of it remain allowed (a consumer may legitimately need a symbol the barrel withholds). Only combinator-free (full) re-exports contribute files to the published closure. Example: `colonizethis_world` re-exports `world/fog_resolution.dart` with `show` of only the coastal-visibility helpers, so `colonizethis_turn` keeps a deep import for the internal fog-decay helpers (`applyFogDecay`, `applySpyRevealTimerDecay`, `applyDistantSeaZoneFogRevert`).
 - For each enforced consumer, it scans `lib/**` (excluding generated `*.g.dart` / `*.freezed.dart` / `*.mocks.dart`). An `import 'package:colonizethis_<target>/src/<file>'` directive is a **violation** when `<file>` is in that target's published closure.
@@ -70,6 +70,14 @@ The `colonizethis_world` barrel publishes the world-state helper files that `col
   - `world/tile_key_coordinates.dart` hides `parseTileKeyCoordinates` (also published by the `colonizethis_orders` barrel as a thin forwarder to this canonical implementation; the orders barrel remains the single public source for the combined `colonizethis_logic` barrel).
 - Intentionally still partial: `world/fog_resolution.dart` remains a `show`-restricted export (coastal-visibility helpers only); its internal fog-decay helpers stay package-internal and are consumed by `colonizethis_turn` via a deep import.
 
+### `colonizethis_orders → colonizethis_world` slice
+
+`colonizethis_orders/lib/**` previously reached the world barrel-published helper files through deep `package:colonizethis_world/src/...` imports (province/unit/player lookups, world constants, movement, naval, topology, mutations, army movement/ids, trace runtime). These are now consumed through the `colonizethis_world` barrel:
+
+- All `colonizethis_orders/lib/**` deep `world/src` imports of fully published world files are replaced with `import 'package:colonizethis_world/colonizethis_world.dart'` (one `show allUnitsFromWorld` narrow import is rerouted to the barrel while keeping its combinator).
+- Files the world barrel publishes only with a combinator stay deep imports in `colonizethis_orders` (for example `world/tile_key_coordinates.dart`, imported with an `as tile_key_coordinates` prefix for `parseTileKeyCoordinates`, which the world barrel `hide`s — see the `turn → world` contract above).
+- Deep `diplomacy/src/diplomacy_resolver.dart` imports that the world barrel now satisfies transitively are removed from the affected `colonizethis_orders/lib/**` files (no behaviour change; the same symbols resolve through the world barrel).
+
 The predicate is derived purely from live barrel contents; the rule loads **no keyed waiver / allowlist data** (`SPEC/program/repo-lint.md` § Policy: no violation allowlists). The rule is registered in `tool/ct_repo_lint_manifest.yaml`; the repository test `test/check_domain_package_barrel_import_test.dart` asserts the real workspace stays green and exercises positive/negative fixtures.
 
 ### Acceptance criteria (`repo.domain_package_barrel_import`)
@@ -83,6 +91,9 @@ The predicate is derived purely from live barrel contents; the rule loads **no k
 - **Given** the post-`turn → world`-slice `colonizethis_turn` package on `dev`, **when** `repo.domain_package_barrel_import` resolves the `world` barrel export closure, **then** no `import 'package:colonizethis_world/src/<file>'` directive in `colonizethis_turn/lib/**` targets a fully published world file and the rule exits `0`.
 - **Given** a `colonizethis_world` barrel that re-exports `src/world/fog_resolution.dart` with a `show` combinator, **when** `barrelPublishedSrcFiles` resolves the world closure, **then** `src/world/fog_resolution.dart` is **not** in the published set.
 - **Given** a `colonizethis_turn` lib file that deep-imports `package:colonizethis_world/src/world/fog_resolution.dart` while the world barrel re-exports that file only with a `show` combinator, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** that directive is not flagged and the rule exits `0`.
+- **Given** the post-`orders → world`-slice `colonizethis_orders` package on `dev`, **when** `repo.domain_package_barrel_import` resolves the `world` barrel export closure, **then** no `import 'package:colonizethis_world/src/<file>'` directive in `colonizethis_orders/lib/**` targets a fully published world file and the rule exits `0`.
+- **Given** the enforced consumer → target boundary map, **when** the rule is loaded, **then** the map includes `orders → {world}` (asserted by `test/check_domain_package_barrel_import_test.dart`).
+- **Given** a `colonizethis_orders` lib file that imports `package:colonizethis_world/src/world/province_lookup.dart` while the `colonizethis_world` barrel already re-exports that file, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** it returns exit code `1` and lists the offending file with a "use import 'package:colonizethis_world/colonizethis_world.dart'" message.
 
 ## Cross-cutting
 

@@ -32,6 +32,7 @@ import 'package:path/path.dart' as p;
 /// deep imports are forbidden. Extended per migrated boundary (Refs #3393).
 const Map<String, Set<String>> _enforcedConsumerTargets = {
   'turn': {'economy', 'diplomacy', 'world'},
+  'orders': {'world'},
 };
 
 final RegExp _deepImport = RegExp(

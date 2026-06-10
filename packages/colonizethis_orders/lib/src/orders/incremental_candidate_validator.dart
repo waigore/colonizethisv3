@@ -23,10 +23,8 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/game_player_lookup.dart';
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_economy/src/economy/economy_riches_to_treasury.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
 import 'order_resolution_context.dart';
 import 'order_validation_result.dart';
 import 'order_validators.dart';

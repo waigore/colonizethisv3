@@ -11,6 +11,18 @@ void _writeFile(String path, String contents) {
     ..writeAsStringSync(contents);
 }
 
+/// Ensures every enforced consumer package has a `lib/` tree in [root] so the
+/// rule does not abort on a missing consumer unrelated to the scenario under
+/// test. Keeps fixtures forward-compatible as new consumer boundaries are
+/// enforced (e.g. `orders`).
+void _ensureEnforcedConsumerDirs(String root) {
+  for (final consumer in enforcedConsumerTargetsForTests().keys) {
+    Directory(
+      p.join(root, 'packages', 'colonizethis_$consumer', 'lib'),
+    ).createSync(recursive: true);
+  }
+}
+
 /// Creates a minimal target domain package whose barrel publishes
 /// `src/<published>` (directly and via a nested sub-barrel) but not
 /// `src/<hidden>`.
@@ -45,6 +57,7 @@ void main() {
       pairs['turn'],
       containsAll(<String>{'economy', 'diplomacy', 'world'}),
     );
+    expect(pairs['orders'], containsAll(<String>{'world'}));
   });
 
   test('passes for the real post-migration domain packages', () {
@@ -124,6 +137,7 @@ void main() {
     File(p.join(turnLib.path, 'end_of_turn.dart')).writeAsStringSync(
       "import 'package:colonizethis_world/src/world/fog_resolution.dart';\n",
     );
+    _ensureEnforcedConsumerDirs(temp.path);
 
     final code = runCheckDomainPackageBarrelImport(
       temp.path,
@@ -152,6 +166,7 @@ void main() {
     File(p.join(turnLib.path, 'phase.dart')).writeAsStringSync(
       "import 'package:colonizethis_economy/src/economy/economy_production.dart';\n",
     );
+    _ensureEnforcedConsumerDirs(temp.path);
 
     final code = runCheckDomainPackageBarrelImport(
       temp.path,
@@ -183,6 +198,7 @@ void main() {
       "import 'package:colonizethis_economy/src/economy/secret_internal.dart';\n"
       "import 'package:colonizethis_economy/colonizethis_economy.dart';\n",
     );
+    _ensureEnforcedConsumerDirs(temp.path);
 
     final code = runCheckDomainPackageBarrelImport(
       temp.path,
@@ -216,6 +232,7 @@ void main() {
     File(p.join(turnLib.path, 'reexport.dart')).writeAsStringSync(
       "export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_phase_result.dart';\n",
     );
+    _ensureEnforcedConsumerDirs(temp.path);
 
     final code = runCheckDomainPackageBarrelImport(
       temp.path,
