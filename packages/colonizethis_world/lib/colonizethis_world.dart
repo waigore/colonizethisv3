@@ -37,6 +37,7 @@ export 'package:colonizethis_world/src/world/fog_resolution.dart'
         applyCoastalSeaZoneFullVisibilityForProvinceTargets;
 export 'package:colonizethis_world/src/world/player_state_pipeline.dart';
 export 'package:colonizethis_world/src/world/player_view.dart';
+export 'package:colonizethis_world/src/world/province_owner_cache.dart';
 export 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
 export 'package:colonizethis_world/src/world/province_lookup.dart';
 export 'package:colonizethis_world/src/world/province_traversal.dart';
