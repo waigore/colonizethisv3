@@ -78,6 +78,37 @@ void main() {
     expect(code, 0);
   });
 
+  test('world barrel publishes the orders-consumed follow-up files', () {
+    // Promoted by the `orders -> world` follow-up slice (Refs #3393 Phase 1):
+    // these world files are now consumed through the barrel by orders.
+    final closure = barrelPublishedSrcFiles(Directory.current.path, 'world');
+    expect(closure, contains('src/world/civilian_tile_occupancy.dart'));
+    expect(closure, contains('src/world/ship_instance_allocate.dart'));
+    // `sea_reachable_provinces.dart` stays internal so the `ai_api.dart`
+    // narrow-contract deep export of it does not become a barrel bypass.
+    expect(closure, isNot(contains('src/world/sea_reachable_provinces.dart')));
+  });
+
+  test('no orders lib file deep-imports the promoted world files', () {
+    final ordersLib = Directory(
+      p.join(Directory.current.path, 'packages', 'colonizethis_orders', 'lib'),
+    );
+    final offenders = <String>[];
+    for (final entity in ordersLib.listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (content.contains(
+            "package:colonizethis_world/src/world/civilian_tile_occupancy.dart",
+          ) ||
+          content.contains(
+            "package:colonizethis_world/src/world/ship_instance_allocate.dart",
+          )) {
+        offenders.add(p.relative(entity.path, from: Directory.current.path));
+      }
+    }
+    expect(offenders, isEmpty);
+  });
+
   test('barrelPublishedSrcFiles resolves direct and nested re-exports', () {
     final temp = Directory.systemTemp.createTempSync('barrel_closure_');
     addTearDown(() => temp.deleteSync(recursive: true));

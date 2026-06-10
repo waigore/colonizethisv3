@@ -16,6 +16,7 @@ export 'package:colonizethis_world/src/world/army_migration.dart';
 export 'package:colonizethis_world/src/world/army_movement.dart';
 export 'package:colonizethis_world/src/world/capital_reassignment_fatal.dart';
 export 'package:colonizethis_world/src/world/capital_and_gp_fall.dart';
+export 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 export 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 export 'package:colonizethis_world/src/world/faction_membership.dart';
 export 'package:colonizethis_world/src/world/game_world_mutations.dart';
@@ -41,6 +42,7 @@ export 'package:colonizethis_world/src/world/province_lookup.dart';
 export 'package:colonizethis_world/src/world/province_traversal.dart';
 export 'package:colonizethis_world/src/world/province_visibility_index.dart';
 export 'package:colonizethis_world/src/world/sea_zone_identity.dart';
+export 'package:colonizethis_world/src/world/ship_instance_allocate.dart';
 export 'package:colonizethis_world/src/world/tile_control.dart';
 // `parseTileKeyCoordinates` is also published by the `colonizethis_orders`
 // barrel (a thin forwarder to this canonical implementation); hide it here so

@@ -78,6 +78,14 @@ The `colonizethis_world` barrel publishes the world-state helper files that `col
 - Files the world barrel publishes only with a combinator stay deep imports in `colonizethis_orders` (for example `world/tile_key_coordinates.dart`, imported with an `as tile_key_coordinates` prefix for `parseTileKeyCoordinates`, which the world barrel `hide`s — see the `turn → world` contract above).
 - Deep `diplomacy/src/diplomacy_resolver.dart` imports that the world barrel now satisfies transitively are removed from the affected `colonizethis_orders/lib/**` files (no behaviour change; the same symbols resolve through the world barrel).
 
+#### Follow-up: promote remaining orders-consumed world files
+
+A subsequent `orders → world` slice promotes two more `colonizethis_world` files that `colonizethis_orders` still reached via deep `src/` imports into the world barrel, then routes those imports through the barrel:
+
+- Newly published in full: `world/civilian_tile_occupancy.dart` (civilian land-tile occupancy/legality helpers: `isLandTileKeyForGame`, `sortedLandTileKeys`, `civilianMayOccupyLandTileKey`) and `world/ship_instance_allocate.dart` (`mintShipInstances`).
+- The four `colonizethis_orders/lib/**` deep imports of these files (in `validators/work_order_validator.dart`, `validators/move_validator.dart`, and `orders_application_build_phase.dart`) become redundant against the existing world-barrel import already present in each consumer and are removed.
+- Intentionally **not** promoted: `world/sea_reachable_provinces.dart` stays package-internal. It is a permitted deep export of the `ai_api.dart` narrow contract precisely because the world barrel does not publish it (see the AI narrow contract section above and the `repo.ai_api_narrow_surface` ACs); publishing it would make that `ai_api.dart` deep export a barrel-bypass violation. `colonizethis_orders/lib/src/orders/order_suggestion_helpers.dart` therefore keeps its deep import of this file.
+
 The predicate is derived purely from live barrel contents; the rule loads **no keyed waiver / allowlist data** (`SPEC/program/repo-lint.md` § Policy: no violation allowlists). The rule is registered in `tool/ct_repo_lint_manifest.yaml`; the repository test `test/check_domain_package_barrel_import_test.dart` asserts the real workspace stays green and exercises positive/negative fixtures.
 
 ### Acceptance criteria (`repo.domain_package_barrel_import`)
@@ -94,6 +102,9 @@ The predicate is derived purely from live barrel contents; the rule loads **no k
 - **Given** the post-`orders → world`-slice `colonizethis_orders` package on `dev`, **when** `repo.domain_package_barrel_import` resolves the `world` barrel export closure, **then** no `import 'package:colonizethis_world/src/<file>'` directive in `colonizethis_orders/lib/**` targets a fully published world file and the rule exits `0`.
 - **Given** the enforced consumer → target boundary map, **when** the rule is loaded, **then** the map includes `orders → {world}` (asserted by `test/check_domain_package_barrel_import_test.dart`).
 - **Given** a `colonizethis_orders` lib file that imports `package:colonizethis_world/src/world/province_lookup.dart` while the `colonizethis_world` barrel already re-exports that file, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** it returns exit code `1` and lists the offending file with a "use import 'package:colonizethis_world/colonizethis_world.dart'" message.
+- **Given** the `colonizethis_world` barrel on `dev` after the orders-consumed follow-up slice, **when** `barrelPublishedSrcFiles(repoRoot, 'world')` resolves the world export closure, **then** the closure contains both `src/world/civilian_tile_occupancy.dart` and `src/world/ship_instance_allocate.dart`.
+- **Given** the `colonizethis_orders` package on `dev` after the orders-consumed follow-up slice, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** no `colonizethis_orders/lib/**` file imports `package:colonizethis_world/src/world/civilian_tile_occupancy.dart` or `package:colonizethis_world/src/world/ship_instance_allocate.dart` and the rule exits `0`.
+- **Given** the `colonizethis_world` barrel on `dev`, **when** `barrelPublishedSrcFiles(repoRoot, 'world')` resolves the world export closure, **then** the closure does **not** contain `src/world/sea_reachable_provinces.dart` (it stays a permitted `ai_api.dart` deep export), so a deep import of it from `colonizethis_orders/lib/**` is not flagged.
 
 ## Cross-cutting
 

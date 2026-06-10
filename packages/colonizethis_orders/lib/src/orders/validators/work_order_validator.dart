@@ -4,7 +4,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../order_work_constants.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../build_rail_work_rules.dart';
 import '../bundled_civilian_work_order.dart';
