@@ -58,6 +58,51 @@ void main() {
       expect(cache.countOwnedBy('p2'), 0);
     });
 
+    test('provincesOwnedByInRegion returns the owner provinces per region', () {
+      final cache = ProvinceOwnerCache.build(buildWorld());
+
+      expect(
+        cache.provincesOwnedByInRegion('p1', ow).map((p) => p.id).toList(),
+        [aId],
+      );
+      expect(
+        cache.provincesOwnedByInRegion('p1', nw).map((p) => p.id).toList(),
+        [cId],
+      );
+    });
+
+    test('provincesOwnedByInRegion is empty for an unowned-in-region owner', () {
+      final cache = ProvinceOwnerCache.build(buildWorld());
+
+      expect(cache.provincesOwnedByInRegion('p2', ow), isEmpty);
+    });
+
+    test('ownsAnyInRegion reflects per-region ownership', () {
+      final cache = ProvinceOwnerCache.build(buildWorld());
+
+      expect(cache.ownsAnyInRegion('p1', ow), isTrue);
+      expect(cache.ownsAnyInRegion('p1', nw), isTrue);
+      expect(cache.ownsAnyInRegion('p2', ow), isFalse);
+    });
+
+    test('countOwnedByInRegion counts per-region owned provinces', () {
+      final cache = ProvinceOwnerCache.build(buildWorld());
+
+      expect(cache.countOwnedByInRegion('p1', ow), 1);
+      expect(cache.countOwnedByInRegion('p1', nw), 1);
+      expect(cache.countOwnedByInRegion('p2', ow), 0);
+    });
+
+    test('provincesOwnedByInRegion returns a read-only list', () {
+      final cache = ProvinceOwnerCache.build(buildWorld());
+      final owned = cache.provincesOwnedByInRegion('p1', ow);
+
+      expect(
+        () => owned.add(const Province(id: '$ow|X', regionId: ow)),
+        throwsUnsupportedError,
+      );
+    });
+
     test('ownerIds lists distinct non-null owners and excludes unowned', () {
       final cache = ProvinceOwnerCache.build(buildWorld());
 

@@ -466,11 +466,12 @@ bool hasUninvadedOldWorldMinor({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
   for (final minor in game.minorNations) {
     if (snapshot.threats.atWarWith.contains(minor.id)) {
       continue;
     }
-    if (game.worldState.oldWorld.provinces.any((p) => p.ownerId == minor.id)) {
+    if (ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld)) {
       return true;
     }
   }

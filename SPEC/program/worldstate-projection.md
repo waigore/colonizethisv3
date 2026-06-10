@@ -8,88 +8,67 @@ umbrella (Refs #3393). Companion to `SPEC/program/turn-resolution.md`,
 
 ## Motivation
 
-Domain packages repeatedly recompute the same deterministic
-ownership groupings by scanning every province
-(`worldState.provincesForRegion(...).where((p) => p.ownerId == playerId)`,
+Domain packages repeatedly recompute the same deterministic ownership
+groupings by scanning every province
+(`provincesForRegion(...).where((p) => p.ownerId == playerId)`,
 `allProvinces().where(...)`). These uncapped global scans inside per-player /
 per-target loops are a recognised next-turn-budget risk
 (`colonizethis-turn-resolution-budget.mdc` § "Duplicate global scans"). A
-lightweight read-only projection that memoises these groupings once per
-turn-resolution pass removes the redundant scans without changing any
-turn-resolution semantics.
+read-only projection that memoises these groupings once per turn-resolution
+pass removes the redundant scans without changing turn-resolution semantics.
 
 ## Scope (Phase 6a — projection component)
 
-Phase 6a adds the **read-only projection component only**. The
-`run_observer_game` before/after profiling against the 15 s budget (Phase 6c)
-is tracked as a follow-up slice of the same umbrella and is **out of scope
-here**. Because Phase 6a adds no call to the projection from any existing
-resolution path, it is behaviour-neutral by construction.
+Phase 6a adds the **read-only projection component only**; the
+`run_observer_game` 15 s-budget profiling (Phase 6c) is a follow-up slice.
+Phase 6a is behaviour-neutral by construction (no resolution path calls it).
 
-## Scope (Phase 6b — first call-site migrations)
+## Scope (Phase 6b — call-site migrations)
 
-Phase 6b begins migrating redundant full-province owner scans to
-`ProvinceOwnerCache`. Each migrated site previously scanned **every** province
-(`allProvinces(world).where((p) => p.ownerId == playerId)`) to collect the
-caller's owned provinces; each now reads the same set from
-`ProvinceOwnerCache.of(world).provincesOwnedBy(playerId)`.
-
-Migrations in this slice are **behaviour-preserving**: every migrated site
-collects results into a `Set` (membership-only; iteration order irrelevant),
-and `provincesOwnedBy(playerId)` returns exactly the provinces whose
-`ownerId == playerId` (a non-null owner). The migrated sites are the
-owned-province fallback branches in `colonizethis_orders`:
-
-- `armyMoveCandidateDestinationProvinceIds` (`order_suggestion_army_move.dart`)
-  — fallback when no `playerOwnedFullProvinceIds` set is supplied.
-- `armyMovePickerDestinations` (`order_suggestion_army_move.dart`) — fallback
-  when neither `playerOwnedFullProvinceIds` nor a resolution snapshot is
-  supplied.
-- `rawCandidateTilesForWorkTarget` (`order_suggestion_work_tile_prefilter.dart`)
-  — fallback when no `playerOwnedProvinceIds` set is supplied.
-
-A second Phase 6b slice migrates the remaining **full-world** owner scans in
-`colonizethis_diplomacy` onto the same projection:
-
-- `provinceCountOwnedBy` (`diplomacy_relation_lookup.dart`) — previously backed
-  by a **separate** per-`Game` `ExpandoIndex` that scanned every province to
-  build an owner→count map. It now reads
-  `ProvinceOwnerCache.of(game.worldState).countOwnedBy(factionId)`, removing the
-  duplicate projection. Both count only provinces with a non-null
-  `ownerId == factionId`, so every consumer (`greatPowerPowerScore`,
-  `joinEmpireCostForMinorOrTribe`) is behaviour-preserved.
-- `_sortedFullProvinceIdsOwnedBy` (`faction_absorption_engine.dart`) — the
-  Join-Empire absorption province-transfer seed. It now derives ids from
-  `ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(ownerId)`; the result
-  is sorted, so the projection's iteration order does not affect the output.
-
-A third Phase 6b slice migrates the **highest-traffic** redundant full-world
-owner scans in `colonizethis_ai` onto the same projection. `computeWarDesireScore`
-(`war_desire_calculator.dart`) is evaluated **per (nation, target faction) pair**
-during planning, so its per-call full-province owner scans are recomputed
-quadratically in the number of factions — exactly the per-target loop the
-projection memoisation targets. The migrated scans (each previously
-`allProvinces(world).where((p) => p.ownerId == factionId)`) now read
-`ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(factionId)`:
-
-- `_resourceNeedBonus` — the target faction's owned provinces, used to collect
-  the target's tile resource ids.
-- `_invasionCapacityAdjustment` — the attacker's and the target's owned-province
-  region-id sets, used to decide whether the war requires an overseas crossing.
-
-These are behaviour-preserving: `provincesOwnedBy(factionId)` returns exactly the
-provinces whose non-null `ownerId == factionId`, identical to the pre-migration
-`where` filter (a `null` owner never equals a faction id), and every result is
-collected into a `Set` (membership only; iteration order irrelevant). The
-projection is reached through the narrow AI contract
-(`package:colonizethis_logic/ai_api.dart` re-exports `ProvinceOwnerCache` at the
-`colonizethis_world` barrel level), preserving the one-way decoupling boundary
+Phase 6b migrates redundant owner scans to `ProvinceOwnerCache`. Every
+migration is **behaviour-preserving**: the projection accessors return exactly
+the provinces whose non-null `ownerId == id` (a `null` owner never equals an
+id), and each migrated site uses the result for membership/count only
+(iteration order irrelevant or re-sorted). AI sites reach the projection
+through the narrow contract — `package:colonizethis_logic/ai_api.dart`
+re-exports `ProvinceOwnerCache`, `kRegionOldWorld`, and `kRegionNewWorld` at the
+`colonizethis_world` barrel level — preserving the one-way decoupling boundary
 (`colonizethis-logic-ai-decoupling.mdc`).
 
-Only full-region scans are migrated; per-region scans
-(`provincesForRegion(...)`) are **not** migrated to this whole-world projection
-in this slice. Migrating the remaining call sites and the Phase 6c profiling
-remain follow-up slices of the umbrella.
+**Slice 1 — `colonizethis_orders` full-world fallbacks** (each previously
+`allProvinces(world).where((p) => p.ownerId == playerId)` → `provincesOwnedBy`):
+`armyMoveCandidateDestinationProvinceIds`, `armyMovePickerDestinations`
+(`order_suggestion_army_move.dart`), and `rawCandidateTilesForWorkTarget`
+(`order_suggestion_work_tile_prefilter.dart`).
+
+**Slice 2 — `colonizethis_diplomacy` full-world scans:** `provinceCountOwnedBy`
+(`diplomacy_relation_lookup.dart`) now reads `countOwnedBy(factionId)`, dropping
+a duplicate per-`Game` `ExpandoIndex`; `_sortedFullProvinceIdsOwnedBy`
+(`faction_absorption_engine.dart`) derives its (re-sorted) seed ids from
+`provincesOwnedBy(ownerId)`.
+
+**Slice 3 — `colonizethis_ai` full-world scans** in `computeWarDesireScore`
+(`war_desire_calculator.dart`), evaluated per (nation, target faction) pair:
+`_resourceNeedBonus` and `_invasionCapacityAdjustment` read
+`provincesOwnedBy(factionId)`.
+
+**Slice 4 — `colonizethis_ai` per-region scans.** High-traffic per-region owner
+checks evaluated **per minor nation** in diplomacy/expansion planning replace
+whole-region rescans (`world.<region>.provinces.any/where((p) => p.ownerId ==
+id)`) with the per-region accessors:
+
+- `_minorOwnsOldWorldProvinces` (`diplomatic_candidate_scoring.dart`),
+  `minorsHoldOldWorldProvinces` (`diplomatic_candidate_scoring_declare_war.dart`),
+  `hasUninvadedOldWorldMinor` (`expand_phase_planner.dart`), and both minor
+  candidate gathers in `diplomacy_planner_declare_war_targets.dart` →
+  `ownsAnyInRegion(minorId, kRegionOldWorld)`.
+- `_newWorldProvinceCountOwnedBy` (`treasury_lock_recovery.dart`) →
+  `countOwnedByInRegion(playerId, kRegionNewWorld)`.
+
+Per-region accessors group by the region a province was visited in
+(`kRegionOldWorld` first, then `kRegionNewWorld`), exactly matching the migrated
+`world.oldWorld.provinces` / `world.newWorld.provinces` lists. Phase 6c
+profiling and the remaining call sites stay follow-up slices of the umbrella.
 
 ### Phase 6b acceptance criteria
 
@@ -127,6 +106,17 @@ remain follow-up slices of the umbrella.
   set equals `{p.regionId for p in ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(factionId)}`
   for the corresponding faction id, equal to the pre-migration `allProvinces`
   owner scan.
+- **Given** a `Game` whose minor `m1` owns one old-world province and minor
+  `m2` owns only new-world provinces, **when** `_minorOwnsOldWorldProvinces`
+  (and the other slice-4 old-world `.any` sites) are evaluated, **then** they
+  return `true` for `m1` and `false` for `m2`, equal to
+  `ProvinceOwnerCache.of(game.worldState).ownsAnyInRegion(id, kRegionOldWorld)`
+  and to the pre-migration `world.oldWorld.provinces.any` scan.
+- **Given** a `Game` whose player `p1` owns two new-world provinces and player
+  `p2` owns none, **when** `_newWorldProvinceCountOwnedBy` runs with no matching
+  snapshot, **then** it returns `2` for `p1` and `0` for `p2`, equal to
+  `ProvinceOwnerCache.of(game.worldState).countOwnedByInRegion(id, kRegionNewWorld)`
+  and to the pre-migration `world.newWorld.provinces` owner count.
 
 ## `ProvinceOwnerCache`
 
@@ -145,6 +135,9 @@ collections it did not build.
   provinces**, each in `RegionData.provinces` list order — matching
   `WorldStateProvinceLookup.allProvinces()`.
 - Per-owner province lists preserve that iteration order.
+- Per-region groupings (`provincesOwnedByInRegion`) are keyed by the region a
+  province was visited in (`kRegionOldWorld` / `kRegionNewWorld`) and preserve
+  that region's `RegionData.provinces` list order.
 - `ownerIds` is the set of distinct non-null owner ids in **first-seen**
   iteration order.
 - For a fixed `WorldState`, every accessor returns the same ordering and the
@@ -167,6 +160,10 @@ constructs an unmemoised instance for direct/test use.
 - `List<Province> provincesOwnedBy(String ownerId)` — unmodifiable; empty when
   the owner controls no province.
 - `int countOwnedBy(String ownerId)`.
+- `List<Province> provincesOwnedByInRegion(String ownerId, String regionId)` —
+  unmodifiable; the owner's provinces in `regionId` only, in region list order.
+- `bool ownsAnyInRegion(String ownerId, String regionId)`.
+- `int countOwnedByInRegion(String ownerId, String regionId)`.
 - `List<String> ownerIds` — unmodifiable; distinct non-null owners,
   first-seen order.
 - `List<Province> unownedProvinces` — unmodifiable; provinces with
@@ -185,6 +182,20 @@ constructs an unmemoised instance for direct/test use.
   province id not present in either region, **then** it returns `null`.
 - **Given** the same `WorldState`, **when** `countOwnedBy('p1')` and
   `countOwnedBy('p2')` are read, **then** they return `2` and `0`.
+- **Given** the same `WorldState`, **when**
+  `provincesOwnedByInRegion('p1', kRegionOldWorld)` and
+  `provincesOwnedByInRegion('p1', kRegionNewWorld)` are read, **then** they
+  return exactly `[A]` and `[C]` respectively.
+- **Given** the same `WorldState`, **when** `ownsAnyInRegion('p1', kRegionOldWorld)`,
+  `ownsAnyInRegion('p1', kRegionNewWorld)`, and `ownsAnyInRegion('p2', kRegionOldWorld)`
+  are read, **then** they return `true`, `true`, and `false`.
+- **Given** the same `WorldState`, **when**
+  `countOwnedByInRegion('p1', kRegionOldWorld)` and
+  `countOwnedByInRegion('p1', kRegionNewWorld)` are read, **then** they return
+  `1` and `1`.
+- **Given** the list returned by `provincesOwnedByInRegion('p1', kRegionOldWorld)`,
+  **when** a caller attempts to add an element, **then** the operation throws
+  `UnsupportedError` (the projection is read-only).
 - **Given** the same `WorldState`, **when** `ownerIds` is read, **then** it
   returns exactly `['p1']` (distinct, first-seen order) and excludes the
   unowned province.

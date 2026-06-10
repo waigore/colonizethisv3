@@ -169,7 +169,9 @@ List<int> computeDiplomaticCandidateScores({
 }
 
 bool _minorOwnsOldWorldProvinces(Game game, String minorId) =>
-    game.worldState.oldWorld.provinces.any((p) => p.ownerId == minorId);
+    ProvinceOwnerCache.of(
+      game.worldState,
+    ).ownsAnyInRegion(minorId, kRegionOldWorld);
 
 Set<String> _activeOldWorldMinorConflictIds({
   required Game game,

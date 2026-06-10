@@ -30,6 +30,8 @@ export 'package:colonizethis_world/colonizethis_world.dart'
         buildPlayerView,
         homeArmyIdFor,
         isAiControlled,
+        kRegionNewWorld,
+        kRegionOldWorld,
         neighborProvinceIdsInRegion,
         regimentTypeCountsForPlayer,
         shipTypeCountsForPlayer,
