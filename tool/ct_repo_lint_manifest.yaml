@@ -502,10 +502,17 @@ rules:
 
   - rule_id: repo.orders_dedup_map_clones
     group: architecture
-    title: Orders module stockpile-quantities clones must use Stockpile.copyQuantities()
+    title: Orders module map clones must use Stockpile.copyQuantities() / copyUnitsById()
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_dedup_map_clones.dart
+
+  - rule_id: repo.orders_file_size
+    group: structure
+    title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_file_size.dart
 
   - rule_id: repo.app_ct_loading_indicator
     group: ui_structure

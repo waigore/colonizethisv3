@@ -35,31 +35,20 @@ class WorkOrderExecutionContext {
   int treasury;
   Map<String, String> purchasedTilesByTileKey;
 
-  Unit? lookupUnit(String unitId) =>
-      state.work.oldUnitsById[unitId] ?? state.work.newUnitsById[unitId];
+  Unit? lookupUnit(String unitId) => state.work.unitById(unitId);
 
   void updateUnit(String unitId, Unit updated) {
-    if (state.work.oldUnitsById.containsKey(unitId)) {
-      state = state.copyWith(
-        work: state.work.copyWith(
-          oldUnitsById: Map<String, Unit>.from(state.work.oldUnitsById)
-            ..[unitId] = updated,
-        ),
-      );
-    } else {
-      state = state.copyWith(
-        work: state.work.copyWith(
-          newUnitsById: Map<String, Unit>.from(state.work.newUnitsById)
-            ..[unitId] = updated,
-        ),
-      );
-    }
+    final oldWorld = state.work.unitsById.oldWorld.containsKey(unitId);
+    state = state.copyWith(
+      work: state.work.withUnitsByIdForRegion(
+        oldWorld,
+        copyUnitsById(state.work.unitsByIdForRegion(oldWorld))
+          ..[unitId] = updated,
+      ),
+    );
   }
 
-  String regionForUnit(String unitId) =>
-      state.work.oldUnitsById.containsKey(unitId)
-      ? kRegionOldWorld
-      : kRegionNewWorld;
+  String regionForUnit(String unitId) => state.work.regionIdForUnitId(unitId);
 
   /// Cached cross-region province map (Refs #2836 item 4).
   Map<String, Province> get provincesById =>

@@ -5,6 +5,7 @@ import 'order_effects_projector.dart';
 export 'order_effects_projector.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'order_resolution_context.dart';
+import 'orders_application_context.dart' show copyUnitsById;
 import 'orders_logging.dart';
 export 'order_validation_result.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -228,7 +229,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
     final tradeOrders = _orders.tradeOrdersByPlayerId[playerId] ?? [];
 
-    final unitsById = Map<String, Unit>.from(game.worldState.allUnitsById);
+    final unitsById = copyUnitsById(game.worldState.allUnitsById);
 
     // Single per-pass [OrderResolutionContext] snapshot shared across every
     // validator factory invocation and per-phase probe (Refs #2836 AC 3;
