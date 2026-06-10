@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolution_result.dart';

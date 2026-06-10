@@ -47,6 +47,29 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 - **Given** the `packages/colonizethis_logic/lib/ai_api.dart` file is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports `Missing AI contract file`.
 - **Given** a domain referenced by an `ai_api.dart` deep export whose barrel file `lib/<domain>.dart` is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports the missing barrel.
 
+## Enforcement: `repo.domain_package_barrel_import` (Phase 1)
+
+`tool/check_domain_package_barrel_import.dart` (rule `repo.domain_package_barrel_import`) enforces the "consume siblings through barrels" principle for **deep `import` directives** between split domain packages, complementing the `ai_api.dart`-scoped Phase 3 rule.
+
+Scope and predicate:
+
+- The rule carries an explicit set of enforced **consumer → target** boundaries. It starts at `turn → {economy, diplomacy}` — the boundaries migrated by the Phase 1 lead slice — and grows as later Phase 1 slices migrate `combat`, `orders`, and `world` deep imports. Boundaries not yet migrated are intentionally **not** enforced so the rule stays green while Phase 1 lands incrementally.
+- For each enforced target, the rule resolves the target domain barrel's transitive `export` closure (following `package:` and relative `export` directives within that package's `lib/`) to the set of published `lib/src/...` files.
+- For each enforced consumer, it scans `lib/**` (excluding generated `*.g.dart` / `*.freezed.dart` / `*.mocks.dart`). An `import 'package:colonizethis_<target>/src/<file>'` directive is a **violation** when `<file>` is in that target's published closure.
+- Granularity is **per file** (matching the issue's "files the barrel does not publish at all" carve-out): deep imports of files the barrel omits remain allowed until a later slice promotes them into the barrel.
+- Only `import` directives are scanned. A deliberate narrow deep `export` re-export of a single internal file (for example `turn_resolution_result.dart` re-exporting `diplomacy/diplomacy_phase_result.dart` to preserve a narrow consumer surface) is out of scope.
+
+The predicate is derived purely from live barrel contents; the rule loads **no keyed waiver / allowlist data** (`SPEC/program/repo-lint.md` § Policy: no violation allowlists). The rule is registered in `tool/ct_repo_lint_manifest.yaml`; the repository test `test/check_domain_package_barrel_import_test.dart` asserts the real workspace stays green and exercises positive/negative fixtures.
+
+### Acceptance criteria (`repo.domain_package_barrel_import`)
+
+- **Given** the post-Phase-1-lead-slice `colonizethis_turn` package on `dev`, **when** `repo.domain_package_barrel_import` resolves the `economy` and `diplomacy` barrel export closures, **then** no `import 'package:colonizethis_economy/src/<file>'` or `import 'package:colonizethis_diplomacy/src/<file>'` directive in `colonizethis_turn/lib/**` targets a file published by that barrel and the rule exits `0`.
+- **Given** a `colonizethis_turn` lib file that imports `package:colonizethis_economy/src/economy/economy_production.dart` while the `colonizethis_economy` barrel already re-exports that file, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** it returns exit code `1` and lists the offending file with a "use import 'package:colonizethis_economy/colonizethis_economy.dart'" message.
+- **Given** a `colonizethis_turn` lib file that deep-imports a target file the owning barrel does **not** publish, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** that directive is not flagged (no barrel alternative exists).
+- **Given** a `colonizethis_turn` lib file with a deliberate narrow deep `export` (not `import`) of an enforced-target file, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** that directive is not flagged.
+- **Given** a generated file (`*.g.dart`) containing a bypassing deep import, **when** `runCheckDomainPackageBarrelImport` scans the workspace, **then** that file is skipped and not flagged.
+- **Given** an enforced consumer package whose `lib/` tree is missing, **when** `runCheckDomainPackageBarrelImport` runs, **then** it returns exit code `1`.
+
 ## Cross-cutting
 
 - The broad `colonizethis_logic.dart` barrel continues to re-export the full domain barrels for `app/`, `ctdev/`, and package tests; narrowing `ai_api.dart` does not change that surface.

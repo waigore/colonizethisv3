@@ -29,8 +29,7 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart' show GamePlayerLookup;
-import 'package:colonizethis_economy/src/economy/projected_cost_engine.dart';
-import 'package:colonizethis_economy/src/economy/worker_action_cost.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'research_rules.dart';
 
 /// Total treasury debits expected for [playerId] on the current turn

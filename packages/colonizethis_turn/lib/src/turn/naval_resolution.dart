@@ -4,9 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_combat/src/combat/naval_combat_resolver.dart';
 import '../constants.dart';
-import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
-import 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';
-import 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
 import 'package:colonizethis_world/src/game_events.dart';
 import 'turn_resolution_seeds.dart';

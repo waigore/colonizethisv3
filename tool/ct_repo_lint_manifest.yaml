@@ -413,6 +413,13 @@ rules:
     runner: dart
     script: tool/check_domain_package_import_dag.dart
 
+  - rule_id: repo.domain_package_barrel_import
+    group: architecture
+    title: split domain packages must import sibling packages via their barrel, not barrel-bypassing deep src/ paths (Refs #3393 Phase 1)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_domain_package_barrel_import.dart
+
   - rule_id: repo.domain_package_test_file_size
     group: structure
     title: split domain-package test files must stay at or below 400 physical lines (Refs #3290)

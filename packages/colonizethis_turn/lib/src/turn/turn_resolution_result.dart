@@ -17,7 +17,7 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_phase_result.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
 export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_phase_result.dart';
 
