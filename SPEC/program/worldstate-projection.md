@@ -63,6 +63,29 @@ A second Phase 6b slice migrates the remaining **full-world** owner scans in
   `ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(ownerId)`; the result
   is sorted, so the projection's iteration order does not affect the output.
 
+A third Phase 6b slice migrates the **highest-traffic** redundant full-world
+owner scans in `colonizethis_ai` onto the same projection. `computeWarDesireScore`
+(`war_desire_calculator.dart`) is evaluated **per (nation, target faction) pair**
+during planning, so its per-call full-province owner scans are recomputed
+quadratically in the number of factions — exactly the per-target loop the
+projection memoisation targets. The migrated scans (each previously
+`allProvinces(world).where((p) => p.ownerId == factionId)`) now read
+`ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(factionId)`:
+
+- `_resourceNeedBonus` — the target faction's owned provinces, used to collect
+  the target's tile resource ids.
+- `_invasionCapacityAdjustment` — the attacker's and the target's owned-province
+  region-id sets, used to decide whether the war requires an overseas crossing.
+
+These are behaviour-preserving: `provincesOwnedBy(factionId)` returns exactly the
+provinces whose non-null `ownerId == factionId`, identical to the pre-migration
+`where` filter (a `null` owner never equals a faction id), and every result is
+collected into a `Set` (membership only; iteration order irrelevant). The
+projection is reached through the narrow AI contract
+(`package:colonizethis_logic/ai_api.dart` re-exports `ProvinceOwnerCache` at the
+`colonizethis_world` barrel level), preserving the one-way decoupling boundary
+(`colonizethis-logic-ai-decoupling.mdc`).
+
 Only full-region scans are migrated; per-region scans
 (`provincesForRegion(...)`) are **not** migrated to this whole-world projection
 in this slice. Migrating the remaining call sites and the Phase 6c profiling
@@ -92,6 +115,18 @@ remain follow-up slices of the umbrella.
   the absorption seed `_sortedFullProvinceIdsOwnedBy(game, 'm1')` is computed,
   **then** it returns `['newWorld|a', 'oldWorld|b']` (ascending id order),
   equal to the pre-migration `allProvinces` owner scan.
+- **Given** a `Game` with attacker great power `gp1` and a minor target `m1`
+  that owns one or more provinces hosting resource tiles, **when**
+  `computeWarDesireScore(game, nationId: 'gp1', targetFactionId: 'm1', ...)` is
+  evaluated, **then** the returned score equals the score produced when the
+  underlying owned-province collection is taken from
+  `ProvinceOwnerCache.of(game.worldState).provincesOwnedBy('m1')` rather than an
+  `allProvinces` owner scan (behaviour-preserving migration).
+- **Given** the same `Game`, **when** the attacker's and target's owned-province
+  region-id sets are derived inside `_invasionCapacityAdjustment`, **then** each
+  set equals `{p.regionId for p in ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(factionId)}`
+  for the corresponding faction id, equal to the pre-migration `allProvinces`
+  owner scan.
 
 ## `ProvinceOwnerCache`
 
