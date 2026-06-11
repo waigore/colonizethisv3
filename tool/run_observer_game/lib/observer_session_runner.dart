@@ -71,6 +71,14 @@ Future<int> runObserverSession({
   var resolvedCount = 0;
   var terminationReason = 'unknown';
 
+  // Per-resolved-turn wall-clock for the turn-processing segment
+  // (`generateOrdersForGameFullAI` through `validateOrdersAndResolveTurnFrom
+  // TrustedOrders` returning `TurnResolutionComplete`). Trace export, snapshot/
+  // HTML writes, and `run-summary.json` I/O are excluded per
+  // SPEC/program/run_observer_game-tool.md § Turn processing wall-clock budget.
+  final turnProcessingMsByTurn = <int>[];
+  final overBudgetTurnNumbers = <int>[];
+
   Future<void> writeTraceArtifact(
     String gameId,
     String relativeName,
@@ -114,6 +122,10 @@ Future<int> runObserverSession({
 
       final before = game;
 
+      // Measures the same segment as the app next-turn worker; excludes trace
+      // export and artifact I/O (stopped before any write below).
+      final turnProcessingStopwatch = Stopwatch()..start();
+
       final fullAi = generateOrdersForGameFullAI(
         before,
         init.combinedTopology,
@@ -149,6 +161,7 @@ Future<int> runObserverSession({
           defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
           onProductionComplete: captureProductionComplete,
         );
+        turnProcessingStopwatch.stop();
       } else {
         final phaseTraces = <TurnTracePhaseTrace>[];
         final traceStartedAt = DateTime.now().toUtc();
@@ -164,6 +177,7 @@ Future<int> runObserverSession({
           onTurnTracePhase: phaseTraces.add,
           turnTraceRuntime: traceRuntime,
         );
+        turnProcessingStopwatch.stop();
 
         if (result is TurnResolutionComplete) {
           final nowUtc = DateTime.now().toUtc();
@@ -199,6 +213,22 @@ Future<int> runObserverSession({
 
       final postTurn = game.worldState.turnState.turnNumber;
       final turnLabel = postTurn.toString().padLeft(6, '0');
+
+      final turnProcessingMs = turnProcessingStopwatch.elapsedMilliseconds;
+      final overBudget = turnProcessingMs > kTurnProcessingWallClockBudgetMs;
+      turnProcessingMsByTurn.add(turnProcessingMs);
+      if (overBudget) {
+        overBudgetTurnNumbers.add(postTurn);
+        _sessionLog.w(
+          'observer:turn_processing_over_budget turn=$postTurn '
+          'ms=$turnProcessingMs budgetMs=$kTurnProcessingWallClockBudgetMs',
+        );
+      } else {
+        _sessionLog.i(
+          'observer:turn_processing turn=$postTurn ms=$turnProcessingMs '
+          'budgetMs=$kTurnProcessingWallClockBudgetMs overBudget=false',
+        );
+      }
 
       final writeSnapshot = requiredSnapshotTurns == null ||
           requiredSnapshotTurns.contains(postTurn);
@@ -249,8 +279,12 @@ Future<int> runObserverSession({
       ? game.victory!.winnerPlayerId
       : pickUniqueGreatPowerLeaderByPowerScore(game);
 
+  final maxTurnProcessingMs = turnProcessingMsByTurn.isEmpty
+      ? 0
+      : turnProcessingMsByTurn.reduce((a, b) => a > b ? a : b);
+
   final summary = <String, Object?>{
-    'runSummarySchemaVersion': 1,
+    'runSummarySchemaVersion': 2,
     'termination_reason': terminationReason,
     'declared_winner_player_id': winnerId,
     'final_turn_number': game.worldState.turnState.turnNumber,
@@ -258,6 +292,13 @@ Future<int> runObserverSession({
     'seed': setupConfig.seed,
     'game_id': game.id,
     'observer_traces_relative': 'observer-traces/${game.id}',
+    'turn_processing_wall_clock_budget_ms': kTurnProcessingWallClockBudgetMs,
+    'turn_processing_wall_clock_ms_by_turn':
+        List<int>.unmodifiable(turnProcessingMsByTurn),
+    'max_turn_processing_wall_clock_ms': maxTurnProcessingMs,
+    'turns_over_wall_clock_budget': overBudgetTurnNumbers.length,
+    'over_wall_clock_budget_turn_numbers':
+        List<int>.unmodifiable(overBudgetTurnNumbers),
     if (minimalTraceMode) 'minimal_trace_mode': true,
   };
 

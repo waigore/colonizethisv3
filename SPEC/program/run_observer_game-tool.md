@@ -77,6 +77,13 @@ HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed
 
 ## Turn processing wall-clock budget (Refs #2507)
 
+### Per-turn measurement, logging, and summary (Refs #3393 Phase 6c)
+
+A single `Stopwatch` wraps the budget segment per resolved turn in **both** full-trace and minimal-trace modes; it starts immediately before `generateOrdersForGameFullAI` and stops immediately after `validateOrdersAndResolveTurnFromTrustedOrders` returns, **before** any trace export, snapshot/HTML write, or `run-summary.json` I/O.
+
+- **Logging signal (`session` sub-prefix):** Each resolved turn emits exactly one timing line. At or under budget → **info** `observer:turn_processing turn=<n> ms=<int> budgetMs=15000 overBudget=false`. Over budget (`ms > kTurnProcessingWallClockBudgetMs`) → **warning** `observer:turn_processing_over_budget turn=<n> ms=<int> budgetMs=15000`. These are grep-stable tokens for budget-regression triage and complement the per-phase `logic` logs in [logging/turn-resolution.md](logging/turn-resolution.md).
+- **`run-summary.json` fields (`runSummarySchemaVersion: 2`):** the summary additionally carries `turn_processing_wall_clock_budget_ms` (the `15000` ceiling), `turn_processing_wall_clock_ms_by_turn` (one entry per resolved turn, in resolution order), `max_turn_processing_wall_clock_ms`, `turns_over_wall_clock_budget` (count), and `over_wall_clock_budget_turn_numbers` (post-resolution turn numbers that breached the ceiling). For a zero-turn run (`--max-turns 0`) the list is empty and `max_turn_processing_wall_clock_ms` is `0`.
+
 Each **resolved turn** in the session loop measures the same segment as the app next-turn worker: **`generateOrdersForGameFullAI`** through **`validateOrdersAndResolveTurnFromTrustedOrders`** returning **`TurnResolutionComplete`**. That segment shares the **15 000 ms** ceiling **`kTurnProcessingWallClockBudgetMs`** ([turn-resolution.md](turn-resolution.md) § Turn processing wall-clock budget). **Excluded:** `runInitGame`, trace export, snapshot/HTML writes, and `run-summary.json` I/O. Nightly observer runs are integration targets; the **quality** gate enforces the budget via `colonizethis_ai` perf test on **turn 1** of **`GameSetupConfig.defaultConfig`**.
 
 ## Relationship to app / ctdev
@@ -114,3 +121,6 @@ CI: **≥ 80% line coverage on `tool/run_observer_game/lib/`** (`quality` workfl
 
 - Given `melos run run_observer_game -- --help`, when the command completes, then exit code is **0** and stdout describes options and artifact layout at a high level.
 - Given a successful multi-turn run (**S4+**), when outputs are written, then layout matches § Artifact layout and summary matches **#2498** ACs.
+- Given a successful run that resolves **N ≥ 1** turns, when `run-summary.json` is written, then `runSummarySchemaVersion` is `2`, `turn_processing_wall_clock_ms_by_turn` is a list of exactly **N** non-negative integers, `turn_processing_wall_clock_budget_ms` equals `kTurnProcessingWallClockBudgetMs` (`15000`), and `max_turn_processing_wall_clock_ms` equals the maximum of that list.
+- Given a run with `--max-turns 0`, when `run-summary.json` is written, then `turn_processing_wall_clock_ms_by_turn` is an empty list, `max_turn_processing_wall_clock_ms` is `0`, and `turns_over_wall_clock_budget` is `0`.
+- Given a resolved turn whose measured segment is at or under `15000` ms, when the turn completes, then the `session` logger emits exactly one **info** line containing `observer:turn_processing turn=<n>` with `overBudget=false`; given a resolved turn whose segment exceeds `15000` ms, then the `session` logger instead emits a **warning** line containing `observer:turn_processing_over_budget turn=<n>` and the turn number is appended to `over_wall_clock_budget_turn_numbers` in `run-summary.json`.
