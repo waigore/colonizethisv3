@@ -277,8 +277,10 @@ void main() {
             choice: InterventionChoice.protest,
           ),
         ],
-        topology: const MapTopology(),
-        orders: orders,
+        config: TurnResolverConfig(
+          topology: const MapTopology(),
+          orders: orders,
+        ),
       );
       expect(complete, isA<TurnResolutionComplete>());
       final rel = getRelation((complete as TurnResolutionComplete).game, 'gp1', 'gp2');

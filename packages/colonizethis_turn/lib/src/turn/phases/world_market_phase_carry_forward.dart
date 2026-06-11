@@ -60,7 +60,7 @@ CarryForwardValidationResult validateCarryForwards({
     if (orders.isEmpty) continue;
     final stockpile = stockpileByFactionId[factionId];
     if (stockpile == null) {
-      validOffers[factionId] = List<TradeOrder>.from(orders);
+      validOffers[factionId] = orders;
       continue;
     }
     final cumulativeByCommodity = <CommodityId, int>{};
@@ -92,7 +92,7 @@ CarryForwardValidationResult validateCarryForwards({
     if (orders.isEmpty) continue;
     final capacity = tradeCapacityByFactionId[factionId];
     if (capacity == null) {
-      validBids[factionId] = List<TradeOrder>.from(orders);
+      validBids[factionId] = orders;
       continue;
     }
     int cumulative = 0;

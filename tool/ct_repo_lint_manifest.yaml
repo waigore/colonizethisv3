@@ -270,6 +270,13 @@ rules:
     runner: dart
     script: tool/check_turn_no_part_directives.dart
 
+  - rule_id: repo.turn_resume_param_budget
+    group: structure
+    title: colonizethis_turn resume entry points must forward TurnResolverConfig (param budget, Refs #3416)
+    spec: SPEC/program/turn-resume-config-dispatch.md
+    runner: dart
+    script: tool/check_turn_resume_param_budget.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)

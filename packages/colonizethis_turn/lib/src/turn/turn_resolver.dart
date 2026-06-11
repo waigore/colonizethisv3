@@ -313,186 +313,95 @@ String _pendingTurnResolutionMessage(TurnResolutionResult result) {
   };
 }
 
-/// Resumes turn resolution after the app has collected overture accept/reject decisions
-/// from the human target(s). Call with the [game] and [pendingOvertures] from
-/// [TurnResolutionPendingOvertures], and the [decisions] from the user. Other parameters
-/// must match those used for the original resolveTurnForGame call (orders, topology, etc.).
+/// Resumes turn resolution after the app has collected overture accept/reject
+/// decisions from the human target(s). Call with the [game] and
+/// [pendingOvertures] from [TurnResolutionPendingOvertures], the [decisions]
+/// from the user, and the [config] that matches the original
+/// [resolveTurnForGameWithConfig] call (orders, topology, etc.). The resume
+/// entry points re-enter resolution at [TurnPhase.diplomacy] (Refs #3416,
+/// `SPEC/program/turn-resume-config-dispatch.md`).
 TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
   required Game game,
   required List<OvertureOffer> pendingOvertures,
   required List<OvertureDecision> decisions,
-  required MapTopology topology,
-  required Orders orders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-  onProductionComplete,
+  required TurnResolverConfig config,
 }) {
   return _resumeTurnResolutionWithDiplomacyDecisions(
     game: game,
-    topology: topology,
-    orders: orders,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
-    onProductionComplete: onProductionComplete,
+    config: config,
     overtureDecisions: decisions,
   );
 }
 
-/// Resumes turn resolution after human FTP accept/reject decisions (Diplomacy phase).
+/// Resumes turn resolution after human FTP accept/reject decisions (Diplomacy
+/// phase). [config] must match the original resolve call. See
+/// [resumeTurnResolutionWithOvertureDecisions].
 TurnResolutionResult resumeTurnResolutionWithFtpDecisions({
   required Game game,
   required List<FtpDecision> decisions,
-  required MapTopology topology,
-  required Orders orders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-  onProductionComplete,
+  required TurnResolverConfig config,
 }) {
   return _resumeTurnResolutionWithDiplomacyDecisions(
     game: game,
-    topology: topology,
-    orders: orders,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
-    onProductionComplete: onProductionComplete,
+    config: config,
     ftpDecisions: decisions,
   );
 }
 
 /// Resumes turn resolution after human intervention choices (Diplomacy phase).
+/// [config] must match the original resolve call. See
+/// [resumeTurnResolutionWithOvertureDecisions].
 TurnResolutionResult resumeTurnResolutionWithInterventionDecisions({
   required Game game,
   required List<InterventionDecision> decisions,
-  required MapTopology topology,
-  required Orders orders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-  onProductionComplete,
+  required TurnResolverConfig config,
 }) {
   return _resumeTurnResolutionWithDiplomacyDecisions(
     game: game,
-    topology: topology,
-    orders: orders,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
-    onProductionComplete: onProductionComplete,
+    config: config,
     interventionDecisions: decisions,
   );
 }
 
 /// Resumes turn resolution after human ally(ies) responded to call to arms.
+/// [config] must match the original resolve call. See
+/// [resumeTurnResolutionWithOvertureDecisions].
 TurnResolutionResult resumeTurnResolutionWithCallToArmsDecisions({
   required Game game,
   required List<CallToArmsDecision> decisions,
-  required MapTopology topology,
-  required Orders orders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-  onProductionComplete,
+  required TurnResolverConfig config,
 }) {
   return _resumeTurnResolutionWithDiplomacyDecisions(
     game: game,
-    topology: topology,
-    orders: orders,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
-    onProductionComplete: onProductionComplete,
+    config: config,
     callToArmsDecisions: decisions,
   );
 }
 
 /// Shared dispatch for the Diplomacy-phase resume entry points. All re-enter
-/// [resolveTurnForGame] at [TurnPhase.diplomacy] with identical parameter
-/// forwarding, differing only in which decision list they carry, so a new
-/// [resolveTurnForGame] parameter is threaded through once here.
+/// [resolveTurnForGameWithConfig] at [TurnPhase.diplomacy] using the supplied
+/// [config], overriding only [TurnResolverConfig.startFromPhase] and the one
+/// decision list each wrapper carries. Threading a single [TurnResolverConfig]
+/// (instead of every individual resolver parameter) keeps the resume entry
+/// points free of duplicated parameter lists: a new resolver parameter is added
+/// to [TurnResolverConfig] once and flows through here automatically (Refs
+/// #3416, `SPEC/program/turn-resume-config-dispatch.md`).
 TurnResolutionResult _resumeTurnResolutionWithDiplomacyDecisions({
   required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-  onProductionComplete,
+  required TurnResolverConfig config,
   List<OvertureDecision>? overtureDecisions,
   List<FtpDecision>? ftpDecisions,
   List<InterventionDecision>? interventionDecisions,
   List<CallToArmsDecision>? callToArmsDecisions,
 }) {
-  return resolveTurnForGame(
+  return resolveTurnForGameWithConfig(
     game: game,
-    topology: topology,
-    orders: orders,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
-    onProductionComplete: onProductionComplete,
-    startFromPhase: TurnPhase.diplomacy,
-    overtureDecisions: overtureDecisions,
-    ftpDecisions: ftpDecisions,
-    interventionDecisions: interventionDecisions,
-    callToArmsDecisions: callToArmsDecisions,
+    config: config.copyWith(
+      startFromPhase: TurnPhase.diplomacy,
+      overtureDecisions: overtureDecisions,
+      ftpDecisions: ftpDecisions,
+      interventionDecisions: interventionDecisions,
+      callToArmsDecisions: callToArmsDecisions,
+    ),
   );
 }

@@ -629,6 +629,13 @@ class ScenarioRunner {
       defaultAssignments: defaultAssignments,
     );
 
+    final resumeConfig = TurnResolverConfig(
+      topology: topology,
+      orders: orderEngine.orders,
+      tileMapByRegion: context.tileMapByRegion,
+      defaultAssignments: defaultAssignments,
+    );
+
     while (true) {
       if (result is TurnResolutionComplete) {
         return result.game;
@@ -659,10 +666,7 @@ class ScenarioRunner {
           game: result.game,
           pendingOvertures: result.pendingOvertures,
           decisions: logicDecisions,
-          topology: topology,
-          orders: orderEngine.orders,
-          tileMapByRegion: context.tileMapByRegion,
-          defaultAssignments: defaultAssignments,
+          config: resumeConfig,
         );
         continue;
       }
@@ -687,10 +691,7 @@ class ScenarioRunner {
         result = resumeTurnResolutionWithCallToArmsDecisions(
           game: result.game,
           decisions: logicDecisions,
-          topology: topology,
-          orders: orderEngine.orders,
-          tileMapByRegion: context.tileMapByRegion,
-          defaultAssignments: defaultAssignments,
+          config: resumeConfig,
         );
         continue;
       }
