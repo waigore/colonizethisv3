@@ -142,165 +142,92 @@ int? _overtureCostForStage(OvertureStage stage) {
   return (accepted: _aiGpAccepts(state, gpId, targetId), pending: null);
 }
 
-({
+/// Result of processing one establish-overture order: the (possibly updated)
+/// rolling state, or an [earlyExit] when the phase must suspend for human input.
+typedef _OvertureOrderStep = ({
   List<Player> players,
   List<OvertureState> overtures,
   Game state,
   Player player,
   OverturePaymentsResult? earlyExit,
-})
-_processEstablishOvertureOrderIfApplicable({
+});
+
+/// Validated, applicable establish-overture order: the resolved stage, target
+/// classification, and stage cost. Null when the order is not applicable (no
+/// state change), letting [_processEstablishOvertureOrderIfApplicable] skip it.
+typedef _ValidatedOverture = ({
+  OvertureStage stage,
+  bool targetIsMinorOrTribe,
+  bool targetIsGp,
+  int cost,
+});
+
+/// Validates an establish-overture [order] against stage progression, target
+/// membership, war state, tech prerequisites, and affordability.
+///
+/// Returns null when the order should be skipped without changing state;
+/// otherwise the resolved stage/target/cost for acceptance resolution.
+_ValidatedOverture? _validateEstablishOvertureOrder({
   required Game state,
-  required List<Player> players,
-  required List<OvertureState> overtures,
-  required int playerIdx,
   required Player player,
   required String gpId,
   required DiplomaticOrder order,
-  required int turn,
+  required List<OvertureState> overtures,
   required DiplomacyFactionMembership factionMembership,
-  List<OvertureDecision>? overtureDecisions,
-  IntraTurnEventTally? eventTally,
 }) {
-  if (order.type != DiplomaticOrderType.establishOverture) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
-  }
+  if (order.type != DiplomaticOrderType.establishOverture) return null;
   final stage = order.overtureStage;
-  if (stage == null || stage == OvertureStage.none) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
-  }
+  if (stage == null || stage == OvertureStage.none) return null;
 
   final targetId = order.targetFactionId;
   final targetIsMinorOrTribe = factionMembership.isMinorOrTribe(targetId);
   final targetIsGp = factionMembership.isGreatPower(targetId);
-  if (!targetIsMinorOrTribe && !targetIsGp) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
-  }
+  if (!targetIsMinorOrTribe && !targetIsGp) return null;
 
   final rel = getRelation(state, gpId, targetId);
-  if (rel != null && rel.atWar) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
-  }
+  if (rel != null && rel.atWar) return null;
 
   final existing = _findOvertureForGpTarget(overtures, gpId, targetId);
   final prevStage = stage.previous;
   final atPrevStage =
       (existing == null && prevStage == OvertureStage.none) ||
       (existing != null && existing.stage == prevStage);
-  if (!atPrevStage) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
-  }
+  if (!atPrevStage) return null;
 
   if (targetIsMinorOrTribe &&
       (stage == OvertureStage.tradeConsulate ||
           stage == OvertureStage.embassy ||
           stage == OvertureStage.nap) &&
       player.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
+    return null;
   }
 
   final cost = _overtureCostForStage(stage);
-  if (cost == null) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
-  }
+  if (cost == null) return null;
+  if (player.treasury < cost && cost > 0) return null;
 
-  if (player.treasury < cost && cost > 0) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: null,
-    );
-  }
-
-  final resolution = _resolveOvertureAcceptance(
-    state: state,
-    gpId: gpId,
-    targetId: targetId,
+  return (
     stage: stage,
     targetIsMinorOrTribe: targetIsMinorOrTribe,
-    players: players,
-    overtures: overtures,
-    overtureDecisions: overtureDecisions,
+    targetIsGp: targetIsGp,
+    cost: cost,
   );
-  if (resolution.pending != null) {
-    return (
-      players: players,
-      overtures: overtures,
-      state: state,
-      player: player,
-      earlyExit: resolution.pending,
-    );
-  }
-  final accepted = resolution.accepted;
+}
 
-  if (!accepted) {
-    var nextState = state;
-    if (targetIsGp) {
-      nextState = appendDiplomaticEvent(
-        nextState,
-        turn,
-        DiplomaticEventType.overtureRejected,
-        {gpId, targetId},
-        fromFactionId: gpId,
-        toFactionId: targetId,
-        overtureStage: stage,
-        wasAiInitiator: isAiControlledForEvidence(nextState, gpId),
-        eventTally: eventTally,
-      );
-    }
-    return (
-      players: players,
-      overtures: overtures,
-      state: nextState,
-      player: player,
-      earlyExit: null,
-    );
-  }
-
+/// Applies an accepted overture: debits the offerer, upserts the overture stage,
+/// records the acceptance event, and returns the advanced step.
+_OvertureOrderStep _applyAcceptedOverture({
+  required Game state,
+  required List<Player> players,
+  required List<OvertureState> overtures,
+  required int playerIdx,
+  required String gpId,
+  required String targetId,
+  required OvertureStage stage,
+  required int cost,
+  required int turn,
+  IntraTurnEventTally? eventTally,
+}) {
   final nextPlayers = debitPlayerTreasury(players, playerIdx, cost);
   final nextPlayer = nextPlayers[playerIdx];
 
@@ -347,6 +274,94 @@ _processEstablishOvertureOrderIfApplicable({
     state: nextState,
     player: nextPlayer,
     earlyExit: null,
+  );
+}
+
+_OvertureOrderStep _processEstablishOvertureOrderIfApplicable({
+  required Game state,
+  required List<Player> players,
+  required List<OvertureState> overtures,
+  required int playerIdx,
+  required Player player,
+  required String gpId,
+  required DiplomaticOrder order,
+  required int turn,
+  required DiplomacyFactionMembership factionMembership,
+  List<OvertureDecision>? overtureDecisions,
+  IntraTurnEventTally? eventTally,
+}) {
+  final unchanged = (
+    players: players,
+    overtures: overtures,
+    state: state,
+    player: player,
+    earlyExit: null,
+  );
+
+  final validated = _validateEstablishOvertureOrder(
+    state: state,
+    player: player,
+    gpId: gpId,
+    order: order,
+    overtures: overtures,
+    factionMembership: factionMembership,
+  );
+  if (validated == null) return unchanged;
+
+  final targetId = order.targetFactionId;
+  final resolution = _resolveOvertureAcceptance(
+    state: state,
+    gpId: gpId,
+    targetId: targetId,
+    stage: validated.stage,
+    targetIsMinorOrTribe: validated.targetIsMinorOrTribe,
+    players: players,
+    overtures: overtures,
+    overtureDecisions: overtureDecisions,
+  );
+  if (resolution.pending != null) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: resolution.pending,
+    );
+  }
+
+  if (!resolution.accepted) {
+    if (!validated.targetIsGp) return unchanged;
+    final nextState = appendDiplomaticEvent(
+      state,
+      turn,
+      DiplomaticEventType.overtureRejected,
+      {gpId, targetId},
+      fromFactionId: gpId,
+      toFactionId: targetId,
+      overtureStage: validated.stage,
+      wasAiInitiator: isAiControlledForEvidence(state, gpId),
+      eventTally: eventTally,
+    );
+    return (
+      players: players,
+      overtures: overtures,
+      state: nextState,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  return _applyAcceptedOverture(
+    state: state,
+    players: players,
+    overtures: overtures,
+    playerIdx: playerIdx,
+    gpId: gpId,
+    targetId: targetId,
+    stage: validated.stage,
+    cost: validated.cost,
+    turn: turn,
+    eventTally: eventTally,
   );
 }
 

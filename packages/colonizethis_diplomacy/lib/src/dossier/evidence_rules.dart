@@ -13,6 +13,19 @@ List<String> _humanObserverIds(Game game) {
   return game.players.where((p) => p.isHuman).map((p) => p.id).toList();
 }
 
+/// Returns the human observer ids for which evidence about [subjectId] should
+/// be recorded, or null when no evidence applies.
+///
+/// Consolidates the AI-subject + at-least-one-human-observer guard repeated at
+/// the top of every `evidenceFor*` rule (Refs #3419): evidence is recorded only
+/// when [subjectId] is AI-controlled and at least one human observer exists.
+List<String>? _evidenceObservers(Game game, String subjectId) {
+  if (!isAiControlledForEvidence(game, subjectId)) return null;
+  final observers = _humanObserverIds(game);
+  if (observers.isEmpty) return null;
+  return observers;
+}
+
 /// True if [playerId] is AI-controlled (evidence/dialogue only for AI subjects).
 /// Named to avoid export clash with ai_planner.isAiControlled.
 bool isAiControlledForEvidence(Game game, String playerId) {
@@ -60,9 +73,8 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   String targetFactionId,
   int turnNumber,
 ) {
-  if (!isAiControlledForEvidence(game, actorGpId)) return [];
-  final observers = _humanObserverIds(game);
-  if (observers.isEmpty) return [];
+  final observers = _evidenceObservers(game, actorGpId);
+  if (observers == null) return [];
 
   final rel = getRelation(game, actorGpId, targetFactionId);
   final wasAllied = rel != null && rel.level == RelationLevel.allied;
@@ -131,9 +143,8 @@ List<DossierEvidenceEntry> evidenceForOfferPeace(
   String targetFactionId,
   int turnNumber,
 ) {
-  if (!isAiControlledForEvidence(game, actorGpId)) return [];
-  final observers = _humanObserverIds(game);
-  if (observers.isEmpty) return [];
+  final observers = _evidenceObservers(game, actorGpId);
+  if (observers == null) return [];
 
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
@@ -162,9 +173,8 @@ List<DossierEvidenceEntry> evidenceForLandBattleVictory(
   String defenderFactionId,
   int turnNumber,
 ) {
-  if (!isAiControlledForEvidence(game, victorGpId)) return [];
-  final observers = _humanObserverIds(game);
-  if (observers.isEmpty) return [];
+  final observers = _evidenceObservers(game, victorGpId);
+  if (observers == null) return [];
 
   final targetIsGp = game.playerById(defenderFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, victorGpId, defenderFactionId);
@@ -200,9 +210,8 @@ List<DossierEvidenceEntry> evidenceForNavalBattleVictory(
   String loserOwnerId,
   int turnNumber,
 ) {
-  if (!isAiControlledForEvidence(game, victorOwnerId)) return [];
-  final observers = _humanObserverIds(game);
-  if (observers.isEmpty) return [];
+  final observers = _evidenceObservers(game, victorOwnerId);
+  if (observers == null) return [];
 
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
@@ -233,13 +242,8 @@ List<DossierEvidenceEntry> evidenceForIsolationistCallToArmsRefuse(
   String defenderGpId,
   int turnNumber,
 ) {
-  if (!isAiControlledForEvidence(game, allyGpId)) {
-    return [];
-  }
-  final observers = _humanObserverIds(game);
-  if (observers.isEmpty) {
-    return [];
-  }
+  final observers = _evidenceObservers(game, allyGpId);
+  if (observers == null) return [];
   final rel = getRelation(game, allyGpId, defenderGpId);
   if (rel == null || !rel.atPeace) {
     return [];
@@ -297,9 +301,8 @@ List<DossierEvidenceEntry> evidenceForEnvyResearchMirror(
   int turnNumber,
   List<DossierEvidenceEntry> pendingSameTurn,
 ) {
-  if (!isAiControlledForEvidence(game, aiGpId)) return [];
-  final observers = _humanObserverIds(game);
-  if (observers.isEmpty) return [];
+  final observers = _evidenceObservers(game, aiGpId);
+  if (observers == null) return [];
 
   final refCat = game.lastHumanCompletedResearchCategory;
   final refTurn = game.lastHumanResearchCategoryCompletionTurn;
@@ -346,13 +349,8 @@ List<DossierEvidenceEntry> evidenceForAiStealTechResolved(
   int turnNumber, {
   required bool success,
 }) {
-  if (!isAiControlledForEvidence(game, aiSpyOwnerGpId)) {
-    return [];
-  }
-  final observers = _humanObserverIds(game);
-  if (observers.isEmpty) {
-    return [];
-  }
+  final observers = _evidenceObservers(game, aiSpyOwnerGpId);
+  if (observers == null) return [];
   final scoreDelta = success ? 3 : 1;
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
