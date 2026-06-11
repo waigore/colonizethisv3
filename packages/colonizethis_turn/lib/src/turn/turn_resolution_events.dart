@@ -63,9 +63,11 @@ void emitResearchCompleteEvents(
 ) {
   final hadTechBefore = _techKeysUnlockedBefore(stateBefore);
   final firstDiscoveriesThisTurn = <String>{};
-  final sortedPlayers = List<Player>.from(stateAfter.players)
-    ..sort((a, b) => a.id.compareTo(b.id));
-  for (final player in sortedPlayers) {
+  final sortedPlayerIds = stateAfter.players.map((p) => p.id).toList()
+    ..sort();
+  for (final playerId in sortedPlayerIds) {
+    final player = stateAfter.playerById(playerId);
+    if (player == null) continue;
     final unlocked = player.techUnlocked ?? {};
     final current = unlocked.entries
         .where((e) => e.value)
@@ -271,24 +273,24 @@ void emitPlayerDiscoveryEvents(
       beforeIndex ?? buildProvinceVisibilityIndex(stateBefore);
   final resolvedAfterIndex =
       afterIndex ?? buildProvinceVisibilityIndex(stateAfter);
-  final sortedPlayers = List<Player>.from(stateAfter.players)
-    ..sort((a, b) => a.id.compareTo(b.id));
-  for (final player in sortedPlayers) {
+  final sortedPlayerIds = stateAfter.players.map((p) => p.id).toList()
+    ..sort();
+  for (final playerId in sortedPlayerIds) {
     _emitPlayerProvinceDiscoveryEvents(
       stateAfter: stateAfter,
-      playerId: player.id,
+      playerId: playerId,
       turn: turn,
       beforeIndex: resolvedBeforeIndex,
       afterIndex: resolvedAfterIndex,
       eventBus: eventBus,
       onGameEvent: onGameEvent,
     );
-    final beforeSea = _seaZonesAtSeaForPlayer(stateBefore, player.id);
-    final afterSea = _seaZonesAtSeaForPlayer(stateAfter, player.id);
+    final beforeSea = _seaZonesAtSeaForPlayer(stateBefore, playerId);
+    final afterSea = _seaZonesAtSeaForPlayer(stateAfter, playerId);
     final newlyDiscovered = afterSea.difference(beforeSea).toList()..sort();
     for (final seaZoneId in newlyDiscovered) {
       final event = PlayerSeaZoneDiscoveredEvent(
-        playerId: player.id,
+        playerId: playerId,
         seaZoneId: seaZoneId,
         turnNumber: turn,
       );

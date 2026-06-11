@@ -128,17 +128,11 @@ Orders filterAcceptedOrdersForAllPlayers({
     }
   }
 
-  final researchByPlayer = Map<String, List<ResearchOrder>>.from(
-    original.researchOrdersByPlayerId,
-  );
-
-  final navalByPlayer = Map<String, List<NavalMoveOrder>>.from(
-    original.navalMoveOrdersByPlayerId,
-  );
-
-  final missionByPlayer = Map<String, List<NavalMissionOrder>>.from(
-    original.navalMissionOrdersByPlayerId,
-  );
+  // Research, naval, and mission orders are not filtered here; shallow-copying
+  // the outer map would not isolate inner lists anyway. Pass through references.
+  final researchByPlayer = original.researchOrdersByPlayerId;
+  final navalByPlayer = original.navalMoveOrdersByPlayerId;
+  final missionByPlayer = original.navalMissionOrdersByPlayerId;
 
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
