@@ -16,7 +16,7 @@ bool isLandTileKeyForGame(Game game, String tileKey) {
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords != null) {
     final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
-    if (tryGetProvince(ws, provinceId) != null) return true;
+    if (ws.tryGetProvince(provinceId) != null) return true;
   }
   return false;
 }
@@ -85,7 +85,7 @@ bool _isTilePurchasedByMover(
 String? _provinceOwnerIdForDestination(Game game, String destinationTileKey) {
   final provinceId = Unit.provinceIdFromTileKey(destinationTileKey);
   if (provinceId == null) return null;
-  return tryGetProvince(game.worldState, provinceId)?.ownerId;
+  return game.worldState.tryGetProvince(provinceId)?.ownerId;
 }
 
 bool _isOccupancyAllowedByProvinceOwner(

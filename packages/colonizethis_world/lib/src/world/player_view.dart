@@ -293,7 +293,7 @@ bool provincePanelShowsFullTileDerivedIntel({
 }) {
   final province =
       view.provincesById[provinceId] ??
-      tryGetProvince(game.worldState, provinceId);
+      game.worldState.tryGetProvince(provinceId);
   final ownerId = province?.ownerId;
   if (ownerId == humanPlayerId) {
     return true;

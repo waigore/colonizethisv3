@@ -500,6 +500,13 @@ rules:
     runner: dart
     script: tool/check_land_tile_keys_single_definition.dart
 
+  - rule_id: repo.world_no_top_level_province_lookup
+    group: architecture
+    title: colonizethis_world lib must use the WorldStateProvinceLookup extension, not deprecated top-level province-lookup wrappers (Refs #3403 Phase 1 Step 2)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_world_no_top_level_province_lookup.dart
+
   - rule_id: repo.orders_dedup_map_clones
     group: architecture
     title: Orders module map clones must use Stockpile.copyQuantities() / copyUnitsById()

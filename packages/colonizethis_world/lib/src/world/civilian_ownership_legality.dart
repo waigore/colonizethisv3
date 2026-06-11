@@ -65,7 +65,7 @@ Game relocateIllegalCiviliansInChangedProvinces(
     }
     final capitalProvinceId = Unit.provinceIdFromTileKey(capitalTileKey);
     if (capitalProvinceId == null ||
-        tryGetProvince(game.worldState, capitalProvinceId) == null) {
+        game.worldState.tryGetProvince(capitalProvinceId) == null) {
       throw StateError(
         'Cannot relocate illegal civilian ${unit.id}: unresolved capital province for owner ${unit.ownerId}',
       );
