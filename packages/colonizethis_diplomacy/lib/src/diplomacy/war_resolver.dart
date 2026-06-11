@@ -14,6 +14,7 @@ Game processWarAndPeace(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   final peaceOffersByPairKey = _peaceOfferPairKeysForGreatPowers(
     game,
@@ -27,6 +28,7 @@ Game processWarAndPeace(
     peaceOffersByPairKey,
     factionMembership,
     onDialogue,
+    eventTally,
   );
 }
 
@@ -37,6 +39,7 @@ Game _runWarAndPeaceOrders(
   Map<String, Set<String>> peaceOffersByPairKey,
   DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 ) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   final warOrders = <({String gpId, DiplomaticOrder order})>[];
@@ -61,6 +64,7 @@ Game _runWarAndPeaceOrders(
       peaceOffersByPairKey: peaceOffersByPairKey,
       factionMembership: factionMembership,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
     game = updated.game;
     relations = updated.relations;
@@ -75,6 +79,7 @@ Game _runWarAndPeaceOrders(
       peaceOffersByPairKey: peaceOffersByPairKey,
       factionMembership: factionMembership,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
     game = updated.game;
     relations = updated.relations;
@@ -114,6 +119,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required Map<String, Set<String>> peaceOffersByPairKey,
   required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   if (order.type == DiplomaticOrderType.declareWar) {
     return _applyDeclareWarOrder(
@@ -123,6 +129,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       order: order,
       turn: turn,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
   }
   if (order.type == DiplomaticOrderType.offerPeace) {
@@ -135,6 +142,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       peaceOffersByPairKey: peaceOffersByPairKey,
       factionMembership: factionMembership,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
   }
   return (game: game, relations: relations);
@@ -147,6 +155,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required DiplomaticOrder order,
   required int turn,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   final targetId = order.targetFactionId;
   final rel = getRelation(game, gpId, targetId);
@@ -176,7 +185,13 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     diplomacyRelations: nextRelations,
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
   );
-  nextGame = cancelSubsidiesBetweenGps(nextGame, gpId, targetId, turn);
+  nextGame = cancelSubsidiesBetweenGps(
+    nextGame,
+    gpId,
+    targetId,
+    turn,
+    eventTally: eventTally,
+  );
   nextGame = appendDiplomaticEvent(
     nextGame,
     turn,
@@ -185,6 +200,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     fromFactionId: gpId,
     toFactionId: targetId,
     wasAiInitiator: isAiControlledForEvidence(nextGame, gpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy war declared $gpId vs $targetId (scores reset to 20)');
   return (game: nextGame, relations: nextRelations);
@@ -199,6 +215,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required Map<String, Set<String>> peaceOffersByPairKey,
   required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   final targetId = order.targetFactionId;
   final rel = getRelation(game, gpId, targetId);
@@ -293,6 +310,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     fromFactionId: gpId,
     toFactionId: targetId,
     wasAiInitiator: isAiControlledForEvidence(nextGame, gpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy peace $gpId-$targetId');
   return (game: nextGame, relations: nextRelations);

@@ -41,7 +41,13 @@ List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
   return out;
 }
 
-Game cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
+Game cancelSubsidiesBetweenGps(
+  Game game,
+  String id1,
+  String id2,
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
   final cancelled = subsidyStates
       .where(
@@ -72,6 +78,7 @@ Game cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
       toFactionId: s.targetId,
       reason: 'war',
       wasAiInitiator: isAiControlledForEvidence(g, s.payerId),
+      eventTally: eventTally,
     );
   }
   return g;
@@ -81,8 +88,9 @@ Game _applyCallToArmsAccept(
   Game game,
   String allyGpId,
   String aggressorGpId,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   relations = setWarStateForPair(
     relations: relations,
@@ -91,7 +99,13 @@ Game _applyCallToArmsAccept(
     turn: turn,
   );
   var g = game.copyWith(diplomacyRelations: relations);
-  g = cancelSubsidiesBetweenGps(g, allyGpId, aggressorGpId, turn);
+  g = cancelSubsidiesBetweenGps(
+    g,
+    allyGpId,
+    aggressorGpId,
+    turn,
+    eventTally: eventTally,
+  );
   g = appendDiplomaticEvent(
     g,
     turn,
@@ -100,6 +114,7 @@ Game _applyCallToArmsAccept(
     fromFactionId: allyGpId,
     toFactionId: aggressorGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
+    eventTally: eventTally,
   );
   diploLog.i(
     'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
@@ -111,8 +126,9 @@ Game _applyCallToArmsRefuse(
   Game game,
   String allyGpId,
   String defenderGpId,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   relations = upsertRelation(relations, allyGpId, defenderGpId, (existing) {
     final base = existing?.score ?? relationScoreNeutral;
@@ -159,6 +175,7 @@ Game _applyCallToArmsRefuse(
     fromFactionId: allyGpId,
     toFactionId: defenderGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
+    eventTally: eventTally,
   );
   diploLog.i(
     'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
@@ -172,8 +189,9 @@ Game _processCallToArmsForWarPair(
   int turn,
   List<CallToArmsDecision>? callToArmsDecisions,
   List<CallToArmsPending> pending,
-  DiplomacyFactionMembership factionMembership,
-) {
+  DiplomacyFactionMembership factionMembership, {
+  IntraTurnEventTally? eventTally,
+}) {
   final aggressorGpId = pair.aggressor;
   final defenderGpId = pair.defender;
   for (final p in state.players) {
@@ -189,18 +207,42 @@ Game _processCallToArmsForWarPair(
       final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
       final turn = state.worldState.turnState.turnNumber;
       if (isBelowObserverConquestQuota(aggressorOw)) {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+        state = _applyCallToArmsRefuse(
+          state,
+          allyGpId,
+          defenderGpId,
+          turn,
+          eventTally: eventTally,
+        );
         continue;
       }
       if (atWarGreatPowerCount(state, allyGpId, factionMembership) >= 1) {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+        state = _applyCallToArmsRefuse(
+          state,
+          allyGpId,
+          defenderGpId,
+          turn,
+          eventTally: eventTally,
+        );
         continue;
       }
       final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
       if (accept) {
-        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+        state = _applyCallToArmsAccept(
+          state,
+          allyGpId,
+          aggressorGpId,
+          turn,
+          eventTally: eventTally,
+        );
       } else {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+        state = _applyCallToArmsRefuse(
+          state,
+          allyGpId,
+          defenderGpId,
+          turn,
+          eventTally: eventTally,
+        );
       }
       continue;
     }
@@ -223,9 +265,21 @@ Game _processCallToArmsForWarPair(
       continue;
     }
     if (decision.accepted) {
-      state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+      state = _applyCallToArmsAccept(
+        state,
+        allyGpId,
+        aggressorGpId,
+        turn,
+        eventTally: eventTally,
+      );
     } else {
-      state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+      state = _applyCallToArmsRefuse(
+        state,
+        allyGpId,
+        defenderGpId,
+        turn,
+        eventTally: eventTally,
+      );
     }
   }
   return state;
@@ -237,6 +291,7 @@ CallToArmsResult processCallToArms(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   List<CallToArmsDecision>? callToArmsDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   var state = game;
   final warPairs = _gpGpWarPairsFromOrders(
@@ -254,6 +309,7 @@ CallToArmsResult processCallToArms(
       callToArmsDecisions,
       pending,
       factionMembership,
+      eventTally: eventTally,
     );
   }
 

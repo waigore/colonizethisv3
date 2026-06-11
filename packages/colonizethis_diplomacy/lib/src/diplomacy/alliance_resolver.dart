@@ -11,8 +11,9 @@ import 'overture_resolver.dart';
 Game resolveJoinEmpireColony(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var factionMembership = DiplomacyFactionMembership.from(game);
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
@@ -24,6 +25,7 @@ Game resolveJoinEmpireColony(
         order,
         turn,
         factionMembership,
+        eventTally: eventTally,
       );
       if (!identical(game, prev)) {
         factionMembership = DiplomacyFactionMembership.from(game);
@@ -38,8 +40,9 @@ Game _resolveJoinEmpireOrderIfApplicable(
   String gpId,
   DiplomaticOrder order,
   int turn,
-  DiplomacyFactionMembership factionMembership,
-) {
+  DiplomacyFactionMembership factionMembership, {
+  IntraTurnEventTally? eventTally,
+}) {
   if (order.type != DiplomaticOrderType.establishOverture) return game;
   if (order.overtureStage != OvertureStage.joinEmpire) return game;
 
@@ -55,7 +58,14 @@ Game _resolveJoinEmpireOrderIfApplicable(
   if (score < relationScoreMinFriendly) return game;
 
   if (factionMembership.isMinorOrTribe(targetId)) {
-    return _resolveJoinEmpireMinorOrTribe(game, gpId, targetId, player, turn);
+    return _resolveJoinEmpireMinorOrTribe(
+      game,
+      gpId,
+      targetId,
+      player,
+      turn,
+      eventTally: eventTally,
+    );
   }
   if (factionMembership.isGreatPower(targetId)) {
     return _resolveJoinEmpireGreatPower(
@@ -65,6 +75,7 @@ Game _resolveJoinEmpireOrderIfApplicable(
       player,
       turn,
       factionMembership,
+      eventTally: eventTally,
     );
   }
   return game;
@@ -75,8 +86,9 @@ Game _resolveJoinEmpireMinorOrTribe(
   String gpId,
   String targetId,
   Player player,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   final cost = joinEmpireCostForMinorOrTribe(game, targetId);
   if (player.treasury < cost) return game;
 
@@ -91,6 +103,7 @@ Game _resolveJoinEmpireMinorOrTribe(
     overtureStage: OvertureStage.joinEmpire,
     amount: cost,
     wasAiInitiator: isAiControlledForEvidence(next, gpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
   return next;
@@ -102,8 +115,9 @@ Game _resolveJoinEmpireGreatPower(
   String targetId,
   Player player,
   int turn,
-  DiplomacyFactionMembership factionMembership,
-) {
+  DiplomacyFactionMembership factionMembership, {
+  IntraTurnEventTally? eventTally,
+}) {
   if (player.techUnlocked?[kTechIdEmpireBuilding] != true) return game;
   if (!isGreatPowerNearlyDefeatedForJoinEmpire(
     game,
@@ -127,6 +141,7 @@ Game _resolveJoinEmpireGreatPower(
     overtureStage: OvertureStage.joinEmpire,
     amount: cost,
     wasAiInitiator: isAiControlledForEvidence(next, gpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy join empire GP $gpId absorbs $targetId cost=$cost');
   return next;
@@ -155,6 +170,7 @@ Game processAlliances(
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
   required DiplomacyFactionMembership factionMembership,
+  IntraTurnEventTally? eventTally,
 }) {
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
@@ -197,6 +213,7 @@ Game processAlliances(
         fromFactionId: gpId,
         toFactionId: targetId,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
+        eventTally: eventTally,
       );
       diploLog.i('diplomacy alliance $gpId-$targetId');
     }

@@ -7,6 +7,7 @@ import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_shared_helpers.dart';
 import 'intervention_resolver_apply.dart';
+import 'overture_resolver.dart';
 
 export 'intervention_resolver_apply.dart';
 export 'intervention_resolver_call_to_arms.dart';
@@ -127,6 +128,7 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
   required DiplomacyFactionMembership factionMembership,
   required Set<String> recordedChoiceKeys,
   List<InterventionDecision>? interventionDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   final eligible = <String>[];
   for (final p in game.players) {
@@ -178,6 +180,7 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
         interveningGpId: interveningId,
         choice: d.choice,
         factionMembership: factionMembership,
+        eventTally: eventTally,
       );
       recordedChoiceKeys.add(
         _interventionChoiceKey(turn, interveningId, aggressorGpId),
@@ -198,6 +201,7 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
       interveningGpId: interveningId,
       choice: aiChoice,
       factionMembership: factionMembership,
+      eventTally: eventTally,
     );
     recordedChoiceKeys.add(
       _interventionChoiceKey(turn, interveningId, aggressorGpId),
@@ -215,6 +219,7 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   List<InterventionDecision>? interventionDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   final seen = <String>{};
   // Built once from current-turn history; kept current as choices are applied
@@ -254,6 +259,7 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
         factionMembership: factionMembership,
         recordedChoiceKeys: recordedChoiceKeys,
         interventionDecisions: interventionDecisions,
+        eventTally: eventTally,
       );
       g = pass.game;
       if (pass.pendingInterventions != null &&

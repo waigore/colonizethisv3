@@ -50,6 +50,7 @@ Game applyInterventionAgainstAggressor(
   required String interveningGpId,
   required InterventionChoice choice,
   DiplomacyFactionMembership? factionMembership,
+  IntraTurnEventTally? eventTally,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   final aggressorIsGp =
@@ -70,6 +71,7 @@ Game applyInterventionAgainstAggressor(
       {interveningGpId, aggressorGpId},
       fromFactionId: interveningGpId,
       toFactionId: aggressorGpId,
+      eventTally: eventTally,
     );
     return g;
   }
@@ -143,6 +145,7 @@ Game applyInterventionAgainstAggressor(
     {interveningGpId, aggressorGpId},
     fromFactionId: interveningGpId,
     toFactionId: aggressorGpId,
+    eventTally: eventTally,
   );
   return g;
 }

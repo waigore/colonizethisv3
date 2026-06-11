@@ -32,7 +32,7 @@ Map<String, int> _subsidyStateIndexByPair(List<SubsidyState> states) {
   return out;
 }
 
-Game terminateAgreementsOnWar(Game game) {
+Game terminateAgreementsOnWar(Game game, {IntraTurnEventTally? eventTally}) {
   final turn = game.worldState.turnState.turnNumber;
   var overtures = game.overtureStates;
   for (final rel in game.diplomacyRelations) {
@@ -65,6 +65,7 @@ Game terminateAgreementsOnWar(Game game) {
         fromFactionId: o.gpId,
         toFactionId: o.targetId,
         reason: 'war',
+        eventTally: eventTally,
       );
     }
     diploLog.i('diplomacy agreements terminated (war)');
@@ -75,8 +76,9 @@ Game terminateAgreementsOnWar(Game game) {
 Game applyRelationModifiersAndUpdateScores(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var players = game.players;
   // Stable id → row index while [players] order/count is unchanged (Refs #2394).
   final playerIndexById = _playerListIndexById(players);
@@ -128,6 +130,7 @@ Game applyRelationModifiersAndUpdateScores(
         toFactionId: targetId,
         amount: amount,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
+        eventTally: eventTally,
       );
       diploLog.i('diplomacy GrantAid $gpId -> $targetId amount $amount');
     }
@@ -192,6 +195,7 @@ Game applyRelationModifiersAndUpdateScores(
         toFactionId: targetId,
         amount: amount,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
+        eventTally: eventTally,
       );
       final targetPlayer = game.playerById(targetId);
       if (targetPlayer != null) {
@@ -216,6 +220,7 @@ Game processOngoingSubsidies(
   Game game,
   int turn, {
   required DiplomacyFactionMembership factionMembership,
+  IntraTurnEventTally? eventTally,
 }) {
   var players = game.players;
   final playerIndexById = _playerListIndexById(players);
@@ -241,6 +246,7 @@ Game processOngoingSubsidies(
         toFactionId: targetId,
         reason: 'insufficient funds',
         wasAiInitiator: isAiControlledForEvidence(game, payerId),
+        eventTally: eventTally,
       );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
@@ -263,6 +269,7 @@ Game processOngoingSubsidies(
         toFactionId: targetId,
         reason: 'war declared',
         wasAiInitiator: isAiControlledForEvidence(game, payerId),
+        eventTally: eventTally,
       );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)

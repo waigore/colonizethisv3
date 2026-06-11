@@ -40,8 +40,9 @@ Game _addFtpPartnership(
   Game game,
   String proposerGpId,
   String targetGpId,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   final key = pairKey(proposerGpId, targetGpId);
   if (game.ftpPartnershipKeys.contains(key)) return game;
   final nextKeys = {...game.ftpPartnershipKeys, key};
@@ -54,6 +55,7 @@ Game _addFtpPartnership(
     fromFactionId: proposerGpId,
     toFactionId: targetGpId,
     wasAiInitiator: isAiControlledForEvidence(next, proposerGpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy ftp formed $proposerGpId-$targetGpId');
   return next;
@@ -65,6 +67,7 @@ Game clearFtpPartnerships(
   Set<String> keysToRemove,
   int turn, {
   String reason = 'agreement_ended',
+  IntraTurnEventTally? eventTally,
 }) {
   if (keysToRemove.isEmpty) return game;
   var next = game;
@@ -85,6 +88,7 @@ Game clearFtpPartnerships(
       fromFactionId: id1,
       toFactionId: id2,
       reason: reason,
+      eventTally: eventTally,
     );
   }
   diploLog.i(
@@ -94,7 +98,7 @@ Game clearFtpPartnerships(
 }
 
 /// Break FTP when either side loses embassy-tier overture toward the other.
-Game breakFtpOnEmbassyLoss(Game game, int turn) {
+Game breakFtpOnEmbassyLoss(Game game, int turn, {IntraTurnEventTally? eventTally}) {
   final toRemove = <String>{};
   for (final key in game.ftpPartnershipKeys) {
     final parts = key.split('|');
@@ -105,11 +109,17 @@ Game breakFtpOnEmbassyLoss(Game game, int turn) {
       toRemove.add(key);
     }
   }
-  return clearFtpPartnerships(game, toRemove, turn, reason: 'embassy_lost');
+  return clearFtpPartnerships(
+    game,
+    toRemove,
+    turn,
+    reason: 'embassy_lost',
+    eventTally: eventTally,
+  );
 }
 
 /// Break FTP between factions currently at war.
-Game breakFtpOnWar(Game game, int turn) {
+Game breakFtpOnWar(Game game, int turn, {IntraTurnEventTally? eventTally}) {
   final toRemove = <String>{};
   for (final key in game.ftpPartnershipKeys) {
     final parts = key.split('|');
@@ -118,7 +128,13 @@ Game breakFtpOnWar(Game game, int turn) {
       toRemove.add(key);
     }
   }
-  return clearFtpPartnerships(game, toRemove, turn, reason: 'war');
+  return clearFtpPartnerships(
+    game,
+    toRemove,
+    turn,
+    reason: 'war',
+    eventTally: eventTally,
+  );
 }
 
 ({Game state, FtpOffer? pendingOffer}) _resolveEstablishFtpOrder({
@@ -128,6 +144,7 @@ Game breakFtpOnWar(Game game, int turn) {
   required int turn,
   required DiplomacyFactionMembership factionMembership,
   List<FtpDecision>? ftpDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   if (order.type != DiplomaticOrderType.establishFtp) {
     return (state: state, pendingOffer: null);
@@ -145,7 +162,13 @@ Game breakFtpOnWar(Game game, int turn) {
   );
   if (decision != null) {
     if (decision.accepted) {
-      state = _addFtpPartnership(state, proposerId, targetId, turn);
+      state = _addFtpPartnership(
+        state,
+        proposerId,
+        targetId,
+        turn,
+        eventTally: eventTally,
+      );
     }
     return (state: state, pendingOffer: null);
   }
@@ -158,7 +181,13 @@ Game breakFtpOnWar(Game game, int turn) {
   }
 
   if (aiGpAcceptsFtp(state, proposerId, targetId)) {
-    state = _addFtpPartnership(state, proposerId, targetId, turn);
+    state = _addFtpPartnership(
+      state,
+      proposerId,
+      targetId,
+      turn,
+      eventTally: eventTally,
+    );
   }
   return (state: state, pendingOffer: null);
 }
@@ -171,6 +200,7 @@ FtpProposalsResult processFtpProposals(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   List<FtpDecision>? ftpDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   var state = game;
   final pending = <FtpOffer>[];
@@ -185,6 +215,7 @@ FtpProposalsResult processFtpProposals(
         turn: turn,
         factionMembership: factionMembership,
         ftpDecisions: ftpDecisions,
+        eventTally: eventTally,
       );
       state = resolved.state;
       final offer = resolved.pendingOffer;
