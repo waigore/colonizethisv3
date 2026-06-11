@@ -149,13 +149,8 @@ TurnPhaseStepOutcome combatTurnPhaseHandler(
   int turn,
 ) {
   final previousOwnership = <String, String?>{};
-  for (final region in [
-    acc.game.worldState.oldWorld,
-    acc.game.worldState.newWorld,
-  ]) {
-    for (final prov in region.provinces) {
-      previousOwnership[prov.id] = prov.ownerId;
-    }
+  for (final prov in acc.game.worldState.allProvinces()) {
+    previousOwnership[prov.id] = prov.ownerId;
   }
   final afterCombat = runCombatPhase(
     acc.game,

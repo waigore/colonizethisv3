@@ -18,16 +18,23 @@ TurnResolutionResult runTurnResolutionPipeline({
   if (gameAtResolutionStart.calendarCampaignHalted) {
     final turn = gameAtResolutionStart.worldState.turnState.turnNumber;
     turnLog.i('turn $turn resolve skipped (calendar halted)');
+    // Halted: start and end are the same state, so a single visibility index
+    // serves both discovery events and the news digest (4 builds -> 1).
+    final haltedIndex = buildProvinceVisibilityIndex(gameAtResolutionStart);
     emitPlayerDiscoveryEvents(
       gameAtResolutionStart,
       gameAtResolutionStart,
       turn,
       config.eventBus,
       config.onGameEvent,
+      beforeIndex: haltedIndex,
+      afterIndex: haltedIndex,
     );
     final news = buildTurnNewsDigestForComplete(
       start: gameAtResolutionStart,
       end: gameAtResolutionStart,
+      startIndex: haltedIndex,
+      endIndex: haltedIndex,
     );
     return TurnResolutionComplete(news.game, turnNewsDigest: news.digest);
   }
@@ -83,16 +90,24 @@ TurnResolutionResult runTurnResolutionPipeline({
   }
 
   turnLog.i('turn $turn resolve end');
+  // Build each per-state visibility index once and reuse it across discovery
+  // events and the news digest instead of recomputing both (4 builds -> 2).
+  final beforeIndex = buildProvinceVisibilityIndex(gameAtResolutionStart);
+  final afterIndex = buildProvinceVisibilityIndex(acc.game);
   emitPlayerDiscoveryEvents(
     gameAtResolutionStart,
     acc.game,
     turn,
     config.eventBus,
     config.onGameEvent,
+    beforeIndex: beforeIndex,
+    afterIndex: afterIndex,
   );
   final news = buildTurnNewsDigestForComplete(
     start: gameAtResolutionStart,
     end: acc.game,
+    startIndex: beforeIndex,
+    endIndex: afterIndex,
   );
   return TurnResolutionComplete(news.game, turnNewsDigest: news.digest);
 }

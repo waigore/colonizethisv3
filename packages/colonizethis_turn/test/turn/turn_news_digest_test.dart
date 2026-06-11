@@ -4,77 +4,6 @@ import 'package:colonizethis_test/test.dart';
 
 import 'turn_news_digest_test_support.dart';
 
-void _expectDigestLinesEqual(TurnNewsDigest a, TurnNewsDigest b) {
-  expect(a.resolvedTurnNumber, b.resolvedTurnNumber);
-  expect(a.lines.length, b.lines.length);
-  for (var i = 0; i < a.lines.length; i++) {
-    _expectLineEqual(a.lines[i], b.lines[i]);
-  }
-}
-
-void _expectLineEqual(TurnNewsLine x, TurnNewsLine y) {
-  expect(x.runtimeType, y.runtimeType);
-  switch ((x, y)) {
-    case (
-      TurnNewsProvinceCapturedLine(
-        provinceId: final ap,
-        previousOwnerId: final a1,
-        newOwnerId: final a2,
-      ),
-      TurnNewsProvinceCapturedLine(
-        provinceId: final bp,
-        previousOwnerId: final b1,
-        newOwnerId: final b2,
-      ),
-    ):
-      expect(ap, bp);
-      expect(a1, b1);
-      expect(a2, b2);
-    case (
-      TurnNewsDiplomacyLine(
-        factionIdA: final aa,
-        factionIdB: final ab,
-        kind: final ak,
-      ),
-      TurnNewsDiplomacyLine(
-        factionIdA: final ba,
-        factionIdB: final bb,
-        kind: final bk,
-      ),
-    ):
-      expect(aa, ba);
-      expect(ab, bb);
-      expect(ak, bk);
-    case (
-      TurnNewsOvertureAdvancedLine(
-        offererGpId: final ao,
-        targetFactionId: final at,
-        newStage: final as_,
-      ),
-      TurnNewsOvertureAdvancedLine(
-        offererGpId: final bo,
-        targetFactionId: final bt,
-        newStage: final bs,
-      ),
-    ):
-      expect(ao, bo);
-      expect(at, bt);
-      expect(as_, bs);
-    case (
-      TurnNewsProvinceDiscoveredLine(provinceId: final ap),
-      TurnNewsProvinceDiscoveredLine(provinceId: final bp),
-    ):
-      expect(ap, bp);
-    case (
-      TurnNewsSeaZoneFleetLine(seaZoneId: final az),
-      TurnNewsSeaZoneFleetLine(seaZoneId: final bz),
-    ):
-      expect(az, bz);
-    default:
-      fail('Unexpected line pair: $x vs $y');
-  }
-}
-
 void main() {
   group('buildTurnNewsDigestForComplete', () {
     test('Given victory on end state When build Then digest is null', () {
@@ -339,13 +268,16 @@ void main() {
     test(
       'Given same start and end When build twice Then identical digest lines',
       () {
-        final start = turnNewsTwoGpGame(turn: 0, relState: RelationState.atPeace);
+        final start = turnNewsTwoGpGame(
+          turn: 0,
+          relState: RelationState.atPeace,
+        );
         final end = turnNewsTwoGpGame(turn: 1, relState: RelationState.atWar);
         final r1 = buildTurnNewsDigestForComplete(start: start, end: end);
         final r2 = buildTurnNewsDigestForComplete(start: start, end: end);
         expect(r1.digest, isNotNull);
         expect(r2.digest, isNotNull);
-        _expectDigestLinesEqual(r1.digest!, r2.digest!);
+        expectDigestLinesEqual(r1.digest!, r2.digest!);
       },
     );
 
