@@ -300,7 +300,8 @@ void main() {
           kTurnProcessingWallClockBudgetMs,
         );
         final byTurn =
-            (sum['turn_processing_wall_clock_ms_by_turn'] as List).cast<int>();
+            (sum['turn_processing_wall_clock_ms_by_turn'] as List<Object?>)
+                .cast<int>();
         expect(byTurn, hasLength(1));
         expect(byTurn.single, greaterThanOrEqualTo(0));
         expect(sum['max_turn_processing_wall_clock_ms'], byTurn.single);
@@ -377,7 +378,7 @@ void main() {
         // Minimal-trace mode still measures the per-turn budget segment.
         expect(summary['runSummarySchemaVersion'], 2);
         expect(
-          (summary['turn_processing_wall_clock_ms_by_turn'] as List),
+          summary['turn_processing_wall_clock_ms_by_turn'] as List<Object?>,
           hasLength(1),
         );
 
