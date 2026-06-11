@@ -1,19 +1,15 @@
 import 'dart:math' show Random;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
-import '../dossier/evidence_rules.dart';
-import 'diplomacy_phase_result.dart';
-import 'diplomacy_relation_updates.dart';
-import 'diplomacy_resolver.dart';
-import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
 
-part 'intervention_resolver_call_to_arms.dart';
-part 'intervention_resolver_apply.dart';
+import 'diplomacy_phase_result.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_shared_helpers.dart';
+import 'intervention_resolver_apply.dart';
+
+export 'intervention_resolver_apply.dart';
+export 'intervention_resolver_call_to_arms.dart';
 
 class InterventionResolutionResult {
   InterventionResolutionResult(this.game, {this.pendingInterventions});
@@ -29,7 +25,7 @@ bool _gpHasEmbassyOrPurchasedLandInMinorTribe(
 ) {
   final o = getOverture(game, gpId, minorOrTribeId);
   final hasEmbassy = o != null && o.hasEmbassy;
-  final hasInvestment = _gpHasPurchasedLandInFactionProvinces(
+  final hasInvestment = gpHasPurchasedLandInFactionProvinces(
     game,
     gpId,
     minorOrTribeId,
@@ -107,18 +103,6 @@ InterventionChoice _chooseAiIntervention(
   final seed = Object.hash(turn, aiGpId, aggressorGpId, defenderMinorOrTribeId);
   final roll = Random(seed).nextDouble();
   return roll < p ? InterventionChoice.intervene : InterventionChoice.doNothing;
-}
-
-Game _clearOverturesBetweenGpAndMinorTribe(
-  Game game,
-  String gpId,
-  String minorOrTribeId,
-) {
-  final overtures = game.overtureStates
-      .where((o) => !(o.gpId == gpId && o.targetId == minorOrTribeId))
-      .toList();
-  if (overtures.length == game.overtureStates.length) return game;
-  return game.copyWith(overtureStates: overtures);
 }
 
 InterventionResolutionResult _processInterventionsForAggressorDefender(

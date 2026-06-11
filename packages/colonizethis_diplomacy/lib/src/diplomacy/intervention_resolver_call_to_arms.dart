@@ -1,4 +1,14 @@
-part of 'intervention_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_world/colonizethis_world.dart';
+import '../dossier/evidence_rules.dart';
+import 'diplomacy_logging.dart';
+import 'diplomacy_phase_result.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_relation_updates.dart';
+import 'diplomacy_shared_helpers.dart';
+import 'overture_resolver.dart';
 
 class CallToArmsResult {
   CallToArmsResult(this.game, {this.pendingCallToArms});

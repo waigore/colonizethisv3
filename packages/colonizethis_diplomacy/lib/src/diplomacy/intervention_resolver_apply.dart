@@ -1,6 +1,15 @@
-part of 'intervention_resolver.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-bool _gpHasPurchasedLandInFactionProvinces(
+import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_relation_updates.dart';
+import 'overture_resolver.dart';
+
+/// True when [gpId] has purchased land tiles inside provinces owned by
+/// [factionId]. Package-visible so the intervention resolver library can reuse
+/// the same investment check (Refs #3419).
+bool gpHasPurchasedLandInFactionProvinces(
   Game game,
   String gpId,
   String factionId,
@@ -17,6 +26,18 @@ bool _gpHasPurchasedLandInFactionProvinces(
     }
   }
   return false;
+}
+
+Game _clearOverturesBetweenGpAndMinorTribe(
+  Game game,
+  String gpId,
+  String minorOrTribeId,
+) {
+  final overtures = game.overtureStates
+      .where((o) => !(o.gpId == gpId && o.targetId == minorOrTribeId))
+      .toList();
+  if (overtures.length == game.overtureStates.length) return game;
+  return game.copyWith(overtureStates: overtures);
 }
 
 /// Applies intervention for one aggressor GP (Diplomacy phase when a GP declares
@@ -145,7 +166,7 @@ String? needsInterventionChoice(Game game, BattleContext ctx) {
 
     final o = getOverture(game, p.id, defenderId);
     final hasEmbassy = o != null && o.hasEmbassy;
-    final hasInvestment = _gpHasPurchasedLandInFactionProvinces(
+    final hasInvestment = gpHasPurchasedLandInFactionProvinces(
       game,
       p.id,
       defenderId,
