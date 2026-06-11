@@ -453,16 +453,10 @@ TurnResolutionResult resumeTurnResolutionWithCallToArmsDecisions({
   );
 }
 
-/// Shared dispatch for the Diplomacy-phase resume entry points
-/// ([resumeTurnResolutionWithOvertureDecisions],
-/// [resumeTurnResolutionWithFtpDecisions],
-/// [resumeTurnResolutionWithInterventionDecisions],
-/// [resumeTurnResolutionWithCallToArmsDecisions]).
-///
-/// All resume paths re-enter [resolveTurnForGame] at [TurnPhase.diplomacy] with
-/// identical parameter forwarding, differing only in which decision list they
-/// carry. Centralising the forwarding here keeps the wrappers thin and means a
-/// new [resolveTurnForGame] parameter only needs to be threaded through once.
+/// Shared dispatch for the Diplomacy-phase resume entry points. All re-enter
+/// [resolveTurnForGame] at [TurnPhase.diplomacy] with identical parameter
+/// forwarding, differing only in which decision list they carry, so a new
+/// [resolveTurnForGame] parameter is threaded through once here.
 TurnResolutionResult _resumeTurnResolutionWithDiplomacyDecisions({
   required Game game,
   required MapTopology topology,
