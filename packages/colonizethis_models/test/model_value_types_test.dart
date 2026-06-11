@@ -19,7 +19,7 @@ void main() {
 
     test('fromJson defaults turn counts when missing', () {
       final restored = CurrentWork.fromJson({
-        'workTarget': 'explore',
+        'workTarget': 'build_farm',
         'tileKey': 'r1|p1|0|0',
       });
       expect(restored.totalTurns, 0);
