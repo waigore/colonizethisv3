@@ -137,14 +137,14 @@ if [ ${#gate_pkgs[@]} -gt 0 ]; then
 fi
 
 gate_pkgs=()
-for pkg in colonizethis_data; do
+for pkg in colonizethis_data colonizethis_models colonizethis_save; do
   if printf '%s\n' "${PKGS[@]}" | grep -qxF "$pkg"; then
     gate_pkgs+=("packages/$pkg")
   fi
 done
 if [ ${#gate_pkgs[@]} -gt 0 ]; then
   echo ""
-  echo "=== Coverage gate (data >= 80%) ==="
+  echo "=== Coverage gate (data/models/save >= 80%) ==="
   "$ROOT/tool/check_coverage_threshold.sh" 80 "${gate_pkgs[@]}"
 fi
 
