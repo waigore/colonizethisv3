@@ -125,8 +125,7 @@ void emitDiplomacyChangeEvents(
 /// Only when **both** previous and new owners are non-empty faction ids (handover to
 /// another faction). Null/empty `ownerId` is uncolonized frontier only, not a capture
 /// outcome. SPEC/game/world-model.md § Invariants.
-void _emitProvinceCapturedEventsForRegion(
-  RegionData region,
+void emitProvinceCapturedEvents(
   Map<String, String?> previousOwnership,
   Game stateAfter,
   int turn,
@@ -134,7 +133,7 @@ void _emitProvinceCapturedEventsForRegion(
   void Function(GameEvent)? onGameEvent,
   void Function(DialogueEvent)? onDialogue,
 ) {
-  for (final prov in region.provinces) {
+  for (final prov in stateAfter.worldState.allProvinces()) {
     final previousOwner = previousOwnership[prov.id];
     final newOwner = prov.ownerId;
     if (previousOwner != null &&
@@ -164,34 +163,6 @@ void _emitProvinceCapturedEventsForRegion(
       onDialogue(e);
     }
   }
-}
-
-void emitProvinceCapturedEvents(
-  Map<String, String?> previousOwnership,
-  Game stateAfter,
-  int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
-  void Function(DialogueEvent)? onDialogue,
-) {
-  _emitProvinceCapturedEventsForRegion(
-    stateAfter.worldState.oldWorld,
-    previousOwnership,
-    stateAfter,
-    turn,
-    eventBus,
-    onGameEvent,
-    onDialogue,
-  );
-  _emitProvinceCapturedEventsForRegion(
-    stateAfter.worldState.newWorld,
-    previousOwnership,
-    stateAfter,
-    turn,
-    eventBus,
-    onGameEvent,
-    onDialogue,
-  );
 }
 
 /// Emit victory_set if [state] has victory set.
@@ -335,24 +306,19 @@ void _emitPlayerProvinceDiscoveryEvents({
   required GameEventBus? eventBus,
   required void Function(GameEvent)? onGameEvent,
 }) {
-  for (final region in [
-    stateAfter.worldState.oldWorld,
-    stateAfter.worldState.newWorld,
-  ]) {
-    for (final province in region.provinces) {
-      final fullProvinceId = _prefixedProvinceId(province);
-      final wasKnown = beforeIndex.isKnownToPlayer(playerId, fullProvinceId);
-      final nowKnown = afterIndex.isKnownToPlayer(playerId, fullProvinceId);
-      if (wasKnown || !nowKnown) {
-        continue;
-      }
-      final event = PlayerProvinceDiscoveredEvent(
-        playerId: playerId,
-        provinceId: fullProvinceId,
-        turnNumber: turn,
-      );
-      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+  for (final province in stateAfter.worldState.allProvinces()) {
+    final fullProvinceId = _prefixedProvinceId(province);
+    final wasKnown = beforeIndex.isKnownToPlayer(playerId, fullProvinceId);
+    final nowKnown = afterIndex.isKnownToPlayer(playerId, fullProvinceId);
+    if (wasKnown || !nowKnown) {
+      continue;
     }
+    final event = PlayerProvinceDiscoveredEvent(
+      playerId: playerId,
+      provinceId: fullProvinceId,
+      turnNumber: turn,
+    );
+    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
   }
 }
 
