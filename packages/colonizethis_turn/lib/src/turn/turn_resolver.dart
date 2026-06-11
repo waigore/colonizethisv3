@@ -334,7 +334,7 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 }) {
-  return resolveTurnForGame(
+  return _resumeTurnResolutionWithDiplomacyDecisions(
     game: game,
     topology: topology,
     orders: orders,
@@ -347,7 +347,6 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
     onProductionComplete: onProductionComplete,
-    startFromPhase: TurnPhase.diplomacy,
     overtureDecisions: decisions,
   );
 }
@@ -369,7 +368,7 @@ TurnResolutionResult resumeTurnResolutionWithFtpDecisions({
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 }) {
-  return resolveTurnForGame(
+  return _resumeTurnResolutionWithDiplomacyDecisions(
     game: game,
     topology: topology,
     orders: orders,
@@ -382,7 +381,6 @@ TurnResolutionResult resumeTurnResolutionWithFtpDecisions({
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
     onProductionComplete: onProductionComplete,
-    startFromPhase: TurnPhase.diplomacy,
     ftpDecisions: decisions,
   );
 }
@@ -404,7 +402,7 @@ TurnResolutionResult resumeTurnResolutionWithInterventionDecisions({
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 }) {
-  return resolveTurnForGame(
+  return _resumeTurnResolutionWithDiplomacyDecisions(
     game: game,
     topology: topology,
     orders: orders,
@@ -417,7 +415,6 @@ TurnResolutionResult resumeTurnResolutionWithInterventionDecisions({
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
     onProductionComplete: onProductionComplete,
-    startFromPhase: TurnPhase.diplomacy,
     interventionDecisions: decisions,
   );
 }
@@ -439,6 +436,52 @@ TurnResolutionResult resumeTurnResolutionWithCallToArmsDecisions({
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 }) {
+  return _resumeTurnResolutionWithDiplomacyDecisions(
+    game: game,
+    topology: topology,
+    orders: orders,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    eventBus: eventBus,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
+    callToArmsDecisions: decisions,
+  );
+}
+
+/// Shared dispatch for the Diplomacy-phase resume entry points
+/// ([resumeTurnResolutionWithOvertureDecisions],
+/// [resumeTurnResolutionWithFtpDecisions],
+/// [resumeTurnResolutionWithInterventionDecisions],
+/// [resumeTurnResolutionWithCallToArmsDecisions]).
+///
+/// All resume paths re-enter [resolveTurnForGame] at [TurnPhase.diplomacy] with
+/// identical parameter forwarding, differing only in which decision list they
+/// carry. Centralising the forwarding here keeps the wrappers thin and means a
+/// new [resolveTurnForGame] parameter only needs to be threaded through once.
+TurnResolutionResult _resumeTurnResolutionWithDiplomacyDecisions({
+  required Game game,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+  onProductionComplete,
+  List<OvertureDecision>? overtureDecisions,
+  List<FtpDecision>? ftpDecisions,
+  List<InterventionDecision>? interventionDecisions,
+  List<CallToArmsDecision>? callToArmsDecisions,
+}) {
   return resolveTurnForGame(
     game: game,
     topology: topology,
@@ -453,6 +496,9 @@ TurnResolutionResult resumeTurnResolutionWithCallToArmsDecisions({
     onGameEvent: onGameEvent,
     onProductionComplete: onProductionComplete,
     startFromPhase: TurnPhase.diplomacy,
-    callToArmsDecisions: decisions,
+    overtureDecisions: overtureDecisions,
+    ftpDecisions: ftpDecisions,
+    interventionDecisions: interventionDecisions,
+    callToArmsDecisions: callToArmsDecisions,
   );
 }
