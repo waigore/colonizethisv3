@@ -61,9 +61,7 @@ List<DialogueEvent> dialogueEventsForLandBattleResult(
   int seed,
 ) {
   final events = <DialogueEvent>[];
-  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
-  final year = mapping.yearAtTurn(turnNumber);
-  final era = eraFromYear(year);
+  final era = _eraForTurn(game, turnNumber);
   if (isAiControlledForEvidence(game, victorId)) {
     events.add(
       DialogueEvent(
@@ -99,9 +97,7 @@ List<DialogueEvent> dialogueEventsForNavalBattleResult(
   int seed,
 ) {
   final events = <DialogueEvent>[];
-  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
-  final year = mapping.yearAtTurn(turnNumber);
-  final era = eraFromYear(year);
+  final era = _eraForTurn(game, turnNumber);
   if (isAiControlledForEvidence(game, victorId)) {
     events.add(
       DialogueEvent(
@@ -154,9 +150,7 @@ List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
     regionId,
     localId,
   );
-  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
-  final year = mapping.yearAtTurn(game.worldState.turnState.turnNumber);
-  final era = eraFromYear(year);
+  final era = _eraForTurn(game, game.worldState.turnState.turnNumber);
   final events = <DialogueEvent>[];
   final seenAi = <String>{};
   for (final neighborLocal in neighborLocalIds) {
