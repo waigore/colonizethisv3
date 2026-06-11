@@ -1,8 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Shared [Game] / [WorldState] factories for logic package tests.
+/// Shared [Game] / [WorldState] factories for cross-package tests.
 ///
-/// Refs waigore/colonizethis#2071 (centralize repeated setup).
+/// Refs waigore/colonizethis#2071 (centralize repeated setup); #3424 Slice 1.
 abstract final class TestFixtures {
   TestFixtures._();
 
