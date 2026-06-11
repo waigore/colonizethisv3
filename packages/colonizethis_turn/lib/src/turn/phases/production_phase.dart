@@ -28,9 +28,7 @@ TurnPipelineState runProductionPipelinePhase(
       assignments: assignments,
     );
     if (result.productionByRecipe.isNotEmpty) {
-      productionByRecipeByPlayerId[player.id] = Map<String, int>.from(
-        result.productionByRecipe,
-      );
+      productionByRecipeByPlayerId[player.id] = result.productionByRecipe;
     }
     return player.copyWith(
       stockpile: result.stockpile,
