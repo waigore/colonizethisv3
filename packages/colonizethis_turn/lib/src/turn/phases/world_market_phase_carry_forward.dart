@@ -1,11 +1,17 @@
-part of 'world_market_phase.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Result of [_validateCarryForwards]: surviving carry-forward orders that
+// World-market carry-forward re-validation (Refs #2990 B3, #3416 part-of ->
+// explicit library). This is a proper library imported by
+// `world_market_phase.dart`; the [CarryForwardValidationResult] type and
+// [validateCarryForwards] are package-visible (no `_` prefix) and stay
+// unexported from the package barrel so the public API is unchanged.
+
+/// Result of [validateCarryForwards]: surviving carry-forward orders that
 /// pass the start-of-phase stockpile (offers) and trade cargo capacity
 /// (bids) re-checks, plus the [MarketActivityNote] entries the phase
 /// should attach to per-commodity `MarketActivity` for dropped orders.
-class _CarryForwardValidationResult {
-  const _CarryForwardValidationResult({
+class CarryForwardValidationResult {
+  const CarryForwardValidationResult({
     required this.validOffersByFactionId,
     required this.validBidsByFactionId,
     required this.dropNotesByCommodity,
@@ -30,7 +36,7 @@ class _CarryForwardValidationResult {
 /// sellers whose offers persist through purchased-tile plumbing) keep all
 /// their carry-forward orders unchanged — there is no GP-side constraint
 /// to enforce on them in this slice.
-_CarryForwardValidationResult _validateCarryForwards({
+CarryForwardValidationResult validateCarryForwards({
   required Map<String, List<TradeOrder>> carryForwardOffersByFactionId,
   required Map<String, List<TradeOrder>> carryForwardBidsByFactionId,
   required Map<String, Stockpile> stockpileByFactionId,
@@ -68,8 +74,8 @@ _CarryForwardValidationResult _validateCarryForwards({
       } else {
         recordNote(
           MarketActivityNote(
-            kind: MarketActivityNoteKind
-                .carryForwardDroppedStockpileInsufficient,
+            kind:
+                MarketActivityNoteKind.carryForwardDroppedStockpileInsufficient,
             factionId: factionId,
             commodityId: order.commodityId,
             quantity: order.quantity,
@@ -98,8 +104,7 @@ _CarryForwardValidationResult _validateCarryForwards({
       } else {
         recordNote(
           MarketActivityNote(
-            kind:
-                MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
+            kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
             factionId: factionId,
             commodityId: order.commodityId,
             quantity: order.quantity,
@@ -110,7 +115,7 @@ _CarryForwardValidationResult _validateCarryForwards({
     if (kept.isNotEmpty) validBids[factionId] = kept;
   }
 
-  return _CarryForwardValidationResult(
+  return CarryForwardValidationResult(
     validOffersByFactionId: validOffers,
     validBidsByFactionId: validBids,
     dropNotesByCommodity: notesByCommodity,

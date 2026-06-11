@@ -7,12 +7,11 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
-
-part 'world_market_phase_orders.dart';
-part 'world_market_phase_price_discovery.dart';
-part 'world_market_phase_deals.dart';
-part 'world_market_phase_carry_forward.dart';
-part 'world_market_phase_activity.dart';
+import 'world_market_phase_orders.dart';
+import 'world_market_phase_price_discovery.dart';
+import 'world_market_phase_deals.dart';
+import 'world_market_phase_carry_forward.dart';
+import 'world_market_phase_activity.dart';
 
 /// World Market phase (phase 13) — gather submitted Great-Power trade orders,
 /// merge previous-turn carry-forwards, run the deal-matching engine, apply
@@ -113,9 +112,9 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // GP-submitted orders; they are intentionally **not** stored as
   // carry-forwards (per § Step E "Minor/Tribe auto-offers do not carry
   // forward") and are excluded from price discovery aggregation (handled
-  // implicitly by `_aggregateNewQuantitiesPerCommodity` keying on
+  // implicitly by `aggregateNewQuantitiesPerCommodity` keying on
   // `newOffersByFactionId` only — auto-offers live in their own map).
-  final autoOffersByFactionId = _computeMinorTribeAutoOffers(
+  final autoOffersByFactionId = computeMinorTribeAutoOffers(
     game: game,
     config: config,
   );
@@ -142,7 +141,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // per-buyer treasury budget so seller credits from urgent offers are
   // not consumed servicing phase-1–12 debt. Player.treasury is **not**
   // mutated here — post-phase persistence is computed from original
-  // values plus deal-applied deltas (see `_applyDealsToPlayers`), which
+  // values plus deal-applied deltas (see `applyDealsToPlayers`), which
   // preserves AC#3 (a broke buyer with no fills exits phase 13 with
   // their original negative balance unchanged). Not an affordability
   // bypass — regiment builds still require
@@ -197,19 +196,19 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
         kLockRecoveryMinorSyntheticTreasuryBudget;
   }
 
-  final carryForwardValidation = _validateCarryForwards(
+  final carryForwardValidation = validateCarryForwards(
     carryForwardOffersByFactionId: priorMarket.carryForwardOffersByFactionId,
     carryForwardBidsByFactionId: priorMarket.carryForwardBidsByFactionId,
     stockpileByFactionId: stockpileByFactionId,
     tradeCapacityByFactionId: tradeCapacityByFactionId,
   );
 
-  final mergedOffersByFactionId = _mergeOrdersByFaction(
+  final mergedOffersByFactionId = mergeOrdersByFaction(
     newOffersByFactionId,
     carryForwardValidation.validOffersByFactionId,
     autoOffersByFactionId,
   );
-  final mergedBidsByFactionId = _mergeOrdersByFaction(
+  final mergedBidsByFactionId = mergeOrdersByFaction(
     newBidsByFactionId,
     carryForwardValidation.validBidsByFactionId,
     lockRecoveryMinorBidsByFactionId,
@@ -218,7 +217,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final hasAnyOrders =
       mergedOffersByFactionId.isNotEmpty || mergedBidsByFactionId.isNotEmpty;
 
-  final newQuantitiesByCommodity = _aggregateNewQuantitiesPerCommodity(
+  final newQuantitiesByCommodity = aggregateNewQuantitiesPerCommodity(
     newOffersByFactionId: newOffersByFactionId,
     newBidsByFactionId: newBidsByFactionId,
   );
@@ -235,7 +234,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     // Attach any drop notes even when no surviving orders remain — the
     // Deal Book / observer trace still needs to see the dropped
     // carry-forwards for the resolved turn.
-    _attachDropNotes(
+    attachDropNotes(
       activity: activity,
       notesByCommodity: carryForwardValidation.dropNotesByCommodity,
     );
@@ -283,7 +282,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       ? null
       : lockRecoveryMinorBidsByFactionId.values.first.first.commodityId;
 
-  final updatedPlayers = _applyDealsToPlayers(
+  final updatedPlayers = applyDealsToPlayers(
     players: game.players,
     filledDeals: matchResult.filledDeals,
     firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
@@ -294,32 +293,32 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // Price-discovery bid-side cap (Refs #3115): aggregate `totalBid_new[c]`
   // from the filled portion of newly-submitted bids only (not from
   // submitted quantity). The newly-submitted bids appear at the head of
-  // each faction's merged bid list per `_mergeOrdersByFaction`, so Step C
+  // each faction's merged bid list per `mergeOrdersByFaction`, so Step C
   // consumes them before any carry-forward residuals; the per-(faction,
   // commodity) `min` below allocates filled units to newly-submitted bids
   // first. See SPEC/program/world-market-resolution.md § Step E.
-  final filledNewBidsByCommodity = _aggregateFilledNewBidsByCommodity(
+  final filledNewBidsByCommodity = aggregateFilledNewBidsByCommodity(
     newBidsByFactionId: newBidsByFactionId,
     filledDeals: matchResult.filledDeals,
   );
-  final priceDiscoveryByCommodity = _buildPriceDiscoveryPairs(
+  final priceDiscoveryByCommodity = buildPriceDiscoveryPairs(
     newQuantitiesByCommodity: newQuantitiesByCommodity,
     filledNewBidsByCommodity: filledNewBidsByCommodity,
   );
 
-  final newPrices = _computeNextPrices(
+  final newPrices = computeNextPrices(
     priorPrices: priorMarket.prices,
     newQuantitiesByCommodity: priceDiscoveryByCommodity,
   );
 
-  final activity = _buildActivity(
+  final activity = buildActivity(
     matchResult: matchResult,
     newQuantitiesByCommodity: priceDiscoveryByCommodity,
     priorPrices: priorMarket.prices,
     newPrices: newPrices,
   );
-  _attachMatcherNotes(activity: activity, matchResult: matchResult);
-  _attachDropNotes(
+  attachMatcherNotes(activity: activity, matchResult: matchResult);
+  attachDropNotes(
     activity: activity,
     notesByCommodity: carryForwardValidation.dropNotesByCommodity,
   );
@@ -333,7 +332,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final updatedMarket = priorMarket.copyWith(
     prices: Map<CommodityId, int>.unmodifiable(newPrices),
     lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
-    carryForwardOffersByFactionId: _restrictToFactions(
+    carryForwardOffersByFactionId: restrictToFactions(
       matchResult.unfilledOffersByFactionId,
       gpFactionIds,
     ),

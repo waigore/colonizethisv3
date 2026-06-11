@@ -1,11 +1,16 @@
-part of 'naval_resolution.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'turn_resolution_seeds.dart';
 
 // Naval-battle victor resolution plus dossier/dialogue side effects for naval
-// resolution (Refs #3290 Phase-0 file-split). Behaviour-preserving move: same
-// library scope as `naval_resolution.dart`, so imports, shared helpers, and
-// visibility are unchanged.
+// resolution (Refs #3290 Phase-0 file-split, #3416 part-of -> explicit
+// library). This is a proper library imported by `naval_resolution.dart`; the
+// public helpers below stay unexported from the package barrel, so the public
+// API is unchanged.
 
-String? _navalBattleWinnerOwnerId(
+String? navalBattleWinnerOwnerId(
   NavalBattleOutcome outcome,
   BattleContextSea battle,
 ) {
@@ -20,7 +25,7 @@ String? _navalBattleWinnerOwnerId(
   }
 }
 
-Game _applyNavalBattleVictoryDossierAndDialogue({
+Game applyNavalBattleVictoryDossierAndDialogue({
   required Game state,
   required BattleContextSea battle,
   required NavalBattleResult result,
