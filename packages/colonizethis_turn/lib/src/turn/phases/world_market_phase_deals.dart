@@ -1,6 +1,12 @@
-part of 'world_market_phase.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-List<Player> _applyDealsToPlayers({
+// World-market deal-application helper (Refs #2992, #3416 part-of -> explicit
+// library). This is a proper library imported by `world_market_phase.dart`;
+// [applyDealsToPlayers] is package-visible (no `_` prefix) and stays
+// unexported from the package barrel so the public API is unchanged.
+
+List<Player> applyDealsToPlayers({
   required List<Player> players,
   required List<FilledDeal> filledDeals,
   Map<String, double> firstRightTreasuryCreditByGpId = const <String, double>{},
@@ -21,7 +27,8 @@ List<Player> _applyDealsToPlayers({
     var notional = (deal.quantity * deal.pricePerUnit).round();
     final isGpBuyer = knownPlayerIds.contains(deal.buyerFactionId);
     final isGpSeller = knownPlayerIds.contains(deal.sellerFactionId);
-    final isLockRecoveryLiquiditySale = isGpSeller &&
+    final isLockRecoveryLiquiditySale =
+        isGpSeller &&
         lockRecoverySellerPriorityIds.contains(deal.sellerFactionId) &&
         lockRecoveryLiquidityCommodityId != null &&
         deal.commodityId == lockRecoveryLiquidityCommodityId;

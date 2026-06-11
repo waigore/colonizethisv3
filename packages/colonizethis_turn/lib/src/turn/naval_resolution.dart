@@ -6,6 +6,9 @@ import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'turn_resolution_seeds.dart';
+import 'naval_resolution_helpers.dart';
+import 'naval_resolution_move.dart';
+import 'naval_resolution_battle.dart';
 export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
     show
         canonicalSeaZoneTileBucketKey,
@@ -15,10 +18,11 @@ export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
 export 'package:colonizethis_world/src/world/naval_mission_orders.dart'
     show applyNavalMissionOrders;
 
-// Naval resolution concern fragments (Refs #3290 Phase-0 file-split). Each
-// `part of` fragment shares this library's imports and library-private scope,
-// so the move is behaviour-preserving — symbols, visibility, and helper
-// sharing (e.g. [_NavalMoveOutcome], [_fleetIndexById]) are unchanged.
+// Naval resolution concern libraries (Refs #3290 Phase-0 file-split, #3416
+// part-of -> explicit library). The former `part of` fragments are now proper
+// libraries imported below; cross-file shared symbols ([NavalMoveOutcome],
+// [buildFleetIndexById], etc.) are package-visible in those libraries and stay
+// unexported from the package barrel, so the move remains behaviour-preserving.
 //
 // This library lives under `turn/` (not `world/`) because it orchestrates
 // naval combat and dossier/dialogue side-effects: it depends on `combat/`
@@ -28,20 +32,6 @@ export 'package:colonizethis_world/src/world/naval_mission_orders.dart'
 // #3290 Phase-0 ahead of the `colonizethis_world` leaf-package extraction
 // (Phase 1); leaf-layer fog code reaches the re-exported coastal-visibility
 // helpers directly via `world/naval_coastal_visibility.dart`.
-part 'naval_resolution_helpers.dart';
-part 'naval_resolution_move.dart';
-part 'naval_resolution_battle.dart';
-
-/// Outcome of a single naval-move order application. Returned by both the
-/// dock and at-sea move handlers and consumed by [applyNavalMovesAndShipReveal]
-/// to thread the mutating fleet/visibility state across each player's orders.
-/// Refs #2560.
-typedef _NavalMoveOutcome = ({
-  List<Fleet> fleets,
-  Map<String, Fleet> fleetById,
-  Map<String, int> fleetIndexById,
-  Map<String, Map<String, String>> visibilityByTile,
-});
 
 Game applyNavalMovesAndShipReveal(
   Game game,
@@ -53,7 +43,7 @@ Game applyNavalMovesAndShipReveal(
     game.worldState.playerVisibilityByTile,
   );
   final fleetById = {for (final f in fleets) f.id: f};
-  var fleetIndexById = _fleetIndexById(fleets);
+  var fleetIndexById = buildFleetIndexById(fleets);
 
   for (final entry in navalMoveOrdersByPlayerId.entries) {
     final playerId = entry.key;
@@ -65,7 +55,7 @@ Game applyNavalMovesAndShipReveal(
       if (fleet.id == homeFleetId) continue;
 
       if (order.isDock) {
-        final docked = _applyDockNavalMoveOrder(
+        final docked = applyDockNavalMoveOrder(
           game: game,
           topology: topology,
           fleets: fleets,
@@ -83,7 +73,7 @@ Game applyNavalMovesAndShipReveal(
         continue;
       }
 
-      final moved = _applySeaNavalMoveOrder(
+      final moved = applySeaNavalMoveOrder(
         game: game,
         topology: topology,
         fleets: fleets,
@@ -138,15 +128,15 @@ Game runNavalInterceptionCombatPhase(
   var battleIndex = 0;
   for (final battle in battles) {
     final hostileByOwner = hostileFactionsByFaction(state);
-    final fleetsBySeaZoneId = _fleetsBySeaZoneId(state.worldState.fleets);
-    final retreatZoneSide1 = _firstFriendlyOrNeutralRetreatZone(
+    final fleetsBySeaZoneId = buildFleetsBySeaZoneId(state.worldState.fleets);
+    final retreatZoneSide1 = firstFriendlyOrNeutralRetreatZone(
       topology,
       battle.seaZoneId,
       battle.side1.ownerId,
       hostileByOwner,
       fleetsBySeaZoneId,
     );
-    final retreatZoneSide2 = _firstFriendlyOrNeutralRetreatZone(
+    final retreatZoneSide2 = firstFriendlyOrNeutralRetreatZone(
       topology,
       battle.seaZoneId,
       battle.side2.ownerId,
@@ -184,7 +174,7 @@ Game runNavalInterceptionCombatPhase(
       'side1Retreated=${result.side1Retreated} side2Retreated=${result.side2Retreated}',
     );
 
-    state = _applyNavalBattleVictoryDossierAndDialogue(
+    state = applyNavalBattleVictoryDossierAndDialogue(
       state: state,
       battle: battle,
       result: result,
@@ -194,7 +184,7 @@ Game runNavalInterceptionCombatPhase(
       onDialogue: onDialogue,
     );
 
-    final winnerOwnerId = _navalBattleWinnerOwnerId(result.outcome, battle);
+    final winnerOwnerId = navalBattleWinnerOwnerId(result.outcome, battle);
     final navalEv = NavalCombatResultEvent(
       seaZoneId: battle.seaZoneId,
       side1OwnerId: battle.side1.ownerId,
