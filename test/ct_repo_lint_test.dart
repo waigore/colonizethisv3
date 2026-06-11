@@ -33,6 +33,11 @@ void main() {
             .spec,
         'SPEC/program/turn-no-part-directives.md',
       );
+      expect(ids, contains('repo.diplomacy_no_part_of'));
+      expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.diplomacy_no_part_of').spec,
+        'SPEC/program/diplomacy-no-part-of.md',
+      );
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
       expect(ids, contains('repo.logic_test_file_size'));

@@ -270,6 +270,13 @@ rules:
     runner: dart
     script: tool/check_turn_no_part_directives.dart
 
+  - rule_id: repo.diplomacy_no_part_of
+    group: structure
+    title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)
+    spec: SPEC/program/diplomacy-no-part-of.md
+    runner: dart
+    script: tool/check_diplomacy_no_part_of.dart
+
   - rule_id: repo.no_flame_in_widgets
     group: structure
     title: app/lib/widgets must not import package:flame directly

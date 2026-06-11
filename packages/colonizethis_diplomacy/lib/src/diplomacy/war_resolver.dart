@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'intervention_resolver.dart';
 import 'overture_resolver.dart';
 
@@ -13,6 +14,7 @@ Game processWarAndPeace(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   final peaceOffersByPairKey = _peaceOfferPairKeysForGreatPowers(
     game,
@@ -26,6 +28,7 @@ Game processWarAndPeace(
     peaceOffersByPairKey,
     factionMembership,
     onDialogue,
+    eventTally,
   );
 }
 
@@ -36,6 +39,7 @@ Game _runWarAndPeaceOrders(
   Map<String, Set<String>> peaceOffersByPairKey,
   DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 ) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   final warOrders = <({String gpId, DiplomaticOrder order})>[];
@@ -60,6 +64,7 @@ Game _runWarAndPeaceOrders(
       peaceOffersByPairKey: peaceOffersByPairKey,
       factionMembership: factionMembership,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
     game = updated.game;
     relations = updated.relations;
@@ -74,28 +79,12 @@ Game _runWarAndPeaceOrders(
       peaceOffersByPairKey: peaceOffersByPairKey,
       factionMembership: factionMembership,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
     game = updated.game;
     relations = updated.relations;
   }
   return game;
-}
-
-int _atWarGreatPowerCount(
-  Game game,
-  String gpId,
-  DiplomacyFactionMembership factionMembership,
-) {
-  var count = 0;
-  for (final rel in game.diplomacyRelations) {
-    if (rel.state != RelationState.atWar) continue;
-    final other = rel.factionId1 == gpId ? rel.factionId2 : rel.factionId1;
-    if (rel.factionId1 != gpId && rel.factionId2 != gpId) continue;
-    if (factionMembership.isGreatPower(other)) {
-      count++;
-    }
-  }
-  return count;
 }
 
 /// GP–GP peace offers by unordered pair (both sides must offer in same phase).
@@ -130,6 +119,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required Map<String, Set<String>> peaceOffersByPairKey,
   required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   if (order.type == DiplomaticOrderType.declareWar) {
     return _applyDeclareWarOrder(
@@ -139,6 +129,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       order: order,
       turn: turn,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
   }
   if (order.type == DiplomaticOrderType.offerPeace) {
@@ -151,6 +142,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       peaceOffersByPairKey: peaceOffersByPairKey,
       factionMembership: factionMembership,
       onDialogue: onDialogue,
+      eventTally: eventTally,
     );
   }
   return (game: game, relations: relations);
@@ -163,6 +155,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required DiplomaticOrder order,
   required int turn,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   final targetId = order.targetFactionId;
   final rel = getRelation(game, gpId, targetId);
@@ -192,7 +185,13 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     diplomacyRelations: nextRelations,
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
   );
-  nextGame = cancelSubsidiesBetweenGps(nextGame, gpId, targetId, turn);
+  nextGame = cancelSubsidiesBetweenGps(
+    nextGame,
+    gpId,
+    targetId,
+    turn,
+    eventTally: eventTally,
+  );
   nextGame = appendDiplomaticEvent(
     nextGame,
     turn,
@@ -201,6 +200,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     fromFactionId: gpId,
     toFactionId: targetId,
     wasAiInitiator: isAiControlledForEvidence(nextGame, gpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy war declared $gpId vs $targetId (scores reset to 20)');
   return (game: nextGame, relations: nextRelations);
@@ -215,6 +215,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required Map<String, Set<String>> peaceOffersByPairKey,
   required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
+  IntraTurnEventTally? eventTally,
 }) {
   final targetId = order.targetFactionId;
   final rel = getRelation(game, gpId, targetId);
@@ -244,12 +245,12 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   final multiFrontConsolidationPeace = bothGreatPowers &&
       offerers.length == 1 &&
       offerers.any(
-        (id) => _atWarGreatPowerCount(game, id, factionMembership) >= 2,
+        (id) => atWarGreatPowerCount(game, id, factionMembership) >= 2,
       );
   final soleGpWarConsolidationPeace = bothGreatPowers &&
       offerers.length == 1 &&
       offerers.any(
-        (id) => _atWarGreatPowerCount(game, id, factionMembership) == 1,
+        (id) => atWarGreatPowerCount(game, id, factionMembership) == 1,
       );
   final oneSidedGpPeace = collapsedSurvivalPeace ||
       belowQuotaOutmatchedGpPeace ||
@@ -309,6 +310,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     fromFactionId: gpId,
     toFactionId: targetId,
     wasAiInitiator: isAiControlledForEvidence(nextGame, gpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy peace $gpId-$targetId');
   return (game: nextGame, relations: nextRelations);

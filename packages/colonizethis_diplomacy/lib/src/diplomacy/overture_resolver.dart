@@ -5,7 +5,38 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_resolver.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'overture_stage_helpers.dart';
+
+/// Mutable per-turn tally for [appendDiplomaticEvent] `intraTurnIndex` assignment.
+///
+/// Built once from existing history at phase start; each [nextIndex] is O(1)
+/// instead of filtering `diplomaticHistoryEvents` on every append (Refs #3419
+/// step 7).
+class IntraTurnEventTally {
+  IntraTurnEventTally._(Map<int, int> countByTurn)
+    : _countByTurn = Map<int, int>.from(countByTurn);
+
+  factory IntraTurnEventTally.fromEvents(List<DiplomaticEvent> events) {
+    final counts = <int, int>{};
+    for (final e in events) {
+      counts[e.turn] = (counts[e.turn] ?? 0) + 1;
+    }
+    return IntraTurnEventTally._(counts);
+  }
+
+  factory IntraTurnEventTally.fromGame(Game game) =>
+      IntraTurnEventTally.fromEvents(game.diplomaticHistoryEvents);
+
+  final Map<int, int> _countByTurn;
+
+  /// Returns the next intra-turn index for [turn] and advances the tally.
+  int nextIndex(int turn) {
+    final idx = _countByTurn[turn] ?? 0;
+    _countByTurn[turn] = idx + 1;
+    return idx;
+  }
+}
 
 Game appendDiplomaticEvent(
   Game game,
@@ -18,9 +49,12 @@ Game appendDiplomaticEvent(
   int? amount,
   String? reason,
   bool wasAiInitiator = false,
+  IntraTurnEventTally? eventTally,
 }) {
   final events = game.diplomaticHistoryEvents;
-  final intraTurnIndex = events.where((e) => e.turn == turn).length;
+  final intraTurnIndex = eventTally != null
+      ? eventTally.nextIndex(turn)
+      : events.where((e) => e.turn == turn).length;
   final event = DiplomaticEvent(
     turn: turn,
     intraTurnIndex: intraTurnIndex,
@@ -34,28 +68,6 @@ Game appendDiplomaticEvent(
     wasAiInitiator: wasAiInitiator,
   );
   return game.copyWith(diplomaticHistoryEvents: [...events, event]);
-}
-
-bool _isTargetHumanGp(Game game, String factionId) {
-  final p = game.playerById(factionId);
-  return p != null && p.isHuman;
-}
-
-OvertureDecision? _findDecision(
-  List<OvertureDecision>? decisions,
-  String offererGpId,
-  String targetFactionId,
-  OvertureStage stage,
-) {
-  if (decisions == null) return null;
-  for (final d in decisions) {
-    if (d.offererGpId == offererGpId &&
-        d.targetFactionId == targetFactionId &&
-        d.stage == stage) {
-      return d;
-    }
-  }
-  return null;
 }
 
 class OverturePaymentsResult {
@@ -110,11 +122,17 @@ int? _overtureCostForStage(OvertureStage stage) {
   if (targetIsMinorOrTribe) {
     return (accepted: _minorOrTribeAcceptsByRule(stage), pending: null);
   }
-  final decision = _findDecision(overtureDecisions, gpId, targetId, stage);
+  final decision = findHumanDecision<OvertureDecision>(
+    overtureDecisions,
+    (d) =>
+        d.offererGpId == gpId &&
+        d.targetFactionId == targetId &&
+        d.stage == stage,
+  );
   if (decision != null) {
     return (accepted: decision.accepted, pending: null);
   }
-  if (_isTargetHumanGp(state, targetId)) {
+  if (isTargetHumanGp(state, targetId)) {
     final pending = [
       OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
     ];
@@ -142,6 +160,7 @@ _processEstablishOvertureOrderIfApplicable({
   required int turn,
   required DiplomacyFactionMembership factionMembership,
   List<OvertureDecision>? overtureDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   if (order.type != DiplomaticOrderType.establishOverture) {
     return (
@@ -270,6 +289,7 @@ _processEstablishOvertureOrderIfApplicable({
         toFactionId: targetId,
         overtureStage: stage,
         wasAiInitiator: isAiControlledForEvidence(nextState, gpId),
+        eventTally: eventTally,
       );
     }
     return (
@@ -281,13 +301,8 @@ _processEstablishOvertureOrderIfApplicable({
     );
   }
 
-  var nextPlayer = player;
-  var nextPlayers = players;
-  if (cost > 0) {
-    nextPlayer = nextPlayer.copyWith(treasury: nextPlayer.treasury - cost);
-    nextPlayers = List<Player>.from(nextPlayers);
-    nextPlayers[playerIdx] = nextPlayer;
-  }
+  final nextPlayers = debitPlayerTreasury(players, playerIdx, cost);
+  final nextPlayer = nextPlayers[playerIdx];
 
   var nextOvertures = overtures;
   final osIdx = nextOvertures.indexWhere(
@@ -323,6 +338,7 @@ _processEstablishOvertureOrderIfApplicable({
     toFactionId: targetId,
     overtureStage: stage,
     wasAiInitiator: isAiControlledForEvidence(nextState, gpId),
+    eventTally: eventTally,
   );
   diploLog.i('diplomacy overture $gpId -> $targetId $stage (accepted)');
   return (
@@ -340,6 +356,7 @@ OverturePaymentsResult processOverturePayments(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   List<OvertureDecision>? overtureDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   var players = List<Player>.from(game.players);
   var overtures = List<OvertureState>.from(game.overtureStates);
@@ -363,6 +380,7 @@ OverturePaymentsResult processOverturePayments(
         turn: turn,
         factionMembership: factionMembership,
         overtureDecisions: overtureDecisions,
+        eventTally: eventTally,
       );
       if (step.earlyExit != null) return step.earlyExit!;
       players = step.players;

@@ -1,18 +1,16 @@
 import 'dart:math' show Random;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
-import '../dossier/evidence_rules.dart';
+
 import 'diplomacy_phase_result.dart';
-import 'diplomacy_relation_updates.dart';
-import 'diplomacy_resolver.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_shared_helpers.dart';
+import 'intervention_resolver_apply.dart';
 import 'overture_resolver.dart';
 
-part 'intervention_resolver_call_to_arms.dart';
-part 'intervention_resolver_apply.dart';
+export 'intervention_resolver_apply.dart';
+export 'intervention_resolver_call_to_arms.dart';
 
 class InterventionResolutionResult {
   InterventionResolutionResult(this.game, {this.pendingInterventions});
@@ -28,7 +26,7 @@ bool _gpHasEmbassyOrPurchasedLandInMinorTribe(
 ) {
   final o = getOverture(game, gpId, minorOrTribeId);
   final hasEmbassy = o != null && o.hasEmbassy;
-  final hasInvestment = _gpHasPurchasedLandInFactionProvinces(
+  final hasInvestment = gpHasPurchasedLandInFactionProvinces(
     game,
     gpId,
     minorOrTribeId,
@@ -36,24 +34,35 @@ bool _gpHasEmbassyOrPurchasedLandInMinorTribe(
   return hasEmbassy || hasInvestment;
 }
 
-bool _interventionChoiceRecordedForTurn(
-  Game game,
+/// Lookup key for a recorded intervention choice on [turn] by [interveningGpId]
+/// reacting to [aggressorGpId]. Refs #3419 step 6.
+String _interventionChoiceKey(
   int turn,
   String interveningGpId,
   String aggressorGpId,
-) {
+) => '$turn|$interveningGpId|$aggressorGpId';
+
+/// Set of `(turn, interveningGpId, aggressorGpId)` keys for intervention choices
+/// already recorded in [game]'s history for [turn], built with a single scan.
+///
+/// Replaces the per-eligible-GP linear scan of the unbounded
+/// `diplomaticHistoryEvents` list (formerly O(history × players) per war
+/// declaration) with an O(1) membership test against this set (Refs #3419).
+Set<String> _recordedInterventionChoiceKeys(Game game, int turn) {
+  final keys = <String>{};
   for (final e in game.diplomaticHistoryEvents) {
     if (e.turn != turn) continue;
-    if (e.fromFactionId != interveningGpId || e.toFactionId != aggressorGpId) {
+    if (e.type != DiplomaticEventType.interventionIntervene &&
+        e.type != DiplomaticEventType.interventionDoNothing &&
+        e.type != DiplomaticEventType.interventionProtest) {
       continue;
     }
-    if (e.type == DiplomaticEventType.interventionIntervene ||
-        e.type == DiplomaticEventType.interventionDoNothing ||
-        e.type == DiplomaticEventType.interventionProtest) {
-      return true;
-    }
+    final from = e.fromFactionId;
+    final to = e.toFactionId;
+    if (from == null || to == null) continue;
+    keys.add(_interventionChoiceKey(turn, from, to));
   }
-  return false;
+  return keys;
 }
 
 bool _interventionsOutstanding(
@@ -62,6 +71,7 @@ bool _interventionsOutstanding(
   String aggressorGpId,
   String defenderMinorOrTribeId,
   DiplomacyFactionMembership factionMembership,
+  Set<String> recordedChoiceKeys,
 ) {
   for (final p in game.players) {
     if (!factionMembership.isGreatPower(p.id) || p.id == aggressorGpId) {
@@ -74,28 +84,13 @@ bool _interventionsOutstanding(
     )) {
       continue;
     }
-    if (!_interventionChoiceRecordedForTurn(game, turn, p.id, aggressorGpId)) {
+    if (!recordedChoiceKeys.contains(
+      _interventionChoiceKey(turn, p.id, aggressorGpId),
+    )) {
       return true;
     }
   }
   return false;
-}
-
-InterventionDecision? _findInterventionDecision(
-  List<InterventionDecision>? list,
-  String aggressorGpId,
-  String defenderMinorOrTribeId,
-  String interveningGpId,
-) {
-  if (list == null) return null;
-  for (final d in list) {
-    if (d.aggressorGpId == aggressorGpId &&
-        d.defenderMinorOrTribeId == defenderMinorOrTribeId &&
-        d.interveningGpId == interveningGpId) {
-      return d;
-    }
-  }
-  return null;
 }
 
 /// Relation score 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80%.
@@ -125,25 +120,15 @@ InterventionChoice _chooseAiIntervention(
   return roll < p ? InterventionChoice.intervene : InterventionChoice.doNothing;
 }
 
-Game _clearOverturesBetweenGpAndMinorTribe(
-  Game game,
-  String gpId,
-  String minorOrTribeId,
-) {
-  final overtures = game.overtureStates
-      .where((o) => !(o.gpId == gpId && o.targetId == minorOrTribeId))
-      .toList();
-  if (overtures.length == game.overtureStates.length) return game;
-  return game.copyWith(overtureStates: overtures);
-}
-
 InterventionResolutionResult _processInterventionsForAggressorDefender(
   Game game, {
   required String aggressorGpId,
   required String defenderMinorOrTribeId,
   required int turn,
   required DiplomacyFactionMembership factionMembership,
+  required Set<String> recordedChoiceKeys,
   List<InterventionDecision>? interventionDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   final eligible = <String>[];
   for (final p in game.players) {
@@ -163,22 +148,20 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
   var g = game;
   final pending = <InterventionPrompt>[];
   for (final interveningId in eligible) {
-    if (_interventionChoiceRecordedForTurn(
-      g,
-      turn,
-      interveningId,
-      aggressorGpId,
+    if (recordedChoiceKeys.contains(
+      _interventionChoiceKey(turn, interveningId, aggressorGpId),
     )) {
       continue;
     }
     final player = g.playerById(interveningId);
     if (player == null) continue;
     if (player.isHuman) {
-      final d = _findInterventionDecision(
+      final d = findHumanDecision<InterventionDecision>(
         interventionDecisions,
-        aggressorGpId,
-        defenderMinorOrTribeId,
-        interveningId,
+        (d) =>
+            d.aggressorGpId == aggressorGpId &&
+            d.defenderMinorOrTribeId == defenderMinorOrTribeId &&
+            d.interveningGpId == interveningId,
       );
       if (d == null) {
         pending.add(
@@ -197,6 +180,10 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
         interveningGpId: interveningId,
         choice: d.choice,
         factionMembership: factionMembership,
+        eventTally: eventTally,
+      );
+      recordedChoiceKeys.add(
+        _interventionChoiceKey(turn, interveningId, aggressorGpId),
       );
       continue;
     }
@@ -214,6 +201,10 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
       interveningGpId: interveningId,
       choice: aiChoice,
       factionMembership: factionMembership,
+      eventTally: eventTally,
+    );
+    recordedChoiceKeys.add(
+      _interventionChoiceKey(turn, interveningId, aggressorGpId),
     );
   }
   if (pending.isNotEmpty) {
@@ -228,8 +219,13 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   List<InterventionDecision>? interventionDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   final seen = <String>{};
+  // Built once from current-turn history; kept current as choices are applied
+  // below, replacing the former per-GP linear scan of diplomaticHistoryEvents
+  // (Refs #3419 step 6).
+  final recordedChoiceKeys = _recordedInterventionChoiceKeys(game, turn);
   var g = game;
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
@@ -251,6 +247,7 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
         gpId,
         targetId,
         factionMembership,
+        recordedChoiceKeys,
       )) {
         continue;
       }
@@ -260,7 +257,9 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
         defenderMinorOrTribeId: targetId,
         turn: turn,
         factionMembership: factionMembership,
+        recordedChoiceKeys: recordedChoiceKeys,
         interventionDecisions: interventionDecisions,
+        eventTally: eventTally,
       );
       g = pass.game;
       if (pass.pendingInterventions != null &&

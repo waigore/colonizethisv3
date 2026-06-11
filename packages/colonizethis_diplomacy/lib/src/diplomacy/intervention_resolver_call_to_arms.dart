@@ -1,39 +1,19 @@
-part of 'intervention_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_world/colonizethis_world.dart';
+import '../dossier/evidence_rules.dart';
+import 'diplomacy_logging.dart';
+import 'diplomacy_phase_result.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_relation_updates.dart';
+import 'diplomacy_shared_helpers.dart';
+import 'overture_resolver.dart';
 
 class CallToArmsResult {
   CallToArmsResult(this.game, {this.pendingCallToArms});
   final Game game;
   final List<CallToArmsPending>? pendingCallToArms;
-}
-
-CallToArmsDecision? _findCallToArmsDecision(
-  List<CallToArmsDecision>? decisions,
-  String allyGpId,
-  String defenderGpId,
-  String aggressorGpId,
-) {
-  if (decisions == null) return null;
-  for (final d in decisions) {
-    if (d.allyGpId == allyGpId &&
-        d.defenderGpId == defenderGpId &&
-        d.aggressorGpId == aggressorGpId) {
-      return d;
-    }
-  }
-  return null;
-}
-
-int _atWarGreatPowerCount(Game game, String gpId) {
-  var count = 0;
-  for (final rel in game.diplomacyRelations) {
-    if (rel.state != RelationState.atWar) continue;
-    if (rel.factionId1 != gpId && rel.factionId2 != gpId) continue;
-    final other = rel.factionId1 == gpId ? rel.factionId2 : rel.factionId1;
-    if (game.playerById(other) != null) {
-      count++;
-    }
-  }
-  return count;
 }
 
 /// GP–GP war pairs from declare-war orders that are at war after step 5.
@@ -61,7 +41,13 @@ List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
   return out;
 }
 
-Game cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
+Game cancelSubsidiesBetweenGps(
+  Game game,
+  String id1,
+  String id2,
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
   final cancelled = subsidyStates
       .where(
@@ -92,6 +78,7 @@ Game cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
       toFactionId: s.targetId,
       reason: 'war',
       wasAiInitiator: isAiControlledForEvidence(g, s.payerId),
+      eventTally: eventTally,
     );
   }
   return g;
@@ -101,8 +88,9 @@ Game _applyCallToArmsAccept(
   Game game,
   String allyGpId,
   String aggressorGpId,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   relations = setWarStateForPair(
     relations: relations,
@@ -111,7 +99,13 @@ Game _applyCallToArmsAccept(
     turn: turn,
   );
   var g = game.copyWith(diplomacyRelations: relations);
-  g = cancelSubsidiesBetweenGps(g, allyGpId, aggressorGpId, turn);
+  g = cancelSubsidiesBetweenGps(
+    g,
+    allyGpId,
+    aggressorGpId,
+    turn,
+    eventTally: eventTally,
+  );
   g = appendDiplomaticEvent(
     g,
     turn,
@@ -120,6 +114,7 @@ Game _applyCallToArmsAccept(
     fromFactionId: allyGpId,
     toFactionId: aggressorGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
+    eventTally: eventTally,
   );
   diploLog.i(
     'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
@@ -131,8 +126,9 @@ Game _applyCallToArmsRefuse(
   Game game,
   String allyGpId,
   String defenderGpId,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   relations = upsertRelation(relations, allyGpId, defenderGpId, (existing) {
     final base = existing?.score ?? relationScoreNeutral;
@@ -179,6 +175,7 @@ Game _applyCallToArmsRefuse(
     fromFactionId: allyGpId,
     toFactionId: defenderGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
+    eventTally: eventTally,
   );
   diploLog.i(
     'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
@@ -192,7 +189,9 @@ Game _processCallToArmsForWarPair(
   int turn,
   List<CallToArmsDecision>? callToArmsDecisions,
   List<CallToArmsPending> pending,
-) {
+  DiplomacyFactionMembership factionMembership, {
+  IntraTurnEventTally? eventTally,
+}) {
   final aggressorGpId = pair.aggressor;
   final defenderGpId = pair.defender;
   for (final p in state.players) {
@@ -208,27 +207,52 @@ Game _processCallToArmsForWarPair(
       final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
       final turn = state.worldState.turnState.turnNumber;
       if (isBelowObserverConquestQuota(aggressorOw)) {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+        state = _applyCallToArmsRefuse(
+          state,
+          allyGpId,
+          defenderGpId,
+          turn,
+          eventTally: eventTally,
+        );
         continue;
       }
-      if (_atWarGreatPowerCount(state, allyGpId) >= 1) {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+      if (atWarGreatPowerCount(state, allyGpId, factionMembership) >= 1) {
+        state = _applyCallToArmsRefuse(
+          state,
+          allyGpId,
+          defenderGpId,
+          turn,
+          eventTally: eventTally,
+        );
         continue;
       }
       final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
       if (accept) {
-        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+        state = _applyCallToArmsAccept(
+          state,
+          allyGpId,
+          aggressorGpId,
+          turn,
+          eventTally: eventTally,
+        );
       } else {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+        state = _applyCallToArmsRefuse(
+          state,
+          allyGpId,
+          defenderGpId,
+          turn,
+          eventTally: eventTally,
+        );
       }
       continue;
     }
 
-    final decision = _findCallToArmsDecision(
+    final decision = findHumanDecision<CallToArmsDecision>(
       callToArmsDecisions,
-      allyGpId,
-      defenderGpId,
-      aggressorGpId,
+      (d) =>
+          d.allyGpId == allyGpId &&
+          d.defenderGpId == defenderGpId &&
+          d.aggressorGpId == aggressorGpId,
     );
     if (decision == null) {
       pending.add(
@@ -241,9 +265,21 @@ Game _processCallToArmsForWarPair(
       continue;
     }
     if (decision.accepted) {
-      state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+      state = _applyCallToArmsAccept(
+        state,
+        allyGpId,
+        aggressorGpId,
+        turn,
+        eventTally: eventTally,
+      );
     } else {
-      state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+      state = _applyCallToArmsRefuse(
+        state,
+        allyGpId,
+        defenderGpId,
+        turn,
+        eventTally: eventTally,
+      );
     }
   }
   return state;
@@ -255,6 +291,7 @@ CallToArmsResult processCallToArms(
   int turn, {
   required DiplomacyFactionMembership factionMembership,
   List<CallToArmsDecision>? callToArmsDecisions,
+  IntraTurnEventTally? eventTally,
 }) {
   var state = game;
   final warPairs = _gpGpWarPairsFromOrders(
@@ -271,6 +308,8 @@ CallToArmsResult processCallToArms(
       turn,
       callToArmsDecisions,
       pending,
+      factionMembership,
+      eventTally: eventTally,
     );
   }
 
