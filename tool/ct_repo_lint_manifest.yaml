@@ -263,6 +263,13 @@ rules:
     runner: dart
     script: tool/check_part_unit_size.dart
 
+  - rule_id: repo.turn_no_part_directives
+    group: structure
+    title: colonizethis_turn lib must not use Dart part / part of directives (Refs #3416)
+    spec: SPEC/program/turn-no-part-directives.md
+    runner: dart
+    script: tool/check_turn_no_part_directives.dart
+
   - rule_id: repo.no_flame_in_widgets
     group: structure
     title: app/lib/widgets must not import package:flame directly
