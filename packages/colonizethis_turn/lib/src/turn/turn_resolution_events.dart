@@ -279,15 +279,27 @@ void emitWorkOrderCompletedEvents(
 }
 
 /// Emit player-scoped province/sea discovery outcomes for this resolved turn.
+///
+/// [beforeIndex]/[afterIndex] may be supplied by callers that already built the
+/// per-state [ProvinceVisibilityIndex] (e.g. the turn-resolution pipeline reuses
+/// the same indices for the news digest) so it is computed once per turn rather
+/// than once here and again in `buildTurnNewsDigestForComplete`
+/// (`SPEC/program/turn-resolution.md` and the turn-resolution budget rule). When
+/// omitted, each index is built from the matching state, preserving prior
+/// behaviour for standalone callers.
 void emitPlayerDiscoveryEvents(
   Game stateBefore,
   Game stateAfter,
   int turn,
   GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
-) {
-  final beforeIndex = buildProvinceVisibilityIndex(stateBefore);
-  final afterIndex = buildProvinceVisibilityIndex(stateAfter);
+  void Function(GameEvent)? onGameEvent, {
+  ProvinceVisibilityIndex? beforeIndex,
+  ProvinceVisibilityIndex? afterIndex,
+}) {
+  final resolvedBeforeIndex =
+      beforeIndex ?? buildProvinceVisibilityIndex(stateBefore);
+  final resolvedAfterIndex =
+      afterIndex ?? buildProvinceVisibilityIndex(stateAfter);
   final sortedPlayers = List<Player>.from(stateAfter.players)
     ..sort((a, b) => a.id.compareTo(b.id));
   for (final player in sortedPlayers) {
@@ -295,8 +307,8 @@ void emitPlayerDiscoveryEvents(
       stateAfter: stateAfter,
       playerId: player.id,
       turn: turn,
-      beforeIndex: beforeIndex,
-      afterIndex: afterIndex,
+      beforeIndex: resolvedBeforeIndex,
+      afterIndex: resolvedAfterIndex,
       eventBus: eventBus,
       onGameEvent: onGameEvent,
     );

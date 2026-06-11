@@ -7,9 +7,19 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 /// Builds digest lines and world-state tracking updates for the completed turn.
 /// [start] is game at resolution entry (after military ensure); [end] is final
 /// state including turn increment. Returns null digest when [end.victory] is set.
+///
+/// [startIndex]/[endIndex] may be supplied by callers that already built the
+/// per-state [ProvinceVisibilityIndex] (e.g. the turn-resolution pipeline reuses
+/// the same indices for `emitPlayerDiscoveryEvents`) so the O(provinces*players)
+/// index is computed once per turn rather than once here and again during
+/// discovery-event emission (`SPEC/program/turn-resolution.md` and the
+/// turn-resolution budget rule). When omitted, each index is built from the
+/// matching state, preserving prior behaviour for standalone callers.
 ({TurnNewsDigest? digest, Game game}) buildTurnNewsDigestForComplete({
   required Game start,
   required Game end,
+  ProvinceVisibilityIndex? startIndex,
+  ProvinceVisibilityIndex? endIndex,
 }) {
   if (end.victory != null) {
     return (digest: null, game: end);
@@ -38,8 +48,8 @@ import 'package:colonizethis_world/colonizethis_world.dart';
     end: end,
     readDone: provReadDone,
     writeDone: provWriteDone,
-    startIndex: buildProvinceVisibilityIndex(start),
-    endIndex: buildProvinceVisibilityIndex(end),
+    startIndex: startIndex ?? buildProvinceVisibilityIndex(start),
+    endIndex: endIndex ?? buildProvinceVisibilityIndex(end),
   );
   final seaLines = _seaZoneFleetLines(
     end: end,
