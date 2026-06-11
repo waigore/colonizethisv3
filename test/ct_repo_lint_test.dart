@@ -26,6 +26,13 @@ void main() {
       expect(ids, contains('repo.workspace_outdated_latest_direct'));
       expect(ids, contains('repo.function_size'));
       expect(ids, contains('repo.part_unit_size'));
+      expect(ids, contains('repo.turn_no_part_directives'));
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.turn_no_part_directives')
+            .spec,
+        'SPEC/program/turn-no-part-directives.md',
+      );
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
       expect(ids, contains('repo.logic_test_file_size'));

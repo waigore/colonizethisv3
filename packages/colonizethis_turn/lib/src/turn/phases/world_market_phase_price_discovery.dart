@@ -1,7 +1,16 @@
-part of 'world_market_phase.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-class _NewQuantityPair {
-  const _NewQuantityPair({required this.bid, required this.offer});
+// World-market price-discovery aggregation helpers (Refs #3115, #3416 part-of
+// -> explicit library). This is a proper library imported by
+// `world_market_phase.dart` and `world_market_phase_activity.dart`; the
+// shared [NewQuantityPair] type and the aggregation functions below are
+// package-visible (no `_` prefix) and stay unexported from the package
+// barrel so the public API is unchanged.
+
+class NewQuantityPair {
+  const NewQuantityPair({required this.bid, required this.offer});
   final int bid;
   final int offer;
 }
@@ -9,7 +18,7 @@ class _NewQuantityPair {
 /// Aggregates per-commodity the filled portion of this turn's
 /// newly-submitted bids attributable to each faction (Refs #3115). The
 /// matcher consumes newly-submitted bids at the head of each faction's
-/// merged bid list (see `_mergeOrdersByFaction`), so the filled units
+/// merged bid list (see `mergeOrdersByFaction`), so the filled units
 /// served to any given faction are allocated to its newly-submitted bids
 /// first; carry-forward bids only receive fills once newly-submitted
 /// bids are exhausted. Therefore:
@@ -20,7 +29,7 @@ class _NewQuantityPair {
 /// `buyerFactionId == f` and `commodityId == c`. Summing across factions
 /// yields `totalBid_new[c]` per
 /// `SPEC/program/world-market-resolution.md` § Step E.
-Map<CommodityId, int> _aggregateFilledNewBidsByCommodity({
+Map<CommodityId, int> aggregateFilledNewBidsByCommodity({
   required Map<String, List<TradeOrder>> newBidsByFactionId,
   required List<FilledDeal> filledDeals,
 }) {
@@ -67,21 +76,21 @@ Map<CommodityId, int> _aggregateFilledNewBidsByCommodity({
 }
 
 /// Builds the per-commodity price-discovery aggregation pair used by
-/// `_computeNextPrices` and `_buildActivity` (Refs #3115). Offers report
+/// `computeNextPrices` and `buildActivity` (Refs #3115). Offers report
 /// the submitted quantity unchanged; bids report only the filled portion
 /// of newly-submitted bids per
 /// `SPEC/program/world-market-resolution.md` § Step E.
-Map<CommodityId, _NewQuantityPair> _buildPriceDiscoveryPairs({
-  required Map<CommodityId, _NewQuantityPair> newQuantitiesByCommodity,
+Map<CommodityId, NewQuantityPair> buildPriceDiscoveryPairs({
+  required Map<CommodityId, NewQuantityPair> newQuantitiesByCommodity,
   required Map<CommodityId, int> filledNewBidsByCommodity,
 }) {
   if (newQuantitiesByCommodity.isEmpty) {
-    return const <CommodityId, _NewQuantityPair>{};
+    return const <CommodityId, NewQuantityPair>{};
   }
-  final result = <CommodityId, _NewQuantityPair>{};
+  final result = <CommodityId, NewQuantityPair>{};
   for (final entry in newQuantitiesByCommodity.entries) {
     final filledBid = filledNewBidsByCommodity[entry.key] ?? 0;
-    result[entry.key] = _NewQuantityPair(
+    result[entry.key] = NewQuantityPair(
       bid: filledBid,
       offer: entry.value.offer,
     );
@@ -89,7 +98,7 @@ Map<CommodityId, _NewQuantityPair> _buildPriceDiscoveryPairs({
   return result;
 }
 
-Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
+Map<CommodityId, NewQuantityPair> aggregateNewQuantitiesPerCommodity({
   required Map<String, List<TradeOrder>> newOffersByFactionId,
   required Map<String, List<TradeOrder>> newBidsByFactionId,
 }) {
@@ -107,9 +116,9 @@ Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
     }
   }
   final all = <CommodityId>{...offer.keys, ...bid.keys};
-  final result = <CommodityId, _NewQuantityPair>{};
+  final result = <CommodityId, NewQuantityPair>{};
   for (final id in all) {
-    result[id] = _NewQuantityPair(bid: bid[id] ?? 0, offer: offer[id] ?? 0);
+    result[id] = NewQuantityPair(bid: bid[id] ?? 0, offer: offer[id] ?? 0);
   }
   return result;
 }
@@ -117,7 +126,7 @@ Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
 /// Computes the next-turn integer prices for every commodity with newly-
 /// submitted activity this turn. Carries the prior integer price forward
 /// for any commodity that did not see activity (preserves the existing
-/// behavior of `_computeNextPrices` that returned a full prices map).
+/// behavior of `computeNextPrices` that returned a full prices map).
 ///
 /// `SPEC/game/world-market.md` § Price discovery requires the persisted
 /// price to be the integer floor of `PriceDiscovery.computeNextPrice`; the
@@ -126,9 +135,9 @@ Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
 /// `WorldMarketState.prices`. Floor is non-negative because
 /// `PriceDiscovery.computeNextPrice` returns a non-negative double (the
 /// price floor of `basePrice * 0.30` is non-negative).
-Map<CommodityId, int> _computeNextPrices({
+Map<CommodityId, int> computeNextPrices({
   required Map<CommodityId, int> priorPrices,
-  required Map<CommodityId, _NewQuantityPair> newQuantitiesByCommodity,
+  required Map<CommodityId, NewQuantityPair> newQuantitiesByCommodity,
 }) {
   final out = <CommodityId, int>{...priorPrices};
   for (final entry in newQuantitiesByCommodity.entries) {

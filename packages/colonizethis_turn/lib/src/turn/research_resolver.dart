@@ -70,42 +70,60 @@ bool _researchDiscoverySatisfied(
   return false;
 }
 
-void _applyResearchOrderIfValid({
-  required Game game,
-  required Player player,
-  required ResearchOrder order,
-  required int slots,
-  required Map<String, bool> originalUnlocked,
-  required Map<String, int> progress,
-  required int maxDebt,
-  required void Function(int newTreasury) setTreasury,
-  required int Function() getTreasury,
-}) {
-  if (order.slotIndex < 0 || order.slotIndex >= slots) return;
+/// Mutable per-player accumulator for one research-phase allocation pass.
+///
+/// Bundles the immutable inputs ([game], [player], [slots], [originalUnlocked],
+/// [maxDebt]) with the state mutated while applying each [ResearchOrder]
+/// ([treasury] and [progress]). Replaces the prior treasury getter/setter
+/// parameter pair so [_applyResearchOrderIfValid] threads a single value.
+class _ResearchAllocationContext {
+  _ResearchAllocationContext({
+    required this.game,
+    required this.player,
+    required this.slots,
+    required this.originalUnlocked,
+    required this.progress,
+    required this.maxDebt,
+    required this.treasury,
+  });
+
+  final Game game;
+  final Player player;
+  final int slots;
+  final Map<String, bool> originalUnlocked;
+  final Map<String, int> progress;
+  final int maxDebt;
+  int treasury;
+}
+
+void _applyResearchOrderIfValid(
+  _ResearchAllocationContext ctx,
+  ResearchOrder order,
+) {
+  if (order.slotIndex < 0 || order.slotIndex >= ctx.slots) return;
   final techId = order.techId;
   if (techId.isEmpty) return;
 
   final tech = techById(techId);
   if (tech == null) return;
-  if (originalUnlocked[techId] == true) return;
-  if (!_researchPrerequisitesMet(tech, originalUnlocked)) return;
-  if (!_researchDiscoverySatisfied(game, player.id, tech)) return;
+  if (ctx.originalUnlocked[techId] == true) return;
+  if (!_researchPrerequisitesMet(tech, ctx.originalUnlocked)) return;
+  if (!_researchDiscoverySatisfied(ctx.game, ctx.player.id, tech)) return;
 
   final funding = fundingStats(order.funding);
   if (funding.cost <= 0) return;
-  final treasury = getTreasury();
-  final nextTreasury = treasury - funding.cost;
-  if (nextTreasury < -maxDebt) return;
+  final nextTreasury = ctx.treasury - funding.cost;
+  if (nextTreasury < -ctx.maxDebt) return;
 
   final points = effectiveResearchPointsForTechAllocation(
-    player,
+    ctx.player,
     tech,
     funding.points,
   );
   if (points <= 0) return;
 
-  setTreasury(nextTreasury);
-  progress[techId] = (progress[techId] ?? 0) + points;
+  ctx.treasury = nextTreasury;
+  ctx.progress[techId] = (ctx.progress[techId] ?? 0) + points;
 }
 
 ({Game state, Player? updatedPlayer}) _resolveResearchForOnePlayer({
@@ -133,7 +151,6 @@ void _applyResearchOrderIfValid({
     player.researchProgressByTechId ?? const <String, int>{},
   );
   final maxDebt = maxDebtForPlayer(player);
-  var treasury = player.treasury;
 
   final bySlot = <int, ResearchOrder>{};
   for (final order in playerOrders) {
@@ -151,19 +168,19 @@ void _applyResearchOrderIfValid({
     (techId, _) => !assignedNonEmptyTechIds.contains(techId),
   );
 
+  final allocation = _ResearchAllocationContext(
+    game: game,
+    player: player,
+    slots: slots,
+    originalUnlocked: originalUnlocked,
+    progress: progress,
+    maxDebt: maxDebt,
+    treasury: player.treasury,
+  );
   for (final order in ordersPerSlot) {
-    _applyResearchOrderIfValid(
-      game: game,
-      player: player,
-      order: order,
-      slots: slots,
-      originalUnlocked: originalUnlocked,
-      progress: progress,
-      maxDebt: maxDebt,
-      getTreasury: () => treasury,
-      setTreasury: (v) => treasury = v,
-    );
+    _applyResearchOrderIfValid(allocation, order);
   }
+  final treasury = allocation.treasury;
 
   final toUnlock = <String>[];
   progress.forEach((techId, pts) {

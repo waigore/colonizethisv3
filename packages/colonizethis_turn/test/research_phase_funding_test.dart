@@ -10,7 +10,10 @@ void main() {
     test('accumulates research progress and unlocks tech when cost reached', () {
       final tech = techById(kTechIdCropRotation)!;
       // Maximum funding costs 1000 gold/turn (per SPEC/game/tech-tree.md)
-      final game = researchPhaseTestBaseGame(treasury: 2000, techUnlocked: const {});
+      final game = researchPhaseTestBaseGame(
+        treasury: 2000,
+        techUnlocked: const {},
+      );
 
       final orders = Orders(
         researchOrdersByPlayerId: {
@@ -83,7 +86,10 @@ void main() {
     test(
       'research with funding none does not spend treasury or add progress',
       () {
-        final game = researchPhaseTestBaseGame(treasury: 100, techUnlocked: const {});
+        final game = researchPhaseTestBaseGame(
+          treasury: 100,
+          techUnlocked: const {},
+        );
         final orders = Orders(
           researchOrdersByPlayerId: {
             'p1': const [
@@ -144,7 +150,10 @@ void main() {
     });
 
     test('research with maximum funding has efficiency bonus', () {
-      final game = researchPhaseTestBaseGame(treasury: 2000, techUnlocked: const {});
+      final game = researchPhaseTestBaseGame(
+        treasury: 2000,
+        techUnlocked: const {},
+      );
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -169,12 +178,91 @@ void main() {
       expect(next.players.single.techUnlocked![kTechIdCropRotation], isTrue);
     });
 
+    test(
+      'debt cap rejects allocation that would breach max debt (no money lending)',
+      () {
+        // maxDebt = 0 without Money Lending: treasury 30, low funding cost 50
+        // would reach -20, below the floor, so the order is rejected with no
+        // treasury spend and no progress. Refs #3416 (research context).
+        final game = researchPhaseTestBaseGame(
+          treasury: 30,
+          techUnlocked: const {kTechIdSawMill: true},
+        );
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            'p1': const [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: kTechIdWindSawMill,
+                funding: ResearchFundingLevel.low,
+              ),
+            ],
+          },
+        );
+        final next = requireTurnResolutionComplete(
+          resolveTurnForGame(
+            game: game,
+            topology: const MapTopology(),
+            orders: orders,
+          ),
+        );
+        expect(next.players.single.treasury, 30);
+        expect(
+          next.players.single.researchProgressByTechId ?? const {},
+          isEmpty,
+        );
+        expect(
+          next.players.single.techUnlocked?[kTechIdWindSawMill],
+          isNot(true),
+        );
+      },
+    );
+
+    test(
+      'debt cap allows treasury to go negative within money-lending floor',
+      () {
+        // maxDebt = 500 with Money Lending: treasury 30, low funding cost 50
+        // reaches -20 which is within the floor, so the order applies.
+        final game = researchPhaseTestBaseGame(
+          treasury: 30,
+          techUnlocked: const {kTechIdSawMill: true, kTechIdMoneyLending: true},
+        );
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            'p1': const [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: kTechIdWindSawMill,
+                funding: ResearchFundingLevel.low,
+              ),
+            ],
+          },
+        );
+        final next = requireTurnResolutionComplete(
+          resolveTurnForGame(
+            game: game,
+            topology: const MapTopology(),
+            orders: orders,
+          ),
+        );
+        expect(next.players.single.treasury, -20);
+        expect(
+          (next.players.single.researchProgressByTechId ??
+              const {})[kTechIdWindSawMill],
+          100,
+        );
+      },
+    );
+
     test('all funding levels match spec values via game behavior', () {
       // Use wind_saw_mill (cost 160) with prereq met so low funding does not complete in one turn.
       const prereqMet = {kTechIdSawMill: true};
 
       // Low: 50 gold, 100 RP (no unlock; 100 < 160)
-      var game = researchPhaseTestBaseGame(treasury: 100, techUnlocked: prereqMet);
+      var game = researchPhaseTestBaseGame(
+        treasury: 100,
+        techUnlocked: prereqMet,
+      );
       var orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [

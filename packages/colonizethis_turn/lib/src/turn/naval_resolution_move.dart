@@ -1,9 +1,15 @@
-part of 'naval_resolution.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'naval_resolution_helpers.dart';
 
 // Per-order naval-move handlers (dock / at-sea) and the reachability gate for
-// naval resolution (Refs #3290 Phase-0 file-split). Behaviour-preserving move:
-// same library scope as `naval_resolution.dart`, so imports, shared helpers
-// ([_NavalMoveOutcome], [_fleetIndexById]), and visibility are unchanged.
+// naval resolution (Refs #3290 Phase-0 file-split, #3416 part-of -> explicit
+// library). This is a proper library imported by `naval_resolution.dart`; the
+// shared helpers ([NavalMoveOutcome], [fleetIndexById]) come from
+// `naval_resolution_helpers.dart`. The public handlers below stay unexported
+// from the package barrel, so the public API is unchanged.
 
 bool _navalMoveDestinationIsReachable({
   required MapTopology topology,
@@ -34,7 +40,7 @@ bool _navalMoveDestinationIsReachable({
   ).contains(destZoneId);
 }
 
-_NavalMoveOutcome _applyDockNavalMoveOrder({
+NavalMoveOutcome applyDockNavalMoveOrder({
   required Game game,
   required MapTopology topology,
   required List<Fleet> fleets,
@@ -112,7 +118,7 @@ _NavalMoveOutcome _applyDockNavalMoveOrder({
       for (final f in fleets)
         if (f.id != fleet.id) f.id == homeFleetId ? updatedHome : f,
     ];
-    final nextFleetIndexById = _fleetIndexById(nextFleets);
+    final nextFleetIndexById = buildFleetIndexById(nextFleets);
     fleetById[homeFleetId] = updatedHome;
     fleetById.remove(fleet.id);
     return (
@@ -162,7 +168,7 @@ _NavalMoveOutcome _applyDockNavalMoveOrder({
   );
 }
 
-_NavalMoveOutcome _applySeaNavalMoveOrder({
+NavalMoveOutcome applySeaNavalMoveOrder({
   required Game game,
   required MapTopology topology,
   required List<Fleet> fleets,

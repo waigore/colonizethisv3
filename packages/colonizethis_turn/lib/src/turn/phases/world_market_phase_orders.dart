@@ -1,13 +1,22 @@
-part of 'world_market_phase.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-Map<String, List<TradeOrder>> _mergeOrdersByFaction(
+import '../turn_resolver_config.dart';
+
+// World-market order gathering / merge / restriction helpers (Refs #2990,
+// #3416 part-of -> explicit library). This is a proper library imported by
+// `world_market_phase.dart`; the helpers below are package-visible (no `_`
+// prefix) so the phase handler can reference them, and stay unexported from
+// the package barrel so the public API is unchanged.
+
+Map<String, List<TradeOrder>> mergeOrdersByFaction(
   Map<String, List<TradeOrder>> newByFaction,
   Map<String, List<TradeOrder>> carryByFaction, [
-  Map<String, List<TradeOrder>> autoByFaction = const <String, List<TradeOrder>>{},
+  Map<String, List<TradeOrder>> autoByFaction =
+      const <String, List<TradeOrder>>{},
 ]) {
-  if (newByFaction.isEmpty &&
-      carryByFaction.isEmpty &&
-      autoByFaction.isEmpty) {
+  if (newByFaction.isEmpty && carryByFaction.isEmpty && autoByFaction.isEmpty) {
     return const <String, List<TradeOrder>>{};
   }
   final factionIds = <String>{
@@ -31,7 +40,7 @@ Map<String, List<TradeOrder>> _mergeOrdersByFaction(
 /// [allowedFactionIds]. Used to filter carry-forwards to GP-only per
 /// `SPEC/program/world-market-resolution.md` § Step E (minor/tribe
 /// auto-offers do not carry forward).
-Map<String, List<TradeOrder>> _restrictToFactions(
+Map<String, List<TradeOrder>> restrictToFactions(
   Map<String, List<TradeOrder>> map,
   Set<String> allowedFactionIds,
 ) {
@@ -54,7 +63,7 @@ Map<String, List<TradeOrder>> _restrictToFactions(
 /// `extractedByPlayerId` instead; in that mode there is no upstream tile data
 /// to walk and the minor/tribe pool is intentionally empty so existing tests
 /// continue to exercise the GP-only matching path).
-Map<String, List<TradeOrder>> _computeMinorTribeAutoOffers({
+Map<String, List<TradeOrder>> computeMinorTribeAutoOffers({
   required Game game,
   required TurnResolverConfig config,
 }) {
