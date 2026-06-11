@@ -9,6 +9,7 @@ import '../dossier/evidence_rules.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'overture_resolver.dart';
 
 part 'intervention_resolver_call_to_arms.dart';
@@ -79,23 +80,6 @@ bool _interventionsOutstanding(
     }
   }
   return false;
-}
-
-InterventionDecision? _findInterventionDecision(
-  List<InterventionDecision>? list,
-  String aggressorGpId,
-  String defenderMinorOrTribeId,
-  String interveningGpId,
-) {
-  if (list == null) return null;
-  for (final d in list) {
-    if (d.aggressorGpId == aggressorGpId &&
-        d.defenderMinorOrTribeId == defenderMinorOrTribeId &&
-        d.interveningGpId == interveningGpId) {
-      return d;
-    }
-  }
-  return null;
 }
 
 /// Relation score 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80%.
@@ -174,11 +158,12 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
     final player = g.playerById(interveningId);
     if (player == null) continue;
     if (player.isHuman) {
-      final d = _findInterventionDecision(
+      final d = findHumanDecision<InterventionDecision>(
         interventionDecisions,
-        aggressorGpId,
-        defenderMinorOrTribeId,
-        interveningId,
+        (d) =>
+            d.aggressorGpId == aggressorGpId &&
+            d.defenderMinorOrTribeId == defenderMinorOrTribeId &&
+            d.interveningGpId == interveningId,
       );
       if (d == null) {
         pending.add(

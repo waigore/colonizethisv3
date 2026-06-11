@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_resolver.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'overture_stage_helpers.dart';
 
 Game appendDiplomaticEvent(
@@ -34,28 +35,6 @@ Game appendDiplomaticEvent(
     wasAiInitiator: wasAiInitiator,
   );
   return game.copyWith(diplomaticHistoryEvents: [...events, event]);
-}
-
-bool _isTargetHumanGp(Game game, String factionId) {
-  final p = game.playerById(factionId);
-  return p != null && p.isHuman;
-}
-
-OvertureDecision? _findDecision(
-  List<OvertureDecision>? decisions,
-  String offererGpId,
-  String targetFactionId,
-  OvertureStage stage,
-) {
-  if (decisions == null) return null;
-  for (final d in decisions) {
-    if (d.offererGpId == offererGpId &&
-        d.targetFactionId == targetFactionId &&
-        d.stage == stage) {
-      return d;
-    }
-  }
-  return null;
 }
 
 class OverturePaymentsResult {
@@ -110,11 +89,17 @@ int? _overtureCostForStage(OvertureStage stage) {
   if (targetIsMinorOrTribe) {
     return (accepted: _minorOrTribeAcceptsByRule(stage), pending: null);
   }
-  final decision = _findDecision(overtureDecisions, gpId, targetId, stage);
+  final decision = findHumanDecision<OvertureDecision>(
+    overtureDecisions,
+    (d) =>
+        d.offererGpId == gpId &&
+        d.targetFactionId == targetId &&
+        d.stage == stage,
+  );
   if (decision != null) {
     return (accepted: decision.accepted, pending: null);
   }
-  if (_isTargetHumanGp(state, targetId)) {
+  if (isTargetHumanGp(state, targetId)) {
     final pending = [
       OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
     ];
@@ -281,13 +266,8 @@ _processEstablishOvertureOrderIfApplicable({
     );
   }
 
-  var nextPlayer = player;
-  var nextPlayers = players;
-  if (cost > 0) {
-    nextPlayer = nextPlayer.copyWith(treasury: nextPlayer.treasury - cost);
-    nextPlayers = List<Player>.from(nextPlayers);
-    nextPlayers[playerIdx] = nextPlayer;
-  }
+  final nextPlayers = debitPlayerTreasury(players, playerIdx, cost);
+  final nextPlayer = nextPlayers[playerIdx];
 
   var nextOvertures = overtures;
   final osIdx = nextOvertures.indexWhere(

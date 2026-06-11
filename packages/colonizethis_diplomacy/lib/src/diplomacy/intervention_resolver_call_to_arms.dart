@@ -6,36 +6,6 @@ class CallToArmsResult {
   final List<CallToArmsPending>? pendingCallToArms;
 }
 
-CallToArmsDecision? _findCallToArmsDecision(
-  List<CallToArmsDecision>? decisions,
-  String allyGpId,
-  String defenderGpId,
-  String aggressorGpId,
-) {
-  if (decisions == null) return null;
-  for (final d in decisions) {
-    if (d.allyGpId == allyGpId &&
-        d.defenderGpId == defenderGpId &&
-        d.aggressorGpId == aggressorGpId) {
-      return d;
-    }
-  }
-  return null;
-}
-
-int _atWarGreatPowerCount(Game game, String gpId) {
-  var count = 0;
-  for (final rel in game.diplomacyRelations) {
-    if (rel.state != RelationState.atWar) continue;
-    if (rel.factionId1 != gpId && rel.factionId2 != gpId) continue;
-    final other = rel.factionId1 == gpId ? rel.factionId2 : rel.factionId1;
-    if (game.playerById(other) != null) {
-      count++;
-    }
-  }
-  return count;
-}
-
 /// GP–GP war pairs from declare-war orders that are at war after step 5.
 List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
   Game game,
@@ -192,6 +162,7 @@ Game _processCallToArmsForWarPair(
   int turn,
   List<CallToArmsDecision>? callToArmsDecisions,
   List<CallToArmsPending> pending,
+  DiplomacyFactionMembership factionMembership,
 ) {
   final aggressorGpId = pair.aggressor;
   final defenderGpId = pair.defender;
@@ -211,7 +182,7 @@ Game _processCallToArmsForWarPair(
         state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
         continue;
       }
-      if (_atWarGreatPowerCount(state, allyGpId) >= 1) {
+      if (atWarGreatPowerCount(state, allyGpId, factionMembership) >= 1) {
         state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
         continue;
       }
@@ -224,11 +195,12 @@ Game _processCallToArmsForWarPair(
       continue;
     }
 
-    final decision = _findCallToArmsDecision(
+    final decision = findHumanDecision<CallToArmsDecision>(
       callToArmsDecisions,
-      allyGpId,
-      defenderGpId,
-      aggressorGpId,
+      (d) =>
+          d.allyGpId == allyGpId &&
+          d.defenderGpId == defenderGpId &&
+          d.aggressorGpId == aggressorGpId,
     );
     if (decision == null) {
       pending.add(
@@ -271,6 +243,7 @@ CallToArmsResult processCallToArms(
       turn,
       callToArmsDecisions,
       pending,
+      factionMembership,
     );
   }
 

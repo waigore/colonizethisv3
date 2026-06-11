@@ -5,6 +5,7 @@ import '../dossier/evidence_rules.dart';
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'overture_resolver.dart';
 
 /// Result of processing FTP proposals in the Diplomacy phase.
@@ -13,25 +14,6 @@ class FtpProposalsResult {
 
   final Game game;
   final List<FtpOffer>? pendingFtpOffers;
-}
-
-bool _isTargetHumanGp(Game game, String factionId) {
-  final p = game.playerById(factionId);
-  return p != null && p.isHuman;
-}
-
-FtpDecision? _findFtpDecision(
-  List<FtpDecision>? decisions,
-  String proposerGpId,
-  String targetGpId,
-) {
-  if (decisions == null) return null;
-  for (final d in decisions) {
-    if (d.proposerGpId == proposerGpId && d.targetGpId == targetGpId) {
-      return d;
-    }
-  }
-  return null;
 }
 
 /// AI target accepts FTP when relation score ≥ [relationScoreMinFtp] and the
@@ -157,7 +139,10 @@ Game breakFtpOnWar(Game game, int turn) {
     return (state: state, pendingOffer: null);
   }
 
-  final decision = _findFtpDecision(ftpDecisions, proposerId, targetId);
+  final decision = findHumanDecision<FtpDecision>(
+    ftpDecisions,
+    (d) => d.proposerGpId == proposerId && d.targetGpId == targetId,
+  );
   if (decision != null) {
     if (decision.accepted) {
       state = _addFtpPartnership(state, proposerId, targetId, turn);
@@ -165,7 +150,7 @@ Game breakFtpOnWar(Game game, int turn) {
     return (state: state, pendingOffer: null);
   }
 
-  if (_isTargetHumanGp(state, targetId)) {
+  if (isTargetHumanGp(state, targetId)) {
     return (
       state: state,
       pendingOffer: FtpOffer(proposerGpId: proposerId, targetGpId: targetId),

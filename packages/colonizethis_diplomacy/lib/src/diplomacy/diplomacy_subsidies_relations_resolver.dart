@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'overture_resolver.dart';
 
 /// O(1) lookup of list index by player id for [players] snapshots.
@@ -105,13 +106,7 @@ Game applyRelationModifiersAndUpdateScores(
       final overture = getOverture(game, gpId, targetId);
       if (overture == null || !overture.hasEmbassy) continue;
 
-      final playerIdx = playerIndexById[gpId] ?? -1;
-      if (playerIdx >= 0) {
-        players = List<Player>.from(players);
-        players[playerIdx] = players[playerIdx].copyWith(
-          treasury: players[playerIdx].treasury - amount,
-        );
-      }
+      players = debitPlayerTreasury(players, playerIndexById[gpId] ?? -1, amount);
 
       relations = applyGrantAidModifier(
         relations: relations,
@@ -161,13 +156,7 @@ Game applyRelationModifiersAndUpdateScores(
       if (overture == null || !overture.hasConsulate) continue;
 
       // Deduct initial payment
-      final payerIdx = playerIndexById[gpId] ?? -1;
-      if (payerIdx >= 0) {
-        players = List<Player>.from(players);
-        players[payerIdx] = players[payerIdx].copyWith(
-          treasury: players[payerIdx].treasury - amount,
-        );
-      }
+      players = debitPlayerTreasury(players, playerIndexById[gpId] ?? -1, amount);
 
       // Store/update ongoing subsidy state
       final pairKey = _subsidyPairKey(gpId, targetId);
@@ -279,13 +268,11 @@ Game processOngoingSubsidies(
     }
 
     // Deduct subsidy payment
-    final payerIdx = playerIndexById[payerId] ?? -1;
-    if (payerIdx >= 0) {
-      players = List<Player>.from(players);
-      players[payerIdx] = players[payerIdx].copyWith(
-        treasury: players[payerIdx].treasury - amount,
-      );
-    }
+    players = debitPlayerTreasury(
+      players,
+      playerIndexById[payerId] ?? -1,
+      amount,
+    );
 
     // Calculate relation boost: +subsidyBoostRelationPerStep per subsidyBoostDucatsPerStep ducats, max subsidyBoostMax
     final boost =
