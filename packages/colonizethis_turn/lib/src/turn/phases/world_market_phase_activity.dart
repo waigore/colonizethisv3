@@ -1,19 +1,28 @@
-part of 'world_market_phase.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'world_market_phase_price_discovery.dart';
+
+// World-market activity-rollup helpers (Refs #3115, #3416 part-of -> explicit
+// library). This is a proper library imported by `world_market_phase.dart`;
+// the shared [NewQuantityPair] type comes from
+// `world_market_phase_price_discovery.dart`. The helpers below are
+// package-visible (no `_` prefix) and stay unexported from the package barrel
+// so the public API is unchanged.
 
 /// Forwards the matcher's per-commodity `MarketActivity.notes` (currently
 /// `bidPartialFillTreasuryInsufficient` entries from the treasury-clamp
 /// pass per Refs #3115) onto the phase-built `activity` map. The matcher
 /// runs in isolation, so it carries its own notes inside
 /// `DealMatchResult.activityByCommodityId`; the phase handler's
-/// `_buildActivity` reassembles `MarketActivity` from filled deals and
+/// `buildActivity` reassembles `MarketActivity` from filled deals and
 /// submitted quantities and would otherwise drop these notes. We merge
-/// them in by appending. Carry-forward drop notes from `_attachDropNotes`
+/// them in by appending. Carry-forward drop notes from `attachDropNotes`
 /// continue to coexist on the same `MarketActivity` (drop notes are
 /// added later in the pipeline and replace the list, so this helper
-/// runs **before** `_attachDropNotes` and uses replacement-with-existing
+/// runs **before** `attachDropNotes` and uses replacement-with-existing
 /// semantics to preserve any prior notes when the drop-notes attacher
 /// later appends).
-void _attachMatcherNotes({
+void attachMatcherNotes({
   required Map<CommodityId, MarketActivity> activity,
   required DealMatchResult matchResult,
 }) {
@@ -49,11 +58,11 @@ void _attachMatcherNotes({
 /// such as `bidPartialFillTreasuryInsufficient` are preserved per Refs
 /// #3115; prior-turn notes are not re-emitted). The final list is
 /// unmodifiable to keep `MarketActivity` immutable. Any `deals` already
-/// attached for the commodity (from `_buildActivity`) are preserved
+/// attached for the commodity (from `buildActivity`) are preserved
 /// verbatim — drop notes and ledger entries coexist on the same
 /// `MarketActivity` per `SPEC/program/world-market-resolution.md` § Step F
 /// Activity rollup.
-void _attachDropNotes({
+void attachDropNotes({
   required Map<CommodityId, MarketActivity> activity,
   required Map<CommodityId, List<MarketActivityNote>> notesByCommodity,
 }) {
@@ -67,10 +76,7 @@ void _attachDropNotes({
         notes: List<MarketActivityNote>.unmodifiable(entry.value),
       );
     } else {
-      final combined = <MarketActivityNote>[
-        ...existing.notes,
-        ...entry.value,
-      ];
+      final combined = <MarketActivityNote>[...existing.notes, ...entry.value];
       activity[commodity] = MarketActivity(
         totalBidQuantity: existing.totalBidQuantity,
         totalOfferQuantity: existing.totalOfferQuantity,
@@ -83,9 +89,9 @@ void _attachDropNotes({
   }
 }
 
-Map<CommodityId, MarketActivity> _buildActivity({
+Map<CommodityId, MarketActivity> buildActivity({
   required DealMatchResult matchResult,
-  required Map<CommodityId, _NewQuantityPair> newQuantitiesByCommodity,
+  required Map<CommodityId, NewQuantityPair> newQuantitiesByCommodity,
   required Map<CommodityId, int> priorPrices,
   required Map<CommodityId, int> newPrices,
 }) {
@@ -103,8 +109,7 @@ Map<CommodityId, MarketActivity> _buildActivity({
   final activity = <CommodityId, MarketActivity>{};
   for (final id in commodityIds) {
     final pair =
-        newQuantitiesByCommodity[id] ??
-        const _NewQuantityPair(bid: 0, offer: 0);
+        newQuantitiesByCommodity[id] ?? const NewQuantityPair(bid: 0, offer: 0);
     final filled = filledByCommodity[id] ?? 0;
     final oldPrice = priorPrices[id] ?? 0;
     final newPrice = newPrices[id] ?? oldPrice;
