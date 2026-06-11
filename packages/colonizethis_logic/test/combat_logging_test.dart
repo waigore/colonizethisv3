@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import 'combat_logging_test_support.dart';
+import 'package:colonizethis_test/combat_logging_test_support.dart';
 
 void main() {
   group('land combat logging (resolveBattleContext)', () {
