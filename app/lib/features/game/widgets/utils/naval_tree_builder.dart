@@ -3,7 +3,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show GamePlayerLookup, homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
+    show
+        GamePlayerLookup,
+        homeFleetIdFor,
+        regionIdForSeaZone,
+        WorldStateProvinceLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../l10n/l10n.dart';
@@ -26,7 +30,7 @@ String? navalDraftMoveLineForFleet({
     if (o.fleetId != fleetId) continue;
     if (o.isDock) {
       final pid = o.destinationPortProvinceId!;
-      final p = tryGetProvince(game.worldState, pid);
+      final p = game.worldState.tryGetProvince(pid);
       final name = p?.displayName ?? p?.id ?? pid;
       return 'Moving to: $name (dock)';
     }
@@ -258,7 +262,7 @@ String? _navalProjectedLocationScopeForFleet({
   if (move != null) {
     if (move.isDock) {
       final pid = move.destinationPortProvinceId!;
-      final province = tryGetProvince(game.worldState, pid);
+      final province = game.worldState.tryGetProvince(pid);
       if (province != null) {
         return _navalNormalizedPortScopeForProvince(province);
       }
@@ -274,7 +278,7 @@ String? _navalProjectedLocationScopeForFleet({
     return _navalNormalizedSeaScope(topology, fleet.seaZoneId!, fleet.regionId);
   }
   if (fleet.inPortAtProvinceId != null) {
-    final province = tryGetProvince(game.worldState, fleet.inPortAtProvinceId!);
+    final province = game.worldState.tryGetProvince(fleet.inPortAtProvinceId!);
     if (province != null) {
       return _navalNormalizedPortScopeForProvince(province);
     }

@@ -117,7 +117,7 @@ bool _ownsUnimprovedFeedstockResourceTile(
     if (!feedstockIds.contains(entry.value)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     if (ws.tileState.improvementLevel(entry.key) < 1) return true;
   }

@@ -2,7 +2,7 @@
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show resolveToFullProvinceId, tryGetProvince;
+    show resolveToFullProvinceId, WorldStateProvinceLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../utils/map_location_resolver.dart';
@@ -14,7 +14,7 @@ String armyStationedProvinceDisplayLabel(Game game, Army army) {
   final full = ProvinceId.isPrefixed(pid)
       ? pid
       : ProvinceId.full(army.regionId, pid);
-  final p = tryGetProvince(game.worldState, full);
+  final p = game.worldState.tryGetProvince(full);
   if (p != null) {
     return p.displayName ?? p.id;
   }
@@ -35,7 +35,7 @@ String? armyDraftMoveLineForArmy({
       game.worldState,
       o.destinationProvinceId,
     );
-    final p = tryGetProvince(game.worldState, full);
+    final p = game.worldState.tryGetProvince(full);
     final name = p?.displayName ?? p?.id ?? ProvinceId.localIdFrom(full);
     return 'Moving to: $name';
   }
@@ -195,7 +195,7 @@ List<ProvinceArmiesNode> _provinceArmyNodesForRegion({
     final full = ProvinceId.isPrefixed(a.stationedProvinceId)
         ? a.stationedProvinceId
         : ProvinceId.full(regionKey, a.stationedProvinceId);
-    final p = tryGetProvince(game.worldState, full);
+    final p = game.worldState.tryGetProvince(full);
     return p != null && p.regionId == regionKey;
   }).toList();
 

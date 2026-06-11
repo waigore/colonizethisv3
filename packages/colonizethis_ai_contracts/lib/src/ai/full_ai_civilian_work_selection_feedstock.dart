@@ -30,7 +30,7 @@ bool _ownsFeedstockResourceTile(
     if (!feedstockIds.contains(entry.value)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     return true;
   }

@@ -51,7 +51,7 @@ int _buildImprovementWorkScore(
     score += kBuildImprovementNewWorldResourceBonus;
     final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
     if (provId != null &&
-        tryGetProvince(game.worldState, provId)?.ownerId == playerId) {
+        game.worldState.tryGetProvince(provId)?.ownerId == playerId) {
       score += kBuildImprovementOwnedNewWorldResourceBonus;
     }
   }
@@ -209,7 +209,7 @@ int _purchaseLandWorkScore(
   final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
   if (provId == null || provId.isEmpty) return 1;
   if (ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
-    final ownerId = tryGetProvince(game.worldState, provId)?.ownerId;
+    final ownerId = game.worldState.tryGetProvince(provId)?.ownerId;
     if (ownerId != null &&
         isMinorOrTribe(game, ownerId, factionMembership: factionMembership)) {
       return kPurchaseLandNewWorldTribeWorkScore;

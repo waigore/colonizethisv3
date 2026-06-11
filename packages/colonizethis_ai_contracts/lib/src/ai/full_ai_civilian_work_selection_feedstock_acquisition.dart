@@ -57,7 +57,7 @@ List<String> sellerFeedstockTileAcquisitionTargetProvinceIdsSorted(
     if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId == playerId) continue;
     provinceIds.add(provinceId);
   }
@@ -225,7 +225,7 @@ bool _ownsUnimprovedOldWorldFeedstockTile(
     if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     if (ws.tileState.improvementLevel(entry.key) < 1) return true;
   }
@@ -250,7 +250,7 @@ bool _ownsUnprospectedOldWorldMineralFeedstockTile(
     if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     if (_isUnprospectedMineralFeedstockTile(
       game,

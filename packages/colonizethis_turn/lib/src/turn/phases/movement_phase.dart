@@ -91,7 +91,7 @@ Game runMovementPhase(
       String playerId,
       String destFullProvinceId,
     ) =>
-        tryGetProvince(state.worldState, destFullProvinceId)?.ownerId ==
+        state.worldState.tryGetProvince(destFullProvinceId)?.ownerId ==
         playerId;
 
     final filtered = onArmyMoveOrderTrace == null

@@ -40,7 +40,7 @@ bool ownsUnimprovedFeedstockResourceTile(
   final ws = game.worldState;
   for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
     for (final entry in byProvince.entries) {
-      final province = tryGetProvince(ws, entry.key);
+      final province = ws.tryGetProvince(entry.key);
       if (province == null || province.ownerId != playerId) continue;
       for (final tileKey in entry.value) {
         final resourceId = ws.resourceByTileKey[tileKey];
@@ -76,7 +76,7 @@ bool ownsImprovedFeedstockResourceTile(
   final ws = game.worldState;
   for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
     for (final entry in byProvince.entries) {
-      final province = tryGetProvince(ws, entry.key);
+      final province = ws.tryGetProvince(entry.key);
       if (province == null || province.ownerId != playerId) continue;
       for (final tileKey in entry.value) {
         final resourceId = ws.resourceByTileKey[tileKey];
@@ -611,7 +611,7 @@ bool ownsFeedstockResourceTileAnyLevel(
   final ws = game.worldState;
   for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
     for (final entry in byProvince.entries) {
-      final province = tryGetProvince(ws, entry.key);
+      final province = ws.tryGetProvince(entry.key);
       if (province == null || province.ownerId != playerId) continue;
       for (final tileKey in entry.value) {
         final resourceId = ws.resourceByTileKey[tileKey];

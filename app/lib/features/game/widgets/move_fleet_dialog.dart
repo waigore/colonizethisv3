@@ -70,7 +70,7 @@ final class _PickPort extends _MovePick {
 
   @override
   void emitLocate(AppEventBus bus, Game game) {
-    final province = tryGetProvince(game.worldState, fullProvinceId);
+    final province = game.worldState.tryGetProvince(fullProvinceId);
     if (province == null) return;
     final key = tileKeyForProvinceLocation(game, province);
     if (key == null) return;
@@ -130,7 +130,7 @@ List<_MovePick> _buildNavalMovePicks({
     final portRows = <({String fullId, String label})>[];
     for (final lp in topo.adjacentProvinceIdsForDock) {
       final full = _fullProvinceIdForTopologyProvince(lp, rz);
-      final province = tryGetProvince(game.worldState, full);
+      final province = game.worldState.tryGetProvince(full);
       if (province == null || province.ownerId != humanPlayerId) continue;
       final name = province.displayName ?? province.id;
       final isCap = dockOrderTargetsPlayerCapital(game, humanPlayerId, full);

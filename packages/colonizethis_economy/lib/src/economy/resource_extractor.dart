@@ -187,7 +187,7 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
   final province = provincesByFullId != null
       ? provincesByFullId[provinceId]
-      : tryGetProvince(game.worldState, provinceId);
+      : game.worldState.tryGetProvince(provinceId);
   if (province == null) {
     final msg =
         'extraction province missing tileKey=$tileKey provinceId=$provinceId '

@@ -57,7 +57,7 @@ void _bumpExposureForProvinceEntry(
   MapEntry<String, List<String>> entry,
   Map<String, int> counts,
 ) {
-  final province = tryGetProvince(game.worldState, entry.key);
+  final province = game.worldState.tryGetProvince(entry.key);
   if (province == null) return;
   for (final tk in entry.value) {
     _bumpExposureForTile(game, view, playerId, tk, province, counts);
@@ -124,7 +124,7 @@ int _prospectTerritoryPoints(
 ) {
   final provId = Unit.provinceIdFromTileKey(tileKey);
   if (provId == null) return 0;
-  final p = tryGetProvince(game.worldState, provId);
+  final p = game.worldState.tryGetProvince(provId);
   if (p == null) return 0;
   if (p.ownerId == playerId) return 32;
   final purchased =

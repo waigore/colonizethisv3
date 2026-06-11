@@ -133,9 +133,8 @@ Game runOneLandBattle(
       combatGeneralLedger: combatGeneralLedger,
     );
     final province = ProvinceId.isPrefixed(ctx.provinceId)
-        ? tryGetProvince(state.worldState, ctx.provinceId)
-        : tryGetProvinceByRegion(
-            state.worldState,
+        ? state.worldState.tryGetProvince(ctx.provinceId)
+        : state.worldState.tryGetProvinceByRegion(
             ctx.regionId,
             ctx.provinceId,
           );

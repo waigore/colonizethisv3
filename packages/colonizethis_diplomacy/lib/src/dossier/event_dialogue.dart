@@ -161,7 +161,7 @@ List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
   final seenAi = <String>{};
   for (final neighborLocal in neighborLocalIds) {
     final fullId = ProvinceId.full(regionId, neighborLocal);
-    final ownerId = tryGetProvince(game.worldState, fullId)?.ownerId;
+    final ownerId = game.worldState.tryGetProvince(fullId)?.ownerId;
     if (ownerId == null ||
         !isAiControlledForEvidence(game, ownerId) ||
         !seenAi.add(ownerId)) {

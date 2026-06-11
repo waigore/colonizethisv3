@@ -137,7 +137,7 @@ void main() {
         final optimized = <String>[];
         for (final id in cache) {
           final p =
-              view.provincesById[id] ?? tryGetProvince(game.worldState, id);
+              view.provincesById[id] ?? game.worldState.tryGetProvince(id);
           if (p != null) {
             optimized.add(p.id);
           }

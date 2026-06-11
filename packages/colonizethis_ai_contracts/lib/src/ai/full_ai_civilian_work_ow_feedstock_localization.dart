@@ -62,7 +62,7 @@ bool ownsProspectedOldWorldMineralFeedstockTile(
     if (!prospected.contains(entry.key)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     return true;
   }
@@ -136,7 +136,7 @@ bool ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
     if (prospected.contains(entry.key)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     feedstockProvinceIds.add(provinceId);
   }
@@ -201,7 +201,7 @@ bool ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTi
     if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     feedstockProvinceIds.add(provinceId);
   }
@@ -276,7 +276,7 @@ bool suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTil
     if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     (eligibleTileKeysByProvince[provinceId] ??= <String>{}).add(entry.key);
   }
@@ -335,7 +335,7 @@ _colocatedMineralEligibleFeedstockProspectProbes({
     if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(ws, provinceId);
+    final province = ws.tryGetProvince(provinceId);
     if (province == null || province.ownerId != playerId) continue;
     (eligibleTileKeysByProvince[provinceId] ??= <String>{}).add(entry.key);
   }
