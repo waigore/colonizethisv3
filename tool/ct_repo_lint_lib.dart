@@ -28,6 +28,7 @@ import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
 import 'check_dart_file_non_comment_line_size.dart';
+import 'check_diplomacy_no_part_of.dart';
 import 'check_debug_handler_one_per_file.dart';
 import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
@@ -809,6 +810,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckTurnNoPartDirectives(repoRoot);
     case 'repo.turn_resume_param_budget':
       return runCheckTurnResumeParamBudget(repoRoot);
+    case 'repo.diplomacy_no_part_of':
+      return runCheckDiplomacyNoPartOf(repoRoot);
     case 'repo.no_flame_in_widgets':
       return runCheckNoFlameInWidgets(repoRoot);
     case 'repo.no_screen_in_game_widgets':

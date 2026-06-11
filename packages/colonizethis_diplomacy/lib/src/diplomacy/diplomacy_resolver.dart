@@ -72,6 +72,8 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   diploLog.d('diplomacy phase start');
   final turn = game.worldState.turnState.turnNumber;
   var state = game;
+  // Single scan at phase start; each append uses O(1) tally (Refs #3419 step 7).
+  final eventTally = IntraTurnEventTally.fromGame(game);
 
   final diploByPlayer = orders.diplomaticOrdersByPlayerId;
   var factionMembership = DiplomacyFactionMembership.from(game);
@@ -83,6 +85,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     turn,
     factionMembership: factionMembership,
     overtureDecisions: overtureDecisions,
+    eventTally: eventTally,
   );
   state = overtureResult.game;
   if (overtureResult.pendingOvertures != null &&
@@ -98,7 +101,12 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = advanceOvertures(state, turn);
 
   // 3. Resolve Join Empire/Colony
-  state = resolveJoinEmpireColony(state, diploByPlayer, turn);
+  state = resolveJoinEmpireColony(
+    state,
+    diploByPlayer,
+    turn,
+    eventTally: eventTally,
+  );
   factionMembership = DiplomacyFactionMembership.from(state);
 
   // 4. Process alliance proposals and responses
@@ -107,6 +115,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     diploByPlayer,
     turn,
     factionMembership: factionMembership,
+    eventTally: eventTally,
   );
 
   // 4b. Process FTP proposals (GP–GP, two-way accept)
@@ -116,6 +125,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     turn,
     factionMembership: factionMembership,
     ftpDecisions: ftpDecisions,
+    eventTally: eventTally,
   );
   state = ftpResult.game;
   if (ftpResult.pendingFtpOffers != null &&
@@ -134,6 +144,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     turn,
     factionMembership: factionMembership,
     onDialogue: onDialogue,
+    eventTally: eventTally,
   );
 
   // 5b. Intervention (Diplomacy phase, after war declarations on Minor/Tribe)
@@ -143,6 +154,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     turn,
     factionMembership: factionMembership,
     interventionDecisions: interventionDecisions,
+    eventTally: eventTally,
   );
   if (interventionResult.pendingInterventions != null &&
       interventionResult.pendingInterventions!.isNotEmpty) {
@@ -160,6 +172,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     turn,
     factionMembership: factionMembership,
     callToArmsDecisions: callToArmsDecisions,
+    eventTally: eventTally,
   );
   state = ctaResult.game;
   if (ctaResult.pendingCallToArms != null &&
@@ -172,9 +185,9 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   }
 
   // 6. War terminates agreements with target
-  state = terminateAgreementsOnWar(state);
-  state = breakFtpOnWar(state, turn);
-  state = breakFtpOnEmbassyLoss(state, turn);
+  state = terminateAgreementsOnWar(state, eventTally: eventTally);
+  state = breakFtpOnWar(state, turn, eventTally: eventTally);
+  state = breakFtpOnEmbassyLoss(state, turn, eventTally: eventTally);
 
   // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
   // Note: Convergence happens AFTER subsidies
@@ -182,13 +195,19 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     state,
     turn,
     factionMembership: factionMembership,
+    eventTally: eventTally,
   );
 
   // 8. Apply relation convergence (+/1 toward 50 for all non-war relations)
   state = applyRelationConvergence(state, turn);
 
   // 9. Apply relation modifiers (grants, etc.)
-  state = applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
+  state = applyRelationModifiersAndUpdateScores(
+    state,
+    diploByPlayer,
+    turn,
+    eventTally: eventTally,
+  );
 
   diploLog.d('diplomacy phase end');
   return DiplomacyPhaseResult(state);

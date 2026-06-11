@@ -7,6 +7,7 @@ export 'src/diplomacy/diplomacy_phase_result.dart';
 export 'src/diplomacy/diplomacy_relation_lookup.dart';
 export 'src/diplomacy/diplomacy_relation_updates.dart';
 export 'src/diplomacy/diplomacy_resolver.dart';
+export 'src/diplomacy/diplomacy_shared_helpers.dart';
 export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart';
 export 'src/diplomacy/faction_absorption_engine.dart';
 export 'src/diplomacy/ftp_resolver.dart';

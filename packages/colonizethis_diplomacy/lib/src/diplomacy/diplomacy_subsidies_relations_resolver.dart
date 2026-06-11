@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'overture_resolver.dart';
 
 /// O(1) lookup of list index by player id for [players] snapshots.
@@ -31,7 +32,7 @@ Map<String, int> _subsidyStateIndexByPair(List<SubsidyState> states) {
   return out;
 }
 
-Game terminateAgreementsOnWar(Game game) {
+Game terminateAgreementsOnWar(Game game, {IntraTurnEventTally? eventTally}) {
   final turn = game.worldState.turnState.turnNumber;
   var overtures = game.overtureStates;
   for (final rel in game.diplomacyRelations) {
@@ -64,6 +65,7 @@ Game terminateAgreementsOnWar(Game game) {
         fromFactionId: o.gpId,
         toFactionId: o.targetId,
         reason: 'war',
+        eventTally: eventTally,
       );
     }
     diploLog.i('diplomacy agreements terminated (war)');
@@ -74,12 +76,15 @@ Game terminateAgreementsOnWar(Game game) {
 Game applyRelationModifiersAndUpdateScores(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn,
-) {
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   var players = game.players;
   // Stable id → row index while [players] order/count is unchanged (Refs #2394).
   final playerIndexById = _playerListIndexById(players);
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  // Pair-key index built once for the phase; grant-aid upserts are amortized
+  // O(1) instead of rebuilding the index per order (Refs #3419 step 5).
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
 
   // GrantAid: deduct treasury, add relation modifier (+5 per grant). Requires Embassy.
   for (final entry in diploByPlayer.entries) {
@@ -105,21 +110,17 @@ Game applyRelationModifiersAndUpdateScores(
       final overture = getOverture(game, gpId, targetId);
       if (overture == null || !overture.hasEmbassy) continue;
 
-      final playerIdx = playerIndexById[gpId] ?? -1;
-      if (playerIdx >= 0) {
-        players = List<Player>.from(players);
-        players[playerIdx] = players[playerIdx].copyWith(
-          treasury: players[playerIdx].treasury - amount,
-        );
-      }
+      players = debitPlayerTreasury(players, playerIndexById[gpId] ?? -1, amount);
 
-      relations = applyGrantAidModifier(
-        relations: relations,
-        gpId: gpId,
-        targetId: targetId,
-        turn: turn,
+      relationsIndex.upsert(
+        gpId,
+        targetId,
+        grantAidRelationUpdater(gpId, targetId, turn),
       );
-      game = game.copyWith(players: players, diplomacyRelations: relations);
+      game = game.copyWith(
+        players: players,
+        diplomacyRelations: relationsIndex.toList(),
+      );
       game = appendDiplomaticEvent(
         game,
         turn,
@@ -129,6 +130,7 @@ Game applyRelationModifiersAndUpdateScores(
         toFactionId: targetId,
         amount: amount,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
+        eventTally: eventTally,
       );
       diploLog.i('diplomacy GrantAid $gpId -> $targetId amount $amount');
     }
@@ -161,13 +163,7 @@ Game applyRelationModifiersAndUpdateScores(
       if (overture == null || !overture.hasConsulate) continue;
 
       // Deduct initial payment
-      final payerIdx = playerIndexById[gpId] ?? -1;
-      if (payerIdx >= 0) {
-        players = List<Player>.from(players);
-        players[payerIdx] = players[payerIdx].copyWith(
-          treasury: players[payerIdx].treasury - amount,
-        );
-      }
+      players = debitPlayerTreasury(players, playerIndexById[gpId] ?? -1, amount);
 
       // Store/update ongoing subsidy state
       final pairKey = _subsidyPairKey(gpId, targetId);
@@ -199,6 +195,7 @@ Game applyRelationModifiersAndUpdateScores(
         toFactionId: targetId,
         amount: amount,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
+        eventTally: eventTally,
       );
       final targetPlayer = game.playerById(targetId);
       if (targetPlayer != null) {
@@ -223,10 +220,13 @@ Game processOngoingSubsidies(
   Game game,
   int turn, {
   required DiplomacyFactionMembership factionMembership,
+  IntraTurnEventTally? eventTally,
 }) {
   var players = game.players;
   final playerIndexById = _playerListIndexById(players);
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  // Single index built once for the whole phase; each boost is amortized O(1)
+  // and the list is copied only at the end (Refs #3419 step 5).
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
 
   for (final subsidy in subsidyStates) {
@@ -246,6 +246,7 @@ Game processOngoingSubsidies(
         toFactionId: targetId,
         reason: 'insufficient funds',
         wasAiInitiator: isAiControlledForEvidence(game, payerId),
+        eventTally: eventTally,
       );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
@@ -268,6 +269,7 @@ Game processOngoingSubsidies(
         toFactionId: targetId,
         reason: 'war declared',
         wasAiInitiator: isAiControlledForEvidence(game, payerId),
+        eventTally: eventTally,
       );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
@@ -279,13 +281,11 @@ Game processOngoingSubsidies(
     }
 
     // Deduct subsidy payment
-    final payerIdx = playerIndexById[payerId] ?? -1;
-    if (payerIdx >= 0) {
-      players = List<Player>.from(players);
-      players[payerIdx] = players[payerIdx].copyWith(
-        treasury: players[payerIdx].treasury - amount,
-      );
-    }
+    players = debitPlayerTreasury(
+      players,
+      playerIndexById[payerId] ?? -1,
+      amount,
+    );
 
     // Calculate relation boost: +subsidyBoostRelationPerStep per subsidyBoostDucatsPerStep ducats, max subsidyBoostMax
     final boost =
@@ -294,12 +294,10 @@ Game processOngoingSubsidies(
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
     if (factionMembership.isMinorOrTribe(targetId)) {
-      relations = applySubsidyBoost(
-        relations: relations,
-        payerId: payerId,
-        targetId: targetId,
-        boost: boost,
-        turn: turn,
+      relationsIndex.upsert(
+        payerId,
+        targetId,
+        subsidyBoostRelationUpdater(payerId, targetId, boost, turn),
       );
       diploLog.i(
         'diplomacy subsidy processed $payerId -> $targetId amount=$amount boost=+$boost',
@@ -320,7 +318,7 @@ Game processOngoingSubsidies(
 
   return game.copyWith(
     players: players,
-    diplomacyRelations: relations,
+    diplomacyRelations: relationsIndex.toList(),
     subsidyStates: subsidyStates,
   );
 }
