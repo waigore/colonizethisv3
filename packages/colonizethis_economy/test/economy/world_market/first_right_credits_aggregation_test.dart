@@ -1,42 +1,7 @@
 import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
-import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_index.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-PurchasedTileIndex _idx(Iterable<PurchasedTileAttribution> rows) =>
-    PurchasedTileIndex.forTesting(rows);
-
-PurchasedTileAttribution _attr({
-  required String tileKey,
-  required String owningGpId,
-  required String sourceFactionId,
-  String provinceId = 'oldWorld|p1',
-}) => PurchasedTileAttribution(
-  tileKey: tileKey,
-  owningGpId: owningGpId,
-  sourceFactionId: sourceFactionId,
-  provinceId: provinceId,
-);
-
-FilledDeal _deal({
-  String seller = 'M1',
-  required String buyer,
-  CommodityId commodityId = 'timber',
-  int quantity = 10,
-  double pricePerUnit = 20.0,
-  bool isFtpMatch = false,
-  bool isFirstRightOfRefusalMatch = false,
-  String? sellerOriginTileKey,
-}) => FilledDeal(
-  sellerFactionId: seller,
-  buyerFactionId: buyer,
-  commodityId: commodityId,
-  quantity: quantity,
-  pricePerUnit: pricePerUnit,
-  isFtpMatch: isFtpMatch,
-  isFirstRightOfRefusalMatch: isFirstRightOfRefusalMatch,
-  sellerOriginTileKey: sellerOriginTileKey,
-);
+import 'first_right_credits_test_support.dart';
 
 void main() {
   group('computeFirstRightCredits aggregation (#2992 D4)', () {
@@ -44,31 +9,31 @@ void main() {
       final result = computeFirstRightCredits(
         filledDeals: [
           // gpA owns k1 from M1 — gpC buys 10 @ 10, relation 100 → 40
-          _deal(
+          deal(
             buyer: 'gpC',
             quantity: 10,
             pricePerUnit: 10.0,
             sellerOriginTileKey: 'k1',
           ),
           // gpB owns k2 from M1 — gpC buys 4 @ 5, relation 50 → 4
-          _deal(
+          deal(
             buyer: 'gpC',
             quantity: 4,
             pricePerUnit: 5.0,
             sellerOriginTileKey: 'k2',
           ),
           // gpA owns k3 from M2 — gpC buys 2 @ 3, relation 25 → 0.6
-          _deal(
+          deal(
             buyer: 'gpC',
             quantity: 2,
             pricePerUnit: 3.0,
             sellerOriginTileKey: 'k3',
           ),
         ],
-        purchasedTileIndex: _idx([
-          _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-          _attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
-          _attr(tileKey: 'k3', owningGpId: 'gpA', sourceFactionId: 'M2'),
+        purchasedTileIndex: idx([
+          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+          attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
+          attr(tileKey: 'k3', owningGpId: 'gpA', sourceFactionId: 'M2'),
         ]),
         relationScoreFor: (gp, src) {
           if (gp == 'gpA' && src == 'M1') return 100; // 40%
@@ -95,22 +60,22 @@ void main() {
         // should generate a D4 credit.
         final result = computeFirstRightCredits(
           filledDeals: [
-            _deal(
+            deal(
               buyer: 'gpA',
               isFirstRightOfRefusalMatch: true,
               quantity: 4,
               pricePerUnit: 10.0,
               sellerOriginTileKey: 'k1',
             ),
-            _deal(
+            deal(
               buyer: 'gpB',
               quantity: 6,
               pricePerUnit: 10.0,
               sellerOriginTileKey: 'k1',
             ),
           ],
-          purchasedTileIndex: _idx([
-            _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+          purchasedTileIndex: idx([
+            attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
           ]),
           relationScoreFor: (_, __) => 100,
         );
@@ -127,28 +92,28 @@ void main() {
       () {
         FirstRightCreditsResult run() => computeFirstRightCredits(
           filledDeals: [
-            _deal(
+            deal(
               buyer: 'gpC',
               quantity: 1,
               pricePerUnit: 5.0,
               sellerOriginTileKey: 'k2',
             ),
-            _deal(
+            deal(
               buyer: 'gpC',
               quantity: 2,
               pricePerUnit: 5.0,
               sellerOriginTileKey: 'k1',
             ),
-            _deal(
+            deal(
               buyer: 'gpC',
               quantity: 3,
               pricePerUnit: 5.0,
               sellerOriginTileKey: 'k2',
             ),
           ],
-          purchasedTileIndex: _idx([
-            _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-            _attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
+          purchasedTileIndex: idx([
+            attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+            attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
           ]),
           relationScoreFor: (_, __) => 100,
         );

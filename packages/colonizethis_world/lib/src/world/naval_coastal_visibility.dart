@@ -7,7 +7,6 @@ import 'player_view.dart';
 import 'province_lookup.dart'
     show landTileKeysForProvinceBucket, toFullProvinceId;
 import 'sea_zone_identity.dart';
-import 'tile_key_coordinates.dart';
 
 ({int x, int y})? _xyFromTileKey(String tileKey) {
   final coords = parseTileKeyCoordinates(tileKey);

@@ -1,26 +1,24 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'support/trade_order_factory.dart';
+
+/// Deal-matcher bid/offer builders delegate to the canonical shared
+/// `TradeOrder` factory (Refs #3427 step 14).
 TradeOrder matcherOffer(
   String commodityId,
   int quantity, {
   int priority = 1,
   String? originTileKey,
-}) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.offer,
-  quantity: quantity,
+}) => testOffer(
+  commodityId,
+  quantity,
   priority: priority,
   originTileKey: originTileKey,
 );
 
 TradeOrder matcherBid(String commodityId, int quantity, {int priority = 1}) =>
-    TradeOrder(
-      commodityId: commodityId,
-      type: TradeOrderType.bid,
-      quantity: quantity,
-      priority: priority,
-    );
+    testBid(commodityId, quantity, priority: priority);
 
 /// Test-only sentinel: bidders default to this very-large treasury budget
 /// when a test does not care about the treasury clamp (Refs #3115). Real

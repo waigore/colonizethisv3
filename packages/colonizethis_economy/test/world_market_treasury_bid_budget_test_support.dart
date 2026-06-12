@@ -4,6 +4,8 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'support/trade_order_factory.dart';
+
 /// Canonical human-player id used across the treasury-bid-budget test
 /// suites so per-player helpers can be shared between files.
 const String humanPlayerId = 'gp_h';
@@ -51,18 +53,11 @@ Orders humanOrdersWith(List<TradeOrder> orders) {
   return Orders(tradeOrdersByPlayerId: {humanPlayerId: orders});
 }
 
-/// Bid trade order at priority 1.
-TradeOrder bidOrder(String commodityId, int qty) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.bid,
-  quantity: qty,
-  priority: 1,
-);
+/// Bid trade order at priority 1 (delegates to the shared factory,
+/// Refs #3427 step 14).
+TradeOrder bidOrder(String commodityId, int qty) => testBid(commodityId, qty);
 
-/// Offer trade order at priority 1.
-TradeOrder offerOrder(String commodityId, int qty) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.offer,
-  quantity: qty,
-  priority: 1,
-);
+/// Offer trade order at priority 1 (delegates to the shared factory,
+/// Refs #3427 step 14).
+TradeOrder offerOrder(String commodityId, int qty) =>
+    testOffer(commodityId, qty);

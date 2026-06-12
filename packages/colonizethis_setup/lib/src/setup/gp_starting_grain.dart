@@ -5,7 +5,6 @@ import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 import 'town_capital_occupancy.dart';
 
 /// Thrown when the capital province cannot host four bootstrap grain farms on land tiles.

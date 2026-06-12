@@ -1,27 +1,20 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'support/trade_order_factory.dart';
+
 /// Shared helpers for `TradeOrderValidator` tests per
 /// `SPEC/program/world-market-resolution.md` § Trade order validation.
-/// Refs #2989 A5.
+/// Refs #2989 A5. The bid/offer builders delegate to the canonical shared
+/// `TradeOrder` factory (Refs #3427 step 14).
 TradeOrder validatorBid(String commodityId, int quantity, {int priority = 1}) =>
-    TradeOrder(
-      commodityId: commodityId,
-      type: TradeOrderType.bid,
-      quantity: quantity,
-      priority: priority,
-    );
+    testBid(commodityId, quantity, priority: priority);
 
 TradeOrder validatorOffer(
   String commodityId,
   int quantity, {
   int priority = 1,
-}) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.offer,
-  quantity: quantity,
-  priority: priority,
-);
+}) => testOffer(commodityId, quantity, priority: priority);
 
 TradeOrderValidationContext validatorCtx({
   String playerId = 'gp1',

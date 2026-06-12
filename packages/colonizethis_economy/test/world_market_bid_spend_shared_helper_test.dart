@@ -13,6 +13,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/trade_order_factory.dart';
+
 const String _gp = 'gp_h';
 
 Game _gameWith(List<TradeOrder> bids, {required Map<CommodityId, int> prices}) {
@@ -33,19 +35,9 @@ Game _gameWith(List<TradeOrder> bids, {required Map<CommodityId, int> prices}) {
   );
 }
 
-TradeOrder _bid(String commodityId, int qty) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.bid,
-  quantity: qty,
-  priority: 1,
-);
+TradeOrder _bid(String commodityId, int qty) => testBid(commodityId, qty);
 
-TradeOrder _offer(String commodityId, int qty) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.offer,
-  quantity: qty,
-  priority: 1,
-);
+TradeOrder _offer(String commodityId, int qty) => testOffer(commodityId, qty);
 
 void main() {
   final data.ResourceRules rules = data.ResourceRules.defaultRules;

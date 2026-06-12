@@ -4,43 +4,7 @@ import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_ind
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-/// Builds a [PurchasedTileIndex] for D4 helper tests via the
-/// `forTesting` constructor so each test can declare exactly the
-/// attribution rows it cares about without spinning up a full [Game].
-PurchasedTileIndex _idx(Iterable<PurchasedTileAttribution> rows) =>
-    PurchasedTileIndex.forTesting(rows);
-
-PurchasedTileAttribution _attr({
-  required String tileKey,
-  required String owningGpId,
-  required String sourceFactionId,
-  String provinceId = 'oldWorld|p1',
-}) => PurchasedTileAttribution(
-  tileKey: tileKey,
-  owningGpId: owningGpId,
-  sourceFactionId: sourceFactionId,
-  provinceId: provinceId,
-);
-
-FilledDeal _deal({
-  String seller = 'M1',
-  required String buyer,
-  CommodityId commodityId = 'timber',
-  int quantity = 10,
-  double pricePerUnit = 20.0,
-  bool isFtpMatch = false,
-  bool isFirstRightOfRefusalMatch = false,
-  String? sellerOriginTileKey,
-}) => FilledDeal(
-  sellerFactionId: seller,
-  buyerFactionId: buyer,
-  commodityId: commodityId,
-  quantity: quantity,
-  pricePerUnit: pricePerUnit,
-  isFtpMatch: isFtpMatch,
-  isFirstRightOfRefusalMatch: isFirstRightOfRefusalMatch,
-  sellerOriginTileKey: sellerOriginTileKey,
-);
+import 'first_right_credits_test_support.dart';
 
 int _alwaysZero(String _, String __) => 0;
 
@@ -49,8 +13,8 @@ void main() {
     test('empty input returns FirstRightCreditsResult.empty (no deals)', () {
       final result = computeFirstRightCredits(
         filledDeals: const <FilledDeal>[],
-        purchasedTileIndex: _idx([
-          _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+        purchasedTileIndex: idx([
+          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
         ]),
         relationScoreFor: _alwaysZero,
       );
@@ -63,8 +27,8 @@ void main() {
       'empty purchased-tile index returns FirstRightCreditsResult.empty',
       () {
         final result = computeFirstRightCredits(
-          filledDeals: [_deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
-          purchasedTileIndex: _idx(const <PurchasedTileAttribution>[]),
+          filledDeals: [deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
+          purchasedTileIndex: idx(const <PurchasedTileAttribution>[]),
           relationScoreFor: _alwaysZero,
         );
         expect(result.creditedDeals, isEmpty);
@@ -74,7 +38,7 @@ void main() {
 
     test('null purchased-tile index returns FirstRightCreditsResult.empty', () {
       final result = computeFirstRightCredits(
-        filledDeals: [_deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
+        filledDeals: [deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
         purchasedTileIndex: null,
         relationScoreFor: _alwaysZero,
       );
@@ -85,15 +49,15 @@ void main() {
     test('positive — owning GP credited for other-GP buy at relation 75', () {
       final result = computeFirstRightCredits(
         filledDeals: [
-          _deal(
+          deal(
             buyer: 'gpB',
             quantity: 10,
             pricePerUnit: 20.0,
             sellerOriginTileKey: 'k1',
           ),
         ],
-        purchasedTileIndex: _idx([
-          _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+        purchasedTileIndex: idx([
+          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
         ]),
         relationScoreFor: (gp, src) => gp == 'gpA' && src == 'M1' ? 75 : 0,
       );
@@ -114,15 +78,15 @@ void main() {
       () {
         final result = computeFirstRightCredits(
           filledDeals: [
-            _deal(
+            deal(
               buyer: 'gpB',
               quantity: 5,
               pricePerUnit: 8.0,
               sellerOriginTileKey: 'k1',
             ),
           ],
-          purchasedTileIndex: _idx([
-            _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+          purchasedTileIndex: idx([
+            attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
           ]),
           relationScoreFor: (gp, src) => 100,
         );
@@ -138,7 +102,7 @@ void main() {
     test('negative — buyer == owning GP (D2 FRR-match path) is excluded', () {
       final result = computeFirstRightCredits(
         filledDeals: [
-          _deal(
+          deal(
             buyer: 'gpA',
             isFirstRightOfRefusalMatch: true,
             quantity: 10,
@@ -146,8 +110,8 @@ void main() {
             sellerOriginTileKey: 'k1',
           ),
         ],
-        purchasedTileIndex: _idx([
-          _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+        purchasedTileIndex: idx([
+          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
         ]),
         relationScoreFor: (_, __) => 100,
       );
@@ -164,15 +128,15 @@ void main() {
     test('negative — relation 0 yields a zero-treasury credit record only', () {
       final result = computeFirstRightCredits(
         filledDeals: [
-          _deal(
+          deal(
             buyer: 'gpB',
             quantity: 10,
             pricePerUnit: 20.0,
             sellerOriginTileKey: 'k1',
           ),
         ],
-        purchasedTileIndex: _idx([
-          _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+        purchasedTileIndex: idx([
+          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
         ]),
         relationScoreFor: (_, __) => 0,
       );
@@ -186,9 +150,9 @@ void main() {
 
     test('negative — deal with null sellerOriginTileKey is skipped', () {
       final result = computeFirstRightCredits(
-        filledDeals: [_deal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0)],
-        purchasedTileIndex: _idx([
-          _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+        filledDeals: [deal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0)],
+        purchasedTileIndex: idx([
+          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
         ]),
         relationScoreFor: (_, __) => 100,
       );
@@ -200,9 +164,9 @@ void main() {
       'negative — deal with unmapped tile key is skipped (no attribution)',
       () {
         final result = computeFirstRightCredits(
-          filledDeals: [_deal(buyer: 'gpB', sellerOriginTileKey: 'unmapped')],
-          purchasedTileIndex: _idx([
-            _attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+          filledDeals: [deal(buyer: 'gpB', sellerOriginTileKey: 'unmapped')],
+          purchasedTileIndex: idx([
+            attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
           ]),
           relationScoreFor: (_, __) => 100,
         );
@@ -212,18 +176,18 @@ void main() {
     );
 
     test('negative — zero quantity or zero price deals are skipped', () {
-      final attr = _attr(
+      final tileAttr = attr(
         tileKey: 'k1',
         owningGpId: 'gpA',
         sourceFactionId: 'M1',
       );
-      final zeroQty = _deal(
+      final zeroQty = deal(
         buyer: 'gpB',
         quantity: 0,
         pricePerUnit: 20.0,
         sellerOriginTileKey: 'k1',
       );
-      final zeroPrice = _deal(
+      final zeroPrice = deal(
         buyer: 'gpB',
         quantity: 10,
         pricePerUnit: 0.0,
@@ -231,7 +195,7 @@ void main() {
       );
       final result = computeFirstRightCredits(
         filledDeals: [zeroQty, zeroPrice],
-        purchasedTileIndex: _idx([attr]),
+        purchasedTileIndex: idx([tileAttr]),
         relationScoreFor: (_, __) => 100,
       );
       expect(result.creditedDeals, isEmpty);
