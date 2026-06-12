@@ -244,42 +244,22 @@ String startingShipTypeForPlayer(Player _) {
   return ShipEconomyCatalog.carrack.shipTypeId;
 }
 
-void _pushUnvisitedPpNeighborsDiag(
-  String u,
-  Map<String, Set<String>> neighbours,
-  Set<String> visited,
-  List<String> stack,
+/// Formats per-landmass diagnostic parts shared by the OW/NW failure dumps.
+List<String> _formatLandmassDiagnosticParts(
+  MapTopology topology,
+  Map<String, Set<String>> ppNbr,
 ) {
-  for (final v in neighbours[u] ?? const <String>{}) {
-    if (visited.contains(v)) continue;
-    stack.add(v);
-  }
-}
-
-typedef _LmDiag = ({int size, String minProvinceId, Set<String> provinces});
-
-List<_LmDiag> _landmassesSortedDescDiag(Map<String, Set<String>> neighbours) {
-  final visited = <String>{};
-  final out = <_LmDiag>[];
-  for (final start in neighbours.keys.toList()..sort()) {
-    if (visited.contains(start)) continue;
-    final comp = <String>{};
-    final stack = <String>[start];
-    while (stack.isNotEmpty) {
-      final u = stack.removeLast();
-      if (!visited.add(u)) continue;
-      comp.add(u);
-      _pushUnvisitedPpNeighborsDiag(u, neighbours, visited, stack);
+  final lms = landmassesSortedDesc(ppNbr);
+  final lmParts = <String>[];
+  for (var i = 0; i < lms.length; i++) {
+    final lm = lms[i];
+    var sea = 0;
+    for (final p in lm.provinces) {
+      if (isProvinceSeaBound(topology, p)) sea++;
     }
-    final minId = comp.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
-    out.add((size: comp.length, minProvinceId: minId, provinces: comp));
+    lmParts.add('i=$i|sz=${lm.size}|sea=$sea|min=${lm.minProvinceId}');
   }
-  out.sort((a, b) {
-    final c = b.size.compareTo(a.size);
-    if (c != 0) return c;
-    return a.minProvinceId.compareTo(b.minProvinceId);
-  });
-  return out;
+  return lmParts;
 }
 
 String lockedOwAssignFailureDiagnostics({
@@ -294,16 +274,7 @@ String lockedOwAssignFailureDiagnostics({
     topology: topology,
     neighbours: ppNbr,
   );
-  final lms = _landmassesSortedDescDiag(ppNbr);
-  final lmParts = <String>[];
-  for (var i = 0; i < lms.length; i++) {
-    final lm = lms[i];
-    var sea = 0;
-    for (final p in lm.provinces) {
-      if (isProvinceSeaBound(topology, p)) sea++;
-    }
-    lmParts.add('i=$i|sz=${lm.size}|sea=$sea|min=${lm.minProvinceId}');
-  }
+  final lmParts = _formatLandmassDiagnosticParts(topology, ppNbr);
   var degMin = 1 << 30;
   var degMax = 0;
   var degSum = 0;
@@ -338,16 +309,7 @@ String lockedNwAssignFailureDiagnostics({
     topology: topology,
     neighbours: ppNbr,
   );
-  final lms = _landmassesSortedDescDiag(ppNbr);
-  final lmParts = <String>[];
-  for (var i = 0; i < lms.length; i++) {
-    final lm = lms[i];
-    var sea = 0;
-    for (final p in lm.provinces) {
-      if (isProvinceSeaBound(topology, p)) sea++;
-    }
-    lmParts.add('i=$i|sz=${lm.size}|sea=$sea|min=${lm.minProvinceId}');
-  }
+  final lmParts = _formatLandmassDiagnosticParts(topology, ppNbr);
   return 'lockedNW_diag seed=${config.seed} nodes=${topology.nodes.length} '
       'edges=${topology.edges.length} nProv=${ppNbr.length} ppSizes=$sizes '
       'partitionOk=$partitionOk feasibilityOk=$feasibilityOk '

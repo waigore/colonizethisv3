@@ -103,6 +103,8 @@ jobs:
               - 'packages/colonizethis_economy/**'
             pkg_diplomacy:
               - 'packages/colonizethis_diplomacy/**'
+            pkg_setup:
+              - 'packages/colonizethis_setup/**'
             pkg_turn:
               - 'packages/colonizethis_turn/**'
             pkg_ai_contracts:
@@ -125,6 +127,7 @@ jobs:
             --changed-combat="${{ steps.filter.outputs.pkg_combat }}" \
             --changed-economy="${{ steps.filter.outputs.pkg_economy }}" \
             --changed-diplomacy="${{ steps.filter.outputs.pkg_diplomacy }}" \
+            --changed-setup="${{ steps.filter.outputs.pkg_setup }}" \
             --changed-turn="${{ steps.filter.outputs.pkg_turn }}" \
             --changed-ai_contracts="${{ steps.filter.outputs.pkg_ai_contracts }}" \
             --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
