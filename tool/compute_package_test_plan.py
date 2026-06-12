@@ -124,6 +124,7 @@ SHORT_TO_FULL: dict[str, str] = {
     "combat": "colonizethis_combat",
     "economy": "colonizethis_economy",
     "diplomacy": "colonizethis_diplomacy",
+    "setup": "colonizethis_setup",
     "turn": "colonizethis_turn",
     "ai_contracts": "colonizethis_ai_contracts",
     "logic": "colonizethis_logic",

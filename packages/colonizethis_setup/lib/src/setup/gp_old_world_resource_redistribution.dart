@@ -7,6 +7,7 @@ import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'seed_perturbation.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
 

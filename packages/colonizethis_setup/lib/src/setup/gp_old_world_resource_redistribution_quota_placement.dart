@@ -177,7 +177,11 @@ void _distributeQuotaPool({
   var resMap = Map<String, String>.from(resMapIn);
   final g = gpIdsSorted.length;
   final rnd = Random(
-    Object.hash(setupSeedBase, kGpOwResourceRedistributionSalt, r.index),
+    perturbSeed(
+      setupSeedBase,
+      kGpOwResourceRedistributionSalt,
+      args: [r.index],
+    ),
   );
   final shuffled = List<String>.from(gpIdsSorted)..shuffle(rnd);
 

@@ -70,6 +70,34 @@ void main() {
       expect(provincePpNeighbours(topo), {'p1': <String>{}});
     });
 
+    test('landmassesSortedDesc orders by size desc then min province id', () {
+      final topo = _mergeTopologies([
+        _pathLandmass(prefix: 'B', size: 2, seaBoundProvinceCount: 1),
+        _pathLandmass(prefix: 'A', size: 3, seaBoundProvinceCount: 1),
+        _pathLandmass(prefix: 'C', size: 2, seaBoundProvinceCount: 1),
+      ]);
+      final nbr = provincePpNeighbours(topo);
+      final landmasses = landmassesSortedDesc(nbr);
+      expect(landmasses.map((lm) => lm.size).toList(), [3, 2, 2]);
+      // Equal-size landmasses break ties on the lexicographically-min id.
+      expect(
+        landmasses[1].minProvinceId.compareTo(landmasses[2].minProvinceId) < 0,
+        true,
+      );
+    });
+
+    test('pushUnvisitedPpNeighbors skips visited and pushes the rest', () {
+      final neighbours = <String, Set<String>>{
+        'a': {'b', 'c'},
+        'b': {'a'},
+        'c': {'a'},
+      };
+      final stack = <String>[];
+      // Negative: a visited neighbour must not be re-pushed.
+      pushUnvisitedPpNeighbors('a', neighbours, {'b'}, stack);
+      expect(stack, ['c']);
+    });
+
     test('ppLandComponentSizesSorted returns sorted multiset', () {
       final topo = MapTopology(
         nodes: const [

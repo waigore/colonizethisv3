@@ -5,6 +5,7 @@ import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'seed_perturbation.dart';
 import 'town_capital_occupancy.dart';
 
 /// Salt for deterministic tie-breaks when assigning Hamilton +1 remainders.
@@ -129,19 +130,15 @@ Map<String, int> _hamiltonTargetsForType({
       final rb = remainder[b] ?? 0;
       final c = rb.compareTo(ra);
       if (c != 0) return c;
-      final ha = Object.hash(
+      final ha = perturbSeed(
         setupSeedBase,
         kGpOwTerrainRedistributionSalt,
-        tieTerrainIndex,
-        nT,
-        a,
+        args: [tieTerrainIndex, nT, a],
       );
-      final hb = Object.hash(
+      final hb = perturbSeed(
         setupSeedBase,
         kGpOwTerrainRedistributionSalt,
-        tieTerrainIndex,
-        nT,
-        b,
+        args: [tieTerrainIndex, nT, b],
       );
       final hc = ha.compareTo(hb);
       if (hc != 0) return hc;
