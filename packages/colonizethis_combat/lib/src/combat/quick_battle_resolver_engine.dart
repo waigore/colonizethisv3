@@ -1,10 +1,28 @@
-part of 'quick_battle_resolver.dart';
+/// Quick Battle round-engine helpers: group bookkeeping, command-point limits,
+/// effective-strength and casualty-fraction math.
+///
+/// SPEC/program/quick-battle-resolution.md.
+///
+/// Extracted from the `quick_battle_resolver.dart` part-file group into a
+/// regular library so these helpers can be imported (and unit-tested)
+/// independently. Helpers consumed by the resolver are package-public; helpers
+/// used only within this file remain private.
+library;
 
-List<QuickBattleGroup> _copyGroups(List<QuickBattleGroup> groups) => groups
+import 'dart:math';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'combat_effective_strength.dart';
+import 'quick_battle_action_modifiers.dart';
+import 'quick_battle_emplaced_guns.dart';
+
+List<QuickBattleGroup> copyGroups(List<QuickBattleGroup> groups) => groups
     .map((g) => g.copyWith(unitIds: List<String>.from(g.unitIds)))
     .toList();
 
-int _rollCommandPoints(Random rng) {
+int rollCommandPoints(Random rng) {
   final span = quickBattleCpPerRoundMax - quickBattleCpPerRoundMin;
   if (span <= 0) return quickBattleCpPerRoundMin;
   return quickBattleCpPerRoundMin + rng.nextInt(span + 1);
@@ -22,10 +40,7 @@ int _actionCost(QuickBattleAction action) {
   }
 }
 
-List<QuickBattleAction> _limitActionsByCp(
-  List<QuickBattleAction> actions,
-  int cp,
-) {
+List<QuickBattleAction> limitActionsByCp(List<QuickBattleAction> actions, int cp) {
   final result = <QuickBattleAction>[];
   var spent = 0;
   for (final a in actions) {
@@ -37,58 +52,7 @@ List<QuickBattleAction> _limitActionsByCp(
   return result;
 }
 
-class _ActionModifiers {
-  const _ActionModifiers({
-    required this.offenseModifier,
-    required this.casualtiesDealtModifier,
-    required this.casualtiesTakenModifier,
-  });
-
-  final double offenseModifier;
-  final double casualtiesDealtModifier;
-  final double casualtiesTakenModifier;
-}
-
-_ActionModifiers _aggregateActionModifiers(List<QuickBattleAction> actions) {
-  var offense = 1.0;
-  var dealt = 1.0;
-  var taken = 1.0;
-
-  for (final a in actions) {
-    switch (a) {
-      case QuickBattleAction.volleyFire:
-        dealt += 0.15;
-        break;
-      case QuickBattleAction.defendEntrench:
-        offense += 0.0;
-        taken -= 0.15;
-        break;
-      case QuickBattleAction.maneuver:
-        offense += 0.05;
-        break;
-      case QuickBattleAction.fallBackRefuseFlank:
-        offense -= 0.2;
-        taken -= 0.25;
-        break;
-      case QuickBattleAction.assaultCharge:
-        offense += 0.25;
-        taken += 0.1;
-        break;
-    }
-  }
-
-  offense = offense.clamp(0.5, 1.5);
-  dealt = dealt.clamp(0.5, 1.5);
-  taken = taken.clamp(0.5, 1.5);
-
-  return _ActionModifiers(
-    offenseModifier: offense,
-    casualtiesDealtModifier: dealt,
-    casualtiesTakenModifier: taken,
-  );
-}
-
-double _effectiveStrength(
+double effectiveStrength(
   List<QuickBattleGroup> groups,
   Map<String, QuickBattleLaneTerrain> laneTerrain,
 ) {
@@ -118,7 +82,7 @@ double _effectiveStrength(
   return total;
 }
 
-List<String> _pickCasualties(
+List<String> pickCasualties(
   List<QuickBattleGroup> groups,
   double fraction,
   Random rng,
@@ -133,7 +97,7 @@ List<String> _pickCasualties(
   return allIds.take(count).toList();
 }
 
-List<QuickBattleGroup> _removeCasualties(
+List<QuickBattleGroup> removeCasualties(
   List<QuickBattleGroup> groups,
   List<String> casualties,
 ) {
@@ -148,7 +112,7 @@ List<QuickBattleGroup> _removeCasualties(
       .toList();
 }
 
-List<QuickBattleGroup> _degradeCohesion(List<QuickBattleGroup> groups) {
+List<QuickBattleGroup> degradeCohesion(List<QuickBattleGroup> groups) {
   return groups
       .map(
         (g) => g.copyWith(
@@ -158,10 +122,10 @@ List<QuickBattleGroup> _degradeCohesion(List<QuickBattleGroup> groups) {
       .toList();
 }
 
-int _totalUnitCount(List<QuickBattleGroup> groups) =>
+int totalUnitCount(List<QuickBattleGroup> groups) =>
     groups.fold(0, (s, g) => s + g.unitIds.length);
 
-bool _attackerActsFirst(QuickBattleInput input) {
+bool attackerActsFirst(QuickBattleInput input) {
   final attackerInitiative =
       input.attackerCavalryShare * initiativeCavalryShareWeight +
       input.attackerGeneralMedals * initiativeGeneralMedalWeight;
@@ -178,16 +142,16 @@ bool _attackerActsFirst(QuickBattleInput input) {
 /// precomputed effective strengths.
 ///
 /// Callers compute `effAtt` and `effDef` once at the round level via
-/// [_attackerEffectiveStrength] and [_defenderEffectiveStrength] and only
+/// [attackerEffectiveStrength] and [defenderEffectiveStrength] and only
 /// recompute the side whose state has changed between strikes. This avoids
-/// the previous O(4) `_effectiveStrength` invocations per round, where the
+/// the previous O(4) [effectiveStrength] invocations per round, where the
 /// striker side's strength was identical across both loss-fraction calls.
-double _defenderLossFractionFromAttackerStrike({
+double defenderLossFractionFromAttackerStrike({
   required QuickBattleInput input,
   required double effAtt,
   required double effDef,
-  required _ActionModifiers attMods,
-  required _ActionModifiers defMods,
+  required ActionModifiers attMods,
+  required ActionModifiers defMods,
 }) {
   final effAttForRatio = combatEffectiveAttackForRatio(
     effAtt: effAtt,
@@ -201,13 +165,13 @@ double _defenderLossFractionFromAttackerStrike({
 }
 
 /// Computes the attacker loss fraction from a defender strike using
-/// precomputed effective strengths. See [_defenderLossFractionFromAttackerStrike]
+/// precomputed effective strengths. See [defenderLossFractionFromAttackerStrike]
 /// for the round-level caching contract.
-double _attackerLossFractionFromDefenderStrike({
+double attackerLossFractionFromDefenderStrike({
   required double effAtt,
   required double effDef,
-  required _ActionModifiers attMods,
-  required _ActionModifiers defMods,
+  required ActionModifiers attMods,
+  required ActionModifiers defMods,
 }) {
   final ratio = effAtt > 0 ? effDef / effAtt : 10.0;
   return (_targetLossFraction(ratio) *
@@ -222,14 +186,14 @@ double _targetLossFraction(double strikerToTargetRatio) {
   return 0.4;
 }
 
-double _attackerEffectiveStrength({
+double attackerEffectiveStrength({
   required QuickBattleInput input,
   required List<QuickBattleGroup> attGroups,
-  required _ActionModifiers attMods,
+  required ActionModifiers attMods,
 }) {
   final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
   return combatEffectiveAttackerStrength(
-    base: _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain),
+    base: effectiveStrength(attGroups, input.attackerDeployment.laneTerrain),
     fortLevel: input.fortLevel,
     factor1: attMods.offenseModifier,
     factor2: input.attackerLeaderMultiplier,
@@ -237,19 +201,19 @@ double _attackerEffectiveStrength({
   );
 }
 
-double _defenderEffectiveStrength({
+double defenderEffectiveStrength({
   required QuickBattleInput input,
   required List<QuickBattleGroup> defGroups,
-  required _ActionModifiers defMods,
-  required List<_MutableEmplacedGun> mutableGuns,
+  required ActionModifiers defMods,
+  required List<MutableEmplacedGun> mutableGuns,
   required bool useVirtualEmplaced,
 }) {
   final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
   final emplaced = useVirtualEmplaced
-      ? _aliveGunStrengthSum(mutableGuns)
+      ? aliveGunStrengthSum(mutableGuns)
       : combatDefaultEmplacedStrength(input.fortLevel);
   return combatEffectiveDefenderStrength(
-    base: _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain),
+    base: effectiveStrength(defGroups, input.defenderDeployment.laneTerrain),
     fortLevel: input.fortLevel,
     factor1: defMods.offenseModifier,
     factor2: input.defenderLeaderMultiplier,
@@ -258,23 +222,23 @@ double _defenderEffectiveStrength({
   );
 }
 
-List<String> _pickDefenderLosses({
+List<String> pickDefenderLosses({
   required List<QuickBattleGroup> groups,
   required double fraction,
   required Random rng,
-  required List<_MutableEmplacedGun> mutableGuns,
+  required List<MutableEmplacedGun> mutableGuns,
   required bool useVirtualEmplaced,
 }) {
-  if (!useVirtualEmplaced) return _pickCasualties(groups, fraction, rng);
-  final regimentCount = _totalUnitCount(groups);
-  final gunHpPool = _sumAliveGunHp(mutableGuns);
+  if (!useVirtualEmplaced) return pickCasualties(groups, fraction, rng);
+  final regimentCount = totalUnitCount(groups);
+  final gunHpPool = sumAliveGunHp(mutableGuns);
   final totalSlots = regimentCount + gunHpPool;
   final gunHpLoss = totalSlots > 0 && gunHpPool > 0
       ? min(gunHpPool, max(0, (fraction * gunHpPool).round()))
       : 0;
-  _applyRoundRobinGunHpDamage(mutableGuns, gunHpLoss);
+  applyRoundRobinGunHpDamage(mutableGuns, gunHpLoss);
   final regFrac = regimentCount > 0 && totalSlots > 0
       ? (fraction * regimentCount / totalSlots).clamp(0.0, 1.0)
       : 0.0;
-  return _pickCasualties(groups, regFrac, rng);
+  return pickCasualties(groups, regFrac, rng);
 }
