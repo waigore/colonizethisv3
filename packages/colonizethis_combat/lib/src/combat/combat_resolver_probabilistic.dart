@@ -101,8 +101,8 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
   final allDefenderCasualties = <String>[];
   final roundResults = <ProbabilisticRoundResult>[];
 
-  final initialAttStr = _aggregateStrength(attackerUnits, 4);
-  final initialDefStr = _aggregateStrength(
+  final initialAttStr = aggregateStrength(attackerUnits, 4);
+  final initialDefStr = aggregateStrength(
     defenderUnits,
     defenderEffectiveMilitaryLevel,
   );
@@ -110,8 +110,8 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
   for (var round = 1; round <= maxCombatRounds; round++) {
     if (attList.isEmpty || defList.isEmpty) break;
 
-    final rawAtt = _aggregateStrength(attList, 4);
-    final rawDef = _aggregateStrength(defList, defenderEffectiveMilitaryLevel);
+    final rawAtt = aggregateStrength(attList, 4);
+    final rawDef = aggregateStrength(defList, defenderEffectiveMilitaryLevel);
 
     final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
     var effAtt = rawAtt * terrainMod.$1 * attackerMoraleMultiplier;
@@ -236,30 +236,25 @@ List<String> _selectCasualtiesWeighted(
     weights.add(1.0 / (s + 0.1));
   }
   final ids = units.map((u) => u.id).toList();
+  final alive = List<bool>.filled(ids.length, true);
   final chosen = <String>[];
 
   for (var i = 0; i < n; i++) {
-    final total = weights.fold(0.0, (a, b) => a + b);
+    var total = 0.0;
+    for (var j = 0; j < weights.length; j++) {
+      if (alive[j]) total += weights[j];
+    }
     if (total <= 0) break;
     var r = rng.nextDouble() * total;
     for (var j = 0; j < weights.length; j++) {
+      if (!alive[j]) continue;
       r -= weights[j];
       if (r <= 0) {
         chosen.add(ids[j]);
-        ids.removeAt(j);
-        weights.removeAt(j);
+        alive[j] = false;
         break;
       }
     }
   }
   return chosen;
-}
-
-/// Aggregates strength for a list of units (probabilistic version with helper).
-double _aggregateStrength(List<Unit> units, int effectiveEra) {
-  var total = 0.0;
-  for (final u in units) {
-    total += unitStrength(u, effectiveEra);
-  }
-  return total;
 }

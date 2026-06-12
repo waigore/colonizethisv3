@@ -47,6 +47,21 @@ double aggregateStrength(List<Unit> units, int effectiveEra) {
   return total;
 }
 
+/// Fraction of [unitIds] that are cavalry regiments (0.0–1.0).
+/// Missing units in [unitsById] are excluded from the numerator but still
+/// count toward the denominator (auto-resolve initiative and Quick Battle).
+double cavalryFraction(List<String> unitIds, Map<String, Unit> unitsById) {
+  if (unitIds.isEmpty) return 0.0;
+  var cavalry = 0;
+  for (final id in unitIds) {
+    final unit = unitsById[id];
+    if (unit == null) continue;
+    final stats = regimentStatsById(unit.type);
+    if (stats != null && stats.isCavalry) cavalry++;
+  }
+  return cavalry / unitIds.length;
+}
+
 /// Morale multiplier from feeding coverage (land or naval). Same breakpoints for
 /// army and fleet upkeep shortfall. SPEC/program/turn-resolution-phase-details.md § Consumption.
 double moraleMultiplierForFeedingCoverage(double coverage) {

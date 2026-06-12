@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'deterministic_rng.dart';
 import 'military_strength.dart';
 
 /// Mission factor for Patrol interception probability.
@@ -183,20 +184,17 @@ List<BattleContextSea> detectNavalConflicts(Game game) {
   return result;
 }
 
-double _fleetInterceptScore(List<String> shipTypeIds) {
-  var total = 0.0;
+(double intercept, double flee) _fleetInterceptAndFleeScores(
+  List<String> shipTypeIds,
+) {
+  var intercept = 0.0;
+  var flee = 0.0;
   for (final id in shipTypeIds) {
-    total += NavalStatsCatalog.get(id).interceptRating;
+    final stats = NavalStatsCatalog.get(id);
+    intercept += stats.interceptRating;
+    flee += stats.fleeRating;
   }
-  return total;
-}
-
-double _fleetFleeScore(List<String> shipTypeIds) {
-  var total = 0.0;
-  for (final id in shipTypeIds) {
-    total += NavalStatsCatalog.get(id).fleeRating;
-  }
-  return total;
+  return (intercept, flee);
 }
 
 /// Interception probability from mission factor × (intercept / (intercept + flee)).
@@ -234,7 +232,7 @@ List<BattleContextSea> filterBattlesByInterception(
   int seed,
 ) {
   if (battles.isEmpty) return battles;
-  final rng = _SeededRng(seed);
+  final rng = DeterministicRng(seed);
 
   // Pre-index moved fleets at sea by (seaZoneId, ownerId) to avoid O(fleets)
   // scan per battle.
@@ -255,10 +253,12 @@ List<BattleContextSea> filterBattlesByInterception(
     final zone = battle.seaZoneId;
     final owner1Moved = ownerMovedInZone(battle.side1.ownerId, zone);
     final owner2Moved = ownerMovedInZone(battle.side2.ownerId, zone);
-    final side1InterceptScore = _fleetInterceptScore(battle.side1.shipTypeIds);
-    final side2InterceptScore = _fleetInterceptScore(battle.side2.shipTypeIds);
-    final side1FleeScore = _fleetFleeScore(battle.side1.shipTypeIds);
-    final side2FleeScore = _fleetFleeScore(battle.side2.shipTypeIds);
+    final (side1InterceptScore, side1FleeScore) = _fleetInterceptAndFleeScores(
+      battle.side1.shipTypeIds,
+    );
+    final (side2InterceptScore, side2FleeScore) = _fleetInterceptAndFleeScores(
+      battle.side2.shipTypeIds,
+    );
     final side2IsInterceptor =
         battle.side2.mission == FleetMission.patrol ||
         battle.side2.mission == FleetMission.blockade;
@@ -334,7 +334,7 @@ NavalBattleResult resolveSeaBattle(
   bool side2CanRetreat = true,
   Map<String, double> navalFeedingCoverageByPlayerId = const {},
 }) {
-  final rng = _SeededRng(seed);
+  final rng = DeterministicRng(seed);
   final cov1 = navalFeedingCoverageByPlayerId[battle.side1.ownerId] ?? 1.0;
   final cov2 = navalFeedingCoverageByPlayerId[battle.side2.ownerId] ?? 1.0;
   final m1 = moraleMultiplierForFeedingCoverage(cov1);
@@ -420,19 +420,6 @@ NavalBattleResult resolveSeaBattle(
     side2Retreated: side2Retreated,
     outcome: outcome,
   );
-}
-
-class _SeededRng {
-  _SeededRng(this._seed);
-  int _seed;
-  int nextInt(int max) {
-    if (max <= 0) return 0;
-    _seed =
-        (_seed * kDeterministicLcgMultiplierGlibc +
-            kDeterministicLcgIncrementGlibc) &
-        kDeterministicLcg31Mask;
-    return _seed % max;
-  }
 }
 
 /// Apply naval battle results to game: replace all fleets of both sides in zone with surviving fleets.

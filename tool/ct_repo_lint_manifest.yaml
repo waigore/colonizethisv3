@@ -385,6 +385,13 @@ rules:
     runner: dart
     script: tool/check_combat_no_logic_deps.dart
 
+  - rule_id: repo.combat_no_private_aggregate_strength
+    group: architecture
+    title: combat probabilistic resolver must use shared aggregateStrength (Refs #3433)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_no_private_aggregate_strength.dart
+
   - rule_id: repo.economy_no_logic_deps
     group: architecture
     title: colonizethis_economy must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
