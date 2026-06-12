@@ -7,6 +7,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/trade_order_factory.dart';
+
 const String _gp = 'gp1';
 
 Game _gameWithCarryForwardBids(
@@ -30,12 +32,8 @@ Game _gameWithCarryForwardBids(
   );
 }
 
-TradeOrder _bid(String commodityId, int qty, {int priority = 3}) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.bid,
-  quantity: qty,
-  priority: priority,
-);
+TradeOrder _bid(String commodityId, int qty, {int priority = 3}) =>
+    testBid(commodityId, qty, priority: priority);
 
 void main() {
   final data.ResourceRules rules = data.ResourceRules.defaultRules;

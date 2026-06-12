@@ -39,6 +39,8 @@ import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_ind
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../../support/trade_order_factory.dart';
+
 const String _gpA = 'gpA';
 const String _gpB = 'gpB';
 const String _gpC = 'gpC';
@@ -71,21 +73,15 @@ TradeOrder _offer(
   int quantity, {
   int priority = 1,
   String? originTileKey,
-}) => TradeOrder(
-  commodityId: commodityId,
-  type: TradeOrderType.offer,
-  quantity: quantity,
+}) => testOffer(
+  commodityId,
+  quantity,
   priority: priority,
   originTileKey: originTileKey,
 );
 
 TradeOrder _bid(String commodityId, int quantity, {int priority = 1}) =>
-    TradeOrder(
-      commodityId: commodityId,
-      type: TradeOrderType.bid,
-      quantity: quantity,
-      priority: priority,
-    );
+    testBid(commodityId, quantity, priority: priority);
 
 DealMatchInputs _matcherInputs({
   required Map<String, List<TradeOrder>> offersByFactionId,
