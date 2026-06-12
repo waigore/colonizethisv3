@@ -26,26 +26,16 @@ typedef _BuildDeductionPlan = ({
       if (econ == null) {
         return (failReason: 'Insufficient resources', plan: null);
       }
-      final unlockingTechId = unlockingTechByCivilianId[order.unitType];
-      if (unlockingTechId != null &&
-          (player.techUnlocked?[unlockingTechId] != true)) {
-        return (failReason: 'Required technology not unlocked', plan: null);
-      }
-      if (treasury < econ.buildTreasuryCost) {
-        return (failReason: 'Insufficient treasury', plan: null);
-      }
-      for (final e in econ.buildInputs.entries) {
-        if (stockpile.quantityOf(e.key) < e.value) {
-          return (failReason: 'Insufficient materials', plan: null);
-        }
-      }
-      return (
-        failReason: null,
-        plan: (
-          treasuryCost: econ.buildTreasuryCost,
-          materialCosts: econ.buildInputs,
-          subtractOnePeasant: false,
-        ),
+      return _resolveBuildPlanForCatalog(
+        player: player,
+        workers: workers,
+        stockpile: stockpile,
+        treasury: treasury,
+        buildTreasuryCost: econ.buildTreasuryCost,
+        buildInputs: econ.buildInputs,
+        unlockingTechId: unlockingTechByCivilianId[order.unitType],
+        requiresPeasant: false,
+        subtractOnePeasant: false,
       );
 
     case BuildUnitCategory.military:
@@ -53,29 +43,16 @@ typedef _BuildDeductionPlan = ({
       if (econ == null) {
         return (failReason: 'Insufficient resources', plan: null);
       }
-      final regimentUnlockTech = unlockingTechByRegimentId[order.unitType];
-      if (regimentUnlockTech != null &&
-          (player.techUnlocked?[regimentUnlockTech] != true)) {
-        return (failReason: 'Required technology not unlocked', plan: null);
-      }
-      if (workers.peasants <= 0) {
-        return (failReason: 'Insufficient workers', plan: null);
-      }
-      if (treasury < econ.buildTreasuryCost) {
-        return (failReason: 'Insufficient treasury', plan: null);
-      }
-      for (final e in econ.buildInputs.entries) {
-        if (stockpile.quantityOf(e.key) < e.value) {
-          return (failReason: 'Insufficient materials', plan: null);
-        }
-      }
-      return (
-        failReason: null,
-        plan: (
-          treasuryCost: econ.buildTreasuryCost,
-          materialCosts: econ.buildInputs,
-          subtractOnePeasant: true,
-        ),
+      return _resolveBuildPlanForCatalog(
+        player: player,
+        workers: workers,
+        stockpile: stockpile,
+        treasury: treasury,
+        buildTreasuryCost: econ.buildTreasuryCost,
+        buildInputs: econ.buildInputs,
+        unlockingTechId: unlockingTechByRegimentId[order.unitType],
+        requiresPeasant: true,
+        subtractOnePeasant: true,
       );
 
     case BuildUnitCategory.naval:
@@ -83,34 +60,66 @@ typedef _BuildDeductionPlan = ({
       if (shipEcon == null) {
         return (failReason: 'Insufficient resources', plan: null);
       }
-      final shipUnlockTech = unlockingTechByShipId[order.unitType];
-      if (shipUnlockTech != null &&
-          (player.techUnlocked?[shipUnlockTech] != true)) {
-        return (failReason: 'Required technology not unlocked', plan: null);
-      }
-      if (workers.peasants <= 0) {
-        return (failReason: 'Insufficient workers', plan: null);
-      }
-      if (treasury < shipEcon.buildTreasuryCost) {
-        return (failReason: 'Insufficient treasury', plan: null);
-      }
-      for (final e in shipEcon.buildInputs.entries) {
-        if (stockpile.quantityOf(e.key) < e.value) {
-          return (failReason: 'Insufficient materials', plan: null);
-        }
-      }
-      return (
-        failReason: null,
-        plan: (
-          treasuryCost: shipEcon.buildTreasuryCost,
-          materialCosts: shipEcon.buildInputs,
-          subtractOnePeasant: true,
-        ),
+      return _resolveBuildPlanForCatalog(
+        player: player,
+        workers: workers,
+        stockpile: stockpile,
+        treasury: treasury,
+        buildTreasuryCost: shipEcon.buildTreasuryCost,
+        buildInputs: shipEcon.buildInputs,
+        unlockingTechId: unlockingTechByShipId[order.unitType],
+        requiresPeasant: true,
+        subtractOnePeasant: true,
       );
 
     case BuildUnitCategory.unknown:
       return (failReason: 'Insufficient resources', plan: null);
   }
+}
+
+/// Generic per-catalog affordability check shared by the civilian, military,
+/// and naval branches of [_resolveBuildDeductionPlan]. Each branch resolves its
+/// own economy-catalog entry (the only per-category difference besides the
+/// peasant requirement and peasant deduction) and delegates the common
+/// tech / worker / treasury / material gating here so the validation order and
+/// failure reasons stay identical across branches.
+///
+/// Check order is preserved from the original per-branch code: unlock tech →
+/// peasant (when [requiresPeasant]) → treasury → materials.
+({String? failReason, _BuildDeductionPlan? plan}) _resolveBuildPlanForCatalog({
+  required Player player,
+  required WorkerPool workers,
+  required Stockpile stockpile,
+  required int treasury,
+  required int buildTreasuryCost,
+  required Map<CommodityId, int> buildInputs,
+  required String? unlockingTechId,
+  required bool requiresPeasant,
+  required bool subtractOnePeasant,
+}) {
+  if (unlockingTechId != null &&
+      (player.techUnlocked?[unlockingTechId] != true)) {
+    return (failReason: 'Required technology not unlocked', plan: null);
+  }
+  if (requiresPeasant && workers.peasants <= 0) {
+    return (failReason: 'Insufficient workers', plan: null);
+  }
+  if (treasury < buildTreasuryCost) {
+    return (failReason: 'Insufficient treasury', plan: null);
+  }
+  for (final e in buildInputs.entries) {
+    if (stockpile.quantityOf(e.key) < e.value) {
+      return (failReason: 'Insufficient materials', plan: null);
+    }
+  }
+  return (
+    failReason: null,
+    plan: (
+      treasuryCost: buildTreasuryCost,
+      materialCosts: buildInputs,
+      subtractOnePeasant: subtractOnePeasant,
+    ),
+  );
 }
 
 /// Result of checking whether a player can afford a build order.
