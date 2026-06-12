@@ -12,6 +12,7 @@ export 'src/economy/projected_cost_engine.dart';
 export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
 export 'src/economy/trade_cargo_capacity.dart';
+export 'src/economy/trade_interception.dart';
 export 'src/economy/worker_action_cost.dart';
 export 'src/economy/worker_economy.dart';
 export 'src/economy/world_market/bid_type_cap.dart';
