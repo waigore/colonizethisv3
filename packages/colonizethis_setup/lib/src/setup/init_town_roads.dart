@@ -7,7 +7,6 @@ import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 const int _initTownRoadLevel = 1;
 

@@ -2,14 +2,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_work_constants.dart';
-import 'package:colonizethis_world/src/world/tile_key_coordinates.dart' as tile_key_coordinates;
 import 'build_rail_work_rules.dart';
 
-/// Canonical tile-key coordinate parser for `regionId|provinceId|x|y`.
-({String regionId, String provinceLocalId, int x, int y})?
-parseTileKeyCoordinates(String tileKey) {
-  return tile_key_coordinates.parseTileKeyCoordinates(tileKey);
-}
+// `parseTileKeyCoordinates` now lives in `colonizethis_models` (Refs #3427).
+// Re-export it here so the `colonizethis_orders` barrel keeps publishing the
+// same canonical declaration for existing consumers; the prior local forwarder
+// (which deep-imported `colonizethis_world/src/`) is removed.
+export 'package:colonizethis_models/colonizethis_models.dart'
+    show parseTileKeyCoordinates;
 
 /// Clears active work state for a unit and restores its pre-assignment tile.
 Unit cancelUnitWork(Unit unit, {String? restoredTile}) {

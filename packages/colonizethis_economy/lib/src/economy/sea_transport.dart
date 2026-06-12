@@ -3,8 +3,6 @@ import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart'
-    show enemiesOf;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.

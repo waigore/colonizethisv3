@@ -5,7 +5,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 import 'game_setup_context.dart';
 import 'game_setup_town_tile_ranking.dart';
 
