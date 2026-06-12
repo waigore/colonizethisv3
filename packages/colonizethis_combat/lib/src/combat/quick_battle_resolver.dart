@@ -5,6 +5,7 @@ import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'combat_effective_strength.dart';
 import 'conflict_detection.dart';
 
 part 'quick_battle_resolver_engine.dart';

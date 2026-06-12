@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'combat_effective_strength.dart';
 import 'combat_types.dart';
 import 'military_strength.dart';
 
@@ -114,22 +115,24 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
     final rawDef = aggregateStrength(defList, defenderEffectiveMilitaryLevel);
 
     final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
-    var effAtt = rawAtt * terrainMod.$1 * attackerMoraleMultiplier;
-    var effDef = rawDef * terrainMod.$2 * defenderMoraleMultiplier;
+    final effAtt = combatEffectiveAttackerStrength(
+      base: rawAtt,
+      fortLevel: fortLevel,
+      factor1: terrainMod.$1,
+      factor2: attackerMoraleMultiplier,
+    );
+    final effDef = combatEffectiveDefenderStrength(
+      base: rawDef,
+      fortLevel: fortLevel,
+      factor1: terrainMod.$2,
+      factor2: defenderMoraleMultiplier,
+      emplacedStrength: combatDefaultEmplacedStrength(fortLevel),
+    );
 
-    if (fortLevel >= 1 && fortLevel <= 3) {
-      final reduction = fortDamageReduction[fortLevel];
-      effAtt *= (1.0 - reduction);
-      final emplaced =
-          fortGunCount[fortLevel] * fortEmplacedStrength[fortLevel];
-      effDef += emplaced;
-    }
-
-    var effAttForRatio = effAtt;
-    if (fortLevel >= 1 && fortLevel <= 3) {
-      final wallHp = wallHpByFortLevel[fortLevel];
-      effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
-    }
+    final effAttForRatio = combatEffectiveAttackForRatio(
+      effAtt: effAtt,
+      fortLevel: fortLevel,
+    );
 
     final total = effAttForRatio + effDef;
     double pAtt = 0.5;

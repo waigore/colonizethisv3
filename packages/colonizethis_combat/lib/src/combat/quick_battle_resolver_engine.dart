@@ -189,10 +189,10 @@ double _defenderLossFractionFromAttackerStrike({
   required _ActionModifiers attMods,
   required _ActionModifiers defMods,
 }) {
-  final wallHp = input.fortLevel >= 1 && input.fortLevel <= 3
-      ? wallHpByFortLevel[input.fortLevel]
-      : 0.0;
-  final effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
+  final effAttForRatio = combatEffectiveAttackForRatio(
+    effAtt: effAtt,
+    fortLevel: input.fortLevel,
+  );
   final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
   return (_targetLossFraction(ratio) *
           attMods.casualtiesDealtModifier *
@@ -228,15 +228,13 @@ double _attackerEffectiveStrength({
   required _ActionModifiers attMods,
 }) {
   final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
-  var effAtt =
-      _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
-      attMods.offenseModifier *
-      input.attackerLeaderMultiplier *
-      terrainMod.$1;
-  if (input.fortLevel >= 1 && input.fortLevel <= 3) {
-    effAtt *= (1.0 - fortDamageReduction[input.fortLevel]);
-  }
-  return effAtt;
+  return combatEffectiveAttackerStrength(
+    base: _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain),
+    fortLevel: input.fortLevel,
+    factor1: attMods.offenseModifier,
+    factor2: input.attackerLeaderMultiplier,
+    factor3: terrainMod.$1,
+  );
 }
 
 double _defenderEffectiveStrength({
@@ -247,20 +245,17 @@ double _defenderEffectiveStrength({
   required bool useVirtualEmplaced,
 }) {
   final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
-  var effDef =
-      _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
-      defMods.offenseModifier *
-      input.defenderLeaderMultiplier *
-      terrainMod.$2;
-  if (input.fortLevel >= 1 && input.fortLevel <= 3) {
-    if (useVirtualEmplaced) {
-      effDef += _aliveGunStrengthSum(mutableGuns);
-    } else {
-      effDef +=
-          fortGunCount[input.fortLevel] * fortEmplacedStrength[input.fortLevel];
-    }
-  }
-  return effDef;
+  final emplaced = useVirtualEmplaced
+      ? _aliveGunStrengthSum(mutableGuns)
+      : combatDefaultEmplacedStrength(input.fortLevel);
+  return combatEffectiveDefenderStrength(
+    base: _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain),
+    fortLevel: input.fortLevel,
+    factor1: defMods.offenseModifier,
+    factor2: input.defenderLeaderMultiplier,
+    factor3: terrainMod.$2,
+    emplacedStrength: emplaced,
+  );
 }
 
 List<String> _pickDefenderLosses({
