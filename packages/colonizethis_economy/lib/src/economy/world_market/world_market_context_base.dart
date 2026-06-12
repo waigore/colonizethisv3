@@ -1,6 +1,6 @@
 /// Shared base for the world-market pure-context inputs.
 ///
-/// `TradeOrderValidationContext` (`trade_order_validator.dart`) and
+/// `TradeOrderValidationContext` (`trade_order_validation_context.dart`) and
 /// `TradeSuggestionContext` (`trade_order_suggester.dart`) both carry the same
 /// four numeric/identity fields (`playerId`, `bidTypeCap`,
 /// `tradeCargoCapacity`, `availableStockpileByCommodityId`). This base holds
