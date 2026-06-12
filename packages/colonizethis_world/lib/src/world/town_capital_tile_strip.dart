@@ -5,7 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'game_world_mutations.dart';
 import 'province_lookup.dart';
-import 'tile_key_coordinates.dart';
 
 /// Every player / minor / tribe capital tile and every province [Province.townTileKey].
 /// Used to forbid resources and extraction improvements on those tiles only

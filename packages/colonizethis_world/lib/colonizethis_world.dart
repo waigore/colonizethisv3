@@ -44,10 +44,16 @@ export 'package:colonizethis_world/src/world/province_visibility_index.dart';
 export 'package:colonizethis_world/src/world/sea_zone_identity.dart';
 export 'package:colonizethis_world/src/world/ship_instance_allocate.dart';
 export 'package:colonizethis_world/src/world/tile_control.dart';
-// `parseTileKeyCoordinates` is also published by the `colonizethis_orders`
-// barrel (a thin forwarder to this canonical implementation); hide it here so
-// the combined `colonizethis_logic` barrel keeps a single public source and
-// avoids an ambiguous export (Refs #3393 Phase 1).
-export 'package:colonizethis_world/src/world/tile_key_coordinates.dart'
-    hide parseTileKeyCoordinates;
+// `parseTileKeyCoordinates` now lives in `colonizethis_models` (Refs #3427) and
+// is re-exported by `tile_key_coordinates.dart`. Because the canonical
+// declaration is the single `colonizethis_models` one, the `colonizethis_world`
+// and `colonizethis_orders` barrels re-export the same element, so the combined
+// `colonizethis_logic` barrel no longer needs the prior `hide` workaround.
+export 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
+// `enemiesOf` promoted to the public barrel (Refs #3427) so consumers such as
+// `colonizethis_economy` (sea transport interception) import it through a
+// barrel instead of a deep `src/` path. Only `enemiesOf` is surfaced to keep
+// the rest of `diplomatic_relation_lookup.dart` internal.
+export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart'
+    show enemiesOf;
 export 'package:colonizethis_world/src/world/topology_helpers.dart';

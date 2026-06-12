@@ -1,10 +1,7 @@
-/// Canonical tile-key coordinate parser for `regionId|provinceId|x|y`.
-({String regionId, String provinceLocalId, int x, int y})?
-parseTileKeyCoordinates(String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length != 4) return null;
-  final x = int.tryParse(parts[2]);
-  final y = int.tryParse(parts[3]);
-  if (x == null || y == null) return null;
-  return (regionId: parts[0], provinceLocalId: parts[1], x: x, y: y);
-}
+/// `parseTileKeyCoordinates` now lives in `colonizethis_models` (Refs #3427).
+///
+/// Re-exported here so existing `colonizethis_world` consumers — both the
+/// barrel and internal `src/world/tile_key_coordinates.dart` imports — keep
+/// resolving the symbol from this path unchanged.
+export 'package:colonizethis_models/colonizethis_models.dart'
+    show parseTileKeyCoordinates;
