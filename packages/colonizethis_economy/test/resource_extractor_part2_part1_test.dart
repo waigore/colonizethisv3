@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 
+import 'test_fixtures.dart';
+
 void main() {
   group('ResourceExtractor', () {
     test('town-rule-only + port: townDevelopmentLevel DOES cap yield', () {
@@ -38,33 +40,29 @@ void main() {
         capitalProvinceId: 'oldWorld|p1',
         capitalTile: cap,
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
         capitalTileGrainBonusPerTurn: 0,
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: 'pl1',
-                townTileKey: 'oldWorld|p1|0|0',
-                townDevelopmentLevel: 4,
-              ),
-              Province(
-                id: 'oldWorld|p2',
-                regionId: 'oldWorld',
-                ownerId: 'pl1',
-                townTileKey: 'oldWorld|p2|0|1',
-                townDevelopmentLevel: 2,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileState: tileState,
-          portsByProvinceSeaboard: {'oldWorld|p2|sea1': 'oldWorld|p2|0|1'},
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: 'pl1',
+              townTileKey: 'oldWorld|p1|0|0',
+              townDevelopmentLevel: 4,
+            ),
+            Province(
+              id: 'oldWorld|p2',
+              regionId: 'oldWorld',
+              ownerId: 'pl1',
+              townTileKey: 'oldWorld|p2|0|1',
+              townDevelopmentLevel: 2,
+            ),
+          ],
         ),
+        tileState: tileState,
+        portsByProvinceSeaboard: {'oldWorld|p2|sea1': 'oldWorld|p2|0|1'},
         players: [player],
       );
       final tileKey = 'oldWorld|p2|1|1';
@@ -116,28 +114,25 @@ void main() {
           y: 0,
         ),
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
         capitalTileGrainBonusPerTurn: 0,
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: 'pl1',
-                townDevelopmentLevel: 4,
-              ),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'pl1'),
-            ],
-          ),
-          tileState: tileState,
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: 'pl1',
+              townDevelopmentLevel: 4,
+            ),
+          ],
         ),
+        newWorld: RegionData(
+          provinces: [
+            Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'pl1'),
+          ],
+        ),
+        tileState: tileState,
         players: [player],
       );
       final result = computeExtraction(
@@ -234,34 +229,31 @@ void main() {
           '$ow|p1|sea1': 'oldWorld|p1|0|0',
           '$nw|n1|sea2': 'newWorld|n1|0|0',
         };
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g1',
           capitalTileGrainBonusPerTurn: 0,
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: '$ow|p1',
-                  regionId: ow,
-                  ownerId: 'pl1',
-                  townDevelopmentLevel: 4,
-                ),
-              ],
-            ),
-            newWorld: RegionData(
-              provinces: [
-                Province(
-                  id: '$nw|n1',
-                  regionId: nw,
-                  ownerId: 'pl1',
-                  townDevelopmentLevel: 4,
-                ),
-              ],
-            ),
-            tileState: tileState,
-            portsByProvinceSeaboard: ports,
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: '$ow|p1',
+                regionId: ow,
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
+            ],
           ),
+          newWorld: RegionData(
+            provinces: [
+              Province(
+                id: '$nw|n1',
+                regionId: nw,
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
+            ],
+          ),
+          tileState: tileState,
+          portsByProvinceSeaboard: ports,
           players: [
             Player(
               id: 'pl1',
@@ -321,24 +313,20 @@ void main() {
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 3)
           .setRoadLevel('oldWorld|p1|0|0', 3);
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
         capitalTileGrainBonusPerTurn: 0,
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: 'pl1',
-                townDevelopmentLevel: 4,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileState: tileState,
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: 'pl1',
+              townDevelopmentLevel: 4,
+            ),
+          ],
         ),
+        tileState: tileState,
         players: [
           Player(
             id: 'pl1',
