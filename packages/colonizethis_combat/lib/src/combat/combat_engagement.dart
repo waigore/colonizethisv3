@@ -8,6 +8,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combat_constants.dart';
+import 'combat_effective_strength.dart';
 import 'combat_loss_profile.dart';
 import 'combat_types.dart';
 import 'military_strength.dart';
@@ -32,35 +33,27 @@ EngagementOutcome resolveEngagement({
   final terrainMod =
       terrainModifiers[terrain] ??
       (kNeutralTerrainAttackerModifier, kNeutralTerrainDefenderModifier);
-  var effAtt =
-      attStr *
-      terrainMod.$1 *
-      attackerMoraleMultiplier *
-      attackerLeaderMultiplier;
-  var effDef =
-      defStr *
-      terrainMod.$2 *
-      defenderMoraleMultiplier *
-      defenderLeaderMultiplier;
-
-  if (fortLevel >= kMinFortLevelForCombatModifiers &&
-      fortLevel <= kMaxFortLevelForCombatModifiers) {
-    final reduction = fortDamageReduction[fortLevel];
-    effAtt *= (kUnityAttackerStrengthMultiplier - reduction);
-    final emplaced = fortGunCount[fortLevel] * fortEmplacedStrength[fortLevel];
-    effDef += emplaced;
-  }
+  final effAtt = combatEffectiveAttackerStrength(
+    base: attStr,
+    fortLevel: fortLevel,
+    factor1: terrainMod.$1,
+    factor2: attackerMoraleMultiplier,
+    factor3: attackerLeaderMultiplier,
+  );
+  final effDef = combatEffectiveDefenderStrength(
+    base: defStr,
+    fortLevel: fortLevel,
+    factor1: terrainMod.$2,
+    factor2: defenderMoraleMultiplier,
+    factor3: defenderLeaderMultiplier,
+    emplacedStrength: combatDefaultEmplacedStrength(fortLevel),
+  );
 
   // Wall HP soaks damage before it applies to defender casualty ratio. SPEC/game/siege-mechanics.md.
-  var effAttForRatio = effAtt;
-  if (fortLevel >= kMinFortLevelForCombatModifiers &&
-      fortLevel <= kMaxFortLevelForCombatModifiers) {
-    final wallHp = wallHpByFortLevel[fortLevel];
-    effAttForRatio = (effAtt - wallHp).clamp(
-      kEffectiveAttackForRatioClampMin,
-      kEffectiveAttackForRatioClampMax,
-    );
-  }
+  final effAttForRatio = combatEffectiveAttackForRatio(
+    effAtt: effAtt,
+    fortLevel: fortLevel,
+  );
 
   final attackerCasualties = <String>[];
   final defenderCasualties = <String>[];

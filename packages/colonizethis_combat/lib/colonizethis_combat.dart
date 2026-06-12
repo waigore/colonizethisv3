@@ -2,6 +2,7 @@
 library colonizethis_combat;
 
 export 'src/combat/battle_general_assignment.dart';
+export 'src/combat/combat_effective_strength.dart';
 export 'src/combat/combat_mode_selection.dart';
 export 'src/combat/combat_resolver.dart';
 export 'src/combat/combat_resolver_probabilistic.dart';

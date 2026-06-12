@@ -98,7 +98,7 @@ Game resolveBattleContext(
 
     final defenderEffectiveLevel = defenderEffectiveLevelByFaction.putIfAbsent(
       defenderFactionId,
-      () => _defenderEffectiveLevel(game, defenderFactionId),
+      () => effectiveEraForFaction(game, defenderFactionId),
     );
     final attackerCoverage =
         feedingCoverageByPlayerId[attacker.side.factionId] ??

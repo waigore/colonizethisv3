@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'battle_general_assignment.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
+import 'military_strength.dart';
 import 'quick_battle_emplaced_builder.dart';
 
 /// Builds QuickBattleInput from Game and BattleContext. SPEC/program/quick-battle-resolution.
@@ -60,8 +61,8 @@ QuickBattleInput buildQuickBattleInput(
   );
   final defenderLeaderMult = leaderBonusForFaction(game, ctx.defenderFactionId);
   final emplacedGuns = buildQuickBattleEmplacedGuns(game, ctx);
-  final attackerCavalryShare = _cavalryShare(allAttackerIds, unitsById);
-  final defenderCavalryShare = _cavalryShare(ctx.defenderUnitIds, unitsById);
+  final attackerCavalryShare = cavalryFraction(allAttackerIds, unitsById);
+  final defenderCavalryShare = cavalryFraction(ctx.defenderUnitIds, unitsById);
 
   return QuickBattleInput(
     attackerFactionId: ctx.attackers.first.factionId,
@@ -90,14 +91,3 @@ QuickBattleInput buildQuickBattleInput(
   );
 }
 
-double _cavalryShare(List<String> unitIds, Map<String, Unit> unitsById) {
-  if (unitIds.isEmpty) return 0.0;
-  var cavalry = 0;
-  for (final id in unitIds) {
-    final unit = unitsById[id];
-    if (unit == null) continue;
-    final stats = regimentStatsById(unit.type);
-    if (stats != null && stats.isCavalry) cavalry++;
-  }
-  return cavalry / unitIds.length;
-}

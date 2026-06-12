@@ -5,25 +5,13 @@ void _sortAttackersByInitiative(
   Map<String, Unit> unitsById,
   Random rng,
 ) {
-  int cavalryCount(AttackingSide side) {
-    var count = 0;
-    for (final id in side.unitIds) {
-      final u = unitsById[id];
-      if (u == null) continue;
-      final stats = regimentStatsById(u.type);
-      if (stats != null && stats.isCavalry) count++;
-    }
-    return count;
-  }
-
   final tieBreakRoll = rng.nextInt(kInitiativeTieBreakRngUpperExclusive);
   int tieRank(String factionId) => Object.hash(factionId, tieBreakRoll);
   final initiativeByAttacker = <_AttackingSideInBattle, double>{};
   for (final attacker in attackers) {
-    final totalUnits = attacker.side.unitIds.length;
-    final cavalryShare = totalUnits > 0
-        ? cavalryCount(attacker.side) / totalUnits
-        : kZeroCavalryShareWhenNoUnits;
+    final cavalryShare = attacker.side.unitIds.isEmpty
+        ? kZeroCavalryShareWhenNoUnits
+        : cavalryFraction(attacker.side.unitIds, unitsById);
     initiativeByAttacker[attacker] =
         cavalryShare * initiativeCavalryShareWeight +
         attacker.side.generalMedals * initiativeGeneralMedalWeight;
@@ -61,16 +49,6 @@ void _incrementGeneralMedals({
       kGeneralMedalsMax,
     ),
   );
-}
-
-int _defenderEffectiveLevel(Game game, String defenderFactionId) {
-  for (final m in game.minorNations) {
-    if (m.id == defenderFactionId) return m.effectiveMilitaryLevel;
-  }
-  for (final t in game.tribes) {
-    if (t.id == defenderFactionId) return t.effectiveMilitaryLevel;
-  }
-  return kDefaultEffectiveMilitaryEra;
 }
 
 /// Max regiments that can participate per side in one engagement.

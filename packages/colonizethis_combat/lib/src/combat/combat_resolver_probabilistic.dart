@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'combat_effective_strength.dart';
 import 'combat_types.dart';
 import 'military_strength.dart';
 
@@ -101,8 +102,8 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
   final allDefenderCasualties = <String>[];
   final roundResults = <ProbabilisticRoundResult>[];
 
-  final initialAttStr = _aggregateStrength(attackerUnits, 4);
-  final initialDefStr = _aggregateStrength(
+  final initialAttStr = aggregateStrength(attackerUnits, 4);
+  final initialDefStr = aggregateStrength(
     defenderUnits,
     defenderEffectiveMilitaryLevel,
   );
@@ -110,26 +111,28 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
   for (var round = 1; round <= maxCombatRounds; round++) {
     if (attList.isEmpty || defList.isEmpty) break;
 
-    final rawAtt = _aggregateStrength(attList, 4);
-    final rawDef = _aggregateStrength(defList, defenderEffectiveMilitaryLevel);
+    final rawAtt = aggregateStrength(attList, 4);
+    final rawDef = aggregateStrength(defList, defenderEffectiveMilitaryLevel);
 
     final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
-    var effAtt = rawAtt * terrainMod.$1 * attackerMoraleMultiplier;
-    var effDef = rawDef * terrainMod.$2 * defenderMoraleMultiplier;
+    final effAtt = combatEffectiveAttackerStrength(
+      base: rawAtt,
+      fortLevel: fortLevel,
+      factor1: terrainMod.$1,
+      factor2: attackerMoraleMultiplier,
+    );
+    final effDef = combatEffectiveDefenderStrength(
+      base: rawDef,
+      fortLevel: fortLevel,
+      factor1: terrainMod.$2,
+      factor2: defenderMoraleMultiplier,
+      emplacedStrength: combatDefaultEmplacedStrength(fortLevel),
+    );
 
-    if (fortLevel >= 1 && fortLevel <= 3) {
-      final reduction = fortDamageReduction[fortLevel];
-      effAtt *= (1.0 - reduction);
-      final emplaced =
-          fortGunCount[fortLevel] * fortEmplacedStrength[fortLevel];
-      effDef += emplaced;
-    }
-
-    var effAttForRatio = effAtt;
-    if (fortLevel >= 1 && fortLevel <= 3) {
-      final wallHp = wallHpByFortLevel[fortLevel];
-      effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
-    }
+    final effAttForRatio = combatEffectiveAttackForRatio(
+      effAtt: effAtt,
+      fortLevel: fortLevel,
+    );
 
     final total = effAttForRatio + effDef;
     double pAtt = 0.5;
@@ -236,30 +239,25 @@ List<String> _selectCasualtiesWeighted(
     weights.add(1.0 / (s + 0.1));
   }
   final ids = units.map((u) => u.id).toList();
+  final alive = List<bool>.filled(ids.length, true);
   final chosen = <String>[];
 
   for (var i = 0; i < n; i++) {
-    final total = weights.fold(0.0, (a, b) => a + b);
+    var total = 0.0;
+    for (var j = 0; j < weights.length; j++) {
+      if (alive[j]) total += weights[j];
+    }
     if (total <= 0) break;
     var r = rng.nextDouble() * total;
     for (var j = 0; j < weights.length; j++) {
+      if (!alive[j]) continue;
       r -= weights[j];
       if (r <= 0) {
         chosen.add(ids[j]);
-        ids.removeAt(j);
-        weights.removeAt(j);
+        alive[j] = false;
         break;
       }
     }
   }
   return chosen;
-}
-
-/// Aggregates strength for a list of units (probabilistic version with helper).
-double _aggregateStrength(List<Unit> units, int effectiveEra) {
-  var total = 0.0;
-  for (final u in units) {
-    total += unitStrength(u, effectiveEra);
-  }
-  return total;
 }

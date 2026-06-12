@@ -317,4 +317,27 @@ void main() {
       expect(effectiveEraForFaction(game, 'unknown'), equals(4));
     });
   });
+
+  group('cavalryFraction', () {
+    test('returns 0 when unit list is empty', () {
+      expect(cavalryFraction([], {}), equals(0.0));
+    });
+
+    test('counts cavalry share over all unit ids', () {
+      final unitsById = {
+        'u1': testUnit(id: 'u1', type: 'squires', locationProvinceId: 'p1'),
+        'u2': testUnit(id: 'u2', type: 'musketeers', locationProvinceId: 'p2'),
+      };
+
+      expect(cavalryFraction(['u1', 'u2'], unitsById), equals(0.5));
+    });
+
+    test('missing units still count toward denominator', () {
+      final unitsById = {
+        'u1': testUnit(id: 'u1', type: 'squires', locationProvinceId: 'p1'),
+      };
+
+      expect(cavalryFraction(['u1', 'missing'], unitsById), equals(0.5));
+    });
+  });
 }
