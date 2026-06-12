@@ -174,7 +174,7 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
     return null;
   }
 
-  final commodityId = _resourceToCommodityId(resource);
+  final CommodityId commodityId = resource.name;
   final techCap =
       techCapForPlayerAndResource?.call(player.id, commodityId) ??
       techCapForPlayer(player.id);
@@ -226,44 +226,3 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
 }
 
 int _defaultTechCap(String playerId) => defaultExtractionCap;
-
-CommodityId _resourceToCommodityId(Resource resource) {
-  switch (resource) {
-    case Resource.grain:
-      return 'grain';
-    case Resource.meat:
-      return 'meat';
-    case Resource.wool:
-      return 'wool';
-    case Resource.horses:
-      return 'horses';
-    case Resource.timber:
-      return 'timber';
-    case Resource.iron:
-      return 'iron';
-    case Resource.copper:
-      return 'copper';
-    case Resource.tin:
-      return 'tin';
-    case Resource.coal:
-      return 'coal';
-    case Resource.sugarCane:
-      return 'sugarCane';
-    case Resource.tobacco:
-      return 'tobacco';
-    case Resource.cotton:
-      return 'cotton';
-    case Resource.furs:
-      return 'furs';
-    case Resource.spices:
-      return 'spices';
-    case Resource.silver:
-      return 'silver';
-    case Resource.gold:
-      return 'gold';
-    case Resource.gems:
-      return 'gems';
-    case Resource.diamonds:
-      return 'diamonds';
-  }
-}

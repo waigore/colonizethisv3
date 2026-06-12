@@ -81,10 +81,30 @@ int stagedBidTotalSpendByPlayer({
   required Game game,
   required data.ResourceRules resourceRules,
 }) {
-  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[playerId];
-  if (list == null || list.isEmpty) return 0;
+  return _sumBidSpend(
+    orders: orders.tradeOrdersByPlayerId[playerId],
+    game: game,
+    resourceRules: resourceRules,
+  );
+}
+
+/// Sum of `quantity × effectiveMarketPrice` over the bid orders in [orders].
+///
+/// Shared core for [stagedBidTotalSpendByPlayer] (staged orders) and
+/// [carryForwardBidNotionalByPlayer] (carry-forward bids): the only
+/// difference between the two callers is the source iterable. Offers,
+/// non-positive quantities, and bids on commodities with no effective
+/// price are skipped so the total stays defensive against out-of-band
+/// orders injected by AI or save state. Returns `0` for a `null` or
+/// empty [orders].
+int _sumBidSpend({
+  required List<TradeOrder>? orders,
+  required Game game,
+  required data.ResourceRules resourceRules,
+}) {
+  if (orders == null || orders.isEmpty) return 0;
   int total = 0;
-  for (final TradeOrder o in list) {
+  for (final TradeOrder o in orders) {
     if (o.type != TradeOrderType.bid) continue;
     if (o.quantity <= 0) continue;
     final int? price = effectiveMarketPriceForCommodityId(
@@ -119,22 +139,11 @@ int carryForwardBidNotionalByPlayer({
   required String playerId,
   required data.ResourceRules resourceRules,
 }) {
-  final List<TradeOrder>? list =
-      game.worldMarketState.carryForwardBidsByFactionId[playerId];
-  if (list == null || list.isEmpty) return 0;
-  int total = 0;
-  for (final TradeOrder o in list) {
-    if (o.type != TradeOrderType.bid) continue;
-    if (o.quantity <= 0) continue;
-    final int? price = effectiveMarketPriceForCommodityId(
-      commodityId: o.commodityId,
-      worldMarket: game.worldMarketState,
-      resourceRules: resourceRules,
-    );
-    if (price == null) continue;
-    total += o.quantity * price;
-  }
-  return total;
+  return _sumBidSpend(
+    orders: game.worldMarketState.carryForwardBidsByFactionId[playerId],
+    game: game,
+    resourceRules: resourceRules,
+  );
 }
 
 /// Treasury budget [playerId] may commit to bids this turn.

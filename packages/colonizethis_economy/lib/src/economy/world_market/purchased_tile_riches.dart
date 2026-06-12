@@ -36,7 +36,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
+import '../tile_extraction_yield.dart';
 import 'purchased_tile_index.dart';
+
+/// Sentinel town-development cap passed to [computeEffectiveTileYield] from the
+/// purchased-tile riches path. The town-cap branches are never entered here
+/// (not a capital province, no road-rule/port-town path), so this value is
+/// never applied; it stays at the maximum tile yield so any future change that
+/// enters a town-cap branch cannot silently clamp purchased-tile riches.
+const int _townDevelopmentCapDisabled = 4;
 
 /// Per-tile riches credit produced by [computePurchasedTileRichesCredits].
 ///
@@ -198,19 +206,23 @@ PurchasedTileRichesResult computePurchasedTileRichesCredits({
     final basePrice = richesBasePrice(commodityId);
     if (basePrice <= 0) continue;
 
-    final improvementLevel = tileState.improvementLevel(tileKey).clamp(0, 4);
-    if (improvementLevel <= 0) continue;
-
-    final roadLevel = tileState.roadLevel(tileKey);
-    final isPort = portTileKeys.contains(tileKey);
-    final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
-
-    const techCap = defaultExtractionCap;
-    final production = (improvementLevel < techCap ? improvementLevel : techCap)
-        .clamp(0, 4);
-    final effective =
-        (production < tileTransportLevel ? production : tileTransportLevel)
-            .clamp(0, 4);
+    // Purchased-tile riches deliberately skip the town-development cap: the
+    // owning GP's purchase authorizes the yield independent of the source
+    // province's town development (see SPEC § Riches handoff). The shared
+    // [computeEffectiveTileYield] math is reused with the town-cap branches
+    // disabled (not capital, no road-rule/port-town path) and an empty
+    // `pathTransportCap` so the per-tile transport level governs the cap.
+    final effective = computeEffectiveTileYield(
+      tileState: tileState,
+      tileKey: tileKey,
+      techCap: defaultExtractionCap,
+      townDevelopmentCap: _townDevelopmentCapDisabled,
+      townTileIsPort: false,
+      isCapitalProvince: false,
+      usesRoadRule: false,
+      portTileKeys: portTileKeys,
+      pathTransportCap: const <String, int>{},
+    );
     if (effective <= 0) continue;
 
     final treasuryDelta = (effective * basePrice * richesCashMultiplier)
