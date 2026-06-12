@@ -3,10 +3,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
+import 'tile_extraction_pipeline.dart';
 import 'tile_extraction_yield.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Per-faction extraction for non-Great-Power factions (Minor Nations and
 /// Tribes). Mirrors the per-tile formula in
@@ -311,37 +311,26 @@ _NonGpTileContribution? _computeNonGpTileContribution({
   if (!connectedTileKeys.contains(tileKey)) {
     return null;
   }
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) return null;
-  if (coords.x < 0 || coords.y < 0) return null;
 
-  final map = tileMapByRegion[coords.regionId];
-  if (map == null) return null;
+  final tileContext = resolveTileKeyExtractionContext(
+    tileKey: tileKey,
+    tileMapByRegion: tileMapByRegion,
+    provincesByFullId: provincesByFullId,
+    logContext: 'non_gp_extraction',
+  );
+  if (tileContext == null) {
+    return null;
+  }
 
-  final resource = map.resourceAt(coords.x, coords.y);
-  if (resource == null) return null;
-
-  // Resource enum name is the canonical commodity id; matches the existing
-  // GP-side `_resourceToCommodityId` switch (see resource_extractor.dart) and
-  // `kMineralResourceIds` membership check in constants.dart.
-  final CommodityId commodityId = resource.name;
-
+  final commodityId = tileContext.commodityId;
   if (kMineralResourceIds.contains(commodityId)) {
     // Non-GP factions never prospect — exclude minerals unconditionally per
     // SPEC/game/extraction-and-improvements.md § Non-Great-Power extraction.
     return null;
   }
 
-  final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
-  final province = provincesByFullId[provinceId];
-  if (province == null) {
-    final msg =
-        'non_gp_extraction province missing tileKey=$tileKey '
-        'provinceId=$provinceId (region-scoped lookup failed; '
-        'SPEC/game/world-model-identity.md)';
-    economyLog.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
-    return null;
-  }
+  final province = tileContext.province;
+  final provinceId = tileContext.provinceId;
 
   final townDevelopmentCap = province.townDevelopmentLevel;
   final townTileKey = province.townTileKey;
@@ -371,19 +360,23 @@ _NonGpTileContribution? _computeNonGpTileContribution({
   // The faction-capital-region check is preserved for parity with the GP
   // helper; in current SPEC every owned non-GP tile is same-region, so this
   // branch is informational only — non-GP output is always land-only.
-  final isLandRelativeToCapital = coords.regionId == factionCapitalRegionId;
+  final isLandRelativeToCapital =
+      tileContext.regionId == factionCapitalRegionId;
   if (!isLandRelativeToCapital) {
     // Non-GP factions cannot own tiles outside their capital region under
     // current SPEC; emit a debug log and skip so this stays observable if a
     // future ruleset changes that invariant.
     economyLog.d(
       'non_gp_extraction skip overseas tile factionCapitalRegionId='
-      '$factionCapitalRegionId tileRegionId=${coords.regionId} '
+      '$factionCapitalRegionId tileRegionId=${tileContext.regionId} '
       'tileKey=$tileKey',
     );
     return null;
   }
-  return _NonGpTileContribution(commodityId: commodityId, units: effective);
+  return _NonGpTileContribution(
+    commodityId: tileContext.commodityId,
+    units: effective,
+  );
 }
 
 class _NonGpTileContribution {

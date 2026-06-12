@@ -35,7 +35,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
+import '../tile_extraction_pipeline.dart';
 import '../tile_extraction_yield.dart';
 import 'purchased_tile_index.dart';
 
@@ -190,17 +190,13 @@ PurchasedTileRichesResult computePurchasedTileRichesCredits({
 
   for (final attribution in attributions) {
     final tileKey = attribution.tileKey;
-    final coords = parseTileKeyCoordinates(tileKey);
-    if (coords == null) continue;
-    if (coords.x < 0 || coords.y < 0) continue;
+    final resourceContext = resolveTileKeyResourceContext(
+      tileKey: tileKey,
+      tileMapByRegion: tileMapByRegion,
+    );
+    if (resourceContext == null) continue;
 
-    final map = tileMapByRegion[coords.regionId];
-    if (map == null) continue;
-
-    final resource = map.resourceAt(coords.x, coords.y);
-    if (resource == null) continue;
-
-    final CommodityId commodityId = resource.name;
+    final commodityId = resourceContext.commodityId;
     if (!richesCommodityIds.contains(commodityId)) continue;
 
     final basePrice = richesBasePrice(commodityId);

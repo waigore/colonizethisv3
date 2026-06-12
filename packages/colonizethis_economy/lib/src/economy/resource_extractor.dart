@@ -4,9 +4,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
+import 'tile_extraction_pipeline.dart';
 import 'tile_extraction_yield.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 
 /// Per-player extraction totals: land (same region as capital) vs overseas.
 class ExtractionTotals {
@@ -156,25 +156,19 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   if (!connectedTileKeys.contains(tileKey)) {
     return null;
   }
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) {
-    return null;
-  }
-  if (coords.x < 0 || coords.y < 0) {
+
+  final tileContext = resolveTileKeyExtractionContext(
+    tileKey: tileKey,
+    tileMapByRegion: tileMapByRegion,
+    provincesByFullId: provincesByFullId,
+    game: game,
+    logContext: 'extraction',
+  );
+  if (tileContext == null) {
     return null;
   }
 
-  final map = tileMapByRegion[coords.regionId];
-  if (map == null) {
-    return null;
-  }
-
-  final resource = map.resourceAt(coords.x, coords.y);
-  if (resource == null) {
-    return null;
-  }
-
-  final CommodityId commodityId = resource.name;
+  final commodityId = tileContext.commodityId;
   final techCap =
       techCapForPlayerAndResource?.call(player.id, commodityId) ??
       techCapForPlayer(player.id);
@@ -183,18 +177,8 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
     return null;
   }
 
-  // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
-  final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
-  final province = provincesByFullId != null
-      ? provincesByFullId[provinceId]
-      : game.worldState.tryGetProvince(provinceId);
-  if (province == null) {
-    final msg =
-        'extraction province missing tileKey=$tileKey provinceId=$provinceId '
-        '(region-scoped lookup failed; SPEC/game/world-model-identity.md)';
-    economyLog.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
-    return null;
-  }
+  final province = tileContext.province;
+  final provinceId = tileContext.provinceId;
   final townDevelopmentCap = province.townDevelopmentLevel;
   final townTileKey = province.townTileKey;
   final townTileIsPort =
@@ -221,7 +205,7 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
     tileKey: tileKey,
     commodityId: commodityId,
     units: effectiveCapped,
-    isLandRelativeToCapital: coords.regionId == capitalRegionId,
+    isLandRelativeToCapital: tileContext.regionId == capitalRegionId,
   );
 }
 
