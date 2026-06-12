@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/src/economy/tile_extraction_pipeline.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 import 'non_gp_extraction_test_support.dart';
 
