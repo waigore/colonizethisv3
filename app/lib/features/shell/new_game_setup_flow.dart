@@ -75,8 +75,10 @@ Future<void> runNewGameSetupAfterLeaderPick({
       minProvincesPerMinor: templateConfig.minProvincesPerMinor,
       seed: perAttemptSeed,
       infiniteMode: templateConfig.infiniteMode,
+      terrainVariation: templateConfig.terrainVariation,
       startingResources: templateConfig.startingResources,
       initTownRoadWiringRegionIds: templateConfig.initTownRoadWiringRegionIds,
+      aiProfileByGpId: templateConfig.aiProfileByGpId,
     );
 
     final outcome = await _showNewGameProgressDialog(

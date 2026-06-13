@@ -31,6 +31,7 @@ class _FakeOvertureRunner extends TurnResolutionRunner {
     required Map<String, TileMapResult> tileMapByRegion,
     bool turnTraceEnabled = false,
     String turnTraceRootDirectory = kCtTurnTraceDirectory,
+    Map<String, AiProfile>? aiProfiles,
   }) {
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
     return TurnResolutionRunnerSession(
@@ -64,6 +65,7 @@ class _FakeInterventionRunner extends TurnResolutionRunner {
     required Map<String, TileMapResult> tileMapByRegion,
     bool turnTraceEnabled = false,
     String turnTraceRootDirectory = kCtTurnTraceDirectory,
+    Map<String, AiProfile>? aiProfiles,
   }) {
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
     return TurnResolutionRunnerSession(

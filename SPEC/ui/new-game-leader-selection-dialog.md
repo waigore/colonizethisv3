@@ -11,7 +11,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `NewGameLeaderSelectionDialog` | `StatefulWidget` | `baseConfig` (`GameSetupConfig`), `naming` (`ResolvedNamingConfig`), `initialLeaderByGpId` (`Map<String, String>`), `onCancel` (`VoidCallback`), `onConfirmed` (`void Function(List<String>, Map<String, String>, int, bool, double)`) | Bus-registered modal (id `new_game_leader_selection`) opened by the shell New Game button via `OpenDialogEvent(newGameLeaderSelectionDialogId)`. Invokes `onConfirmed` with the chosen lineup and parameters; the scope's builder then kicks off `runNewGameSetupAfterLeaderPick`. |
+| `NewGameLeaderSelectionDialog` | `StatefulWidget` | `baseConfig` (`GameSetupConfig`), `naming` (`ResolvedNamingConfig`), `initialLeaderByGpId` (`Map<String, String>`), `blessedProfileNames` (`List<String>`), `onCancel` (`VoidCallback`), `onConfirmed` (`void Function(List<String>, Map<String, String>, int, bool, double, Map<String, String?>)`) | Bus-registered modal (id `new_game_leader_selection`) opened by the shell New Game button via `OpenDialogEvent(newGameLeaderSelectionDialogId)`. Invokes `onConfirmed` with the chosen lineup, parameters, and per-AI-slot blessed profile names; the scope's builder then kicks off `runNewGameSetupAfterLeaderPick`. |
 
 Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 480`, `maxHeight: 720`). Six slots are fixed (`_kNumSlots == 6`); slot 0 is the human player (`shell_newGame_playerYou`), slots 1–5 are AI (`shell_newGame_playerAi`). Dialog id constant: `newGameLeaderSelectionDialogId`.
 

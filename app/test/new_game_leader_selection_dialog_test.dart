@@ -70,6 +70,7 @@ void main() {
         int seed,
         bool infiniteMode,
         double terrainVariation,
+        Map<String, String?> aiProfileByGpId,
       )
       onConfirmed,
     }) async {
@@ -103,6 +104,7 @@ void main() {
                         baseConfig: base,
                         naming: naming,
                         initialLeaderByGpId: initial,
+                        blessedProfileNames: const [],
                         onCancel: () => Navigator.of(ctx).pop(),
                         onConfirmed: onConfirmed,
                       ),
@@ -123,7 +125,7 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -146,8 +148,8 @@ void main() {
       (WidgetTester tester) async {
         await pumpDialog(
           tester,
-          surfaceSize: const Size(900, 1600),
-          onConfirmed: (_, _, _, _, _) {},
+          surfaceSize: const Size(900, 2000),
+          onConfirmed: (_, _, _, _, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -173,7 +175,7 @@ void main() {
       await pumpDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _, _) {},
+        onConfirmed: (_, _, _, _, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -201,7 +203,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, seed, infiniteMode, _) {
+        onConfirmed: (ids, leaders, seed, infiniteMode, _, __) {
           gotIds = ids;
           gotLeaders = leaders;
           gotSeed = seed;
@@ -219,13 +221,129 @@ void main() {
       expect(gotInfiniteMode, isFalse);
     });
 
+    testWidgets('AI slots show profile dropdown when blessed names exist', (
+      WidgetTester tester,
+    ) async {
+      Map<String, String?>? gotProfiles;
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(900, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: () {
+                    final base = GameSetupConfig.defaultConfig;
+                    final naming = defaultNamingConfig;
+                    final initial = <String, String>{};
+                    for (final gpId in base.selectedGreatPowerIds) {
+                      final gp = naming.gpById(gpId);
+                      if (gp != null && gp.leaderVariants.isNotEmpty) {
+                        initial[gpId] = gp.defaultLeaderVariantId;
+                      }
+                    }
+                    showDialog<void>(
+                      context: context,
+                      builder: (ctx) => NewGameLeaderSelectionDialog(
+                        baseConfig: base,
+                        naming: naming,
+                        initialLeaderByGpId: initial,
+                        blessedProfileNames: const ['aggressive_v2'],
+                        onCancel: () => Navigator.of(ctx).pop(),
+                        onConfirmed:
+                            (_, _, _, _, _, profiles) => gotProfiles = profiles,
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CtDropdown<String>), findsNWidgets(17));
+      await ensureTapStart(tester);
+      expect(gotProfiles, isEmpty);
+    });
+
+    testWidgets('selecting blessed profile forwards aiProfileByGpId', (
+      WidgetTester tester,
+    ) async {
+      Map<String, String?>? gotProfiles;
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(900, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: () {
+                    final base = GameSetupConfig.defaultConfig;
+                    final naming = defaultNamingConfig;
+                    final initial = <String, String>{};
+                    for (final gpId in base.selectedGreatPowerIds) {
+                      final gp = naming.gpById(gpId);
+                      if (gp != null && gp.leaderVariants.isNotEmpty) {
+                        initial[gpId] = gp.defaultLeaderVariantId;
+                      }
+                    }
+                    showDialog<void>(
+                      context: context,
+                      builder: (ctx) => NewGameLeaderSelectionDialog(
+                        baseConfig: base,
+                        naming: naming,
+                        initialLeaderByGpId: initial,
+                        blessedProfileNames: const ['aggressive_v2'],
+                        onCancel: () => Navigator.of(ctx).pop(),
+                        onConfirmed:
+                            (_, _, _, _, _, profiles) => gotProfiles = profiles,
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      final profileDropdowns = find.widgetWithText(CtDropdown<String>, 'Normal');
+      await tester.tap(profileDropdowns.first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('aggressive_v2').last);
+      await tester.pumpAndSettle();
+      await ensureTapStart(tester);
+      expect(gotProfiles?.values, contains('aggressive_v2'));
+    });
+
     testWidgets('Cancel closes dialog without calling onConfirmed', (
       WidgetTester tester,
     ) async {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, _, _) {
+        onConfirmed: (_, _, _, _, _, _) {
           confirmed = true;
         },
       );
@@ -244,7 +362,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _, _, _) {
+        onConfirmed: (ids, leaders, _, _, _, __) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -267,7 +385,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -281,7 +399,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -297,7 +415,7 @@ void main() {
       bool? gotInfiniteMode;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, infiniteMode, _) =>
+        onConfirmed: (_, _, _, infiniteMode, _, __) =>
             gotInfiniteMode = infiniteMode,
       );
       final checkbox = find.byType(Checkbox);
@@ -312,7 +430,7 @@ void main() {
     testWidgets(
       'shows terrain variation slider with default helper and label',
       (WidgetTester tester) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         expect(find.byType(CtSlider), findsOneWidget);
         expect(find.textContaining('Terrain variation'), findsOneWidget);
         expect(
@@ -328,7 +446,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __) =>
               gotTerrainVariation = terrainVariation,
         );
         await ensureTapStart(tester);
@@ -342,7 +460,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __) =>
               gotTerrainVariation = terrainVariation,
         );
 
@@ -364,7 +482,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __) =>
               gotTerrainVariation = terrainVariation,
         );
 
@@ -400,6 +518,7 @@ void main() {
           int seed,
           bool infiniteMode,
           double terrainVariation,
+          Map<String, String?> aiProfileByGpId,
         )?
         onConfirmed,
       }) async {
@@ -432,8 +551,9 @@ void main() {
                           baseConfig: baseConfig,
                           naming: naming,
                           initialLeaderByGpId: initial,
+                          blessedProfileNames: const [],
                           onCancel: () => Navigator.of(ctx).pop(),
-                          onConfirmed: onConfirmed ?? (_, _, _, _, _) {},
+                          onConfirmed: onConfirmed ?? (_, _, _, _, _, _) {},
                         ),
                       );
                     },
@@ -644,7 +764,7 @@ void main() {
       testWidgets(
         'title resolves --accent color and letterSpacing == fontSize * 0.05',
         (WidgetTester tester) async {
-          await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+          await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
           final titleFinder = find.byKey(
             const ValueKey<String>('leaderSelectionDialogTitle'),
           );
@@ -666,7 +786,7 @@ void main() {
       testWidgets('renders exactly one CtBrassDivider keyed below the title', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         final dividerFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogBrassDivider'),
         );
@@ -688,7 +808,7 @@ void main() {
       testWidgets('intro paints --muted italic body color', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         final introFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogIntro'),
         );
@@ -702,7 +822,7 @@ void main() {
           '(regression guard against unstyled headings)', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         final Text title = tester.widget<Text>(
           find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
         );
@@ -759,8 +879,9 @@ void main() {
                         baseConfig: base,
                         naming: naming,
                         initialLeaderByGpId: initial,
+                        blessedProfileNames: const [],
                         onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed: (_, _, _, _, _) {},
+                        onConfirmed: (_, _, _, _, _, _) {},
                       ),
                     );
                   },

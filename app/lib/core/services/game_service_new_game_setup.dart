@@ -22,7 +22,11 @@ Game _gameServiceCreateNewGame(
       effectiveSeed: effectiveSeed,
     );
   }
-  final result = _gameServiceSetupResultWithFinalizedGame(setupResult, effectiveSeed);
+  final result = _gameServiceSetupResultWithFinalizedGame(
+    setupResult,
+    effectiveSeed,
+    aiProfileByGpId: cfg.aiProfileByGpId,
+  );
   _gameServicePersistNewGame(service, gameId: gameId, result: result);
   return result.game;
 }
@@ -79,7 +83,11 @@ Future<Game> _gameServiceCreateNewGameAsync(
     reportPhase(3);
     await yieldUi();
   }
-  final result = _gameServiceSetupResultWithFinalizedGame(setupResult, effectiveSeed);
+  final result = _gameServiceSetupResultWithFinalizedGame(
+    setupResult,
+    effectiveSeed,
+    aiProfileByGpId: cfg.aiProfileByGpId,
+  );
 
   reportPhase(4);
   await yieldUi();
@@ -91,13 +99,15 @@ Future<Game> _gameServiceCreateNewGameAsync(
 
 GameSetupResult _gameServiceSetupResultWithFinalizedGame(
   GameSetupResult setup,
-  int effectiveSeed,
-) {
+  int effectiveSeed, {
+  Map<String, String?> aiProfileByGpId = const {},
+}) {
   var game = setup.game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {
       for (final p in setup.game.players) p.id: effectiveSeed + p.id.hashCode,
     },
+    aiProfileByGpId: Map<String, String?>.from(aiProfileByGpId),
   );
   game = assignHiddenAgendasForGame(game);
   return GameSetupResult(

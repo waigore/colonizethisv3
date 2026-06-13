@@ -25,6 +25,7 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     required this.baseConfig,
     required this.naming,
     required this.initialLeaderByGpId,
+    required this.blessedProfileNames,
     required this.onCancel,
     required this.onConfirmed,
   });
@@ -36,6 +37,10 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
   final GameSetupConfig baseConfig;
   final ResolvedNamingConfig naming;
   final Map<String, String> initialLeaderByGpId;
+
+  /// Blessed tuned profile names from the asset manifest (sorted).
+  final List<String> blessedProfileNames;
+
   final VoidCallback onCancel;
   final void Function(
     List<String> orderedGreatPowerIds,
@@ -43,6 +48,7 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     int seed,
     bool infiniteMode,
     double terrainVariation,
+    Map<String, String?> aiProfileByGpId,
   )
   onConfirmed;
 
@@ -93,6 +99,10 @@ class _NewGameLeaderSelectionDialogState
   bool _infiniteMode = false;
   double _terrainVariation =
       NewGameLeaderSelectionDialog.defaultTerrainVariation;
+  final Map<int, String?> _profileBySlot = <int, String?>{};
+
+  /// Dropdown sentinel for the default hardcoded AI personality.
+  static const String normalProfileChoiceId = '';
 
   List<String> get _allGpIds =>
       widget.naming.greatPowers.map((g) => g.id).toList();
@@ -396,7 +406,20 @@ class _NewGameLeaderSelectionDialogState
       seed,
       _infiniteMode,
       _terrainVariation,
+      _aiProfileByGpIdForCallback(),
     );
+  }
+
+  Map<String, String?> _aiProfileByGpIdForCallback() {
+    final out = <String, String?>{};
+    for (var slot = 1; slot < _kNumSlots; slot++) {
+      final gpId = _orderedGpIdsBySlot[slot];
+      final profileName = _profileBySlot[slot];
+      if (profileName != null && profileName.isNotEmpty) {
+        out[gpId] = profileName;
+      }
+    }
+    return out;
   }
 
   Widget _buildTerrainVariationField(
@@ -506,6 +529,27 @@ class _NewGameLeaderSelectionDialogState
       },
     );
 
+    final Widget? profileDropdown = slotIndex == 0
+        ? null
+        : CtDropdown<String>(
+            value: _profileBySlot[slotIndex] ?? normalProfileChoiceId,
+            items: <String>[
+              normalProfileChoiceId,
+              ...widget.blessedProfileNames,
+            ],
+            hint: 'AI Profile',
+            itemLabel: (id) => id.isEmpty ? 'Normal' : id,
+            onChanged: (value) {
+              setState(() {
+                if (value == null || value.isEmpty) {
+                  _profileBySlot.remove(slotIndex);
+                } else {
+                  _profileBySlot[slotIndex] = value;
+                }
+              });
+            },
+          );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: CtSpacing.ml),
       child: Column(
@@ -525,6 +569,7 @@ class _NewGameLeaderSelectionDialogState
           _SlotPickersBody(
             nationDropdown: nationDropdown,
             leaderDropdown: leaderDropdown,
+            profileDropdown: profileDropdown,
           ),
         ],
       ),
@@ -559,10 +604,12 @@ class _SlotPickersBody extends StatelessWidget {
   const _SlotPickersBody({
     required this.nationDropdown,
     required this.leaderDropdown,
+    this.profileDropdown,
   });
 
   final Widget nationDropdown;
   final Widget leaderDropdown;
+  final Widget? profileDropdown;
 
   /// Vertical gap between the nation dropdown and the leader dropdown when
   /// the slot body is stacked (matches the slot label ↔ pickers gap of
@@ -594,16 +641,30 @@ class _SlotPickersBody extends StatelessWidget {
           nationDropdown,
           const SizedBox(height: stackedGap),
           leaderDropdown,
+          if (profileDropdown != null) ...[
+            const SizedBox(height: stackedGap),
+            profileDropdown!,
+          ],
         ],
       );
     }
-    return Row(
-      key: sideBySideRowKey,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(child: nationDropdown),
-        const SizedBox(width: CtSpacing.m),
-        Expanded(child: leaderDropdown),
+        Row(
+          key: sideBySideRowKey,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(child: nationDropdown),
+            const SizedBox(width: CtSpacing.m),
+            Expanded(child: leaderDropdown),
+          ],
+        ),
+        if (profileDropdown != null) ...[
+          const SizedBox(height: stackedGap),
+          profileDropdown!,
+        ],
       ],
     );
   }

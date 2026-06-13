@@ -822,8 +822,9 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
                       baseConfig: base,
                       naming: naming,
                       initialLeaderByGpId: initial,
+                      blessedProfileNames: const [],
                       onCancel: () => Navigator.of(innerContext).pop(),
-                      onConfirmed: (_, _, _, _, _) {},
+                      onConfirmed: (_, _, _, _, _, __) {},
                     ),
                   );
                 },
@@ -873,8 +874,9 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
                       baseConfig: base,
                       naming: naming,
                       initialLeaderByGpId: initial,
+                      blessedProfileNames: const [],
                       onCancel: () => Navigator.of(innerContext).pop(),
-                      onConfirmed: (_, _, _, _, _) {},
+                      onConfirmed: (_, _, _, _, _, __) {},
                     ),
                   );
                 },

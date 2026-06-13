@@ -14,6 +14,7 @@ import 'config/ct_e2e.dart';
 import 'config/map_terrain_config.dart';
 import 'config/themes.dart';
 import 'core/services/app_event_handler_scope.dart';
+import 'core/services/blessed_ai_profile_loader.dart';
 import 'core/services/desktop_window_startup_service.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
@@ -47,6 +48,8 @@ Future<void> bootstrapApp({
   await openHiveBoxSafely(HiveBoxNames.games);
   await openHiveBoxSafely(HiveBoxNames.offlineQueue);
   await ensureDesktopWindowStartup();
+  // Warm blessed AI profile asset bundle for new-game UI and turn resolution.
+  await BlessedAiProfileLoader.loadCatalog();
   // Await bundled Cinzel registration for the editorial-monocle theme;
   // `preloadEditorialMonocleFonts` hard-errors when assets are missing.
   // Skipped under e2e to avoid font bootstrap in integration_test. Tests
