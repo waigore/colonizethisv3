@@ -356,7 +356,10 @@ CargoPreference _cargoPreference(
   ColonialSummary colonial = const ColonialSummary(),
   bool belowQuotaPeaceTreasuryRecovery = false,
 }) {
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
+  final domainWeights = resolveDomainWeights(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
   final agendaId = config.hiddenAgendaId;
   // Trade-oriented agendas/personalities favour cargo.
   var economyWeight = domainWeights.economy;
