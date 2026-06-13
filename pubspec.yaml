@@ -62,6 +62,9 @@ melos:
     run_observer_game:
       description: Full-AI observer runner; traces and snapshots. SPEC/program/run_observer_game-tool.md.
       run: dart run run_observer_game
+    ga_runner:
+      description: GA orchestration for AI profile tuning. SPEC/program/ga-runner.md.
+      run: dart run ga_runner
     sim_economy:
       description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
       run: dart run sim_economy
