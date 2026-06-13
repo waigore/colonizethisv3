@@ -150,10 +150,10 @@ List<double> _normalizeColumn(List<double> raws) {
 
 List<_PlayerRaw> _parsePlayers(Map<String, dynamic> snapshot) {
   final raw = snapshot['players'];
-  if (raw is! List) return const <_PlayerRaw>[];
+  if (raw is! List<Object?>) return const <_PlayerRaw>[];
   final players = <_PlayerRaw>[];
   for (final entry in raw) {
-    if (entry is! Map) continue;
+    if (entry is! Map<Object?, Object?>) continue;
     final playerId = entry['playerId'];
     if (playerId is! String) continue;
     players.add(
@@ -169,7 +169,7 @@ List<_PlayerRaw> _parsePlayers(Map<String, dynamic> snapshot) {
 }
 
 int _workerTotal(Object? pool) {
-  if (pool is! Map) return 0;
+  if (pool is! Map<Object?, Object?>) return 0;
   var sum = 0;
   for (final tier in _kWorkerTiers) {
     final value = pool[tier];
@@ -193,9 +193,9 @@ num _numOf(Map<dynamic, dynamic> map, String key) {
 
 Map<String, int> _countByOwner(Object? rows) {
   final result = <String, int>{};
-  if (rows is! List) return result;
+  if (rows is! List<Object?>) return result;
   for (final row in rows) {
-    if (row is! Map) continue;
+    if (row is! Map<Object?, Object?>) continue;
     final owner = row['ownerId'];
     if (owner is String) {
       result[owner] = (result[owner] ?? 0) + 1;
@@ -206,9 +206,9 @@ Map<String, int> _countByOwner(Object? rows) {
 
 Map<String, String?> _ownerByProvince(Object? rows) {
   final result = <String, String?>{};
-  if (rows is! List) return result;
+  if (rows is! List<Object?>) return result;
   for (final row in rows) {
-    if (row is! Map) continue;
+    if (row is! Map<Object?, Object?>) continue;
     final id = row['id'];
     if (id is String) {
       final owner = row['ownerId'];
@@ -220,7 +220,7 @@ Map<String, String?> _ownerByProvince(Object? rows) {
 
 Map<String, int> _regimentCountByOwner(Object? lines) {
   final result = <String, int>{};
-  if (lines is! List) return result;
+  if (lines is! List<Object?>) return result;
   for (final line in lines) {
     if (line is! String) continue;
     final owner = _token(line, 'owner=');
@@ -236,7 +236,7 @@ Map<String, int> _regimentCountByOwner(Object? lines) {
 
 List<_Relation> _parseRelations(Object? lines) {
   final result = <_Relation>[];
-  if (lines is! List) return result;
+  if (lines is! List<Object?>) return result;
   for (final line in lines) {
     if (line is! String) continue;
     final relation = _Relation.tryParse(line);
