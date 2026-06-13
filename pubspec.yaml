@@ -30,6 +30,7 @@ workspace:
   - tool/generate_map
   - tool/init_game
   - tool/run_observer_game
+  - tool/ga_runner
   - tool/sim_economy
   - tool/sim_combat
   - tool/sim_combat_montecarlo
