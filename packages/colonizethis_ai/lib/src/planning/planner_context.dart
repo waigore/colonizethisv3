@@ -54,8 +54,10 @@ class PlannerContext {
   Map<String, String?> get provinceOwner =>
       _provinceOwner ??= getProvinceOwnerMap(game);
 
-  PersonalityDomainWeights get domainWeights =>
-      getDomainWeightsForLeader(config.personalityId);
+  PersonalityDomainWeights get domainWeights => resolveDomainWeights(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
 
   /// Move / army-move / conquest base weight (military vs economy vs fallback).
   int resolveMilitaryEconomyWeight({int fallback = 50}) {

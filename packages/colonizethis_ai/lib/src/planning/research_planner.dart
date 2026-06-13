@@ -55,7 +55,10 @@ Orders runResearchPlanner({required PlannerContext ctx}) {
     return ctx.orders;
   }
 
-  final thresholds = getThresholdsForLeader(ctx.config.personalityId);
+  final thresholds = resolveThresholds(
+    ctx.config.personalityId,
+    overrides: ctx.config.parameterOverrides,
+  );
   final chosen = selectWeightedCandidate(
     candidates: researchCandidates,
     seed: ctx.seeds.researchSeed,

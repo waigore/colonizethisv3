@@ -112,7 +112,10 @@ BuildUnitOrder? pickBuildOrder({
       candidates = regimentsOnly;
     }
   }
-  final thresholds = getThresholdsForLeader(config.personalityId);
+  final thresholds = resolveThresholds(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
   final scores = candidates.map((o) {
     final unitType = o.unitType;
     final isShip = ShipEconomyCatalog.byId.containsKey(unitType);

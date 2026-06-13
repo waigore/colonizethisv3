@@ -31,7 +31,10 @@ List<int> computeDiplomaticCandidateScores({
   PhasePlanOutcome? phasePlan,
 }) {
   final agendaId = config.hiddenAgendaId;
-  final thresholds = getThresholdsForLeader(config.personalityId);
+  final thresholds = resolveThresholds(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
   var maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
   final behindVictoryPace =
       snapshot.conquest.provincesToVictory >

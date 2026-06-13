@@ -21,6 +21,7 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
   OrderSuggestionAPI? orderSuggestionApi,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
+  Map<String, AiProfile>? profiles,
 }) {
   return generateOrdersForPlayerFullAIWithTrace(
     game,
@@ -30,6 +31,7 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
     orderSuggestionApi: orderSuggestionApi,
     onDialogue: onDialogue,
     onMood: onMood,
+    profiles: profiles,
   ).result;
 }
 
@@ -46,6 +48,7 @@ StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
   void Function(String phaseId)? onStagedPlannerProgress,
   Orders? sameTurnPriorDiplomaticOrders,
   bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  Map<String, AiProfile>? profiles,
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
@@ -71,10 +74,13 @@ StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
     personalityId: player.personalityId,
   );
   final agendaId = game.hiddenAgendaByGpId[playerId] ?? 'peacemaker';
+  final activeProfile = profiles?[playerId];
   final config = AIConfig(
     leaderId: leaderId,
     personalityId: personalityKey,
     hiddenAgendaId: agendaId,
+    parameterOverrides: activeProfile?.parameters,
+    profileId: activeProfile?.profileId,
   );
   final suggestionAPI = orderSuggestionApi ?? const DefaultOrderSuggestionAPI();
   final traced = generateStrategicOrdersWithTrace(
@@ -120,6 +126,7 @@ FullAIResult generateOrdersForGameFullAI(
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
   bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  Map<String, AiProfile>? profiles,
 }) {
   final totalStopwatch = Stopwatch()..start();
   var planningGame = game;
@@ -164,6 +171,7 @@ FullAIResult generateOrdersForGameFullAI(
       onStagedPlannerProgress: onStagedPlannerProgress,
       sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
       growthStagePlannerEnabled: growthStagePlannerEnabled,
+      profiles: profiles,
     );
     _log.i(
       'full_ai player_complete gameId=${game.id} playerId=$playerId '
