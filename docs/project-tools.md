@@ -63,6 +63,14 @@ Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implem
 
 ---
 
+## ga_runner (fitness library)
+
+Genetic-algorithm tuning of AI profiles. This package currently ships the **fitness function** (`package:ga_runner/ga_runner.dart`, `computeFitness`) that scores AI profile performance from a single `run_observer_game` final snapshot and `run-summary.json`, returning a per-player `FitnessScore` (`economic` / `military` / `diplomatic` / `total`). It is a pure, deterministic computation — it does not run games or aggregate across the GA's `k` games. Spec: [SPEC/program/ga-fitness.md](../SPEC/program/ga-fitness.md). Tracked by [GitHub #3438](https://github.com/waigore/colonizethisv3/issues/3438).
+
+The GA orchestration CLI (`ga_runner --config` / `--resume`) is added by [GitHub #3439](https://github.com/waigore/colonizethisv3/issues/3439); until then this package exposes the fitness library only (no executable / Melos script).
+
+---
+
 ## generate_map
 
 End-to-end map generation: generate tile map from province and continent count, infer topology from the grid, output graph description, map summary, tile map PNG, and topology graph (DOT + PNG when Graphviz installed). Spec: [SPEC/program/map-data.md](../SPEC/program/map-data.md).
