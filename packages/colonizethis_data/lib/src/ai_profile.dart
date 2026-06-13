@@ -9,6 +9,7 @@ import 'package:colonizethis_data/package_logger.dart';
 
 import 'ai_parameter_registry.dart';
 import 'ai_personality_config.dart';
+import 'data_validation_exception.dart';
 
 final _log = packageLogger('ai_profile');
 
@@ -104,11 +105,14 @@ class AiProfile {
     'parameters': Map<String, num>.from(parameters),
   };
 
-  /// Registry-keyed value lookup. Throws [ArgumentError] for unknown keys.
+  /// Registry-keyed value lookup. Throws [DataValidationException] for unknown
+  /// keys.
   num valueOf(String name) {
     final value = parameters[name];
     if (value == null) {
-      throw ArgumentError.value(name, 'name', 'not a registered parameter');
+      throw DataValidationException(
+        'AiProfile: "$name" is not a registered parameter',
+      );
     }
     return value;
   }
