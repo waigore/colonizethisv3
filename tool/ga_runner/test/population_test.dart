@@ -70,7 +70,7 @@ void main() {
       }
     });
 
-    test('throws FormatException when a seed file is a JSON array', () async {
+    test('throws when a seed file is not a profile object', () async {
       final dir = await Directory.systemTemp.createTemp('ga_seeds_');
       try {
         await File(p.join(dir.path, 'arr.json')).writeAsString('[1, 2, 3]');
