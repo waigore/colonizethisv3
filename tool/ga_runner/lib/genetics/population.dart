@@ -119,13 +119,22 @@ List<PopulationMember> evolvePopulation({
     );
   }
 
+  // Elites retain their stable slot ids; children take the remaining slot ids
+  // so every member of a generation keeps a unique `profile-NNN` identity
+  // (required for per-slot profile files, fitness maps, and resume round-trip).
+  final eliteSlotIds = {for (final m in next) m.slotId};
+  final availableSlotIds = <String>[
+    for (var i = 0; i < current.length; i++)
+      if (!eliteSlotIds.contains(_slotId(i))) _slotId(i),
+  ];
+  var childCursor = 0;
   while (next.length < current.length) {
     final parentAIdx = _tournamentIndex(generationFitness, current.length, rng);
     var parentBIdx = _tournamentIndex(generationFitness, current.length, rng);
     if (parentBIdx == parentAIdx && current.length > 1) {
       parentBIdx = (parentBIdx + 1) % current.length;
     }
-    final slotId = _slotId(next.length);
+    final slotId = availableSlotIds[childCursor++];
     var child = uniformCrossover(
       current[parentAIdx].profile,
       current[parentBIdx].profile,

@@ -128,14 +128,43 @@ void main() {
       );
 
       expect(a.length, 5);
-      // Non-elite children get fresh sequential slot ids.
-      expect(a[2].slotId, 'profile-002');
+      // Sorted fitness desc => indices 3 (0.9) and 1 (0.8) are elites, so they
+      // retain slot ids profile-003 and profile-001. Children fill the
+      // remaining slot ids in ascending order: profile-000, 002, 004.
+      expect(a[0].slotId, 'profile-003');
+      expect(a[1].slotId, 'profile-001');
+      expect(a[2].slotId, 'profile-000');
+      expect(a[3].slotId, 'profile-002');
       expect(a[4].slotId, 'profile-004');
       // Same seed => identical child parameters (determinism).
       for (var i = 0; i < a.length; i++) {
         expect(a[i].slotId, b[i].slotId);
         expect(a[i].profile.parameters, b[i].profile.parameters);
       }
+    });
+
+    test('assigns a unique slot id to every member when elites are mid-roster', () {
+      final current = buildInitialPopulation(
+        seeds: seedAiProfiles.take(5).toList(),
+        populationSize: 5,
+        rng: math.Random(11),
+      );
+      // Elites are the high-index members (slots profile-003 and profile-004),
+      // the case where naive sequential child slot ids would collide.
+      final fitness = <double>[0.1, 0.2, 0.3, 0.9, 0.8];
+
+      final next = evolvePopulation(
+        current: current,
+        generationFitness: fitness,
+        rng: math.Random(5),
+      );
+
+      final slotIds = next.map((m) => m.slotId).toList();
+      expect(slotIds.toSet().length, next.length);
+      expect(
+        slotIds.toSet(),
+        {'profile-000', 'profile-001', 'profile-002', 'profile-003', 'profile-004'},
+      );
     });
 
     test('handles a single-member population without crossover deadlock', () {
