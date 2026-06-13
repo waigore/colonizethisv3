@@ -129,6 +129,98 @@ void main() {
       }
     });
 
+    test('resume continues from persisted generation boundary', () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_resume_');
+      try {
+        final config = GaConfig(
+          populationSize: 2,
+          gamesPerProfile: 1,
+          maxGenerations: 1,
+          gamePlayerCount: 2,
+          maxTurns: 3,
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: GameSetupConfig(
+            selectedGreatPowerIds: const ['england', 'france'],
+            minorNationCount: 0,
+            tribeCount: 2,
+            numProvincesOldWorld: 20,
+            numProvincesNewWorld: 8,
+            seed: 99,
+          ),
+          outputDir: runDir.parent.path,
+          seed: 11,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: const _FakeObserverRunner(),
+        );
+        expect(await engine.runFresh(runId: 'ga-run-resume'), 0);
+        final afterFirst = loadRunState(runDir.path);
+        expect(afterFirst.currentGeneration, 0);
+
+        final stateFile = File('${runDir.path}/run-state.json');
+        final stateJson =
+            jsonDecode(stateFile.readAsStringSync()) as Map<String, dynamic>;
+        final configJson = stateJson['config'] as Map<String, dynamic>;
+        configJson['max_generations'] = 2;
+        await stateFile.writeAsString(jsonEncode(stateJson));
+
+        final resumeEngine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: GaConfig.fromJson(configJson),
+          runDir: runDir.path,
+          observerRunner: const _FakeObserverRunner(),
+        );
+        expect(await resumeEngine.resume(loadRunState(runDir.path)), 0);
+        final afterSecond = loadRunState(runDir.path);
+        expect(afterSecond.currentGeneration, 1);
+        expect(afterSecond.convergence.bestFitnessPerGeneration.length, 2);
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
+    test('returns 130 when stop is requested before generation starts', () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_sigint_');
+      try {
+        final config = GaConfig(
+          populationSize: 2,
+          gamesPerProfile: 1,
+          maxGenerations: 3,
+          gamePlayerCount: 2,
+          maxTurns: 3,
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: GameSetupConfig(
+            selectedGreatPowerIds: const ['england', 'france'],
+            minorNationCount: 0,
+            tribeCount: 2,
+            numProvincesOldWorld: 20,
+            numProvincesNewWorld: 8,
+            seed: 99,
+          ),
+          outputDir: runDir.parent.path,
+          seed: 11,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: const _FakeObserverRunner(),
+          stopRequested: true,
+        );
+        expect(await engine.runFresh(runId: 'ga-run-sigint'), 130);
+        expect(File('${runDir.path}/run-state.json').existsSync(), isFalse);
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
     test('assigns fitness 0 when all games fail', () async {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_fail_');

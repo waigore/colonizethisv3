@@ -69,6 +69,53 @@ void main() {
       }
     });
 
+    test('rejects missing population profile file on load', () async {
+      final dir = await Directory.systemTemp.createTemp('ga_state_missing_profile_');
+      try {
+        await File('${dir.path}/run-state.json').writeAsString(
+          jsonEncode(<String, dynamic>{
+            'schema_version': kGaRunStateSchemaVersion,
+            'run_id': 'ga-run-missing-profile',
+            'config': <String, dynamic>{
+              'seed_profiles_dir': 'seeds',
+              'seed': 1,
+              'game_player_count': 2,
+              'game_setup_config': <String, dynamic>{
+                'selectedGreatPowerIds': <String>['england', 'france'],
+              },
+            },
+            'current_generation': 0,
+            'population': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'profile_id': 'profile-000',
+                'fitness_history': <double>[],
+                'generations_survived': 0,
+              },
+            ],
+            'best_overall': <String, dynamic>{
+              'profile_id': 'profile-000',
+              'fitness': 0.0,
+              'generation': 0,
+            },
+            'convergence': <String, dynamic>{
+              'best_fitness_per_generation': <double>[],
+              'avg_fitness_per_generation': <double>[],
+            },
+          }),
+        );
+        expect(
+          () => loadRunState(dir.path),
+          throwsA(
+            predicate<FormatException>(
+              (e) => e.message.contains('missing population profile file'),
+            ),
+          ),
+        );
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    });
+
     test('rejects unknown schema version', () async {
       final dir = await Directory.systemTemp.createTemp('ga_state_bad_');
       try {
