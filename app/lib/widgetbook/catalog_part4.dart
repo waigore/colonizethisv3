@@ -887,6 +887,49 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        name: 'Tuned AI profiles available',
+        builder: (context) {
+          // Per-AI-slot AI Profile dropdown (Refs #3444): AI slots 1-5 list
+          // `Normal` + every blessed profile name; the human slot (0) shows
+          // no profile dropdown. SPEC:
+          // `SPEC/ui/new-game-leader-selection-dialog.md` § Tuned AI profile
+          // selector.
+          final base = GameSetupConfig.defaultConfig;
+          final naming = defaultNamingConfig;
+          final initial = <String, String>{};
+          for (final gpId in base.selectedGreatPowerIds) {
+            final gp = naming.gpById(gpId);
+            if (gp != null && gp.leaderVariants.isNotEmpty) {
+              initial[gpId] = gp.defaultLeaderVariantId;
+            }
+          }
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => NewGameLeaderSelectionDialog(
+                      baseConfig: base,
+                      naming: naming,
+                      initialLeaderByGpId: initial,
+                      blessedProfileNames: const [
+                        'aggressive_v2',
+                        'defensive_v1',
+                      ],
+                      onCancel: () => Navigator.of(innerContext).pop(),
+                      onConfirmed: (_, _, _, _, _, __) {},
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Tuned-Profile Leader Selection'),
+              );
+            },
+          );
+        },
+      ),
     ],
   ),
 ];

@@ -180,6 +180,12 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get shell_leaderDialog_selectLeaderHint => 'Select leader';
 
   @override
+  String get shell_leaderDialog_aiProfileLabel => 'AI Profile';
+
+  @override
+  String get shell_leaderDialog_aiProfileNormal => 'Normal';
+
+  @override
   String get common_cancel => 'Cancel';
 
   @override

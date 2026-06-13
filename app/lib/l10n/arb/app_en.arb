@@ -246,6 +246,14 @@
   "@shell_leaderDialog_selectLeaderHint": {
     "description": "Hint text for the leader dropdown in the leader selection dialog."
   },
+  "shell_leaderDialog_aiProfileLabel": "AI Profile",
+  "@shell_leaderDialog_aiProfileLabel": {
+    "description": "Label / hint for the per-AI-slot tuned AI profile dropdown in the new-game leader selection dialog."
+  },
+  "shell_leaderDialog_aiProfileNormal": "Normal",
+  "@shell_leaderDialog_aiProfileNormal": {
+    "description": "Dropdown option label for the default (hardcoded personality) AI in the per-AI-slot tuned AI profile dropdown."
+  },
   "common_cancel": "Cancel",
   "@common_cancel": {
     "description": "Generic Cancel button label."

@@ -537,8 +537,9 @@ class _NewGameLeaderSelectionDialogState
               normalProfileChoiceId,
               ...widget.blessedProfileNames,
             ],
-            hint: 'AI Profile',
-            itemLabel: (id) => id.isEmpty ? 'Normal' : id,
+            hint: l10n.shell_leaderDialog_aiProfileLabel,
+            itemLabel: (id) =>
+                id.isEmpty ? l10n.shell_leaderDialog_aiProfileNormal : id,
             onChanged: (value) {
               setState(() {
                 if (value == null || value.isEmpty) {
