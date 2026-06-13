@@ -224,6 +224,78 @@ void main() {
       expect(out.join('\n'), contains('Parameter diff'));
     });
 
+    test('bless --profile blesses a specific slot id', () async {
+      final code = await runBlessCommand(
+        arguments: <String>[
+          '--run',
+          runDir.path,
+          '--profile',
+          'profile-000',
+          '--name',
+          'slot_specific',
+        ],
+        repoRoot: repoRoot.path,
+        emitStdout: (_) {},
+        emitStderr: (_) {},
+      );
+      expect(code, 0);
+      expect(
+        File(blessedProfileAssetPath(repoRoot.path, 'slot_specific'))
+            .existsSync(),
+        isTrue,
+      );
+      final manifest = BlessedProfileManifest.readFile(
+        blessedManifestPath(repoRoot.path),
+      );
+      expect(manifest.profiles.single.sourceProfileId, 'profile-000');
+    });
+
+    test('compare --baseline direct path emits curves and diff', () async {
+      final candidate = await _writeCompletedRun(
+        runId: 'ga-run-direct-candidate',
+        member: PopulationMember(
+          slotId: 'profile-000',
+          profile: seedAiProfilesById['napoleon']!,
+          fitnessHistory: <double>[7.0],
+          generationsSurvived: 1,
+        ),
+      );
+      addTearDown(() => candidate.delete(recursive: true));
+      final out = <String>[];
+      final code = await runCompareCommand(
+        arguments: <String>[
+          '--baseline',
+          runDir.path,
+          '--candidate',
+          candidate.path,
+        ],
+        repoRoot: repoRoot.path,
+        emitStdout: out.add,
+        emitStderr: (_) {},
+      );
+      expect(code, 0);
+      final printed = out.join('\n');
+      expect(printed, contains('Fitness per generation'));
+      expect(printed, contains('Parameter diff'));
+    });
+
+    test('compare --baseline-name not in manifest exits non-zero', () async {
+      final err = <String>[];
+      final code = await runCompareCommand(
+        arguments: <String>[
+          '--baseline-name',
+          'never_blessed',
+          '--candidate',
+          runDir.path,
+        ],
+        repoRoot: repoRoot.path,
+        emitStdout: (_) {},
+        emitStderr: err.add,
+      );
+      expect(code, isNot(0));
+      expect(err.join('\n'), contains('not in manifest'));
+    });
+
     test('compare rejects both --baseline and --baseline-name', () async {
       final err = <String>[];
       final code = await runCompareCommand(
