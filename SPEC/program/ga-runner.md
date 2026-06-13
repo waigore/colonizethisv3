@@ -77,8 +77,15 @@ run-state.json
 profiles/profile-NNN.json
 gen-NNN/fitness.json
 gen-NNN/best-profile.json
+best-overall-profile.json
 history.json
 ```
+
+On run completion (all generations finished) the runner writes
+`best-overall-profile.json` at the run root: the `AiProfile` JSON of the
+best-overall member (the `gen-NNN/best-profile.json` from `best_overall.generation`).
+The export is idempotent: resuming an already-complete run re-writes it without
+re-running games.
 
 ## Acceptance criteria
 
@@ -103,3 +110,11 @@ history.json
 - Given `ga_runner --resume` on a completed run (`current_generation ==
   max_generations`), then the system logs completion and exits **0** without
   re-running games.
+- Given a GA run completes all generations, when the final generation is
+  persisted, then the system writes `best-overall-profile.json` at the run root
+  whose `AiProfile` JSON equals the `gen-NNN/best-profile.json` of the
+  `best_overall.generation`.
+- Given `ga_runner --resume` on an already-complete run with
+  `best-overall-profile.json` absent, when resume runs, then the system
+  re-writes `best-overall-profile.json` from the best-overall generation and
+  exits **0** without re-running games.

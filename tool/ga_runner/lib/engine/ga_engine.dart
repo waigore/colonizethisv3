@@ -56,6 +56,7 @@ class GaEngine {
 
   Future<int> resume(GaRunState state) async {
     if (state.currentGeneration >= state.config.maxGenerations - 1) {
+      await exportBestOverallProfile(runDir, state.bestOverall);
       _log.i('ga:already_complete generation=${state.currentGeneration}');
       return 0;
     }
@@ -142,6 +143,7 @@ class GaEngine {
       await writeHistory(runDir, convergence);
 
       if (gen == config.maxGenerations - 1) {
+        await exportBestOverallProfile(runDir, bestOverall);
         _log.i('ga:complete generations=${config.maxGenerations}');
         return 0;
       }

@@ -134,6 +134,97 @@ void main() {
       }
     });
 
+    test('exports best-overall profile at run completion', () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_best_');
+      try {
+        final config = GaConfig(
+          populationSize: 2,
+          gamesPerProfile: 1,
+          maxGenerations: 1,
+          gamePlayerCount: 2,
+          maxTurns: 3,
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: GameSetupConfig(
+            selectedGreatPowerIds: const ['england', 'france'],
+            minorNationCount: 0,
+            tribeCount: 2,
+            numProvincesOldWorld: 20,
+            numProvincesNewWorld: 8,
+            seed: 99,
+          ),
+          outputDir: runDir.parent.path,
+          seed: 11,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: const _FakeObserverRunner(),
+        );
+        expect(await engine.runFresh(runId: 'ga-run-best'), 0);
+        final state = loadRunState(runDir.path);
+        final bestExport = File('${runDir.path}/best-overall-profile.json');
+        expect(bestExport.existsSync(), isTrue);
+        final genLabel = state.bestOverall.generation.toString().padLeft(3, '0');
+        final genBest = File('${runDir.path}/gen-$genLabel/best-profile.json');
+        expect(bestExport.readAsStringSync(), genBest.readAsStringSync());
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
+    test('resume on already-complete run re-exports best-overall profile', () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_best_resume_');
+      try {
+        final config = GaConfig(
+          populationSize: 2,
+          gamesPerProfile: 1,
+          maxGenerations: 1,
+          gamePlayerCount: 2,
+          maxTurns: 3,
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: GameSetupConfig(
+            selectedGreatPowerIds: const ['england', 'france'],
+            minorNationCount: 0,
+            tribeCount: 2,
+            numProvincesOldWorld: 20,
+            numProvincesNewWorld: 8,
+            seed: 99,
+          ),
+          outputDir: runDir.parent.path,
+          seed: 11,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: const _FakeObserverRunner(),
+        );
+        expect(await engine.runFresh(runId: 'ga-run-best-resume'), 0);
+
+        final bestExport = File('${runDir.path}/best-overall-profile.json');
+        final expected = bestExport.readAsStringSync();
+        bestExport.deleteSync();
+        expect(bestExport.existsSync(), isFalse);
+
+        final resumeEngine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: const _FakeObserverRunner(),
+        );
+        expect(await resumeEngine.resume(loadRunState(runDir.path)), 0);
+        expect(bestExport.existsSync(), isTrue);
+        expect(bestExport.readAsStringSync(), expected);
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
     test('resume continues from persisted generation boundary', () async {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_resume_');

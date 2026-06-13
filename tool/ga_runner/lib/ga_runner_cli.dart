@@ -163,11 +163,6 @@ Future<int> _resume({
     return kExitError;
   }
 
-  if (state.currentGeneration >= state.config.maxGenerations - 1) {
-    _log.i('ga:resume_already_complete dir=$resumeDir');
-    return 0;
-  }
-
   final engine = GaEngine(
     repoRoot: repoRoot,
     config: state.config,

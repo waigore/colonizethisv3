@@ -205,6 +205,21 @@ Future<void> writeGenerationArtifacts({
   );
 }
 
+/// Exports the best-overall member's profile to `<runDir>/best-overall-profile.json`.
+///
+/// Idempotent: copies the `gen-NNN/best-profile.json` recorded for
+/// [bestOverall].generation. No-op when no generation has completed or the
+/// source artifact is absent. SPEC/program/ga-runner.md.
+Future<void> exportBestOverallProfile(String runDir, GaBestOverall bestOverall) async {
+  if (bestOverall.generation < 0) return;
+  final genLabel = bestOverall.generation.toString().padLeft(3, '0');
+  final source = File('$runDir/gen-$genLabel/best-profile.json');
+  if (!source.existsSync()) return;
+  await File('$runDir/best-overall-profile.json').writeAsString(
+    source.readAsStringSync(),
+  );
+}
+
 GaRunState loadRunState(String runDir) {
   final file = File('$runDir/run-state.json');
   if (!file.existsSync()) {
