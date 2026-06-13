@@ -54,8 +54,14 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
             hasColonialAcquisitionTargets(snapshot.colonial) &&
             !shouldSuppressNewWorldColonialOrders(snapshot: snapshot);
   final colonialPressureScale = effectiveColonialPressureWeight ?? 1.0;
-  final weights = getGoalWeightsForLeader(config.personalityId);
-  final thresholds = getThresholdsForLeader(config.personalityId);
+  final weights = resolveGoalWeights(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
+  final thresholds = resolveThresholds(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
 
   var defend = weights.defend;
   var expand = weights.expand;
@@ -196,7 +202,10 @@ String majorConstraintForStrategicGoal(
   AIWorldSnapshot snapshot,
   AIConfig config,
 ) {
-  final thresholds = getThresholdsForLeader(config.personalityId);
+  final thresholds = resolveThresholds(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
   return switch (selected) {
     StrategicGoal.defend =>
       snapshot.threats.capitalThreatened

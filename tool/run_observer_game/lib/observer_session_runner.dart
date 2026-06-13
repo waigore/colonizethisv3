@@ -8,6 +8,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'observer_minimal_trace.dart';
+import 'observer_profiles.dart';
 import 'observer_snapshot_v1.dart';
 import 'package_logger.dart';
 
@@ -22,6 +23,7 @@ Future<int> runObserverSession({
   bool verifyConquest = false,
   bool verifyColonialExpansion = false,
   bool verifyWorkforce = false,
+  String? profilesDir,
   int verifyArtifactCapBytes = kObserverVerifyArtifactSizeCapBytes,
 }) async {
   late final InitGameResult init;
@@ -37,6 +39,23 @@ Future<int> runObserverSession({
   } on Object catch (e, st) {
     _sessionLog.e('observer:init_failed', error: e, stackTrace: st);
     return 2;
+  }
+
+  // Per-GP AI profile overrides (Refs #3437). Loaded before the turn loop so a
+  // missing directory or invalid profile aborts the run with a clear error and
+  // exit code; null when --profiles is not passed (byte-identical default path).
+  Map<String, AiProfile>? profiles;
+  if (profilesDir != null) {
+    try {
+      profiles = loadObserverProfiles(
+        dir: profilesDir,
+        playerIds: [for (final p in init.game.players) p.id],
+      );
+    } on ObserverProfileLoadException catch (e) {
+      _sessionLog.e('observer:profile_load_failed', error: e);
+      stderr.writeln('Error: ${e.message}');
+      return kExitProfileLoadFailed;
+    }
   }
 
   final minimalTraceMode =
@@ -130,6 +149,7 @@ Future<int> runObserverSession({
         before,
         init.combinedTopology,
         tileMapByRegion: init.tileMapByRegion,
+        profiles: profiles,
       );
       final gameForResolution = fullAi.game;
 

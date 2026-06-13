@@ -39,6 +39,7 @@ export 'src/turn_processing_wall_clock_budget.dart';
 export 'src/unit_roles.dart';
 export 'src/leader_bonuses.dart';
 export 'src/ai_personality_config.dart';
+export 'src/ai_personality_overrides.dart';
 export 'src/ai_victory_config.dart';
 export 'src/ai_parameter_registry.dart';
 export 'src/ai_profile.dart';

@@ -58,6 +58,7 @@ melos run run_observer_game -- [options]
 - `--seed <n>` — optional RNG seed
 - `--max-turns <n>` — optional turn cap (default = calendar-1800 turn for the mapping)
 - `--config <path>` — optional `GameSetupConfig` JSON (`init_game`-compatible)
+- `--profiles <dir>` — optional directory of per-GP `AiProfile` JSON files keyed `<playerId>.json`; overrides AI personality params at decision time (Refs **#3437**). Missing GPs use defaults; unmatched files are ignored (warn); a missing dir or invalid profile aborts with exit **9**.
 
 Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implemented per GitHub **#2498**; use `--max-turns` for short CI-style runs. Each resolved turn’s **Full AI + trusted resolve** segment shares the **15 s** wall-clock budget with the app (`kTurnProcessingWallClockBudgetMs`; enforced by `colonizethis_ai` perf test on turn 1 of `GameSetupConfig.defaultConfig`; Refs **#2507**).
 

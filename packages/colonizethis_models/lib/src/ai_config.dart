@@ -10,6 +10,8 @@ class AIConfig {
     required this.personalityId,
     required this.hiddenAgendaId,
     this.difficultyModifiers = const {},
+    this.parameterOverrides,
+    this.profileId,
   });
 
   /// Canonical leader id (e.g. 'victoria', 'napoleon').
@@ -27,4 +29,14 @@ class AIConfig {
   /// Difficulty-derived modifiers (e.g. starting resources, ruleset modifiers).
   /// Keys are modifier names; values are numeric or per-ruleset.
   final Map<String, num> difficultyModifiers;
+
+  /// Active `AiProfile` parameter overrides (registry-keyed `name -> num`), or
+  /// `null` when no profile is active. When `null`, AI behavior is identical to
+  /// the no-profile path. Applied per the override-resolution rule in
+  /// `SPEC/ai/ai-profile-overrides.md` (Refs #3437).
+  final Map<String, num>? parameterOverrides;
+
+  /// Active profile id (`profile_id`) for trace provenance, or `null` when no
+  /// profile is active. SPEC/ai/ai-profile-overrides.md (Refs #3437).
+  final String? profileId;
 }
