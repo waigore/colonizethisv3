@@ -19,14 +19,14 @@ class GaEngine {
     required this.config,
     required this.runDir,
     required this.observerRunner,
-    this.stopRequested = false,
-  });
+    bool Function()? shouldStop,
+  }) : shouldStop = shouldStop ?? (() => false);
 
   final String repoRoot;
   final GaConfig config;
   final String runDir;
   final ObserverRunner observerRunner;
-  bool stopRequested;
+  final bool Function() shouldStop;
 
   Future<int> runFresh({required String runId}) async {
     final seeds = loadSeedProfilesFromDir(config.seedProfilesDir);
@@ -81,17 +81,22 @@ class GaEngine {
     var convergence = state.convergence;
 
     for (var gen = startGeneration; gen < config.maxGenerations; gen++) {
-      if (stopRequested) {
+      if (shouldStop()) {
         _log.i('ga:interrupted generation=$gen');
         return 130;
       }
 
       _log.i('ga:generation_start index=$gen');
-      final fitnessBySlot = await _evaluateGeneration(
+      final evaluation = await _evaluateGeneration(
         generation: gen,
         population: current,
         rng: rng,
       );
+      if (!evaluation.complete) {
+        _log.i('ga:interrupted generation=$gen');
+        return 130;
+      }
+      final fitnessBySlot = evaluation.fitnessBySlot;
 
       for (final member in current) {
         member.fitnessHistory.add(fitnessBySlot[member.slotId] ?? 0.0);
@@ -141,7 +146,7 @@ class GaEngine {
         return 0;
       }
 
-      if (stopRequested) {
+      if (shouldStop()) {
         _log.i('ga:interrupted after_generation=$gen');
         return 130;
       }
@@ -158,7 +163,7 @@ class GaEngine {
     return 0;
   }
 
-  Future<Map<String, double>> _evaluateGeneration({
+  Future<({Map<String, double> fitnessBySlot, bool complete})> _evaluateGeneration({
     required int generation,
     required List<PopulationMember> population,
     required math.Random rng,
@@ -170,7 +175,10 @@ class GaEngine {
     for (var profileIndex = 0; profileIndex < population.length; profileIndex++) {
       final subject = population[profileIndex];
       for (var gameIndex = 0; gameIndex < config.gamesPerProfile; gameIndex++) {
-        if (stopRequested) break;
+        if (shouldStop()) {
+          _log.i('ga:evaluation_interrupted generation=$generation');
+          return (fitnessBySlot: const <String, double>{}, complete: false);
+        }
         final opponentIndex = _pickOpponentIndex(
           subjectIndex: profileIndex,
           populationLength: population.length,
@@ -218,10 +226,13 @@ class GaEngine {
       }
     }
 
-    return {
-      for (final entry in fitnessTotals.entries)
-        entry.key: _aggregateFitness(entry.value, entry.key, generation),
-    };
+    return (
+      fitnessBySlot: {
+        for (final entry in fitnessTotals.entries)
+          entry.key: _aggregateFitness(entry.value, entry.key, generation),
+      },
+      complete: true,
+    );
   }
 
   double? _scoreGame({

@@ -45,9 +45,13 @@ Map<String, dynamic> _minimalSnapshot() => <String, dynamic>{
 };
 
 class _FakeObserverRunner implements ObserverRunner {
-  const _FakeObserverRunner({this.exitCode = 0});
+  const _FakeObserverRunner({
+    this.exitCode = 0,
+    this.onGameComplete,
+  });
 
   final int exitCode;
+  final void Function()? onGameComplete;
 
   @override
   Future<ObserverRunResult> run({
@@ -58,6 +62,7 @@ class _FakeObserverRunner implements ObserverRunner {
     required int maxTurns,
     required int seed,
   }) async {
+    onGameComplete?.call();
     if (exitCode != 0) {
       return ObserverRunResult(exitCode: exitCode);
     }
@@ -211,10 +216,53 @@ void main() {
           config: config,
           runDir: runDir.path,
           observerRunner: const _FakeObserverRunner(),
-          stopRequested: true,
+          shouldStop: () => true,
         );
         expect(await engine.runFresh(runId: 'ga-run-sigint'), 130);
         expect(File('${runDir.path}/run-state.json').existsSync(), isFalse);
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
+    test('returns 130 mid-generation and keeps last completed generation', () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_sigint_mid_');
+      var gamesCompleted = 0;
+      const stopAfterGames = 3;
+      try {
+        final config = GaConfig(
+          populationSize: 2,
+          gamesPerProfile: 1,
+          maxGenerations: 2,
+          gamePlayerCount: 2,
+          maxTurns: 3,
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: GameSetupConfig(
+            selectedGreatPowerIds: const ['england', 'france'],
+            minorNationCount: 0,
+            tribeCount: 2,
+            numProvincesOldWorld: 20,
+            numProvincesNewWorld: 8,
+            seed: 99,
+          ),
+          outputDir: runDir.parent.path,
+          seed: 11,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: _FakeObserverRunner(
+            onGameComplete: () => gamesCompleted++,
+          ),
+          shouldStop: () => gamesCompleted >= stopAfterGames,
+        );
+        expect(await engine.runFresh(runId: 'ga-run-sigint-mid'), 130);
+        final state = loadRunState(runDir.path);
+        expect(state.currentGeneration, 0);
+        expect(state.convergence.bestFitnessPerGeneration.length, 1);
       } finally {
         await Directory(seedsDir).delete(recursive: true);
         await runDir.delete(recursive: true);

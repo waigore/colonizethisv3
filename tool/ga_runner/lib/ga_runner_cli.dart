@@ -137,11 +137,10 @@ Future<int> _startFresh({
     config: config,
     runDir: runDir,
     observerRunner: runner,
-    stopRequested: isStopRequested(),
+    shouldStop: isStopRequested,
   );
   _log.i('ga:run_start id=$runId dir=$runDir');
   try {
-    engine.stopRequested = isStopRequested();
     return await engine.runFresh(runId: runId);
   } on FormatException catch (e) {
     emitStderr('Error: $e');
@@ -174,10 +173,9 @@ Future<int> _resume({
     config: state.config,
     runDir: resumeDir,
     observerRunner: runner,
-    stopRequested: isStopRequested(),
+    shouldStop: isStopRequested,
   );
   try {
-    engine.stopRequested = isStopRequested();
     return await engine.resume(state);
   } on FormatException catch (e) {
     emitStderr('Error: $e');
