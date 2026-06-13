@@ -65,9 +65,9 @@ class AiProfile {
     }
 
     final rawParams = json['parameters'];
-    final inputParams = rawParams is Map
+    final inputParams = rawParams is Map<Object?, Object?>
         ? rawParams
-        : const <String, dynamic>{};
+        : const <Object?, Object?>{};
 
     final resolved = <String, num>{};
     for (final param in AiParameterRegistry.allParams) {
