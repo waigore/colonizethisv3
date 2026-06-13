@@ -56,5 +56,105 @@ void main() {
         await dir.delete(recursive: true);
       }
     });
+
+    test('throws FormatException when a seed file is malformed', () async {
+      final dir = await Directory.systemTemp.createTemp('ga_seeds_');
+      try {
+        await File(p.join(dir.path, 'bad.json')).writeAsString('{ not json');
+        expect(
+          () => loadSeedProfilesFromDir(dir.path),
+          throwsA(isA<FormatException>()),
+        );
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    });
+
+    test('throws FormatException when a seed file is a JSON array', () async {
+      final dir = await Directory.systemTemp.createTemp('ga_seeds_');
+      try {
+        await File(p.join(dir.path, 'arr.json')).writeAsString('[1, 2, 3]');
+        expect(
+          () => loadSeedProfilesFromDir(dir.path),
+          throwsA(isA<FormatException>()),
+        );
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    });
+  });
+
+  group('evolvePopulation (Refs #3439)', () {
+    test('keeps the top two elites unchanged and grows their survival count', () {
+      final current = buildInitialPopulation(
+        seeds: seedAiProfiles.take(5).toList(),
+        populationSize: 5,
+        rng: math.Random(7),
+      );
+      final fitness = <double>[0.1, 0.9, 0.5, 0.2, 0.7];
+
+      final next = evolvePopulation(
+        current: current,
+        generationFitness: fitness,
+        rng: math.Random(7),
+      );
+
+      expect(next.length, current.length);
+      // Sorted fitness desc => indices 1 (0.9) then 4 (0.7) are elites.
+      expect(next[0].slotId, current[1].slotId);
+      expect(next[0].profile, same(current[1].profile));
+      expect(next[0].generationsSurvived, current[1].generationsSurvived + 1);
+      expect(next[1].slotId, current[4].slotId);
+      expect(next[1].profile, same(current[4].profile));
+    });
+
+    test('fills non-elite slots with deterministic children for a fixed seed', () {
+      final current = buildInitialPopulation(
+        seeds: seedAiProfiles.take(5).toList(),
+        populationSize: 5,
+        rng: math.Random(11),
+      );
+      final fitness = <double>[0.3, 0.8, 0.4, 0.9, 0.1];
+
+      final a = evolvePopulation(
+        current: current,
+        generationFitness: fitness,
+        rng: math.Random(99),
+      );
+      final b = evolvePopulation(
+        current: current,
+        generationFitness: fitness,
+        rng: math.Random(99),
+      );
+
+      expect(a.length, 5);
+      // Non-elite children get fresh sequential slot ids.
+      expect(a[2].slotId, 'profile-002');
+      expect(a[4].slotId, 'profile-004');
+      // Same seed => identical child parameters (determinism).
+      for (var i = 0; i < a.length; i++) {
+        expect(a[i].slotId, b[i].slotId);
+        expect(a[i].profile.parameters, b[i].profile.parameters);
+      }
+    });
+
+    test('handles a single-member population without crossover deadlock', () {
+      final current = buildInitialPopulation(
+        seeds: seedAiProfiles.take(1).toList(),
+        populationSize: 1,
+        rng: math.Random(3),
+      );
+
+      final next = evolvePopulation(
+        current: current,
+        generationFitness: <double>[0.5],
+        rng: math.Random(3),
+      );
+
+      expect(next.length, 1);
+      // Only slot is the sole elite, preserved unchanged.
+      expect(next[0].slotId, current[0].slotId);
+      expect(next[0].profile, same(current[0].profile));
+    });
   });
 }
