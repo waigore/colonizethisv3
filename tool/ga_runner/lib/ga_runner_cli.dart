@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 
+import 'bless/bless_command.dart';
+import 'bless/compare_command.dart';
+import 'bless/list_command.dart';
 import 'config/ga_config.dart';
 import 'engine/ga_engine.dart';
 import 'observer/observer_runner.dart';
@@ -20,6 +23,9 @@ String _usage(ArgParser parser) {
     ..writeln('Usage:')
     ..writeln('  melos run ga_runner -- --config <path>')
     ..writeln('  melos run ga_runner -- --resume <dir>')
+    ..writeln('  melos run ga_runner -- bless --run <dir> --name <name>')
+    ..writeln('  melos run ga_runner -- compare --baseline <dir> --candidate <dir>')
+    ..writeln('  melos run ga_runner -- list --run <dir>')
     ..writeln('')
     ..writeln('Genetic-algorithm tuning of AI profiles (SPEC/program/ga-runner.md).')
     ..writeln('')
@@ -52,6 +58,36 @@ Future<int> runGaRunnerCli(
   required void Function(String line) emitStderr,
   ObserverRunner? observerRunner,
 }) async {
+  if (arguments.isNotEmpty) {
+    final sub = arguments.first;
+    if (sub == 'bless' || sub == 'compare' || sub == 'list') {
+      final repoRoot = findRepoRoot();
+      final rest = arguments.sublist(1);
+      switch (sub) {
+        case 'bless':
+          return runBlessCommand(
+            arguments: rest,
+            repoRoot: repoRoot,
+            emitStdout: emitStdout,
+            emitStderr: emitStderr,
+          );
+        case 'compare':
+          return runCompareCommand(
+            arguments: rest,
+            repoRoot: repoRoot,
+            emitStdout: emitStdout,
+            emitStderr: emitStderr,
+          );
+        case 'list':
+          return runListCommand(
+            arguments: rest,
+            emitStdout: emitStdout,
+            emitStderr: emitStderr,
+          );
+      }
+    }
+  }
+
   final parser = ArgParser(usageLineLength: 100)
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Print usage and exit.')
     ..addOption('config', help: 'Path to ga-config.json for a new run.')

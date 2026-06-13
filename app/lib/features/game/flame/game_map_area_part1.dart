@@ -540,6 +540,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
     );
     try {
+      final aiCatalog =
+          ref.read(blessedAiProfileCatalogProvider).value ?? const {};
+      final aiProfiles = resolveAiProfilesForGame(game, aiCatalog);
       final session = runner.startResolution(
         game: game,
         orders: orders,
@@ -547,6 +550,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         tileMapByRegion: mapData.tileMapByRegion,
         turnTraceEnabled: service.isTurnTraceEnabled,
         turnTraceRootDirectory: service.turnTraceRootDirectory,
+        aiProfiles: aiProfiles,
       );
       final activeSessionId = session.sessionId;
       _gameMapNextTurnUiLog.i(

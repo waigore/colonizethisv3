@@ -182,6 +182,14 @@ abstract class AppLocalizations {
   /// Hint text for the leader dropdown in the leader selection dialog.
   String get shell_leaderDialog_selectLeaderHint;
 
+  /// Label / hint for the per-AI-slot tuned AI profile dropdown in the
+  /// new-game leader selection dialog.
+  String get shell_leaderDialog_aiProfileLabel;
+
+  /// Dropdown option label for the default (hardcoded personality) AI in the
+  /// per-AI-slot tuned AI profile dropdown.
+  String get shell_leaderDialog_aiProfileNormal;
+
   /// Generic Cancel button label.
   String get common_cancel;
 

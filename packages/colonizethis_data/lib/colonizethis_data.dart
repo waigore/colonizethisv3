@@ -43,6 +43,7 @@ export 'src/ai_personality_overrides.dart';
 export 'src/ai_victory_config.dart';
 export 'src/ai_parameter_registry.dart';
 export 'src/ai_profile.dart';
+export 'src/ai_profile_batch_loader.dart';
 export 'src/seed_ai_profiles.dart';
 export 'src/hidden_agenda_config.dart';
 export 'src/dialogue_catalog.dart';

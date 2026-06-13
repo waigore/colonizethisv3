@@ -27,3 +27,10 @@ const String kDialogueTribeFirstContactAsset =
 
 /// Map terrain config asset loaded at app startup.
 const String kMapTerrainTilesetsAsset = 'assets/data/map_terrain_tilesets.json';
+
+/// Root-relative prefix for blessed GA AI profile JSON assets.
+const String kBlessedAiProfilesAssetPrefix = 'assets/profiles/';
+
+/// Blessed AI profile manifest asset loaded at app startup.
+const String kBlessedAiProfilesManifestAsset =
+    '${kBlessedAiProfilesAssetPrefix}manifest.json';

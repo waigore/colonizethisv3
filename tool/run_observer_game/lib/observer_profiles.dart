@@ -41,21 +41,21 @@ Map<String, AiProfile> loadObserverProfiles({
   }
 
   final idSet = playerIds.toSet();
-  final loaded = <String, AiProfile>{};
+  final documents = <String, String>{};
   for (final id in idSet) {
     final file = File('${directory.path}/$id.json');
     if (!file.existsSync()) continue;
-    try {
-      final decoded = jsonDecode(file.readAsStringSync());
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('profile JSON must be a JSON object');
-      }
-      loaded[id] = AiProfile.fromJson(decoded);
-    } on Object catch (e) {
-      throw ObserverProfileLoadException(
-        'failed to load profile for "$id" (${file.path}): $e',
-      );
-    }
+    documents[id] = file.readAsStringSync();
+  }
+
+  Map<String, AiProfile> loaded;
+  try {
+    loaded = loadAiProfilesFromJsonDocuments(documents);
+  } on AiProfileBatchLoadException catch (e) {
+    final first = e.errors.entries.first;
+    throw ObserverProfileLoadException(
+      'failed to load profile for "${first.key}": ${first.value}',
+    );
   }
 
   for (final entity in directory.listSync().whereType<File>()) {

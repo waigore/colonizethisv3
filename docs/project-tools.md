@@ -73,6 +73,10 @@ Genetic-algorithm tuning of AI profiles. Ships the **fitness function** (`comput
 ```bash
 melos run ga_runner -- --config <ga-config.json>
 melos run ga_runner -- --resume <run-dir>
+melos run ga_runner -- bless --run <run-dir> --name <profile-name> [--profile <slot-id>] [--force]
+melos run ga_runner -- compare --baseline <run-dir> --candidate <run-dir>
+melos run ga_runner -- compare --baseline-name <name> --candidate <run-dir>
+melos run ga_runner -- list --run <run-dir>
 melos run ga_runner -- --help
 ```
 
@@ -80,9 +84,12 @@ melos run ga_runner -- --help
 
 - `--config <path>` — start a new GA run (`ga-config.json`; see SPEC/program/ga-runner.md)
 - `--resume <dir>` — resume from `run-state.json` under a prior run directory
+- `bless` — copy a completed-run profile into `app/assets/profiles/` and update `manifest.json` (Refs **#3444**)
+- `compare` — side-by-side fitness curves and best-overall parameter diff between runs
+- `list` — list final-generation population members with fitness and survival counts
 - `--help` / `-h` — usage
 
-Exit codes: **0** success or already-complete resume; **1** config/resume/seed error; **130** interrupted (last completed generation persisted).
+Exit codes: **0** success or already-complete resume; **1** config/resume/seed error; **2** bless duplicate name (without `--force`); **130** interrupted (last completed generation persisted).
 
 ---
 

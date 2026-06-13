@@ -118,3 +118,41 @@ re-running games.
   `best-overall-profile.json` absent, when resume runs, then the system
   re-writes `best-overall-profile.json` from the best-overall generation and
   exits **0** without re-running games.
+
+## Blessing / graduation (Refs #3444)
+
+```
+melos run ga_runner -- bless --run <dir> --name <profile-name> [--profile <slot-id>] [--force]
+melos run ga_runner -- compare --baseline <dir> --candidate <dir>
+melos run ga_runner -- compare --baseline-name <name> --candidate <dir>
+melos run ga_runner -- list --run <dir>
+```
+
+- **`bless`** copies a completed-run profile JSON to
+  `app/assets/profiles/<name>.json` and updates `manifest.json` (schema below).
+  Default source is `best_overall.profile_id`; `--profile` selects a slot id.
+  Duplicate names exit **2** unless `--force` (in-place manifest replace).
+- **`compare`** prints side-by-side `best_fitness_per_generation` curves and a
+  parameter diff of best-overall profiles. `--baseline` and `--baseline-name`
+  are mutually exclusive; `--baseline-name` resolves `source_run_id` from the
+  manifest and locates the run directory as a sibling of `--candidate`.
+- **`list`** prints final-generation population rows: slot id, last fitness,
+  `generations_survived`, display name.
+
+### Blessed profile manifest (`app/assets/profiles/manifest.json`)
+
+```json
+{
+  "profiles": [
+    {
+      "name": "aggressive_v2",
+      "source_run_id": "ga-run-20260601-120000",
+      "source_profile_id": "profile-007",
+      "source_fitness": 156.2,
+      "blessed_at": "2026-06-02T10:00:00Z"
+    }
+  ]
+}
+```
+
+At most one manifest entry per profile name.

@@ -59,6 +59,7 @@ flutter:
     - assets/images/terrain/base_32/
     - assets/images/terrain/tilesets/
     - assets/dialogue/
+    - assets/profiles/
     - google_fonts/
   fonts:
     - family: Cinzel

@@ -29,10 +29,14 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
         initialSelections[gpId] = gp.defaultLeaderVariantId;
       }
     }
+    final container = ProviderScope.containerOf(ctx);
+    final blessedNames =
+        container.read(blessedAiProfileNamesProvider).value ?? const <String>[];
     return NewGameLeaderSelectionDialog(
       baseConfig: baseConfig,
       naming: naming,
       initialLeaderByGpId: initialSelections,
+      blessedProfileNames: blessedNames,
       onCancel: () => Navigator.of(ctx).pop(),
       onConfirmed:
           (
@@ -41,6 +45,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
             seed,
             infiniteMode,
             terrainVariation,
+            aiProfileByGpId,
           ) {
             final navCtx = appNavigatorKey.currentContext;
             if (navCtx == null) {
@@ -64,6 +69,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
               terrainVariation: terrainVariation,
               startingResources: baseConfig.startingResources,
               initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
+              aiProfileByGpId: aiProfileByGpId,
             );
             unawaited(
               runNewGameSetupAfterLeaderPick(

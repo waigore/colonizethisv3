@@ -16,7 +16,9 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';
+import '../../../../providers/blessed_ai_profiles_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
+import '../../../core/services/ai_profile_resolution.dart';
 import '../../../core/services/turn_resolution_blocking_service.dart';
 import '../../../core/services/turn_resolution_runner.dart';
 import '../../../widgets/ct_icon_action.dart';
@@ -149,6 +151,8 @@ Future<void> _runFlameCanvasNextTurn(
 
   StreamSubscription<TurnResolutionProgressEvent>? progressSub;
   try {
+    final aiCatalog = ref.read(blessedAiProfileCatalogProvider).value ?? const {};
+    final aiProfiles = resolveAiProfilesForGame(game, aiCatalog);
     final session = runner.startResolution(
       game: game,
       orders: orders,
@@ -156,6 +160,7 @@ Future<void> _runFlameCanvasNextTurn(
       tileMapByRegion: mapData.tileMapByRegion,
       turnTraceEnabled: service.isTurnTraceEnabled,
       turnTraceRootDirectory: service.turnTraceRootDirectory,
+      aiProfiles: aiProfiles,
     );
     final activeSessionId = session.sessionId;
     _gameScreenLog.i(

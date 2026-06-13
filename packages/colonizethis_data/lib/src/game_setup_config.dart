@@ -26,6 +26,7 @@ class GameSetupConfig {
     this.preferredInitialMapZoomMultiplier,
     Set<int>? humanGreatPowerSlotIndices,
     Set<String>? initTownRoadWiringRegionIds,
+    this.aiProfileByGpId = const {},
   }) : humanGreatPowerSlotIndices =
            humanGreatPowerSlotIndices ?? const {0},
        initTownRoadWiringRegionIds =
@@ -107,6 +108,10 @@ class GameSetupConfig {
   /// `human_slot_index_out_of_range`. SPEC/program/game-setup-pipeline.md
   /// § Human/AI slot assignment.
   final Set<int> humanGreatPowerSlotIndices;
+
+  /// gpId → blessed profile name for AI slots; absent or null = normal AI.
+  /// Chosen at new-game setup only. Refs #3444.
+  final Map<String, String?> aiProfileByGpId;
 
   /// Default config for Phase 2.
   static final GameSetupConfig defaultConfig = GameSetupConfig();
