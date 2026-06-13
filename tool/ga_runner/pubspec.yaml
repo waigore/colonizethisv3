@@ -1,0 +1,21 @@
+name: ga_runner
+description: >
+  Genetic-algorithm tuning of AI profiles. This slice ships the fitness
+  function that scores AI profile performance from run_observer_game output.
+  SPEC/program/ga-fitness.md. GitHub #3438 (#3439 adds the GA orchestration CLI).
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  colonizethis_logger:
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../../packages/colonizethis_exception_lint
+  colonizethis_test:
+  custom_lint: 0.8.1
+  test: 1.30.0
