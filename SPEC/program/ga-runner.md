@@ -1,0 +1,105 @@
+# GA Runner Tool
+
+## Purpose
+
+Orchestrate genetic-algorithm optimization of `AiProfile` parameters (#3436) by
+running `run_observer_game` sessions with `--profiles`, scoring outcomes via
+`computeFitness` (#3438), and applying selection/crossover/mutation. Refs #3439.
+
+## CLI
+
+```
+melos run ga_runner -- --config <path>     Start a new GA run
+melos run ga_runner -- --resume <dir>      Resume from saved state
+melos run ga_runner -- --help              Usage
+```
+
+Exit codes: **0** success or already-complete resume; **1** config/resume/seed
+error; **130** SIGINT (last completed generation persisted).
+
+## Configuration (`ga-config.json`)
+
+| Field | Default | Meaning |
+|---|---|---|
+| `population_size` | 20 | Profiles per generation |
+| `games_per_profile` | 5 | Observer games (`k`) scored per profile per generation |
+| `max_generations` | 100 | Generation count |
+| `game_player_count` | 2 | Must match `selectedGreatPowerIds.length` in setup |
+| `max_turns` | 200 | Observer `--max-turns` |
+| `seed_profiles_dir` | required | Directory of seed `AiProfile` JSON (`*.json`) |
+| `game_setup_config` | required | `GameSetupConfig` JSON (`init_game`-compatible) |
+| `output_dir` | `output/` | Parent directory for run folders |
+| `seed` | required | Master RNG seed for pairing/mutation |
+
+v1 evaluates **2-player** games only (`game_player_count = 2`).
+
+## Observer contract
+
+The runner invokes (from repo root):
+
+```
+melos run run_observer_game -- \
+  --config <round>/setup.json \
+  --profiles <round>/profiles/ \
+  --max-turns <max_turns> \
+  --seed <per-game-seed> \
+  --output <round>/
+```
+
+Final snapshot: highest `turn-NNNNNN.snapshot.json` under
+`<round>/observer-traces/<gameId>/`. `run-summary.json` in the same directory.
+Capital provinces for fitness are resolved once per game via `runInitGame` with
+the same setup/seed and written to `<round>/capitals.json`.
+
+## Genetic operators
+
+- **Initialization:** load all `*.json` seeds from `seed_profiles_dir`; the first
+  seven (sorted by basename) seed the population; remaining slots are mutated
+  clones of random seeds.
+- **Selection:** sort by fitness descending; elite top 2 unchanged; fill remaining
+  slots with tournament(size 3) parents + uniform crossover + 5% per-parameter
+  Gaussian mutation (`σ = 0.05 × (max − min)`, clamped to registry bounds;
+  integers rounded).
+- **Generation fitness:** mean of successfully scored game fitness totals for the
+  profile; failed games discarded; all-failed → `0.0`; non-finite treated as
+  failure.
+
+## Persistence
+
+Atomic writes at **completed-generation** boundaries only (`run-state.json` temp +
+rename). SIGINT abandons the in-progress generation; resume continues at
+`current_generation + 1`. Schema version **1**; unknown version exits **1**.
+
+Directory layout under `<output_dir>/<run-id>/`:
+
+```
+run-state.json
+profiles/profile-NNN.json
+gen-NNN/fitness.json
+gen-NNN/best-profile.json
+history.json
+```
+
+## Acceptance criteria
+
+- Given a valid `ga-config.json`, when the operator runs `ga_runner --config`,
+  then the system creates a run directory, seeds the population from
+  `seed_profiles_dir`, and completes generation 0 scheduling.
+- Given a completed generation, when state is persisted, then `run-state.json`
+  records `current_generation` and the full population metadata and
+  `profiles/profile-NNN.json` round-trip through resume.
+- Given tournament selection with a fixed RNG seed, when parents are chosen twice
+  with identical inputs, then the same parents are selected (deterministic).
+- Given uniform crossover with fixed RNG, when two parents are crossed, then each
+  child parameter is within registry bounds and equals one parent's value.
+- Given mutation with fixed RNG, when a parameter is marked for mutation, then the
+  new value is clamped to `[minValue, maxValue]` and integer params are integral.
+- Given a failed observer game for one profile round, when generation fitness is
+  computed, then that game is omitted from the average and the run continues.
+- Given all `k` games fail for a profile, when generation fitness is computed,
+  then the profile receives fitness `0.0` for that generation.
+- Given SIGINT during a generation, when the handler runs, then the last
+  completed generation remains on disk and the process exits **130**.
+- Given `ga_runner --resume` on a completed run (`current_generation ==
+  max_generations`), then the system logs completion and exits **0** without
+  re-running games.

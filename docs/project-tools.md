@@ -64,11 +64,25 @@ Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implem
 
 ---
 
-## ga_runner (fitness library)
+## ga_runner
 
-Genetic-algorithm tuning of AI profiles. This package currently ships the **fitness function** (`package:ga_runner/ga_runner.dart`, `computeFitness`) that scores AI profile performance from a single `run_observer_game` final snapshot and `run-summary.json`, returning a per-player `FitnessScore` (`economic` / `military` / `diplomatic` / `total`). It is a pure, deterministic computation — it does not run games or aggregate across the GA's `k` games. Spec: [SPEC/program/ga-fitness.md](../SPEC/program/ga-fitness.md). Tracked by [GitHub #3438](https://github.com/waigore/colonizethisv3/issues/3438).
+Genetic-algorithm tuning of AI profiles. Ships the **fitness function** (`computeFitness`) and the **GA orchestration CLI** that runs observer games with `--profiles`, scores outcomes, and evolves a population across generations with resumable state. Specs: [SPEC/program/ga-fitness.md](../SPEC/program/ga-fitness.md), [SPEC/program/ga-runner.md](../SPEC/program/ga-runner.md). Tracked by [GitHub #3438](https://github.com/waigore/colonizethisv3/issues/3438), [GitHub #3439](https://github.com/waigore/colonizethisv3/issues/3439).
 
-The GA orchestration CLI (`ga_runner --config` / `--resume`) is added by [GitHub #3439](https://github.com/waigore/colonizethisv3/issues/3439); until then this package exposes the fitness library only (no executable / Melos script).
+**Invocation**
+
+```bash
+melos run ga_runner -- --config <ga-config.json>
+melos run ga_runner -- --resume <run-dir>
+melos run ga_runner -- --help
+```
+
+**Options**
+
+- `--config <path>` — start a new GA run (`ga-config.json`; see SPEC/program/ga-runner.md)
+- `--resume <dir>` — resume from `run-state.json` under a prior run directory
+- `--help` / `-h` — usage
+
+Exit codes: **0** success or already-complete resume; **1** config/resume/seed error; **130** interrupted (last completed generation persisted).
 
 ---
 
