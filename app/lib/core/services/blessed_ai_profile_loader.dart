@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/services.dart';
 
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/package_logger.dart';
 
 final _log = packageLogger('data');
@@ -11,11 +12,11 @@ final _log = packageLogger('data');
 class BlessedAiProfileLoader {
   const BlessedAiProfileLoader._();
 
-  static const String _manifestAsset = 'assets/profiles/manifest.json';
-
   /// Profile names listed in [manifest] (sorted).
   static Future<List<String>> loadBlessedProfileNames() async {
-    final manifestRaw = await rootBundle.loadString(_manifestAsset);
+    final manifestRaw = await rootBundle.loadString(
+      kBlessedAiProfilesManifestAsset,
+    );
     final manifestDecoded = jsonDecode(manifestRaw);
     if (manifestDecoded is! Map<String, dynamic>) {
       return const [];
@@ -45,7 +46,7 @@ class BlessedAiProfileLoader {
     }
     final documents = <String, String>{};
     for (final name in names) {
-      final assetPath = 'assets/profiles/$name.json';
+      final assetPath = blessedAiProfileAssetPath(name);
       try {
         documents[name] = await rootBundle.loadString(assetPath);
       } on Object catch (e) {
