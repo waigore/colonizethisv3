@@ -39,6 +39,7 @@ import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_map_clones.dart';
+import 'check_setup_dedup_gp_ow_tile_scans.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
 import 'check_logic_work_target_switch.dart';
@@ -846,6 +847,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckOrdersDedupMapClones(repoRoot);
     case 'repo.setup_dedup_init_pipeline_retry':
       return runCheckSetupDedupInitPipelineRetry(repoRoot);
+    case 'repo.setup_dedup_gp_ow_tile_scans':
+      return runCheckSetupDedupGpOwTileScans(repoRoot);
     case 'repo.logic_dual_region_province_field_access':
       return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
     case 'repo.logic_all_provinces_sanctioned_calls':
