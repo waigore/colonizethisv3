@@ -71,6 +71,50 @@ void main() {
     });
   });
 
+  group('classifyCombatStrengthRatioBand (shared #3448 thresholds)', () {
+    test('classifies at and above the strong-striker threshold', () {
+      expect(
+        classifyCombatStrengthRatioBand(kStrongStrikerStrengthRatioThreshold),
+        CombatStrengthRatioBand.strongStriker,
+      );
+      expect(
+        classifyCombatStrengthRatioBand(3.0),
+        CombatStrengthRatioBand.strongStriker,
+      );
+    });
+
+    test('classifies at and below the strong-target threshold', () {
+      expect(
+        classifyCombatStrengthRatioBand(kStrongTargetStrengthRatioThreshold),
+        CombatStrengthRatioBand.strongTarget,
+      );
+      expect(
+        classifyCombatStrengthRatioBand(0.1),
+        CombatStrengthRatioBand.strongTarget,
+      );
+    });
+
+    test('classifies the open interval between thresholds as even', () {
+      expect(
+        classifyCombatStrengthRatioBand(1.0),
+        CombatStrengthRatioBand.even,
+      );
+      expect(
+        classifyCombatStrengthRatioBand(1.49),
+        CombatStrengthRatioBand.even,
+      );
+      expect(
+        classifyCombatStrengthRatioBand(0.68),
+        CombatStrengthRatioBand.even,
+      );
+    });
+
+    test('exposes the canonical breakpoint values', () {
+      expect(kStrongStrikerStrengthRatioThreshold, 1.5);
+      expect(kStrongTargetStrengthRatioThreshold, 0.67);
+    });
+  });
+
   group('combatCasualtyCount', () {
     test('rounds fractional losses up and clamps to available units', () {
       expect(combatCasualtyCount(unitCount: 3, lossFraction: 0.15), 1);

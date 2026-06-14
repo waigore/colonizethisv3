@@ -392,6 +392,27 @@ rules:
     runner: dart
     script: tool/check_combat_no_private_aggregate_strength.dart
 
+  - rule_id: repo.combat_rng_factories
+    group: architecture
+    title: combat RNG must be constructed via combat_rng.dart factories (Refs #3448)
+    spec: SPEC/program/combat-resolution.md
+    runner: dart
+    script: tool/check_combat_rng_factories.dart
+
+  - rule_id: repo.combat_no_raw_copies_in_resolution
+    group: architecture
+    title: naval ship-list clones must use copyNavalShips() helper (Refs #3448)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_no_raw_copies_in_resolution.dart
+
+  - rule_id: repo.combat_dedup_precombat_indexes
+    group: architecture
+    title: pre-combat movement scan must stay deduplicated via PreCombatMovementIndex (Refs #3448)
+    spec: SPEC/program/combat-resolution.md
+    runner: dart
+    script: tool/check_combat_dedup_precombat_indexes.dart
+
   - rule_id: repo.economy_no_logic_deps
     group: architecture
     title: colonizethis_economy must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
