@@ -549,6 +549,13 @@ rules:
     runner: dart
     script: tool/check_map_grid_ops_central.dart
 
+  - rule_id: repo.map_gen_stage_protocol
+    group: structure
+    title: colonizethis_map generation services must implement MapGenStage (Refs #3459)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_gen_stage_protocol.dart
+
   - rule_id: repo.land_province_bucket_keys
     group: game_invariants
     title: Canonical full-id land province bucket lookups in guarded paths

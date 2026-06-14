@@ -2,9 +2,10 @@
 
 part of 'tile_map_generator.dart';
 
-class _TileMapGenTerrainResource {
+class _TileMapGenTerrainResource implements MapGenStage {
   _TileMapGenTerrainResource(this.params, this._graph);
 
+  @override
   final TileMapParams params;
   final TileMapGridGraph _graph;
 

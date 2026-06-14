@@ -13,6 +13,7 @@ library tile_map_generator_land_seeds;
 import 'dart:math';
 
 import 'grid_voronoi.dart';
+import 'map_gen_stage.dart';
 import 'tile_map_directions.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
@@ -28,9 +29,10 @@ part 'tile_map_generator_land_seeds_organic_part.dart';
 part 'tile_map_generator_land_seeds_coast_part.dart';
 
 /// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
-class TileMapGenLandSeeds {
+class TileMapGenLandSeeds implements MapGenStage {
   TileMapGenLandSeeds(this.params);
 
+  @override
   final TileMapLandSeedParams params;
 
   /// One continent seed per continent; then a cluster of land-shape seeds per continent (K from province count). No province seeds yet.

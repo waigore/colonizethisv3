@@ -3,9 +3,10 @@
 
 part of 'tile_map_generator.dart';
 
-class _TileMapGenLakesProvinces {
+class _TileMapGenLakesProvinces implements MapGenStage {
   _TileMapGenLakesProvinces(this.params, this._graph, this._join);
 
+  @override
   final TileMapParams params;
   final TileMapGridGraph _graph;
   final _TileMapGenJoinSea _join;
@@ -70,7 +71,7 @@ class _TileMapGenLakesProvinces {
       landSeeds,
       continentBySeedIndex,
     );
-    final next = TileMapGrid.copy(grid);
+    final next = snapshotGrid(grid);
     final lakeCells = <(int x, int y)>[];
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
@@ -142,7 +143,7 @@ class _TileMapGenLakesProvinces {
     );
     if (ocean.isEmpty) return grid;
 
-    final next = TileMapGrid.copy(grid);
+    final next = snapshotGrid(grid);
     final moatCells = <(int x, int y)>[];
 
     for (var y = 0; y < params.height; y++) {
@@ -301,7 +302,7 @@ class _TileMapGenLakesProvinces {
       noiseScale: 0,
       noiseSeed: params.seed,
     );
-    final next = TileMapGrid.copy(grid);
+    final next = snapshotGrid(grid);
     for (final entry in assignment.entries) {
       final (x, y) = entry.key;
       next[y][x] = entry.value;
@@ -315,7 +316,7 @@ class _TileMapGenLakesProvinces {
     String seaZoneId,
     Random rnd,
   ) {
-    final next = TileMapGrid.copy(grid);
+    final next = snapshotGrid(grid);
     for (var y = 1; y < params.height - 1; y++) {
       for (var x = 1; x < params.width - 1; x++) {
         _tryBorderNoiseSwapAtCell(grid, next, x, y, seaZoneId, rnd);
