@@ -108,7 +108,7 @@ void main() {
       );
       // Sanity: no generalCap persisted in JSON for a legacy player.
       expect(
-        (game.toJson()['players'] as List).first,
+        (game.toJson()['players'] as List<Object?>).first,
         isNot(contains('generalCap')),
       );
       adapter.save(box, game);
