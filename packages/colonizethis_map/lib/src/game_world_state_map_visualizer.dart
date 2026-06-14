@@ -7,43 +7,15 @@ import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'tile_map_capital_markers.dart';
+import 'region_map_view_inputs.dart';
 import 'tile_map_grid.dart';
 import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
 import 'init_game_map_view_data.dart';
-import 'province_ownership_view.dart';
 import 'region_constants.dart';
-import 'region_data_access.dart';
 import 'tile_key_util.dart';
-
-typedef _RegionRenderInputs = ({
-  Map<String, String> ownerByProvinceId,
-  List<TileMapCapitalMarker> capitalTiles,
-  Map<String, (int r, int g, int b)> factionColors,
-});
-
-_RegionRenderInputs _buildRegionRenderInputs({
-  required Game game,
-  required String regionId,
-}) {
-  final ownerByProvinceId = provinceOwnerByIdFromProvinces(
-    regionDataForMapRegionId(game.worldState, regionId).provinces,
-  );
-  final capitals = collectCapitalMarkersForRegion(
-    game: game,
-    regionId: regionId,
-    scope: capitalMarkerScopeForRegion(regionId),
-  );
-  final factionColors = factionOwnershipColorMapForRegion(game, regionId);
-  return (
-    ownerByProvinceId: ownerByProvinceId,
-    capitalTiles: capitals,
-    factionColors: factionColors,
-  );
-}
 
 void _appendPortTileToRegionLists(
   String tileKey,
@@ -228,11 +200,11 @@ Uint8List renderInitGameMapToPng({
   required Map<String, MapTopology> topologyByRegion,
   int cellSize = 24,
 }) {
-  final owInputs = _buildRegionRenderInputs(
+  final owInputs = regionMapRenderInputs(
     game: game,
     regionId: kRegionOldWorld,
   );
-  final nwInputs = _buildRegionRenderInputs(
+  final nwInputs = regionMapRenderInputs(
     game: game,
     regionId: kRegionNewWorld,
   );
