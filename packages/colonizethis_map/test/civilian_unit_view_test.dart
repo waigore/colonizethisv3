@@ -1,10 +1,11 @@
 import 'package:colonizethis_map/src/civilian_unit_view.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('normalizeCivilianUnitTypeForPriority', () {
     test('lowercases and strips separators', () {
-      expect(normalizeCivilianUnitTypeForPriority('Builder'), 'builder');
+      expect(normalizeCivilianUnitTypeForPriority(kUnitTypeBuilder), 'builder');
       expect(normalizeCivilianUnitTypeForPriority('rail_builder'), 'railbuilder');
       expect(normalizeCivilianUnitTypeForPriority('Rail-Builder'), 'railbuilder');
     });
@@ -13,22 +14,22 @@ void main() {
   group('civilianUnitIconPriorityForType', () {
     test('orders known civilian roles by priority', () {
       expect(
-        civilianUnitIconPriorityForType('Builder'),
-        lessThan(civilianUnitIconPriorityForType('Engineer')),
+        civilianUnitIconPriorityForType(kUnitTypeBuilder),
+        lessThan(civilianUnitIconPriorityForType(kUnitTypeEngineer)),
       );
       expect(
-        civilianUnitIconPriorityForType('Engineer'),
-        lessThan(civilianUnitIconPriorityForType('Explorer')),
+        civilianUnitIconPriorityForType(kUnitTypeEngineer),
+        lessThan(civilianUnitIconPriorityForType(kUnitTypeExplorer)),
       );
       expect(
-        civilianUnitIconPriorityForType('Spy'),
+        civilianUnitIconPriorityForType(kUnitTypeSpy),
         lessThan(civilianUnitIconPriorityForType('unknown_role')),
       );
     });
 
     test('treats separator variants as equivalent', () {
       expect(
-        civilianUnitIconPriorityForType('Rail Builder'),
+        civilianUnitIconPriorityForType(kUnitTypeRailBuilder),
         civilianUnitIconPriorityForType('RailBuilder'),
       );
     });
@@ -36,8 +37,8 @@ void main() {
 
   group('isCivilianUnitType', () {
     test('returns true for non-military non-naval roles', () {
-      expect(isCivilianUnitType('Builder'), isTrue);
-      expect(isCivilianUnitType('Explorer'), isTrue);
+      expect(isCivilianUnitType(kUnitTypeBuilder), isTrue);
+      expect(isCivilianUnitType(kUnitTypeExplorer), isTrue);
     });
 
     test('returns false for military and naval roles', () {
