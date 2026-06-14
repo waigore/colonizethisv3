@@ -2,16 +2,17 @@ import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+// Mirrors the production `{$var}` interpolation syntax (issue #3463) so the
+// widget test fails if Dart binds Yarn variables without the `$` prefix.
 const _kTestYarn = '''
 title: tribe_first_contact
 ---
-Scouts return from the New World with word of a people hitherto unknown to thy crown. They name themselves Maya, and hold their seat at Chichen.
+Scouts return from the New World with word of a people hitherto unknown to thy crown. They name themselves {\$tribeName}, and hold their seat at {\$capitalName}.
 -> Continue
 ===
 ''';

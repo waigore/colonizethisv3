@@ -61,6 +61,14 @@ class _TribeFirstContactOverlayState extends State<TribeFirstContactOverlay> {
       final bundle = widget.assetBundle ?? rootBundle;
       final text = await bundle.loadString(kDialogueTribeFirstContactAsset);
       final project = YarnProject();
+      // Jenny resolves `{$tribeName}` / `{$capitalName}` interpolation at PARSE
+      // time and stores variables under their `$`-prefixed name, so the bindings
+      // must use the `$` prefix AND be set before `parse` — otherwise parsing
+      // throws `NameError: variable $tribeName is not defined` and blocks the
+      // game (#3463). StringVariable reads storage at runtime, so these values
+      // are reflected when the line renders.
+      project.variables.setVariable(r'$tribeName', widget.tribeName);
+      project.variables.setVariable(r'$capitalName', widget.capitalName);
       project.parse(text);
       if (!project.nodes.containsKey(_kNode)) {
         throw StateError(
@@ -68,8 +76,6 @@ class _TribeFirstContactOverlayState extends State<TribeFirstContactOverlay> {
           '$kDialogueTribeFirstContactAsset',
         );
       }
-      project.variables.setVariable('tribeName', widget.tribeName);
-      project.variables.setVariable('capitalName', widget.capitalName);
 
       final view = CtDialogueView(logger: log);
       final runner = DialogueRunner(
