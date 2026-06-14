@@ -144,17 +144,28 @@ void _addAllocationTexts(
 
   for (final recipe in ProductionRecipesCatalog.all) {
     final desired = desiredOutputByRecipe[recipe.id] ?? 0;
+    final locked = !ProductionRecipesCatalog.isRecipeAvailableForPlayer(
+      recipe,
+      player.techUnlocked,
+    );
     final affordance = computeRecipeAffordance(
       recipe: recipe,
       stockpile: player.stockpile,
       desiredOutputByRecipe: desiredOutputByRecipe,
       effectiveLabour: effectiveLabour,
     );
+    // A locked (tech-gated) recipe forces maxAchievable to 0 and renders the
+    // localized (locked) marker as a separate Text after the recipe label,
+    // mirroring ProductionAllocationRow / _AllocationSubpanel._buildRecipeLabel.
+    final maxAchievable = locked ? 0 : affordance.maxDesiredOutput;
 
     out.add(_recipeLabelText(recipe));
+    if (locked) {
+      out.add(l10n.production_recipeLocked);
+    }
     out.add(
       l10n.production_recipeAffordance(
-        affordance.maxDesiredOutput,
+        maxAchievable,
         affordance.limitingLabel,
       ),
     );

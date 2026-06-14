@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
@@ -487,7 +488,11 @@ class _AllocationSubpanel extends StatelessWidget {
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final AppLocalizations l10n;
 
-  Widget _buildRecipeLabel(ProductionRecipe recipe, ThemeData theme) {
+  Widget _buildRecipeLabel(
+    ProductionRecipe recipe,
+    ThemeData theme,
+    bool locked,
+  ) {
     final outputCommodity = CommodityCatalog.byId[recipe.outputCommodityId];
     final outputName = outputCommodity?.displayName ?? recipe.outputCommodityId;
     final inputParts = recipe.inputQuantities.entries
@@ -516,6 +521,15 @@ class _AllocationSubpanel extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+        if (locked) ...[
+          const SizedBox(width: 4),
+          Text(
+            l10n.production_recipeLocked,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: EditorialMonoclePalette.muted,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -570,6 +584,10 @@ class _AllocationSubpanel extends StatelessWidget {
         );
       }
       final recipe = recipes[i];
+      final locked = !ProductionRecipesCatalog.isRecipeAvailableForPlayer(
+        recipe,
+        player.techUnlocked,
+      );
       widgets.add(
         ProductionAllocationRowChrome(
           key: ValueKey<String>('production_alloc_row_chrome_${recipe.id}'),
@@ -580,9 +598,11 @@ class _AllocationSubpanel extends StatelessWidget {
             effectiveLabour: effectiveLabour,
             desiredOutputByRecipe: desiredOutputByRecipe,
             onDesiredOutputChanged: onDesiredOutputChanged,
-            buildRecipeLabel: (value) => _buildRecipeLabel(value, theme),
+            buildRecipeLabel: (value, isLocked) =>
+                _buildRecipeLabel(value, theme, isLocked),
             l10n: l10n,
             theme: theme,
+            locked: locked,
           ),
         ),
       );

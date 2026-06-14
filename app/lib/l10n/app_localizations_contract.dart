@@ -1392,6 +1392,11 @@ abstract class AppLocalizations {
   /// more required techs are missing for the viewed player.
   String get production_labourTierLocked;
 
+  /// Parenthetical marker shown after an Allocation recipe name when the
+  /// recipe's required technology is not unlocked for the viewed player
+  /// (e.g. fabric_from_cotton before cotton_weaving).
+  String get production_recipeLocked;
+
   /// Concatenation of the tier name and the unlock-state parenthetical for
   /// a Labour Controls row (e.g. "Peasants (unlocked)").
   String production_labourTierLabel(String tier, String state);
