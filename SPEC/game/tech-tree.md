@@ -91,6 +91,10 @@ Techs grant **effects** when researched (no separate "apply" step):
   When the System validates the catalog at startup  
   Then the System ensures that the catalog contains exactly 113 technologies (matching the Imperialism II 08-technology Technology Chart), that every tech id is unique, that every prerequisite id refers to a tech present in the catalog, that the directed graph formed by prerequisite edges is acyclic (a DAG), and that every tech is reachable from the set of techs with no prerequisites; the System rejects the catalog if any of these conditions fail.
 
+- Given the global tech catalog constructed from this doc and its category sub-docs, where each tech is classified by its **effect-or-prerequisite role** as having at least one of: a non-empty regiment unlock set, a non-empty ship unlock set, an entry in the resource extraction-cap map (per [tech-and-extraction-cap.md](tech-and-extraction-cap.md)), a non-empty discovery-resource gate, a documented runtime effect hook recorded in the audit's documented-runtime-effect set, or at least one dependent tech (it appears as a prerequisite of another catalog tech)  
+  When the System audits the catalog  
+  Then the System ensures that **every** catalog tech satisfies at least one of those criteria, and the System rejects the catalog (the audit fails) if any tech has no structural effect, no documented runtime effect, and no dependent — this guards against silently adding a tech with no gameplay effect and no prerequisite role.
+
 - Given a discovery tech with prerequisite "(Explorer finds X)" per [tech-tree-new-world.md](tech-tree-new-world.md)  
   When the System computes researchable techs for a player  
   Then the System includes that tech only if the player has at least one tile that (a) has visibility fully visible or fogged for that player, (b) contains a resource that satisfies X (per the discovery-resource mapping in that doc), and (c) if that resource is prospect-required, the tile has been prospected by that player.
