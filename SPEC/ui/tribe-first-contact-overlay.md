@@ -18,7 +18,7 @@
 
 Same chrome contract as `OVL10001`: `CtFullScreenDialogueShell` + centered `CtDialogShell`, title `tribeFirstContactOverlay_title` (`First Contact`), `CtBrassDivider`, Yarn body. Scrim uses `EditorialMonoclePalette.dialogScrim`.
 
-Yarn node `tribe_first_contact` receives variables `tribeName` (Tribe `displayName`) and `capitalName` (capital province `displayName`, or local id fallback), bound via Jenny's `$`-prefixed names (`setVariable(r'$tribeName', …)`) so the asset's `{$tribeName}` / `{$capitalName}` interpolation resolves without a Jenny `NameError` (#3463). Dismissal invokes `onDismissed` once; host marks herald shown and dequeues. If the Yarn asset fails to load or run, the overlay surfaces a dismissible error whose Continue control restores the playable game screen (never an indefinitely blocking spinner).
+Yarn node `tribe_first_contact` receives variables `tribeName` (Tribe `displayName`) and `capitalName` (capital province `displayName`, or local id fallback), bound via Jenny's `$`-prefixed names (`setVariable(r'$tribeName', …)`) so the asset's `{$tribeName}` / `{$capitalName}` interpolation resolves without a Jenny `NameError` (#3463). Dismissal invokes `onDismissed` once; host marks herald shown and dequeues. If the Yarn asset fails to load or run, the overlay surfaces a dismissible error using its own overlay-specific copy (`tribeFirstContactOverlay_loadError`, "Could not load first-contact dialogue: …") — not the reused intro copy (`game_intro_loadError`) of `OVL10001` — whose Continue control restores the playable game screen (never an indefinitely blocking spinner).
 
 ---
 
@@ -28,3 +28,4 @@ Yarn node `tribe_first_contact` receives variables `tribeName` (Tribe `displayNa
 - **AC-3/AC-5 (relation):** Given contact detection, when sync runs, then `Game.diplomacyRelations` contains the GP–Tribe pair at `AT_PEACE`, score 50, Neutral — logic tests in `gp_tribe_first_contact_test.dart`.
 - **AC-7 (no premature herald):** Given a new game where the GP has zero non-`unknown` New World tiles, when `syncGpTribeFirstContact` runs, then no herald appears and no GP–Tribe relation is persisted solely from sea-reachable colonial intel.
 - **AC-8 (no dialogue deadlock):** Given the Yarn asset fails to load or run, when the player taps Continue, then the game screen becomes playable and the herald does not re-block input.
+- **AC-9 (overlay-specific load-error copy):** Given the Yarn asset fails to load or run, when the error surface renders, then it shows the overlay-specific `tribeFirstContactOverlay_loadError` text ("Could not load first-contact dialogue: …") and never the intro overlay's `game_intro_loadError` ("Could not load intro dialogue: …") copy.
