@@ -21,7 +21,7 @@ Orchestrates game creation from config through map generation, province/capital 
 - **Default `{0}`** reproduces current behavior exactly: slot 0 (`gp1`) human, `gp2…gpN` AI; for a fixed seed init output is byte-for-byte unchanged from before this field existed (the field does not advance RNG).
 - **Empty set `{}`** = fully AI (no human player); used by `run_observer_game` so observer snapshots report every GP `"isHuman": false`.
 - **Validation:** every index must satisfy `0 <= i < greatPowerCount`; an out-of-range or negative index makes `runInitGame` throw `SetupConfigConstraintException` with stable code **`human_slot_index_out_of_range`** and produce **no** game. An empty set is valid (all AI).
-- The player-app new-game flow keeps the default `{0}` (one human, slot 0); see [game-setup.md](../game/game-setup.md) and the UI contract in `SPEC/ui/game-setup.md` (unchanged).
+- The player-app new-game flow keeps the default `{0}` (one human, slot 0); see [game-setup.md](../game/game-setup.md) and the UI contract in [new-game-leader-selection-dialog.md](../ui/new-game-leader-selection-dialog.md).
 
 ## Algorithm / Flow
 

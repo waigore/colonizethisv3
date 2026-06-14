@@ -12,7 +12,7 @@ Major flows only; keep this table small.
 
 | Code | Flow | Sub-flow digits (4th char) |
 |------|------|----------------------------|
-| `SHEL` | App shell, main menu, setup, initializing, pause menu | `1` menu/shell route, `2` game setup, `3` game initializing, `4` pause menu panel |
+| `SHEL` | App shell, main menu, initializing, pause menu | `1` menu/shell route, `3` game initializing, `4` pause menu panel |
 | `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route |
 | `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
 | `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military |
@@ -34,7 +34,6 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 |----|-------|------|----------------|------------|--------|
 | `SHEL10001` | Shell screen | [shell-screen.md](shell-screen.md) | `app/lib/features/shell/shell_screen.dart` | Shell Screen | active |
 | `SHEL10002` | Main menu (CtMainMenu) | [main-menu.md](main-menu.md) | `app/lib/widgets/main_menu.dart` | Main Menu | active |
-| `SHEL20001` | Game setup (CtGameSetup) | [game-setup.md](game-setup.md) | `app/lib/widgets/game_setup.dart` | Game Setup | active |
 | `SHEL30001` | Game initializing | [game-initializing.md](game-initializing.md) | TBD | — | draft |
 | `SHEL40001` | Pause menu panel | [pause-menu-panel.md](pause-menu-panel.md) | `app/lib/features/game/widgets/pause_menu_panel.dart` | Pause Menu Panel | active |
 | `GAME10001` | Game screen | [game-screen.md](game-screen.md) | `app/lib/features/game/flame/game_screen.dart` | Game Screen | active |

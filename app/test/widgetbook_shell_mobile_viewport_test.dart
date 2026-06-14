@@ -2,25 +2,20 @@
 // under `app/lib/widgetbook/catalog.dart`:
 //
 //  * `Main Menu` → `Default (mobile)` and `Pixel art (mobile)`
-//  * `Game Setup` → `Default (mobile)` and `Default (mobile, pixel)`
+//  * `New Game Leader Selection Dialog` → `Default (mobile)`
 //
 // Pins two SPEC contracts per mobile story (Refs #2870 R22 / S9):
 //
 //  1. Each mobile use case is wired into its public directory getter
-//     (`mainMenuDirectories` / `gameSetupDirectories`) so renaming or removing
-//     it surfaces here in CI before reviewers lose the mobile-viewport story.
+//     (`mainMenuDirectories` / `newGameLeaderSelectionDialogDirectories`).
 //  2. The builder pumps without exceptions inside the shared `mobileViewport`
-//     (360 × 640 dp) frame and selects the narrow responsive layout:
-//     `CtMainMenu` resolves the compact `kMainMenuBodyPaddingNarrow` padding
-//     (`≤ 430 dp` per `SPEC/ui/mobile-adaptation.md` § 4 Main Menu), and
-//     `CtGameSetup` mounts without overflow (`< 500 dp` stacked-slot rule).
+//     (360 × 640 dp) frame.
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 6 (Widgetbook verification) and
 // § 4 (narrow breakpoints). Complements the 320 dp minimum-viewport pins in
-// `mobile_320dp_min_viewport_test.dart` by asserting the dedicated mobile
-// Widgetbook stories render at the 360 × 640 dp review frame.
+// `mobile_320dp_min_viewport_test.dart`.
 
-import 'package:colonizethis_app/widgets/game_setup.dart';
+import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -129,46 +124,45 @@ void main() {
   );
 
   group(
-    'Game Setup Widgetbook mobile-viewport stories (Refs #2870 R22 / S9)',
+    'New Game Leader Selection Dialog Widgetbook mobile story (Refs #2870 R22 / S9)',
     () {
-      for (final useCaseName in const <String>[
-        'Default (mobile)',
-        'Default (mobile, pixel)',
-      ]) {
-        testWidgets('"$useCaseName" is wired into gameSetupDirectories', (
-          WidgetTester tester,
-        ) async {
+      const useCaseName = 'Default (mobile)';
+
+      testWidgets(
+        '"$useCaseName" is wired into newGameLeaderSelectionDialogDirectories',
+        (WidgetTester tester) async {
           final useCase = _useCase(
-            gameSetupDirectories,
-            folderName: 'Game Setup',
+            newGameLeaderSelectionDialogDirectories,
+            folderName: 'New Game Leader Selection Dialog',
             useCaseName: useCaseName,
           );
           expect(useCase.builder, isNotNull);
-        });
+        },
+      );
 
-        testWidgets(
-          '"$useCaseName" pumps without exception and mounts CtGameSetup',
-          (WidgetTester tester) async {
-            final useCase = _useCase(
-              gameSetupDirectories,
-              folderName: 'Game Setup',
-              useCaseName: useCaseName,
-            );
+      testWidgets(
+        '"$useCaseName" pumps without exception and mounts '
+        'NewGameLeaderSelectionDialog',
+        (WidgetTester tester) async {
+          final useCase = _useCase(
+            newGameLeaderSelectionDialogDirectories,
+            folderName: 'New Game Leader Selection Dialog',
+            useCaseName: useCaseName,
+          );
 
-            await _pumpMobileViewport(tester, useCase);
+          await _pumpMobileViewport(tester, useCase);
 
-            expect(
-              tester.takeException(),
-              isNull,
-              reason:
-                  'SPEC/ui/mobile-adaptation.md § 6: the Game Setup mobile '
-                  'Widgetbook story must pump inside the 360 × 640 dp frame '
-                  'without overflow (< 500 dp stacked-slot layout).',
-            );
-            expect(find.byType(CtGameSetup), findsOneWidget);
-          },
-        );
-      }
+          expect(
+            tester.takeException(),
+            isNull,
+            reason:
+                'SPEC/ui/mobile-adaptation.md § 6: the leader-selection '
+                'mobile Widgetbook story must pump inside the 360 × 640 dp '
+                'frame without overflow (< 500 dp stacked-slot layout).',
+          );
+          expect(find.byType(NewGameLeaderSelectionDialog), findsOneWidget);
+        },
+      );
     },
   );
 }

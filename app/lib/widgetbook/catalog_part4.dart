@@ -836,6 +836,39 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
         },
       ),
       WidgetbookUseCase(
+        name: 'Default (mobile)',
+        builder: (context) {
+          final base = GameSetupConfig.defaultConfig;
+          final naming = defaultNamingConfig;
+          final initial = <String, String>{};
+          for (final gpId in base.selectedGreatPowerIds) {
+            final gp = naming.gpById(gpId);
+            if (gp != null && gp.leaderVariants.isNotEmpty) {
+              initial[gpId] = gp.defaultLeaderVariantId;
+            }
+          }
+          return mobileViewport(
+            context,
+            MaterialApp(
+              theme: AppThemes.editorialMonocle,
+              localizationsDelegates:
+                  AppLocalizationsBinding.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Center(
+                child: NewGameLeaderSelectionDialog(
+                  baseConfig: base,
+                  naming: naming,
+                  initialLeaderByGpId: initial,
+                  blessedProfileNames: const [],
+                  onCancel: () {},
+                  onConfirmed: (_, _, _, _, _, __) {},
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
         name: 'Duplicate slot regression — England in slots 1 and 6',
         builder: (context) {
           // Two slots carry the same Great Power id ("england"). Demonstrates

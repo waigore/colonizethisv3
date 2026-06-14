@@ -5,7 +5,8 @@ const double kNarrowBreakpoint = 600;
 /// Viewport width threshold in **logical pixels** below which Game Setup uses stacked
 /// slot rows. Intentionally lower than [kNarrowBreakpoint] so setup can stay multi-column
 /// on widths where the in-game shell is already narrow. SPEC/ui/mobile-adaptation.md;
-/// SPEC/ui/game-setup.md.
+/// Narrow-viewport breakpoint for new-game leader selection slot rows.
+/// SPEC/ui/new-game-leader-selection-dialog.md.
 const double kGameSetupNarrowBreakpoint = 500;
 
 /// Minimum supported viewport width in **logical pixels**. Every screen covered

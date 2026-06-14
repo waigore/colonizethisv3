@@ -17,7 +17,6 @@ const String _registryPath = '../SPEC/ui/screen-registry.md';
 const Map<String, String> _expectedConstants = {
   'shellScreen': UiScreenIds.shellScreen,
   'mainMenu': UiScreenIds.mainMenu,
-  'gameSetup': UiScreenIds.gameSetup,
   'gameInitializing': UiScreenIds.gameInitializing,
   'pauseMenuPanel': UiScreenIds.pauseMenuPanel,
   'gameScreen': UiScreenIds.gameScreen,

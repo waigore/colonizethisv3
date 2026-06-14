@@ -59,7 +59,7 @@ Load Game state:
 Navigation (widget exposes callbacks; shell performs routing):
 
 - Given `CtMainMenu` is rendered with non-null `onNewGame`, when the user taps **New Game**, then the widget invokes `onNewGame` and performs no routing inside the widget itself.
-- Given the shell has wired `onNewGame`, when `onNewGame` fires, then the shell emits `OpenDialogEvent(id: 'new_game_leader_selection')` to mount `NewGameLeaderSelectionDialog` per [Game Setup](game-setup.md) § Shell new game dialog, then on confirm navigates to [Game Initializing](game-initializing.md) and on initialisation complete to [Empire overview](empire-overview.md).
+- Given the shell has wired `onNewGame`, when `onNewGame` fires, then the shell emits `OpenDialogEvent(id: 'new_game_leader_selection')` to mount `NewGameLeaderSelectionDialog` per [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md), then on confirm navigates to [Game Initializing](game-initializing.md) and on initialisation complete to [Empire overview](empire-overview.md).
 - Given `CtMainMenu` is rendered with `resumeGameVisible: true` and a non-null `onResumeGame`, when the user taps **Resume game**, then the widget invokes `onResumeGame`.
 - Given the shell has wired `onResumeGame`, when `onResumeGame` fires, then the shell loads the auto-save slot under the same entry conditions as a normal load and then navigates to [Empire overview](empire-overview.md).
 - Given the **Load Game** control is enabled and `CtMainMenu` is rendered with non-null `onLoadGame`, when the user taps **Load Game**, then the widget invokes `onLoadGame`.

@@ -419,10 +419,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/units/shared/units_panel_shell.dart',
   'lib/features/shell/new_game_setup_flow.dart',
   'lib/features/debug_log/debug_log_viewer_screen.dart',
-  // Top-level shell screen widgets (`CtGameSetup` / `CtMainMenu`) under
-  // `lib/widgets/`. These are the SHEL20001 / SHEL10002 screen surfaces and
-  // are part of the same per-screen padding-token adoption surface as the
-  // `lib/features/**` entries above (Refs #2914 S5).
-  'lib/widgets/game_setup.dart',
+  // Top-level shell screen widgets (`CtMainMenu`) under `lib/widgets/`.
+  // Part of the per-screen padding-token adoption surface (Refs #2914 S5).
   'lib/widgets/main_menu.dart',
 ];
