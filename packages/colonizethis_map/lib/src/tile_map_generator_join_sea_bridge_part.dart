@@ -20,9 +20,9 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
     final numContinents = provinceToContinent.values.toSet().length;
     var didJoin = false;
-    var g = copyTileMapGrid(grid);
-    var tg = terrainGrid != null ? copyTileMapGrid(terrainGrid) : null;
-    var rg = resourceGrid != null ? copyTileMapGrid(resourceGrid) : null;
+    var g = TileMapGrid.copy(grid);
+    var tg = terrainGrid != null ? TileMapGrid.copy(terrainGrid) : null;
+    var rg = resourceGrid != null ? TileMapGrid.copy(resourceGrid) : null;
     final ocean = _graph.oceanCells(
       g,
       seaZoneId,
