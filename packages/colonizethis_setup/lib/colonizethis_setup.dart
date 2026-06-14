@@ -3,6 +3,7 @@ library colonizethis_setup;
 
 export 'src/setup/capital_choice.dart';
 export 'src/setup/effective_setup_seed.dart';
+export 'src/setup/full_assignment_verification.dart';
 export 'src/setup/game_setup.dart';
 export 'src/setup/game_setup_town_tile_ranking.dart';
 export 'src/setup/gp_land_connectivity_repair.dart';

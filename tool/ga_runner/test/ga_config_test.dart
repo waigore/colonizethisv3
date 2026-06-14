@@ -20,6 +20,49 @@ void main() {
       expect(config.gamePlayerCount, 2);
       expect(config.populationSize, 20);
       expect(config.gameSetupConfig.selectedGreatPowerIds.length, 2);
+      expect(config.gameSetupConfig.numProvincesOldWorld, 23);
+      expect(config.gameSetupConfig.minorNationCount, 3);
+      expect(config.gameSetupConfig.tribeCount, 3);
+    });
+
+    test('derives numProvincesOldWorld from profile builder (ignores stale JSON)', () {
+      final config = GaConfig.fromJson(<String, dynamic>{
+        'seed_profiles_dir': 'seeds/',
+        'seed': 7,
+        'game_player_count': 2,
+        'game_setup_config': <String, dynamic>{
+          'selectedGreatPowerIds': <String>['england', 'france'],
+          'minorNationCount': 3,
+          'tribeCount': 3,
+          'numProvincesOldWorld': 20,
+          'numProvincesNewWorld': 12,
+        },
+      });
+      expect(config.gameSetupConfig.numProvincesOldWorld, 23);
+    });
+
+    test('rejects orphan continents via profile builder', () {
+      expect(
+        () => GaConfig.fromJson(<String, dynamic>{
+          'seed_profiles_dir': 'seeds/',
+          'seed': 7,
+          'game_player_count': 2,
+          'game_setup_config': <String, dynamic>{
+            'selectedGreatPowerIds': <String>['england', 'france'],
+            'minorNationCount': 3,
+            'tribeCount': 3,
+            'continentCount': 6,
+            'numProvincesNewWorld': 12,
+          },
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('orphan continents'),
+          ),
+        ),
+      );
     });
 
     Map<String, dynamic> configWith({

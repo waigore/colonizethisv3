@@ -45,12 +45,15 @@ total  = scored + shapingPenalties                             // penalties addi
 Each category is the **equal-weight mean** of its per-component normalized values.
 Per component: take the player's raw value, floor it at `0`, then divide by the
 game-wide max of that component. If a component's game-max is `0`, every player
-scores `0` for that component.
+scores `0` for that component. **Exception:** province share is already a
+`[0, 1]` fraction of all `provinceOwnershipSorted` rows and is used **directly**
+(not re-normalized among GPs) so minor/tribe-owned provinces lower GP scores
+(#3447).
 
 | Category (weight) | Components (equal weight) | Raw source |
 |---|---|---|
-| Economic (0.4) | treasury; worker count; province count | `treasuryPounds`; sum of `workerPool` tiers; count of `provinceOwnershipSorted` rows with `ownerId == playerId` |
-| Military (0.4) | regiment count; province count; strength proxy | sum of `regiments=` over `militaryArmySummariesSorted` for `owner=playerId`; province count; `regimentLikeUnitCountHint` (fallback `greatPowerPowerScore` when the hint is absent) |
+| Economic (0.4) | treasury; worker count; province share | `treasuryPounds`; sum of `workerPool` tiers; `ownedProvinces / totalProvinces` where `totalProvinces` is the count of all `provinceOwnershipSorted` rows (GP, minor, and tribe ownership included) |
+| Military (0.4) | regiment count; province share; strength proxy | sum of `regiments=` over `militaryArmySummariesSorted` for `owner=playerId`; province share (same as economic); `regimentLikeUnitCountHint` (fallback `greatPowerPowerScore` when the hint is absent) |
 | Diplomatic (0.2) | alliance count; non-war relations | `diplomacyRelationSummariesSorted` rows involving the player with `lvl=allied`; rows involving the player that are `peace` |
 
 ### Win multiplier
@@ -73,6 +76,16 @@ Capital loss is evaluated only when `capitalProvinceByPlayerId` contains the
 player; an absent capital id skips that penalty. A capital id present in the map
 but not owned by the player (including an unowned or other-owned province row)
 triggers the penalty. The military-heavy ratio is `0` when the denominator is `0`.
+
+### NPC / minor / tribe world pressure (#3447)
+
+Province share replaces raw province count in economic and military categories so
+fitness reflects **political map density**, not a two-GP vacuum. When minors and
+tribes own provinces in `provinceOwnershipSorted`, the same absolute GP province
+holdings yield a **lower** share than in a sparse world, penalizing head-to-head
+normalization that ignored NPC territory. Diplomatic components already count any
+relation row involving the scored GP (including minor/tribe factions when present
+in `diplomacyRelationSummariesSorted`).
 
 ## Non-Scope
 
@@ -112,3 +125,8 @@ triggers the penalty. The military-heavy ratio is `0` when the denominator is `0
 - Given two snapshots identical except that player `P` owns more provinces and has
   more regiments and treasury in the second, when both are scored, then `P`'s
   `total` in the second is strictly greater than in the first.
+- Given two snapshots where GP `P` owns the same absolute province count but the
+  second includes additional minor/tribe-owned provinces in
+  `provinceOwnershipSorted`, when both are scored, then `P`'s province-share
+  components in economic and military are strictly lower in the second than in
+  the first.

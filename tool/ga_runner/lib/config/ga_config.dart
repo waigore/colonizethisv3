@@ -32,12 +32,22 @@ class GaConfig {
     if (setupJson is! Map<String, dynamic>) {
       throw const FormatException('game_setup_config must be a JSON object');
     }
-    final setup = _gameSetupFromJson(setupJson);
+    final parsed = _gameSetupFromJson(setupJson);
     // GA observer games require realistic minor/tribe presence (Refs #3447).
     validateGaFactionMinimums(
-      minorNationCount: setup.minorNationCount,
-      tribeCount: setup.tribeCount,
+      minorNationCount: parsed.minorNationCount,
+      tribeCount: parsed.tribeCount,
     );
+    final profile = buildGaSetupProfile(
+      selectedGreatPowerIds: parsed.selectedGreatPowerIds,
+      minorNationCount: parsed.minorNationCount,
+      tribeCount: parsed.tribeCount,
+      continentCount: parsed.continentCount,
+      minProvincesPerMinor: parsed.minProvincesPerMinor,
+      numProvincesNewWorld: parsed.numProvincesNewWorld,
+      seed: parsed.seed,
+    );
+    final setup = _mergeGaSetupExtras(profile.setupConfig, parsed);
     final playerCount =
         (json['game_player_count'] as num?)?.toInt() ?? setup.greatPowerCount;
     if (playerCount != setup.greatPowerCount) {
@@ -164,4 +174,29 @@ GameSetupConfig withGameSeed(GameSetupConfig config, int seed) =>
       startingResources: config.startingResources,
       humanGreatPowerSlotIndices: const <int>{},
       initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
+    );
+
+/// Merges GA profile-builder output with optional fields parsed from JSON.
+GameSetupConfig _mergeGaSetupExtras(
+  GameSetupConfig derived,
+  GameSetupConfig parsed,
+) =>
+    GameSetupConfig(
+      selectedGreatPowerIds: derived.selectedGreatPowerIds,
+      leaderVariantByGpId: parsed.leaderVariantByGpId,
+      continentCount: derived.continentCount,
+      minorNationCount: derived.minorNationCount,
+      tribeCount: derived.tribeCount,
+      numProvincesOldWorld: derived.numProvincesOldWorld,
+      numProvincesNewWorld: derived.numProvincesNewWorld,
+      minProvincesPerMinor: derived.minProvincesPerMinor,
+      seed: derived.seed,
+      infiniteMode: parsed.infiniteMode,
+      terrainVariation: parsed.terrainVariation,
+      startingResources: parsed.startingResources,
+      preferredInitialMapZoomMultiplier:
+          parsed.preferredInitialMapZoomMultiplier,
+      humanGreatPowerSlotIndices: const <int>{},
+      initTownRoadWiringRegionIds: parsed.initTownRoadWiringRegionIds,
+      aiProfileByGpId: parsed.aiProfileByGpId,
     );
