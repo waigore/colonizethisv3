@@ -570,6 +570,13 @@ rules:
     runner: dart
     script: tool/check_orders_dedup_map_clones.dart
 
+  - rule_id: repo.setup_dedup_init_pipeline_retry
+    group: architecture
+    title: setup init pipelines must delegate map+setup retry loop to runInitPipelineWithRetries (Refs #3449)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_init_pipeline_retry.dart
+
   - rule_id: repo.orders_file_size
     group: structure
     title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)
