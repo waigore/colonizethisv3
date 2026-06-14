@@ -19,6 +19,11 @@ import 'combat_loss_profile.dart';
 import 'quick_battle_action_modifiers.dart';
 import 'quick_battle_emplaced_guns.dart';
 
+/// Keep (copy-disposition, Refs #3448 AC5): canonical working-copy helper for
+/// Quick Battle. Groups (and their `unitIds`) are mutated per round, so each
+/// run must own detached lists rather than alias the caller's deployment. This
+/// is a unit-id clone, not a [ShipInstance] clone, so it stays distinct from
+/// `copyNavalShips(...)`.
 List<QuickBattleGroup> copyGroups(List<QuickBattleGroup> groups) => groups
     .map((g) => g.copyWith(unitIds: List<String>.from(g.unitIds)))
     .toList();

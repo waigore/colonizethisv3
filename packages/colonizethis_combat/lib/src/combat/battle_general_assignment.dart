@@ -67,6 +67,9 @@ List<BattleContext> bindGeneralsForCombatPhase({
       final usedAttackers =
           ledger.attackCommanderGeneralIdsByFaction[factionId] ??
           const <String>{};
+      // Keep (copy-disposition, Refs #3448 AC5): materializes the filtered
+      // candidate order so it can be indexed for RNG tie-breaks; not a
+      // defensive ship/unit clone.
       final available = (generalsByFaction[factionId] ?? const <General>[])
           .where((g) => !usedAttackers.contains(g.id))
           .toList();
@@ -156,6 +159,8 @@ BattleGeneralAssignment assignGeneralsForBattleContext({
       final used =
           ledger.attackCommanderGeneralIdsByFaction[attacker.factionId] ??
           const <String>{};
+      // Keep (copy-disposition, Refs #3448 AC5): materializes the filtered
+      // candidate order for RNG selection; not a defensive ship/unit clone.
       final available = game.generals
           .where((g) => g.ownerId == attacker.factionId && !used.contains(g.id))
           .toList();
