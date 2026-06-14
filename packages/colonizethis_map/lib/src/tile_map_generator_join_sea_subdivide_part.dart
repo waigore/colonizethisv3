@@ -17,7 +17,7 @@ extension _TileMapGenJoinSeaSubdividePart on _TileMapGenJoinSea {
         if (minYa != minYb) return minYa.compareTo(minYb);
         return minXa.compareTo(minXb);
       });
-    final g = TileMapGrid.copy(grid);
+    final g = snapshotGrid(grid);
     final maxPerZone = (params.maxSeaZoneFraction * totalSea).floor();
     var nextSeaZoneIndex = 1;
     for (final component in sorted) {
