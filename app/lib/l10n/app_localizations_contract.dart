@@ -627,6 +627,9 @@ abstract class AppLocalizations {
   /// Display-font title for the tribe first-contact herald overlay (OVL80001).
   String get tribeFirstContactOverlay_title;
 
+  /// Error shown when the tribe first-contact herald (OVL80001) Yarn dialogue fails to load.
+  String tribeFirstContactOverlay_loadError(String error);
+
   /// Error shown when overture dialogue fails to load.
   String game_overture_loadError(String error);
 
