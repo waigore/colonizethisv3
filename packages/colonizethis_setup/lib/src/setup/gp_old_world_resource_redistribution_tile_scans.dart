@@ -100,7 +100,7 @@ _clearGreatPowerOldWorldTerrainResources({
   var map = mapIn;
   var resMap = Map<String, String>.from(resMapIn);
   var tileState = tileStateIn;
-  final gpIds = game.players.map((p) => p.id).toSet();
+  final gpIds = gpIdsSortedFromPlayers(game).toSet();
   final ownerByLocal = gpOwnerByLocalProvinceId(game);
   if (map.resourceGrid == null) return (map, resMap, tileState);
 

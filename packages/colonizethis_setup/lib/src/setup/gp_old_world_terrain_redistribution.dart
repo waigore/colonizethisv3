@@ -134,7 +134,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
     );
   }
 
-  final gpIdsSorted = game.players.map((p) => p.id).toList();
+  final gpIdsSorted = gpIdsSortedFromPlayers(game);
   final gpIds = gpIdsSorted.toSet();
   if (gpIdsSorted.isEmpty) {
     return (
@@ -259,7 +259,7 @@ int countTerrainOnGpOldWorldEligibleTiles({
   required TileMapResult map,
   required TerrainType terrain,
 }) {
-  final gpIdsSorted = game.players.map((p) => p.id).toList();
+  final gpIdsSorted = gpIdsSortedFromPlayers(game);
   final gpIds = gpIdsSorted.toSet();
   final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);

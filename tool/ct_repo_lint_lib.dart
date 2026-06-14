@@ -39,6 +39,7 @@ import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_map_clones.dart';
+import 'check_setup_dedup_gp_ids_from_players.dart';
 import 'check_setup_dedup_gp_ow_tile_scans.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
@@ -844,6 +845,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckSetupDedupInitPipelineRetry(repoRoot);
     case 'repo.setup_dedup_gp_ow_tile_scans':
       return runCheckSetupDedupGpOwTileScans(repoRoot);
+    case 'repo.setup_dedup_gp_ids_from_players':
+      return runCheckSetupDedupGpIdsFromPlayers(repoRoot);
     case 'repo.domain_package_logger_dedup':
       return runCheckDomainPackageLoggerDedup(repoRoot);
     case 'repo.ai_api_narrow_surface':
