@@ -13,21 +13,9 @@ import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
 import 'init_game_map_view_data.dart';
+import 'province_ownership_view.dart';
 import 'region_constants.dart';
 import 'tile_key_util.dart';
-
-Map<String, String> _provinceIdToOwnerIdFromProvinces(
-  List<Province> provinces,
-) {
-  final out = <String, String>{};
-  for (final p in provinces) {
-    final oid = p.ownerId;
-    if (oid != null && oid.isNotEmpty) {
-      out[p.id] = oid;
-    }
-  }
-  return out;
-}
 
 typedef _RegionRenderInputs = ({
   Map<String, String> ownerByProvinceId,
@@ -40,7 +28,7 @@ _RegionRenderInputs _buildRegionRenderInputs({
   required String regionId,
 }) {
   if (regionId == kRegionOldWorld) {
-    final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+    final ownerByProvinceId = provinceOwnerByIdFromProvinces(
       game.worldState.oldWorld.provinces,
     );
     final capitals = collectCapitalMarkersForRegion(
@@ -56,7 +44,7 @@ _RegionRenderInputs _buildRegionRenderInputs({
     );
   }
 
-  final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+  final ownerByProvinceId = provinceOwnerByIdFromProvinces(
     game.worldState.newWorld.provinces,
   );
   final capitals = collectCapitalMarkersForRegion(
