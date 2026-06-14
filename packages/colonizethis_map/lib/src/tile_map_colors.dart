@@ -4,6 +4,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'region_constants.dart';
+
 /// Distinct RGB colors for region/faction assignment. Deterministic order.
 const List<(int r, int g, int b)> regionPalette = [
   (180, 80, 80), // red
@@ -101,6 +103,34 @@ Map<String, (int r, int g, int b)> factionOwnershipColorMapForNewWorld(
 ) {
   final tribeIds = game.tribes.map((tribe) => tribe.id).toList()..sort();
   return factionOwnershipColorMap(tribeIds: tribeIds);
+}
+
+/// Ownership colours for a single region's ownership overlay: Old World maps
+/// scan great powers + minor nations, New World maps scan tribes.
+///
+/// Single canonical region→colour selector (Refs #3459 AC3) so visualizer
+/// paths stop branching `regionId == kRegionOldWorld ? ...ForOldWorld(game)
+/// : ...ForNewWorld(game)`. Throws [ArgumentError] for unknown ids. The
+/// optional [greatPowerColorOverride] is only meaningful for the Old World.
+Map<String, (int r, int g, int b)> factionOwnershipColorMapForRegion(
+  Game game,
+  String regionId, {
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+}) {
+  if (regionId == kRegionOldWorld) {
+    return factionOwnershipColorMapForOldWorld(
+      game,
+      greatPowerColorOverride: greatPowerColorOverride,
+    );
+  }
+  if (regionId == kRegionNewWorld) {
+    return factionOwnershipColorMapForNewWorld(game);
+  }
+  throw ArgumentError.value(
+    regionId,
+    'regionId',
+    'map: unknown region id (expected $kRegionOldWorld or $kRegionNewWorld)',
+  );
 }
 
 /// Faction colour data for init-game map views (great-power ids + full palette).

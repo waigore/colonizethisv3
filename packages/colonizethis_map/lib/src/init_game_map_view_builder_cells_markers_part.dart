@@ -92,7 +92,6 @@ Map<String, (int x, int y)> _buildProvinceToRepresentativeTile({
 _buildUnitAndCivilianMarkerData({
   required Game game,
   required String regionId,
-  required bool isOldWorld,
   required List<Province> provinces,
   required List<CellViewData> cells,
   required Map<String, (int x, int y)> provinceToTile,
@@ -138,9 +137,10 @@ _buildUnitAndCivilianMarkerData({
     );
   }
 
-  final regionUnits = isOldWorld
-      ? game.worldState.oldWorld.units
-      : game.worldState.newWorld.units;
+  final regionUnits = regionDataForMapRegionId(
+    game.worldState,
+    regionId,
+  ).units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
         civilianOwnerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);

@@ -16,6 +16,7 @@ import 'multi_region_map_rendering.dart';
 import 'init_game_map_view_data.dart';
 import 'province_ownership_view.dart';
 import 'region_constants.dart';
+import 'region_data_access.dart';
 import 'tile_key_util.dart';
 
 typedef _RegionRenderInputs = ({
@@ -28,32 +29,15 @@ _RegionRenderInputs _buildRegionRenderInputs({
   required Game game,
   required String regionId,
 }) {
-  if (regionId == kRegionOldWorld) {
-    final ownerByProvinceId = provinceOwnerByIdFromProvinces(
-      game.worldState.oldWorld.provinces,
-    );
-    final capitals = collectCapitalMarkersForRegion(
-      game: game,
-      regionId: regionId,
-      scope: TileMapCapitalMarkerScope.oldWorldFactions,
-    );
-    final factionColors = factionOwnershipColorMapForOldWorld(game);
-    return (
-      ownerByProvinceId: ownerByProvinceId,
-      capitalTiles: capitals,
-      factionColors: factionColors,
-    );
-  }
-
   final ownerByProvinceId = provinceOwnerByIdFromProvinces(
-    game.worldState.newWorld.provinces,
+    regionDataForMapRegionId(game.worldState, regionId).provinces,
   );
   final capitals = collectCapitalMarkersForRegion(
     game: game,
     regionId: regionId,
-    scope: TileMapCapitalMarkerScope.newWorldFactions,
+    scope: capitalMarkerScopeForRegion(regionId),
   );
-  final factionColors = factionOwnershipColorMapForNewWorld(game);
+  final factionColors = factionOwnershipColorMapForRegion(game, regionId);
   return (
     ownerByProvinceId: ownerByProvinceId,
     capitalTiles: capitals,

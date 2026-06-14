@@ -90,4 +90,27 @@ void main() {
       expect(markers, isEmpty);
     });
   });
+
+  group('capitalMarkerScopeForRegion (Refs #3459 AC3)', () {
+    test('old world resolves to oldWorldFactions scope', () {
+      expect(
+        capitalMarkerScopeForRegion('oldWorld'),
+        TileMapCapitalMarkerScope.oldWorldFactions,
+      );
+    });
+
+    test('new world resolves to newWorldFactions scope', () {
+      expect(
+        capitalMarkerScopeForRegion('newWorld'),
+        TileMapCapitalMarkerScope.newWorldFactions,
+      );
+    });
+
+    test('unknown region id throws ArgumentError', () {
+      expect(
+        () => capitalMarkerScopeForRegion('moon'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
 }
