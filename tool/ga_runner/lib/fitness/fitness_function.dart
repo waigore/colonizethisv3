@@ -25,6 +25,16 @@ const double kMilitaryHeavyBrokePenalty = -30.0;
 /// Regiment-to-(regiment+worker) ratio above which "military-heavy" applies.
 const double kMilitaryHeavyRatioThreshold = 0.9;
 
+/// Total tech-catalog size used to normalize tech-unlock progress
+/// (`SPEC/game/tech-tree.md`; the #3470 Slice D audit enforces this count).
+const int kTechCatalogSize = 113;
+
+/// Weight blending tech-unlock progress into the economic category score
+/// (`economic = economicRaw × (1 - w) + techUnlockFraction × w`). Fixed constant
+/// within `[0.05, 0.20]` per SPEC/program/ga-fitness.md; exact value inside the
+/// band is GA-tunable and deferred (#3472).
+const double kTechUnlockEconomicWeight = 0.10;
+
 const List<String> _kWorkerTiers = <String>[
   'peasants',
   'apprentices',
@@ -72,7 +82,7 @@ Map<String, FitnessScore> computeFitness(
         .length;
   }
 
-  final economic = _categoryWithDirect(
+  final economicRaw = _categoryWithDirect(
     normalizedColumns: <List<double>>[
       [for (final p in players) p.treasury],
       [for (final p in players) p.workerTotal.toDouble()],
@@ -81,6 +91,10 @@ Map<String, FitnessScore> computeFitness(
       [for (final p in players) p.provinceShare],
     ],
   );
+  final economic = <double>[
+    for (var i = 0; i < players.length; i++)
+      _blendTechUnlock(economicRaw[i], players[i].techUnlockCount),
+  ];
   final military = _categoryWithDirect(
     normalizedColumns: <List<double>>[
       [for (final p in players) p.regimentCount.toDouble()],
@@ -137,6 +151,14 @@ double _shapingPenalties(
   return sum;
 }
 
+/// Folds tech-unlock progress into the raw economic score per
+/// SPEC/program/ga-fitness.md § Economic tech-unlock blend.
+double _blendTechUnlock(double economicRaw, int techUnlockCount) {
+  final fraction = (techUnlockCount / kTechCatalogSize).clamp(0.0, 1.0);
+  return economicRaw * (1 - kTechUnlockEconomicWeight) +
+      fraction * kTechUnlockEconomicWeight;
+}
+
 /// Equal-weight mean of per-component normalized values for each player.
 List<double> _category(List<List<double>> rawColumns) =>
     _categoryWithDirect(normalizedColumns: rawColumns, directColumns: const []);
@@ -185,11 +207,14 @@ List<_PlayerRaw> _parsePlayers(Map<String, dynamic> snapshot) {
         treasury: _numOf(entry, 'treasuryPounds').toDouble(),
         workerTotal: _workerTotal(entry['workerPool']),
         strengthProxy: _strengthProxy(entry),
+        techUnlockCount: _techUnlockCount(entry['techUnlockedIds']),
       ),
     );
   }
   return players;
 }
+
+int _techUnlockCount(Object? ids) => ids is List<Object?> ? ids.length : 0;
 
 int _workerTotal(Object? pool) {
   if (pool is! Map<Object?, Object?>) return 0;
@@ -285,12 +310,14 @@ class _PlayerRaw {
     required this.treasury,
     required this.workerTotal,
     required this.strengthProxy,
+    required this.techUnlockCount,
   });
 
   final String playerId;
   final double treasury;
   final int workerTotal;
   final double strengthProxy;
+  final int techUnlockCount;
 
   int provinceCount = 0;
   double provinceShare = 0.0;
