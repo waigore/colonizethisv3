@@ -212,9 +212,10 @@ _buildProvinceMetadata({
   required MapTopology topology,
 }) {
   final seaZoneIds = seaZoneIdsFromTopology(topology);
-  final provinces = isOldWorld
-      ? game.worldState.oldWorld.provinces
-      : game.worldState.newWorld.provinces;
+  final provinces = provincesForGameRegion(
+    game,
+    isOldWorld ? kRegionOldWorld : kRegionNewWorld,
+  );
   final ownerByProvinceId = provinceOwnerByIdFromProvinces(provinces);
   final provinceDisplayNameById = <String, String>{};
   final provincePoliticalOwnerByPrefixedProvinceId = <String, String?>{};

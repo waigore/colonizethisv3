@@ -143,7 +143,7 @@ _buildUnitAndCivilianMarkerData({
       : game.worldState.newWorld.units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
-        civilianOwnerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
+        civilianOwnerIds.contains(u.ownerId) && isCivilianUnitType(u.type);
     if (isPlayerOwnedCivilian) {
       _addCivilianUnitToTileKeyBucket(
         unit: u,
@@ -176,9 +176,9 @@ _buildUnitAndCivilianMarkerData({
     final tileKey = entry.key;
     final units = entry.value.toList()
       ..sort((a, b) {
-        final priorityCompare = _civilianIconPriorityForType(
+        final priorityCompare = civilianUnitIconPriorityForType(
           a.type,
-        ).compareTo(_civilianIconPriorityForType(b.type));
+        ).compareTo(civilianUnitIconPriorityForType(b.type));
         if (priorityCompare != 0) {
           return priorityCompare;
         }
