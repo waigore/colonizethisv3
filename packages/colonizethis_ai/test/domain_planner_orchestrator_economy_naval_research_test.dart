@@ -57,6 +57,8 @@ void main() {
             id: 'gp1',
             displayName: 'Leader',
             isHuman: false,
+            // Treasury funds the treasury-aware research planner (Refs #3472).
+            treasury: 1000,
             leaderKey:
                 'victoria', // economy and military weights both high enough
           ),

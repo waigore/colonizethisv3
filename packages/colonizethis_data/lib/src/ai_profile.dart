@@ -146,6 +146,12 @@ class AiProfile {
     researchExploration: valueOf(
       'personalityThresholds.researchExploration',
     ).round(),
+    researchFundingAggression: valueOf(
+      'personalityThresholds.researchFundingAggression',
+    ).round(),
+    researchSlotFillAggression: valueOf(
+      'personalityThresholds.researchSlotFillAggression',
+    ).round(),
   );
 
   /// Victory-config override value for [constName] (flat Dart constant key).

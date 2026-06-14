@@ -9,16 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// unlocked labour/economy techs.
 ///
 /// A value of 0 means the player may not go below 0 treasury.
-int maxDebtForPlayer(Player player) {
-  final unlocked = player.techUnlocked ?? const <String, bool>{};
-  // Money Lending: research spending may drive treasury negative up to this cap.
-  // Banking extends the floor when the prerequisite chain includes Money Lending.
-  // SPEC/game/tech-tree-labour-economy.md.
-  if (unlocked[kTechIdMoneyLending] != true) {
-    return 0;
-  }
-  if (unlocked[kTechIdBanking] == true) {
-    return 1000;
-  }
-  return 500;
-}
+int maxDebtForPlayer(Player player) =>
+    // Canonical debt floor lives in `colonizethis_data` (research_funding.dart)
+    // so the resolver and Full-AI research planner share one rule. Refs #3472.
+    researchMaxDebtForUnlocked(player.techUnlocked);

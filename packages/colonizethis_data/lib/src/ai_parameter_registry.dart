@@ -223,6 +223,18 @@ final List<AiParameter> _personalityParams = <AiParameter>[
     defaultThresholds.researchExploration,
     'Research preference weight for exploration techs.',
   ),
+  _personality(
+    AiParameterCategory.personalityThreshold,
+    'personalityThresholds.researchFundingAggression',
+    defaultThresholds.researchFundingAggression,
+    'Scales the Full-AI target uniform research funding tier.',
+  ),
+  _personality(
+    AiParameterCategory.personalityThreshold,
+    'personalityThresholds.researchSlotFillAggression',
+    defaultThresholds.researchSlotFillAggression,
+    'Target fraction of empty research slots Full AI fills each turn.',
+  ),
 ];
 
 final List<AiParameter> _victoryConfigParams = <AiParameter>[
