@@ -39,6 +39,18 @@ List<WidgetbookNode> get productionPanelDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Cotton weaving locked',
+        builder: (context) => _ProductionPanelStory(
+          playerOverride: cottonWeavingLockedProductionPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Cotton weaving unlocked',
+        builder: (context) => _ProductionPanelStory(
+          playerOverride: cottonWeavingUnlockedProductionPlayer(),
+        ),
+      ),
     ],
   ),
 ];

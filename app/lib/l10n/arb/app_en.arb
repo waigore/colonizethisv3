@@ -2520,6 +2520,10 @@
   "@production_labourTierLocked": {
     "description": "Parenthetical suffix on a Labour Controls tier label when one or more required techs are missing for the viewed player."
   },
+  "production_recipeLocked": "(locked)",
+  "@production_recipeLocked": {
+    "description": "Parenthetical marker shown after an Allocation recipe name when the recipe's required technology is not unlocked for the viewed player (e.g. fabric_from_cotton before cotton_weaving)."
+  },
   "production_labourTierLabel": "{tier} {state}",
   "@production_labourTierLabel": {
     "description": "Concatenation of the tier name and the unlock-state parenthetical for a Labour Controls row (e.g. 'Peasants (unlocked)').",

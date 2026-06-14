@@ -601,6 +601,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get production_labourTierLocked => '(locked)';
 
   @override
+  String get production_recipeLocked => '(locked)';
+
+  @override
   String production_labourTierLabel(String tier, String state) {
     return '$tier $state';
   }
