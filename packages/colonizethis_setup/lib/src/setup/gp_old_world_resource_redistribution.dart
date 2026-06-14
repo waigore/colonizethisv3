@@ -40,7 +40,7 @@ int countResourceOnGpOldWorldTiles({
   required TileMapResult map,
   required Resource resource,
 }) {
-  final gpIds = game.players.map((p) => p.id).toSet();
+  final gpIds = gpIdsSortedFromPlayers(game).toSet();
   final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
   return _countResourceOnGpTiles(
@@ -70,8 +70,8 @@ applyGreatPowerOldWorldResourceRedistribution({
     return (game: game, tileMap: tileMapOldWorld, fairnessScore: 0);
   }
 
-  // Preserve runtime player slot order (gp1, gp2, …); do not lex-sort (gp10 < gp2).
-  final gpIdsSorted = game.players.map((p) => p.id).toList();
+  // Slot order preserved by gpIdsSortedFromPlayers (gp1, gp2, …; no lex sort).
+  final gpIdsSorted = gpIdsSortedFromPlayers(game);
   final gpIds = gpIdsSorted.toSet();
   final g = gpIdsSorted.length;
   if (g == 0) {

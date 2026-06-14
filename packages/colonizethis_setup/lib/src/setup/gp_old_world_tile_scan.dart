@@ -37,6 +37,18 @@ Map<String, String> gpOwnerByLocalProvinceId(Game game) {
 /// as private `_isGpId`).
 bool isGpOwner(String id, Set<String> gpIds) => gpIds.contains(id);
 
+/// Great Power ids in runtime player **slot order** (gp1, gp2, …, gp10) — the
+/// order they appear in [game]'s players. Never lex-sort GP ids here
+/// (`gp10` sorts before `gp2` lexically); GP OW resource/terrain redistribution,
+/// ownership, and [collectGpOwEligibleTilesSorted] all depend on slot order.
+/// Single source of truth for the previously duplicated
+/// `game.players.map((p) => p.id).toList()` / `.toSet()` constructions across
+/// the redistribution concerns (Refs #3449). Derive the membership set via
+/// `gpIdsSortedFromPlayers(game).toSet()`.
+List<String> gpIdsSortedFromPlayers(Game game) => [
+  for (final p in game.players) p.id,
+];
+
 /// Callback invoked for each GP-owned Old World land tile during a grid scan.
 /// [tileKey] is the canonical [gpOwTileKey] for ([x], [y]).
 typedef GpOwLandTileVisitor =
