@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_map/src/topology_inference.dart';
 
 void main() {
   group('inferTopologyFromTileMap', () {
