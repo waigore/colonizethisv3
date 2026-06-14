@@ -9,13 +9,13 @@
     "widgetbook_story_path": "Main Menu"
   },
   {
-    "id": "ct_game_setup",
-    "name": "CtGameSetup",
-    "dart_file_path": "lib/widgets/game_setup.dart",
-    "constructor_props": "variant: GameSetupVariant, state: GameSetupState, naming: ResolvedNamingConfig, initialOrderedGpIds: List<String>, initialLeaderVariantByGpId: Map<String, String>, onStartGame: void Function(List<String>, Map<String, String>), onBack: VoidCallback",
-    "category": "screen",
+    "id": "new_game_leader_selection_dialog",
+    "name": "NewGameLeaderSelectionDialog",
+    "dart_file_path": "lib/features/shell/new_game_leader_selection_dialog.dart",
+    "constructor_props": "baseConfig: GameSetupConfig, naming: ResolvedNamingConfig, initialLeaderByGpId: Map<String, String>, blessedProfileNames: List<String>, onCancel: VoidCallback, onConfirmed: void Function(List<String>, Map<String, String>, int, bool, double, Map<String, String?>)",
+    "category": "dialog",
     "source": "pipeline",
-    "widgetbook_story_path": "Game Setup"
+    "widgetbook_story_path": "New Game Leader Selection Dialog"
   },
   {
     "id": "ct_region_map",

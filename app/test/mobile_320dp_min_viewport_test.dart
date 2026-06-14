@@ -8,20 +8,10 @@
 //    `noSaves` state) at exactly `kMinViewportWidth × 640` (320 × 640 dp) and
 //    assert no `RenderFlex` overflow exceptions surface and every visible
 //    `CtNinePatchButton` reports a rendered height ≥ `kMinTouchTargetSize`.
-//  * Render `CtGameSetup` (`plain` + `pixelArt` variants × `default_` +
-//    `loading` states) at the same minimum viewport and assert the screen
-//    pumps without exceptions and the six player-slot rows stack vertically
-//    per § 4 Game Setup (the narrow `< 500 dp` rule applies trivially at
-//    320 dp).
-//  * Render `NewGameLeaderSelectionDialog` (DLG10001) — the shell-mounted
-//    dialog version of Game Setup — at the same minimum viewport. The
-//    dialog mirrors `CtGameSetup`'s narrow `< 500 dp` slot-row stacking
-//    contract (`SPEC/ui/new-game-leader-selection-dialog.md` § Narrow-
-//    viewport slot pickers stacking + `SPEC/ui/mobile-adaptation.md` § 4
-//    Game Setup), so the 320 dp minimum viewport must select the stacked
-//    column body (one per slot) and must not mount the side-by-side row
-//    body, while the trailing Cancel + Start `CtNinePatchButton` pair
-//    keeps its ≥ 44 dp touch-target contract.
+//  * Render `NewGameLeaderSelectionDialog` (DLG10001) at the same minimum
+//    viewport. At 320 dp the dialog uses stacked slot rows per
+//    `SPEC/ui/new-game-leader-selection-dialog.md` § Narrow-viewport slot
+//    pickers stacking and `SPEC/ui/mobile-adaptation.md` § 4.
 //  * Include negative pins that intentionally render at a wide viewport so a
 //    regression in the host overflow detection itself would be caught.
 //
@@ -46,7 +36,6 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/game_setup.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
@@ -79,24 +68,6 @@ Widget _wrapMainMenu({
   );
 }
 
-Widget _wrapGameSetup({
-  GameSetupVariant variant = GameSetupVariant.plain,
-  GameSetupState state = GameSetupState.default_,
-}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: CtGameSetup(
-      variant: variant,
-      state: state,
-      naming: defaultNamingConfig,
-      initialOrderedGpIds: List<String>.filled(6, ''),
-      initialLeaderVariantByGpId: const {},
-      onStartGame: (_, _) {},
-      onBack: () {},
-    ),
-  );
-}
-
 /// Pumps [screen] at [size] and asserts the framework emitted no
 /// exception. We deliberately treat any caught exception as a failure
 /// because Flutter surfaces `RenderFlex` overflows as
@@ -107,10 +78,9 @@ Widget _wrapGameSetup({
 ///
 /// When [settleAnimations] is `true` (default) the helper drives
 /// `pumpAndSettle()` to completion. When `false` it pumps a small finite
-/// number of frames instead so screens with **continuous** animations
-/// (e.g. the `CtGameSetup` `loading` state with its always-spinning
-/// loading indicator) can still be exercised against the layout overflow
-/// contract without the framework's settle-loop timing out.
+/// number of frames instead so screens with **continuous** animations can
+/// still be exercised against the layout overflow contract without the
+/// framework's settle-loop timing out.
 Future<void> _pumpAtSize(
   WidgetTester tester,
   Widget screen, {
@@ -302,107 +272,6 @@ void main() {
       );
 
       testWidgets(
-        'AC2 (positive) CtGameSetup plain @ 320×640: no exception, '
-        'six player-slot rows render (stacked layout per § 4)',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _wrapGameSetup(),
-            size: _kMinViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          // § 4 Game Setup stacked layout: the six slot labels still render.
-          expect(find.text('Player 1 (You)'), findsOneWidget);
-          expect(find.text('Player 2 (AI)'), findsOneWidget);
-          expect(find.text('Player 6 (AI)'), findsOneWidget);
-          expect(find.text('Select nation'), findsNWidgets(6));
-        },
-      );
-
-      testWidgets(
-        'AC2 (positive) CtGameSetup pixelArt @ 320×640: no exception, '
-        'screen pumps without overflow',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _wrapGameSetup(variant: GameSetupVariant.pixelArt),
-            size: _kMinViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-        },
-      );
-
-      testWidgets(
-        'AC2 (positive) CtGameSetup pixelArt loading @ 320×640: '
-        'no exception (loading scrim + back link share narrow viewport)',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _wrapGameSetup(
-              variant: GameSetupVariant.pixelArt,
-              state: GameSetupState.loading,
-            ),
-            size: _kMinViewport,
-            // The loading state's `CtLoadingIndicator` animates
-            // continuously, so `pumpAndSettle` would never settle.
-            settleAnimations: false,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(
-            find.byKey(const ValueKey<String>('gameSetupLoadingLabel')),
-            findsOneWidget,
-          );
-        },
-      );
-
-      testWidgets(
-        'AC2 (positive) CtGameSetup plain loading @ 320×640: no exception',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _wrapGameSetup(state: GameSetupState.loading),
-            size: _kMinViewport,
-            settleAnimations: false,
-          );
-
-          expect(tester.takeException(), isNull);
-        },
-      );
-
-      testWidgets(
-        'AC2 (regression) CtGameSetup pixelArt back-link label ellipses at '
-        '320 dp instead of overflowing — Refs #2870 S10 / Refs #2868 R14',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _wrapGameSetup(variant: GameSetupVariant.pixelArt),
-            size: _kMinViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          // The back-link label remains in the tree (single line, may be
-          // ellipsised by Flexible+TextOverflow.ellipsis when the row would
-          // otherwise overflow). Ellipsised Text widgets still report
-          // `findsOneWidget` because the `Text` element exists; the visual
-          // contract is preserved (1 row, 1 line) regardless of clipping.
-          expect(
-            find.byKey(const ValueKey<String>('gameSetupBackLinkLabel')),
-            findsOneWidget,
-          );
-          // The `CtBackButton` glyph still renders (single 28x28 dp tap
-          // target per `SPEC/ui/game-setup.md` § R14 + `SPEC/ui/`
-          // `pixel-art-ui-catalog.md` § CtBackButton).
-          expect(
-            find.byKey(const ValueKey<String>('gameSetupBackLinkGlyph')),
-            findsOneWidget,
-          );
-        },
-      );
-
-      testWidgets(
         'Negative control: CtMainMenu plain @ 1024×768 also pumps without '
         'exception (regression sentinel for the overflow contract)',
         (WidgetTester tester) async {
@@ -418,9 +287,8 @@ void main() {
     },
   );
 
-  // Pin the 320 dp minimum-viewport contract for the shell-mounted
-  // `NewGameLeaderSelectionDialog` (DLG10001) — the dialog version of
-  // Game Setup raised from the shell New Game button. The dialog already
+  // Pin the 320 dp minimum-viewport contract for
+  // `NewGameLeaderSelectionDialog` (DLG10001). The dialog already
   // pins its 500 dp wide↔narrow boundary in
   // `new_game_leader_selection_dialog_test.dart`; this group closes the
   // remaining 320 dp viewport gap so the shell New Game flow honours the

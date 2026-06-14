@@ -838,9 +838,8 @@ void main() {
     });
   });
 
-  // Refs #2870 R3 — narrow slot-row stacking parity with `CtGameSetup` so the
-  // shell dialog (DLG10001) honours the same `< kGameSetupNarrowBreakpoint`
-  // (500 dp) rule as the full-screen Game Setup surface (SHEL20001).
+  // Refs #2870 R3 — narrow slot-row stacking at `< kGameSetupNarrowBreakpoint`
+  // (500 dp) per DLG10001 / SPEC/ui/new-game-leader-selection-dialog.md.
   // SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
   // + § Acceptance Criteria narrow-viewport stacking AC; mirrors
   // `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.

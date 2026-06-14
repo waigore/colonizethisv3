@@ -396,7 +396,7 @@ keep the literal.
 - [buttons-nine-patch.md](buttons-nine-patch.md)
 - [game-toolbar-icons.md](game-toolbar-icons.md)
 - [main-menu.md](main-menu.md)
-- [game-setup.md](game-setup.md)
+- [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md)
 - [production-panel.md](production-panel.md)
 - [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)
 
