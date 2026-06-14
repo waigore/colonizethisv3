@@ -217,6 +217,10 @@ GameSetupResult createGameFromGeneratedMaps({
   );
   game = ensureMilitaryArmiesForGame(game);
 
+  // Initialize each Great Power's general cap (1 at start) and spawn one
+  // general per GP. SPEC/game/military-generals.md § Count and tech-gated cap.
+  game = syncGeneralCapsFromTech(game);
+
   // Map tint / UI swatches: runtime player ids (gp1..gpN) → GDD default RGB for
   // the semantic Great Power in each setup slot (see greatPowerDefaultColorRgb).
   // Province.ownerId uses gpN; without this, factionOwnershipColorMap misses

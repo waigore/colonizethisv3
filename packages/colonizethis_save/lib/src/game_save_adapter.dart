@@ -133,7 +133,9 @@ class GameSaveAdapter {
           'Invalid save payload for gameId=$gameId',
         );
       }
-      final game = Game.fromJson(Map<String, dynamic>.from(gameRaw));
+      final game = reconcileGeneralsToGeneralCap(
+        Game.fromJson(Map<String, dynamic>.from(gameRaw)),
+      );
       _log.i('loaded gameId=$gameId');
       return game;
     } catch (e, st) {
@@ -166,7 +168,9 @@ class GameSaveAdapter {
         'Invalid save payload for gameId=$gameId',
       );
     }
-    final game = Game.fromJson(Map<String, dynamic>.from(gameRaw));
+    final game = reconcileGeneralsToGeneralCap(
+      Game.fromJson(Map<String, dynamic>.from(gameRaw)),
+    );
     _log.i('loaded strict gameId=$gameId');
     return game;
   }

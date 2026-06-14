@@ -280,8 +280,13 @@ Game resolveResearchPhase(Game game, Orders orders) {
   turnLog.i(
     'research phase end turn=$turn playersWithOrders=$playersWithOrders',
   );
-  return state.copyWith(
+  final resolvedState = state.copyWith(
     players: updatedPlayers,
     dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...extraEvidence],
   );
+
+  // Tech unlocks this phase may raise a GP's general cap; recompute caps and
+  // spawn new generals (0 medals) so each roster matches its cap.
+  // SPEC/game/military-generals.md § Count and tech-gated cap.
+  return syncGeneralCapsFromTech(resolvedState);
 }
