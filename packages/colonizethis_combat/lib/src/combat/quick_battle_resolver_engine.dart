@@ -15,6 +15,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combat_effective_strength.dart';
+import 'combat_loss_profile.dart';
 import 'quick_battle_action_modifiers.dart';
 import 'quick_battle_emplaced_guns.dart';
 
@@ -40,7 +41,10 @@ int _actionCost(QuickBattleAction action) {
   }
 }
 
-List<QuickBattleAction> limitActionsByCp(List<QuickBattleAction> actions, int cp) {
+List<QuickBattleAction> limitActionsByCp(
+  List<QuickBattleAction> actions,
+  int cp,
+) {
   final result = <QuickBattleAction>[];
   var spent = 0;
   for (final a in actions) {
@@ -180,10 +184,24 @@ double attackerLossFractionFromDefenderStrike({
       .clamp(0.0, 1.0);
 }
 
+/// Base loss fraction the striker inflicts on the target, before action and
+/// casualty modifiers.
+///
+/// Classifies the striker-to-target ratio with the shared
+/// [classifyCombatStrengthRatioBand] so the `>= 1.5` / `<= 0.67` band edges stay
+/// the single source of truth shared with the auto-resolve loss profile
+/// (Refs #3448, AC2). The Quick Battle fractions (0.85 / 0.15 / 0.4) remain
+/// distinct from the auto-resolve fractions; only the band thresholds are
+/// shared.
 double _targetLossFraction(double strikerToTargetRatio) {
-  if (strikerToTargetRatio >= 1.5) return 0.85;
-  if (strikerToTargetRatio <= 0.67) return 0.15;
-  return 0.4;
+  switch (classifyCombatStrengthRatioBand(strikerToTargetRatio)) {
+    case CombatStrengthRatioBand.strongStriker:
+      return 0.85;
+    case CombatStrengthRatioBand.strongTarget:
+      return 0.15;
+    case CombatStrengthRatioBand.even:
+      return 0.4;
+  }
 }
 
 double attackerEffectiveStrength({

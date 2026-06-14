@@ -8,6 +8,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'battle_general_assignment.dart';
 import 'combat_constants.dart';
 import 'combat_engagement.dart';
+import 'combat_rng.dart';
 import 'combat_types.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';

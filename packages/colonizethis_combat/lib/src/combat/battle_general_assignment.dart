@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'combat_rng.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 
@@ -32,16 +33,6 @@ class BattleGeneralAssignment {
   final int defenderMedals;
 }
 
-Random _preCombatBindingRng(Game game) {
-  return Random(
-    Object.hash(
-      game.globalGameSeed ?? 0,
-      game.worldState.turnState.turnNumber,
-      'preCombatGenerals',
-    ),
-  );
-}
-
 /// Runs one pre-combat pass and binds generals to attacking armies and
 /// primary defending armies across all provided battle contexts.
 List<BattleContext> bindGeneralsForCombatPhase({
@@ -49,7 +40,7 @@ List<BattleContext> bindGeneralsForCombatPhase({
   required List<BattleContext> contexts,
   required CombatPhaseGeneralLedger ledger,
 }) {
-  final rng = _preCombatBindingRng(game);
+  final rng = preCombatBindingRng(game);
   final defenderUsedByFaction = <String, Set<String>>{};
   final generalsByFaction = <String, List<General>>{};
   for (final general in game.generals) {
@@ -213,16 +204,5 @@ BattleGeneralAssignment assignGeneralsForBattleContext({
     attackerByFactionId: attackerByFactionId,
     defenderGeneralId: ctx.defenderGeneralId,
     defenderMedals: ctx.defenderGeneralMedals,
-  );
-}
-
-Random battleAssignmentRng(Game game, BattleContext ctx) {
-  return Random(
-    Object.hash(
-      game.globalGameSeed ?? 0,
-      game.worldState.turnState.turnNumber,
-      ctx.regionId,
-      ctx.provinceId,
-    ),
   );
 }

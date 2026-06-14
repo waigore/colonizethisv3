@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'pre_combat_index.dart';
+
 /// Battle context for one contested province. SPEC/program/combat-resolution.md.
 class BattleContext {
   const BattleContext({
@@ -109,20 +111,18 @@ class AttackingSide {
 /// Attackers are attacking armies (not faction-aggregated sides).
 List<BattleContext> detectConflicts(Game game, Orders orders) {
   final contexts = <BattleContext>[];
-  final armyById = {for (final a in game.worldState.armies) a.id: a};
+  final index = PreCombatMovementIndex.build(game, orders);
+  final armyById = index.armiesById;
+  final gpIds = index.greatPowerIds;
   final armiesByOwnerAndProvince = _indexArmiesByOwnerAndProvince(
     game.worldState.armies,
   );
   final unitById = game.worldState.allUnitsById;
-  final gpIds = {for (final p in game.players) p.id};
 
   void processRegion(RegionData region) {
     if (region.units.isEmpty) return;
 
-    final unitsByProvince = <String, List<Unit>>{};
-    for (final u in region.units) {
-      unitsByProvince.putIfAbsent(u.locationProvinceId, () => []).add(u);
-    }
+    final unitsByProvince = unitsByProvinceIndex(region);
 
     final movedArmyIdsByProvince = <String, List<String>>{};
     final movedIntoByFaction = <String, Set<String>>{};
@@ -141,27 +141,15 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
             .add(factionId);
       }
     }
-    for (final entry in orders.armyMoveOrdersByPlayerId.entries) {
-      final factionId = entry.key;
-      if (!gpIds.contains(factionId)) continue;
-      for (final order in entry.value) {
-        final army = armyById[order.armyId];
-        if (army == null || army.ownerId != factionId) continue;
-        if (army.isHomeArmy) continue;
-        final destFull = ProvinceId.isPrefixed(order.destinationProvinceId)
-            ? order.destinationProvinceId
-            : ProvinceId.full(
-                ProvinceId.regionIdFrom(army.stationedProvinceId),
-                order.destinationProvinceId,
-              );
-        movedArmyIdsByProvince
-            .putIfAbsent(destFull, () => <String>[])
-            .add(army.id);
-        movedIntoByFaction.putIfAbsent(destFull, () => {}).add(factionId);
-      }
+    for (final move in index.greatPowerArmyMoves) {
+      final destFull = move.destinationProvinceId;
+      movedArmyIdsByProvince
+          .putIfAbsent(destFull, () => <String>[])
+          .add(move.army.id);
+      movedIntoByFaction.putIfAbsent(destFull, () => {}).add(move.factionId);
     }
 
-    final provinceById = {for (final p in region.provinces) p.id: p};
+    final provinceById = provincesByIdIndex(region);
 
     for (final entry in unitsByProvince.entries) {
       final provinceId = entry.key;

@@ -7,8 +7,21 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'deterministic_rng.dart';
+import 'combat_rng.dart';
 import 'military_strength.dart';
+
+/// Canonical clone of a naval ship-instance list (Refs #3448, AC5).
+///
+/// Centralizes the defensive copy that previously used raw `List.from(...)` at
+/// several naval resolution sites (battle-context snapshots and per-round
+/// working lists). Returns a growable list so callers that mutate the copy
+/// (for example `removeAt` during casualty application) keep working. Routing
+/// every ship-list clone through this one helper lets
+/// `repo.combat_no_raw_copies_in_resolution` forbid re-introducing raw
+/// `List.from` clones on ship collections in the resolution path.
+List<ShipInstance> copyNavalShips(List<ShipInstance> ships) => <ShipInstance>[
+  ...ships,
+];
 
 /// Mission factor for Patrol interception probability.
 const double kNavalInterceptMissionFactorPatrol = 0.50;
@@ -167,12 +180,12 @@ List<BattleContextSea> detectNavalConflicts(Game game) {
             seaZoneId: zoneId,
             side1: NavalBattleSide(
               ownerId: a,
-              ships: List.from(owners[a]!),
+              ships: copyNavalShips(owners[a]!),
               mission: missionA,
             ),
             side2: NavalBattleSide(
               ownerId: b,
-              ships: List.from(owners[b]!),
+              ships: copyNavalShips(owners[b]!),
               mission: missionB,
             ),
           ),
@@ -232,7 +245,7 @@ List<BattleContextSea> filterBattlesByInterception(
   int seed,
 ) {
   if (battles.isEmpty) return battles;
-  final rng = DeterministicRng(seed);
+  final rng = navalCombatRng(seed);
 
   // Pre-index moved fleets at sea by (seaZoneId, ownerId) to avoid O(fleets)
   // scan per battle.
@@ -334,7 +347,7 @@ NavalBattleResult resolveSeaBattle(
   bool side2CanRetreat = true,
   Map<String, double> navalFeedingCoverageByPlayerId = const {},
 }) {
-  final rng = DeterministicRng(seed);
+  final rng = navalCombatRng(seed);
   final cov1 = navalFeedingCoverageByPlayerId[battle.side1.ownerId] ?? 1.0;
   final cov2 = navalFeedingCoverageByPlayerId[battle.side2.ownerId] ?? 1.0;
   final m1 = moraleMultiplierForFeedingCoverage(cov1);
@@ -344,8 +357,8 @@ NavalBattleResult resolveSeaBattle(
   final total = str1 + str2;
   if (total <= 0) {
     return NavalBattleResult(
-      survivingShipsSide1: List.from(battle.side1.ships),
-      survivingShipsSide2: List.from(battle.side2.ships),
+      survivingShipsSide1: copyNavalShips(battle.side1.ships),
+      survivingShipsSide2: copyNavalShips(battle.side2.ships),
     );
   }
   final ratio1 = str1 / total;
@@ -355,8 +368,8 @@ NavalBattleResult resolveSeaBattle(
   final casualties2 = (battle.side2.ships.length * (1 - (1 - ratio1)) * 0.5)
       .round()
       .clamp(0, battle.side2.ships.length);
-  final list1 = List<ShipInstance>.from(battle.side1.ships);
-  final list2 = List<ShipInstance>.from(battle.side2.ships);
+  final list1 = copyNavalShips(battle.side1.ships);
+  final list2 = copyNavalShips(battle.side2.ships);
   for (var i = 0; i < casualties1 && list1.isNotEmpty; i++) {
     list1.removeAt(rng.nextInt(list1.length));
   }
