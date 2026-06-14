@@ -49,6 +49,7 @@ Map<String, FitnessScore> computeFitness(
   final provinceCountByOwner = _countByOwner(
     snapshot['provinceOwnershipSorted'],
   );
+  final totalProvinces = provinceCountByOwner.values.fold<int>(0, (a, b) => a + b);
   final ownerByProvince = _ownerByProvince(snapshot['provinceOwnershipSorted']);
   final regimentCountByOwner = _regimentCountByOwner(
     snapshot['militaryArmySummariesSorted'],
@@ -59,7 +60,9 @@ Map<String, FitnessScore> computeFitness(
   final winnerId = runSummary['declared_winner_player_id'];
 
   for (final p in players) {
-    p.provinceCount = provinceCountByOwner[p.playerId] ?? 0;
+    final owned = provinceCountByOwner[p.playerId] ?? 0;
+    p.provinceCount = owned;
+    p.provinceShare = totalProvinces > 0 ? owned / totalProvinces : 0.0;
     p.regimentCount = regimentCountByOwner[p.playerId] ?? 0;
     p.allianceCount = relations
         .where((r) => r.involves(p.playerId) && r.level == 'allied')
@@ -69,16 +72,24 @@ Map<String, FitnessScore> computeFitness(
         .length;
   }
 
-  final economic = _category(<List<double>>[
-    [for (final p in players) p.treasury],
-    [for (final p in players) p.workerTotal.toDouble()],
-    [for (final p in players) p.provinceCount.toDouble()],
-  ]);
-  final military = _category(<List<double>>[
-    [for (final p in players) p.regimentCount.toDouble()],
-    [for (final p in players) p.provinceCount.toDouble()],
-    [for (final p in players) p.strengthProxy],
-  ]);
+  final economic = _categoryWithDirect(
+    normalizedColumns: <List<double>>[
+      [for (final p in players) p.treasury],
+      [for (final p in players) p.workerTotal.toDouble()],
+    ],
+    directColumns: <List<double>>[
+      [for (final p in players) p.provinceShare],
+    ],
+  );
+  final military = _categoryWithDirect(
+    normalizedColumns: <List<double>>[
+      [for (final p in players) p.regimentCount.toDouble()],
+      [for (final p in players) p.strengthProxy],
+    ],
+    directColumns: <List<double>>[
+      [for (final p in players) p.provinceShare],
+    ],
+  );
   final diplomatic = _category(<List<double>>[
     [for (final p in players) p.allianceCount.toDouble()],
     [for (final p in players) p.nonWarRelations.toDouble()],
@@ -127,13 +138,25 @@ double _shapingPenalties(
 }
 
 /// Equal-weight mean of per-component normalized values for each player.
-List<double> _category(List<List<double>> rawColumns) {
-  final normalized = rawColumns.map(_normalizeColumn).toList();
-  final playerCount = normalized.first.length;
-  final componentCount = normalized.length;
+List<double> _category(List<List<double>> rawColumns) =>
+    _categoryWithDirect(normalizedColumns: rawColumns, directColumns: const []);
+
+/// Mixes max-normalized columns with direct `[0, 1]` columns (province share).
+List<double> _categoryWithDirect({
+  required List<List<double>> normalizedColumns,
+  required List<List<double>> directColumns,
+}) {
+  final normalized = normalizedColumns.map(_normalizeColumn).toList();
+  final direct = directColumns
+      .map((column) => column.map((v) => v < 0 ? 0.0 : v).toList())
+      .toList();
+  final allColumns = <List<double>>[...normalized, ...direct];
+  if (allColumns.isEmpty) return const <double>[];
+  final playerCount = allColumns.first.length;
+  final componentCount = allColumns.length;
   return List<double>.generate(playerCount, (i) {
     var sum = 0.0;
-    for (final column in normalized) {
+    for (final column in allColumns) {
       sum += column[i];
     }
     return sum / componentCount;
@@ -270,6 +293,7 @@ class _PlayerRaw {
   final double strengthProxy;
 
   int provinceCount = 0;
+  double provinceShare = 0.0;
   int regimentCount = 0;
   int allianceCount = 0;
   int nonWarRelations = 0;
