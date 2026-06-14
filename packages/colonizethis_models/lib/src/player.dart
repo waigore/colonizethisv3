@@ -20,6 +20,7 @@ class Player {
     this.personalityId,
     this.researchProgressByTechId,
     this.researchSlots,
+    this.generalCap,
   });
 
   final String id;
@@ -58,6 +59,11 @@ class Player {
   /// Default is 3; University tech can raise this to 4. When null, treat as 3.
   final int? researchSlots;
 
+  /// Tech-gated general cap for this Great Power (min/max generals in the pool).
+  /// 1 at game start; grows with military/diplomacy techs. Null in legacy saves
+  /// (treated as derive-from-tech or 1 on load). SPEC/game/military-generals.md.
+  final int? generalCap;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'displayName': displayName,
@@ -77,6 +83,7 @@ class Player {
         researchProgressByTechId!.isNotEmpty)
       'researchProgressByTechId': researchProgressByTechId,
     if (researchSlots != null) 'researchSlots': researchSlots,
+    if (generalCap != null) 'generalCap': generalCap,
   };
 
   static Player fromJson(Map<String, dynamic> json) {
@@ -150,6 +157,7 @@ class Player {
       personalityId: json['personalityId'] as String?,
       researchProgressByTechId: _readResearchProgress(),
       researchSlots: (json['researchSlots'] as num?)?.toInt(),
+      generalCap: (json['generalCap'] as num?)?.toInt(),
     );
   }
 
@@ -168,6 +176,7 @@ class Player {
     String? personalityId,
     Map<String, int>? researchProgressByTechId,
     int? researchSlots,
+    int? generalCap,
   }) {
     return Player(
       id: id ?? this.id,
@@ -185,6 +194,7 @@ class Player {
       researchProgressByTechId:
           researchProgressByTechId ?? this.researchProgressByTechId,
       researchSlots: researchSlots ?? this.researchSlots,
+      generalCap: generalCap ?? this.generalCap,
     );
   }
 
@@ -209,7 +219,8 @@ class Player {
             researchProgressByTechId,
             other.researchProgressByTechId,
           ) &&
-          researchSlots == other.researchSlots;
+          researchSlots == other.researchSlots &&
+          generalCap == other.generalCap;
 
   @override
   int get hashCode => Object.hash(
@@ -229,6 +240,7 @@ class Player {
         ? null
         : Object.hashAll(researchProgressByTechId!.entries),
     researchSlots,
+    generalCap,
   );
 
   static bool _mapEquals(Map<String, bool>? a, Map<String, bool>? b) {
