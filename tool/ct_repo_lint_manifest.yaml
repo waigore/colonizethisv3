@@ -406,6 +406,13 @@ rules:
     runner: dart
     script: tool/check_combat_no_raw_copies_in_resolution.dart
 
+  - rule_id: repo.combat_documented_keep_copies
+    group: architecture
+    title: combat keep-copy sites must carry a copy-disposition rationale marker (Refs #3448)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_documented_keep_copies.dart
+
   - rule_id: repo.combat_dedup_precombat_indexes
     group: architecture
     title: pre-combat movement scan must stay deduplicated via PreCombatMovementIndex (Refs #3448)

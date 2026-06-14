@@ -50,6 +50,9 @@ Game applyLandBattleAttackTreasuryCosts(Game game, BattleContext ctx) {
     final idx = playerIndexById[id];
     if (idx == null) continue;
     final nextTreasury = math.max(0, players[idx].treasury - cost);
+    // Keep (copy-disposition, Refs #3448 AC5): copy-on-write to isolate the
+    // caller-owned players list before the single-index treasury update; not a
+    // ship/unit clone, so it is intentionally outside copyNavalShips(...).
     players = List<Player>.from(players);
     players[idx] = players[idx].copyWith(treasury: nextTreasury);
   }

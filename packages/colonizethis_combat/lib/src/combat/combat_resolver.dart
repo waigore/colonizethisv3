@@ -36,6 +36,8 @@ Game resolveBattleContext(
   final unitsById = unitsByIdFromRegion(region);
   final provinceOwnerAtBattleStart =
       _provinceOwnerIdAtBattleStart(game, ctx) ?? ctx.defenderFactionId;
+  // Keep (copy-disposition, Refs #3448 AC5): mutation-isolated working copy of
+  // the defender unit ids; this engagement reassigns it as the defender changes.
   var defenderUnitIds = ctx.defenderUnitIds.toList();
   var defenderFactionId = ctx.defenderFactionId;
   var provinceOwnerId = provinceOwnerAtBattleStart;
@@ -94,6 +96,8 @@ Game resolveBattleContext(
       defenderFactionId,
       currentDefenderMedals,
     );
+    // Keep (copy-disposition, Refs #3448 AC5): per-engagement capping
+    // materialization (take(...).toList()), not a defensive ship/unit clone.
     final cappedAttackerUnits = attackerUnits.take(attackerLimit).toList();
     final cappedDefenderUnits = defenderUnits.take(defenderLimit).toList();
 

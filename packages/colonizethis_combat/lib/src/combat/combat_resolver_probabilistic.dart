@@ -96,6 +96,9 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
 }) {
   final rng = random ?? probabilisticEngagementRng(seed);
 
+  // Keep (copy-disposition, Refs #3448 AC5): the probabilistic simulation
+  // mutates unit state across rounds, so it requires detached unit lists
+  // (deep copyWith), not the shared ship-list helper.
   var attList = attackerUnits.map((u) => u.copyWith()).toList();
   var defList = defenderUnits.map((u) => u.copyWith()).toList();
 
