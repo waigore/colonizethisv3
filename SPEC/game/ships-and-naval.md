@@ -264,6 +264,8 @@ raidEfficiency = 0.3 to 0.7 depending on relative strength
 
 current product contract: trade/transport interception uses hardcoded constants in logic for these terms (including civilian penalty and raid-efficiency bounds), not ruleset-config values.
 
+**Privateering bonus:** When an intercepting enemy fleet's owner has `privateering_companies` unlocked ([tech-tree-naval.md](tech-tree-naval.md)), that fleet's `interceptRating` contribution to `base` is multiplied by `kPrivateeringTradeRaidBonus = 1.25` (and movement interception by `kPrivateeringInterceptBonus = 1.25`) before the documented clamps. The bonus applies only to owners holding the tech and never when it is locked. Normative constants and ACs: [naval-movement-resolution.md](../program/naval-movement-resolution.md).
+
 ---
 
 ## Acceptance Criteria
