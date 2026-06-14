@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'commodities.dart';
+import 'tech_ids.dart';
 
 /// Production recipes for Phase 2.
 /// SPEC/game/production-recipes.md
@@ -11,6 +12,7 @@ class ProductionRecipe {
     required this.outputQuantity,
     required this.inputQuantities,
     required this.labourPerOutput,
+    this.requiredTechId,
   });
 
   /// Stable id for referring to this recipe from logic or scripts.
@@ -27,6 +29,12 @@ class ProductionRecipe {
 
   /// Labour required per output unit.
   final int labourPerOutput;
+
+  /// Technology id this recipe requires before a player may use it, or `null`
+  /// when the recipe is always available. Gating is per player and evaluated
+  /// against the player's `techUnlocked` set. SPEC/game/production-recipes.md
+  /// § Technology-gated recipes.
+  final String? requiredTechId;
 }
 
 class ProductionRecipesCatalog {
@@ -53,7 +61,8 @@ class ProductionRecipesCatalog {
     labourPerOutput: 2,
   );
 
-  /// 2 cotton → 1 fabric.
+  /// 2 cotton → 1 fabric. Tech-gated: requires `cotton_weaving` per player
+  /// (SPEC/game/tech-tree-new-world.md, SPEC/game/production-recipes.md).
   static final ProductionRecipe fabricFromCotton = ProductionRecipe(
     id: 'fabric_from_cotton',
     outputCommodityId: CommodityCatalog.fabric.id,
@@ -62,6 +71,7 @@ class ProductionRecipesCatalog {
       CommodityCatalog.cotton.id: 2,
     },
     labourPerOutput: 2,
+    requiredTechId: kTechIdCottonWeaving,
   );
 
   /// 2 sugarCane → 1 refinedSugar.
@@ -181,4 +191,31 @@ class ProductionRecipesCatalog {
   /// O(1) lookup backed by [byOutputCommodityId]. Refs #3288.
   static List<ProductionRecipe> producing(CommodityId commodityId) =>
       byOutputCommodityId[commodityId] ?? const <ProductionRecipe>[];
+
+  /// Whether [recipe] is available to a player with the given [techUnlocked]
+  /// set. A recipe with no `requiredTechId` is always available. A tech-gated
+  /// recipe is available only when its `requiredTechId` maps to `true` in
+  /// [techUnlocked]; a `null`, missing, or `false` entry means locked.
+  /// Gating is per player. SPEC/game/production-recipes.md
+  /// § Technology-gated recipes.
+  static bool isRecipeAvailableForPlayer(
+    ProductionRecipe recipe,
+    Map<String, bool>? techUnlocked,
+  ) {
+    final requiredTechId = recipe.requiredTechId;
+    if (requiredTechId == null) return true;
+    return techUnlocked?[requiredTechId] == true;
+  }
+
+  /// The subset of [all] available to a player with the given [techUnlocked]
+  /// set, preserving [all] order. Recipes whose `requiredTechId` is not
+  /// unlocked are excluded. SPEC/game/production-recipes.md
+  /// § Technology-gated recipes.
+  static List<ProductionRecipe> availableForPlayer(
+    Map<String, bool>? techUnlocked,
+  ) =>
+      [
+        for (final recipe in all)
+          if (isRecipeAvailableForPlayer(recipe, techUnlocked)) recipe,
+      ];
 }
