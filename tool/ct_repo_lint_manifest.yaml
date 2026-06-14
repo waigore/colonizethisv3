@@ -577,6 +577,13 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_init_pipeline_retry.dart
 
+  - rule_id: repo.setup_dedup_gp_ow_tile_scans
+    group: architecture
+    title: setup GP Old World tile scans must delegate to the shared gp_old_world_tile_scan.dart helpers (Refs #3449)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_gp_ow_tile_scans.dart
+
   - rule_id: repo.orders_file_size
     group: structure
     title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)
