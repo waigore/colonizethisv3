@@ -13,6 +13,7 @@ Map<String, dynamic> _player(
   int masters = 0,
   num? strengthHint,
   num? powerScore,
+  int? techUnlockedCount,
 }) => <String, dynamic>{
   'playerId': id,
   'treasuryPounds': treasury,
@@ -24,7 +25,17 @@ Map<String, dynamic> _player(
   },
   if (strengthHint != null) 'regimentLikeUnitCountHint': strengthHint,
   if (powerScore != null) 'greatPowerPowerScore': powerScore,
+  if (techUnlockedCount != null)
+    'techUnlockedIds': <String>[
+      for (var i = 0; i < techUnlockedCount; i++) 'tech_$i',
+    ],
 };
+
+/// Folds the economic raw score into the tech-unlock-blended value the same way
+/// `computeFitness` does, for tests whose players carry no `techUnlockedIds`
+/// (techUnlockFraction == 0): `economic = economicRaw × (1 - w)`.
+double _econNoTech(double economicRaw) =>
+    economicRaw * (1 - kTechUnlockEconomicWeight);
 
 Map<String, String?> _prov(String id, String? ownerId) => <String, String?>{
   'id': id,
@@ -74,7 +85,7 @@ void main() {
   });
 
   group('category normalization', () {
-    test('strictly stronger player gets economic 1.0 and beats weaker', () {
+    test('strictly stronger player gets top economic and beats weaker', () {
       final scores = computeFitness(
         _snapshot(
           players: [
@@ -86,7 +97,7 @@ void main() {
         _summary(null),
         capitalProvinceByPlayerId: const {},
       );
-      expect(scores['A']!.economic, closeTo(8 / 9, 1e-9));
+      expect(scores['A']!.economic, closeTo(_econNoTech(8 / 9), 1e-9));
       expect(scores['A']!.economic, greaterThan(scores['B']!.economic));
     });
 
@@ -112,7 +123,7 @@ void main() {
       );
       // Only treasury varies; floored A treasury is 0, B is max → A economic 0.
       expect(scores['A']!.economic, 0.0);
-      expect(scores['B']!.economic, closeTo(1.0 / 3.0, 1e-9));
+      expect(scores['B']!.economic, closeTo(_econNoTech(1.0 / 3.0), 1e-9));
     });
 
     test('diplomatic counts allied-only alliances and non-war relations', () {
@@ -151,7 +162,9 @@ void main() {
         _summary('A'),
         capitalProvinceByPlayerId: const {'A': 'pA1'},
       );
-      expect(scores['A']!.total, closeTo(2.0, 1e-9));
+      // Dominator economic raw 1.0 → blended _econNoTech(1.0); mil 1.0, dip 1.0.
+      final base = 0.4 * _econNoTech(1.0) + 0.4 * 1.0 + 0.2 * 1.0;
+      expect(scores['A']!.total, closeTo(base * 2.0, 1e-9));
     });
 
     test('non-winner uses multiplier 1.0 (same dominator → base 1.0)', () {
@@ -160,7 +173,8 @@ void main() {
         _summary(null),
         capitalProvinceByPlayerId: const {'A': 'pA1'},
       );
-      expect(scores['A']!.total, closeTo(1.0, 1e-9));
+      final base = 0.4 * _econNoTech(1.0) + 0.4 * 1.0 + 0.2 * 1.0;
+      expect(scores['A']!.total, closeTo(base, 1e-9));
     });
   });
 
@@ -175,8 +189,9 @@ void main() {
         _summary(null),
         capitalProvinceByPlayerId: const {'A': 'p1'},
       );
-      // base = 0.4*(0+1+1)/3 + 0.4*1 = 0.6666667; penalty -50.
-      expect(scores['A']!.total, closeTo(0.6666667 - 50.0, 1e-6));
+      // econRaw=(0+1+1)/3=2/3 blended; mil=1.0; penalty -50.
+      final base = 0.4 * _econNoTech(2 / 3) + 0.4 * 1.0;
+      expect(scores['A']!.total, closeTo(base - 50.0, 1e-6));
     });
 
     test('zero regiments applies -80', () {
@@ -188,8 +203,9 @@ void main() {
         _summary(null),
         capitalProvinceByPlayerId: const {'A': 'p1'},
       );
-      // base = 0.4*1 + 0.4*(0+1+1)/3 = 0.6666667; penalty -80.
-      expect(scores['A']!.total, closeTo(0.6666667 - 80.0, 1e-6));
+      // econRaw=1.0 blended; mil=(0+1+1)/3=2/3; penalty -80.
+      final base = 0.4 * _econNoTech(1.0) + 0.4 * (2 / 3);
+      expect(scores['A']!.total, closeTo(base - 80.0, 1e-6));
     });
 
     test('capital loss applies -100; absent capital id skips penalty', () {
@@ -209,9 +225,10 @@ void main() {
         // A's capital p1 is owned by B → loss; B has no capital provided → skip.
         capitalProvinceByPlayerId: const {'A': 'p1'},
       );
-      // base = 0.4*(1+1+0.5)/3 + 0.4*(1+0.5+1)/3 ≈ 0.6666667; penalty -100.
-      expect(scores['A']!.total, closeTo(0.6666667 - 100.0, 1e-6));
-      expect(scores['B']!.total, closeTo(0.6666667, 1e-6));
+      // econRaw=mil=(1+1+0.5)/3=5/6; A blended econ; penalty -100.
+      final base = 0.4 * _econNoTech(5 / 6) + 0.4 * (5 / 6);
+      expect(scores['A']!.total, closeTo(base - 100.0, 1e-6));
+      expect(scores['B']!.total, closeTo(base, 1e-6));
     });
 
     test('military-heavy + broke adds -30 on top of bankruptcy', () {
@@ -224,9 +241,10 @@ void main() {
         _summary(null),
         capitalProvinceByPlayerId: const {'A': 'p1'},
       );
-      // base = 0.4*(0+0+1)/3 + 0.4*1 = 0.5333333; ratio 10/10=1.0 > 0.9 and
+      // econRaw=(0+0+1)/3=1/3 blended; mil=1.0; ratio 10/10=1.0 > 0.9 and
       // treasury 0 → -30, plus bankruptcy -50 → -80 total penalties.
-      expect(scores['A']!.total, closeTo(0.5333333 - 80.0, 1e-6));
+      final base = 0.4 * _econNoTech(1 / 3) + 0.4 * 1.0;
+      expect(scores['A']!.total, closeTo(base - 80.0, 1e-6));
     });
   });
 
@@ -358,8 +376,102 @@ void main() {
         _summary(null),
         capitalProvinceByPlayerId: const {'A': 'p1'},
       );
-      // No parseable regiments → zero-regiment penalty -80.
-      expect(scores['A']!.total, closeTo(0.6666667 - 80.0, 1e-6));
+      // econRaw=1.0 blended; mil=(0+1+1)/3=2/3; zero-regiment penalty -80.
+      final base = 0.4 * _econNoTech(1.0) + 0.4 * (2 / 3);
+      expect(scores['A']!.total, closeTo(base - 80.0, 1e-6));
+    });
+  });
+
+  group('economic tech-unlock blend (#3472)', () {
+    test('absent techUnlockedIds → fraction 0, economic = raw × (1 - w)', () {
+      final scores = computeFitness(
+        _snapshot(
+          players: [
+            _player('A', treasury: 100, peasants: 10),
+            _player('B', treasury: 10, peasants: 2),
+          ],
+          provinces: [_prov('p1', 'A'), _prov('p2', 'A'), _prov('p3', 'B')],
+        ),
+        _summary(null),
+        capitalProvinceByPlayerId: const {},
+      );
+      // A economicRaw = (1 + 1 + 2/3) / 3 = 8/9, no tech → ×(1 - w).
+      expect(scores['A']!.economic, closeTo(_econNoTech(8 / 9), 1e-9));
+    });
+
+    test('full catalog unlocked with zero economic raw → economic == w', () {
+      final scores = computeFitness(
+        _snapshot(
+          players: [_player('A', techUnlockedCount: kTechCatalogSize)],
+        ),
+        _summary(null),
+        capitalProvinceByPlayerId: const {},
+      );
+      // Single player, no treasury/workers/provinces → economicRaw 0.
+      // fraction = 113/113 = 1.0 → economic = 0×(1-w) + 1.0×w = w.
+      expect(scores['A']!.economic, closeTo(kTechUnlockEconomicWeight, 1e-9));
+    });
+
+    test('techUnlockFraction is clamped to 1.0 above catalog size', () {
+      final scores = computeFitness(
+        _snapshot(
+          players: [_player('A', techUnlockedCount: kTechCatalogSize + 50)],
+        ),
+        _summary(null),
+        capitalProvinceByPlayerId: const {},
+      );
+      expect(scores['A']!.economic, closeTo(kTechUnlockEconomicWeight, 1e-9));
+    });
+
+    test('partial unlock blends proportionally with zero economic raw', () {
+      const count = 30;
+      final scores = computeFitness(
+        _snapshot(players: [_player('A', techUnlockedCount: count)]),
+        _summary(null),
+        capitalProvinceByPlayerId: const {},
+      );
+      final expected =
+          (count / kTechCatalogSize) * kTechUnlockEconomicWeight;
+      expect(scores['A']!.economic, closeTo(expected, 1e-9));
+    });
+
+    test('more unlocked techs → strictly greater economic at equal raw', () {
+      // Both players have identical treasury, workers, and province share.
+      final scores = computeFitness(
+        _snapshot(
+          players: [
+            _player('A', treasury: 100, peasants: 10, techUnlockedCount: 40),
+            _player('B', treasury: 100, peasants: 10, techUnlockedCount: 5),
+          ],
+          provinces: [_prov('pa', 'A'), _prov('pb', 'B')],
+        ),
+        _summary(null),
+        capitalProvinceByPlayerId: const {},
+      );
+      expect(
+        scores['A']!.economic,
+        greaterThan(scores['B']!.economic),
+      );
+    });
+
+    test('tech unlocks do not affect military or diplomatic scores', () {
+      final scores = computeFitness(
+        _snapshot(
+          players: [
+            _player('A', treasury: 100, techUnlockedCount: kTechCatalogSize),
+            _player('B', treasury: 100, techUnlockedCount: 0),
+          ],
+          provinces: [_prov('pa', 'A'), _prov('pb', 'B')],
+          armies: const [
+            'army:a owner=A region=r regiments=5',
+            'army:b owner=B region=r regiments=5',
+          ],
+        ),
+        _summary(null),
+        capitalProvinceByPlayerId: const {},
+      );
+      expect(scores['A']!.military, closeTo(scores['B']!.military, 1e-9));
+      expect(scores['A']!.diplomatic, closeTo(scores['B']!.diplomatic, 1e-9));
     });
   });
 }
