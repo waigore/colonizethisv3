@@ -200,7 +200,7 @@ void main() {
           displayName: 'B',
           isHuman: false,
           techUnlocked: enemyHasPrivateering
-              ? const {'privateering_companies': true}
+              ? const {kTechIdPrivateeringCompanies: true}
               : const {},
         ),
       ],
