@@ -152,4 +152,26 @@ void main() {
       );
     });
   });
+
+  group('default app init regression (#3447 AC6)', () {
+    test(
+      'GameSetupConfig.defaultConfig init is unchanged (no GA verifier on app path)',
+      () {
+        final init = runInitGame(
+          config: GameSetupConfig.defaultConfig,
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
+        );
+
+        expect(init.game.worldState.oldWorld.provinces.length, 60);
+        expect(init.game.worldState.newWorld.provinces.length, 30);
+        expect(
+          init.game.worldState.oldWorld.provinces.every(
+            (p) => p.ownerId != null && p.ownerId!.isNotEmpty,
+          ),
+          isTrue,
+        );
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
+  });
 }

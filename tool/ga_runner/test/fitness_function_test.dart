@@ -86,7 +86,7 @@ void main() {
         _summary(null),
         capitalProvinceByPlayerId: const {},
       );
-      expect(scores['A']!.economic, closeTo(1.0, 1e-9));
+      expect(scores['A']!.economic, closeTo(8 / 9, 1e-9));
       expect(scores['A']!.economic, greaterThan(scores['B']!.economic));
     });
 
@@ -209,8 +209,9 @@ void main() {
         // A's capital p1 is owned by B → loss; B has no capital provided → skip.
         capitalProvinceByPlayerId: const {'A': 'p1'},
       );
-      expect(scores['A']!.total, closeTo(0.8 - 100.0, 1e-6));
-      expect(scores['B']!.total, closeTo(0.8, 1e-6));
+      // base = 0.4*(1+1+0.5)/3 + 0.4*(1+0.5+1)/3 ≈ 0.6666667; penalty -100.
+      expect(scores['A']!.total, closeTo(0.6666667 - 100.0, 1e-6));
+      expect(scores['B']!.total, closeTo(0.6666667, 1e-6));
     });
 
     test('military-heavy + broke adds -30 on top of bankruptcy', () {
@@ -294,6 +295,56 @@ void main() {
       );
       expect(strong['P']!.total, greaterThan(weak['P']!.total));
     });
+
+    test(
+      'province share drops when NPC factions own additional provinces (#3447)',
+      () {
+        final gpProvinces = List<Map<String, String?>>.generate(
+          7,
+          (i) => _prov('gp-$i', 'A'),
+        );
+        final sparse = computeFitness(
+          _snapshot(
+            players: [_player('A'), _player('B')],
+            provinces: [
+              ...gpProvinces,
+              ...List<Map<String, String?>>.generate(
+                7,
+                (i) => _prov('b-$i', 'B'),
+              ),
+            ],
+          ),
+          _summary(null),
+          capitalProvinceByPlayerId: const {},
+        );
+        final realistic = computeFitness(
+          _snapshot(
+            players: [_player('A'), _player('B')],
+            provinces: [
+              ...gpProvinces,
+              ...List<Map<String, String?>>.generate(
+                7,
+                (i) => _prov('b-$i', 'B'),
+              ),
+              ...List<Map<String, String?>>.generate(
+                9,
+                (i) => _prov('m-$i', 'minor-$i'),
+              ),
+            ],
+          ),
+          _summary(null),
+          capitalProvinceByPlayerId: const {},
+        );
+        expect(
+          realistic['A']!.economic,
+          lessThan(sparse['A']!.economic),
+        );
+        expect(
+          realistic['A']!.military,
+          lessThan(sparse['A']!.military),
+        );
+      },
+    );
   });
 
   group('robustness', () {
