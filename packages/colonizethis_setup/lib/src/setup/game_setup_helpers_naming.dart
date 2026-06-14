@@ -98,9 +98,11 @@ void _applyGreatPowerProvinceNaming({
     final capitalProvId = player.capitalProvinceId;
     if (capitalProvId == null) continue;
     applyNamingToFaction(
-      ownedProvinces: oldWorldProvinces
-          .where((p) => p.ownerId == player.id)
-          .toList(),
+      ownedProvinces: ownedProvincesForFaction(
+        oldWorldProvinces,
+        player.id,
+        sorted: false,
+      ),
       capitalProvinceId: capitalProvId,
       capitalName: gpNaming.capitalCityName,
       pool: variant.provinceNamePool,
@@ -139,8 +141,7 @@ void _applyMinorNationProvinceNaming({
       (n) => n.id == minor.id,
       orElse: () => const MinorNationNaming(id: '', displayName: ''),
     );
-    final owned = oldWorldProvinces.where((p) => p.ownerId == minor.id).toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    final owned = ownedProvincesForFaction(oldWorldProvinces, minor.id);
     if (owned.isEmpty) continue;
     final capitalName = namingMinor.id.isEmpty
         ? fallbackOldWorld(namingSeed + minor.id.hashCode)
@@ -190,8 +191,7 @@ void _applyTribeProvinceNaming({
       orElse: () =>
           const TribeNaming(id: '', displayName: '', provinceNamePool: []),
     );
-    final owned = newWorldProvinces.where((p) => p.ownerId == tribe.id).toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    final owned = ownedProvincesForFaction(newWorldProvinces, tribe.id);
     if (owned.isEmpty) continue;
     final capitalName = namingTribe.id.isEmpty
         ? fallbackNewWorld(namingSeed + tribe.id.hashCode)

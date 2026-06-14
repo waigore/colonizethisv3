@@ -59,6 +59,56 @@ void main() {
     });
   });
 
+  group('ownedProvincesForFaction', () {
+    test('positive: returns provinces sorted by id by default', () {
+      final provinces = [
+        prov('ow|p3', 'gp1'),
+        prov('ow|p1', 'gp1'),
+        prov('ow|p2', 'gp2'),
+        prov('ow|p0', 'gp1'),
+      ];
+      expect(
+        ownedProvincesForFaction(provinces, 'gp1').map((p) => p.id).toList(),
+        ['ow|p0', 'ow|p1', 'ow|p3'],
+      );
+    });
+
+    test('positive: sorted=false preserves source iteration order', () {
+      final provinces = [
+        prov('ow|p3', 'gp1'),
+        prov('ow|p1', 'gp1'),
+        prov('ow|p0', 'gp1'),
+      ];
+      expect(
+        ownedProvincesForFaction(
+          provinces,
+          'gp1',
+          sorted: false,
+        ).map((p) => p.id).toList(),
+        ['ow|p3', 'ow|p1', 'ow|p0'],
+      );
+    });
+
+    test('negative: faction owning nothing yields an empty list', () {
+      final provinces = [prov('ow|p1', 'gp1'), prov('ow|p2', null)];
+      expect(ownedProvincesForFaction(provinces, 'gp9'), isEmpty);
+    });
+
+    test(
+      'matches the previous inline where/toList/sort expression exactly',
+      () {
+        final provinces = [
+          prov('ow|b', 'gp1'),
+          prov('ow|a', 'gp1'),
+          prov('ow|c', 'gp2'),
+        ];
+        final legacy = provinces.where((pr) => pr.ownerId == 'gp1').toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+        expect(ownedProvincesForFaction(provinces, 'gp1'), legacy);
+      },
+    );
+  });
+
   group('factionSetupTableRow', () {
     test('positive: byte-identical to the legacy Great Power row format', () {
       const id = 'gp1';

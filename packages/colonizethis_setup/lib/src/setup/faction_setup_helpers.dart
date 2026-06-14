@@ -20,6 +20,24 @@ List<String> ownedProvinceIdsForFaction(
   return owned;
 }
 
+/// Provinces owned by [factionId] within [provinces]. When [sorted] (the
+/// default) the provinces are ordered by ascending id, matching the province
+/// naming collection contract; pass `sorted: false` to preserve the source
+/// iteration order (used by Great Power naming, which assigns names in the
+/// order provinces appear in the region list).
+List<Province> ownedProvincesForFaction(
+  Iterable<Province> provinces,
+  String factionId, {
+  bool sorted = true,
+}) {
+  final owned = <Province>[
+    for (final pr in provinces)
+      if (pr.ownerId == factionId) pr,
+  ];
+  if (sorted) owned.sort((a, b) => a.id.compareTo(b.id));
+  return owned;
+}
+
 /// One faction row for the "Faction Setup" markdown table. [capitalProvinceId]
 /// renders as an em dash when null, and [ownedProvinceIds] are comma-joined.
 String factionSetupTableRow({
