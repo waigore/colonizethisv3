@@ -150,7 +150,7 @@ List<List<String>> _assignLandByLandSeedsImpl(
   );
   entries.sort((a, b) => a.$1.compareTo(b.$1));
 
-  final next = copyTileMapGrid(grid);
+  final next = TileMapGrid.copy(grid);
   final used = List<int>.filled(numContinents, 0);
   for (final (_, x, y, c) in entries) {
     if (used[c] < budget[c]) {

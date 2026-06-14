@@ -206,8 +206,8 @@ bool _tryGrowOneCoastalCellForContinent(
     provincesByContinent.putIfAbsent(e.value, () => []).add(e.key);
   }
 
-  var g = copyTileMapGrid(grid);
-  var cg = copyTileMapGrid(continentGrid);
+  var g = TileMapGrid.copy(grid);
+  var cg = TileMapGrid.copy(continentGrid);
   final coastalByContinent = <int, List<(int x, int y)>>{};
   for (var c = 0; c < numContinents; c++) {
     coastalByContinent[c] = [];

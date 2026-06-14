@@ -138,8 +138,8 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
   );
   entries.sort((a, b) => a.$1.compareTo(b.$1));
 
-  final next = copyTileMapGrid(grid);
-  final nextContinent = copyTileMapGrid(continentGrid);
+  final next = TileMapGrid.copy(grid);
+  final nextContinent = TileMapGrid.copy(continentGrid);
   final used = List<int>.filled(numContinents, 0);
   final buffer = params.continentBufferTiles == 0
       ? 1
@@ -223,7 +223,7 @@ _placeLandSeedsOrganicImpl(
 
   final landSeeds = <(int x, int y)>[];
   final continentBySeedIndex = <int>[];
-  var g = copyTileMapGrid(grid);
+  var g = TileMapGrid.copy(grid);
   var continentGrid = List.generate(
     params.height,
     (_) => List.filled(params.width, -1),

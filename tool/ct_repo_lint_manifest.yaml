@@ -542,6 +542,13 @@ rules:
     runner: dart
     script: tool/check_map_no_partfile_classes.dart
 
+  - rule_id: repo.map_grid_ops_central
+    group: structure
+    title: colonizethis_map lib tile-grid deep copies must route through TileMapGrid.copy (Refs #3459)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_grid_ops_central.dart
+
   - rule_id: repo.land_province_bucket_keys
     group: game_invariants
     title: Canonical full-id land province bucket lookups in guarded paths

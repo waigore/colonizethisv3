@@ -215,14 +215,11 @@ _buildProvinceMetadata({
   final provinces = isOldWorld
       ? game.worldState.oldWorld.provinces
       : game.worldState.newWorld.provinces;
-  final ownerByProvinceId = <String, String>{};
+  final ownerByProvinceId = provinceOwnerByIdFromProvinces(provinces);
   final provinceDisplayNameById = <String, String>{};
   final provincePoliticalOwnerByPrefixedProvinceId = <String, String?>{};
   for (final p in provinces) {
     provincePoliticalOwnerByPrefixedProvinceId[p.id] = p.ownerId;
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      ownerByProvinceId[p.id] = p.ownerId!;
-    }
     if (p.displayName != null && p.displayName!.isNotEmpty) {
       provinceDisplayNameById[p.id] = p.displayName!;
     }
