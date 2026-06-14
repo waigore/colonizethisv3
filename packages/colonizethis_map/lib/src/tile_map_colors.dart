@@ -4,6 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'map_validation_exception.dart';
 import 'region_constants.dart';
 
 /// Distinct RGB colors for region/faction assignment. Deterministic order.
@@ -126,10 +127,8 @@ Map<String, (int r, int g, int b)> factionOwnershipColorMapForRegion(
   if (regionId == kRegionNewWorld) {
     return factionOwnershipColorMapForNewWorld(game);
   }
-  throw ArgumentError.value(
-    regionId,
-    'regionId',
-    'map: unknown region id (expected $kRegionOldWorld or $kRegionNewWorld)',
+  throw MapValidationException(
+    'map: unknown region id "$regionId" (expected $kRegionOldWorld or $kRegionNewWorld)',
   );
 }
 
