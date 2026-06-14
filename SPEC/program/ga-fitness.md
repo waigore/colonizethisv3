@@ -56,6 +56,25 @@ scores `0` for that component. **Exception:** province share is already a
 | Military (0.4) | regiment count; province share; strength proxy | sum of `regiments=` over `militaryArmySummariesSorted` for `owner=playerId`; province share (same as economic); `regimentLikeUnitCountHint` (fallback `greatPowerPowerScore` when the hint is absent) |
 | Diplomatic (0.2) | alliance count; non-war relations | `diplomacyRelationSummariesSorted` rows involving the player with `lvl=allied`; rows involving the player that are `peace` |
 
+### Economic tech-unlock blend (#3472)
+
+After the Economic category mean (`economicRaw`) is computed, the System folds in
+research progress so the GA rewards tech investment as part of economic fitness:
+
+```
+techUnlockFraction = clamp(|techUnlocked| / 113, 0, 1)   // 113 = catalog size (SPEC/game/tech-tree.md)
+economic = economicRaw × (1 - w) + techUnlockFraction × w  // w ∈ [0.05, 0.20]
+```
+
+`|techUnlocked|` is the count of the player's `techUnlockedIds` in the snapshot
+(`0` when the field is absent). `w` (`kTechUnlockEconomicWeight`) is a fixed code
+constant within `[0.05, 0.20]` (default `0.10`); its exact value inside that band
+is **GA-tunable and deferred** (numeric tuning is out of scope for #3472). The
+blend rewards research without dominating treasury, workers, or province share, and
+keeps `economic ∈ [0, 1]`. The Military and Diplomatic categories are unaffected.
+The blended `economic` is the value reported in `FitnessScore.economic` and used as
+the `economic` term in the base formula.
+
 ### Win multiplier
 
 `winMultiplier = 2.0` when `playerId == runSummary['declared_winner_player_id']`,
@@ -100,8 +119,20 @@ in `diplomacyRelationSummariesSorted`).
   returns one `FitnessScore` per player keyed by `playerId`, each with
   `economic`, `military`, `diplomatic`, and `total` fields.
 - Given two players where one has strictly greater treasury, workers, and
-  provinces and all else equal, when scored, then the stronger player's `economic`
-  is `1.0` and is greater than the weaker player's `economic`.
+  provinces, equal `techUnlockedIds`, and all else equal, when scored, then the
+  stronger player's `economic` equals `(1 - w) × 1.0 + w × techUnlockFraction` and
+  is greater than the weaker player's `economic`.
+- Given a player whose snapshot lists `N` entries in `techUnlockedIds` (`N >= 0`),
+  when the economic score is computed, then the System blends
+  `techUnlockFraction = clamp(N / 113, 0, 1)` into economic as
+  `economic = economicRaw × (1 - w) + techUnlockFraction × w` with the fixed
+  constant `w = kTechUnlockEconomicWeight ∈ [0.05, 0.20]`.
+- Given two players with identical economic raw inputs (treasury, workers,
+  province share) where one has strictly more entries in `techUnlockedIds`, when
+  scored, then the player with more unlocked techs has a strictly greater
+  `economic` score.
+- Given a player whose snapshot has no `techUnlockedIds` field, when scored, then
+  `techUnlockFraction` is `0` and `economic` equals `economicRaw × (1 - w)`.
 - Given a component whose game-wide max raw value is `0` across all players, when
   scored, then every player's normalized value for that component is `0` and does
   not produce a division-by-zero error.
