@@ -112,10 +112,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     );
     final rnd = Random(params.seed);
 
-    var grid = List.generate(
-      params.height,
-      (_) => List.filled(params.width, seaZoneId),
-    );
+    var grid = TileMapGrid.filled(params.height, params.width, seaZoneId);
     onLog?.call(
       'Pass 1: Grid initialized (${params.width}x${params.height}), all sea',
     );

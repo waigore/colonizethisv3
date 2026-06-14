@@ -14,13 +14,15 @@ class _TileMapGenTerrainResource {
     ResourceRules rules,
     Random rnd,
   ) {
-    final terrainGrid = List.generate(
+    final terrainGrid = TileMapGrid.filled<TerrainType?>(
       params.height,
-      (_) => List.filled(params.width, null as TerrainType?),
+      params.width,
+      null,
     );
-    final resourceGrid = List.generate(
+    final resourceGrid = TileMapGrid.filled<Resource?>(
       params.height,
-      (_) => List.filled(params.width, null as Resource?),
+      params.width,
+      null,
     );
 
     // Collect land cells (sentinel) for terrain assignment.

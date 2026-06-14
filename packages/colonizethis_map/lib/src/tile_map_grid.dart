@@ -14,4 +14,18 @@ class TileMapGrid {
   /// seeded generation output stays bit-for-bit deterministic.
   static List<List<T>> copy<T>(List<List<T>> grid) =>
       grid.map((row) => row.toList()).toList();
+
+  /// Returns a new row-major grid of [height] rows × [width] columns, each cell
+  /// initialized to [fill].
+  static List<List<T>> filled<T>(int height, int width, T fill) =>
+      List.generate(height, (_) => List.filled(width, fill));
+
+  /// Returns a new row-major grid of [height] rows × [width] columns, with cell
+  /// `(y, x)` set by [cellAt].
+  static List<List<T>> generate<T>(
+    int height,
+    int width,
+    T Function(int y, int x) cellAt,
+  ) =>
+      List.generate(height, (y) => List.generate(width, (x) => cellAt(y, x)));
 }

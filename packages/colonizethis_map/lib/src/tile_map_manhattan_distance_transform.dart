@@ -1,5 +1,7 @@
 import 'dart:math' show min;
 
+import 'tile_map_grid.dart';
+
 /// Exact grid Manhattan (L1) distance from each cell to the nearest coordinate
 /// in [sources].
 ///
@@ -23,10 +25,7 @@ List<List<int>> manhattanDistToNearestPoints(
     if (width <= 0 || height <= 0) {
       return [];
     }
-    return List.generate(
-      height,
-      (_) => List.filled(width, distanceWhenNoSources),
-    );
+    return TileMapGrid.filled(height, width, distanceWhenNoSources);
   }
   return manhattanDistToNearestSourceXY(
     width,
@@ -51,9 +50,10 @@ List<List<int>> manhattanDistToNearestSourceXY(
     return [];
   }
   const inf = 1 << 30;
-  final dist = List.generate(
+  final dist = TileMapGrid.generate(
     height,
-    (y) => List.generate(width, (x) => isSource(x, y) ? 0 : inf),
+    width,
+    (y, x) => isSource(x, y) ? 0 : inf,
   );
   for (var y = 0; y < height; y++) {
     for (var x = 0; x < width; x++) {

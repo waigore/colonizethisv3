@@ -8,6 +8,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'tile_map_capital_markers.dart';
+import 'tile_map_grid.dart';
 import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
@@ -349,12 +350,10 @@ Uint8List renderInitGameMapToPngFromViewData({
     final tmpResult = TileMapResult(
       width: region.width,
       height: region.height,
-      grid: List.generate(
+      grid: TileMapGrid.generate(
         region.height,
-        (y) => List.generate(
-          region.width,
-          (x) => region.cellAt(x, y).regionCellId,
-        ),
+        region.width,
+        (y, x) => region.cellAt(x, y).regionCellId,
       ),
     );
     drawBorders(
