@@ -23,12 +23,6 @@ List<ShipInstance> copyNavalShips(List<ShipInstance> ships) => <ShipInstance>[
   ...ships,
 ];
 
-/// Mission factor for Patrol interception probability.
-const double kNavalInterceptMissionFactorPatrol = 0.50;
-
-/// Mission factor for Blockade interception probability.
-const double kNavalInterceptMissionFactorBlockade = 0.90;
-
 /// Retreat base chance. SPEC/game/ships-and-naval.md.
 const double kNavalRetreatBaseChance = 0.6;
 
@@ -197,34 +191,6 @@ List<BattleContextSea> detectNavalConflicts(Game game) {
   return result;
 }
 
-(double intercept, double flee) _fleetInterceptAndFleeScores(
-  List<String> shipTypeIds,
-) {
-  var intercept = 0.0;
-  var flee = 0.0;
-  for (final id in shipTypeIds) {
-    final stats = NavalStatsCatalog.get(id);
-    intercept += stats.interceptRating;
-    flee += stats.fleeRating;
-  }
-  return (intercept, flee);
-}
-
-/// Interception probability from mission factor × (intercept / (intercept + flee)).
-/// Clamped to [0.05, 0.85].
-double navalInterceptProbability({
-  required double interceptorScore,
-  required double targetFleeScore,
-  required bool isBlockade,
-}) {
-  final denom = interceptorScore + targetFleeScore;
-  final ratio = denom <= 0 ? 0.0 : interceptorScore / denom;
-  final missionFactor = isBlockade
-      ? kNavalInterceptMissionFactorBlockade
-      : kNavalInterceptMissionFactorPatrol;
-  return (missionFactor * ratio).clamp(0.05, 0.85);
-}
-
 /// Average movement (MV) for a list of ship types. Used for retreat speed advantage.
 double avgNavalMovement(List<String> shipTypeIds) {
   if (shipTypeIds.isEmpty) return 0.0;
@@ -233,76 +199,6 @@ double avgNavalMovement(List<String> shipTypeIds) {
     sum += NavalStatsCatalog.get(id).movement;
   }
   return sum / shipTypeIds.length;
-}
-
-/// Filter battles by interception roll when one side moved and the other is Patrol/Blockade.
-/// [movedFleetIds] = set of fleet ids that had a move order this turn.
-/// Returns only battles where interceptor rolled success (or no interception case).
-List<BattleContextSea> filterBattlesByInterception(
-  Game game,
-  List<BattleContextSea> battles,
-  Set<String> movedFleetIds,
-  int seed,
-) {
-  if (battles.isEmpty) return battles;
-  final rng = navalCombatRng(seed);
-
-  // Pre-index moved fleets at sea by (seaZoneId, ownerId) to avoid O(fleets)
-  // scan per battle.
-  final movedAtSeaByZoneAndOwner = <String, Set<String>>{};
-  for (final f in game.worldState.fleets) {
-    if (!f.isAtSea || f.seaZoneId == null) continue;
-    if (!movedFleetIds.contains(f.id)) continue;
-    movedAtSeaByZoneAndOwner
-        .putIfAbsent('${f.seaZoneId}|${f.ownerId}', () => {})
-        .add(f.id);
-  }
-
-  bool ownerMovedInZone(String ownerId, String zone) =>
-      movedAtSeaByZoneAndOwner.containsKey('$zone|$ownerId');
-
-  final out = <BattleContextSea>[];
-  for (final battle in battles) {
-    final zone = battle.seaZoneId;
-    final owner1Moved = ownerMovedInZone(battle.side1.ownerId, zone);
-    final owner2Moved = ownerMovedInZone(battle.side2.ownerId, zone);
-    final (side1InterceptScore, side1FleeScore) = _fleetInterceptAndFleeScores(
-      battle.side1.shipTypeIds,
-    );
-    final (side2InterceptScore, side2FleeScore) = _fleetInterceptAndFleeScores(
-      battle.side2.shipTypeIds,
-    );
-    final side2IsInterceptor =
-        battle.side2.mission == FleetMission.patrol ||
-        battle.side2.mission == FleetMission.blockade;
-    final side1IsInterceptor =
-        battle.side1.mission == FleetMission.patrol ||
-        battle.side1.mission == FleetMission.blockade;
-    bool rollIntercept = false;
-    double pIntercept = 0.5;
-    if (owner1Moved && side2IsInterceptor) {
-      rollIntercept = true;
-      pIntercept = navalInterceptProbability(
-        interceptorScore: side2InterceptScore,
-        targetFleeScore: side1FleeScore,
-        isBlockade: battle.side2.mission == FleetMission.blockade,
-      );
-    } else if (owner2Moved && side1IsInterceptor) {
-      rollIntercept = true;
-      pIntercept = navalInterceptProbability(
-        interceptorScore: side1InterceptScore,
-        targetFleeScore: side2FleeScore,
-        isBlockade: battle.side1.mission == FleetMission.blockade,
-      );
-    }
-    if (!rollIntercept) {
-      out.add(battle);
-      continue;
-    }
-    final roll = rng.nextInt(100) / 100.0;
-    if (roll < pIntercept) out.add(battle);
-  }
-  return out;
 }
 
 /// Compute naval strength from ship type list (firepower + range weighted).

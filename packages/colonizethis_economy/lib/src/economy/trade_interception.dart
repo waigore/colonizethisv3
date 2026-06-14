@@ -15,6 +15,15 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 /// Civilian target bonus for cargo interception. SPEC: 1.25–1.5.
 const double civilianTargetBonus = 1.25;
 
+/// Privateering doctrine bonus to trade/transport raid effectiveness.
+///
+/// Applied as a single multiplicative factor to the `interceptRating`
+/// contribution of intercepting enemy fleets whose owner has
+/// `privateering_companies` unlocked, before the `ratio`/`base` terms and the
+/// documented cargo/ship clamps. Deterministic, no ruleset lookup.
+/// SPEC/program/naval-movement-resolution.md § Trade/Transport Interception.
+const double kPrivateeringTradeRaidBonus = 1.25;
+
 /// Action factor for patrol (baseline).
 const double actionFactorPatrol = 0.5;
 
@@ -57,7 +66,7 @@ class _TradeInterceptionScan {
     required this.playerMerchantShips,
   });
 
-  final int interceptScore;
+  final double interceptScore;
   final bool hasBlockade;
   final int evasionScore;
   final double escortStrength;
@@ -65,12 +74,17 @@ class _TradeInterceptionScan {
 }
 
 /// Single-pass fleet aggregation for interception/evasion/escort/merchant counters.
+///
+/// [privateeringEnemyIds] are enemy owner ids with `privateering_companies`
+/// unlocked; their intercepting fleets' `interceptRating` contribution is scaled
+/// by [kPrivateeringTradeRaidBonus] before aggregation (per-owner, tech-gated).
 _TradeInterceptionScan _scanTradeInterceptionInputs(
   List<Fleet> fleets,
   Set<String> enemyIds,
   String playerId,
+  Set<String> privateeringEnemyIds,
 ) {
-  var interceptScore = 0;
+  var interceptScore = 0.0;
   var hasBlockade = false;
   var evasionScore = 0;
   var escortStrength = 0.0;
@@ -82,11 +96,14 @@ _TradeInterceptionScan _scanTradeInterceptionInputs(
         f.isAtSea &&
         (f.mission == FleetMission.patrol ||
             f.mission == FleetMission.blockade);
+    final privateeringFactor = privateeringEnemyIds.contains(f.ownerId)
+        ? kPrivateeringTradeRaidBonus
+        : 1.0;
 
     for (final typeId in f.shipTypeIds) {
       final stats = NavalStatsCatalog.get(typeId);
       if (isEnemyFleet && canEnemyIntercept) {
-        interceptScore += stats.interceptRating;
+        interceptScore += stats.interceptRating * privateeringFactor;
       }
       if (!isPlayerFleet) {
         continue;
@@ -166,7 +183,18 @@ TradeInterceptionResult applyTradeInterception(
   }
 
   final fleets = game.worldState.fleets;
-  final scan = _scanTradeInterceptionInputs(fleets, enemies, playerId);
+  final privateeringEnemyIds = <String>{
+    for (final enemyId in enemies)
+      if (game.playerById(enemyId)?.techUnlocked?[kTechIdPrivateeringCompanies] ==
+          true)
+        enemyId,
+  };
+  final scan = _scanTradeInterceptionInputs(
+    fleets,
+    enemies,
+    playerId,
+    privateeringEnemyIds,
+  );
 
   if (scan.interceptScore <= 0) {
     final unchanged = Map<CommodityId, int>.from(overseasDelivered);

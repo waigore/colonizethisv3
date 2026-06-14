@@ -47,7 +47,7 @@ For current product, interception uses hardcoded constants in logic code (no rul
 - Clamp bounds: `[0.05, 0.85]`.
 - Formula: `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)`.
 
-No additional interception tech/composition bonus path is applied in current product; any such bonus is deferred.
+**Privateering interception bonus (tech-gated).** When the **intercepting** fleet's owner has `privateering_companies` in `techUnlocked` (Great Power doctrine; [tech-tree-naval.md](../game/tech-tree-naval.md)), the System multiplies that fleet's `fleetInterceptScore` by the single deterministic multiplicative constant `kPrivateeringInterceptBonus = 1.25` (range 1.10–1.30, strictly > 1.0) **before** computing `ratio` and applying the `[0.05, 0.85]` clamp, so the clamp bounds remain the hard limits. The bonus applies only to the intercepting side and is never applied when the tech is absent from the intercepting owner's `techUnlocked` set. The target/evading side is unaffected. The bonus is a fixed code constant (no ruleset lookup) and deterministic for fixed inputs.
 
 **Trade/Transport Interception:**
 
@@ -69,6 +69,8 @@ For current product, trade/transport interception also uses hardcoded constants 
 - `escortStrengthWeight = 0.3`
 - `civilianShipLossPenalty = 2.0`
 - `raidEfficiencyMin = 0.3`, `raidEfficiencyMax = 0.7`
+
+**Privateering trade-raid bonus (tech-gated).** When an **intercepting** enemy fleet's owner has `privateering_companies` in `techUnlocked`, the System multiplies that fleet's `interceptRating` contribution to the aggregate `fleetInterceptScore` by the single deterministic multiplicative constant `kPrivateeringTradeRaidBonus = 1.25` (range 1.10–1.30, strictly > 1.0) **before** deriving `ratio`, `base`, and the documented `P_cargo_intercept` / `P_ship_sunk` clamps, so those clamps remain the hard limits. The bonus is applied per intercepting owner that holds the tech (an enemy fleet whose owner lacks the tech contributes its unscaled `interceptRating`), is never applied for owners without the tech, and is a fixed code constant (no ruleset lookup), deterministic for fixed inputs.
 
 **Join home fleet:**
 
@@ -105,10 +107,22 @@ BuildUnitOrder for naval type; spawns in home fleet (in port at capital). Costs 
   When the System resolves interception in current product  
   Then the System uses hardcoded mission factors (`patrol=0.5`, `blockade=0.9`) and computes `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)` with no ruleset lookup.
 
-- Given interception modifiers are evaluated in current product  
+- Given an interceptor fleet on `patrol` or `blockade` whose owner does **not** have `privateering_companies` in `techUnlocked`, with fixed intercept and flee scores  
   When the System computes interception probability for fleet movement resolution  
-  Then the System does not apply any separate interception tech/composition bonus path, and treats those bonuses as deferred behavior.
+  Then the System computes `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)` using the unscaled `fleetInterceptScore` (no privateering bonus applied).
+
+- Given an interceptor fleet on `patrol` or `blockade` whose owner **has** `privateering_companies` in `techUnlocked`, with fixed intercept and flee scores where `targetEvasionScore > 0`  
+  When the System computes interception probability for fleet movement resolution  
+  Then the System multiplies `fleetInterceptScore` by `kPrivateeringInterceptBonus = 1.25` before computing `ratio` and the `[0.05, 0.85]` clamp, producing a `P_intercept` strictly greater than the no-tech baseline for the same scores while remaining within `[0.05, 0.85]`, deterministic for fixed inputs.
 
 - Given trade/transport interception runs during Extraction/Trade for fixed seed and identical game state  
   When the System applies cargo and ship-loss reduction formulas  
   Then the System uses documented named code constants (including `civilianTargetBonus`, mission factors, escort constants, and raid-efficiency bounds) and produces deterministic outputs.
+
+- Given trade/transport interception runs during Extraction/Trade and **no** intercepting enemy fleet owner has `privateering_companies` in `techUnlocked`  
+  When the System aggregates `fleetInterceptScore` and applies the cargo/ship-loss formulas for a fixed seed  
+  Then the System uses each enemy fleet's unscaled `interceptRating` (no privateering bonus) and produces the baseline reduced-delivered and ship-loss outputs.
+
+- Given trade/transport interception runs during Extraction/Trade and an intercepting enemy fleet owner **has** `privateering_companies` in `techUnlocked`  
+  When the System aggregates `fleetInterceptScore` for a fixed seed and identical game state  
+  Then the System multiplies that owner's intercepting fleet `interceptRating` contributions by `kPrivateeringTradeRaidBonus = 1.25` before deriving `ratio`/`base` and the `P_cargo_intercept` / `P_ship_sunk` clamps, yielding reduced delivered cargo less than or equal to the no-tech baseline (strictly less for inputs where the higher intercept probability changes the rounded outcome) while remaining within the documented clamp bounds, deterministic for fixed inputs.
