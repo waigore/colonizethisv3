@@ -121,5 +121,15 @@ PersonalityThresholds resolveThresholds(
       overrides,
       base.researchExploration,
     ),
+    researchFundingAggression: _resolveInt(
+      'personalityThresholds.researchFundingAggression',
+      overrides,
+      base.researchFundingAggression,
+    ),
+    researchSlotFillAggression: _resolveInt(
+      'personalityThresholds.researchSlotFillAggression',
+      overrides,
+      base.researchSlotFillAggression,
+    ),
   );
 }

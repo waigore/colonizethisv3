@@ -50,7 +50,7 @@ AI uses the order suggestion API and applies:
   - **Prefer enemy:** When choosing among valid move candidates, score moves into enemy (at-war) territory higher than moves into unowned or own territory; weighted selection then prefers enemy/contested. Default bonus +20 to score when destination owner is at war with the mover.
   - **Army parity with human rules:** AI `ArmyMoveOrder` generation uses the same legality as human move assignment: any player-owned destination province is valid across regions (no adjacency requirement), while non-owned destinations require normal adjacency/war validation.
 - **Build/work:** Prefer cheaper orders improving owned, visible provinces.
-- **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
+- **Research:** Prefer lower-era, cheaper techs unlocking core capabilities. Full-AI multi-slot fill and funding: see § Research planner.
 - **Diplomacy (Full AI):**
   - Compute a per-pair `warDesireScore` (0..100) for GP↔target where target can be GP, Minor, or Tribe.
   - Use the same composite power basis as diplomacy power score (military + province + naval) for strength ratio.
@@ -61,6 +61,16 @@ AI uses the order suggestion API and applies:
 - **Province identity:** Movement targets, build provinces, and visibility use the **prefixed** form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
 
 Seeded randomness selects among acceptable candidates; personality weights bias selection.
+
+### Research planner (Full AI, Refs #3472)
+The research planner runs **every** turn (it may emit zero orders) and assigns a **uniform, treasury-aware balanced funding tier** across the player's research slots. It consumes the multi-slot candidates from `suggestResearchOrders` ([order-suggestions.md](../program/order-suggestions.md) § Research orders) and:
+
+- **Preserves in-progress research:** candidates whose tech has `researchProgressByTechId > 0` are *must-keep* and are never dropped; when nothing at or above Low is affordable they are emitted at `none` (preserves progress without spending).
+- **Targets new slots:** when `primaryGoal == tech`, all empty slots are targeted; otherwise the target count scales by `researchSlotFillAggression` and is further reduced when the research domain weight is below the planner threshold (`40 - getAgendaResearchModifier(hiddenAgendaId)`), so a weak research weight under a non-tech goal can scale fill to zero.
+- **Uniform funding tier:** the cap tier derives from `researchFundingAggression` (raised to a `High` floor when `primaryGoal == tech`; capped at `None` when treasury `<= 0`). The planner picks the **highest** tier whose uniform per-slot cost keeps `treasury - slots×cost` at or above the research debt floor ([research-resolution.md](../program/research-resolution.md) § Constraints).
+- **Downgrade then drop:** if no tier at or above Low fits, it steps the tier down uniformly; if still unaffordable, it drops the **highest-index new** slots one at a time (never in-progress slots) until the set fits.
+
+Funding treasury costs and the debt floor are canonical in `colonizethis_data` (`research_funding.dart`), shared by the turn resolver and this planner. `researchFundingAggression` and `researchSlotFillAggression` are GA-tunable personality thresholds ([ai-parameter-registry.md](ai-parameter-registry.md)). Pure and deterministic: identical inputs yield identical orders.
 
 ### Seeding
 Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds: perception, goals, economy, military, diplomacy, research, tactical, dialogue, agenda. Same save + seeds → same orders and events.

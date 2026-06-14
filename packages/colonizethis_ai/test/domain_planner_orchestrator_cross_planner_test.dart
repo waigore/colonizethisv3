@@ -59,6 +59,9 @@ void main() {
             isHuman: false,
             leaderKey:
                 'victoria', // economy and military weights both high enough
+            // Positive treasury so the treasury-aware research planner
+            // (Refs #3472) can afford a funding tier for the empty slot.
+            treasury: 500,
           ),
         ],
       );
@@ -73,12 +76,16 @@ void main() {
         prospectedTiles: const {},
         diplomacyByOtherId: const {},
       );
+      // Use a tech primary goal so the treasury-aware research planner
+      // (Refs #3472) deterministically fills the single empty slot the fake
+      // API offers; economy work/build still run via Victoria's high economy
+      // weight and naval move/mission are independent of the primary goal.
       final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
         view: view,
         turnSeed: 123,
-        primaryGoal: StrategicGoal.expand,
+        primaryGoal: StrategicGoal.tech,
         suggestionAPI: fakeApi,
       );
 
