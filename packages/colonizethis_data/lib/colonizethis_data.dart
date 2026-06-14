@@ -17,6 +17,7 @@ export 'src/locked_partition_topology_gates.dart';
 export 'src/tech_definition.dart';
 export 'src/tech_ids.dart';
 export 'src/tech_extraction.dart';
+export 'src/general_cap.dart';
 export 'src/tech_effect_summary.dart';
 export 'src/riches_prices.dart';
 export 'src/production_recipes.dart';
