@@ -121,7 +121,7 @@ class _TribeFirstContactOverlayState extends State<TribeFirstContactOverlay> {
             const CtBrassDivider(),
             const SizedBox(height: 14),
             Text(
-              l10n.game_intro_loadError('$_loadError'),
+              l10n.tribeFirstContactOverlay_loadError('$_loadError'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: EditorialMonoclePalette.accentDim,
               ),

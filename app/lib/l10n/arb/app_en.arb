@@ -1032,6 +1032,15 @@
   "@tribeFirstContactOverlay_title": {
     "description": "Display-font title for the tribe first-contact herald overlay (OVL80001)."
   },
+  "tribeFirstContactOverlay_loadError": "Could not load first-contact dialogue: {error}",
+  "@tribeFirstContactOverlay_loadError": {
+    "description": "Error shown when the tribe first-contact herald (OVL80001) Yarn dialogue fails to load.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "game_overture_loadError": "Could not load overture dialogue: {error}",
   "@game_overture_loadError": {
     "description": "Error shown when overture dialogue fails to load.",
