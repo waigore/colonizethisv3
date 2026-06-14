@@ -10,6 +10,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combat_effective_strength.dart';
+import 'combat_rng.dart';
 import 'combat_types.dart';
 import 'military_strength.dart';
 
@@ -93,7 +94,7 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
   double attackerMoraleMultiplier = 1.0,
   double defenderMoraleMultiplier = 1.0,
 }) {
-  final rng = random ?? Random(seed ?? 0);
+  final rng = random ?? probabilisticEngagementRng(seed);
 
   var attList = attackerUnits.map((u) => u.copyWith()).toList();
   var defList = defenderUnits.map((u) => u.copyWith()).toList();

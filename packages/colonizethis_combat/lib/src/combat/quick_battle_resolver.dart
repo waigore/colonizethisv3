@@ -1,9 +1,8 @@
-import 'dart:math';
-
 import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'combat_rng.dart';
 import 'conflict_detection.dart';
 import 'quick_battle_action_modifiers.dart';
 import 'quick_battle_emplaced_guns.dart';
@@ -38,7 +37,7 @@ QuickBattleResult resolveQuickBattle(
     'quick_battle start province=${input.provinceId} '
     'seed=${input.seed} rounds=${input.maxRounds}',
   );
-  final rng = Random(input.seed);
+  final rng = quickBattleRng(input.seed);
   var attGroups = copyGroups(input.attackerDeployment.groups);
   var defGroups = copyGroups(input.defenderDeployment.groups);
   final attCasualties = <String>[];

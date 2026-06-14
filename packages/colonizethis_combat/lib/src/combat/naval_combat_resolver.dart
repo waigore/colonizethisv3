@@ -7,7 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'deterministic_rng.dart';
+import 'combat_rng.dart';
 import 'military_strength.dart';
 
 /// Mission factor for Patrol interception probability.
@@ -232,7 +232,7 @@ List<BattleContextSea> filterBattlesByInterception(
   int seed,
 ) {
   if (battles.isEmpty) return battles;
-  final rng = DeterministicRng(seed);
+  final rng = navalCombatRng(seed);
 
   // Pre-index moved fleets at sea by (seaZoneId, ownerId) to avoid O(fleets)
   // scan per battle.
@@ -334,7 +334,7 @@ NavalBattleResult resolveSeaBattle(
   bool side2CanRetreat = true,
   Map<String, double> navalFeedingCoverageByPlayerId = const {},
 }) {
-  final rng = DeterministicRng(seed);
+  final rng = navalCombatRng(seed);
   final cov1 = navalFeedingCoverageByPlayerId[battle.side1.ownerId] ?? 1.0;
   final cov2 = navalFeedingCoverageByPlayerId[battle.side2.ownerId] ?? 1.0;
   final m1 = moraleMultiplierForFeedingCoverage(cov1);
