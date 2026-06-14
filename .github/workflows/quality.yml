@@ -381,6 +381,80 @@ jobs:
           done
           git diff --exit-code -- "${rels[@]}"
 
+  # New Game init smoke (e2e): unconditionally-required PR quality gate, parallel
+  # to `app_build_linux` (same `app_tests_cache` artifact). Runs ONLY the
+  # sub-20s New Game -> default leaders -> begin smoke
+  # (`integration_test/new_game_smoke_init_e2e_test.dart`) under Xvfb on the
+  # Linux desktop target, guarding the critical init UX against app/package
+  # regressions per SPEC/program/e2e-integration-tests.md. The smoke file
+  # itself enforces the 20s wall-clock budget (fail fast inside the test).
+  # Add this job to branch protection if merges must wait on it.
+  # When no test-relevant paths change the only step is the skip echo, so the
+  # job reports success and stays a stable required check (parallel to
+  # `app_build_linux`).
+  app_e2e_smoke_init:
+    name: App e2e smoke (New Game init)
+    needs: [changes, app_tests_cache]
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      (
+        needs.changes.outputs.tests != 'true' ||
+        needs.app_tests_cache.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+    steps:
+      - name: Skip when no test-relevant paths changed
+        if: needs.changes.outputs.tests != 'true'
+        run: echo "No test-relevant paths matched; skipping New Game init smoke."
+
+      - name: Checkout
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        if: needs.changes.outputs.tests == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Install Linux desktop + Xvfb dependencies
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev xvfb
+
+      - name: Download app test cache
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: app-test-cache
+          path: _app_test_cache
+
+      - name: Restore pub + Dart tool cache
+        if: needs.changes.outputs.tests == 'true'
+        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
+
+      - name: Run New Game init smoke (Linux desktop, Xvfb, CT_E2E)
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          cd app
+          # Gitignored linux/flutter/generated_plugins.cmake; workspace dart pub get does not emit it.
+          flutter pub get
+          flutter config --enable-linux-desktop
+          xvfb-run -a flutter test \
+            integration_test/new_game_smoke_init_e2e_test.dart \
+            -d linux --dart-define=CT_E2E=true --no-pub
+
   # Always-selective app-test matrix per SPEC/program/ci-app-selective-tests.md.
   #
   # Runs the partitioned subset of `needs.changes.outputs.app_tests` for each
