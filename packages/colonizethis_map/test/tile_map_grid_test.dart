@@ -34,4 +34,44 @@ void main() {
       expect(identical(copy.first, withEmptyRow.first), isFalse);
     });
   });
+
+  group('TileMapGrid.filled', () {
+    test('creates uniform grid of requested dimensions', () {
+      final grid = TileMapGrid.filled(3, 4, 'sea');
+      expect(grid.length, 3);
+      expect(grid.every((row) => row.length == 4), isTrue);
+      expect(grid.every((row) => row.every((cell) => cell == 'sea')), isTrue);
+    });
+
+    test('each row is an independent list', () {
+      final grid = TileMapGrid.filled(2, 2, 0);
+      grid[0][0] = 99;
+      expect(grid[1][0], 0);
+    });
+
+    test('returns empty grid for non-positive dimensions', () {
+      expect(TileMapGrid.filled(0, 5, 1), isEmpty);
+      expect(TileMapGrid.filled(3, 0, 1), [
+        <int>[],
+        <int>[],
+        <int>[],
+      ]);
+    });
+  });
+
+  group('TileMapGrid.generate', () {
+    test('invokes cellAt for each coordinate', () {
+      final grid = TileMapGrid.generate(2, 3, (y, x) => y * 10 + x);
+      expect(grid, [
+        [0, 1, 2],
+        [10, 11, 12],
+      ]);
+    });
+
+    test('each row is an independent list', () {
+      final grid = TileMapGrid.generate(2, 2, (_, __) => 0);
+      grid[0][0] = 99;
+      expect(grid[1][0], 0);
+    });
+  });
 }

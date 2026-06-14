@@ -224,10 +224,7 @@ _placeLandSeedsOrganicImpl(
   final landSeeds = <(int x, int y)>[];
   final continentBySeedIndex = <int>[];
   var g = TileMapGrid.copy(grid);
-  var continentGrid = List.generate(
-    params.height,
-    (_) => List.filled(params.width, -1),
-  );
+  var continentGrid = TileMapGrid.filled(params.height, params.width, -1);
 
   const closeRadius = 5;
   const awayPenalty = 0.7;

@@ -12,6 +12,7 @@ import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_directions.dart';
+import 'map_gen_stage.dart';
 import 'tile_map_grid.dart';
 import 'tile_map_grid_graph.dart';
 import 'tile_map_resource_cap_state.dart';
@@ -112,10 +113,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     );
     final rnd = Random(params.seed);
 
-    var grid = List.generate(
-      params.height,
-      (_) => List.filled(params.width, seaZoneId),
-    );
+    var grid = TileMapGrid.filled(params.height, params.width, seaZoneId);
     onLog?.call(
       'Pass 1: Grid initialized (${params.width}x${params.height}), all sea',
     );

@@ -34,6 +34,7 @@ import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
+import 'check_map_gen_stage_protocol.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
@@ -840,6 +841,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckTileMapInlineCardinalDirections(repoRoot);
     case 'repo.map_grid_ops_central':
       return runCheckMapGridOpsCentral(repoRoot);
+    case 'repo.map_gen_stage_protocol':
+      return runCheckMapGenStageProtocol(repoRoot);
     case 'repo.land_province_bucket_keys':
       return runCheckLandProvinceBucketKeys(repoRoot);
     case 'repo.orders_dedup_map_clones':
