@@ -20,6 +20,8 @@
     "personalityThresholds.researchMilitary": 75,
     "personalityThresholds.researchEconomic": 50,
     "personalityThresholds.researchExploration": 55,
+    "personalityThresholds.researchFundingAggression": 50,
+    "personalityThresholds.researchSlotFillAggression": 70,
     "kMilitaryVictoryOldWorldProvinceThreshold": 31,
     "kExpandBonusWhenInvadableProvinces": 15,
     "kConquerScoreFloorProvincesToVictoryThreshold": 20,

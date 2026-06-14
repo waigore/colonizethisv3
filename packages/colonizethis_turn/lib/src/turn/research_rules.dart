@@ -1,3 +1,5 @@
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show researchFundingTreasuryCost;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 const int defaultResearchSlots = 3;
@@ -11,32 +13,20 @@ const int researchPointsHigh = 800;
 /// Maximum funding has 2.5x efficiency bonus.
 const int researchPointsMaximum = 2500;
 
-const int researchTreasuryCostLow = 50;
-const int researchTreasuryCostMedium = 150;
-const int researchTreasuryCostHigh = 400;
-const int researchTreasuryCostMaximum = 1000;
+// Treasury cost presets are owned by `colonizethis_data` (research_funding.dart)
+// so the resolver and the Full-AI research planner read one source of truth.
+// Refs #3472.
 
 /// Research-funding lookup: returns both the research points awarded per turn
 /// and the treasury cost per turn for a given funding level (Refs #2391 AC2).
 ({int points, int cost}) fundingStats(ResearchFundingLevel level) {
+  final cost = researchFundingTreasuryCost(level);
   return switch (level) {
-    ResearchFundingLevel.none => (points: 0, cost: 0),
-    ResearchFundingLevel.low => (
-        points: researchPointsLow,
-        cost: researchTreasuryCostLow,
-      ),
-    ResearchFundingLevel.medium => (
-        points: researchPointsMedium,
-        cost: researchTreasuryCostMedium,
-      ),
-    ResearchFundingLevel.high => (
-        points: researchPointsHigh,
-        cost: researchTreasuryCostHigh,
-      ),
-    ResearchFundingLevel.maximum => (
-        points: researchPointsMaximum,
-        cost: researchTreasuryCostMaximum,
-      ),
+    ResearchFundingLevel.none => (points: 0, cost: cost),
+    ResearchFundingLevel.low => (points: researchPointsLow, cost: cost),
+    ResearchFundingLevel.medium => (points: researchPointsMedium, cost: cost),
+    ResearchFundingLevel.high => (points: researchPointsHigh, cost: cost),
+    ResearchFundingLevel.maximum => (points: researchPointsMaximum, cost: cost),
   };
 }
 
