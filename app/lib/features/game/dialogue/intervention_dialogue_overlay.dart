@@ -80,7 +80,15 @@ class _InterventionDialogueOverlayState
     try {
       final bundle = widget.assetBundle ?? rootBundle;
       final text = await bundle.loadString(kDialogueInterventionAsset);
-      final project = YarnProject()..parse(text);
+      final project = YarnProject();
+      // Jenny resolves `{$var}` interpolation at PARSE time, so the interpolated
+      // faction variables must exist (with the `$` prefix) before `parse` or it
+      // throws a `NameError` (#3463). Real per-prompt values are bound before
+      // each node runs; StringVariable reads storage at runtime.
+      project.variables.setVariable(r'$aggressorName', '');
+      project.variables.setVariable(r'$defenderName', '');
+      project.variables.setVariable(r'$interveningName', '');
+      project.parse(text);
       for (final node in [
         _kIntro,
         _kSituation,
@@ -150,7 +158,7 @@ class _InterventionDialogueOverlayState
         );
 
         project.variables.setVariable(
-          'aggressorName',
+          r'$aggressorName',
           _factionDisplayName(widget.game, prompt.aggressorGpId),
         );
         setState(() => _yarnUiActive = true);
@@ -168,16 +176,19 @@ class _InterventionDialogueOverlayState
   }
 
   void _setFactionVariables(YarnProject project, InterventionPrompt prompt) {
+    // Jenny stores Yarn variables under their `$`-prefixed name; the asset
+    // interpolates `{$aggressorName}` etc. Binding without the prefix raised a
+    // Jenny `NameError` at runtime (#3463).
     project.variables.setVariable(
-      'aggressorName',
+      r'$aggressorName',
       _factionDisplayName(widget.game, prompt.aggressorGpId),
     );
     project.variables.setVariable(
-      'defenderName',
+      r'$defenderName',
       _factionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
     );
     project.variables.setVariable(
-      'interveningName',
+      r'$interveningName',
       _factionDisplayName(widget.game, prompt.interveningGpId),
     );
   }

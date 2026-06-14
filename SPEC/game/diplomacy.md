@@ -38,7 +38,12 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 
 ### GP–Tribe first contact
 
-GP–Tribe pairs are **not** initialized at game start. When a human GP discovers a Tribe via `knownDiplomaticTargetFactionIds` (tile visibility or sea-reachable colonial intel), `applyGpTribeFirstContactRelations` persists `AT_PEACE`, score `50`, Neutral with `sinceTurn` = current turn. The app presents the first-contact herald once per `(gameId, tribeId)` per session (`OVL80001`). See [`tribe-first-contact-overlay.md`](../ui/tribe-first-contact-overlay.md).
+GP–Tribe pairs are **not** initialized at game start. A human GP **discovers** a Tribe for first-contact only when the GP holds **non-`unknown` tile visibility into at least one province that Tribe owns** (`discoveredTribeIdsForFirstContact`). Sea-reachable colonial intel alone — which can connect Old World coasts to a still-unrevealed New World at turn 0 — does **not** count as first-contact discovery, so the herald and the persisted relation do not fire before the New World is genuinely revealed. On discovery, `applyGpTribeFirstContactRelations` persists `AT_PEACE`, score `50`, Neutral with `sinceTurn` = current turn, and the app presents the first-contact herald once per `(gameId, tribeId)` per session (`OVL80001`). See [`tribe-first-contact-overlay.md`](../ui/tribe-first-contact-overlay.md).
+
+The broader `knownDiplomaticTargetFactionIds` set (tile visibility, existing relations, **and** sea-reachable colonial intel) remains the source for diplomacy-panel targeting and declare-war colonial intel; only the herald + first-contact relation trigger is narrowed to tile visibility.
+
+- Given a new game where the human GP has zero non-`unknown` tiles in any Tribe-owned province, when `applyGpTribeFirstContactRelations` runs, then no GP–Tribe relation is persisted and `newlyContactedTribeIds` is empty, even if a Tribe colony is sea-reachable from the GP's Old World anchors.
+- Given the human GP holds non-`unknown` tile visibility into a province owned by Tribe `T`, when `applyGpTribeFirstContactRelations` runs and no GP–`T` relation exists, then the system persists `AT_PEACE`, score `50`, Neutral for the GP–`T` pair and includes `T` in `newlyContactedTribeIds`.
 
 ### GP–Minor Rules
 
