@@ -13,7 +13,9 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'setup_constants.dart';
 import 'effective_setup_seed.dart';
+import 'faction_setup_helpers.dart';
 import 'game_setup.dart';
+import 'init_pipeline_retry.dart';
 import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
 
@@ -223,10 +225,26 @@ _runLockedFullInitPipeline({
   setupLog.d(
     'init game generating OW+NW maps (locked partition + setup retries)',
   );
-  const maxPipelineAttempts = 64;
-  for (var pipelineTry = 0; pipelineTry < maxPipelineAttempts; pipelineTry++) {
-    final mapSeed = effectiveSeed + pipelineTry * 100003;
-    try {
+  return runInitPipelineWithRetries(
+    effectiveSeed: effectiveSeed,
+    modeLabel: 'locked full-init',
+    onAttemptError: (error, stackTrace, attempt, isLastAttempt) {
+      if (error is! MapPartitionGatesExhaustedException) {
+        return InitPipelineErrorAction.unhandled;
+      }
+      if (!isLastAttempt) {
+        setupLog.w(
+          'logic: locked full-init partition gates exhausted at '
+          'attempt=$attempt; bumping mapSeed (details=$error)',
+        );
+        return InitPipelineErrorAction.retry;
+      }
+      throw SetupTopologyDataException(
+        code: MapPartitionGatesExhaustedException.codeValue,
+        details: error.toString(),
+      );
+    },
+    generateAndCreate: (mapSeed) {
       final locked = generateLockedFullInitTileMapPair(
         config: config,
         effectiveSeed: mapSeed,
@@ -253,43 +271,7 @@ _runLockedFullInitPipeline({
         warpLinks: warpLinks,
       );
       return (warpLinks: warpLinks, setupResult: setupResult);
-    } on MapPartitionGatesExhaustedException catch (e) {
-      if (pipelineTry < maxPipelineAttempts - 1) {
-        setupLog.w(
-          'logic: locked full-init partition gates exhausted at '
-          'pipelineTry=$pipelineTry; bumping mapSeed (details=$e)',
-        );
-        continue;
-      }
-      throw SetupTopologyDataException(
-        code: MapPartitionGatesExhaustedException.codeValue,
-        details: e.toString(),
-      );
-    } on SetupTopologyDataException catch (e, st) {
-      final retriableTopology =
-          e.code == 'assigner_exhausted' ||
-          e.code == 'faction_component_bin_pack_failed' ||
-          e.code == 'assignment_remainder_not_connected';
-      if (retriableTopology && pipelineTry < maxPipelineAttempts - 1) {
-        setupLog.w(
-          'logic: locked full-init setup topology retry at pipelineTry=$pipelineTry '
-          '(code=${e.code}; regenerating maps mapSeed=$mapSeed)',
-        );
-        continue;
-      }
-      setupLog.e(
-        'logic: locked full-init setup failed: $e',
-        error: e,
-        stackTrace: st,
-      );
-      rethrow;
-    }
-  }
-  throw SetupTopologyDataException(
-    code: 'assigner_exhausted',
-    details:
-        'Locked full-init pipeline exhausted after $maxPipelineAttempts '
-        'map+setup attempts',
+    },
   );
 }
 
@@ -300,10 +282,10 @@ _runFreeformInitPipeline({
   required int effectiveSeed,
   required TileMapRegionGenerator generateRegion,
 }) {
-  const maxFreeformAttempts = 64;
-  for (var attempt = 0; attempt < maxFreeformAttempts; attempt++) {
-    final mapSeed = effectiveSeed + attempt * 100003;
-    try {
+  return runInitPipelineWithRetries(
+    effectiveSeed: effectiveSeed,
+    modeLabel: 'freeform init',
+    generateAndCreate: (mapSeed) {
       final mapGenParams = MapGenerationParams(
         numContinents: config.continentCount,
         seed: mapSeed,
@@ -320,9 +302,7 @@ _runFreeformInitPipeline({
         seaFraction: kDefaultSeaFraction,
         skipFillLakes: options.skipFillLakes,
       );
-      setupLog.d(
-        'init game generating OW map (freeform attempt=$attempt mapSeed=$mapSeed)',
-      );
+      setupLog.d('init game generating OW map (freeform mapSeed=$mapSeed)');
       final ow = generateRegion(
         params: paramsOW,
         numProvinces: config.numProvincesOldWorld,
@@ -373,31 +353,7 @@ _runFreeformInitPipeline({
         warpLinks: warpLinks,
       );
       return (warpLinks: warpLinks, setupResult: setupResult);
-    } on SetupTopologyDataException catch (e, st) {
-      final retriableTopology =
-          e.code == 'assigner_exhausted' ||
-          e.code == 'faction_component_bin_pack_failed' ||
-          e.code == 'assignment_remainder_not_connected';
-      if (retriableTopology && attempt < maxFreeformAttempts - 1) {
-        setupLog.w(
-          'logic: freeform init topology retry at attempt=$attempt '
-          '(code=${e.code}; mapSeed=$mapSeed)',
-        );
-        continue;
-      }
-      setupLog.e(
-        'logic: freeform init setup failed: $e',
-        error: e,
-        stackTrace: st,
-      );
-      rethrow;
-    }
-  }
-  throw SetupTopologyDataException(
-    code: 'assigner_exhausted',
-    details:
-        'Freeform init pipeline exhausted after $maxFreeformAttempts '
-        'map+setup attempts',
+    },
   );
 }
 
@@ -414,39 +370,36 @@ String formatInitGameSetupMarkdown(Game game) {
   final oldWorldProvinces = game.worldState.provincesForRegion(kRegionOldWorld);
   final newWorldProvinces = game.worldState.provincesForRegion(kRegionNewWorld);
   for (final p in game.players) {
-    final owned =
-        oldWorldProvinces
-            .where((pr) => pr.ownerId == p.id)
-            .map((pr) => pr.id)
-            .toList()
-          ..sort();
-    final capital = p.capitalProvinceId ?? '—';
     buf.writeln(
-      '| ${p.displayName} (${p.id}) | Great Power | $capital | ${owned.join(", ")} |',
+      factionSetupTableRow(
+        displayLabel: p.displayName,
+        factionId: p.id,
+        typeLabel: 'Great Power',
+        capitalProvinceId: p.capitalProvinceId,
+        ownedProvinceIds: ownedProvinceIdsForFaction(oldWorldProvinces, p.id),
+      ),
     );
   }
   for (final m in game.minorNations) {
-    final owned =
-        oldWorldProvinces
-            .where((pr) => pr.ownerId == m.id)
-            .map((pr) => pr.id)
-            .toList()
-          ..sort();
-    final capital = m.capitalProvinceId ?? '—';
     buf.writeln(
-      '| ${m.displayName ?? m.id} (${m.id}) | Minor Nation | $capital | ${owned.join(", ")} |',
+      factionSetupTableRow(
+        displayLabel: m.displayName ?? m.id,
+        factionId: m.id,
+        typeLabel: 'Minor Nation',
+        capitalProvinceId: m.capitalProvinceId,
+        ownedProvinceIds: ownedProvinceIdsForFaction(oldWorldProvinces, m.id),
+      ),
     );
   }
   for (final t in game.tribes) {
-    final owned =
-        newWorldProvinces
-            .where((pr) => pr.ownerId == t.id)
-            .map((pr) => pr.id)
-            .toList()
-          ..sort();
-    final capital = t.capitalProvinceId ?? '—';
     buf.writeln(
-      '| ${t.displayName ?? t.id} (${t.id}) | Tribe | $capital | ${owned.join(", ")} |',
+      factionSetupTableRow(
+        displayLabel: t.displayName ?? t.id,
+        factionId: t.id,
+        typeLabel: 'Tribe',
+        capitalProvinceId: t.capitalProvinceId,
+        ownedProvinceIds: ownedProvinceIdsForFaction(newWorldProvinces, t.id),
+      ),
     );
   }
 

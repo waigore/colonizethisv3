@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/utils/graph_traversal.dart';
 import 'capital_choice.dart';
+import 'faction_setup_helpers.dart';
 import 'game_setup_topology.dart';
 import 'locked_province_assigner.dart';
 import 'province_assignment.dart';
@@ -33,10 +34,11 @@ Game assignCapitalsForFactions({
   setCapitalFn,
 }) {
   for (final factionId in factionIds) {
-    final owned = provinces
-        .where((p) => p.ownerId == factionId)
-        .map((p) => p.id)
-        .toList();
+    final owned = ownedProvinceIdsForFaction(
+      provinces,
+      factionId,
+      sorted: false,
+    );
     if (owned.isEmpty) continue;
     final (provinceId, tile) = pickCapitalForFaction(
       owned,
