@@ -4,42 +4,28 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'pre_combat_index.dart';
+
 /// Applies immediate province flips when a Great Power army moves into an
 /// enemy-owned province that has no defending combat units (and no third-party
 /// combat presence). SPEC/game/combat.md § Unopposed capture.
 ///
 /// Runs at the start of the combat phase, before [detectConflicts].
 Game applyUnopposedProvinceCaptures(Game game, Orders orders) {
-  final gpIds = {for (final p in game.players) p.id};
-  final armyById = {for (final a in game.worldState.armies) a.id: a};
+  final index = PreCombatMovementIndex.build(game, orders);
   var state = game;
 
   void processRegion(RegionData region) {
-    final provinceById = {for (final p in region.provinces) p.id: p};
-    final unitsByProvince = <String, List<Unit>>{};
-    for (final u in region.units) {
-      unitsByProvince.putIfAbsent(u.locationProvinceId, () => []).add(u);
-    }
+    final provinceById = provincesByIdIndex(region);
+    final unitsByProvince = unitsByProvinceIndex(region);
 
     final movedGpIdsByProvince = <String, Set<String>>{};
-    for (final entry in orders.armyMoveOrdersByPlayerId.entries) {
-      final factionId = entry.key;
-      if (!gpIds.contains(factionId)) continue;
-      for (final order in entry.value) {
-        final army = armyById[order.armyId];
-        if (army == null || army.ownerId != factionId) continue;
-        if (army.isHomeArmy) continue;
-        final destFull = ProvinceId.isPrefixed(order.destinationProvinceId)
-            ? order.destinationProvinceId
-            : ProvinceId.full(
-                ProvinceId.regionIdFrom(army.stationedProvinceId),
-                order.destinationProvinceId,
-              );
-        if (!provinceById.containsKey(destFull)) continue;
-        movedGpIdsByProvince
-            .putIfAbsent(destFull, () => <String>{})
-            .add(factionId);
-      }
+    for (final move in index.greatPowerArmyMoves) {
+      final destFull = move.destinationProvinceId;
+      if (!provinceById.containsKey(destFull)) continue;
+      movedGpIdsByProvince
+          .putIfAbsent(destFull, () => <String>{})
+          .add(move.factionId);
     }
 
     final sortedProvinceIds = movedGpIdsByProvince.keys.toList()..sort();
