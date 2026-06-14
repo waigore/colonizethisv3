@@ -1,84 +1,19 @@
 // SPEC/game/tile-map-and-generation.md; SPEC/program/game-setup-pipeline.md (§7d.terrain).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/colonizethis_world.dart';
+import 'gp_old_world_tile_scan.dart';
 import 'seed_perturbation.dart';
+import 'setup_logging.dart';
 import 'town_capital_occupancy.dart';
 
 /// Salt for deterministic tie-breaks when assigning Hamilton +1 remainders.
 /// ASCII "TRRN" packed (issue #1872).
 const int kGpOwTerrainRedistributionSalt = 0x5452524e;
 
-String _owTileKey(String localProvinceId, int x, int y) => CapitalTile.tileKey(
-  kRegionOldWorld,
-  ProvinceId.full(kRegionOldWorld, localProvinceId),
-  x,
-  y,
-);
-
-Map<String, String> _ownerByLocalProvinceId(Game game) {
-  final m = <String, String>{};
-  for (final p in game.worldState.provincesForRegion(kRegionOldWorld)) {
-    m[ProvinceId.localIdFrom(p.id)] = p.ownerId ?? '';
-  }
-  return m;
-}
-
-bool _isGpId(String id, Set<String> gpIds) => gpIds.contains(id);
-
-/// In-scope: GP-owned Old World land tiles excluding town/capital keys.
-/// Sorted by player slot order, then [y], then [x] for deterministic application.
-class _GpOwEligibleTile {
-  const _GpOwEligibleTile({
-    required this.x,
-    required this.y,
-    required this.gpId,
-  });
-
-  final int x;
-  final int y;
-  final String gpId;
-}
-
-List<_GpOwEligibleTile> _collectEligibleTilesSorted({
-  required TileMapResult map,
-  required List<String> gpIdsSorted,
-  required Set<String> gpIds,
-  required Map<String, String> ownerByLocal,
-  required Set<String> forbidden,
-}) {
-  final gpIndex = <String, int>{
-    for (var i = 0; i < gpIdsSorted.length; i++) gpIdsSorted[i]: i,
-  };
-  final out = <_GpOwEligibleTile>[];
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final local = map.cell(x, y);
-      final owner = ownerByLocal[local];
-      if (owner == null || !_isGpId(owner, gpIds)) continue;
-      if (map.terrainAt(x, y) == null) continue;
-      final key = _owTileKey(local, x, y);
-      if (forbidden.contains(key)) continue;
-      out.add(_GpOwEligibleTile(x: x, y: y, gpId: owner));
-    }
-  }
-  out.sort((a, b) {
-    final ia = gpIndex[a.gpId] ?? 999;
-    final ib = gpIndex[b.gpId] ?? 999;
-    final c = ia.compareTo(ib);
-    if (c != 0) return c;
-    final cy = a.y.compareTo(b.y);
-    if (cy != 0) return cy;
-    return a.x.compareTo(b.x);
-  });
-  return out;
-}
-
 Map<String, int> _eligibleLandCountsByGp(
-  List<_GpOwEligibleTile> tiles,
+  List<GpOwLandTile> tiles,
   List<String> gpIdsSorted,
 ) {
   final m = <String, int>{for (final g in gpIdsSorted) g: 0};
@@ -90,7 +25,7 @@ Map<String, int> _eligibleLandCountsByGp(
 
 Map<TerrainType, int> _countTerrainOnEligibleTiles({
   required TileMapResult map,
-  required List<_GpOwEligibleTile> tiles,
+  required List<GpOwLandTile> tiles,
 }) {
   final m = <TerrainType, int>{};
   for (final t in tiles) {
@@ -209,9 +144,9 @@ applyGreatPowerOldWorldTerrainRedistribution({
     );
   }
 
-  final ownerByLocal = _ownerByLocalProvinceId(game);
+  final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
-  final tiles = _collectEligibleTilesSorted(
+  final tiles = collectGpOwEligibleTilesSorted(
     map: tileMapOldWorld,
     gpIdsSorted: gpIdsSorted,
     gpIds: gpIds,
@@ -326,9 +261,9 @@ int countTerrainOnGpOldWorldEligibleTiles({
 }) {
   final gpIdsSorted = game.players.map((p) => p.id).toList();
   final gpIds = gpIdsSorted.toSet();
-  final ownerByLocal = _ownerByLocalProvinceId(game);
+  final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
-  final tiles = _collectEligibleTilesSorted(
+  final tiles = collectGpOwEligibleTilesSorted(
     map: map,
     gpIdsSorted: gpIdsSorted,
     gpIds: gpIds,

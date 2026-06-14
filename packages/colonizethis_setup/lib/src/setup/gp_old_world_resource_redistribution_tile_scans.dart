@@ -7,24 +7,6 @@ part of 'gp_old_world_resource_redistribution.dart';
 // `GpOldWorldResourceRedistributionInfeasibleException` type, and private
 // visibility are all unchanged.
 
-String _owTileKey(String localProvinceId, int x, int y) => CapitalTile.tileKey(
-  kRegionOldWorld,
-  ProvinceId.full(kRegionOldWorld, localProvinceId),
-  x,
-  y,
-);
-
-/// Maps local province grid id → owning faction id for Old World provinces.
-Map<String, String> _ownerByLocalProvinceId(Game game) {
-  final m = <String, String>{};
-  for (final p in game.worldState.provincesForRegion(kRegionOldWorld)) {
-    m[ProvinceId.localIdFrom(p.id)] = p.ownerId ?? '';
-  }
-  return m;
-}
-
-bool _isGpId(String id, Set<String> gpIds) => gpIds.contains(id);
-
 List<Resource> _resourcesInRedistributionSet(ResourceRules rules) {
   return Resource.values
       .where((r) => rules.isAllowedInRegion(r, kRegionOldWorld))
@@ -39,20 +21,17 @@ int _countResourceOnGpTiles({
   required Set<String> forbidden,
   required Resource resource,
 }) {
+  if (map.resourceGrid == null) return 0;
   var n = 0;
-  final grid = map.resourceGrid;
-  if (grid == null) return 0;
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final local = map.cell(x, y);
-      final owner = ownerByLocal[local];
-      if (owner == null || !_isGpId(owner, gpIds)) continue;
-      if (map.terrainAt(x, y) == null) continue;
-      final key = _owTileKey(local, x, y);
-      if (forbidden.contains(key)) continue;
-      if (grid[y][x] == resource) n++;
-    }
-  }
+  visitGpOwLandTiles(
+    map: map,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpIds,
+    visit: (x, y, local, owner, key) {
+      if (forbidden.contains(key)) return;
+      if (map.resourceAt(x, y) == resource) n++;
+    },
+  );
   return n;
 }
 
@@ -65,18 +44,16 @@ int _countResourceTilesForGp({
   required Resource r,
 }) {
   var a = 0;
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final local = map.cell(x, y);
-      final owner = ownerByLocal[local];
-      if (owner == null || owner != gp) continue;
-      if (!_isGpId(owner, gpSet)) continue;
-      if (map.terrainAt(x, y) == null) continue;
-      final key = _owTileKey(local, x, y);
-      if (forbidden.contains(key)) continue;
+  visitGpOwLandTiles(
+    map: map,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpSet,
+    visit: (x, y, local, owner, key) {
+      if (owner != gp) return;
+      if (forbidden.contains(key)) return;
       if (map.resourceAt(x, y) == r) a++;
-    }
-  }
+    },
+  );
   return a;
 }
 
@@ -89,7 +66,7 @@ double _fairnessScore({
 }) {
   final g = gpIdsSorted.length;
   if (g == 0) return 0;
-  final ownerByLocal = _ownerByLocalProvinceId(game);
+  final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final gpSet = gpIdsSorted.toSet();
   final forbidden = collectTownAndCapitalTileKeys(game);
   var maxDev = 0.0;
@@ -124,25 +101,23 @@ _clearGreatPowerOldWorldTerrainResources({
   var resMap = Map<String, String>.from(resMapIn);
   var tileState = tileStateIn;
   final gpIds = game.players.map((p) => p.id).toSet();
-  final ownerByLocal = _ownerByLocalProvinceId(game);
+  final ownerByLocal = gpOwnerByLocalProvinceId(game);
   if (map.resourceGrid == null) return (map, resMap, tileState);
 
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final local = map.cell(x, y);
-      final owner = ownerByLocal[local];
-      if (owner == null || !_isGpId(owner, gpIds)) continue;
-      if (map.terrainAt(x, y) == null) continue;
-      final key = _owTileKey(local, x, y);
+  visitGpOwLandTiles(
+    map: map,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpIds,
+    visit: (x, y, local, owner, key) {
       final hadRes = map.resourceAt(x, y) != null;
       final hadEntry = resMap.containsKey(key);
       final hadImp = tileState.improvementLevel(key) != 0;
-      if (!hadRes && !hadEntry && !hadImp) continue;
+      if (!hadRes && !hadEntry && !hadImp) return;
       map = map.withResourceAt(x, y, null);
       resMap.remove(key);
       tileState = tileState.setImprovement(key, 0);
-    }
-  }
+    },
+  );
   return (map, resMap, tileState);
 }
 
@@ -157,22 +132,21 @@ int _eligibleEmptyCountForGp({
   required Set<String> used,
 }) {
   var c = 0;
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final local = map.cell(x, y);
-      final owner = ownerByLocal[local];
-      if (owner == null || owner != gp) continue;
-      if (!_isGpId(owner, gpIds)) continue;
+  visitGpOwLandTiles(
+    map: map,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpIds,
+    visit: (x, y, local, owner, key) {
+      if (owner != gp) return;
+      if (forbidden.contains(key)) return;
+      if (used.contains(key)) return;
+      if (map.resourceAt(x, y) != null) return;
       final t = map.terrainAt(x, y);
-      if (t == null) continue;
-      final key = _owTileKey(local, x, y);
-      if (forbidden.contains(key)) continue;
-      if (used.contains(key)) continue;
-      if (map.resourceAt(x, y) != null) continue;
-      if (!rules.isAllowedOnTerrain(r, t)) continue;
+      if (t == null) return;
+      if (!rules.isAllowedOnTerrain(r, t)) return;
       c++;
-    }
-  }
+    },
+  );
   return c;
 }
 
@@ -187,22 +161,21 @@ String? _firstLexEligibleEmptyTileForGp({
   required Set<String> used,
 }) {
   final candidates = <String>[];
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final local = map.cell(x, y);
-      final owner = ownerByLocal[local];
-      if (owner == null || owner != gp) continue;
-      if (!_isGpId(owner, gpIds)) continue;
+  visitGpOwLandTiles(
+    map: map,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpIds,
+    visit: (x, y, local, owner, key) {
+      if (owner != gp) return;
+      if (forbidden.contains(key)) return;
+      if (used.contains(key)) return;
+      if (map.resourceAt(x, y) != null) return;
       final t = map.terrainAt(x, y);
-      if (t == null) continue;
-      final key = _owTileKey(local, x, y);
-      if (forbidden.contains(key)) continue;
-      if (used.contains(key)) continue;
-      if (map.resourceAt(x, y) != null) continue;
-      if (!rules.isAllowedOnTerrain(r, t)) continue;
+      if (t == null) return;
+      if (!rules.isAllowedOnTerrain(r, t)) return;
       candidates.add(key);
-    }
-  }
+    },
+  );
   candidates.sort();
   return candidates.isEmpty ? null : candidates.first;
 }

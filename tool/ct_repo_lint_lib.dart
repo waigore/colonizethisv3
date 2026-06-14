@@ -39,6 +39,7 @@ import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_map_clones.dart';
+import 'check_setup_dedup_gp_ow_tile_scans.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
 import 'check_logic_work_target_switch.dart';
@@ -745,6 +746,15 @@ int? _tryRunDartRuleInProcess({
     return appResult;
   }
 
+  final int? logicResult = _tryRunLogicRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+    incrementalPaths: incrementalPaths,
+  );
+  if (logicResult != null) {
+    return logicResult;
+  }
+
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
@@ -784,20 +794,6 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugHandlerOnePerFile(repoRoot);
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
-    case 'repo.logic_diplomatic_sub_validator_size':
-      return runCheckLogicDiplomaticSubValidatorSize(repoRoot);
-    case 'repo.logic_work_target_switch':
-      return runCheckLogicWorkTargetSwitch(repoRoot);
-    case 'repo.logic_test_file_size':
-      // Full-tree enforcement (GitHub #2288): the #2216 file-size debt is now
-      // cleared across `packages/colonizethis_logic/test/**`, so the rule
-      // scans the entire tree when no changed-file baseline is provided and
-      // narrows to changed files when CI supplies an incremental baseline.
-      return runCheckLogicTestFileSize(repoRoot, targetFiles: incrementalPaths);
-    case 'repo.logic_domain_import_dag':
-      return runCheckLogicDomainImportDag(repoRoot);
-    case 'repo.logic_source_file_size':
-      return runCheckLogicSourceFileSize(repoRoot);
     case 'repo.world_no_logic_deps':
       return runCheckWorldNoLogicDeps(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
@@ -846,18 +842,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckOrdersDedupMapClones(repoRoot);
     case 'repo.setup_dedup_init_pipeline_retry':
       return runCheckSetupDedupInitPipelineRetry(repoRoot);
-    case 'repo.logic_dual_region_province_field_access':
-      return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
-    case 'repo.logic_all_provinces_sanctioned_calls':
-      return runCheckLogicAllProvincesSanctionedCalls(repoRoot);
-    case 'repo.logic_units_by_id_rebuild':
-      return runCheckLogicUnitsByIdRebuild(repoRoot);
-    case 'repo.logic_validator_units_params':
-      return runCheckLogicValidatorUnitsParams(repoRoot);
-    case 'repo.logic_dead_files':
-      return runCheckLogicDeadFiles(repoRoot);
-    case 'repo.logic_dedup_logger':
-      return runCheckLogicDedupLogger(repoRoot);
+    case 'repo.setup_dedup_gp_ow_tile_scans':
+      return runCheckSetupDedupGpOwTileScans(repoRoot);
     case 'repo.domain_package_logger_dedup':
       return runCheckDomainPackageLoggerDedup(repoRoot);
     case 'repo.ai_api_narrow_surface':
@@ -910,6 +896,47 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppNoMaterialTextButton(repoRoot);
     case 'repo.app_no_material_scaffold':
       return runCheckAppNoMaterialScaffold(repoRoot);
+    default:
+      return null;
+  }
+}
+
+/// Dispatch helper for `repo.logic_*` manifest rules. Keeps the main
+/// `_tryRunDartRuleInProcess` switch under the `repo.dart_long_string_switches`
+/// 49-case ceiling as new logic-scoped rules are added. Returns `null` for
+/// non-logic rule ids so the caller falls back to the generic dispatch.
+int? _tryRunLogicRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+  required List<String>? incrementalPaths,
+}) {
+  switch (ruleId) {
+    case 'repo.logic_diplomatic_sub_validator_size':
+      return runCheckLogicDiplomaticSubValidatorSize(repoRoot);
+    case 'repo.logic_work_target_switch':
+      return runCheckLogicWorkTargetSwitch(repoRoot);
+    case 'repo.logic_test_file_size':
+      // Full-tree enforcement (GitHub #2288): the #2216 file-size debt is now
+      // cleared across `packages/colonizethis_logic/test/**`, so the rule
+      // scans the entire tree when no changed-file baseline is provided and
+      // narrows to changed files when CI supplies an incremental baseline.
+      return runCheckLogicTestFileSize(repoRoot, targetFiles: incrementalPaths);
+    case 'repo.logic_domain_import_dag':
+      return runCheckLogicDomainImportDag(repoRoot);
+    case 'repo.logic_source_file_size':
+      return runCheckLogicSourceFileSize(repoRoot);
+    case 'repo.logic_dual_region_province_field_access':
+      return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
+    case 'repo.logic_all_provinces_sanctioned_calls':
+      return runCheckLogicAllProvincesSanctionedCalls(repoRoot);
+    case 'repo.logic_units_by_id_rebuild':
+      return runCheckLogicUnitsByIdRebuild(repoRoot);
+    case 'repo.logic_validator_units_params':
+      return runCheckLogicValidatorUnitsParams(repoRoot);
+    case 'repo.logic_dead_files':
+      return runCheckLogicDeadFiles(repoRoot);
+    case 'repo.logic_dedup_logger':
+      return runCheckLogicDedupLogger(repoRoot);
     default:
       return null;
   }

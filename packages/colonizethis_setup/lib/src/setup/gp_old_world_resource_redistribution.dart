@@ -7,6 +7,7 @@ import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'gp_old_world_tile_scan.dart';
 import 'seed_perturbation.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
@@ -40,7 +41,7 @@ int countResourceOnGpOldWorldTiles({
   required Resource resource,
 }) {
   final gpIds = game.players.map((p) => p.id).toSet();
-  final ownerByLocal = _ownerByLocalProvinceId(game);
+  final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
   return _countResourceOnGpTiles(
     map: map,
@@ -77,7 +78,7 @@ applyGreatPowerOldWorldResourceRedistribution({
     return (game: game, tileMap: tileMapOldWorld, fairnessScore: 0);
   }
 
-  final ownerByLocal = _ownerByLocalProvinceId(game);
+  final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
   final resourceSet = _resourcesInRedistributionSet(resourceRules);
 
