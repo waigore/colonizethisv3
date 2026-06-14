@@ -41,7 +41,6 @@ import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_di
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
-import 'package:colonizethis_app/widgets/game_setup.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -55,10 +54,6 @@ const Map<String, ({String actual, String expected})> _bindings = {
     expected: UiScreenIds.shellScreen,
   ),
   'CtMainMenu': (actual: CtMainMenu.screenId, expected: UiScreenIds.mainMenu),
-  'CtGameSetup': (
-    actual: CtGameSetup.screenId,
-    expected: UiScreenIds.gameSetup,
-  ),
   'GameScreen': (actual: GameScreen.screenId, expected: UiScreenIds.gameScreen),
   'ProductionScreen': (
     actual: ProductionScreen.screenId,

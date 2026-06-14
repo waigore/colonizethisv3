@@ -36,6 +36,7 @@ import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
 import 'check_map_gen_stage_protocol.dart';
 import 'check_map_grid_ops_central.dart';
+import 'check_map_public_barrel_surface.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
@@ -843,6 +844,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckMapGridOpsCentral(repoRoot);
     case 'repo.map_gen_stage_protocol':
       return runCheckMapGenStageProtocol(repoRoot);
+    case 'repo.map_public_barrel_surface':
+      return runCheckMapPublicBarrelSurface(repoRoot);
     case 'repo.land_province_bucket_keys':
       return runCheckLandProvinceBucketKeys(repoRoot);
     case 'repo.orders_dedup_map_clones':

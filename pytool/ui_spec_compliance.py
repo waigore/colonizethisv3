@@ -15,7 +15,6 @@ SPEC_UI = REPO_ROOT / "SPEC" / "ui"
 IN_SCOPE_FILES = [
     "shell-screen.md",
     "main-menu.md",
-    "game-setup.md",
     "game-screen.md",
     "production-panel.md",
     "diplomacy-panel.md",
