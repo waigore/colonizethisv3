@@ -796,3 +796,10 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_screen_registry_active_paths.dart
+
+  - rule_id: repo.dialogue_yarn_variable_bindings
+    group: ui_structure
+    title: "dialogue overlays must bind Yarn {$var} interpolations via setVariable(r'$var', …) (Refs #3463)"
+    spec: SPEC/ui/tribe-first-contact-overlay.md
+    runner: dart
+    script: tool/check_dialogue_yarn_variable_bindings.dart

@@ -4,7 +4,6 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
-import 'known_diplomatic_targets.dart';
 
 /// Outcome of applying GP–Tribe first-contact relations for one human GP.
 /// SPEC/game/diplomacy.md § GP–Tribe first contact (issue #3341).
@@ -23,8 +22,14 @@ class GpTribeFirstContactResult {
 /// For each discovered Tribe without an existing GP–Tribe relation, persist the
 /// default neutral first-contact standing (`AT_PEACE`, score 50, Neutral).
 ///
-/// Discovery uses [knownDiplomaticTargetFactionIds] (tile visibility, colonial
-/// intel, or existing relation). Only Tribe targets are mutated.
+/// Discovery is intentionally **player-facing**: a Tribe counts as discovered
+/// only when the GP holds non-`unknown` tile visibility into a province that
+/// Tribe owns (see [discoveredTribeIdsForFirstContact]). Sea-reachable colonial
+/// intel alone — which can connect Old World coasts to an unrevealed New World
+/// at turn 0 — does **not** trigger the herald or persist a relation (#3463).
+/// Broad targeting for the diplomacy panel / declare-war intel still lives in
+/// `knownDiplomaticTargetFactionIds`. The [topology] parameter is retained for
+/// call-site compatibility but is not consulted by herald discovery.
 GpTribeFirstContactResult applyGpTribeFirstContactRelations({
   required Game game,
   required String gpId,
@@ -39,16 +44,12 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
     );
   }
 
-  final known = knownDiplomaticTargetFactionIds(
-    view: view,
-    game: game,
-    topology: topology,
-  );
+  final discovered = discoveredTribeIdsForFirstContact(view: view, game: game);
   final turn = game.worldState.turnState.turnNumber;
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   final newlyContacted = <String>[];
 
-  for (final factionId in known) {
+  for (final factionId in discovered) {
     if (!tribeIds.contains(factionId)) continue;
     if (getRelation(game, gpId, factionId) != null) continue;
 
@@ -82,4 +83,37 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
     game: game.copyWith(diplomacyRelations: relations),
     newlyContactedTribeIds: newlyContacted,
   );
+}
+
+/// Tribe faction ids the human GP has actually **discovered** for first-contact
+/// purposes: the GP holds non-`unknown` tile visibility into at least one
+/// province owned by that Tribe.
+///
+/// This is deliberately narrower than `knownDiplomaticTargetFactionIds`: it
+/// omits the sea-reachable colonial-intel path so the first-contact herald and
+/// the persisted GP–Tribe relation only fire once the New World is genuinely
+/// revealed, matching the player-facing "Scouts return from the New World"
+/// framing (SPEC/game/diplomacy.md § GP–Tribe first contact; #3463).
+Set<String> discoveredTribeIdsForFirstContact({
+  required PlayerView view,
+  required Game game,
+}) {
+  final tribeIds = {for (final t in game.tribes) t.id};
+  if (tribeIds.isEmpty) return const <String>{};
+
+  final discovered = <String>{};
+  final playerId = view.playerId;
+  for (final entry in view.visibilityByTile.entries) {
+    if (entry.value == VisibilityLevel.unknown) continue;
+    final parsed = parseTileKeyCoordinates(entry.key);
+    if (parsed == null) continue;
+    final regionId = parsed.regionId;
+    final provinceLocalId = parsed.provinceLocalId;
+    final provinceId = ProvinceId.full(regionId, provinceLocalId);
+    final province = view.provinceByRegionAndId(regionId, provinceId);
+    final ownerId = province?.ownerId;
+    if (ownerId == null || ownerId == playerId) continue;
+    if (tribeIds.contains(ownerId)) discovered.add(ownerId);
+  }
+  return discovered;
 }
