@@ -85,6 +85,11 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
+      // AC-6 diagnostics: the load-error copy is overlay-specific (OVL80001),
+      // not the reused "intro dialogue" string from OVL10001 (#3463).
+      expect(find.textContaining('first-contact dialogue'), findsOneWidget);
+      expect(find.textContaining('intro dialogue'), findsNothing);
+
       await tester.tap(find.text('Continue'));
       await tester.pump();
 

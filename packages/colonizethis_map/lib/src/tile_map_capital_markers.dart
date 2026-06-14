@@ -1,5 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'map_validation_exception.dart';
+import 'region_constants.dart';
+
 /// Capital marker coordinates for map rendering (PNG / init-game view).
 typedef TileMapCapitalMarker = ({
   String factionId,
@@ -18,6 +21,26 @@ enum TileMapCapitalMarkerScope {
 
   /// All faction types; capitals filtered by [regionId] on the tile.
   allFactions,
+}
+
+/// Default per-region capital-marker scope for ownership overlays: Old World
+/// scans great powers + minor nations; New World scans tribes.
+///
+/// Single canonical region→scope selector (Refs #3459 AC3) so single-region
+/// ownership overlays stop branching the scope inline. Throws
+/// [MapValidationException]
+/// for unknown ids. Combined (all-faction) views pass
+/// [TileMapCapitalMarkerScope.allFactions] explicitly.
+TileMapCapitalMarkerScope capitalMarkerScopeForRegion(String regionId) {
+  if (regionId == kRegionOldWorld) {
+    return TileMapCapitalMarkerScope.oldWorldFactions;
+  }
+  if (regionId == kRegionNewWorld) {
+    return TileMapCapitalMarkerScope.newWorldFactions;
+  }
+  throw MapValidationException(
+    'map: unknown region id "$regionId" (expected $kRegionOldWorld or $kRegionNewWorld)',
+  );
 }
 
 List<TileMapCapitalMarker> collectCapitalMarkersForRegion({

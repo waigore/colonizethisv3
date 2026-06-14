@@ -37,18 +37,13 @@ InitGameMapViewData buildInitGameMapViewData({
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
   RegionMapViewData? oldWorld;
   RegionMapViewData? newWorld;
-  final regionConfigs = [
-    (regionId: kRegionOldWorld, isOldWorld: true),
-    (regionId: kRegionNewWorld, isOldWorld: false),
-  ];
-  for (final region in regionConfigs) {
+  for (final regionId in const [kRegionOldWorld, kRegionNewWorld]) {
     final regionView = _buildRegionViewData(
-      regionId: region.regionId,
-      tileMap: tileMapByRegion[region.regionId]!,
-      topology: topologyByRegion[region.regionId]!,
+      regionId: regionId,
+      tileMap: tileMapByRegion[regionId]!,
+      topology: topologyByRegion[regionId]!,
       game: game,
       cellSize: cellSize,
-      isOldWorld: region.isOldWorld,
       greatPowerColorOverride: greatPowerColorOverride,
       visibilityByTile: visibilityByTile,
       warpLinks: warpLinks,
@@ -59,7 +54,7 @@ InitGameMapViewData buildInitGameMapViewData({
           resourceExtractionBlockedUnitsByTile,
       civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
-    if (region.isOldWorld) {
+    if (regionId == kRegionOldWorld) {
       oldWorld = regionView;
     } else {
       newWorld = regionView;
@@ -86,7 +81,6 @@ RegionMapViewData _buildRegionViewData({
   required MapTopology topology,
   required Game game,
   required int cellSize,
-  required bool isOldWorld,
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
   Map<String, TileVisibility>? visibilityByTile,
   List<WarpLink>? warpLinks,
@@ -97,7 +91,7 @@ RegionMapViewData _buildRegionViewData({
 }) {
   final provinceMeta = _buildProvinceMetadata(
     game: game,
-    isOldWorld: isOldWorld,
+    regionId: regionId,
     topology: topology,
   );
   final factionData = initGameFactionColorData(
@@ -108,7 +102,6 @@ RegionMapViewData _buildRegionViewData({
     game: game,
     regionId: regionId,
     tileMap: tileMap,
-    isOldWorld: isOldWorld,
     provinces: provinceMeta.provinces,
     seaZoneIds: provinceMeta.seaZoneIds,
     ownerByProvinceId: provinceMeta.ownerByProvinceId,
@@ -208,13 +201,14 @@ RegionMapViewData _buildRegionMapViewDataFromParts({
 })
 _buildProvinceMetadata({
   required Game game,
-  required bool isOldWorld,
+  required String regionId,
   required MapTopology topology,
 }) {
   final seaZoneIds = seaZoneIdsFromTopology(topology);
-  final provinces = isOldWorld
-      ? game.worldState.oldWorld.provinces
-      : game.worldState.newWorld.provinces;
+  final provinces = regionDataForMapRegionId(
+    game.worldState,
+    regionId,
+  ).provinces;
   final ownerByProvinceId = provinceOwnerByIdFromProvinces(provinces);
   final provinceDisplayNameById = <String, String>{};
   final provincePoliticalOwnerByPrefixedProvinceId = <String, String?>{};
@@ -261,7 +255,6 @@ _buildCellAndUnitData({
   required Game game,
   required String regionId,
   required TileMapResult tileMap,
-  required bool isOldWorld,
   required List<Province> provinces,
   required Set<String> seaZoneIds,
   required Map<String, String> ownerByProvinceId,
@@ -293,7 +286,6 @@ _buildCellAndUnitData({
   final unitOverlayData = _buildUnitAndCivilianMarkerData(
     game: game,
     regionId: regionId,
-    isOldWorld: isOldWorld,
     provinces: provinces,
     cells: cells,
     provinceToTile: provinceToTile,

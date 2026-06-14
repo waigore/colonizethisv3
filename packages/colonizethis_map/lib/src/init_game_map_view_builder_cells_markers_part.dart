@@ -92,7 +92,6 @@ Map<String, (int x, int y)> _buildProvinceToRepresentativeTile({
 _buildUnitAndCivilianMarkerData({
   required Game game,
   required String regionId,
-  required bool isOldWorld,
   required List<Province> provinces,
   required List<CellViewData> cells,
   required Map<String, (int x, int y)> provinceToTile,
@@ -138,12 +137,13 @@ _buildUnitAndCivilianMarkerData({
     );
   }
 
-  final regionUnits = isOldWorld
-      ? game.worldState.oldWorld.units
-      : game.worldState.newWorld.units;
+  final regionUnits = regionDataForMapRegionId(
+    game.worldState,
+    regionId,
+  ).units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
-        civilianOwnerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
+        civilianOwnerIds.contains(u.ownerId) && isCivilianUnitType(u.type);
     if (isPlayerOwnedCivilian) {
       _addCivilianUnitToTileKeyBucket(
         unit: u,
@@ -176,9 +176,9 @@ _buildUnitAndCivilianMarkerData({
     final tileKey = entry.key;
     final units = entry.value.toList()
       ..sort((a, b) {
-        final priorityCompare = _civilianIconPriorityForType(
+        final priorityCompare = civilianUnitIconPriorityForType(
           a.type,
-        ).compareTo(_civilianIconPriorityForType(b.type));
+        ).compareTo(civilianUnitIconPriorityForType(b.type));
         if (priorityCompare != 0) {
           return priorityCompare;
         }

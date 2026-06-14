@@ -192,6 +192,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get tribeFirstContactOverlay_title => 'First Contact';
 
   @override
+  String tribeFirstContactOverlay_loadError(String error) {
+    return 'Could not load first-contact dialogue: $error';
+  }
+
+  @override
   String game_overture_loadError(String error) {
     return 'Could not load overture dialogue: $error';
   }
