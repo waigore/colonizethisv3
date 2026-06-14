@@ -1,5 +1,5 @@
 // New game setup: six slots with nation + leader pickers. Opened via
-// OpenDialogEvent id `new_game_leader_selection`. SPEC/ui/game-setup.md § Shell new game dialog.
+// OpenDialogEvent id `new_game_leader_selection`. SPEC/ui/new-game-leader-selection-dialog.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
@@ -593,14 +593,11 @@ class _LeaderDialogTextStyles {
 }
 
 /// Pickers body that switches between a side-by-side `Row` and a vertically
-/// stacked `Column` at the [kGameSetupNarrowBreakpoint] (500 dp) viewport
-/// width, mirroring the `CtGameSetup` narrow-stacking rule so the shell
-/// dialog (DLG10001) honours the same `< 500 dp` rule as the full-screen
-/// Game Setup surface (SHEL20001).
+/// stacked `Column` at the [kGameSetupNarrowBreakpoint] (500 dp) viewport width.
 ///
 /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
-/// + Acceptance Criteria narrow-viewport stacking AC; `SPEC/ui/game-setup.md`
-/// § Shell new game dialog; `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.
+/// + Acceptance Criteria narrow-viewport stacking AC;
+/// `SPEC/ui/mobile-adaptation.md` § 4 New game leader selection.
 class _SlotPickersBody extends StatelessWidget {
   const _SlotPickersBody({
     required this.nationDropdown,
