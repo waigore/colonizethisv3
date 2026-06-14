@@ -294,6 +294,7 @@ EconomyPlan runEconomyPlanner({
     effectiveLabour: effectiveLabour,
     config: config,
     seeds: seeds,
+    techUnlocked: player.techUnlocked,
     militaryRebuildCrisis: militaryRebuildCrisis,
     regimentBuildInputProductionBoost: growthStagePlannerEnabled
         ? false
@@ -414,6 +415,7 @@ List<AssignedRecipe> _allocateLabour({
   required int effectiveLabour,
   required AIConfig config,
   required AISeedBundle seeds,
+  Map<String, bool>? techUnlocked,
   bool militaryRebuildCrisis = false,
   bool regimentBuildInputProductionBoost = false,
   Set<String> missingRegimentBuildInputIds = const {},
@@ -447,6 +449,7 @@ List<AssignedRecipe> _allocateLabour({
       feedstockReserve: feedstockReserve,
       feedstockReserveOutputIds: feedstockReserveOutputIds,
       labourByRecipe: labourByRecipe,
+      techUnlocked: techUnlocked,
       onStateUpdated: (nextVirtual, nextRemainingLabour) {
         virtual = nextVirtual;
         remainingLabour = nextRemainingLabour;
@@ -457,6 +460,16 @@ List<AssignedRecipe> _allocateLabour({
   // Build feasible recipes with scores. Feasible = can run at least 1 full run.
   final candidates = <ScoredRecipe>[];
   for (final recipe in recipes) {
+    // Skip recipes the player has not unlocked (e.g. `fabric_from_cotton`
+    // requires `cotton_weaving`) so the AI never assigns labour to or suggests
+    // a tech-locked recipe. SPEC/game/production-recipes.md
+    // § Technology-gated recipes; Refs #3470 Slice C.
+    if (!ProductionRecipesCatalog.isRecipeAvailableForPlayer(
+      recipe,
+      techUnlocked,
+    )) {
+      continue;
+    }
     if (castIronLabourPeasantRecruitFabricBoost &&
         recipe.outputCommodityId == CommodityCatalog.fabric.id) {
       continue;
@@ -579,6 +592,7 @@ void _assignCastIronLabourFabricPrePass({
   required Set<String> feedstockReserveOutputIds,
   required Map<String, int> labourByRecipe,
   required void Function(Stockpile virtual, int remainingLabour) onStateUpdated,
+  Map<String, bool>? techUnlocked,
 }) {
   final fabricId = CommodityCatalog.fabric.id;
   final fabricRecipes = ProductionRecipesCatalog.producing(fabricId).toList()
@@ -586,6 +600,14 @@ void _assignCastIronLabourFabricPrePass({
   var nextVirtual = virtual;
   var nextRemainingLabour = remainingLabour;
   for (final recipe in fabricRecipes) {
+    // Tech-locked fabric recipes (e.g. `fabric_from_cotton` without
+    // `cotton_weaving`) are not assignable. Refs #3470 Slice C.
+    if (!ProductionRecipesCatalog.isRecipeAvailableForPlayer(
+      recipe,
+      techUnlocked,
+    )) {
+      continue;
+    }
     if (nextRemainingLabour < recipe.labourPerOutput) continue;
     final feasibilityStock =
         feedstockReserveOutputIds.contains(recipe.outputCommodityId)

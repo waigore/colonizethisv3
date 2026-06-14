@@ -36,6 +36,18 @@ The following recipes are defined for current product:
 
 ---
 
+## Technology-gated recipes
+
+Most recipes are always available. A recipe MAY declare a **required technology id**; such a recipe is **available per player** only when that player has the technology in its `techUnlocked` set. Gating is per player and deterministic.
+
+- **Fabric (cotton)** (`fabric_from_cotton`) requires `cotton_weaving` ([tech-tree-new-world.md](tech-tree-new-world.md)). Until the player researches `cotton_weaving`, that player cannot produce fabric from cotton.
+- **Fabric (wool)** (`fabric_from_wool`) is **always available** (no technology gate).
+- A recipe with no required technology id is always available to every player.
+
+The gate is enforced wherever recipe availability is evaluated for a player: production assignment/feasibility, order projections and suggestions, and the AI economy planner's recipe candidate selection. A player that has not unlocked the required technology never has a tech-gated recipe assigned, suggested, or scored. The recipe definition stays in the program-level catalog; availability is computed from the player's `techUnlocked` set, not by removing the recipe from the catalog.
+
+---
+
 ## Examples
 
 - Timber ×2, Iron ×2 → Cast Iron (labour per unit from constants).
@@ -81,3 +93,19 @@ Testable conditions for "done": recipe structure (output commodity + quantity, i
 - Given the System has executed the Production phase for a player and at least one recipe ran  
   When the phase completes  
   Then the System records which recipes ran and the quantity produced per recipe (e.g. productionByRecipe: recipe id → quantity produced) so that order projections and inspection can use it; see [order-projections.md](../program/order-projections.md) (§ productionByRecipe) and [economy-models.md](../program/economy-models.md).
+
+- Given a recipe declares no required technology id  
+  When the System evaluates whether that recipe is available to any player  
+  Then the System reports the recipe as available regardless of the player's `techUnlocked` set.
+
+- Given the `fabric_from_cotton` recipe declares required technology id `cotton_weaving`, and a player whose `techUnlocked` set does not contain `cotton_weaving` mapped to `true`  
+  When the System evaluates recipe availability for that player (production assignment, feasibility, order suggestion, or AI economy planning)  
+  Then the System reports `fabric_from_cotton` as not available to that player while `fabric_from_wool` remains available.
+
+- Given the `fabric_from_cotton` recipe declares required technology id `cotton_weaving`, and a player whose `techUnlocked` set maps `cotton_weaving` to `true`  
+  When the System evaluates recipe availability for that player  
+  Then the System reports `fabric_from_cotton` as available to that player.
+
+- Given an AI-controlled player whose `techUnlocked` set does not contain `cotton_weaving` mapped to `true`  
+  When the AI economy planner scores and allocates production recipes for that player  
+  Then the AI economy planner does not score, assign labour to, or suggest `fabric_from_cotton`.
