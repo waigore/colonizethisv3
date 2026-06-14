@@ -9,3 +9,4 @@ export 'fitness/fitness_score.dart';
 export 'genetics/operators.dart';
 export 'genetics/population.dart';
 export 'persistence/run_state.dart';
+export 'setup/ga_setup_profile.dart';

@@ -1,5 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import '../setup/ga_setup_profile.dart';
+
 /// Parsed `ga-config.json`. SPEC/program/ga-runner.md. Refs #3439.
 class GaConfig {
   const GaConfig({
@@ -31,6 +33,11 @@ class GaConfig {
       throw const FormatException('game_setup_config must be a JSON object');
     }
     final setup = _gameSetupFromJson(setupJson);
+    // GA observer games require realistic minor/tribe presence (Refs #3447).
+    validateGaFactionMinimums(
+      minorNationCount: setup.minorNationCount,
+      tribeCount: setup.tribeCount,
+    );
     final playerCount =
         (json['game_player_count'] as num?)?.toInt() ?? setup.greatPowerCount;
     if (playerCount != setup.greatPowerCount) {

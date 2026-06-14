@@ -20,10 +20,10 @@ void main() {
           seedProfilesDir: 'seeds',
           gameSetupConfig: GameSetupConfig(
             selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 0,
+            minorNationCount: 3,
             tribeCount: 3,
-            numProvincesOldWorld: 20,
-            numProvincesNewWorld: 10,
+            numProvincesOldWorld: 23,
+            numProvincesNewWorld: 12,
           ),
           outputDir: 'out',
           seed: 42,

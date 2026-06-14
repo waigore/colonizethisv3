@@ -33,6 +33,16 @@ error; **130** SIGINT (last completed generation persisted).
 
 v1 evaluates **2-player** games only (`game_player_count = 2`).
 
+## GA setup profile (Refs #3447)
+
+GA observer games must produce **realistic** worlds matching the player-app
+province-assignment invariants (full non-empty ownership, app-default per-GP Old
+World share, mandatory minors/tribes ≥ 3 each), not the sparse zero-minor maps
+used previously. `GaConfig.fromJson` rejects (`FormatException`, exit **1**) any
+`game_setup_config` with `minorNationCount < 3` or `tribeCount < 3`. Per-faction
+targets, budget scaling, and the orphan-continent rule are normative in
+**[ga-setup-profile.md](ga-setup-profile.md)**.
+
 ## Observer contract
 
 The runner invokes (from repo root):
@@ -118,6 +128,15 @@ re-running games.
   `best-overall-profile.json` absent, when resume runs, then the system
   re-writes `best-overall-profile.json` from the best-overall generation and
   exits **0** without re-running games.
+- Given a `ga-config.json` whose `game_setup_config.minorNationCount` is `0`,
+  `1`, or `2`, when `GaConfig.fromJson` parses it, then the system throws a
+  `FormatException` (CLI exit **1**) naming the minimum of 3 minors.
+- Given a `ga-config.json` whose `game_setup_config.tribeCount` is `0`, `1`, or
+  `2`, when `GaConfig.fromJson` parses it, then the system throws a
+  `FormatException` (CLI exit **1**) naming the minimum of 3 tribes.
+
+GA setup profile builder ACs are normative in
+[ga-setup-profile.md](ga-setup-profile.md).
 
 ## Blessing / graduation (Refs #3444)
 
