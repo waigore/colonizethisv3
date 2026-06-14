@@ -167,6 +167,103 @@ void main() {
       );
     });
 
+    // Slice B of #3470: privateering trade-raid bonus.
+    // SPEC/program/naval-movement-resolution.md § Trade/Transport Interception.
+    Game gameWithEnemyPatrol({required bool enemyHasPrivateering}) => Game(
+      id: 'g1',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        fleets: [
+          Fleet(
+            id: 'enemy',
+            ownerId: 'p2',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: const ['sloop'],
+            mission: FleetMission.patrol,
+          ),
+          Fleet(
+            id: 'mine',
+            ownerId: 'p1',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: const ['fluyte'],
+          ),
+        ],
+      ),
+      players: [
+        const Player(id: 'p1', displayName: 'A', isHuman: true),
+        Player(
+          id: 'p2',
+          displayName: 'B',
+          isHuman: false,
+          techUnlocked: enemyHasPrivateering
+              ? const {'privateering_companies': true}
+              : const {},
+        ),
+      ],
+      diplomacyRelations: const [
+        DiplomacyRelation(
+          factionId1: 'p1',
+          factionId2: 'p2',
+          state: RelationState.atWar,
+        ),
+      ],
+    );
+
+    test('enemy without privateering reduces cargo by the baseline', () {
+      final game = gameWithEnemyPatrol(enemyHasPrivateering: false);
+      final result = applyTradeInterception(
+        game,
+        'p1',
+        {CommodityCatalog.grain.id: 100},
+        seed: 42,
+      );
+      // ratio = 4/7; pCargoEffective ≈ 0.2265 => keep ≈ round(77.35) = 77.
+      expect(result.reducedDelivered[CommodityCatalog.grain.id], 77);
+    });
+
+    test('enemy with privateering reduces cargo more (strictly less kept)', () {
+      final baseline = applyTradeInterception(
+        gameWithEnemyPatrol(enemyHasPrivateering: false),
+        'p1',
+        {CommodityCatalog.grain.id: 100},
+        seed: 42,
+      );
+      final boosted = applyTradeInterception(
+        gameWithEnemyPatrol(enemyHasPrivateering: true),
+        'p1',
+        {CommodityCatalog.grain.id: 100},
+        seed: 42,
+      );
+      final keptBaseline = baseline.reducedDelivered[CommodityCatalog.grain.id]!;
+      final keptBoosted = boosted.reducedDelivered[CommodityCatalog.grain.id]!;
+      // 5/8 ratio => pCargoEffective ≈ 0.2578 => keep ≈ round(74.22) = 74.
+      expect(keptBoosted, 74);
+      expect(keptBoosted, lessThan(keptBaseline));
+    });
+
+    test('privateering trade-raid result is deterministic for a fixed seed', () {
+      final a = applyTradeInterception(
+        gameWithEnemyPatrol(enemyHasPrivateering: true),
+        'p1',
+        {CommodityCatalog.grain.id: 100},
+        seed: 999,
+      );
+      final b = applyTradeInterception(
+        gameWithEnemyPatrol(enemyHasPrivateering: true),
+        'p1',
+        {CommodityCatalog.grain.id: 100},
+        seed: 999,
+      );
+      expect(
+        a.reducedDelivered[CommodityCatalog.grain.id],
+        b.reducedDelivered[CommodityCatalog.grain.id],
+      );
+    });
+
     test('can remove merchant ships when interception triggers and RNG hits', () {
       final game = Game(
         id: 'g1',
