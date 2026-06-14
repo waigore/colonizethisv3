@@ -48,7 +48,7 @@ For complete details, read the relevant rule file(s) in `.cursor/rules/`.
 
 ## Project agent skills
 
-Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the task, read and follow it.
+Skills live under `.cursor/skills/<name>/SKILL.md` (source of truth for all agents). Grok discovers thin shims at `.grok/skills/<name>/SKILL.md` (repo priority) that delegate by reading the Cursor files. When a skill matches the task, read and follow the authoritative `.cursor/skills/` version (and any referenced `reference.md` or sibling skills it names).
 
 | Skill | Use when |
 |-------|----------|
