@@ -57,6 +57,44 @@ The builder guarantees **no landmass is left without a painting faction**:
 - `minorOwTargets`: list of per-minor OW targets (length `minorCount`).
 - `tribeNwTargets`: list of per-tribe NW targets (length `tribeCount`).
 
+## Full-assignment verification (normative)
+
+GA observer games must materialize the same **full non-empty ownership**
+invariant the player app guarantees: every province present in the generated
+topology must appear in `WorldState` with a non-empty `ownerId` (Great Power,
+minor, or tribe). The shared, reusable verifier
+`verifyFullProvinceAssignment` lives in `colonizethis_setup`
+(`packages/colonizethis_setup/lib/src/setup/full_assignment_verification.dart`)
+and operates on a `WorldState` plus the per-region topology map. The GA init
+path (capital resolution in `tool/ga_runner`) invokes it for **every** game
+init; the default player-app init path does **not** call it, so app behavior is
+unchanged.
+
+On any violation the verifier throws `SetupTopologyDataException` with the
+stable code `unassigned_provinces` (constant `kGaUnassignedProvincesCode`),
+surfacing all of: topology province ids missing from `WorldState`, per-region
+province-count mismatches, and provinces with a `null` or empty `ownerId`. The
+code is not in the GA pipeline's retriable set, so the failure propagates and
+the GA run exits non-zero rather than scoring a malformed world.
+
+### Acceptance criteria
+
+- Given a `WorldState` whose per-region provinces match the topology province
+  nodes exactly and every province has a non-empty `ownerId`, when
+  `verifyFullProvinceAssignment` runs, then it returns without throwing.
+- Given a `WorldState` missing one or more topology province nodes for a region,
+  when `verifyFullProvinceAssignment` runs, then it throws
+  `SetupTopologyDataException` with code `unassigned_provinces` and the message
+  names the missing province id(s).
+- Given a `WorldState` where at least one province has a `null` or empty
+  `ownerId`, when `verifyFullProvinceAssignment` runs, then it throws
+  `SetupTopologyDataException` with code `unassigned_provinces` and the message
+  names the unowned province id(s).
+- Given a valid GA setup profile (2 GPs, 3 minors, 3 tribes), when `runInitGame`
+  materializes the game and the GA init path runs the verifier, then every Old
+  World and New World topology province is present in `WorldState` with a
+  non-empty `ownerId` and the verifier does not throw.
+
 ## Acceptance criteria
 
 - Given a profile request with `gpCount = 2`, `minorCount = 3`, `tribeCount = 3`,
