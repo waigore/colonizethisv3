@@ -18,7 +18,14 @@ Each Great Power has a **general cap**: the maximum (and minimum) number of gene
   - If `national_bureaucracy` **or** `improved_infantry_tactics` is in `techUnlocked`, set `capBase = max(capBase, 3)`.
   - If `nationalism` is in `techUnlocked`, set `capBase = max(capBase, 4)`.
   The faction’s **general cap** is `capBase`. When the cap increases (e.g. from 1 to 2), the system immediately creates additional generals so that total general count equals the new cap; new generals start at 0 medals. **Stacking:** `national_bureaucracy` and `improved_infantry_tactics` do not stack—only one of them is required for cap 3; researching both does not increase the cap further.
-- **Scope:** The cap is per faction (global), not per region.
+- **Scope:** The cap is per faction (global), not per region. The cap applies to **Great Powers only**; Minor Nations and Tribes have no general cap and no generals.
+
+### Persistence and load reconciliation (spawn-only)
+
+The System **persists** each Great Power's effective general cap (`Player.generalCap`) in the save file. On **load** the System reconciles each GP's `generals` roster to its effective cap:
+
+- The effective cap is the persisted `Player.generalCap`. When a loaded save has **no** persisted cap (legacy migration), the System derives it from `techUnlocked` via the cap-stacking rules above (minimum 1).
+- Reconciliation is **spawn-only**: when the roster has fewer generals than the cap, the System spawns missing generals with 0 medals until the roster size equals the cap. The System **never deletes** generals; a roster that already **exceeds** the cap is retained (above-cap rosters are tolerated, not trimmed). Cap growth is therefore monotonic.
 
 ### Assignment (pre-Combat phase)
 
