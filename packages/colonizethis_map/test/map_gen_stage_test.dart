@@ -1,7 +1,7 @@
 import 'package:colonizethis_map/src/map_gen_stage.dart';
 import 'package:colonizethis_map/src/tile_map_grid.dart';
 import 'package:colonizethis_map/src/tile_map_land_seed_contract.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 class _StubParams implements TileMapLandSeedParams {
   const _StubParams({this.width = 3, this.height = 2});
