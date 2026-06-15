@@ -239,7 +239,8 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 
   final researchThreshold = computeResearchThreshold(ctx: ctx);
   final researchWillRun = researchPlannerWillRun(ctx: ctx);
-  ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));
+  final researchResult = runResearchPlannerWithDecision(ctx: ctx);
+  ctx = ctx.withOrders(researchResult.orders);
   emit('aiStageG');
 
   // Refs #2994 F7 / Refs #3122 orchestrator wiring: merge treasury-planner
@@ -295,6 +296,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     workThreshold: economyGate.workThreshold,
     buildThreshold: economyGate.buildThreshold,
     researchThreshold: researchThreshold,
+    researchDecision: researchResult.decision,
   );
 
   return DomainPlannerOutcome(
@@ -601,7 +603,8 @@ void _appendEconomyPeasantRecruit({
     }
     if (peasantRecruit != null) {
       final player = ctx.game.playerById(ctx.nationId);
-      final affordable = player != null &&
+      final affordable =
+          player != null &&
           canAffordRecruitWorker(
             player,
             peasantRecruit,
@@ -864,13 +867,11 @@ _BuildPassResult _appendEconomyBuildOrders({
       snapshot: snapshot,
     );
     if (growthStageSuppressesMilitaryBuilds(stage)) {
-      candidatesForGate = buildCandidates
-          .where((order) {
-            final category = buildUnitCategoryForUnitType(order.unitType);
-            return category != BuildUnitCategory.military &&
-                category != BuildUnitCategory.naval;
-          })
-          .toList();
+      candidatesForGate = buildCandidates.where((order) {
+        final category = buildUnitCategoryForUnitType(order.unitType);
+        return category != BuildUnitCategory.military &&
+            category != BuildUnitCategory.naval;
+      }).toList();
       _log.d(
         'growth_stage military build suppressed nationId=${ctx.nationId} '
         'militaryPriority=${stage.militaryPriority}',
