@@ -99,8 +99,14 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
+    Orders currentOrders, {
+    int researchNavalWeight = 0,
+    int researchMilitaryWeight = 0,
+    int researchEconomicWeight = 0,
+    int researchExplorationWeight = 0,
+    int researchSeed = 0,
+    int categoryDiversifyWeight = 0,
+  }) {
     ordersLog.d(
       'order suggestion API suggestResearchOrders player=${view.playerId}',
     );
@@ -109,6 +115,12 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
       game,
       topology,
       currentOrders,
+      researchNavalWeight: researchNavalWeight,
+      researchMilitaryWeight: researchMilitaryWeight,
+      researchEconomicWeight: researchEconomicWeight,
+      researchExplorationWeight: researchExplorationWeight,
+      researchSeed: researchSeed,
+      categoryDiversifyWeight: categoryDiversifyWeight,
     );
   }
 

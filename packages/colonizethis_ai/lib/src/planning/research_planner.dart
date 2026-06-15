@@ -61,25 +61,43 @@ int _affordableUniformTierIndex({
   return ResearchFundingLevel.none.index;
 }
 
+/// Whether [ctx]'s player has any active war this turn.
+bool _isAtWar(PlannerContext ctx) => ctx.game.diplomacyRelations.any(
+  (r) => r.involvesNation(ctx.nationId) && r.atWar,
+);
+
 /// Target number of **new** (non-in-progress) slots to fill this turn.
+///
+/// Scales by goal / aggression / research weight, then applies the at-war cap
+/// ([kResearchSlotFillCapWhenAtWar]) unconditionally — including the
+/// `primaryGoal == tech` fill-all path. SPEC/ai/ai-architecture.md § Research.
 int _targetNewSlotCount({
   required PlannerContext ctx,
   required PersonalityThresholds thresholds,
   required int emptyCount,
 }) {
   if (emptyCount <= 0) return 0;
-  if (ctx.primaryGoal == StrategicGoal.tech) return emptyCount;
 
-  final fill = thresholds.researchSlotFillAggression.clamp(0, 100);
-  var target = (emptyCount * fill / 100).ceil();
-
-  final threshold = computeResearchThreshold(ctx: ctx);
-  final research = ctx.domainWeights.research;
-  if (research < threshold) {
-    final denom = threshold <= 0 ? 1 : threshold;
-    target = (target * research / denom).floor();
+  final int target;
+  if (ctx.primaryGoal == StrategicGoal.tech) {
+    target = emptyCount;
+  } else {
+    final fill = thresholds.researchSlotFillAggression.clamp(0, 100);
+    var scaled = (emptyCount * fill / 100).ceil();
+    final threshold = computeResearchThreshold(ctx: ctx);
+    final research = ctx.domainWeights.research;
+    if (research < threshold) {
+      final denom = threshold <= 0 ? 1 : threshold;
+      scaled = (scaled * research / denom).floor();
+    }
+    target = scaled;
   }
-  return target.clamp(0, emptyCount);
+
+  var capped = target;
+  if (_isAtWar(ctx)) {
+    capped = math.min(capped, kResearchSlotFillCapWhenAtWar);
+  }
+  return capped.clamp(0, emptyCount);
 }
 
 /// Applies a uniform balanced funding tier across [assigned], stepping the tier
@@ -128,10 +146,8 @@ List<ResearchOrder> _packResearchFunding({
   }
 
   final tier = ResearchFundingLevel.values[tierIdx];
-  final kept = <ResearchOrder>[
-    ...mustKeep,
-    ...selectedNew.take(newCount),
-  ]..sort((a, b) => a.slotIndex.compareTo(b.slotIndex));
+  final kept = <ResearchOrder>[...mustKeep, ...selectedNew.take(newCount)]
+    ..sort((a, b) => a.slotIndex.compareTo(b.slotIndex));
 
   return [
     for (final o in kept)
@@ -148,11 +164,22 @@ List<ResearchOrder> _packResearchFunding({
 /// highest-index drop within the research debt floor.
 /// SPEC/ai/ai-architecture.md § Research; SPEC/program/order-suggestions.md.
 Orders runResearchPlanner({required PlannerContext ctx}) {
+  final thresholds = resolveThresholds(
+    ctx.config.personalityId,
+    overrides: ctx.config.parameterOverrides,
+  );
+
   final suggestions = ctx.suggestionAPI.suggestResearchOrders(
     ctx.view,
     ctx.game,
     ctx.topology,
     ctx.orders,
+    researchNavalWeight: thresholds.researchNaval,
+    researchMilitaryWeight: thresholds.researchMilitary,
+    researchEconomicWeight: thresholds.researchEconomic,
+    researchExplorationWeight: thresholds.researchExploration,
+    researchSeed: ctx.seeds.researchSeed,
+    categoryDiversifyWeight: kResearchCategoryDiversifyWeight,
   );
   if (suggestions.isEmpty) return ctx.orders;
 
@@ -163,11 +190,6 @@ Orders runResearchPlanner({required PlannerContext ctx}) {
   final mustKeep = suggestions.where(isInProgress).toList();
   final newCandidates = suggestions.where((o) => !isInProgress(o)).toList()
     ..sort((a, b) => a.slotIndex.compareTo(b.slotIndex));
-
-  final thresholds = resolveThresholds(
-    ctx.config.personalityId,
-    overrides: ctx.config.parameterOverrides,
-  );
 
   final targetNew = _targetNewSlotCount(
     ctx: ctx,

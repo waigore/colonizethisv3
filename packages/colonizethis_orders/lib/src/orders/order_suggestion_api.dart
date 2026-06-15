@@ -43,8 +43,14 @@ abstract class OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  );
+    Orders currentOrders, {
+    int researchNavalWeight,
+    int researchMilitaryWeight,
+    int researchEconomicWeight,
+    int researchExplorationWeight,
+    int researchSeed,
+    int categoryDiversifyWeight,
+  });
   List<NavalMoveOrder> suggestNavalMoveOrders(
     PlayerView view,
     Game game,
