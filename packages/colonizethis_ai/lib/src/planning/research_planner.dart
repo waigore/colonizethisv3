@@ -66,27 +66,54 @@ bool _isAtWar(PlannerContext ctx) => ctx.game.diplomacyRelations.any(
   (r) => r.involvesNation(ctx.nationId) && r.atWar,
 );
 
-/// Resolved new-slot target plus whether the at-war cap was the binding
-/// constraint, for the multi-slot research decision trace (Refs #3472 AC10).
+/// Whether [ctx]'s player has stalled Old World expansion this turn, i.e. owns
+/// at most `kStalledOldWorldProvinceThreshold` Old World provinces. Counts the
+/// player's Old World holdings from the player view (same scan perception uses
+/// in `_buildConquestSummary`); evaluated lazily only when the stalled cap
+/// could bind. Refs #3472 (Stalled-expansion cap).
+bool _isStalledExpansion(PlannerContext ctx) {
+  var owned = 0;
+  for (final p in ctx.view.provincesById.entries) {
+    if (p.value.ownerId != ctx.view.playerId) continue;
+    if (ProvinceId.regionIdFrom(p.key) != kOldWorldRegionId) continue;
+    owned++;
+  }
+  return isStalledOldWorldExpansion(owned);
+}
+
+/// Resolved new-slot target plus whether the at-war / stalled-expansion caps
+/// were binding constraints, for the multi-slot research decision trace
+/// (Refs #3472 AC10).
 class _SlotTarget {
-  const _SlotTarget({required this.target, required this.atWarCapApplied});
+  const _SlotTarget({
+    required this.target,
+    required this.atWarCapApplied,
+    required this.stalledExpansionCapApplied,
+  });
 
   final int target;
   final bool atWarCapApplied;
+  final bool stalledExpansionCapApplied;
 }
 
 /// Target number of **new** (non-in-progress) slots to fill this turn.
 ///
 /// Scales by goal / aggression / research weight, then applies the at-war cap
-/// ([kResearchSlotFillCapWhenAtWar]) unconditionally — including the
-/// `primaryGoal == tech` fill-all path. SPEC/ai/ai-architecture.md § Research.
+/// ([kResearchSlotFillCapWhenAtWar]) and the stalled-expansion cap
+/// ([kResearchSlotFillCapWhenStalledExpansion]) unconditionally — including the
+/// `primaryGoal == tech` fill-all path. Both caps apply together; the smaller
+/// binding cap wins. SPEC/ai/ai-architecture.md § Research planner.
 _SlotTarget _targetNewSlotCount({
   required PlannerContext ctx,
   required PersonalityThresholds thresholds,
   required int emptyCount,
 }) {
   if (emptyCount <= 0) {
-    return const _SlotTarget(target: 0, atWarCapApplied: false);
+    return const _SlotTarget(
+      target: 0,
+      atWarCapApplied: false,
+      stalledExpansionCapApplied: false,
+    );
   }
 
   final int target;
@@ -106,13 +133,20 @@ _SlotTarget _targetNewSlotCount({
 
   var capped = target;
   var atWarCapApplied = false;
-  if (_isAtWar(ctx) && kResearchSlotFillCapWhenAtWar < capped) {
+  if (kResearchSlotFillCapWhenAtWar < capped && _isAtWar(ctx)) {
     capped = kResearchSlotFillCapWhenAtWar;
     atWarCapApplied = true;
+  }
+  var stalledExpansionCapApplied = false;
+  if (kResearchSlotFillCapWhenStalledExpansion < capped &&
+      _isStalledExpansion(ctx)) {
+    capped = kResearchSlotFillCapWhenStalledExpansion;
+    stalledExpansionCapApplied = true;
   }
   return _SlotTarget(
     target: capped.clamp(0, emptyCount),
     atWarCapApplied: atWarCapApplied,
+    stalledExpansionCapApplied: stalledExpansionCapApplied,
   );
 }
 
@@ -224,6 +258,7 @@ class ResearchPlannerDecision {
     required this.emptySlotCount,
     required this.targetSlotCount,
     required this.atWarCapApplied,
+    required this.stalledExpansionCapApplied,
     required this.fundingTier,
     required this.slots,
     required this.droppedSlotIndices,
@@ -233,11 +268,15 @@ class ResearchPlannerDecision {
   /// Empty active slots that had a candidate tech this turn.
   final int emptySlotCount;
 
-  /// New slots targeted after aggression scaling and the at-war cap.
+  /// New slots targeted after aggression scaling and the slot-fill caps.
   final int targetSlotCount;
 
   /// Whether the at-war cap reduced the target below its pre-cap value.
   final bool atWarCapApplied;
+
+  /// Whether the stalled-expansion cap reduced the target below its running
+  /// value (applied after the at-war cap).
+  final bool stalledExpansionCapApplied;
 
   /// Uniform funding tier applied to every emitted order.
   final ResearchFundingLevel fundingTier;
@@ -249,13 +288,14 @@ class ResearchPlannerDecision {
   final List<int> droppedSlotIndices;
 
   /// Primary binding constraint, by precedence: `treasuryDrop` >
-  /// `atWarCap` > `uniformDowngrade` > `none`.
+  /// `stalledExpansionCap` > `atWarCap` > `uniformDowngrade` > `none`.
   final String constraintReason;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'emptySlotCount': emptySlotCount,
     'targetSlotCount': targetSlotCount,
     'atWarCapApplied': atWarCapApplied,
+    'stalledExpansionCapApplied': stalledExpansionCapApplied,
     'fundingTier': fundingTier.name,
     'slots': [for (final s in slots) s.toJson()],
     'droppedSlotIndices': droppedSlotIndices,
@@ -376,6 +416,8 @@ ResearchPlannerDecision _buildDecision({
   final String constraintReason;
   if (pack.droppedNewCount > 0) {
     constraintReason = 'treasuryDrop';
+  } else if (slotTarget.stalledExpansionCapApplied) {
+    constraintReason = 'stalledExpansionCap';
   } else if (slotTarget.atWarCapApplied) {
     constraintReason = 'atWarCap';
   } else if (pack.tierIdx < pack.capIdx) {
@@ -388,6 +430,7 @@ ResearchPlannerDecision _buildDecision({
     emptySlotCount: emptySlotCount,
     targetSlotCount: slotTarget.target,
     atWarCapApplied: slotTarget.atWarCapApplied,
+    stalledExpansionCapApplied: slotTarget.stalledExpansionCapApplied,
     fundingTier: ResearchFundingLevel.values[pack.tierIdx],
     slots: [
       for (final o in funded)
