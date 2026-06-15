@@ -3,7 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 // Fake suggestion API used to drive domain planners deterministically in tests.
-class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI {
+class FakeOrderSuggestionAPIForDomainPlannerTests
+    implements OrderSuggestionAPI {
   const FakeOrderSuggestionAPIForDomainPlannerTests({
     required this.work,
     required this.build,
@@ -72,8 +73,14 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) => research;
+    Orders currentOrders, {
+    int researchNavalWeight = 0,
+    int researchMilitaryWeight = 0,
+    int researchEconomicWeight = 0,
+    int researchExplorationWeight = 0,
+    int researchSeed = 0,
+    int categoryDiversifyWeight = 0,
+  }) => research;
 
   @override
   List<NavalMoveOrder> suggestNavalMoveOrders(
@@ -109,17 +116,14 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     MapTopology topology,
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      diplomatic
-          .where((o) => o.type == DiplomaticOrderType.declareWar)
-          .toList();
+  }) => diplomatic
+      .where((o) => o.type == DiplomaticOrderType.declareWar)
+      .toList();
 
   @override
   TradeSuggestionResult suggestTradeOrders(
     PlayerView view,
     Game game, {
     TradeSuggestionContext? contextOverride,
-  }) =>
-      TradeSuggestionResult.empty;
+  }) => TradeSuggestionResult.empty;
 }
-

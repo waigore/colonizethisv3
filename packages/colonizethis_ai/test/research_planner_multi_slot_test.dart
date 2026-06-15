@@ -1,7 +1,6 @@
 import 'package:colonizethis_ai/src/planning/goal_manager.dart';
 import 'package:colonizethis_ai/src/planning/research_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -51,8 +50,11 @@ void main() {
     navalMission: const [],
   );
 
-  ResearchOrder ro(int slot, String tech) =>
-      ResearchOrder(slotIndex: slot, techId: tech, funding: ResearchFundingLevel.medium);
+  ResearchOrder ro(int slot, String tech) => ResearchOrder(
+    slotIndex: slot,
+    techId: tech,
+    funding: ResearchFundingLevel.medium,
+  );
 
   List<ResearchOrder> runFor({
     required Game game,
@@ -149,6 +151,57 @@ void main() {
         result.single.funding,
         ResearchFundingLevel.none,
         reason: 'broke treasury keeps progress without spending',
+      );
+    });
+
+    test('caps new slot fill at kResearchSlotFillCapWhenAtWar while at war '
+        'even when primaryGoal is tech (AC7)', () {
+      final game = gameWith(treasury: 5000).copyWith(
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: playerId,
+            factionId2: 'enemy',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final result = runFor(
+        game: game,
+        api: api,
+        primaryGoal: StrategicGoal.tech,
+      );
+
+      expect(
+        result.length,
+        kResearchSlotFillCapWhenAtWar,
+        reason: 'at-war cap limits new assignments to 2 despite tech goal',
+      );
+    });
+
+    test('does not cap slot fill when at peace (negative control for AC7)', () {
+      final game = gameWith(treasury: 5000).copyWith(
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: playerId,
+            factionId2: 'neighbor',
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final result = runFor(
+        game: game,
+        api: api,
+        primaryGoal: StrategicGoal.tech,
+      );
+
+      expect(
+        result.length,
+        3,
+        reason: 'an at-peace relation does not trigger the at-war cap',
       );
     });
 
