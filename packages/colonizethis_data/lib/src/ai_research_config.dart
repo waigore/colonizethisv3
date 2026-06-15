@@ -20,6 +20,14 @@ const ResearchFundingLevel kResearchMaxFundingWhenBroke =
 /// SPEC/ai/ai-architecture.md § Research planner (At-war cap). Refs #3472.
 const int kResearchSlotFillCapWhenAtWar = 2;
 
+/// Maximum number of **new** research-slot assignments the Full-AI planner makes
+/// in a turn while the player's Old World expansion is stalled
+/// (`isStalledOldWorldExpansion(oldWorldProvincesOwned)`). Applied after the
+/// at-war cap; the smaller binding cap wins when both fire.
+/// SPEC/ai/ai-architecture.md § Research planner (Stalled-expansion cap).
+/// Refs #3472.
+const int kResearchSlotFillCapWhenStalledExpansion = 1;
+
 /// Greedy-vs-category-diversified blend (0–100) for free research slots `>= 1`.
 ///
 /// `0` disables diversification (pure greedy `era → cost → id`, the default for

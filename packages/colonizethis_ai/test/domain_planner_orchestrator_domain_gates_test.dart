@@ -296,6 +296,7 @@ void main() {
           emptySlotCount: 3,
           targetSlotCount: 2,
           atWarCapApplied: true,
+          stalledExpansionCapApplied: false,
           fundingTier: ResearchFundingLevel.high,
           slots: [
             ResearchSlotDecision(
@@ -326,6 +327,7 @@ void main() {
       expect(research['emptySlotCount'], 3);
       expect(research['targetSlotCount'], 2);
       expect(research['atWarCapApplied'], isTrue);
+      expect(research['stalledExpansionCapApplied'], isFalse);
       expect(research['fundingTier'], 'high');
       expect(research['constraintReason'], 'atWarCap');
       final slots = research['slots'] as List<Object?>;

@@ -1,6 +1,7 @@
 import 'package:colonizethis_ai/src/planning/goal_manager.dart';
 import 'package:colonizethis_ai/src/planning/research_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -56,11 +57,36 @@ void main() {
     funding: ResearchFundingLevel.medium,
   );
 
+  /// Player view owning [ownedOldWorldProvinces] Old World provinces, used to
+  /// drive the stalled-expansion cap (`isStalledOldWorldExpansion`): 1..9 owned
+  /// is stalled, 0 owned is terminal collapse (not stalled). Refs #3472.
+  PlayerView viewOwning(Game game, int ownedOldWorldProvinces) {
+    final provincesById = <String, Province>{};
+    for (var i = 0; i < ownedOldWorldProvinces; i++) {
+      final id = ProvinceId.full(kOldWorldRegionId, 'p$i');
+      provincesById[id] = Province(
+        id: id,
+        regionId: kOldWorldRegionId,
+        ownerId: playerId,
+      );
+    }
+    return PlayerView(
+      playerId: playerId,
+      player: game.players.single,
+      ownUnitsById: const {},
+      provincesById: provincesById,
+      visibilityByTile: const {},
+      prospectedTiles: const {},
+      diplomacyByOtherId: const {},
+    );
+  }
+
   List<ResearchOrder> runFor({
     required Game game,
     required FakeOrderSuggestionAPIForDomainPlannerTests api,
     StrategicGoal primaryGoal = StrategicGoal.expand,
     AIConfig config = kTestAiConfig,
+    PlayerView? view,
   }) {
     final ctx = buildTestPlannerContext(
       game: game,
@@ -68,6 +94,7 @@ void main() {
       primaryGoal: primaryGoal,
       config: config,
       suggestionAPI: api,
+      view: view,
     );
     final orders = runResearchPlanner(ctx: ctx);
     return orders.researchOrdersByPlayerId[playerId] ?? const <ResearchOrder>[];
@@ -78,6 +105,7 @@ void main() {
     required FakeOrderSuggestionAPIForDomainPlannerTests api,
     StrategicGoal primaryGoal = StrategicGoal.expand,
     AIConfig config = kTestAiConfig,
+    PlayerView? view,
   }) {
     final ctx = buildTestPlannerContext(
       game: game,
@@ -85,6 +113,7 @@ void main() {
       primaryGoal: primaryGoal,
       config: config,
       suggestionAPI: api,
+      view: view,
     );
     return runResearchPlannerWithDecision(ctx: ctx);
   }
@@ -221,6 +250,72 @@ void main() {
       );
     });
 
+    test('caps new slot fill at kResearchSlotFillCapWhenStalledExpansion when '
+        'Old World expansion is stalled even when primaryGoal is tech', () {
+      final game = gameWith(treasury: 5000);
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final result = runFor(
+        game: game,
+        api: api,
+        primaryGoal: StrategicGoal.tech,
+        // 5 owned Old World provinces => stalled (1..9 band).
+        view: viewOwning(game, 5),
+      );
+
+      expect(
+        result.length,
+        kResearchSlotFillCapWhenStalledExpansion,
+        reason: 'stalled-expansion cap limits new assignments to 1',
+      );
+    });
+
+    test('does not apply the stalled-expansion cap with zero Old World '
+        'provinces (terminal collapse, not stalled)', () {
+      final game = gameWith(treasury: 5000);
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final result = runFor(
+        game: game,
+        api: api,
+        primaryGoal: StrategicGoal.tech,
+        // 0 owned => isStalledOldWorldExpansion is false (requires > 0).
+        view: viewOwning(game, 0),
+      );
+
+      expect(
+        result.length,
+        3,
+        reason: 'zero Old World holdings is not the stalled band',
+      );
+    });
+
+    test('stalled-expansion cap binds below the at-war cap when both fire', () {
+      final game = gameWith(treasury: 5000).copyWith(
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: playerId,
+            factionId2: 'enemy',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final result = runFor(
+        game: game,
+        api: api,
+        primaryGoal: StrategicGoal.tech,
+        view: viewOwning(game, 5),
+      );
+
+      expect(
+        result.length,
+        kResearchSlotFillCapWhenStalledExpansion,
+        reason: 'the smaller (stalled) cap wins over the at-war cap',
+      );
+    });
+
     test('emits no new research when research domain weight is far below '
         'threshold', () {
       final game = gameWith(treasury: 1000);
@@ -323,6 +418,31 @@ void main() {
       expect(decision.constraintReason, 'atWarCap');
     });
 
+    test('reports stalledExpansionCap and the cap target when Old World '
+        'expansion is stalled', () {
+      final game = gameWith(treasury: 5000);
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final decision = decisionFor(
+        game: game,
+        api: api,
+        primaryGoal: StrategicGoal.tech,
+        view: viewOwning(game, 5),
+      ).decision;
+
+      expect(decision, isNotNull);
+      expect(decision!.emptySlotCount, 3);
+      expect(
+        decision.targetSlotCount,
+        kResearchSlotFillCapWhenStalledExpansion,
+      );
+      expect(decision.stalledExpansionCapApplied, isTrue);
+      expect(decision.atWarCapApplied, isFalse);
+      expect(decision.slots.length, kResearchSlotFillCapWhenStalledExpansion);
+      expect(decision.droppedSlotIndices, isEmpty);
+      expect(decision.constraintReason, 'stalledExpansionCap');
+    });
+
     test('decision is null when the planner emits no research orders', () {
       final game = gameWith(treasury: 1000);
       final api = apiWith(const []);
@@ -345,6 +465,7 @@ void main() {
       expect(json['emptySlotCount'], 3);
       expect(json['targetSlotCount'], 3);
       expect(json['atWarCapApplied'], isFalse);
+      expect(json['stalledExpansionCapApplied'], isFalse);
       expect(json['fundingTier'], 'medium');
       expect(json['constraintReason'], 'none');
       expect(json['droppedSlotIndices'], isEmpty);
