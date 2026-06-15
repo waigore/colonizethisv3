@@ -73,6 +73,22 @@ void main() {
     return orders.researchOrdersByPlayerId[playerId] ?? const <ResearchOrder>[];
   }
 
+  ResearchPlannerResult decisionFor({
+    required Game game,
+    required FakeOrderSuggestionAPIForDomainPlannerTests api,
+    StrategicGoal primaryGoal = StrategicGoal.expand,
+    AIConfig config = kTestAiConfig,
+  }) {
+    final ctx = buildTestPlannerContext(
+      game: game,
+      topology: topology,
+      primaryGoal: primaryGoal,
+      config: config,
+      suggestionAPI: api,
+    );
+    return runResearchPlannerWithDecision(ctx: ctx);
+  }
+
   group('runResearchPlanner multi-slot funding', () {
     test('fills all empty slots with a uniform affordable tier', () {
       final game = gameWith(treasury: 1000);
@@ -223,6 +239,121 @@ void main() {
         isEmpty,
         reason: 'non-tech primary goal with weak research scales fill to zero',
       );
+    });
+  });
+
+  group('runResearchPlannerWithDecision trace record (AC10)', () {
+    test('records per-slot funding and unconstrained reason when all slots '
+        'fund at the desired tier', () {
+      final game = gameWith(treasury: 1000);
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final decision = decisionFor(game: game, api: api).decision;
+
+      expect(decision, isNotNull);
+      expect(decision!.emptySlotCount, 3);
+      expect(decision.targetSlotCount, 3);
+      expect(decision.atWarCapApplied, isFalse);
+      expect(decision.fundingTier, ResearchFundingLevel.medium);
+      expect(decision.slots.map((s) => s.slotIndex).toList(), [0, 1, 2]);
+      expect(decision.slots.map((s) => s.techId).toSet(), {
+        'tech_a',
+        'tech_b',
+        'tech_c',
+      });
+      expect(
+        decision.slots.every((s) => s.funding == ResearchFundingLevel.medium),
+        isTrue,
+      );
+      expect(decision.droppedSlotIndices, isEmpty);
+      expect(decision.constraintReason, 'none');
+    });
+
+    test('reports uniformDowngrade when treasury forces a lower tier with no '
+        'slot dropped', () {
+      final game = gameWith(treasury: 100);
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b')]);
+
+      final decision = decisionFor(game: game, api: api).decision;
+
+      expect(decision, isNotNull);
+      expect(decision!.fundingTier, ResearchFundingLevel.low);
+      expect(decision.slots.length, 2);
+      expect(decision.droppedSlotIndices, isEmpty);
+      expect(decision.constraintReason, 'uniformDowngrade');
+    });
+
+    test('reports treasuryDrop and the dropped highest-index slot when no '
+        'uniform tier fits all slots', () {
+      final game = gameWith(treasury: 50);
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b')]);
+
+      final decision = decisionFor(game: game, api: api).decision;
+
+      expect(decision, isNotNull);
+      expect(decision!.slots.map((s) => s.slotIndex).toList(), [0]);
+      expect(decision.droppedSlotIndices, [1]);
+      expect(decision.constraintReason, 'treasuryDrop');
+    });
+
+    test('reports atWarCap when the at-war cap bounds the target', () {
+      final game = gameWith(treasury: 5000).copyWith(
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: playerId,
+            factionId2: 'enemy',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final decision = decisionFor(
+        game: game,
+        api: api,
+        primaryGoal: StrategicGoal.tech,
+      ).decision;
+
+      expect(decision, isNotNull);
+      expect(decision!.emptySlotCount, 3);
+      expect(decision.targetSlotCount, kResearchSlotFillCapWhenAtWar);
+      expect(decision.atWarCapApplied, isTrue);
+      expect(decision.slots.length, kResearchSlotFillCapWhenAtWar);
+      expect(decision.droppedSlotIndices, isEmpty);
+      expect(decision.constraintReason, 'atWarCap');
+    });
+
+    test('decision is null when the planner emits no research orders', () {
+      final game = gameWith(treasury: 1000);
+      final api = apiWith(const []);
+
+      final result = decisionFor(game: game, api: api);
+
+      expect(result.decision, isNull);
+      expect(
+        result.orders.researchOrdersByPlayerId[playerId],
+        anyOf(isNull, isEmpty),
+      );
+    });
+
+    test('decision JSON exposes the multi-slot trace contract', () {
+      final game = gameWith(treasury: 1000);
+      final api = apiWith([ro(0, 'tech_a'), ro(1, 'tech_b'), ro(2, 'tech_c')]);
+
+      final json = decisionFor(game: game, api: api).decision!.toJson();
+
+      expect(json['emptySlotCount'], 3);
+      expect(json['targetSlotCount'], 3);
+      expect(json['atWarCapApplied'], isFalse);
+      expect(json['fundingTier'], 'medium');
+      expect(json['constraintReason'], 'none');
+      expect(json['droppedSlotIndices'], isEmpty);
+      final slots = json['slots'] as List<Object?>;
+      expect(slots.length, 3);
+      final first = slots.first as Map<String, Object?>;
+      expect(first['slotIndex'], 0);
+      expect(first['techId'], 'tech_a');
+      expect(first['funding'], 'medium');
     });
   });
 }

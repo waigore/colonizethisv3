@@ -27,6 +27,7 @@ import 'package:colonizethis_ai/src/planning/domain_planner_outcome.dart';
 import 'package:colonizethis_ai/src/planning/naval_planner.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_ai/src/planning/planner_context.dart';
+import 'package:colonizethis_ai/src/planning/research_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -85,9 +86,7 @@ Game _scenarioGame() {
         leaderKey: 'napoleon',
       ),
     ],
-    minorNations: const [
-      MinorNation(id: _minorId, displayName: 'Minor One'),
-    ],
+    minorNations: const [MinorNation(id: _minorId, displayName: 'Minor One')],
     tribes: const [],
     diplomacyRelations: const [
       DiplomacyRelation(
@@ -102,19 +101,19 @@ Game _scenarioGame() {
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _conquestCandidateApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  armyMove: [
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _owMinorProvince,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      armyMove: [
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _owMinorProvince,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -226,6 +225,11 @@ void main() {
         // assert it is a boolean (truthy or falsy) so a future
         // regression that dropped the field surfaces.
         expect(gates.navalPlannerRan, isA<bool>());
+        // This fixture has no research candidates, so the planner emits
+        // no orders and the multi-slot research decision is omitted from
+        // the trace (Refs #3472 AC10).
+        expect(gates.researchDecision, isNull);
+        expect(gates.toJson().containsKey('research'), isFalse);
       },
     );
 
@@ -239,43 +243,40 @@ void main() {
       },
     );
 
-    test(
-      'computeNavalRunGate.willRun is false when base weight falls below '
-      'kNavalRunMinWeight with no colonial-pressure boost',
-      () {
-        final game = _scenarioGame();
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
-        final ctx = PlannerContext(
-          nationId: _nationId,
-          view: view,
-          game: game,
-          topology: topology,
-          orders: const Orders(),
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2832300),
-          suggestionAPI: _conquestCandidateApi,
-        );
-        // EXPAND with no NW pressure: phase-dispatched naval directive
-        // reports `colonialPreferenceActive: false`, so the gate is
-        // decided purely by `ctx.resolveNavalBaseWeight() >=
-        // kNavalRunMinWeight`. The minimal fixture's weight is below
-        // that bound, so `willRun` is false.
-        final phasePlan = runPhasePlanners(
-          game: game,
-          snapshot: snapshot,
-          personalityId: _aiConfig.personalityId,
-        );
-        final gate = computeNavalRunGate(
-          ctx: ctx,
-          snapshot: snapshot,
-          phasePlan: phasePlan,
-        );
-        expect(gate.willRun, gate.weight >= kNavalRunMinWeight);
-      },
-    );
+    test('computeNavalRunGate.willRun is false when base weight falls below '
+        'kNavalRunMinWeight with no colonial-pressure boost', () {
+      final game = _scenarioGame();
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _expandSnapshot();
+      final ctx = PlannerContext(
+        nationId: _nationId,
+        view: view,
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: AISeedBundle.fromTurnSeed(2832300),
+        suggestionAPI: _conquestCandidateApi,
+      );
+      // EXPAND with no NW pressure: phase-dispatched naval directive
+      // reports `colonialPreferenceActive: false`, so the gate is
+      // decided purely by `ctx.resolveNavalBaseWeight() >=
+      // kNavalRunMinWeight`. The minimal fixture's weight is below
+      // that bound, so `willRun` is false.
+      final phasePlan = runPhasePlanners(
+        game: game,
+        snapshot: snapshot,
+        personalityId: _aiConfig.personalityId,
+      );
+      final gate = computeNavalRunGate(
+        ctx: ctx,
+        snapshot: snapshot,
+        phasePlan: phasePlan,
+      );
+      expect(gate.willRun, gate.weight >= kNavalRunMinWeight);
+    });
 
     test('json shape matches the trace contract', () {
       const sample = DomainGateData(
@@ -291,6 +292,26 @@ void main() {
         workThreshold: 40,
         buildThreshold: 30,
         researchThreshold: 40,
+        researchDecision: ResearchPlannerDecision(
+          emptySlotCount: 3,
+          targetSlotCount: 2,
+          atWarCapApplied: true,
+          fundingTier: ResearchFundingLevel.high,
+          slots: [
+            ResearchSlotDecision(
+              slotIndex: 0,
+              techId: 'tech_a',
+              funding: ResearchFundingLevel.high,
+            ),
+            ResearchSlotDecision(
+              slotIndex: 1,
+              techId: 'tech_b',
+              funding: ResearchFundingLevel.high,
+            ),
+          ],
+          droppedSlotIndices: [],
+          constraintReason: 'atWarCap',
+        ),
       );
       final json = sample.toJson();
       expect(json['workPlannerRan'], isTrue);
@@ -301,6 +322,15 @@ void main() {
       expect(thresholds['work'], 40);
       expect(thresholds['build'], 30);
       expect(thresholds['research'], 40);
+      final research = json['research'] as Map<String, Object?>;
+      expect(research['emptySlotCount'], 3);
+      expect(research['targetSlotCount'], 2);
+      expect(research['atWarCapApplied'], isTrue);
+      expect(research['fundingTier'], 'high');
+      expect(research['constraintReason'], 'atWarCap');
+      final slots = research['slots'] as List<Object?>;
+      expect(slots.length, 2);
+      expect((slots.first as Map<String, Object?>)['techId'], 'tech_a');
     });
   });
 }

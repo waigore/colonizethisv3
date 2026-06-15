@@ -66,17 +66,28 @@ bool _isAtWar(PlannerContext ctx) => ctx.game.diplomacyRelations.any(
   (r) => r.involvesNation(ctx.nationId) && r.atWar,
 );
 
+/// Resolved new-slot target plus whether the at-war cap was the binding
+/// constraint, for the multi-slot research decision trace (Refs #3472 AC10).
+class _SlotTarget {
+  const _SlotTarget({required this.target, required this.atWarCapApplied});
+
+  final int target;
+  final bool atWarCapApplied;
+}
+
 /// Target number of **new** (non-in-progress) slots to fill this turn.
 ///
 /// Scales by goal / aggression / research weight, then applies the at-war cap
 /// ([kResearchSlotFillCapWhenAtWar]) unconditionally — including the
 /// `primaryGoal == tech` fill-all path. SPEC/ai/ai-architecture.md § Research.
-int _targetNewSlotCount({
+_SlotTarget _targetNewSlotCount({
   required PlannerContext ctx,
   required PersonalityThresholds thresholds,
   required int emptyCount,
 }) {
-  if (emptyCount <= 0) return 0;
+  if (emptyCount <= 0) {
+    return const _SlotTarget(target: 0, atWarCapApplied: false);
+  }
 
   final int target;
   if (ctx.primaryGoal == StrategicGoal.tech) {
@@ -94,18 +105,40 @@ int _targetNewSlotCount({
   }
 
   var capped = target;
-  if (_isAtWar(ctx)) {
-    capped = math.min(capped, kResearchSlotFillCapWhenAtWar);
+  var atWarCapApplied = false;
+  if (_isAtWar(ctx) && kResearchSlotFillCapWhenAtWar < capped) {
+    capped = kResearchSlotFillCapWhenAtWar;
+    atWarCapApplied = true;
   }
-  return capped.clamp(0, emptyCount);
+  return _SlotTarget(
+    target: capped.clamp(0, emptyCount),
+    atWarCapApplied: atWarCapApplied,
+  );
 }
 
-/// Applies a uniform balanced funding tier across [assigned], stepping the tier
-/// down uniformly and then dropping the highest-index **new** slots until the
-/// set fits the research debt floor. In-progress slots in [mustKeepTechIds] are
-/// never dropped: when nothing at or above Low is affordable they are emitted
-/// at `none` to preserve accumulated progress without spending. Refs #3472.
-List<ResearchOrder> _packResearchFunding({
+/// Outcome of [_packResearchFunding]: the funded orders plus the packing
+/// metadata the multi-slot decision trace needs (Refs #3472 AC10).
+class _FundingPack {
+  const _FundingPack({
+    required this.orders,
+    required this.tierIdx,
+    required this.capIdx,
+    required this.droppedNewCount,
+  });
+
+  final List<ResearchOrder> orders;
+  final int tierIdx;
+  final int capIdx;
+  final int droppedNewCount;
+}
+
+/// Applies a uniform balanced funding tier across [selectedNew] + [mustKeep],
+/// stepping the tier down uniformly and then dropping the highest-index **new**
+/// slots until the set fits the research debt floor. In-progress slots in
+/// [mustKeep] are never dropped: when nothing at or above Low is affordable they
+/// are emitted at `none` to preserve accumulated progress without spending.
+/// Refs #3472.
+_FundingPack _packResearchFunding({
   required PlannerContext ctx,
   required PersonalityThresholds thresholds,
   required List<ResearchOrder> mustKeep,
@@ -149,10 +182,97 @@ List<ResearchOrder> _packResearchFunding({
   final kept = <ResearchOrder>[...mustKeep, ...selectedNew.take(newCount)]
     ..sort((a, b) => a.slotIndex.compareTo(b.slotIndex));
 
-  return [
-    for (final o in kept)
-      ResearchOrder(slotIndex: o.slotIndex, techId: o.techId, funding: tier),
-  ];
+  return _FundingPack(
+    orders: [
+      for (final o in kept)
+        ResearchOrder(slotIndex: o.slotIndex, techId: o.techId, funding: tier),
+    ],
+    tierIdx: tierIdx,
+    capIdx: capIdx,
+    droppedNewCount: selectedNew.length - newCount,
+  );
+}
+
+/// One emitted research slot in the multi-slot decision trace (Refs #3472
+/// AC10): the assigned slot index, tech id, and uniform funding tier.
+class ResearchSlotDecision {
+  const ResearchSlotDecision({
+    required this.slotIndex,
+    required this.techId,
+    required this.funding,
+  });
+
+  final int slotIndex;
+  final String techId;
+  final ResearchFundingLevel funding;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'slotIndex': slotIndex,
+    'techId': techId,
+    'funding': funding.name,
+  };
+}
+
+/// Multi-slot Full-AI research decision provenance for the AI trace
+/// (Refs #3472 AC10). Emitted under `thresholds.domainGates.research`;
+/// see SPEC/ai/turn-trace-interpretation.md § Domain activation.
+///
+/// Pure runtime observation of the planner's slot-fill / treasury-packing
+/// arithmetic; carries no side effects and is deterministic for fixed inputs.
+class ResearchPlannerDecision {
+  const ResearchPlannerDecision({
+    required this.emptySlotCount,
+    required this.targetSlotCount,
+    required this.atWarCapApplied,
+    required this.fundingTier,
+    required this.slots,
+    required this.droppedSlotIndices,
+    required this.constraintReason,
+  });
+
+  /// Empty active slots that had a candidate tech this turn.
+  final int emptySlotCount;
+
+  /// New slots targeted after aggression scaling and the at-war cap.
+  final int targetSlotCount;
+
+  /// Whether the at-war cap reduced the target below its pre-cap value.
+  final bool atWarCapApplied;
+
+  /// Uniform funding tier applied to every emitted order.
+  final ResearchFundingLevel fundingTier;
+
+  /// Emitted slots (in-progress + new), sorted by `slotIndex`.
+  final List<ResearchSlotDecision> slots;
+
+  /// New slot indices dropped by treasury packing, highest-index first.
+  final List<int> droppedSlotIndices;
+
+  /// Primary binding constraint, by precedence: `treasuryDrop` >
+  /// `atWarCap` > `uniformDowngrade` > `none`.
+  final String constraintReason;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'emptySlotCount': emptySlotCount,
+    'targetSlotCount': targetSlotCount,
+    'atWarCapApplied': atWarCapApplied,
+    'fundingTier': fundingTier.name,
+    'slots': [for (final s in slots) s.toJson()],
+    'droppedSlotIndices': droppedSlotIndices,
+    'constraintReason': constraintReason,
+  };
+}
+
+/// Research planner output plus the multi-slot decision record for the trace.
+///
+/// [decision] is `null` when the planner emitted no research orders (no
+/// suggestions, no targeted/in-progress slots, or an empty funded set), so the
+/// trace omits `thresholds.domainGates.research` for that turn.
+class ResearchPlannerResult {
+  const ResearchPlannerResult({required this.orders, this.decision});
+
+  final Orders orders;
+  final ResearchPlannerDecision? decision;
 }
 
 /// Full-AI research planner: every turn, fills empty research slots with
@@ -163,7 +283,15 @@ List<ResearchOrder> _packResearchFunding({
 /// research domain weight), and packs funding by uniform downgrade then
 /// highest-index drop within the research debt floor.
 /// SPEC/ai/ai-architecture.md § Research; SPEC/program/order-suggestions.md.
-Orders runResearchPlanner({required PlannerContext ctx}) {
+Orders runResearchPlanner({required PlannerContext ctx}) =>
+    runResearchPlannerWithDecision(ctx: ctx).orders;
+
+/// As [runResearchPlanner], but also returns the multi-slot decision record
+/// for the AI trace (Refs #3472 AC10). The orchestrator uses this entry to
+/// populate `thresholds.domainGates.research`.
+ResearchPlannerResult runResearchPlannerWithDecision({
+  required PlannerContext ctx,
+}) {
   final thresholds = resolveThresholds(
     ctx.config.personalityId,
     overrides: ctx.config.parameterOverrides,
@@ -181,7 +309,7 @@ Orders runResearchPlanner({required PlannerContext ctx}) {
     researchSeed: ctx.seeds.researchSeed,
     categoryDiversifyWeight: kResearchCategoryDiversifyWeight,
   );
-  if (suggestions.isEmpty) return ctx.orders;
+  if (suggestions.isEmpty) return ResearchPlannerResult(orders: ctx.orders);
 
   final progress =
       ctx.view.player.researchProgressByTechId ?? const <String, int>{};
@@ -191,27 +319,85 @@ Orders runResearchPlanner({required PlannerContext ctx}) {
   final newCandidates = suggestions.where((o) => !isInProgress(o)).toList()
     ..sort((a, b) => a.slotIndex.compareTo(b.slotIndex));
 
-  final targetNew = _targetNewSlotCount(
+  final slotTarget = _targetNewSlotCount(
     ctx: ctx,
     thresholds: thresholds,
     emptyCount: newCandidates.length,
   );
-  final selectedNew = newCandidates.take(targetNew).toList();
+  final selectedNew = newCandidates.take(slotTarget.target).toList();
 
-  if (mustKeep.isEmpty && selectedNew.isEmpty) return ctx.orders;
+  if (mustKeep.isEmpty && selectedNew.isEmpty) {
+    return ResearchPlannerResult(orders: ctx.orders);
+  }
 
-  final funded = _packResearchFunding(
+  final pack = _packResearchFunding(
     ctx: ctx,
     thresholds: thresholds,
     mustKeep: mustKeep,
     selectedNew: selectedNew,
   );
-  if (funded.isEmpty) return ctx.orders;
+  final funded = pack.orders;
+  if (funded.isEmpty) return ResearchPlannerResult(orders: ctx.orders);
+
+  final decision = _buildDecision(
+    emptySlotCount: newCandidates.length,
+    slotTarget: slotTarget,
+    selectedNew: selectedNew,
+    pack: pack,
+    funded: funded,
+  );
 
   _log.i(
     'research chosen nationId=${ctx.nationId} slots=${funded.length} '
-    'funding=${funded.isEmpty ? "none" : funded.first.funding.name} '
-    'inProgress=${mustKeep.length}',
+    'funding=${funded.first.funding.name} inProgress=${mustKeep.length} '
+    'constraint=${decision.constraintReason}',
   );
-  return ctx.orders.appendResearchOrders(ctx.nationId, funded);
+  return ResearchPlannerResult(
+    orders: ctx.orders.appendResearchOrders(ctx.nationId, funded),
+    decision: decision,
+  );
+}
+
+/// Assembles the [ResearchPlannerDecision] from the resolved slot target and
+/// treasury-packing outcome. `constraintReason` follows the documented
+/// precedence (treasuryDrop > atWarCap > uniformDowngrade > none).
+ResearchPlannerDecision _buildDecision({
+  required int emptySlotCount,
+  required _SlotTarget slotTarget,
+  required List<ResearchOrder> selectedNew,
+  required _FundingPack pack,
+  required List<ResearchOrder> funded,
+}) {
+  final keptNewCount = selectedNew.length - pack.droppedNewCount;
+  final droppedSlotIndices = <int>[
+    for (final o in selectedNew.skip(keptNewCount)) o.slotIndex,
+  ].reversed.toList();
+
+  final String constraintReason;
+  if (pack.droppedNewCount > 0) {
+    constraintReason = 'treasuryDrop';
+  } else if (slotTarget.atWarCapApplied) {
+    constraintReason = 'atWarCap';
+  } else if (pack.tierIdx < pack.capIdx) {
+    constraintReason = 'uniformDowngrade';
+  } else {
+    constraintReason = 'none';
+  }
+
+  return ResearchPlannerDecision(
+    emptySlotCount: emptySlotCount,
+    targetSlotCount: slotTarget.target,
+    atWarCapApplied: slotTarget.atWarCapApplied,
+    fundingTier: ResearchFundingLevel.values[pack.tierIdx],
+    slots: [
+      for (final o in funded)
+        ResearchSlotDecision(
+          slotIndex: o.slotIndex,
+          techId: o.techId,
+          funding: o.funding,
+        ),
+    ],
+    droppedSlotIndices: droppedSlotIndices,
+    constraintReason: constraintReason,
+  );
 }
