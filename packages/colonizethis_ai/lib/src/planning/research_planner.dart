@@ -398,9 +398,22 @@ ResearchPlannerResult runResearchPlannerWithDecision({
   );
 }
 
+/// Primary binding constraint for the multi-slot research decision, by
+/// documented precedence: `treasuryDrop` > `stalledExpansionCap` > `atWarCap` >
+/// `uniformDowngrade` > `none`. Uses guard-style early returns so the precedence
+/// chain stays flat (control-flow nesting depth).
+String _constraintReason(_SlotTarget slotTarget, _FundingPack pack) {
+  if (pack.droppedNewCount > 0) return 'treasuryDrop';
+  if (slotTarget.stalledExpansionCapApplied) return 'stalledExpansionCap';
+  if (slotTarget.atWarCapApplied) return 'atWarCap';
+  if (pack.tierIdx < pack.capIdx) return 'uniformDowngrade';
+  return 'none';
+}
+
 /// Assembles the [ResearchPlannerDecision] from the resolved slot target and
 /// treasury-packing outcome. `constraintReason` follows the documented
-/// precedence (treasuryDrop > atWarCap > uniformDowngrade > none).
+/// precedence (treasuryDrop > stalledExpansionCap > atWarCap > uniformDowngrade
+/// > none).
 ResearchPlannerDecision _buildDecision({
   required int emptySlotCount,
   required _SlotTarget slotTarget,
@@ -413,18 +426,7 @@ ResearchPlannerDecision _buildDecision({
     for (final o in selectedNew.skip(keptNewCount)) o.slotIndex,
   ].reversed.toList();
 
-  final String constraintReason;
-  if (pack.droppedNewCount > 0) {
-    constraintReason = 'treasuryDrop';
-  } else if (slotTarget.stalledExpansionCapApplied) {
-    constraintReason = 'stalledExpansionCap';
-  } else if (slotTarget.atWarCapApplied) {
-    constraintReason = 'atWarCap';
-  } else if (pack.tierIdx < pack.capIdx) {
-    constraintReason = 'uniformDowngrade';
-  } else {
-    constraintReason = 'none';
-  }
+  final constraintReason = _constraintReason(slotTarget, pack);
 
   return ResearchPlannerDecision(
     emptySlotCount: emptySlotCount,
