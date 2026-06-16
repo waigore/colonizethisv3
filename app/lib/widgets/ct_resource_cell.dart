@@ -13,8 +13,9 @@ import 'ct_spacing.dart';
 ///
 /// * a leading 20x20 pixel-icon slot whose painter is supplied by the
 ///   consumer via [iconBuilder] (typically a `ResourceIcon`);
-/// * a flexible name column rendered with the dark-theme body font, overflowing
-///   with ellipsis when constrained;
+/// * a flexible name column rendered with the dark-theme body font that takes
+///   all residual width (so the trailing cluster is pinned to the card's right
+///   edge), overflowing with ellipsis only as a last-resort fallback;
 /// * a trailing monospace quantity coloured `--accent-dim`;
 /// * an optional trailing monospace delta whose colour is driven entirely by
 ///   the delta's sign per R10:
@@ -161,13 +162,35 @@ class CtResourceCell extends StatelessWidget {
     );
   }
 
-  /// Builds the trailing quantity + optional delta as **one** loose [Flexible]
-  /// cluster (see [build]). Presenting quantity+delta as a single flex child of
-  /// the outer [Row] keeps the [Expanded] name column's flex share constant
-  /// whether or not a delta is shown, so the rendered name keeps the same width
-  /// with vs without a `+N` / `-N` delta (Refs #2862 S9 / C10). Inside the
-  /// cluster each value is itself a loose [Flexible] so they ellipsize as a
-  /// last resort at pathologically narrow widths instead of overflowing.
+  /// Outer-[Row] flex factor of the [Expanded] name column relative to the
+  /// trailing quantity/delta cluster ([trailingFlex]). The name claims the
+  /// large majority of residual width so canonical commodity / worker names
+  /// render in full at normal grid widths instead of being squeezed into
+  /// ellipsis by an equal-flex trailing cluster (issue #3485 regression).
+  static const int nameFlex = 3;
+
+  /// Outer-[Row] flex factor of the trailing quantity/delta cluster. The
+  /// cluster's slot is the **last** flex child, so its right edge coincides
+  /// with the card's inner-right edge; the cluster's content is right-aligned
+  /// within the slot (see [_trailingCluster]) so the amount is pinned to that
+  /// edge. The small flex (vs [nameFlex]) keeps the slot wide enough to show
+  /// the quantity + optional delta in full at normal widths while still
+  /// collapsing — and letting the values ellipsize — at pathologically narrow
+  /// widths instead of overflowing.
+  static const int trailingFlex = 1;
+
+  /// Builds the trailing quantity + optional delta as the **last** flex child
+  /// of the outer [Row] (see [build]). The cluster slot's right edge coincides
+  /// with the card's inner-right edge, and the cluster's content is
+  /// right-aligned within the slot via [Alignment.centerRight], so the quantity
+  /// (and, when present, the trailing `+N` / `-N` delta) is pinned hard against
+  /// the card's right edge whether or not a delta is shown (issue #3485). The
+  /// optional delta sits immediately to the right of the quantity per the
+  /// mockup `.resource-cell` order. Inside the cluster each value is a loose
+  /// [Flexible] with `maxLines: 1` + ellipsis so it shrinks as a defensive
+  /// last-resort fallback at pathologically narrow widths instead of
+  /// overflowing; in normal usage neither value ellipsizes (Refs #2862 S9 / C10,
+  /// #3485).
   Widget _trailingCluster(
     BuildContext context, {
     required String quantityText,
@@ -176,31 +199,35 @@ class CtResourceCell extends StatelessWidget {
   }) {
     return Flexible(
       fit: FlexFit.loose,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Flexible(
-            fit: FlexFit.loose,
-            child: _monoText(
-              context,
-              text: quantityText,
-              color: EditorialMonoclePalette.accentDim,
-              fontSize: quantityFontSize,
-            ),
-          ),
-          if (deltaText != null) ...<Widget>[
-            const SizedBox(width: quantityToDeltaGap),
+      flex: trailingFlex,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
             Flexible(
               fit: FlexFit.loose,
               child: _monoText(
                 context,
-                text: deltaText,
-                color: deltaTextColor!,
-                fontSize: deltaFontSize,
+                text: quantityText,
+                color: EditorialMonoclePalette.accentDim,
+                fontSize: quantityFontSize,
               ),
             ),
+            if (deltaText != null) ...<Widget>[
+              const SizedBox(width: quantityToDeltaGap),
+              Flexible(
+                fit: FlexFit.loose,
+                child: _monoText(
+                  context,
+                  text: deltaText,
+                  color: deltaTextColor!,
+                  fontSize: deltaFontSize,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -230,6 +257,7 @@ class CtResourceCell extends StatelessWidget {
             ),
             const SizedBox(width: itemGap),
             Expanded(
+              flex: nameFlex,
               child: Text(
                 name,
                 style: _nameStyle(context),
