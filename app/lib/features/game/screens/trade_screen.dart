@@ -508,7 +508,7 @@ class TradeScreen extends ConsumerWidget {
         ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
-        if (shellPanelsNotDefined(shellRef)) {
+        if (shellPanelsNotDefined(shellRef.read(shellPlayerContextProvider))) {
           // ignore: avoid_hardcoded_strings_in_widgets
           return const ObserveModeNotDefinedPanel(title: 'Trade');
         }
@@ -684,6 +684,16 @@ class _MarketTabContent extends ConsumerWidget {
     final AppLocalizations l10n = appL10n(context);
     final WorldMarketState market = game.worldMarketState;
     final Orders orders = ref.watch(currentOrdersProvider);
+    final CurrentOrdersNotifier ordersNotifier =
+        ref.read(currentOrdersProvider.notifier);
+
+    int? readProjectedTreasuryDelta() {
+      try {
+        return ref.read(treasurySummaryProvider).projectedDelta;
+      } on Object {
+        return null;
+      }
+    }
 
     final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
     final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
@@ -747,7 +757,24 @@ class _MarketTabContent extends ConsumerWidget {
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        ref: ref,
+        onDirectionChanged: (CommodityId commodityId, TradeOrderType? next) =>
+            _handleDirectionChanged(
+              ordersNotifier: ordersNotifier,
+              orders: orders,
+              productionInputConsumption: productionInputConsumption,
+              projectedTreasuryDelta: readProjectedTreasuryDelta(),
+              commodityId: commodityId,
+              next: next,
+            ),
+        onQuantityDelta: (CommodityId commodityId, int delta) =>
+            _handleQuantityDelta(
+              ordersNotifier: ordersNotifier,
+              orders: orders,
+              productionInputConsumption: productionInputConsumption,
+              projectedTreasuryDelta: readProjectedTreasuryDelta(),
+              commodityId: commodityId,
+              delta: delta,
+            ),
       ),
       ..._buildCommoditySectionWidgets(
         sectionKey: TradeScreen.marketSectionRawMaterialsKey,
@@ -761,7 +788,24 @@ class _MarketTabContent extends ConsumerWidget {
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        ref: ref,
+        onDirectionChanged: (CommodityId commodityId, TradeOrderType? next) =>
+            _handleDirectionChanged(
+              ordersNotifier: ordersNotifier,
+              orders: orders,
+              productionInputConsumption: productionInputConsumption,
+              projectedTreasuryDelta: readProjectedTreasuryDelta(),
+              commodityId: commodityId,
+              next: next,
+            ),
+        onQuantityDelta: (CommodityId commodityId, int delta) =>
+            _handleQuantityDelta(
+              ordersNotifier: ordersNotifier,
+              orders: orders,
+              productionInputConsumption: productionInputConsumption,
+              projectedTreasuryDelta: readProjectedTreasuryDelta(),
+              commodityId: commodityId,
+              delta: delta,
+            ),
         isFirstSection: false,
       ),
       ..._buildCommoditySectionWidgets(
@@ -776,7 +820,24 @@ class _MarketTabContent extends ConsumerWidget {
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        ref: ref,
+        onDirectionChanged: (CommodityId commodityId, TradeOrderType? next) =>
+            _handleDirectionChanged(
+              ordersNotifier: ordersNotifier,
+              orders: orders,
+              productionInputConsumption: productionInputConsumption,
+              projectedTreasuryDelta: readProjectedTreasuryDelta(),
+              commodityId: commodityId,
+              next: next,
+            ),
+        onQuantityDelta: (CommodityId commodityId, int delta) =>
+            _handleQuantityDelta(
+              ordersNotifier: ordersNotifier,
+              orders: orders,
+              productionInputConsumption: productionInputConsumption,
+              projectedTreasuryDelta: readProjectedTreasuryDelta(),
+              commodityId: commodityId,
+              delta: delta,
+            ),
         isFirstSection: false,
       ),
     ];
@@ -853,31 +914,6 @@ class _MarketTabContent extends ConsumerWidget {
   /// editorial-monocle conventions for read-only surfaces.
   static const double _observeModeOpacity = 0.7;
 
-  /// Projected per-commodity production-input consumption derived from
-  /// the player's current Production-panel labour allocation
-  /// (`productionDesiredOutputProvider` →
-  /// `assignedRecipesFromDesiredOutput`).
-  ///
-  /// Returned as the `productionInputConsumptionByCommodityId`
-  /// argument for `offerCapByCommodityId` / `sellableHeadroomByCommodityId`
-  /// so the sellable readout, Offer chip gating, and Offer `+` stepper
-  /// all honor the player's industry-allocation reservations per
-  /// `SPEC/game/world-market.md` § Per-commodity quantity cap and
-  /// `SPEC/ui/trade-screen.md` § Market tab — sellable readout +
-  /// offer-side clamp.
-  ///
-  /// `build` `watch`es `productionDesiredOutputProvider` so the screen
-  /// rebuilds on allocation changes; the handler paths reuse
-  /// `ref.read` and call this helper to evaluate the same projection
-  /// in their imperative context.
-  ///
-  /// When the desired-output map is empty (player hasn't allocated any
-  /// recipes yet, or the provider is missing under widget tests /
-  /// Widgetbook), the returned map is empty and the offer cap falls
-  /// back to raw stockpile — preserving the legacy contract.
-  Map<CommodityId, int> _projectedProductionConsumption(WidgetRef ref) =>
-      _consumptionForDesiredOutput(ref.read(productionDesiredOutputProvider));
-
   /// Pure helper: build the per-commodity production-input consumption
   /// map for a desired-output snapshot. Extracted so `build` (which
   /// `watch`es the provider) and the handlers (which `read` it) share
@@ -899,41 +935,40 @@ class _MarketTabContent extends ConsumerWidget {
   /// Projected treasury change this turn from the player's **non-bid**
   /// staged orders (build / recruit / civilian / subsidy commitments).
   ///
-  /// Reads `treasurySummaryProvider.projectedDelta`, which is the signed
-  /// treasury delta from `projectOrderEffects` over the **current**
-  /// `Orders` (which already includes the player's staged bids). Adding
-  /// the player's running bid spend back nets the bid contribution out
-  /// of the projection so the helper passes a non-bid-only delta into
+  /// Reads [summary.projectedDelta], which is the signed treasury delta
+  /// from `projectOrderEffects` over the **current** `Orders` (which
+  /// already includes the player's staged bids). Adding the player's
+  /// running bid spend back nets the bid contribution out of the
+  /// projection so the helper passes a non-bid-only delta into
   /// `treasuryAvailableForBidsByPlayer` per
   /// `SPEC/ui/trade-screen.md` § Market tab — treasury bid cap.
   ///
-  /// Returns `0` when `treasurySummaryProvider.projectedDelta` is `null`
-  /// — typical for Widgetbook stories and isolated widget tests that
-  /// run without `gameServiceProvider` map data. The default-zero return
-  /// makes the helper fall back to raw treasury (the legacy contract)
-  /// for those callers.
-  int _projectedNonBidTreasuryDelta(WidgetRef ref, int stagedBidSpend) {
-    final TreasurySummary summary = ref.read(treasurySummaryProvider);
-    final int? projectedDelta = summary.projectedDelta;
+  /// Returns `0` when [summary.projectedDelta] is `null` — typical for
+  /// Widgetbook stories and isolated widget tests that run without
+  /// `gameServiceProvider` map data.
+  int _projectedNonBidTreasuryDelta(
+    int? projectedDelta,
+    int stagedBidSpend,
+  ) {
     if (projectedDelta == null) return 0;
     return projectedDelta + stagedBidSpend;
   }
 
-  void _handleDirectionChanged(
-    WidgetRef ref,
-    CommodityId commodityId,
-    TradeOrderType? next,
-  ) {
-    final CurrentOrdersNotifier notifier =
-        ref.read(currentOrdersProvider.notifier);
-    final Orders orders = ref.read(currentOrdersProvider);
+  void _handleDirectionChanged({
+    required CurrentOrdersNotifier ordersNotifier,
+    required Orders orders,
+    required Map<CommodityId, int> productionInputConsumption,
+    required int? projectedTreasuryDelta,
+    required CommodityId commodityId,
+    required TradeOrderType? next,
+  }) {
     if (next == null) {
       final Orders updated = removeTradeOrderForPlayer(
         orders: orders,
         playerId: playerId,
         commodityId: commodityId,
       );
-      if (!identical(updated, orders)) notifier.replaceAll(updated);
+      if (!identical(updated, orders)) ordersNotifier.replaceAll(updated);
       return;
     }
     final TradeOrder? prior = tradeOrderForPlayerCommodity(
@@ -1000,7 +1035,7 @@ class _MarketTabContent extends ConsumerWidget {
           game: game,
           playerId: playerId,
           projectedNonBidTreasuryDelta: _projectedNonBidTreasuryDelta(
-            ref,
+            projectedTreasuryDelta,
             totalStagedBidSpend,
           ),
         );
@@ -1034,8 +1069,7 @@ class _MarketTabContent extends ConsumerWidget {
       final int rowCap = offerCapByCommodityId(
         game: game,
         playerId: playerId,
-        productionInputConsumptionByCommodityId:
-            _projectedProductionConsumption(ref),
+        productionInputConsumptionByCommodityId: productionInputConsumption,
       )[commodityId] ??
           0;
       if (rowCap <= 0) {
@@ -1058,17 +1092,17 @@ class _MarketTabContent extends ConsumerWidget {
       playerId: playerId,
       order: nextOrder,
     );
-    notifier.replaceAll(updated);
+    ordersNotifier.replaceAll(updated);
   }
 
-  void _handleQuantityDelta(
-    WidgetRef ref,
-    CommodityId commodityId,
-    int delta,
-  ) {
-    final CurrentOrdersNotifier notifier =
-        ref.read(currentOrdersProvider.notifier);
-    final Orders orders = ref.read(currentOrdersProvider);
+  void _handleQuantityDelta({
+    required CurrentOrdersNotifier ordersNotifier,
+    required Orders orders,
+    required Map<CommodityId, int> productionInputConsumption,
+    required int? projectedTreasuryDelta,
+    required CommodityId commodityId,
+    required int delta,
+  }) {
     final TradeOrder? prior = tradeOrderForPlayerCommodity(
       orders,
       playerId,
@@ -1115,7 +1149,7 @@ class _MarketTabContent extends ConsumerWidget {
           game: game,
           playerId: playerId,
           projectedNonBidTreasuryDelta: _projectedNonBidTreasuryDelta(
-            ref,
+            projectedTreasuryDelta,
             totalStagedBidSpend,
           ),
         );
@@ -1133,8 +1167,7 @@ class _MarketTabContent extends ConsumerWidget {
       final int rowCap = offerCapByCommodityId(
         game: game,
         playerId: playerId,
-        productionInputConsumptionByCommodityId:
-            _projectedProductionConsumption(ref),
+        productionInputConsumptionByCommodityId: productionInputConsumption,
       )[commodityId] ??
           0;
       if (prior.quantity + delta > rowCap) return;
@@ -1145,7 +1178,7 @@ class _MarketTabContent extends ConsumerWidget {
       playerId: playerId,
       order: nextOrder,
     );
-    notifier.replaceAll(updated);
+    ordersNotifier.replaceAll(updated);
   }
 
   /// Returns the per-row sellable headroom shown as `(N)` next to the
@@ -1245,7 +1278,9 @@ class _MarketTabContent extends ConsumerWidget {
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required WidgetRef ref,
+    required void Function(CommodityId commodityId, TradeOrderType? next)
+        onDirectionChanged,
+    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     bool isFirstSection = true,
   }) {
     if (commodities.isEmpty) return const <Widget>[];
@@ -1285,11 +1320,9 @@ class _MarketTabContent extends ConsumerWidget {
             volumeStyle: volumeStyle,
             quantityStyle: quantityStyle,
             onDirectionChanged: (TradeOrderType? next) =>
-                _handleDirectionChanged(ref, commodities[index].id, next),
-            onIncrement: () =>
-                _handleQuantityDelta(ref, commodities[index].id, 1),
-            onDecrement: () =>
-                _handleQuantityDelta(ref, commodities[index].id, -1),
+                onDirectionChanged(commodities[index].id, next),
+            onIncrement: () => onQuantityDelta(commodities[index].id, 1),
+            onDecrement: () => onQuantityDelta(commodities[index].id, -1),
           ),
         ),
     ];

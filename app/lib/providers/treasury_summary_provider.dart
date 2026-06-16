@@ -2,7 +2,9 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'game_service_provider.dart';
 import 'game_summary_support.dart';
+import '../features/game/shell_player_context.dart';
 import 'games_provider.dart';
 
 final _treasurySummaryLog = packageLogger('treasury_summary');
@@ -20,8 +22,11 @@ class TreasurySummary {
 }
 
 final treasurySummaryProvider = Provider<TreasurySummary>((ref) {
-  return watchGameSummary<TreasurySummary>(
-    ref,
+  return computeGameSummary<TreasurySummary>(
+    game: ref.watch(currentGameProvider),
+    shell: ref.watch(shellPlayerContextProvider),
+    orders: ref.watch(currentOrdersProvider),
+    gameService: ref.watch(gameServiceProvider),
     whenNoGame: const TreasurySummary(treasury: 0),
     notDefined: (shell) => shell.treasuryNotDefined,
     whenNotDefined: () => const TreasurySummary(treasury: 0, notDefined: true),
@@ -30,7 +35,7 @@ final treasurySummaryProvider = Provider<TreasurySummary>((ref) {
       final game = context.game;
       final player = game.playerById(context.playerId) ?? game.players.first;
       final treasury = player.treasury;
-      final orders = context.ref.watch(currentOrdersProvider);
+      final orders = context.orders;
       if (!context.hasMapData) {
         return TreasurySummary(treasury: treasury);
       }

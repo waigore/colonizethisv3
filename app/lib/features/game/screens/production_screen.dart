@@ -92,7 +92,7 @@ class ProductionScreen extends ConsumerWidget {
         ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
-        if (shellPanelsNotDefined(shellRef)) {
+        if (shellPanelsNotDefined(shellRef.read(shellPlayerContextProvider))) {
           return const ObserveModeNotDefinedPanel(title: 'Production');
         }
         final desiredOutputByRecipe = shellRef.watch(

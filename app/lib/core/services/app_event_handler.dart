@@ -298,7 +298,7 @@ class AppEventHandler {
           }
           final shell = ref.read(shellPlayerContextProvider);
           final civilianOwnerIds = resolveCivilianMarkerOwnerIds(shell, game);
-          final panelPlayerId = shellPanelPlayerId(ref, game);
+          final panelPlayerId = resolveShellPanelPlayerId(shell, game);
           final readOnly = !shell.canMutateViaUi;
           final currentOrders = ref.watch(currentOrdersProvider);
           final bus = ref.watch(appEventBusProvider);
@@ -356,12 +356,12 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          if (shellPanelsNotDefined(ref)) {
+          final shell = ref.read(shellPlayerContextProvider);
+          if (shellPanelsNotDefined(shell)) {
             return const ObserveModeNotDefinedPanel(title: 'Military Units');
           }
-          final humanPlayerId = shellPanelPlayerId(ref, game);
-          final readOnly =
-              !ref.read(shellPlayerContextProvider).canMutateViaUi;
+          final humanPlayerId = resolveShellPanelPlayerId(shell, game);
+          final readOnly = !shell.canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
@@ -391,12 +391,12 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          if (shellPanelsNotDefined(ref)) {
+          final shell = ref.read(shellPlayerContextProvider);
+          if (shellPanelsNotDefined(shell)) {
             return const ObserveModeNotDefinedPanel(title: 'Naval Units');
           }
-          final humanPlayerId = shellPanelPlayerId(ref, game);
-          final readOnly =
-              !ref.read(shellPlayerContextProvider).canMutateViaUi;
+          final humanPlayerId = resolveShellPanelPlayerId(shell, game);
+          final readOnly = !shell.canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);

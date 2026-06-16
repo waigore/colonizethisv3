@@ -4,7 +4,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/game/shell_player_context.dart';
+import 'game_service_provider.dart';
 import 'game_summary_support.dart';
+import 'games_provider.dart';
 
 final _homeFleetCargoLog = packageLogger('home_fleet_cargo');
 
@@ -26,8 +29,11 @@ class HomeFleetCargoSummary {
 }
 
 final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
-  return watchGameSummary<HomeFleetCargoSummary>(
-    ref,
+  return computeGameSummary<HomeFleetCargoSummary>(
+    game: ref.watch(currentGameProvider),
+    shell: ref.watch(shellPlayerContextProvider),
+    orders: ref.watch(currentOrdersProvider),
+    gameService: ref.watch(gameServiceProvider),
     whenNoGame: const HomeFleetCargoSummary(used: 0, capacity: 0),
     notDefined: (shell) => shell.cargoNotDefined,
     whenNotDefined: () =>

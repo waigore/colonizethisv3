@@ -611,7 +611,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
             );
           }
           final applyStopwatch = Stopwatch()..start();
-          applyTurnResolutionResult(ref, c.result);
+          ref.read(turnResolutionResultApplierProvider).apply(c.result);
           _gameMapNextTurnUiLog.i(
             'logic: next_turn_ui_map result_applied gameId=${game.id} '
             'sessionId=$activeSessionId applyMs=${applyStopwatch.elapsedMilliseconds} '
