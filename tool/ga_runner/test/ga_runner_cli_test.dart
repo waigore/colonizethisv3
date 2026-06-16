@@ -6,6 +6,8 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:ga_runner/ga_runner.dart';
 import 'package:ga_runner/ga_runner_cli.dart';
+
+import 'test_ga_config.dart';
 import 'package:ga_runner/observer/observer_runner.dart';
 
 /// Writes a minimal-but-valid `ga-config.json` to [path], overriding
@@ -273,21 +275,13 @@ void main() {
     test('--resume exits 0 when run already completed all generations', () async {
       final dir = await Directory.systemTemp.createTemp('ga_resume_done_');
       try {
-        final config = GaConfig(
+        final config = testGaConfig(
           populationSize: 1,
           gamesPerProfile: 1,
           maxGenerations: 1,
-          gamePlayerCount: 2,
           maxTurns: 3,
           seedProfilesDir: 'seeds',
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 1,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(seed: 1),
           outputDir: 'out',
           seed: 1,
         );

@@ -13,6 +13,30 @@ Future<void> materializeRoundArtifacts({
   required AiProfile profileB,
   required Map<String, String> capitalProvinces,
 }) async {
+  await materializeMultiPlayerRoundArtifacts(
+    roundDir: roundDir,
+    setup: setup,
+    profilesBySlot: <String, AiProfile>{
+      'gp1': profileA,
+      'gp2': profileB,
+    },
+    capitalProvinces: capitalProvinces,
+  );
+}
+
+/// Writes observer setup and `gp1`…`gpN` profile JSON for an N-player game.
+Future<void> materializeMultiPlayerRoundArtifacts({
+  required String roundDir,
+  required GameSetupConfig setup,
+  required Map<String, AiProfile> profilesBySlot,
+  required Map<String, String> capitalProvinces,
+}) async {
+  if (profilesBySlot.length != setup.greatPowerCount) {
+    throw FormatException(
+      'profilesBySlot length (${profilesBySlot.length}) must match '
+      'setup.greatPowerCount (${setup.greatPowerCount})',
+    );
+  }
   await Directory(roundDir).create(recursive: true);
   final setupFile = File('$roundDir/setup.json');
   await setupFile.writeAsString(
@@ -20,12 +44,11 @@ Future<void> materializeRoundArtifacts({
   );
   final profilesDir = Directory('$roundDir/profiles');
   await profilesDir.create(recursive: true);
-  await File('${profilesDir.path}/gp1.json').writeAsString(
-    '${const JsonEncoder.withIndent('  ').convert(profileA.toJson())}\n',
-  );
-  await File('${profilesDir.path}/gp2.json').writeAsString(
-    '${const JsonEncoder.withIndent('  ').convert(profileB.toJson())}\n',
-  );
+  for (final entry in profilesBySlot.entries) {
+    await File('${profilesDir.path}/${entry.key}.json').writeAsString(
+      '${const JsonEncoder.withIndent('  ').convert(entry.value.toJson())}\n',
+    );
+  }
   await File('$roundDir/capitals.json').writeAsString(
     '${const JsonEncoder.withIndent('  ').convert(capitalProvinces)}\n',
   );

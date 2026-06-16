@@ -11,25 +11,20 @@ import 'package:ga_runner/bless/list_command.dart';
 import 'package:ga_runner/ga_runner.dart';
 import 'package:ga_runner/ga_runner_cli.dart';
 
+import 'test_ga_config.dart';
+
 Future<Directory> _writeCompletedRun({
   required String runId,
   required PopulationMember member,
 }) async {
   final dir = await Directory.systemTemp.createTemp('ga_bless_run_');
-  final config = GaConfig(
+  final config = testGaConfig(
     populationSize: 1,
     gamesPerProfile: 1,
     maxGenerations: 1,
-    gamePlayerCount: 2,
     maxTurns: 3,
     seedProfilesDir: 'seeds',
-    gameSetupConfig: GameSetupConfig(
-      selectedGreatPowerIds: const ['england', 'france'],
-      minorNationCount: 3,
-      tribeCount: 3,
-      numProvincesOldWorld: 23,
-      numProvincesNewWorld: 12,
-    ),
+    gameSetupConfig: testTwoPlayerSetup(),
     outputDir: 'out',
     seed: 1,
   );

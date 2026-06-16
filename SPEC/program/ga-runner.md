@@ -30,8 +30,46 @@ error; **130** SIGINT (last completed generation persisted).
 | `game_setup_config` | required | `GameSetupConfig` JSON (`init_game`-compatible) |
 | `output_dir` | `output/` | Parent directory for run folders |
 | `seed` | optional | Master RNG seed for pairing/mutation. Omit to generate one from entropy (see **Master seed resolution**) |
+| `seven_gp_games_per_profile` | 1 | Observer games per profile in the 7-GP stage (`0` disables the stage) |
+| `stage_fitness_weights.two_player` | 0.5 | Weight for 2-player stage fitness |
+| `stage_fitness_weights.seven_gp` | 0.5 | Weight for 7-GP stage fitness |
+| `seven_gp_opponent_selection` | `top_fitness` | Opponent ranking policy (`top_fitness` only in v2) |
+| `seven_gp_fallback_default_ai_seats` | 3 | Default-AI seats when prior-winner pool is insufficient |
+| `seven_gp_fallback_randomized_ai_seats` | 3 | Randomized-AI seats when prior-winner pool is insufficient |
+| `seven_gp_use_blessed_profiles` | false | Include blessed manifest profiles in opponent pool |
 
-v1 evaluates **2-player** games only (`game_player_count = 2`).
+The 2-player stage keeps `game_player_count = 2` in `game_setup_config`. The
+7-GP stage uses a derived 7-GP setup (`allGreatPowerIds`) built with the same
+minor/tribe constraints. Refs #3488.
+
+## Multi-stage evaluation (Refs #3488)
+
+Per profile, per generation:
+
+1. **2-player stage:** `games_per_profile` observer games with the 2-GP setup;
+   subject is always `gp1`; stage fitness = mean of successfully scored `gp1`
+   totals; all games fail → stage fitness `0.0`.
+2. **7-GP stage:** unless skipped (zero successfully scored 2-player games),
+   `seven_gp_games_per_profile` observer games with the derived 7-GP setup;
+   subject is always `gp1` (same `AiProfile` as the 2-player stage); six
+   opponent seats (`gp2`–`gp7`) from prior generation winners, optional blessed
+   profiles, then default seed leaders and randomized-AI fallback (`3`+`3` by
+   default when no prior winners).
+
+**Per-generation fitness:**
+
+- When the 7-GP stage runs:  
+  `(w2p × fitness_2p + w7gp × fitness_7gp) / (w2p + w7gp)` using
+  `stage_fitness_weights` (each weight finite and > 0).
+- When the 7-GP stage is skipped (all 2-player games failed): `fitness_2p`
+  only (typically `0.0`).
+
+Stages run for every profile before selection/evolution. Round artifacts:
+`gen-NNN/<slot>-gXX` (2-player) and `gen-NNN/<slot>-7gp-gXX` (7-GP).
+
+**Deferred (follow-up):** per-stage mid-generation resume (`evaluation_stage` in
+`run-state.json`) and alternate `seven_gp_opponent_selection` modes beyond
+`top_fitness`.
 
 ## Master seed resolution (Refs #3486)
 
@@ -83,9 +121,10 @@ the same setup/seed and written to `<round>/capitals.json`.
   slots with tournament(size 3) parents + uniform crossover + 5% per-parameter
   Gaussian mutation (`σ = 0.05 × (max − min)`, clamped to registry bounds;
   integers rounded).
-- **Generation fitness:** mean of successfully scored game fitness totals for the
-  profile; failed games discarded; all-failed → `0.0`; non-finite treated as
-  failure.
+- **Generation fitness:** when the 7-GP stage runs, weighted mean of 2-player and
+  7-GP stage means (see **Multi-stage evaluation**); otherwise the 2-player
+  stage mean only. Failed games discarded per stage; all-failed stage → `0.0`;
+  non-finite treated as failure.
 
 ## Persistence
 
@@ -147,6 +186,19 @@ re-running games.
 - Given a `ga-config.json` whose `game_setup_config.tribeCount` is `0`, `1`, or
   `2`, when `GaConfig.fromJson` parses it, then the system throws a
   `FormatException` (CLI exit **1**) naming the minimum of 3 tribes.
+- Given a profile whose 2-player stage has at least one successfully scored game,
+  when generation evaluation runs with `seven_gp_games_per_profile > 0`, then the
+  runner schedules a 7-GP stage for that profile before finalizing generation
+  fitness.
+- Given a profile whose 2-player stage has zero successfully scored games, when
+  generation fitness is computed, then the 7-GP stage is skipped and generation
+  fitness equals the 2-player stage fitness (`0.0`).
+- Given both stages run for a profile, when per-generation fitness is computed,
+  then the system applies the weighted formula from **Multi-stage evaluation**
+  using configured `stage_fitness_weights`.
+- Given generation 0 with zero prior GA winners, when building a 7-GP roster,
+  then all six opponent seats use the configured default-AI and randomized-AI
+  fallback counts (defaults `3` + `3`).
 
 ### Master seed resolution ACs (Refs #3486)
 

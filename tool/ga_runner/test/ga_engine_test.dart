@@ -8,6 +8,8 @@ import 'package:path/path.dart' as p;
 import 'package:ga_runner/ga_runner.dart';
 import 'package:ga_runner/observer/observer_runner.dart';
 
+import 'test_ga_config.dart';
+
 Map<String, dynamic> _minimalSnapshot() => <String, dynamic>{
   'players': <Map<String, dynamic>>[
     <String, dynamic>{
@@ -98,23 +100,10 @@ void main() {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_');
       try {
-        final config = GaConfig(
-          populationSize: 2,
-          gamesPerProfile: 1,
-          maxGenerations: 1,
-          gamePlayerCount: 2,
-          maxTurns: 3,
+        final config = testGaConfig(
           seedProfilesDir: seedsDir,
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 99,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(),
           outputDir: runDir.parent.path,
-          seed: 11,
         );
         final engine = GaEngine(
           repoRoot: Directory.current.path,
@@ -138,23 +127,10 @@ void main() {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_best_');
       try {
-        final config = GaConfig(
-          populationSize: 2,
-          gamesPerProfile: 1,
-          maxGenerations: 1,
-          gamePlayerCount: 2,
-          maxTurns: 3,
+        final config = testGaConfig(
           seedProfilesDir: seedsDir,
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 99,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(),
           outputDir: runDir.parent.path,
-          seed: 11,
         );
         final engine = GaEngine(
           repoRoot: Directory.current.path,
@@ -179,23 +155,10 @@ void main() {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_best_resume_');
       try {
-        final config = GaConfig(
-          populationSize: 2,
-          gamesPerProfile: 1,
-          maxGenerations: 1,
-          gamePlayerCount: 2,
-          maxTurns: 3,
+        final config = testGaConfig(
           seedProfilesDir: seedsDir,
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 99,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(),
           outputDir: runDir.parent.path,
-          seed: 11,
         );
         final engine = GaEngine(
           repoRoot: Directory.current.path,
@@ -229,23 +192,10 @@ void main() {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_resume_');
       try {
-        final config = GaConfig(
-          populationSize: 2,
-          gamesPerProfile: 1,
-          maxGenerations: 1,
-          gamePlayerCount: 2,
-          maxTurns: 3,
+        final config = testGaConfig(
           seedProfilesDir: seedsDir,
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 99,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(),
           outputDir: runDir.parent.path,
-          seed: 11,
         );
         final engine = GaEngine(
           repoRoot: Directory.current.path,
@@ -284,23 +234,11 @@ void main() {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_sigint_');
       try {
-        final config = GaConfig(
-          populationSize: 2,
-          gamesPerProfile: 1,
+        final config = testGaConfig(
           maxGenerations: 3,
-          gamePlayerCount: 2,
-          maxTurns: 3,
           seedProfilesDir: seedsDir,
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 99,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(),
           outputDir: runDir.parent.path,
-          seed: 11,
         );
         final engine = GaEngine(
           repoRoot: Directory.current.path,
@@ -323,23 +261,11 @@ void main() {
       var gamesCompleted = 0;
       const stopAfterGames = 3;
       try {
-        final config = GaConfig(
-          populationSize: 2,
-          gamesPerProfile: 1,
+        final config = testGaConfig(
           maxGenerations: 2,
-          gamePlayerCount: 2,
-          maxTurns: 3,
           seedProfilesDir: seedsDir,
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 99,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(),
           outputDir: runDir.parent.path,
-          seed: 11,
         );
         final engine = GaEngine(
           repoRoot: Directory.current.path,
@@ -360,27 +286,81 @@ void main() {
       }
     });
 
+    test('schedules 7-GP stage after successful 2-player stage', () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_7gp_');
+      var gamesCompleted = 0;
+      try {
+        final config = testGaConfig(
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: testTwoPlayerSetup(),
+          outputDir: runDir.parent.path,
+          sevenGpGamesPerProfile: 1,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: _FakeObserverRunner(
+            onGameComplete: () => gamesCompleted++,
+          ),
+        );
+        expect(await engine.runFresh(runId: 'ga-run-7gp'), 0);
+        expect(gamesCompleted, 4);
+        expect(
+          Directory('${runDir.path}/gen-000')
+              .listSync()
+              .where((e) => e.path.contains('-7gp-')),
+          hasLength(2),
+        );
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
+    test('skips 7-GP stage when all 2-player games fail', () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_7gp_skip_');
+      var gamesCompleted = 0;
+      try {
+        final config = testGaConfig(
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: testTwoPlayerSetup(),
+          outputDir: runDir.parent.path,
+          sevenGpGamesPerProfile: 1,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: _FakeObserverRunner(
+            exitCode: 2,
+            onGameComplete: () => gamesCompleted++,
+          ),
+        );
+        await engine.runFresh(runId: 'ga-run-7gp-skip');
+        expect(gamesCompleted, 2);
+        expect(
+          Directory('${runDir.path}/gen-000')
+              .listSync()
+              .where((e) => e.path.contains('-7gp-')),
+          isEmpty,
+        );
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
     test('assigns fitness 0 when all games fail', () async {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_fail_');
       try {
-        final config = GaConfig(
-          populationSize: 2,
-          gamesPerProfile: 1,
-          maxGenerations: 1,
-          gamePlayerCount: 2,
-          maxTurns: 3,
+        final config = testGaConfig(
           seedProfilesDir: seedsDir,
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-            seed: 99,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(),
           outputDir: runDir.parent.path,
-          seed: 11,
         );
         final engine = GaEngine(
           repoRoot: Directory.current.path,
