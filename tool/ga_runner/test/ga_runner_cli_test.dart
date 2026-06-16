@@ -165,6 +165,80 @@ void main() {
       }
     });
 
+    test('--config emits resolved entropy master seed when seed omitted (#3486)', () async {
+      final dir = await Directory.systemTemp.createTemp('ga_config_seed_omitted_');
+      try {
+        final configPath = '${dir.path}/ga-config.json';
+        await File(configPath).writeAsString(
+          jsonEncode(<String, dynamic>{
+            'population_size': 2,
+            'games_per_profile': 1,
+            'max_generations': 1,
+            'game_player_count': 2,
+            'max_turns': 3,
+            'seed_profiles_dir': '${dir.path}/no-such-seeds',
+            'game_setup_config': <String, dynamic>{
+              'selectedGreatPowerIds': <String>['england', 'france'],
+              'minorNationCount': 3,
+              'tribeCount': 3,
+              'numProvincesOldWorld': 23,
+              'numProvincesNewWorld': 12,
+              'seed': 1,
+            },
+            'output_dir': '${dir.path}/out',
+          }),
+        );
+        final out = <String>[];
+        final code = await runGaRunnerCli(
+          <String>['--config', configPath],
+          emitStdout: out.add,
+          emitStderr: (_) {},
+          observerRunner: const _NoOpObserverRunner(),
+        );
+        // Engine still fails because seeds dir is absent, but the resolved
+        // master seed must be emitted before scheduling.
+        expect(code, 1);
+        expect(out.join('\n'), contains('ga:master_seed'));
+        expect(out.join('\n'), contains('source=entropy'));
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    });
+
+    test('--config exits 1 when seed is present but not an integer (#3486)', () async {
+      final dir = await Directory.systemTemp.createTemp('ga_config_seed_bad_');
+      try {
+        final configPath = '${dir.path}/ga-config.json';
+        await File(configPath).writeAsString(
+          jsonEncode(<String, dynamic>{
+            'seed_profiles_dir': '${dir.path}/seeds',
+            'seed': 'abc',
+            'game_player_count': 2,
+            'game_setup_config': <String, dynamic>{
+              'selectedGreatPowerIds': <String>['england', 'france'],
+              'minorNationCount': 3,
+              'tribeCount': 3,
+              'numProvincesOldWorld': 23,
+              'numProvincesNewWorld': 12,
+            },
+            'output_dir': '${dir.path}/out',
+          }),
+        );
+        final err = <String>[];
+        final code = await runGaRunnerCli(
+          <String>['--config', configPath],
+          emitStdout: (_) {},
+          emitStderr: err.add,
+          observerRunner: const _NoOpObserverRunner(),
+        );
+        expect(code, 1);
+        expect(err.join('\n'), contains('invalid ga-config.json'));
+        expect(err.join('\n'), contains('seed must be an integer'));
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    });
+
     test('--resume exits 1 when run-state.json is missing', () async {
       final dir = await Directory.systemTemp.createTemp('ga_resume_missing_');
       try {

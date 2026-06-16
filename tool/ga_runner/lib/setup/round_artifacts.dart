@@ -32,7 +32,7 @@ Future<void> materializeMultiPlayerRoundArtifacts({
   required Map<String, String> capitalProvinces,
 }) async {
   if (profilesBySlot.length != setup.greatPowerCount) {
-    throw ArgumentError(
+    throw FormatException(
       'profilesBySlot length (${profilesBySlot.length}) must match '
       'setup.greatPowerCount (${setup.greatPowerCount})',
     );
