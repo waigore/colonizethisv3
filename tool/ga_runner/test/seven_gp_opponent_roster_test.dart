@@ -22,7 +22,8 @@ void main() {
       subject = seedAiProfilesById['victoria']!;
     });
 
-    test('fills six seats from default + randomized AI when no prior winners', () {
+    test('fills six seats from default + randomized AI when no prior winners',
+        () {
       final roster = buildSevenGpOpponentRoster(
         subjectProfile: subject,
         priorWinners: const <PriorGenerationWinner>[],
@@ -38,6 +39,31 @@ void main() {
         roster.map((p) => p.profileId).contains(subject.profileId),
         isFalse,
       );
+
+      final subjectLeaderId = seedAiProfileLeaderIds.firstWhere(
+        (leaderId) => seedAiProfilesById[leaderId]!.profileId == subject.profileId,
+      );
+      final expectedDefaultLeaderProfileIds = seedAiProfileLeaderIds
+          .where((leaderId) => leaderId != subjectLeaderId)
+          .take(config.sevenGpFallbackDefaultAiSeats)
+          .map((leaderId) => seedAiProfilesById[leaderId]!.profileId)
+          .toList();
+      final seedProfileIds =
+          seedAiProfiles.map((profile) => profile.profileId).toSet();
+      final defaultLeaderIds = roster
+          .map((profile) => profile.profileId)
+          .where(seedProfileIds.contains)
+          .toList();
+      final randomizedIds = roster
+          .map((profile) => profile.profileId)
+          .where((id) => id.startsWith('seven-gp-rand-'))
+          .toList();
+      expect(defaultLeaderIds, hasLength(config.sevenGpFallbackDefaultAiSeats));
+      expect(
+        randomizedIds,
+        hasLength(config.sevenGpFallbackRandomizedAiSeats),
+      );
+      expect(defaultLeaderIds, orderedEquals(expectedDefaultLeaderProfileIds));
     });
 
     test('excludes subject profile from opponents', () {
