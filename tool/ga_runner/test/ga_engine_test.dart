@@ -286,6 +286,46 @@ void main() {
       }
     });
 
+    test(
+      'does not persist evaluation_checkpoint when interrupted during 2-player '
+      'stage with 7-GP enabled (#3488)',
+      () async {
+        final seedsDir = await _seedDir();
+        final runDir =
+            await Directory.systemTemp.createTemp('ga_run_sigint_2p_7gp_');
+        var gamesCompleted = 0;
+        // Gen 0: 2 two-player + 2 seven-GP games; gen 1: stop on first 2-player.
+        const stopAfterGames = 5;
+        try {
+          final config = testGaConfig(
+            maxGenerations: 2,
+            seedProfilesDir: seedsDir,
+            gameSetupConfig: testTwoPlayerSetup(),
+            outputDir: runDir.parent.path,
+            sevenGpGamesPerProfile: 1,
+          );
+          final engine = GaEngine(
+            repoRoot: Directory.current.path,
+            config: config,
+            runDir: runDir.path,
+            observerRunner: _FakeObserverRunner(
+              onGameComplete: () => gamesCompleted++,
+            ),
+            shouldStop: () => gamesCompleted >= stopAfterGames,
+          );
+          expect(await engine.runFresh(runId: 'ga-run-sigint-2p-7gp'), 130);
+          final interrupted = loadRunState(runDir.path);
+          expect(interrupted.currentGeneration, 0);
+          expect(interrupted.evaluationCheckpoint, isNull);
+          expect(interrupted.convergence.bestFitnessPerGeneration.length, 1);
+        } finally {
+          await Directory(seedsDir).delete(recursive: true);
+          await runDir.delete(recursive: true);
+        }
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
+
     test('schedules 7-GP stage after successful 2-player stage', () async {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_7gp_');
