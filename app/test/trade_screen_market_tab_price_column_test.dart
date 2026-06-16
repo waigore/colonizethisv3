@@ -76,15 +76,42 @@ double _priceTextRight(
   String priceText,
 ) {
   final Finder priceFinder = find.descendant(
-    of: find.byKey(TradeScreen.marketCommodityRowKey(commodityId)),
+    of: _trailingPriceRowFinder(commodityId),
     matching: find.text(priceText),
   );
   expect(priceFinder, findsOneWidget);
   return tester.getTopRight(priceFinder).dx;
 }
 
+Finder _trailingPriceRowFinder(CommodityId commodityId) {
+  final Finder coinFinder = find.byKey(
+    TradeScreen.marketRowPriceCoinIconKey(commodityId),
+  );
+  return find.ancestor(
+    of: coinFinder,
+    matching: find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is Row && widget.mainAxisSize == MainAxisSize.min,
+    ),
+  );
+}
+
+/// Empty [ResourceRules] so `_formatPrice` can render the em-dash fallback
+/// for commodities absent from `worldMarketState.prices` (Refs #3487 AC4).
+ResourceRules _emptyMarketPriceRules() {
+  return ResourceRules(
+    regionRule: const <Resource, ResourceRegionRule>{},
+    allowedTerrains: const <Resource, List<TerrainType>>{},
+    defaultMarketPrice: const <Resource, int>{},
+  );
+}
+
 void main() {
   suppressLogsForTests();
+
+  tearDown(() {
+    TradeScreen.marketPriceResourceRulesOverride = null;
+  });
 
   group('TradeScreen Market tab price column alignment (#3487)', () {
     testWidgets(
@@ -191,6 +218,47 @@ void main() {
           closeTo(sugarPriceRight, 1),
           reason: 'Short and long commodity names must not stagger the price '
               'column.',
+        );
+      },
+    );
+
+    testWidgets(
+      'em-dash price fallback shares the trailing column with integer '
+      'prices',
+      (tester) async {
+        TradeScreen.marketPriceResourceRulesOverride = _emptyMarketPriceRules();
+
+        await _pumpTradeScreen(
+          tester,
+          game: _buildGame(
+            prices: const <CommodityId, int>{'timber': 5},
+          ),
+        );
+
+        final double integerPriceRight =
+            _priceTextRight(tester, 'timber', '5');
+        final double emDashPriceRight = _priceTextRight(
+          tester,
+          'iron',
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '—',
+        );
+
+        expect(
+          emDashPriceRight,
+          closeTo(integerPriceRight, 1),
+          reason: 'Em-dash fallback must right-align in the same column as '
+              'integer prices.',
+        );
+
+        final coinFinder = find.descendant(
+          of: find.byKey(TradeScreen.marketCommodityRowKey('iron')),
+          matching: find.byKey(TradeScreen.marketRowPriceCoinIconKey('iron')),
+        );
+        expect(
+          coinFinder,
+          findsOneWidget,
+          reason: 'Treasury-coin glyph must remain mounted for em-dash rows.',
         );
       },
     );

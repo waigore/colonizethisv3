@@ -288,6 +288,12 @@ class TradeScreen extends ConsumerWidget {
   /// inside the trailing market-price column (Refs `#3487`).
   static const double marketRowPriceColumnInnerGap = 4;
 
+  /// When non-null, overrides [ResourceRules.defaultRules] for Market tab
+  /// price formatting only. Widget tests set this to exercise the em-dash
+  /// fallback path without a catalog default (Refs `#3487` AC4).
+  @visibleForTesting
+  static ResourceRules? marketPriceResourceRulesOverride;
+
   /// Asset path of the treasury-coin glyph rendered next to each
   /// Market row's integer price (Refs `#3093` — row-icons slice). Same
   /// asset family as the game tab bar treasury chip
@@ -1354,9 +1360,11 @@ class _MarketTabContent extends ConsumerWidget {
   /// canonical em-dash glyph is a defensive fallback retained for future
   /// commodity additions that ship without a catalog default.
   static String _formatPrice(int? price, {required CommodityId commodityId}) {
+    final ResourceRules rules =
+        TradeScreen.marketPriceResourceRulesOverride ??
+        ResourceRules.defaultRules;
     final int? effective =
-        price ?? ResourceRules.defaultRules
-            .defaultMarketPriceForCommodityId(commodityId);
+        price ?? rules.defaultMarketPriceForCommodityId(commodityId);
     if (effective == null) return priceUnknownGlyph;
     return effective.toString();
   }
