@@ -9,6 +9,76 @@ import '../genetics/population.dart';
 /// Supported `run-state.json` schema version.
 const int kGaRunStateSchemaVersion = 1;
 
+/// Mid-generation evaluation checkpoint when SIGINT arrives during the 7-GP
+/// stage after all 2-player games completed. Refs #3488.
+class GaEvaluationCheckpoint {
+  const GaEvaluationCheckpoint({
+    required this.generation,
+    required this.twoPlayerScores,
+    required this.sevenGpScores,
+    required this.profileIndex,
+    required this.gameIndex,
+  });
+
+  /// Generation index being evaluated (not yet persisted as complete).
+  final int generation;
+
+  /// Per-slot successfully scored 2-player game totals.
+  final Map<String, List<double>> twoPlayerScores;
+
+  /// Per-slot successfully scored 7-GP game totals (may be partial).
+  final Map<String, List<double>> sevenGpScores;
+
+  /// Next profile index in the 7-GP loop.
+  final int profileIndex;
+
+  /// Next game index within [profileIndex]'s 7-GP stage.
+  final int gameIndex;
+
+  static const String stageSevenGp = 'seven_gp';
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'generation': generation,
+    'evaluation_stage': stageSevenGp,
+    'two_player_scores': twoPlayerScores.map(
+      (k, v) => MapEntry(k, List<double>.from(v)),
+    ),
+    'seven_gp_scores': sevenGpScores.map(
+      (k, v) => MapEntry(k, List<double>.from(v)),
+    ),
+    'profile_index': profileIndex,
+    'game_index': gameIndex,
+  };
+
+  factory GaEvaluationCheckpoint.fromJson(Map<String, dynamic> json) {
+    final stage = json['evaluation_stage'] as String?;
+    if (stage != stageSevenGp) {
+      throw FormatException(
+        'unsupported evaluation_stage $stage (expected $stageSevenGp)',
+      );
+    }
+    return GaEvaluationCheckpoint(
+      generation: (json['generation'] as num).toInt(),
+      twoPlayerScores: _readScoreMap(json['two_player_scores']),
+      sevenGpScores: _readScoreMap(json['seven_gp_scores']),
+      profileIndex: (json['profile_index'] as num).toInt(),
+      gameIndex: (json['game_index'] as num).toInt(),
+    );
+  }
+
+  static Map<String, List<double>> _readScoreMap(Object? raw) {
+    if (raw is! Map<String, dynamic>) {
+      throw const FormatException('checkpoint score map must be an object');
+    }
+    return raw.map(
+      (k, v) => MapEntry(
+        k,
+        (v as List<dynamic>).map((e) => (e as num).toDouble()).toList(),
+      ),
+    );
+  }
+}
+
 /// Serializable GA run state. SPEC/program/ga-runner.md.
 class GaRunState {
   GaRunState({
@@ -18,6 +88,7 @@ class GaRunState {
     required this.population,
     required this.bestOverall,
     required this.convergence,
+    this.evaluationCheckpoint,
   });
 
   final String runId;
@@ -26,6 +97,9 @@ class GaRunState {
   final List<PopulationMember> population;
   final GaBestOverall bestOverall;
   final GaConvergence convergence;
+
+  /// Non-null when a generation was interrupted during the 7-GP stage.
+  final GaEvaluationCheckpoint? evaluationCheckpoint;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'schema_version': kGaRunStateSchemaVersion,
@@ -42,6 +116,8 @@ class GaRunState {
     ],
     'best_overall': bestOverall.toJson(),
     'convergence': convergence.toJson(),
+    if (evaluationCheckpoint != null)
+      'evaluation_checkpoint': evaluationCheckpoint!.toJson(),
   };
 
   factory GaRunState.fromJson(Map<String, dynamic> json, String runDir) {
@@ -98,6 +174,14 @@ class GaRunState {
     if (convJson is! Map<String, dynamic>) {
       throw const FormatException('convergence must be an object');
     }
+    final checkpointJson = json['evaluation_checkpoint'];
+    GaEvaluationCheckpoint? checkpoint;
+    if (checkpointJson != null) {
+      if (checkpointJson is! Map<String, dynamic>) {
+        throw const FormatException('evaluation_checkpoint must be an object');
+      }
+      checkpoint = GaEvaluationCheckpoint.fromJson(checkpointJson);
+    }
     return GaRunState(
       runId: json['run_id'] as String? ?? 'unknown',
       config: config,
@@ -105,6 +189,7 @@ class GaRunState {
       population: population,
       bestOverall: GaBestOverall.fromJson(bestJson),
       convergence: GaConvergence.fromJson(convJson),
+      evaluationCheckpoint: checkpoint,
     );
   }
 }
@@ -122,15 +207,25 @@ class GaBestOverall {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'profile_id': profileId,
-    'fitness': fitness,
+    if (fitness.isFinite) 'fitness': fitness,
     'generation': generation,
   };
 
-  factory GaBestOverall.fromJson(Map<String, dynamic> json) => GaBestOverall(
-    profileId: json['profile_id'] as String? ?? '',
-    fitness: (json['fitness'] as num?)?.toDouble() ?? 0.0,
-    generation: (json['generation'] as num?)?.toInt() ?? 0,
-  );
+  factory GaBestOverall.fromJson(Map<String, dynamic> json) {
+    final generation = (json['generation'] as num?)?.toInt() ?? 0;
+    final rawFitness = json['fitness'];
+    final double fitness;
+    if (rawFitness == null) {
+      fitness = generation < 0 ? double.negativeInfinity : 0.0;
+    } else {
+      fitness = (rawFitness as num).toDouble();
+    }
+    return GaBestOverall(
+      profileId: json['profile_id'] as String? ?? '',
+      fitness: fitness,
+      generation: generation,
+    );
+  }
 }
 
 class GaConvergence {

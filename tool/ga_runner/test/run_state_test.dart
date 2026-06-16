@@ -175,5 +175,59 @@ void main() {
         await dir.delete(recursive: true);
       }
     });
+
+    test('round-trips evaluation_checkpoint for 7-GP resume (#3488)', () async {
+      final dir = await Directory.systemTemp.createTemp('ga_state_ckpt_');
+      try {
+        final config = testGaConfig(
+          seedProfilesDir: 'seeds',
+          gameSetupConfig: testTwoPlayerSetup(),
+        );
+        final members = <PopulationMember>[
+          PopulationMember(
+            slotId: 'profile-000',
+            profile: seedAiProfilesById['victoria']!,
+          ),
+        ];
+        await writeProfileFiles(dir.path, members);
+        final checkpoint = GaEvaluationCheckpoint(
+          generation: 0,
+          twoPlayerScores: <String, List<double>>{
+            'profile-000': <double>[12.0],
+          },
+          sevenGpScores: <String, List<double>>{
+            'profile-000': <double>[],
+          },
+          profileIndex: 0,
+          gameIndex: 0,
+        );
+        await persistRunState(
+          dir.path,
+          GaRunState(
+            runId: 'ga-run-ckpt',
+            config: config,
+            currentGeneration: -1,
+            population: members,
+            bestOverall: const GaBestOverall(
+              profileId: '',
+              fitness: double.negativeInfinity,
+              generation: -1,
+            ),
+            convergence: GaConvergence(),
+            evaluationCheckpoint: checkpoint,
+          ),
+        );
+
+        final loaded = loadRunState(dir.path);
+        expect(loaded.evaluationCheckpoint?.generation, 0);
+        expect(loaded.evaluationCheckpoint?.profileIndex, 0);
+        expect(
+          loaded.evaluationCheckpoint?.twoPlayerScores['profile-000'],
+          <double>[12.0],
+        );
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    });
   });
 }

@@ -319,6 +319,66 @@ void main() {
       }
     });
 
+    test('resumes 7-GP stage from checkpoint without replaying 2-player games',
+        () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_7gp_resume_');
+      var gamesCompleted = 0;
+      const stopAfterGames = 3;
+      try {
+        final config = testGaConfig(
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: testTwoPlayerSetup(),
+          outputDir: runDir.parent.path,
+          sevenGpGamesPerProfile: 1,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: _FakeObserverRunner(
+            onGameComplete: () => gamesCompleted++,
+          ),
+          shouldStop: () => gamesCompleted >= stopAfterGames,
+        );
+        expect(await engine.runFresh(runId: 'ga-run-7gp-resume'), 130);
+        final interrupted = loadRunState(runDir.path);
+        expect(interrupted.evaluationCheckpoint, isNotNull);
+        expect(interrupted.evaluationCheckpoint!.generation, 0);
+        expect(interrupted.currentGeneration, -1);
+        expect(
+          Directory('${runDir.path}/gen-000')
+              .listSync()
+              .where((e) => e.path.contains('-7gp-')),
+          hasLength(1),
+        );
+
+        gamesCompleted = 0;
+        final resumeEngine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: _FakeObserverRunner(
+            onGameComplete: () => gamesCompleted++,
+          ),
+        );
+        expect(await resumeEngine.resume(interrupted), 0);
+        expect(gamesCompleted, 1);
+        expect(
+          Directory('${runDir.path}/gen-000')
+              .listSync()
+              .where((e) => e.path.contains('-7gp-')),
+          hasLength(2),
+        );
+        final completed = loadRunState(runDir.path);
+        expect(completed.evaluationCheckpoint, isNull);
+        expect(completed.currentGeneration, 0);
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
     test('skips 7-GP stage when all 2-player games fail', () async {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_7gp_skip_');

@@ -53,3 +53,18 @@ int deriveSevenGpSelectionSeed(
     (generation * 1000003) ^
     (subjectIndex * 9973) ^
     _kSevenGpSelectionSalt;
+
+const int _kSevenGpRosterSalt = 0x57057E2;
+
+/// Per-subject RNG seed for randomized-AI base-profile picks in 7-GP rosters.
+/// Deterministic for resume so mid-generation continuation does not depend on
+/// shared [Random] consumption order.
+int deriveSevenGpRosterSeed(
+  int masterSeed,
+  int generation,
+  int subjectIndex,
+) =>
+    masterSeed ^
+    (generation * 1000003) ^
+    (subjectIndex * 9973) ^
+    _kSevenGpRosterSalt;
