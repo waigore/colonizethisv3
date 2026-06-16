@@ -82,8 +82,8 @@ melos run ga_runner -- --help
 
 **Options**
 
-- `--config <path>` — start a new GA run (`ga-config.json`; see SPEC/program/ga-runner.md)
-- `--resume <dir>` — resume from `run-state.json` under a prior run directory
+- `--config <path>` — start a new GA run (`ga-config.json`; see SPEC/program/ga-runner.md). The top-level `seed` is optional: omit it to generate a master seed from entropy (the resolved seed is logged at run start as `ga:master_seed seed=<n> source=entropy` and persisted in `run-state.json`)
+- `--resume <dir>` — resume from `run-state.json` under a prior run directory (reuses the persisted master seed; never regenerates)
 - `bless` — copy a completed-run profile into `app/assets/profiles/` and update `manifest.json` (Refs **#3444**)
 - `compare` — side-by-side fitness curves and best-overall parameter diff between runs
 - `list` — list final-generation population members with fitness and survival counts

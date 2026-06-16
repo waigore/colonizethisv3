@@ -29,9 +29,22 @@ error; **130** SIGINT (last completed generation persisted).
 | `seed_profiles_dir` | required | Directory of seed `AiProfile` JSON (`*.json`) |
 | `game_setup_config` | required | `GameSetupConfig` JSON (`init_game`-compatible) |
 | `output_dir` | `output/` | Parent directory for run folders |
-| `seed` | required | Master RNG seed for pairing/mutation |
+| `seed` | optional | Master RNG seed for pairing/mutation. Omit to generate one from entropy (see **Master seed resolution**) |
 
 v1 evaluates **2-player** games only (`game_player_count = 2`).
+
+## Master seed resolution (Refs #3486)
+
+The master `seed` drives pairing/mutation (`Random(config.seed)`) and per-game
+seed derivation (`deriveGameSeed`). It is **optional**: when the key is absent
+(or `null`), the runner generates one via `Random.secure()` as a non-negative
+32-bit integer (`[0, 2^32)`), assigns it into the resolved `GaConfig`, persists
+it in `run-state.json` (`config.seed`), and emits `ga:master_seed seed=<n>
+source=entropy` at run start. A present-but-non-integer `seed` is a config error
+(`FormatException`, exit **1**). An explicit integer is preserved unchanged
+(emitted `source=config`) and yields identical evolution/derivation as before.
+`--resume` reuses the persisted integer seed and never regenerates. No other seed
+semantics change.
 
 ## GA setup profile (Refs #3447)
 
@@ -134,6 +147,27 @@ re-running games.
 - Given a `ga-config.json` whose `game_setup_config.tribeCount` is `0`, `1`, or
   `2`, when `GaConfig.fromJson` parses it, then the system throws a
   `FormatException` (CLI exit **1**) naming the minimum of 3 tribes.
+
+### Master seed resolution ACs (Refs #3486)
+
+- Given a valid `ga-config.json` with no top-level `seed` key, when the operator
+  runs `ga_runner --config`, then `GaConfig.fromJson` does not throw and the
+  resolved `config.seed` is a non-negative integer in `[0, 2^32)`.
+- Given a config parsed with no `seed` key, when the resolved config is
+  serialized (`toJson`, as persisted in `run-state.json`), then `seed` is present
+  as the resolved integer value.
+- Given a run started from a config with no `seed` key, when generation starts,
+  then the runner emits an operator-visible line containing
+  `ga:master_seed seed=<n> source=entropy` before observer scheduling.
+- Given a config whose `seed` is an integer `7`, when `GaConfig.fromJson` parses
+  it, then `config.seed == 7` and re-parsing `config.toJson()` yields the same
+  seed (explicit-seed determinism preserved on resume).
+- Given a config whose `seed` is present but not an integer (for example `"abc"`
+  or `1.5`), when `GaConfig.fromJson` parses it, then the system throws a
+  `FormatException` (CLI exit **1**) naming `seed must be an integer`.
+- Given a persisted `run-state.json` whose `config.seed` is `12345`, when the run
+  is resumed, then `loadRunState` reuses `config.seed == 12345` and no new master
+  seed is generated.
 
 GA setup profile builder ACs are normative in
 [ga-setup-profile.md](ga-setup-profile.md).
