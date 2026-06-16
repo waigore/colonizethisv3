@@ -1,33 +1,20 @@
+import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/providers/game_summary_support.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 
-/// Probe provider exercising [watchGameSummary] in isolation. The map-present,
-/// no-map, and error compute paths are covered end-to-end by
-/// `home_fleet_cargo_provider_test.dart`; this probe pins the short-circuit
-/// preamble (`whenNoGame` / `whenNotDefined`) that runs before any
-/// `gameServiceProvider` access (#3279 target state #8).
-final _probeProvider = Provider<String>((ref) {
-  return watchGameSummary<String>(
-    ref,
-    whenNoGame: 'no-game',
-    notDefined: (shell) => shell.treasuryNotDefined,
-    whenNotDefined: () => 'not-defined',
-    log: packageLogger('test_game_summary'),
-    compute: (context) => context.hasMapData
-        ? 'map:${context.playerId}'
-        : 'no-map:${context.playerId}',
-    onError: (game, playerId) => 'error:$playerId',
-  );
-});
-
+/// Probe inputs exercising [computeGameSummary] short-circuit paths. The
+/// map-present, no-map, and error compute paths are covered end-to-end by
+/// `home_fleet_cargo_provider_test.dart`; these tests pin the preamble
+/// (`whenNoGame` / `whenNotDefined`) that runs before any [GameService] access
+/// (#3279 target state #8).
 Game _game() => Game(
   id: 'g-summary',
   worldState: WorldState(
@@ -56,30 +43,48 @@ ShellPlayerContext _shell({required bool notDefined}) => ShellPlayerContext(
   cargoNotDefined: notDefined,
 );
 
+String _probe({
+  required Game? game,
+  required ShellPlayerContext shell,
+}) {
+  return computeGameSummary<String>(
+    game: game,
+    shell: shell,
+    orders: const Orders(),
+    gameService: _gameService,
+    whenNoGame: 'no-game',
+    notDefined: (shell) => shell.treasuryNotDefined,
+    whenNotDefined: () => 'not-defined',
+    log: packageLogger('test_game_summary'),
+    compute: (context) => context.hasMapData
+        ? 'map:${context.playerId}'
+        : 'no-map:${context.playerId}',
+    onError: (game, playerId) => 'error:$playerId',
+  );
+}
+
+late final GameService _gameService;
+
 void main() {
   suppressLogsForTests();
 
-  test('returns whenNoGame and never reads the shell when no game is set', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+  setUpAll(() async {
+    Hive.init('./.dart_tool/test_hive_game_summary_support');
+    final box = await Hive.openBox<dynamic>('games_game_summary_support');
+    _gameService = GameService(box, GameSaveAdapter());
+  });
 
-    expect(container.read(_probeProvider), 'no-game');
+  test('returns whenNoGame and never reads the shell when no game is set', () {
+    expect(_probe(game: null, shell: _shell(notDefined: false)), 'no-game');
   });
 
   test(
     'returns whenNotDefined when the shell marks the summary not-defined',
     () {
-      final container = ProviderContainer(
-        overrides: [
-          shellPlayerContextProvider.overrideWith(
-            (ref) => _shell(notDefined: true),
-          ),
-        ],
+      expect(
+        _probe(game: _game(), shell: _shell(notDefined: true)),
+        'not-defined',
       );
-      addTearDown(container.dispose);
-      container.read(currentGameProvider.notifier).setGame(_game());
-
-      expect(container.read(_probeProvider), 'not-defined');
     },
   );
 }
