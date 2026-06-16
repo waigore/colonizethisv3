@@ -36,3 +36,20 @@ int deriveSevenGpSeatSeed(
     (subjectIndex * 9973) ^
     (seatIndex * 1009) ^
     _kSevenGpGameSalt;
+
+/// Salt XOR so the `random` opponent-selection shuffle seed never collides with
+/// per-seat randomized-AI seeds for the same tuple inputs.
+const int _kSevenGpSelectionSalt = 0x5E1EC7;
+
+/// Seed for the deterministic `random` `seven_gp_opponent_selection` shuffle of
+/// the prior-generation-winner pool. Independent of [deriveSevenGpSeatSeed] so
+/// reordering prior winners does not perturb the randomized-AI fallback stream.
+int deriveSevenGpSelectionSeed(
+  int masterSeed,
+  int generation,
+  int subjectIndex,
+) =>
+    masterSeed ^
+    (generation * 1000003) ^
+    (subjectIndex * 9973) ^
+    _kSevenGpSelectionSalt;

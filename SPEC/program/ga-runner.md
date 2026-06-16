@@ -33,7 +33,7 @@ error; **130** SIGINT (last completed generation persisted).
 | `seven_gp_games_per_profile` | 1 | Observer games per profile in the 7-GP stage (`0` disables the stage) |
 | `stage_fitness_weights.two_player` | 0.5 | Weight for 2-player stage fitness |
 | `stage_fitness_weights.seven_gp` | 0.5 | Weight for 7-GP stage fitness |
-| `seven_gp_opponent_selection` | `top_fitness` | Opponent ranking policy (`top_fitness` only in v2) |
+| `seven_gp_opponent_selection` | `top_fitness` | Prior-winner ordering policy: `top_fitness` (fitness desc, generation asc tiebreak) or `random` (deterministic seeded shuffle). Other values fail config parse (exit `1`) |
 | `seven_gp_fallback_default_ai_seats` | 3 | Default-AI seats when prior-winner pool is insufficient |
 | `seven_gp_fallback_randomized_ai_seats` | 3 | Randomized-AI seats when prior-winner pool is insufficient |
 | `seven_gp_use_blessed_profiles` | false | Include blessed manifest profiles in opponent pool |
@@ -67,9 +67,22 @@ Per profile, per generation:
 Stages run for every profile before selection/evolution. Round artifacts:
 `gen-NNN/<slot>-gXX` (2-player) and `gen-NNN/<slot>-7gp-gXX` (7-GP).
 
+**Opponent selection modes (`seven_gp_opponent_selection`):** Selects the order
+in which eligible prior-generation winners are seated into the six opponent
+seats before blessed/default/randomized fallback fill. Selection never reorders
+the downstream blessed → default-leader → randomized fallback stages and never
+seats the subject profile.
+
+- `top_fitness` (default): rank prior winners by fitness descending, breaking
+  ties by generation ascending, then seat in that order.
+- `random`: seat prior winners in a deterministic seeded shuffle. The shuffle
+  RNG is seeded by `deriveSevenGpSelectionSeed(master_seed, generation,
+  subjectIndex)` so the seating order is identical for fixed master seed,
+  generation, subject index, and prior-winner pool, and is independent of the
+  randomized-AI fallback RNG stream.
+
 **Deferred (follow-up):** per-stage mid-generation resume (`evaluation_stage` in
-`run-state.json`) and alternate `seven_gp_opponent_selection` modes beyond
-`top_fitness`.
+`run-state.json`).
 
 ## Master seed resolution (Refs #3486)
 
@@ -199,6 +212,21 @@ re-running games.
 - Given generation 0 with zero prior GA winners, when building a 7-GP roster,
   then all six opponent seats use the configured default-AI and randomized-AI
   fallback counts (defaults `3` + `3`).
+- Given a `ga-config.json` whose `seven_gp_opponent_selection` is `random`, when
+  `GaConfig.fromJson` parses it, then the system does not throw and
+  `config.sevenGpOpponentSelection == 'random'`.
+- Given a `ga-config.json` whose `seven_gp_opponent_selection` is any value
+  other than `top_fitness` or `random` (for example `most_wins`), when
+  `GaConfig.fromJson` parses it, then the system throws a `FormatException`
+  (CLI exit **1**) naming the allowed values.
+- Given `seven_gp_opponent_selection = random` and a fixed master seed,
+  generation, subject index, and prior-winner pool of at least two distinct
+  winners, when `buildSevenGpOpponentRoster` runs twice, then both invocations
+  seat the prior winners in the identical order (deterministic seeded shuffle).
+- Given `seven_gp_opponent_selection = random`, when the roster is built, then
+  the subject profile is never seated as an opponent and every eligible prior
+  winner (up to the six seats) is seated before blessed/default/randomized
+  fallback fill.
 
 ### Master seed resolution ACs (Refs #3486)
 
