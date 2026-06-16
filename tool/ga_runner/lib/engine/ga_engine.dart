@@ -1,18 +1,28 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import '../bless/blessed_profile_manifest.dart';
 import '../config/ga_config.dart';
 import '../fitness/fitness_function.dart';
+import '../fitness/stage_fitness.dart';
 import '../genetics/population.dart';
 import '../observer/observer_runner.dart';
 import '../package_logger.dart';
 import '../persistence/run_state.dart';
 import '../setup/capital_resolver.dart';
+import '../setup/prior_generation_winners.dart';
 import '../setup/round_artifacts.dart';
+import '../setup/seven_gp_opponent_roster.dart';
+import 'ga_seeds.dart';
+
+export 'ga_seeds.dart';
 
 final _log = packageLogger('engine');
 
-/// Orchestrates GA generations. SPEC/program/ga-runner.md. Refs #3439.
+/// Orchestrates GA generations. SPEC/program/ga-runner.md. Refs #3439, #3488.
 class GaEngine {
   GaEngine({
     required this.repoRoot,
@@ -170,7 +180,10 @@ class GaEngine {
     required List<PopulationMember> population,
     required math.Random rng,
   }) async {
-    final fitnessTotals = <String, List<double>>{
+    final twoPlayerScores = <String, List<double>>{
+      for (final m in population) m.slotId: <double>[],
+    };
+    final sevenGpScores = <String, List<double>>{
       for (final m in population) m.slotId: <double>[],
     };
 
@@ -190,7 +203,7 @@ class GaEngine {
         final roundDir =
             '$runDir/gen-${generation.toString().padLeft(3, '0')}/'
             '${subject.slotId}-g${gameIndex.toString().padLeft(2, '0')}';
-        final gameSeed = _deriveGameSeed(
+        final gameSeed = deriveGameSeed(
           config.seed,
           generation,
           profileIndex,
@@ -206,34 +219,145 @@ class GaEngine {
           capitalProvinces: capitals,
         );
 
-        final observerResult = await observerRunner.run(
-          repoRoot: repoRoot,
-          setupPath: '$roundDir/setup.json',
-          profilesDir: '$roundDir/profiles',
-          outputDir: roundDir,
-          maxTurns: config.maxTurns,
-          seed: gameSeed,
-        );
-
-        final score = _scoreGame(
-          observerResult: observerResult,
+        final score = await _runObserverAndScore(
           roundDir: roundDir,
-          subjectSlotId: subject.slotId,
+          gameSeed: gameSeed,
           generation: generation,
+          profileSlotId: subject.slotId,
           gameIndex: gameIndex,
+          stageLabel: 'two_player',
         );
         if (score != null) {
-          fitnessTotals[subject.slotId]!.add(score);
+          twoPlayerScores[subject.slotId]!.add(score);
+        }
+      }
+    }
+
+    final priorWinners = loadPriorGenerationWinners(
+      runDir: runDir,
+      beforeGeneration: generation,
+    );
+    final blessedProfiles = config.sevenGpUseBlessedProfiles
+        ? _loadBlessedProfiles()
+        : const <AiProfile>[];
+
+    for (var profileIndex = 0; profileIndex < population.length; profileIndex++) {
+      final subject = population[profileIndex];
+      final scoredTwoPlayer = twoPlayerScores[subject.slotId]!;
+      if (config.sevenGpGamesPerProfile == 0 || scoredTwoPlayer.isEmpty) {
+        continue;
+      }
+
+      final opponents = buildSevenGpOpponentRoster(
+        subjectProfile: subject.profile,
+        priorWinners: priorWinners,
+        blessedProfiles: blessedProfiles,
+        config: config,
+        rng: rng,
+        masterSeed: config.seed,
+        generation: generation,
+        subjectIndex: profileIndex,
+      );
+
+      for (var gameIndex = 0;
+          gameIndex < config.sevenGpGamesPerProfile;
+          gameIndex++) {
+        if (shouldStop()) {
+          _log.i('ga:evaluation_interrupted generation=$generation');
+          return (fitnessBySlot: const <String, double>{}, complete: false);
+        }
+        final roundDir =
+            '$runDir/gen-${generation.toString().padLeft(3, '0')}/'
+            '${subject.slotId}-7gp-g${gameIndex.toString().padLeft(2, '0')}';
+        final gameSeed = deriveSevenGpGameSeed(
+          config.seed,
+          generation,
+          profileIndex,
+          gameIndex,
+        );
+        final setup = withGameSeed(config.sevenGpGameSetupConfig, gameSeed);
+        final capitals = resolveCapitalProvinces(setup);
+        final profilesBySlot = <String, AiProfile>{
+          'gp1': subject.profile,
+          for (var i = 0; i < opponents.length; i++)
+            'gp${i + 2}': opponents[i],
+        };
+        await materializeMultiPlayerRoundArtifacts(
+          roundDir: roundDir,
+          setup: setup,
+          profilesBySlot: profilesBySlot,
+          capitalProvinces: capitals,
+        );
+
+        final score = await _runObserverAndScore(
+          roundDir: roundDir,
+          gameSeed: gameSeed,
+          generation: generation,
+          profileSlotId: subject.slotId,
+          gameIndex: gameIndex,
+          stageLabel: 'seven_gp',
+        );
+        if (score != null) {
+          sevenGpScores[subject.slotId]!.add(score);
         }
       }
     }
 
     return (
       fitnessBySlot: {
-        for (final entry in fitnessTotals.entries)
-          entry.key: _aggregateFitness(entry.value, entry.key, generation),
+        for (final member in population)
+          member.slotId: combineStageFitness(
+            twoPlayerFitness: meanStageFitness(twoPlayerScores[member.slotId]!),
+            sevenGpFitness: config.sevenGpGamesPerProfile == 0 ||
+                    twoPlayerScores[member.slotId]!.isEmpty
+                ? null
+                : meanStageFitness(sevenGpScores[member.slotId]!),
+            weights: config.stageFitnessWeights,
+            sevenGpSkipped: twoPlayerScores[member.slotId]!.isEmpty,
+          ),
       },
       complete: true,
+    );
+  }
+
+  List<AiProfile> _loadBlessedProfiles() {
+    final manifest = BlessedProfileManifest.readFile(
+      blessedManifestPath(repoRoot),
+    );
+    final profiles = <AiProfile>[];
+    for (final entry in manifest.profiles) {
+      final file = File(blessedProfileAssetPath(repoRoot, entry.name));
+      if (!file.existsSync()) continue;
+      final decoded = jsonDecode(file.readAsStringSync());
+      if (decoded is! Map<String, dynamic>) continue;
+      profiles.add(AiProfile.fromJson(decoded));
+    }
+    return profiles;
+  }
+
+  Future<double?> _runObserverAndScore({
+    required String roundDir,
+    required int gameSeed,
+    required int generation,
+    required String profileSlotId,
+    required int gameIndex,
+    required String stageLabel,
+  }) async {
+    final observerResult = await observerRunner.run(
+      repoRoot: repoRoot,
+      setupPath: '$roundDir/setup.json',
+      profilesDir: '$roundDir/profiles',
+      outputDir: roundDir,
+      maxTurns: config.maxTurns,
+      seed: gameSeed,
+    );
+    return _scoreGame(
+      observerResult: observerResult,
+      roundDir: roundDir,
+      subjectSlotId: profileSlotId,
+      generation: generation,
+      gameIndex: gameIndex,
+      stageLabel: stageLabel,
     );
   }
 
@@ -243,19 +367,21 @@ class GaEngine {
     required String subjectSlotId,
     required int generation,
     required int gameIndex,
+    required String stageLabel,
   }) {
     if (observerResult.exitCode != 0 || observerResult.gameTraceDir == null) {
       _log.w(
-        'ga:game_failed generation=$generation profile=$subjectSlotId '
-        'game=$gameIndex exit=${observerResult.exitCode}',
+        'ga:game_failed stage=$stageLabel generation=$generation '
+        'profile=$subjectSlotId game=$gameIndex '
+        'exit=${observerResult.exitCode}',
       );
       return null;
     }
     final artifacts = loadFinalObserverArtifacts(observerResult.gameTraceDir!);
     if (artifacts == null) {
       _log.w(
-        'ga:artifacts_missing generation=$generation profile=$subjectSlotId '
-        'game=$gameIndex',
+        'ga:artifacts_missing stage=$stageLabel generation=$generation '
+        'profile=$subjectSlotId game=$gameIndex',
       );
       return null;
     }
@@ -269,22 +395,12 @@ class GaEngine {
     final total = gp1?.total;
     if (total == null || !total.isFinite) {
       _log.w(
-        'ga:fitness_invalid generation=$generation profile=$subjectSlotId '
-        'game=$gameIndex',
+        'ga:fitness_invalid stage=$stageLabel generation=$generation '
+        'profile=$subjectSlotId game=$gameIndex',
       );
       return null;
     }
     return total;
-  }
-
-  double _aggregateFitness(List<double> scores, String slotId, int generation) {
-    if (scores.isEmpty) {
-      _log.e(
-        'ga:all_games_failed generation=$generation profile=$slotId',
-      );
-      return 0.0;
-    }
-    return scores.reduce((a, b) => a + b) / scores.length;
   }
 
   int _pickOpponentIndex({
@@ -298,12 +414,6 @@ class GaEngine {
     return opponent;
   }
 }
-
-int deriveGameSeed(int masterSeed, int generation, int profileIndex, int gameIndex) =>
-    masterSeed ^ (generation * 1000003) ^ (profileIndex * 9973) ^ (gameIndex * 101);
-
-int _deriveGameSeed(int masterSeed, int generation, int profileIndex, int gameIndex) =>
-    deriveGameSeed(masterSeed, generation, profileIndex, gameIndex);
 
 String newRunId() {
   final now = DateTime.now().toUtc();

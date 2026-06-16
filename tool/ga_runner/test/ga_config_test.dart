@@ -135,5 +135,57 @@ void main() {
         throwsA(isA<FormatException>()),
       );
     });
+
+    test('parses seven_gp defaults and derives 7-GP setup', () {
+      final config = GaConfig.fromJson(<String, dynamic>{
+        'seed_profiles_dir': 'seeds/',
+        'seed': 7,
+        'game_player_count': 2,
+        'game_setup_config': <String, dynamic>{
+          'selectedGreatPowerIds': <String>['england', 'france'],
+          'minorNationCount': 3,
+          'tribeCount': 3,
+        },
+      });
+      expect(config.sevenGpGamesPerProfile, 1);
+      expect(config.stageFitnessWeights.twoPlayer, 0.5);
+      expect(config.sevenGpGameSetupConfig.greatPowerCount, 7);
+      expect(config.sevenGpFallbackDefaultAiSeats, 3);
+    });
+
+    test('rejects invalid stage fitness weights', () {
+      expect(
+        () => GaConfig.fromJson(<String, dynamic>{
+          'seed_profiles_dir': 'seeds/',
+          'seed': 7,
+          'game_player_count': 2,
+          'stage_fitness_weights': <String, dynamic>{'two_player': 0},
+          'game_setup_config': <String, dynamic>{
+            'selectedGreatPowerIds': <String>['england', 'france'],
+            'minorNationCount': 3,
+            'tribeCount': 3,
+          },
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('rejects fallback seat counts that do not sum to 6', () {
+      expect(
+        () => GaConfig.fromJson(<String, dynamic>{
+          'seed_profiles_dir': 'seeds/',
+          'seed': 7,
+          'game_player_count': 2,
+          'seven_gp_fallback_default_ai_seats': 2,
+          'seven_gp_fallback_randomized_ai_seats': 2,
+          'game_setup_config': <String, dynamic>{
+            'selectedGreatPowerIds': <String>['england', 'france'],
+            'minorNationCount': 3,
+            'tribeCount': 3,
+          },
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
   });
 }

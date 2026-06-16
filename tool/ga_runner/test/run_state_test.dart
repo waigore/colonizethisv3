@@ -6,25 +6,20 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:ga_runner/ga_runner.dart';
 
+import 'test_ga_config.dart';
+
 void main() {
   group('GaRunState persistence', () {
     test('round-trips through atomic persist and load', () async {
       final dir = await Directory.systemTemp.createTemp('ga_state_');
       try {
-        final config = GaConfig(
+        final config = testGaConfig(
           populationSize: 2,
           gamesPerProfile: 1,
           maxGenerations: 1,
-          gamePlayerCount: 2,
           maxTurns: 5,
           seedProfilesDir: 'seeds',
-          gameSetupConfig: GameSetupConfig(
-            selectedGreatPowerIds: const ['england', 'france'],
-            minorNationCount: 3,
-            tribeCount: 3,
-            numProvincesOldWorld: 23,
-            numProvincesNewWorld: 12,
-          ),
+          gameSetupConfig: testTwoPlayerSetup(seed: 42),
           outputDir: 'out',
           seed: 42,
         );
