@@ -99,6 +99,72 @@ void main() {
     });
   });
 
+  group('buildSevenGpOpponentRoster partial prior-winner fallback (Refs #3488)',
+      () {
+    late GaConfig config;
+    late AiProfile subject;
+
+    setUp(() {
+      config = testGaConfig(
+        seedProfilesDir: 'seeds',
+        gameSetupConfig: testTwoPlayerSetup(),
+        sevenGpGamesPerProfile: 1,
+      );
+      subject = seedAiProfilesById['victoria']!;
+    });
+
+    // Prior winners use unique GA-evolved ids that are not seed-leader ids, so
+    // the default-leader fallback fill stays distinct from the seated winners.
+    List<PriorGenerationWinner> gaWinners(int n) {
+      final base = seedAiProfilesById['napoleon']!;
+      return <PriorGenerationWinner>[
+        for (var i = 0; i < n; i++)
+          PriorGenerationWinner(
+            profile: AiProfile(
+              schemaVersion: base.schemaVersion,
+              profileId: 'ga-winner-$i',
+              displayName: 'ga-winner-$i',
+              parameters: base.parameters,
+            ),
+            fitness: 100.0 - i,
+            generation: i,
+          ),
+      ];
+    }
+
+    for (final n in <int>[1, 3, 5]) {
+      test('seats $n prior winners and fills ${6 - n} fallback seats', () {
+        final winners = gaWinners(n);
+        final roster = buildSevenGpOpponentRoster(
+          subjectProfile: subject,
+          priorWinners: winners,
+          blessedProfiles: const <AiProfile>[],
+          config: config,
+          rng: math.Random(13),
+          masterSeed: 11,
+          generation: 4,
+          subjectIndex: 0,
+        );
+
+        expect(roster, hasLength(6));
+
+        final winnerIds = winners.map((w) => w.profile.profileId).toSet();
+        final rosterIds = roster.map((p) => p.profileId).toList();
+        // All n prior winners are seated, occupying the first n seats.
+        expect(rosterIds.take(n).toSet(), winnerIds);
+        // Remaining seats are fallback profiles, not prior winners.
+        expect(
+          rosterIds.skip(n).where(winnerIds.contains),
+          isEmpty,
+        );
+        // Subject is never seated as an opponent.
+        expect(rosterIds.contains(subject.profileId), isFalse);
+        // Six distinct opponents overall.
+        expect(rosterIds.toSet(), hasLength(6));
+      });
+    }
+  });
+
   group('buildSevenGpOpponentRoster random selection (Refs #3488)', () {
     late GaConfig randomConfig;
     late AiProfile subject;

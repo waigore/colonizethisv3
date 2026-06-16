@@ -94,6 +94,48 @@ Future<String> _seedDir() async {
   return dir.path;
 }
 
+Map<String, dynamic> _readGpProfileJson(String roundDir, String slot) {
+  final file = File(p.join(roundDir, 'profiles', '$slot.json'));
+  return jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+}
+
+Map<String, dynamic> _completedRunSnapshot(String runDir) {
+  final state = loadRunState(runDir);
+  final genDir = Directory(p.join(runDir, 'gen-000'));
+  final roundDirs = genDir
+      .listSync()
+      .map((entry) => p.basename(entry.path))
+      .toList()
+    ..sort();
+  final sevenGpRosters = <String, List<String>>{};
+  for (final entry in genDir.listSync()) {
+    final roundName = p.basename(entry.path);
+    if (!roundName.contains('-7gp-')) {
+      continue;
+    }
+    final rosterIds = <String>[];
+    for (var seat = 1; seat <= 7; seat++) {
+      final profileFile =
+          File(p.join(entry.path, 'profiles', 'gp$seat.json'));
+      if (!profileFile.existsSync()) {
+        continue;
+      }
+      final decoded =
+          jsonDecode(profileFile.readAsStringSync()) as Map<String, dynamic>;
+      rosterIds.add(decoded['profile_id'] as String);
+    }
+    sevenGpRosters[roundName] = rosterIds;
+  }
+  return <String, dynamic>{
+    'fitnessBySlot': <String, List<double>>{
+      for (final member in state.population)
+        member.slotId: List<double>.from(member.fitnessHistory),
+    },
+    'roundDirs': roundDirs,
+    'sevenGpRosters': sevenGpRosters,
+  };
+}
+
 void main() {
   group('GaEngine integration', () {
     test('runs one generation and persists state', () async {
@@ -326,6 +368,52 @@ void main() {
       timeout: const Timeout(Duration(minutes: 2)),
     );
 
+    test('uses subject 2-player AiProfile as gp1 in 7-GP artifacts (#3488)',
+        () async {
+      final seedsDir = await _seedDir();
+      final runDir = await Directory.systemTemp.createTemp('ga_run_7gp_gp1_');
+      try {
+        final config = testGaConfig(
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: testTwoPlayerSetup(),
+          outputDir: runDir.parent.path,
+          sevenGpGamesPerProfile: 1,
+        );
+        final engine = GaEngine(
+          repoRoot: Directory.current.path,
+          config: config,
+          runDir: runDir.path,
+          observerRunner: const _FakeObserverRunner(),
+        );
+        expect(await engine.runFresh(runId: 'ga-run-7gp-gp1'), 0);
+
+        final genDir = Directory(p.join(runDir.path, 'gen-000'));
+        for (final entry in genDir.listSync()) {
+          final roundName = p.basename(entry.path);
+          if (!roundName.contains('-7gp-')) {
+            continue;
+          }
+          final slotId = roundName.split('-7gp-').first;
+          final twoPlayerRound = genDir
+              .listSync()
+              .map((e) => p.basename(e.path))
+              .where(
+                (name) =>
+                    name.startsWith('$slotId-g') && !name.contains('-7gp-'),
+              )
+              .first;
+          final twoPlayerDir = p.join(genDir.path, twoPlayerRound);
+          expect(
+            _readGpProfileJson(entry.path, 'gp1'),
+            _readGpProfileJson(twoPlayerDir, 'gp1'),
+          );
+        }
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await runDir.delete(recursive: true);
+      }
+    });
+
     test('schedules 7-GP stage after successful 2-player stage', () async {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_7gp_');
@@ -418,6 +506,48 @@ void main() {
         await runDir.delete(recursive: true);
       }
     });
+
+    test(
+      'deterministic stage scheduling and fitness for fixed config and seed '
+      '(#3488)',
+      () async {
+        final seedsDir = await _seedDir();
+        final parentDir = await Directory.systemTemp.createTemp('ga_run_det_');
+        final runDirA = Directory(p.join(parentDir.path, 'run-a'));
+        final runDirB = Directory(p.join(parentDir.path, 'run-b'));
+        try {
+          final config = testGaConfig(
+            seedProfilesDir: seedsDir,
+            gameSetupConfig: testTwoPlayerSetup(),
+            outputDir: parentDir.path,
+            sevenGpGamesPerProfile: 1,
+            seed: 4242,
+          );
+          final engineA = GaEngine(
+            repoRoot: Directory.current.path,
+            config: config,
+            runDir: runDirA.path,
+            observerRunner: const _FakeObserverRunner(),
+          );
+          final engineB = GaEngine(
+            repoRoot: Directory.current.path,
+            config: config,
+            runDir: runDirB.path,
+            observerRunner: const _FakeObserverRunner(),
+          );
+          expect(await engineA.runFresh(runId: 'ga-run-det-a'), 0);
+          expect(await engineB.runFresh(runId: 'ga-run-det-b'), 0);
+          expect(
+            _completedRunSnapshot(runDirA.path),
+            _completedRunSnapshot(runDirB.path),
+          );
+        } finally {
+          await Directory(seedsDir).delete(recursive: true);
+          await parentDir.delete(recursive: true);
+        }
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
 
     test('skips 7-GP stage when all 2-player games fail', () async {
       final seedsDir = await _seedDir();

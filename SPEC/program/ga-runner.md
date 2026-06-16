@@ -213,15 +213,28 @@ re-running games.
   when generation evaluation runs with `seven_gp_games_per_profile > 0`, then the
   runner schedules a 7-GP stage for that profile before finalizing generation
   fitness.
+- Given a 7-GP round for a profile slot, when round artifacts are materialized,
+  then `profiles/gp1.json` equals the subject slot's `AiProfile` JSON from that
+  slot's completed 2-player stage (`profiles/gp1.json` in any of its 2-player
+  round directories).
 - Given a profile whose 2-player stage has zero successfully scored games, when
   generation fitness is computed, then the 7-GP stage is skipped and generation
   fitness equals the 2-player stage fitness (`0.0`).
 - Given both stages run for a profile, when per-generation fitness is computed,
   then the system applies the weighted formula from **Multi-stage evaluation**
   using configured `stage_fitness_weights`.
+- Given identical `ga-config.json` inputs and master seed, when `ga_runner` runs
+  two fresh evaluations to completion, then generation round directories, 7-GP
+  seated profile ids per round, and per-slot generation fitness values are
+  identical.
 - Given generation 0 with zero prior GA winners, when building a 7-GP roster,
   then all six opponent seats use the configured default-AI and randomized-AI
   fallback counts (defaults `3` + `3`).
+- Given `n` eligible prior GA winners with `0 < n < 6`, when building a 7-GP
+  roster, then exactly the `n` distinct prior-winner profiles occupy the first
+  opponent seats and the remaining `6 - n` seats use the blessed → default-leader
+  → randomized-AI fallback fill, with the subject profile excluded from every
+  seat and the roster always seating six distinct opponents.
 - Given interruption during the 7-GP stage after all 2-player games completed,
   when `ga_runner --resume` continues, then completed 2-player artifacts are
   not replayed and only unfinished 7-GP games resume from `evaluation_checkpoint`.
