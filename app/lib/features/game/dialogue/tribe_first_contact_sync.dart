@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../config/constants.dart';
+import '../../../core/services/game_service.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/observe_session_provider.dart';
@@ -26,12 +27,19 @@ String tribeCapitalDisplayName(Game game, Tribe tribe) {
 
 /// Applies persisted GP–Tribe first-contact relations and enqueues heralds
 /// for tribes not yet announced this session.
-void syncGpTribeFirstContact(WidgetRef ref, Game game) {
+void syncGpTribeFirstContact({
+  required Game game,
+  required ShellPlayerContext shell,
+  required CurrentGameNotifier gameNotifier,
+  required GameService gameService,
+  required ObserveSessionNotifier observeNotifier,
+  required TribeFirstContactHeraldsShownNotifier shownNotifier,
+  required TribeFirstContactHeraldQueueNotifier queueNotifier,
+}) {
   // Widget tests and Widgetbook mount GameScreen without opening the Hive
   // games box; skip sync until persistence is available.
   if (!Hive.isBoxOpen(HiveBoxNames.games)) return;
 
-  final shell = ref.read(shellPlayerContextProvider);
   final humanPlayerId =
       shell.panelPlayerId ?? resolveShellPanelPlayerId(shell, game);
   Player? human;
@@ -43,7 +51,7 @@ void syncGpTribeFirstContact(WidgetRef ref, Game game) {
   }
   if (human == null || !human.isHuman) return;
 
-  final mapData = ref.read(gameServiceProvider).getMapData(game.id);
+  final mapData = gameService.getMapData(game.id);
   if (mapData == null) return;
 
   final view = buildPlayerView(game, mapData.combinedTopology, humanPlayerId);
@@ -55,15 +63,9 @@ void syncGpTribeFirstContact(WidgetRef ref, Game game) {
   );
   if (result.newlyContactedTribeIds.isEmpty) return;
 
-  ref.read(currentGameProvider.notifier).setGame(result.game);
-  final toSave = ref
-      .read(observeSessionProvider.notifier)
-      .prepareGameForPersistence(result.game);
-  ref.read(gameServiceProvider).saveGame(toSave);
-
-  final shownNotifier = ref.read(tribeFirstContactHeraldsShownProvider.notifier);
-  final queueNotifier =
-      ref.read(tribeFirstContactHeraldQueueProvider.notifier);
+  gameNotifier.setGame(result.game);
+  final toSave = observeNotifier.prepareGameForPersistence(result.game);
+  gameService.saveGame(toSave);
 
   for (final tribeId in result.newlyContactedTribeIds) {
     if (shownNotifier.isShown(game.id, tribeId)) continue;
@@ -105,15 +107,27 @@ class _TribeFirstContactSyncListenerState
     if (!mounted) return;
     final game = ref.read(currentGameProvider);
     if (game != null) {
-      syncGpTribeFirstContact(ref, game);
+      _syncGame(game);
     }
+  }
+
+  void _syncGame(Game game) {
+    syncGpTribeFirstContact(
+      game: game,
+      shell: ref.read(shellPlayerContextProvider),
+      gameNotifier: ref.read(currentGameProvider.notifier),
+      gameService: ref.read(gameServiceProvider),
+      observeNotifier: ref.read(observeSessionProvider.notifier),
+      shownNotifier: ref.read(tribeFirstContactHeraldsShownProvider.notifier),
+      queueNotifier: ref.read(tribeFirstContactHeraldQueueProvider.notifier),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<Game?>(currentGameProvider, (previous, next) {
       if (next != null) {
-        syncGpTribeFirstContact(ref, next);
+        _syncGame(next);
       }
     });
     return widget.child;

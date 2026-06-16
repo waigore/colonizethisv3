@@ -762,6 +762,7 @@ ProviderScope _gameScreenProviderScope({
         ref.onDispose(bus.dispose);
         return bus;
       }),
+      gameServiceProvider.overrideWith((ref) => _StoryStubGameService()),
       currentGameProvider.overrideWith(() => CurrentGameNotifier(activeGame)),
       currentOrdersProvider.overrideWith(
         () => CurrentOrdersNotifier(const Orders()),

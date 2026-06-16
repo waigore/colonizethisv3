@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/game_event_bridge.dart';
 import '../core/services/game_service.dart';
 import 'app_event_bus_provider.dart';
-import 'game_persistence.dart';
 import 'games_box_provider.dart';
+import 'observe_session_provider.dart';
 
 final gameSaveAdapterProvider = Provider<GameSaveAdapter>(
   (ref) => GameSaveAdapter(),
@@ -30,6 +30,8 @@ final gameServiceProvider = Provider<GameService>((ref) {
   final service = GameService(box, adapter);
   service.eventBus = bus;
   service.logicEventBus = bridge.logicBus;
-  configureGameServiceObservePersistence(ref, service);
+  service.prepareGameForPersistence = (game) => ref
+      .read(observeSessionProvider.notifier)
+      .prepareGameForPersistence(game);
   return service;
 });

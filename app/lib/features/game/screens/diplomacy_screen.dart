@@ -69,7 +69,7 @@ class DiplomacyScreen extends ConsumerWidget {
         ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
-        if (shellPanelsNotDefined(shellRef)) {
+        if (shellPanelsNotDefined(shellRef.read(shellPlayerContextProvider))) {
           return const ObserveModeNotDefinedPanel(title: 'Diplomacy');
         }
         final orders = shellRef.watch(currentOrdersProvider);

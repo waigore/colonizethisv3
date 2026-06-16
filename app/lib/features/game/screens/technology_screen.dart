@@ -99,7 +99,7 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
-        if (shellPanelsNotDefined(shellRef)) {
+        if (shellPanelsNotDefined(shellRef.read(shellPlayerContextProvider))) {
           // ignore: avoid_hardcoded_strings_in_widgets
           return const ObserveModeNotDefinedPanel(title: 'Technology');
         }

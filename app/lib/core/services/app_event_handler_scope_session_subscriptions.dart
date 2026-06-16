@@ -8,7 +8,6 @@ void resetCivilianWorkUpsertValidationPassCountForTests() {
 
 extension _SessionCommands on _AppEventHandlerScopeState {
   void _unlessTurnResolutionBlocksSession(
-    WidgetRef ref,
     String eventKind,
     void Function() apply,
   ) {
@@ -37,37 +36,38 @@ extension _SessionCommands on _AppEventHandlerScopeState {
     _showSnackBar(ShowSnackBarEvent(message: result.message));
   }
 
-  bool _rejectUiMutationIfObserving() =>
-      rejectUiMutationIfObserving(ref, _showSnackBar);
+  bool _rejectUiMutationIfObserving() => rejectUiMutationIfObserving(
+        shell: ref.read(shellPlayerContextProvider),
+        showSnack: _showSnackBar,
+      );
 
   List<StreamSubscription<dynamic>> _sessionCommandListeners(AppEventBus bus) {
     return [
       bus.on<SetObserveModeOffEvent>().listen((_) {
-        _unlessTurnResolutionBlocksSession(ref, 'SetObserveModeOffEvent', () {
-          applySetObserveModeOff(ref);
+        _unlessTurnResolutionBlocksSession( 'SetObserveModeOffEvent', () {
+          ref.read(observeModeSessionHandlerProvider).applySetObserveModeOff();
         });
       }),
       bus.on<SetObserveModeGlobalEvent>().listen((_) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'SetObserveModeGlobalEvent',
           () {
-            applySetObserveModeGlobal(ref);
+            ref.read(observeModeSessionHandlerProvider).applySetObserveModeGlobal();
           },
         );
       }),
       bus.on<SetObserveModePlayerEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'SetObserveModePlayerEvent',
           () {
-            applySetObserveModePlayer(ref, e.targetPlayerId);
+            ref
+                .read(observeModeSessionHandlerProvider)
+                .applySetObserveModePlayer(e.targetPlayerId);
           },
         );
       }),
       bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'RemovePendingWorkOrderRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -83,7 +83,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<UpsertPendingCivilianWorkOrderRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'UpsertPendingCivilianWorkOrderRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -159,7 +158,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'CancelInProgressCivilianWorkRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -178,13 +176,12 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
       }),
       bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'NavalFleetsUpdatedEvent', () {
+        _unlessTurnResolutionBlocksSession( 'NavalFleetsUpdatedEvent', () {
           ref.read(currentGameProvider.notifier).setGame(e.game);
         });
       }),
       bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'NavalSplitFleetRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -202,7 +199,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<NavalTransferShipsRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'NavalTransferShipsRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -221,7 +217,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'NavalMoveFleetRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -235,13 +230,12 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
       }),
       bus.on<LandArmiesUpdatedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'LandArmiesUpdatedEvent', () {
+        _unlessTurnResolutionBlocksSession( 'LandArmiesUpdatedEvent', () {
           ref.read(currentGameProvider.notifier).setGame(e.game);
         });
       }),
       bus.on<ArmyCombineRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'ArmyCombineRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -257,7 +251,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
       }),
       bus.on<ArmySplitRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'ArmySplitRequestedEvent', () {
+        _unlessTurnResolutionBlocksSession( 'ArmySplitRequestedEvent', () {
           if (_rejectUiMutationIfObserving()) return;
           final g = ref.read(currentGameProvider);
           if (g == null) return;
@@ -271,7 +265,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         });
       }),
       bus.on<ArmyMoveRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'ArmyMoveRequestedEvent', () {
+        _unlessTurnResolutionBlocksSession( 'ArmyMoveRequestedEvent', () {
           if (_rejectUiMutationIfObserving()) return;
           final g = ref.read(currentGameProvider);
           if (g == null) return;
@@ -337,13 +331,15 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'TrainCivilianBuildOrdersCommittedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
-            final pid = shellPanelPlayerId(ref, g);
+            final pid = resolveShellPanelPlayerId(
+              ref.read(shellPlayerContextProvider),
+              g,
+            );
             final o = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -360,13 +356,15 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<TrainMilitaryBuildOrdersCommittedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'TrainMilitaryBuildOrdersCommittedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
-            final pid = shellPanelPlayerId(ref, g);
+            final pid = resolveShellPanelPlayerId(
+              ref.read(shellPlayerContextProvider),
+              g,
+            );
             final o = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -383,7 +381,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<SpawnDebugCivilianAtCapitalEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'SpawnDebugCivilianAtCapitalEvent',
           () {
             final current = ref.read(currentGameProvider);
@@ -395,7 +392,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<SpawnDebugRegimentAtCapitalEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'SpawnDebugRegimentAtCapitalEvent',
           () {
             final current = ref.read(currentGameProvider);
@@ -407,7 +403,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<SpawnDebugShipAtCapitalHomeFleetEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'SpawnDebugShipAtCapitalHomeFleetEvent',
           () {
             final current = ref.read(currentGameProvider);
@@ -421,7 +416,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
       }),
       bus.on<CreditDebugTreasuryEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'CreditDebugTreasuryEvent', () {
+        _unlessTurnResolutionBlocksSession( 'CreditDebugTreasuryEvent', () {
           final current = ref.read(currentGameProvider);
           _applyDebugCommand(
             applyDebugTreasuryCredit(currentGame: current, event: e),
@@ -430,7 +425,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<CreditDebugWorkerPoolEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'CreditDebugWorkerPoolEvent',
           () {
             final current = ref.read(currentGameProvider);
@@ -442,7 +436,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<CreditDebugStockpileCommodityEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'CreditDebugStockpileCommodityEvent',
           () {
             final current = ref.read(currentGameProvider);
@@ -454,7 +447,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<FlipDebugProvinceOwnershipEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'FlipDebugProvinceOwnershipEvent',
           () {
             final current = ref.read(currentGameProvider);
@@ -473,7 +465,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
       }),
       bus.on<RevealDebugProvinceEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'RevealDebugProvinceEvent', () {
+        _unlessTurnResolutionBlocksSession( 'RevealDebugProvinceEvent', () {
           final current = ref.read(currentGameProvider);
           final mapData = current == null
               ? null
@@ -489,7 +481,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'AppendDiplomaticOrderRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -504,7 +495,6 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<RemoveDiplomaticOrderRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
-          ref,
           'RemoveDiplomaticOrderRequestedEvent',
           () {
             if (_rejectUiMutationIfObserving()) return;
@@ -522,7 +512,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
       }),
       bus.on<CombatModeChosenEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(ref, 'CombatModeChosenEvent', () {
+        _unlessTurnResolutionBlocksSession( 'CombatModeChosenEvent', () {
           final g = ref.read(currentGameProvider);
           final updated = applyCombatModeChoiceToGame(g, e.mode);
           if (updated == null) {
