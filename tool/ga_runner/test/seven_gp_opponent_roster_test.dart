@@ -191,6 +191,94 @@ void main() {
     }
   });
 
+  group('buildSevenGpOpponentRoster blessed profiles (Refs #3488)', () {
+    late GaConfig blessedConfig;
+    late AiProfile subject;
+
+    AiProfile blessedProfile(String id) {
+      final base = seedAiProfilesById['napoleon']!;
+      return AiProfile(
+        schemaVersion: base.schemaVersion,
+        profileId: id,
+        displayName: id,
+        parameters: base.parameters,
+      );
+    }
+
+    setUp(() {
+      blessedConfig = testGaConfig(
+        seedProfilesDir: 'seeds',
+        gameSetupConfig: testTwoPlayerSetup(),
+        sevenGpGamesPerProfile: 1,
+        sevenGpUseBlessedProfiles: true,
+      );
+      subject = seedAiProfilesById['victoria']!;
+    });
+
+    test('seats blessed profiles after prior winners and before fallback fill',
+        () {
+      final blessed = <AiProfile>[
+        blessedProfile('blessed-alpha'),
+        blessedProfile('blessed-beta'),
+      ];
+      final priorWinner = PriorGenerationWinner(
+        profile: seedAiProfilesById['napoleon']!,
+        fitness: 50,
+        generation: 1,
+      );
+      final roster = buildSevenGpOpponentRoster(
+        subjectProfile: subject,
+        priorWinners: <PriorGenerationWinner>[priorWinner],
+        blessedProfiles: blessed,
+        config: blessedConfig,
+        rng: math.Random(5),
+        masterSeed: 11,
+        generation: 2,
+        subjectIndex: 0,
+      );
+
+      expect(roster, hasLength(6));
+      expect(roster.first.profileId, priorWinner.profile.profileId);
+      expect(
+        roster
+            .skip(1)
+            .take(blessed.length)
+            .map((profile) => profile.profileId)
+            .toList(),
+        blessed.map((profile) => profile.profileId).toList(),
+      );
+      expect(
+        roster.map((profile) => profile.profileId).contains(subject.profileId),
+        isFalse,
+      );
+    });
+
+    test('ignores blessed profiles when config disables them', () {
+      final disabledConfig = testGaConfig(
+        seedProfilesDir: 'seeds',
+        gameSetupConfig: testTwoPlayerSetup(),
+        sevenGpGamesPerProfile: 1,
+        sevenGpUseBlessedProfiles: false,
+      );
+      final blessed = <AiProfile>[blessedProfile('blessed-only')];
+      final roster = buildSevenGpOpponentRoster(
+        subjectProfile: subject,
+        priorWinners: const <PriorGenerationWinner>[],
+        blessedProfiles: blessed,
+        config: disabledConfig,
+        rng: math.Random(5),
+        masterSeed: 11,
+        generation: 0,
+        subjectIndex: 0,
+      );
+
+      expect(
+        roster.map((profile) => profile.profileId).contains('blessed-only'),
+        isFalse,
+      );
+    });
+  });
+
   group('buildSevenGpOpponentRoster random selection (Refs #3488)', () {
     late GaConfig randomConfig;
     late AiProfile subject;

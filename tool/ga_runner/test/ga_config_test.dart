@@ -251,6 +251,33 @@ void main() {
       );
     });
 
+    test('parses seven_gp_use_blessed_profiles (Refs #3488)', () {
+      final enabled = GaConfig.fromJson(<String, dynamic>{
+        'seed_profiles_dir': 'seeds/',
+        'seed': 7,
+        'game_player_count': 2,
+        'seven_gp_use_blessed_profiles': true,
+        'game_setup_config': <String, dynamic>{
+          'selectedGreatPowerIds': <String>['england', 'france'],
+          'minorNationCount': 3,
+          'tribeCount': 3,
+        },
+      });
+      expect(enabled.sevenGpUseBlessedProfiles, isTrue);
+
+      final disabled = GaConfig.fromJson(<String, dynamic>{
+        'seed_profiles_dir': 'seeds/',
+        'seed': 7,
+        'game_player_count': 2,
+        'game_setup_config': <String, dynamic>{
+          'selectedGreatPowerIds': <String>['england', 'france'],
+          'minorNationCount': 3,
+          'tribeCount': 3,
+        },
+      });
+      expect(disabled.sevenGpUseBlessedProfiles, isFalse);
+    });
+
     test('accepts random seven_gp_opponent_selection (Refs #3488)', () {
       final config = GaConfig.fromJson(<String, dynamic>{
         'seed_profiles_dir': 'seeds/',
