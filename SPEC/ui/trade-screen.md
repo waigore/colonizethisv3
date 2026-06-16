@@ -107,14 +107,16 @@ Padding (16 dp)
             │                   ├── CtSectionLabel "Manufactured"    (`tradeScreenMarketSection:manufactured`)
             │                   └── Padding (keyed `tradeScreenMarketRow:<id>`)
             │                       └── _MarketCommodityRow            // manufactured rows in catalog order
-            │                           ├── Row                       // (Refs #3093 row-icons slice)
+            │                           ├── Row                       // (Refs #3093 row-icons, #3487 price column)
             │                           │   ├── ResourceIcon 20 dp (`...:resourceIcon`)
-            │                           │   ├── Text <displayName> (titleSmall, --accent)
-            │                           │   ├── Text '(N)' sellable (`...:sellable`, --muted)
-            │                           │   ├── Spacer
-            │                           │   ├── StrictAssetIcon coin 14 dp (`...:priceCoin`,
-            │                           │   │     assets/icons/32/ui_icon_treasury_coin.png)
-            │                           │   └── Text <price | "—"> (titleSmall, --accentBright)
+            │                           │   ├── Expanded → Row
+            │                           │   │   ├── Text <displayName> (titleSmall, --accent, ellipsis)
+            │                           │   │   └── Text '(N)' sellable (`...:sellable`, --muted)
+            │                           │   └── SizedBox width `marketRowPriceColumnWidth` (right-aligned)
+            │                           │       └── Row (mainAxisSize: min)
+            │                           │           ├── StrictAssetIcon coin 14 dp (`...:priceCoin`,
+            │                           │           │     assets/icons/32/ui_icon_treasury_coin.png)
+            │                           │           └── Text <price | "—"> (titleSmall, --accentBright)
             │                           ├── Text 'Bids N / Offers M' (bodySmall, --muted)
             │                           └── Wrap (per-row interactive controls — Refs #2993 E5b)
             │                               ├── CtChoiceChip 'None'  (`...:none`)
@@ -477,6 +479,13 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 - **Given** the `TradeScreen` is mounted with a human player, observe mode is **not** active, and `Game.worldMarketState.prices == {timber: 30}`, **when** the timber row renders, **then** `tester.getRect(marketRowResourceIconKey('timber')).right <= tester.getRect(find.text('Timber')).left` (leading commodity glyph paints to the left of the display name) and `tester.getRect(marketRowPriceCoinIconKey('timber')).right <= tester.getRect(find.text('30')).left` (trailing currency glyph paints to the left of the integer price text).
 - **Given** the `TradeScreen` is mounted with a human player and `Game.worldMarketState.prices` is empty for a manufactured commodity whose catalog default price is also absent (e.g. `'lumber'`), **then** the row for that commodity still contains exactly one widget keyed `marketRowPriceCoinIconKey('lumber')` (the coin acts as a visual currency cue, not a price-availability flag) and the row's price text continues to render the canonical em-dash glyph (`TradeScreen.priceUnknownGlyph`).
 - **Given** the `TradeScreen` is mounted with a human player and observe mode is **not** active, **then** no widget keyed `TradeScreen.marketRowResourceIconKey(id)` or `TradeScreen.marketRowPriceCoinIconKey(id)` is mounted for any commodity in the excluded set (`gold`, `silver`, `gems`, `diamonds`, `spices`) per `SPEC/game/world-market.md` §Tradeable commodities.
+
+### Market tab — price column alignment (`#3487` slice)
+
+- **Given** the `TradeScreen` is mounted with a human player, observe mode is **not** active, and `Game.worldMarketState.prices` contains at least two tradeable commodities with different integer prices (e.g. `timber: 5` and `iron: 220`), **when** the Market tab commodity list renders, **then** the UI layer renders the treasury-coin icon and price text as one trailing unit per row whose **right edge is flush with the row's right padding boundary** on every measured row.
+- **Given** the same conditions, **when** widget tests measure the price `Text` geometry for two or more rows with different digit lengths, **then** `tester.getTopRight(find.text(<price>)).dx` is equal within 1 logical pixel across those rows (shared price column).
+- **Given** the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, **when** the Market tab commodity list renders with seeded prices, **then** `WidgetTester.takeException()` returns `null`, the shared right-edge price-column rule from the prior ACs still holds, and no horizontal overflow is introduced.
+- **Given** a commodity row resolves to the em-dash price fallback (`TradeScreen.priceUnknownGlyph`), **when** the row renders, **then** the coin icon and em-dash remain in the same right-aligned trailing column as integer prices and the em-dash right edge aligns with the shared price column edge.
 
 ### Market tab — observe-mode chrome parity (`#3093` slice)
 
