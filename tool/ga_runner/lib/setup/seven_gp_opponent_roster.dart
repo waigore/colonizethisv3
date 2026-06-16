@@ -43,20 +43,15 @@ List<AiProfile> buildSevenGpOpponentRoster({
     usedProfileIds.add(profile.profileId);
   }
 
-  if (config.sevenGpOpponentSelection == 'top_fitness') {
-    final ranked = List<PriorGenerationWinner>.from(priorWinners)
-      ..sort((a, b) {
-        final byFitness = b.fitness.compareTo(a.fitness);
-        if (byFitness != 0) return byFitness;
-        return a.generation.compareTo(b.generation);
-      });
-    for (final winner in ranked) {
-      tryAdd(winner.profile);
-    }
-  } else {
-    throw StateError(
-      'unsupported seven_gp_opponent_selection: ${config.sevenGpOpponentSelection}',
-    );
+  final ordered = _orderPriorWinners(
+    priorWinners: priorWinners,
+    selection: config.sevenGpOpponentSelection,
+    masterSeed: masterSeed,
+    generation: generation,
+    subjectIndex: subjectIndex,
+  );
+  for (final winner in ordered) {
+    tryAdd(winner.profile);
   }
 
   if (config.sevenGpUseBlessedProfiles) {
@@ -108,4 +103,46 @@ List<AiProfile> buildSevenGpOpponentRoster({
     );
   }
   return opponents;
+}
+
+/// Orders the prior-generation-winner pool for seating per the configured
+/// [selection] policy. SPEC/program/ga-runner.md § Opponent selection modes.
+/// Refs #3488.
+///
+/// * `top_fitness`: fitness descending, generation ascending tiebreak.
+/// * `random`: deterministic seeded shuffle keyed by
+///   [deriveSevenGpSelectionSeed] so the order is identical for fixed master
+///   seed, generation, subject index, and pool.
+List<PriorGenerationWinner> _orderPriorWinners({
+  required List<PriorGenerationWinner> priorWinners,
+  required String selection,
+  required int masterSeed,
+  required int generation,
+  required int subjectIndex,
+}) {
+  final ordered = List<PriorGenerationWinner>.from(priorWinners);
+  switch (selection) {
+    case 'top_fitness':
+      ordered.sort((a, b) {
+        final byFitness = b.fitness.compareTo(a.fitness);
+        if (byFitness != 0) return byFitness;
+        return a.generation.compareTo(b.generation);
+      });
+      return ordered;
+    case 'random':
+      final selectionRng = math.Random(
+        deriveSevenGpSelectionSeed(masterSeed, generation, subjectIndex),
+      );
+      for (var i = ordered.length - 1; i > 0; i--) {
+        final j = selectionRng.nextInt(i + 1);
+        final tmp = ordered[i];
+        ordered[i] = ordered[j];
+        ordered[j] = tmp;
+      }
+      return ordered;
+    default:
+      throw StateError(
+        'unsupported seven_gp_opponent_selection: $selection',
+      );
+  }
 }

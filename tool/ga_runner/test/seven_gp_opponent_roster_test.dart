@@ -98,4 +98,107 @@ void main() {
       expect(a, b);
     });
   });
+
+  group('buildSevenGpOpponentRoster random selection (Refs #3488)', () {
+    late GaConfig randomConfig;
+    late AiProfile subject;
+    late List<PriorGenerationWinner> winners;
+
+    setUp(() {
+      randomConfig = testGaConfig(
+        seedProfilesDir: 'seeds',
+        gameSetupConfig: testTwoPlayerSetup(),
+        sevenGpGamesPerProfile: 1,
+        sevenGpOpponentSelection: 'random',
+      );
+      subject = seedAiProfilesById['victoria']!;
+      // Four distinct non-subject prior winners with descending fitness so a
+      // shuffle is meaningfully distinguishable from the fitness ordering.
+      final ids = seedAiProfileLeaderIds
+          .where((id) => seedAiProfilesById[id]!.profileId != subject.profileId)
+          .take(4)
+          .toList();
+      winners = <PriorGenerationWinner>[
+        for (var i = 0; i < ids.length; i++)
+          PriorGenerationWinner(
+            profile: seedAiProfilesById[ids[i]]!,
+            fitness: 100.0 - i,
+            generation: i,
+          ),
+      ];
+    });
+
+    List<AiProfile> buildWith({required int seed, int generation = 3}) =>
+        buildSevenGpOpponentRoster(
+          subjectProfile: subject,
+          priorWinners: winners,
+          blessedProfiles: const <AiProfile>[],
+          config: randomConfig,
+          rng: math.Random(seed),
+          masterSeed: 11,
+          generation: generation,
+          subjectIndex: 0,
+        );
+
+    test('is deterministic for fixed master seed, generation, and inputs', () {
+      final a = buildWith(seed: 7).map((p) => p.profileId).toList();
+      final b = buildWith(seed: 7).map((p) => p.profileId).toList();
+      expect(a, b);
+    });
+
+    test('seats every eligible prior winner before fallback and excludes '
+        'the subject', () {
+      final roster = buildWith(seed: 7);
+      expect(roster, hasLength(6));
+      final winnerIds = winners.map((w) => w.profile.profileId).toSet();
+      // Prior winners are seated first (shuffled), before blessed/default/
+      // randomized fallback fill.
+      expect(
+        roster.take(winners.length).map((p) => p.profileId).toSet(),
+        winnerIds,
+      );
+      expect(
+        roster.map((p) => p.profileId).contains(subject.profileId),
+        isFalse,
+      );
+    });
+
+    test('shuffle order is not the top-fitness order for at least one '
+        'generation seed (mode actually reorders)', () {
+      List<String> topFitnessOrder() => (List<PriorGenerationWinner>.from(
+            winners,
+          )..sort((a, b) {
+              final byFitness = b.fitness.compareTo(a.fitness);
+              if (byFitness != 0) return byFitness;
+              return a.generation.compareTo(b.generation);
+            }))
+          .map((w) => w.profile.profileId)
+          .toList();
+
+      final topOrder = topFitnessOrder();
+      // Scan a handful of generation seeds; the deterministic shuffle must
+      // differ from the strict fitness ordering for at least one of them.
+      final reordered = <int>[for (var g = 0; g < 8; g++) g].any((g) {
+        final order = buildWith(seed: 7, generation: g)
+            .take(winners.length)
+            .map((p) => p.profileId)
+            .toList();
+        return !_listEquals(order, topOrder);
+      });
+      expect(
+        reordered,
+        isTrue,
+        reason: 'random selection must produce an order distinct from '
+            'top_fitness for at least one generation seed.',
+      );
+    });
+  });
+}
+
+bool _listEquals(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

@@ -4,6 +4,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 
 import '../setup/ga_setup_profile.dart';
 
+/// Allowed `seven_gp_opponent_selection` prior-winner ordering policies.
+/// SPEC/program/ga-runner.md § Opponent selection modes. Refs #3488.
+const List<String> kSevenGpOpponentSelectionModes = <String>[
+  'top_fitness',
+  'random',
+];
+
 /// Weights for combining 2-player and 7-GP stage fitness. Refs #3488.
 class StageFitnessWeights {
   const StageFitnessWeights({
@@ -164,9 +171,10 @@ class GaConfig {
     );
     final sevenGpOpponentSelection =
         json['seven_gp_opponent_selection'] as String? ?? 'top_fitness';
-    if (sevenGpOpponentSelection != 'top_fitness') {
+    if (!kSevenGpOpponentSelectionModes.contains(sevenGpOpponentSelection)) {
       throw FormatException(
-        'seven_gp_opponent_selection must be top_fitness '
+        'seven_gp_opponent_selection must be one of '
+        '${kSevenGpOpponentSelectionModes.join(', ')} '
         '(got $sevenGpOpponentSelection)',
       );
     }
