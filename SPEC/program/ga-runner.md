@@ -81,8 +81,18 @@ seats the subject profile.
   generation, subject index, and prior-winner pool, and is independent of the
   randomized-AI fallback RNG stream.
 
-**Deferred (follow-up):** per-stage mid-generation resume (`evaluation_stage` in
-`run-state.json`).
+### Mid-generation resume (Refs #3488)
+
+When SIGINT arrives during the **7-GP stage** after all 2-player games for the
+in-progress generation have completed, the runner persists an
+`evaluation_checkpoint` in `run-state.json` with `evaluation_stage: seven_gp`,
+per-slot stage score arrays, and the next `profile_index` / `game_index`. The
+`current_generation` field remains at the last **fully completed** generation.
+
+`ga_runner --resume` continues the interrupted generation from the checkpoint:
+completed 2-player artifacts are not replayed; only unfinished 7-GP games run.
+SIGINT during the 2-player stage still abandons the in-progress generation with
+no checkpoint (unchanged).
 
 ## Master seed resolution (Refs #3486)
 
@@ -212,6 +222,12 @@ re-running games.
 - Given generation 0 with zero prior GA winners, when building a 7-GP roster,
   then all six opponent seats use the configured default-AI and randomized-AI
   fallback counts (defaults `3` + `3`).
+- Given interruption during the 7-GP stage after all 2-player games completed,
+  when `ga_runner --resume` continues, then completed 2-player artifacts are
+  not replayed and only unfinished 7-GP games resume from `evaluation_checkpoint`.
+- Given interruption during the 2-player stage, when `ga_runner --resume`
+  continues, then the runner resumes at the last fully completed generation
+  (no partial 2-player checkpoint).
 - Given a `ga-config.json` whose `seven_gp_opponent_selection` is `random`, when
   `GaConfig.fromJson` parses it, then the system does not throw and
   `config.sevenGpOpponentSelection == 'random'`.

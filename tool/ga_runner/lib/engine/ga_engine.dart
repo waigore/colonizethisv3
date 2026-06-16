@@ -65,7 +65,8 @@ class GaEngine {
   }
 
   Future<int> resume(GaRunState state) async {
-    if (state.currentGeneration >= state.config.maxGenerations - 1) {
+    if (state.evaluationCheckpoint == null &&
+        state.currentGeneration >= state.config.maxGenerations - 1) {
       await exportBestOverallProfile(runDir, state.bestOverall);
       _log.i('ga:already_complete generation=${state.currentGeneration}');
       return 0;
@@ -73,11 +74,13 @@ class GaEngine {
     final rng = math.Random(
       state.config.seed + (state.currentGeneration + 1) * 1009,
     );
+    final startGeneration = state.evaluationCheckpoint?.generation ??
+        state.currentGeneration + 1;
     return _runGenerations(
       state,
       state.population,
       rng,
-      startGeneration: state.currentGeneration + 1,
+      startGeneration: startGeneration,
     );
   }
 
@@ -90,6 +93,7 @@ class GaEngine {
     var current = population;
     var bestOverall = state.bestOverall;
     var convergence = state.convergence;
+    var evaluationCheckpoint = state.evaluationCheckpoint;
 
     for (var gen = startGeneration; gen < config.maxGenerations; gen++) {
       if (shouldStop()) {
@@ -98,15 +102,33 @@ class GaEngine {
       }
 
       _log.i('ga:generation_start index=$gen');
+      final resumeCheckpoint =
+          evaluationCheckpoint?.generation == gen ? evaluationCheckpoint : null;
       final evaluation = await _evaluateGeneration(
         generation: gen,
         population: current,
         rng: rng,
+        checkpoint: resumeCheckpoint,
       );
       if (!evaluation.complete) {
+        if (evaluation.checkpoint != null) {
+          await persistRunState(
+            runDir,
+            GaRunState(
+              runId: state.runId,
+              config: config,
+              currentGeneration: state.currentGeneration,
+              population: current,
+              bestOverall: bestOverall,
+              convergence: convergence,
+              evaluationCheckpoint: evaluation.checkpoint,
+            ),
+          );
+        }
         _log.i('ga:interrupted generation=$gen');
         return 130;
       }
+      evaluationCheckpoint = null;
       final fitnessBySlot = evaluation.fitnessBySlot;
 
       for (final member in current) {
@@ -147,6 +169,7 @@ class GaEngine {
         population: current,
         bestOverall: bestOverall,
         convergence: convergence,
+        evaluationCheckpoint: null,
       );
       await writeProfileFiles(runDir, current);
       await persistRunState(runDir, nextState);
@@ -175,10 +198,16 @@ class GaEngine {
     return 0;
   }
 
-  Future<({Map<String, double> fitnessBySlot, bool complete})> _evaluateGeneration({
+  Future<
+      ({
+        Map<String, double> fitnessBySlot,
+        bool complete,
+        GaEvaluationCheckpoint? checkpoint,
+      })> _evaluateGeneration({
     required int generation,
     required List<PopulationMember> population,
     required math.Random rng,
+    GaEvaluationCheckpoint? checkpoint,
   }) async {
     final twoPlayerScores = <String, List<double>>{
       for (final m in population) m.slotId: <double>[],
@@ -187,48 +216,66 @@ class GaEngine {
       for (final m in population) m.slotId: <double>[],
     };
 
-    for (var profileIndex = 0; profileIndex < population.length; profileIndex++) {
-      final subject = population[profileIndex];
-      for (var gameIndex = 0; gameIndex < config.gamesPerProfile; gameIndex++) {
-        if (shouldStop()) {
-          _log.i('ga:evaluation_interrupted generation=$generation');
-          return (fitnessBySlot: const <String, double>{}, complete: false);
-        }
-        final opponentIndex = _pickOpponentIndex(
-          subjectIndex: profileIndex,
-          populationLength: population.length,
-          rng: rng,
-        );
-        final opponent = population[opponentIndex];
-        final roundDir =
-            '$runDir/gen-${generation.toString().padLeft(3, '0')}/'
-            '${subject.slotId}-g${gameIndex.toString().padLeft(2, '0')}';
-        final gameSeed = deriveGameSeed(
-          config.seed,
-          generation,
-          profileIndex,
-          gameIndex,
-        );
-        final setup = withGameSeed(config.gameSetupConfig, gameSeed);
-        final capitals = resolveCapitalProvinces(setup);
-        await materializeRoundArtifacts(
-          roundDir: roundDir,
-          setup: setup,
-          profileA: subject.profile,
-          profileB: opponent.profile,
-          capitalProvinces: capitals,
-        );
+    if (checkpoint != null) {
+      for (final entry in checkpoint.twoPlayerScores.entries) {
+        twoPlayerScores[entry.key] = List<double>.from(entry.value);
+      }
+      for (final entry in checkpoint.sevenGpScores.entries) {
+        sevenGpScores[entry.key] = List<double>.from(entry.value);
+      }
+    }
 
-        final score = await _runObserverAndScore(
-          roundDir: roundDir,
-          gameSeed: gameSeed,
-          generation: generation,
-          profileSlotId: subject.slotId,
-          gameIndex: gameIndex,
-          stageLabel: 'two_player',
-        );
-        if (score != null) {
-          twoPlayerScores[subject.slotId]!.add(score);
+    final skipTwoPlayer =
+        checkpoint != null && checkpoint.generation == generation;
+
+    if (!skipTwoPlayer) {
+      for (var profileIndex = 0; profileIndex < population.length; profileIndex++) {
+        final subject = population[profileIndex];
+        for (var gameIndex = 0; gameIndex < config.gamesPerProfile; gameIndex++) {
+          if (shouldStop()) {
+            _log.i('ga:evaluation_interrupted generation=$generation');
+            return (
+              fitnessBySlot: const <String, double>{},
+              complete: false,
+              checkpoint: null,
+            );
+          }
+          final opponentIndex = _pickOpponentIndex(
+            subjectIndex: profileIndex,
+            populationLength: population.length,
+            rng: rng,
+          );
+          final opponent = population[opponentIndex];
+          final roundDir =
+              '$runDir/gen-${generation.toString().padLeft(3, '0')}/'
+              '${subject.slotId}-g${gameIndex.toString().padLeft(2, '0')}';
+          final gameSeed = deriveGameSeed(
+            config.seed,
+            generation,
+            profileIndex,
+            gameIndex,
+          );
+          final setup = withGameSeed(config.gameSetupConfig, gameSeed);
+          final capitals = resolveCapitalProvinces(setup);
+          await materializeRoundArtifacts(
+            roundDir: roundDir,
+            setup: setup,
+            profileA: subject.profile,
+            profileB: opponent.profile,
+            capitalProvinces: capitals,
+          );
+
+          final score = await _runObserverAndScore(
+            roundDir: roundDir,
+            gameSeed: gameSeed,
+            generation: generation,
+            profileSlotId: subject.slotId,
+            gameIndex: gameIndex,
+            stageLabel: 'two_player',
+          );
+          if (score != null) {
+            twoPlayerScores[subject.slotId]!.add(score);
+          }
         }
       }
     }
@@ -241,7 +288,18 @@ class GaEngine {
         ? _loadBlessedProfiles()
         : const <AiProfile>[];
 
-    for (var profileIndex = 0; profileIndex < population.length; profileIndex++) {
+    final sevenGpStartProfile = checkpoint?.generation == generation
+        ? checkpoint!.profileIndex
+        : 0;
+    final sevenGpStartGame = checkpoint?.generation == generation
+        ? checkpoint!.gameIndex
+        : 0;
+
+    for (
+      var profileIndex = sevenGpStartProfile;
+      profileIndex < population.length;
+      profileIndex++
+    ) {
       final subject = population[profileIndex];
       final scoredTwoPlayer = twoPlayerScores[subject.slotId]!;
       if (config.sevenGpGamesPerProfile == 0 || scoredTwoPlayer.isEmpty) {
@@ -253,18 +311,33 @@ class GaEngine {
         priorWinners: priorWinners,
         blessedProfiles: blessedProfiles,
         config: config,
-        rng: rng,
+        rng: math.Random(
+          deriveSevenGpRosterSeed(config.seed, generation, profileIndex),
+        ),
         masterSeed: config.seed,
         generation: generation,
         subjectIndex: profileIndex,
       );
 
-      for (var gameIndex = 0;
+      final gameStartIndex = profileIndex == sevenGpStartProfile
+          ? sevenGpStartGame
+          : 0;
+      for (var gameIndex = gameStartIndex;
           gameIndex < config.sevenGpGamesPerProfile;
           gameIndex++) {
         if (shouldStop()) {
           _log.i('ga:evaluation_interrupted generation=$generation');
-          return (fitnessBySlot: const <String, double>{}, complete: false);
+          return (
+            fitnessBySlot: const <String, double>{},
+            complete: false,
+            checkpoint: GaEvaluationCheckpoint(
+              generation: generation,
+              twoPlayerScores: _copyScoreMap(twoPlayerScores),
+              sevenGpScores: _copyScoreMap(sevenGpScores),
+              profileIndex: profileIndex,
+              gameIndex: gameIndex,
+            ),
+          );
         }
         final roundDir =
             '$runDir/gen-${generation.toString().padLeft(3, '0')}/'
@@ -317,8 +390,12 @@ class GaEngine {
           ),
       },
       complete: true,
+      checkpoint: null,
     );
   }
+
+  Map<String, List<double>> _copyScoreMap(Map<String, List<double>> source) =>
+      source.map((k, v) => MapEntry(k, List<double>.from(v)));
 
   List<AiProfile> _loadBlessedProfiles() {
     final manifest = BlessedProfileManifest.readFile(
