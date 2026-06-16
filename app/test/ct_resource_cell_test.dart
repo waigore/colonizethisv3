@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -348,6 +349,178 @@ void main() {
           noDeltaGlyphWidth,
           reason: 'Adding a +N / -N delta must not shrink the rendered name '
               'per #2862 C10.',
+        );
+      },
+    );
+  });
+
+  group('CtResourceCell amount right-edge anchoring (#3485)', () {
+    Future<void> pumpFixedWidth(
+      WidgetTester tester,
+      Widget cell, {
+      required double width,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.editorialMonocle,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(width: width, child: cell),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    // The card's inner-right x: the card right edge minus the cell's horizontal
+    // padding (`CtSpacing.s`). The trailing cluster must be flush with this.
+    double innerRightX(WidgetTester tester) {
+      final double cardRight =
+          tester.getTopRight(find.byType(CtResourceCell)).dx;
+      return cardRight - CtSpacing.s;
+    }
+
+    testWidgets(
+      'quantity right edge is pinned to the card inner-right edge (no delta)',
+      (tester) async {
+        const double width = 240;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Iron',
+            quantity: 430,
+          ),
+          width: width,
+        );
+        final double qtyRight = tester.getTopRight(find.text('430')).dx;
+        expect(
+          qtyRight,
+          closeTo(innerRightX(tester), 1.5),
+          reason: 'The stockpile amount must be pinned to the card right edge '
+              '(legacy equal-flex trailing cluster left it near the middle).',
+        );
+      },
+    );
+
+    testWidgets(
+      'delta (not quantity) is flush to the right edge, with the quantity '
+      'immediately to its left',
+      (tester) async {
+        const double width = 240;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Timber',
+            quantity: 920,
+            delta: -40,
+          ),
+          width: width,
+        );
+        final double deltaRight = tester.getTopRight(find.text('-40')).dx;
+        final double qtyRight = tester.getTopRight(find.text('920')).dx;
+        final double deltaLeft = tester.getTopLeft(find.text('-40')).dx;
+        expect(
+          deltaRight,
+          closeTo(innerRightX(tester), 1.5),
+          reason: 'When a delta is present it is the rightmost element and is '
+              'pinned to the card right edge.',
+        );
+        // Quantity sits immediately to the left of the delta (delta adjacency).
+        expect(qtyRight, lessThanOrEqualTo(deltaLeft + 0.5));
+        expect(
+          deltaLeft - qtyRight,
+          closeTo(CtResourceCell.quantityToDeltaGap, 1.0),
+        );
+      },
+    );
+
+    testWidgets(
+      'worker cells follow the same right-edge amount anchoring rule',
+      (tester) async {
+        const double width = 200;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Journeymen',
+            quantity: 6,
+          ),
+          width: width,
+        );
+        final double qtyRight = tester.getTopRight(find.text('6')).dx;
+        expect(qtyRight, closeTo(innerRightX(tester), 1.5));
+      },
+    );
+
+    testWidgets(
+      'amounts of two equal-width cards with different name lengths align to '
+      'the same right edge',
+      (tester) async {
+        const double width = 220;
+        await pumpFixedWidth(
+          tester,
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CtResourceCell(
+                iconBuilder: tinyIcon,
+                name: 'Tin',
+                quantity: 85,
+              ),
+              CtResourceCell(
+                iconBuilder: tinyIcon,
+                name: 'Refined Sugar',
+                quantity: 50,
+              ),
+            ],
+          ),
+          width: width,
+        );
+        final double shortQtyRight = tester.getTopRight(find.text('85')).dx;
+        final double longQtyRight = tester.getTopRight(find.text('50')).dx;
+        expect(
+          shortQtyRight,
+          closeTo(longQtyRight, 1.5),
+          reason: 'Right-pinned amounts must line up vertically regardless of '
+              'commodity name length.',
+        );
+      },
+    );
+
+    testWidgets(
+      'canonical commodity name renders in full at a representative wide grid '
+      'cell width that the legacy equal-flex layout would have truncated',
+      (tester) async {
+        // ~240 logical px approximates a 3-column cell when the Available panel
+        // is ~740 dp wide. The legacy layout gave the name only ~half the
+        // residual width (~99 px here) and clipped "Refined Sugar"; the fix
+        // gives the name all residual width so it renders in full.
+        const double width = 240;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Refined Sugar',
+            quantity: 50,
+            delta: 5,
+          ),
+          width: width,
+        );
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.descendant(
+            of: find.byType(CtResourceCell),
+            matching: find.text('Refined Sugar'),
+          ),
+        );
+        expect(
+          paragraph.didExceedMaxLines,
+          isFalse,
+          reason: 'The name must render in full at a representative wide grid '
+              'cell width per #3485.',
         );
       },
     );
