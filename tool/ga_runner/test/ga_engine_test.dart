@@ -6,15 +6,22 @@ import 'package:colonizethis_test/test.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:ga_runner/ga_runner.dart';
+import 'package:ga_runner/fitness/stage_fitness.dart';
 import 'package:ga_runner/observer/observer_runner.dart';
 
 import 'test_ga_config.dart';
 
-Map<String, dynamic> _minimalSnapshot() => <String, dynamic>{
+const _testCapitalProvinces = <String, String>{
+  'gp1': 'oldWorld|p1',
+  'gp2': 'oldWorld|p2',
+};
+
+Map<String, dynamic> _minimalSnapshot({double gp1Treasury = 100}) =>
+    <String, dynamic>{
   'players': <Map<String, dynamic>>[
     <String, dynamic>{
       'playerId': 'gp1',
-      'treasuryPounds': 100,
+      'treasuryPounds': gp1Treasury,
       'workerPool': <String, dynamic>{
         'peasants': 10,
         'apprentices': 0,
@@ -73,6 +80,44 @@ class _FakeObserverRunner implements ObserverRunner {
     await Directory(traceDir).create(recursive: true);
     await File('$traceDir/turn-000001.snapshot.json').writeAsString(
       jsonEncode(_minimalSnapshot()),
+    );
+    await File('$traceDir/run-summary.json').writeAsString(
+      jsonEncode(<String, dynamic>{
+        'declared_winner_player_id': 'gp1',
+        'termination_reason': 'military_victory',
+      }),
+    );
+    return ObserverRunResult(exitCode: 0, gameTraceDir: traceDir);
+  }
+}
+
+/// Returns distinct gp1 fitness totals for 2-player vs 7-GP observer rounds.
+class _StageDifferentiatedObserverRunner implements ObserverRunner {
+  const _StageDifferentiatedObserverRunner({
+    this.twoPlayerGp1Treasury = 50,
+    this.sevenGpGp1Treasury = 200,
+  });
+
+  final double twoPlayerGp1Treasury;
+  final double sevenGpGp1Treasury;
+
+  @override
+  Future<ObserverRunResult> run({
+    required String repoRoot,
+    required String setupPath,
+    required String profilesDir,
+    required String outputDir,
+    required int maxTurns,
+    required int seed,
+  }) async {
+    final isSevenGp = outputDir.contains('-7gp-');
+    final treasury =
+        isSevenGp ? sevenGpGp1Treasury : twoPlayerGp1Treasury;
+    final gameId = 'game-$seed';
+    final traceDir = '$outputDir/observer-traces/$gameId';
+    await Directory(traceDir).create(recursive: true);
+    await File('$traceDir/turn-000001.snapshot.json').writeAsString(
+      jsonEncode(_minimalSnapshot(gp1Treasury: treasury)),
     );
     await File('$traceDir/run-summary.json').writeAsString(
       jsonEncode(<String, dynamic>{
@@ -413,6 +458,102 @@ void main() {
         await runDir.delete(recursive: true);
       }
     });
+
+    test(
+      'combines weighted 2-player and 7-GP stage fitness per config weights '
+      '(#3488)',
+      () async {
+        final seedsDir = await _seedDir();
+        final runDir =
+            await Directory.systemTemp.createTemp('ga_run_weighted_fit_');
+        const twoPlayerTreasury = 50.0;
+        const sevenGpTreasury = 200.0;
+        const weights = StageFitnessWeights(twoPlayer: 0.25, sevenGp: 0.75);
+        try {
+          final config = testGaConfig(
+            populationSize: 1,
+            seedProfilesDir: seedsDir,
+            gameSetupConfig: testTwoPlayerSetup(),
+            outputDir: runDir.parent.path,
+            sevenGpGamesPerProfile: 1,
+            stageFitnessWeights: weights,
+          );
+          final engine = GaEngine(
+            repoRoot: Directory.current.path,
+            config: config,
+            runDir: runDir.path,
+            observerRunner: const _StageDifferentiatedObserverRunner(
+              twoPlayerGp1Treasury: twoPlayerTreasury,
+              sevenGpGp1Treasury: sevenGpTreasury,
+            ),
+          );
+          expect(await engine.runFresh(runId: 'ga-run-weighted-fit'), 0);
+
+          final summary = <String, dynamic>{
+            'declared_winner_player_id': 'gp1',
+            'termination_reason': 'military_victory',
+          };
+          final twoPlayerFitness = computeFitness(
+            _minimalSnapshot(gp1Treasury: twoPlayerTreasury),
+            summary,
+            capitalProvinceByPlayerId: _testCapitalProvinces,
+          )['gp1']!
+              .total;
+          final sevenGpFitness = computeFitness(
+            _minimalSnapshot(gp1Treasury: sevenGpTreasury),
+            summary,
+            capitalProvinceByPlayerId: _testCapitalProvinces,
+          )['gp1']!
+              .total;
+          final expected = combineStageFitness(
+            twoPlayerFitness: twoPlayerFitness,
+            sevenGpFitness: sevenGpFitness,
+            weights: weights,
+            sevenGpSkipped: false,
+          );
+
+          final state = loadRunState(runDir.path);
+          expect(state.population.single.fitnessHistory.single, expected);
+        } finally {
+          await Directory(seedsDir).delete(recursive: true);
+          await runDir.delete(recursive: true);
+        }
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
+
+    test(
+      'skips 7-GP scheduling when seven_gp_games_per_profile is 0 (#3488)',
+      () async {
+        final seedsDir = await _seedDir();
+        final runDir =
+            await Directory.systemTemp.createTemp('ga_run_7gp_disabled_');
+        try {
+          final config = testGaConfig(
+            seedProfilesDir: seedsDir,
+            gameSetupConfig: testTwoPlayerSetup(),
+            outputDir: runDir.parent.path,
+            sevenGpGamesPerProfile: 0,
+          );
+          final engine = GaEngine(
+            repoRoot: Directory.current.path,
+            config: config,
+            runDir: runDir.path,
+            observerRunner: const _FakeObserverRunner(),
+          );
+          expect(await engine.runFresh(runId: 'ga-run-7gp-disabled'), 0);
+          expect(
+            Directory('${runDir.path}/gen-000')
+                .listSync()
+                .where((e) => e.path.contains('-7gp-')),
+            isEmpty,
+          );
+        } finally {
+          await Directory(seedsDir).delete(recursive: true);
+          await runDir.delete(recursive: true);
+        }
+      },
+    );
 
     test('schedules 7-GP stage after successful 2-player stage', () async {
       final seedsDir = await _seedDir();
