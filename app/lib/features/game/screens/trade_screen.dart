@@ -275,6 +275,18 @@ class TradeScreen extends ConsumerWidget {
   /// `[ResourceIcon 20] Name (N) … [Coin 14] 30`.
   static const double marketRowPriceCoinIconSize = 14;
 
+  /// Fixed width of the trailing market-price column (coin + price text)
+  /// on Market row line 1 (Refs `#3487`). The same width on every row so
+  /// the right edge of the price digits shares a vertical column across
+  /// the commodity list. Sized to fit [marketRowPriceCoinIconSize] +
+  /// [marketRowPriceColumnInnerGap] + three-digit catalog default prices
+  /// (e.g. manufactured `steel` at `530`) at [titleSmall] without clipping.
+  static const double marketRowPriceColumnWidth = 64;
+
+  /// Horizontal gap between the treasury-coin glyph and the price text
+  /// inside the trailing market-price column (Refs `#3487`).
+  static const double marketRowPriceColumnInnerGap = 4;
+
   /// Asset path of the treasury-coin glyph rendered next to each
   /// Market row's integer price (Refs `#3093` — row-icons slice). Same
   /// asset family as the game tab bar treasury chip
@@ -1479,9 +1491,10 @@ class _MarketCommodityRow extends StatelessWidget {
   }
 }
 
-/// Top read-only line of a Market tab commodity row (Refs #3093):
-/// resource icon, commodity name, sellable `(N)` headroom readout,
-/// a flexible spacer, then the coin icon and current market price.
+/// Top read-only line of a Market tab commodity row (Refs #3093, #3487):
+/// resource icon, commodity name, sellable `(N)` headroom readout, then a
+/// fixed-width trailing column that right-aligns the coin icon and price so
+/// every row shares the same price-digit column edge.
 /// Extracted from `_MarketCommodityRow.build` to keep the parent
 /// `build` body within the `widget_build_method_too_long` AST cap.
 class _MarketCommodityRowHeader extends StatelessWidget {
@@ -1515,30 +1528,47 @@ class _MarketCommodityRowHeader extends StatelessWidget {
           size: TradeScreen.marketRowResourceIconSize,
         ),
         const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            commodityDisplayName,
-            style: nameStyle,
-            overflow: TextOverflow.ellipsis,
+        Expanded(
+          child: Row(
+            children: <Widget>[
+              Flexible(
+                child: Text(
+                  commodityDisplayName,
+                  style: nameStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                '($sellableHeadroom)',
+                key: TradeScreen.marketRowSellableReadoutKey(commodityId),
+                style: sellableStyle,
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 4),
-        Text(
-          // ignore: avoid_hardcoded_strings_in_widgets
-          '($sellableHeadroom)',
-          key: TradeScreen.marketRowSellableReadoutKey(commodityId),
-          style: sellableStyle,
+        SizedBox(
+          width: TradeScreen.marketRowPriceColumnWidth,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                StrictAssetIcon(
+                  key: TradeScreen.marketRowPriceCoinIconKey(commodityId),
+                  assetPath: TradeScreen.marketRowPriceCoinAssetPath,
+                  width: TradeScreen.marketRowPriceCoinIconSize,
+                  height: TradeScreen.marketRowPriceCoinIconSize,
+                ),
+                const SizedBox(
+                  width: TradeScreen.marketRowPriceColumnInnerGap,
+                ),
+                Text(priceText, style: priceStyle),
+              ],
+            ),
+          ),
         ),
-        const Spacer(),
-        const SizedBox(width: 8),
-        StrictAssetIcon(
-          key: TradeScreen.marketRowPriceCoinIconKey(commodityId),
-          assetPath: TradeScreen.marketRowPriceCoinAssetPath,
-          width: TradeScreen.marketRowPriceCoinIconSize,
-          height: TradeScreen.marketRowPriceCoinIconSize,
-        ),
-        const SizedBox(width: 4),
-        Text(priceText, style: priceStyle),
       ],
     );
   }
