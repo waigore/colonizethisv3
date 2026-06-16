@@ -222,6 +222,11 @@ re-running games.
 - Given generation 0 with zero prior GA winners, when building a 7-GP roster,
   then all six opponent seats use the configured default-AI and randomized-AI
   fallback counts (defaults `3` + `3`).
+- Given `n` eligible prior GA winners with `0 < n < 6`, when building a 7-GP
+  roster, then exactly the `n` distinct prior-winner profiles occupy the first
+  opponent seats and the remaining `6 - n` seats use the blessed → default-leader
+  → randomized-AI fallback fill, with the subject profile excluded from every
+  seat and the roster always seating six distinct opponents.
 - Given interruption during the 7-GP stage after all 2-player games completed,
   when `ga_runner --resume` continues, then completed 2-player artifacts are
   not replayed and only unfinished 7-GP games resume from `evaluation_checkpoint`.
