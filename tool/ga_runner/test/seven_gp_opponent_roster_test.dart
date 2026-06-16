@@ -22,7 +22,8 @@ void main() {
       subject = seedAiProfilesById['victoria']!;
     });
 
-    test('fills six seats from default + randomized AI when no prior winners', () {
+    test('fills six seats from default + randomized AI when no prior winners',
+        () {
       final roster = buildSevenGpOpponentRoster(
         subjectProfile: subject,
         priorWinners: const <PriorGenerationWinner>[],
@@ -38,6 +39,31 @@ void main() {
         roster.map((p) => p.profileId).contains(subject.profileId),
         isFalse,
       );
+
+      final subjectLeaderId = seedAiProfileLeaderIds.firstWhere(
+        (leaderId) => seedAiProfilesById[leaderId]!.profileId == subject.profileId,
+      );
+      final expectedDefaultLeaderProfileIds = seedAiProfileLeaderIds
+          .where((leaderId) => leaderId != subjectLeaderId)
+          .take(config.sevenGpFallbackDefaultAiSeats)
+          .map((leaderId) => seedAiProfilesById[leaderId]!.profileId)
+          .toList();
+      final seedProfileIds =
+          seedAiProfiles.map((profile) => profile.profileId).toSet();
+      final defaultLeaderIds = roster
+          .map((profile) => profile.profileId)
+          .where(seedProfileIds.contains)
+          .toList();
+      final randomizedIds = roster
+          .map((profile) => profile.profileId)
+          .where((id) => id.startsWith('seven-gp-rand-'))
+          .toList();
+      expect(defaultLeaderIds, hasLength(config.sevenGpFallbackDefaultAiSeats));
+      expect(
+        randomizedIds,
+        hasLength(config.sevenGpFallbackRandomizedAiSeats),
+      );
+      expect(defaultLeaderIds, orderedEquals(expectedDefaultLeaderProfileIds));
     });
 
     test('excludes subject profile from opponents', () {
@@ -163,6 +189,94 @@ void main() {
         expect(rosterIds.toSet(), hasLength(6));
       });
     }
+  });
+
+  group('buildSevenGpOpponentRoster blessed profiles (Refs #3488)', () {
+    late GaConfig blessedConfig;
+    late AiProfile subject;
+
+    AiProfile blessedProfile(String id) {
+      final base = seedAiProfilesById['napoleon']!;
+      return AiProfile(
+        schemaVersion: base.schemaVersion,
+        profileId: id,
+        displayName: id,
+        parameters: base.parameters,
+      );
+    }
+
+    setUp(() {
+      blessedConfig = testGaConfig(
+        seedProfilesDir: 'seeds',
+        gameSetupConfig: testTwoPlayerSetup(),
+        sevenGpGamesPerProfile: 1,
+        sevenGpUseBlessedProfiles: true,
+      );
+      subject = seedAiProfilesById['victoria']!;
+    });
+
+    test('seats blessed profiles after prior winners and before fallback fill',
+        () {
+      final blessed = <AiProfile>[
+        blessedProfile('blessed-alpha'),
+        blessedProfile('blessed-beta'),
+      ];
+      final priorWinner = PriorGenerationWinner(
+        profile: seedAiProfilesById['napoleon']!,
+        fitness: 50,
+        generation: 1,
+      );
+      final roster = buildSevenGpOpponentRoster(
+        subjectProfile: subject,
+        priorWinners: <PriorGenerationWinner>[priorWinner],
+        blessedProfiles: blessed,
+        config: blessedConfig,
+        rng: math.Random(5),
+        masterSeed: 11,
+        generation: 2,
+        subjectIndex: 0,
+      );
+
+      expect(roster, hasLength(6));
+      expect(roster.first.profileId, priorWinner.profile.profileId);
+      expect(
+        roster
+            .skip(1)
+            .take(blessed.length)
+            .map((profile) => profile.profileId)
+            .toList(),
+        blessed.map((profile) => profile.profileId).toList(),
+      );
+      expect(
+        roster.map((profile) => profile.profileId).contains(subject.profileId),
+        isFalse,
+      );
+    });
+
+    test('ignores blessed profiles when config disables them', () {
+      final disabledConfig = testGaConfig(
+        seedProfilesDir: 'seeds',
+        gameSetupConfig: testTwoPlayerSetup(),
+        sevenGpGamesPerProfile: 1,
+        sevenGpUseBlessedProfiles: false,
+      );
+      final blessed = <AiProfile>[blessedProfile('blessed-only')];
+      final roster = buildSevenGpOpponentRoster(
+        subjectProfile: subject,
+        priorWinners: const <PriorGenerationWinner>[],
+        blessedProfiles: blessed,
+        config: disabledConfig,
+        rng: math.Random(5),
+        masterSeed: 11,
+        generation: 0,
+        subjectIndex: 0,
+      );
+
+      expect(
+        roster.map((profile) => profile.profileId).contains('blessed-only'),
+        isFalse,
+      );
+    });
   });
 
   group('buildSevenGpOpponentRoster random selection (Refs #3488)', () {

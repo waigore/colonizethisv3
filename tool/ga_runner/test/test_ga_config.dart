@@ -19,6 +19,7 @@ GaConfig testGaConfig({
   int seed = 11,
   int sevenGpGamesPerProfile = 0,
   String sevenGpOpponentSelection = 'top_fitness',
+  bool sevenGpUseBlessedProfiles = false,
   StageFitnessWeights stageFitnessWeights = const StageFitnessWeights(
     twoPlayer: 0.5,
     sevenGp: 0.5,
@@ -49,7 +50,7 @@ GaConfig testGaConfig({
     sevenGpOpponentSelection: sevenGpOpponentSelection,
     sevenGpFallbackDefaultAiSeats: 3,
     sevenGpFallbackRandomizedAiSeats: 3,
-    sevenGpUseBlessedProfiles: false,
+    sevenGpUseBlessedProfiles: sevenGpUseBlessedProfiles,
   );
 }
 
