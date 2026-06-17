@@ -282,8 +282,9 @@ _applyOneCivilianMoveOrder(
     onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
   );
   if (precheck != null) return precheck;
-  final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
-  if (unit == null) return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  final found = _findCivilianUnitAndRegion(ow, nw, order.unitId);
+  if (found == null) return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  final unit = found.unit;
   final prepared = _prepareMovedCivilianUnit(unit, order.destinationTileKey);
   if (prepared == null) {
     onCivilianMoveOrderTrace?.call(
@@ -294,7 +295,7 @@ _applyOneCivilianMoveOrder(
     );
     return (ow: ow, nw: nw, applied: 0, ignored: 1);
   }
-  final srcRegion = _regionHoldingUnit(ow, nw, unit.id);
+  final srcRegion = found.regionId;
   if (srcRegion.isEmpty) {
     onCivilianMoveOrderTrace?.call(
       playerId: playerId,
@@ -338,8 +339,8 @@ _precheckCivilianMoveOrder(
   MoveOrder order, {
   CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
 }) {
-  final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
-  if (unit == null) {
+  final found = _findCivilianUnitAndRegion(ow, nw, order.unitId);
+  if (found == null) {
     return _ignoredMove(
       ow,
       nw,
@@ -349,6 +350,7 @@ _precheckCivilianMoveOrder(
       onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
     );
   }
+  final unit = found.unit;
   final ownerMismatch = _ownerMismatchPrecheck(
     ow,
     nw,
@@ -415,24 +417,18 @@ _ownerMismatchPrecheck(
   return (ow: ow, nw: nw, applied: 0, ignored: 1);
 }
 
-Unit? _findCivilianMoveUnit(List<Unit> ow, List<Unit> nw, String id) {
+({Unit unit, String regionId})? _findCivilianUnitAndRegion(
+  List<Unit> ow,
+  List<Unit> nw,
+  String unitId,
+) {
   for (final u in ow) {
-    if (u.id == id) return u;
+    if (u.id == unitId) return (unit: u, regionId: kRegionOldWorld);
   }
   for (final u in nw) {
-    if (u.id == id) return u;
+    if (u.id == unitId) return (unit: u, regionId: kRegionNewWorld);
   }
   return null;
-}
-
-String _regionHoldingUnit(List<Unit> ow, List<Unit> nw, String unitId) {
-  for (final u in ow) {
-    if (u.id == unitId) return kRegionOldWorld;
-  }
-  for (final u in nw) {
-    if (u.id == unitId) return kRegionNewWorld;
-  }
-  return '';
 }
 
 ({Unit moved, String destRegion})? _prepareMovedCivilianUnit(

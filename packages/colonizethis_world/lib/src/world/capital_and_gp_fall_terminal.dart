@@ -1,5 +1,39 @@
 part of 'capital_and_gp_fall.dart';
 
+RegionData _transferFactionProvinceAndUnits(
+  RegionData region, {
+  required String fromFactionId,
+  required String toFactionId,
+}) {
+  final updatedProvinces = region.provinces
+      .map(
+        (p) => p.ownerId == fromFactionId ? p.copyWith(ownerId: toFactionId) : p,
+      )
+      .toList();
+  final remainingUnits = region.units
+      .where((u) => u.ownerId != fromFactionId)
+      .toList();
+  return RegionData(provinces: updatedProvinces, units: remainingUnits);
+}
+
+WorldState _transferFactionWorldStateAssets(
+  WorldState worldState, {
+  required String fromFactionId,
+  required String toFactionId,
+}) {
+  final updatedWorldState = worldState.mapBothRegions(
+    (_, region) => _transferFactionProvinceAndUnits(
+      region,
+      fromFactionId: fromFactionId,
+      toFactionId: toFactionId,
+    ),
+  );
+  final remainingFleets = worldState.fleets
+      .where((f) => f.ownerId != fromFactionId)
+      .toList();
+  return updatedWorldState.copyWith(fleets: remainingFleets);
+}
+
 /// Terminal fall for **Minor Nations** and **Tribes** after combat resolution
 /// and capital reassignment. Parallel to [applyGreatPowerFall] but the
 /// eligibility check is **no owned provinces in the original capital region**
@@ -72,25 +106,11 @@ Game _applyTerminalFallForFaction({
   ).ownsAnyInRegion(factionId, originalRegionId);
   if (hasProvinceInOriginalRegion) return game;
 
-  RegionData transferRegion(RegionData region) {
-    final updatedProvinces = region.provinces
-        .map(
-          (p) => p.ownerId == factionId ? p.copyWith(ownerId: conquerorId) : p,
-        )
-        .toList();
-    final remainingUnits = region.units
-        .where((u) => u.ownerId != factionId)
-        .toList();
-    return RegionData(provinces: updatedProvinces, units: remainingUnits);
-  }
-
-  final updatedWorldState = game.worldState.mapBothRegions(
-    (_, region) => transferRegion(region),
+  final nextWorldState = _transferFactionWorldStateAssets(
+    game.worldState,
+    fromFactionId: factionId,
+    toFactionId: conquerorId,
   );
-  final remainingFleets = game.worldState.fleets
-      .where((f) => f.ownerId != factionId)
-      .toList();
-  final nextWorldState = updatedWorldState.copyWith(fleets: remainingFleets);
   var next = game.withWorldState(nextWorldState);
   next = removeFaction(next);
   worldLog.i(
@@ -136,27 +156,11 @@ Game applyGreatPowerFall(
 
     final conquerorId = prevCapitalOwner;
 
-    RegionData transferRegion(RegionData region) {
-      final updatedProvinces = region.provinces
-          .map(
-            (p) => p.ownerId == playerId ? p.copyWith(ownerId: conquerorId) : p,
-          )
-          .toList();
-      final remainingUnits = region.units
-          .where((u) => u.ownerId != playerId)
-          .toList();
-      return RegionData(provinces: updatedProvinces, units: remainingUnits);
-    }
-
-    final updatedWorldState = game.worldState.mapBothRegions(
-      (_, region) => transferRegion(region),
+    final nextWorldState = _transferFactionWorldStateAssets(
+      game.worldState,
+      fromFactionId: playerId,
+      toFactionId: conquerorId,
     );
-
-    final remainingFleets = game.worldState.fleets
-        .where((f) => f.ownerId != playerId)
-        .toList();
-
-    final nextWorldState = updatedWorldState.copyWith(fleets: remainingFleets);
     game = game
         .withWorldState(nextWorldState)
         .mapPlayers(

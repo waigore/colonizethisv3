@@ -69,24 +69,6 @@ Map<String, String> _clearPurchasedTilesForProvince(
   return filtered;
 }
 
-int _countPurchasedTilesForProvince(
-  WorldState worldState,
-  String conqueredProvinceId,
-) {
-  final existing = worldState.purchasedTilesByTileKey;
-  if (existing.isEmpty) {
-    return 0;
-  }
-  var removed = 0;
-  for (final tileKey in existing.keys) {
-    final provinceId = Unit.provinceIdFromTileKey(tileKey);
-    if (provinceId == conqueredProvinceId) {
-      removed++;
-    }
-  }
-  return removed;
-}
-
 int _spyTimerRemovalsForProvince(
   Map<String, Map<String, int>> spyRevealTurnsByPlayer,
   String provinceId,
@@ -126,15 +108,20 @@ int _civilianRelocationCountBefore(Game game, Set<String> changedProvinceIds) {
   return count;
 }
 
-typedef _CanonicalProvinceTransferRow = ({
+typedef _CanonicalProvinceTransferContext = ({
   Province province,
   String canonicalProvinceId,
-});
-
-typedef _CanonicalProvinceTransferContext = ({
-  _CanonicalProvinceTransferRow row,
   RegionData region,
   int provinceIndex,
+});
+
+typedef _CanonicalProvinceTransferOutcome = ({
+  Game game,
+  ProvinceOwnershipVisibilitySummary visibilitySummary,
+  int regimentsTransferred,
+  int inPortFleetsTransferred,
+  int purchasedLandEntriesRemoved,
+  int spyTimersCleared,
 });
 
 _CanonicalProvinceTransferContext _resolveValidatedCanonicalTransfer(
@@ -179,7 +166,12 @@ _CanonicalProvinceTransferContext _resolveValidatedCanonicalTransfer(
       '$canonicalId',
     );
   }
-  return (row: row, region: region, provinceIndex: provinceIndex);
+  return (
+    province: row.province,
+    canonicalProvinceId: canonicalId,
+    region: region,
+    provinceIndex: provinceIndex,
+  );
 }
 
 /// Single-province canonical ownership transfer: province owner, resident
@@ -206,7 +198,7 @@ Game applyCanonicalSingleProvinceOwnershipTransfer(
   ).game;
 }
 
-({Game game, ProvinceOwnershipVisibilitySummary visibilitySummary})
+_CanonicalProvinceTransferOutcome
 _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
   Game game, {
   required String targetProvinceId,
@@ -217,37 +209,48 @@ _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
 }) {
   final region = ctx.region;
   final pIdx = ctx.provinceIndex;
-  final canonicalId = ctx.row.canonicalProvinceId;
-  final regionId = ctx.row.province.regionId;
+  final canonicalId = ctx.canonicalProvinceId;
+  final regionId = ctx.province.regionId;
 
   final updatedProvinces = List<Province>.from(region.provinces)
     ..[pIdx] = region.provinces[pIdx].copyWith(ownerId: newOwnerId);
 
+  var regimentsTransferred = 0;
   final updatedUnits = region.units.map((u) {
     if ((u.locationProvinceId == targetProvinceId ||
             u.locationProvinceId == canonicalId) &&
         u.ownerId == oldOwnerId &&
         isMilitaryUnit(u.type)) {
+      regimentsTransferred++;
       return u.copyWith(ownerId: newOwnerId);
     }
     return u;
   }).toList();
 
+  var inPortFleetsTransferred = 0;
   final updatedFleets = game.worldState.fleets.map((f) {
     final inPort = f.inPortAtProvinceId;
     if ((inPort == targetProvinceId || inPort == canonicalId) &&
         f.ownerId == oldOwnerId) {
+      inPortFleetsTransferred++;
       return f.copyWith(ownerId: newOwnerId);
     }
     return f;
   }).toList();
 
+  var purchasedLandEntriesRemoved = 0;
   final purchasedAfter = _clearPurchasedTilesForProvince(
     game.worldState,
     canonicalId,
-    (_) {},
+    (removed) => purchasedLandEntriesRemoved = removed,
   );
 
+  final spyTimersCleared = _spyTimerRemovalsForProvince(
+    game.worldState.spyRevealTurnsByPlayer,
+    canonicalId,
+    oldOwnerId,
+    newOwnerId,
+  );
   final spyNext = clearSpyRevealTimersForProvinceOwnershipTransfer(
     game.worldState.spyRevealTurnsByPlayer,
     canonicalId,
@@ -288,7 +291,14 @@ _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
     worldState: reconcileArmiesAfterUnitsChanged(nextGame.worldState, nextGame),
   );
 
-  return (game: nextGame, visibilitySummary: visOutcome.visibilitySummary);
+  return (
+    game: nextGame,
+    visibilitySummary: visOutcome.visibilitySummary,
+    regimentsTransferred: regimentsTransferred,
+    inPortFleetsTransferred: inPortFleetsTransferred,
+    purchasedLandEntriesRemoved: purchasedLandEntriesRemoved,
+    spyTimersCleared: spyTimersCleared,
+  );
 }
 
 ({Game game, ProvinceOwnershipVisibilitySummary visibilitySummary})
@@ -315,13 +325,17 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
     oldOwnerId: oldOwnerId,
     newOwnerId: newOwnerId,
   );
-  return _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
+  final outcome = _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
     game,
     targetProvinceId: targetProvinceId,
     oldOwnerId: oldOwnerId,
     newOwnerId: newOwnerId,
     ctx: ctx,
     relocateIllegalCivilians: relocateIllegalCivilians,
+  );
+  return (
+    game: outcome.game,
+    visibilitySummary: outcome.visibilitySummary,
   );
 }
 
@@ -361,40 +375,7 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
     oldOwnerId: oldOwnerId,
     newOwnerId: newOwnerId,
   );
-  final row = ctx.row;
-  final region = ctx.region;
-  final canonicalId = row.canonicalProvinceId;
-
-  var regimentsTransferred = 0;
-  for (final u in region.units) {
-    if ((u.locationProvinceId == targetProvinceId ||
-            u.locationProvinceId == canonicalId) &&
-        u.ownerId == oldOwnerId &&
-        isMilitaryUnit(u.type)) {
-      regimentsTransferred++;
-    }
-  }
-
-  var inPortFleetsTransferred = 0;
-  for (final f in game.worldState.fleets) {
-    final inPort = f.inPortAtProvinceId;
-    if ((inPort == targetProvinceId || inPort == canonicalId) &&
-        f.ownerId == oldOwnerId) {
-      inPortFleetsTransferred++;
-    }
-  }
-
-  final purchasedLandEntriesRemoved = _countPurchasedTilesForProvince(
-    game.worldState,
-    canonicalId,
-  );
-
-  final spyTimersCleared = _spyTimerRemovalsForProvince(
-    game.worldState.spyRevealTurnsByPlayer,
-    canonicalId,
-    oldOwnerId,
-    newOwnerId,
-  );
+  final canonicalId = ctx.canonicalProvinceId;
 
   final civilianRelocations = _civilianRelocationCountBefore(game, {
     targetProvinceId,
@@ -416,10 +397,10 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
       provinceId: targetProvinceId,
       oldOwnerId: oldOwnerId,
       newOwnerId: newOwnerId,
-      regimentsTransferred: regimentsTransferred,
-      inPortFleetsTransferred: inPortFleetsTransferred,
-      purchasedLandEntriesRemoved: purchasedLandEntriesRemoved,
-      spyTimersCleared: spyTimersCleared,
+      regimentsTransferred: core.regimentsTransferred,
+      inPortFleetsTransferred: core.inPortFleetsTransferred,
+      purchasedLandEntriesRemoved: core.purchasedLandEntriesRemoved,
+      spyTimersCleared: core.spyTimersCleared,
       civilianRelocations: civilianRelocations,
       visibilitySummary: core.visibilitySummary,
     ),

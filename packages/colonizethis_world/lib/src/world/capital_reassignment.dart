@@ -55,6 +55,20 @@ WorldState applyGreatPowerCapitalProvinceTownDevelopment(
   );
 }
 
+Game _setCapitalForFactionReassignment({
+  required Game game,
+  required String provinceId,
+  required CapitalTile tile,
+  required Game Function(Game) applyUpdate,
+}) {
+  if (tile.provinceId != provinceId) {
+    throw CapitalReassignmentFatalError(
+      'Capital tile province ${tile.provinceId} does not match $provinceId',
+    );
+  }
+  return applyUpdate(game);
+}
+
 /// Sets [playerId]'s capital after runtime reassignment (combat). Updates **only** player
 /// `capitalProvinceId` and `capitalTile`; does not place ports, roads, or change province
 /// `townTileKey`. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
@@ -64,15 +78,15 @@ Game setCapitalForReassignment({
   required String provinceId,
   required CapitalTile tile,
 }) {
-  if (tile.provinceId != provinceId) {
-    throw CapitalReassignmentFatalError(
-      'Capital tile province ${tile.provinceId} does not match $provinceId',
-    );
-  }
-  return game.mapPlayers((p) {
-    if (p.id != playerId) return p;
-    return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
-  });
+  return _setCapitalForFactionReassignment(
+    game: game,
+    provinceId: provinceId,
+    tile: tile,
+    applyUpdate: (g) => g.mapPlayers((p) {
+      if (p.id != playerId) return p;
+      return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
+    }),
+  );
 }
 
 /// Sets [minorId]'s capital after runtime reassignment (combat / debug flip).
@@ -82,19 +96,21 @@ Game setCapitalForMinorReassignment({
   required String provinceId,
   required CapitalTile tile,
 }) {
-  if (tile.provinceId != provinceId) {
-    throw CapitalReassignmentFatalError(
-      'Capital tile province ${tile.provinceId} does not match $provinceId',
-    );
-  }
-  final updatedMinors = game.minorNations
-      .map(
-        (m) => m.id != minorId
-            ? m
-            : m.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
-      )
-      .toList();
-  return game.copyWith(minorNations: updatedMinors);
+  return _setCapitalForFactionReassignment(
+    game: game,
+    provinceId: provinceId,
+    tile: tile,
+    applyUpdate: (g) {
+      final updatedMinors = g.minorNations
+          .map(
+            (m) => m.id != minorId
+                ? m
+                : m.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
+          )
+          .toList();
+      return g.copyWith(minorNations: updatedMinors);
+    },
+  );
 }
 
 /// Sets [tribeId]'s capital after runtime reassignment (combat / debug flip).
@@ -104,17 +120,19 @@ Game setCapitalForTribeReassignment({
   required String provinceId,
   required CapitalTile tile,
 }) {
-  if (tile.provinceId != provinceId) {
-    throw CapitalReassignmentFatalError(
-      'Capital tile province ${tile.provinceId} does not match $provinceId',
-    );
-  }
-  final updatedTribes = game.tribes
-      .map(
-        (t) => t.id != tribeId
-            ? t
-            : t.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
-      )
-      .toList();
-  return game.copyWith(tribes: updatedTribes);
+  return _setCapitalForFactionReassignment(
+    game: game,
+    provinceId: provinceId,
+    tile: tile,
+    applyUpdate: (g) {
+      final updatedTribes = g.tribes
+          .map(
+            (t) => t.id != tribeId
+                ? t
+                : t.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
+          )
+          .toList();
+      return g.copyWith(tribes: updatedTribes);
+    },
+  );
 }
