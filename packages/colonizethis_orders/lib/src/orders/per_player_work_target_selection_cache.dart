@@ -137,36 +137,30 @@ class PerPlayerWorkTargetSelectionCache {
 
   static final Map<String, WorkTargetSelectionPopulationStrategy>
   _defaultStrategies = {
-    kWorkTargetExplore: _populateExploreTargets,
-    kWorkTargetStealTech: _populateStealTechTargets,
-    kWorkTargetCounterSpy: _populateCounterSpyTargets,
-    kWorkTargetPurchaseLand: _populatePurchaseLandTargets,
-    kWorkTargetProspect: _populateProspectTargets,
-    kWorkTargetBuildImprovement: _populateBuildImprovementTargets,
-    kWorkTargetUpgradeTown: _populateUpgradeTownTargets,
-    kWorkTargetBuildRoad: _populateBuildRoadTargets,
-    kWorkTargetBuildPort: _populateBuildPortTargets,
-    kWorkTargetBuildFort: _populateBuildFortTargets,
-    kWorkTargetBuildRail: _populateBuildRailTargets,
+    for (final target in _mergedValidWorkTargets)
+      target: (WorkTargetSelectionSnapshot s) =>
+          _populateMergedValidForTarget(s, target),
+    for (final target in _idleNoPendingWorkTargets)
+      target: (WorkTargetSelectionSnapshot s) =>
+          _populateIdleNoPendingTargets(s, target),
   };
 
-  static Set<String> _populateExploreTargets(WorkTargetSelectionSnapshot s) {
-    return _populateMergedValidForTarget(s, kWorkTargetExplore);
-  }
+  static const _mergedValidWorkTargets = <String>{
+    kWorkTargetExplore,
+    kWorkTargetStealTech,
+    kWorkTargetCounterSpy,
+    kWorkTargetPurchaseLand,
+  };
 
-  static Set<String> _populateStealTechTargets(WorkTargetSelectionSnapshot s) {
-    return _populateMergedValidForTarget(s, kWorkTargetStealTech);
-  }
-
-  static Set<String> _populateCounterSpyTargets(WorkTargetSelectionSnapshot s) {
-    return _populateMergedValidForTarget(s, kWorkTargetCounterSpy);
-  }
-
-  static Set<String> _populatePurchaseLandTargets(
-    WorkTargetSelectionSnapshot s,
-  ) {
-    return _populateMergedValidForTarget(s, kWorkTargetPurchaseLand);
-  }
+  static const _idleNoPendingWorkTargets = <String>{
+    kWorkTargetProspect,
+    kWorkTargetBuildImprovement,
+    kWorkTargetUpgradeTown,
+    kWorkTargetBuildRoad,
+    kWorkTargetBuildPort,
+    kWorkTargetBuildFort,
+    kWorkTargetBuildRail,
+  };
 
   /// Per-unit union of `getValidWorkOrderTileKeysWithVisibility` (same as
   /// `explore` cache population).
@@ -196,38 +190,6 @@ class PerPlayerWorkTargetSelectionCache {
       merged.addAll(valid);
     }
     return merged;
-  }
-
-  static Set<String> _populateBuildImprovementTargets(
-    WorkTargetSelectionSnapshot s,
-  ) {
-    return _populateIdleNoPendingTargets(s, kWorkTargetBuildImprovement);
-  }
-
-  static Set<String> _populateProspectTargets(WorkTargetSelectionSnapshot s) {
-    return _populateIdleNoPendingTargets(s, kWorkTargetProspect);
-  }
-
-  static Set<String> _populateUpgradeTownTargets(
-    WorkTargetSelectionSnapshot s,
-  ) {
-    return _populateIdleNoPendingTargets(s, kWorkTargetUpgradeTown);
-  }
-
-  static Set<String> _populateBuildRoadTargets(WorkTargetSelectionSnapshot s) {
-    return _populateIdleNoPendingTargets(s, kWorkTargetBuildRoad);
-  }
-
-  static Set<String> _populateBuildPortTargets(WorkTargetSelectionSnapshot s) {
-    return _populateIdleNoPendingTargets(s, kWorkTargetBuildPort);
-  }
-
-  static Set<String> _populateBuildFortTargets(WorkTargetSelectionSnapshot s) {
-    return _populateIdleNoPendingTargets(s, kWorkTargetBuildFort);
-  }
-
-  static Set<String> _populateBuildRailTargets(WorkTargetSelectionSnapshot s) {
-    return _populateIdleNoPendingTargets(s, kWorkTargetBuildRail);
   }
 
   static Set<String> _populateIdleNoPendingTargets(

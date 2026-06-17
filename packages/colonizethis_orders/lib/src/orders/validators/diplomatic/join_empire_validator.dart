@@ -6,6 +6,13 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import '../../order_validation_result.dart';
 import 'diplomatic_sub_validator.dart';
 
+/// Dedicated Join Empire overture-stage helper module (Refs #3500).
+///
+/// Retained as a standalone file — not fused into [establishOvertureSubValidator]
+/// — because GP nearly-defeated logic is non-trivial and one-concern-per-file
+/// applies. Consumed by `establish_overture_validator.dart` for
+/// [OvertureStage.joinEmpire] only; not a missing per-type factory.
+///
 /// [OvertureStage.joinEmpire] rules for [DiplomaticOrderType.establishOverture]
 /// orders (Refs #2391 AC10, SPEC/program/orders.md § Diplomatic orders).
 ///

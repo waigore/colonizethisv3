@@ -30,12 +30,12 @@ DiplomaticSubValidator establishOvertureSubValidator(
       treasury,
     );
   }
-  if (relation?.atWar == true) {
-    return rejectDiplomaticSub(
-      'Cannot establish overture while at war with that faction',
-      treasury,
-    );
-  }
+  final atWarRejection = rejectDiplomaticSubIfAtWar(
+    relation: relation,
+    reason: 'Cannot establish overture while at war with that faction',
+    treasury: treasury,
+  );
+  if (atWarRejection != null) return atWarRejection;
 
   final currentStage =
       getOverture(ctx.game, ctx.playerId, targetId)?.stage ??

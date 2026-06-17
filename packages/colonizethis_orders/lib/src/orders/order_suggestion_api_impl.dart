@@ -8,6 +8,11 @@ import 'order_suggestion_api.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'order_resolution_context.dart';
 
+List<T> _suggestWithLog<T>(String method, String playerId, List<T> Function() run) {
+  ordersLog.d('order suggestion API $method player=$playerId');
+  return run();
+}
+
 /// Default implementation of [OrderSuggestionAPI] using the top-level suggest* functions.
 class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
   const DefaultOrderSuggestionAPI();
@@ -19,10 +24,11 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    ordersLog.d(
-      'order suggestion API suggestMoveOrders player=${view.playerId} turn=${game.worldState.turnState.turnNumber}',
+    return _suggestWithLog(
+      'suggestMoveOrders turn=${game.worldState.turnState.turnNumber}',
+      view.playerId,
+      () => suggestion.suggestMoveOrders(view, game, topology, currentOrders),
     );
-    return suggestion.suggestMoveOrders(view, game, topology, currentOrders);
   }
 
   @override
@@ -32,14 +38,15 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    ordersLog.d(
-      'order suggestion API suggestArmyMoveOrders player=${view.playerId}',
-    );
-    return suggestion.suggestArmyMoveOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
+    return _suggestWithLog(
+      'suggestArmyMoveOrders',
+      view.playerId,
+      () => suggestion.suggestArmyMoveOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+      ),
     );
   }
 
@@ -51,15 +58,16 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    ordersLog.d(
-      'order suggestion API suggestWorkOrders player=${view.playerId}',
-    );
-    return suggestion.suggestWorkOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
-      tileMapByRegion: tileMapByRegion,
+    return _suggestWithLog(
+      'suggestWorkOrders',
+      view.playerId,
+      () => suggestion.suggestWorkOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      ),
     );
   }
 
@@ -70,10 +78,11 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    ordersLog.d(
-      'order suggestion API suggestBuildOrders player=${view.playerId}',
+    return _suggestWithLog(
+      'suggestBuildOrders',
+      view.playerId,
+      () => suggestion.suggestBuildOrders(view, game, topology, currentOrders),
     );
-    return suggestion.suggestBuildOrders(view, game, topology, currentOrders);
   }
 
   @override
@@ -83,14 +92,15 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    ordersLog.d(
-      'order suggestion API suggestRecruitWorkerOrders player=${view.playerId}',
-    );
-    return suggestion.suggestRecruitWorkerOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
+    return _suggestWithLog(
+      'suggestRecruitWorkerOrders',
+      view.playerId,
+      () => suggestion.suggestRecruitWorkerOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+      ),
     );
   }
 
@@ -107,20 +117,21 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     int researchSeed = 0,
     int categoryDiversifyWeight = 0,
   }) {
-    ordersLog.d(
-      'order suggestion API suggestResearchOrders player=${view.playerId}',
-    );
-    return suggestion.suggestResearchOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
-      researchNavalWeight: researchNavalWeight,
-      researchMilitaryWeight: researchMilitaryWeight,
-      researchEconomicWeight: researchEconomicWeight,
-      researchExplorationWeight: researchExplorationWeight,
-      researchSeed: researchSeed,
-      categoryDiversifyWeight: categoryDiversifyWeight,
+    return _suggestWithLog(
+      'suggestResearchOrders',
+      view.playerId,
+      () => suggestion.suggestResearchOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+        researchNavalWeight: researchNavalWeight,
+        researchMilitaryWeight: researchMilitaryWeight,
+        researchEconomicWeight: researchEconomicWeight,
+        researchExplorationWeight: researchExplorationWeight,
+        researchSeed: researchSeed,
+        categoryDiversifyWeight: categoryDiversifyWeight,
+      ),
     );
   }
 
@@ -132,15 +143,16 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     Orders currentOrders, {
     OrderResolutionContext? resolution,
   }) {
-    ordersLog.d(
-      'order suggestion API suggestNavalMoveOrders player=${view.playerId}',
-    );
-    return suggestion.suggestNavalMoveOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
-      resolution: resolution,
+    return _suggestWithLog(
+      'suggestNavalMoveOrders',
+      view.playerId,
+      () => suggestion.suggestNavalMoveOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+        resolution: resolution,
+      ),
     );
   }
 
@@ -152,15 +164,16 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     Orders currentOrders, {
     OrderResolutionContext? resolution,
   }) {
-    ordersLog.d(
-      'order suggestion API suggestNavalMissionOrders player=${view.playerId}',
-    );
-    return suggestion.suggestNavalMissionOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
-      resolution: resolution,
+    return _suggestWithLog(
+      'suggestNavalMissionOrders',
+      view.playerId,
+      () => suggestion.suggestNavalMissionOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+        resolution: resolution,
+      ),
     );
   }
 
@@ -172,15 +185,16 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    ordersLog.d(
-      'order suggestion API suggestDiplomaticOrders player=${view.playerId}',
-    );
-    return suggestion.suggestDiplomaticOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
-      tileMapByRegion: tileMapByRegion,
+    return _suggestWithLog(
+      'suggestDiplomaticOrders',
+      view.playerId,
+      () => suggestion.suggestDiplomaticOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      ),
     );
   }
 
@@ -192,15 +206,16 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    ordersLog.d(
-      'order suggestion API suggestDeclareWarOrders player=${view.playerId}',
-    );
-    return suggestion.suggestDeclareWarOrders(
-      view,
-      game,
-      topology,
-      currentOrders,
-      tileMapByRegion: tileMapByRegion,
+    return _suggestWithLog(
+      'suggestDeclareWarOrders',
+      view.playerId,
+      () => suggestion.suggestDeclareWarOrders(
+        view,
+        game,
+        topology,
+        currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      ),
     );
   }
 

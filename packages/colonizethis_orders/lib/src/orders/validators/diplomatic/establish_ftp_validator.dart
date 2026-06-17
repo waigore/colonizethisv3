@@ -11,13 +11,13 @@ DiplomaticSubValidator establishFtpSubValidator(
   required treasury,
 }) {
   final targetId = order.targetFactionId;
-  if (!isGreatPower(
-    ctx.game,
-    targetId,
-    factionMembership: ctx.factionMembership,
-  )) {
-    return rejectDiplomaticSub('FTP target must be a Great Power', treasury);
-  }
+  final notGpRejection = rejectIfNotGreatPowerTarget(
+    ctx: ctx,
+    targetId: targetId,
+    rejectionReason: 'FTP target must be a Great Power',
+    treasury: treasury,
+  );
+  if (notGpRejection != null) return notGpRejection;
   final atWarRejection = rejectDiplomaticSubIfAtWar(
     relation: relation,
     reason: 'Cannot establish FTP while at war with that faction',

@@ -9,12 +9,11 @@ DiplomaticSubValidator offerPeaceSubValidator(
   required relation,
   required treasury,
 }) {
-  final atWar = relation?.atWar ?? false;
-  if (!atWar) {
-    return rejectDiplomaticSub(
-      'Cannot offer peace when not at war with that faction',
-      treasury,
-    );
-  }
+  final atPeaceRejection = rejectDiplomaticSubIfAtPeace(
+    relation: relation,
+    reason: 'Cannot offer peace when not at war with that faction',
+    treasury: treasury,
+  );
+  if (atPeaceRejection != null) return atPeaceRejection;
   return acceptDiplomaticSub(treasury);
 });

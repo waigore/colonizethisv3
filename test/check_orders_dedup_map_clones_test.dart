@@ -111,4 +111,90 @@ Map<String, Unit> copyUnitsById(Map<String, Unit> source) =>
       expect(violations, isEmpty);
     });
   });
+
+  group('findDuplicateWithProjectedEconomyViolations', () {
+    test('flags subclass constructor without super delegation', () {
+      const src = r'''
+class BuildOrderValidator extends StatefulValidator {
+  BuildOrderValidator.withProjectedEconomy({
+    required Stockpile stockpile,
+    required int treasury,
+    required WorkerPool workerPool,
+  }) : stockpileState = stockpile,
+       treasuryState = treasury,
+       workerPoolState = workerPool,
+       super();
 }
+''';
+      final violations = findDuplicateWithProjectedEconomyViolations(
+        relativePath:
+            'packages/colonizethis_orders/lib/src/orders/validators/build_order_validator.dart',
+        source: src,
+      );
+      expect(violations, hasLength(1));
+    });
+
+    test('accepts super.withProjectedEconomy delegation', () {
+      const src = r'''
+class BuildOrderValidator extends StatefulValidator {
+  BuildOrderValidator.withProjectedEconomy({
+    required Stockpile stockpile,
+    required int treasury,
+    required WorkerPool workerPool,
+  }) : super.withProjectedEconomy(
+         stockpile: stockpile,
+         treasury: treasury,
+         workerPool: workerPool,
+       );
+}
+''';
+      final violations = findDuplicateWithProjectedEconomyViolations(
+        relativePath:
+            'packages/colonizethis_orders/lib/src/orders/validators/build_order_validator.dart',
+        source: src,
+      );
+      expect(violations, isEmpty);
+    });
+  });
+
+  group('findOrderAcceptedProbeDuplicateViolations', () {
+    test('flags is*OrderAccepted that inlines incrementalValidatorForCandidateProbe', () {
+      const src = r'''
+bool isMoveOrderAccepted(Game game, MapTopology topology, String playerId,
+    Orders baseOrders, MoveOrder candidate) {
+  final validator = incrementalValidatorForCandidateProbe(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: baseOrders,
+  );
+  return validator.isMoveAccepted(candidate);
+}
+''';
+      final violations = findOrderAcceptedProbeDuplicateViolations(
+        relativePath: _orderSuggestionContextRelative,
+        source: src,
+      );
+      expect(violations, hasLength(1));
+    });
+  });
+
+  group('findInlinedDiplomaticRelationGuardViolations', () {
+    test('flags inline relation?.atWar checks', () {
+      const src = r'''
+if (relation?.atWar == true) {
+  return rejectDiplomaticSub('at war', treasury);
+}
+''';
+      final violations = findInlinedDiplomaticRelationGuardViolations(
+        relativePath:
+            'packages/colonizethis_orders/lib/src/orders/validators/diplomatic/establish_overture_validator.dart',
+        source: src,
+      );
+      expect(violations, hasLength(1));
+    });
+  });
+}
+
+const _orderSuggestionContextRelative =
+    'packages/colonizethis_orders/lib/src/orders/order_suggestion_context.dart';

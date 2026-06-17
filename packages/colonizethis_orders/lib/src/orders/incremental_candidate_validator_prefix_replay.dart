@@ -153,44 +153,9 @@ extension IncrementalCandidateValidatorPrefixReplay
   }
 
   bool isDiplomaticAccepted(DiplomaticOrder candidate) {
-    final player = _player();
-    if (player == null) return false;
-    if (_cachedDiplomaticPrefixReplaySucceeded == false) {
-      return false;
-    }
-    final economy = _projectEconomyAfterAcceptedBuildAndWorkOrders(player);
-    final membership = _factionMembership();
-
-    if (_cachedPostDiplomaticPrefixState == null) {
-      final prefixValidator = DiplomaticOrderValidator(
-        game: game,
-        playerId: playerId,
-        initialTreasury: economy.treasury,
-        factionMembership: membership,
-      );
-      for (final existing in diplomaticOrders) {
-        final result = prefixValidator.validate(
-          existing,
-          previousRejected: false,
-        );
-        if (!result.result.isAccepted) {
-          _cachedDiplomaticPrefixReplaySucceeded = false;
-          return false;
-        }
-      }
-      _cachedDiplomaticPrefixReplaySucceeded = true;
-      _cachedPostDiplomaticPrefixState = prefixValidator
-          .capturePrefixCheckpoint();
-    }
-
-    final checkpoint = _cachedPostDiplomaticPrefixState!;
-    final candidateValidator = DiplomaticOrderValidator.fromPrefixCheckpoint(
-      game: game,
-      playerId: playerId,
-      checkpoint: checkpoint,
-      factionMembership: membership,
-    );
-    return candidateValidator
+    final prepared = _prepareDiplomaticCandidateValidator();
+    if (!prepared.ok) return false;
+    return prepared.validator!
         .validate(candidate, previousRejected: false)
         .result
         .isAccepted;
@@ -199,13 +164,38 @@ extension IncrementalCandidateValidatorPrefixReplay
   /// Like [isDiplomaticAccepted] but returns the full [OrderValidationResult]
   /// so UI layers can surface validator rejection text on disabled controls.
   OrderValidationResult probeDiplomaticOrder(DiplomaticOrder candidate) {
+    final prepared = _prepareDiplomaticCandidateValidator(
+      playerNotFoundReason: 'Player not found',
+      prefixReplayFailedReason: 'Previous invalid diplomatic order in prefix',
+    );
+    if (prepared.reject != null) return prepared.reject!;
+    return prepared.validator!
+        .validate(candidate, previousRejected: false)
+        .result;
+  }
+
+  ({bool ok, OrderValidationResult? reject, DiplomaticOrderValidator? validator})
+  _prepareDiplomaticCandidateValidator({
+    String? playerNotFoundReason,
+    String? prefixReplayFailedReason,
+  }) {
     final player = _player();
     if (player == null) {
-      return OrderValidationResult.rejected('Player not found');
+      return (
+        ok: false,
+        reject: playerNotFoundReason == null
+            ? null
+            : OrderValidationResult.rejected(playerNotFoundReason),
+        validator: null,
+      );
     }
     if (_cachedDiplomaticPrefixReplaySucceeded == false) {
-      return OrderValidationResult.rejected(
-        'Previous invalid diplomatic order in prefix',
+      return (
+        ok: false,
+        reject: prefixReplayFailedReason == null
+            ? null
+            : OrderValidationResult.rejected(prefixReplayFailedReason),
+        validator: null,
       );
     }
     final economy = _projectEconomyAfterAcceptedBuildAndWorkOrders(player);
@@ -225,7 +215,13 @@ extension IncrementalCandidateValidatorPrefixReplay
         );
         if (!result.result.isAccepted) {
           _cachedDiplomaticPrefixReplaySucceeded = false;
-          return result.result;
+          return (
+            ok: false,
+            reject: prefixReplayFailedReason == null
+                ? null
+                : result.result,
+            validator: null,
+          );
         }
       }
       _cachedDiplomaticPrefixReplaySucceeded = true;
@@ -240,8 +236,6 @@ extension IncrementalCandidateValidatorPrefixReplay
       checkpoint: checkpoint,
       factionMembership: membership,
     );
-    return candidateValidator
-        .validate(candidate, previousRejected: false)
-        .result;
+    return (ok: true, reject: null, validator: candidateValidator);
   }
 }

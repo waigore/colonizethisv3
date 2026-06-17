@@ -4,6 +4,23 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import '../../order_validation_result.dart';
 
+/// Rejects when [targetId] is not a Great Power; otherwise `null`.
+({OrderValidationResult result, int treasury})? rejectIfNotGreatPowerTarget({
+  required DiplomaticSubValidatorContext ctx,
+  required String targetId,
+  required String rejectionReason,
+  required int treasury,
+}) {
+  if (!isGreatPower(
+    ctx.game,
+    targetId,
+    factionMembership: ctx.factionMembership,
+  )) {
+    return rejectDiplomaticSub(rejectionReason, treasury);
+  }
+  return null;
+}
+
 /// Returns a rejection when [relation] is at war; otherwise `null`.
 ({OrderValidationResult result, int treasury})? rejectDiplomaticSubIfAtWar({
   required DiplomacyRelation? relation,

@@ -600,7 +600,7 @@ rules:
 
   - rule_id: repo.orders_dedup_map_clones
     group: architecture
-    title: Orders module map clones must use Stockpile.copyQuantities() / copyUnitsById()
+    title: Orders module dedup regressions (map clones, probe wrappers, diplomatic helpers)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_dedup_map_clones.dart

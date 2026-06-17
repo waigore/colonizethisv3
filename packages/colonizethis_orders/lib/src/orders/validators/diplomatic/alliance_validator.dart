@@ -1,4 +1,3 @@
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'diplomatic_sub_validator.dart';
 
 /// Type-specific validator for [DiplomaticOrderType.alliance] orders.
@@ -11,16 +10,13 @@ DiplomaticSubValidator allianceSubValidator(
   required treasury,
 }) {
   final targetId = order.targetFactionId;
-  if (!isGreatPower(
-    ctx.game,
-    targetId,
-    factionMembership: ctx.factionMembership,
-  )) {
-    return rejectDiplomaticSub(
-      'Alliance target must be a Great Power',
-      treasury,
-    );
-  }
+  final notGpRejection = rejectIfNotGreatPowerTarget(
+    ctx: ctx,
+    targetId: targetId,
+    rejectionReason: 'Alliance target must be a Great Power',
+    treasury: treasury,
+  );
+  if (notGpRejection != null) return notGpRejection;
   final atWarRejection = rejectDiplomaticSubIfAtWar(
     relation: relation,
     reason: 'Cannot form alliance while at war with that faction',

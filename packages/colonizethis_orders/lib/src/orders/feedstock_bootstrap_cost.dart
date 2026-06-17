@@ -11,18 +11,31 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'feedstock_extraction_targets.dart';
 
-bool _isFeedstockBootstrapTarget(
+bool _isUnimprovedFeedstockTile(
   Game game,
   String playerId,
   String targetTileKey,
+  Set<String> feedstockIds,
 ) {
-  final feedstockIds = feedstockExtractionResourceIdsForPlayer(game, playerId);
   if (feedstockIds.isEmpty) return false;
   final ws = game.worldState;
   final resourceId = ws.resourceByTileKey[targetTileKey];
   if (resourceId == null || !feedstockIds.contains(resourceId)) return false;
   if (ws.tileState.improvementLevel(targetTileKey) >= 1) return false;
   return true;
+}
+
+bool _isFeedstockBootstrapTarget(
+  Game game,
+  String playerId,
+  String targetTileKey,
+) {
+  return _isUnimprovedFeedstockTile(
+    game,
+    playerId,
+    targetTileKey,
+    feedstockExtractionResourceIdsForPlayer(game, playerId),
+  );
 }
 
 /// Improvement-input feedstock tiles (`timber` / `iron`) only — excludes the
@@ -34,16 +47,15 @@ bool _isImprovementInputFeedstockBootstrapTarget(
   String playerId,
   String targetTileKey,
 ) {
-  final feedstockIds = <String>{
-    ...sellerImprovementInputFeedstockExtractionResourceIds(game, playerId),
-    ...supplierImprovementInputFeedstockExtractionResourceIds(game, playerId),
-  };
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  final resourceId = ws.resourceByTileKey[targetTileKey];
-  if (resourceId == null || !feedstockIds.contains(resourceId)) return false;
-  if (ws.tileState.improvementLevel(targetTileKey) >= 1) return false;
-  return true;
+  return _isUnimprovedFeedstockTile(
+    game,
+    playerId,
+    targetTileKey,
+    <String>{
+      ...sellerImprovementInputFeedstockExtractionResourceIds(game, playerId),
+      ...supplierImprovementInputFeedstockExtractionResourceIds(game, playerId),
+    },
+  );
 }
 
 Player? _playerById(Game game, String playerId) {
