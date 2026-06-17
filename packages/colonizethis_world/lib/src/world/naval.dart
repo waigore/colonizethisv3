@@ -112,7 +112,7 @@ bool isAdjacentSeaZone(
 }
 
 /// True when both ids are **sea-zone** topology nodes sharing an undirected edge (S–S only).
-/// At-sea fleet moves use this; undock uses [seaZonesAdjacentToProvince].
+/// At-sea fleet moves use this; undock uses [seaZoneIdsAdjacentToProvince].
 bool isAdjacentSeaSeaZone(
   MapTopology topology,
   String seaZoneIdA,
@@ -233,7 +233,11 @@ NavalMoveTopologyPicks navalMoveTopologyPicksForFleet({
         adjacentProvinceIdsForDock: [],
       );
     }
-    final undock = seaZonesAdjacentToProvince(topology, provinceNodeId).toList()
+    final undock = seaZoneIdsAdjacentToProvince(
+      topology,
+      rl.localId,
+      regionId: rl.regionId,
+    ).toList()
       ..sort();
     return NavalMoveTopologyPicks(
       adjacentSeaZoneIds: undock,

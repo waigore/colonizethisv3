@@ -5,6 +5,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'package:colonizethis_world/src/utils/graph_traversal.dart';
 
+import 'naval.dart' show seaZoneIdsAdjacentToProvince;
+
 /// Topology helpers shared by movement and connectivity. SPEC/game/map-topology.md.
 ///
 /// `MapTopology` is immutable (const constructor, final fields), so per-topology
@@ -191,18 +193,14 @@ Set<String> seaZonesReachableBySeaPath(
 }
 
 /// Sea zone ids adjacent to province [provinceNodeId] in topology (P–S edges).
+///
+/// Prefer [seaZoneIdsAdjacentToProvince] from `naval.dart` for prefixed province
+/// ids and region-scoped resolution.
 Set<String> seaZonesAdjacentToProvince(
   MapTopology topology,
   String provinceNodeId,
 ) {
-  final seaZoneIds = seaZoneNodeIds(topology);
-  final out = <String>{};
-  for (final edge in topology.edges) {
-    if (edge.id1 != provinceNodeId && edge.id2 != provinceNodeId) continue;
-    final other = edge.id1 == provinceNodeId ? edge.id2 : edge.id1;
-    if (seaZoneIds.contains(other)) out.add(other);
-  }
-  return out;
+  return seaZoneIdsAdjacentToProvince(topology, provinceNodeId);
 }
 
 /// All node ids directly adjacent to [nodeId] in [topology] regardless of node

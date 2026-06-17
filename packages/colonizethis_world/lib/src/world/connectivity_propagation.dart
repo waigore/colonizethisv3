@@ -232,9 +232,12 @@ Set<String> _seaConnectedPortKeysForCapital({
         : (ProvinceId.isPrefixed(capital.provinceId)
               ? ProvinceId.localIdFrom(capital.provinceId)
               : capital.provinceId);
-    final capitalSeaZones = seaZonesAdjacentToProvince(
+    final capitalSeaZones = seaZoneIdsAdjacentToProvince(
       topology,
       provinceIdForLookup,
+      regionId: ProvinceId.isPrefixed(capital.provinceId)
+          ? ProvinceId.regionIdFrom(capital.provinceId)
+          : null,
     );
     final seaReachable = seaZonesReachableBySeaPath(
       topology,
