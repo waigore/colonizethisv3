@@ -14,6 +14,7 @@ import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_keys.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
 import 'order_suggestion_context.dart';
+import 'order_suggestion_pass_context.dart';
 import 'order_visibility.dart';
 import 'work_suggestion_pipeline.dart';
 import 'partial_province_reveal.dart';
@@ -91,17 +92,26 @@ List<WorkOrder> suggestWorkOrders(
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestWorkOrders player=${view.playerId}');
-  final playerId = view.playerId;
+  final pass = SuggestionPassContext.forPlayerView(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestWorkOrders',
+    tileMapByRegion: tileMapByRegion,
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
+  final playerId = pass.playerId;
   final suggestions = <WorkOrder>[];
+  final factionMembership = pass.factionMembership;
+  final candidateValidator = pass.candidateValidator;
 
   // Index existing work orders per unit to avoid suggesting duplicates (by unit + target).
-  final existingTargetsByUnit = <String, Set<String>>{};
-  final existingForPlayer =
-      currentOrders.workOrdersByPlayerId[playerId] ?? const [];
-  for (final o in existingForPlayer) {
-    existingTargetsByUnit.putIfAbsent(o.unitId, () => <String>{}).add(o.target);
-  }
+  final existingTargetsByUnit = indexExistingTargetsByEntityId(
+    currentOrders.workOrdersByPlayerId[playerId],
+    (o) => o.unitId,
+    (o) => o.target,
+  );
 
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final partiallyRevealedProvinceCache =
@@ -121,12 +131,7 @@ List<WorkOrder> suggestWorkOrders(
     colonialIntelExploreProvinceIds: colonialIntelExploreProvinceIds,
   );
 
-  // Reuse [view.provincesById] (same full-id keys as [buildPlayerView]) instead
-  // of a second [allProvinces] scan over world state (Refs #2394).
-  final playerOwnedProvinceIds = <String>{
-    for (final e in view.provincesById.entries)
-      if (e.value.ownerId == playerId) e.key,
-  };
+  final playerOwnedProvinceIds = ownedProvinceIdsFromView(view, playerId);
 
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
@@ -136,28 +141,6 @@ List<WorkOrder> suggestWorkOrders(
     currentOrders,
     playerId,
   );
-
-  // One validator per suggestion pass: amortizes buildPlayerView + unit map
-  // across all units (Refs #2394, IncrementalCandidateValidator.forPlayer).
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
-  );
-  final factionMembership =
-      sharedCandidateValidator?.factionMembershipSnapshot ??
-      DiplomacyFactionMembership.from(game);
-  final candidateValidator =
-      sharedCandidateValidator ??
-      buildIncrementalCandidateValidator(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        baseOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-        resolution: orderResolutionContextFromView(view, game),
-        factionMembership: factionMembership,
-      );
 
   var needsMerchantPurchaseLandTileIndex = false;
   for (final unit in view.ownUnits) {

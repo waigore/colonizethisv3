@@ -173,12 +173,11 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     playerOverturesByTargetId.putIfAbsent(o.targetId, () => o);
   }
 
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
+  SuggestionPassContext.assertSharedValidatorPlayerId(
+    sharedCandidateValidator,
+    playerId,
   );
-  final diplomaticResolution = _effectiveOrderResolutionContext(
+  final diplomaticResolution = effectiveOrderResolutionContext(
     view: view,
     game: game,
     sharedCandidateValidator: sharedCandidateValidator,
@@ -328,12 +327,11 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
   };
   final knownTargetIds = knownTargets.toSet();
 
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
+  SuggestionPassContext.assertSharedValidatorPlayerId(
+    sharedCandidateValidator,
+    playerId,
   );
-  final declareWarResolution = _effectiveOrderResolutionContext(
+  final declareWarResolution = effectiveOrderResolutionContext(
     view: view,
     game: game,
     sharedCandidateValidator: sharedCandidateValidator,

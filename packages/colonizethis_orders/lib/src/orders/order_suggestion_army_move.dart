@@ -143,14 +143,10 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
               provinceById: sharedCandidateValidator.view.provincesById,
             )
           : null);
-  final effectivePlayerView = effectiveResolution?.view;
   final ownedProvinceIds =
       playerOwnedFullProvinceIds ??
       (effectiveResolution != null
-          ? <String>{
-              for (final e in effectiveResolution.provinceById.entries)
-                if (e.value.ownerId == playerId) e.key,
-            }
+          ? ownedProvinceIdsFromView(effectiveResolution.view, playerId)
           : <String>{
               for (final p in ProvinceOwnerCache.of(
                 game.worldState,
@@ -268,40 +264,25 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
   Orders currentOrders, {
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  final playerId = view.playerId;
-  final suggestions = <ArmyMoveOrder>[];
-  final existingArmyMoves = <String, Set<String>>{};
-  final existingForPlayer =
-      currentOrders.armyMoveOrdersByPlayerId[playerId] ?? const [];
-  for (final m in existingForPlayer) {
-    existingArmyMoves
-        .putIfAbsent(m.armyId, () => <String>{})
-        .add(m.destinationProvinceId);
-  }
-
-  // Single per-player validator: amortizes the per-player [PlayerView] /
-  // units-by-id setup across every candidate probe. SPEC/program/order-
-  // suggestions.md § Incremental candidate validation. Refs #2237.
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
+  final pass = SuggestionPassContext.forPlayerView(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestArmyMoveOrders',
+    sharedCandidateValidator: sharedCandidateValidator,
+    useBuildIncrementalWrapper: false,
   );
-  final candidateValidator =
-      sharedCandidateValidator ??
-      IncrementalCandidateValidator.forPlayer(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        basePrefix: currentOrders,
-        factionMembership: DiplomacyFactionMembership.from(game),
-        resolution: orderResolutionContextFromView(view, game),
-      );
+  final playerId = pass.playerId;
+  final suggestions = <ArmyMoveOrder>[];
+  final candidateValidator = pass.candidateValidator;
+  final existingArmyMoves = indexExistingTargetsByEntityId(
+    currentOrders.armyMoveOrdersByPlayerId[playerId],
+    (m) => m.armyId,
+    (m) => m.destinationProvinceId,
+  );
 
-  final playerOwnedFullProvinceIds = <String>{
-    for (final e in view.provincesById.entries)
-      if (e.value.ownerId == playerId) e.key,
-  };
+  final playerOwnedFullProvinceIds = ownedProvinceIdsFromView(view, playerId);
 
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;
@@ -320,29 +301,30 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
       playerOwnedFullProvinceIds: playerOwnedFullProvinceIds,
     );
 
-    var acceptedForArmy = 0;
-    var probeAttemptsForArmy = 0;
-    for (final destinationProvinceId in destIds) {
-      final already = existingArmyMoves[army.id];
-      if (already != null && already.contains(destinationProvinceId)) continue;
-      probeAttemptsForArmy++;
-
-      final candidate = ArmyMoveOrder(
-        armyId: army.id,
-        destinationProvinceId: destinationProvinceId,
-      );
-
-      if (candidateValidator.isArmyMoveAccepted(candidate)) {
-        suggestions.add(candidate);
-        acceptedForArmy++;
-        if (acceptedForArmy >= _kMaxArmyMoveSuggestionsPerArmy) {
-          break;
-        }
-      }
-      if (probeAttemptsForArmy >= _kMaxArmyMoveProbeAttemptsPerArmy) {
-        break;
-      }
-    }
+    runCappedSuggestionProbeLoop<String>(
+      candidates: destIds,
+      shouldSkip: (destinationProvinceId) {
+        final already = existingArmyMoves[army.id];
+        return already != null && already.contains(destinationProvinceId);
+      },
+      probe: (destinationProvinceId) {
+        final candidate = ArmyMoveOrder(
+          armyId: army.id,
+          destinationProvinceId: destinationProvinceId,
+        );
+        return candidateValidator.isArmyMoveAccepted(candidate);
+      },
+      onAccepted: (destinationProvinceId) {
+        suggestions.add(
+          ArmyMoveOrder(
+            armyId: army.id,
+            destinationProvinceId: destinationProvinceId,
+          ),
+        );
+      },
+      maxAccepted: _kMaxArmyMoveSuggestionsPerArmy,
+      maxProbes: _kMaxArmyMoveProbeAttemptsPerArmy,
+    );
   }
 
   suggestions.sort((a, b) {

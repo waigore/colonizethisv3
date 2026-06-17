@@ -3,8 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
-import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
+import 'order_suggestion_pass_context.dart';
 
 /// Suggests build-unit orders that are affordable and valid for [view.playerId].
 ///
@@ -21,25 +21,18 @@ List<BuildUnitOrder> suggestBuildOrders(
   Orders currentOrders, {
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestBuildOrders player=${view.playerId}');
-  final playerId = view.playerId;
+  final pass = SuggestionPassContext.forPlayerView(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestBuildOrders',
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
+  final playerId = pass.playerId;
   final player = view.player;
   final suggestions = <BuildUnitOrder>[];
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
-  );
-  final candidateValidator =
-      sharedCandidateValidator ??
-      buildIncrementalCandidateValidator(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        baseOrders: currentOrders,
-        resolution: orderResolutionContextFromView(view, game),
-        factionMembership: DiplomacyFactionMembership.from(game),
-      );
+  final candidateValidator = pass.candidateValidator;
 
   final capitalId = player.capitalProvinceId;
   if (capitalId == null) {
@@ -79,13 +72,8 @@ List<BuildUnitOrder> suggestBuildOrders(
   suggestions.sort((a, b) => a.unitType.compareTo(b.unitType));
 
   orderSuggestionLog.d(
-    'suggestBuildOrders player=$playerId candidates=${suggestions.length}',
-  );
-  orderSuggestionLog.d(
     'suggestBuildOrders full list ${suggestions.map((o) => o.unitType).join(", ")}',
   );
-  if (suggestions.isEmpty) {
-    orderSuggestionLog.w('suggestBuildOrders no candidates player=$playerId');
-  }
+  pass.logExit(candidateCount: suggestions.length, warnIfEmpty: true);
   return suggestions;
 }

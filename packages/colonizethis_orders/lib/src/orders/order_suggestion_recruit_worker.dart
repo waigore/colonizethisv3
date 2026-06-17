@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
+import 'order_suggestion_pass_context.dart';
 
 /// Suggests `RecruitWorkerOrder` candidates that are affordable and valid
 /// for [view.playerId] against the prefix in [currentOrders] (Refs #2692 S7,
@@ -32,32 +33,16 @@ List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
   Orders currentOrders, {
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestRecruitWorkerOrders player=${view.playerId}');
-  final playerId = view.playerId;
-  final suggestions = <RecruitWorkerOrder>[];
-
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
+  final pass = SuggestionPassContext.forPlayerView(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestRecruitWorkerOrders',
+    sharedCandidateValidator: sharedCandidateValidator,
   );
-  final effectiveResolution = sharedCandidateValidator != null
-      ? (
-          view: sharedCandidateValidator.view,
-          unitsById: sharedCandidateValidator.unitsById,
-          provinceById: sharedCandidateValidator.view.provincesById,
-        )
-      : orderResolutionContextFromView(view, game);
-  final candidateValidator =
-      sharedCandidateValidator ??
-      buildIncrementalCandidateValidator(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        baseOrders: currentOrders,
-        resolution: effectiveResolution,
-        factionMembership: DiplomacyFactionMembership.from(game),
-      );
+  final suggestions = <RecruitWorkerOrder>[];
+  final candidateValidator = pass.candidateValidator;
 
   for (final tier in WorkerTier.values) {
     final candidate = RecruitWorkerOrder(targetTier: tier);
@@ -71,14 +56,7 @@ List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
 
   suggestions.sort((a, b) => a.targetTier.index.compareTo(b.targetTier.index));
 
-  orderSuggestionLog.d(
-    'suggestRecruitWorkerOrders player=$playerId candidates=${suggestions.length}',
-  );
-  if (suggestions.isEmpty) {
-    orderSuggestionLog.d(
-      'suggestRecruitWorkerOrders no candidates player=$playerId',
-    );
-  }
+  pass.logExit(candidateCount: suggestions.length);
   return suggestions;
 }
 
