@@ -36,10 +36,10 @@ class RecruitWorkerOrderValidator extends StatefulValidator {
     required int treasury,
     required WorkerPool workerPool,
   }) : _player = player,
-       super(
-         stockpileState: stockpile,
-         treasuryState: treasury,
-         workerPoolState: workerPool,
+       super.withProjectedEconomy(
+         stockpile: stockpile,
+         treasury: treasury,
+         workerPool: workerPool,
        );
 
   final Player _player;
@@ -69,21 +69,21 @@ class RecruitWorkerOrderValidator extends StatefulValidator {
           stockpileState,
           treasuryState,
         );
-        if (!check.canAfford) {
-          return OrderValidationResult.rejected(
-            check.reason ?? kRecruitWorkerInsufficientMaterials,
-          );
-        }
-        final after = applyRecruitWorkerCostDeduction(
-          order,
-          workerPoolState,
-          stockpileState,
-          treasuryState,
+        return applyCostIfAffordable(
+          check: check,
+          defaultRejectionReason: kRecruitWorkerInsufficientMaterials,
+          applyDeduction: () {
+            final after = applyRecruitWorkerCostDeduction(
+              order,
+              workerPoolState,
+              stockpileState,
+              treasuryState,
+            );
+            workerPoolState = after.workers;
+            stockpileState = after.stockpile;
+            treasuryState = after.treasury;
+          },
         );
-        workerPoolState = after.workers;
-        stockpileState = after.stockpile;
-        treasuryState = after.treasury;
-        return OrderValidationResult.accepted();
       },
     );
   }

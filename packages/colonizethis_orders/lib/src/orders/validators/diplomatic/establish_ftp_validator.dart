@@ -18,12 +18,12 @@ DiplomaticSubValidator establishFtpSubValidator(
   )) {
     return rejectDiplomaticSub('FTP target must be a Great Power', treasury);
   }
-  if (relation?.atWar ?? false) {
-    return rejectDiplomaticSub(
-      'Cannot establish FTP while at war with that faction',
-      treasury,
-    );
-  }
+  final atWarRejection = rejectDiplomaticSubIfAtWar(
+    relation: relation,
+    reason: 'Cannot establish FTP while at war with that faction',
+    treasury: treasury,
+  );
+  if (atWarRejection != null) return atWarRejection;
   if (hasFtpPartnership(ctx.game, ctx.playerId, targetId)) {
     return rejectDiplomaticSub(
       'FTP already established with that faction',

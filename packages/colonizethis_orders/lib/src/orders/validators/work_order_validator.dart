@@ -3,10 +3,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../order_work_constants.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../build_rail_work_rules.dart';
 import '../bundled_civilian_work_order.dart';
+import '../diplomatic_access_helpers.dart';
 import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../unit_type_helpers.dart';
@@ -206,7 +206,15 @@ class WorkOrderValidator extends StatefulValidator {
       player: _context.player,
       playerId: _context.playerId,
       treasury: treasuryState,
-      civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
+      civilianEmbassyWorkAllowed: (unitType, provinceOwnerId) =>
+          civilianEmbassyWorkAllowedInMinorTribeProvince(
+            game: _context.game,
+            playerId: _context.playerId,
+            player: _context.player,
+            unitType: unitType,
+            provinceOwnerId: provinceOwnerId,
+            factionMembership: _context.factionMembership,
+          ),
       factionMembership: _context.factionMembership,
     );
     return runWorkOrderTargetPrecheck(
@@ -232,7 +240,14 @@ class WorkOrderValidator extends StatefulValidator {
       _context.playerId,
       o.targetTileKey,
     );
-    final embassyWork = _civilianWorkAllowedInMinorTribeProvince(type, ownerId);
+    final embassyWork = civilianEmbassyWorkAllowedInMinorTribeProvince(
+      game: _context.game,
+      playerId: _context.playerId,
+      player: _context.player,
+      unitType: type,
+      provinceOwnerId: ownerId,
+      factionMembership: _context.factionMembership,
+    );
     if (controlled || embassyWork) {
       return null;
     }
@@ -274,9 +289,7 @@ class WorkOrderValidator extends StatefulValidator {
   }
 
   bool _skipsMaterialAndTechValidation(String target) =>
-      target == kWorkTargetStealTech ||
-      target == kWorkTargetCounterSpy ||
-      target == kWorkTargetPurchaseLand;
+      kWorkTargetsWithoutMaterialCost.contains(target);
 
   int _improvementLevelForCost(WorkOrder o) =>
       o.target == kWorkTargetBuildImprovement
@@ -421,7 +434,7 @@ class WorkOrderValidator extends StatefulValidator {
   }
 
   bool _skipsProjectedCost(String target) =>
-      target == kWorkTargetStealTech || target == kWorkTargetCounterSpy;
+      kWorkTargetsWithoutProjectedMaterialCost.contains(target);
 
   void _applyProjectedCostMap(Map<String, int> costMap) {
     if (!ProjectedCostEngine.canAffordWorkMaterialCost(
@@ -434,36 +447,5 @@ class WorkOrderValidator extends StatefulValidator {
       stockpileState,
       costMap,
     );
-  }
-
-  /// Builder / Engineer / Merchant may work in Minor/Tribe provinces with embassy + Diplomatic Expertise. SPEC/game/tech-tree-diplomacy-civilian.md.
-  bool _civilianWorkAllowedInMinorTribeProvince(
-    String unitType,
-    String? provinceOwnerId,
-  ) {
-    if (provinceOwnerId == null || provinceOwnerId == _context.playerId) {
-      return false;
-    }
-    if (unitType != kUnitTypeBuilder &&
-        unitType != kUnitTypeEngineer &&
-        unitType != kUnitTypeMerchant) {
-      return false;
-    }
-    if (!isMinorOrTribe(
-      _context.game,
-      provinceOwnerId,
-      factionMembership: _context.factionMembership,
-    )) {
-      return false;
-    }
-    final rel = getRelation(_context.game, _context.playerId, provinceOwnerId);
-    if (rel?.atWar == true) return false;
-    final overture = getOverture(
-      _context.game,
-      _context.playerId,
-      provinceOwnerId,
-    );
-    if (overture == null || !overture.hasEmbassy) return false;
-    return _context.player.techUnlocked?[kTechIdDiplomaticExpertise] == true;
   }
 }

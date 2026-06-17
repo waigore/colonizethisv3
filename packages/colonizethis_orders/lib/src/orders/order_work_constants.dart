@@ -23,6 +23,21 @@ const String kWorkTargetBuildFort = 'build_fort';
 const String kWorkTargetBuildRail = 'build_rail';
 const String kWorkTargetUpgradeTown = 'upgrade_town';
 
+/// Work targets that skip material-cost and tech validation (treasury-only or
+/// no-cost targets). Used by validators and cost calculators.
+const Set<String> kWorkTargetsWithoutMaterialCost = {
+  kWorkTargetStealTech,
+  kWorkTargetCounterSpy,
+  kWorkTargetPurchaseLand,
+};
+
+/// Work targets that skip projected material-cost deduction during validation.
+/// [kWorkTargetPurchaseLand] treasury is charged on work completion instead.
+const Set<String> kWorkTargetsWithoutProjectedMaterialCost = {
+  kWorkTargetStealTech,
+  kWorkTargetCounterSpy,
+};
+
 /// Resource ids that count as minerals for work/purchase rules.
 /// Shared across extraction, work orders, and order application helpers.
 const Set<String> kMineralResourceIds = {

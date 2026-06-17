@@ -7,7 +7,7 @@ import '../order_validation_result.dart';
 import '../order_visibility.dart';
 
 /// Validates [ArmyMoveOrder]. SPEC/program/orders.md.
-class ArmyMoveValidator {
+class ArmyMoveValidator extends OrderValidator {
   const ArmyMoveValidator();
 
   /// Validates the army move.
@@ -28,82 +28,88 @@ class ArmyMoveValidator {
     List<DiplomaticOrder> diplomaticOrders,
     PlayerView view,
     MapTopology topology, {
+    bool previousRejected = false,
     Map<String, Army>? armiesById,
     DiplomacyFactionMembership? factionMembership,
   }) {
-    final army = armiesById != null
-        ? armiesById[order.armyId]
-        : _firstArmyById(game.worldState.armies, order.armyId);
-    if (army == null || army.ownerId != playerId) {
-      return OrderValidationResult.rejected('Invalid army move');
-    }
-    if (army.isHomeArmy) {
-      return OrderValidationResult.rejected('Home army cannot leave capital');
-    }
-    final unitRegion = ProvinceId.regionIdFrom(army.stationedProvinceId);
-    final destFullId = resolveToFullProvinceId(
-      game.worldState,
-      order.destinationProvinceId,
+    return shortCircuitIfPreviousRejected(
+      previousRejected: previousRejected,
+      body: () {
+        final army = armiesById != null
+            ? armiesById[order.armyId]
+            : _firstArmyById(game.worldState.armies, order.armyId);
+        if (army == null || army.ownerId != playerId) {
+          return OrderValidationResult.rejected('Invalid army move');
+        }
+        if (army.isHomeArmy) {
+          return OrderValidationResult.rejected('Home army cannot leave capital');
+        }
+        final unitRegion = ProvinceId.regionIdFrom(army.stationedProvinceId);
+        final destFullId = resolveToFullProvinceId(
+          game.worldState,
+          order.destinationProvinceId,
+        );
+        final destRegion = ProvinceId.regionIdFrom(destFullId);
+        final destProvince = game.worldState.tryGetProvince(destFullId);
+        final destOwnerId = destProvince?.ownerId;
+        final moveToOwnProvince = destOwnerId == playerId;
+        if (!moveToOwnProvince && destRegion != unitRegion) {
+          return OrderValidationResult.rejected('Invalid army move');
+        }
+        if (!moveToOwnProvince) {
+          final fromLocal = ProvinceId.localIdFrom(army.stationedProvinceId);
+          final destLocal = ProvinceId.localIdFrom(destFullId);
+          if (!isValidLandMoveInRegion(
+            topology,
+            unitRegion,
+            fromLocal,
+            destLocal,
+          )) {
+            return OrderValidationResult.rejected('Invalid army move');
+          }
+        }
+
+        if (destOwnerId != null &&
+            destOwnerId != playerId &&
+            isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
+            !canAttackWithWarOrDeclaring(
+              game,
+              playerId,
+              destOwnerId,
+              diplomaticOrders,
+            )) {
+          return OrderValidationResult.rejected(
+            'Must declare war before attacking Great Power province',
+          );
+        }
+
+        if (destOwnerId != null &&
+            destOwnerId != playerId &&
+            isMinorOrTribe(
+              game,
+              destOwnerId,
+              factionMembership: factionMembership,
+            ) &&
+            !canAttackWithWarOrDeclaring(
+              game,
+              playerId,
+              destOwnerId,
+              diplomaticOrders,
+            )) {
+          return OrderValidationResult.rejected(
+            'Must declare war before attacking Minor Nation or Tribe province',
+          );
+        }
+
+        if (!moveSourceVisibilityOk(view, unitRegion, army.stationedProvinceId) ||
+            !moveDestVisibilityOkForArmy(view, destRegion, destFullId)) {
+          return OrderValidationResult.rejected(
+            'Source or destination not visible',
+          );
+        }
+        return OrderValidationResult.accepted();
+      },
     );
-    final destRegion = ProvinceId.regionIdFrom(destFullId);
-    final destProvince = game.worldState.tryGetProvince(destFullId);
-    final destOwnerId = destProvince?.ownerId;
-    final moveToOwnProvince = destOwnerId == playerId;
-    if (!moveToOwnProvince && destRegion != unitRegion) {
-      return OrderValidationResult.rejected('Invalid army move');
-    }
-    if (!moveToOwnProvince) {
-      final fromLocal = ProvinceId.localIdFrom(army.stationedProvinceId);
-      final destLocal = ProvinceId.localIdFrom(destFullId);
-      if (!isValidLandMoveInRegion(
-        topology,
-        unitRegion,
-        fromLocal,
-        destLocal,
-      )) {
-        return OrderValidationResult.rejected('Invalid army move');
-      }
-    }
-
-    if (destOwnerId != null &&
-        destOwnerId != playerId &&
-        isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
-        !canAttackWithWarOrDeclaring(
-          game,
-          playerId,
-          destOwnerId,
-          diplomaticOrders,
-        )) {
-      return OrderValidationResult.rejected(
-        'Must declare war before attacking Great Power province',
-      );
-    }
-
-    if (destOwnerId != null &&
-        destOwnerId != playerId &&
-        isMinorOrTribe(
-          game,
-          destOwnerId,
-          factionMembership: factionMembership,
-        ) &&
-        !canAttackWithWarOrDeclaring(
-          game,
-          playerId,
-          destOwnerId,
-          diplomaticOrders,
-        )) {
-      return OrderValidationResult.rejected(
-        'Must declare war before attacking Minor Nation or Tribe province',
-      );
-    }
-
-    if (!moveSourceVisibilityOk(view, unitRegion, army.stationedProvinceId) ||
-        !moveDestVisibilityOkForArmy(view, destRegion, destFullId)) {
-      return OrderValidationResult.rejected(
-        'Source or destination not visible',
-      );
-    }
-    return OrderValidationResult.accepted();
   }
 }
 

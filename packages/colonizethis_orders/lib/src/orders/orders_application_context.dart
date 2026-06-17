@@ -158,6 +158,31 @@ class BuildWorkState {
   }
 }
 
+/// Writes projected economy fields back onto [player] inside [current.game].
+BuildWorkState writebackPlayerEconomyFields(
+  BuildWorkState current,
+  Player player, {
+  required WorkerPool workers,
+  required Stockpile stockpile,
+  required int treasury,
+}) {
+  return current.copyWith(
+    game: current.game.copyWith(
+      players: current.game.players
+          .map(
+            (p) => p.id == player.id
+                ? p.copyWith(
+                    workerPool: workers,
+                    stockpile: stockpile,
+                    treasury: treasury,
+                  )
+                : p,
+          )
+          .toList(),
+    ),
+  );
+}
+
 /// Returns [game] with [newUnitId] appended to the appropriate army for [player].
 ///
 /// When [armiesById] is supplied it MUST be a snapshot of `game.worldState.armies`

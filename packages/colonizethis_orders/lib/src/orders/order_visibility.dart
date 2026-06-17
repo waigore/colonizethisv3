@@ -143,21 +143,6 @@ bool _workVisExplorePartialReveal(
   return isPartiallyRevealedProvinceLandTilesForPlayer(view, landKeys);
 }
 
-bool _workVisFoggedOrBetterProvince(
-  PlayerView view,
-  String regionId,
-  String provinceId,
-  bool isOwned,
-  WorldState? _,
-) {
-  return provinceHasAtLeastVisibility(
-    view,
-    regionId,
-    provinceId,
-    VisibilityLevel.fogged,
-  );
-}
-
 bool _workVisFoggedProvince(
   PlayerView view,
   String regionId,
@@ -200,8 +185,8 @@ final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
       kWorkTargetBuildPort: _workVisOwnedOrFoggedProvince,
       kWorkTargetBuildFort: _workVisOwnedOrFoggedProvince,
       'build_rail': _workVisOwnedOrFoggedProvince,
-      kWorkTargetPurchaseLand: _workVisFoggedOrBetterProvince,
-      kWorkTargetStealTech: _workVisFoggedOrBetterProvince,
+      kWorkTargetPurchaseLand: _workVisFoggedProvince,
+      kWorkTargetStealTech: _workVisFoggedProvince,
       kWorkTargetCounterSpy: _workVisOwnedOrFoggedProvince,
     };
 

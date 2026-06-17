@@ -22,12 +22,9 @@ class WorkOrderCostCalculator {
     int? fortLevel,
     int? roadLevel,
   }) {
-    if (target == kWorkTargetStealTech ||
-        target == kWorkTargetCounterSpy ||
-        target == kWorkTargetPurchaseLand) {
+    if (kWorkTargetsWithoutMaterialCost.contains(target)) {
       return null;
     }
-
     final province = _targetProvince(targetTileKey);
     final fl = fortLevel ?? province?.fortLevel ?? 0;
     final rl = roadLevel ?? game.worldState.tileState.roadLevel(targetTileKey);

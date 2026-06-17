@@ -21,12 +21,11 @@ DiplomaticSubValidator allianceSubValidator(
       treasury,
     );
   }
-  final atWar = relation?.atWar ?? false;
-  if (atWar) {
-    return rejectDiplomaticSub(
-      'Cannot form alliance while at war with that faction',
-      treasury,
-    );
-  }
+  final atWarRejection = rejectDiplomaticSubIfAtWar(
+    relation: relation,
+    reason: 'Cannot form alliance while at war with that faction',
+    treasury: treasury,
+  );
+  if (atWarRejection != null) return atWarRejection;
   return acceptDiplomaticSub(treasury);
 });
