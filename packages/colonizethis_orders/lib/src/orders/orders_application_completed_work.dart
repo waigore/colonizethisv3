@@ -172,7 +172,10 @@ BuildWorkState _completedWorkBuildImprovement(CompletedWorkContext ctx) {
   return s.copyWith(game: game, work: work);
 }
 
-BuildWorkState _completedWorkUpgradeTown(CompletedWorkContext ctx) {
+BuildWorkState _updateProvinceAtUnitLocation(
+  CompletedWorkContext ctx,
+  Province Function(Province province) update,
+) {
   final s = ctx.state;
   final u = ctx.unit;
   final getProvinces = ctx.getProvinces;
@@ -182,14 +185,21 @@ BuildWorkState _completedWorkUpgradeTown(CompletedWorkContext ctx) {
   final next = provinces.map((p) {
     if (!replaced && p.id == u.locationProvinceId) {
       replaced = true;
-      return p.copyWith(
-        townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
-      );
+      return update(p);
     }
     return p;
   }).toList();
   if (!replaced) return s;
   return s.copyWith(work: replaceProvinces(s.work, next));
+}
+
+BuildWorkState _completedWorkUpgradeTown(CompletedWorkContext ctx) {
+  return _updateProvinceAtUnitLocation(
+    ctx,
+    (p) => p.copyWith(
+      townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
+    ),
+  );
 }
 
 BuildWorkState _completedWorkExplore(CompletedWorkContext ctx) {
@@ -257,21 +267,10 @@ BuildWorkState _completedWorkBuildPort(CompletedWorkContext ctx) {
 BuildWorkState _completedWorkBuildFort(CompletedWorkContext ctx) {
   final s = ctx.state;
   final u = ctx.unit;
-  final getProvinces = ctx.getProvinces;
-  final replaceProvinces = ctx.replaceProvinces;
-  final provinces = getProvinces();
-  var replaced = false;
-  final nextProvinces = provinces.map((p) {
-    if (!replaced && p.id == u.locationProvinceId) {
-      replaced = true;
-      return p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3));
-    }
-    return p;
-  }).toList();
-  WorkOrderState work = s.work;
-  if (replaced) {
-    work = replaceProvinces(work, nextProvinces);
-  }
+  var next = _updateProvinceAtUnitLocation(
+    ctx,
+    (p) => p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3)),
+  );
   if (s.topology != null && s.onDialogue != null) {
     final seed =
         ((s.game.globalGameSeed ?? 0) ^
@@ -289,7 +288,7 @@ BuildWorkState _completedWorkBuildFort(CompletedWorkContext ctx) {
       s.onDialogue!(e);
     }
   }
-  return s.copyWith(work: work);
+  return next;
 }
 
 BuildWorkState _completedWorkBuildRail(CompletedWorkContext ctx) {

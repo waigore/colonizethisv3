@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../order_work_constants.dart';
+import '../diplomatic_access_helpers.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import '../order_validation_result.dart';
@@ -47,9 +48,7 @@ typedef WorkOrderTargetPrecheck =
 /// Targets that run dedicated territory rules in [workOrderTargetPrechecks] and
 /// must not also hit the default non-explorer foreign-province check.
 const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
-  kWorkTargetStealTech,
-  kWorkTargetCounterSpy,
-  kWorkTargetPurchaseLand,
+  ...kWorkTargetsWithoutMaterialCost,
   kWorkTargetBuildImprovement,
 };
 
@@ -150,16 +149,13 @@ OrderValidationResult? precheckPurchaseLand(
   if (resourceId == null || resourceId.isEmpty) {
     return OrderValidationResult.rejected('Tile has no resource');
   }
-  if (kMineralResourceIds.contains(resourceId)) {
-    final prospected =
-        ctx.game.worldState.playerProspectedTiles[ctx.playerId] ??
-        const <String>{};
-    if (!prospected.contains(o.targetTileKey)) {
-      return OrderValidationResult.rejected(
-        'Mineral tile must be prospected first',
-      );
-    }
-  }
+  final mineralRejection = rejectIfMineralTileNotProspected(
+    game: ctx.game,
+    playerId: ctx.playerId,
+    tileKey: o.targetTileKey,
+    resourceId: resourceId,
+  );
+  if (mineralRejection != null) return mineralRejection;
   final cost = purchaseLandCost(resourceId);
   if (ctx.treasury < cost) {
     return OrderValidationResult.rejected(
@@ -202,16 +198,13 @@ OrderValidationResult? precheckBuildImprovement(
       'Tile has no resource; build_improvement requires a resource on the tile',
     );
   }
-  if (kMineralResourceIds.contains(resourceId)) {
-    final prospected =
-        ctx.game.worldState.playerProspectedTiles[ctx.playerId] ??
-        const <String>{};
-    if (!prospected.contains(o.targetTileKey)) {
-      return OrderValidationResult.rejected(
-        'Mineral tile must be prospected first',
-      );
-    }
-  }
+  final mineralRejection = rejectIfMineralTileNotProspected(
+    game: ctx.game,
+    playerId: ctx.playerId,
+    tileKey: o.targetTileKey,
+    resourceId: resourceId,
+  );
+  if (mineralRejection != null) return mineralRejection;
   final currentLevel = ctx.game.worldState.tileState.improvementLevel(
     o.targetTileKey,
   );

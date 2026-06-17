@@ -77,41 +77,26 @@ List<MoveOrder> suggestMoveOrders(
   Orders currentOrders, {
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestMoveOrders player=${view.playerId}');
-  final playerId = view.playerId;
+  final pass = SuggestionPassContext.forPlayerView(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestMoveOrders',
+    sharedCandidateValidator: sharedCandidateValidator,
+    useBuildIncrementalWrapper: false,
+  );
+  final playerId = pass.playerId;
   final suggestions = <MoveOrder>[];
+  final candidateValidator = pass.candidateValidator;
 
   // Build a convenience index of current move orders for this player to avoid
   // suggesting duplicate moves for the same unit + destination.
-  final existingMoves = <String, Set<String>>{};
-  final existingForPlayer =
-      currentOrders.moveOrdersByPlayerId[playerId] ?? const [];
-  for (final m in existingForPlayer) {
-    existingMoves
-        .putIfAbsent(m.unitId, () => <String>{})
-        .add(m.destinationTileKey);
-  }
-
-  // Build the incremental candidate validator once per suggestion pass: the
-  // per-player [PlayerView]/units-by-id work is amortized across every
-  // candidate probe in the loop, instead of being rebuilt per probe via the
-  // old [OrderEngine] full-pass path. SPEC/program/order-suggestions.md
-  // § Incremental candidate validation. Refs #2237.
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
+  final existingMoves = indexExistingTargetsByEntityId(
+    currentOrders.moveOrdersByPlayerId[playerId],
+    (m) => m.unitId,
+    (m) => m.destinationTileKey,
   );
-  final candidateValidator =
-      sharedCandidateValidator ??
-      IncrementalCandidateValidator.forPlayer(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        basePrefix: currentOrders,
-        factionMembership: DiplomacyFactionMembership.from(game),
-        resolution: orderResolutionContextFromView(view, game),
-      );
 
   for (final unit in view.ownUnits) {
     if (isMilitaryUnit(unit.type)) {
@@ -135,29 +120,30 @@ List<MoveOrder> suggestMoveOrders(
       unit: unit,
     );
 
-    var acceptedForUnit = 0;
-    var probeAttemptsForUnit = 0;
-    for (final destinationTileKey in destinationCandidates) {
-      final already = existingMoves[unit.id];
-      if (already != null && already.contains(destinationTileKey)) continue;
-      probeAttemptsForUnit++;
-
-      final candidate = MoveOrder(
-        unitId: unit.id,
-        destinationTileKey: destinationTileKey,
-      );
-
-      if (candidateValidator.isMoveAccepted(candidate)) {
-        suggestions.add(candidate);
-        acceptedForUnit++;
-        if (acceptedForUnit >= _kMaxMoveSuggestionsPerUnit) {
-          break;
-        }
-      }
-      if (probeAttemptsForUnit >= _kMaxMoveProbeAttemptsPerUnit) {
-        break;
-      }
-    }
+    runCappedSuggestionProbeLoop<String>(
+      candidates: destinationCandidates,
+      shouldSkip: (destinationTileKey) {
+        final already = existingMoves[unit.id];
+        return already != null && already.contains(destinationTileKey);
+      },
+      probe: (destinationTileKey) {
+        final candidate = MoveOrder(
+          unitId: unit.id,
+          destinationTileKey: destinationTileKey,
+        );
+        return candidateValidator.isMoveAccepted(candidate);
+      },
+      onAccepted: (destinationTileKey) {
+        suggestions.add(
+          MoveOrder(
+            unitId: unit.id,
+            destinationTileKey: destinationTileKey,
+          ),
+        );
+      },
+      maxAccepted: _kMaxMoveSuggestionsPerUnit,
+      maxProbes: _kMaxMoveProbeAttemptsPerUnit,
+    );
   }
 
   suggestions.sort((a, b) {
@@ -166,11 +152,6 @@ List<MoveOrder> suggestMoveOrders(
     return a.destinationTileKey.compareTo(b.destinationTileKey);
   });
 
-  orderSuggestionLog.d(
-    'suggestMoveOrders player=$playerId candidates=${suggestions.length}',
-  );
-  if (suggestions.isEmpty) {
-    orderSuggestionLog.w('suggestMoveOrders no candidates player=$playerId');
-  }
+  pass.logExit(candidateCount: suggestions.length, warnIfEmpty: true);
   return suggestions;
 }

@@ -50,20 +50,12 @@ BuildWorkState runWorkerPoolPhase(BuildWorkState state) {
       treasury = after.treasury;
     }
 
-    current = current.copyWith(
-      game: current.game.copyWith(
-        players: current.game.players
-            .map(
-              (p) => p.id == player.id
-                  ? p.copyWith(
-                      workerPool: workers,
-                      stockpile: stockpile,
-                      treasury: treasury,
-                    )
-                  : p,
-            )
-            .toList(),
-      ),
+    current = writebackPlayerEconomyFields(
+      current,
+      player,
+      workers: workers,
+      stockpile: stockpile,
+      treasury: treasury,
     );
   }
 

@@ -241,15 +241,14 @@ void _runArmyMovePhase(
     state.results,
     armyMoves,
     state.rejected,
-    (o, prev) => prev
-        ? previousInvalidOrderResult
-        : v.armyMoveValidator.validate(
+    (o, prev) => v.armyMoveValidator.validate(
             o,
             game,
             playerId,
             diplomatic,
             view,
             topology,
+            previousRejected: prev,
             armiesById: armiesById,
             factionMembership: factionMembership,
           ),

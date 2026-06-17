@@ -254,6 +254,7 @@ class IncrementalCandidateValidator {
           diplomaticOrders,
           view,
           topology,
+          previousRejected: false,
           armiesById: _armiesById(),
           factionMembership: _factionMembership(),
         )

@@ -26,6 +26,22 @@ int regimentCountForPlayer(Game game, String playerId) {
   return count;
 }
 
+/// Production-recipe feedstock commodity ids for recipes whose output is in
+/// [neededOutputs]. Shared by the regiment-build-input and improvement-input
+/// feedstock-extraction gates (Refs #3500).
+Set<String> feedstockCommodityIdsForRecipeOutputs(
+  Set<CommodityId> neededOutputs,
+) {
+  if (neededOutputs.isEmpty) return const <String>{};
+  final feedstock = <String>{};
+  for (final recipe in ProductionRecipesCatalog.all) {
+    if (neededOutputs.contains(recipe.outputCommodityId)) {
+      feedstock.addAll(recipe.inputQuantities.keys);
+    }
+  }
+  return feedstock;
+}
+
 int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
   return ProvinceOwnerCache.of(
     game.worldState,
@@ -91,13 +107,7 @@ Set<String> regimentBuildInputFeedstockExtractionResourceIds(
       if (player.stockpile.quantityOf(entry.key) < entry.value) entry.key,
   };
   if (missingInputs.isEmpty) return const <String>{};
-  final feedstock = <String>{};
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (missingInputs.contains(recipe.outputCommodityId)) {
-      feedstock.addAll(recipe.inputQuantities.keys);
-    }
-  }
-  return feedstock;
+  return feedstockCommodityIdsForRecipeOutputs(missingInputs);
 }
 
 /// True iff [playerId] owns at least one province tile hosting a resource in
@@ -190,12 +200,7 @@ Set<String> supplierImprovementInputFeedstockExtractionResourceIds(
     excludePlayerId: playerId,
   );
   if (neededInputs.isEmpty) return const <String>{};
-  final feedstock = <String>{};
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (neededInputs.contains(recipe.outputCommodityId)) {
-      feedstock.addAll(recipe.inputQuantities.keys);
-    }
-  }
+  final feedstock = feedstockCommodityIdsForRecipeOutputs(neededInputs);
   if (feedstock.isEmpty) return const <String>{};
   if (!_ownsUnimprovedFeedstockResourceTile(game, playerId, feedstock)) {
     return const <String>{};
@@ -255,12 +260,7 @@ Set<String> sellerImprovementInputFeedstockResourceIds(
     playerId,
   );
   if (neededInputs.isEmpty) return const <String>{};
-  final feedstock = <String>{};
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (neededInputs.contains(recipe.outputCommodityId)) {
-      feedstock.addAll(recipe.inputQuantities.keys);
-    }
-  }
+  final feedstock = feedstockCommodityIdsForRecipeOutputs(neededInputs);
   return feedstock;
 }
 

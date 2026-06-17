@@ -7,6 +7,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Merges human and AI orders with precedence (human over AI).
 /// For conflicting orders (e.g. same unit, same slot): human wins.
 /// Stable ordering: by player id, then order type.
+///
+/// Each [Orders] field uses an explicit [_mergeOrders] call because the record
+/// carries ten distinct order-list types with different merge strategies and
+/// conflict keys — a descriptor loop would need heterogeneous generics or
+/// dynamic casts with no net clarity gain (Refs #3500 Phase 5).
 Orders mergeOrderLists({
   required Orders humanOrders,
   Orders? aiOrders,

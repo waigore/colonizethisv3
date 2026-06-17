@@ -101,6 +101,34 @@ IncrementalCandidateValidator incrementalValidatorForCandidateProbe({
   );
 }
 
+bool _probeOrderAccepted<T>({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders baseOrders,
+  required T candidate,
+  required bool Function(IncrementalCandidateValidator validator, T candidate)
+  probeWithValidator,
+  Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  OrderResolutionContext? resolution,
+  DiplomacyFactionMembership? factionMembership,
+  void Function()? onBeforeProbe,
+}) {
+  final validator = incrementalValidatorForCandidateProbe(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: baseOrders,
+    tileMapByRegion: tileMapByRegion,
+    resolution: resolution,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
+  onBeforeProbe?.call();
+  return probeWithValidator(validator, candidate);
+}
+
 bool isMoveOrderAccepted(
   Game game,
   MapTopology topology,
@@ -116,16 +144,17 @@ bool isMoveOrderAccepted(
   // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
   // § Incremental candidate validation; SPEC/program/order-engine.md
   // § Validation (candidate-probe context). Refs #2237.
-  final validator = incrementalValidatorForCandidateProbe(
+  return _probeOrderAccepted<MoveOrder>(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    candidate: candidate,
     resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
+    probeWithValidator: (validator, c) => validator.isMoveAccepted(c),
   );
-  return validator.isMoveAccepted(candidate);
 }
 
 bool isArmyMoveOrderAccepted(
@@ -142,16 +171,17 @@ bool isArmyMoveOrderAccepted(
   // [baseOrders]'s diplomatic context without re-running full-pass
   // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = incrementalValidatorForCandidateProbe(
+  return _probeOrderAccepted<ArmyMoveOrder>(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    candidate: candidate,
     resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
+    probeWithValidator: (validator, c) => validator.isArmyMoveAccepted(c),
   );
-  return validator.isArmyMoveAccepted(candidate);
 }
 
 bool isWorkOrderAccepted(
@@ -165,17 +195,19 @@ bool isWorkOrderAccepted(
   OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
-  final validator = incrementalValidatorForCandidateProbe(
+  return _probeOrderAccepted<WorkOrder>(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    candidate: candidate,
     tileMapByRegion: tileMapByRegion,
     resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
+    onBeforeProbe: bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking,
+    probeWithValidator: isWorkOrderAcceptedWithValidator,
   );
-  return isWorkOrderAcceptedWithValidator(validator, candidate);
 }
 
 bool isBuildOrderAccepted(
@@ -188,16 +220,17 @@ bool isBuildOrderAccepted(
   OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
-  final validator = incrementalValidatorForCandidateProbe(
+  return _probeOrderAccepted<BuildUnitOrder>(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    candidate: candidate,
     resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
+    probeWithValidator: isBuildOrderAcceptedWithValidator,
   );
-  return isBuildOrderAcceptedWithValidator(validator, candidate);
 }
 
 bool isNavalMoveOrderAccepted(
@@ -212,16 +245,17 @@ bool isNavalMoveOrderAccepted(
 }) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = incrementalValidatorForCandidateProbe(
+  return _probeOrderAccepted<NavalMoveOrder>(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    candidate: candidate,
     resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
+    probeWithValidator: (validator, c) => validator.isNavalMoveAccepted(c),
   );
-  return validator.isNavalMoveAccepted(candidate);
 }
 
 bool isNavalMissionOrderAccepted(
@@ -236,16 +270,17 @@ bool isNavalMissionOrderAccepted(
 }) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = incrementalValidatorForCandidateProbe(
+  return _probeOrderAccepted<NavalMissionOrder>(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    candidate: candidate,
     resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
+    probeWithValidator: (validator, c) => validator.isNavalMissionAccepted(c),
   );
-  return validator.isNavalMissionAccepted(candidate);
 }
 
 bool isDiplomaticOrderAccepted(
@@ -265,17 +300,18 @@ bool isDiplomaticOrderAccepted(
   DiplomacyFactionMembership? factionMembership,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  final validator = incrementalValidatorForCandidateProbe(
+  return _probeOrderAccepted<DiplomaticOrder>(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    candidate: candidate,
     tileMapByRegion: tileMapByRegion,
     resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
+    probeWithValidator: (validator, c) => validator.isDiplomaticAccepted(c),
   );
-  return validator.isDiplomaticAccepted(candidate);
 }
 
 /// Validates [candidate] with an existing [validator] built for the same

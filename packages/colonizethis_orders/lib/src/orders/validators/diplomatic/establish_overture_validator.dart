@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
@@ -31,12 +30,12 @@ DiplomaticSubValidator establishOvertureSubValidator(
       treasury,
     );
   }
-  if (relation?.atWar == true) {
-    return rejectDiplomaticSub(
-      'Cannot establish overture while at war with that faction',
-      treasury,
-    );
-  }
+  final atWarRejection = rejectDiplomaticSubIfAtWar(
+    relation: relation,
+    reason: 'Cannot establish overture while at war with that faction',
+    treasury: treasury,
+  );
+  if (atWarRejection != null) return atWarRejection;
 
   final currentStage =
       getOverture(ctx.game, ctx.playerId, targetId)?.stage ??
@@ -98,19 +97,18 @@ bool _isMinorTribeOrGreatPower(
         targetId,
         OvertureStage.tradeConsulate,
       ) &&
-      !_playerHasDiplomaticExpertise(ctx)) {
+      !ctx.hasDiplomaticExpertise) {
     return rejectDiplomaticSub(
       'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
       treasury,
     );
   }
-  if (treasury < overtureConsulateCost) {
-    return rejectDiplomaticSub(
-      'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
-      treasury,
-    );
-  }
-  return acceptDiplomaticSub(treasury - overtureConsulateCost);
+  return validateTreasuryDebit(
+    treasury: treasury,
+    cost: overtureConsulateCost,
+    reason:
+        'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
+  );
 }
 
 ({OrderValidationResult result, int treasury}) _validateEmbassy(
@@ -119,30 +117,29 @@ bool _isMinorTribeOrGreatPower(
   OvertureStage currentStage,
   int treasury,
 ) {
-  if (currentStage != OvertureStage.tradeConsulate) {
-    return rejectDiplomaticSub(
-      'Embassy requires existing Trade Consulate with that faction',
-      treasury,
-    );
-  }
+  final stageRejection = rejectIfOvertureStageMismatch(
+    currentStage: currentStage,
+    requiredStage: OvertureStage.tradeConsulate,
+    reason: 'Embassy requires existing Trade Consulate with that faction',
+    treasury: treasury,
+  );
+  if (stageRejection != null) return stageRejection;
   if (_minorTribeStageRequiresDiplomaticExpertise(
         ctx,
         targetId,
         OvertureStage.embassy,
       ) &&
-      !_playerHasDiplomaticExpertise(ctx)) {
+      !ctx.hasDiplomaticExpertise) {
     return rejectDiplomaticSub(
       'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
       treasury,
     );
   }
-  if (treasury < overtureEmbassyCost) {
-    return rejectDiplomaticSub(
-      'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
-      treasury,
-    );
-  }
-  return acceptDiplomaticSub(treasury - overtureEmbassyCost);
+  return validateTreasuryDebit(
+    treasury: treasury,
+    cost: overtureEmbassyCost,
+    reason: 'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
+  );
 }
 
 ({OrderValidationResult result, int treasury}) _validateNap(
@@ -151,18 +148,19 @@ bool _isMinorTribeOrGreatPower(
   OvertureStage currentStage,
   int treasury,
 ) {
-  if (currentStage != OvertureStage.embassy) {
-    return rejectDiplomaticSub(
-      'Non-Aggression Pact requires existing Embassy with that faction',
-      treasury,
-    );
-  }
+  final stageRejection = rejectIfOvertureStageMismatch(
+    currentStage: currentStage,
+    requiredStage: OvertureStage.embassy,
+    reason: 'Non-Aggression Pact requires existing Embassy with that faction',
+    treasury: treasury,
+  );
+  if (stageRejection != null) return stageRejection;
   if (_minorTribeStageRequiresDiplomaticExpertise(
         ctx,
         targetId,
         OvertureStage.nap,
       ) &&
-      !_playerHasDiplomaticExpertise(ctx)) {
+      !ctx.hasDiplomaticExpertise) {
     return rejectDiplomaticSub(
       'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
       treasury,
@@ -186,13 +184,4 @@ bool _minorTribeStageRequiresDiplomaticExpertise(
   return stage == OvertureStage.tradeConsulate ||
       stage == OvertureStage.embassy ||
       stage == OvertureStage.nap;
-}
-
-bool _playerHasDiplomaticExpertise(DiplomaticSubValidatorContext ctx) {
-  for (final p in ctx.game.players) {
-    if (p.id == ctx.playerId) {
-      return p.techUnlocked?[kTechIdDiplomaticExpertise] == true;
-    }
-  }
-  return false;
 }

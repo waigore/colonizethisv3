@@ -252,20 +252,12 @@ BuildWorkState runBuildPhase(BuildWorkState state) {
       );
     }
 
-    current = current.copyWith(
-      game: current.game.copyWith(
-        players: current.game.players
-            .map(
-              (p) => p.id == player.id
-                  ? p.copyWith(
-                      stockpile: stockpile,
-                      workerPool: workers,
-                      treasury: treasury,
-                    )
-                  : p,
-            )
-            .toList(),
-      ),
+    current = writebackPlayerEconomyFields(
+      current,
+      player,
+      workers: workers,
+      stockpile: stockpile,
+      treasury: treasury,
     );
   }
 

@@ -103,45 +103,28 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   OrderResolutionContext? resolution,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestNavalMoveOrders player=${view.playerId}');
-  final playerId = view.playerId;
-  final suggestions = <NavalMoveOrder>[];
-  final existingByFleet = <String, Set<String>>{};
-  for (final o
-      in currentOrders.navalMoveOrdersByPlayerId[playerId] ?? const []) {
-    final key = o.isDock
-        ? 'port:${o.destinationPortProvinceId}'
-        : (o.destinationSeaZoneId ?? '');
-    if (key.isNotEmpty) {
-      existingByFleet.putIfAbsent(o.fleetId, () => <String>{}).add(key);
-    }
-  }
-
-  // Single per-player validator: amortizes the per-player [PlayerView] /
-  // units-by-id setup across every candidate probe in the loop.
-  // SPEC/program/order-suggestions.md § Incremental candidate validation.
-  // Refs #2237.
-  //
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
-  );
-  final effectiveResolution = _effectiveOrderResolutionContext(
+  final pass = SuggestionPassContext.forPlayerView(
     view: view,
     game: game,
-    resolution: resolution,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestNavalMoveOrders',
     sharedCandidateValidator: sharedCandidateValidator,
+    resolution: resolution,
+    includeFactionMembershipInBuild: false,
+    useBuildIncrementalWrapper: false,
   );
-  final candidateValidator =
-      sharedCandidateValidator ??
-      IncrementalCandidateValidator.forPlayer(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        basePrefix: currentOrders,
-        resolution: effectiveResolution,
-      );
+  final playerId = pass.playerId;
+  final suggestions = <NavalMoveOrder>[];
+  final candidateValidator = pass.candidateValidator;
+  final existingByFleet = indexExistingTargetsByEntityId(
+    currentOrders.navalMoveOrdersByPlayerId[playerId],
+    (o) => o.fleetId,
+    (o) => o.isDock
+        ? 'port:${o.destinationPortProvinceId}'
+        : (o.destinationSeaZoneId ?? ''),
+    skipEmptyTargets: true,
+  );
 
   final homeFleetId = homeFleetIdFor(playerId);
   for (final fleet in game.worldState.fleets) {
@@ -189,9 +172,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
         : (b.destinationSeaZoneId ?? '');
     return keyA.compareTo(keyB);
   });
-  orderSuggestionLog.d(
-    'suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
-  );
+  pass.logExit(candidateCount: suggestions.length);
   return suggestions;
 }
 
@@ -206,39 +187,25 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   OrderResolutionContext? resolution,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestNavalMissionOrders player=${view.playerId}');
-  final playerId = view.playerId;
-  final suggestions = <NavalMissionOrder>[];
-  final existingByFleet = <String>{};
-  for (final o
-      in currentOrders.navalMissionOrdersByPlayerId[playerId] ?? const []) {
-    existingByFleet.add(o.fleetId);
-  }
-
-  // Single per-player validator amortizes per-player setup across every
-  // candidate probe (mission × fleet). SPEC/program/order-suggestions.md
-  // § Incremental candidate validation. Refs #2237.
-  //
-  assert(
-    sharedCandidateValidator == null ||
-        sharedCandidateValidator.playerId == playerId,
-    'sharedCandidateValidator playerId must match view.playerId',
-  );
-  final effectiveResolution = _effectiveOrderResolutionContext(
+  final pass = SuggestionPassContext.forPlayerView(
     view: view,
     game: game,
-    resolution: resolution,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestNavalMissionOrders',
     sharedCandidateValidator: sharedCandidateValidator,
+    resolution: resolution,
+    includeFactionMembershipInBuild: false,
+    useBuildIncrementalWrapper: false,
   );
-  final candidateValidator =
-      sharedCandidateValidator ??
-      IncrementalCandidateValidator.forPlayer(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        basePrefix: currentOrders,
-        resolution: effectiveResolution,
-      );
+  final playerId = pass.playerId;
+  final suggestions = <NavalMissionOrder>[];
+  final candidateValidator = pass.candidateValidator;
+  final existingByFleet = <String>{
+    for (final o
+        in currentOrders.navalMissionOrdersByPlayerId[playerId] ?? const [])
+      o.fleetId,
+  };
 
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId) continue;
@@ -259,8 +226,6 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     if (c != 0) return c;
     return a.mission.compareTo(b.mission);
   });
-  orderSuggestionLog.d(
-    'suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
-  );
+  pass.logExit(candidateCount: suggestions.length);
   return suggestions;
 }

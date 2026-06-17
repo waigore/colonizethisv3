@@ -32,10 +32,10 @@ class BuildOrderValidator extends StatefulValidator {
     required WorkerPool workerPool,
   }) : _game = game,
        _player = player,
-       super(
-         stockpileState: stockpile,
-         treasuryState: treasury,
-         workerPoolState: workerPool,
+       super.withProjectedEconomy(
+         stockpile: stockpile,
+         treasury: treasury,
+         workerPool: workerPool,
        );
 
   WorkerPool get workers => workerPoolState;
@@ -80,23 +80,21 @@ class BuildOrderValidator extends StatefulValidator {
           stockpileState,
           treasuryState,
         );
-        if (!check.canAfford) {
-          return OrderValidationResult.rejected(
-            check.reason ?? 'Insufficient resources',
-          );
-        }
-
-        final after = ProjectedCostEngine.applyBuildOrderCostDeduction(
-          _player,
-          o,
-          workerPoolState,
-          stockpileState,
-          treasuryState,
+        return applyCostIfAffordable(
+          check: check,
+          applyDeduction: () {
+            final after = ProjectedCostEngine.applyBuildOrderCostDeduction(
+              _player,
+              o,
+              workerPoolState,
+              stockpileState,
+              treasuryState,
+            );
+            workerPoolState = after.workers;
+            stockpileState = after.stockpile;
+            treasuryState = after.treasury;
+          },
         );
-        workerPoolState = after.workers;
-        stockpileState = after.stockpile;
-        treasuryState = after.treasury;
-        return OrderValidationResult.accepted();
       },
     );
   }
