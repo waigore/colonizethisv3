@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
+import '../economy_phase_sequence.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 import '../turn_resolution_seeds.dart';
@@ -136,23 +137,14 @@ TurnPhaseStepOutcome extractionTurnPhaseHandler(
   TurnResolverConfig config,
   int turn,
 ) {
-  // Capture per-player overseas tonnage actually shipped so the world
-  // market phase (#2990, B2 follow-up) can subtract it from the
-  // home-fleet cargo when computing trade cargo capacity. See
-  // SPEC/game/world-market.md § Cargo — AC "Cargo released by under-used
-  // extraction".
   final shippedTonnageByPlayerId = <String, int>{};
-  final nextGame = runExtractionPhase(
-    acc.game,
-    config.topology,
-    config.tileMapByRegion,
-    config.extractedByPlayerId,
-    overseasShippedTonnageOut: shippedTonnageByPlayerId,
-  );
   return TurnPhaseStepContinue(
-    acc.copyWith(
-      game: nextGame,
-      overseasExtractionShippedTonnageByPlayerId: shippedTonnageByPlayerId,
+    runEconomyExtractionStep(
+      acc,
+      economyPhaseStepContextFromConfig(
+        config,
+        overseasShippedTonnageOut: shippedTonnageByPlayerId,
+      ),
     ),
   );
 }

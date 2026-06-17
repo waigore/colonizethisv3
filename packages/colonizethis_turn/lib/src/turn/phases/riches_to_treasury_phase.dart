@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import '../economy_phase_sequence.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 
@@ -63,11 +64,12 @@ TurnPhaseStepOutcome richesToTreasuryTurnPhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) {
-  final afterStockpile = runRichesToTreasuryPhase(acc.game);
-  final afterPurchasedTiles = applyPurchasedTileRichesHandoff(
-    afterStockpile,
-    tileMapByRegion: config.tileMapByRegion,
-  );
-  return TurnPhaseStepContinue(acc.copyWith(game: afterPurchasedTiles));
-}
+) => TurnPhaseStepContinue(
+  runEconomyRichesToTreasuryStep(
+    acc,
+    economyPhaseStepContextFromConfig(
+      config,
+      applyPurchasedTileRichesHandoff: true,
+    ),
+  ),
+);
