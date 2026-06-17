@@ -16,12 +16,6 @@ const _orderSuggestionContextRelative =
 const _statefulValidatorRelative =
     'packages/colonizethis_orders/lib/src/orders/validators/stateful_validator.dart';
 
-const _diplomaticSubValidatorRelative =
-    'packages/colonizethis_orders/lib/src/orders/validators/diplomatic/diplomatic_sub_validator.dart';
-
-const _diplomaticValidatorsDir =
-    'packages/colonizethis_orders/lib/src/orders/validators/diplomatic';
-
 /// Matches a raw clone of a stockpile quantities map, e.g.
 /// `Map<String, int>.from(snap.stockpile.quantities)`.
 final RegExp _rawQuantitiesClonePattern = RegExp(
@@ -88,27 +82,6 @@ int runCheckOrdersDedupMapClones(
         source: source,
       ),
     );
-  }
-
-  final diplomaticDir = Directory(p.join(root, _diplomaticValidatorsDir));
-  if (diplomaticDir.existsSync()) {
-    for (final entity in diplomaticDir.listSync(recursive: false)) {
-      if (entity is! File || !entity.path.endsWith('.dart')) continue;
-      final relativePath = p.relative(entity.path, from: root);
-      if (relativePath == _diplomaticSubValidatorRelative) continue;
-      violations.addAll(
-        findInlinedDiplomaticRelationGuardViolations(
-          relativePath: relativePath,
-          source: entity.readAsStringSync(),
-        ),
-      );
-      violations.addAll(
-        findInlinedGreatPowerGuardViolations(
-          relativePath: relativePath,
-          source: entity.readAsStringSync(),
-        ),
-      );
-    }
   }
 
   if (violations.isEmpty) {

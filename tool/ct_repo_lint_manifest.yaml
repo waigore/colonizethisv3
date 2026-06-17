@@ -600,10 +600,17 @@ rules:
 
   - rule_id: repo.orders_dedup_map_clones
     group: architecture
-    title: Orders module dedup regressions (map clones, probe wrappers, diplomatic helpers)
+    title: Orders module dedup regressions (map clones, probe wrappers, visibility helpers)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_dedup_map_clones.dart
+
+  - rule_id: repo.orders_dedup_diplomatic_helpers
+    group: architecture
+    title: Diplomatic sub-validators must reuse shared helpers (Refs #3500)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_dedup_diplomatic_helpers.dart
 
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture

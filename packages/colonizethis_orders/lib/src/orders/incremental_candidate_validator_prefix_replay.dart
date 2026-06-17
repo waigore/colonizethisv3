@@ -153,22 +153,32 @@ extension IncrementalCandidateValidatorPrefixReplay
   }
 
   bool isDiplomaticAccepted(DiplomaticOrder candidate) {
-    final prepared = _prepareDiplomaticCandidateValidator();
-    if (!prepared.ok) return false;
-    return prepared.validator!
-        .validate(candidate, previousRejected: false)
-        .result
-        .isAccepted;
+    return _validateDiplomaticCandidate(candidate).isAccepted;
   }
 
   /// Like [isDiplomaticAccepted] but returns the full [OrderValidationResult]
   /// so UI layers can surface validator rejection text on disabled controls.
   OrderValidationResult probeDiplomaticOrder(DiplomaticOrder candidate) {
-    final prepared = _prepareDiplomaticCandidateValidator(
+    return _validateDiplomaticCandidate(
+      candidate,
       playerNotFoundReason: 'Player not found',
       prefixReplayFailedReason: 'Previous invalid diplomatic order in prefix',
     );
-    if (prepared.reject != null) return prepared.reject!;
+  }
+
+  OrderValidationResult _validateDiplomaticCandidate(
+    DiplomaticOrder candidate, {
+    String? playerNotFoundReason,
+    String? prefixReplayFailedReason,
+  }) {
+    final prepared = _prepareDiplomaticCandidateValidator(
+      playerNotFoundReason: playerNotFoundReason,
+      prefixReplayFailedReason: prefixReplayFailedReason,
+    );
+    if (!prepared.ok) {
+      return prepared.reject ??
+          OrderValidationResult.rejected('Diplomatic order rejected');
+    }
     return prepared.validator!
         .validate(candidate, previousRejected: false)
         .result;

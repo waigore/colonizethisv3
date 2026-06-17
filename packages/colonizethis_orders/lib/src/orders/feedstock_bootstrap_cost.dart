@@ -25,16 +25,30 @@ bool _isUnimprovedFeedstockTile(
   return true;
 }
 
-bool _isFeedstockBootstrapTarget(
+bool _isFeedstockBootstrapTargetForTile(
   Game game,
   String playerId,
   String targetTileKey,
+  Set<String> Function(Game game, String playerId) feedstockIdsForPlayer,
 ) {
   return _isUnimprovedFeedstockTile(
     game,
     playerId,
     targetTileKey,
-    feedstockExtractionResourceIdsForPlayer(game, playerId),
+    feedstockIdsForPlayer(game, playerId),
+  );
+}
+
+bool _isFeedstockBootstrapTarget(
+  Game game,
+  String playerId,
+  String targetTileKey,
+) {
+  return _isFeedstockBootstrapTargetForTile(
+    game,
+    playerId,
+    targetTileKey,
+    feedstockExtractionResourceIdsForPlayer,
   );
 }
 
@@ -47,13 +61,16 @@ bool _isImprovementInputFeedstockBootstrapTarget(
   String playerId,
   String targetTileKey,
 ) {
-  return _isUnimprovedFeedstockTile(
+  return _isFeedstockBootstrapTargetForTile(
     game,
     playerId,
     targetTileKey,
-    <String>{
+    (game, playerId) => <String>{
       ...sellerImprovementInputFeedstockExtractionResourceIds(game, playerId),
-      ...supplierImprovementInputFeedstockExtractionResourceIds(game, playerId),
+      ...supplierImprovementInputFeedstockExtractionResourceIds(
+        game,
+        playerId,
+      ),
     },
   );
 }

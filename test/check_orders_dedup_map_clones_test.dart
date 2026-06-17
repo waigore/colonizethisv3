@@ -178,22 +178,6 @@ bool isMoveOrderAccepted(Game game, MapTopology topology, String playerId,
       expect(violations, hasLength(1));
     });
   });
-
-  group('findInlinedDiplomaticRelationGuardViolations', () {
-    test('flags inline relation?.atWar checks', () {
-      const src = r'''
-if (relation?.atWar == true) {
-  return rejectDiplomaticSub('at war', treasury);
-}
-''';
-      final violations = findInlinedDiplomaticRelationGuardViolations(
-        relativePath:
-            'packages/colonizethis_orders/lib/src/orders/validators/diplomatic/establish_overture_validator.dart',
-        source: src,
-      );
-      expect(violations, hasLength(1));
-    });
-  });
 }
 
 const _orderSuggestionContextRelative =
