@@ -6,11 +6,16 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show WorkOrderCostCalculator;
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'phases/consumption_phase.dart';
-import 'phases/extraction_phase.dart';
-import 'phases/production_phase.dart';
-import 'phases/riches_to_treasury_phase.dart';
+import 'economy_phase_sequence.dart';
 import 'turn_pipeline_state.dart';
+
+const List<EconomyPreviewStockpilePhase> _economyPreviewStockpilePhases =
+    <EconomyPreviewStockpilePhase>[
+      EconomyPreviewStockpilePhase.extraction,
+      EconomyPreviewStockpilePhase.richesToTreasury,
+      EconomyPreviewStockpilePhase.consumption,
+      EconomyPreviewStockpilePhase.production,
+    ];
 
 Map<String, int> _stockpileCommodityDeltaMap(
   Stockpile before,
@@ -247,52 +252,24 @@ economyPreviewStockpilePhaseDeltasForPlayer({
     stockpileForViewed(acc.game),
   );
 
-  final beforeExtraction = stockpileForViewed(acc.game);
-  acc = acc.copyWith(
-    game: runExtractionPhase(
-      acc.game,
-      topology,
-      tileMapByRegion,
-      extractedByPlayerId,
-    ),
+  final economyCtx = EconomyPhaseStepContext(
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
   );
-  final extraction = _stockpileCommodityDeltaMap(
-    beforeExtraction,
-    stockpileForViewed(acc.game),
-  );
-
-  final beforeRiches = stockpileForViewed(acc.game);
-  acc = acc.copyWith(game: runRichesToTreasuryPhase(acc.game));
-  final richesToTreasury = _stockpileCommodityDeltaMap(
-    beforeRiches,
-    stockpileForViewed(acc.game),
-  );
-
-  final beforeConsumption = stockpileForViewed(acc.game);
-  acc = runConsumptionPipelinePhase(acc);
-  final consumption = _stockpileCommodityDeltaMap(
-    beforeConsumption,
-    stockpileForViewed(acc.game),
-  );
-
-  final beforeProduction = stockpileForViewed(acc.game);
-  acc = runProductionPipelinePhase(
-    acc,
-    defaultAssignments,
-    defaultAssignmentsByPlayerId,
-    null,
-  );
-  final production = _stockpileCommodityDeltaMap(
-    beforeProduction,
-    stockpileForViewed(acc.game),
-  );
+  final economyDeltas = <EconomyPreviewStockpilePhase, Map<String, int>>{};
+  for (var i = 0; i < economyPhaseSteps.length; i++) {
+    final before = stockpileForViewed(acc.game);
+    acc = economyPhaseSteps[i](acc, economyCtx);
+    economyDeltas[_economyPreviewStockpilePhases[i]] =
+        _stockpileCommodityDeltaMap(before, stockpileForViewed(acc.game));
+  }
 
   return {
     EconomyPreviewStockpilePhase.pendingBuildCosts: pendingBuildCosts,
-    EconomyPreviewStockpilePhase.extraction: extraction,
-    EconomyPreviewStockpilePhase.richesToTreasury: richesToTreasury,
-    EconomyPreviewStockpilePhase.consumption: consumption,
-    EconomyPreviewStockpilePhase.production: production,
+    ...economyDeltas,
   };
 }
 
@@ -313,21 +290,15 @@ Game applyEconomyPhasesForPreview({
       currentOrders: currentOrders,
     ),
   );
-  acc = acc.copyWith(
-    game: runExtractionPhase(
-      acc.game,
-      topology,
-      tileMapByRegion,
-      extractedByPlayerId,
-    ),
-  );
-  acc = acc.copyWith(game: runRichesToTreasuryPhase(acc.game));
-  acc = runConsumptionPipelinePhase(acc);
-  acc = runProductionPipelinePhase(
+  acc = runEconomyPhaseSequence(
     acc,
-    defaultAssignments,
-    defaultAssignmentsByPlayerId,
-    null,
+    EconomyPhaseStepContext(
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+      extractedByPlayerId: extractedByPlayerId,
+      defaultAssignments: defaultAssignments,
+      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    ),
   );
   return acc.game;
 }

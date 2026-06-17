@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_orders/src/orders/bundled_civilian_work_order.dart';
-import 'package:colonizethis_turn/src/turn/phases/movement_phase.dart';
+import 'package:colonizethis_turn/src/turn/phases/movement_phase_bundled_work.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

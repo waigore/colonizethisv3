@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../naval_resolution.dart';
+import '../turn_phase_handler_helpers.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 
@@ -30,13 +31,13 @@ TurnPhaseStepOutcome navalInterceptionCombatTurnPhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) => TurnPhaseStepContinue(
-  runNavalInterceptionTurnPhase(
-    acc,
+) => simplePipelinePhase(
+  (pipeline) => runNavalInterceptionTurnPhase(
+    pipeline,
     config.topology,
     config.orders.navalMoveOrdersByPlayerId,
     config.eventBus,
     config.onDialogue,
     config.onGameEvent,
   ),
-);
+)(acc, config, turn);
