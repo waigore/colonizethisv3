@@ -38,10 +38,28 @@ void main() {
                 'Extraction ignoring baseline cap before researching ${testCase.techId}',
           );
 
+          // Seed progress just below the (rebalanced) cost so a single
+          // maximum-funding turn unlocks the tech regardless of its cost tier,
+          // keeping this test focused on the cap-applies-next-turn behavior
+          // rather than research pacing. SPEC/game/tech-tree.md § Research Model.
+          final seededProgress = techById(testCase.techId)!.cost - 1;
+          final researchInput = afterBaseline.copyWith(
+            players: [
+              for (final p in afterBaseline.players)
+                p.id == _playerId
+                    ? p.copyWith(
+                        researchProgressByTechId: {
+                          testCase.techId: seededProgress,
+                        },
+                      )
+                    : p,
+            ],
+          );
+
           // Turn B: research resolves this turn; extraction still uses previous cap.
           final withResearch = requireTurnResolutionComplete(
             resolveTurnForGame(
-              game: afterBaseline,
+              game: researchInput,
               topology: _topology,
               orders: Orders(
                 researchOrdersByPlayerId: {

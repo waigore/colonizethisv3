@@ -71,6 +71,17 @@ Techs grant **effects** when researched (no separate "apply" step):
 
 **Slots:** 3 by default; 4 with University tech. Each slot holds at most one active tech (or is empty).
 
+**Research point costs (per tier):** Each tech's RP `cost` is derived from its cost tier (the existing era bucket `1..4`) via `cost(tier) = 1800 + (tier - 1) * 600`. The four tiers are therefore:
+
+| Cost tier | RP cost | Turns at Medium (300 RP/turn) |
+|-----------|---------|-------------------------------|
+| 1 (lowest)  | 1800 | 6  |
+| 2           | 2400 | 8  |
+| 3           | 3000 | 10 |
+| 4 (highest) | 3600 | 12 |
+
+These costs target one completed tech per active slot roughly every 6–12 turns at the **Medium** funding preset, rather than instant completion. Funding presets (gold/RP rates below) are unchanged; only the catalog `cost` values follow this formula. The **Industrial Funding of Research** bonus (+20% RP, floored, for military/naval techs) is applied on top of the funding RP per allocation and is unchanged. In-progress research saved under older cost values is **not** migrated.
+
 **Funding presets:**
 
 | Preset  | Gold/Turn | RP/Turn | Efficiency                     |
@@ -106,3 +117,23 @@ Techs grant **effects** when researched (no separate "apply" step):
 - Given a research slot is configured with one of the funding presets defined in the table above and a tech that has not yet been unlocked  
   When the System advances the game by one turn and executes the Research phase  
   Then the System deducts the configured gold-per-turn from the player treasury for that slot unless the preset is `None`, adds the configured RP-per-turn to that tech’s research progress, and, when the accumulated RP reaches or exceeds that tech’s cost, marks the tech as completed and unlocked at the end of that phase.
+
+- Given the global tech catalog after the cost rebalance, where each tech has a cost tier (era) in `1..4`  
+  When the System evaluates a tech's `cost`  
+  Then the cost equals `1800 + (tier - 1) * 600`, so tier-1 techs cost `1800` RP, tier-2 cost `2400` RP, tier-3 cost `3000` RP, and tier-4 cost `3600` RP, and the set of distinct catalog costs is exactly `{1800, 2400, 3000, 3600}`.
+
+- Given a tier-1 tech (cost `1800` RP) assigned to one slot at **Medium** funding (300 RP/turn) with all prerequisites unlocked and treasury sufficient to fund every turn  
+  When exactly 5 Research phases resolve  
+  Then the tech is not yet in `techUnlocked` (progress `1500` RP `< 1800`); and when the 6th Research phase resolves, the tech is in `techUnlocked`.
+
+- Given a tier-4 tech (cost `3600` RP) assigned to one slot at **Medium** funding (300 RP/turn) with all prerequisites unlocked and treasury sufficient to fund every turn  
+  When exactly 11 Research phases resolve  
+  Then the tech is not yet in `techUnlocked` (progress `3300` RP `< 3600`); and when the 12th Research phase resolves, the tech is in `techUnlocked`.
+
+- Given a tier-2 tech (cost `2400` RP) assigned at **Low** funding (100 RP/turn) with prerequisites unlocked  
+  When one Research phase resolves  
+  Then the tech's research progress increases by exactly `100` RP and the tech remains not unlocked (`100 < 2400`).
+
+- Given **Industrial Funding of Research** is unlocked and a tier-2 **military** tech (cost `2400` RP) is assigned at **Medium** funding (300 RP/turn) with prerequisites unlocked  
+  When one Research phase resolves  
+  Then the tech's research progress increases by exactly `floor(300 × 1.2) = 360` RP.
