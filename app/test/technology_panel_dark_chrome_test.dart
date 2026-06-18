@@ -15,6 +15,7 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/research_slot_turn_preview_view.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -464,7 +465,8 @@ void main() {
 
   group('Slot card chrome (Refs #2864 AC S3)', () {
     testWidgets(
-      'assigned slot uses CtProgressBar and the canonical RP label format',
+      'editable assigned slot uses the dual-segment turn preview and the '
+      'canonical RP label format (Refs #3512)',
       (WidgetTester tester) async {
         final techId = techCatalog.keys.first;
         final techCost = techCatalog[techId]!.cost;
@@ -489,7 +491,11 @@ void main() {
         await tester.pumpWidget(host(localGame, localGame.players.first, orders: orders));
         await tester.pumpAndSettle();
 
-        expect(find.byType(CtProgressBar), findsOneWidget);
+        // The editable slot now renders the dual-segment turn preview
+        // (committed + anticipated) in place of the single-segment
+        // CtProgressBar; the canonical RP label format is preserved.
+        expect(find.byType(ResearchSlotTurnPreviewView), findsOneWidget);
+        expect(find.byType(CtProgressBar), findsNothing);
         expect(find.text('17 / $techCost RP'), findsOneWidget);
       },
     );

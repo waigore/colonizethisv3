@@ -6,12 +6,14 @@ import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/themes.dart';
 import '../../../l10n/l10n.dart';
+import '../utils/research_slot_preview.dart';
 import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_progress_bar.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'chrome/ct_action_text_button.dart';
 import 'chrome/ct_danger_text_button.dart';
+import 'research_slot_turn_preview_view.dart';
 import 'technology_slot_funding_toggles.dart';
 
 /// Opacity applied to the locked fourth-slot card body when
@@ -165,6 +167,7 @@ class ResearchSlotCard extends StatelessWidget {
     required this.onChooseTech,
     this.funding = ResearchFundingLevel.medium,
     this.onFundingChanged,
+    this.turnPreview,
   });
 
   final int slotIndex;
@@ -176,6 +179,7 @@ class ResearchSlotCard extends StatelessWidget {
   final VoidCallback? onChooseTech;
   final ResearchFundingLevel funding;
   final ValueChanged<ResearchFundingLevel>? onFundingChanged;
+  final ResearchSlotTurnPreview? turnPreview;
 
   bool get _hasTech => techId != null;
 
@@ -204,6 +208,7 @@ class ResearchSlotCard extends StatelessWidget {
               cost: cost,
               funding: funding,
               onFundingChanged: onFundingChanged,
+              turnPreview: turnPreview,
             ),
         ],
       ),
@@ -321,6 +326,7 @@ class _SlotAssignedBody extends StatelessWidget {
     required this.cost,
     required this.funding,
     required this.onFundingChanged,
+    required this.turnPreview,
   });
 
   final int slotIndex;
@@ -329,6 +335,7 @@ class _SlotAssignedBody extends StatelessWidget {
   final int cost;
   final ResearchFundingLevel funding;
   final ValueChanged<ResearchFundingLevel>? onFundingChanged;
+  final ResearchSlotTurnPreview? turnPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -348,31 +355,37 @@ class _SlotAssignedBody extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 4),
-        Row(
-          children: [
-            Expanded(
-              child: CtProgressBar(
-                value: cost > 0 ? progress / cost : 0,
+        if (turnPreview != null)
+          ResearchSlotTurnPreviewView(
+            slotIndex: slotIndex,
+            preview: turnPreview!,
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: CtProgressBar(
+                  value: cost > 0 ? progress / cost : 0,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              l10n.technologyPanel_slotRpProgress(progress, cost),
-              style: TextStyle(
-                color: EditorialMonoclePalette.accentDim,
-                fontFamilyFallback: const <String>[
-                  'SF Mono',
-                  'Menlo',
-                  'monospace',
-                ],
-                fontFeatures: const <FontFeature>[
-                  FontFeature.tabularFigures(),
-                ],
-                fontSize: 10,
+              const SizedBox(width: 8),
+              Text(
+                l10n.technologyPanel_slotRpProgress(progress, cost),
+                style: TextStyle(
+                  color: EditorialMonoclePalette.accentDim,
+                  fontFamilyFallback: const <String>[
+                    'SF Mono',
+                    'Menlo',
+                    'monospace',
+                  ],
+                  fontFeatures: const <FontFeature>[
+                    FontFeature.tabularFigures(),
+                  ],
+                  fontSize: 10,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }

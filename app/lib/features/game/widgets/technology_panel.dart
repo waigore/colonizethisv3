@@ -5,12 +5,18 @@ import 'package:flutter/material.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
+import '../utils/research_slot_preview.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'technology_panel_orders.dart';
 import 'technology_panel_widgets.dart';
 
+// Re-export the research slot-card widget family (extracted to keep this file
+// under the `repo.game_widgets_file_size` cap) so existing importers and tests
+// keep resolving `ResearchSlotCard`, `LockedResearchSlotCard`, the slot
+// constants, `TechSectionHeading`, and `ResearchedTechChip` from this panel
+// entrypoint.
 export 'technology_panel_widgets.dart';
 
 /// Always-rendered slot count on the Slots tab.
@@ -213,6 +219,17 @@ class TechnologyPanel extends StatelessWidget {
     final cost = tech?.cost ?? 0;
     final hasTech = techId != null;
     final funding = order?.funding ?? ResearchFundingLevel.medium;
+    // The turn preview accompanies the editable funding controls, so it renders
+    // only on the editable (human, own-orders) panel; read-only panels keep the
+    // simple committed-progress bar. Refs #3512.
+    final turnPreview = (tech == null || !canEdit)
+        ? null
+        : computeResearchSlotTurnPreview(
+            player: player,
+            tech: tech,
+            committedProgress: techProgress,
+            funding: funding,
+          );
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: ResearchSlotCard(
@@ -222,6 +239,7 @@ class TechnologyPanel extends StatelessWidget {
         cost: cost,
         canEdit: canEdit,
         funding: funding,
+        turnPreview: turnPreview,
         onFundingChanged: hasTech && canEdit
             ? (level) => onOrdersChanged!(
                   applySetSlotFunding(
