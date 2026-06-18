@@ -1,28 +1,45 @@
 # Reference: verify-github-issue
 
-## CONTRIBUTING (summary)
+## Baseline
 
-- PRs via Pull Request only; **default target branch: `dev`**.
-- Pre-PR: SPEC/ACs updated; implementation and tests aligned; logging aligned if logging changed; coverage gates (90% / 80%).
+- PRs → **`dev`**. Coverage 90% (logic/ai/map) / 80% (elsewhere).
+- App tests: **`cd app && flutter test`** — not `dart test` from repo root.
+- UI proof: widget goldens in `app/test/`, PNGs in `app/test/goldens/`.
 
-Source: repo root `CONTRIBUTING.md`.
-
-## AGENTS (summary)
-
-- `.cursor/rules/*.mdc` are the implementation/review source of truth.
-- SPEC-first; coverage and test commands per `colonizethis-testing.mdc`; acceptance criteria quality per `colonizethis-acceptance-criteria.mdc`.
-
-Source: repo root `AGENTS.md`.
-
-## Example `gh` commands
+## Verify on dev
 
 ```bash
-# View issue (JSON for scripting)
-gh issue view 42 --json title,body,state,labels,url
-
-# Post verification result as an issue comment (user must be logged in)
-gh issue comment 42 --body-file verification.md
-# or: gh issue comment 42 --body "$(cat verification.md)"
+git fetch origin && git checkout dev && git pull
 ```
 
-Replace `42` with the issue number; run from a clone of the repo with `gh auth login` completed. This skill’s GitHub write is the comment only.
+## Golden discovery and run
+
+```bash
+rg 'matchesGoldenFile' app/test --glob '*_test.dart' -l
+cd app && flutter test test/<file>.dart   # never --update-goldens
+```
+
+## Gist upload + comment
+
+```bash
+ISSUE=42
+PROOF_DIR="tmp/verify-issue-${ISSUE}"
+mkdir -p "$PROOF_DIR"
+cp app/test/goldens/<file>.png "$PROOF_DIR/"
+
+GIST_URL=$(gh gist create --public "$PROOF_DIR"/*.png -d "Verify #${ISSUE}" 2>&1 | tail -1)
+GIST_ID="${GIST_URL##*/}"
+OWNER=$(gh api "gists/${GIST_ID}" --jq .owner.login)
+# Embed: https://gist.githubusercontent.com/${OWNER}/${GIST_ID}/raw/<file>.png
+
+gh issue comment "$ISSUE" --body-file verification.md
+rm -rf "$PROOF_DIR"
+```
+
+## gh
+
+```bash
+gh issue view 42 --json title,body,state,labels,url
+gh issue comment 42 --body-file verification.md
+gh pr list --state merged --search "Refs #42" --json number,url,mergeCommit
+```
