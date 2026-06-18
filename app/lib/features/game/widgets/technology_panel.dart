@@ -2,16 +2,18 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_brass_divider.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_progress_bar.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import 'chrome/ct_action_text_button.dart';
+import 'chrome/ct_danger_text_button.dart';
 import 'technology_panel_orders.dart';
 
 /// Always-rendered slot count on the Slots tab.
@@ -27,6 +29,19 @@ const int kTechnologyResearchSlotCount = 4;
 /// SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4
 /// (University). Refs #2864 S0/S3.
 const double kTechnologyLockedSlotOpacity = 0.45;
+
+/// Viewport width (logical px) below which the compact slot action controls
+/// (`CtActionTextButton` / `CtDangerTextButton`) guarantee a
+/// [kMinTouchTargetSize] (44 dp) tap target in both dimensions.
+///
+/// Mirrors the in-game shell narrow breakpoint (`< 600 dp`) in
+/// `SPEC/ui/mobile-adaptation.md` § 4. At or above this width the slot action
+/// controls render at their compact mockup size
+/// (`SPEC/ui/mockups/GAME40001-technology-panel.html` `.slot-actions button`);
+/// below it the controls expand so they satisfy the mobile minimum
+/// touch-target rule (§ 1). SPEC/ui/technology-panel.md § Slot behaviour.
+/// Refs #3510.
+const double kTechnologySlotActionTouchTargetBreakpoint = 600;
 
 /// Technology panel (UXD 03k / GAME40001). Shows researched techs and
 /// research slots for a player under the dark editorial-monocle theme.
@@ -411,6 +426,12 @@ class _SlotHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    // SPEC/ui/technology-panel.md § Slot behaviour: below the narrow
+    // breakpoint the compact slot action controls expand to a 44 dp minimum
+    // tap target (mobile-adaptation § 1); at or above it they keep the
+    // compact mockup size (`.slot-actions button`). Refs #3510.
+    final bool enforceMobileTouchTarget = MediaQuery.sizeOf(context).width <
+        kTechnologySlotActionTouchTargetBreakpoint;
     return Row(
       children: [
         Expanded(
@@ -425,19 +446,47 @@ class _SlotHeaderRow extends StatelessWidget {
         ),
         if (canEdit) ...[
           if (hasTech && onCancel != null) ...[
-            CtNinePatchButton(
-              onPressed: onCancel,
-              child: Text(l10n.common_cancel),
+            _wrapSlotActionTouchTarget(
+              enforce: enforceMobileTouchTarget,
+              child: CtDangerTextButton(
+                onPressed: onCancel,
+                label: l10n.common_cancel,
+              ),
             ),
             const SizedBox(width: 4),
           ],
           if (onChooseTech != null)
-            CtNinePatchButton(
-              onPressed: onChooseTech,
-              child: Text(l10n.technologyPanel_chooseTech),
+            _wrapSlotActionTouchTarget(
+              enforce: enforceMobileTouchTarget,
+              child: CtActionTextButton(
+                onPressed: onChooseTech,
+                label: l10n.technologyPanel_chooseTech,
+              ),
             ),
         ],
       ],
+    );
+  }
+
+  /// Guarantees a [kMinTouchTargetSize] (44 dp) minimum tap target around a
+  /// compact slot action control when [enforce] is `true` (narrow / mobile
+  /// viewports). The min constraints propagate through the button's
+  /// `InkWell`, so the whole 44 dp region becomes tappable while the visible
+  /// chrome stays the compact mockup control on wider viewports.
+  /// SPEC/ui/technology-panel.md § Slot behaviour. Refs #3510.
+  static Widget _wrapSlotActionTouchTarget({
+    required bool enforce,
+    required Widget child,
+  }) {
+    if (!enforce) {
+      return child;
+    }
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: kMinTouchTargetSize,
+        minHeight: kMinTouchTargetSize,
+      ),
+      child: child,
     );
   }
 }
