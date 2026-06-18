@@ -17,7 +17,18 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildFort, kWorkTargetBuildImprovement, kWorkTargetBuildPort, kWorkTargetBuildRail, kWorkTargetBuildRoad, kWorkTargetCounterSpy, kWorkTargetExplore, kWorkTargetProspect, kWorkTargetPurchaseLand, kWorkTargetStealTech, kWorkTargetUpgradeTown;
+    show
+        kWorkTargetBuildFort,
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildPort,
+        kWorkTargetBuildRail,
+        kWorkTargetBuildRoad,
+        kWorkTargetCounterSpy,
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech,
+        kWorkTargetUpgradeTown;
 
 class _EventHandlingWrapper extends StatefulWidget {
   const _EventHandlingWrapper({
@@ -400,15 +411,31 @@ void main() {
         final cases = <({String unitType, String target, int turns})>[
           (unitType: kUnitTypeExplorer, target: kWorkTargetExplore, turns: 3),
           (unitType: kUnitTypeExplorer, target: kWorkTargetProspect, turns: 1),
-          (unitType: kUnitTypeBuilder, target: kWorkTargetBuildImprovement, turns: 1),
-          (unitType: kUnitTypeBuilder, target: kWorkTargetUpgradeTown, turns: 1),
+          (
+            unitType: kUnitTypeBuilder,
+            target: kWorkTargetBuildImprovement,
+            turns: 1,
+          ),
+          (
+            unitType: kUnitTypeBuilder,
+            target: kWorkTargetUpgradeTown,
+            turns: 1,
+          ),
           (unitType: kUnitTypeEngineer, target: kWorkTargetBuildRoad, turns: 1),
           (unitType: kUnitTypeEngineer, target: kWorkTargetBuildPort, turns: 1),
           (unitType: kUnitTypeEngineer, target: kWorkTargetBuildFort, turns: 3),
-          (unitType: kUnitTypeRailBuilder, target: kWorkTargetBuildRail, turns: 1),
+          (
+            unitType: kUnitTypeRailBuilder,
+            target: kWorkTargetBuildRail,
+            turns: 1,
+          ),
           (unitType: kUnitTypeSpy, target: kWorkTargetStealTech, turns: 5),
           (unitType: kUnitTypeSpy, target: kWorkTargetCounterSpy, turns: 1),
-          (unitType: kUnitTypeMerchant, target: kWorkTargetPurchaseLand, turns: 1),
+          (
+            unitType: kUnitTypeMerchant,
+            target: kWorkTargetPurchaseLand,
+            turns: 1,
+          ),
         ];
 
         for (var i = 0; i < cases.length; i++) {
@@ -733,13 +760,22 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 50));
 
-        final headerButtons = find.descendant(
+        // Scope to the header Train pill by label: row-action Assign pills are
+        // now also CtActionTextButton (#3514 row-action migration), so the
+        // header control is resolved via its 'Train' label rather than the
+        // first CtActionTextButton in the shell.
+        final trainLabel = find.descendant(
           of: find.byType(UnitsPanelShell),
+          matching: find.text('Train'),
+        );
+        expect(trainLabel, findsOneWidget);
+        final trainButtonFinder = find.ancestor(
+          of: trainLabel,
           matching: find.byType(CtActionTextButton),
         );
-        expect(headerButtons, findsOneWidget);
+        expect(trainButtonFinder, findsOneWidget);
         final trainButton = tester.widget<CtActionTextButton>(
-          headerButtons.first,
+          trainButtonFinder,
         );
         expect(trainButton.primary, isTrue);
         expect(trainButton.label, 'Train');

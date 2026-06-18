@@ -64,6 +64,8 @@ class CtActionTextButton extends StatefulWidget {
     this.semanticLabel,
     this.tooltip,
     this.primary = false,
+    this.icon,
+    this.iconSize = 14,
   });
 
   /// Tap callback. Ignored when [enabled] is `false`.
@@ -71,6 +73,18 @@ class CtActionTextButton extends StatefulWidget {
 
   /// Single-line label text rendered inside the button.
   final String label;
+
+  /// Optional leading icon rendered before [label] (mockup row-action pills
+  /// such as the civilian units panel `.u-actions button` keep an icon + label
+  /// per `SPEC/ui/civilian-units-panel.md` § Row actions and issue #3514 owner
+  /// decision #7 — Assign stays icon + label). When `null` (default) the
+  /// button keeps the original text-only chrome so existing header / secondary
+  /// call sites are unchanged.
+  final IconData? icon;
+
+  /// Rendered size of [icon] when present. Defaults to the compact row-action
+  /// footprint (14 logical px) used by the unit-panel mockups.
+  final double iconSize;
 
   /// When `false`, the entire control fades to the shared
   /// [CtNinePatchButton.disabledOpacity] and ignores pointer events.
@@ -143,6 +157,24 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
   FontWeight get _resolvedFontWeight =>
       widget.primary ? FontWeight.w700 : FontWeight.w600;
 
+  /// Builds the button content: the bare [Text] label (default) or a compact
+  /// `Icon + label` row when [CtActionTextButton.icon] is set. The icon colour
+  /// tracks the resolved foreground so it shares the idle/hover treatment.
+  Widget _buildLabel() {
+    final IconData? icon = widget.icon;
+    if (icon == null) {
+      return Text(widget.label);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: widget.iconSize, color: _resolvedForeground),
+        const SizedBox(width: 4),
+        Text(widget.label),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Widget surface = DecoratedBox(
@@ -170,7 +202,7 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
             letterSpacing: CtActionTextButton._letterSpacing,
             fontWeight: _resolvedFontWeight,
           ),
-          child: Text(widget.label),
+          child: _buildLabel(),
         ),
       ),
     );
@@ -195,10 +227,7 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
       cursor: SystemMouseCursors.click,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onPressed,
-          child: surface,
-        ),
+        child: InkWell(onTap: widget.onPressed, child: surface),
       ),
     );
 
