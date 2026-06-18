@@ -4,7 +4,6 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'economy_resource_constants.dart';
 import 'tile_extraction_pipeline.dart';
-import 'tile_extraction_yield.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 
 /// Shared per-faction / per-tile traversal helpers for the non-Great-Power
@@ -150,73 +149,46 @@ NonGpTileContribution? _computeNonGpTileContribution({
   required Set<String> portTileKeys,
   required Map<String, Province> provincesByFullId,
 }) {
-  if (!connectedTileKeys.contains(tileKey)) {
-    return null;
-  }
-
-  final tileContext = resolveTileKeyExtractionContext(
-    tileKey: tileKey,
+  // Thin non-Great-Power wrapper over the shared [computeTileYieldContribution]
+  // orchestration with the two non-GP knobs: a fixed default tech cap for every
+  // resource (Minors and Tribes do not research tech) and unconditional mineral
+  // exclusion (non-GP factions never prospect). SPEC/game/extraction-and-
+  // improvements.md § Non-Great-Power extraction. Refs #3517 Cluster 1.
+  final contribution = computeTileYieldContribution(
+    game: game,
     tileMapByRegion: tileMapByRegion,
-    provincesByFullId: provincesByFullId,
-    logContext: 'non_gp_extraction',
-  );
-  if (tileContext == null) {
-    return null;
-  }
-
-  final commodityId = tileContext.commodityId;
-  if (kMineralResourceIds.contains(commodityId)) {
-    // Non-GP factions never prospect — exclude minerals unconditionally per
-    // SPEC/game/extraction-and-improvements.md § Non-Great-Power extraction.
-    return null;
-  }
-
-  final province = tileContext.province;
-  final provinceId = tileContext.provinceId;
-
-  final townDevelopmentCap = province.townDevelopmentLevel;
-  final townTileKey = province.townTileKey;
-  final townTileIsPort =
-      townTileKey != null && portTileKeys.contains(townTileKey);
-
-  // Non-GP tech cap is the package-wide default (1) for every resource: Minors
-  // and Tribes do not research tech. The remaining production / transport /
-  // town-development math is shared with the GP helper via
-  // computeEffectiveTileYield so the two stay provably in lockstep.
-  final isCapitalProvince = provinceId == factionCapitalProvinceId;
-  final usesRoadRule = connectedByRoadRule.contains(tileKey);
-  final effective = computeEffectiveTileYield(
-    tileState: game.worldState.tileState,
     tileKey: tileKey,
-    techCap: defaultExtractionCap,
-    townDevelopmentCap: townDevelopmentCap,
-    townTileIsPort: townTileIsPort,
-    isCapitalProvince: isCapitalProvince,
-    usesRoadRule: usesRoadRule,
-    portTileKeys: portTileKeys,
+    connectedTileKeys: connectedTileKeys,
     pathTransportCap: pathTransportCap,
+    connectedByRoadRule: connectedByRoadRule,
+    portTileKeys: portTileKeys,
+    capitalProvinceId: factionCapitalProvinceId,
+    capitalRegionId: factionCapitalRegionId,
+    logContext: 'non_gp_extraction',
+    provincesByFullId: provincesByFullId,
+    techCapForCommodity: (_) => defaultExtractionCap,
+    isCommodityExtractable: (_, commodityId) =>
+        !kMineralResourceIds.contains(commodityId),
   );
-  if (effective <= 0) {
+  if (contribution == null) {
     return null;
   }
   // The faction-capital-region check is preserved for parity with the GP
   // helper; in current SPEC every owned non-GP tile is same-region, so this
   // branch is informational only — non-GP output is always land-only.
-  final isLandRelativeToCapital =
-      tileContext.regionId == factionCapitalRegionId;
-  if (!isLandRelativeToCapital) {
+  if (!contribution.isLandRelativeToCapital) {
     // Non-GP factions cannot own tiles outside their capital region under
     // current SPEC; emit a debug log and skip so this stays observable if a
     // future ruleset changes that invariant.
     economyLog.d(
       'non_gp_extraction skip overseas tile factionCapitalRegionId='
-      '$factionCapitalRegionId tileRegionId=${tileContext.regionId} '
+      '$factionCapitalRegionId tileRegionId=${contribution.regionId} '
       'tileKey=$tileKey',
     );
     return null;
   }
   return NonGpTileContribution(
-    commodityId: tileContext.commodityId,
-    units: effective,
+    commodityId: contribution.commodityId,
+    units: contribution.units,
   );
 }
