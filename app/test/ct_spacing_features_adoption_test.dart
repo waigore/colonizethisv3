@@ -395,7 +395,12 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/military_units_panel.dart',
   'lib/features/game/widgets/move_army_dialog.dart',
   'lib/features/game/widgets/move_fleet_dialog.dart',
-  'lib/features/game/widgets/naval_units_panel.dart',
+  // naval_units_panel.dart dropped from the adoption list: #3523 replaced its
+  // only CtSpacing callsite (the header button's vertical: CtSpacing.s padding)
+  // with CtActionTextButton pills, leaving only an out-of-scale
+  // `SizedBox(width: 4)` gap (a legitimate override per SPEC § Spacing tokens,
+  // kept raw in the sibling military_units_panel.dart). With no token-eligible
+  // spacing left, the import/token-reference invariants no longer apply.
   'lib/features/game/widgets/observe_mode_not_defined_panel.dart',
   'lib/features/game/widgets/pause_menu_panel.dart',
   'lib/features/game/widgets/production_allocation_row_chrome.dart',
