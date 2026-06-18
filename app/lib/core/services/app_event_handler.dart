@@ -42,6 +42,7 @@ import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
 import '../../features/game/widgets/pause_menu_panel.dart';
+import '../../features/game/widgets/units/shared/units_panel_sheet_surface.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
@@ -290,6 +291,12 @@ class AppEventHandler {
     await showModalBottomSheet<void>(
       context: nav.context,
       isScrollControlled: true,
+      // Transparent Material surface so UnitsPanelSheetSurface owns the
+      // mockup `.sheet` chrome (gradient + 2 px accent-dim top edge + 4 dp
+      // top radius). SPEC/ui/components/units-panel-shell.md § Bottom-sheet
+      // host chrome (#3514 owner decision #4).
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       builder: (ctx) => Consumer(
         builder: (context, ref, _) {
           final game = ref.watch(currentGameProvider);
@@ -309,7 +316,8 @@ class AppEventHandler {
           final maxHeight = kCtE2EEnabled
               ? MediaQuery.sizeOf(context).height * 0.92
               : MediaQuery.sizeOf(context).height * (isNarrow ? 0.33 : 0.5);
-          return ConstrainedBox(
+          return UnitsPanelSheetSurface(
+            child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: CivilianUnitsPanel(
               game: game,
@@ -332,6 +340,7 @@ class AppEventHandler {
               buildImprovementShortcutTargetTileKey:
                   event.buildImprovementShortcutTargetTileKey,
             ),
+            ),
           );
         },
       ),
@@ -350,6 +359,10 @@ class AppEventHandler {
     if (nav == null) return;
     await showModalBottomSheet<void>(
       context: nav.context,
+      // Transparent Material surface so UnitsPanelSheetSurface owns the
+      // mockup `.sheet` chrome (#3514 owner decision #4).
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       builder: (ctx) => Consumer(
         builder: (context, ref, _) {
           final game = ref.watch(currentGameProvider);
@@ -365,13 +378,15 @@ class AppEventHandler {
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
-          return MilitaryUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            bus: bus,
-            readOnly: readOnly,
-            topology: mapData?.combinedTopology ?? const MapTopology(),
-            draftOrders: draftOrders,
+          return UnitsPanelSheetSurface(
+            child: MilitaryUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              bus: bus,
+              readOnly: readOnly,
+              topology: mapData?.combinedTopology ?? const MapTopology(),
+              draftOrders: draftOrders,
+            ),
           );
         },
       ),
@@ -385,6 +400,10 @@ class AppEventHandler {
     if (nav == null) return;
     await showModalBottomSheet<void>(
       context: nav.context,
+      // Transparent Material surface so UnitsPanelSheetSurface owns the
+      // mockup `.sheet` chrome (#3514 owner decision #4).
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       builder: (ctx) => Consumer(
         builder: (context, ref, _) {
           final game = ref.watch(currentGameProvider);
@@ -400,18 +419,20 @@ class AppEventHandler {
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
-          return NavalUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            bus: bus,
-            readOnly: readOnly,
-            topology: mapData?.combinedTopology ?? const MapTopology(),
-            draftOrders: draftOrders,
-            tileMapByRegion: mapData?.tileMapByRegion,
-            topologyByRegion: mapData?.topologyByRegion,
-            locationScopeKey: event.locationScopeKey,
-            initialSelectedFleetId: event.initialSelectedFleetId,
-            tileScopeTileKey: event.tileScopeTileKey,
+          return UnitsPanelSheetSurface(
+            child: NavalUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              bus: bus,
+              readOnly: readOnly,
+              topology: mapData?.combinedTopology ?? const MapTopology(),
+              draftOrders: draftOrders,
+              tileMapByRegion: mapData?.tileMapByRegion,
+              topologyByRegion: mapData?.topologyByRegion,
+              locationScopeKey: event.locationScopeKey,
+              initialSelectedFleetId: event.initialSelectedFleetId,
+              tileScopeTileKey: event.tileScopeTileKey,
+            ),
           );
         },
       ),
