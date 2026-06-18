@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -390,7 +392,7 @@ void main() {
       expect(armyTile, findsOneWidget);
       final moveButton = find.descendant(
         of: armyTile,
-        matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        matching: find.widgetWithText(CtActionTextButton, 'Move'),
       );
       await tester.tap(moveButton.first);
       await tester.pumpAndSettle();
@@ -402,6 +404,140 @@ void main() {
       expect(captured!.moveOrder.armyId, 'amove');
       expect(captured!.moveOrder.destinationProvinceId, p3);
     });
+
+    testWidgets(
+      'AC #3514: army row Locate is a rightmost circular pill in the actions '
+      'cluster and emits LocateMapTileEvent',
+      (WidgetTester tester) async {
+        LocateMapTileEvent? locate;
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        bus.on<LocateMapTileEvent>().listen((e) => locate = e);
+
+        const playerId = 'gp_locate_cluster';
+        const p = 'oldWorld|p2';
+        const p3 = 'oldWorld|p3';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'oldWorld|p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'oldWorld|p3',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
+        );
+        final game = Game(
+          id: 'g_locate_cluster',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: p,
+                  regionId: 'oldWorld',
+                  ownerId: playerId,
+                  townTileKey: 'tk',
+                ),
+                Province(id: p3, regionId: 'oldWorld', ownerId: playerId),
+              ],
+              units: [
+                Unit(
+                  id: 'um1',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+                Unit(
+                  id: 'um2',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: 'acluster',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: p,
+                regimentUnitIds: const ['um1', 'um2'],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                p: ['oldWorld|p2|0|0'],
+                p3: ['oldWorld|p3|0|0'],
+              },
+            },
+            playerVisibilityByTile: {
+              playerId: {
+                'oldWorld|p2|0|0': 'fullyVisible',
+                'oldWorld|p3|0|0': 'fullyVisible',
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: playerId,
+              displayName: 'M',
+              isHuman: true,
+              capitalProvinceId: p,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: game,
+            humanPlayerId: playerId,
+            bus: bus,
+            topology: topology,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final armyTile = find.widgetWithText(ExpansionTile, 'Army acluster');
+        expect(armyTile, findsOneWidget);
+
+        // Move + Split render as compact pills; Locate as a circular pill.
+        final moveBtn = find.descendant(
+          of: armyTile,
+          matching: find.widgetWithText(CtActionTextButton, 'Move'),
+        );
+        final splitBtn = find.descendant(
+          of: armyTile,
+          matching: find.widgetWithText(CtActionTextButton, 'Split'),
+        );
+        final locateBtn = find.descendant(
+          of: armyTile,
+          matching: find.byType(CtCircularLocateButton),
+        );
+        expect(moveBtn, findsOneWidget);
+        expect(splitBtn, findsOneWidget);
+        expect(locateBtn, findsOneWidget);
+        // Locate must NOT use the legacy title-row CtIconAction chrome and must
+        // be the rightmost control in the actions cluster.
+        final locateDx = tester.getCenter(locateBtn).dx;
+        expect(locateDx, greaterThan(tester.getCenter(moveBtn).dx));
+        expect(locateDx, greaterThan(tester.getCenter(splitBtn).dx));
+
+        await tester.tap(locateBtn);
+        await tester.pump();
+        await tester.pumpAndSettle();
+        expect(locate, isNotNull);
+        expect(locate!.tileKey, 'tk');
+        expect(locate!.regionId, 'oldWorld');
+      },
+    );
 
     testWidgets(
       'Move dialog groups by owning faction and cross-region owned move',
@@ -523,7 +659,7 @@ void main() {
         expect(armyTile, findsOneWidget);
         final moveButton = find.descendant(
           of: armyTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+          matching: find.widgetWithText(CtActionTextButton, 'Move'),
         );
         await tester.tap(moveButton.first);
         await tester.pumpAndSettle();
@@ -718,7 +854,7 @@ void main() {
       expect(armyTile, findsOneWidget);
       final moveButton = find.descendant(
         of: armyTile,
-        matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        matching: find.widgetWithText(CtActionTextButton, 'Move'),
       );
       await tester.tap(moveButton.first);
       await tester.pumpAndSettle();
@@ -827,7 +963,7 @@ void main() {
 
         final splitBtn = find.descendant(
           of: homeTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Split'),
+          matching: find.widgetWithText(CtActionTextButton, 'Split'),
         ).first;
         await tester.ensureVisible(splitBtn);
         await tester.tap(splitBtn);
@@ -940,7 +1076,7 @@ void main() {
 
         final splitBtn = find.descendant(
           of: homeTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Split'),
+          matching: find.widgetWithText(CtActionTextButton, 'Split'),
         ).first;
         await tester.ensureVisible(splitBtn);
         await tester.tap(splitBtn);
@@ -957,8 +1093,10 @@ void main() {
 
         expect(find.text('1 regiments · Capital'), findsNWidgets(2));
 
-        await tester.tap(find.text('Home Army'));
-        await tester.pumpAndSettle();
+        // After the in-place split rebuild the Home Army row stays expanded
+        // (tapping the Split row-action pill no longer toggles the
+        // ExpansionTile, since the CtActionTextButton InkWell absorbs the tap),
+        // so its single musketeer is already visible.
         expect(find.text('Musketeers: 1'), findsOneWidget);
 
         await tester.tap(find.text('Army army_7'));

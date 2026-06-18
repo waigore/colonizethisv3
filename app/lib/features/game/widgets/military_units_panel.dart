@@ -10,7 +10,6 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'chrome/ct_action_text_button.dart';
@@ -369,16 +368,13 @@ class _ArmyExpansionTile extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Flexible(child: Text(_armyTitle(), overflow: TextOverflow.ellipsis)),
-          if (onLocate != null) ...[
-            const SizedBox(width: 4),
-            CtIconAction(
-              tooltip: l10n.common_locate,
-              onPressed: onLocate,
-              icon: Icons.my_location,
-            ),
-          ],
         ],
       ),
+      // Issue #3514: Move / Split render as mockup compact pills and the Locate
+      // control is the rightmost icon-only circular pill in the actions cluster
+      // (moved out of the title `Row` / `CtIconAction`). Locate still emits the
+      // same `LocateMapTileEvent` via [onLocate], so there is no behavioral
+      // regression.
       actions: [
         if (onMove != null)
           UnitsEntityAction(
@@ -393,6 +389,14 @@ class _ArmyExpansionTile extends StatelessWidget {
             icon: Icons.call_split,
             label: l10n.common_split,
             onPressed: onSplit,
+          ),
+        if (onLocate != null)
+          UnitsEntityAction(
+            tooltip: l10n.common_locate,
+            icon: Icons.my_location,
+            label: l10n.common_locate,
+            iconOnly: true,
+            onPressed: onLocate,
           ),
       ],
     );

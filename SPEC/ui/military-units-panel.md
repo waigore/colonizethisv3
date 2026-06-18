@@ -22,6 +22,7 @@
 - **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
 - **Train button:** Header **Train** closes panel and emits `OpenDialogEvent(trainMilitaryDialogId)` for [train-military-dialog.md](train-military-dialog.md).
 - **Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header **Train** and **Combine** actions render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. Bus emissions and enable/disable rules are unchanged: **Train** is disabled in observe (read-only) mode; **Combine** is enabled only when `canCombineArmySelection` holds for the current selection. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
+- **Army row action chrome (mockup `.unit-row` pills; issue #3514 owner decision #6):** Army row actions render through the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) mockup compact-pill family — **Move** and **Split** as neutral `CtActionTextButton` pills, and **Locate** as the rightmost **icon-only circular** `CtCircularLocateButton` (mockup `.locate-btn`). The Locate control is **moved out of the title row** (`CtIconAction`) into the actions cluster; it still emits the same `LocateMapTileEvent` tile key (no behavioral regression).
 
 ---
 
@@ -129,6 +130,8 @@ Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches
 - Given the user taps **Train**, when the action completes, then the UI layer closes the panel and opens the Train Military dialog via `AppEventBus` per [train-military-dialog.md](train-military-dialog.md).
 
 - Given the Military Units panel is open (issue #3514 owner decisions #5 / #15), when the header **Train** and **Combine** actions render, then the UI layer renders each as a `CtActionTextButton` with `primary == true` (compact primary gradient pill, no `CtNinePatchButton` corner-bracket chrome), and tapping **Train** still emits `OpenDialogEvent(trainMilitaryDialogId)`.
+- Given an army row with Move, Split, and Locate actions (issue #3514 owner decision #6), when the row renders, then the UI layer renders **Move** and **Split** as `CtActionTextButton` pills and renders **Locate** as the rightmost `CtCircularLocateButton` (icon-only circular pill), with no `CtNinePatchButton` row-action chrome.
+- Given an army row whose Locate control is tapped, when the press is handled, then the UI layer emits the same `LocateMapTileEvent` tile key as before the Locate control moved into the actions cluster.
 
 - Given the Widgetbook “Military Units Panel” **With map** story, when the user selects an army row, then the map highlights and centers on that army’s province tile and switches region tab when needed.
 

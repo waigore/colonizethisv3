@@ -44,6 +44,7 @@ class CtDangerTextButton extends StatefulWidget {
     this.tooltip,
     this.icon,
     this.iconSize = 14,
+    this.iconOnly = false,
   });
 
   /// Tap callback. Ignored when [enabled] is `false`.
@@ -62,6 +63,13 @@ class CtDangerTextButton extends StatefulWidget {
   /// Rendered size of [icon] when present. Defaults to the compact row-action
   /// footprint (14 logical px) used by the unit-panel mockups.
   final double iconSize;
+
+  /// When `true` (and [icon] is set), the button suppresses its text [label]
+  /// and renders only the [icon] — used by the shared unit/fleet
+  /// [UnitsEntityActionRow] narrow-width collapse (issue #3514). Accessibility
+  /// still resolves through [semanticLabel] / [label]. When `false` (default)
+  /// the button keeps its `Icon + label` (or text-only) rendering.
+  final bool iconOnly;
 
   /// When `false`, the entire control fades to the shared
   /// [CtNinePatchButton.disabledOpacity] and ignores pointer events.
@@ -143,6 +151,8 @@ class _CtDangerTextButtonState extends State<CtDangerTextButton> {
       ),
       child: widget.icon == null
           ? Text(widget.label, style: labelStyle)
+          : widget.iconOnly
+          ? Icon(widget.icon, size: widget.iconSize, color: dangerColor)
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: [
