@@ -8,7 +8,7 @@ This composite is **not** a screen and has **no** stable screen ID. It is the ca
 
 ## Purpose
 
-Consolidates the per-entity row layout shared by the Civilian, Military, and Naval unit panels: a left details cluster, a right actions cluster, and the narrow-width icon-only collapse rule. Callers supply `details` and a list of [`UnitsEntityAction`](#widget-contract) entries; the composite owns the `UnitsPanelRowChrome` gradient surface, the mockup compact-pill row actions (see [Action pill family](#action-pill-family-both-modes)), the wrap-vs-row choice driven by `dense`, the collapse breakpoints, and the per-action icon-only opt-in. Tracking issues: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9, [#3514](https://github.com/waigore/colonizethisv3/issues/3514).
+Consolidates the per-entity row layout shared by the Civilian, Military, and Naval unit panels: a left details cluster, a right actions cluster, and the narrow-width icon-only collapse rule. Callers supply `details` and a list of [`UnitsEntityAction`](#widget-contract) entries; the composite owns the `UnitsPanelRowChrome` surface (unless `chrome: false`), the compact-pill row actions, the wrap-vs-row choice driven by `dense`, the collapse breakpoints, and the icon-only opt-in. Tracking issues: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9, [#3514](https://github.com/waigore/colonizethisv3/issues/3514).
 
 ---
 
@@ -21,6 +21,7 @@ Consolidates the per-entity row layout shared by the Civilian, Military, and Nav
 | `iconOnlyBreakpoint` | `double` | `280` | Outer-width threshold below which default-mode actions collapse to icon-only. |
 | `spacing` | `double` | `6` | Inter-button gap (`Wrap.spacing/runSpacing` in default mode, `SizedBox.width` between dense actions). |
 | `dense` | `bool` | `false` | Switches the cluster to the naval inline-pill footprint (no wrap, smaller pills). Naval rows opt in; civilian/military rows keep `dense: false`. |
+| `chrome` | `bool` | `true` | `true` paints the row's own `UnitsPanelRowChrome` surface; `false` renders only the inner padded `Row` (the outer [`UnitsEntityCard`](units-entity-card.md) supplies the border). |
 
 `UnitsEntityAction` is the per-action descriptor: `tooltip`, `icon`, `label`, `onPressed`, `buttonKey` (stable e2e key applied to the rendered pill), `iconOnly` (per-action icon-only opt-in; renders the circular `CtCircularLocateButton`, used by the military/naval right-end Locate pill), and `variant` (`UnitsEntityActionVariant`, default `neutral`; `danger` selects the `CtDangerTextButton` pill).
 
@@ -73,7 +74,7 @@ The dense `Row` is `mainAxisSize: min`, so it cannot wrap at the naval default w
 
 ## Behavior
 
-1. **Outer chrome.** Every row paints through `UnitsPanelRowChrome` (gradient + 1 dp `EditorialMonoclePalette.accentDim` border). No outer `Padding`; host lists supply `listPadding` via [`UnitsPanelShell`](units-panel-shell.md).
+1. **Outer chrome.** Rows paint through `UnitsPanelRowChrome` (gradient + 1 dp `EditorialMonoclePalette.accentDim` border) unless `chrome: false` (the [`UnitsEntityCard`](units-entity-card.md) supplies the border). No outer `Padding`; hosts supply `listPadding` via [`UnitsPanelShell`](units-panel-shell.md).
 2. **Default collapse.** Outer width `< iconOnlyBreakpoint` drops every default-mode neutral/danger label via the pill `iconOnly` flag; the `Wrap` may flow onto a second run.
 3. **Dense collapse.** Dense rows cannot wrap; the inner `LayoutBuilder` forces icon-only below `70 dp * actions.length`. The outer `iconOnly` predicate forces the same collapse.
 4. **Per-action `iconOnly` opt-in.** `UnitsEntityAction.iconOnly == true` always renders the rightmost circular `CtCircularLocateButton` so Move and Split keep their labels.
@@ -118,16 +119,15 @@ Consumer specs link back here instead of redeclaring the surface, pill footprint
 
 ## Tests
 
-- `app/test/units_panel_shared_widgets_test.dart` — wide vs narrow rendering and the `UnitsPanelRowChrome` wrapper (`group UnitsEntityActionRow`).
-- `app/test/naval_units_panel_mockup_fidelity_test.dart` — naval `dense: true` R25 footprint and R27 Locate-iconOnly contract against the naval mockup.
-- `app/test/spec_components_units_entity_action_row_test.dart` — spec-pinning tests for canonical sections, consumer enumeration, the `iconOnlyBreakpoint = 280` default, and the 1000-word ceiling.
+- `app/test/units_panel_shared_widgets_test.dart` — wide vs narrow rendering and the `UnitsPanelRowChrome` wrapper.
+- `app/test/naval_units_panel_mockup_fidelity_test.dart` — naval `dense: true` R25/R27 contract.
+- `app/test/units_entity_card_test.dart` — `chrome: false` + `UnitsEntityCard` card chrome.
+- `app/test/spec_components_units_entity_action_row_test.dart` — spec-pinning and the 1000-word ceiling.
 
 ---
 
 ## Related
 
-- Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtActionTextButton*, *CtDangerTextButton*, *CtCircularLocateButton*, *CtNinePatchButton*, *Editorial-monocle palette*.
-- Sibling composite: [`units-panel-shell.md`](units-panel-shell.md) (outer chrome that hosts these rows).
-- Consumer screen specs: [`civilian-units-panel.md`](../civilian-units-panel.md), [`military-units-panel.md`](../military-units-panel.md), [`naval-units-panel.md`](../naval-units-panel.md).
-- Narrow-viewport policy: [`mobile-adaptation.md`](../mobile-adaptation.md) § 7.
-- Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
+- Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtActionTextButton*, *CtDangerTextButton*, *CtCircularLocateButton*, *CtNinePatchButton*.
+- Sibling composites: [`units-panel-shell.md`](units-panel-shell.md), [`units-entity-card.md`](units-entity-card.md).
+- Narrow-viewport policy: [`mobile-adaptation.md`](../mobile-adaptation.md) § 7. Tracking: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
