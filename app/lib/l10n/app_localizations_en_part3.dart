@@ -168,6 +168,21 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get technologyPanel_slotCancelled => 'Research slot cancelled';
 
   @override
+  String get technologyPanel_fundingNone => 'None';
+
+  @override
+  String get technologyPanel_fundingLow => 'Low';
+
+  @override
+  String get technologyPanel_fundingMedium => 'Medium';
+
+  @override
+  String get technologyPanel_fundingHigh => 'High';
+
+  @override
+  String get technologyPanel_fundingMaximum => 'Maximum';
+
+  @override
   String get techTree_noTechsInCatalog => 'No techs in catalog';
 
   @override

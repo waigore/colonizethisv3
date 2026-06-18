@@ -1052,6 +1052,21 @@ abstract class AppLocalizations {
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;
 
+  /// Slot funding toggle label for ResearchFundingLevel.none (Refs #3512).
+  String get technologyPanel_fundingNone;
+
+  /// Slot funding toggle label for ResearchFundingLevel.low (Refs #3512).
+  String get technologyPanel_fundingLow;
+
+  /// Slot funding toggle label for ResearchFundingLevel.medium (Refs #3512).
+  String get technologyPanel_fundingMedium;
+
+  /// Slot funding toggle label for ResearchFundingLevel.high (Refs #3512).
+  String get technologyPanel_fundingHigh;
+
+  /// Slot funding toggle label for ResearchFundingLevel.maximum (Refs #3512).
+  String get technologyPanel_fundingMaximum;
+
   /// Tech tree empty-state text.
   String get techTree_noTechsInCatalog;
 
