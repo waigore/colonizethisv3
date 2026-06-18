@@ -118,6 +118,11 @@ The panel does **not** show locked techs in the assignment list. When there are 
   - The card renders no Cancel and no Choose tech action button.
   - The card emits no `ResearchOrder` mutations.
 - Each active slot card (indices `0..player.researchSlots - 1`) shows label (e.g. “Slot 1”), assigned tech (if any) with progress, and actions: Cancel (if assigned), Choose tech.
+- **Slot action controls (compact, mockup-faithful):** The slot header actions use the compact text-button chrome from the mockup `.slot-actions` block (`SPEC/ui/mockups/GAME40001-technology-panel.html`), **not** the heavy `CtNinePatchButton` primary chrome:
+  - **Choose tech** renders as a neutral `CtActionTextButton` (mockup `.slot-actions button`: `--surface-lite` → `--bg-deep` gradient, 1 px `--border`, `--accent-dim` → `--accent-bright` on hover, Cinzel display font).
+  - **Cancel** renders as a destructive `CtDangerTextButton` (mockup `.cancel-slot`: transparent fill, 1 px `--danger` border, `--danger` label, idle opacity `0.7` lifting to `1.0` on hover).
+  - The locked Slot 4 placeholder renders neither control (per § Slot behaviour > Locked slot 4).
+  - **Mobile touch target:** When the viewport width is `< kTechnologySlotActionTouchTargetBreakpoint` (600 logical px, mirroring the in-game shell narrow breakpoint in `SPEC/ui/mobile-adaptation.md` § 4), each slot action control guarantees a tap target of at least `kMinTouchTargetSize` (44 dp) in both dimensions per mobile-adaptation § 1. At or above that width the controls render at their compact mockup density.
 - **Choose tech:** Opens the dark editorial-monocle Choose-tech dialog (see § Choose-tech dialog) listing only the choosable techs (researchable, not in another slot). Selecting a tech assigns it to that slot and closes the dialog.
 - **Cancel:** Clears the slot (order removed); progress for that tech is lost on resolution per [research-resolution.md](../program/research-resolution.md).
 - **Goal slot:** Out of scope for this spec; only assignment slots are defined here.
@@ -161,6 +166,12 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **Given** `player.researchSlots` is `null` or strictly less than `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card body at opacity `0.45`, sets the header label to exactly `"Slot 4 (University)"`, shows exactly the footnote line `"Requires University tech"` in place of any assigned-tech / progress / empty-state content, and renders no Cancel and no Choose tech button on that card.
 
 - **Given** `player.researchSlots` is greater than or equal to `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card at full opacity (not the locked `0.45`), uses the standard slot label `"Slot 4"`, and renders Cancel (when assigned) and Choose tech buttons as on the other active slots.
+
+- **Compact slot action controls (Refs #3510):** **Given** an active slot card with an assigned tech is rendered with editing enabled (`onOrdersChanged != null`), **when** the slot header actions build, **then** the UI layer renders the `Choose tech` action as a `CtActionTextButton` and the `Cancel` action as a `CtDangerTextButton`, and renders no `CtNinePatchButton` for the slot actions (the heavy nine-patch chrome is reserved for the Choose-tech dialog `Close` footer).
+
+- **Mobile slot-action touch target (Refs #3510):** **Given** the Slots tab is rendered with editing enabled at a viewport width strictly less than `kTechnologySlotActionTouchTargetBreakpoint` (600 logical px), e.g. the `360 × 640 dp` mobile frame, **when** each rendered slot action control (`CtActionTextButton` / `CtDangerTextButton`) is measured, **then** the UI layer reports a rendered size of at least `kMinTouchTargetSize` (44 dp) in both width and height.
+
+- **Desktop slot-action density (Refs #3510):** **Given** the Slots tab is rendered with editing enabled at a viewport width greater than or equal to `kTechnologySlotActionTouchTargetBreakpoint` (600 logical px), **when** a slot action control is measured, **then** the UI layer reports a rendered height strictly less than `kMinTouchTargetSize` (44 dp), preserving the compact mockup `.slot-actions button` density rather than padding the control to the mobile minimum.
 
 - **Slots tab section ordering (Refs #2864 S0/S6):** **Given** the Slots tab is rendered for any player on any viewport, **when** the body widget tree is laid out, **then** the `CtSectionLabel` carrying the localized `technologyPanel_researchedTechsHeading` text appears at a strictly smaller vertical offset (smaller `Offset.dy`) than the `CtSectionLabel` carrying the localized `technologyPanel_researchSlotsHeading` text, matching the mockup body markup (`SPEC/ui/mockups/GAME40001-technology-panel.html`: `.researched-heading` precedes `.slots-heading`).
 

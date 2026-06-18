@@ -10,6 +10,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -128,7 +131,23 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Requires University tech'), findsOneWidget);
-        // Verify the locked card itself contains no action buttons.
+        // Verify the locked card itself contains no action buttons of any
+        // chrome family (compact mockup controls or legacy nine-patch).
+        // Refs #3510.
+        expect(
+          find.descendant(
+            of: find.byType(LockedResearchSlotCard),
+            matching: find.byType(CtActionTextButton),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(LockedResearchSlotCard),
+            matching: find.byType(CtDangerTextButton),
+          ),
+          findsNothing,
+        );
         expect(
           find.descendant(
             of: find.byType(LockedResearchSlotCard),
@@ -250,6 +269,127 @@ void main() {
         final slotsHeadingY =
             tester.getTopLeft(find.text('RESEARCH SLOTS')).dy;
         expect(researchedHeadingY, lessThan(slotsHeadingY));
+      },
+    );
+  });
+
+  group('Compact slot action controls (Refs #3510)', () {
+    testWidgets(
+      'positive: Choose tech uses CtActionTextButton and Cancel uses '
+      'CtDangerTextButton (no heavy nine-patch chrome on slot actions)',
+      (WidgetTester tester) async {
+        final techId = techCatalog.keys.first;
+        final player = basePlayer.copyWith(researchSlots: 3);
+        final localGame = game.copyWith(
+          players: [player, ...game.players.skip(1)],
+        );
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            player.id: [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: techId,
+                funding: ResearchFundingLevel.medium,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(host(localGame, player, orders: orders));
+        await tester.pumpAndSettle();
+
+        // The compact mockup controls render for the slot actions.
+        expect(find.byType(CtActionTextButton), findsWidgets);
+        expect(find.byType(CtDangerTextButton), findsOneWidget);
+        // The legacy nine-patch chrome is no longer used for slot actions
+        // (the Choose-tech dialog Close button lives on a separate route).
+        expect(find.byType(CtNinePatchButton), findsNothing);
+        // Labels are preserved so existing finders keep working.
+        expect(find.text('Choose tech'), findsWidgets);
+        expect(find.text('Cancel'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'mobile (360 dp): each slot action control reports a >= 44 dp tap target',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(360, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final techId = techCatalog.keys.first;
+        final player = basePlayer.copyWith(researchSlots: 3);
+        final localGame = game.copyWith(
+          players: [player, ...game.players.skip(1)],
+        );
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            player.id: [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: techId,
+                funding: ResearchFundingLevel.medium,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(host(localGame, player, orders: orders));
+        await tester.pumpAndSettle();
+
+        for (final Element element in <Element>[
+          ...find.byType(CtActionTextButton).evaluate(),
+          ...find.byType(CtDangerTextButton).evaluate(),
+        ]) {
+          final Size size = tester.getSize(find.byWidget(element.widget));
+          expect(
+            size.width,
+            greaterThanOrEqualTo(kMinTouchTargetSize),
+            reason:
+                'SPEC/ui/technology-panel.md § Slot behaviour (Refs #3510): on '
+                'the mobile viewport each compact slot action control must be '
+                'at least kMinTouchTargetSize (44 dp) wide.',
+          );
+          expect(
+            size.height,
+            greaterThanOrEqualTo(kMinTouchTargetSize),
+            reason:
+                'SPEC/ui/technology-panel.md § Slot behaviour (Refs #3510): on '
+                'the mobile viewport each compact slot action control must be '
+                'at least kMinTouchTargetSize (44 dp) tall.',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'desktop (>= 600 dp): compact slot action controls stay below 44 dp '
+      '(mockup .slot-actions button density preserved)',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(1000, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final player = basePlayer.copyWith(
+          researchSlots: 3,
+          techUnlocked: <String, bool>{},
+        );
+        final localGame = game.copyWith(
+          players: [player, ...game.players.skip(1)],
+        );
+        await tester.pumpWidget(host(localGame, player));
+        await tester.pumpAndSettle();
+
+        final Size chooseSize =
+            tester.getSize(find.byType(CtActionTextButton).first);
+        expect(
+          chooseSize.height,
+          lessThan(kMinTouchTargetSize),
+          reason:
+              'SPEC/ui/technology-panel.md § Slot behaviour (Refs #3510): on '
+              'wider viewports the compact slot action control keeps the '
+              'mockup .slot-actions button density and is not padded to 44 dp.',
+        );
       },
     );
   });
