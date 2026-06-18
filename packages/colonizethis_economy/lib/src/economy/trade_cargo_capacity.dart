@@ -32,23 +32,28 @@ int overseasShippedTonnageFromExtractionTotals(
   return shipped;
 }
 
-/// Forecasts overseas shipped tonnage for [playerId] using the same extraction
-/// and cargo-cap rules as [runExtractionPhase]. Returns `0` when tile maps are
-/// unavailable.
-int forecastOverseasShippedTonnageForPlayer({
+/// Computes per-player [ExtractionTotals] using the same connectivity and
+/// tech-cap rules as [forecastOverseasShippedTonnageForPlayer], so callers
+/// that drive multiple trade-cargo forecasts in one planning pass can build
+/// the map **once** and reuse it (Refs #3517 Cluster 4 — avoids the duplicate
+/// O(players × connected-tiles) [computeExtraction] scan the treasury planner
+/// otherwise re-runs on every invocation; see
+/// `colonizethis-turn-resolution-budget.mdc` § duplicate global scans).
+///
+/// Returns an empty map when [tileMapByRegion] is empty (the same condition
+/// under which [forecastOverseasShippedTonnageForPlayer] forecasts `0`).
+Map<String, ExtractionTotals> computeExtractionTotalsForTradeForecast({
   required Game game,
-  required String playerId,
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
-  Map<String, Fleet>? fleetsById,
 }) {
-  if (tileMapByRegion.isEmpty) return 0;
+  if (tileMapByRegion.isEmpty) return const <String, ExtractionTotals>{};
   final connectivity = resolveConnectivity(
     game: game,
     tileMapByRegion: tileMapByRegion,
     topology: topology,
   );
-  final extraction = computeExtraction(
+  return computeExtraction(
     game: game,
     tileMapByRegion: tileMapByRegion,
     connectivityResult: connectivity,
@@ -60,6 +65,34 @@ int forecastOverseasShippedTonnageForPlayer({
       );
     },
   );
+}
+
+/// Forecasts overseas shipped tonnage for [playerId] using the same extraction
+/// and cargo-cap rules as [runExtractionPhase]. Returns `0` when tile maps are
+/// unavailable.
+///
+/// When [extractionById] is supplied (a map produced by
+/// [computeExtractionTotalsForTradeForecast] earlier in the same planning
+/// pass), the per-call [computeExtraction] scan is skipped and the player's
+/// overseas totals are read directly from the map (Refs #3517 Cluster 4).
+/// When it is `null`, the extraction map is computed on demand, preserving the
+/// previous behaviour for callers outside the AI planning pipeline.
+int forecastOverseasShippedTonnageForPlayer({
+  required Game game,
+  required String playerId,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required MapTopology topology,
+  Map<String, Fleet>? fleetsById,
+  Map<String, ExtractionTotals>? extractionById,
+}) {
+  if (tileMapByRegion.isEmpty) return 0;
+  final extraction =
+      extractionById ??
+      computeExtractionTotalsForTradeForecast(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
+      );
   final totals = extraction[playerId];
   if (totals == null || totals.overseas.isEmpty) {
     return 0;
@@ -76,12 +109,17 @@ int forecastOverseasShippedTonnageForPlayer({
 }
 
 /// `max(0, cargoHoldsForHomeFleet − forecast overseas shipped tonnage)`.
+///
+/// [extractionById] is forwarded to [forecastOverseasShippedTonnageForPlayer]
+/// so a pre-computed extraction map (Refs #3517 Cluster 4) bypasses the
+/// per-call [computeExtraction] scan.
 int tradeCargoCapacityForGreatPower({
   required Game game,
   required String playerId,
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
   Map<String, Fleet>? fleetsById,
+  Map<String, ExtractionTotals>? extractionById,
 }) {
   final homeFleetHolds = cargoHoldsForHomeFleet(
     game,
@@ -95,6 +133,7 @@ int tradeCargoCapacityForGreatPower({
     tileMapByRegion: tileMapByRegion,
     topology: topology,
     fleetsById: fleetsById,
+    extractionById: extractionById,
   );
   final capacity = homeFleetHolds - shipped;
   return capacity > 0 ? capacity : 0;

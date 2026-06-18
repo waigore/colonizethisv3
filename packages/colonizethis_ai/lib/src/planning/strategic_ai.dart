@@ -1,7 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show PlayerView, TurnTraceAiSection, buildPlayerView;
+    show
+        PlayerView,
+        TurnTraceAiSection,
+        buildPlayerView,
+        cargoHoldsForHomeFleet,
+        computeExtractionTotalsForTradeForecast;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -158,6 +163,30 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     snapshot: planningSnapshot,
     personalityId: config.personalityId,
   );
+  // Refs #3517 Cluster 4: the treasury planner forecasts overseas trade-cargo
+  // capacity via `computeExtraction`, an O(players × connected-tiles) scan.
+  // `runTreasuryPlanner` is potentially invoked more than once per AI player
+  // turn (the `runEconomyPlanner` pass below plus the orchestrator tail
+  // re-invocation when `recomputeTradeOrdersWithPendingCosts` is set), so the
+  // extraction map is hoisted and computed **once** here and threaded into
+  // both call sites instead of being recomputed on every invocation
+  // (`colonizethis-turn-resolution-budget.mdc` § duplicate global scans). AI
+  // planning is read-only over `game` (`PlannerContext.withOrders` reuses the
+  // same `game` object across every step), so a single map is safe to reuse
+  // across the invocations within one planning pass. The compute is gated on a
+  // present tile map and a non-zero home fleet (the same precondition
+  // `tradeCargoCapacityForGreatPower` short-circuits on) so a player with no
+  // home fleet never pays for an extraction scan it would not consume.
+  final tradeForecastExtractionById =
+      (tileMapByRegion != null &&
+          tileMapByRegion.isNotEmpty &&
+          cargoHoldsForHomeFleet(planningGame, nationId) > 0)
+      ? computeExtractionTotalsForTradeForecast(
+          game: planningGame,
+          tileMapByRegion: tileMapByRegion,
+          topology: topology,
+        )
+      : null;
   // Refs #3122 orchestrator wiring: the production strategic-AI entry
   // skips trade-order generation inside [runEconomyPlanner] so the
   // orchestrator can re-invoke [runTreasuryPlanner] after every other
@@ -177,6 +206,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     topology: topology,
     skipTradeOrderGeneration: true,
     growthStagePlannerEnabled: growthStagePlannerEnabled,
+    extractionById: tradeForecastExtractionById,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
@@ -195,6 +225,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     phasePlan: phasePlan,
     recomputeTradeOrdersWithPendingCosts: true,
     growthStagePlannerEnabled: growthStagePlannerEnabled,
+    extractionById: tradeForecastExtractionById,
   );
   // Trade orders are merged into [Orders.tradeOrdersByPlayerId] inside the
   // domain orchestrator (Refs #2994 F7) so all orchestrator callers see the

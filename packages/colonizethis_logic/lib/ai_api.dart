@@ -50,9 +50,11 @@ export 'package:colonizethis_orders/colonizethis_orders.dart'
 // colonizethis_economy (barrel-level re-exports).
 export 'package:colonizethis_economy/colonizethis_economy.dart'
     show
+        ExtractionTotals,
         canAffordRecruitWorker,
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
+        computeExtractionTotalsForTradeForecast,
         effectiveLabourForWorkers,
         effectiveMarketPriceForCommodityId,
         kWorldMarketBaselineBidTypeCap,

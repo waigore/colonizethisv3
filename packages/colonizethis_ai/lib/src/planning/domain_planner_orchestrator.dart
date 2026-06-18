@@ -56,6 +56,7 @@ Orders runDomainPlanners({
   void Function(String phaseId)? onStagedPlannerProgress,
   PhasePlanOutcome? phasePlan,
   bool recomputeTradeOrdersWithPendingCosts = false,
+  Map<String, ExtractionTotals>? extractionById,
 }) {
   return runDomainPlannersWithOutcome(
     game: game,
@@ -72,6 +73,7 @@ Orders runDomainPlanners({
     onStagedPlannerProgress: onStagedPlannerProgress,
     phasePlan: phasePlan,
     recomputeTradeOrdersWithPendingCosts: recomputeTradeOrdersWithPendingCosts,
+    extractionById: extractionById,
   ).orders;
 }
 
@@ -103,6 +105,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   PhasePlanOutcome? phasePlan,
   bool recomputeTradeOrdersWithPendingCosts = false,
   bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  Map<String, ExtractionTotals>? extractionById,
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
@@ -272,6 +275,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
             tileMapByRegion: tileMapByRegion,
             topology: topology,
             currentOrders: ctx.orders,
+            extractionById: extractionById,
           );
   } else {
     resolvedTradeOrders = economyPlan.tradeOrders;
