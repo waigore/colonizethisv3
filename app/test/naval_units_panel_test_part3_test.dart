@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -145,6 +146,7 @@ void main() {
       ),
     );
   }
+
   group('NavalUnitsPanel', () {
     testWidgets(
       'AC: Home Fleet transfer moves selected ships and keeps source when ships remain',
@@ -252,7 +254,7 @@ void main() {
           find.descendant(of: sourceFinder, matching: find.byType(Checkbox)),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
 
         final moveOneFluyte = find.byKey(
@@ -385,8 +387,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isFalse);
       },
@@ -491,12 +493,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isTrue);
 
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
 
         expect(updated, isNotNull);
@@ -602,7 +604,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
 
         expect(updated, isNotNull);
@@ -707,8 +709,8 @@ void main() {
           expect(tester.widget<Checkbox>(cb).value, isTrue);
         }
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isTrue);
       },
@@ -816,7 +818,10 @@ void main() {
           await tester.pumpAndSettle();
         }
 
-        final combineFinder = find.widgetWithText(CtNinePatchButton, 'Combine');
+        final combineFinder = find.widgetWithText(
+          CtActionTextButton,
+          'Combine',
+        );
         await tester.scrollUntilVisible(combineFinder, 120);
         await tester.pumpAndSettle();
         await tester.tap(combineFinder);
@@ -943,8 +948,8 @@ void main() {
         expect(removedFinder, findsNothing);
         expect(tester.widget<Checkbox>(staysCb).value, isTrue);
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isFalse);
       },
@@ -1055,7 +1060,7 @@ void main() {
           findsOne,
         );
 
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
 
         expect(updated, isNotNull);
@@ -1065,6 +1070,5 @@ void main() {
         expect(mergedIds, ['cs1', 'cs2']);
       },
     );
-
   });
 }
