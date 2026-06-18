@@ -12,6 +12,7 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 const Key _kSlotPickersStackedColumnKey = ValueKey<String>(
@@ -129,18 +130,25 @@ void main() {
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
-      expect(find.text('New game — Setup'), findsOneWidget);
-      expect(find.text('Player 1 (You)'), findsOneWidget);
-      expect(find.text('Player 2 (AI)'), findsOneWidget);
-      expect(find.text('Player 6 (AI)'), findsOneWidget);
-      expect(find.textContaining('Default map colours'), findsOneWidget);
-      expect(find.text('Game / world seed'), findsOneWidget);
-      expect(find.textContaining('Use 0 for a random world'), findsOneWidget);
+      expect(find.text('Choose nations and leaders'), findsOneWidget);
       expect(
-        find.text('Infinite mode (turns progress past 1800)'),
+        find.text('Choose six great powers and a leader variant for each'),
         findsOneWidget,
       );
-      expect(find.byType(CheckboxListTile), findsOneWidget);
+      // Mockup slot labels: "Slot N" with an uppercase "YOU" tag on slot 0.
+      expect(find.text('Slot 1'), findsOneWidget);
+      expect(find.text('YOU'), findsOneWidget);
+      expect(find.text('Slot 2'), findsOneWidget);
+      expect(find.text('Slot 6'), findsOneWidget);
+      expect(find.text('Game seed'), findsOneWidget);
+      expect(find.text('Enter 0 for a random seed'), findsOneWidget);
+      expect(
+        find.text('Infinite mode (no victory condition)'),
+        findsOneWidget,
+      );
+      // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
+      expect(find.byType(CtToggleSwitch), findsOneWidget);
+      expect(find.byType(CheckboxListTile), findsNothing);
     });
 
     testWidgets(
@@ -160,7 +168,7 @@ void main() {
         );
 
         final viewHeight = tester.view.physicalSize.height;
-        final player6Top = tester.getRect(find.text('Player 6 (AI)')).top;
+        final player6Top = tester.getRect(find.text('Slot 6')).top;
         final startTop = tester.getRect(find.text('Start')).top;
         expect(player6Top, greaterThan(0));
         expect(player6Top, lessThan(viewHeight));
@@ -351,7 +359,7 @@ void main() {
       await ensureTapCancel(tester);
 
       expect(confirmed, isFalse);
-      expect(find.text('New game — Setup'), findsNothing);
+      expect(find.text('Choose nations and leaders'), findsNothing);
     });
 
     testWidgets('changing slot 1 nation to Sweden updates order and leader', (
@@ -409,7 +417,7 @@ void main() {
       expect(gotSeed, 42);
     });
 
-    testWidgets('Start passes infiniteMode true when checkbox checked', (
+    testWidgets('Start passes infiniteMode true when toggle switched on', (
       WidgetTester tester,
     ) async {
       bool? gotInfiniteMode;
@@ -418,10 +426,10 @@ void main() {
         onConfirmed: (_, _, _, infiniteMode, _, __) =>
             gotInfiniteMode = infiniteMode,
       );
-      final checkbox = find.byType(Checkbox);
-      await tester.ensureVisible(checkbox);
+      final toggle = find.byType(CtToggleSwitch);
+      await tester.ensureVisible(toggle);
       await tester.pumpAndSettle();
-      await tester.tap(checkbox);
+      await tester.tap(toggle);
       await tester.pumpAndSettle();
       await ensureTapStart(tester);
       expect(gotInfiniteMode, isTrue);
@@ -432,11 +440,10 @@ void main() {
       (WidgetTester tester) async {
         await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         expect(find.byType(CtSlider), findsOneWidget);
-        expect(find.textContaining('Terrain variation'), findsOneWidget);
-        expect(
-          find.textContaining('Higher values produce more mixed terrain'),
-          findsOneWidget,
-        );
+        expect(find.text('Terrain variation:'), findsOneWidget);
+        // Live percent value rendered separately from the static label.
+        expect(find.text('50%'), findsOneWidget);
+        expect(find.text('0% flat — 100% extreme'), findsOneWidget);
       },
     );
 
@@ -838,8 +845,10 @@ void main() {
     });
   });
 
-  // Refs #2870 R3 — narrow slot-row stacking at `< kGameSetupNarrowBreakpoint`
-  // (500 dp) per DLG10001 / SPEC/ui/new-game-leader-selection-dialog.md.
+  // Refs #2870 R3 / #3507 D2 — narrow slot-row stacking at
+  // `< kLeaderSelectionNarrowBreakpoint` (540 dp), the DLG10001-dedicated
+  // breakpoint matching the mockup `@media (min-width: 540px)` rule, per
+  // SPEC/ui/new-game-leader-selection-dialog.md.
   // SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
   // + § Acceptance Criteria narrow-viewport stacking AC; mirrors
   // `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.
@@ -896,7 +905,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('wide viewport (>= 500 dp): slot bodies render side-by-side row, '
+    testWidgets('wide viewport (>= 540 dp): slot bodies render side-by-side row, '
         'no stacked column body, no exception', (WidgetTester tester) async {
       await pumpDialogAt(tester, surfaceSize: const Size(800, 1300));
 
@@ -922,7 +931,7 @@ void main() {
       );
     });
 
-    testWidgets('narrow viewport (< 500 dp): slot bodies render stacked column, '
+    testWidgets('narrow viewport (< 540 dp): slot bodies render stacked column, '
         'no side-by-side row body, no exception', (WidgetTester tester) async {
       await pumpDialogAt(tester, surfaceSize: const Size(480, 1300));
 
@@ -950,17 +959,17 @@ void main() {
       );
     });
 
-    testWidgets('boundary: viewport exactly at 500 dp uses wide row body '
+    testWidgets('boundary: viewport exactly at 540 dp uses wide row body '
         '(breakpoint is strict <)', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(500, 1300));
+      await pumpDialogAt(tester, surfaceSize: const Size(540, 1300));
 
       expect(tester.takeException(), isNull);
       expect(
         find.byKey(_kSlotPickersSideBySideRowKey),
         findsNWidgets(6),
         reason:
-            '500 dp is the boundary — kGameSetupNarrowBreakpoint is a '
-            'strict less-than check, so 500 dp keeps the wide row body.',
+            '540 dp is the boundary — kLeaderSelectionNarrowBreakpoint is a '
+            'strict less-than check, so 540 dp keeps the wide row body.',
       );
       expect(find.byKey(_kSlotPickersStackedColumnKey), findsNothing);
     });

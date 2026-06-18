@@ -9,7 +9,9 @@ void main() {
   group('Research phase tech effects', () {
     test('completing University sets researchSlots to 4', () {
       // SPEC/game/tech-tree.md: 3 slots by default, 4 with University tech.
-      // University requires: money_lending, apprentice_workers, printing_press
+      // University requires: money_lending, apprentice_workers, printing_press.
+      // Pre-seed progress just below cost so a single maximum-funding turn
+      // crosses the (rebalanced) cost threshold and unlocks University.
       final game = researchPhaseTestBaseGame(
         treasury: 3000,
         techUnlocked: const {
@@ -17,6 +19,7 @@ void main() {
           kTechIdApprenticeWorkers: true,
           kTechIdPrintingPress: true,
         },
+        progress: {kTechIdUniversity: techById(kTechIdUniversity)!.cost - 1},
       );
       final orders = Orders(
         researchOrdersByPlayerId: {
@@ -150,7 +153,8 @@ void main() {
           ),
         );
         final player = next.players.single;
-        // Last wins => maximum only: 1000 spent, 2500 RP => crop_rotation (cost 120) unlocks.
+        // Last wins => maximum only: 1000 spent, 2500 RP => crop_rotation
+        // (tier-1 cost 1800) unlocks since 2500 >= 1800.
         expect(player.treasury, 1000);
         expect(player.techUnlocked![kTechIdCropRotation], isTrue);
         // If both were applied we would have 1050 spent and dual progress; so no double spend.

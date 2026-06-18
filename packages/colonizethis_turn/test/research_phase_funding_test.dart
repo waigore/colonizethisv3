@@ -117,7 +117,8 @@ void main() {
     );
 
     test('research with low funding deducts treasury and adds progress', () {
-      // Use wind_saw_mill (cost 160) with prereq so 100 RP does not complete in one turn.
+      // Use wind_saw_mill (tier-2 cost 2400) with prereq so 100 RP does not
+      // complete in one turn. SPEC/game/tech-tree.md § Research Model.
       final game = researchPhaseTestBaseGame(
         treasury: 100,
         techUnlocked: const {kTechIdSawMill: true},
@@ -173,7 +174,8 @@ void main() {
         ),
       );
       // Maximum funding: 1000 gold cost, 2500 RP per turn (2.5x efficiency).
-      // crop_rotation cost is 120, so tech unlocks and progress is cleared.
+      // crop_rotation tier-1 cost is 1800, so 2500 RP >= 1800 unlocks the tech
+      // and progress is cleared. SPEC/game/tech-tree.md § Research Model.
       expect(next.players.single.treasury, 1000);
       expect(next.players.single.techUnlocked![kTechIdCropRotation], isTrue);
     });
@@ -255,10 +257,12 @@ void main() {
     );
 
     test('all funding levels match spec values via game behavior', () {
-      // Use wind_saw_mill (cost 160) with prereq met so low funding does not complete in one turn.
+      // Use wind_saw_mill (tier-2 cost 2400) with prereq met. Only Maximum
+      // funding (2500 RP) completes it in one turn; Low/Medium/High accrue
+      // partial progress. SPEC/game/tech-tree.md § Research Model.
       const prereqMet = {kTechIdSawMill: true};
 
-      // Low: 50 gold, 100 RP (no unlock; 100 < 160)
+      // Low: 50 gold, 100 RP (no unlock; 100 < 2400)
       var game = researchPhaseTestBaseGame(
         treasury: 100,
         techUnlocked: prereqMet,
@@ -288,7 +292,7 @@ void main() {
         100,
       );
 
-      // Medium: 150 gold, 300 RP (unlocks wind_saw_mill)
+      // Medium: 150 gold, 300 RP (no unlock; 300 < 2400)
       game = researchPhaseTestBaseGame(treasury: 200, techUnlocked: prereqMet);
       orders = Orders(
         researchOrdersByPlayerId: {
@@ -309,9 +313,17 @@ void main() {
         ),
       );
       expect(next.players.single.treasury, 50);
-      expect(next.players.single.techUnlocked![kTechIdWindSawMill], isTrue);
+      expect(
+        (next.players.single.researchProgressByTechId ??
+            const {})[kTechIdWindSawMill],
+        300,
+      );
+      expect(
+        next.players.single.techUnlocked?[kTechIdWindSawMill],
+        isNot(true),
+      );
 
-      // High: 400 gold, 800 RP (unlocks)
+      // High: 400 gold, 800 RP (no unlock; 800 < 2400)
       game = researchPhaseTestBaseGame(treasury: 500, techUnlocked: prereqMet);
       orders = Orders(
         researchOrdersByPlayerId: {
@@ -332,7 +344,15 @@ void main() {
         ),
       );
       expect(next.players.single.treasury, 100);
-      expect(next.players.single.techUnlocked![kTechIdWindSawMill], isTrue);
+      expect(
+        (next.players.single.researchProgressByTechId ??
+            const {})[kTechIdWindSawMill],
+        800,
+      );
+      expect(
+        next.players.single.techUnlocked?[kTechIdWindSawMill],
+        isNot(true),
+      );
 
       // Maximum: 1000 gold, 2500 RP (2.5x efficiency, unlocks)
       game = researchPhaseTestBaseGame(treasury: 1500, techUnlocked: prereqMet);

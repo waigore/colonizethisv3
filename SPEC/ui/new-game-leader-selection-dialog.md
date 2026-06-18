@@ -13,7 +13,7 @@
 |--------|------|------------|-------------|
 | `NewGameLeaderSelectionDialog` | `StatefulWidget` | `baseConfig` (`GameSetupConfig`), `naming` (`ResolvedNamingConfig`), `initialLeaderByGpId` (`Map<String, String>`), `blessedProfileNames` (`List<String>`), `onCancel` (`VoidCallback`), `onConfirmed` (`void Function(List<String>, Map<String, String>, int, bool, double, Map<String, String?>)`) | Bus-registered modal (id `new_game_leader_selection`) opened by the shell New Game button via `OpenDialogEvent(newGameLeaderSelectionDialogId)`. Invokes `onConfirmed` with the chosen lineup, parameters, and per-AI-slot blessed profile names; the scope's builder then kicks off `runNewGameSetupAfterLeaderPick`. |
 
-Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 480`, `maxHeight: 720`). Six slots are fixed (`_kNumSlots == 6`); slot 0 is the human player (`shell_newGame_playerYou`), slots 1–5 are AI (`shell_newGame_playerAi`). Dialog id constant: `newGameLeaderSelectionDialogId`.
+Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 540`, `maxHeight: 720`) matching the authoritative mockup `.dialog-shell{max-width:540px}`. Six slots are fixed (`_kNumSlots == 6`); each slot heading reads `Slot N` (`shell_leaderDialog_slotLabel`); slot 0 is the human player and additionally shows a `YOU` tag (`shell_leaderDialog_slotYouTag`, uppercased via presentation style), slots 1–5 are AI. Dialog id constant: `newGameLeaderSelectionDialogId`.
 
 **Tuned AI profile selector (Refs #3444):** each AI slot (1–5) renders a third `CtDropdown<String>` — the **AI Profile** picker (hint `shell_leaderDialog_aiProfileLabel`) — beneath/beside its nation + leader pickers. Its items are the **Normal** sentinel (`normalProfileChoiceId == ''`, labelled `shell_leaderDialog_aiProfileNormal`) followed by each blessed profile name from `blessedProfileNames` (sorted, supplied from the asset manifest). The human slot (0) renders **no** profile picker (`profileDropdown == null`). Selection is held in `_profileBySlot` (`Map<int, String?>`, slot index → profile name; `Normal`/empty removes the entry). On confirm, `_aiProfileByGpIdForCallback` maps slots 1–5 to `Map<String, String?>` keyed by each slot's Great Power id (only non-empty selections are emitted) and passes it as the sixth `onConfirmed` argument. `blessedProfileNames` empty → every AI slot still shows the picker but its only item is **Normal**.
 
@@ -23,49 +23,50 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ```text
 +----------------------------------------------------------+
-| Choose nations and leaders                               |  --accent, 0.05em
-| ────── ◆ ──────                                          |  CtBrassDivider
-| Choose six great powers and a leader variant for each... |  --muted italic intro
+|              Choose nations and leaders                  |  --accent, centered, 0.05em
+|   Choose six great powers and a leader variant for each  |  --muted italic, centered
+|                    ────── ◆ ──────                       |  CtBrassDivider (below header text)
 |                                                          |
-|  Slot 1 (You)                                            |  --accent-dim w600
-|  [ ◇ Nation v ]  [ Leader v ]                            |
-|  Slot 2                                                  |  --muted regular
-|  [ ◇ Nation v ]  [ Leader v ]                            |
-|  [ AI Profile v ]                                        |  Normal | <blessed names> (AI slots 1-5 only)
+| ┌──────────────────────────────────────────────────────┐|  slot-row chrome: surface→bg-deep
+| │ Slot 1  YOU                                            ││  gradient, accent-dim top/bottom border,
+| │ [ ◇ Nation v ]  [ Leader v ]                           ││  8/10 dp padding; 6 dp inter-row gap
+| └──────────────────────────────────────────────────────┘|
+| ┌──────────────────────────────────────────────────────┐|
+| │ Slot 2                                                 ││  --muted regular
+| │ [ ◇ Nation v ]  [ Leader v ]                           ││
+| │ AI Profile: [ Normal v ]                               ││  inline label + dropdown (AI slots 1-5)
+| └──────────────────────────────────────────────────────┘|
 |  ...                                                     |
-|  Slot 6                                                  |
-|  [ ◇ Nation v ]  [ Leader v ]                            |
-|  [ AI Profile v ]                                        |
 |                                                          |
-|  Game seed                                               |  --accent-dim w600
+|  Game seed                                               |  --fg w600
 |  [ <text>                              ]                 |  TextField (numeric, --border idle / --accent focus)
-|  Helper text                                             |  --muted helper
+|  Enter 0 for a random seed                               |  --muted helper
 |                                                          |
-|  [ ] Infinite mode (no victory condition)                |  CheckboxListTile (accent active, border idle)
-|       Helper text                                        |  --muted helper
+|  [=O] Infinite mode (no victory condition)               |  CtToggleSwitch + label
+|       The game will continue indefinitely                |  --muted helper
 |                                                          |
-|  Terrain variation: 50%                                  |  --accent-dim w600
+|  Terrain variation:                        50%           |  static label + live mono percent
 |  [ ───────●────────────────────────── ]   slider 0..1    |
-|  Helper text                                             |  --muted helper
+|  0% flat — 100% extreme                                  |  --muted helper
 |                                                          |
 |              [ Cancel ]    [ Start ]                     |
 +----------------------------------------------------------+
 ```
 
-- Dialog chrome wraps in `CtDialogShell` (`maxWidth: 480`, `maxHeight: 720`), painting the dark editorial-monocle frame (#2867 R1) from `EditorialMonoclePalette`.
-- Header chrome (#2867 R2 + R21):
+- Dialog chrome wraps in `CtDialogShell` (`maxWidth: 540`, `maxHeight: 720`), painting the dark editorial-monocle frame (#2867 R1) from `EditorialMonoclePalette`. `maxWidth` matches the mockup `.dialog-shell{max-width:540px}`.
+- Header chrome (#2867 R2 + R21), centered (`CrossAxisAlignment.center`, `textAlign: TextAlign.center`), in mockup order title → intro → divider:
   - Title `shell_leaderDialog_title`, keyed `ValueKey<String>('leaderSelectionDialogTitle')`, color `EditorialMonoclePalette.accent`, `letterSpacing == fontSize * 0.05`, `FontWeight.w600`.
-  - `CtBrassDivider` keyed `ValueKey<String>('leaderSelectionDialogBrassDivider')` between title and intro.
   - Intro `shell_leaderDialog_intro`, keyed `ValueKey<String>('leaderSelectionDialogIntro')`, color `EditorialMonoclePalette.muted`, `FontStyle.italic`.
-- Slots: six `Column` rows in fixed top-down order; each row hosts a slot label, then the slot pickers body. Slot 0 (`shell_newGame_playerYou`) label uses `EditorialMonoclePalette.accentDim` with `FontWeight.w600`; AI slots use `EditorialMonoclePalette.muted` regular weight. The slot pickers body is responsive at `kGameSetupNarrowBreakpoint` (500 dp):
-  - Wide viewport (`MediaQuery.sizeOf(context).width >= kGameSetupNarrowBreakpoint`, 500 dp): one horizontal `Row` with two `Expanded(CtDropdown<String>)` — nation on the left, leader on the right.
-  - Narrow viewport (`MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint`, 500 dp): a vertical `Column` with the nation dropdown full width on the first line and the leader dropdown full width on the second line, beneath the slot label. See [mobile-adaptation.md](mobile-adaptation.md) § 4 New game leader selection.
+  - `CtBrassDivider` keyed `ValueKey<String>('leaderSelectionDialogBrassDivider')` beneath the title + intro.
+- Slots: six rows in fixed top-down order separated by a 6 dp gap (`.slots-list{gap:6px}`). Each row is a `DecoratedBox` with the mockup `.slot-row` chrome — a vertical `surface → bgDeep` gradient and 1 dp `EditorialMonoclePalette.accentDim` top + bottom borders, padded 8 dp vertical / 10 dp horizontal — hosting the slot heading then the slot pickers body. The heading reads `Slot N` (`shell_leaderDialog_slotLabel`); slot 0 also renders a `YOU` tag (`shell_leaderDialog_slotYouTag`, uppercased via style) and uses `EditorialMonoclePalette.accentDim` `FontWeight.w600`; AI slots use `EditorialMonoclePalette.muted` regular weight. The slot pickers body is responsive at `kLeaderSelectionNarrowBreakpoint` (540 dp):
+  - Wide viewport (`MediaQuery.sizeOf(context).width >= kLeaderSelectionNarrowBreakpoint`, 540 dp): one horizontal `Row` with two `Expanded(CtDropdown<String>)` — nation on the left, leader on the right.
+  - Narrow viewport (`MediaQuery.sizeOf(context).width < kLeaderSelectionNarrowBreakpoint`, 540 dp): a vertical `Column` with the nation dropdown full width on the first line and the leader dropdown full width on the second line, beneath the slot label. See [mobile-adaptation.md](mobile-adaptation.md) § 4 New game leader selection.
   - Nation dropdown items show a `GpDefaultMapColorSwatch(greatPowerId: id)` leading icon and `naming.gpById(id)?.countryName` label. Items are filtered per slot: only IDs not already chosen in another slot, plus the slot's own current value.
   - Leader dropdown items are the chosen nation's `leaderVariants` by id, labelled by `LeaderVariant.name`. Selection defaults to `defaultLeaderVariantId`.
-  - AI Profile dropdown (AI slots 1–5 only; `_SlotPickersBody.profileDropdown != null`) renders full-width on its own line **below** the nation/leader row in both viewports (the body always stacks the profile picker under the nation+leader `Row`/`Column`). Items are the `Normal` sentinel (`normalProfileChoiceId == ''`, labelled `shell_leaderDialog_aiProfileNormal`) plus each `blessedProfileNames` entry; hint `shell_leaderDialog_aiProfileLabel`. The human slot (0) passes `profileDropdown == null`, so its body has no profile line.
-- Seed input: `shell_leaderDialog_seedLabel` (`accentDim`, w600), numeric `TextField` (controller seeded with `baseConfig.seed.toString()`; idle/enabled border `EditorialMonoclePalette.border` 1px, focused border `EditorialMonoclePalette.accent` 2px, text color `EditorialMonoclePalette.fg`), helper `shell_leaderDialog_seedHelper` (`EditorialMonoclePalette.muted`). Submit value parsed by `parseSeedInput`.
-- Infinite mode: `CheckboxListTile` with leading control; `activeColor: EditorialMonoclePalette.accent`, `checkColor: EditorialMonoclePalette.bgDeep`, idle `side: BorderSide(color: EditorialMonoclePalette.border)`; primary `shell_leaderDialog_infiniteModeLabel` (`EditorialMonoclePalette.fg`), secondary `shell_leaderDialog_infiniteModeHelper` (`EditorialMonoclePalette.muted`).
-- Terrain variation: label `shell_leaderDialog_terrainVariationLabel(percent)` (percent = `(value * 100).round()`, color `EditorialMonoclePalette.accentDim` w600), `CtSlider(min: 0.0, max: 1.0, divisions: 20)`, helper `shell_leaderDialog_terrainVariationHelper` (`EditorialMonoclePalette.muted`). Default `defaultTerrainVariation == 0.5`.
+  - AI Profile line (AI slots 1–5 only; `_SlotPickersBody.profileLine != null`) renders full-width on its own line **below** the nation/leader row in both viewports as a `Row` of an inline `AI Profile:` label (`shell_leaderDialog_aiProfileInlineLabel`, mockup `.profile-line`) and an `Expanded(CtDropdown<String>)`. Dropdown items are the `Normal` sentinel (`normalProfileChoiceId == ''`, labelled `shell_leaderDialog_aiProfileNormal`) plus each `blessedProfileNames` entry; hint `shell_leaderDialog_aiProfileLabel`. The human slot (0) passes `profileLine == null`, so its body has no profile line.
+- Seed input: `shell_leaderDialog_seedLabel` ("Game seed", `accentDim`, w600), numeric `TextField` (controller seeded with `baseConfig.seed.toString()`; idle/enabled border `EditorialMonoclePalette.border` 1px, focused border `EditorialMonoclePalette.accent` 2px, text color `EditorialMonoclePalette.fg`), helper `shell_leaderDialog_seedHelper` ("Enter 0 for a random seed", `EditorialMonoclePalette.muted`). Submit value parsed by `parseSeedInput`.
+- Infinite mode: `CtToggleSwitch` (no Material `CheckboxListTile`) beside the label `shell_leaderDialog_infiniteModeLabel` ("Infinite mode (no victory condition)", `EditorialMonoclePalette.fg` w600), with helper `shell_leaderDialog_infiniteModeHelper` ("The game will continue indefinitely", `EditorialMonoclePalette.muted`) indented beneath, per mockup `.toggle-row` / `.toggle-hint`.
+- Terrain variation: a `Row` with the static label `shell_leaderDialog_terrainVariationLabel` ("Terrain variation:", `accentDim` w600) and the live mono percent value `shell_leaderDialog_terrainVariationValue(percent)` (percent = `(value * 100).round()`, keyed `ValueKey<String>('leaderSelectionDialogTerrainVariationValue')`, `accentDim`, tabular figures); the label flexes so it wraps rather than overflowing at 320 dp. Below: `CtSlider(min: 0.0, max: 1.0, divisions: 20)` and helper `shell_leaderDialog_terrainVariationHelper` ("0% flat — 100% extreme", `EditorialMonoclePalette.muted`). Default `defaultTerrainVariation == 0.5`.
 - Footer: right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Start (`common_start`). Start enabled only when `_startEnabled == true`.
 - Duplicate slot validation feedback (#2867 R19): when the slot's currently-selected Great Power id (`_orderedGpIdsBySlot[slotIndex]`) also appears in at least one other slot's ordered list, the nation `CtDropdown<String>` is wrapped in a `DecoratedBox` keyed `ValueKey<String>('newGameLeaderDialogSlotDuplicateBorder_<slotIndex>')` whose `Border.all` resolves to `EditorialMonoclePalette.danger` at `NewGameLeaderSelectionDialog.duplicateSlotBorderWidth` (1 dp). Non-duplicate slots render the nation dropdown directly without that wrapper.
 
@@ -89,10 +90,10 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 | Missing leader variants | `_leaderByGpId[id]` not in `gp.leaderVariants` for any slot | Start disabled (`_startEnabled == false`). |
 | Slot reassignment | User picks a new nation for slot i | `_orderedGpIdsBySlot[i]` updates; `_leaderByGpId[newId]` resets to `defaultLeaderVariantId`. |
 | Leader change | User picks a new leader variant for slot i | `_leaderByGpId[effectiveGpId]` updates only. |
-| Infinite toggled | `CheckboxListTile.value` changes | `_infiniteMode` updates; no other side effects. |
-| Terrain change | `CtSlider.onChanged` fires | `_terrainVariation` updates and the label percent rerenders. |
-| AI slot (1–5) | `slotIndex > 0` | Slot body mounts the AI Profile `CtDropdown<String>` (`profileDropdown != null`) with `Normal` + every `blessedProfileNames` entry. |
-| Human slot (0) | `slotIndex == 0` | Slot body mounts **no** AI Profile dropdown (`profileDropdown == null`); only nation + leader pickers render. |
+| Infinite toggled | `CtToggleSwitch.value` changes | `_infiniteMode` updates; no other side effects. |
+| Terrain change | `CtSlider.onChanged` fires | `_terrainVariation` updates and the mono percent value rerenders. |
+| AI slot (1–5) | `slotIndex > 0` | Slot body mounts the AI Profile line (`profileLine != null`): inline `AI Profile:` label + `CtDropdown<String>` with `Normal` + every `blessedProfileNames` entry. |
+| Human slot (0) | `slotIndex == 0` | Slot body mounts **no** AI Profile line (`profileLine == null`); only nation + leader pickers render. |
 | No blessed profiles | `blessedProfileNames.isEmpty` | Each AI slot's profile dropdown still renders but offers only the `Normal` item. |
 | Profile chosen | User picks a blessed name for slot i | `_profileBySlot[i]` set to that name; emitted on confirm as `aiProfileByGpId[gpId]`. |
 | Profile reset to Normal | User picks `Normal` (empty value) for slot i | `_profileBySlot.remove(i)`; that slot's gpId is absent from the emitted `aiProfileByGpId`. |
@@ -120,11 +121,11 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ## Components
 
-- `CtDialogShell`, `CtBrassDivider`, `CtDropdown`, `CtNinePatchButton`, `CtSlider`, `GpDefaultMapColorSwatch` (see `app/lib/widgets/`).
-- `EditorialMonoclePalette` tokens: `accent`, `accentDim`, `muted`, `fg`, `border`, `bgDeep` (no hex literals in widget source per #2867 R1).
-- Material (chrome host only): `TextField`, `CheckboxListTile`, `Row`, `Column`, `Padding`, `Text`.
+- `CtDialogShell`, `CtBrassDivider`, `CtDropdown`, `CtNinePatchButton`, `CtSlider`, `CtToggleSwitch`, `GpDefaultMapColorSwatch` (see `app/lib/widgets/`).
+- `EditorialMonoclePalette` tokens: `accent`, `accentDim`, `muted`, `fg`, `border`, `bgDeep`, `surface` (no hex literals in widget source per #2867 R1).
+- Material (chrome host only): `TextField`, `DecoratedBox`, `Row`, `Column`, `Flexible`, `Padding`, `Text` (the infinite-mode control is the custom `CtToggleSwitch`, not Material `CheckboxListTile`).
 - Helpers: `NewGameLeaderSelectionDialog.parseSeedInput`, `defaultTerrainVariation`.
-- Localized keys via `appL10n(context)`: `shell_leaderDialog_title`, `shell_leaderDialog_intro`, `shell_leaderDialog_seedLabel`, `shell_leaderDialog_seedHelper`, `shell_leaderDialog_infiniteModeLabel`, `shell_leaderDialog_infiniteModeHelper`, `shell_leaderDialog_terrainVariationLabel`, `shell_leaderDialog_terrainVariationHelper`, `shell_leaderDialog_selectLeaderHint`, `shell_leaderDialog_aiProfileLabel`, `shell_leaderDialog_aiProfileNormal`, `shell_newGame_playerYou`, `shell_newGame_playerAi`, `shell_newGame_selectNation`, `common_cancel`, `common_start`.
+- Localized keys via `appL10n(context)`: `shell_leaderDialog_title`, `shell_leaderDialog_intro`, `shell_leaderDialog_slotLabel`, `shell_leaderDialog_slotYouTag`, `shell_leaderDialog_seedLabel`, `shell_leaderDialog_seedHelper`, `shell_leaderDialog_infiniteModeLabel`, `shell_leaderDialog_infiniteModeHelper`, `shell_leaderDialog_terrainVariationLabel`, `shell_leaderDialog_terrainVariationValue`, `shell_leaderDialog_terrainVariationHelper`, `shell_leaderDialog_selectLeaderHint`, `shell_leaderDialog_aiProfileInlineLabel`, `shell_leaderDialog_aiProfileLabel`, `shell_leaderDialog_aiProfileNormal`, `shell_newGame_selectNation`, `common_cancel`, `common_start`.
 
 ---
 
@@ -144,7 +145,7 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 - Given the user moves the terrain-variation slider to a normalized value `v`, when `widget.onConfirmed` is invoked, then its `terrainVariation` argument equals `v` (in `[0.0, 1.0]`).
 
-- Given the user toggles the infinite-mode checkbox to `true` and the dialog is otherwise startable, when the user taps Start, then `widget.onConfirmed` receives `infiniteMode == true`.
+- Given the user toggles the infinite-mode `CtToggleSwitch` to `true` and the dialog is otherwise startable, when the user taps Start, then `widget.onConfirmed` receives `infiniteMode == true`.
 
 - Given the user taps Cancel, when the gesture completes, then `widget.onCancel` is invoked exactly once and `widget.onConfirmed` is not invoked.
 
@@ -160,11 +161,11 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ### Narrow-viewport slot pickers stacking
 
-- Given the dialog is open and `MediaQuery.sizeOf(context).width >= kGameSetupNarrowBreakpoint` (500 dp), when any of the six slot rows render, then the slot body mounts a single horizontal `Row` containing both the nation `CtDropdown<String>` and the leader `CtDropdown<String>` side-by-side (each at equal flex), and the slot body does not mount a vertically-stacked `Column` containing both dropdowns.
+- Given the dialog is open and `MediaQuery.sizeOf(context).width >= kLeaderSelectionNarrowBreakpoint` (540 dp), when any of the six slot rows render, then the slot body mounts a single horizontal `Row` containing both the nation `CtDropdown<String>` and the leader `CtDropdown<String>` side-by-side (each at equal flex), and the slot body does not mount a vertically-stacked `Column` containing both dropdowns.
 
-- Given the dialog is open and `MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint` (500 dp), when any of the six slot rows render, then the slot body mounts a vertical `Column` with the slot label on the first line, the nation `CtDropdown<String>` full width on the second line, and the leader `CtDropdown<String>` full width on the third line, and the slot body does not mount a horizontal `Row` containing both dropdowns side-by-side (per [mobile-adaptation.md](mobile-adaptation.md) § 4).
+- Given the dialog is open and `MediaQuery.sizeOf(context).width < kLeaderSelectionNarrowBreakpoint` (540 dp), when any of the six slot rows render, then the slot body mounts a vertical `Column` with the slot label on the first line, the nation `CtDropdown<String>` full width on the second line, and the leader `CtDropdown<String>` full width on the third line, and the slot body does not mount a horizontal `Row` containing both dropdowns side-by-side (per [mobile-adaptation.md](mobile-adaptation.md) § 4).
 
-- Given the viewport size is exactly `Size(kMinViewportWidth, 640)` (320 × 640 dp) and the dialog is rendered with `baseConfig = GameSetupConfig.defaultConfig`, `naming = defaultNamingConfig`, and the default per-GP leader-variant map, when the dialog builds, then `WidgetTester.takeException()` returns `null` (no `RenderFlex` overflow exception surfaces through the framework), every one of the six slot rows mounts the stacked column body keyed `ValueKey<String>('newGameLeaderDialogSlotPickersColumn')` (so `find.byKey(...).evaluate().length == 6`), no slot mounts the wide row body keyed `ValueKey<String>('newGameLeaderDialogSlotPickersRow')`, the dialog title `New game — Setup`, the six slot labels `Player 1 (You)` through `Player 6 (AI)`, and the trailing `Cancel` and `Start` `CtNinePatchButton` labels all render within the ~288 dp `CtDialogShell` content column, and every rendered `CtNinePatchButton` reports a rendered height `>= kMinTouchTargetSize` (44 dp) per [mobile-adaptation.md](mobile-adaptation.md) § 1. Pinned by `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` (Refs #2870 S7/S8/S10).
+- Given the viewport size is exactly `Size(kMinViewportWidth, 640)` (320 × 640 dp) and the dialog is rendered with `baseConfig = GameSetupConfig.defaultConfig`, `naming = defaultNamingConfig`, and the default per-GP leader-variant map, when the dialog builds, then `WidgetTester.takeException()` returns `null` (no `RenderFlex` overflow exception surfaces through the framework), every one of the six slot rows mounts the stacked column body keyed `ValueKey<String>('newGameLeaderDialogSlotPickersColumn')` (so `find.byKey(...).evaluate().length == 6`), no slot mounts the wide row body keyed `ValueKey<String>('newGameLeaderDialogSlotPickersRow')`, the dialog title `Choose nations and leaders`, the six slot headings `Slot 1` through `Slot 6` (slot 1 additionally showing the `YOU` tag), and the trailing `Cancel` and `Start` `CtNinePatchButton` labels all render within the ~268 dp `CtDialogShell` content column, and every rendered `CtNinePatchButton` reports a rendered height `>= kMinTouchTargetSize` (44 dp) per [mobile-adaptation.md](mobile-adaptation.md) § 1. Pinned by `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` (Refs #2870 S7/S8/S10).
 
 ### Duplicate slot validation feedback (#2867 R19)
 
@@ -197,5 +198,5 @@ Catalog folder: **New Game Leader Selection Dialog** (registered in `app/lib/wid
 
 Automated widget tests:
 
-- `app/test/new_game_leader_selection_dialog_test.dart` — six-slot rendering, default ordering, seed parsing, infinite-mode toggle, terrain-variation slider, Cancel, slot reassignment, Start payload, the 500 dp wide↔narrow slot-pickers boundary, the duplicate slot validation feedback contract (positive: duplicate slot's nation dropdown carries the danger-border wrapper; negative: no danger-border wrapper when all six slots are unique; recovery: replacing the duplicate clears the wrapper and re-enables Start), and the tuned AI profile selector (AI slots show the `Normal` + blessed-name dropdown, default Start emits an empty `aiProfileByGpId`, selecting a blessed name forwards it keyed by gpId).
-- `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` — minimum-viewport pin (Refs #2870 S7/S8/S10): no `RenderFlex` overflow at 320 × 640 dp, every slot renders the stacked column body (no wide row body), title + six slot labels + Cancel + Start labels visible, every rendered `CtNinePatchButton` ≥ 44 dp tall, and a 1024 × 768 negative regression sentinel that flips the contract so the wide row body is the only one mounted.
+- `app/test/new_game_leader_selection_dialog_test.dart` — six-slot rendering, default ordering, seed parsing, infinite-mode toggle, terrain-variation slider, Cancel, slot reassignment, Start payload, the 540 dp wide↔narrow slot-pickers boundary, the duplicate slot validation feedback contract (positive: duplicate slot's nation dropdown carries the danger-border wrapper; negative: no danger-border wrapper when all six slots are unique; recovery: replacing the duplicate clears the wrapper and re-enables Start), and the tuned AI profile selector (AI slots show the `Normal` + blessed-name dropdown, default Start emits an empty `aiProfileByGpId`, selecting a blessed name forwards it keyed by gpId).
+- `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` — minimum-viewport pin (Refs #2870 S7/S8/S10): no `RenderFlex` overflow at 320 × 640 dp, every slot renders the stacked column body (no wide row body), title + six `Slot N` headings (slot 1 with `YOU` tag) + Cancel + Start labels visible, every rendered `CtNinePatchButton` ≥ 44 dp tall, and a 1024 × 768 negative regression sentinel that flips the contract so the wide row body is the only one mounted.

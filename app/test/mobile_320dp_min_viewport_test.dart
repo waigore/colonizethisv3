@@ -289,7 +289,7 @@ void main() {
 
   // Pin the 320 dp minimum-viewport contract for
   // `NewGameLeaderSelectionDialog` (DLG10001). The dialog already
-  // pins its 500 dp wide↔narrow boundary in
+  // pins its 540 dp wide↔narrow boundary in
   // `new_game_leader_selection_dialog_test.dart`; this group closes the
   // remaining 320 dp viewport gap so the shell New Game flow honours the
   // same minimum viewport every other player-facing surface does.
@@ -380,14 +380,14 @@ void main() {
                 'width — every slot row + the seed field + checkbox + '
                 'slider + Cancel/Start action row must wrap within that.',
           );
-          // 320 dp < kGameSetupNarrowBreakpoint (500 dp) → narrow stacking
+          // 320 dp < kLeaderSelectionNarrowBreakpoint (540 dp) → narrow stacking
           // contract per SPEC/ui/new-game-leader-selection-dialog.md
           // § Narrow-viewport slot pickers stacking.
           expect(
             find.byKey(kSlotPickersStackedColumnKey),
             findsNWidgets(6),
             reason:
-                '320 dp is well below kGameSetupNarrowBreakpoint (500 dp); '
+                '320 dp is well below kLeaderSelectionNarrowBreakpoint (540 dp); '
                 'every one of the six slot rows MUST mount the stacked '
                 'column body keyed `newGameLeaderDialogSlotPickersColumn`.',
           );
@@ -410,10 +410,11 @@ void main() {
           await pumpDialogAtSize(tester, size: _kMinViewport);
 
           expect(tester.takeException(), isNull);
-          expect(find.text('New game — Setup'), findsOneWidget);
-          expect(find.text('Player 1 (You)'), findsOneWidget);
-          expect(find.text('Player 2 (AI)'), findsOneWidget);
-          expect(find.text('Player 6 (AI)'), findsOneWidget);
+          expect(find.text('Choose nations and leaders'), findsOneWidget);
+          expect(find.text('Slot 1'), findsOneWidget);
+          expect(find.text('YOU'), findsOneWidget);
+          expect(find.text('Slot 2'), findsOneWidget);
+          expect(find.text('Slot 6'), findsOneWidget);
           expect(
             find.descendant(
               of: find.byType(CtNinePatchButton),
@@ -491,7 +492,7 @@ void main() {
             find.byKey(kSlotPickersSideBySideRowKey),
             findsNWidgets(6),
             reason:
-                '1024 dp ≥ kGameSetupNarrowBreakpoint (500 dp): the dialog '
+                '1024 dp ≥ kLeaderSelectionNarrowBreakpoint (540 dp): the dialog '
                 'MUST select the wide side-by-side row body for every '
                 'slot. A regression that always picked the narrow column '
                 'body would flip this sentinel.',
