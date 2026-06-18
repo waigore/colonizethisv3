@@ -37,6 +37,7 @@ error; **130** SIGINT (last completed generation persisted).
 | `seven_gp_fallback_default_ai_seats` | 3 | Default-AI seats when prior-winner pool is insufficient |
 | `seven_gp_fallback_randomized_ai_seats` | 3 | Randomized-AI seats when prior-winner pool is insufficient |
 | `seven_gp_use_blessed_profiles` | false | Include blessed manifest profiles in opponent pool |
+| `prune_observer_traces` | false | When `true`, delete each round's `observer-traces` subtree after the game is scored (see **Round trace pruning**) |
 
 The 2-player stage keeps `game_player_count = 2` in `game_setup_config`. The
 7-GP stage uses a derived 7-GP setup (`allGreatPowerIds`) built with the same
@@ -134,6 +135,22 @@ Final snapshot: highest `turn-NNNNNN.snapshot.json` under
 `<round>/observer-traces/<gameId>/`. `run-summary.json` in the same directory.
 Capital provinces for fitness are resolved once per game via `runInitGame` with
 the same setup/seed and written to `<round>/capitals.json`.
+
+## Round trace pruning
+
+Each observer game writes a heavy `<round>/observer-traces/<gameId>/` subtree
+(per-turn snapshots, optional HTML, merged trace). Fitness scoring only needs
+the final snapshot and `run-summary.json`, both read during scoring; no other
+stage (prior-winner loading, generation artifacts, resume) reads observer
+traces. For long runs (high `max_turns`) this subtree dominates disk usage and
+can exhaust the volume.
+
+When `prune_observer_traces` is `true`, the runner deletes
+`<round>/observer-traces/` immediately after each game is scored (whether or not
+the game produced a valid fitness), retaining the lightweight round inputs
+(`setup.json`, `profiles/`, `capitals.json`). When `false` (default), all traces
+are retained for inspection. Pruning does not alter fitness values, per-slot
+generation fitness, opponent rosters, or any determinism guarantees.
 
 ## Genetic operators
 
@@ -256,6 +273,23 @@ re-running games.
   the subject profile is never seated as an opponent and every eligible prior
   winner (up to the six seats) is seated before blessed/default/randomized
   fallback fill.
+
+### Round trace pruning ACs
+
+- Given a `ga-config.json` with no `prune_observer_traces` key, when
+  `GaConfig.fromJson` parses it, then `config.pruneObserverTraces` is `false`
+  and the resolved config serializes (`toJson`) with `prune_observer_traces`
+  equal to `false`.
+- Given a `ga-config.json` with `prune_observer_traces: true`, when
+  `GaConfig.fromJson` parses it, then `config.pruneObserverTraces` is `true` and
+  round-trips through `toJson`/`fromJson` and run-state resume unchanged.
+- Given `prune_observer_traces` is `true`, when a round game has been scored,
+  then the runner deletes `<round>/observer-traces/` while retaining
+  `<round>/setup.json`, `<round>/profiles/`, and `<round>/capitals.json`, and
+  the computed per-slot fitness is identical to a run with
+  `prune_observer_traces` set to `false`.
+- Given `prune_observer_traces` is `false` (default), when a round game has been
+  scored, then the runner retains `<round>/observer-traces/`.
 
 ### Master seed resolution ACs (Refs #3486)
 

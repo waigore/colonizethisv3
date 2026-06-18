@@ -82,7 +82,7 @@ melos run ga_runner -- --help
 
 **Options**
 
-- `--config <path>` — start a new GA run (`ga-config.json`; see SPEC/program/ga-runner.md). The top-level `seed` is optional: omit it to generate a master seed from entropy (the resolved seed is logged at run start as `ga:master_seed seed=<n> source=entropy` and persisted in `run-state.json`)
+- `--config <path>` — start a new GA run (`ga-config.json`; see SPEC/program/ga-runner.md). The top-level `seed` is optional: omit it to generate a master seed from entropy (the resolved seed is logged at run start as `ga:master_seed seed=<n> source=entropy` and persisted in `run-state.json`). Set `"prune_observer_traces": true` to delete each round's heavy `observer-traces` subtree after scoring (keeps disk usage bounded for long/high-`max_turns` runs; fitness is unchanged)
 - `--resume <dir>` — resume from `run-state.json` under a prior run directory (reuses the persisted master seed; never regenerates)
 - `bless` — copy a completed-run profile into `app/assets/profiles/` and update `manifest.json` (Refs **#3444**)
 - `compare` — side-by-side fitness curves and best-overall parameter diff between runs

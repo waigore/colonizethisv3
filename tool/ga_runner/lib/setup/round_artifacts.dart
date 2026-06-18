@@ -54,6 +54,20 @@ Future<void> materializeMultiPlayerRoundArtifacts({
   );
 }
 
+/// Deletes the heavy `observer-traces` subtree under [roundDir].
+///
+/// Safe to call after a game has been scored: fitness reads the final snapshot
+/// and `run-summary.json` during scoring, and nothing downstream
+/// (prior-winner loading, generation artifacts) reads observer traces. The
+/// lightweight round inputs (`setup.json`, `profiles/`, `capitals.json`) are
+/// retained. Returns `true` when a trace directory existed and was removed.
+Future<bool> pruneRoundObserverTraces(String roundDir) async {
+  final traceRoot = Directory('$roundDir/observer-traces');
+  if (!traceRoot.existsSync()) return false;
+  await traceRoot.delete(recursive: true);
+  return true;
+}
+
 Map<String, String> readCapitalProvinces(String roundDir) {
   final file = File('$roundDir/capitals.json');
   if (!file.existsSync()) return const <String, String>{};
