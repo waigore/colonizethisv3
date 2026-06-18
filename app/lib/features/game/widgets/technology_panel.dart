@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/themes.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/tech_ui_helpers.dart';
@@ -114,7 +115,12 @@ class TechnologyPanel extends StatelessWidget {
         // ordering and matches the mockup body markup in
         // SPEC/ui/mockups/GAME40001-technology-panel.html where
         // `.researched-heading` precedes `.slots-heading`. Refs #2864 S0/S6.
-        CtSectionLabel(l10n.technologyPanel_researchedTechsHeading),
+        // The two canonical Slots-tab headings use the mockup-faithful
+        // accent display-font `TechSectionHeading` (mockup
+        // `.researched-heading` / `.slots-heading`) rather than the small-caps
+        // `CtSectionLabel` chrome; per the issue source-of-truth precedence
+        // the mockup wins on this purely visual heading detail. Refs #3510.
+        TechSectionHeading(l10n.technologyPanel_researchedTechsHeading),
         const SizedBox(height: 6),
         if (researchedIds.isEmpty)
           Text(
@@ -136,7 +142,7 @@ class TechnologyPanel extends StatelessWidget {
         const SizedBox(height: 16),
         const CtBrassDivider(),
         const SizedBox(height: 12),
-        CtSectionLabel(l10n.technologyPanel_researchSlotsHeading),
+        TechSectionHeading(l10n.technologyPanel_researchSlotsHeading),
         const SizedBox(height: 6),
         // Stretch every slot card to the full panel content width so the
         // locked Slot 4 placeholder is the same width as the active Slots
@@ -364,6 +370,51 @@ LinearGradient _technologyDarkSurfaceGradient() {
       EditorialMonoclePalette.surface,
     ],
   );
+}
+
+/// Mockup-faithful section heading for the Slots-tab canonical sections
+/// (`Researched Techs`, `Research Slots`).
+///
+/// Mirrors the mockup `.researched-heading` / `.slots-heading` style
+/// (`SPEC/ui/mockups/GAME40001-technology-panel.html`): the Cinzel display
+/// family at [fontSize] / [fontWeight], `--accent` colour, `0.04em`
+/// letter-spacing, and the literal heading text (NOT the small-caps
+/// upper-cased treatment used by `CtSectionLabel`). Per the issue
+/// source-of-truth precedence the mockup is canonical for this purely visual
+/// heading detail, so these two headings diverge from the app-wide
+/// `CtSectionLabel` chrome. SPEC/ui/technology-panel.md § Slots tab — section
+/// ordering. Refs #3510.
+class TechSectionHeading extends StatelessWidget {
+  const TechSectionHeading(this.text, {super.key});
+
+  final String text;
+
+  /// Heading font size in logical px (mockup `.researched-heading`
+  /// `font-size: clamp(11px,1.5vw,13px)` upper bound).
+  @visibleForTesting
+  static const double fontSize = 13;
+
+  /// Heading weight (mockup `font-weight:600`).
+  @visibleForTesting
+  static const FontWeight fontWeight = FontWeight.w600;
+
+  /// Letter spacing in logical px (`0.04em` of [fontSize]).
+  @visibleForTesting
+  static const double letterSpacing = fontSize * 0.04;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontFamily: editorialMonocleDisplayFontFamily,
+        color: EditorialMonoclePalette.accent,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+      ),
+    );
+  }
 }
 
 /// Active research slot card chrome (flat editorial-monocle surface +

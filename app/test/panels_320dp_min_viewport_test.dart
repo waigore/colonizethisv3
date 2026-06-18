@@ -378,7 +378,7 @@ void main() {
           // Debug-init player has three active slots + locked slot 4 (University).
           expect(find.byType(ResearchSlotCard), findsNWidgets(3));
           expect(find.byType(LockedResearchSlotCard), findsOneWidget);
-          expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+          expect(find.text('Researched Techs'), findsOneWidget);
         },
       );
 

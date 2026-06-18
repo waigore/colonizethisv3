@@ -42,10 +42,14 @@ The body of the Slots tab MUST render the following sections in this top-to-bott
 
 The Slots tab body MUST NOT render a dev-only panel header block. The mockup `.content` block opens directly with `.researched-heading`; there is no per-player title or slot-count line above it. Specifically, the body MUST NOT render the legacy `technologyPanel_title` (`"Technology - {playerName}"`) line nor the legacy `technologyPanel_researchSlotsCount` (`"Research slots: {slots}"`) line. The player identity and the `Technology` title are already carried by the `CtTopBar` chrome (§ Top bar). Refs #3510.
 
-1. **Researched Techs** — `CtSectionLabel` heading (`technologyPanel_researchedTechsHeading`) followed by the read-only `ResearchedTechChip` `Wrap` grid (or the empty-state line when the player has no researched techs).
+1. **Researched Techs** — `TechSectionHeading` heading (`technologyPanel_researchedTechsHeading`) followed by the read-only `ResearchedTechChip` `Wrap` grid (or the empty-state line when the player has no researched techs).
 2. **Section divider** — a single `CtBrassDivider` separates the Researched Techs block from the Research Slots block below it.
-3. **Research Slots** — `CtSectionLabel` heading (`technologyPanel_researchSlotsHeading`) followed by the four slot cards per § Slot behaviour.
-4. **In-progress techs (optional, auxiliary)** — When `Player.researchProgressByTechId` is non-empty, an auxiliary `In progress` block renders at the bottom of the panel below the Research Slots section.
+3. **Research Slots** — `TechSectionHeading` heading (`technologyPanel_researchSlotsHeading`) followed by the four slot cards per § Slot behaviour.
+4. **In-progress techs (optional, auxiliary)** — When `Player.researchProgressByTechId` is non-empty, an auxiliary `In progress` block renders at the bottom of the panel below the Research Slots section. This auxiliary block is absent from the mockup and retains the app-wide `CtSectionLabel` chrome; only the two canonical headings (1) and (3) use the mockup-faithful `TechSectionHeading`.
+
+#### Slots tab — canonical heading style (normative, Refs #3510)
+
+The two canonical Slots-tab section headings (`Researched Techs`, `Research Slots`) render via `TechSectionHeading` (`app/lib/features/game/widgets/technology_panel.dart`), matching the mockup `.researched-heading` / `.slots-heading` style in [`mockups/GAME40001-technology-panel.html`](mockups/GAME40001-technology-panel.html): the Cinzel display family (`editorialMonocleDisplayFontFamily`) at `13` logical px, weight `600`, `0.04em` letter spacing, `EditorialMonoclePalette.accent` colour, and the literal heading text. These headings do **not** use the small-caps upper-cased `CtSectionLabel` chrome used elsewhere in the app. Per § Source-of-truth precedence (issue #3510) the mockup is canonical for this purely visual heading detail, so the Technology Slots headings deliberately diverge from the cross-panel `CtSectionLabel` convention. Rendering these headings via `CtSectionLabel` (small-caps, `--muted`, brass underline) is a regression.
 
 Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassDivider` placement that visually swaps the two sections — is a regression. Refs #2864 S0/S6.
 
@@ -81,6 +85,7 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 ## Components
 
 - Technology screen widgets, choose-tech dialog, [tech-tree-widget.md](tech-tree-widget.md).
+- `TechSectionHeading` (`app/lib/features/game/widgets/technology_panel.dart`) — mockup-faithful accent display-font heading for the two canonical Slots-tab sections (Refs #3510); see § Slots tab — canonical heading style.
 - `SlotFundingToggleRow` (`app/lib/features/game/widgets/technology_slot_funding_toggles.dart`) — compact five-button per-slot research-funding selector (Refs #3512). Pure-helper `applySetSlotFunding` (`technology_panel_orders.dart`) returns the updated `Orders` for the dispatch callback.
 
 ---
@@ -186,7 +191,9 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 
 - **No funding toggles on empty slot (Refs #3512):** **Given** an active slot card with no assigned tech (no `ResearchOrder` for that slot) rendered with editing enabled, **when** the slot body builds, **then** the UI layer renders the empty-state line and no `SlotFundingToggleRow` (funding is meaningless without an assigned tech).
 
-- **Slots tab section ordering (Refs #2864 S0/S6):** **Given** the Slots tab is rendered for any player on any viewport, **when** the body widget tree is laid out, **then** the `CtSectionLabel` carrying the localized `technologyPanel_researchedTechsHeading` text appears at a strictly smaller vertical offset (smaller `Offset.dy`) than the `CtSectionLabel` carrying the localized `technologyPanel_researchSlotsHeading` text, matching the mockup body markup (`SPEC/ui/mockups/GAME40001-technology-panel.html`: `.researched-heading` precedes `.slots-heading`).
+- **Slots tab section ordering (Refs #2864 S0/S6):** **Given** the Slots tab is rendered for any player on any viewport, **when** the body widget tree is laid out, **then** the `TechSectionHeading` carrying the localized `technologyPanel_researchedTechsHeading` text appears at a strictly smaller vertical offset (smaller `Offset.dy`) than the `TechSectionHeading` carrying the localized `technologyPanel_researchSlotsHeading` text, matching the mockup body markup (`SPEC/ui/mockups/GAME40001-technology-panel.html`: `.researched-heading` precedes `.slots-heading`).
+
+- **Mockup-faithful section heading style (Refs #3510):** **Given** the Slots tab is rendered for any player, **when** the two canonical section headings build, **then** the UI layer renders each of `technologyPanel_researchedTechsHeading` and `technologyPanel_researchSlotsHeading` inside a `TechSectionHeading` whose `Text` carries the literal (non-upper-cased) heading string, resolves its colour to `EditorialMonoclePalette.accent`, uses the `editorialMonocleDisplayFontFamily` (Cinzel) display family, and uses `FontWeight.w600`; the UI layer renders neither canonical heading via `CtSectionLabel` (no small-caps upper-cased `RESEARCHED TECHS` / `RESEARCH SLOTS` text for these two headings).
 
 - **No dev-only panel header block (Refs #3510):** **Given** the Slots tab is rendered for any player on any viewport, **when** the panel body widget tree is inspected, **then** the UI layer renders no `Text` carrying the localized `technologyPanel_title` (`"Technology - {playerName}"`) string and no `Text` carrying the localized `technologyPanel_researchSlotsCount` (`"Research slots: {slots}"`) string, matching the mockup which opens directly with the `Researched Techs` heading.
 
