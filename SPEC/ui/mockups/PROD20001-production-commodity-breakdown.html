@@ -20,7 +20,11 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 .dialog{position:relative;z-index:1;width:min(96vw,720px);max-height:90vh;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 8%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:16px;display:flex;flex-direction:column}
 .dialog h3{font-family:var(--font-display);font-size:clamp(16px,2.2vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center;margin-bottom:12px}
 .table-wrap{flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{border-collapse:collapse;width:100%;min-width:600px}
+table{border-collapse:collapse;width:100%;min-width:600px;table-layout:fixed}
+/* Wide-path column distribution (Refs #3509): Commodity column gets a larger
+   share (~2x); the five phase columns + Total share the remainder evenly. */
+th:first-child,td:first-child{width:25%}
+th:not(:first-child),td:not(:first-child){width:12.5%}
 th{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:8px 10px;border-bottom:2px solid var(--accent-dim);background:var(--surface);position:sticky;top:0}
 th:first-child{text-align:left}
 .section-hdr td{font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent-dim);padding:10px 10px 6px;background:var(--bg-deep);border-bottom:1px solid var(--border)}

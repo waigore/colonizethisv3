@@ -148,9 +148,14 @@ function renderAll(){
     return `<div class="tech-chip">${icn(t.iconFile)}<span>${t.name}</span></div>`;
   }).join('');
 
-  const maxSlots=variant==='all'?4:3;
+  // Active slot count: 4 with University (the `all` variant), otherwise 3.
+  // The slots container always renders exactly four cards in slot-index
+  // order — the active slots followed by a locked Slot 4 placeholder when
+  // the player has fewer than four active slots — matching
+  // SPEC/ui/technology-panel.md § Slot behaviour. Refs #3510.
+  const activeSlots=variant==='all'?4:3;
   let slotsHtml='';
-  for(let i=1;i<=maxSlots;i++){
+  for(let i=1;i<=activeSlots;i++){
     const assigned=currentResearch[i];
     const t=assigned?techCatalog.find(x=>x.id===assigned.tech):null;
     const pct=assigned?(assigned.progress/assigned.cost*100):0;
@@ -170,11 +175,15 @@ function renderAll(){
         </div>
       `:`<div class="slot-empty">No tech assigned</div>`}
     </div>`;
-    if(i>=3&&variant==='all')slotsHtml+=`<div class="slot-card" style="opacity:.45">
-      <div class="slot-header"><span class="slot-label">Slot 4 (University)</span></div>
-      <div class="slot-empty">Requires University tech</div>
-    </div>`;
   }
+  // Locked Slot 4 placeholder: rendered exactly once when fewer than four
+  // active slots exist (default / empty variants), at the same card width
+  // as Slots 1–3. The `all` variant already renders a live Slot 4 above and
+  // therefore renders no locked placeholder. Refs #3510.
+  if(activeSlots<4)slotsHtml+=`<div class="slot-card" style="opacity:.45">
+    <div class="slot-header"><span class="slot-label">Slot 4 (University)</span></div>
+    <div class="slot-empty">Requires University tech</div>
+  </div>`;
   document.getElementById('slots-container').innerHTML=slotsHtml;
 }
 

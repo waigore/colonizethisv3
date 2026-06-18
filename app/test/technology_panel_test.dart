@@ -21,7 +21,9 @@ void main() {
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
 
-  testWidgets('TechnologyPanel builds and shows player name and research slots', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel builds and omits the dev-only header block (Refs #3510)',
+    (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -36,10 +38,12 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(TechnologyPanel), findsOneWidget);
-    expect(find.textContaining(player.displayName), findsOneWidget);
-    expect(find.textContaining('Research slots:'), findsOneWidget);
-    // Dark theme uses an explicit section heading, not a count line, for
-    // the researched-techs grid (Refs #2864 S2).
+    // SPEC/ui/technology-panel.md § Slots tab — section ordering: the body
+    // MUST NOT render the legacy dev-only header block (per-player title
+    // `Technology - {name}` or `Research slots: N` count line). Refs #3510.
+    expect(find.textContaining('Technology - '), findsNothing);
+    expect(find.textContaining('Research slots:'), findsNothing);
+    // Body opens directly with the Researched Techs section heading.
     expect(find.text('RESEARCHED TECHS'), findsOneWidget);
     expect(find.text('None yet'), findsOneWidget);
   });
@@ -149,7 +153,9 @@ void main() {
     expect(find.textContaining('RP'), findsOneWidget);
   });
 
-  testWidgets('TechnologyPanel shows custom research slots when set', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel omits the research-slot count line even at 4 slots (Refs #3510)',
+    (WidgetTester tester) async {
     const slots = 4;
     final withSlots = player.copyWith(researchSlots: slots);
     final gameWithSlots = game.copyWith(
@@ -168,7 +174,57 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Research slots: $slots'), findsOneWidget);
+    // The dev-only count line is removed regardless of slot count; with
+    // 4 active slots there is also no locked placeholder. Refs #3510.
+    expect(find.textContaining('Research slots:'), findsNothing);
+    expect(find.byType(ResearchSlotCard), findsNWidgets(4));
+    expect(find.byType(LockedResearchSlotCard), findsNothing);
+  });
+
+  testWidgets(
+    'Locked Slot 4 renders the same width as the active slot cards (Refs #3510)',
+    (WidgetTester tester) async {
+    final withLockedSlot = player.copyWith(researchSlots: 3);
+    final gameWithLockedSlot = game.copyWith(
+      players: [withLockedSlot, ...game.players.skip(1)],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 600,
+            child: SingleChildScrollView(
+              child: TechnologyPanel(
+                game: gameWithLockedSlot,
+                player: withLockedSlot,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ResearchSlotCard), findsNWidgets(3));
+    expect(find.byType(LockedResearchSlotCard), findsOneWidget);
+
+    final double lockedWidth =
+        tester.getSize(find.byType(LockedResearchSlotCard)).width;
+    final List<double> activeWidths = <double>[
+      for (final element in find.byType(ResearchSlotCard).evaluate())
+        tester.getSize(find.byWidget(element.widget)).width,
+    ];
+    expect(activeWidths, isNotEmpty);
+    for (final double activeWidth in activeWidths) {
+      expect(
+        (lockedWidth - activeWidth).abs(),
+        lessThanOrEqualTo(1.0),
+        reason:
+            'SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4: '
+            'the locked Slot 4 card must render at the same width as the '
+            'active slot cards (Refs #3510).',
+      );
+    }
   });
 
   testWidgets('TechnologyPanel "Choose tech" shows no-techs modal when none available',

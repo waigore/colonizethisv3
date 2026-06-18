@@ -87,18 +87,12 @@ class TechnologyPanel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.technologyPanel_title(player.displayName),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.technologyPanel_researchSlotsCount(slots),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: EditorialMonoclePalette.muted,
-              ),
-        ),
-        const SizedBox(height: 12),
+        // No dev-only panel header block: the per-player title and the
+        // research-slot count line are intentionally omitted so the Slots
+        // tab body opens directly with the Researched Techs heading, matching
+        // the mockup (`SPEC/ui/mockups/GAME40001-technology-panel.html` opens
+        // with `.researched-heading`). Player identity and the `Technology`
+        // title are carried by the `CtTopBar` chrome. Refs #3510.
         // Researched Techs renders ABOVE Research Slots per
         // SPEC/ui/technology-panel.md § Layout / wireframe > Body section
         // ordering and matches the mockup body markup in
@@ -128,7 +122,13 @@ class TechnologyPanel extends StatelessWidget {
         const SizedBox(height: 12),
         CtSectionLabel(l10n.technologyPanel_researchSlotsHeading),
         const SizedBox(height: 6),
+        // Stretch every slot card to the full panel content width so the
+        // locked Slot 4 placeholder is the same width as the active Slots
+        // 1–3 (mockup `.slot-card` is a full-width block element).
+        // SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4.
+        // Refs #3510.
         Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: List.generate(
             kTechnologyResearchSlotCount,
             (index) => _buildResearchSlot(
