@@ -33,12 +33,21 @@ class UnitsEntityActionRow extends StatelessWidget {
     this.iconOnlyBreakpoint = 280,
     this.spacing = 6,
     this.dense = false,
+    this.chrome = true,
   });
 
   final Widget details;
   final List<UnitsEntityAction> actions;
   final double iconOnlyBreakpoint;
   final double spacing;
+
+  /// When `true` (default), the row paints its own [UnitsPanelRowChrome]
+  /// gradient + border surface — used by standalone rows. When `false`, the
+  /// row renders only its inner padded `Row`; the surrounding chrome is
+  /// supplied by an outer wrapper (the expandable [UnitsEntityCard] used by
+  /// the military / naval panels), so the border is not double-painted.
+  /// SPEC/ui/components/units-entity-action-row.md (issue #3514 AC-6).
+  final bool chrome;
 
   /// When `true`, every action button renders at the compact inline-pill
   /// footprint defined for the naval-units panel mockup. The actions cluster
@@ -53,51 +62,56 @@ class UnitsEntityActionRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final iconOnly = constraints.maxWidth < iconOnlyBreakpoint;
+        final row = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: details),
+            if (actions.isNotEmpty) ...[
+              SizedBox(width: dense ? spacing : 8),
+              Flexible(
+                fit: FlexFit.loose,
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: dense
+                      ? LayoutBuilder(
+                          builder: (context, denseConstraints) {
+                            // Dense Row cannot wrap; if the actions cluster
+                            // alone is narrower than [denseIconOnlyBreakpoint]
+                            // (label + icon footprint per the mockup), fall
+                            // back to icon-only across the whole cluster so
+                            // it stays on one line. R25 spec explicitly
+                            // permits "Narrow icon-only fallback below the
+                            // existing iconOnlyBreakpoint".
+                            final denseIconOnly =
+                                iconOnly ||
+                                denseConstraints.maxWidth <
+                                    _denseIconOnlyBreakpoint(actions.length);
+                            return _buildDenseActionsRow(
+                              actions: actions,
+                              forceIconOnly: denseIconOnly,
+                            );
+                          },
+                        )
+                      : _buildDefaultActionsWrap(
+                          actions: actions,
+                          iconOnly: iconOnly,
+                        ),
+                ),
+              ),
+            ],
+          ],
+        );
+        const padding = EdgeInsets.symmetric(
+          horizontal: CtSpacing.m,
+          vertical: 6,
+        );
+        if (!chrome) {
+          return Padding(padding: padding, child: row);
+        }
         return UnitsPanelRowChrome(
           margin: EdgeInsets.zero,
-          padding: const EdgeInsets.symmetric(
-            horizontal: CtSpacing.m,
-            vertical: 6,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: details),
-              if (actions.isNotEmpty) ...[
-                SizedBox(width: dense ? spacing : 8),
-                Flexible(
-                  fit: FlexFit.loose,
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: dense
-                        ? LayoutBuilder(
-                            builder: (context, denseConstraints) {
-                              // Dense Row cannot wrap; if the actions cluster
-                              // alone is narrower than [denseIconOnlyBreakpoint]
-                              // (label + icon footprint per the mockup), fall
-                              // back to icon-only across the whole cluster so
-                              // it stays on one line. R25 spec explicitly
-                              // permits "Narrow icon-only fallback below the
-                              // existing iconOnlyBreakpoint".
-                              final denseIconOnly =
-                                  iconOnly ||
-                                  denseConstraints.maxWidth <
-                                      _denseIconOnlyBreakpoint(actions.length);
-                              return _buildDenseActionsRow(
-                                actions: actions,
-                                forceIconOnly: denseIconOnly,
-                              );
-                            },
-                          )
-                        : _buildDefaultActionsWrap(
-                            actions: actions,
-                            iconOnly: iconOnly,
-                          ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+          padding: padding,
+          child: row,
         );
       },
     );
