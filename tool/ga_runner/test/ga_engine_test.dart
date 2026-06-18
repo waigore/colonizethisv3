@@ -210,6 +210,92 @@ void main() {
       }
     });
 
+    test('prune_observer_traces deletes traces, keeps inputs and fitness',
+        () async {
+      final seedsDir = await _seedDir();
+      final prunedRun = await Directory.systemTemp.createTemp('ga_run_prune_');
+      final keptRun = await Directory.systemTemp.createTemp('ga_run_keep_');
+      try {
+        final prunedConfig = testGaConfig(
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: testTwoPlayerSetup(),
+          outputDir: prunedRun.parent.path,
+          pruneObserverTraces: true,
+        );
+        final keptConfig = testGaConfig(
+          seedProfilesDir: seedsDir,
+          gameSetupConfig: testTwoPlayerSetup(),
+          outputDir: keptRun.parent.path,
+        );
+        expect(
+          await GaEngine(
+            repoRoot: Directory.current.path,
+            config: prunedConfig,
+            runDir: prunedRun.path,
+            observerRunner: const _FakeObserverRunner(),
+          ).runFresh(runId: 'ga-run-prune'),
+          0,
+        );
+        expect(
+          await GaEngine(
+            repoRoot: Directory.current.path,
+            config: keptConfig,
+            runDir: keptRun.path,
+            observerRunner: const _FakeObserverRunner(),
+          ).runFresh(runId: 'ga-run-keep'),
+          0,
+        );
+
+        final prunedGen = Directory(p.join(prunedRun.path, 'gen-000'));
+        final roundDirs = prunedGen
+            .listSync()
+            .whereType<Directory>()
+            .toList();
+        expect(roundDirs, isNotEmpty);
+        for (final round in roundDirs) {
+          expect(
+            Directory(p.join(round.path, 'observer-traces')).existsSync(),
+            isFalse,
+            reason: 'traces should be pruned in ${round.path}',
+          );
+          expect(File(p.join(round.path, 'setup.json')).existsSync(), isTrue);
+          expect(
+            Directory(p.join(round.path, 'profiles')).existsSync(),
+            isTrue,
+          );
+          expect(
+            File(p.join(round.path, 'capitals.json')).existsSync(),
+            isTrue,
+          );
+        }
+
+        final keptGen = Directory(p.join(keptRun.path, 'gen-000'));
+        for (final round in keptGen.listSync().whereType<Directory>()) {
+          expect(
+            Directory(p.join(round.path, 'observer-traces')).existsSync(),
+            isTrue,
+            reason: 'traces should be retained by default in ${round.path}',
+          );
+        }
+
+        final prunedState = loadRunState(prunedRun.path);
+        final keptState = loadRunState(keptRun.path);
+        final prunedFitness = <String, List<double>>{
+          for (final m in prunedState.population)
+            m.slotId: List<double>.from(m.fitnessHistory),
+        };
+        final keptFitness = <String, List<double>>{
+          for (final m in keptState.population)
+            m.slotId: List<double>.from(m.fitnessHistory),
+        };
+        expect(prunedFitness, keptFitness);
+      } finally {
+        await Directory(seedsDir).delete(recursive: true);
+        await prunedRun.delete(recursive: true);
+        await keptRun.delete(recursive: true);
+      }
+    });
+
     test('exports best-overall profile at run completion', () async {
       final seedsDir = await _seedDir();
       final runDir = await Directory.systemTemp.createTemp('ga_run_best_');

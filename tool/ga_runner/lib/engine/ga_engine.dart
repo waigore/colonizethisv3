@@ -478,7 +478,7 @@ class GaEngine {
       maxTurns: config.maxTurns,
       seed: gameSeed,
     );
-    return _scoreGame(
+    final score = _scoreGame(
       observerResult: observerResult,
       roundDir: roundDir,
       subjectSlotId: profileSlotId,
@@ -486,6 +486,16 @@ class GaEngine {
       gameIndex: gameIndex,
       stageLabel: stageLabel,
     );
+    if (config.pruneObserverTraces) {
+      final pruned = await pruneRoundObserverTraces(roundDir);
+      if (pruned) {
+        _log.i(
+          'ga:traces_pruned stage=$stageLabel generation=$generation '
+          'profile=$profileSlotId game=$gameIndex',
+        );
+      }
+    }
+    return score;
   }
 
   double? _scoreGame({
