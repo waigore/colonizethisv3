@@ -1837,6 +1837,26 @@
   "@technologyPanel_slotCancelled": {
     "description": "Snackbar shown when a research slot assignment is removed."
   },
+  "technologyPanel_fundingNone": "None",
+  "@technologyPanel_fundingNone": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.none (Refs #3512)."
+  },
+  "technologyPanel_fundingLow": "Low",
+  "@technologyPanel_fundingLow": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.low (Refs #3512)."
+  },
+  "technologyPanel_fundingMedium": "Medium",
+  "@technologyPanel_fundingMedium": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.medium (Refs #3512)."
+  },
+  "technologyPanel_fundingHigh": "High",
+  "@technologyPanel_fundingHigh": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.high (Refs #3512)."
+  },
+  "technologyPanel_fundingMaximum": "Maximum",
+  "@technologyPanel_fundingMaximum": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.maximum (Refs #3512)."
+  },
   "techTree_noTechsInCatalog": "No techs in catalog",
   "@techTree_noTechsInCatalog": {
     "description": "Tech tree empty-state text."

@@ -294,6 +294,42 @@ Orders applyAssignTechToSlot({
   return currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
 }
 
+/// Returns an `Orders` value with the `ResearchOrder` at [slotIndex] for
+/// [humanPlayerId] updated to use [funding], preserving the slot's `techId`.
+/// When no order exists at [slotIndex] (an empty slot), the orders are
+/// returned unchanged so funding cannot be set on an unassigned slot.
+///
+/// SPEC/ui/technology-panel.md § Slot behaviour > Slot funding controls
+/// (Refs #3512).
+Orders applySetSlotFunding({
+  required Orders currentOrders,
+  required String humanPlayerId,
+  required int slotIndex,
+  required ResearchFundingLevel funding,
+}) {
+  final existing =
+      currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
+      const <ResearchOrder>[];
+  final ordersForPlayer = List<ResearchOrder>.from(existing);
+  final existingIndex = ordersForPlayer.indexWhere(
+    (o) => o.slotIndex == slotIndex,
+  );
+  if (existingIndex < 0) {
+    return currentOrders;
+  }
+  final previous = ordersForPlayer[existingIndex];
+  ordersForPlayer[existingIndex] = ResearchOrder(
+    slotIndex: previous.slotIndex,
+    techId: previous.techId,
+    funding: funding,
+  );
+  final updatedMap = {
+    ...currentOrders.researchOrdersByPlayerId,
+    humanPlayerId: ordersForPlayer,
+  };
+  return currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
+}
+
 /// Removes the `ResearchOrder` at [slotIndex] for [humanPlayerId], shows
 /// a transient snackbar confirmation when a `ScaffoldMessenger` is in
 /// scope, and dispatches the updated `Orders` via `onOrdersChanged`.

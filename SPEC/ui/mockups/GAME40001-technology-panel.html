@@ -57,6 +57,10 @@ html{overflow-y:auto;scroll-behavior:smooth}
 .prog-bar{flex:1;height:clamp(4px,.6vh,5px);background:var(--bg-deep);border:1px solid var(--border);border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent-dim);border-radius:1px;transition:width .3s}
 .slot-progress span{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--accent-dim);white-space:nowrap}
+.slot-funding{display:flex;gap:4px;flex-wrap:wrap;margin-top:clamp(4px,.7vh,6px)}
+.fund-btn{padding:2px 8px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font-display);font-size:10px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.fund-btn:hover{color:var(--accent-bright)}
+.fund-btn.active{border-color:var(--accent);background:oklch(0.70 0.13 86 / .18);color:var(--accent-bright)}
 
 .tech-dialog{display:none;position:fixed;inset:0;z-index:100;background:oklch(8% 0.01 30 / .6);align-items:center;justify-content:center;padding:20px}
 .tech-dialog.show{display:flex}
@@ -169,6 +173,13 @@ function renderAll(){
       </div>
       ${assigned?`
         <div class="slot-tech">${icn(t.iconFile)} ${t.name}</div>
+        <div class="slot-funding">
+          ${['None','Low','Medium','High','Maximum'].map(level=>{
+            const lv=level.toLowerCase();
+            const active=(assigned.funding||'medium')===lv?' active':'';
+            return `<button class="fund-btn${active}" onclick="selectFunding(${i},'${lv}')">${level}</button>`;
+          }).join('')}
+        </div>
         <div class="slot-progress">
           <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
           <span>${assigned.progress} / ${assigned.cost} RP</span>
@@ -217,9 +228,17 @@ function openChooseTech(slot){
 
 function assignTech(slot,techId){
   const t=techCatalog.find(x=>x.id===techId);
-  currentResearch[slot]={tech:techId,progress:Math.floor(Math.random()*parseInt(t.cost)*0.6),cost:parseInt(t.cost)};
+  currentResearch[slot]={tech:techId,progress:Math.floor(Math.random()*parseInt(t.cost)*0.6),cost:parseInt(t.cost),funding:'medium'};
   updateReserved();
   document.getElementById('tech-dialog').classList.remove('show');
+  renderAll();
+}
+
+// Per-slot research funding selection (Refs #3512). Default Medium on new
+// assignment; selection persists until changed or the slot is cancelled.
+function selectFunding(slot,level){
+  if(!currentResearch[slot])return;
+  currentResearch[slot].funding=level;
   renderAll();
 }
 
@@ -233,7 +252,7 @@ function setVariant(v){
     currentResearch[1]=null;currentResearch[2]=null;currentResearch[3]=null;currentResearch[4]=null;
     unlockedTechs=['agriculture','workshop','militia','galleon','frigate','exploration','trade_consulate','embassy','line_infantry','dragoons','artillery','ship_of_the_line','steam_engine','guild_hall'];
   }else{
-    currentResearch[1]={tech:'guild_hall',progress:45,cost:150};
+    currentResearch[1]={tech:'guild_hall',progress:45,cost:150,funding:'medium'};
     currentResearch[2]=null;
     currentResearch[3]=null;
     currentResearch[4]=null;
