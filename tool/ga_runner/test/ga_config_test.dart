@@ -278,6 +278,37 @@ void main() {
       expect(disabled.sevenGpUseBlessedProfiles, isFalse);
     });
 
+    test('prune_observer_traces defaults to false and round-trips', () {
+      final defaulted = GaConfig.fromJson(<String, dynamic>{
+        'seed_profiles_dir': 'seeds/',
+        'seed': 7,
+        'game_player_count': 2,
+        'game_setup_config': <String, dynamic>{
+          'selectedGreatPowerIds': <String>['england', 'france'],
+          'minorNationCount': 3,
+          'tribeCount': 3,
+        },
+      });
+      expect(defaulted.pruneObserverTraces, isFalse);
+      expect(defaulted.toJson()['prune_observer_traces'], isFalse);
+
+      final enabled = GaConfig.fromJson(<String, dynamic>{
+        'seed_profiles_dir': 'seeds/',
+        'seed': 7,
+        'game_player_count': 2,
+        'prune_observer_traces': true,
+        'game_setup_config': <String, dynamic>{
+          'selectedGreatPowerIds': <String>['england', 'france'],
+          'minorNationCount': 3,
+          'tribeCount': 3,
+        },
+      });
+      expect(enabled.pruneObserverTraces, isTrue);
+      expect(enabled.toJson()['prune_observer_traces'], isTrue);
+      final roundTripped = GaConfig.fromJson(enabled.toJson());
+      expect(roundTripped.pruneObserverTraces, isTrue);
+    });
+
     test('accepts random seven_gp_opponent_selection (Refs #3488)', () {
       final config = GaConfig.fromJson(<String, dynamic>{
         'seed_profiles_dir': 'seeds/',
