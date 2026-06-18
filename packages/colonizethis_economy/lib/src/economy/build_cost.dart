@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'cost_check.dart';
+
 /// Shared build-order cost and eligibility. Single source of truth for validation
 /// and application. SPEC/program/orders.md § Build orders.
 /// Used by BuildOrderValidator and orders_application.
@@ -97,20 +99,33 @@ typedef _BuildDeductionPlan = ({
   required bool requiresPeasant,
   required bool subtractOnePeasant,
 }) {
-  if (unlockingTechId != null &&
-      (player.techUnlocked?[unlockingTechId] != true)) {
-    return (failReason: 'Required technology not unlocked', plan: null);
-  }
-  if (requiresPeasant && workers.peasants <= 0) {
-    return (failReason: 'Insufficient workers', plan: null);
-  }
-  if (treasury < buildTreasuryCost) {
-    return (failReason: 'Insufficient treasury', plan: null);
-  }
-  for (final e in buildInputs.entries) {
-    if (stockpile.quantityOf(e.key) < e.value) {
-      return (failReason: 'Insufficient materials', plan: null);
-    }
+  // Canonical order, first failure: tech → workers → treasury → materials.
+  // Shared with recruit-worker affordability via [checkPreconditionsInOrder]
+  // (Refs #3517 Cluster 2).
+  final failReason = checkPreconditionsInOrder([
+    (
+      failReason: 'Required technology not unlocked',
+      check: () =>
+          unlockingTechId == null ||
+          player.techUnlocked?[unlockingTechId] == true,
+    ),
+    (
+      failReason: 'Insufficient workers',
+      check: () => !(requiresPeasant && workers.peasants <= 0),
+    ),
+    (
+      failReason: 'Insufficient treasury',
+      check: () => treasury >= buildTreasuryCost,
+    ),
+    (
+      failReason: 'Insufficient materials',
+      check: () => buildInputs.entries.every(
+        (e) => stockpile.quantityOf(e.key) >= e.value,
+      ),
+    ),
+  ]);
+  if (failReason != null) {
+    return (failReason: failReason, plan: null);
   }
   return (
     failReason: null,

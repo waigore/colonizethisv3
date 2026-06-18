@@ -153,19 +153,21 @@ class DealMatcher {
     );
     final bidStatesByFaction = _indexOrdersByFaction(inputs.bidsByFactionId);
 
+    // Pre-build the per-commodity views once (Refs #3517 Cluster 3) so the
+    // matching loop below is an O(1) lookup instead of re-scanning every order
+    // state for each commodity.
+    final offerStatesByCommodity = _indexStatesByCommodity(offerStatesByFaction);
+    final bidStatesByCommodity = _indexStatesByCommodity(bidStatesByFaction);
+
     final purchasedTileIndex = inputs.purchasedTileIndex;
     final firstRightEnabled =
         purchasedTileIndex != null && purchasedTileIndex.isNotEmpty;
 
     for (final commodityId in commodityIds) {
-      final commodityOffers = _orderedStatesForCommodity(
-        offerStatesByFaction,
-        commodityId,
-      );
-      final commodityBids = _orderedStatesForCommodity(
-        bidStatesByFaction,
-        commodityId,
-      );
+      final commodityOffers =
+          offerStatesByCommodity[commodityId] ?? const <_OrderState>[];
+      final commodityBids =
+          bidStatesByCommodity[commodityId] ?? const <_OrderState>[];
 
       final totalOfferQuantity = _sumInputQuantity(commodityOffers);
       final totalBidQuantity = _sumInputQuantity(commodityBids);
