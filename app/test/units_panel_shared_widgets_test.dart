@@ -77,6 +77,45 @@ void main() {
         expect(border.bottom, BorderSide.none);
       },
     );
+
+    testWidgets(
+      'bottomBorderMuted variant renders a 1dp --border bottom border '
+      'without CtSectionLabel (Refs #3514)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: RegionSectionHeader(
+                label: 'Old World',
+                variant: RegionHeaderVariant.bottomBorderMuted,
+              ),
+            ),
+          ),
+        );
+
+        // Civilian mockup `.region-heading` chrome: upper-cased muted label
+        // over a `var(--border)` bottom border (not the legacy CtSectionLabel
+        // `--accent-dim` border).
+        expect(find.text('OLD WORLD'), findsOneWidget);
+        expect(find.byType(CtSectionLabel), findsNothing);
+
+        final Text label = tester.widget<Text>(find.text('OLD WORLD'));
+        expect(label.style?.color, EditorialMonoclePalette.muted);
+        expect(label.style?.fontWeight, FontWeight.w600);
+
+        final DecoratedBox decoratedBox = tester.widget<DecoratedBox>(
+          find.descendant(
+            of: find.byType(RegionSectionHeader),
+            matching: find.byType(DecoratedBox),
+          ),
+        );
+        final Border border =
+            (decoratedBox.decoration as BoxDecoration).border! as Border;
+        expect(border.bottom.width, RegionSectionHeader.bottomBorderWidth);
+        expect(border.bottom.color, EditorialMonoclePalette.border);
+        expect(border.left, BorderSide.none);
+      },
+    );
   });
 
   group('LocationSectionHeader', () {
