@@ -8,7 +8,7 @@ This composite is **not** a screen and has **no** stable screen ID. It is the ca
 
 ## Purpose
 
-Consolidates the constrained-panel + `CtPanel` + `CtTopBar` + scrollable-list / empty-state chrome shared by the Civilian, Military, and Naval unit panels so each panel composes only its row content. Callers supply a title, optional trailing actions, the `hasContent` predicate, list children for the populated branch, and the `emptyMessage` for the empty branch; the composite owns the `ConstrainedBox`, outer `Padding`, `CtPanel`, `CtTopBar` (no back button), `ListView`, and the muted-italic empty-state copy. Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
+Consolidates the constrained-panel + `CtPanel` + `CtTopBar` + scrollable-list / empty-state chrome shared by the Civilian, Military, and Naval unit panels so each panel composes only its row content. Callers supply a title, trailing actions, `hasContent`, list children, and `emptyMessage`; the composite owns the `ConstrainedBox`, `Padding`, `CtPanel`, `CtTopBar` (no back button), `ListView`, and muted-italic empty copy. The outer modal bottom-sheet frame is the sibling [`UnitsPanelSheetSurface`](units-panel-sheet-surface.md). Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
 
 ---
 
@@ -107,6 +107,7 @@ Each consumer spec links back here for the chrome contract instead of redeclarin
 
 ## Related
 
+- Bottom-sheet host frame: [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md).
 - Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtPanel*, § *CtTopBar*, § *Editorial-monocle palette*.
 - Shared skeleton: [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md).
 - Hosting surfaces: [`empire-overview.md`](../empire-overview.md), [`in-game-shell-narrow.md`](../in-game-shell-narrow.md), [`mobile-adaptation.md`](../mobile-adaptation.md) § 7.
