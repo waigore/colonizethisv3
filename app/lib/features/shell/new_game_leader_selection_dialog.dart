@@ -14,9 +14,25 @@ import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 const int _kNumSlots = 6;
+
+/// Vertical gap between slot rows. Matches the mockup `.slots-list{gap:6px}`.
+const double _kSlotListGap = CtSpacing.s;
+
+/// Slot-row inner padding. Matches the mockup `.slot-row{padding:8px 10px}`
+/// (vertical 8 dp = [CtSpacing.m]; horizontal 10 dp is a per-component override
+/// not on the canonical spacing scale).
+const EdgeInsets _kSlotRowPadding = EdgeInsets.symmetric(
+  vertical: CtSpacing.m,
+  horizontal: 10,
+);
+
+/// Horizontal gap between the infinite-mode toggle and its label, also used to
+/// indent the helper text. Matches the mockup `.toggle-row{gap:10px}`.
+const double _kToggleLabelGap = 10;
 
 /// Shown when the shell emits `OpenDialogEvent('new_game_leader_selection')`.
 class NewGameLeaderSelectionDialog extends StatefulWidget {
@@ -208,11 +224,40 @@ class _NewGameLeaderSelectionDialogState
     return true;
   }
 
-  String _slotLabel(AppLocalizations l10n, int slotIndex) {
-    final slotNumber = slotIndex + 1;
-    return slotIndex == 0
-        ? l10n.shell_newGame_playerYou(slotNumber)
-        : l10n.shell_newGame_playerAi(slotNumber);
+  /// Slot heading row: `Slot N` plus a `YOU` tag for the human slot (0).
+  /// Mirrors the mockup `.slot-label` / `.you-tag`: the literal copy stays
+  /// `You` ([AppLocalizations.shell_leaderDialog_slotYouTag]) and uppercasing
+  /// is applied here as presentation, matching the mockup's CSS
+  /// `text-transform:uppercase`.
+  Widget _buildSlotLabel(
+    AppLocalizations l10n,
+    int slotIndex,
+    _LeaderDialogTextStyles styles,
+  ) {
+    final bool isYou = slotIndex == 0;
+    final TextStyle labelStyle = styles.slotLabel.copyWith(
+      color: isYou
+          ? EditorialMonoclePalette.accentDim
+          : EditorialMonoclePalette.muted,
+      fontWeight: isYou ? FontWeight.w600 : FontWeight.normal,
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          l10n.shell_leaderDialog_slotLabel(slotIndex + 1),
+          style: labelStyle,
+        ),
+        if (isYou) ...[
+          const SizedBox(width: CtSpacing.s),
+          Text(
+            l10n.shell_leaderDialog_slotYouTag.toUpperCase(),
+            key: const ValueKey<String>('leaderSelectionDialogSlotYouTag'),
+            style: styles.slotYouTag,
+          ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -222,16 +267,19 @@ class _NewGameLeaderSelectionDialogState
     final _LeaderDialogTextStyles styles = _resolveTextStyles(theme);
     final Set<int> duplicateSlots = _duplicateSlotIndices();
     final slotWidgets = <Widget>[
-      for (var i = 0; i < _kNumSlots; i++)
+      for (var i = 0; i < _kNumSlots; i++) ...[
+        if (i > 0) const SizedBox(height: _kSlotListGap),
         _buildSlotRow(
           context,
           i,
           l10n,
+          styles,
           isDuplicate: duplicateSlots.contains(i),
         ),
+      ],
     ];
     return CtDialogShell(
-      maxWidth: 480,
+      maxWidth: 540,
       maxHeight: 720,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -263,6 +311,8 @@ class _NewGameLeaderSelectionDialogState
   }
 
   _LeaderDialogTextStyles _resolveTextStyles(ThemeData theme) {
+    final TextStyle bodySmall =
+        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
     return _LeaderDialogTextStyles(
       title: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
           .copyWith(
@@ -275,35 +325,56 @@ class _NewGameLeaderSelectionDialogState
             color: EditorialMonoclePalette.muted,
             fontStyle: FontStyle.italic,
           ),
-      fieldLabel: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-          .copyWith(
-            color: EditorialMonoclePalette.accentDim,
-            fontWeight: FontWeight.w600,
-          ),
-      helper: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-          .copyWith(color: EditorialMonoclePalette.muted, fontSize: 12),
+      fieldLabel: bodySmall.copyWith(
+        color: EditorialMonoclePalette.accentDim,
+        fontWeight: FontWeight.w600,
+      ),
+      helper: bodySmall.copyWith(
+        color: EditorialMonoclePalette.muted,
+        fontSize: 12,
+      ),
+      slotLabel: bodySmall.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.48,
+      ),
+      slotYouTag: bodySmall.copyWith(
+        fontSize: 9,
+        letterSpacing: 0.54,
+        color: EditorialMonoclePalette.accentDim,
+        fontWeight: FontWeight.normal,
+      ),
+      profileInlineLabel: bodySmall.copyWith(
+        fontSize: 10,
+        letterSpacing: 0.4,
+        color: EditorialMonoclePalette.muted,
+      ),
     );
   }
 
   Widget _buildHeader(AppLocalizations l10n, _LeaderDialogTextStyles styles) {
+    // Mockup header order (DLG10001 `.dialog-body`): centered title, centered
+    // italic intro, then the brass divider beneath both.
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           l10n.shell_leaderDialog_title,
           key: const ValueKey<String>('leaderSelectionDialogTitle'),
           style: styles.title,
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: CtSpacing.m),
-        const CtBrassDivider(
-          key: ValueKey<String>('leaderSelectionDialogBrassDivider'),
-        ),
-        const SizedBox(height: CtSpacing.ml),
+        const SizedBox(height: CtSpacing.xs),
         Text(
           l10n.shell_leaderDialog_intro,
           key: const ValueKey<String>('leaderSelectionDialogIntro'),
           style: styles.intro,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: CtSpacing.ml),
+        const CtBrassDivider(
+          key: ValueKey<String>('leaderSelectionDialogBrassDivider'),
         ),
       ],
     );
@@ -354,26 +425,48 @@ class _NewGameLeaderSelectionDialogState
     AppLocalizations l10n,
     _LeaderDialogTextStyles styles,
   ) {
-    return CheckboxListTile(
-      contentPadding: EdgeInsets.zero,
-      controlAffinity: ListTileControlAffinity.leading,
-      value: _infiniteMode,
-      activeColor: EditorialMonoclePalette.accent,
-      checkColor: EditorialMonoclePalette.bgDeep,
-      side: BorderSide(color: EditorialMonoclePalette.border),
-      onChanged: (value) {
-        setState(() => _infiniteMode = value ?? false);
-      },
-      title: Text(
-        l10n.shell_leaderDialog_infiniteModeLabel,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: EditorialMonoclePalette.fg,
+    // Mockup `.toggle-row`: CtToggleSwitch beside the label, helper text
+    // indented beneath (no Material `CheckboxListTile` chrome per
+    // `pixel-art-ui-catalog.md`).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: CtToggleSwitch(
+                value: _infiniteMode,
+                onChanged: (value) {
+                  setState(() => _infiniteMode = value);
+                },
+              ),
+            ),
+            const SizedBox(width: _kToggleLabelGap),
+            Expanded(
+              child: Text(
+                l10n.shell_leaderDialog_infiniteModeLabel,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: EditorialMonoclePalette.fg,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-      subtitle: Text(
-        l10n.shell_leaderDialog_infiniteModeHelper,
-        style: styles.helper,
-      ),
+        const SizedBox(height: CtSpacing.xs),
+        Padding(
+          padding: const EdgeInsets.only(
+            left: CtToggleSwitch.trackWidth + _kToggleLabelGap,
+          ),
+          child: Text(
+            l10n.shell_leaderDialog_infiniteModeHelper,
+            style: styles.helper,
+          ),
+        ),
+      ],
     );
   }
 
@@ -433,9 +526,32 @@ class _NewGameLeaderSelectionDialogState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          l10n.shell_leaderDialog_terrainVariationLabel(percent),
-          style: fieldLabelStyle,
+        // Mockup `.slider-row`: static label on the left, live mono percent
+        // value beside it, slider below. The label flexes so it wraps rather
+        // than overflowing at the 320 dp minimum viewport.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              child: Text(
+                l10n.shell_leaderDialog_terrainVariationLabel,
+                style: fieldLabelStyle,
+              ),
+            ),
+            const SizedBox(width: CtSpacing.m),
+            Text(
+              l10n.shell_leaderDialog_terrainVariationValue(percent),
+              key: const ValueKey<String>(
+                'leaderSelectionDialogTerrainVariationValue',
+              ),
+              style: fieldLabelStyle.copyWith(
+                color: EditorialMonoclePalette.accentDim,
+                fontFeatures: const <FontFeature>[
+                  FontFeature.tabularFigures(),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: CtSpacing.s),
         CtSlider(
@@ -459,7 +575,8 @@ class _NewGameLeaderSelectionDialogState
   Widget _buildSlotRow(
     BuildContext context,
     int slotIndex,
-    AppLocalizations l10n, {
+    AppLocalizations l10n,
+    _LeaderDialogTextStyles styles, {
     bool isDuplicate = false,
   }) {
     final gpId = _orderedGpIdsBySlot[slotIndex];
@@ -551,28 +668,52 @@ class _NewGameLeaderSelectionDialogState
             },
           );
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: CtSpacing.ml),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            _slotLabel(l10n, slotIndex),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: slotIndex == 0
-                  ? EditorialMonoclePalette.accentDim
-                  : EditorialMonoclePalette.muted,
-              fontWeight: slotIndex == 0 ? FontWeight.w600 : FontWeight.normal,
+    // Mockup `.profile-line`: inline "AI Profile:" label beside the dropdown
+    // (AI slots only). The dropdown takes the remaining width.
+    final Widget? profileLine = profileDropdown == null
+        ? null
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                l10n.shell_leaderDialog_aiProfileInlineLabel,
+                style: styles.profileInlineLabel,
+              ),
+              const SizedBox(width: CtSpacing.s),
+              Expanded(child: profileDropdown),
+            ],
+          );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            EditorialMonoclePalette.surface,
+            EditorialMonoclePalette.bgDeep,
+          ],
+        ),
+        border: Border(
+          top: BorderSide(color: EditorialMonoclePalette.accentDim),
+          bottom: BorderSide(color: EditorialMonoclePalette.accentDim),
+        ),
+      ),
+      child: Padding(
+        padding: _kSlotRowPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSlotLabel(l10n, slotIndex, styles),
+            const SizedBox(height: CtSpacing.s),
+            _SlotPickersBody(
+              nationDropdown: nationDropdown,
+              leaderDropdown: leaderDropdown,
+              profileLine: profileLine,
             ),
-          ),
-          const SizedBox(height: CtSpacing.m / 2),
-          _SlotPickersBody(
-            nationDropdown: nationDropdown,
-            leaderDropdown: leaderDropdown,
-            profileDropdown: profileDropdown,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -584,16 +725,24 @@ class _LeaderDialogTextStyles {
     required this.intro,
     required this.fieldLabel,
     required this.helper,
+    required this.slotLabel,
+    required this.slotYouTag,
+    required this.profileInlineLabel,
   });
 
   final TextStyle title;
   final TextStyle intro;
   final TextStyle fieldLabel;
   final TextStyle helper;
+  final TextStyle slotLabel;
+  final TextStyle slotYouTag;
+  final TextStyle profileInlineLabel;
 }
 
 /// Pickers body that switches between a side-by-side `Row` and a vertically
-/// stacked `Column` at the [kGameSetupNarrowBreakpoint] (500 dp) viewport width.
+/// stacked `Column` at the [kLeaderSelectionNarrowBreakpoint] (540 dp) viewport
+/// width — the DLG10001-dedicated breakpoint matching the mockup
+/// `@media (min-width: 540px)` rule.
 ///
 /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
 /// + Acceptance Criteria narrow-viewport stacking AC;
@@ -602,12 +751,15 @@ class _SlotPickersBody extends StatelessWidget {
   const _SlotPickersBody({
     required this.nationDropdown,
     required this.leaderDropdown,
-    this.profileDropdown,
+    this.profileLine,
   });
 
   final Widget nationDropdown;
   final Widget leaderDropdown;
-  final Widget? profileDropdown;
+
+  /// Pre-built AI Profile line (inline label + dropdown) for AI slots; `null`
+  /// for the human slot (0).
+  final Widget? profileLine;
 
   /// Vertical gap between the nation dropdown and the leader dropdown when
   /// the slot body is stacked (matches the slot label ↔ pickers gap of
@@ -629,7 +781,7 @@ class _SlotPickersBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool narrow =
-        MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint;
+        MediaQuery.sizeOf(context).width < kLeaderSelectionNarrowBreakpoint;
     if (narrow) {
       return Column(
         key: stackedColumnKey,
@@ -639,9 +791,9 @@ class _SlotPickersBody extends StatelessWidget {
           nationDropdown,
           const SizedBox(height: stackedGap),
           leaderDropdown,
-          if (profileDropdown != null) ...[
+          if (profileLine != null) ...[
             const SizedBox(height: stackedGap),
-            profileDropdown!,
+            profileLine!,
           ],
         ],
       );
@@ -655,13 +807,13 @@ class _SlotPickersBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(child: nationDropdown),
-            const SizedBox(width: CtSpacing.m),
+            const SizedBox(width: CtSpacing.s),
             Expanded(child: leaderDropdown),
           ],
         ),
-        if (profileDropdown != null) ...[
+        if (profileLine != null) ...[
           const SizedBox(height: stackedGap),
-          profileDropdown!,
+          profileLine!,
         ],
       ],
     );
