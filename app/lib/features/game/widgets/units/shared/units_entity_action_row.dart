@@ -187,6 +187,16 @@ class UnitsEntityActionRow extends StatelessWidget {
   }
 }
 
+/// Visual emphasis for a [UnitsEntityAction] when rendered with the mockup
+/// compact-pill row-action family (issue #3514). [neutral] uses the standard
+/// `CtActionTextButton` pill (mockup `.u-actions button`); [danger] uses the
+/// destructive `CtDangerTextButton` pill (mockup `.u-actions .cancel-btn`).
+///
+/// The shared [UnitsEntityActionRow] (military / naval rows, still on
+/// `CtNinePatchButton`) ignores this field; only the civilian row-action
+/// cluster consumes it today.
+enum UnitsEntityActionVariant { neutral, danger }
+
 class UnitsEntityAction {
   const UnitsEntityAction({
     required this.tooltip,
@@ -195,12 +205,17 @@ class UnitsEntityAction {
     required this.onPressed,
     this.iconOnly = false,
     this.buttonKey,
+    this.variant = UnitsEntityActionVariant.neutral,
   });
 
   final String tooltip;
   final IconData icon;
   final String label;
   final VoidCallback? onPressed;
+
+  /// Visual emphasis (neutral vs destructive) used by mockup compact-pill
+  /// row actions. Defaults to [UnitsEntityActionVariant.neutral].
+  final UnitsEntityActionVariant variant;
 
   /// Stable [Key] applied to the rendered action button regardless of whether
   /// it renders `Icon + label` or collapses to icon-only. Lets e2e helpers

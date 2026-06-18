@@ -420,6 +420,7 @@ class _UnitRow extends ConsumerWidget {
           tooltip: l10n.common_cancel,
           icon: Icons.cancel_outlined,
           label: l10n.common_cancel,
+          variant: UnitsEntityActionVariant.danger,
           onPressed: () => _confirmCancel(context),
         ),
       // R30: locate is the rightmost action in the action cluster
@@ -583,10 +584,7 @@ class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: _cardGradient,
-                border: Border.all(
-                  color: _borderColor(),
-                  width: _borderWidth,
-                ),
+                border: Border.all(color: _borderColor(), width: _borderWidth),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(_innerSpacing),
@@ -612,59 +610,64 @@ class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
   }
 }
 
-/// Right-aligned action cluster inside [CivilianUnitRowCard]. Mirrors the
-/// default-mode cluster layout from
-/// [`UnitsEntityActionRow`](units/shared/units_entity_action_row.dart) without
-/// re-applying the outer chrome (the card itself owns the chrome). Each
-/// action renders as a `CtNinePatchButton`; entries with `iconOnly == true`
-/// (e.g. the rightmost Locate action per R30) render icon-only at all
-/// widths.
+/// Right-aligned action cluster inside [CivilianUnitRowCard]. Renders the
+/// mockup compact-pill row actions per `SPEC/ui/civilian-units-panel.md`
+/// § Row actions and the `UNIT10001` mockup `.u-actions` family (issue #3514
+/// owner decisions #6/#7):
+///
+/// - neutral actions (e.g. **Assign**) render as [CtActionTextButton] pills
+///   with an icon + label (mockup `.u-actions button`),
+/// - destructive actions ([UnitsEntityActionVariant.danger], e.g. **Cancel**)
+///   render as [CtDangerTextButton] pills (mockup `.u-actions .cancel-btn`),
+/// - `iconOnly` actions (the rightmost **Locate** control per R30) render as a
+///   circular [CtCircularLocateButton] (mockup `.u-actions .locate-btn`).
+///
+/// The cluster stays a right-aligned [Wrap] so it flows onto a second line at
+/// narrow widths rather than overflowing horizontally.
 class _CivilianUnitCardActions extends StatelessWidget {
   const _CivilianUnitCardActions({required this.actions});
 
   final List<UnitsEntityAction> actions;
 
-  static const double _iconOnlyBreakpoint = 200;
   static const double _spacing = 6;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final iconOnly = constraints.maxWidth < _iconOnlyBreakpoint;
-        return Wrap(
-          spacing: _spacing,
-          runSpacing: _spacing,
-          alignment: WrapAlignment.end,
-          children: [
-            for (final action in actions)
-              Tooltip(
-                message: action.tooltip,
-                child: CtNinePatchButton(
-                  onPressed: action.onPressed,
-                  enabled: action.onPressed != null,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: iconOnly || action.iconOnly
-                        ? CtSpacing.m
-                        : 10,
-                    vertical: 6,
-                  ),
-                  minHeight: 32,
-                  child: iconOnly || action.iconOnly
-                      ? Icon(action.icon, size: 16)
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(action.icon, size: 16),
-                            const SizedBox(width: 4),
-                            Text(action.label),
-                          ],
-                        ),
-                ),
-              ),
-          ],
-        );
-      },
+    return Wrap(
+      spacing: _spacing,
+      runSpacing: _spacing,
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [for (final action in actions) _buildAction(action)],
+    );
+  }
+
+  Widget _buildAction(UnitsEntityAction action) {
+    final bool enabled = action.onPressed != null;
+    if (action.iconOnly) {
+      return CtCircularLocateButton(
+        onPressed: action.onPressed,
+        icon: action.icon,
+        tooltip: action.tooltip,
+        semanticLabel: action.label,
+        enabled: enabled,
+      );
+    }
+    if (action.variant == UnitsEntityActionVariant.danger) {
+      return CtDangerTextButton(
+        onPressed: action.onPressed,
+        label: action.label,
+        icon: action.icon,
+        tooltip: action.tooltip,
+        enabled: enabled,
+      );
+    }
+    return CtActionTextButton(
+      onPressed: action.onPressed,
+      label: action.label,
+      icon: action.icon,
+      tooltip: action.tooltip,
+      enabled: enabled,
     );
   }
 }

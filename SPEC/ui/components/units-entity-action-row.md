@@ -22,7 +22,7 @@ Consolidates the per-entity row layout shared by the Civilian, Military, and Nav
 | `spacing` | `double` | `6` | Inter-button gap (`Wrap.spacing/runSpacing` in default mode, `SizedBox.width` between dense actions). |
 | `dense` | `bool` | `false` | Switches the cluster to the naval inline-pill footprint (no wrap, smaller pills). Naval rows opt in; civilian/military rows keep `dense: false`. |
 
-`UnitsEntityAction` is the per-action descriptor: `tooltip`, `icon`, `label`, `onPressed`, and `iconOnly` (per-action icon-only opt-in, used by the naval right-end Locate pill).
+`UnitsEntityAction` is the per-action descriptor: `tooltip`, `icon`, `label`, `onPressed`, `iconOnly` (per-action icon-only opt-in, used by the naval right-end Locate pill), and `variant` (`UnitsEntityActionVariant`, default `neutral`; `danger` marks civilian destructive pills — issue #3514 — ignored here).
 
 ---
 
@@ -66,7 +66,7 @@ LayoutBuilder(denseMaxWidth)
     separated by SizedBox(width: spacing)
 ```
 
-The dense `Row` is `mainAxisSize: min`, so the cluster cannot break onto a second line at the naval default panel width (420–640 dp). The `70 * actions.length` heuristic keeps the naval Move + Split + Locate cluster in label mode at the default width and collapses to icons below ~150 dp.
+The dense `Row` is `mainAxisSize: min`, so it cannot wrap at the naval default width (420–640 dp). The `70 * actions.length` heuristic keeps Move + Split + Locate in label mode there and collapses to icons below ~150 dp.
 
 ---
 
@@ -99,7 +99,7 @@ The dense `Row` is `mainAxisSize: min`, so the cluster cannot break onto a secon
 | `UNIT20001` | [`military-units-panel.md`](../military-units-panel.md) | Default mode. Army actions: Move, Split (each gated on its callback). |
 | `UNIT30001` | [`naval-units-panel.md`](../naval-units-panel.md) | Dense mode (R25). Fleet actions: Move (regular only), Split (when allowed), right-end Locate via `iconOnly = true` (R27). |
 
-Consumer specs link back here for the row contract instead of redeclaring the gradient surface, pill footprint, and collapse thresholds.
+Consumer specs link back here instead of redeclaring the gradient surface, pill footprint, and collapse thresholds.
 
 ---
 
