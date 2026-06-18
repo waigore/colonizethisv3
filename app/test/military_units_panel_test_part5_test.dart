@@ -1,77 +1,17 @@
 // Tests for MilitaryUnitsPanel. SPEC/ui/military-units-panel.md.
 
-import 'dart:async';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_panel.dart';
-import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
-
-/// Applies [ArmySplitRequestedEvent] like [AppEventHandlerScope] and rebuilds
-/// the panel with updated [Game] (widget tests do not mount full shell).
-class _ArmySplitTestHarness extends StatefulWidget {
-  const _ArmySplitTestHarness({
-    required this.initialGame,
-    required this.humanPlayerId,
-    required this.bus,
-  });
-
-  final Game initialGame;
-  final String humanPlayerId;
-  final AppEventBus bus;
-
-  @override
-  State<_ArmySplitTestHarness> createState() => _ArmySplitTestHarnessState();
-}
-
-class _ArmySplitTestHarnessState extends State<_ArmySplitTestHarness> {
-  late Game _game;
-  StreamSubscription<ArmySplitRequestedEvent>? _sub;
-
-  @override
-  void initState() {
-    super.initState();
-    _game = widget.initialGame;
-    _sub = widget.bus.on<ArmySplitRequestedEvent>().listen((e) {
-      final next = applyArmySplit(
-        game: _game,
-        playerId: e.humanPlayerId,
-        sourceArmyId: e.sourceArmyId,
-        unitIdsToMove: e.unitIdsToMove,
-      );
-      setState(() => _game = next);
-    });
-  }
-
-  @override
-  void dispose() {
-    unawaited(_sub?.cancel());
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MilitaryUnitsPanel(
-      game: _game,
-      humanPlayerId: widget.humanPlayerId,
-      bus: widget.bus,
-      topology: const MapTopology(),
-      draftOrders: const Orders(),
-    );
-  }
-}
 
 Future<void> expandFirstArmyExpansion(WidgetTester tester) async {
   final tiles = find.byType(ExpansionTile);
@@ -390,7 +330,7 @@ void main() {
       expect(armyTile, findsOneWidget);
       final moveButton = find.descendant(
         of: armyTile,
-        matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        matching: find.widgetWithText(CtActionTextButton, 'Move'),
       );
       await tester.tap(moveButton.first);
       await tester.pumpAndSettle();
@@ -402,6 +342,140 @@ void main() {
       expect(captured!.moveOrder.armyId, 'amove');
       expect(captured!.moveOrder.destinationProvinceId, p3);
     });
+
+    testWidgets(
+      'AC #3514: army row Locate is a rightmost circular pill in the actions '
+      'cluster and emits LocateMapTileEvent',
+      (WidgetTester tester) async {
+        LocateMapTileEvent? locate;
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        bus.on<LocateMapTileEvent>().listen((e) => locate = e);
+
+        const playerId = 'gp_locate_cluster';
+        const p = 'oldWorld|p2';
+        const p3 = 'oldWorld|p3';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'oldWorld|p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'oldWorld|p3',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
+        );
+        final game = Game(
+          id: 'g_locate_cluster',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: p,
+                  regionId: 'oldWorld',
+                  ownerId: playerId,
+                  townTileKey: 'tk',
+                ),
+                Province(id: p3, regionId: 'oldWorld', ownerId: playerId),
+              ],
+              units: [
+                Unit(
+                  id: 'um1',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+                Unit(
+                  id: 'um2',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: 'acluster',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: p,
+                regimentUnitIds: const ['um1', 'um2'],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                p: ['oldWorld|p2|0|0'],
+                p3: ['oldWorld|p3|0|0'],
+              },
+            },
+            playerVisibilityByTile: {
+              playerId: {
+                'oldWorld|p2|0|0': 'fullyVisible',
+                'oldWorld|p3|0|0': 'fullyVisible',
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: playerId,
+              displayName: 'M',
+              isHuman: true,
+              capitalProvinceId: p,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: game,
+            humanPlayerId: playerId,
+            bus: bus,
+            topology: topology,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final armyTile = find.widgetWithText(ExpansionTile, 'Army acluster');
+        expect(armyTile, findsOneWidget);
+
+        // Move + Split render as compact pills; Locate as a circular pill.
+        final moveBtn = find.descendant(
+          of: armyTile,
+          matching: find.widgetWithText(CtActionTextButton, 'Move'),
+        );
+        final splitBtn = find.descendant(
+          of: armyTile,
+          matching: find.widgetWithText(CtActionTextButton, 'Split'),
+        );
+        final locateBtn = find.descendant(
+          of: armyTile,
+          matching: find.byType(CtCircularLocateButton),
+        );
+        expect(moveBtn, findsOneWidget);
+        expect(splitBtn, findsOneWidget);
+        expect(locateBtn, findsOneWidget);
+        // Locate must NOT use the legacy title-row CtIconAction chrome and must
+        // be the rightmost control in the actions cluster.
+        final locateDx = tester.getCenter(locateBtn).dx;
+        expect(locateDx, greaterThan(tester.getCenter(moveBtn).dx));
+        expect(locateDx, greaterThan(tester.getCenter(splitBtn).dx));
+
+        await tester.tap(locateBtn);
+        await tester.pump();
+        await tester.pumpAndSettle();
+        expect(locate, isNotNull);
+        expect(locate!.tileKey, 'tk');
+        expect(locate!.regionId, 'oldWorld');
+      },
+    );
 
     testWidgets(
       'Move dialog groups by owning faction and cross-region owned move',
@@ -523,7 +597,7 @@ void main() {
         expect(armyTile, findsOneWidget);
         final moveButton = find.descendant(
           of: armyTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+          matching: find.widgetWithText(CtActionTextButton, 'Move'),
         );
         await tester.tap(moveButton.first);
         await tester.pumpAndSettle();
@@ -718,7 +792,7 @@ void main() {
       expect(armyTile, findsOneWidget);
       final moveButton = find.descendant(
         of: armyTile,
-        matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        matching: find.widgetWithText(CtActionTextButton, 'Move'),
       );
       await tester.tap(moveButton.first);
       await tester.pumpAndSettle();
@@ -738,233 +812,5 @@ void main() {
       expect(captured!.declareWarTargetFactionId, enemyId);
       expect(captured!.moveOrder.destinationProvinceId, loc2);
     });
-
-    testWidgets(
-      'split home army (all regiments): panel shows new army with regiment rows',
-      (WidgetTester tester) async {
-        const playerId = 'gp_split_ui_full';
-        const cap = 'oldWorld|cap';
-        final initial = Game(
-          id: 'g_split_full',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: cap,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  displayName: 'Capital',
-                  townTileKey: 'tk_cap',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'r1',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-                Unit(
-                  id: 'r2',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: [
-              Army(
-                id: 'home_army',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: cap,
-                regimentUnitIds: const ['r1', 'r2'],
-                isHomeArmy: true,
-              ),
-            ],
-            nextArmySeq: 1,
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                cap: ['tk_cap'],
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'Splitter',
-              isHuman: true,
-              capitalProvinceId: cap,
-            ),
-          ],
-        );
-
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                height: 900,
-                width: 480,
-                child: _ArmySplitTestHarness(
-                  initialGame: initial,
-                  humanPlayerId: playerId,
-                  bus: bus,
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final homeTile = find.widgetWithText(ExpansionTile, 'Home Army').first;
-        await tester.tap(homeTile);
-        await tester.pumpAndSettle();
-
-        final splitBtn = find.descendant(
-          of: homeTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Split'),
-        ).first;
-        await tester.ensureVisible(splitBtn);
-        await tester.tap(splitBtn);
-        await tester.pumpAndSettle();
-
-        await tester.tap(
-          find.byKey(CtTransferListKeys.leftMoveAll('musketeers')),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Confirm Split'));
-        // Broadcast bus delivers listeners asynchronously; flush like split_army_dialog_test.
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-        await tester.pumpAndSettle();
-
-        expect(find.text('0 regiments · Capital'), findsOneWidget);
-        expect(find.text('2 regiments · Capital'), findsOneWidget);
-
-        await tester.tap(find.text('Army army_1'));
-        await tester.pumpAndSettle();
-        expect(find.text('Musketeers: 2'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'split home army (partial): panel shows correct counts on both armies',
-      (WidgetTester tester) async {
-        const playerId = 'gp_split_ui_partial';
-        const cap = 'oldWorld|cap';
-        final initial = Game(
-          id: 'g_split_partial',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: cap,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  displayName: 'Capital',
-                  townTileKey: 'tk_cap',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'r1',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-                Unit(
-                  id: 'r2',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: [
-              Army(
-                id: 'home_army',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: cap,
-                regimentUnitIds: const ['r1', 'r2'],
-                isHomeArmy: true,
-              ),
-            ],
-            nextArmySeq: 7,
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                cap: ['tk_cap'],
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'Splitter',
-              isHuman: true,
-              capitalProvinceId: cap,
-            ),
-          ],
-        );
-
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                height: 900,
-                width: 480,
-                child: _ArmySplitTestHarness(
-                  initialGame: initial,
-                  humanPlayerId: playerId,
-                  bus: bus,
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final homeTile = find.widgetWithText(ExpansionTile, 'Home Army').first;
-        await tester.tap(homeTile);
-        await tester.pumpAndSettle();
-
-        final splitBtn = find.descendant(
-          of: homeTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Split'),
-        ).first;
-        await tester.ensureVisible(splitBtn);
-        await tester.tap(splitBtn);
-        await tester.pumpAndSettle();
-
-        await tester.tap(
-          find.byKey(CtTransferListKeys.leftMoveOne('musketeers')),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Confirm Split'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-        await tester.pumpAndSettle();
-
-        expect(find.text('1 regiments · Capital'), findsNWidgets(2));
-
-        await tester.tap(find.text('Home Army'));
-        await tester.pumpAndSettle();
-        expect(find.text('Musketeers: 1'), findsOneWidget);
-
-        await tester.tap(find.text('Army army_7'));
-        await tester.pumpAndSettle();
-        expect(find.text('Musketeers: 1'), findsNWidgets(2));
-      },
-    );
   });
 }

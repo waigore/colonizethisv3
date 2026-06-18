@@ -66,6 +66,7 @@ class CtActionTextButton extends StatefulWidget {
     this.primary = false,
     this.icon,
     this.iconSize = 14,
+    this.iconOnly = false,
   });
 
   /// Tap callback. Ignored when [enabled] is `false`.
@@ -85,6 +86,15 @@ class CtActionTextButton extends StatefulWidget {
   /// Rendered size of [icon] when present. Defaults to the compact row-action
   /// footprint (14 logical px) used by the unit-panel mockups.
   final double iconSize;
+
+  /// When `true` (and [icon] is set), the button suppresses its text [label]
+  /// and renders only the [icon]. Used by the shared unit/fleet
+  /// [UnitsEntityActionRow] narrow-width collapse so Move / Split row-action
+  /// pills shrink to icon-only below the collapse breakpoint while keeping the
+  /// mockup `.f-actions button` pill chrome (issue #3514). Accessibility still
+  /// resolves through [semanticLabel] / [label]. When `false` (default) the
+  /// button keeps its `Icon + label` (or text-only) rendering.
+  final bool iconOnly;
 
   /// When `false`, the entire control fades to the shared
   /// [CtNinePatchButton.disabledOpacity] and ignores pointer events.
@@ -164,6 +174,9 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
     final IconData? icon = widget.icon;
     if (icon == null) {
       return Text(widget.label);
+    }
+    if (widget.iconOnly) {
+      return Icon(icon, size: widget.iconSize, color: _resolvedForeground);
     }
     return Row(
       mainAxisSize: MainAxisSize.min,

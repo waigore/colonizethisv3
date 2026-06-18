@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../../widgets/ct_spacing.dart';
+import '../../chrome/ct_action_text_button.dart';
+import '../../chrome/ct_circular_locate_button.dart';
+import '../../chrome/ct_danger_text_button.dart';
 import 'units_panel_row_chrome.dart';
 
 /// Shared unit/fleet row layout:
@@ -9,14 +11,20 @@ import 'units_panel_row_chrome.dart';
 /// - action buttons on the right, left-to-right
 /// - icon-only action mode on narrow widths
 ///
-/// `dense: true` switches the action buttons to the compact inline-pill
-/// footprint specified by the naval-units mockup
-/// (`SPEC/ui/mockups/UNIT30001-naval-units-panel.html` `.f-actions button`):
-/// smaller padding, lower [CtNinePatchButton.minHeight], smaller icon size,
-/// and a `Row` that cannot wrap onto a second line at the default panel
-/// width. Individual [UnitsEntityAction] entries may opt into icon-only
-/// rendering via [UnitsEntityAction.iconOnly] (e.g. the locate control on a
-/// fleet row); icon-only entries still respect the `dense` footprint.
+/// Row actions render with the mockup compact-pill family (issue #3514 owner
+/// decision #6 — `SPEC/ui/mockups/UNIT20001-military-units-panel.html`
+/// `.unit-row` / `UNIT30001-naval-units-panel.html` `.f-actions button`):
+/// neutral actions use [CtActionTextButton], destructive
+/// ([UnitsEntityActionVariant.danger]) actions use [CtDangerTextButton], and
+/// per-action `iconOnly` controls (the right-end Locate pill) use the circular
+/// [CtCircularLocateButton] (mockup `.locate-btn`).
+///
+/// `dense: true` switches the cluster to the naval inline footprint: a `Row`
+/// that cannot wrap onto a second line at the default panel width. Individual
+/// [UnitsEntityAction] entries may opt into icon-only rendering via
+/// [UnitsEntityAction.iconOnly] (e.g. the locate control on a fleet/army row);
+/// at narrow widths the remaining neutral/danger pills collapse to icon-only
+/// via [CtActionTextButton.iconOnly] / [CtDangerTextButton.iconOnly].
 class UnitsEntityActionRow extends StatelessWidget {
   const UnitsEntityActionRow({
     super.key,
@@ -113,31 +121,10 @@ class UnitsEntityActionRow extends StatelessWidget {
       spacing: spacing,
       runSpacing: spacing,
       alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         for (final action in actions)
-          Tooltip(
-            message: action.tooltip,
-            child: CtNinePatchButton(
-              key: action.buttonKey,
-              onPressed: action.onPressed,
-              enabled: action.onPressed != null,
-              padding: EdgeInsets.symmetric(
-                horizontal: iconOnly || action.iconOnly ? CtSpacing.m : 10,
-                vertical: 6,
-              ),
-              minHeight: 32,
-              child: iconOnly || action.iconOnly
-                  ? Icon(action.icon, size: 16)
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(action.icon, size: 16),
-                        const SizedBox(width: 4),
-                        Text(action.label),
-                      ],
-                    ),
-            ),
-          ),
+          _buildActionPill(action: action, forceIconOnly: iconOnly),
       ],
     );
   }
@@ -151,50 +138,70 @@ class UnitsEntityActionRow extends StatelessWidget {
       if (i > 0) {
         children.add(SizedBox(width: spacing));
       }
-      final action = actions[i];
-      final renderAsIconOnly = forceIconOnly || action.iconOnly;
       children.add(
-        Tooltip(
-          message: action.tooltip,
-          child: CtNinePatchButton(
-            key: action.buttonKey,
-            onPressed: action.onPressed,
-            enabled: action.onPressed != null,
-            // Mockup `.f-actions button { padding:3px 7px; font-size:9px; }` /
-            // `.locate-btn { width:22px; height:22px; }` — keep the dense
-            // pills tappable (>=24 dp) while shaving the inherited 32 dp
-            // default `CtNinePatchButton` height.
-            padding: EdgeInsets.symmetric(
-              horizontal: renderAsIconOnly ? 4 : 7,
-              vertical: 3,
-            ),
-            minHeight: 24,
-            child: renderAsIconOnly
-                ? Icon(action.icon, size: 14)
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(action.icon, size: 14),
-                      const SizedBox(width: 3),
-                      Text(action.label),
-                    ],
-                  ),
-          ),
-        ),
+        _buildActionPill(action: actions[i], forceIconOnly: forceIconOnly),
       );
     }
-    return Row(mainAxisSize: MainAxisSize.min, children: children);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: children,
+    );
+  }
+
+  /// Renders a single action as a mockup compact pill (issue #3514). Per-action
+  /// [UnitsEntityAction.iconOnly] controls (the right-end Locate affordance)
+  /// always render as the circular [CtCircularLocateButton]; the width-driven
+  /// [forceIconOnly] collapse only suppresses the label on neutral/danger
+  /// pills so Move / Split shrink to icon-only at narrow widths.
+  Widget _buildActionPill({
+    required UnitsEntityAction action,
+    required bool forceIconOnly,
+  }) {
+    final bool enabled = action.onPressed != null;
+    if (action.iconOnly) {
+      return CtCircularLocateButton(
+        key: action.buttonKey,
+        onPressed: action.onPressed,
+        icon: action.icon,
+        tooltip: action.tooltip,
+        semanticLabel: action.label,
+        enabled: enabled,
+      );
+    }
+    if (action.variant == UnitsEntityActionVariant.danger) {
+      return CtDangerTextButton(
+        key: action.buttonKey,
+        onPressed: action.onPressed,
+        label: action.label,
+        icon: action.icon,
+        tooltip: action.tooltip,
+        enabled: enabled,
+        iconOnly: forceIconOnly,
+      );
+    }
+    return CtActionTextButton(
+      key: action.buttonKey,
+      onPressed: action.onPressed,
+      label: action.label,
+      icon: action.icon,
+      tooltip: action.tooltip,
+      enabled: enabled,
+      iconOnly: forceIconOnly,
+    );
   }
 }
 
 /// Visual emphasis for a [UnitsEntityAction] when rendered with the mockup
 /// compact-pill row-action family (issue #3514). [neutral] uses the standard
-/// `CtActionTextButton` pill (mockup `.u-actions button`); [danger] uses the
-/// destructive `CtDangerTextButton` pill (mockup `.u-actions .cancel-btn`).
+/// [CtActionTextButton] pill (mockup `.u-actions button` / `.f-actions
+/// button`); [danger] uses the destructive [CtDangerTextButton] pill (mockup
+/// `.u-actions .cancel-btn`).
 ///
-/// The shared [UnitsEntityActionRow] (military / naval rows, still on
-/// `CtNinePatchButton`) ignores this field; only the civilian row-action
-/// cluster consumes it today.
+/// Consumed by both the civilian row-action cluster
+/// (`_CivilianUnitCardActions`) and the shared [UnitsEntityActionRow]
+/// (military / naval rows) now that all three unit panels render the mockup
+/// compact-pill row-action family.
 enum UnitsEntityActionVariant { neutral, danger }
 
 class UnitsEntityAction {
