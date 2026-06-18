@@ -43,6 +43,40 @@ void main() {
       expect(find.byType(CtSectionLabel), findsOneWidget);
       expect(find.text('OLD WORLD'), findsOneWidget);
     });
+
+    testWidgets(
+      'leftBar variant renders a left accent-dim bar without CtSectionLabel '
+      '(Refs #3514)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: RegionSectionHeader(
+                label: 'New World',
+                variant: RegionHeaderVariant.leftBar,
+              ),
+            ),
+          ),
+        );
+
+        // Mockup `.region-label` / `.region-heading` chrome: upper-cased label,
+        // no bottom-border CtSectionLabel.
+        expect(find.text('NEW WORLD'), findsOneWidget);
+        expect(find.byType(CtSectionLabel), findsNothing);
+
+        final DecoratedBox decoratedBox = tester.widget<DecoratedBox>(
+          find.descendant(
+            of: find.byType(RegionSectionHeader),
+            matching: find.byType(DecoratedBox),
+          ),
+        );
+        final Border border =
+            (decoratedBox.decoration as BoxDecoration).border! as Border;
+        expect(border.left.width, RegionSectionHeader.leftBarWidth);
+        expect(border.left.color, EditorialMonoclePalette.accentDim);
+        expect(border.bottom, BorderSide.none);
+      },
+    );
   });
 
   group('LocationSectionHeader', () {
@@ -59,6 +93,34 @@ void main() {
       );
       expect(find.text('Province A — New World'), findsOneWidget);
     });
+
+    testWidgets(
+      'renders semi-bold fg-at-0.8 chrome per mockup .province-label '
+      '(Refs #3514)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: LocationSectionHeader(
+                label: 'Province A',
+                regionLabel: 'New World',
+              ),
+            ),
+          ),
+        );
+
+        final Text text = tester.widget<Text>(
+          find.text('Province A — New World'),
+        );
+        expect(text.style?.fontWeight, FontWeight.w600);
+        expect(
+          text.style?.color,
+          EditorialMonoclePalette.fg.withValues(
+            alpha: LocationSectionHeader.labelOpacity,
+          ),
+        );
+      },
+    );
   });
 
   group('UnitsPanelShell', () {

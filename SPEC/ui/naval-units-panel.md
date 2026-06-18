@@ -116,6 +116,20 @@ Side panel (CtPanel) beside map on wide viewports; scrollable fleet tree grouped
 ## Components
 
 - `NavalUnitsPanel`, [move-fleet-dialog.md](move-fleet-dialog.md), [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md).
+- `RegionSectionHeader` (`app/lib/features/game/widgets/units/shared/region_section_header.dart`) — rendered with the `RegionHeaderVariant.leftBar` chrome on this panel (Refs #3514); see § Region / location header chrome.
+- `LocationSectionHeader` (`app/lib/features/game/widgets/units/shared/location_section_header.dart`) — location (Home Fleet / port / sea-zone) sub-header; see § Region / location header chrome.
+
+---
+
+## Region / location header chrome (Refs #3514)
+
+The region and location group headers follow the naval mockup
+(`SPEC/ui/mockups/UNIT30001-naval-units-panel.html`) for **visual chrome**;
+the displayed header text content (`name — region` on location headers) is
+unchanged.
+
+- **Region header (`.region-heading`):** Each region grouping heading (`Old World` / `New World`) renders via `RegionSectionHeader` with `variant: RegionHeaderVariant.leftBar` — an upper-cased `EditorialMonoclePalette.muted` Cinzel display label (`editorialMonocleDisplayFontFamily`, `12` logical px, `FontWeight.w600`) preceded by a `3` dp `EditorialMonoclePalette.accentDim` **left** border (`RegionSectionHeader.leftBarWidth`) with `6 × 3` dp inner padding. The bottom-border `CtSectionLabel` chrome (`RegionHeaderVariant.bottomBorder`) is **not** used on this panel.
+- **Location header (`.location-label`):** Each location sub-header (Home Fleet / In Port / At Sea / named node) renders via `LocationSectionHeader` as an indented body-font line in `EditorialMonoclePalette.fg` at `0.8` opacity (`LocationSectionHeader.labelOpacity`), `FontWeight.w600`. The previous muted `titleSmall` styling is replaced; the leading `CtSpacing.ml` indent is retained.
 
 ---
 
@@ -294,4 +308,8 @@ The first implementation pass for [#2866](https://github.com/) (PR #2906 + #2919
 - **(R29)** **Given** the Naval Units panel is open and the user expands any fleet row, **when** the expanded content finishes rendering, **then** the UI layer renders (a) a single `Table` widget with one row per ship type with columns `Type`, `×Count`, `Role` and **not** a per-ship-type stack of `ListTile`s, (b) a single `Total ships: X · Warships: Y · Merchants: Z` summary line below the table (one `Text` widget, **not** three separate `ListTile`s) and a retained `Strength: V` line, and (c) for the Home Fleet only, a `Cargo capacity: X holds` line between the table and the summary line (non-home fleets render no cargo line).
 
 - **(Fleet card chrome, issue #3514 AC-6)** **Given** the Naval Units panel is open against `AppThemes.editorialMonocle` with at least one fleet row, **when** the row chrome finishes rendering at the default panel width, **then** each `FleetExpansionTile` renders exactly one [`UnitsEntityCard`](components/units-entity-card.md) (the mockup `.fleet-row` bordered gradient card, not bare `ExpansionTile` Material chrome), its dense `UnitsEntityActionRow` is hosted with `chrome == false` (no double border), and `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow from the dense Move/Split/Locate cluster under the card chrome).
+
+- **Region header left-bar chrome (Refs #3514):** **Given** the Naval Units panel is open with fleets grouped into at least one region, **when** a region group heading renders, **then** the UI layer renders it via a `RegionSectionHeader` whose `variant` is `RegionHeaderVariant.leftBar` (mockup `.region-heading` left-accent-bar chrome), and renders no `CtSectionLabel` bottom-border region heading on this panel.
+
+- **Location header semi-bold fg chrome (Refs #3514):** **Given** the Naval Units panel is open with at least one location (Home Fleet / port / sea-zone) group, **when** the location sub-header renders, **then** the UI layer renders its `LocationSectionHeader` `Text` with `FontWeight.w600` and a colour resolving to `EditorialMonoclePalette.fg` at `0.8` opacity (mockup `.location-label`), while the displayed `name — region` line content is unchanged.
 
