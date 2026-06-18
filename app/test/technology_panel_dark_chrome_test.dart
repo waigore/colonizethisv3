@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/research_slot_turn_preview_view.dart';
@@ -191,9 +193,14 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(ResearchedTechChip), findsNWidgets(2));
-        expect(find.byType(CtSectionLabel), findsWidgets);
-        expect(find.text('RESEARCHED TECHS'), findsOneWidget);
-        expect(find.text('RESEARCH SLOTS'), findsOneWidget);
+        // The two canonical Slots-tab headings render via the mockup-faithful
+        // TechSectionHeading (normal case), not the upper-cased CtSectionLabel
+        // chrome. Refs #3510.
+        expect(find.byType(TechSectionHeading), findsNWidgets(2));
+        expect(find.text('Researched Techs'), findsOneWidget);
+        expect(find.text('Research Slots'), findsOneWidget);
+        expect(find.text('RESEARCHED TECHS'), findsNothing);
+        expect(find.text('RESEARCH SLOTS'), findsNothing);
       },
     );
 
@@ -218,7 +225,7 @@ void main() {
 
   group('Slots-tab section ordering (Refs #2864 S0/S6 ordering AC)', () {
     testWidgets(
-      'positive: RESEARCHED TECHS heading renders strictly above RESEARCH SLOTS heading (Offset.dy)',
+      'positive: Researched Techs heading renders strictly above Research Slots heading (Offset.dy)',
       (WidgetTester tester) async {
         // Mix of researched techs (drives the chip grid) and at least
         // one in-progress tech (exercises the auxiliary section without
@@ -236,9 +243,9 @@ void main() {
         await tester.pumpAndSettle();
 
         final researchedHeadingY =
-            tester.getTopLeft(find.text('RESEARCHED TECHS')).dy;
+            tester.getTopLeft(find.text('Researched Techs')).dy;
         final slotsHeadingY =
-            tester.getTopLeft(find.text('RESEARCH SLOTS')).dy;
+            tester.getTopLeft(find.text('Research Slots')).dy;
         expect(
           researchedHeadingY,
           lessThan(slotsHeadingY),
@@ -266,10 +273,71 @@ void main() {
         await tester.pumpAndSettle();
 
         final researchedHeadingY =
-            tester.getTopLeft(find.text('RESEARCHED TECHS')).dy;
+            tester.getTopLeft(find.text('Researched Techs')).dy;
         final slotsHeadingY =
-            tester.getTopLeft(find.text('RESEARCH SLOTS')).dy;
+            tester.getTopLeft(find.text('Research Slots')).dy;
         expect(researchedHeadingY, lessThan(slotsHeadingY));
+      },
+    );
+  });
+
+  group('Mockup-faithful canonical heading style (Refs #3510)', () {
+    testWidgets(
+      'positive: both canonical headings render via TechSectionHeading with '
+      'accent Cinzel display style and literal (non-upper-cased) text',
+      (WidgetTester tester) async {
+        final ids = techCatalog.keys.take(2).toList();
+        final unlocked = {for (final id in ids) id: true};
+        final player = basePlayer.copyWith(
+          researchSlots: 3,
+          techUnlocked: unlocked,
+        );
+        final localGame = game.copyWith(
+          players: [player, ...game.players.skip(1)],
+        );
+        await tester.pumpWidget(host(localGame, player));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(TechSectionHeading), findsNWidgets(2));
+        for (final label in <String>['Researched Techs', 'Research Slots']) {
+          final Text headingText = tester.widget<Text>(
+            find.descendant(
+              of: find.widgetWithText(TechSectionHeading, label),
+              matching: find.text(label),
+            ),
+          );
+          final style = headingText.style;
+          expect(style, isNotNull);
+          expect(style!.color, EditorialMonoclePalette.accent);
+          expect(style.fontFamily, editorialMonocleDisplayFontFamily);
+          expect(style.fontWeight, FontWeight.w600);
+          // Literal heading text, not the CtSectionLabel upper-cased form.
+          expect(headingText.data, label);
+        }
+      },
+    );
+
+    testWidgets(
+      'negative: neither canonical heading renders via CtSectionLabel '
+      '(no upper-cased RESEARCHED TECHS / RESEARCH SLOTS chrome)',
+      (WidgetTester tester) async {
+        final ids = techCatalog.keys.take(2).toList();
+        final unlocked = {for (final id in ids) id: true};
+        final player = basePlayer.copyWith(
+          researchSlots: 3,
+          techUnlocked: unlocked,
+        );
+        final localGame = game.copyWith(
+          players: [player, ...game.players.skip(1)],
+        );
+        await tester.pumpWidget(host(localGame, player));
+        await tester.pumpAndSettle();
+
+        expect(find.text('RESEARCHED TECHS'), findsNothing);
+        expect(find.text('RESEARCH SLOTS'), findsNothing);
+        // With no in-progress techs the auxiliary CtSectionLabel block is
+        // absent, so the Slots tab renders no CtSectionLabel at all.
+        expect(find.byType(CtSectionLabel), findsNothing);
       },
     );
   });

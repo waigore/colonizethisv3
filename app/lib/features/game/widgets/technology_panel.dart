@@ -6,19 +6,18 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/research_slot_preview.dart';
-import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/strict_asset_icon.dart';
 import 'technology_panel_orders.dart';
-import 'technology_research_slot_card.dart';
+import 'technology_panel_widgets.dart';
 
 // Re-export the research slot-card widget family (extracted to keep this file
 // under the `repo.game_widgets_file_size` cap) so existing importers and tests
 // keep resolving `ResearchSlotCard`, `LockedResearchSlotCard`, the slot
-// constants, and `technologyDarkSurfaceGradient` from this panel entrypoint.
-export 'technology_research_slot_card.dart';
+// constants, `TechSectionHeading`, and `ResearchedTechChip` from this panel
+// entrypoint.
+export 'technology_panel_widgets.dart';
 
 /// Always-rendered slot count on the Slots tab.
 ///
@@ -97,7 +96,12 @@ class TechnologyPanel extends StatelessWidget {
         // ordering and matches the mockup body markup in
         // SPEC/ui/mockups/GAME40001-technology-panel.html where
         // `.researched-heading` precedes `.slots-heading`. Refs #2864 S0/S6.
-        CtSectionLabel(l10n.technologyPanel_researchedTechsHeading),
+        // The two canonical Slots-tab headings use the mockup-faithful
+        // accent display-font `TechSectionHeading` (mockup
+        // `.researched-heading` / `.slots-heading`) rather than the small-caps
+        // `CtSectionLabel` chrome; per the issue source-of-truth precedence
+        // the mockup wins on this purely visual heading detail. Refs #3510.
+        TechSectionHeading(l10n.technologyPanel_researchedTechsHeading),
         const SizedBox(height: 6),
         if (researchedIds.isEmpty)
           Text(
@@ -119,7 +123,7 @@ class TechnologyPanel extends StatelessWidget {
         const SizedBox(height: 16),
         const CtBrassDivider(),
         const SizedBox(height: 12),
-        CtSectionLabel(l10n.technologyPanel_researchSlotsHeading),
+        TechSectionHeading(l10n.technologyPanel_researchSlotsHeading),
         const SizedBox(height: 6),
         // Stretch every slot card to the full panel content width so the
         // locked Slot 4 placeholder is the same width as the active Slots
@@ -291,55 +295,3 @@ class TechnologyPanel extends StatelessWidget {
   }
 }
 
-/// Read-only researched-tech chip rendered in the Slots tab grid.
-///
-/// SPEC/ui/technology-panel.md § Layout / wireframe + mockup
-/// `.tech-chip`: vertical `--bg-deep` → `--surface` gradient, 1 px
-/// `--border` outline, 14 px tech-category icon, body-font tech name in
-/// `--fg`. Refs #2864 S2.
-class ResearchedTechChip extends StatelessWidget {
-  const ResearchedTechChip({super.key, required this.techId});
-
-  final String techId;
-
-  @visibleForTesting
-  static const double iconSize = 14;
-
-  @override
-  Widget build(BuildContext context) {
-    final tech = techById(techId);
-    final iconPath = techCategoryIconAssetPath(tech?.category);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: technologyDarkSurfaceGradient(),
-        border: Border.all(
-          color: EditorialMonoclePalette.border,
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (iconPath != null) ...[
-              StrictAssetIcon(
-                assetPath: iconPath,
-                width: iconSize,
-                height: iconSize,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              techDisplayName(techId),
-              style: TextStyle(
-                color: EditorialMonoclePalette.fg,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

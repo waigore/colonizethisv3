@@ -1,19 +1,10 @@
-// Research slot card widgets for the GAME40001 Technology panel Slots tab.
-//
-// Split out of `technology_panel.dart` so that file stays under the
-// `repo.game_widgets_file_size` cap. Contains the active slot card chrome
-// (`ResearchSlotCard` + its header/body sub-widgets), the locked fourth-slot
-// placeholder, the shared slot-card chrome, and the shared dark-surface
-// gradient. Refs #2864 S3 / #3512.
-//
-// SPEC: SPEC/ui/technology-panel.md § Slot behaviour.
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/themes.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/research_slot_preview.dart';
 import '../utils/tech_ui_helpers.dart';
@@ -45,13 +36,66 @@ const double kTechnologyLockedSlotOpacity = 0.45;
 /// Refs #3510.
 const double kTechnologySlotActionTouchTargetBreakpoint = 600;
 
-/// Vertical `--bg-deep` → `--surface` gradient shared by the researched
-/// tech chip body and the slot card chrome. Mirrors the mockup
-/// `linear-gradient(180deg,var(--bg-deep),var(--surface))` and is the
-/// single source so future palette tweaks stay aligned across both
-/// surfaces (SPEC/ui/technology-panel.md § Layout / wireframe + mockup
-/// `.tech-chip` and `.slot-card`). Refs #2864 S2/S3.
-LinearGradient technologyDarkSurfaceGradient() {
+/// Read-only researched-tech chip rendered in the Slots tab grid.
+///
+/// SPEC/ui/technology-panel.md § Layout / wireframe + mockup
+/// `.tech-chip`: vertical `--bg-deep` → `--surface` gradient, 1 px
+/// `--border` outline, 14 px tech-category icon, body-font tech name in
+/// `--fg`. Refs #2864 S2.
+class ResearchedTechChip extends StatelessWidget {
+  const ResearchedTechChip({super.key, required this.techId});
+
+  final String techId;
+
+  @visibleForTesting
+  static const double iconSize = 14;
+
+  @override
+  Widget build(BuildContext context) {
+    final tech = techById(techId);
+    final iconPath = techCategoryIconAssetPath(tech?.category);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: _technologyDarkSurfaceGradient(),
+        border: Border.all(
+          color: EditorialMonoclePalette.border,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (iconPath != null) ...[
+              StrictAssetIcon(
+                assetPath: iconPath,
+                width: iconSize,
+                height: iconSize,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              techDisplayName(techId),
+              style: TextStyle(
+                color: EditorialMonoclePalette.fg,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Vertical `--bg-deep` → `--surface` gradient shared by the researched
+// tech chip body and the slot card chrome. Mirrors the mockup
+// `linear-gradient(180deg,var(--bg-deep),var(--surface))` and is the
+// single source so future palette tweaks stay aligned across both
+// surfaces (SPEC/ui/technology-panel.md § Layout / wireframe + mockup
+// `.tech-chip` and `.slot-card`). Refs #2864 S2/S3.
+LinearGradient _technologyDarkSurfaceGradient() {
   return LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
@@ -60,6 +104,51 @@ LinearGradient technologyDarkSurfaceGradient() {
       EditorialMonoclePalette.surface,
     ],
   );
+}
+
+/// Mockup-faithful section heading for the Slots-tab canonical sections
+/// (`Researched Techs`, `Research Slots`).
+///
+/// Mirrors the mockup `.researched-heading` / `.slots-heading` style
+/// (`SPEC/ui/mockups/GAME40001-technology-panel.html`): the Cinzel display
+/// family at [fontSize] / [fontWeight], `--accent` colour, `0.04em`
+/// letter-spacing, and the literal heading text (NOT the small-caps
+/// upper-cased treatment used by `CtSectionLabel`). Per the issue
+/// source-of-truth precedence the mockup is canonical for this purely visual
+/// heading detail, so these two headings diverge from the app-wide
+/// `CtSectionLabel` chrome. SPEC/ui/technology-panel.md § Slots tab — section
+/// ordering. Refs #3510.
+class TechSectionHeading extends StatelessWidget {
+  const TechSectionHeading(this.text, {super.key});
+
+  final String text;
+
+  /// Heading font size in logical px (mockup `.researched-heading`
+  /// `font-size: clamp(11px,1.5vw,13px)` upper bound).
+  @visibleForTesting
+  static const double fontSize = 13;
+
+  /// Heading weight (mockup `font-weight:600`).
+  @visibleForTesting
+  static const FontWeight fontWeight = FontWeight.w600;
+
+  /// Letter spacing in logical px (`0.04em` of [fontSize]).
+  @visibleForTesting
+  static const double letterSpacing = fontSize * 0.04;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontFamily: editorialMonocleDisplayFontFamily,
+        color: EditorialMonoclePalette.accent,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+      ),
+    );
+  }
 }
 
 /// Active research slot card chrome (flat editorial-monocle surface +
@@ -90,9 +179,6 @@ class ResearchSlotCard extends StatelessWidget {
   final VoidCallback? onChooseTech;
   final ResearchFundingLevel funding;
   final ValueChanged<ResearchFundingLevel>? onFundingChanged;
-
-  /// Computed next-turn preview for the assigned tech (RP/gold deltas, debt
-  /// block). `null` when the slot has no resolvable tech. Refs #3512.
   final ResearchSlotTurnPreview? turnPreview;
 
   bool get _hasTech => techId != null;
@@ -389,7 +475,7 @@ class _SlotCardChrome extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: technologyDarkSurfaceGradient(),
+        gradient: _technologyDarkSurfaceGradient(),
         border: Border.all(
           color: EditorialMonoclePalette.border,
           width: 1,

@@ -43,8 +43,9 @@ void main() {
     // `Technology - {name}` or `Research slots: N` count line). Refs #3510.
     expect(find.textContaining('Technology - '), findsNothing);
     expect(find.textContaining('Research slots:'), findsNothing);
-    // Body opens directly with the Researched Techs section heading.
-    expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+    // Body opens directly with the Researched Techs section heading, rendered
+    // via the mockup-faithful TechSectionHeading (normal case). Refs #3510.
+    expect(find.text('Researched Techs'), findsOneWidget);
     expect(find.text('None yet'), findsOneWidget);
   });
 
@@ -120,8 +121,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    // Dark theme heading + three custom chip primitives (Refs #2864 S2).
-    expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+    // Dark theme heading (mockup-faithful TechSectionHeading, normal case)
+    // + three custom chip primitives (Refs #2864 S2 / #3510).
+    expect(find.text('Researched Techs'), findsOneWidget);
     expect(find.byType(ResearchedTechChip), findsNWidgets(3));
     // Material `Chip` is banned by the Ct-* catalog.
     expect(find.byType(Chip), findsNothing);
