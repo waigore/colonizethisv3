@@ -58,6 +58,8 @@ For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the 
 
 When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `locationScopeKey`, optional `initialSelectedFleetId`, and optional `tileScopeTileKey`, the list shows only fleets at that location scope, the title uses the tile-scoped string, and the **Tile** header action emits **`OpenMapTileDetailEvent`** for `tileScopeTileKey` (after **`ClosePanelEvent`**, same pattern as civilians).
 
+**Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header actions — tile-scope **Tile** and **Combine** — render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. The naval panel has **no** Train action. Bus emissions and enable/disable rules are unchanged: **Tile** is disabled when `tileScopeTileKey` is empty; **Combine** is enabled only when the current selection is combinable. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
+
 ---
 
 ## Scope: which fleets are shown
@@ -248,6 +250,8 @@ The first implementation pass for [#2866](https://github.com/) (PR #2906 + #2919
 - **Given** the Naval Units panel is open and the user expands a fleet row, **when** the fleet has one or more ships, **then** the UI layer shows a composition table with one row per ship type (including type name, count, and role tag) and a capabilities section (cargo capacity for the Home Fleet, strength summary for sea-going fleets) as defined in this spec.
 
 - **Given** the Naval Units panel is open and the user expands a fleet that includes ships of type `carrack`, **when** the user reads the composition row for that type, **then** the UI layer shows **Carrack** (or the mapped `shipTypeDisplayName` label) with the count, and does **not** show the raw id string `carrack:` as the row title.
+
+- **Given** the Naval Units panel is open (issue #3514 owner decisions #5 / #15), **when** the header **Combine** action (and the tile-scope **Tile** action, when present) renders, **then** the UI layer renders each as a `CtActionTextButton` with `primary == true` (compact primary gradient pill), and the header mounts no `CtNinePatchButton` descendant for its actions.
 
 - **Given** the Naval Units panel is open and renders one or more at-sea fleets, **when** the UI shows sea-zone location labels (group headers or row subtitles), **then** the UI resolves and displays sea-zone display names from world-state sea-zone naming data (prefixed key) and does not show raw `seaZoneId` values as user-facing labels.
 

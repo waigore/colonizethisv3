@@ -141,6 +141,8 @@ For each civilian unit, the panel shows:
 - **Selection swap:** In tile scope, tapping a different row changes selected unit id immediately.
 - **Action target:** In tile scope, row actions (**Assign**, **Cancel**) apply to the selected row only.
 - **Header actions (tile scope only):** The panel title row includes **Tile** then **Train** (left to right after the title). **Tile** opens province/tile detail for the **currently selected** unit’s **rendered tile** (`assignedTileKey` when present, otherwise `tileKey`). When there is no selected unit or no rendered tile key, **Tile** is disabled (or equivalent). **Full-list mode** (panel opened from the rail, no tile scope): the title row has **Train** only—no **Tile** in the header.
+- **Header action chrome (mockup `.train-btn` / `.hdr-btn` primary; issue #3514 owner decision #5):** Both header actions (**Train**, and tile-scope **Tile**) render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The primary pill is visually distinct from a neutral secondary `CtActionTextButton` (static `--border`, `--accent-dim` label). Bus emissions are unchanged: **Train** emits `ClosePanelEvent` then `OpenDialogEvent(trainCiviliansDialogId)` on the next frame; **Tile** emits `ClosePanelEvent` then `OpenMapTileDetailEvent` for the selected row’s rendered tile. The mockup `Close` pill and `mode-tag` remain preview-only scaffolding (no production `Close` pill is added). The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
+- **Status line in mockup (issue #3514 owner decision #8):** The live panel always shows an explicit `Status: …` line in each row detail stack (see § Per-unit row content). The `UNIT10001` HTML mockup renders the same explicit `Status: <Idle|Working>` line (`.u-status`) between the unit-type title and the location line so the mockup stays consistent with the implementation.
 
 ---
 
@@ -224,6 +226,12 @@ For each civilian unit, the panel shows:
 - **Given** the civilian units panel is open in tile scope and a unit row is selected, **when** the user presses **Tile** in the panel header, **then** the UI layer opens province/tile detail for the selected row’s rendered tile key.
 
 - **Given** the civilian units panel is open in **full-list** mode (no tile scope), **when** the panel is displayed, **then** the title row shows **Train** only and does not show a header **Tile** button.
+
+- **Given** the Civilian Units panel is open (issue #3514 owner decision #5), **when** the header **Train** action renders, **then** the UI layer renders it as a `CtActionTextButton` with `primary == true` (compact primary gradient pill, no `CtNinePatchButton` corner-bracket chrome), and tapping it still emits `OpenDialogEvent(trainCiviliansDialogId)`.
+
+- **Given** the Civilian Units panel is open in tile scope (issue #3514 owner decision #5), **when** the header **Tile** action renders, **then** the UI layer renders it as a `CtActionTextButton` with `primary == true`, and the header mounts no `CtNinePatchButton` descendant for its actions.
+
+- **Given** the `UNIT10001` HTML mockup (`SPEC/ui/mockups/UNIT10001-civilian-units-panel.html`) is opened in a browser (issue #3514 owner decision #8), **when** a sample row is viewed, **then** the row shows an explicit `Status:` line (`.u-status`) between the unit-type title and the location line, consistent with the live panel.
 
 - **Given** the civilian units panel is open in tile scope with **no** listed units for that tile (empty scoped list), **when** the panel is displayed, **then** the header **Tile** control does not open detail incorrectly (disabled or non-actionable).
 

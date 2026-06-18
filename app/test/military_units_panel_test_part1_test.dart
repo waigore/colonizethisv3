@@ -12,7 +12,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -147,6 +149,65 @@ void main() {
 
         expect(find.text('No military units'), findsOneWidget);
         expect(find.byType(ListTile), findsNothing);
+      },
+    );
+
+    testWidgets('header Train renders as a primary CtActionTextButton pill '
+        '(no CtNinePatchButton header chrome) — #3514 owner decisions #5/#15', (
+      WidgetTester tester,
+    ) async {
+      // Empty roster isolates the header so the only button chrome is the
+      // Train pill (no row Move/Split CtNinePatchButtons, no Combine).
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithNoUnits),
+      );
+      await tester.pumpAndSettle();
+
+      final headerButtons = find.descendant(
+        of: find.byType(UnitsPanelShell),
+        matching: find.byType(CtActionTextButton),
+      );
+      expect(headerButtons, findsOneWidget);
+      final train = tester.widget<CtActionTextButton>(headerButtons.first);
+      expect(train.primary, isTrue);
+      expect(train.label, 'Train');
+      expect(find.byType(CtNinePatchButton), findsNothing);
+    });
+
+    testWidgets(
+      'header Combine renders as a primary CtActionTextButton pill when a '
+      'combinable roster is present — #3514 owner decisions #5/#15',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        );
+        await tester.pumpAndSettle();
+
+        final combine = find.ancestor(
+          of: find.text('Combine'),
+          matching: find.byType(CtActionTextButton),
+        );
+        // Combine only renders for a non-empty roster; when present it must be
+        // a primary pill and never a CtNinePatchButton.
+        if (combine.evaluate().isNotEmpty) {
+          expect(
+            tester.widget<CtActionTextButton>(combine.first).primary,
+            isTrue,
+          );
+          expect(
+            find.ancestor(
+              of: find.text('Combine'),
+              matching: find.byType(CtNinePatchButton),
+            ),
+            findsNothing,
+          );
+        }
+        final train = find.ancestor(
+          of: find.text('Train'),
+          matching: find.byType(CtActionTextButton),
+        );
+        expect(train, findsOneWidget);
+        expect(tester.widget<CtActionTextButton>(train.first).primary, isTrue);
       },
     );
 

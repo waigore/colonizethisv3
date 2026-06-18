@@ -190,6 +190,18 @@ abstract class AppLocalizations {
   /// per-AI-slot tuned AI profile dropdown.
   String get shell_leaderDialog_aiProfileNormal;
 
+  /// Inline label rendered beside the per-AI-slot tuned AI profile dropdown
+  /// (mockup `.profile-line`).
+  String get shell_leaderDialog_aiProfileInlineLabel;
+
+  /// Slot heading for each player slot in the new-game setup dialog
+  /// (mockup `.slot-label`).
+  String shell_leaderDialog_slotLabel(int slotNumber);
+
+  /// Tag appended to the human player's slot label. Rendered uppercase via
+  /// presentation style (mockup `.you-tag` with text-transform:uppercase).
+  String get shell_leaderDialog_slotYouTag;
+
   /// Generic Cancel button label.
   String get common_cancel;
 
@@ -220,15 +232,20 @@ abstract class AppLocalizations {
   /// Helper text explaining 0 vs fixed seed for the new-game leader dialog.
   String get shell_leaderDialog_seedHelper;
 
-  /// Checkbox label for infinite campaign mode in the new-game leader dialog.
+  /// Toggle label for infinite campaign mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeLabel;
 
   /// Helper text for infinite mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeHelper;
 
-  /// Slider label for terrain noise variation in the new-game leader dialog,
-  /// including the current percent value.
-  String shell_leaderDialog_terrainVariationLabel(int percent);
+  /// Static slider label for terrain noise variation in the new-game leader
+  /// dialog. The live percent value is rendered separately via
+  /// [shell_leaderDialog_terrainVariationValue].
+  String get shell_leaderDialog_terrainVariationLabel;
+
+  /// Live terrain-variation percent value rendered beside the terrain
+  /// variation label.
+  String shell_leaderDialog_terrainVariationValue(int percent);
 
   /// Helper text under the terrain variation slider.
   String get shell_leaderDialog_terrainVariationHelper;
