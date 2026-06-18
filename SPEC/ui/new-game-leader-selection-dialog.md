@@ -185,6 +185,10 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 - Given the dialog is open under any theme, when the title `Text` is inspected, then its `style.color` is NOT equal to `AppThemes.colonial.textTheme.titleMedium?.color` (regression guard: dropping the EditorialMonoclePalette override would surface the colonial titleMedium color instead of the canonical `--accent` token).
 
+### Dialog frame width (mockup-authoritative, Refs #3507 D1)
+
+- Given the dialog is open, when the `CtDialogShell` wrapping `NewGameLeaderSelectionDialog` is inspected, then its `maxWidth` equals `540` and its `maxHeight` equals `720`, matching the authoritative mockup `.dialog-shell{max-width:540px}` (refreshed by #3506). Per the issue source-of-truth precedence the mockup wins on this purely visual detail, so the stale "keep 480 px" figure in the original D1 text does not apply; the dialog frame width is pinned to the 540 dp mockup value (also the `kLeaderSelectionNarrowBreakpoint` wide/narrow threshold).
+
 ### Visual baseline goldens (Refs #3507)
 
 - Given the dialog is rendered directly under `AppThemes.editorialMonocle` at a `600 × 900` dp viewport (width `>= kLeaderSelectionNarrowBreakpoint`, 540 dp) with `baseConfig = GameSetupConfig.defaultConfig`, `naming = defaultNamingConfig`, the default per-GP leader-variant map, and `blessedProfileNames == const []`, when the framed surface keyed `ValueKey<String>('leaderSelectionDialogWideGolden')` is captured, then `WidgetTester.takeException()` returns `null` and the capture matches the committed baseline `app/test/goldens/new_game_leader_selection_dialog_wide.png` (side-by-side nation/leader pickers per the mockup `@media (min-width: 540px)` rule).
