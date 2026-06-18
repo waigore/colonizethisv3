@@ -42,6 +42,8 @@ class CtDangerTextButton extends StatefulWidget {
     this.enabled = true,
     this.semanticLabel,
     this.tooltip,
+    this.icon,
+    this.iconSize = 14,
   });
 
   /// Tap callback. Ignored when [enabled] is `false`.
@@ -49,6 +51,17 @@ class CtDangerTextButton extends StatefulWidget {
 
   /// Single-line label text rendered inside the button.
   final String label;
+
+  /// Optional leading icon rendered before [label] (mockup destructive
+  /// row-action pills such as the civilian units panel `.u-actions .cancel-btn`
+  /// keep an icon + label per `SPEC/ui/civilian-units-panel.md` § Row actions,
+  /// issue #3514). When `null` (default) the button keeps the original
+  /// text-only chrome so existing call sites are unchanged.
+  final IconData? icon;
+
+  /// Rendered size of [icon] when present. Defaults to the compact row-action
+  /// footprint (14 logical px) used by the unit-panel mockups.
+  final double iconSize;
 
   /// When `false`, the entire control fades to the shared
   /// [CtNinePatchButton.disabledOpacity] and ignores pointer events.
@@ -128,7 +141,16 @@ class _CtDangerTextButtonState extends State<CtDangerTextButton> {
         horizontal: CtDangerTextButton._horizontalPadding,
         vertical: CtDangerTextButton._verticalPadding,
       ),
-      child: Text(widget.label, style: labelStyle),
+      child: widget.icon == null
+          ? Text(widget.label, style: labelStyle)
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(widget.icon, size: widget.iconSize, color: dangerColor),
+                const SizedBox(width: 4),
+                Text(widget.label, style: labelStyle),
+              ],
+            ),
     );
 
     final Widget faded = Opacity(opacity: _resolvedOpacity, child: surface);
@@ -148,10 +170,7 @@ class _CtDangerTextButtonState extends State<CtDangerTextButton> {
       cursor: SystemMouseCursors.click,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onPressed,
-          child: faded,
-        ),
+        child: InkWell(onTap: widget.onPressed, child: faded),
       ),
     );
 
