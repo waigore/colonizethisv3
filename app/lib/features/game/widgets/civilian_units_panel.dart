@@ -17,6 +17,7 @@ import '../../../providers/games_provider.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
+import 'chrome/ct_action_text_button.dart';
 import '../../../widgets/resource_icon.dart';
 import 'civilian_units_sort.dart';
 import 'game_panel_contract.dart';
@@ -299,9 +300,15 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       title: tileScopeActive
           ? l10n.civilian_units_title_tile
           : l10n.civilian_units_title,
+      // Header actions render as compact **primary** pills
+      // (`CtActionTextButton(primary: true)`) — gradient surface, 1 px
+      // accent-dim border, no nine-patch corner brackets — per
+      // SPEC/ui/civilian-units-panel.md § Header actions and issue #3514
+      // owner decision #5.
       actions: [
         if (tileScopeActive)
-          CtNinePatchButton(
+          CtActionTextButton(
+            primary: true,
             enabled: headerTileKey != null && headerTileKey.isNotEmpty,
             onPressed: () {
               final key = headerTileKey;
@@ -313,9 +320,11 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
                 widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
               });
             },
-            child: Text(l10n.civilian_units_tile),
+            label: l10n.civilian_units_tile,
           ),
-        CtNinePatchButton(
+        CtActionTextButton(
+          primary: true,
+          enabled: !widget.readOnly,
           onPressed: widget.readOnly
               ? null
               : () {
@@ -324,8 +333,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
                     widget.bus.emit(OpenDialogEvent(trainCiviliansDialogId));
                   });
                 },
-          enabled: !widget.readOnly,
-          child: Text(l10n.common_train),
+          label: l10n.common_train,
         ),
       ],
       hasContent: hasAny,

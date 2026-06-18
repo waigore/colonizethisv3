@@ -11,9 +11,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -647,9 +647,11 @@ void main() {
         expect(find.text('Civilian Units (Tile)'), findsOneWidget);
         expect(find.text('Tile'), findsOneWidget);
 
+        // Header actions are compact primary pills (CtActionTextButton,
+        // not CtNinePatchButton) per #3514 owner decision #5.
         final shellButtons = find.descendant(
           of: find.byType(UnitsPanelShell),
-          matching: find.byType(CtNinePatchButton),
+          matching: find.byType(CtActionTextButton),
         );
         expect(
           find.descendant(of: shellButtons.at(0), matching: find.text('Tile')),
@@ -700,10 +702,49 @@ void main() {
       expect(find.text('No civilian units'), findsOneWidget);
       final tileButton = find.ancestor(
         of: find.text('Tile'),
-        matching: find.byType(CtNinePatchButton),
+        matching: find.byType(CtActionTextButton),
       );
-      expect(tester.widget<CtNinePatchButton>(tileButton).enabled, isFalse);
+      expect(tester.widget<CtActionTextButton>(tileButton).enabled, isFalse);
     });
+
+    testWidgets(
+      'full-list header Train renders as a primary CtActionTextButton pill '
+      '(no CtNinePatchButton header chrome) — #3514 owner decision #5',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              availableWorkTargetIdsForUnitProvider.overrideWith(
+                (ref, _) => const <String>[],
+              ),
+            ],
+            child: MaterialApp(
+              home: Scaffold(
+                body: CivilianUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerIdWithUnits,
+                  bus: bus,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final headerButtons = find.descendant(
+          of: find.byType(UnitsPanelShell),
+          matching: find.byType(CtActionTextButton),
+        );
+        expect(headerButtons, findsOneWidget);
+        final trainButton = tester.widget<CtActionTextButton>(
+          headerButtons.first,
+        );
+        expect(trainButton.primary, isTrue);
+        expect(trainButton.label, 'Train');
+      },
+    );
 
     testWidgets(
       'tile-scoped header Tile emits OpenMapTileDetailEvent for rendered tile',
