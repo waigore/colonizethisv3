@@ -202,49 +202,80 @@ class _ResearchDualSegmentBar extends StatelessWidget {
           child: Stack(
             alignment: Alignment.centerLeft,
             children: <Widget>[
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: EditorialMonoclePalette.surface,
-                  border: Border.all(
-                    color: EditorialMonoclePalette.accentDim,
-                    width: borderWidth,
-                  ),
-                ),
-                child: const SizedBox.expand(),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(borderWidth),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      if (committedWidth > 0)
-                        SizedBox(
-                          width: committedWidth,
-                          height: double.infinity,
-                          child: ColoredBox(
-                            color: EditorialMonoclePalette.accent,
-                          ),
-                        ),
-                      if (anticipatedWidth > 0)
-                        AnimatedContainer(
-                          key: anticipatedSegmentKey,
-                          duration: animationDuration,
-                          curve: Curves.easeOut,
-                          width: anticipatedWidth,
-                          height: double.infinity,
-                          color: EditorialMonoclePalette.accent
-                              .withValues(alpha: 0.4),
-                        ),
-                    ],
-                  ),
-                ),
+              const _DualSegmentTrack(),
+              _DualSegmentFill(
+                committedWidth: committedWidth,
+                anticipatedWidth: anticipatedWidth,
+                anticipatedSegmentKey: anticipatedSegmentKey,
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+/// Static track (surface fill + `--accent-dim` border) behind both segments.
+class _DualSegmentTrack extends StatelessWidget {
+  const _DualSegmentTrack();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.surface,
+        border: Border.all(
+          color: EditorialMonoclePalette.accentDim,
+          width: _ResearchDualSegmentBar.borderWidth,
+        ),
+      ),
+      child: const SizedBox.expand(),
+    );
+  }
+}
+
+/// Committed (segment A) + anticipated (segment B, animated) fill row, inset by
+/// the track border so the segments sit inside the 1 px frame.
+class _DualSegmentFill extends StatelessWidget {
+  const _DualSegmentFill({
+    required this.committedWidth,
+    required this.anticipatedWidth,
+    required this.anticipatedSegmentKey,
+  });
+
+  final double committedWidth;
+  final double anticipatedWidth;
+  final Key anticipatedSegmentKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(_ResearchDualSegmentBar.borderWidth),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (committedWidth > 0)
+              SizedBox(
+                width: committedWidth,
+                height: double.infinity,
+                child: ColoredBox(color: EditorialMonoclePalette.accent),
+              ),
+            if (anticipatedWidth > 0)
+              AnimatedContainer(
+                key: anticipatedSegmentKey,
+                duration: _ResearchDualSegmentBar.animationDuration,
+                curve: Curves.easeOut,
+                width: anticipatedWidth,
+                height: double.infinity,
+                color:
+                    EditorialMonoclePalette.accent.withValues(alpha: 0.4),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
