@@ -10,7 +10,6 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'chrome/ct_action_text_button.dart';
 import 'game_panel_contract.dart';
@@ -20,6 +19,7 @@ import 'split_army_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
+import 'units/shared/units_entity_card.dart';
 import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
@@ -345,10 +345,9 @@ class _ArmyExpansionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: CtSpacing.m),
-      child: ExpansionTile(
+      child: UnitsEntityCard(
         title: _buildTitleRow(),
         subtitle: Text(_subtitleText()),
-        dense: true,
         children: _buildChildren(),
       ),
     );
@@ -356,6 +355,7 @@ class _ArmyExpansionTile extends StatelessWidget {
 
   Widget _buildTitleRow() {
     return UnitsEntityActionRow(
+      chrome: false,
       details: Row(
         children: [
           Checkbox(
@@ -417,47 +417,18 @@ class _ArmyExpansionTile extends StatelessWidget {
   }
 
   List<Widget> _buildChildren() {
+    // Expanded content mirrors the mockup `.unit-row .u-comp-table` — the
+    // per-regiment composition rows only. Move / Split are exposed exclusively
+    // as the compact title-row pills (issue #3514 owner decision #6); the
+    // legacy `CtNinePatchButton` footer duplicate is removed so the army card
+    // carries no nine-patch row-action chrome.
     return [
       if (block.rows.isEmpty)
         _UnitDetailRow(title: l10n.military_units_noRegimentsAssigned)
       else
         for (final row in block.rows)
           _RegimentRow(row: row, l10n: l10n, onTap: null),
-      _buildFooterButtons(),
     ];
-  }
-
-  Widget _buildFooterButtons() {
-    return Padding(
-      padding: const EdgeInsets.all(CtSpacing.m),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          if (onMove != null) ...[
-            CtNinePatchButton(
-              onPressed: onMove,
-              padding: const EdgeInsets.symmetric(
-                horizontal: CtSpacing.ml,
-                vertical: CtSpacing.m,
-              ),
-              minHeight: 36,
-              child: Text(l10n.common_move),
-            ),
-            const SizedBox(width: CtSpacing.m),
-          ],
-          if (onSplit != null)
-            CtNinePatchButton(
-              onPressed: onSplit,
-              padding: const EdgeInsets.symmetric(
-                horizontal: CtSpacing.ml,
-                vertical: CtSpacing.m,
-              ),
-              minHeight: 36,
-              child: Text(l10n.common_split),
-            ),
-        ],
-      ),
-    );
   }
 }
 
