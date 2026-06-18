@@ -112,7 +112,7 @@ void main() {
       await tester.tap(find.text('New Game'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Player 1 (You)'), findsOneWidget);
+      expect(find.text('Slot 1'), findsOneWidget);
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
 
       // Dialog should appear with Start and Cancel buttons.

@@ -8,8 +8,8 @@
 //     (360 × 640 dp) frame per `SPEC/ui/mobile-adaptation.md` § 6 and
 //     `SPEC/ui/new-game-leader-selection-dialog.md`.
 //
-// At 360 dp (< `kGameSetupNarrowBreakpoint` = 500 dp) the slot rows stack
-// vertically per the dialog spec § Narrow-viewport slot pickers stacking.
+// At 360 dp (< `kLeaderSelectionNarrowBreakpoint` = 540 dp) the slot rows
+// stack vertically per the dialog spec § Narrow-viewport slot pickers stacking.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

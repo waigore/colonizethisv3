@@ -238,7 +238,7 @@
   "@debugLog_filter_level": {
     "description": "Label for the log level filter section in the debug log viewer."
   },
-  "shell_leaderDialog_intro": "Assign each player slot a Great Power and leader. Default map colours appear beside each nation in the nation picker.",
+  "shell_leaderDialog_intro": "Choose six great powers and a leader variant for each",
   "@shell_leaderDialog_intro": {
     "description": "Intro text for the new-game setup dialog (nations + leaders)."
   },
@@ -249,6 +249,23 @@
   "shell_leaderDialog_aiProfileLabel": "AI Profile",
   "@shell_leaderDialog_aiProfileLabel": {
     "description": "Label / hint for the per-AI-slot tuned AI profile dropdown in the new-game leader selection dialog."
+  },
+  "shell_leaderDialog_aiProfileInlineLabel": "AI Profile:",
+  "@shell_leaderDialog_aiProfileInlineLabel": {
+    "description": "Inline label rendered beside the per-AI-slot tuned AI profile dropdown (mockup `.profile-line`)."
+  },
+  "shell_leaderDialog_slotLabel": "Slot {slotNumber}",
+  "@shell_leaderDialog_slotLabel": {
+    "description": "Slot heading for each player slot in the new-game setup dialog (mockup `.slot-label`).",
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "shell_leaderDialog_slotYouTag": "You",
+  "@shell_leaderDialog_slotYouTag": {
+    "description": "Tag appended to the human player's slot label. Rendered uppercase via presentation style (mockup `.you-tag` with text-transform:uppercase)."
   },
   "shell_leaderDialog_aiProfileNormal": "Normal",
   "@shell_leaderDialog_aiProfileNormal": {
@@ -270,7 +287,7 @@
   "@common_start": {
     "description": "Generic Start button label used when beginning a flow."
   },
-  "shell_leaderDialog_title": "New game — Setup",
+  "shell_leaderDialog_title": "Choose nations and leaders",
   "@shell_leaderDialog_title": {
     "description": "Title of the new-game setup dialog (nations + leaders)."
   },
@@ -296,28 +313,32 @@
       }
     }
   },
-  "shell_leaderDialog_seedLabel": "Game / world seed",
+  "shell_leaderDialog_seedLabel": "Game seed",
   "@shell_leaderDialog_seedLabel": {
     "description": "Label for the numeric seed field in the new-game leader dialog."
   },
 
-  "shell_leaderDialog_seedHelper": "Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.",
+  "shell_leaderDialog_seedHelper": "Enter 0 for a random seed",
   "@shell_leaderDialog_seedHelper": {
     "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
   },
 
-  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (turns progress past 1800)",
+  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (no victory condition)",
   "@shell_leaderDialog_infiniteModeLabel": {
-    "description": "Checkbox label for infinite campaign mode in the new-game leader dialog."
+    "description": "Toggle label for infinite campaign mode in the new-game leader dialog."
   },
-  "shell_leaderDialog_infiniteModeHelper": "When enabled, the campaign continues past calendar year 1800 until a military victory.",
+  "shell_leaderDialog_infiniteModeHelper": "The game will continue indefinitely",
   "@shell_leaderDialog_infiniteModeHelper": {
     "description": "Helper text for infinite mode in the new-game leader dialog."
   },
 
-  "shell_leaderDialog_terrainVariationLabel": "Terrain variation ({percent}%)",
+  "shell_leaderDialog_terrainVariationLabel": "Terrain variation:",
   "@shell_leaderDialog_terrainVariationLabel": {
-    "description": "Slider label for terrain noise variation in the new-game leader dialog, including the current percent value.",
+    "description": "Static slider label for terrain noise variation in the new-game leader dialog. The live percent value is rendered separately via shell_leaderDialog_terrainVariationValue."
+  },
+  "shell_leaderDialog_terrainVariationValue": "{percent}%",
+  "@shell_leaderDialog_terrainVariationValue": {
+    "description": "Live terrain-variation percent value rendered beside the terrain variation label.",
     "placeholders": {
       "percent": {
         "type": "int",
@@ -325,7 +346,7 @@
       }
     }
   },
-  "shell_leaderDialog_terrainVariationHelper": "Higher values produce more mixed terrain (0 keeps legacy clumps).",
+  "shell_leaderDialog_terrainVariationHelper": "0% flat — 100% extreme",
   "@shell_leaderDialog_terrainVariationHelper": {
     "description": "Helper text under the terrain variation slider."
   },
