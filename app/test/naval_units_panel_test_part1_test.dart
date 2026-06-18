@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -159,6 +160,30 @@ void main() {
       if (find.byType(ExpansionTile).evaluate().isNotEmpty) {
         expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
       }
+    });
+
+    testWidgets('header Combine renders as a primary CtActionTextButton pill '
+        '(no CtNinePatchButton header chrome) — #3514 owner decisions #5/#15', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
+      );
+      await tester.pumpAndSettle();
+
+      final combine = find.ancestor(
+        of: find.text('Combine'),
+        matching: find.byType(CtActionTextButton),
+      );
+      expect(combine, findsOneWidget);
+      expect(tester.widget<CtActionTextButton>(combine.first).primary, isTrue);
+      expect(
+        find.ancestor(
+          of: find.text('Combine'),
+          matching: find.byType(CtNinePatchButton),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets(
@@ -804,7 +829,7 @@ void main() {
         );
 
         final combineButtons = find.widgetWithText(
-          CtNinePatchButton,
+          CtActionTextButton,
           'Combine',
         );
         expect(combineButtons, findsOneWidget);
@@ -816,7 +841,7 @@ void main() {
         expect(
           find.descendant(
             of: homeFleetFinder,
-            matching: find.widgetWithText(CtNinePatchButton, 'Combine'),
+            matching: find.widgetWithText(CtActionTextButton, 'Combine'),
           ),
           findsNothing,
         );
@@ -925,7 +950,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+          find.widgetWithText(CtActionTextButton, 'Combine'),
           findsOneWidget,
         );
       },
