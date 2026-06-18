@@ -18,5 +18,6 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | `ProductionAllocationRow` | [`production-allocation-row.md`](production-allocation-row.md) | `GAME20001` (production panel). |
 | `TrainDialogChrome` | [`train-dialog-chrome.md`](train-dialog-chrome.md) | `UNIT40001` (train civilians dialog), `UNIT50001` (train military dialog). |
 | `UnitsEntityActionRow` | [`units-entity-action-row.md`](units-entity-action-row.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
+| `UnitsEntityCard` | [`units-entity-card.md`](units-entity-card.md) | `UNIT20001` (military units panel). |
 | `UnitsPanelSheetSurface` | [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
 | `UnitsPanelShell` | [`units-panel-shell.md`](units-panel-shell.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
