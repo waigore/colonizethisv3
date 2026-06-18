@@ -48,16 +48,23 @@ Map<String, List<_OrderState>> _indexOrdersByFaction(
   return result;
 }
 
-List<_OrderState> _orderedStatesForCommodity(
+/// Groups every order state by [TradeOrder.commodityId] in a single pass,
+/// preserving the exact ordering the per-commodity scan produced (faction
+/// order from [_indexOrdersByFaction] insertion — alphabetical — then
+/// faction-local index). Built once in the [DealMatcher.matchDeals] prologue so
+/// the per-commodity matching loop is an O(1) map lookup instead of an
+/// O(total-states) re-scan for every commodity, avoiding the duplicate global
+/// scan flagged by `colonizethis-turn-resolution-budget.mdc` (Refs #3517
+/// Cluster 3). The grouped lists reference the same mutable [_OrderState]
+/// objects as [statesByFaction], so `remaining` decrements during matching stay
+/// visible to the carry-forward pass.
+Map<CommodityId, List<_OrderState>> _indexStatesByCommodity(
   Map<String, List<_OrderState>> statesByFaction,
-  CommodityId commodityId,
 ) {
-  final out = <_OrderState>[];
+  final out = <CommodityId, List<_OrderState>>{};
   for (final entry in statesByFaction.entries) {
     for (final state in entry.value) {
-      if (state.order.commodityId == commodityId) {
-        out.add(state);
-      }
+      (out[state.order.commodityId] ??= <_OrderState>[]).add(state);
     }
   }
   return out;

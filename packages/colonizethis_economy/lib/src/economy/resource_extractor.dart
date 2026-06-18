@@ -5,7 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
 import 'tile_extraction_pipeline.dart';
-import 'tile_extraction_yield.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Per-player extraction totals: land (same region as capital) vs overseas.
@@ -153,59 +152,38 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   /// rows are resolved by id in O(1) instead of scanning the region list per tile.
   Map<String, Province>? provincesByFullId,
 }) {
-  if (!connectedTileKeys.contains(tileKey)) {
-    return null;
-  }
-
-  final tileContext = resolveTileKeyExtractionContext(
-    tileKey: tileKey,
-    tileMapByRegion: tileMapByRegion,
-    provincesByFullId: provincesByFullId,
+  // Thin Great-Power wrapper over the shared [computeTileYieldContribution]
+  // orchestration: per-resource (or per-player) tech cap and the mineral
+  // Prospecting Gate (minerals require the tile to be prospected). Refs #3517
+  // Cluster 1.
+  final contribution = computeTileYieldContribution(
     game: game,
-    logContext: 'extraction',
-  );
-  if (tileContext == null) {
-    return null;
-  }
-
-  final commodityId = tileContext.commodityId;
-  final techCap =
-      techCapForPlayerAndResource?.call(player.id, commodityId) ??
-      techCapForPlayer(player.id);
-  final isMineral = kMineralResourceIds.contains(commodityId);
-  if (isMineral && !prospectedTileKeys.contains(tileKey)) {
-    return null;
-  }
-
-  final province = tileContext.province;
-  final provinceId = tileContext.provinceId;
-  final townDevelopmentCap = province.townDevelopmentLevel;
-  final townTileKey = province.townTileKey;
-  final townTileIsPort =
-      townTileKey != null && portTileKeys.contains(townTileKey);
-
-  final isCapitalProvince = provinceId == player.capitalProvinceId;
-  final usesRoadRule = connectedByRoadRule.contains(tileKey);
-  final effectiveCapped = computeEffectiveTileYield(
-    tileState: game.worldState.tileState,
+    tileMapByRegion: tileMapByRegion,
     tileKey: tileKey,
-    techCap: techCap,
-    townDevelopmentCap: townDevelopmentCap,
-    townTileIsPort: townTileIsPort,
-    isCapitalProvince: isCapitalProvince,
-    usesRoadRule: usesRoadRule,
-    portTileKeys: portTileKeys,
+    connectedTileKeys: connectedTileKeys,
     pathTransportCap: pathTransportCap,
+    connectedByRoadRule: connectedByRoadRule,
+    portTileKeys: portTileKeys,
+    capitalProvinceId: player.capitalProvinceId,
+    capitalRegionId: capitalRegionId,
+    logContext: 'extraction',
+    provincesByFullId: provincesByFullId,
+    techCapForCommodity: (commodityId) =>
+        techCapForPlayerAndResource?.call(player.id, commodityId) ??
+        techCapForPlayer(player.id),
+    isCommodityExtractable: (tileKey, commodityId) =>
+        !kMineralResourceIds.contains(commodityId) ||
+        prospectedTileKeys.contains(tileKey),
   );
-  if (effectiveCapped <= 0) {
+  if (contribution == null) {
     return null;
   }
 
   return TileExtractionContribution(
     tileKey: tileKey,
-    commodityId: commodityId,
-    units: effectiveCapped,
-    isLandRelativeToCapital: tileContext.regionId == capitalRegionId,
+    commodityId: contribution.commodityId,
+    units: contribution.units,
+    isLandRelativeToCapital: contribution.isLandRelativeToCapital,
   );
 }
 

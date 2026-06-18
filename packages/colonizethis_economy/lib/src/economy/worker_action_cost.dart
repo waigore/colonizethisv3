@@ -14,6 +14,8 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'cost_check.dart';
+
 /// Rejection reason vocabulary (matches GDD § Order rejection reasons).
 ///
 /// These strings are part of the user-visible UI contract; do not change
@@ -42,21 +44,31 @@ const String kRecruitWorkerTechLocked = 'Required technology not unlocked';
 ) {
   final row = WorkerActionEconomyCatalog.forTier(order.targetTier);
   final tech = player.techUnlocked ?? const <String, bool>{};
-  for (final techId in row.requiredTechIds) {
-    if (tech[techId] != true) {
-      return (canAfford: false, reason: kRecruitWorkerTechLocked);
-    }
-  }
-  if (row.consumesPeasant && workers.peasants <= 0) {
-    return (canAfford: false, reason: kRecruitWorkerInsufficientWorkers);
-  }
-  if (treasury < row.treasuryCost) {
-    return (canAfford: false, reason: kRecruitWorkerInsufficientTreasury);
-  }
-  for (final entry in row.materialCosts.entries) {
-    if (stockpile.quantityOf(entry.key) < entry.value) {
-      return (canAfford: false, reason: kRecruitWorkerInsufficientMaterials);
-    }
+  // Canonical order, first failure: tech → workers → treasury → materials.
+  // Shared with build-unit affordability via [checkPreconditionsInOrder]
+  // (Refs #3517 Cluster 2).
+  final reason = checkPreconditionsInOrder([
+    (
+      failReason: kRecruitWorkerTechLocked,
+      check: () => row.requiredTechIds.every((techId) => tech[techId] == true),
+    ),
+    (
+      failReason: kRecruitWorkerInsufficientWorkers,
+      check: () => !(row.consumesPeasant && workers.peasants <= 0),
+    ),
+    (
+      failReason: kRecruitWorkerInsufficientTreasury,
+      check: () => treasury >= row.treasuryCost,
+    ),
+    (
+      failReason: kRecruitWorkerInsufficientMaterials,
+      check: () => row.materialCosts.entries.every(
+        (entry) => stockpile.quantityOf(entry.key) >= entry.value,
+      ),
+    ),
+  ]);
+  if (reason != null) {
+    return (canAfford: false, reason: reason);
   }
   return (canAfford: true, reason: null);
 }
