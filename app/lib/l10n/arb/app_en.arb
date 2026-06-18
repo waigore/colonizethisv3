@@ -1878,6 +1878,80 @@
   "@technologyPanel_fundingMaximum": {
     "description": "Slot funding toggle label for ResearchFundingLevel.maximum (Refs #3512)."
   },
+  "technologyPanel_rpDeltaPreview": "+{rp} RP",
+  "@technologyPanel_rpDeltaPreview": {
+    "description": "Green anticipated research-point delta shown on a slot card for the RP applied next turn (Refs #3512).",
+    "placeholders": {
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_goldSpendPerTurn": "\u2212{gold}/turn",
+  "@technologyPanel_goldSpendPerTurn": {
+    "description": "Treasury (gold) per-turn cost shown on a slot card when funding will spend gold next turn (Refs #3512).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_goldNoSpendPerTurn": "{gold}/turn",
+  "@technologyPanel_goldNoSpendPerTurn": {
+    "description": "Treasury (gold) per-turn cost shown greyed on a debt-blocked slot card (no spend occurs) (Refs #3512).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownTitle": "Research points this turn",
+  "@technologyPanel_rpBreakdownTitle": {
+    "description": "Title of the research-funding breakdown dialog (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownBaseLabel": "Base \u2014 {funding} funding",
+  "@technologyPanel_rpBreakdownBaseLabel": {
+    "description": "Breakdown dialog row labelling the base RP for the selected funding level (Refs #3512).",
+    "placeholders": {
+      "funding": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownIndustrialLabel": "Industrial Funding +20%",
+  "@technologyPanel_rpBreakdownIndustrialLabel": {
+    "description": "Breakdown dialog row labelling the Industrial Funding of Research +20% military/naval bonus (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownEffectiveLabel": "Effective RP this turn",
+  "@technologyPanel_rpBreakdownEffectiveLabel": {
+    "description": "Breakdown dialog row labelling the effective RP applied this turn (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownTreasuryLabel": "Treasury cost this turn",
+  "@technologyPanel_rpBreakdownTreasuryLabel": {
+    "description": "Breakdown dialog row labelling the per-turn treasury (gold) cost (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownDebtBlocked": "Treasury below the research debt floor \u2014 0 RP applied this turn.",
+  "@technologyPanel_rpBreakdownDebtBlocked": {
+    "description": "Breakdown dialog note shown when the funding spend is debt-blocked so 0 RP is applied (Refs #3512)."
+  },
+  "technologyPanel_rpValue": "{rp} RP",
+  "@technologyPanel_rpValue": {
+    "description": "Monospace research-point value used in the breakdown dialog rows (Refs #3512).",
+    "placeholders": {
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_goldValue": "{gold} gold",
+  "@technologyPanel_goldValue": {
+    "description": "Treasury (gold) value used in the breakdown dialog treasury-cost row (Refs #3512).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "techTree_noTechsInCatalog": "No techs in catalog",
   "@techTree_noTechsInCatalog": {
     "description": "Tech tree empty-state text."

@@ -6,6 +6,7 @@ import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
+import '../utils/research_slot_preview.dart';
 import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_progress_bar.dart';
@@ -14,6 +15,7 @@ import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'chrome/ct_action_text_button.dart';
 import 'chrome/ct_danger_text_button.dart';
+import 'research_slot_turn_preview_view.dart';
 import 'technology_panel_orders.dart';
 import 'technology_slot_funding_toggles.dart';
 
@@ -232,6 +234,17 @@ class TechnologyPanel extends StatelessWidget {
     final cost = tech?.cost ?? 0;
     final hasTech = techId != null;
     final funding = order?.funding ?? ResearchFundingLevel.medium;
+    // The turn preview accompanies the editable funding controls, so it renders
+    // only on the editable (human, own-orders) panel; read-only panels keep the
+    // simple committed-progress bar. Refs #3512.
+    final turnPreview = (tech == null || !canEdit)
+        ? null
+        : computeResearchSlotTurnPreview(
+            player: player,
+            tech: tech,
+            committedProgress: techProgress,
+            funding: funding,
+          );
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: ResearchSlotCard(
@@ -241,6 +254,7 @@ class TechnologyPanel extends StatelessWidget {
         cost: cost,
         canEdit: canEdit,
         funding: funding,
+        turnPreview: turnPreview,
         onFundingChanged: hasTech && canEdit
             ? (level) => onOrdersChanged!(
                   applySetSlotFunding(
@@ -382,6 +396,7 @@ class ResearchSlotCard extends StatelessWidget {
     required this.onChooseTech,
     this.funding = ResearchFundingLevel.medium,
     this.onFundingChanged,
+    this.turnPreview,
   });
 
   final int slotIndex;
@@ -393,6 +408,10 @@ class ResearchSlotCard extends StatelessWidget {
   final VoidCallback? onChooseTech;
   final ResearchFundingLevel funding;
   final ValueChanged<ResearchFundingLevel>? onFundingChanged;
+
+  /// Computed next-turn preview for the assigned tech (RP/gold deltas, debt
+  /// block). `null` when the slot has no resolvable tech. Refs #3512.
+  final ResearchSlotTurnPreview? turnPreview;
 
   bool get _hasTech => techId != null;
 
@@ -421,6 +440,7 @@ class ResearchSlotCard extends StatelessWidget {
               cost: cost,
               funding: funding,
               onFundingChanged: onFundingChanged,
+              turnPreview: turnPreview,
             ),
         ],
       ),
@@ -538,6 +558,7 @@ class _SlotAssignedBody extends StatelessWidget {
     required this.cost,
     required this.funding,
     required this.onFundingChanged,
+    required this.turnPreview,
   });
 
   final int slotIndex;
@@ -546,6 +567,7 @@ class _SlotAssignedBody extends StatelessWidget {
   final int cost;
   final ResearchFundingLevel funding;
   final ValueChanged<ResearchFundingLevel>? onFundingChanged;
+  final ResearchSlotTurnPreview? turnPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -565,31 +587,37 @@ class _SlotAssignedBody extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 4),
-        Row(
-          children: [
-            Expanded(
-              child: CtProgressBar(
-                value: cost > 0 ? progress / cost : 0,
+        if (turnPreview != null)
+          ResearchSlotTurnPreviewView(
+            slotIndex: slotIndex,
+            preview: turnPreview!,
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: CtProgressBar(
+                  value: cost > 0 ? progress / cost : 0,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              l10n.technologyPanel_slotRpProgress(progress, cost),
-              style: TextStyle(
-                color: EditorialMonoclePalette.accentDim,
-                fontFamilyFallback: const <String>[
-                  'SF Mono',
-                  'Menlo',
-                  'monospace',
-                ],
-                fontFeatures: const <FontFeature>[
-                  FontFeature.tabularFigures(),
-                ],
-                fontSize: 10,
+              const SizedBox(width: 8),
+              Text(
+                l10n.technologyPanel_slotRpProgress(progress, cost),
+                style: TextStyle(
+                  color: EditorialMonoclePalette.accentDim,
+                  fontFamilyFallback: const <String>[
+                    'SF Mono',
+                    'Menlo',
+                    'monospace',
+                  ],
+                  fontFeatures: const <FontFeature>[
+                    FontFeature.tabularFigures(),
+                  ],
+                  fontSize: 10,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }
