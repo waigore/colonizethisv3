@@ -56,6 +56,7 @@ Turn economic phases (in order):
 
 - Models (Stockpile, WorkerPool, Player fields): colonizethis_models.
 - Resolution logic (extraction, production, transport, consumption): colonizethis_logic.
+- Trade-cargo forecasting: `colonizethis_economy` publishes `computeExtractionTotalsForTradeForecast` (per-player `ExtractionTotals` map) so callers driving multiple overseas-tonnage forecasts in one pass build the extraction map once; `forecastOverseasShippedTonnageForPlayer` / `tradeCargoCapacityForGreatPower` accept an optional pre-computed `extractionById` map and fall back to an on-demand `computeExtraction` scan when it is absent (Refs #3517 Cluster 4; avoids duplicate global scans per `colonizethis-turn-resolution-budget.mdc`).
 
 ---
 

@@ -66,6 +66,7 @@ EconomyPlan runEconomyPlanner({
   MapTopology? topology,
   bool skipTradeOrderGeneration = false,
   bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  Map<String, ExtractionTotals>? extractionById,
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
@@ -125,6 +126,7 @@ EconomyPlan runEconomyPlanner({
               snapshot: snapshot,
               tileMapByRegion: tileMapByRegion,
               topology: topology,
+              extractionById: extractionById,
             ),
     );
   }
@@ -337,6 +339,7 @@ EconomyPlan runEconomyPlanner({
           snapshot: snapshot,
           tileMapByRegion: tileMapByRegion,
           topology: topology,
+          extractionById: extractionById,
         );
   _log.i(
     'economy plan playerId=${view.playerId} '
