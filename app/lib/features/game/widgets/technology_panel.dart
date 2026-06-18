@@ -15,6 +15,7 @@ import '../../../widgets/strict_asset_icon.dart';
 import 'chrome/ct_action_text_button.dart';
 import 'chrome/ct_danger_text_button.dart';
 import 'technology_panel_orders.dart';
+import 'technology_slot_funding_toggles.dart';
 
 /// Always-rendered slot count on the Slots tab.
 ///
@@ -230,6 +231,7 @@ class TechnologyPanel extends StatelessWidget {
     final techProgress = techId == null ? 0 : (progress[techId] ?? 0);
     final cost = tech?.cost ?? 0;
     final hasTech = techId != null;
+    final funding = order?.funding ?? ResearchFundingLevel.medium;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: ResearchSlotCard(
@@ -238,6 +240,17 @@ class TechnologyPanel extends StatelessWidget {
         progress: techProgress,
         cost: cost,
         canEdit: canEdit,
+        funding: funding,
+        onFundingChanged: hasTech && canEdit
+            ? (level) => onOrdersChanged!(
+                  applySetSlotFunding(
+                    currentOrders: currentOrders,
+                    humanPlayerId: humanPlayerId,
+                    slotIndex: index,
+                    funding: level,
+                  ),
+                )
+            : null,
         onCancel: hasTech && canEdit
             ? () {
                 applyCancelSlotOrder(
@@ -367,6 +380,8 @@ class ResearchSlotCard extends StatelessWidget {
     required this.canEdit,
     required this.onCancel,
     required this.onChooseTech,
+    this.funding = ResearchFundingLevel.medium,
+    this.onFundingChanged,
   });
 
   final int slotIndex;
@@ -376,6 +391,8 @@ class ResearchSlotCard extends StatelessWidget {
   final bool canEdit;
   final VoidCallback? onCancel;
   final VoidCallback? onChooseTech;
+  final ResearchFundingLevel funding;
+  final ValueChanged<ResearchFundingLevel>? onFundingChanged;
 
   bool get _hasTech => techId != null;
 
@@ -398,9 +415,12 @@ class ResearchSlotCard extends StatelessWidget {
             const _SlotEmptyBody()
           else
             _SlotAssignedBody(
+              slotIndex: slotIndex,
               techId: techId!,
               progress: progress,
               cost: cost,
+              funding: funding,
+              onFundingChanged: onFundingChanged,
             ),
         ],
       ),
@@ -512,23 +532,38 @@ class _SlotEmptyBody extends StatelessWidget {
 
 class _SlotAssignedBody extends StatelessWidget {
   const _SlotAssignedBody({
+    required this.slotIndex,
     required this.techId,
     required this.progress,
     required this.cost,
+    required this.funding,
+    required this.onFundingChanged,
   });
 
+  final int slotIndex;
   final String techId;
   final int progress;
   final int cost;
+  final ResearchFundingLevel funding;
+  final ValueChanged<ResearchFundingLevel>? onFundingChanged;
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final onFundingChanged = this.onFundingChanged;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         _AssignedTechRow(techId: techId),
+        if (onFundingChanged != null) ...[
+          const SizedBox(height: 6),
+          SlotFundingToggleRow(
+            slotIndex: slotIndex,
+            selected: funding,
+            onChanged: onFundingChanged,
+          ),
+        ],
         const SizedBox(height: 4),
         Row(
           children: [

@@ -65,6 +65,7 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 |-------------------|--------------|---------------|--------------|
 | Choose tech | Slot empty or re-assign | Opens filtered tech list | Assigns `ResearchOrder` on select. |
 | Cancel | Slot assigned | Clears slot order | Progress lost on resolution per research-resolution. |
+| Funding toggle | Slot assigned and editing enabled | Sets `ResearchOrder.funding` for that slot | Updates `Orders.researchOrdersByPlayerId` immediately; persists until changed or cancelled. |
 
 ---
 
@@ -80,6 +81,7 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 ## Components
 
 - Technology screen widgets, choose-tech dialog, [tech-tree-widget.md](tech-tree-widget.md).
+- `SlotFundingToggleRow` (`app/lib/features/game/widgets/technology_slot_funding_toggles.dart`) — compact five-button per-slot research-funding selector (Refs #3512). Pure-helper `applySetSlotFunding` (`technology_panel_orders.dart`) returns the updated `Orders` for the dispatch callback.
 
 ---
 
@@ -123,6 +125,7 @@ The panel does **not** show locked techs in the assignment list. When there are 
   - **Cancel** renders as a destructive `CtDangerTextButton` (mockup `.cancel-slot`: transparent fill, 1 px `--danger` border, `--danger` label, idle opacity `0.7` lifting to `1.0` on hover).
   - The locked Slot 4 placeholder renders neither control (per § Slot behaviour > Locked slot 4).
   - **Mobile touch target:** When the viewport width is `< kTechnologySlotActionTouchTargetBreakpoint` (600 logical px, mirroring the in-game shell narrow breakpoint in `SPEC/ui/mobile-adaptation.md` § 4), each slot action control guarantees a tap target of at least `kMinTouchTargetSize` (44 dp) in both dimensions per mobile-adaptation § 1. At or above that width the controls render at their compact mockup density.
+- **Slot funding controls (Refs #3512):** Each active slot card with an assigned tech renders a compact row of **five rectangular funding toggle controls** in the fixed order **None, Low, Medium, High, Maximum** (one per `ResearchFundingLevel` value), implemented by `SlotFundingToggleRow` (`app/lib/features/game/widgets/technology_slot_funding_toggles.dart`). Each toggle carries a stable key `techFundingToggle_<slotIndex>_<level.name>` so widget tests can locate it without coupling to localized strings. The toggle matching the slot's current `ResearchOrder.funding` renders in the **selected** state (1 px `--accent` border, accent-tinted fill, `--accent-bright` label); the other four render **unselected** (1 px `--border` outline, transparent fill, `--muted` label). New assignments default to **Medium** (`applyAssignTechToSlot` seeds `ResearchFundingLevel.medium`), so a freshly assigned slot shows Medium selected. Tapping a toggle for level `L` dispatches the updated `Orders` (via `applySetSlotFunding`) so the slot's `ResearchOrder.funding` becomes `L` with its `techId` / `slotIndex` unchanged; selection persists until changed again or the slot is cancelled. The funding toggle row is rendered **only** when the slot has an assigned tech **and** editing is enabled (`onOrdersChanged != null`); empty slots, the locked Slot 4 placeholder, and read-only (`onOrdersChanged == null`) panels render no funding controls. Hard-coded colours are forbidden; all tokens resolve through `EditorialMonoclePalette`.
 - **Choose tech:** Opens the dark editorial-monocle Choose-tech dialog (see § Choose-tech dialog) listing only the choosable techs (researchable, not in another slot). Selecting a tech assigns it to that slot and closes the dialog.
 - **Cancel:** Clears the slot (order removed); progress for that tech is lost on resolution per [research-resolution.md](../program/research-resolution.md).
 - **Goal slot:** Out of scope for this spec; only assignment slots are defined here.
@@ -172,6 +175,16 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **Mobile slot-action touch target (Refs #3510):** **Given** the Slots tab is rendered with editing enabled at a viewport width strictly less than `kTechnologySlotActionTouchTargetBreakpoint` (600 logical px), e.g. the `360 × 640 dp` mobile frame, **when** each rendered slot action control (`CtActionTextButton` / `CtDangerTextButton`) is measured, **then** the UI layer reports a rendered size of at least `kMinTouchTargetSize` (44 dp) in both width and height.
 
 - **Desktop slot-action density (Refs #3510):** **Given** the Slots tab is rendered with editing enabled at a viewport width greater than or equal to `kTechnologySlotActionTouchTargetBreakpoint` (600 logical px), **when** a slot action control is measured, **then** the UI layer reports a rendered height strictly less than `kMinTouchTargetSize` (44 dp), preserving the compact mockup `.slot-actions button` density rather than padding the control to the mobile minimum.
+
+- **Slot funding toggles present (Refs #3512):** **Given** an active slot card with an assigned tech is rendered with editing enabled (`onOrdersChanged != null`), **when** the slot body builds, **then** the UI layer renders exactly five funding toggle controls inside a `SlotFundingToggleRow`, in order labelled None, Low, Medium, High, Maximum, each carrying a stable key `techFundingToggle_<slotIndex>_<level.name>` for the five `ResearchFundingLevel` values.
+
+- **Slot funding default Medium (Refs #3512):** **Given** a slot whose `ResearchOrder.funding` equals `ResearchFundingLevel.medium` (the default seeded on new assignment by `applyAssignTechToSlot`), **when** the funding toggle row renders, **then** the Medium toggle is rendered in the selected state (`--accent` border) and the None, Low, High, and Maximum toggles are rendered in the unselected state (`--border` outline).
+
+- **Slot funding selection updates orders (Refs #3512):** **Given** an active slot at index `i` with an assigned tech `t` and editing enabled, **when** the player taps the funding toggle for level `L` (any `ResearchFundingLevel` other than the current one), **then** the UI layer dispatches `onOrdersChanged` with an `Orders` whose `researchOrdersByPlayerId[playerId]` entry at `slotIndex == i` has `funding == L`, `techId == t`, and `slotIndex == i` unchanged, and no other slot's `ResearchOrder` is mutated.
+
+- **No funding toggles on read-only panel (Refs #3512):** **Given** an active slot card with an assigned tech is rendered with editing disabled (`onOrdersChanged == null`), **when** the slot body builds, **then** the UI layer renders no `SlotFundingToggleRow` and no funding toggle controls.
+
+- **No funding toggles on empty slot (Refs #3512):** **Given** an active slot card with no assigned tech (no `ResearchOrder` for that slot) rendered with editing enabled, **when** the slot body builds, **then** the UI layer renders the empty-state line and no `SlotFundingToggleRow` (funding is meaningless without an assigned tech).
 
 - **Slots tab section ordering (Refs #2864 S0/S6):** **Given** the Slots tab is rendered for any player on any viewport, **when** the body widget tree is laid out, **then** the `CtSectionLabel` carrying the localized `technologyPanel_researchedTechsHeading` text appears at a strictly smaller vertical offset (smaller `Offset.dy`) than the `CtSectionLabel` carrying the localized `technologyPanel_researchSlotsHeading` text, matching the mockup body markup (`SPEC/ui/mockups/GAME40001-technology-panel.html`: `.researched-heading` precedes `.slots-heading`).
 
