@@ -40,6 +40,8 @@ Slots tab content: vertical list of slot rows (label, assigned tech + progress, 
 
 The body of the Slots tab MUST render the following sections in this top-to-bottom order, matching the mockup body markup in [`mockups/GAME40001-technology-panel.html`](mockups/GAME40001-technology-panel.html) where `.researched-heading` + `.researched-grid` precede `.slots-heading` + `#slots-container`:
 
+The Slots tab body MUST NOT render a dev-only panel header block. The mockup `.content` block opens directly with `.researched-heading`; there is no per-player title or slot-count line above it. Specifically, the body MUST NOT render the legacy `technologyPanel_title` (`"Technology - {playerName}"`) line nor the legacy `technologyPanel_researchSlotsCount` (`"Research slots: {slots}"`) line. The player identity and the `Technology` title are already carried by the `CtTopBar` chrome (§ Top bar). Refs #3510.
+
 1. **Researched Techs** — `CtSectionLabel` heading (`technologyPanel_researchedTechsHeading`) followed by the read-only `ResearchedTechChip` `Wrap` grid (or the empty-state line when the player has no researched techs).
 2. **Section divider** — a single `CtBrassDivider` separates the Researched Techs block from the Research Slots block below it.
 3. **Research Slots** — `CtSectionLabel` heading (`technologyPanel_researchSlotsHeading`) followed by the four slot cards per § Slot behaviour.
@@ -109,6 +111,7 @@ The panel does **not** show locked techs in the assignment list. When there are 
 
 - **Slots:** The Slots tab always renders exactly four slot cards in slot-index order regardless of `player.researchSlots`. The active slot count remains `player.researchSlots` (default 3; 4 with University); the locked-slot rule below covers the fourth card when the player has not researched University.
 - **Locked slot 4 (University):** When `player.researchSlots` is `null` or strictly less than `4`, the fourth slot card renders as a **locked placeholder**:
+  - The card uses the same slot-card chrome and occupies the **same card width** as Slots 1–3 (it stretches to the full panel content width; only its opacity, header label, and body content differ). Refs #3510.
   - The card body is rendered at exactly `0.45` opacity (the mockup `.slot-card[style="opacity:.45"]` value).
   - The slot header label reads exactly `"Slot 4 (University)"` (no other content in the header).
   - In place of the assigned-tech body / progress / empty-state, the card body shows exactly one footnote line `"Requires University tech"` in `--muted` italic.
@@ -160,6 +163,12 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **Given** `player.researchSlots` is greater than or equal to `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card at full opacity (not the locked `0.45`), uses the standard slot label `"Slot 4"`, and renders Cancel (when assigned) and Choose tech buttons as on the other active slots.
 
 - **Slots tab section ordering (Refs #2864 S0/S6):** **Given** the Slots tab is rendered for any player on any viewport, **when** the body widget tree is laid out, **then** the `CtSectionLabel` carrying the localized `technologyPanel_researchedTechsHeading` text appears at a strictly smaller vertical offset (smaller `Offset.dy`) than the `CtSectionLabel` carrying the localized `technologyPanel_researchSlotsHeading` text, matching the mockup body markup (`SPEC/ui/mockups/GAME40001-technology-panel.html`: `.researched-heading` precedes `.slots-heading`).
+
+- **No dev-only panel header block (Refs #3510):** **Given** the Slots tab is rendered for any player on any viewport, **when** the panel body widget tree is inspected, **then** the UI layer renders no `Text` carrying the localized `technologyPanel_title` (`"Technology - {playerName}"`) string and no `Text` carrying the localized `technologyPanel_researchSlotsCount` (`"Research slots: {slots}"`) string, matching the mockup which opens directly with the `Researched Techs` heading.
+
+- **Locked Slot 4 same width as active slots (Refs #3510):** **Given** `player.researchSlots` is `null` or strictly less than `4`, **when** the Slots tab is rendered, **then** the locked `LockedResearchSlotCard` fourth-slot card and each active `ResearchSlotCard` are laid out at the same width (within ±1 logical px) so the locked placeholder is not visually narrower or wider than Slots 1–3.
+
+- **Mockup locked Slot 4 parity (Refs #3510):** **Given** the `SPEC/ui/mockups/GAME40001-technology-panel.html` `slots-container` is rendered, **when** the default / empty variant is active (`activeSlots < 4`), **then** it shows exactly four `.slot-card` elements — three active slots plus exactly one locked `Slot 4 (University)` placeholder — and **when** the `all` variant is active (`activeSlots === 4`), then it shows exactly four `.slot-card` elements (Slots 1–4 live) and no locked Slot 4 placeholder.
 
 - **Top bar present (dark chrome):** **Given** the Technology screen is mounted for the viewed player on any viewport, **when** the screen builds its chrome, **then** the UI layer renders a `CtTopBar` instance above the body whose `title` equals `"Technology"`, whose `backButtonLabel` equals `"Map"`, and whose leading `icon` is the pixel-art asset `assets/icons/32/ui_icon_technology.png` sized 18 × 18 logical px (no fallback to the legacy `CtScreenShell` parchment chrome).
 
