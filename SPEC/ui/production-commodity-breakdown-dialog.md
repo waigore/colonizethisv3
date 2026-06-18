@@ -127,6 +127,8 @@ There is no Confirm/Cancel pair: this dialog is read-only and dismiss-only.
 
 - **`productionBreakdownWideColumnContentWidths` distribution (Refs #3509):** Given `availableWidth = 832`, `phaseColumnCount = 5`, `columnSpacing = 24`, `horizontalMargin = 12`, when `productionBreakdownWideColumnContentWidths` is called, then it returns `7` widths summing (with the chrome `2 × 12 + 24 × 6 = 168`) to `832` within ±1 logical px, the six numeric entries (indices `1`..`6`) are all equal, and entry `0` (**Commodity**) is strictly greater than each numeric entry.
 
+- **Wide-path visual golden (Refs #3509):** Given the viewport width equals `kProductionBreakdownDialogWideViewportThreshold` (`900` logical px) and the `getDebugInitGameResult()` fixture under `AppThemes.editorialMonocle`, when `ProductionCommodityBreakdownDialog` (PROD20001) renders inside a keyed `RepaintBoundary`, then the captured frame matches the committed baseline `app/test/goldens/production_commodity_breakdown_wide_full_width.png` (visual proof that the 7-column table fills the content column with the wider **Commodity** column and equal numeric columns; pinned by `app/test/production_commodity_breakdown_dialog_wide_golden_test.dart`).
+
 ---
 
 ## Widgetbook
@@ -135,4 +137,4 @@ Catalog folder: **Production Commodity Breakdown Dialog** (registered in `app/li
 
 1. **Default — three sections, mixed deltas:** Uses `getDebugInitGameResult()` for a baseline `Game` + topology and the first human player. Demo opener renders an `ElevatedButton` that calls `showDialog` so reviewers can launch the breakdown table; the widget is wrapped in a `ProviderScope` overriding `productionDesiredOutputProvider` to a deterministic non-empty map.
 
-Automated widget tests: `app/test/production_commodity_breakdown_dialog_spec_test.dart`.
+Automated widget tests: `app/test/production_commodity_breakdown_dialog_spec_test.dart`, `app/test/production_commodity_breakdown_dialog_wide_full_width_test.dart` (structural wide-path pins), and `app/test/production_commodity_breakdown_dialog_wide_golden_test.dart` (`matchesGoldenFile` visual proof for the wide-path full-width distribution; baseline `app/test/goldens/production_commodity_breakdown_wide_full_width.png`).
