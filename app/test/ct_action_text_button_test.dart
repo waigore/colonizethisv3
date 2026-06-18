@@ -158,4 +158,70 @@ void main() {
       expect(semantics, findsOneWidget);
     });
   });
+
+  // Primary header-pill variant (issue #3514 owner decision #5): gradient
+  // surface from CtGradients.buttonGradient, accent-dim border lifting to
+  // accent on hover, accent label lifting to accent-bright on hover, w700.
+  group('CtActionTextButton (primary variant)', () {
+    TextStyle primaryLabelStyle(WidgetTester tester) {
+      final animated = find.ancestor(
+        of: find.text('Train'),
+        matching: find.byType(AnimatedDefaultTextStyle),
+      );
+      expect(animated, findsWidgets);
+      return tester.widget<AnimatedDefaultTextStyle>(animated.first).style;
+    }
+
+    testWidgets('paints the primary buttonGradient surface + 1px accent-dim '
+        'border', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _host(CtActionTextButton(primary: true, onPressed: () {}, label: 'Train')),
+      );
+      await tester.pump();
+
+      final decoration = _surfaceOf(tester).decoration as BoxDecoration;
+      expect(decoration.gradient, CtGradients.buttonGradient);
+      final border = decoration.border as Border;
+      expect(border.top.color, EditorialMonoclePalette.accentDim);
+      expect(border.top.width, 1.0);
+    });
+
+    testWidgets('uses accent idle label foreground at weight w700', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(CtActionTextButton(primary: true, onPressed: () {}, label: 'Train')),
+      );
+      await tester.pump();
+
+      final style = primaryLabelStyle(tester);
+      expect(style.color, EditorialMonoclePalette.accent);
+      expect(style.fontWeight, FontWeight.w700);
+      expect(style.fontFamily, editorialMonocleDisplayFontFamily);
+    });
+
+    testWidgets('lifts label colour to accent-bright on pointer hover', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(CtActionTextButton(primary: true, onPressed: () {}, label: 'Train')),
+      );
+      await tester.pump();
+
+      expect(primaryLabelStyle(tester).color, EditorialMonoclePalette.accent);
+
+      final gesture = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+      );
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await gesture.moveTo(tester.getCenter(find.byType(CtActionTextButton)));
+      await tester.pumpAndSettle();
+
+      expect(
+        primaryLabelStyle(tester).color,
+        EditorialMonoclePalette.accentBright,
+      );
+    });
+  });
 }

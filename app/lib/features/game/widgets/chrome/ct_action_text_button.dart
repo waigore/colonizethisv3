@@ -34,6 +34,24 @@ import 'ct_nine_patch_button.dart';
 /// This is the neutral counterpart to `CtDangerTextButton` (mockup
 /// `.reset-btn` / `.disband-btn`); use that widget for destructive actions.
 ///
+/// **Primary variant ([primary] == `true`):** Compact *primary* header pill
+/// used by the unit panels' header actions (Train / Tile / Combine) per
+/// `SPEC/ui/civilian-units-panel.md` § Header actions and issue #3514 owner
+/// decision **#5** (mockup `.train-btn` / `.hdr-btn` primary family —
+/// gradient surface, 1 px border, **no nine-patch corner brackets**). The
+/// primary variant is visually distinct from the neutral secondary pill so
+/// the player can tell a primary header action apart from a neutral one:
+///
+/// - **Surface:** [CtGradients.buttonGradient] (`--surface-lite` →
+///   `--surface`) instead of the secondary `actionButtonGradient`.
+/// - **Border:** [EditorialMonoclePalette.accentDim] (idle) lifting to
+///   [EditorialMonoclePalette.accent] on hover (the secondary variant keeps a
+///   static `--border`).
+/// - **Foreground:** [EditorialMonoclePalette.accent] (idle) lifting to
+///   [EditorialMonoclePalette.accentBright] on hover (brighter than the
+///   secondary's `--accent-dim` idle).
+/// - **Font weight:** [FontWeight.w700] (the secondary keeps `w600`).
+///
 /// No hard-coded colour literals are used — every visible colour resolves
 /// through [EditorialMonoclePalette] tokens so the widget stays compliant
 /// with the editorial-monocle theme contract.
@@ -45,6 +63,7 @@ class CtActionTextButton extends StatefulWidget {
     this.enabled = true,
     this.semanticLabel,
     this.tooltip,
+    this.primary = false,
   });
 
   /// Tap callback. Ignored when [enabled] is `false`.
@@ -63,6 +82,15 @@ class CtActionTextButton extends StatefulWidget {
 
   /// Optional pointer tooltip; not rendered when `null`.
   final String? tooltip;
+
+  /// When `true`, the button renders the **primary** header-pill variant
+  /// (accent-dim border lifting to accent on hover, accent foreground, the
+  /// `--surface-lite` → `--surface` [CtGradients.buttonGradient] surface, and
+  /// a heavier label weight) per `SPEC/ui/civilian-units-panel.md`
+  /// § Header actions (issue #3514 owner decision #5). When `false`
+  /// (default), the button keeps the original neutral secondary `.action-btn`
+  /// chrome so existing call sites do not change.
+  final bool primary;
 
   static const double _fontSize = 10;
   static const double _letterSpacing = 10 * 0.04; // .04em = 0.4 logical px
@@ -88,17 +116,40 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
     setState(() => _hovered = hovered);
   }
 
-  Color get _resolvedForeground => _hovered
-      ? EditorialMonoclePalette.accentBright
-      : EditorialMonoclePalette.accentDim;
+  Color get _resolvedForeground {
+    if (widget.primary) {
+      return _hovered
+          ? EditorialMonoclePalette.accentBright
+          : EditorialMonoclePalette.accent;
+    }
+    return _hovered
+        ? EditorialMonoclePalette.accentBright
+        : EditorialMonoclePalette.accentDim;
+  }
+
+  Color get _resolvedBorderColor {
+    if (widget.primary) {
+      return _hovered
+          ? EditorialMonoclePalette.accent
+          : EditorialMonoclePalette.accentDim;
+    }
+    return EditorialMonoclePalette.border;
+  }
+
+  LinearGradient get _resolvedGradient => widget.primary
+      ? CtGradients.buttonGradient
+      : CtGradients.actionButtonGradient;
+
+  FontWeight get _resolvedFontWeight =>
+      widget.primary ? FontWeight.w700 : FontWeight.w600;
 
   @override
   Widget build(BuildContext context) {
     final Widget surface = DecoratedBox(
       decoration: BoxDecoration(
-        gradient: CtGradients.actionButtonGradient,
+        gradient: _resolvedGradient,
         border: Border.all(
-          color: EditorialMonoclePalette.border,
+          color: _resolvedBorderColor,
           width: CtActionTextButton._borderWidth,
         ),
       ),
@@ -117,7 +168,7 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
             fontFamily: editorialMonocleDisplayFontFamily,
             fontSize: CtActionTextButton._fontSize,
             letterSpacing: CtActionTextButton._letterSpacing,
-            fontWeight: FontWeight.w600,
+            fontWeight: _resolvedFontWeight,
           ),
           child: Text(widget.label),
         ),
