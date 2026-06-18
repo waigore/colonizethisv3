@@ -33,6 +33,7 @@ import '../features/game/combat/quick_battle_action_selector.dart';
 import '../features/game/combat/quick_battle_deployment_view.dart';
 import '../features/game/combat/quick_battle_result_dialog.dart';
 import '../features/game/combat/quick_battle_screen.dart';
+import '../features/game/widgets/chrome/ct_action_text_button.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_dialogs.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
@@ -315,6 +316,40 @@ List<WidgetbookNode> get buttonDirectories => [
                       onPressed: () {},
                       child: Text(appL10n(context).widgetbook_fixedWidth),
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      // CtActionTextButton — neutral secondary pill (mockup `.action-btn`)
+      // and the issue #3514 primary header-pill variant (`.train-btn`
+      // family). SPEC/ui/pixel-art-ui-catalog.md § CtActionTextButton.
+      WidgetbookUseCase(
+        name: 'CtActionTextButton',
+        builder: (context) => Theme(
+          data: AppThemes.editorialMonocle,
+          child: ColoredBox(
+            color: EditorialMonoclePalette.bg,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CtActionTextButton(onPressed: () {}, label: 'Breakdown'),
+                  const SizedBox(width: 12),
+                  CtActionTextButton(
+                    primary: true,
+                    onPressed: () {},
+                    label: 'Train',
+                  ),
+                  const SizedBox(width: 12),
+                  const CtActionTextButton(
+                    primary: true,
+                    onPressed: null,
+                    enabled: false,
+                    label: 'Tile',
                   ),
                 ],
               ),

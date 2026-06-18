@@ -13,8 +13,7 @@ import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_spacing.dart';
+import 'chrome/ct_action_text_button.dart';
 import 'fleet_expansion_tile.dart';
 import 'game_panel_contract.dart';
 import 'utils/naval_tree_builder.dart';
@@ -499,9 +498,13 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       title: tileScopeActive
           ? l10n.naval_units_title_tile
           : l10n.naval_units_title,
+      // Header actions render as compact **primary** pills
+      // (`CtActionTextButton(primary: true)`) per SPEC/ui/naval-units-panel.md
+      // § Header actions and issue #3514 owner decisions #5 / #15.
       actions: [
         if (tileScopeActive)
-          CtNinePatchButton(
+          CtActionTextButton(
+            primary: true,
             enabled: widget.tileScopeTileKey!.isNotEmpty,
             onPressed: () {
               final key = widget.tileScopeTileKey!;
@@ -510,12 +513,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                 widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
               });
             },
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: CtSpacing.s,
-            ),
-            minHeight: 32,
-            child: Text(l10n.civilian_units_tile),
+            label: l10n.civilian_units_tile,
           ),
         if (tileScopeActive && hasAny && flat.isNotEmpty)
           const SizedBox(width: 4),
@@ -533,15 +531,11 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
             ),
           ),
           const SizedBox(width: 4),
-          CtNinePatchButton(
+          CtActionTextButton(
+            primary: true,
             onPressed: canCombine ? () => _performCombine(flat) : null,
             enabled: canCombine,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: CtSpacing.s,
-            ),
-            minHeight: 32,
-            child: Text(l10n.common_combine),
+            label: l10n.common_combine,
           ),
         ],
       ],

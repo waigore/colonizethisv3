@@ -13,6 +13,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
+import 'chrome/ct_action_text_button.dart';
 import 'game_panel_contract.dart';
 import 'utils/military_tree_builder.dart';
 import 'move_army_dialog.dart';
@@ -184,21 +185,21 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
           ),
         ),
         const SizedBox(width: 4),
-        CtNinePatchButton(
+        // Combine adopts the compact **primary** header pill
+        // (`CtActionTextButton(primary: true)`) per SPEC/ui/military-units-panel.md
+        // § Header actions and issue #3514 owner decisions #5 / #15.
+        CtActionTextButton(
+          primary: true,
           onPressed: canCombine ? () => _performCombine(flat) : null,
           enabled: canCombine,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: CtSpacing.s,
-          ),
-          minHeight: 32,
-          child: Text(l10n.common_combine),
+          label: l10n.common_combine,
         ),
       ],
-      CtNinePatchButton(
+      CtActionTextButton(
+        primary: true,
         onPressed: readOnly ? null : _openTrainDialog,
         enabled: !readOnly,
-        child: Text(l10n.common_train),
+        label: l10n.common_train,
       ),
     ];
   }

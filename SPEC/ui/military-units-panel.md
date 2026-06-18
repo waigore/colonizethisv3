@@ -21,6 +21,7 @@
 - **Desktop / wide:** Side panel / bottom sheet; map visible.
 - **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
 - **Train button:** Header **Train** closes panel and emits `OpenDialogEvent(trainMilitaryDialogId)` for [train-military-dialog.md](train-military-dialog.md).
+- **Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header **Train** and **Combine** actions render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. Bus emissions and enable/disable rules are unchanged: **Train** is disabled in observe (read-only) mode; **Combine** is enabled only when `canCombineArmySelection` holds for the current selection. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
 
 ---
 
@@ -126,6 +127,8 @@ Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches
 - Given the naval subsection is present, when the user views the panel, then fleet grouping and ship-type rows match [naval-units-panel.md](naval-units-panel.md) and are unchanged in behavior from the pre-army naval specification.
 
 - Given the user taps **Train**, when the action completes, then the UI layer closes the panel and opens the Train Military dialog via `AppEventBus` per [train-military-dialog.md](train-military-dialog.md).
+
+- Given the Military Units panel is open (issue #3514 owner decisions #5 / #15), when the header **Train** and **Combine** actions render, then the UI layer renders each as a `CtActionTextButton` with `primary == true` (compact primary gradient pill, no `CtNinePatchButton` corner-bracket chrome), and tapping **Train** still emits `OpenDialogEvent(trainMilitaryDialogId)`.
 
 - Given the Widgetbook “Military Units Panel” **With map** story, when the user selects an army row, then the map highlights and centers on that army’s province tile and switches region tab when needed.
 
