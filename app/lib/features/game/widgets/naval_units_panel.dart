@@ -542,7 +542,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       hasContent: hasAny,
       listChildren: [
         for (final group in tree) ...[
-          RegionSectionHeader(label: regionDisplayLabel(group.regionId)),
+          RegionSectionHeader(
+            label: regionDisplayLabel(group.regionId),
+            variant: RegionHeaderVariant.leftBar,
+          ),
           if (group.homeFleet != null)
             FleetExpansionTile(
               row: group.homeFleet!,
