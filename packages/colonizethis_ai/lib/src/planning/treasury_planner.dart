@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart'
     show
+        ExtractionTotals,
         GamePlayerLookup,
         ProvinceOwnerCache,
         cargoHoldsForHomeFleet,
@@ -88,6 +89,7 @@ List<TradeOrder> runTreasuryPlanner({
   MapTopology? topology,
   Orders currentOrders = const Orders(),
   ResourceRules? resourceRules,
+  Map<String, ExtractionTotals>? extractionById,
 }) {
   final ResourceRules rules = resourceRules ?? ResourceRules.defaultRules;
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
@@ -96,6 +98,7 @@ List<TradeOrder> runTreasuryPlanner({
     playerId: playerId,
     tileMapByRegion: tileMapByRegion,
     topology: topology,
+    extractionById: extractionById,
   );
 
   final projected = _projectStockpileAfterProduction(
@@ -375,6 +378,7 @@ int _resolveTradeCargoCapacity({
   required String playerId,
   required Map<String, TileMapResult>? tileMapByRegion,
   required MapTopology? topology,
+  Map<String, ExtractionTotals>? extractionById,
 }) {
   if (tileMapByRegion != null && tileMapByRegion.isNotEmpty && topology != null) {
     return tradeCargoCapacityForGreatPower(
@@ -382,6 +386,7 @@ int _resolveTradeCargoCapacity({
       playerId: playerId,
       tileMapByRegion: tileMapByRegion,
       topology: topology,
+      extractionById: extractionById,
     );
   }
   final homeFleetHolds = cargoHoldsForHomeFleet(game, playerId);
