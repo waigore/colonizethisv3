@@ -57,3 +57,9 @@ export 'package:colonizethis_world/src/world/tile_key_coordinates.dart';
 export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart'
     show enemiesOf;
 export 'package:colonizethis_world/src/world/topology_helpers.dart';
+// `reachableNonOwnedProvinceIdsViaSeas` / `reachableNonOwnedProvinceDistancesViaSeas`
+// promoted to the public barrel (Refs #3543) so consumers such as
+// `colonizethis_orders` and `colonizethis_diplomacy` import them through the
+// barrel instead of a deep `src/` path. The `ai_api.dart` narrow contract
+// re-exports these symbols through this barrel rather than a deep src export.
+export 'package:colonizethis_world/src/world/sea_reachable_provinces.dart';

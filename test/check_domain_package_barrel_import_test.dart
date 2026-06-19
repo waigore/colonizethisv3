@@ -91,9 +91,10 @@ void main() {
     final closure = barrelPublishedSrcFiles(Directory.current.path, 'world');
     expect(closure, contains('src/world/civilian_tile_occupancy.dart'));
     expect(closure, contains('src/world/ship_instance_allocate.dart'));
-    // `sea_reachable_provinces.dart` stays internal so the `ai_api.dart`
-    // narrow-contract deep export of it does not become a barrel bypass.
-    expect(closure, isNot(contains('src/world/sea_reachable_provinces.dart')));
+    // `sea_reachable_provinces.dart` was promoted into the world barrel by the
+    // #3543 slice; the `ai_api.dart` deep export was re-routed through the world
+    // barrel `show` list in the same slice so it is not a barrel bypass.
+    expect(closure, contains('src/world/sea_reachable_provinces.dart'));
   });
 
   test('no orders lib file deep-imports the promoted world files', () {
@@ -109,6 +110,9 @@ void main() {
           ) ||
           content.contains(
             "package:colonizethis_world/src/world/ship_instance_allocate.dart",
+          ) ||
+          content.contains(
+            "package:colonizethis_world/src/world/sea_reachable_provinces.dart",
           )) {
         offenders.add(p.relative(entity.path, from: Directory.current.path));
       }
