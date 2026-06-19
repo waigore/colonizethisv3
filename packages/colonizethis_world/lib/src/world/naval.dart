@@ -68,31 +68,11 @@ Map<String, Map<String, TopologyNode>> _computeNodesByRegionAndId(
   return nodesByRegionAndId;
 }
 
-/// All topology nodes keyed by node id. Cached per topology instance for the
-/// same reasons as [indexTopologyNodesByRegion]; the returned map is treated
-/// as read-only by callers.
-Map<String, TopologyNode> _nodesByIdFor(MapTopology topology) =>
-    _nodesByIdCache.get(topology);
-
-Map<String, TopologyNode> _computeNodesById(MapTopology topology) {
-  final out = <String, TopologyNode>{};
-  for (final n in topology.nodes) {
-    out[n.id] = n;
-  }
-  return out;
-}
-
 final ExpandoIndex<MapTopology, Map<String, Map<String, TopologyNode>>>
 _nodesByRegionAndIdCache =
     ExpandoIndex<MapTopology, Map<String, Map<String, TopologyNode>>>(
       'topology.nodesByRegionAndId',
       _computeNodesByRegionAndId,
-    );
-
-final ExpandoIndex<MapTopology, Map<String, TopologyNode>> _nodesByIdCache =
-    ExpandoIndex<MapTopology, Map<String, TopologyNode>>(
-      'topology.nodesById',
-      _computeNodesById,
     );
 
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
@@ -321,35 +301,13 @@ String? seaZoneIdForProvince(
       regionNodes,
     );
   }
-  final nodesById = _nodesByIdFor(topology);
+  final nodesById = topologyNodesById(topology);
   for (final e in topology.edges) {
     if (e.id1 != provinceId && e.id2 != provinceId) continue;
     final other = e.id1 == provinceId ? e.id2 : e.id1;
     if (nodesById[other]?.type == TopologyNodeType.seaZone) return other;
   }
   return null;
-}
-
-/// True when [edgeEndpoint] is the same sea-zone topology node as [seaZoneId] for
-/// [effectiveRegion]. Handles combined topologies where edges use prefixed sea ids
-/// (`regionId|localSea`) while fleet state or orders may still use the local id.
-bool _topologyProvinceEndpointMatches(
-  String edgeEndpoint,
-  String provinceId,
-  String? regionId,
-) {
-  if (edgeEndpoint == provinceId) return true;
-  if (regionId == null) return false;
-  if (ProvinceId.isPrefixed(provinceId)) {
-    if (!ProvinceId.isPrefixed(edgeEndpoint)) {
-      return ProvinceId.regionIdFrom(provinceId) == regionId &&
-          ProvinceId.localIdFrom(provinceId) == edgeEndpoint;
-    }
-  } else if (ProvinceId.isPrefixed(edgeEndpoint)) {
-    return ProvinceId.regionIdFrom(edgeEndpoint) == regionId &&
-        ProvinceId.localIdFrom(edgeEndpoint) == provinceId;
-  }
-  return false;
 }
 
 /// Province ids that share an edge with [seaZoneId] (coastal provinces), optionally
@@ -425,43 +383,6 @@ String? regionIdForSeaZone(MapTopology topology, String seaZoneId) {
     }
   }
   return soleLocal?.regionId;
-}
-
-/// Sea zone ids that share an edge with [provinceId] (P↔S). [provinceId] may be
-/// prefixed (regionId|localId) or local; when [regionId] is provided, lookup is region-scoped.
-/// Cross-region edges (e.g. province in OW, sea zone in NW) are included.
-Set<String> seaZoneIdsAdjacentToProvince(
-  MapTopology topology,
-  String provinceId, {
-  String? regionId,
-}) {
-  String localProvinceId = provinceId;
-  if (provinceId.contains('|')) {
-    final parts = provinceId.split('|');
-    localProvinceId = parts.length > 1
-        ? parts.sublist(1).join('|')
-        : provinceId;
-  }
-  final nodeById = _nodesByIdFor(topology);
-  final out = <String>{};
-  for (final e in topology.edges) {
-    final id1 = e.id1, id2 = e.id2;
-    String? prov;
-    if (id1 == localProvinceId ||
-        id1 == provinceId ||
-        _topologyProvinceEndpointMatches(id1, provinceId, regionId)) {
-      prov = id1;
-    } else if (id2 == localProvinceId ||
-        id2 == provinceId ||
-        _topologyProvinceEndpointMatches(id2, provinceId, regionId)) {
-      prov = id2;
-    }
-    if (prov == null) continue;
-    final other = id1 == prov ? id2 : id1;
-    final node = nodeById[other];
-    if (node != null && node.type == TopologyNodeType.seaZone) out.add(other);
-  }
-  return out;
 }
 
 /// Fleets in port at [provinceId]. Per SPEC/game/ships-and-naval.md: in port =

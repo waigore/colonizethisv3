@@ -64,3 +64,49 @@ void _forEachGpPlayerVisibility({
     action(player.id, vis);
   }
 }
+
+/// Shared per-region Great-Power visibility iteration for the coastal/distant
+/// sea-zone fog passes. Returns a fresh deep-mutable copy of [visibility]; for
+/// every world region that has tile-key buckets it resolves the region topology
+/// and invokes [perRegion] with the region id, its topology, its tile-key
+/// buckets, and a `forEachGpPlayer` callback the caller drives once any
+/// per-region precomputation is ready. `forEachGpPlayer` walks each GP player's
+/// mutable visibility map (from the returned copy) so callers mutate in place.
+Map<String, Map<String, String>> _forEachWorldRegionGpVisibility({
+  required Game game,
+  required Map<String, Map<String, String>> visibility,
+  required MapTopology topology,
+  Map<String, MapTopology>? topologyByRegion,
+  required void Function(
+    String regionId,
+    MapTopology regionTopology,
+    Map<String, List<String>> regionTileKeys,
+    void Function(void Function(String playerId, Map<String, String> vis))
+    forEachGpPlayer,
+  )
+  perRegion,
+}) {
+  final gpIds = game.players.map((p) => p.id).toSet();
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final result = _mutableGpVisibilityCopy(visibility);
+
+  forEachWorldRegion(game.worldState, (regionId, _) {
+    final regionTileKeys = tileKeysByRegion[regionId];
+    if (regionTileKeys == null) return;
+    final regionTopology = topologyForRegion(
+      topology,
+      regionId,
+      topologyByRegion: topologyByRegion,
+    );
+    perRegion(regionId, regionTopology, regionTileKeys, (action) {
+      _forEachGpPlayerVisibility(
+        game: game,
+        gpIds: gpIds,
+        result: result,
+        action: action,
+      );
+    });
+  });
+
+  return result;
+}
