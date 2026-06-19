@@ -2,29 +2,20 @@ library order_suggestion_work;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-import 'feedstock_extraction_targets.dart'
-    show feedstockExtractionResourceIdsForPlayer;
-import 'order_work_constants.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'bundled_civilian_work_order.dart';
+
 import 'incremental_candidate_validator.dart';
-import 'order_resolution_context.dart';
-import 'order_suggestion_helpers.dart';
-import 'order_suggestion_work_tile_keys.dart';
-import 'order_suggestion_work_tile_prefilter.dart';
 import 'order_suggestion_context.dart';
+import 'order_suggestion_helpers.dart';
 import 'order_suggestion_pass_context.dart';
+import 'order_suggestion_work_explorer.dart';
+import 'order_suggestion_work_merchant.dart';
+import 'order_suggestion_work_spy.dart';
+import 'order_suggestion_work_worker.dart';
 import 'order_visibility.dart';
 import 'work_suggestion_pipeline.dart';
 import 'partial_province_reveal.dart';
-import 'orders_application_helpers.dart';
 import 'unit_type_helpers.dart';
-
-part 'order_suggestion_work_explorer.dart';
-part 'order_suggestion_work_worker.dart';
-part 'order_suggestion_work_spy.dart';
-part 'order_suggestion_work_merchant.dart';
 
 /// Tile keys that are merchant purchase-land suggestion candidates for [game]:
 /// tiles in provinces not owned by any [Game.players] entry that carry a
@@ -267,7 +258,7 @@ void _addWorkSuggestionsForUnit({
   final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
 
   if (isExplorer) {
-    _addExplorerWorkSuggestionsForUnit(
+    addExplorerWorkSuggestionsForUnit(
       view: view,
       game: game,
       topology: topology,
@@ -289,7 +280,7 @@ void _addWorkSuggestionsForUnit({
   }
 
   if (isWorker) {
-    _addWorkerSuggestionsForUnit(
+    addWorkerSuggestionsForUnit(
       view: view,
       game: game,
       topology: topology,
@@ -312,7 +303,7 @@ void _addWorkSuggestionsForUnit({
   }
 
   if (isSpy && tilesInProvince.isNotEmpty) {
-    _addSpySuggestionsForUnit(
+    addSpySuggestionsForUnit(
       game: game,
       topology: topology,
       currentOrders: currentOrders,
@@ -332,7 +323,7 @@ void _addWorkSuggestionsForUnit({
   }
 
   if (isMerchant) {
-    _addMerchantSuggestionsForUnit(
+    addMerchantSuggestionsForUnit(
       unit: unit,
       type: type,
       unitRegionId: regionId,

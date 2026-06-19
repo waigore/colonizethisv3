@@ -1,6 +1,12 @@
-part of 'order_suggestion_work.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-void _addSpySuggestionsForUnit({
+import 'incremental_candidate_validator.dart';
+import 'order_suggestion_context.dart';
+import 'order_work_constants.dart';
+import 'work_suggestion_pipeline.dart';
+
+void addSpySuggestionsForUnit({
   required Game game,
   required MapTopology topology,
   required Orders currentOrders,

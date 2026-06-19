@@ -10,6 +10,20 @@ files. Umbrella policy: `SPEC/program/repo-lint.md` (**no violation allowlists**
 | `tool/check_dart_file_non_comment_line_size.dart` | Walker, counter, CLI |
 | `tool/ct_repo_lint_manifest.yaml` | Registers rule `repo.dart_file_non_comment_line_size` |
 
+## Extraction shape (libraries, not part files)
+
+When a file is split to stay under this gate (or the tighter domain/models caps),
+the extracted unit MUST be a **standalone Dart library with explicit `import`
+declarations**, not a `part` / `part of` fragment that inherits the host
+library's private scope. Part fragments keep the extracted code implicitly
+coupled to the host (shared imports and private members), which defeats the
+testability and decoupling goal the size gate exists to encourage. The
+`colonizethis_turn` (`repo.turn_no_part_directives`, Refs #3416) and
+`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419) packages
+already forbid `part` directives in their `lib/` trees; other packages SHOULD
+prefer the same standalone-library shape when extracting for size, and MAY add an
+equivalent no-`part` gate once their `lib/` tree is part-free.
+
 ## Scan scope
 
 - The checker walks the repository tree from the repo root, skipping directory

@@ -1,6 +1,18 @@
-part of 'order_suggestion_work.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-void _addWorkerSuggestionsForUnit({
+import 'feedstock_extraction_targets.dart'
+    show feedstockExtractionResourceIdsForPlayer;
+import 'incremental_candidate_validator.dart';
+import 'order_suggestion_context.dart';
+import 'order_suggestion_work_tile_keys.dart';
+import 'order_suggestion_work_tile_prefilter.dart';
+import 'order_work_constants.dart';
+import 'unit_type_helpers.dart';
+import 'work_suggestion_pipeline.dart';
+
+void addWorkerSuggestionsForUnit({
   required PlayerView view,
   required Game game,
   required MapTopology topology,
