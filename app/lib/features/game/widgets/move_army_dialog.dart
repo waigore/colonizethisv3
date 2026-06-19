@@ -12,6 +12,7 @@ import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'chrome/ct_nine_patch_button.dart';
+import 'move_units_dialog_base.dart';
 
 String moveArmyFactionGroupHeaderLabel(
   Game game,
@@ -66,7 +67,7 @@ class MoveArmyDialog extends StatefulWidget {
   State<MoveArmyDialog> createState() => _MoveArmyDialogState();
 }
 
-class _MoveArmyDialogState extends State<MoveArmyDialog> {
+class _MoveArmyDialogState extends MoveUnitsDialogState<MoveArmyDialog> {
   String? _selected;
   IncrementalCandidateValidator? _sharedCandidateValidator;
   List<ArmyMovePickerDestination>? _cachedDestinations;
@@ -249,23 +250,36 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  String get moveDialogTitle => appL10n(context).moveArmy_title(widget.army.id);
+
+  @override
+  bool get moveDialogHasDestinations => _destinationEntries().isNotEmpty;
+
+  @override
+  String get moveDialogEmptyText =>
+      appL10n(context).moveArmy_noValidDestinations;
+
+  @override
+  bool get moveDialogCanConfirm => _selected != null;
+
+  @override
+  void onMoveDialogConfirm() {
+    _onConfirmPressed();
+  }
+
+  @override
+  void onMoveDialogCancel() => Navigator.of(context).pop();
+
+  @override
+  Widget build(BuildContext context) => buildMoveDialogScaffold(context);
+
+  @override
+  Widget buildMoveDialogDestinations(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
     final entries = _destinationEntries();
     final owned = entries.where((e) => e.isPlayerOwned).toList();
     final invasion = entries.where((e) => !e.isPlayerOwned).toList();
-
-    final TextStyle titleStyle =
-        (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
-            .copyWith(
-              color: EditorialMonoclePalette.accent,
-              letterSpacing: 0.05 * 16,
-              fontWeight: FontWeight.w600,
-            );
-    final TextStyle emptyStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle())
-            .copyWith(color: EditorialMonoclePalette.muted);
 
     Widget sectionRows(
       List<ArmyMovePickerDestination> sectionEntries, {
@@ -275,28 +289,18 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: sectionEntries
             .map(
-              (entry) => _MoveArmyDestinationRow(
-                entry: entry,
-                selected: _selected == entry.fullProvinceId,
-                declareWarTriggerLabel: showDeclareWarTrigger &&
-                        entry.requiresDeclareWarOnConfirm
-                    ? l10n.moveArmy_declareWarOnTrigger(
-                        moveArmyFactionGroupHeaderLabel(
-                          widget.game,
-                          entry,
-                          l10n,
-                        ),
-                      )
-                    : null,
-                onTap: () =>
-                    setState(() => _selected = entry.fullProvinceId),
+              (entry) => _buildDestinationRow(
+                theme,
+                l10n,
+                entry,
+                showDeclareWarTrigger: showDeclareWarTrigger,
               ),
             )
             .toList(),
       );
     }
 
-    final destinationColumns = Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -313,184 +317,47 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         ],
       ],
     );
-
-    final body = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(l10n.moveArmy_title(widget.army.id), style: titleStyle),
-        const SizedBox(height: CtSpacing.ml),
-        if (entries.isEmpty)
-          Text(l10n.moveArmy_noValidDestinations, style: emptyStyle)
-        else
-          destinationColumns,
-        const SizedBox(height: CtSpacing.l),
-        Wrap(
-          alignment: WrapAlignment.end,
-          spacing: CtSpacing.m,
-          runSpacing: CtSpacing.m,
-          children: [
-            CtNinePatchButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.common_cancel),
-            ),
-            CtNinePatchButton(
-              enabled: _selected != null,
-              onPressed: _selected == null ? null : _onConfirmPressed,
-              child: Text(l10n.common_confirm),
-            ),
-          ],
-        ),
-      ],
-    );
-
-    return CtDialogShell(child: body);
   }
-}
 
-/// Single destination row inside `MoveArmyDialog`.
-///
-/// SPEC: `SPEC/ui/move-army-dialog.md` § Layout — radio-row outline contract
-/// (#2867 R7). Invasion rows may append a `declare war on …` trigger in
-/// `--danger` italic body style (#2867 R8).
-class _MoveArmyDestinationRow extends StatelessWidget {
-  const _MoveArmyDestinationRow({
-    required this.entry,
-    required this.selected,
-    required this.onTap,
-    this.declareWarTriggerLabel,
-  });
-
-  final ArmyMovePickerDestination entry;
-  final bool selected;
-  final VoidCallback onTap;
-  final String? declareWarTriggerLabel;
-
-  static const double _selectedBorderWidth = 2;
-  static const double _idleBorderWidth = 1;
-  static const double _dotOuterDiameter = 14;
-  static const double _dotInnerDiameter = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: entry.provinceLabel,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: _MoveArmyDestinationRowChrome(
-            selected: selected,
-            entry: entry,
-            declareWarTriggerLabel: declareWarTriggerLabel,
-          ),
-        ),
-      ),
+  /// Builds a single army destination row over the shared
+  /// [MoveDialogDestinationRow] chrome. Invasion rows append a
+  /// `declare war on …` trigger in `--danger` italic body style (#2867 R8).
+  Widget _buildDestinationRow(
+    ThemeData theme,
+    AppLocalizations l10n,
+    ArmyMovePickerDestination entry, {
+    required bool showDeclareWarTrigger,
+  }) {
+    final bool selected = _selected == entry.fullProvinceId;
+    final TextStyle labelStyle = moveDialogRowLabelStyle(
+      theme,
+      selected: selected,
     );
-  }
-}
-
-class _MoveArmyDestinationRowChrome extends StatelessWidget {
-  const _MoveArmyDestinationRowChrome({
-    required this.selected,
-    required this.entry,
-    required this.declareWarTriggerLabel,
-  });
-
-  final bool selected;
-  final ArmyMovePickerDestination entry;
-  final String? declareWarTriggerLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color outline = selected
-        ? EditorialMonoclePalette.accent
-        : EditorialMonoclePalette.border;
-    final double outlineWidth = selected
-        ? _MoveArmyDestinationRow._selectedBorderWidth
-        : _MoveArmyDestinationRow._idleBorderWidth;
-    final TextStyle labelStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-          color: selected
-              ? EditorialMonoclePalette.fg
-              : EditorialMonoclePalette.fg.withValues(alpha: 0.9),
-        );
-    final TextStyle? triggerStyle = declareWarTriggerLabel == null
+    final String? triggerLabel =
+        showDeclareWarTrigger && entry.requiresDeclareWarOnConfirm
+        ? l10n.moveArmy_declareWarOnTrigger(
+            moveArmyFactionGroupHeaderLabel(widget.game, entry, l10n),
+          )
+        : null;
+    final TextStyle? triggerStyle = triggerLabel == null
         ? null
-        : (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(
-                color: EditorialMonoclePalette.danger,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w600,
-              );
+        : (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+            color: EditorialMonoclePalette.danger,
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w600,
+          );
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: outline, width: outlineWidth),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: CtSpacing.m,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return MoveDialogDestinationRow(
+      selected: selected,
+      semanticsLabel: entry.provinceLabel,
+      onTap: () => setState(() => _selected = entry.fullProvinceId),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _MoveArmyRadioDot(selected: selected),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(entry.provinceLabel, style: labelStyle),
-                if (declareWarTriggerLabel != null && triggerStyle != null)
-                  Text(declareWarTriggerLabel!, style: triggerStyle),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MoveArmyRadioDot extends StatelessWidget {
-  const _MoveArmyRadioDot({required this.selected});
-
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: _MoveArmyDestinationRow._dotOuterDiameter,
-      height: _MoveArmyDestinationRow._dotOuterDiameter,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected
-                    ? EditorialMonoclePalette.accent
-                    : EditorialMonoclePalette.border,
-                width: 1,
-              ),
-            ),
-          ),
-          if (selected)
-            Container(
-              width: _MoveArmyDestinationRow._dotInnerDiameter,
-              height: _MoveArmyDestinationRow._dotInnerDiameter,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: EditorialMonoclePalette.accent,
-              ),
-            ),
+          Text(entry.provinceLabel, style: labelStyle),
+          if (triggerLabel != null && triggerStyle != null)
+            Text(triggerLabel, style: triggerStyle),
         ],
       ),
     );

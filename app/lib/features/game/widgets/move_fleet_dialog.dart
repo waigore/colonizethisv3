@@ -9,14 +9,13 @@ import '../../../config/ct_e2e.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../utils/map_location_resolver.dart';
 import '../utils/region_labels.dart';
 import '../utils/sea_zone_name_resolver.dart';
-import 'chrome/ct_nine_patch_button.dart';
+import 'move_units_dialog_base.dart';
 
 sealed class _MovePick {
   const _MovePick();
@@ -175,7 +174,7 @@ class MoveFleetDialog extends StatefulWidget {
   State<MoveFleetDialog> createState() => _MoveFleetDialogState();
 }
 
-class _MoveFleetDialogState extends State<MoveFleetDialog> {
+class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
   late final List<_MovePick> _picks;
   _MovePick? _selected;
   var _picksInitialized = false;
@@ -197,27 +196,48 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+  String get moveDialogTitle {
     final l10n = appL10n(context);
-    final picks = _picks;
-    final seaPicks = picks.whereType<_PickSeaZone>().toList();
-    final portPicks = picks.whereType<_PickPort>().toList();
     final fleetLabel = _fleetMoveDialogTitleLabel(widget.fleet);
-    final titleText = picks.isEmpty
+    return _picks.isEmpty
         ? l10n.moveFleet_title(fleetLabel)
-        : l10n.moveFleet_titleWithDestinations(fleetLabel, picks.length);
+        : l10n.moveFleet_titleWithDestinations(fleetLabel, _picks.length);
+  }
 
-    final TextStyle titleStyle =
-        (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
-            .copyWith(
-              color: EditorialMonoclePalette.accent,
-              letterSpacing: 0.05 * 16,
-              fontWeight: FontWeight.w600,
-            );
-    final TextStyle emptyStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle())
-            .copyWith(color: EditorialMonoclePalette.muted);
+  @override
+  bool get moveDialogHasDestinations => _picks.isNotEmpty;
+
+  @override
+  String get moveDialogEmptyText =>
+      appL10n(context).moveFleet_noAdjacentSeaZones;
+
+  @override
+  bool get moveDialogCanConfirm => _selected != null;
+
+  @override
+  void onMoveDialogConfirm() {
+    final selected = _selected;
+    if (selected == null) return;
+    widget.bus.emit(
+      NavalMoveFleetRequestedEvent(
+        humanPlayerId: widget.humanPlayerId,
+        moveOrder: selected.toOrder(widget.fleet.id),
+      ),
+    );
+    Navigator.pop(context, true);
+  }
+
+  @override
+  void onMoveDialogCancel() => Navigator.pop(context, false);
+
+  @override
+  Widget build(BuildContext context) => buildMoveDialogScaffold(context);
+
+  @override
+  Widget buildMoveDialogDestinations(BuildContext context) {
+    final l10n = appL10n(context);
+    final seaPicks = _picks.whereType<_PickSeaZone>().toList();
+    final portPicks = _picks.whereType<_PickPort>().toList();
 
     final moveColumns = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -238,65 +258,36 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       ],
     );
 
-    final body = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(titleText, style: titleStyle),
-        const SizedBox(height: CtSpacing.ml),
-        if (picks.isEmpty)
-          Text(l10n.moveFleet_noAdjacentSeaZones, style: emptyStyle)
-        else
-          kCtE2EEnabled
-              ? KeyedSubtree(
-                  key: kCtE2EMoveFleetDialogScrollRootKey,
-                  child: moveColumns,
-                )
-              : moveColumns,
-        const SizedBox(height: CtSpacing.l),
-        Wrap(
-          alignment: WrapAlignment.end,
-          spacing: CtSpacing.m,
-          runSpacing: CtSpacing.m,
-          children: [
-            CtNinePatchButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.common_cancel),
-            ),
-            CtNinePatchButton(
-              enabled: _selected != null,
-              onPressed: _selected == null
-                  ? null
-                  : () {
-                      widget.bus.emit(
-                        NavalMoveFleetRequestedEvent(
-                          humanPlayerId: widget.humanPlayerId,
-                          moveOrder: _selected!.toOrder(widget.fleet.id),
-                        ),
-                      );
-                      Navigator.pop(context, true);
-                    },
-              child: Text(l10n.common_confirm),
-            ),
-          ],
-        ),
-      ],
-    );
-
-    return CtDialogShell(child: body);
+    // When `kCtE2EEnabled`, wrap the rows column so fleet-reach e2e helpers can
+    // scope a scroll root without Material chrome (Refs #2336).
+    return kCtE2EEnabled
+        ? KeyedSubtree(
+            key: kCtE2EMoveFleetDialogScrollRootKey,
+            child: moveColumns,
+          )
+        : moveColumns;
   }
 
   Widget _row(_MovePick pick, int index) {
-    final row = _MoveFleetDestinationRow(
+    final bool selected = identical(pick, _selected);
+    final row = MoveDialogDestinationRow(
       // Deterministic per-row key (CT_E2E only) so fleet-reach e2e helpers can
       // select the first available destination without Material `RadioListTile`
       // chrome (Refs #2336).
       key: kCtE2EEnabled ? kCtE2EMoveFleetDestinationRowKey(index) : null,
-      pick: pick,
-      selected: identical(pick, _selected),
+      selected: selected,
+      semanticsLabel: pick.rowLabel,
       onTap: () => setState(() => _selected = pick),
-      onLocate: () => pick.emitLocate(widget.bus, widget.game),
-      locateTooltip: appL10n(context).moveFleet_locateOnMap,
+      content: Text(
+        pick.rowLabel,
+        style: moveDialogRowLabelStyle(Theme.of(context), selected: selected),
+      ),
+      trailing: CtIconAction(
+        tooltip: appL10n(context).moveFleet_locateOnMap,
+        icon: Icons.my_location,
+        iconColor: EditorialMonoclePalette.muted,
+        onPressed: () => pick.emitLocate(widget.bus, widget.game),
+      ),
     );
     // Additionally expose sea-zone rows by their topology id (CT_E2E only) so
     // the fleet-reach helper can tap the adjacent sea zone that makes BFS
@@ -310,128 +301,5 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       );
     }
     return row;
-  }
-}
-
-/// Single destination row inside `MoveFleetDialog`.
-///
-/// SPEC: `SPEC/ui/move-fleet-dialog.md` § Layout — radio-row outline contract
-/// (#2867 R7). The row renders a 1 px `--border` outline by default and a 2 px
-/// `--accent` outline with a filled `--accent` dot when [selected]. No
-/// Material `Radio` / `RadioListTile` is used — that ensures the surface
-/// remains free of the legacy chrome banned by `SPEC/ui/pixel-art-ui-catalog.md`
-/// § Material design ban.
-class _MoveFleetDestinationRow extends StatelessWidget {
-  const _MoveFleetDestinationRow({
-    super.key,
-    required this.pick,
-    required this.selected,
-    required this.onTap,
-    required this.onLocate,
-    required this.locateTooltip,
-  });
-
-  final _MovePick pick;
-  final bool selected;
-  final VoidCallback onTap;
-  final VoidCallback onLocate;
-  final String locateTooltip;
-
-  static const double _selectedBorderWidth = 2;
-  static const double _idleBorderWidth = 1;
-  static const double _dotOuterDiameter = 14;
-  static const double _dotInnerDiameter = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color outline = selected
-        ? EditorialMonoclePalette.accent
-        : EditorialMonoclePalette.border;
-    final double outlineWidth = selected
-        ? _selectedBorderWidth
-        : _idleBorderWidth;
-    final TextStyle labelStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-          color: selected
-              ? EditorialMonoclePalette.fg
-              : EditorialMonoclePalette.fg.withValues(alpha: 0.9),
-        );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: pick.rowLabel,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: outline, width: outlineWidth),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: CtSpacing.m,
-            ),
-            child: Row(
-              children: [
-                _RadioDot(selected: selected),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(pick.rowLabel, style: labelStyle),
-                ),
-                CtIconAction(
-                  tooltip: locateTooltip,
-                  icon: Icons.my_location,
-                  iconColor: EditorialMonoclePalette.muted,
-                  onPressed: onLocate,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RadioDot extends StatelessWidget {
-  const _RadioDot({required this.selected});
-
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: _MoveFleetDestinationRow._dotOuterDiameter,
-      height: _MoveFleetDestinationRow._dotOuterDiameter,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected
-                    ? EditorialMonoclePalette.accent
-                    : EditorialMonoclePalette.border,
-                width: 1,
-              ),
-            ),
-          ),
-          if (selected)
-            Container(
-              width: _MoveFleetDestinationRow._dotInnerDiameter,
-              height: _MoveFleetDestinationRow._dotInnerDiameter,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: EditorialMonoclePalette.accent,
-              ),
-            ),
-        ],
-      ),
-    );
   }
 }
