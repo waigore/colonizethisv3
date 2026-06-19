@@ -22,6 +22,7 @@
 - **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
 - **Train button:** Header **Train** closes panel and emits `OpenDialogEvent(trainMilitaryDialogId)` for [train-military-dialog.md](train-military-dialog.md).
 - **Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header **Train** and **Combine** actions render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. Bus emissions and enable/disable rules are unchanged: **Train** is disabled in observe (read-only) mode; **Combine** is enabled only when `canCombineArmySelection` holds for the current selection. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
+- **No production Close pill (mockup `.close-btn` preview-only; issue #3514 owner decision #14):** The `UNIT20001` mockup header (`mockups/UNIT20001-military-units-panel.html`) depicts a **Close** pill purely as a static preview affordance. The shipped panel renders **no** production Close pill: it is hosted in a side-panel / bottom-sheet surface that owns its own dismissal (the shared [`UnitsPanelShell`](components/units-panel-shell.md) `CtTopBar` renders **without** a back/close button — see § *Layout / wireframe* there). The mockup HTML is **not** edited to remove the preview Close; this divergence is recorded here so the panel matches the mockup style without adding a redundant Close control.
 - **Army row action chrome (mockup `.unit-row` pills; issue #3514 owner decision #6):** Army row actions render through the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) mockup compact-pill family — **Move** and **Split** as neutral `CtActionTextButton` pills, and **Locate** as the rightmost **icon-only circular** `CtCircularLocateButton` (mockup `.locate-btn`). The Locate control is **moved out of the title row** (`CtIconAction`) into the actions cluster; it still emits the same `LocateMapTileEvent` tile key (no behavioral regression). Move / Split are exposed **only** as these title-row pills; the expanded body carries **no** duplicate `CtNinePatchButton` footer actions (mockup `.u-comp-table` shows the composition rows only).
 - **Army row card chrome (mockup `.unit-row` card; issue #3514 owner decision; AC-6):** Each expandable army row renders as the mockup bordered gradient **card** via the shared [`UnitsEntityCard`](components/units-entity-card.md) wrapper, **not** bare Material `ExpansionTile` chrome. Collapsed, the card paints a vertical `EditorialMonoclePalette.bgDeep` → `EditorialMonoclePalette.surface` gradient with a 1 px `EditorialMonoclePalette.border` outline (mockup `.unit-row`); when expanded it switches to a flat `EditorialMonoclePalette.surface` fill with a 1 px `EditorialMonoclePalette.accentDim` outline (mockup `.unit-row.expanded`) and its detail rows are separated from the header by a 1 px `EditorialMonoclePalette.border` top divider (mockup `.u-comp-table` `border-top`). The inner `ExpansionTile` is transparent (no Material divider, background fill, or shape border) so its `RotationTransition` expand affordance — and the e2e helpers that detect it — keep working.
 
@@ -88,6 +89,19 @@ Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches
 ## Components
 
 - `MilitaryUnitsPanel`, [move-army-dialog.md](move-army-dialog.md), naval subsection widgets.
+- `RegionSectionHeader` (`app/lib/features/game/widgets/units/shared/region_section_header.dart`) — rendered with the `RegionHeaderVariant.leftBar` chrome on this panel (Refs #3514); see § Region / location header chrome.
+- `LocationSectionHeader` (`app/lib/features/game/widgets/units/shared/location_section_header.dart`) — province / sea-zone sub-header; see § Region / location header chrome.
+
+---
+
+## Region / location header chrome (Refs #3514)
+
+The region and location group headers follow the military mockup
+(`SPEC/ui/mockups/UNIT20001-military-units-panel.html`) for **visual chrome**;
+the displayed text content (`name — region` on the location line) is unchanged.
+
+- **Region header (`.region-label`):** Each region grouping heading (`Old World` / `New World`) renders via `RegionSectionHeader` with `variant: RegionHeaderVariant.leftBar` — an upper-cased `EditorialMonoclePalette.muted` Cinzel display label (`editorialMonocleDisplayFontFamily`, `12` logical px, `FontWeight.w600`) preceded by a `3` dp `EditorialMonoclePalette.accentDim` **left** border (`RegionSectionHeader.leftBarWidth`) with `6 × 3` dp inner padding. The bottom-border `CtSectionLabel` chrome (`RegionHeaderVariant.bottomBorder`) is **not** used on this panel.
+- **Location / province header (`.province-label`):** Each province (or sea-zone) sub-header renders via `LocationSectionHeader` as an indented body-font line in `EditorialMonoclePalette.fg` at `0.8` opacity (`LocationSectionHeader.labelOpacity`), `FontWeight.w600`. The previous muted `titleSmall` styling is replaced; the leading `CtSpacing.ml` indent is retained.
 
 ---
 
@@ -131,6 +145,10 @@ Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches
 - Given the user taps **Train**, when the action completes, then the UI layer closes the panel and opens the Train Military dialog via `AppEventBus` per [train-military-dialog.md](train-military-dialog.md).
 
 - Given the Military Units panel is open (issue #3514 owner decisions #5 / #15), when the header **Train** and **Combine** actions render, then the UI layer renders each as a `CtActionTextButton` with `primary == true` (compact primary gradient pill, no `CtNinePatchButton` corner-bracket chrome), and tapping **Train** still emits `OpenDialogEvent(trainMilitaryDialogId)`.
+
+- **Region header left-bar chrome (Refs #3514):** Given the Military Units panel is open with armies grouped into at least one region, when a region group heading renders, then the UI layer renders it via a `RegionSectionHeader` whose `variant` is `RegionHeaderVariant.leftBar` (mockup `.region-label` left-accent-bar chrome), and renders no `CtSectionLabel` bottom-border region heading on this panel.
+
+- **Location header semi-bold fg chrome (Refs #3514):** Given the Military Units panel is open with at least one province (or sea-zone) group, when the location sub-header renders, then the UI layer renders its `LocationSectionHeader` `Text` with `FontWeight.w600` and a colour resolving to `EditorialMonoclePalette.fg` at `0.8` opacity (mockup `.province-label`), while the displayed `name — region` line content is unchanged.
 - Given an army row with Move, Split, and Locate actions (issue #3514 owner decision #6), when the row renders, then the UI layer renders **Move** and **Split** as `CtActionTextButton` pills and renders **Locate** as the rightmost `CtCircularLocateButton` (icon-only circular pill), with no `CtNinePatchButton` row-action chrome.
 - Given an army row whose Locate control is tapped, when the press is handled, then the UI layer emits the same `LocateMapTileEvent` tile key as before the Locate control moved into the actions cluster.
 - Given a collapsed army row (issue #3514 AC-6), when the row renders, then the UI layer wraps the row in a `UnitsEntityCard` that paints a `DecoratedBox` whose decoration uses `UnitsEntityCard.collapsedGradient` (vertical `EditorialMonoclePalette.bgDeep` → `EditorialMonoclePalette.surface`) and a 1 px `EditorialMonoclePalette.border` outline, and the row mounts no bare-Material `ExpansionTile` background fill (its `backgroundColor` and `collapsedBackgroundColor` are `Colors.transparent`).
@@ -148,6 +166,8 @@ Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches
 - Given a regiment or ship type id is absent from the display-name maps, when the panel renders that row, then the UI layer shows the raw id as the label (fallback) and does not throw.
 
 - Given the panel renders army or naval rows with row actions, when the row is shown on wide or narrow widths, then the UI layer uses the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite with details on the left, actions on the right in left-to-right order, and icon-only action rendering on narrow widths.
+
+- **(Golden coverage, issue #3514)** Given `UNIT20001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), when `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), then the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_military_default.png` and the panel raises no exception (`WidgetTester.takeException()` is `null`).
 
 ---
 

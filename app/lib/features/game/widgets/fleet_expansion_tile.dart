@@ -7,6 +7,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'utils/naval_tree_builder.dart';
 import 'units/shared/units_entity_action_row.dart';
+import 'units/shared/units_entity_card.dart';
 
 /// Naval-units fleet row.
 ///
@@ -32,6 +33,17 @@ import 'units/shared/units_entity_action_row.dart';
 ///   `Total ships: X · Warships: Y · Merchants: Z` summary plus the
 ///   retained `Strength: V` line, replacing the previous per-stat
 ///   `ListTile` stack.
+///
+/// The collapsed/expanded chrome is the shared [UnitsEntityCard] mockup
+/// `.fleet-row` bordered gradient card (`bg-deep → surface` gradient + 1 px
+/// `--border` collapsed; flat `--surface` + 1 px `--accent-dim` expanded with
+/// a child top divider) rather than the bare Material `ExpansionTile`,
+/// matching the military army-row migration (issue #3514 owner decision #6 /
+/// AC-6; `SPEC/ui/mockups/UNIT30001-naval-units-panel.html` `.fleet-row`).
+/// The dense [UnitsEntityActionRow] is hosted with `chrome: false` so the
+/// card border is not double-painted; the title row stays on a single inline
+/// row (collapsing to icon-only at narrow widths) so Move / Split / Locate
+/// remain overflow-free under the card chrome.
 class FleetExpansionTile extends StatelessWidget {
   const FleetExpansionTile({
     super.key,
@@ -60,17 +72,20 @@ class FleetExpansionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: CtSpacing.m),
-      child: ExpansionTile(
+      child: UnitsEntityCard(
         title: _buildTitle(),
         subtitle: _buildSubtitle(),
-        dense: true,
         children: _buildChildren(),
       ),
     );
   }
 
   Widget _buildTitle() {
+    // `chrome: false`: the surrounding bordered gradient card is supplied by
+    // [UnitsEntityCard] so the action row must not paint its own
+    // [UnitsPanelRowChrome] border (issue #3514 AC-6).
     return UnitsEntityActionRow(
+      chrome: false,
       dense: true,
       details: _buildTitleDetails(),
       actions: _buildTitleActions(),

@@ -62,6 +62,19 @@ The card layout is `Row(crossAxisAlignment: start)` with the detail stack on the
 
 The card is hover-aware via `MouseRegion`: pointer enter switches the border to `--accent-dim`. Tile-scope selection also paints the border `--accent-dim` so the selected row is visually distinct without relying on Material `ListTile.selected` chrome.
 
+### Region heading chrome (mockup `.region-heading`; issue #3514 owner decision #10)
+
+Each region group heading (`Old World` / `New World`) matches `SPEC/ui/mockups/UNIT10001-civilian-units-panel.html` `.region-heading` chrome rather than the legacy `CtSectionLabel` (`--accent-dim`) bottom border. It renders via `RegionSectionHeader(variant: RegionHeaderVariant.bottomBorderMuted)`:
+
+| Token / property | Source | Value |
+|------------------|--------|-------|
+| Label text | region display label | Upper-cased (`Old World` → `OLD WORLD`) |
+| Label font | `editorialMonocleDisplayFontFamily` | Display (Cinzel/Iowan) `12` dp · `FontWeight.w600` · `0.06em` tracking |
+| Label colour | `EditorialMonoclePalette.muted` | `var(--muted)` |
+| Bottom border | `EditorialMonoclePalette.border` | 1 dp (`var(--border)`, not `--accent-dim`) |
+
+The observe-mode multi-owner sub-heading (per-faction grouping) is not part of the mockup and keeps the default `CtSectionLabel` treatment.
+
 ---
 
 ## Behavior
@@ -269,6 +282,10 @@ For each civilian unit, the panel shows:
 - **Given** the Civilian Units panel renders a civilian unit row with a locate action (R30; mockup `.u-actions .locate-btn`), **when** the user reads the row's right-aligned action cluster left-to-right, **then** the **Locate** action is the rightmost child, renders as an icon-only `CtNinePatchButton` (`UnitsEntityAction.iconOnly == true`, `icon: Icons.my_location`), and the title row does **not** mount any `CtIconAction` locate descendant.
 
 - **Given** the Civilian Units panel renders any civilian unit row, **when** the user reads the row's left detail stack top-to-bottom, **then** the unit-type title appears above the `Status:` line, which appears above the `Location:` line, which appears above the `Assigned to:` line — all inside the single bordered card from R30 (no separate `ListTile.subtitle` rendering outside the card chrome).
+
+- **Given** the Civilian Units panel lists civilian units in at least one region (issue #3514 owner decision #10; mockup `.region-heading`), **when** a region group heading renders, **then** the UI layer renders it via `RegionSectionHeader(variant: RegionHeaderVariant.bottomBorderMuted)` — an upper-cased `EditorialMonoclePalette.muted` display label over a 1 dp `EditorialMonoclePalette.border` bottom border (not the legacy `CtSectionLabel` `--accent-dim` border), and mounts no `CtSectionLabel` for that region heading.
+
+- **(Golden coverage, issue #3514)** **Given** `UNIT10001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), **when** `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), **then** the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_civilian_default.png` and the panel raises no exception (`WidgetTester.takeException()` is `null`).
 
 ---
 
