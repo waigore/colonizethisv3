@@ -111,39 +111,29 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
   MapTopology topology, {
   Map<String, MapTopology>? topologyByRegion,
 }) {
-  final gpIds = game.players.map((p) => p.id).toSet();
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  final result = _mutableGpVisibilityCopy(visibility);
-
-  forEachWorldRegion(game.worldState, (regionId, _) {
-    final regionTileKeys = tileKeysByRegion[regionId];
-    if (regionTileKeys == null) return;
-    final regionTopology = topologyForRegion(
-      topology,
-      regionId,
-      topologyByRegion: topologyByRegion,
-    );
-    final seaZoneIds = seaZoneNodeIds(regionTopology);
-    final fleetAtSeaZoneKeysByPlayer = _fleetAtSeaZoneKeysByPlayerInRegion(
-      game,
-      regionId,
-    );
-    _forEachGpPlayerVisibility(
-      game: game,
-      gpIds: gpIds,
-      result: result,
-      action: (playerId, vis) => _applyDistantSeaFogForGpPlayerInRegion(
-        game: game,
-        playerId: playerId,
-        regionId: regionId,
-        regionTopology: regionTopology,
-        seaZoneIds: seaZoneIds,
-        regionTileKeys: regionTileKeys,
-        fleetAtSeaZoneKeysByPlayer: fleetAtSeaZoneKeysByPlayer,
-        vis: vis,
-      ),
-    );
-  });
-
-  return result;
+  return _forEachWorldRegionGpVisibility(
+    game: game,
+    visibility: visibility,
+    topology: topology,
+    topologyByRegion: topologyByRegion,
+    perRegion: (regionId, regionTopology, regionTileKeys, forEachGpPlayer) {
+      final seaZoneIds = seaZoneNodeIds(regionTopology);
+      final fleetAtSeaZoneKeysByPlayer = _fleetAtSeaZoneKeysByPlayerInRegion(
+        game,
+        regionId,
+      );
+      forEachGpPlayer(
+        (playerId, vis) => _applyDistantSeaFogForGpPlayerInRegion(
+          game: game,
+          playerId: playerId,
+          regionId: regionId,
+          regionTopology: regionTopology,
+          seaZoneIds: seaZoneIds,
+          regionTileKeys: regionTileKeys,
+          fleetAtSeaZoneKeysByPlayer: fleetAtSeaZoneKeysByPlayer,
+          vis: vis,
+        ),
+      );
+    },
+  );
 }

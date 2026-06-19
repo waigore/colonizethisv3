@@ -1,11 +1,10 @@
 import 'dart:collection';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'package:colonizethis_world/src/utils/graph_traversal.dart';
-
-import 'naval.dart' show seaZoneIdsAdjacentToProvince;
 
 /// Topology helpers shared by movement and connectivity. SPEC/game/map-topology.md.
 ///
@@ -194,13 +193,95 @@ Set<String> seaZonesReachableBySeaPath(
 
 /// Sea zone ids adjacent to province [provinceNodeId] in topology (P–S edges).
 ///
-/// Prefer [seaZoneIdsAdjacentToProvince] from `naval.dart` for prefixed province
-/// ids and region-scoped resolution.
+/// Prefer [seaZoneIdsAdjacentToProvince] for prefixed province ids and
+/// region-scoped resolution.
 Set<String> seaZonesAdjacentToProvince(
   MapTopology topology,
   String provinceNodeId,
 ) {
   return seaZoneIdsAdjacentToProvince(topology, provinceNodeId);
+}
+
+/// All topology nodes keyed by node id, cached per immutable topology instance.
+///
+/// Hot-path naval/connectivity/fog callers reuse the same `Map` instance across
+/// calls so per-province loops avoid the O(nodes) rebuild cost every iteration.
+/// The returned map is treated as read-only by callers.
+Map<String, TopologyNode> topologyNodesById(MapTopology topology) =>
+    _nodesByIdCache.get(topology);
+
+Map<String, TopologyNode> _computeNodesById(MapTopology topology) {
+  final out = <String, TopologyNode>{};
+  for (final n in topology.nodes) {
+    out[n.id] = n;
+  }
+  return out;
+}
+
+final ExpandoIndex<MapTopology, Map<String, TopologyNode>> _nodesByIdCache =
+    ExpandoIndex<MapTopology, Map<String, TopologyNode>>(
+      'topology.nodesById',
+      _computeNodesById,
+    );
+
+/// True when [edgeEndpoint] is the same province topology node as [provinceId]
+/// for [regionId]. Handles combined topologies where edges use prefixed ids
+/// (`regionId|localId`) while orders/state may still use the local id.
+bool _topologyProvinceEndpointMatches(
+  String edgeEndpoint,
+  String provinceId,
+  String? regionId,
+) {
+  if (edgeEndpoint == provinceId) return true;
+  if (regionId == null) return false;
+  if (ProvinceId.isPrefixed(provinceId)) {
+    if (!ProvinceId.isPrefixed(edgeEndpoint)) {
+      return ProvinceId.regionIdFrom(provinceId) == regionId &&
+          ProvinceId.localIdFrom(provinceId) == edgeEndpoint;
+    }
+  } else if (ProvinceId.isPrefixed(edgeEndpoint)) {
+    return ProvinceId.regionIdFrom(edgeEndpoint) == regionId &&
+        ProvinceId.localIdFrom(edgeEndpoint) == provinceId;
+  }
+  return false;
+}
+
+/// Sea zone ids that share an edge with province [provinceId] (coastal P–S
+/// edges), optionally restricted to [regionId] per
+/// SPEC/game/world-model-identity.md (region-scoped lookup). Accepts local or
+/// prefixed (`regionId|localId`) province ids.
+Set<String> seaZoneIdsAdjacentToProvince(
+  MapTopology topology,
+  String provinceId, {
+  String? regionId,
+}) {
+  String localProvinceId = provinceId;
+  if (provinceId.contains('|')) {
+    final parts = provinceId.split('|');
+    localProvinceId = parts.length > 1
+        ? parts.sublist(1).join('|')
+        : provinceId;
+  }
+  final nodeById = topologyNodesById(topology);
+  final out = <String>{};
+  for (final e in topology.edges) {
+    final id1 = e.id1, id2 = e.id2;
+    String? prov;
+    if (id1 == localProvinceId ||
+        id1 == provinceId ||
+        _topologyProvinceEndpointMatches(id1, provinceId, regionId)) {
+      prov = id1;
+    } else if (id2 == localProvinceId ||
+        id2 == provinceId ||
+        _topologyProvinceEndpointMatches(id2, provinceId, regionId)) {
+      prov = id2;
+    }
+    if (prov == null) continue;
+    final other = id1 == prov ? id2 : id1;
+    final node = nodeById[other];
+    if (node != null && node.type == TopologyNodeType.seaZone) out.add(other);
+  }
+  return out;
 }
 
 /// All node ids directly adjacent to [nodeId] in [topology] regardless of node

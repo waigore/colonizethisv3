@@ -1,7 +1,20 @@
-part of 'connectivity_resolver.dart';
+/// Pure tile/grid helpers shared by the connectivity resolver and propagation
+/// core. Standalone library (extracted from the former
+/// `connectivity_resolver.dart` `part` chain, Refs #3544 Step 3); the helpers
+/// are public so the standalone `connectivity_propagation.dart` and
+/// `connectivity_resolver.dart` libraries can both call them via imports instead
+/// of `part`-scoped privates. None of these are surfaced through the package
+/// barrel, so they remain package-internal.
+library;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../world_constants.dart';
+import 'port_seaboard_registry_key.dart';
 
 /// True if the capital tile is adjacent to sea (seaboard). SPEC/game/capital-and-connectivity § Port connection to capital.
-bool _isCapitalTileOnSeaboard(
+bool isCapitalTileOnSeaboard(
   CapitalTile capital,
   Map<String, TileMapResult> tileMapByRegion,
   Set<String> provinceIdsByType,
@@ -15,7 +28,7 @@ bool _isCapitalTileOnSeaboard(
     final ny = capital.y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) return true;
     final cellId = map.cell(nx, ny);
-    if (!_isLandProvinceGridCell(cellId, capital.regionId, provinceIdsByType)) {
+    if (!isLandProvinceGridCell(cellId, capital.regionId, provinceIdsByType)) {
       return true;
     }
   }
@@ -24,7 +37,7 @@ bool _isCapitalTileOnSeaboard(
 
 /// Port tile key -> (fullProvinceId, seaZoneId). Built from portsByProvinceSeaboard.
 /// Key format: fullProvinceId|seaZoneId (e.g. oldWorld|p1|sea1) or legacy provinceId|seaZoneId (2 parts).
-Map<String, (String, String)> _portToProvinceSeaZone(WorldState worldState) {
+Map<String, (String, String)> portToProvinceSeaZone(WorldState worldState) {
   final out = <String, (String, String)>{};
   for (final e in worldState.portsByProvinceSeaboard.entries) {
     final decoded = decodePortSeaboardRegistryKey(e.key);
@@ -34,7 +47,8 @@ Map<String, (String, String)> _portToProvinceSeaZone(WorldState worldState) {
   return out;
 }
 
-int _transportLevelAtTile(
+/// Effective transport level at [tileKey]: ports count as level 4, otherwise the road level.
+int transportLevelAtTile(
   WorldState worldState,
   String tileKey,
   Map<String, (String, String)> portTileToProvinceSeaZone,
@@ -44,14 +58,15 @@ int _transportLevelAtTile(
   return r > 0 ? r : 0;
 }
 
-String? _fullProvinceIdFromTileKey(String tileKey) {
+/// Full prefixed province id (`regionId|localId`) parsed from a tile key, or null.
+String? fullProvinceIdFromTileKey(String tileKey) {
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords == null) return null;
   return '${coords.regionId}|${coords.provinceLocalId}';
 }
 
 /// Tile grids use local province ids (`p2`); [buildCombinedTopology] uses prefixed node ids (`oldWorld|p2`).
-bool _isLandProvinceGridCell(
+bool isLandProvinceGridCell(
   String localCellId,
   String regionId,
   Set<String> landProvinceNodeIds,
@@ -61,7 +76,7 @@ bool _isLandProvinceGridCell(
 }
 
 /// Adjacent tile keys (4-neighbour). Includes tiles in same or neighbouring provinces (any land cell). Tile key uses neighbour's province id.
-List<String> _adjacentTileKeys(
+List<String> adjacentTileKeys(
   String regionId,
   String provinceId,
   int x,
@@ -77,7 +92,7 @@ List<String> _adjacentTileKeys(
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
     final cellId = map.cell(nx, ny);
-    if (!_isLandProvinceGridCell(cellId, regionId, provinceIdsByType)) continue;
+    if (!isLandProvinceGridCell(cellId, regionId, provinceIdsByType)) continue;
     final fullProvinceId = '$regionId|$cellId';
     out.add(CapitalTile.tileKey(regionId, fullProvinceId, nx, ny));
   }

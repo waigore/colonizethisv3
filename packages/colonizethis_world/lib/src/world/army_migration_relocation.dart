@@ -67,7 +67,7 @@ WorldState _worldStateWithUpdatedArmyAndUnits(
   List<Unit> owUnits,
   List<Unit> nwUnits,
 ) => worldState.copyWith(armies: armies).mapBothRegionUnits((regionId, _) {
-  return regionId == kRegionOldWorld ? owUnits : nwUnits;
+  return (ow: owUnits, nw: nwUnits).unitListForRegion(regionId);
 });
 
 List<Army> _retargetArmyStation(

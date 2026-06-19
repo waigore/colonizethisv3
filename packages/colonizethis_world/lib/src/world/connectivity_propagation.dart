@@ -1,4 +1,25 @@
-part of 'connectivity_resolver.dart';
+/// Capital-connectivity propagation core (Road rule, sea-path port wiring,
+/// blockade pruning, Town rule closure). Standalone library (extracted from the
+/// former `connectivity_resolver.dart` `part` chain, Refs #3544 Step 3) so the
+/// propagation algorithm can be understood, imported, and unit-tested without
+/// pulling in the resolver. Public surface is [connectedTilesForPlayer]; the
+/// rest is library-private. None of these are surfaced through the package
+/// barrel (they stay package-internal, consumed only by
+/// `connectivity_resolver.dart`).
+library;
+
+import 'dart:collection';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'connectivity_metrics.dart';
+import 'connectivity_result.dart';
+import 'connectivity_tile_helpers.dart';
+import 'port_seaboard_registry_key.dart';
+import 'topology_helpers.dart';
+import 'package:colonizethis_world/src/utils/graph_traversal.dart';
+import '../world_constants.dart';
 
 void _tryEnqueueSeaConnectedPortExpansion({
   required String portKey,
@@ -28,7 +49,7 @@ void _removeBlockadedPortTilesExceptCapital({
   required String capitalProvinceId,
 }) {
   for (final key in connected.toList()) {
-    final fullProvinceId = _fullProvinceIdFromTileKey(key);
+    final fullProvinceId = fullProvinceIdFromTileKey(key);
     if (fullProvinceId == null) continue;
     if (!blockadedPortProvinces.contains(fullProvinceId)) continue;
     if (fullProvinceId == capitalProvinceId) continue;
@@ -37,7 +58,10 @@ void _removeBlockadedPortTilesExceptCapital({
   }
 }
 
-ConnectivityResult _connectedTilesForPlayer({
+/// Resolves the connected tile set + path transport cap for a single faction's
+/// capital. SPEC/game/capital-and-connectivity. Shared by Great-Power and
+/// non-Great-Power connectivity resolution.
+ConnectivityResult connectedTilesForPlayer({
   required Game game,
   required String playerId,
   required CapitalTile capital,
@@ -63,7 +87,7 @@ ConnectivityResult _connectedTilesForPlayer({
   final capitalKey = capital.toTileKey();
   final connected = <String>{capitalKey};
   final pathCap = <String, int>{};
-  pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey, portInfo);
+  pathCap[capitalKey] = transportLevelAtTile(worldState, capitalKey, portInfo);
 
   // Road rule: a tile may expand connectivity when it carries a road/rail or a
   // port. Shared by both propagation passes so the rule has a single source;
@@ -174,7 +198,7 @@ void _runConnectivityPropagation({
     queue: queue,
     connected: connected,
     pathCap: pathCap,
-    onDequeue: _recordConnectivityBottleneckDequeue,
+    onDequeue: recordConnectivityBottleneckDequeue,
     shouldExpandEdgesFrom: (key) {
       final coords = parseTileKeyCoordinates(key);
       if (coords == null) return false;
@@ -191,7 +215,7 @@ void _runConnectivityPropagation({
       if (coords.x < 0 || coords.y < 0) return const <String>[];
       final map = tileMapByRegion[coords.regionId];
       if (map == null) return const <String>[];
-      return _adjacentTileKeys(
+      return adjacentTileKeys(
         coords.regionId,
         coords.provinceLocalId,
         coords.x,
@@ -201,7 +225,7 @@ void _runConnectivityPropagation({
       );
     },
     transportLevelAt: (neighbor) =>
-        _transportLevelAtTile(worldState, neighbor, portTileToProvinceSeaZone),
+        transportLevelAtTile(worldState, neighbor, portTileToProvinceSeaZone),
   );
 }
 
@@ -220,7 +244,7 @@ Set<String> _seaConnectedPortKeysForCapital({
   final capitalProvinceBlockaded = blockadedPortProvinces.contains(
     capital.provinceId,
   );
-  final capitalOnSeaboard = _isCapitalTileOnSeaboard(
+  final capitalOnSeaboard = isCapitalTileOnSeaboard(
     capital,
     tileMapByRegion,
     provinceIdsByType,
@@ -242,7 +266,7 @@ Set<String> _seaConnectedPortKeysForCapital({
     final seaReachable = seaZonesReachableBySeaPath(
       topology,
       capitalSeaZones,
-      onDequeue: _recordSeaZoneBfsDequeue,
+      onDequeue: recordSeaZoneBfsDequeue,
     );
     for (final entry in worldState.portsByProvinceSeaboard.entries) {
       final portMeta = decodePortSeaboardRegistryKey(entry.key);
@@ -259,7 +283,7 @@ Set<String> _seaConnectedPortKeysForCapital({
   }
   if (!capitalOnSeaboard) {
     for (final portKey in capitalRegionPortKeys) {
-      final portProvinceId = _fullProvinceIdFromTileKey(portKey);
+      final portProvinceId = fullProvinceIdFromTileKey(portKey);
       if (portProvinceId == null) {
         out.add(portKey);
         continue;
@@ -275,7 +299,7 @@ Set<String> _seaConnectedPortKeysForCapital({
 /// § Connectivity (Game Rule) Town rule: 4-adjacent to a connected town in the **same** province.
 ///
 /// [townByTileKey] is the player-scoped town-tile → province map prepared by
-/// [_buildPerPlayerProvinceCaches] in a single dual-region scan (Refs #2394).
+/// `_buildPerPlayerProvinceCaches` in a single dual-region scan (Refs #2394).
 void _applyTownRuleConnectivityClosure({
   required Map<String, Province> townByTileKey,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -305,7 +329,7 @@ void _applyTownRuleConnectivityClosure({
 
   while (pendingTowns.isNotEmpty) {
     final tk = pendingTowns.removeFirst();
-    _recordTownRuleWorklistDequeue();
+    recordTownRuleWorklistDequeue();
     queuedTowns.remove(tk);
     expandedTowns.add(tk);
 
@@ -323,7 +347,7 @@ void _applyTownRuleConnectivityClosure({
       final ny = coords.y + d.$2;
       if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) continue;
       final cell = map.cell(nx, ny);
-      if (!_isLandProvinceGridCell(cell, coords.regionId, provinceIdsByType)) {
+      if (!isLandProvinceGridCell(cell, coords.regionId, provinceIdsByType)) {
         continue;
       }
       if (cell != coords.provinceLocalId) continue;
@@ -332,7 +356,7 @@ void _applyTownRuleConnectivityClosure({
       connected.add(nKey);
       pathCap[nKey] =
           pathCap[tk] ??
-          _transportLevelAtTile(worldState, tk, portTileToProvinceSeaZone);
+          transportLevelAtTile(worldState, tk, portTileToProvinceSeaZone);
       if (townByTileKey.containsKey(nKey)) {
         enqueueTownForExpansion(nKey);
       }

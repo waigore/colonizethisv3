@@ -19,6 +19,13 @@ export 'package:colonizethis_world/src/world/capital_reassignment_fatal.dart';
 export 'package:colonizethis_world/src/world/capital_and_gp_fall.dart';
 export 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 export 'package:colonizethis_world/src/world/connectivity_resolver.dart';
+// Connectivity hot-path metrics test hook (Refs #2268 AC-10). Previously surfaced
+// via the `connectivity_resolver.dart` `part` chain; after the Step 3 split
+// (Refs #3544) it lives in its own library and is re-exported here to preserve
+// the public surface (`ConnectivityHotPathMetrics`, the test-only setter). The
+// internal `record*` helpers stay package-private.
+export 'package:colonizethis_world/src/world/connectivity_metrics.dart'
+    show ConnectivityHotPathMetrics, setConnectivityHotPathMetricsForTests;
 export 'package:colonizethis_world/src/world/faction_membership.dart';
 export 'package:colonizethis_world/src/world/game_world_mutations.dart';
 export 'package:colonizethis_world/src/world/unit_lookup.dart';
