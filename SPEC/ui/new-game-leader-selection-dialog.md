@@ -185,6 +185,16 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 - Given the dialog is open under any theme, when the title `Text` is inspected, then its `style.color` is NOT equal to `AppThemes.colonial.textTheme.titleMedium?.color` (regression guard: dropping the EditorialMonoclePalette override would surface the colonial titleMedium color instead of the canonical `--accent` token).
 
+### Dialog frame width (mockup-authoritative, Refs #3507 D1)
+
+- Given the dialog is open, when the `CtDialogShell` wrapping `NewGameLeaderSelectionDialog` is inspected, then its `maxWidth` equals `540` and its `maxHeight` equals `720`, matching the authoritative mockup `.dialog-shell{max-width:540px}` (refreshed by #3506). Per the issue source-of-truth precedence the mockup wins on this purely visual detail, so the stale "keep 480 px" figure in the original D1 text does not apply; the dialog frame width is pinned to the 540 dp mockup value (also the `kLeaderSelectionNarrowBreakpoint` wide/narrow threshold).
+
+### Visual baseline goldens (Refs #3507)
+
+- Given the dialog is rendered directly under `AppThemes.editorialMonocle` at a `600 × 900` dp viewport (width `>= kLeaderSelectionNarrowBreakpoint`, 540 dp) with `baseConfig = GameSetupConfig.defaultConfig`, `naming = defaultNamingConfig`, the default per-GP leader-variant map, and `blessedProfileNames == const []`, when the framed surface keyed `ValueKey<String>('leaderSelectionDialogWideGolden')` is captured, then `WidgetTester.takeException()` returns `null` and the capture matches the committed baseline `app/test/goldens/new_game_leader_selection_dialog_wide.png` (side-by-side nation/leader pickers per the mockup `@media (min-width: 540px)` rule).
+
+- Given the dialog is rendered directly under `AppThemes.editorialMonocle` at a `320 × 900` dp viewport (width `< kLeaderSelectionNarrowBreakpoint`, 540 dp) with the same default inputs as the wide golden, when the framed surface keyed `ValueKey<String>('leaderSelectionDialogNarrowGolden')` is captured, then `WidgetTester.takeException()` returns `null` and the capture matches the committed baseline `app/test/goldens/new_game_leader_selection_dialog_narrow_320.png` (vertically stacked nation/leader pickers, no `RenderFlex` overflow at the minimum supported viewport).
+
 ---
 
 ## Widgetbook
@@ -200,3 +210,4 @@ Automated widget tests:
 
 - `app/test/new_game_leader_selection_dialog_test.dart` — six-slot rendering, default ordering, seed parsing, infinite-mode toggle, terrain-variation slider, Cancel, slot reassignment, Start payload, the 540 dp wide↔narrow slot-pickers boundary, the duplicate slot validation feedback contract (positive: duplicate slot's nation dropdown carries the danger-border wrapper; negative: no danger-border wrapper when all six slots are unique; recovery: replacing the duplicate clears the wrapper and re-enables Start), and the tuned AI profile selector (AI slots show the `Normal` + blessed-name dropdown, default Start emits an empty `aiProfileByGpId`, selecting a blessed name forwards it keyed by gpId).
 - `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` — minimum-viewport pin (Refs #2870 S7/S8/S10): no `RenderFlex` overflow at 320 × 640 dp, every slot renders the stacked column body (no wide row body), title + six `Slot N` headings (slot 1 with `YOU` tag) + Cancel + Start labels visible, every rendered `CtNinePatchButton` ≥ 44 dp tall, and a 1024 × 768 negative regression sentinel that flips the contract so the wide row body is the only one mounted.
+- `app/test/new_game_leader_selection_dialog_golden_test.dart` (Refs #3507) — `matchesGoldenFile` visual baselines under `AppThemes.editorialMonocle`: a wide `600 × 900` dp capture (`goldens/new_game_leader_selection_dialog_wide.png`, side-by-side pickers) and a narrow `320 × 900` dp capture (`goldens/new_game_leader_selection_dialog_narrow_320.png`, stacked pickers), each asserting `takeException() == null`.

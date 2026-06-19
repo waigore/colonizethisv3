@@ -56,7 +56,17 @@ html{overflow-y:auto;scroll-behavior:smooth}
 .slot-progress{display:flex;align-items:center;gap:8px;margin-top:clamp(4px,.7vh,6px)}
 .prog-bar{flex:1;height:clamp(4px,.6vh,5px);background:var(--bg-deep);border:1px solid var(--border);border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent-dim);border-radius:1px;transition:width .3s}
+/* Dual-segment turn preview (Refs #3512): committed (segment A) + anticipated
+   RP this turn (segment B, subtler accent tint, animated on width). */
+.prog-bar{display:flex}
+.prog-fill-committed{height:100%;background:var(--accent);border-radius:1px 0 0 1px}
+.prog-fill-anticipated{height:100%;background:oklch(0.70 0.13 86 / .4);transition:width .12s ease-out}
 .slot-progress span{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--accent-dim);white-space:nowrap}
+.rp-delta{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--success,oklch(0.78 0.15 150));cursor:pointer;white-space:nowrap}
+.slot-gold{display:flex;align-items:center;gap:5px;margin-top:3px;font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px)}
+.slot-gold img{width:14px;height:14px;image-rendering:pixelated}
+.slot-gold.spend{color:var(--danger)}
+.slot-gold.blocked{color:var(--muted)}
 .slot-funding{display:flex;gap:4px;flex-wrap:wrap;margin-top:clamp(4px,.7vh,6px)}
 .fund-btn{padding:2px 8px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font-display);font-size:10px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
 .fund-btn:hover{color:var(--accent-bright)}
@@ -117,6 +127,21 @@ let variant='default';
 let unlockedTechs=['agriculture','workshop','militia','galleon','frigate','exploration','trade_consulate'];
 let currentResearch={};
 let reserved=[];
+
+// Funding presets (Refs #3512): RP/turn and gold/turn, mirroring
+// research_rules.dart / research_funding.dart. Mock treasury + debt floor
+// demonstrate the treasury-insufficient (debt-blocked) slot state.
+const FUNDING_RP={none:0,low:100,medium:300,high:800,maximum:2500};
+const FUNDING_GOLD={none:0,low:50,medium:150,high:400,maximum:1000};
+const MOCK_TREASURY=120;      // low reserves so Maximum funding is debt-blocked
+const MOCK_RESEARCH_MAX_DEBT=0; // no money_lending unlocked
+function previewForSlot(a){
+  const lv=a.funding||'medium';
+  const base=FUNDING_RP[lv]||0, gold=FUNDING_GOLD[lv]||0;
+  const blocked=gold>0 && (MOCK_TREASURY-gold)<(-MOCK_RESEARCH_MAX_DEBT);
+  const anticipated=(lv==='none'||blocked)?0:base;
+  return {base,gold,blocked,anticipated,spends:!blocked&&gold>0,isNone:lv==='none'};
+}
 
 const techCatalog=[
   {id:'workshop',name:'Workshop',iconFile:'tech_labour.png',cost:'75 RP',desc:'Unlocks Apprentice worker tier'},
@@ -180,10 +205,28 @@ function renderAll(){
             return `<button class="fund-btn${active}" onclick="selectFunding(${i},'${lv}')">${level}</button>`;
           }).join('')}
         </div>
-        <div class="slot-progress">
-          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-          <span>${assigned.progress} / ${assigned.cost} RP</span>
+        ${(()=>{
+          const pv=previewForSlot(assigned);
+          const committedPct=Math.min(100,pct);
+          const headroom=Math.max(0,100-committedPct);
+          const antPct=Math.min(headroom,assigned.cost>0?(pv.anticipated/assigned.cost*100):0);
+          const delta=pv.anticipated>0
+            ? `<span class="rp-delta" title="Show research breakdown">+${pv.anticipated} RP</span>` : '';
+          let gold='';
+          if(!pv.isNone){
+            const cls=pv.blocked?'blocked':(pv.spends?'spend':'');
+            const label=pv.spends?`\u2212${pv.gold}/turn`:`${pv.gold}/turn`;
+            gold=`<div class="slot-gold ${cls}">${icn('treasury_coin.png')}<span>${label}</span></div>`;
+          }
+          return `<div class="slot-progress">
+          <div class="prog-bar">
+            <div class="prog-fill-committed" style="width:${committedPct}%"></div>
+            <div class="prog-fill-anticipated" style="width:${antPct}%"></div>
+          </div>
+          <span>${assigned.progress} / ${assigned.cost} RP</span>${delta}
         </div>
+        ${gold}`;
+        })()}
       `:`<div class="slot-empty">No tech assigned</div>`}
     </div>`;
   }

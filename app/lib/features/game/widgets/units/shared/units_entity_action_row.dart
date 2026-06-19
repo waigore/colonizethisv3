@@ -118,13 +118,24 @@ class UnitsEntityActionRow extends StatelessWidget {
   }
 
   /// Heuristic per-action label+icon width used to decide when the dense
-  /// actions cluster must collapse to icon-only to avoid wrapping. Sized so
-  /// the default 3-action naval cluster (Move + Split + Locate icon) stays
-  /// in label+icon mode at the spec'd 420–640 dp panel width but collapses
-  /// at the test-host viewports that constrain the action cluster below
-  /// ~150 dp.
+  /// actions cluster must collapse to icon-only to avoid overflowing the
+  /// single inline row. Sized so the default 3-action naval cluster
+  /// (Move + Split + Locate icon) stays in label+icon mode at the spec'd
+  /// wide naval panel width (≥ ~528 dp content) but collapses to icon-only
+  /// once the cluster's flex share drops below the combined label+icon
+  /// footprint — including when the dense row is hosted inside the
+  /// [UnitsEntityCard] mockup card chrome, where the actions cluster shares
+  /// the title width ~50/50 with the row details and a bare label+icon
+  /// pair (e.g. Move + Split with no locate on a tile-less at-sea fleet)
+  /// would otherwise overflow its share by a few logical px (issue #3514
+  /// naval card migration; SPEC/ui/components/units-entity-card.md).
+  ///
+  /// The `90` constant reflects the measured Cinzel-display label + 14 dp
+  /// icon + 10 dp horizontal padding + 1 dp border footprint of a single
+  /// compact pill plus inter-pill spacing, with a small margin so the
+  /// collapse fires before the `RenderFlex` overflow rather than after it.
   static double _denseIconOnlyBreakpoint(int actionCount) {
-    return 70.0 * actionCount;
+    return 90.0 * actionCount;
   }
 
   Widget _buildDefaultActionsWrap({

@@ -152,6 +152,24 @@ void main() {
     });
 
     testWidgets(
+      'CtDialogShell frame is pinned to the mockup-authoritative 540 dp width',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+
+        // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
+        // the dialog frame is pinned to the refreshed mockup
+        // `.dialog-shell{max-width:540px}` (Refs #3506/#3507 D1). This guards
+        // against regressing to the stale 480 dp figure in the original
+        // D1 text — the mockup is the visual source of truth.
+        final shell = tester.widget<CtDialogShell>(
+          find.byType(CtDialogShell),
+        );
+        expect(shell.maxWidth, 540);
+        expect(shell.maxHeight, 720);
+      },
+    );
+
+    testWidgets(
       'large viewport: six slots visible; single shell vertical scroll only',
       (WidgetTester tester) async {
         await pumpDialog(

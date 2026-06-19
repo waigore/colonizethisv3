@@ -216,7 +216,10 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
   ) {
     return [
       for (final group in groups) ...[
-        RegionSectionHeader(label: regionDisplayLabel(group.regionKey)),
+        RegionSectionHeader(
+          label: regionDisplayLabel(group.regionKey),
+          variant: RegionHeaderVariant.leftBar,
+        ),
         ..._buildProvinceLocationChildren(group, l10n),
         ..._buildSeaLocationChildren(group, l10n),
       ],

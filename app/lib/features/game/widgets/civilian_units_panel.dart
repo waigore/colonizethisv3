@@ -141,7 +141,10 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       return const [];
     }
     final children = <Widget>[
-      RegionSectionHeader(label: regionDisplayLabel(regionId)),
+      RegionSectionHeader(
+        label: regionDisplayLabel(regionId),
+        variant: RegionHeaderVariant.bottomBorderMuted,
+      ),
     ];
     if (!multiOwner) {
       children.addAll(
