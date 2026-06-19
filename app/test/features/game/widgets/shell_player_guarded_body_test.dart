@@ -15,6 +15,7 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/observe_mode_not_defined_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/shell_player_guarded_body.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -39,6 +40,8 @@ ShellPlayerContext _shell({
 }
 
 void main() {
+  setUpAll(suppressLogsForTests);
+
   group('observeNotDefinedSentinel', () {
     test('returns null when the shell has defined player chrome', () {
       final sentinel = observeNotDefinedSentinel(
