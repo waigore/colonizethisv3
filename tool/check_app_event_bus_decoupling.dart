@@ -67,6 +67,12 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // file under the 700-line `repo.game_widgets_file_size` cap. Same
   // local-by-design rationale as the parent file (Refs #2864 S3 split).
   'app/lib/features/game/widgets/technology_panel_orders.dart',
+  // Read-only research-funding breakdown dialog split out of
+  // `technology_panel.dart` to keep that file under the
+  // `repo.game_widgets_file_size` cap. Same local-by-design rationale as the
+  // parent panel — `SPEC/program/app-ui-wiring.md` § "Local by design"
+  // (`ResearchFundingBreakdownDialog`, Refs #3512).
+  'app/lib/features/game/widgets/research_slot_turn_preview_view.dart',
   'app/lib/features/shell/new_game_setup_flow.dart',
   // Split / move fleet — `SPEC/program/app-ui-wiring.md` "Split fleet" /
   // "Move fleet" paragraphs.
