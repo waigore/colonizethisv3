@@ -60,6 +60,10 @@ When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `location
 
 **Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header actions — tile-scope **Tile** and **Combine** — render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. The naval panel has **no** Train action. Bus emissions and enable/disable rules are unchanged: **Tile** is disabled when `tileScopeTileKey` is empty; **Combine** is enabled only when the current selection is combinable. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
 
+**No production Close pill (mockup `.close-btn` preview-only; issue #3514 owner decision #14):** The `UNIT30001` mockup header (`mockups/UNIT30001-naval-units-panel.html`) depicts a **Close** pill purely as a static preview affordance. The shipped panel renders **no** production Close pill: it is hosted in a side-panel / bottom-sheet surface that owns its own dismissal (the shared [`UnitsPanelShell`](components/units-panel-shell.md) `CtTopBar` renders **without** a back/close button). The mockup HTML is **not** edited to remove the preview Close; this divergence is recorded here so the panel matches the mockup style without adding a redundant Close control.
+
+**No panel subtitle (mockup `.panel-subtitle` out of scope; issue #3514 owner decision #16):** The `UNIT30001` mockup includes a `.panel-subtitle` line under the header. This spec defines **no** panel subtitle, so the shipped panel renders none; the mockup `.panel-subtitle` is **out of scope** and is not implemented. The mockup HTML is **not** edited to remove it; this divergence is recorded here.
+
 ---
 
 ## Scope: which fleets are shown
