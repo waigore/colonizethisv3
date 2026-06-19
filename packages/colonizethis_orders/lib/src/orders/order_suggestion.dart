@@ -21,17 +21,15 @@ export 'order_suggestion_recruit_worker.dart'
 export 'order_suggestion_research.dart' show suggestResearchOrders;
 export 'order_suggestion_work_tile_keys.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
-export 'order_suggestion_move_army.dart'
+export 'order_suggestion_army_move.dart'
     show
         ArmyMovePickerDestination,
         armyMoveCandidateDestinationProvinceIds,
         armyMovePickerDestinations,
-        suggestArmyMoveOrders,
-        suggestMoveOrders;
-export 'order_suggestion_naval_diplomatic.dart'
-    show
-        suggestDeclareWarOrders,
-        suggestDiplomaticOrders,
-        suggestNavalMissionOrders,
-        suggestNavalMoveOrders;
+        suggestArmyMoveOrders;
+export 'order_suggestion_move_unit.dart' show suggestMoveOrders;
+export 'order_suggestion_diplomatic.dart'
+    show suggestDeclareWarOrders, suggestDiplomaticOrders;
+export 'order_suggestion_naval.dart'
+    show suggestNavalMissionOrders, suggestNavalMoveOrders;
 export 'order_suggestion_work.dart' show suggestWorkOrders;
