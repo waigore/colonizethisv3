@@ -83,6 +83,7 @@ import '../../../widgets/resource_icon.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart';
 import '../widgets/shell_player_guarded_body.dart';
+import 'trade_section_handlers.dart';
 
 part 'trade_screen_deal_book.dart';
 part 'trade_screen_market_row.dart';
@@ -748,6 +749,40 @@ class _MarketTabContent extends ConsumerWidget {
       playerId: playerId,
     );
 
+    // Refs #3546 — collapse the three verbatim per-section closure pairs into a
+    // single factory call. The shared per-build order context is bound once;
+    // the projected treasury delta is still read lazily per interaction inside
+    // the factory (behaviour-preserving).
+    final TradeSectionHandlers sectionHandlers = buildTradeSectionHandlers(
+      readProjectedTreasuryDelta: readProjectedTreasuryDelta,
+      handleDirectionChanged: ({
+        required CommodityId commodityId,
+        required TradeOrderType? next,
+        required int? projectedTreasuryDelta,
+      }) =>
+          _handleDirectionChanged(
+            ordersNotifier: ordersNotifier,
+            orders: orders,
+            productionInputConsumption: productionInputConsumption,
+            projectedTreasuryDelta: projectedTreasuryDelta,
+            commodityId: commodityId,
+            next: next,
+          ),
+      handleQuantityDelta: ({
+        required CommodityId commodityId,
+        required int delta,
+        required int? projectedTreasuryDelta,
+      }) =>
+          _handleQuantityDelta(
+            ordersNotifier: ordersNotifier,
+            orders: orders,
+            productionInputConsumption: productionInputConsumption,
+            projectedTreasuryDelta: projectedTreasuryDelta,
+            commodityId: commodityId,
+            delta: delta,
+          ),
+    );
+
     // SingleChildScrollView + Column (instead of ListView.builder) so
     // every commodity row is built up-front. Widget tests pin all 22
     // tradeable rows by key without scrolling; the row count is bounded
@@ -775,24 +810,8 @@ class _MarketTabContent extends ConsumerWidget {
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: (CommodityId commodityId, TradeOrderType? next) =>
-            _handleDirectionChanged(
-              ordersNotifier: ordersNotifier,
-              orders: orders,
-              productionInputConsumption: productionInputConsumption,
-              projectedTreasuryDelta: readProjectedTreasuryDelta(),
-              commodityId: commodityId,
-              next: next,
-            ),
-        onQuantityDelta: (CommodityId commodityId, int delta) =>
-            _handleQuantityDelta(
-              ordersNotifier: ordersNotifier,
-              orders: orders,
-              productionInputConsumption: productionInputConsumption,
-              projectedTreasuryDelta: readProjectedTreasuryDelta(),
-              commodityId: commodityId,
-              delta: delta,
-            ),
+        onDirectionChanged: sectionHandlers.onDirectionChanged,
+        onQuantityDelta: sectionHandlers.onQuantityDelta,
       ),
       ..._buildCommoditySectionWidgets(
         sectionKey: TradeScreen.marketSectionRawMaterialsKey,
@@ -806,24 +825,8 @@ class _MarketTabContent extends ConsumerWidget {
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: (CommodityId commodityId, TradeOrderType? next) =>
-            _handleDirectionChanged(
-              ordersNotifier: ordersNotifier,
-              orders: orders,
-              productionInputConsumption: productionInputConsumption,
-              projectedTreasuryDelta: readProjectedTreasuryDelta(),
-              commodityId: commodityId,
-              next: next,
-            ),
-        onQuantityDelta: (CommodityId commodityId, int delta) =>
-            _handleQuantityDelta(
-              ordersNotifier: ordersNotifier,
-              orders: orders,
-              productionInputConsumption: productionInputConsumption,
-              projectedTreasuryDelta: readProjectedTreasuryDelta(),
-              commodityId: commodityId,
-              delta: delta,
-            ),
+        onDirectionChanged: sectionHandlers.onDirectionChanged,
+        onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
       ),
       ..._buildCommoditySectionWidgets(
@@ -838,24 +841,8 @@ class _MarketTabContent extends ConsumerWidget {
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: (CommodityId commodityId, TradeOrderType? next) =>
-            _handleDirectionChanged(
-              ordersNotifier: ordersNotifier,
-              orders: orders,
-              productionInputConsumption: productionInputConsumption,
-              projectedTreasuryDelta: readProjectedTreasuryDelta(),
-              commodityId: commodityId,
-              next: next,
-            ),
-        onQuantityDelta: (CommodityId commodityId, int delta) =>
-            _handleQuantityDelta(
-              ordersNotifier: ordersNotifier,
-              orders: orders,
-              productionInputConsumption: productionInputConsumption,
-              projectedTreasuryDelta: readProjectedTreasuryDelta(),
-              commodityId: commodityId,
-              delta: delta,
-            ),
+        onDirectionChanged: sectionHandlers.onDirectionChanged,
+        onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
       ),
     ];
