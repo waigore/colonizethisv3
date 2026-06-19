@@ -1067,6 +1067,41 @@ abstract class AppLocalizations {
   /// Slot funding toggle label for ResearchFundingLevel.maximum (Refs #3512).
   String get technologyPanel_fundingMaximum;
 
+  /// Green anticipated research-point delta shown on a slot card (Refs #3512).
+  String technologyPanel_rpDeltaPreview(int rp);
+
+  /// Treasury (gold) per-turn cost shown on a slot card that will spend gold
+  /// next turn (Refs #3512).
+  String technologyPanel_goldSpendPerTurn(int gold);
+
+  /// Treasury (gold) per-turn cost shown greyed on a debt-blocked slot card
+  /// (no spend occurs) (Refs #3512).
+  String technologyPanel_goldNoSpendPerTurn(int gold);
+
+  /// Title of the research-funding breakdown dialog (Refs #3512).
+  String get technologyPanel_rpBreakdownTitle;
+
+  /// Breakdown dialog row labelling the base RP for the funding level (Refs #3512).
+  String technologyPanel_rpBreakdownBaseLabel(String funding);
+
+  /// Breakdown dialog row labelling the Industrial Funding +20% bonus (Refs #3512).
+  String get technologyPanel_rpBreakdownIndustrialLabel;
+
+  /// Breakdown dialog row labelling the effective RP applied this turn (Refs #3512).
+  String get technologyPanel_rpBreakdownEffectiveLabel;
+
+  /// Breakdown dialog row labelling the per-turn treasury cost (Refs #3512).
+  String get technologyPanel_rpBreakdownTreasuryLabel;
+
+  /// Breakdown dialog note shown when the spend is debt-blocked (Refs #3512).
+  String get technologyPanel_rpBreakdownDebtBlocked;
+
+  /// Monospace research-point value used in breakdown dialog rows (Refs #3512).
+  String technologyPanel_rpValue(int rp);
+
+  /// Treasury (gold) value used in the breakdown dialog treasury row (Refs #3512).
+  String technologyPanel_goldValue(int gold);
+
   /// Tech tree empty-state text.
   String get techTree_noTechsInCatalog;
 

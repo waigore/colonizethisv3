@@ -183,6 +183,55 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get technologyPanel_fundingMaximum => 'Maximum';
 
   @override
+  String technologyPanel_rpDeltaPreview(int rp) {
+    return '+$rp RP';
+  }
+
+  @override
+  String technologyPanel_goldSpendPerTurn(int gold) {
+    return '\u2212$gold/turn';
+  }
+
+  @override
+  String technologyPanel_goldNoSpendPerTurn(int gold) {
+    return '$gold/turn';
+  }
+
+  @override
+  String get technologyPanel_rpBreakdownTitle => 'Research points this turn';
+
+  @override
+  String technologyPanel_rpBreakdownBaseLabel(String funding) {
+    return 'Base \u2014 $funding funding';
+  }
+
+  @override
+  String get technologyPanel_rpBreakdownIndustrialLabel =>
+      'Industrial Funding +20%';
+
+  @override
+  String get technologyPanel_rpBreakdownEffectiveLabel =>
+      'Effective RP this turn';
+
+  @override
+  String get technologyPanel_rpBreakdownTreasuryLabel =>
+      'Treasury cost this turn';
+
+  @override
+  String get technologyPanel_rpBreakdownDebtBlocked =>
+      'Treasury below the research debt floor \u2014 0 RP applied this turn.';
+
+  @override
+  String technologyPanel_rpValue(int rp) {
+    return '$rp RP';
+  }
+
+  @override
+  String technologyPanel_goldValue(int gold) {
+    return '$gold gold';
+  }
+
+  @override
   String get techTree_noTechsInCatalog => 'No techs in catalog';
 
   @override
