@@ -58,35 +58,26 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
   MapTopology topology, {
   Map<String, MapTopology>? topologyByRegion,
 }) {
-  final gpIds = game.players.map((p) => p.id).toSet();
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  final result = _mutableGpVisibilityCopy(visibilityAfterFogDecay);
   final ownerCache = ProvinceOwnerCache.of(game.worldState);
 
-  forEachWorldRegion(game.worldState, (regionId, regionData) {
-    final regionTileKeys = tileKeysByRegion[regionId];
-    if (regionTileKeys == null) return;
-    final regionTopology = topologyForRegion(
-      topology,
-      regionId,
-      topologyByRegion: topologyByRegion,
-    );
-    _forEachGpPlayerVisibility(
-      game: game,
-      gpIds: gpIds,
-      result: result,
-      action: (playerId, vis) => _applyCoastalFullVisibilityForGpPlayerInRegion(
-        playerId: playerId,
-        regionId: regionId,
-        ownerCache: ownerCache,
-        regionTopology: regionTopology,
-        regionTileKeys: regionTileKeys,
-        vis: vis,
-      ),
-    );
-  });
-
-  return result;
+  return _forEachWorldRegionGpVisibility(
+    game: game,
+    visibility: visibilityAfterFogDecay,
+    topology: topology,
+    topologyByRegion: topologyByRegion,
+    perRegion: (regionId, regionTopology, regionTileKeys, forEachGpPlayer) {
+      forEachGpPlayer(
+        (playerId, vis) => _applyCoastalFullVisibilityForGpPlayerInRegion(
+          playerId: playerId,
+          regionId: regionId,
+          ownerCache: ownerCache,
+          regionTopology: regionTopology,
+          regionTileKeys: regionTileKeys,
+          vis: vis,
+        ),
+      );
+    },
+  );
 }
 
 /// Sets adjacent sea-zone water tiles to fullyVisible for [playerId] for each

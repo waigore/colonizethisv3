@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'naval.dart';
 import 'province_lookup.dart';
+import 'topology_helpers.dart';
 
 /// Returns the owning player id of [fleet.targetProvinceId] when this fleet
 /// contributes a valid blockade according to SPEC/game/capital-and-connectivity.

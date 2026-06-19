@@ -399,6 +399,13 @@ rules:
     runner: dart
     script: tool/check_world_no_logic_deps.dart
 
+  - rule_id: repo.world_no_circular_imports
+    group: architecture
+    title: colonizethis_world lib/ file import graph must be acyclic (Refs #3544)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_no_circular_imports.dart
+
   - rule_id: repo.combat_no_logic_deps
     group: architecture
     title: colonizethis_combat must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)

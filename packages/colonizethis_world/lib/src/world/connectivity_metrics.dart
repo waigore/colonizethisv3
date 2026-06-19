@@ -1,4 +1,13 @@
-part of 'connectivity_resolver.dart';
+/// Connectivity hot-path counters and the test-only recording hook.
+///
+/// Standalone library (extracted from the former `connectivity_resolver.dart`
+/// `part` chain, Refs #3544 Step 3). The mutable counter container
+/// [ConnectivityHotPathMetrics] is encapsulated here; the only module-level
+/// mutable state ([_connectivityHotPathMetricsForTests]) is private to this
+/// library and reachable solely through the public `record*`/`set*` functions
+/// below, so the standalone `connectivity_propagation.dart` core records via
+/// these functions rather than reaching into another library's privates.
+library;
 
 /// Counters for connectivity hot paths (Refs #2268 AC-10); used with
 /// [setConnectivityHotPathMetricsForTests] from tests only.
@@ -21,14 +30,17 @@ void setConnectivityHotPathMetricsForTests(
   _connectivityHotPathMetricsForTests = metrics;
 }
 
-void _recordTownRuleWorklistDequeue() {
+/// Increments the town-rule worklist dequeue counter when a test hook is active.
+void recordTownRuleWorklistDequeue() {
   _connectivityHotPathMetricsForTests?.townRuleWorklistDequeues++;
 }
 
-void _recordConnectivityBottleneckDequeue() {
+/// Increments the bottleneck-propagation dequeue counter when a test hook is active.
+void recordConnectivityBottleneckDequeue() {
   _connectivityHotPathMetricsForTests?.connectivityBottleneckDequeues++;
 }
 
-void _recordSeaZoneBfsDequeue() {
+/// Increments the sea-zone BFS dequeue counter when a test hook is active.
+void recordSeaZoneBfsDequeue() {
   _connectivityHotPathMetricsForTests?.seaZoneBreadthFirstDequeues++;
 }

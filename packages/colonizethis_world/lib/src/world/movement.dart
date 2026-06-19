@@ -166,7 +166,7 @@ applyCivilianTileMoveOrdersToWorldRegions(
   List<Unit> nw,
 ) {
   final ws = game.worldState.mapBothRegionUnits((regionId, _) {
-    return regionId == kRegionOldWorld ? ow : nw;
+    return (ow: ow, nw: nw).unitListForRegion(regionId);
   });
   return (oldWorld: ws.oldWorld, newWorld: ws.newWorld);
 }
