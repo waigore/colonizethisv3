@@ -162,8 +162,7 @@ OrderValidationResult? precheckPurchaseLand(
       'Insufficient treasury for purchase_land (need $cost)',
     );
   }
-  final existingBuyer =
-      ctx.game.worldState.purchasedTilesByTileKey[o.targetTileKey];
+  final existingBuyer = ctx.game.worldState.purchaserOfTile(o.targetTileKey);
   if (existingBuyer != null) {
     return OrderValidationResult.rejected(
       existingBuyer == ctx.playerId

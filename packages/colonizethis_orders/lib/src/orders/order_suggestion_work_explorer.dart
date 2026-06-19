@@ -339,8 +339,7 @@ void _addProspectSuggestionIfEligible({
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
-  final prospected =
-      game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+  final prospected = game.worldState.prospectedTilesForPlayer(playerId);
   // [buildPlayerView] already aggregates every province row into
   // [PlayerView.provincesById]; reuse that snapshot instead of scanning
   // [allProvinces] again for each explorer prospect probe (Refs #2394,

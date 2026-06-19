@@ -401,9 +401,9 @@ class WorkOrderValidator extends StatefulValidator {
         'Tile is not mineral-eligible for prospecting',
       );
     }
-    final prospected =
-        _context.game.worldState.playerProspectedTiles[_context.playerId] ??
-        const <String>{};
+    final prospected = _context.game.worldState.prospectedTilesForPlayer(
+      _context.playerId,
+    );
     if (prospected.contains(o.targetTileKey)) {
       return OrderValidationResult.rejected('Tile already prospected');
     }

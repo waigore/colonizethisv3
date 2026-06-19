@@ -14,7 +14,7 @@ bool tryApplyExploreWorkOrder({
   final regionId = regionForUnit(order.unitId);
   final provinceId =
       Unit.provinceIdFromTileKey(targetTileKey) ?? unit.locationProvinceId;
-  final byProvince = game.worldState.tileKeysByRegionAndProvince[regionId];
+  final byProvince = game.worldState.tileKeysForRegion(regionId);
   if (byProvince == null || byProvince.isEmpty) return false;
 
   final tilesInP = byProvince[provinceId]?.length ?? 0;

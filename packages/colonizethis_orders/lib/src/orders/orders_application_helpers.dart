@@ -28,7 +28,7 @@ Unit cancelUnitWork(Unit unit, {String? restoredTile}) {
 
 /// Whether the tile is eligible for mineral-related work (prospect, build_improvement).
 ///
-/// When [game.worldState.resourceByTileKey] has a known resource that is not a
+/// When [WorldState.resourceAtTile] has a known resource that is not a
 /// prospect-required mineral, returns false even if [tileMapByRegion] shows
 /// prospectable terrain (e.g. wool on hills). Missing/unknown resource uses
 /// prospectable terrain from [tileMapByRegion] when available; otherwise falls

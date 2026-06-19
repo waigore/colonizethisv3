@@ -48,8 +48,7 @@ OrderValidationResult? rejectIfMineralTileNotProspected({
 }) {
   if (resourceId == null || resourceId.isEmpty) return null;
   if (!kMineralResourceIds.contains(resourceId)) return null;
-  final prospected =
-      game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+  final prospected = game.worldState.prospectedTilesForPlayer(playerId);
   if (!prospected.contains(tileKey)) {
     return OrderValidationResult.rejected(
       'Mineral tile must be prospected first',

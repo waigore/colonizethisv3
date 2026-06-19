@@ -65,8 +65,7 @@ bool civilianBundledWorkNeedsProvinceMoveLeg(
   // province — no implicit MoveOrder-equivalent leg (MoveValidator cannot
   // express this case). Work apply handles placement. See
   // order_engine_validate_work_build_improvement_test (Refs #1869).
-  if (game.worldState.purchasedTilesByTileKey[o.targetTileKey] ==
-      unit.ownerId) {
+  if (game.worldState.purchaserOfTile(o.targetTileKey) == unit.ownerId) {
     return false;
   }
   return true;

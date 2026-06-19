@@ -228,9 +228,8 @@ BuildWorkState _processWorkUnits(
     final u = entry.value;
     if (u.currentWork == null) continue;
     final cw = u.currentWork!;
-    final purchasedByTile = current.game.worldState.purchasedTilesByTileKey;
-    if (purchasedByTile.containsKey(cw.tileKey) &&
-        purchasedByTile[cw.tileKey] != u.ownerId) {
+    final purchaser = current.game.worldState.purchaserOfTile(cw.tileKey);
+    if (purchaser != null && purchaser != u.ownerId) {
       unitsById[entry.key] = cancelUnitWork(u);
       ordersApplicationLog.d(
         'work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}',
