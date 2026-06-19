@@ -12,26 +12,27 @@
 /// This file covers all candidate types used by suggestion probes, including
 /// stateful build/work/diplomatic validators via accepted-prefix replay.
 ///
-/// Prefix-replay validators and economy-projection helpers live in `part of`
-/// concern files (`incremental_candidate_validator_prefix_replay.dart`,
-/// `incremental_candidate_validator_projection.dart`) to keep each file below
-/// the repo file-size policy (`SPEC/program/dart-file-non-comment-line-size.md`);
-/// they share this library's private scope so behaviour is unchanged (Refs
-/// #3290 Phase 0 file decomposition).
+/// Prefix-replay validators and economy-projection probe helpers live in the
+/// standalone companion library `incremental_candidate_validator_replay.dart`
+/// (re-exported below) so each file stays under the repo file-size policy
+/// (`SPEC/program/dart-file-non-comment-line-size.md`) while declaring explicit
+/// imports rather than inheriting this library's private scope via `part`
+/// fragments (Refs #3543 — de-part-file orders; extraction-shape policy
+/// § Extraction shape). The shared per-pass memoization slots live in
+/// [IncrementalCandidateValidatorCache] (the [cache] field) so the companion
+/// library can read and write them through the validator's public surface.
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'incremental_candidate_validator_cache.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';
-import 'unit_type_helpers.dart';
-import 'validator_bundle.dart';
 
-part 'incremental_candidate_validator_prefix_replay.dart';
-part 'incremental_candidate_validator_projection.dart';
+export 'incremental_candidate_validator_cache.dart';
+export 'incremental_candidate_validator_replay.dart';
 
 class IncrementalCandidateValidator {
   IncrementalCandidateValidator._({
@@ -127,47 +128,21 @@ class IncrementalCandidateValidator {
   final List<DiplomaticOrder> diplomaticOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
   final DiplomacyFactionMembership? prefetchedFactionMembership;
-  Set<String>? _cachedDevExclusiveTiles;
-  Set<String>? _cachedCivilianDraftMoveUnitIds;
-  ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
-  ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildAndWorkOrders;
 
-  /// When [false], existing work orders in [basePrefix] failed incremental
-  /// replay; every [isWorkAccepted] probe must reject (Refs #2394).
-  bool? _cachedWorkPrefixReplaySucceeded;
-  ({
-    Stockpile stockpile,
-    int treasury,
-    Set<String> seenUnitIds,
-    Set<String> devExclusive,
-  })?
-  _cachedPostWorkPrefixState;
-
-  /// When [false], existing build orders in [basePrefix] failed incremental
-  /// replay; every [isBuildAccepted] probe must reject (Refs #2394).
-  bool? _cachedBuildPrefixReplaySucceeded;
-  ({Stockpile stockpile, int treasury, WorkerPool workers})?
-  _cachedPostBuildPrefixEconomy;
-
-  /// When [false], existing recruit worker orders in [basePrefix] failed
-  /// incremental replay; every [isRecruitWorkerAccepted] probe must reject
-  /// (Refs #2692 S7).
-  bool? _cachedRecruitWorkerPrefixReplaySucceeded;
-  ({Stockpile stockpile, int treasury, WorkerPool workers})?
-  _cachedPostRecruitWorkerPrefixEconomy;
-  Map<String, Army>? _cachedArmiesById;
-  DiplomacyFactionMembership? _cachedFactionMembership;
-  NavalOrderValidator? _cachedNavalOrderValidator;
-  OrderResolutionContext? _cachedOrderResolutionContext;
+  /// Per-pass memoization slots shared with the replay/projection probe helpers
+  /// in `incremental_candidate_validator_replay.dart`. A fresh holder per
+  /// validator instance preserves the previous per-instance caching behaviour
+  /// (Refs #2394, #2692 S7; #3543 de-part-file).
+  final IncrementalCandidateValidatorCache cache =
+      IncrementalCandidateValidatorCache();
 
   /// Per-pass [OrderResolutionContext] reused across move / work / build /
   /// recruit / naval / diplomatic probe sites that already accept the record.
-  /// Mirrors the per-pass caching of [_factionMembership] and
-  /// [_armiesById] so a single suggestion pass does not allocate one record
-  /// per candidate probe (Refs #2836 AC 3;
-  /// SPEC/program/logic-validator-units-params.md).
+  /// Mirrors the per-pass caching of [factionMembershipSnapshot] so a single
+  /// suggestion pass does not allocate one record per candidate probe
+  /// (Refs #2836 AC 3; SPEC/program/logic-validator-units-params.md).
   OrderResolutionContext _orderResolutionContext() {
-    final cached = _cachedOrderResolutionContext;
+    final cached = cache.orderResolutionContext;
     if (cached != null) {
       return cached;
     }
@@ -176,26 +151,21 @@ class IncrementalCandidateValidator {
       game,
       unitsById: unitsById,
     );
-    _cachedOrderResolutionContext = built;
+    cache.orderResolutionContext = built;
     return built;
   }
-
-  /// When [false], existing diplomatic orders in [basePrefix] failed incremental
-  /// replay; every [isDiplomaticAccepted] probe must reject (Refs #2394).
-  bool? _cachedDiplomaticPrefixReplaySucceeded;
-  DiplomaticPrefixCheckpoint? _cachedPostDiplomaticPrefixState;
 
   DiplomacyFactionMembership _factionMembership() {
     final pre = prefetchedFactionMembership;
     if (pre != null) {
       return pre;
     }
-    final cached = _cachedFactionMembership;
+    final cached = cache.factionMembership;
     if (cached != null) {
       return cached;
     }
     final built = DiplomacyFactionMembership.from(game);
-    _cachedFactionMembership = built;
+    cache.factionMembership = built;
     return built;
   }
 
@@ -265,14 +235,14 @@ class IncrementalCandidateValidator {
   /// (single suggestion pass). Avoids rebuilding `armies.where(id == ...)` per
   /// candidate probe (Refs #2394, SPEC/program/order-suggestions.md).
   Map<String, Army> _armiesById() {
-    final cached = _cachedArmiesById;
+    final cached = cache.armiesById;
     if (cached != null) {
       return cached;
     }
     final computed = <String, Army>{
       for (final a in game.worldState.armies) a.id: a,
     };
-    _cachedArmiesById = computed;
+    cache.armiesById = computed;
     return computed;
   }
 
@@ -280,7 +250,7 @@ class IncrementalCandidateValidator {
   /// once; reuse avoids rebuilding the fleet map on every naval probe (Refs
   /// #2394, SPEC/program/order-suggestions.md).
   NavalOrderValidator _navalOrderValidator() {
-    final cached = _cachedNavalOrderValidator;
+    final cached = cache.navalOrderValidator;
     if (cached != null) {
       return cached;
     }
@@ -289,7 +259,7 @@ class IncrementalCandidateValidator {
       topology: topology,
       playerId: playerId,
     );
-    _cachedNavalOrderValidator = built;
+    cache.navalOrderValidator = built;
     return built;
   }
 

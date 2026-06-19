@@ -39,7 +39,7 @@ bool isMineralEligibleTile(
   String tileKey,
 ) {
   final terrain = terrainTypeForTileKey(tileMapByRegion, tileKey);
-  final resourceId = game.worldState.resourceByTileKey[tileKey];
+  final resourceId = game.worldState.resourceAtTile(tileKey);
   final hasResource = resourceId != null && resourceId.isNotEmpty;
 
   if (hasResource) {

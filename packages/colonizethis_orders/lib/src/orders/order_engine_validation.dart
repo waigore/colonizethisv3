@@ -1,4 +1,23 @@
-part of 'order_engine.dart';
+/// Per-category order validation pipeline for [OrderEngine].
+///
+/// Promoted from a `part of 'order_engine.dart'` fragment to a standalone
+/// library with explicit imports (Refs #3543 — de-part-file orders; the
+/// extraction-shape policy in `SPEC/program/dart-file-non-comment-line-size.md`
+/// § Extraction shape requires standalone libraries rather than part
+/// fragments). The engine now imports this library and calls
+/// [runOrderValidationPhases]; nothing here imports `order_engine.dart`, so the
+/// orders `lib/` import graph stays acyclic.
+library;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+
+import 'order_effects_projector.dart';
+import 'order_resolution_context.dart';
+import 'order_validator_factory.dart';
+import 'validator_bundle.dart';
 
 /// Appends one [OrderValidationResult] per order; short-circuits when [rejected].
 /// Returns the new rejected flag (true if any result was rejected).
@@ -41,12 +60,66 @@ bool _appendValidationResults<T>(
   return (rejected: r, state: s);
 }
 
-/// Mutable state threaded through [_runOrderValidationPhases].
+/// Canonical, declarative per-category validation phase plan: the phase [name]
+/// plus whether the validator bundle is rebuilt **before** the phase runs.
+///
+/// The plan is static and input-independent so the phase ordering and
+/// bundle-refresh contract (Refs #2391 AC7; SPEC/program/order-engine.md
+/// § Validation pipeline) is unit-testable on its own.
+/// [runOrderValidationPhases] pairs each entry, in order, with the closure that
+/// runs it; the move + army-move phases share the initial bundle (no refresh),
+/// every resource/diplomatic/naval phase refreshes so incremental
+/// stockpile/treasury/diplomatic state matches resolution ordering, and the
+/// trade phase runs last against the already-advanced bundle.
+const List<({String name, bool refreshBundleBefore})> orderValidationPhasePlan =
+    <({String name, bool refreshBundleBefore})>[
+      (name: 'move', refreshBundleBefore: false),
+      (name: 'army-move', refreshBundleBefore: false),
+      (name: 'recruit-worker', refreshBundleBefore: true),
+      (name: 'build', refreshBundleBefore: true),
+      (name: 'work', refreshBundleBefore: true),
+      (name: 'diplomatic', refreshBundleBefore: true),
+      (name: 'naval', refreshBundleBefore: true),
+      (name: 'trade', refreshBundleBefore: false),
+    ];
+
+/// Runs one resource-ledger phase: appends one [OrderValidationResult] per
+/// order from [validate], then carries the worker pool / stockpile / treasury
+/// the validator advanced back into [state] via [carryForwardLedgers].
+///
+/// Collapses the structurally identical recruit-worker / build / work phases,
+/// which differ only in which validator runs and which ledgers it carries
+/// forward (recruit & build advance the worker pool; work does not). Behaviour
+/// is unchanged: it is the former `_runRecruitWorkerPhase` / `_runBuildPhase` /
+/// `_runWorkPhase` template parameterised by the validator and pull-back.
+void _runResourceLedgerPhase<T>(
+  OrderValidators v,
+  OrderValidationRunState state,
+  List<T> orders,
+  OrderValidationResult Function(
+    OrderValidators v,
+    T order,
+    bool previousRejected,
+  )
+  validate,
+  void Function(OrderValidators v, OrderValidationRunState state)
+  carryForwardLedgers,
+) {
+  state.rejected = _appendValidationResults(
+    state.results,
+    orders,
+    state.rejected,
+    (o, prev) => validate(v, o, prev),
+  );
+  carryForwardLedgers(v, state);
+}
+
+/// Mutable state threaded through [runOrderValidationPhases].
 /// Holds the running rejected flag, treasury, stockpile, worker pool, and
 /// the accumulated [OrderValidationResult] list. Existing only inside
 /// [OrderEngine.validatePlayerOrdersWithContext]'s call stack.
-class _OrderValidationRunState {
-  _OrderValidationRunState({
+class OrderValidationRunState {
+  OrderValidationRunState({
     required this.results,
     required this.stockpile,
     required this.treasury,
@@ -70,11 +143,17 @@ class _OrderValidationRunState {
 /// provinceById); both the per-bundle validator factory and the per-move
 /// validator share this exact record so probes do not rebuild equivalent
 /// maps (Refs #2836 AC 3; SPEC/program/logic-validator-units-params.md).
-void _runOrderValidationPhases({
+///
+/// [stagedOrdersSnapshot] is the engine's deep-copied order snapshot used by
+/// the trade-order phase's projector dry-run. The caller (the engine) builds it
+/// via its generated `copyOrdersSnapshotForEngine`; passing the copy in keeps
+/// this library independent of the generated `order_engine.g.dart` part and the
+/// orders import graph acyclic.
+void runOrderValidationPhases({
   required OrderValidatorFactory validatorFactory,
   required OrderEffectsProjector? projector,
-  required Orders orders,
-  required _OrderValidationRunState state,
+  required Orders stagedOrdersSnapshot,
+  required OrderValidationRunState state,
   required Game game,
   required Player player,
   required String playerId,
@@ -111,90 +190,104 @@ void _runOrderValidationPhases({
     state.workerPool,
   );
 
-  // One ordered list: move + army share the initial bundle; each later
-  // category refreshes validators so stockpile/treasury/diplomatic state
-  // matches incremental validation ordering (Refs #2391 AC7,
-  // SPEC/program/order-engine.md). Worker pool orders (recruit / train)
-  // come before unit builds in both validation and resolution so the
+  // Run closures paired positionally with [orderValidationPhasePlan] (which
+  // owns the declarative name + bundle-refresh contract). move + army share the
+  // initial bundle; each later category refreshes validators so
+  // stockpile/treasury/diplomatic state matches incremental validation ordering
+  // (Refs #2391 AC7, SPEC/program/order-engine.md). Worker-pool orders (recruit
+  // / train) come before unit builds in both validation and resolution so the
   // peasant reservation ledger reflects accepted recruit consumes before
   // military / naval builds check their own peasant requirement
   // (SPEC/game/workers-and-population.md § Peasant reservation;
   // SPEC/program/turn-resolution-phase-details.md § Build / work).
-  final validationPhases =
-      <({bool refreshBundleBefore, void Function(OrderValidators) run})>[
-        (
-          refreshBundleBefore: false,
-          run: (v) => _runMovePhase(
-            v,
-            state,
-            moves,
-            game,
-            playerId,
-            resolution,
-            diplomatic,
-            topology,
-            factionMembership,
-          ),
-        ),
-        (
-          refreshBundleBefore: false,
-          run: (v) => _runArmyMovePhase(
-            v,
-            state,
-            armyMoves,
-            game,
-            playerId,
-            diplomatic,
-            resolution.view,
-            topology,
-            armiesById,
-            factionMembership,
-          ),
-        ),
-        (
-          refreshBundleBefore: true,
-          run: (v) => _runRecruitWorkerPhase(v, state, recruitWorkers),
-        ),
-        (
-          refreshBundleBefore: true,
-          run: (v) => _runBuildPhase(v, state, builds),
-        ),
-        (refreshBundleBefore: true, run: (v) => _runWorkPhase(v, state, works)),
-        (
-          refreshBundleBefore: true,
-          run: (v) => _runDiplomaticPhase(v, state, diplomatic),
-        ),
-        (
-          refreshBundleBefore: true,
-          run: (v) => _runNavalPhase(v, state, navals, missions),
-        ),
-        (
-          refreshBundleBefore: false,
-          run: (v) => _runTradeOrderPhase(
-            state,
-            game,
-            playerId,
-            tradeOrders,
-            topology,
-            copyOrdersSnapshotForEngine(orders),
-            tileMapByRegion,
-            projector,
-          ),
-        ),
-      ];
+  final phaseRuns = <void Function(OrderValidators v)>[
+    (v) => _runMovePhase(
+      v,
+      state,
+      moves,
+      game,
+      playerId,
+      resolution,
+      diplomatic,
+      topology,
+      factionMembership,
+    ),
+    (v) => _runArmyMovePhase(
+      v,
+      state,
+      armyMoves,
+      game,
+      playerId,
+      diplomatic,
+      resolution.view,
+      topology,
+      armiesById,
+      factionMembership,
+    ),
+    (v) => _runResourceLedgerPhase(
+      v,
+      state,
+      recruitWorkers,
+      (vv, o, prev) =>
+          vv.recruitWorkerValidator.validate(o, previousRejected: prev),
+      (vv, st) {
+        st.workerPool = vv.recruitWorkerValidator.workers;
+        st.stockpile = vv.recruitWorkerValidator.stockpile;
+        st.treasury = vv.recruitWorkerValidator.treasury;
+      },
+    ),
+    (v) => _runResourceLedgerPhase(
+      v,
+      state,
+      builds,
+      (vv, o, prev) => vv.buildValidator.validate(o, previousRejected: prev),
+      (vv, st) {
+        st.workerPool = vv.buildValidator.workers;
+        st.stockpile = vv.buildValidator.stockpile;
+        st.treasury = vv.buildValidator.treasury;
+      },
+    ),
+    (v) => _runResourceLedgerPhase(
+      v,
+      state,
+      works,
+      (vv, o, prev) => vv.workValidator.validate(o, previousRejected: prev),
+      (vv, st) {
+        st.stockpile = vv.workValidator.stockpile;
+        st.treasury = vv.workValidator.treasury;
+      },
+    ),
+    (v) => _runDiplomaticPhase(v, state, diplomatic),
+    (v) => _runNavalPhase(v, state, navals, missions),
+    (v) => _runTradeOrderPhase(
+      state,
+      game,
+      playerId,
+      tradeOrders,
+      topology,
+      stagedOrdersSnapshot,
+      tileMapByRegion,
+      projector,
+    ),
+  ];
+
+  assert(
+    phaseRuns.length == orderValidationPhasePlan.length,
+    'phaseRuns must stay positionally aligned with orderValidationPhasePlan',
+  );
 
   var validators = newValidatorBundle();
-  for (final phase in validationPhases) {
-    if (phase.refreshBundleBefore) {
+  for (var i = 0; i < orderValidationPhasePlan.length; i++) {
+    if (orderValidationPhasePlan[i].refreshBundleBefore) {
       validators = newValidatorBundle();
     }
-    phase.run(validators);
+    phaseRuns[i](validators);
   }
 }
 
 void _runMovePhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<MoveOrder> moves,
   Game game,
   String playerId,
@@ -227,7 +320,7 @@ void _runMovePhase(
 
 void _runArmyMovePhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<ArmyMoveOrder> armyMoves,
   Game game,
   String playerId,
@@ -242,69 +335,22 @@ void _runArmyMovePhase(
     armyMoves,
     state.rejected,
     (o, prev) => v.armyMoveValidator.validate(
-            o,
-            game,
-            playerId,
-            diplomatic,
-            view,
-            topology,
-            previousRejected: prev,
-            armiesById: armiesById,
-            factionMembership: factionMembership,
-          ),
+      o,
+      game,
+      playerId,
+      diplomatic,
+      view,
+      topology,
+      previousRejected: prev,
+      armiesById: armiesById,
+      factionMembership: factionMembership,
+    ),
   );
-}
-
-void _runRecruitWorkerPhase(
-  OrderValidators v,
-  _OrderValidationRunState state,
-  List<RecruitWorkerOrder> recruitWorkers,
-) {
-  state.rejected = _appendValidationResults(
-    state.results,
-    recruitWorkers,
-    state.rejected,
-    (o, prev) => v.recruitWorkerValidator.validate(o, previousRejected: prev),
-  );
-  state.workerPool = v.recruitWorkerValidator.workers;
-  state.stockpile = v.recruitWorkerValidator.stockpile;
-  state.treasury = v.recruitWorkerValidator.treasury;
-}
-
-void _runBuildPhase(
-  OrderValidators v,
-  _OrderValidationRunState state,
-  List<BuildUnitOrder> builds,
-) {
-  state.rejected = _appendValidationResults(
-    state.results,
-    builds,
-    state.rejected,
-    (o, prev) => v.buildValidator.validate(o, previousRejected: prev),
-  );
-  state.workerPool = v.buildValidator.workers;
-  state.stockpile = v.buildValidator.stockpile;
-  state.treasury = v.buildValidator.treasury;
-}
-
-void _runWorkPhase(
-  OrderValidators v,
-  _OrderValidationRunState state,
-  List<WorkOrder> works,
-) {
-  state.rejected = _appendValidationResults(
-    state.results,
-    works,
-    state.rejected,
-    (o, prev) => v.workValidator.validate(o, previousRejected: prev),
-  );
-  state.stockpile = v.workValidator.stockpile;
-  state.treasury = v.workValidator.treasury;
 }
 
 void _runDiplomaticPhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<DiplomaticOrder> diplomatic,
 ) {
   final afterDiplomatic =
@@ -324,7 +370,7 @@ void _runDiplomaticPhase(
 
 void _runNavalPhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<NavalMoveOrder> navals,
   List<NavalMissionOrder> missions,
 ) {
@@ -344,7 +390,7 @@ void _runNavalPhase(
 }
 
 void _runTradeOrderPhase(
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   Game game,
   String playerId,
   List<TradeOrder> tradeOrders,

@@ -167,7 +167,9 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 
 ## Code generation (OrderEngine slots)
 
-**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`_OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
+**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
+
+**Extraction shape:** `order_engine.g.dart` is a **standalone library** with explicit `import` declarations, not a `part of 'order_engine.dart'` fragment (Refs #3543; per `SPEC/program/dart-file-non-comment-line-size.md` § Extraction shape and the `repo.orders_no_part_directives` gate). The slot descriptor `OrderSlot<T>` and the `copyMapOfOrderLists` helper shared between the hand-written engine and the generated library live in `order_engine_slot.dart` (a package-internal library not re-exported from the barrel), so generation stays standalone without widening the package's public API.
 
 **Manifest:** `packages/colonizethis_orders/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
 

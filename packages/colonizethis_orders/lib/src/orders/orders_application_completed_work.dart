@@ -141,7 +141,7 @@ BuildWorkState _completedWorkBuildImprovement(CompletedWorkContext ctx) {
   );
   var game = s.game;
 
-  final resourceId = game.worldState.resourceByTileKey[cw.tileKey];
+  final resourceId = game.worldState.resourceAtTile(cw.tileKey);
   final mirrorCat = envyMirrorTechCategoryForExtractionResource(resourceId);
   if (mirrorCat == null) {
     return s.copyWith(work: work);

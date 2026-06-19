@@ -26,9 +26,7 @@ List<String> _sortedBundledEntryTileKeysInProvince(
 ) {
   final regionId = ProvinceId.regionIdFrom(destProvinceFullId);
   final tiles = List<String>.from(
-    game
-            .worldState
-            .tileKeysByRegionAndProvince[regionId]?[destProvinceFullId] ??
+    game.worldState.tileKeysForProvince(regionId, destProvinceFullId) ??
         const <String>[],
   )..sort();
   return tiles;

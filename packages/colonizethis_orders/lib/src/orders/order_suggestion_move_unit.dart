@@ -1,4 +1,10 @@
-part of 'order_suggestion_move_army.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_suggestion_pass_context.dart';
+import 'order_visibility.dart';
 
 const int _kMaxMoveSuggestionsPerUnit = 24;
 const int _kMaxMoveProbeAttemptsPerUnit = 160;
@@ -135,10 +141,7 @@ List<MoveOrder> suggestMoveOrders(
       },
       onAccepted: (destinationTileKey) {
         suggestions.add(
-          MoveOrder(
-            unitId: unit.id,
-            destinationTileKey: destinationTileKey,
-          ),
+          MoveOrder(unitId: unit.id, destinationTileKey: destinationTileKey),
         );
       },
       maxAccepted: _kMaxMoveSuggestionsPerUnit,

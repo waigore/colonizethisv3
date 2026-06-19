@@ -17,7 +17,7 @@ bool purchaseLandEligibleAtAssign({
   if (purchasedTilesByTileKey.containsKey(targetTileKey)) {
     return false;
   }
-  final resourceId = state.game.worldState.resourceByTileKey[targetTileKey];
+  final resourceId = state.game.worldState.resourceAtTile(targetTileKey);
   if (resourceId == null) {
     return false;
   }
@@ -62,7 +62,7 @@ applyPurchaseLandCompletion({
   required Province? Function(String) provinceById,
 }) {
   final purchased = Map<String, String>.from(purchasedTilesByTileKey);
-  final resourceId = state.game.worldState.resourceByTileKey[targetTileKey];
+  final resourceId = state.game.worldState.resourceAtTile(targetTileKey);
   if (resourceId == null) {
     return (treasury: treasury, purchasedTilesByTileKey: purchased);
   }
