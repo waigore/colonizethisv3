@@ -285,6 +285,8 @@ For each civilian unit, the panel shows:
 
 - **Given** the Civilian Units panel lists civilian units in at least one region (issue #3514 owner decision #10; mockup `.region-heading`), **when** a region group heading renders, **then** the UI layer renders it via `RegionSectionHeader(variant: RegionHeaderVariant.bottomBorderMuted)` — an upper-cased `EditorialMonoclePalette.muted` display label over a 1 dp `EditorialMonoclePalette.border` bottom border (not the legacy `CtSectionLabel` `--accent-dim` border), and mounts no `CtSectionLabel` for that region heading.
 
+- **(Golden coverage, issue #3514)** **Given** `UNIT10001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), **when** `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), **then** the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_civilian_default.png` and the panel raises no exception (`WidgetTester.takeException()` is `null`).
+
 ---
 
 ## Integration

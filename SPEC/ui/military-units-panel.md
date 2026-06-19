@@ -166,6 +166,8 @@ the displayed text content (`name — region` on the location line) is unchanged
 
 - Given the panel renders army or naval rows with row actions, when the row is shown on wide or narrow widths, then the UI layer uses the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite with details on the left, actions on the right in left-to-right order, and icon-only action rendering on narrow widths.
 
+- **(Golden coverage, issue #3514)** Given `UNIT20001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), when `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), then the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_military_default.png` and the panel raises no exception (`WidgetTester.takeException()` is `null`).
+
 ---
 
 ## Integration
