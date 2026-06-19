@@ -1,41 +1,20 @@
-import 'dart:collection';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world_constants.dart';
-import 'package:colonizethis_world/src/utils/graph_traversal.dart';
-import 'diplomatic_relation_lookup.dart';
 import 'connectivity_blockade_target.dart';
-import 'port_seaboard_registry_key.dart';
+import 'connectivity_propagation.dart';
+import 'connectivity_result.dart';
+import 'connectivity_tile_helpers.dart';
+import 'diplomatic_relation_lookup.dart';
 import 'province_traversal.dart';
 import 'topology_helpers.dart';
 
-part 'connectivity_metrics.dart';
-part 'connectivity_tile_helpers.dart';
-part 'connectivity_propagation.dart';
-
-/// Result of connectivity resolution: connected tile set and per-tile path transport cap.
-/// SPEC/game/capital-and-connectivity, extraction-and-improvements: effective yield is
-/// capped by min transport level along path to town then to capital; [pathTransportCap]
-/// is that cap (max over paths of min road level on path).
-///
-/// [connectedByRoadRule] is the tile set before § Town rule expansion (Road rule + sea
-/// port wiring per resolver). Used for extraction town-development caps.
-class ConnectivityResult {
-  const ConnectivityResult({
-    required this.connected,
-    this.pathTransportCap = const {},
-    this.connectedByRoadRule = const {},
-  });
-
-  final Set<String> connected;
-  final Map<String, int> pathTransportCap;
-
-  /// Tiles reachable under Road rule + overseas/port phases **before** 4-adjacent town closure.
-  final Set<String> connectedByRoadRule;
-}
+// Re-export so deep importers of `connectivity_resolver.dart` (e.g. economy
+// tests) keep seeing `ConnectivityResult` after its extraction to its own
+// library (Refs #3544 Step 3). The package barrel exports the class via this
+// re-export, preserving the public surface.
+export 'connectivity_result.dart';
 
 /// Resolves which tiles are connected to each player's capital. SPEC/game/capital-and-connectivity.
 ///
@@ -93,7 +72,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
       blockadedPortProvincesByPlayerId ??
       computeBlockadedPortProvincesByPlayer(game, topology);
   // Pre-compute once for all players; worldState is fixed across the player loop.
-  final portInfo = _portToProvinceSeaZone(game.worldState);
+  final portInfo = portToProvinceSeaZone(game.worldState);
   // Single dual-region province scan: bucket ownership and town-tile lookups by
   // playerId so per-player loops below run O(1) lookups instead of repeating
   // O(provinces) scans (Refs #2394).
@@ -105,12 +84,14 @@ Map<String, ConnectivityResult> resolveConnectivity({
   for (final player in game.players) {
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
-      worldLog.d('connectivity resolve player=${player.id} skipped (no capital)');
+      worldLog.d(
+        'connectivity resolve player=${player.id} skipped (no capital)',
+      );
       result[player.id] = const ConnectivityResult(connected: {});
       continue;
     }
 
-    final cr = _connectedTilesForPlayer(
+    final cr = connectedTilesForPlayer(
       game: game,
       playerId: player.id,
       capital: capital,
@@ -178,7 +159,7 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
   );
   final provinceIdsByType = provinceNodeIds(topology);
   final topologySeaZones = seaZoneNodeIds(topology);
-  final portInfo = _portToProvinceSeaZone(game.worldState);
+  final portInfo = portToProvinceSeaZone(game.worldState);
   // Reuses the same single dual-region province scan used for Great Powers
   // (Refs #2394). The cache buckets ownership by `Province.ownerId`, which for
   // non-Great-Power-owned provinces equals the `MinorNation.id` or `Tribe.id`,
@@ -195,11 +176,13 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
     required String? capitalProvinceId,
   }) {
     if (capitalTile == null || capitalProvinceId == null) {
-      worldLog.d('non_gp connectivity resolve faction=$factionId skipped (no capital)');
+      worldLog.d(
+        'non_gp connectivity resolve faction=$factionId skipped (no capital)',
+      );
       result[factionId] = const ConnectivityResult(connected: {});
       return;
     }
-    final cr = _connectedTilesForPlayer(
+    final cr = connectedTilesForPlayer(
       game: game,
       playerId: factionId,
       capital: capitalTile,
@@ -255,8 +238,10 @@ _buildPerPlayerProvinceCaches(Game game) {
     ownedByPlayer.putIfAbsent(ownerId, () => <String>{}).add(province.id);
     final tk = province.townTileKey;
     if (tk != null) {
-      townByTileKeyByPlayer
-          .putIfAbsent(ownerId, () => <String, Province>{})[tk] = province;
+      townByTileKeyByPlayer.putIfAbsent(
+        ownerId,
+        () => <String, Province>{},
+      )[tk] = province;
     }
   }
   return (
