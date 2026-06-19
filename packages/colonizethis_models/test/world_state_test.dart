@@ -103,6 +103,43 @@ void main() {
       ]);
     });
 
+    group('focused accessors (#3543 §4)', () {
+      final state = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        resourceByTileKey: const {'oldWorld|p1|0|0': 'iron'},
+        tileKeysByRegionAndProvince: const {
+          'oldWorld': {
+            'p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
+          },
+        },
+        portsByProvinceSeaboard: const {'oldWorld|p1|oldWorld|s1': 'oldWorld|p1|2|0'},
+      );
+
+      test('resourceAtTile returns mapped resource and null otherwise', () {
+        expect(state.resourceAtTile('oldWorld|p1|0|0'), 'iron');
+        expect(state.resourceAtTile('oldWorld|p1|9|9'), isNull);
+      });
+
+      test('tileKeysForProvince returns bucket and null for missing keys', () {
+        expect(state.tileKeysForProvince('oldWorld', 'p1'), [
+          'oldWorld|p1|0|0',
+          'oldWorld|p1|1|0',
+        ]);
+        expect(state.tileKeysForProvince('oldWorld', 'pX'), isNull);
+        expect(state.tileKeysForProvince('newWorld', 'p1'), isNull);
+      });
+
+      test('portTileForSeaboard returns port tile and null otherwise', () {
+        expect(
+          state.portTileForSeaboard('oldWorld|p1|oldWorld|s1'),
+          'oldWorld|p1|2|0',
+        );
+        expect(state.portTileForSeaboard('oldWorld|p1|oldWorld|s9'), isNull);
+      });
+    });
+
     test('fromJson rejects unprefixed province ids in region provinces', () {
       final json = <String, dynamic>{
         'turnState': const TurnState(

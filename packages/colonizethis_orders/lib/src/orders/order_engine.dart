@@ -4,7 +4,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'order_effects_projector.dart';
 export 'order_effects_projector.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'order_engine.g.dart';
+import 'order_engine_slot.dart';
+import 'order_engine_validation.dart';
 import 'order_resolution_context.dart';
+import 'order_validator_factory.dart';
+export 'order_validator_factory.dart';
 import 'orders_application_context.dart' show copyUnitsById;
 import 'orders_logging.dart';
 export 'order_validation_result.dart';
@@ -17,9 +22,6 @@ export 'validator_bundle.dart'
         createOrderValidators,
         createWorkOrderValidator;
 import 'validator_bundle.dart';
-
-part 'order_engine.g.dart';
-part 'order_engine_validation.dart';
 
 // --- Test-only instrumentation (Refs #2237 AC2) ---
 bool _trackValidatePlayerOrdersWithContextInvocationsForTests = false;
@@ -37,55 +39,17 @@ void setOrderEngineValidatePlayerOrdersWithContextTrackingForTests(
 int get orderEngineValidatePlayerOrdersWithContextInvocationCountForTests =>
     _validatePlayerOrdersWithContextInvocationCountForTests;
 
-/// Deep-copy of order maps: new map and new list per player. Used by generated copy helpers.
-Map<String, List<T>> _copyMapOfOrderLists<T>(Map<String, List<T>> map) =>
-    Map.from(map)..updateAll((_, v) => List<T>.from(v));
-
-class _OrderSlot<T> {
-  const _OrderSlot({
-    required this.getter,
-    required this.updater,
-    required this.label,
-  });
-
-  final Map<String, List<T>> Function(Orders) getter;
-  final Orders Function(Orders, Map<String, List<T>>) updater;
-  final String label;
-}
-
-/// Builds the per-bundle [OrderValidators] for one validation slice.
-///
-/// [resolution] threads the canonical [OrderResolutionContext] record
-/// (`view` + `unitsById` + `provinceById`) so factories reuse the
-/// per-pass snapshot the engine entry-point already built instead of
-/// rebuilding the player view or unit-by-id map (Refs #2836 AC 3;
-/// SPEC/program/logic-validator-units-params.md).
-typedef OrderValidatorFactory =
-    OrderValidators Function(
-      Game game,
-      Player player,
-      String playerId,
-      OrderResolutionContext resolution,
-      MapTopology topology,
-      List<DiplomaticOrder> diplomaticOrders,
-      Map<String, TileMapResult>? tileMapByRegion,
-      Set<String> civilianDraftMoveUnitIds,
-      Set<String> devExclusiveTiles,
-      Stockpile stockpile,
-      int treasury,
-      DiplomacyFactionMembership factionMembership,
-      WorkerPool workerPool,
-    );
-
 /// One post–move/army validation round: caller constructs a fresh [OrderValidators]
 /// bundle, then invokes this to append results and propagate economy state.
 /// Order engine: holds per-player orders, validates in submission order,
 /// exposes projected effects. SPEC/program/order-engine.md.
-/// Slot table and public add/remove/withContext methods are generated from
-/// [order_engine_manifest.yaml] → [order_engine.g.dart].
-/// Per-category validation phases live in the `order_engine_validation.dart`
-/// `part of` fragment (Refs #3290 Phase 0 file decomposition).
-class OrderEngine with _OrderEngineGeneratedOrderMethods {
+/// Slot table and public add/remove/withContext methods are generated into the
+/// standalone `order_engine.g.dart` library from [order_engine_manifest.yaml]
+/// and mixed in via [OrderEngineGeneratedOrderMethods].
+/// Per-category validation phases live in the standalone
+/// `order_engine_validation.dart` library (Refs #3290 Phase 0 file
+/// decomposition; Refs #3543 de-part-file).
+class OrderEngine with OrderEngineGeneratedOrderMethods {
   OrderEngine({
     Orders initialOrders = const Orders(),
     OrderValidatorFactory? validatorFactory,
@@ -171,7 +135,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
   OrderValidationResult addOrderForSlot<T>(
     String playerId,
     T order,
-    _OrderSlot<T> slot,
+    OrderSlot<T> slot,
   ) {
     _appendOrder(playerId, order, slot.getter, slot.updater);
     return OrderValidationResult.accepted();
@@ -183,7 +147,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     MapTopology topology,
     String playerId,
     T order,
-    _OrderSlot<T> slot, {
+    OrderSlot<T> slot, {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
     return _addOrderWithContext(
@@ -199,7 +163,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
   }
 
   /// Used by generated [order_engine.g.dart] mixins; not part of the supported public API.
-  void removeOrderForSlot<T>(String playerId, int index, _OrderSlot<T> slot) {
+  void removeOrderForSlot<T>(String playerId, int index, OrderSlot<T> slot) {
     _removeOrderAt(playerId, index, slot.getter, slot.updater);
   }
 
@@ -269,17 +233,17 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     // validator must see the post-recruit headcount so military/naval builds
     // that consume a peasant respect the combined reservation (see
     // SPEC/game/workers-and-population.md § Peasant reservation).
-    final state = _OrderValidationRunState(
+    final state = OrderValidationRunState(
       results: <OrderValidationResult>[],
       stockpile: player.stockpile,
       treasury: player.treasury,
       workerPool: player.workerPool,
     );
 
-    _runOrderValidationPhases(
+    runOrderValidationPhases(
       validatorFactory: _validatorFactory,
       projector: _projector,
-      orders: _orders,
+      stagedOrdersSnapshot: copyOrdersSnapshotForEngine(_orders),
       state: state,
       game: game,
       player: player,

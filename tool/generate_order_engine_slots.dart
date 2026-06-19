@@ -113,7 +113,18 @@ void main() {
   sink.writeln('// Run: dart run tool/generate_order_engine_slots.dart');
   sink.writeln('// Source: order_engine_manifest.yaml');
   sink.writeln();
-  sink.writeln("part of 'order_engine.dart';");
+  // Standalone library (not a `part of`): explicit imports keep the orders
+  // `lib/` tree free of `part` directives (Refs #3543; extraction shape per
+  // SPEC/program/dart-file-non-comment-line-size.md § Extraction shape).
+  sink.writeln('library;');
+  sink.writeln();
+  sink.writeln("import 'package:colonizethis_data/colonizethis_data.dart';");
+  sink.writeln(
+    "import 'package:colonizethis_models/colonizethis_models.dart';",
+  );
+  sink.writeln();
+  sink.writeln("import 'order_engine.dart';");
+  sink.writeln("import 'order_engine_slot.dart';");
   sink.writeln();
 
   for (final s in slots) {
@@ -131,7 +142,7 @@ void main() {
     sink.writeln();
     final slotConst = '_orderSlot${s.orderType}';
     sink.writeln(
-      'const $slotConst = _OrderSlot<${s.orderType}>(\n'
+      'const $slotConst = OrderSlot<${s.orderType}>(\n'
       '  getter: $getter,\n'
       '  updater: $updater,\n'
       "  label: '${_escapeString(s.logLabel)}',\n"
@@ -144,13 +155,13 @@ void main() {
   sink.writeln('    Orders(');
   for (final s in slots) {
     sink.writeln(
-      '      ${s.ordersField}: _copyMapOfOrderLists('
+      '      ${s.ordersField}: copyMapOfOrderLists('
       'initialOrders.${s.ordersField}),',
     );
   }
   for (final s in storageOnly) {
     sink.writeln(
-      '      ${s.ordersField}: _copyMapOfOrderLists('
+      '      ${s.ordersField}: copyMapOfOrderLists('
       'initialOrders.${s.ordersField}),',
     );
   }
@@ -161,19 +172,19 @@ void main() {
   sink.writeln('    Orders(');
   for (final s in slots) {
     sink.writeln(
-      '      ${s.ordersField}: _copyMapOfOrderLists(o.${s.ordersField}),',
+      '      ${s.ordersField}: copyMapOfOrderLists(o.${s.ordersField}),',
     );
   }
   for (final s in storageOnly) {
     sink.writeln(
-      '      ${s.ordersField}: _copyMapOfOrderLists(o.${s.ordersField}),',
+      '      ${s.ordersField}: copyMapOfOrderLists(o.${s.ordersField}),',
     );
   }
   sink.writeln('    );');
   sink.writeln();
 
   // No `on OrderEngine` — that would be circular with `class OrderEngine with ...`.
-  sink.writeln('mixin _OrderEngineGeneratedOrderMethods {');
+  sink.writeln('mixin OrderEngineGeneratedOrderMethods {');
   for (final s in slots) {
     final slotConst = '_orderSlot${s.orderType}';
     sink.writeln(

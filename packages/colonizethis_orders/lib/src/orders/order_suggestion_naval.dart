@@ -1,4 +1,10 @@
-part of 'order_suggestion_naval_diplomatic.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
+import 'order_suggestion_pass_context.dart';
 
 void _addAcceptedSeaZoneCandidates({
   required IncrementalCandidateValidator candidateValidator,

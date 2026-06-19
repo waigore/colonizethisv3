@@ -83,6 +83,24 @@ class WorldState {
   /// Prefixed sea zone ids that already generated a news "first fleet" line.
   final List<String> newsDigestSeaZoneFleetDoneIds;
 
+  /// Resource (commodity id) mapped to [tileKey], or `null` when the tile has
+  /// no mapped resource. Read-only accessor over [resourceByTileKey] so callers
+  /// avoid drilling the internal map directly (#3543 §4).
+  String? resourceAtTile(String tileKey) => resourceByTileKey[tileKey];
+
+  /// Tile keys recorded for the ([regionId], [provinceId]) bucket, or `null`
+  /// when the region or province bucket is absent. [provinceId] uses the same
+  /// key form stored in [tileKeysByRegionAndProvince] (prefixed for sea zones,
+  /// local id for land provinces). Read-only accessor (#3543 §4).
+  List<String>? tileKeysForProvince(String regionId, String provinceId) =>
+      tileKeysByRegionAndProvince[regionId]?[provinceId];
+
+  /// Port tile key for [provinceSeaboardKey] ("provinceId|seaZoneId"), or `null`
+  /// when no port exists for that seaboard. Read-only accessor over
+  /// [portsByProvinceSeaboard] (#3543 §4).
+  String? portTileForSeaboard(String provinceSeaboardKey) =>
+      portsByProvinceSeaboard[provinceSeaboardKey];
+
   Map<String, dynamic> toJson() => {
     'turnState': turnState.toJson(),
     'oldWorld': oldWorld.toJson(),

@@ -18,8 +18,9 @@ declarations**, not a `part` / `part of` fragment that inherits the host
 library's private scope. Part fragments keep the extracted code implicitly
 coupled to the host (shared imports and private members), which defeats the
 testability and decoupling goal the size gate exists to encourage. The
-`colonizethis_turn` (`repo.turn_no_part_directives`, Refs #3416) and
-`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419) packages
+`colonizethis_turn` (`repo.turn_no_part_directives`, Refs #3416),
+`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419), and
+`colonizethis_orders` (`repo.orders_no_part_directives`, Refs #3543) packages
 already forbid `part` directives in their `lib/` trees; other packages SHOULD
 prefer the same standalone-library shape when extracting for size, and MAY add an
 equivalent no-`part` gate once their `lib/` tree is part-free.
