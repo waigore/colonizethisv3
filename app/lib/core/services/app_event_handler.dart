@@ -30,7 +30,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/editorial_monocle_palette.dart';
 import '../../features/game/shell_player_context.dart';
-import '../../features/game/widgets/observe_mode_not_defined_panel.dart';
+import '../../features/game/widgets/shell_player_guarded_body.dart';
 
 import '../../config/routes.dart';
 import '../../config/constants.dart';
@@ -370,9 +370,8 @@ class AppEventHandler {
             return const SizedBox.shrink();
           }
           final shell = ref.read(shellPlayerContextProvider);
-          if (shellPanelsNotDefined(shell)) {
-            return const ObserveModeNotDefinedPanel(title: 'Military Units');
-          }
+          final sentinel = observeNotDefinedSentinel(shell, 'Military Units');
+          if (sentinel != null) return sentinel;
           final humanPlayerId = resolveShellPanelPlayerId(shell, game);
           final readOnly = !shell.canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);
@@ -411,9 +410,8 @@ class AppEventHandler {
             return const SizedBox.shrink();
           }
           final shell = ref.read(shellPlayerContextProvider);
-          if (shellPanelsNotDefined(shell)) {
-            return const ObserveModeNotDefinedPanel(title: 'Naval Units');
-          }
+          final sentinel = observeNotDefinedSentinel(shell, 'Naval Units');
+          if (sentinel != null) return sentinel;
           final humanPlayerId = resolveShellPanelPlayerId(shell, game);
           final readOnly = !shell.canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);

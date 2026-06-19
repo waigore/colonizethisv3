@@ -15,7 +15,7 @@ import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../shell_player_context.dart';
-import '../widgets/observe_mode_not_defined_panel.dart';
+import '../widgets/shell_player_guarded_body.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -92,9 +92,9 @@ class ProductionScreen extends ConsumerWidget {
         ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
-        if (shellPanelsNotDefined(shellRef.read(shellPlayerContextProvider))) {
-          return const ObserveModeNotDefinedPanel(title: 'Production');
-        }
+        final shell = shellRef.read(shellPlayerContextProvider);
+        final sentinel = observeNotDefinedSentinel(shell, 'Production');
+        if (sentinel != null) return sentinel;
         final desiredOutputByRecipe = shellRef.watch(
           productionDesiredOutputProvider,
         );
@@ -134,9 +134,7 @@ class ProductionScreen extends ConsumerWidget {
                 ),
               },
             );
-        final canEdit = shellRef
-            .read(shellPlayerContextProvider)
-            .canMutateViaUi;
+        final canEdit = shell.canMutateViaUi;
         final labourCallbacks = ProductionLabourCallbacks(
           onAppendRecruitOrder: (tier) {
             if (!canEdit) return;
