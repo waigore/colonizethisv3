@@ -1,11 +1,10 @@
 import 'dart:collection' show UnmodifiableMapView;
 
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show Game, Province, ProvinceId, RegionData, Unit, WorldState;
+    show Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../world_constants.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
 
 /// Id → first list index for one [RegionData.provinces] list instance (Refs #2394).
 /// First matching id wins, matching [List.indexWhere] semantics on duplicates.
@@ -425,15 +424,4 @@ extension WorldStateProvinceLookup on WorldState {
       kRegionNewWorld: List<Province>.from(newWorld.provinces),
     };
   }
-}
-
-/// Old World provinces owned by [factionId] (observer conquest / survival peace).
-///
-/// Pure world/province lookup with no diplomacy dependency; lives in `world/`
-/// so leaf-layer consumers (and `colonizethis_world` after extraction) do not
-/// import the diplomacy domain (Refs #3290 Phase 0 — `ai → diplomacy` edge).
-int oldWorldProvinceCountOwnedBy(Game game, String factionId) {
-  return ProvinceOwnerCache.of(
-    game.worldState,
-  ).countOwnedByInRegion(factionId, kRegionOldWorld);
 }

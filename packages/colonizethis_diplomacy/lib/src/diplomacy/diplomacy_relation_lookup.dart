@@ -12,7 +12,7 @@ import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 
 export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
-export 'package:colonizethis_world/src/world/province_lookup.dart'
+export 'package:colonizethis_world/src/world/province_owner_cache.dart'
     show oldWorldProvinceCountOwnedBy;
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
