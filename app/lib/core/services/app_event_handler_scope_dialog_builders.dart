@@ -1,4 +1,3 @@
-
 part of 'app_event_handler_scope.dart';
 
 extension _DialogBuilders on _AppEventHandlerScopeState {
@@ -12,9 +11,12 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
       turnNewsDialogId: _buildTurnNewsDialog,
       // Feature-layer builders (e.g. the shell new-game leader dialog) are
       // injected by the composition root and merged last so a feature owns its
-      // dialog construction without `core/services/` importing `features/`
-      // (Refs #3546). SPEC/program/app-ui-wiring.md.
-      ...widget.extraDialogBuilders,
+      // dialog construction without `core/services/` importing `features/`.
+      // Each factory is resolved here with [appNavigatorKey] — the documented
+      // choke point — so feature files thread the key explicitly rather than
+      // reading the global (Refs #3546). SPEC/program/app-ui-wiring.md.
+      for (final entry in widget.extraDialogBuilders.entries)
+        entry.key: entry.value(appNavigatorKey),
     };
   }
 

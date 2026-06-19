@@ -172,12 +172,15 @@ class AppEventHandlerScope extends ConsumerStatefulWidget {
 
   final Widget child;
 
-  /// Feature-layer dialog builders injected by the composition root, merged
-  /// over the core builders in [_DialogBuilders._dialogBuilders]. This keeps
+  /// Feature-layer dialog builder factories injected by the composition root,
+  /// merged over the core builders in [_DialogBuilders._dialogBuilders]. Each
+  /// factory is resolved with [appNavigatorKey] inside this scope (the
+  /// documented `core/services/` choke point), so feature files thread the
+  /// navigator key explicitly instead of reading the global. This keeps
   /// `core/services/` free of `features/` dialog imports: a feature owns its
   /// dialog construction and `main.dart` wires it in by [OpenDialogEvent] id
   /// (Refs #3546). SPEC/program/app-ui-wiring.md.
-  final Map<String, DialogBuilder> extraDialogBuilders;
+  final Map<String, NavigatorKeyDialogBuilder> extraDialogBuilders;
 
   @override
   ConsumerState<AppEventHandlerScope> createState() =>
@@ -242,5 +245,4 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
 
   @override
   Widget build(BuildContext context) => widget.child;
-
 }

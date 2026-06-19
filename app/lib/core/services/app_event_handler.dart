@@ -53,6 +53,14 @@ import '../../widgets/ct_confirm_dialog.dart';
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
 
+/// Factory for a feature-layer [DialogBuilder] that needs the app navigator
+/// key. The composition root injects the factory (a const top-level tear-off)
+/// without holding the global `appNavigatorKey`; the core scope resolves it
+/// with the navigator key so feature layers thread the key explicitly instead
+/// of reaching for the global (Refs #3546). SPEC/program/app-ui-wiring.md.
+typedef NavigatorKeyDialogBuilder =
+    DialogBuilder Function(GlobalKey<NavigatorState> navigatorKey);
+
 final _log = packageLogger('event');
 
 class AppEventHandler {
