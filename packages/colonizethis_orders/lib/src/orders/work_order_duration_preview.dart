@@ -50,8 +50,7 @@ int _previewExploreTurns({
   final targetProvinceId =
       Unit.provinceIdFromTileKey(order.targetTileKey) ??
       unit.locationProvinceId;
-  final byProvince =
-      game.worldState.tileKeysByRegionAndProvince[targetRegionId];
+  final byProvince = game.worldState.tileKeysForRegion(targetRegionId);
   if (byProvince == null || byProvince.isEmpty) return 1;
 
   final tilesInProvince = byProvince[targetProvinceId]?.length ?? 0;

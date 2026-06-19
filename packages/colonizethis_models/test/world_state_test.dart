@@ -115,6 +115,10 @@ void main() {
           },
         },
         portsByProvinceSeaboard: const {'oldWorld|p1|oldWorld|s1': 'oldWorld|p1|2|0'},
+        purchasedTilesByTileKey: const {'oldWorld|p1|0|0': 'player_red'},
+        playerProspectedTiles: const {
+          'player_red': {'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
+        },
       );
 
       test('resourceAtTile returns mapped resource and null otherwise', () {
@@ -137,6 +141,26 @@ void main() {
           'oldWorld|p1|2|0',
         );
         expect(state.portTileForSeaboard('oldWorld|p1|oldWorld|s9'), isNull);
+      });
+
+      test('purchaserOfTile returns buyer id and null when unpurchased', () {
+        expect(state.purchaserOfTile('oldWorld|p1|0|0'), 'player_red');
+        expect(state.purchaserOfTile('oldWorld|p1|1|0'), isNull);
+      });
+
+      test('prospectedTilesForPlayer returns set and empty when absent', () {
+        expect(state.prospectedTilesForPlayer('player_red'), {
+          'oldWorld|p1|0|0',
+          'oldWorld|p1|1|0',
+        });
+        expect(state.prospectedTilesForPlayer('player_blue'), isEmpty);
+      });
+
+      test('tileKeysForRegion returns bucket and null for missing region', () {
+        expect(state.tileKeysForRegion('oldWorld'), {
+          'p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
+        });
+        expect(state.tileKeysForRegion('newWorld'), isNull);
       });
     });
 

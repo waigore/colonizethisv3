@@ -278,7 +278,7 @@ void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
       }
       final resourceId = c.resourceByTile[tileKey];
       if (resourceId == null || resourceId.isEmpty) return;
-      final existingBuyer = c.game.worldState.purchasedTilesByTileKey[tileKey];
+      final existingBuyer = c.game.worldState.purchaserOfTile(tileKey);
       if (existingBuyer != null) return;
       c.result.add(tileKey);
     },
@@ -304,8 +304,7 @@ void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
 }
 
 void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
-  final prospected =
-      c.game.worldState.playerProspectedTiles[c.playerId] ?? const <String>{};
+  final prospected = c.game.worldState.prospectedTilesForPlayer(c.playerId);
   _forEachPrefixedProvinceTile(
     tileKeysByRegion: c.tileKeysByRegion,
     onTile: (provinceId, tileKey) {

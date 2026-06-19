@@ -109,9 +109,9 @@ bool _applyProspectWorkOrder(
   )) {
     return false;
   }
-  final existing =
-      context.state.game.worldState.playerProspectedTiles[context.player.id] ??
-      const <String>{};
+  final existing = context.state.game.worldState.prospectedTilesForPlayer(
+    context.player.id,
+  );
   if (existing.contains(targetTileKey)) {
     return false;
   }

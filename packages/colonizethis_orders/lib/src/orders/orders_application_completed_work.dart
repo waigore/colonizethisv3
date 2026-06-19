@@ -325,8 +325,7 @@ BuildWorkState _completedWorkProspect(CompletedWorkContext ctx) {
   if (!isMineralEligibleTile(s.game, s.tileMapByRegion, cw.tileKey)) {
     return s;
   }
-  final existing =
-      s.game.worldState.playerProspectedTiles[u.ownerId] ?? const <String>{};
+  final existing = s.game.worldState.prospectedTilesForPlayer(u.ownerId);
   if (existing.contains(cw.tileKey)) {
     return s;
   }

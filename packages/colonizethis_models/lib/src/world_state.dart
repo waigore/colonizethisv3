@@ -101,6 +101,24 @@ class WorldState {
   String? portTileForSeaboard(String provinceSeaboardKey) =>
       portsByProvinceSeaboard[provinceSeaboardKey];
 
+  /// Buyer player id that purchased [tileKey] (Merchant purchase_land), or
+  /// `null` when the tile is unpurchased. Read-only accessor over
+  /// [purchasedTilesByTileKey] so callers avoid drilling the internal map
+  /// directly (#3543 §4).
+  String? purchaserOfTile(String tileKey) => purchasedTilesByTileKey[tileKey];
+
+  /// Prospected tile keys for [playerId], or an empty set when the player has
+  /// prospected no tiles. Read-only accessor over [playerProspectedTiles] that
+  /// folds the common `?? const <String>{}` fallback in one place (#3543 §4).
+  Set<String> prospectedTilesForPlayer(String playerId) =>
+      playerProspectedTiles[playerId] ?? const <String>{};
+
+  /// Tile-key buckets recorded for [regionId] (province id -> tile keys), or
+  /// `null` when the region bucket is absent. Read-only accessor over
+  /// [tileKeysByRegionAndProvince] for per-region lookups (#3543 §4).
+  Map<String, List<String>>? tileKeysForRegion(String regionId) =>
+      tileKeysByRegionAndProvince[regionId];
+
   Map<String, dynamic> toJson() => {
     'turnState': turnState.toJson(),
     'oldWorld': oldWorld.toJson(),
