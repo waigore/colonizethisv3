@@ -19,7 +19,7 @@ bool _isUnimprovedFeedstockTile(
 ) {
   if (feedstockIds.isEmpty) return false;
   final ws = game.worldState;
-  final resourceId = ws.resourceByTileKey[targetTileKey];
+  final resourceId = ws.resourceAtTile(targetTileKey);
   if (resourceId == null || !feedstockIds.contains(resourceId)) return false;
   if (ws.tileState.improvementLevel(targetTileKey) >= 1) return false;
   return true;

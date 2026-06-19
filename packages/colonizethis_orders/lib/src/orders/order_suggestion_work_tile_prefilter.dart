@@ -146,8 +146,10 @@ void _addCandidateTilesForStealTech({
 
     // Find a tile in the capital province
     final regionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    final byProvince = game.worldState.tileKeysByRegionAndProvince[regionId];
-    final tiles = byProvince?[capitalProvinceId];
+    final tiles = game.worldState.tileKeysForProvince(
+      regionId,
+      capitalProvinceId,
+    );
     if (tiles != null && tiles.isNotEmpty) {
       result.add(tiles.first);
     }

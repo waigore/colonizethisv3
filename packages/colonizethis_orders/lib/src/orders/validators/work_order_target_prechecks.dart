@@ -145,7 +145,7 @@ OrderValidationResult? precheckPurchaseLand(
       'Cannot purchase land: embassy required with that Minor/Tribe',
     );
   }
-  final resourceId = ctx.game.worldState.resourceByTileKey[o.targetTileKey];
+  final resourceId = ctx.game.worldState.resourceAtTile(o.targetTileKey);
   if (resourceId == null || resourceId.isEmpty) {
     return OrderValidationResult.rejected('Tile has no resource');
   }
@@ -192,7 +192,7 @@ OrderValidationResult? precheckBuildImprovement(
       'Cannot build improvement in foreign or uncontrolled province',
     );
   }
-  final resourceId = ctx.game.worldState.resourceByTileKey[o.targetTileKey];
+  final resourceId = ctx.game.worldState.resourceAtTile(o.targetTileKey);
   if (resourceId == null || resourceId.isEmpty) {
     return OrderValidationResult.rejected(
       'Tile has no resource; build_improvement requires a resource on the tile',
