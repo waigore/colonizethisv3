@@ -7,6 +7,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/features/shell/new_game_leader_dialog_builder.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -89,6 +90,12 @@ void main() {
         appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
       ],
       child: AppEventHandlerScope(
+        // Mirror the composition root (main.dart): the shell new-game leader
+        // dialog builder lives in features/shell and is injected here so the
+        // New Game flow can open its dialog (Refs #3546).
+        extraDialogBuilders: const {
+          newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
+        },
         child: MaterialApp(
           navigatorKey: appNavigatorKey,
           initialRoute: Routes.shell,
