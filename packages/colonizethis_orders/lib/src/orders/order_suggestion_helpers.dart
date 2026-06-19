@@ -3,7 +3,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_world/src/world/sea_reachable_provinces.dart';
 
 /// Shared helpers for order suggestion. SPEC/ai/ai-architecture.md.
 /// Used by order_suggestion and AI planners.

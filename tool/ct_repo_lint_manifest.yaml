@@ -462,6 +462,13 @@ rules:
     runner: dart
     script: tool/check_orders_no_logic_deps.dart
 
+  - rule_id: repo.orders_no_cross_package_src_imports
+    group: architecture
+    title: colonizethis_orders/lib must not import another colonizethis package's src/ tree (Refs #3543)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_orders_no_cross_package_src_imports.dart
+
   - rule_id: repo.turn_no_logic_deps
     group: architecture
     title: colonizethis_turn must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 3)

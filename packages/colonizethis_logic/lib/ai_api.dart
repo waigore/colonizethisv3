@@ -33,6 +33,8 @@ export 'package:colonizethis_world/colonizethis_world.dart'
         kRegionNewWorld,
         kRegionOldWorld,
         neighborProvinceIdsInRegion,
+        reachableNonOwnedProvinceDistancesViaSeas,
+        reachableNonOwnedProvinceIdsViaSeas,
         regimentTypeCountsForPlayer,
         shipTypeCountsForPlayer,
         unitsByIdFromWorld;
@@ -112,7 +114,3 @@ export 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart
         selfLockRecoverySellerNeededProducibleImprovementInputs,
         sellerImprovementInputFeedstockExtractionResourceIds,
         supplierImprovementInputFeedstockExtractionResourceIds;
-export 'package:colonizethis_world/src/world/sea_reachable_provinces.dart'
-    show
-        reachableNonOwnedProvinceDistancesViaSeas,
-        reachableNonOwnedProvinceIdsViaSeas;
