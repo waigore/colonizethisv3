@@ -1,4 +1,15 @@
-part of 'order_suggestion_work.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'bundled_civilian_work_order.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
+import 'order_suggestion_context.dart';
+import 'order_visibility.dart';
+import 'order_work_constants.dart';
+import 'orders_application_helpers.dart';
+import 'work_suggestion_pipeline.dart';
 
 ({WorkOrder? chosen, String lastReason}) _tryExploreWorkOrderForProvince({
   required PlayerView view,
@@ -77,7 +88,7 @@ part of 'order_suggestion_work.dart';
   return (chosen: null, lastReason: 'engine_rejected');
 }
 
-void _addExplorerWorkSuggestionsForUnit({
+void addExplorerWorkSuggestionsForUnit({
   required PlayerView view,
   required Game game,
   required MapTopology topology,
