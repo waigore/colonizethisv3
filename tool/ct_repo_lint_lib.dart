@@ -18,6 +18,7 @@ import 'check_app_no_material_listtile.dart';
 import 'check_app_no_material_scaffold.dart';
 import 'check_app_no_material_switchlisttile.dart';
 import 'check_app_no_material_textbutton.dart';
+import 'check_app_shell_panel_dedup.dart';
 import 'check_app_textstyle_fontsize_fallback.dart';
 import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
@@ -790,6 +791,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
     case 'repo.app_event_bus_decoupling':
       return runCheckAppEventBusDecoupling(repoRoot);
+    case 'repo.app_no_shell_panel_duplication':
+      return runCheckAppShellPanelDedup(repoRoot);
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':

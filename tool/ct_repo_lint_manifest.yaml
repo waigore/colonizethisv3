@@ -235,6 +235,13 @@ rules:
     runner: dart
     script: tool/check_app_widget_ref_parameter_smell.dart
 
+  - rule_id: repo.app_no_shell_panel_duplication
+    group: architecture
+    title: app/lib observe-mode shell guard must stay centralized in shell_player_guarded_body (Refs #3546)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_shell_panel_dedup.dart
+
   - rule_id: repo.subscription_tracker
     group: structure
     title: app feature subscriptions must use SubscriptionTracker
