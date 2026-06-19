@@ -4,7 +4,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'order_effects_projector.dart';
 export 'order_effects_projector.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'order_engine_validation.dart';
 import 'order_resolution_context.dart';
+import 'order_validator_factory.dart';
+export 'order_validator_factory.dart';
 import 'orders_application_context.dart' show copyUnitsById;
 import 'orders_logging.dart';
 export 'order_validation_result.dart';
@@ -19,7 +22,6 @@ export 'validator_bundle.dart'
 import 'validator_bundle.dart';
 
 part 'order_engine.g.dart';
-part 'order_engine_validation.dart';
 
 // --- Test-only instrumentation (Refs #2237 AC2) ---
 bool _trackValidatePlayerOrdersWithContextInvocationsForTests = false;
@@ -52,30 +54,6 @@ class _OrderSlot<T> {
   final Orders Function(Orders, Map<String, List<T>>) updater;
   final String label;
 }
-
-/// Builds the per-bundle [OrderValidators] for one validation slice.
-///
-/// [resolution] threads the canonical [OrderResolutionContext] record
-/// (`view` + `unitsById` + `provinceById`) so factories reuse the
-/// per-pass snapshot the engine entry-point already built instead of
-/// rebuilding the player view or unit-by-id map (Refs #2836 AC 3;
-/// SPEC/program/logic-validator-units-params.md).
-typedef OrderValidatorFactory =
-    OrderValidators Function(
-      Game game,
-      Player player,
-      String playerId,
-      OrderResolutionContext resolution,
-      MapTopology topology,
-      List<DiplomaticOrder> diplomaticOrders,
-      Map<String, TileMapResult>? tileMapByRegion,
-      Set<String> civilianDraftMoveUnitIds,
-      Set<String> devExclusiveTiles,
-      Stockpile stockpile,
-      int treasury,
-      DiplomacyFactionMembership factionMembership,
-      WorkerPool workerPool,
-    );
 
 /// One post–move/army validation round: caller constructs a fresh [OrderValidators]
 /// bundle, then invokes this to append results and propagate economy state.
@@ -269,17 +247,17 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     // validator must see the post-recruit headcount so military/naval builds
     // that consume a peasant respect the combined reservation (see
     // SPEC/game/workers-and-population.md § Peasant reservation).
-    final state = _OrderValidationRunState(
+    final state = OrderValidationRunState(
       results: <OrderValidationResult>[],
       stockpile: player.stockpile,
       treasury: player.treasury,
       workerPool: player.workerPool,
     );
 
-    _runOrderValidationPhases(
+    runOrderValidationPhases(
       validatorFactory: _validatorFactory,
       projector: _projector,
-      orders: _orders,
+      stagedOrdersSnapshot: copyOrdersSnapshotForEngine(_orders),
       state: state,
       game: game,
       player: player,

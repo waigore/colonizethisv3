@@ -1,4 +1,23 @@
-part of 'order_engine.dart';
+/// Per-category order validation pipeline for [OrderEngine].
+///
+/// Promoted from a `part of 'order_engine.dart'` fragment to a standalone
+/// library with explicit imports (Refs #3543 — de-part-file orders; the
+/// extraction-shape policy in `SPEC/program/dart-file-non-comment-line-size.md`
+/// § Extraction shape requires standalone libraries rather than part
+/// fragments). The engine now imports this library and calls
+/// [runOrderValidationPhases]; nothing here imports `order_engine.dart`, so the
+/// orders `lib/` import graph stays acyclic.
+library;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+
+import 'order_effects_projector.dart';
+import 'order_resolution_context.dart';
+import 'order_validator_factory.dart';
+import 'validator_bundle.dart';
 
 /// Appends one [OrderValidationResult] per order; short-circuits when [rejected].
 /// Returns the new rejected flag (true if any result was rejected).
@@ -41,12 +60,12 @@ bool _appendValidationResults<T>(
   return (rejected: r, state: s);
 }
 
-/// Mutable state threaded through [_runOrderValidationPhases].
+/// Mutable state threaded through [runOrderValidationPhases].
 /// Holds the running rejected flag, treasury, stockpile, worker pool, and
 /// the accumulated [OrderValidationResult] list. Existing only inside
 /// [OrderEngine.validatePlayerOrdersWithContext]'s call stack.
-class _OrderValidationRunState {
-  _OrderValidationRunState({
+class OrderValidationRunState {
+  OrderValidationRunState({
     required this.results,
     required this.stockpile,
     required this.treasury,
@@ -70,11 +89,17 @@ class _OrderValidationRunState {
 /// provinceById); both the per-bundle validator factory and the per-move
 /// validator share this exact record so probes do not rebuild equivalent
 /// maps (Refs #2836 AC 3; SPEC/program/logic-validator-units-params.md).
-void _runOrderValidationPhases({
+///
+/// [stagedOrdersSnapshot] is the engine's deep-copied order snapshot used by
+/// the trade-order phase's projector dry-run. The caller (the engine) builds it
+/// via its generated `copyOrdersSnapshotForEngine`; passing the copy in keeps
+/// this library independent of the generated `order_engine.g.dart` part and the
+/// orders import graph acyclic.
+void runOrderValidationPhases({
   required OrderValidatorFactory validatorFactory,
   required OrderEffectsProjector? projector,
-  required Orders orders,
-  required _OrderValidationRunState state,
+  required Orders stagedOrdersSnapshot,
+  required OrderValidationRunState state,
   required Game game,
   required Player player,
   required String playerId,
@@ -176,7 +201,7 @@ void _runOrderValidationPhases({
             playerId,
             tradeOrders,
             topology,
-            copyOrdersSnapshotForEngine(orders),
+            stagedOrdersSnapshot,
             tileMapByRegion,
             projector,
           ),
@@ -194,7 +219,7 @@ void _runOrderValidationPhases({
 
 void _runMovePhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<MoveOrder> moves,
   Game game,
   String playerId,
@@ -227,7 +252,7 @@ void _runMovePhase(
 
 void _runArmyMovePhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<ArmyMoveOrder> armyMoves,
   Game game,
   String playerId,
@@ -242,22 +267,22 @@ void _runArmyMovePhase(
     armyMoves,
     state.rejected,
     (o, prev) => v.armyMoveValidator.validate(
-            o,
-            game,
-            playerId,
-            diplomatic,
-            view,
-            topology,
-            previousRejected: prev,
-            armiesById: armiesById,
-            factionMembership: factionMembership,
-          ),
+      o,
+      game,
+      playerId,
+      diplomatic,
+      view,
+      topology,
+      previousRejected: prev,
+      armiesById: armiesById,
+      factionMembership: factionMembership,
+    ),
   );
 }
 
 void _runRecruitWorkerPhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<RecruitWorkerOrder> recruitWorkers,
 ) {
   state.rejected = _appendValidationResults(
@@ -273,7 +298,7 @@ void _runRecruitWorkerPhase(
 
 void _runBuildPhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<BuildUnitOrder> builds,
 ) {
   state.rejected = _appendValidationResults(
@@ -289,7 +314,7 @@ void _runBuildPhase(
 
 void _runWorkPhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<WorkOrder> works,
 ) {
   state.rejected = _appendValidationResults(
@@ -304,7 +329,7 @@ void _runWorkPhase(
 
 void _runDiplomaticPhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<DiplomaticOrder> diplomatic,
 ) {
   final afterDiplomatic =
@@ -324,7 +349,7 @@ void _runDiplomaticPhase(
 
 void _runNavalPhase(
   OrderValidators v,
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   List<NavalMoveOrder> navals,
   List<NavalMissionOrder> missions,
 ) {
@@ -344,7 +369,7 @@ void _runNavalPhase(
 }
 
 void _runTradeOrderPhase(
-  _OrderValidationRunState state,
+  OrderValidationRunState state,
   Game game,
   String playerId,
   List<TradeOrder> tradeOrders,
