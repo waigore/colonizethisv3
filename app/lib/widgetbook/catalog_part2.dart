@@ -160,6 +160,17 @@ List<WidgetbookNode> get techTreeDirectories => [
           variant: _TechnologySlotsStoryVariant.noResearchableTechs,
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Slots — funding & turn preview',
+        builder: (context) => _technologyFundingPreviewStoryHost(context),
+      ),
+      WidgetbookUseCase(
+        name: 'Slots — funding & turn preview (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          _technologyFundingPreviewStoryHost(context),
+        ),
+      ),
     ],
   ),
 ];
@@ -289,6 +300,143 @@ Widget _technologySlotsStoryHost({
         players: [player, ...baseGame.players.skip(1)],
       );
       return (player, game);
+  }
+}
+
+/// Tier-1, prerequisite-free techs assigned to slots 0–2 by the funding /
+/// turn-preview story so each active slot renders the funding toggles and the
+/// dual-segment (committed + anticipated) progress bar with an RP delta and a
+/// gold row. SPEC/ui/technology-panel.md § Widgetbook + § Slot turn preview.
+const List<String> _kFundingPreviewTechIds = <String>[
+  kTechIdCropRotation,
+  kTechIdSawMill,
+  kTechIdLandEnclosure,
+];
+
+/// Per-slot committed RP for the funding-preview fixture, chosen so each bar
+/// shows a non-trivial committed segment A plus headroom for the anticipated
+/// segment B (all techs cost 1800 RP at tier 1).
+const List<int> _kFundingPreviewCommittedRp = <int>[600, 300, 0];
+
+/// Per-slot funding levels for the funding-preview fixture, exercising the
+/// Low / Medium / High toggle-selected chrome and three distinct
+/// dual-segment / RP-delta / gold-row renderings.
+const List<ResearchFundingLevel> _kFundingPreviewLevels = <ResearchFundingLevel>[
+  ResearchFundingLevel.medium,
+  ResearchFundingLevel.high,
+  ResearchFundingLevel.low,
+];
+
+/// Builds the editable `(Player, Game, Orders)` fixture for the funding /
+/// turn-preview story: a player with ample treasury (no debt block) whose
+/// first three research slots are assigned prerequisite-free tier-1 techs at
+/// varied funding levels with committed progress. Kept separate from the host
+/// so the same fixture can drive the Widgetbook story and a widget regression
+/// test. SPEC/ui/technology-panel.md § Widgetbook.
+({Player player, Game game, Orders orders}) technologyFundingPreviewFixture({
+  required Game baseGame,
+  required Player basePlayer,
+}) {
+  final progress = <String, int>{
+    for (var i = 0; i < _kFundingPreviewTechIds.length; i++)
+      _kFundingPreviewTechIds[i]: _kFundingPreviewCommittedRp[i],
+  };
+  // Ample treasury keeps every slot above the research debt floor so the
+  // anticipated segment B, RP delta, and gold spend all render (no debt block).
+  final player = basePlayer.copyWith(
+    treasury: 8000,
+    researchSlots: 3,
+    researchProgressByTechId: progress,
+  );
+  final game = baseGame.copyWith(
+    players: [player, ...baseGame.players.skip(1)],
+  );
+  final orders = Orders(
+    researchOrdersByPlayerId: <String, List<ResearchOrder>>{
+      player.id: <ResearchOrder>[
+        for (var i = 0; i < _kFundingPreviewTechIds.length; i++)
+          ResearchOrder(
+            slotIndex: i,
+            techId: _kFundingPreviewTechIds[i],
+            funding: _kFundingPreviewLevels[i],
+          ),
+      ],
+    },
+  );
+  return (player: player, game: game, orders: orders);
+}
+
+/// Builds the editable funding / turn-preview Widgetbook story host. Renders
+/// the inner [TechnologyPanel] (not the full `TechnologyScreen`) with a
+/// non-null `onOrdersChanged`, so the funding toggles and dual-segment turn
+/// preview render and respond to taps. SPEC/ui/technology-panel.md
+/// § Widgetbook. Refs #3512.
+Widget _technologyFundingPreviewStoryHost(BuildContext context) {
+  final result = getDebugInitGameResult();
+  final game = result.game;
+  if (game.players.isEmpty) {
+    return Center(child: Text(appL10n(context).widgetbook_noPlayers));
+  }
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      body: _TechnologyFundingPreviewStory(
+        baseGame: game,
+        basePlayer: game.players.first,
+      ),
+    ),
+  );
+}
+
+/// Stateful wrapper that holds the seeded [Orders] so the funding toggles in
+/// the Widgetbook story are interactive (tapping a toggle re-renders the slot
+/// with the new funding level and refreshed turn preview).
+class _TechnologyFundingPreviewStory extends StatefulWidget {
+  const _TechnologyFundingPreviewStory({
+    required this.baseGame,
+    required this.basePlayer,
+  });
+
+  final Game baseGame;
+  final Player basePlayer;
+
+  @override
+  State<_TechnologyFundingPreviewStory> createState() =>
+      _TechnologyFundingPreviewStoryState();
+}
+
+class _TechnologyFundingPreviewStoryState
+    extends State<_TechnologyFundingPreviewStory> {
+  late Player _player;
+  late Game _game;
+  late Orders _orders;
+
+  @override
+  void initState() {
+    super.initState();
+    final fixture = technologyFundingPreviewFixture(
+      baseGame: widget.baseGame,
+      basePlayer: widget.basePlayer,
+    );
+    _player = fixture.player;
+    _game = fixture.game;
+    _orders = fixture.orders;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(CtSpacing.l),
+      child: TechnologyPanel(
+        game: _game,
+        player: _player,
+        currentOrders: _orders,
+        onOrdersChanged: (next) => setState(() => _orders = next),
+      ),
+    );
   }
 }
 
