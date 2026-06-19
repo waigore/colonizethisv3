@@ -2,13 +2,19 @@
 // Run: dart run tool/generate_order_engine_slots.dart
 // Source: order_engine_manifest.yaml
 
-part of 'order_engine.dart';
+library;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'order_engine.dart';
+import 'order_engine_slot.dart';
 
 Map<String, List<MoveOrder>> _orderEngineGetMoveOrder(Orders o) => o.moveOrdersByPlayerId;
 
 Orders _orderEngineWithMoveOrder(Orders o, Map<String, List<MoveOrder>> m) => o.copyWith(moveOrdersByPlayerId: m);
 
-const _orderSlotMoveOrder = _OrderSlot<MoveOrder>(
+const _orderSlotMoveOrder = OrderSlot<MoveOrder>(
   getter: _orderEngineGetMoveOrder,
   updater: _orderEngineWithMoveOrder,
   label: 'move',
@@ -18,7 +24,7 @@ Map<String, List<ArmyMoveOrder>> _orderEngineGetArmyMoveOrder(Orders o) => o.arm
 
 Orders _orderEngineWithArmyMoveOrder(Orders o, Map<String, List<ArmyMoveOrder>> m) => o.copyWith(armyMoveOrdersByPlayerId: m);
 
-const _orderSlotArmyMoveOrder = _OrderSlot<ArmyMoveOrder>(
+const _orderSlotArmyMoveOrder = OrderSlot<ArmyMoveOrder>(
   getter: _orderEngineGetArmyMoveOrder,
   updater: _orderEngineWithArmyMoveOrder,
   label: 'army move',
@@ -28,7 +34,7 @@ Map<String, List<BuildUnitOrder>> _orderEngineGetBuildUnitOrder(Orders o) => o.b
 
 Orders _orderEngineWithBuildUnitOrder(Orders o, Map<String, List<BuildUnitOrder>> m) => o.copyWith(buildUnitOrdersByPlayerId: m);
 
-const _orderSlotBuildUnitOrder = _OrderSlot<BuildUnitOrder>(
+const _orderSlotBuildUnitOrder = OrderSlot<BuildUnitOrder>(
   getter: _orderEngineGetBuildUnitOrder,
   updater: _orderEngineWithBuildUnitOrder,
   label: 'build',
@@ -38,7 +44,7 @@ Map<String, List<WorkOrder>> _orderEngineGetWorkOrder(Orders o) => o.workOrdersB
 
 Orders _orderEngineWithWorkOrder(Orders o, Map<String, List<WorkOrder>> m) => o.copyWith(workOrdersByPlayerId: m);
 
-const _orderSlotWorkOrder = _OrderSlot<WorkOrder>(
+const _orderSlotWorkOrder = OrderSlot<WorkOrder>(
   getter: _orderEngineGetWorkOrder,
   updater: _orderEngineWithWorkOrder,
   label: 'work',
@@ -48,7 +54,7 @@ Map<String, List<DiplomaticOrder>> _orderEngineGetDiplomaticOrder(Orders o) => o
 
 Orders _orderEngineWithDiplomaticOrder(Orders o, Map<String, List<DiplomaticOrder>> m) => o.copyWith(diplomaticOrdersByPlayerId: m);
 
-const _orderSlotDiplomaticOrder = _OrderSlot<DiplomaticOrder>(
+const _orderSlotDiplomaticOrder = OrderSlot<DiplomaticOrder>(
   getter: _orderEngineGetDiplomaticOrder,
   updater: _orderEngineWithDiplomaticOrder,
   label: 'diplomatic',
@@ -58,7 +64,7 @@ Map<String, List<NavalMoveOrder>> _orderEngineGetNavalMoveOrder(Orders o) => o.n
 
 Orders _orderEngineWithNavalMoveOrder(Orders o, Map<String, List<NavalMoveOrder>> m) => o.copyWith(navalMoveOrdersByPlayerId: m);
 
-const _orderSlotNavalMoveOrder = _OrderSlot<NavalMoveOrder>(
+const _orderSlotNavalMoveOrder = OrderSlot<NavalMoveOrder>(
   getter: _orderEngineGetNavalMoveOrder,
   updater: _orderEngineWithNavalMoveOrder,
   label: 'naval move',
@@ -68,7 +74,7 @@ Map<String, List<NavalMissionOrder>> _orderEngineGetNavalMissionOrder(Orders o) 
 
 Orders _orderEngineWithNavalMissionOrder(Orders o, Map<String, List<NavalMissionOrder>> m) => o.copyWith(navalMissionOrdersByPlayerId: m);
 
-const _orderSlotNavalMissionOrder = _OrderSlot<NavalMissionOrder>(
+const _orderSlotNavalMissionOrder = OrderSlot<NavalMissionOrder>(
   getter: _orderEngineGetNavalMissionOrder,
   updater: _orderEngineWithNavalMissionOrder,
   label: 'naval mission',
@@ -78,7 +84,7 @@ Map<String, List<RecruitWorkerOrder>> _orderEngineGetRecruitWorkerOrder(Orders o
 
 Orders _orderEngineWithRecruitWorkerOrder(Orders o, Map<String, List<RecruitWorkerOrder>> m) => o.copyWith(recruitWorkerOrdersByPlayerId: m);
 
-const _orderSlotRecruitWorkerOrder = _OrderSlot<RecruitWorkerOrder>(
+const _orderSlotRecruitWorkerOrder = OrderSlot<RecruitWorkerOrder>(
   getter: _orderEngineGetRecruitWorkerOrder,
   updater: _orderEngineWithRecruitWorkerOrder,
   label: 'recruit worker',
@@ -88,7 +94,7 @@ Map<String, List<TradeOrder>> _orderEngineGetTradeOrder(Orders o) => o.tradeOrde
 
 Orders _orderEngineWithTradeOrder(Orders o, Map<String, List<TradeOrder>> m) => o.copyWith(tradeOrdersByPlayerId: m);
 
-const _orderSlotTradeOrder = _OrderSlot<TradeOrder>(
+const _orderSlotTradeOrder = OrderSlot<TradeOrder>(
   getter: _orderEngineGetTradeOrder,
   updater: _orderEngineWithTradeOrder,
   label: 'trade',
@@ -96,33 +102,33 @@ const _orderSlotTradeOrder = _OrderSlot<TradeOrder>(
 
 Orders copyInitialOrdersForEngine(Orders initialOrders) =>
     Orders(
-      moveOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.moveOrdersByPlayerId),
-      armyMoveOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.armyMoveOrdersByPlayerId),
-      buildUnitOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.buildUnitOrdersByPlayerId),
-      workOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.workOrdersByPlayerId),
-      diplomaticOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.diplomaticOrdersByPlayerId),
-      navalMoveOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.navalMoveOrdersByPlayerId),
-      navalMissionOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.navalMissionOrdersByPlayerId),
-      recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.recruitWorkerOrdersByPlayerId),
-      tradeOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.tradeOrdersByPlayerId),
-      researchOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.researchOrdersByPlayerId),
+      moveOrdersByPlayerId: copyMapOfOrderLists(initialOrders.moveOrdersByPlayerId),
+      armyMoveOrdersByPlayerId: copyMapOfOrderLists(initialOrders.armyMoveOrdersByPlayerId),
+      buildUnitOrdersByPlayerId: copyMapOfOrderLists(initialOrders.buildUnitOrdersByPlayerId),
+      workOrdersByPlayerId: copyMapOfOrderLists(initialOrders.workOrdersByPlayerId),
+      diplomaticOrdersByPlayerId: copyMapOfOrderLists(initialOrders.diplomaticOrdersByPlayerId),
+      navalMoveOrdersByPlayerId: copyMapOfOrderLists(initialOrders.navalMoveOrdersByPlayerId),
+      navalMissionOrdersByPlayerId: copyMapOfOrderLists(initialOrders.navalMissionOrdersByPlayerId),
+      recruitWorkerOrdersByPlayerId: copyMapOfOrderLists(initialOrders.recruitWorkerOrdersByPlayerId),
+      tradeOrdersByPlayerId: copyMapOfOrderLists(initialOrders.tradeOrdersByPlayerId),
+      researchOrdersByPlayerId: copyMapOfOrderLists(initialOrders.researchOrdersByPlayerId),
     );
 
 Orders copyOrdersSnapshotForEngine(Orders o) =>
     Orders(
-      moveOrdersByPlayerId: _copyMapOfOrderLists(o.moveOrdersByPlayerId),
-      armyMoveOrdersByPlayerId: _copyMapOfOrderLists(o.armyMoveOrdersByPlayerId),
-      buildUnitOrdersByPlayerId: _copyMapOfOrderLists(o.buildUnitOrdersByPlayerId),
-      workOrdersByPlayerId: _copyMapOfOrderLists(o.workOrdersByPlayerId),
-      diplomaticOrdersByPlayerId: _copyMapOfOrderLists(o.diplomaticOrdersByPlayerId),
-      navalMoveOrdersByPlayerId: _copyMapOfOrderLists(o.navalMoveOrdersByPlayerId),
-      navalMissionOrdersByPlayerId: _copyMapOfOrderLists(o.navalMissionOrdersByPlayerId),
-      recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(o.recruitWorkerOrdersByPlayerId),
-      tradeOrdersByPlayerId: _copyMapOfOrderLists(o.tradeOrdersByPlayerId),
-      researchOrdersByPlayerId: _copyMapOfOrderLists(o.researchOrdersByPlayerId),
+      moveOrdersByPlayerId: copyMapOfOrderLists(o.moveOrdersByPlayerId),
+      armyMoveOrdersByPlayerId: copyMapOfOrderLists(o.armyMoveOrdersByPlayerId),
+      buildUnitOrdersByPlayerId: copyMapOfOrderLists(o.buildUnitOrdersByPlayerId),
+      workOrdersByPlayerId: copyMapOfOrderLists(o.workOrdersByPlayerId),
+      diplomaticOrdersByPlayerId: copyMapOfOrderLists(o.diplomaticOrdersByPlayerId),
+      navalMoveOrdersByPlayerId: copyMapOfOrderLists(o.navalMoveOrdersByPlayerId),
+      navalMissionOrdersByPlayerId: copyMapOfOrderLists(o.navalMissionOrdersByPlayerId),
+      recruitWorkerOrdersByPlayerId: copyMapOfOrderLists(o.recruitWorkerOrdersByPlayerId),
+      tradeOrdersByPlayerId: copyMapOfOrderLists(o.tradeOrdersByPlayerId),
+      researchOrdersByPlayerId: copyMapOfOrderLists(o.researchOrdersByPlayerId),
     );
 
-mixin _OrderEngineGeneratedOrderMethods {
+mixin OrderEngineGeneratedOrderMethods {
   OrderValidationResult addMoveOrder(String playerId, MoveOrder order) =>
       (this as OrderEngine).addOrderForSlot(playerId, order, _orderSlotMoveOrder);
 
