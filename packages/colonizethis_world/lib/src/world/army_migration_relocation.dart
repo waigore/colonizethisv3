@@ -22,7 +22,7 @@ WorldState updateArmyStation(
     destinationProvinceId,
     regionId,
   );
-  final army = _armyById(armies, armyId);
+  final army = firstArmyById(armies, armyId);
   if (army == null) return worldState;
   final unitsByRegion = worldState.mutableUnitListsByRegion();
   final relocated = _relocateArmyRegiments(
@@ -85,15 +85,6 @@ List<Army> _retargetArmyStation(
             ),
     )
     .toList();
-
-/// First matching army by id. Single-pass scan; avoids `.where(...).toList()`
-/// allocation on migration paths (Refs #2394, SPEC/program/turn-resolution.md).
-Army? _armyById(List<Army> armies, String armyId) {
-  for (final a in armies) {
-    if (a.id == armyId) return a;
-  }
-  return null;
-}
 
 RegionUnitLists _moveRegimentToProvince({
   required List<Unit> ow,

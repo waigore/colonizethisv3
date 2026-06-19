@@ -11,6 +11,7 @@ export 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 export 'src/world_constants.dart';
 export 'package:colonizethis_world/src/world/army_commands.dart';
 export 'package:colonizethis_world/src/world/army_ids.dart';
+export 'package:colonizethis_world/src/world/army_lookup.dart';
 export 'package:colonizethis_world/src/world/ai_control.dart';
 export 'package:colonizethis_world/src/world/army_migration.dart';
 export 'package:colonizethis_world/src/world/army_movement.dart';

@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world_constants.dart';
 import 'army_ids.dart';
+import 'army_lookup.dart';
 import 'game_world_mutations.dart';
 import 'province_lookup.dart';
 import 'region_unit_lists.dart';
@@ -260,13 +261,6 @@ WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
       if (p.capitalProvinceId != null) p.id: p.capitalProvinceId!,
   };
 
-  Army? findArmy(String id) {
-    for (final a in armies) {
-      if (a.id == id) return a;
-    }
-    return null;
-  }
-
   for (final u in military) {
     if (claimed.contains(u.id)) continue;
     final cap = capitals[u.ownerId];
@@ -274,7 +268,7 @@ WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
     final targetId = wantsHome
         ? homeArmyIdFor(u.ownerId)
         : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
-    var target = findArmy(targetId);
+    var target = firstArmyById(armies, targetId);
     if (target == null) {
       final regionId = _regionIdForUnitInWorld(worldState, u);
       target = Army(
