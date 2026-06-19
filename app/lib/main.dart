@@ -16,6 +16,7 @@ import 'config/themes.dart';
 import 'core/services/app_event_handler_scope.dart';
 import 'core/services/blessed_ai_profile_loader.dart';
 import 'core/services/desktop_window_startup_service.dart';
+import 'features/shell/new_game_leader_dialog_builder.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
 Future<void> _openHiveBoxSafely(String name) async {
@@ -58,7 +59,19 @@ Future<void> bootstrapApp({
       preloadFonts ??
       () => preloadEditorialMonocleFonts(skipInTests: kCtE2EEnabled);
   await preload();
-  runAppFn(const ProviderScope(child: AppEventHandlerScope(child: App())));
+  // Composition root wires the shell feature's new-game leader dialog builder
+  // into the core event-handler scope so `core/services/` stays free of
+  // `features/shell/` imports (Refs #3546). SPEC/program/app-ui-wiring.md.
+  runAppFn(
+    const ProviderScope(
+      child: AppEventHandlerScope(
+        extraDialogBuilders: {
+          newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
+        },
+        child: App(),
+      ),
+    ),
+  );
 }
 
 /// Integration tests (`integration_test/`) call this after

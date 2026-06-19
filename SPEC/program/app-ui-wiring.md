@@ -65,7 +65,7 @@ Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEve
 
 ## Dialog IDs (`OpenDialogEvent`)
 
-Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
+Register core (game-feature) builders in **`app/lib/core/services/app_event_handler_scope.dart`**. **Feature-layer dialog builders that would otherwise force `core/services/` to import `features/`** (for example the shell `new_game_leader_selection` dialog) live in their owning feature and are injected into the scope at the **composition root** (`app/lib/main.dart`) via **`AppEventHandlerScope.extraDialogBuilders`** — a `Map<String, DialogBuilder>` merged over the core builders by `OpenDialogEvent` id. This keeps `core/services/` free of `features/shell/` imports while preserving the single choke point for `navigatorKey` / `ProviderScope.containerOf` (Refs #3546).
 
 | ID | Widget | Constant |
 |----|--------|----------|

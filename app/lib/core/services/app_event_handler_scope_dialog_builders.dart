@@ -4,82 +4,18 @@ part of 'app_event_handler_scope.dart';
 extension _DialogBuilders on _AppEventHandlerScopeState {
   Map<String, DialogBuilder> _dialogBuilders() {
     return {
-      newGameLeaderSelectionDialogId: _buildNewGameLeaderSelectionDialog,
       trainCiviliansDialogId: _buildTrainCiviliansDialog,
       trainMilitaryDialogId: _buildTrainMilitaryDialog,
       grantOrSubsidyDialogId: _buildGrantOrSubsidyDialog,
       combatModeChoiceDialogId: _buildCombatModeChoiceDialog,
       quickBattleResultDialogId: _buildQuickBattleResultDialog,
       turnNewsDialogId: _buildTurnNewsDialog,
+      // Feature-layer builders (e.g. the shell new-game leader dialog) are
+      // injected by the composition root and merged last so a feature owns its
+      // dialog construction without `core/services/` importing `features/`
+      // (Refs #3546). SPEC/program/app-ui-wiring.md.
+      ...widget.extraDialogBuilders,
     };
-  }
-
-  Widget _buildNewGameLeaderSelectionDialog(
-    BuildContext ctx,
-    Map<String, Object?>? _,
-  ) {
-    final baseConfig = kCtE2EEnabled
-        ? _ctE2eNewGameLeaderTemplateConfig()
-        : GameSetupConfig.defaultConfig;
-    final naming = defaultNamingConfig;
-    final initialSelections = <String, String>{};
-    for (final gpId in baseConfig.selectedGreatPowerIds) {
-      final gp = naming.gpById(gpId);
-      if (gp != null && gp.leaderVariants.isNotEmpty) {
-        initialSelections[gpId] = gp.defaultLeaderVariantId;
-      }
-    }
-    final container = ProviderScope.containerOf(ctx);
-    final blessedNames =
-        container.read(blessedAiProfileNamesProvider).value ?? const <String>[];
-    return NewGameLeaderSelectionDialog(
-      baseConfig: baseConfig,
-      naming: naming,
-      initialLeaderByGpId: initialSelections,
-      blessedProfileNames: blessedNames,
-      onCancel: () => Navigator.of(ctx).pop(),
-      onConfirmed:
-          (
-            orderedGreatPowerIds,
-            leaderVariantByGpId,
-            seed,
-            infiniteMode,
-            terrainVariation,
-            aiProfileByGpId,
-          ) {
-            final navCtx = appNavigatorKey.currentContext;
-            if (navCtx == null) {
-              _logShell.w(
-                'appNavigatorKey has no context; skipping new game setup',
-              );
-              return;
-            }
-            final rootContainer = ProviderScope.containerOf(navCtx);
-            final templateConfig = GameSetupConfig(
-              selectedGreatPowerIds: orderedGreatPowerIds,
-              leaderVariantByGpId: leaderVariantByGpId,
-              continentCount: baseConfig.continentCount,
-              minorNationCount: baseConfig.minorNationCount,
-              tribeCount: baseConfig.tribeCount,
-              numProvincesOldWorld: baseConfig.numProvincesOldWorld,
-              numProvincesNewWorld: baseConfig.numProvincesNewWorld,
-              minProvincesPerMinor: baseConfig.minProvincesPerMinor,
-              seed: seed,
-              infiniteMode: infiniteMode,
-              terrainVariation: terrainVariation,
-              startingResources: baseConfig.startingResources,
-              initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
-              aiProfileByGpId: aiProfileByGpId,
-            );
-            unawaited(
-              runNewGameSetupAfterLeaderPick(
-                navigatorKey: appNavigatorKey,
-                container: rootContainer,
-                templateConfig: templateConfig,
-              ),
-            );
-          },
-    );
   }
 
   Widget _buildTrainCiviliansDialog(BuildContext ctx, Map<String, Object?>? _) {
