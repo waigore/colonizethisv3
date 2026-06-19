@@ -5,6 +5,8 @@ import 'region_data.dart';
 import 'tile_map_state.dart';
 import 'turn_state.dart';
 
+part 'world_state/focused_accessors.dart';
+
 /// Snapshot at a point in time. Turn state + region data + tile state. SPEC/game/world-model.
 class WorldState {
   const WorldState({
@@ -82,42 +84,6 @@ class WorldState {
 
   /// Prefixed sea zone ids that already generated a news "first fleet" line.
   final List<String> newsDigestSeaZoneFleetDoneIds;
-
-  /// Resource (commodity id) mapped to [tileKey], or `null` when the tile has
-  /// no mapped resource. Read-only accessor over [resourceByTileKey] so callers
-  /// avoid drilling the internal map directly (#3543 §4).
-  String? resourceAtTile(String tileKey) => resourceByTileKey[tileKey];
-
-  /// Tile keys recorded for the ([regionId], [provinceId]) bucket, or `null`
-  /// when the region or province bucket is absent. [provinceId] uses the same
-  /// key form stored in [tileKeysByRegionAndProvince] (prefixed for sea zones,
-  /// local id for land provinces). Read-only accessor (#3543 §4).
-  List<String>? tileKeysForProvince(String regionId, String provinceId) =>
-      tileKeysByRegionAndProvince[regionId]?[provinceId];
-
-  /// Port tile key for [provinceSeaboardKey] ("provinceId|seaZoneId"), or `null`
-  /// when no port exists for that seaboard. Read-only accessor over
-  /// [portsByProvinceSeaboard] (#3543 §4).
-  String? portTileForSeaboard(String provinceSeaboardKey) =>
-      portsByProvinceSeaboard[provinceSeaboardKey];
-
-  /// Buyer player id that purchased [tileKey] (Merchant purchase_land), or
-  /// `null` when the tile is unpurchased. Read-only accessor over
-  /// [purchasedTilesByTileKey] so callers avoid drilling the internal map
-  /// directly (#3543 §4).
-  String? purchaserOfTile(String tileKey) => purchasedTilesByTileKey[tileKey];
-
-  /// Prospected tile keys for [playerId], or an empty set when the player has
-  /// prospected no tiles. Read-only accessor over [playerProspectedTiles] that
-  /// folds the common `?? const <String>{}` fallback in one place (#3543 §4).
-  Set<String> prospectedTilesForPlayer(String playerId) =>
-      playerProspectedTiles[playerId] ?? const <String>{};
-
-  /// Tile-key buckets recorded for [regionId] (province id -> tile keys), or
-  /// `null` when the region bucket is absent. Read-only accessor over
-  /// [tileKeysByRegionAndProvince] for per-region lookups (#3543 §4).
-  Map<String, List<String>>? tileKeysForRegion(String regionId) =>
-      tileKeysByRegionAndProvince[regionId];
 
   Map<String, dynamic> toJson() => {
     'turnState': turnState.toJson(),
