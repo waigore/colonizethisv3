@@ -76,6 +76,13 @@ rules:
     runner: dart
     script: tool/check_ai_dedup_weight_scale_clamp.dart
 
+  - rule_id: repo.economy_cost_check_shared_helper
+    group: architecture
+    title: economy cost-check functions must use the shared checkPreconditionsInOrder helper (Refs #3517 Cluster 2)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_cost_check_shared_helper.dart
+
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
     title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)
