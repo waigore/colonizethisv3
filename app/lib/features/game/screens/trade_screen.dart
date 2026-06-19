@@ -82,7 +82,7 @@ import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/resource_icon.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart';
-import '../widgets/observe_mode_not_defined_panel.dart';
+import '../widgets/shell_player_guarded_body.dart';
 
 part 'trade_screen_deal_book.dart';
 part 'trade_screen_market_row.dart';
@@ -527,12 +527,11 @@ class TradeScreen extends ConsumerWidget {
         ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
-        if (shellPanelsNotDefined(shellRef.read(shellPlayerContextProvider))) {
-          // ignore: avoid_hardcoded_strings_in_widgets
-          return const ObserveModeNotDefinedPanel(title: 'Trade');
-        }
-        final bool canEdit =
-            shellRef.read(shellPlayerContextProvider).canMutateViaUi;
+        final shell = shellRef.read(shellPlayerContextProvider);
+        // ignore: avoid_hardcoded_strings_in_widgets
+        final sentinel = observeNotDefinedSentinel(shell, 'Trade');
+        if (sentinel != null) return sentinel;
+        final bool canEdit = shell.canMutateViaUi;
         return _TradeScreenTabsBody(
           key: tabsBodyKey,
           game: displayGame,

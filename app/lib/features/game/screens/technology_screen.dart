@@ -14,7 +14,7 @@ import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart';
-import '../widgets/observe_mode_not_defined_panel.dart';
+import '../widgets/shell_player_guarded_body.dart';
 import '../widgets/tech_tree_widget.dart';
 import '../widgets/technology_panel.dart';
 
@@ -99,14 +99,12 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
-        if (shellPanelsNotDefined(shellRef.read(shellPlayerContextProvider))) {
-          // ignore: avoid_hardcoded_strings_in_widgets
-          return const ObserveModeNotDefinedPanel(title: 'Technology');
-        }
+        final shell = shellRef.read(shellPlayerContextProvider);
+        // ignore: avoid_hardcoded_strings_in_widgets
+        final sentinel = observeNotDefinedSentinel(shell, 'Technology');
+        if (sentinel != null) return sentinel;
         final displayPlayer = displayGame.playerById(widget.player.id)!;
-        final canEdit = shellRef
-            .read(shellPlayerContextProvider)
-            .canMutateViaUi;
+        final canEdit = shell.canMutateViaUi;
         switch (_tab) {
           case _TechnologyTab.slots:
             return _SlotsBody(
