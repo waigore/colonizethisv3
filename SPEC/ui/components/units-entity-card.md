@@ -63,8 +63,7 @@ Padding(bottom: CtSpacing.xs)
 | Screen ID | Spec | Notes |
 |-----------|------|-------|
 | `UNIT20001` | [`military-units-panel.md`](../military-units-panel.md) | Army rows (issue #3514 AC-6). |
-
-Naval fleet rows (`UNIT30001`) are tracked for the same card migration as a follow-up.
+| `UNIT30001` | [`naval-units-panel.md`](../naval-units-panel.md) | Fleet rows (issue #3514 AC-6). The hosted [`UnitsEntityActionRow`](units-entity-action-row.md) keeps `dense: true` so Move / Split / Locate stay on one inline row (R25), collapsing to icon-only when the cluster's flex share drops below the label+icon footprint under the card chrome. |
 
 ---
 
@@ -72,6 +71,7 @@ Naval fleet rows (`UNIT30001`) are tracked for the same card migration as a foll
 
 - `app/test/units_entity_card_test.dart` — collapsed/expanded chrome and the transparent `ExpansionTile`.
 - `app/test/military_units_panel_test_part1_test.dart` — army rows mount no `CtNinePatchButton` chrome.
+- `app/test/naval_units_panel_mockup_fidelity_test.dart` — fleet rows render one `UnitsEntityCard` each, host the dense action row chrome-less, and lay out without `RenderFlex` overflow (issue #3514 AC-6 naval migration).
 
 ---
 

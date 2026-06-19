@@ -116,6 +116,20 @@ Side panel (CtPanel) beside map on wide viewports; scrollable fleet tree grouped
 ## Components
 
 - `NavalUnitsPanel`, [move-fleet-dialog.md](move-fleet-dialog.md), [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md).
+- `RegionSectionHeader` (`app/lib/features/game/widgets/units/shared/region_section_header.dart`) — rendered with the `RegionHeaderVariant.leftBar` chrome on this panel (Refs #3514); see § Region / location header chrome.
+- `LocationSectionHeader` (`app/lib/features/game/widgets/units/shared/location_section_header.dart`) — location (Home Fleet / port / sea-zone) sub-header; see § Region / location header chrome.
+
+---
+
+## Region / location header chrome (Refs #3514)
+
+The region and location group headers follow the naval mockup
+(`SPEC/ui/mockups/UNIT30001-naval-units-panel.html`) for **visual chrome**;
+the displayed header text content (`name — region` on location headers) is
+unchanged.
+
+- **Region header (`.region-heading`):** Each region grouping heading (`Old World` / `New World`) renders via `RegionSectionHeader` with `variant: RegionHeaderVariant.leftBar` — an upper-cased `EditorialMonoclePalette.muted` Cinzel display label (`editorialMonocleDisplayFontFamily`, `12` logical px, `FontWeight.w600`) preceded by a `3` dp `EditorialMonoclePalette.accentDim` **left** border (`RegionSectionHeader.leftBarWidth`) with `6 × 3` dp inner padding. The bottom-border `CtSectionLabel` chrome (`RegionHeaderVariant.bottomBorder`) is **not** used on this panel.
+- **Location header (`.location-label`):** Each location sub-header (Home Fleet / In Port / At Sea / named node) renders via `LocationSectionHeader` as an indented body-font line in `EditorialMonoclePalette.fg` at `0.8` opacity (`LocationSectionHeader.labelOpacity`), `FontWeight.w600`. The previous muted `titleSmall` styling is replaced; the leading `CtSpacing.ml` indent is retained.
 
 ---
 
@@ -153,6 +167,8 @@ For every fleet (including the Home Fleet), the collapsed row shows:
 Collapsed row content stays compact and focused on: location, mission (and draft move line when present), and inline actions.
 
 ### Expanded details (on demand)
+
+Each fleet row renders inside the shared [`UnitsEntityCard`](components/units-entity-card.md) mockup `.fleet-row` bordered gradient card (collapsed `--bg-deep` → `--surface` gradient + 1 px `--border`; expanded flat `--surface` + 1 px `--accent-dim` with a 1 px `--border` child top divider), not the bare Material `ExpansionTile` chrome — the same card migration delivered for military army rows (issue #3514 owner decision #6 / AC-6). The dense [`UnitsEntityActionRow`](components/units-entity-action-row.md) title cluster is hosted with `chrome: false` so the card border is not double-painted, and stays on one inline row (collapsing to icon-only when its flex share drops below the label+icon footprint).
 
 When a row is **expanded**, additional details are shown **within the same panel** as a single compact band — composition `Table` widget, optional Home-Fleet cargo line, and a single-line composition summary — mirroring mockup `.fleet-row .f-expanded` (`SPEC/ui/mockups/UNIT30001-naval-units-panel.html`). The legacy per-stat `ListTile` stack is **no longer used**; see [Naval mockup fidelity (R25–R29)](#naval-mockup-fidelity-r25r29) for the layout pin.
 
@@ -290,4 +306,12 @@ The first implementation pass for [#2866](https://github.com/) (PR #2906 + #2919
 - **(R28)** **Given** the Naval Units panel is open and shows a fleet **in port** at a province, **when** the user reads the row subtitle, **then** the location line ends with the literal localised qualifier `(in port)` (e.g. `Old World — London (in port)`), resolved via `AppLocalizations.naval_units_locInPort`; for a fleet **at sea** in a sea zone the location line ends with `(at sea)` (e.g. `New World — Caribbean Sea (at sea)`), resolved via `AppLocalizations.naval_units_locAtSea`. No English string for either qualifier is hard-coded in widgets.
 
 - **(R29)** **Given** the Naval Units panel is open and the user expands any fleet row, **when** the expanded content finishes rendering, **then** the UI layer renders (a) a single `Table` widget with one row per ship type with columns `Type`, `×Count`, `Role` and **not** a per-ship-type stack of `ListTile`s, (b) a single `Total ships: X · Warships: Y · Merchants: Z` summary line below the table (one `Text` widget, **not** three separate `ListTile`s) and a retained `Strength: V` line, and (c) for the Home Fleet only, a `Cargo capacity: X holds` line between the table and the summary line (non-home fleets render no cargo line).
+
+- **(Fleet card chrome, issue #3514 AC-6)** **Given** the Naval Units panel is open against `AppThemes.editorialMonocle` with at least one fleet row, **when** the row chrome finishes rendering at the default panel width, **then** each `FleetExpansionTile` renders exactly one [`UnitsEntityCard`](components/units-entity-card.md) (the mockup `.fleet-row` bordered gradient card, not bare `ExpansionTile` Material chrome), its dense `UnitsEntityActionRow` is hosted with `chrome == false` (no double border), and `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow from the dense Move/Split/Locate cluster under the card chrome).
+
+- **(Golden coverage, issue #3514)** **Given** `UNIT30001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), **when** `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), **then** the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_naval_default.png`, at least one `UnitsEntityCard` fleet-row card is present, and the panel raises no exception (`WidgetTester.takeException()` is `null`).
+
+- **Region header left-bar chrome (Refs #3514):** **Given** the Naval Units panel is open with fleets grouped into at least one region, **when** a region group heading renders, **then** the UI layer renders it via a `RegionSectionHeader` whose `variant` is `RegionHeaderVariant.leftBar` (mockup `.region-heading` left-accent-bar chrome), and renders no `CtSectionLabel` bottom-border region heading on this panel.
+
+- **Location header semi-bold fg chrome (Refs #3514):** **Given** the Naval Units panel is open with at least one location (Home Fleet / port / sea-zone) group, **when** the location sub-header renders, **then** the UI layer renders its `LocationSectionHeader` `Text` with `FontWeight.w600` and a colour resolving to `EditorialMonoclePalette.fg` at `0.8` opacity (mockup `.location-label`), while the displayed `name — region` line content is unchanged.
 
