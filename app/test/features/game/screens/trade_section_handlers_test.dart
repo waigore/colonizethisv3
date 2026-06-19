@@ -15,9 +15,12 @@
 
 import 'package:colonizethis_app/features/game/screens/trade_section_handlers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  setUpAll(suppressLogsForTests);
+
   group('buildTradeSectionHandlers', () {
     test('onDirectionChanged forwards row args plus the lazily-read delta', () {
       final List<({CommodityId id, TradeOrderType? next, int? delta})> calls =
