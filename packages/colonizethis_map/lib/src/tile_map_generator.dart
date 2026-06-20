@@ -27,6 +27,7 @@ part 'tile_map_generator_join_sea_bridge_part.dart';
 part 'tile_map_generator_join_sea_jitter_part.dart';
 part 'tile_map_generator_join_sea_subdivide_part.dart';
 part 'tile_map_generator_terrain_assign.dart';
+part 'tile_map_generator_terrain_hardwood_part.dart';
 part 'tile_map_generator_terrain_noise.dart';
 part 'tile_map_generator_lakes_provinces.dart';
 
