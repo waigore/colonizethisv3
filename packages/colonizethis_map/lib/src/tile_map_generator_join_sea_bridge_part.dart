@@ -153,19 +153,16 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
       numContinents,
       (_) => <(int x, int y)>{},
     );
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        final id = grid[y][x];
-        if (id == seaZoneId) continue;
-        final continentIndex = membership[id];
-        if (continentIndex == null ||
-            continentIndex < 0 ||
-            continentIndex >= numContinents) {
-          continue;
-        }
-        out[continentIndex].add((x, y));
+    TileMapGrid.forEachCell(grid, (y, x, id) {
+      if (id == seaZoneId) return;
+      final continentIndex = membership[id];
+      if (continentIndex == null ||
+          continentIndex < 0 ||
+          continentIndex >= numContinents) {
+        return;
       }
-    }
+      out[continentIndex].add((x, y));
+    });
     return out;
   }
 
@@ -298,18 +295,16 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
   }) {
     // One ocean-neighbour count per candidate; reuse for sort keys (Refs #2489).
     final coastal = <(int x, int y, int oceanNeighbours)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] == seaZoneId) continue;
-        if (landCellsExcludedFromSeaRestore?.contains((x, y)) ?? false) {
-          continue;
-        }
-        final n = _graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean);
-        if (n >= 1) {
-          coastal.add((x, y, n));
-        }
+    TileMapGrid.forEachCell(grid, (y, x, value) {
+      if (value == seaZoneId) return;
+      if (landCellsExcludedFromSeaRestore?.contains((x, y)) ?? false) {
+        return;
       }
-    }
+      final n = _graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean);
+      if (n >= 1) {
+        coastal.add((x, y, n));
+      }
+    });
     coastal.sort((a, b) => b.$3.compareTo(a.$3));
     final restoredToSea = <(int x, int y)>[];
     for (var i = 0; i < count && i < coastal.length; i++) {

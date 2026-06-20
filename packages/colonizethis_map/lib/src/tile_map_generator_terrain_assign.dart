@@ -28,13 +28,11 @@ class _TileMapGenTerrainResource implements MapGenStage {
 
     // Collect land cells (sentinel) for terrain assignment.
     final landCells = <(int x, int y)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] == _landSentinel) {
-          landCells.add((x, y));
-        }
+    TileMapGrid.forEachCell(grid, (y, x, value) {
+      if (value == _landSentinel) {
+        landCells.add((x, y));
       }
-    }
+    });
     if (landCells.isEmpty) {
       // No land; nothing to assign.
       return (terrainGrid, resourceGrid);
@@ -70,21 +68,19 @@ class _TileMapGenTerrainResource implements MapGenStage {
           )
         : null;
 
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        _maybePlaceResourceAtLandCell(
-          grid,
-          terrainGrid,
-          resourceGrid,
-          mapRegionId,
-          rules,
-          capState,
-          rnd,
-          x,
-          y,
-        );
-      }
-    }
+    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+      _maybePlaceResourceAtLandCell(
+        grid,
+        terrainGrid,
+        resourceGrid,
+        mapRegionId,
+        rules,
+        capState,
+        rnd,
+        x,
+        y,
+      );
+    });
 
     return (terrainGrid, resourceGrid);
   }
@@ -192,25 +188,23 @@ class _TileMapGenTerrainResource implements MapGenStage {
     var mountainCount = 0;
     final frontier = <(int x, int y)>{};
     final remaining = <(int x, int y)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] != _landSentinel) continue;
-        final terrain = terrainGrid[y][x];
-        if (terrain == TerrainType.mountain) {
-          mountainCount++;
-          _addMountainAdjacentFrontierFromCell(
-            x,
-            y,
-            terrainGrid,
-            grid,
-            directions,
-            frontier,
-          );
-        } else {
-          remaining.add((x, y));
-        }
+    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+      if (grid[y][x] != _landSentinel) return;
+      final terrain = terrainGrid[y][x];
+      if (terrain == TerrainType.mountain) {
+        mountainCount++;
+        _addMountainAdjacentFrontierFromCell(
+          x,
+          y,
+          terrainGrid,
+          grid,
+          directions,
+          frontier,
+        );
+      } else {
+        remaining.add((x, y));
       }
-    }
+    });
     return (
       mountainCount: mountainCount,
       mountainAdjacentFrontier: frontier,

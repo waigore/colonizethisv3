@@ -77,20 +77,18 @@ List<(double effectiveD2, int x, int y, int continent)> _voronoiLandCellEntries(
   List<int> seedEndByContinent,
 ) {
   final entries = <(double effectiveD2, int x, int y, int continent)>[];
-  for (var y = 0; y < params.height; y++) {
-    for (var x = 0; x < params.width; x++) {
-      final (bestC, bestD2) = _bestContinentForCellVoronoi(
-        params,
-        landSeeds,
-        numContinents,
-        seedStartByContinent,
-        seedEndByContinent,
-        x,
-        y,
-      );
-      entries.add((bestD2, x, y, bestC));
-    }
-  }
+  TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+    final (bestC, bestD2) = _bestContinentForCellVoronoi(
+      params,
+      landSeeds,
+      numContinents,
+      seedStartByContinent,
+      seedEndByContinent,
+      x,
+      y,
+    );
+    entries.add((bestD2, x, y, bestC));
+  });
   return entries;
 }
 

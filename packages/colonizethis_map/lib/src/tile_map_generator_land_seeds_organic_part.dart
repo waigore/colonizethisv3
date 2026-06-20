@@ -15,14 +15,12 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
   List<List<int>> minDistToOwnLand,
 ) {
   final candidates = <(int x, int y)>[];
-  for (var y = 0; y < params.height; y++) {
-    for (var x = 0; x < params.width; x++) {
-      if (grid[y][x] != seaZoneId) continue;
-      final minDistToOwn = minDistToOwnLand[y][x];
-      if (minDistToOwn > closeRadius) continue;
-      candidates.add((x, y));
-    }
-  }
+  TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+    if (grid[y][x] != seaZoneId) return;
+    final minDistToOwn = minDistToOwnLand[y][x];
+    if (minDistToOwn > closeRadius) return;
+    candidates.add((x, y));
+  });
   return candidates;
 }
 
@@ -296,11 +294,9 @@ _placeLandSeedsOrganicImpl(
 
   // Step 3: Coastline growth if budget remains
   var usedTotal = 0;
-  for (var y = 0; y < params.height; y++) {
-    for (var x = 0; x < params.width; x++) {
-      if (g[y][x] == kTileMapLandSentinel) usedTotal++;
-    }
-  }
+  TileMapGrid.forEachCell(g, (_, __, value) {
+    if (value == kTileMapLandSentinel) usedTotal++;
+  });
   if (usedTotal < landBudgetTotal) {
     final remaining = landBudgetTotal - usedTotal;
     final (g2, _) = _growCoastlines(
