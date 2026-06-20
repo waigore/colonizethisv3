@@ -1,4 +1,3 @@
-
 /// Pass 4–5, Pass 8–9: lakes, moats, border noise, province seeds and assignment.
 
 part of 'tile_map_generator.dart';
@@ -216,11 +215,7 @@ class _TileMapGenLakesProvinces implements MapGenStage {
     };
     TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
       if (grid[y][x] != _landSentinel) return;
-      final bestSeedIndex = _graph.nearestLandSeedIndexForCell(
-        x,
-        y,
-        landSeeds,
-      );
+      final bestSeedIndex = _graph.nearestLandSeedIndexForCell(x, y, landSeeds);
       final c = continentBySeedIndex[bestSeedIndex];
       byContinent[c]!.add((x, y));
     });
@@ -309,6 +304,9 @@ class _TileMapGenLakesProvinces implements MapGenStage {
     Random rnd,
   ) {
     final next = snapshotGrid(grid);
+    // ct-lint-allow: nested-grid-walk — bordered interior walk (skips the grid
+    // edge, y/x in 1..n-2), so the full-grid TileMapGrid.forEachIndex contract
+    // does not apply.
     for (var y = 1; y < params.height - 1; y++) {
       for (var x = 1; x < params.width - 1; x++) {
         _tryBorderNoiseSwapAtCell(grid, next, x, y, seaZoneId, rnd);

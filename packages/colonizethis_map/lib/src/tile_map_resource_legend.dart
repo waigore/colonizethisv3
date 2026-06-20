@@ -129,6 +129,8 @@ String? geographicGameWorldResourceGlyphLetter(String? resourceId) {
 Iterable<({int x, int y, String letter})> tileMapResourceGlyphs(
   TileMapResult result,
 ) sync* {
+  // ct-lint-allow: nested-grid-walk — sync* generator; a forEachIndex callback
+  // cannot `yield` to the enclosing generator.
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
       final resource = result.resourceAt(x, y);

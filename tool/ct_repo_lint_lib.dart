@@ -37,6 +37,7 @@ import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
 import 'check_map_gen_stage_protocol.dart';
+import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
@@ -855,6 +856,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckTileMapInlineCardinalDirections(repoRoot);
     case 'repo.map_grid_ops_central':
       return runCheckMapGridOpsCentral(repoRoot);
+    case 'repo.map_grid_cell_iteration_central':
+      return runCheckMapGridCellIterationCentral(repoRoot);
     case 'repo.map_gen_stage_protocol':
       return runCheckMapGenStageProtocol(repoRoot);
     case 'repo.map_public_barrel_surface':

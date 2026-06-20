@@ -130,6 +130,8 @@ int _drawOptionalLegendSections(
 }
 
 Iterable<String> _regionIdsFromResult(TileMapResult result) sync* {
+  // ct-lint-allow: nested-grid-walk — sync* generator; a forEachIndex callback
+  // cannot `yield` to the enclosing generator.
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
       yield result.cell(x, y);
