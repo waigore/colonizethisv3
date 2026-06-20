@@ -107,6 +107,42 @@ bool isAiControlledForEvidence(Game game, String playerId) {
   return (game: game.copyWith(overtureStates: kept), removed: removed);
 }
 
+/// Removes every overture that involves [factionId] on **either** side from
+/// [game] (i.e. `o.gpId == factionId || o.targetId == factionId`).
+///
+/// Canonical full-faction-teardown counterpart to the pair-scoped
+/// [clearOverturesBetweenGpAndFaction] (Refs #3562 AC1). Use this when an entire
+/// faction is being removed — Join-Empire absorption of a Minor/Tribe or a Great
+/// Power — so its inbound and outbound overtures all disappear regardless of the
+/// counterpart. The pair-scoped helper, by contrast, clears only a single
+/// GP↔faction pairing and is the wrong tool here.
+///
+/// Minor/Tribe targets never originate overtures (overtures are GP→target), so
+/// for them the either-side filter is equivalent to the previous
+/// `targetId == factionId` block; for an absorbed Great Power the either-side
+/// filter matches the previous `gpId == factionId || targetId == factionId`
+/// block. Both prior inline blocks are therefore behaviour-preserving here.
+///
+/// Returns the (possibly unchanged) game alongside the overtures that were
+/// removed, in their original `game.overtureStates` order. When nothing matches
+/// the original [game] instance is returned with an empty `removed` list.
+({Game game, List<OvertureState> removed}) clearOverturesInvolvingFaction(
+  Game game,
+  String factionId,
+) {
+  final removed = <OvertureState>[];
+  final kept = <OvertureState>[];
+  for (final o in game.overtureStates) {
+    if (o.gpId == factionId || o.targetId == factionId) {
+      removed.add(o);
+    } else {
+      kept.add(o);
+    }
+  }
+  if (removed.isEmpty) return (game: game, removed: const <OvertureState>[]);
+  return (game: game.copyWith(overtureStates: kept), removed: removed);
+}
+
 /// Returns the first decision in [decisions] for which [matches] is true, or
 /// null when [decisions] is null or no entry matches.
 ///

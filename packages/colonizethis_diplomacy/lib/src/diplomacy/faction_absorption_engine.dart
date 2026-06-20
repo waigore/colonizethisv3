@@ -214,9 +214,12 @@ Game _absorbIntoGp(
       tribes = next.tribes.where((t) => t.id != absorbedFactionId).toList();
     }
 
-    final overtures = next.overtureStates
-        .where((o) => o.targetId != absorbedFactionId)
-        .toList();
+    // Canonical full-faction overture teardown (Refs #3562 AC1) replaces the
+    // prior inline `targetId == absorbedFactionId` filter. Minor/Tribe targets
+    // never originate overtures, so clearing either side is equivalent here.
+    final overtures =
+        clearOverturesInvolvingFaction(next, absorbedFactionId).game
+            .overtureStates;
 
     final relations = next.diplomacyRelations
         .where(
@@ -243,11 +246,11 @@ Game _absorbIntoGp(
   final glyphs = Map<String, String>.from(next.politicalGlyphByPlayerId)
     ..remove(absorbedFactionId);
 
-  final overtures = next.overtureStates
-      .where(
-        (o) => o.gpId != absorbedFactionId && o.targetId != absorbedFactionId,
-      )
-      .toList();
+  // Canonical full-faction overture teardown (Refs #3562 AC1) replaces the prior
+  // inline `gpId == absorbedFactionId || targetId == absorbedFactionId` filter.
+  final overtures =
+      clearOverturesInvolvingFaction(next, absorbedFactionId).game
+          .overtureStates;
 
   final relations = next.diplomacyRelations
       .where(
