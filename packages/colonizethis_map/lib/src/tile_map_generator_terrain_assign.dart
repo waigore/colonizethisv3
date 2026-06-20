@@ -2,12 +2,41 @@
 
 part of 'tile_map_generator.dart';
 
-class _TileMapGenTerrainResource implements MapGenStage {
+class _TileMapGenTerrainResource
+    implements MapGenPass<TerrainPassPayload, TerrainPassResult> {
   _TileMapGenTerrainResource(this.params, this._graph);
 
   @override
   final TileMapParams params;
   final TileMapGridGraph _graph;
+
+  /// Uniform pass entry: Pass 6–7 terrain/resource assignment. Returns
+  /// `(null, null)` when [TerrainPassPayload.resourceRules] is null (skip),
+  /// matching the prior inline orchestration (Refs #3574, slice 4).
+  @override
+  TerrainPassResult run(MapGenPassContext<TerrainPassPayload> ctx) {
+    final payload = ctx.payload;
+    final rules = payload.resourceRules;
+    if (rules == null) {
+      ctx.log('Pass 6–7: Terrain/resources skipped (no rules or no provinces)');
+      return (null, null);
+    }
+    final t = assignTerrainAndResources(
+      payload.grid,
+      payload.regionId,
+      rules,
+      payload.rnd,
+    );
+    var terrainCount = 0;
+    var resourceCount = 0;
+    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+      if (t.$1[y][x] != null) terrainCount++;
+      if (t.$2[y][x] != null) resourceCount++;
+    });
+    ctx.log('Pass 6: Terrain assigned ($terrainCount land cells)');
+    ctx.log('Pass 7: Resources placed ($resourceCount cells)');
+    return t;
+  }
 
   (List<List<TerrainType?>>, List<List<Resource?>>) assignTerrainAndResources(
     List<List<String>> grid,

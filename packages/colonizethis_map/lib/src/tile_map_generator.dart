@@ -6,6 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/package_logger.dart';
 
 import 'grid_voronoi.dart';
+import 'map_gen_pass_payloads.dart';
 import 'map_validation_exception.dart';
 import 'tile_map_generator_land_seeds.dart';
 import 'tile_map_land_sentinel.dart';
@@ -262,33 +263,25 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     Random rnd,
     void Function(String)? onLog,
   ) {
-    if (params.seedBeforeAssignment) {
-      final placed = _landSeedService.placeLandSeeds(provinceToContinent, rnd);
-      final continentSeeds = placed.$1;
-      final landSeeds = placed.$2;
-      final continentBySeedIndex = placed.$3;
-      onLog?.call(
-        'Pass 2: Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}',
-      );
-      final assignedGrid = _landSeedService.assignLandByLandSeeds(
-        grid,
-        landSeeds,
-        continentBySeedIndex,
-        provinceToContinent,
-        seaZoneId,
-      );
-      return (assignedGrid, continentSeeds, landSeeds, continentBySeedIndex);
-    }
-    final organic = _landSeedService.placeLandSeedsOrganic(
-      grid,
-      provinceToContinent,
-      seaZoneId,
-      rnd,
+    final result = _landSeedService.run(
+      MapGenPassContext<LandSeedPassPayload>(
+        params: params,
+        payload: LandSeedPassPayload(
+          grid: grid,
+          provinceToContinent: provinceToContinent,
+          seaZoneId: seaZoneId,
+          rnd: rnd,
+          seedBeforeAssignment: params.seedBeforeAssignment,
+        ),
+        onLog: onLog,
+      ),
     );
-    onLog?.call(
-      'Pass 2–3 (organic): Continent seeds ${organic.$1.length}, land seeds ${organic.$2.length}',
+    return (
+      result.grid,
+      result.continentSeeds,
+      result.landSeeds,
+      result.continentBySeedIndex,
     );
-    return (organic.$4, organic.$1, organic.$2, organic.$3);
   }
 
   int _countLandCells(List<List<String>> grid) {
@@ -307,32 +300,19 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     Random rnd,
     void Function(String)? onLog,
   ) {
-    var nextGrid = grid;
-    if (params.skipFillLakes) {
-      onLog?.call('Pass 4: Fill lakes and moats skipped');
-    } else {
-      nextGrid = _lakeAndProvinceService.fillLakes(
-        nextGrid,
-        seaZoneId,
-        landSeeds,
-        continentBySeedIndex,
-      );
-      nextGrid = _lakeAndProvinceService.fillMoats(
-        nextGrid,
-        seaZoneId,
-        landSeeds,
-        continentBySeedIndex,
-        rnd,
-      );
-      onLog?.call('Pass 4: Fill lakes and moats done');
-    }
-    if (params.borderNoise > 0) {
-      nextGrid = _lakeAndProvinceService.borderNoise(nextGrid, seaZoneId, rnd);
-      onLog?.call('Pass 5: Border noise applied');
-    } else {
-      onLog?.call('Pass 5: Border noise skipped (0)');
-    }
-    return nextGrid;
+    return _lakeAndProvinceService.run(
+      MapGenPassContext<LakesPassPayload>(
+        params: params,
+        payload: LakesPassPayload(
+          grid: grid,
+          seaZoneId: seaZoneId,
+          landSeeds: landSeeds,
+          continentBySeedIndex: continentBySeedIndex,
+          rnd: rnd,
+        ),
+        onLog: onLog,
+      ),
+    );
   }
 
   (List<List<TerrainType?>>?, List<List<Resource?>>?)
@@ -343,27 +323,18 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     Random rnd,
     void Function(String)? onLog,
   ) {
-    if (resourceRules == null) {
-      onLog?.call(
-        'Pass 6–7: Terrain/resources skipped (no rules or no provinces)',
-      );
-      return (null, null);
-    }
-    final t = _terrainResourceService.assignTerrainAndResources(
-      grid,
-      regionId,
-      resourceRules,
-      rnd,
+    return _terrainResourceService.run(
+      MapGenPassContext<TerrainPassPayload>(
+        params: params,
+        payload: TerrainPassPayload(
+          grid: grid,
+          regionId: regionId,
+          resourceRules: resourceRules,
+          rnd: rnd,
+        ),
+        onLog: onLog,
+      ),
     );
-    var terrainCount = 0;
-    var resourceCount = 0;
-    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
-      if (t.$1[y][x] != null) terrainCount++;
-      if (t.$2[y][x] != null) resourceCount++;
-    });
-    onLog?.call('Pass 6: Terrain assigned ($terrainCount land cells)');
-    onLog?.call('Pass 7: Resources placed ($resourceCount cells)');
-    return t;
   }
 
   (List<List<String>>, List<List<TerrainType?>>?, List<List<Resource?>>?)

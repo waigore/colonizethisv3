@@ -2,13 +2,48 @@
 
 part of 'tile_map_generator.dart';
 
-class _TileMapGenLakesProvinces implements MapGenStage {
+class _TileMapGenLakesProvinces
+    implements MapGenPass<LakesPassPayload, List<List<String>>> {
   _TileMapGenLakesProvinces(this.params, this._graph, this._join);
 
   @override
   final TileMapParams params;
   final TileMapGridGraph _graph;
   final _TileMapGenJoinSea _join;
+
+  /// Uniform pass entry: Pass 4 lake/moat fill (unless `skipFillLakes`) then
+  /// Pass 5 border noise (when `borderNoise > 0`). Returns the updated grid;
+  /// behaviour matches the prior inline orchestration (Refs #3574, slice 4).
+  @override
+  List<List<String>> run(MapGenPassContext<LakesPassPayload> ctx) {
+    final payload = ctx.payload;
+    var nextGrid = payload.grid;
+    if (params.skipFillLakes) {
+      ctx.log('Pass 4: Fill lakes and moats skipped');
+    } else {
+      nextGrid = fillLakes(
+        nextGrid,
+        payload.seaZoneId,
+        payload.landSeeds,
+        payload.continentBySeedIndex,
+      );
+      nextGrid = fillMoats(
+        nextGrid,
+        payload.seaZoneId,
+        payload.landSeeds,
+        payload.continentBySeedIndex,
+        payload.rnd,
+      );
+      ctx.log('Pass 4: Fill lakes and moats done');
+    }
+    if (params.borderNoise > 0) {
+      nextGrid = borderNoise(nextGrid, payload.seaZoneId, payload.rnd);
+      ctx.log('Pass 5: Border noise applied');
+    } else {
+      ctx.log('Pass 5: Border noise skipped (0)');
+    }
+    return nextGrid;
+  }
 
   void _addCoastalLandCandidatesAroundLakeCell(
     int x,
