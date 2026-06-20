@@ -59,9 +59,10 @@ Game runExtractionPhase(
   // Not [Game.mapPlayers]: [currentState] (fleets) may change between players.
   final updatedPlayers = <Player>[];
   final fleetsByIdStartOfPhase = fleetsByIdForWorld(state.worldState);
-  var extractionSeed =
-      (state.globalGameSeed ?? 0) ^
-      (state.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
+  var extractionSeed = mixTurnSeed(
+    state,
+    state.worldState.turnState.turnNumber,
+  );
   for (final player in state.players) {
     var stockpile = player.stockpile;
     final tot = extraction[player.id];

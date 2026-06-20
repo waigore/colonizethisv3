@@ -113,7 +113,7 @@ void _emitEraChangeDialogue(
   final previousEra = eraFromYear(mapping.yearAtTurn(currentTurn));
   final newEra = eraFromYear(mapping.yearAtTurn(nextTurn));
   if (previousEra == newEra) return;
-  final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * kTurnResolutionSeedMix);
+  final seed = mixTurnSeed(game, nextTurn);
   final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
   for (final e in events) {
     onDialogue(e);
