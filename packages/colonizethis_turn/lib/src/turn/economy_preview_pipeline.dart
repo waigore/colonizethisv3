@@ -17,6 +17,27 @@ const List<EconomyPreviewStockpilePhase> _economyPreviewStockpilePhases =
       EconomyPreviewStockpilePhase.production,
     ];
 
+/// Builds the [EconomyPhaseStepContext] shared by the preview entry points
+/// ([economyPreviewStockpilePhaseDeltasForPlayer] and
+/// [applyEconomyPhasesForPreview]). Centralizing construction keeps the common
+/// economy-preview context fields in one place so a new field is threaded once
+/// (extract-at-2+-uses; preview context is identical across both call sites).
+EconomyPhaseStepContext _economyPreviewStepContext({
+  required MapTopology topology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  return EconomyPhaseStepContext(
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+  );
+}
+
 Map<String, int> _stockpileCommodityDeltaMap(
   Stockpile before,
   Stockpile after,
@@ -244,7 +265,7 @@ economyPreviewStockpilePhaseDeltasForPlayer({
     stockpileForViewed(acc.game),
   );
 
-  final economyCtx = EconomyPhaseStepContext(
+  final economyCtx = _economyPreviewStepContext(
     topology: topology,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
@@ -284,7 +305,7 @@ Game applyEconomyPhasesForPreview({
   );
   acc = runEconomyPhaseSequence(
     acc,
-    EconomyPhaseStepContext(
+    _economyPreviewStepContext(
       topology: topology,
       tileMapByRegion: tileMapByRegion,
       extractedByPlayerId: extractedByPlayerId,
