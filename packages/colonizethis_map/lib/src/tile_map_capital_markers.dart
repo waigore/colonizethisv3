@@ -1,7 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'map_validation_exception.dart';
-import 'region_constants.dart';
+import 'map_region_dispatch.dart';
 
 /// Capital marker coordinates for map rendering (PNG / init-game view).
 typedef TileMapCapitalMarker = ({
@@ -32,14 +31,10 @@ enum TileMapCapitalMarkerScope {
 /// for unknown ids. Combined (all-faction) views pass
 /// [TileMapCapitalMarkerScope.allFactions] explicitly.
 TileMapCapitalMarkerScope capitalMarkerScopeForRegion(String regionId) {
-  if (regionId == kRegionOldWorld) {
-    return TileMapCapitalMarkerScope.oldWorldFactions;
-  }
-  if (regionId == kRegionNewWorld) {
-    return TileMapCapitalMarkerScope.newWorldFactions;
-  }
-  throw MapValidationException(
-    'map: unknown region id "$regionId" (expected $kRegionOldWorld or $kRegionNewWorld)',
+  return selectByMapRegionId(
+    regionId,
+    oldWorld: () => TileMapCapitalMarkerScope.oldWorldFactions,
+    newWorld: () => TileMapCapitalMarkerScope.newWorldFactions,
   );
 }
 
