@@ -612,6 +612,13 @@ rules:
     runner: dart
     script: tool/check_map_grid_ops_central.dart
 
+  - rule_id: repo.map_grid_cell_iteration_central
+    group: structure
+    title: colonizethis_map lib tile-grid cell walks must route through TileMapGrid.forEachIndex/forEachCell (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_grid_cell_iteration_central.dart
+
   - rule_id: repo.map_gen_stage_protocol
     group: structure
     title: colonizethis_map generation services must implement MapGenStage (Refs #3459)

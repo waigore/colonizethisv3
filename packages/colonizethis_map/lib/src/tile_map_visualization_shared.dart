@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 
 import 'init_game_map_view_data.dart';
 import 'tile_map_colors.dart';
+import 'tile_map_grid.dart';
 import 'tile_map_resource_legend.dart';
 
 export 'tile_map_colors.dart';
@@ -125,36 +126,34 @@ void drawBorders(
 ) {
   final black = image.getColor(0, 0, 0);
   final borderThickness = cellSize >= 12 ? 2 : 1;
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      if (x + 1 < result.width) {
-        _drawVerticalCellBorderIfDifferent(
-          image,
-          result,
-          x,
-          y,
-          seaZoneIds,
-          cellSize,
-          seaZoneBorderColor,
-          black,
-          borderThickness,
-        );
-      }
-      if (y + 1 < result.height) {
-        _drawHorizontalCellBorderIfDifferent(
-          image,
-          result,
-          x,
-          y,
-          seaZoneIds,
-          cellSize,
-          seaZoneBorderColor,
-          black,
-          borderThickness,
-        );
-      }
+  TileMapGrid.forEachIndex(result.height, result.width, (y, x) {
+    if (x + 1 < result.width) {
+      _drawVerticalCellBorderIfDifferent(
+        image,
+        result,
+        x,
+        y,
+        seaZoneIds,
+        cellSize,
+        seaZoneBorderColor,
+        black,
+        borderThickness,
+      );
     }
-  }
+    if (y + 1 < result.height) {
+      _drawHorizontalCellBorderIfDifferent(
+        image,
+        result,
+        x,
+        y,
+        seaZoneIds,
+        cellSize,
+        seaZoneBorderColor,
+        black,
+        borderThickness,
+      );
+    }
+  });
 }
 
 /// Draws a color swatch in the legend at row y.

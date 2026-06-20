@@ -13,55 +13,53 @@ List<CellViewData> _buildCellViewDataList({
   required Map<String, int>? resourceExtractionBlockedUnitsByTile,
 }) {
   final cells = <CellViewData>[];
-  for (var y = 0; y < tileMap.height; y++) {
-    for (var x = 0; x < tileMap.width; x++) {
-      final localId = tileMap.cell(x, y);
-      final isSea = seaZoneIds.contains(localId);
-      final terrain = tileMap.terrainAt(x, y);
-      final resource = tileMap.resourceAt(x, y);
-      final tileKey = '$regionId|$localId|$x|$y';
-      final improvement = isSea ? null : tileState.improvementLevel(tileKey);
-      final road = isSea ? null : tileState.roadLevel(tileKey);
-      final visibility = visibilityByTile != null
-          ? (visibilityByTile[tileKey] ?? TileVisibility.visible)
-          : TileVisibility.visible;
-      final extractionUnits = isSea
-          ? null
-          : resourceExtractionUnitsByTile?[tileKey];
-      final extractionEffectiveUnits = isSea
-          ? null
-          : resourceExtractionEffectiveUnitsByTile?[tileKey];
-      final extractionBlockedUnits = isSea
-          ? null
-          : resourceExtractionBlockedUnitsByTile?[tileKey];
-      final fullProvinceId = isSea ? null : ProvinceId.full(regionId, localId);
-      cells.add(
-        CellViewData(
-          x: x,
-          y: y,
-          regionCellId: localId,
-          isSea: isSea,
-          terrainTypeId: terrain?.name,
-          terrainType: terrain,
-          resourceId: resource?.name,
-          ownerFactionId: fullProvinceId != null
-              ? ownerByProvinceId[fullProvinceId]
-              : null,
-          provinceDisplayName: isSea
-              ? null
-              : (fullProvinceId != null
-                    ? provinceDisplayNameById[fullProvinceId]
-                    : null),
-          improvementLevel: isSea ? null : improvement,
-          roadLevel: isSea ? null : road,
-          resourceExtractionUnits: extractionUnits,
-          resourceExtractionEffectiveUnits: extractionEffectiveUnits,
-          resourceExtractionBlockedUnits: extractionBlockedUnits,
-          visibility: visibility,
-        ),
-      );
-    }
-  }
+  TileMapGrid.forEachIndex(tileMap.height, tileMap.width, (y, x) {
+    final localId = tileMap.cell(x, y);
+    final isSea = seaZoneIds.contains(localId);
+    final terrain = tileMap.terrainAt(x, y);
+    final resource = tileMap.resourceAt(x, y);
+    final tileKey = '$regionId|$localId|$x|$y';
+    final improvement = isSea ? null : tileState.improvementLevel(tileKey);
+    final road = isSea ? null : tileState.roadLevel(tileKey);
+    final visibility = visibilityByTile != null
+        ? (visibilityByTile[tileKey] ?? TileVisibility.visible)
+        : TileVisibility.visible;
+    final extractionUnits = isSea
+        ? null
+        : resourceExtractionUnitsByTile?[tileKey];
+    final extractionEffectiveUnits = isSea
+        ? null
+        : resourceExtractionEffectiveUnitsByTile?[tileKey];
+    final extractionBlockedUnits = isSea
+        ? null
+        : resourceExtractionBlockedUnitsByTile?[tileKey];
+    final fullProvinceId = isSea ? null : ProvinceId.full(regionId, localId);
+    cells.add(
+      CellViewData(
+        x: x,
+        y: y,
+        regionCellId: localId,
+        isSea: isSea,
+        terrainTypeId: terrain?.name,
+        terrainType: terrain,
+        resourceId: resource?.name,
+        ownerFactionId: fullProvinceId != null
+            ? ownerByProvinceId[fullProvinceId]
+            : null,
+        provinceDisplayName: isSea
+            ? null
+            : (fullProvinceId != null
+                  ? provinceDisplayNameById[fullProvinceId]
+                  : null),
+        improvementLevel: isSea ? null : improvement,
+        roadLevel: isSea ? null : road,
+        resourceExtractionUnits: extractionUnits,
+        resourceExtractionEffectiveUnits: extractionEffectiveUnits,
+        resourceExtractionBlockedUnits: extractionBlockedUnits,
+        visibility: visibility,
+      ),
+    );
+  });
   return cells;
 }
 
@@ -71,16 +69,14 @@ Map<String, (int x, int y)> _buildProvinceToRepresentativeTile({
   required Set<String> seaZoneIds,
 }) {
   final provinceToTile = <String, (int x, int y)>{};
-  for (var y = 0; y < tileMap.height; y++) {
-    for (var x = 0; x < tileMap.width; x++) {
-      final localId = tileMap.cell(x, y);
-      if (seaZoneIds.contains(localId)) {
-        continue;
-      }
-      final fullProvinceId = ProvinceId.full(regionId, localId);
-      provinceToTile.putIfAbsent(fullProvinceId, () => (x, y));
+  TileMapGrid.forEachIndex(tileMap.height, tileMap.width, (y, x) {
+    final localId = tileMap.cell(x, y);
+    if (seaZoneIds.contains(localId)) {
+      return;
     }
-  }
+    final fullProvinceId = ProvinceId.full(regionId, localId);
+    provinceToTile.putIfAbsent(fullProvinceId, () => (x, y));
+  });
   return provinceToTile;
 }
 
@@ -137,10 +133,7 @@ _buildUnitAndCivilianMarkerData({
     );
   }
 
-  final regionUnits = regionDataForMapRegionId(
-    game.worldState,
-    regionId,
-  ).units;
+  final regionUnits = regionDataForMapRegionId(game.worldState, regionId).units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
         civilianOwnerIds.contains(u.ownerId) && isCivilianUnitType(u.type);
