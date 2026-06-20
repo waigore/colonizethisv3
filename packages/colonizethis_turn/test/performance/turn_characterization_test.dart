@@ -115,10 +115,6 @@ MapTopology _stripTopology() {
 
 void main() {
   group('Turn characterization (Refs #2268 AC-10)', () {
-    tearDown(() {
-      setConnectivityHotPathMetricsForTests(null);
-    });
-
     test(
       'full turn on large synthetic game keeps connectivity hot-path work bounded',
       () {
@@ -147,9 +143,6 @@ void main() {
         );
         expect(totalTiles, 100);
 
-        final metrics = ConnectivityHotPathMetrics();
-        setConnectivityHotPathMetricsForTests(metrics);
-
         final next = requireTurnResolutionComplete(
           resolveTurnForGame(
             game: game,
@@ -160,6 +153,25 @@ void main() {
         );
 
         expect(next.worldState.turnState.turnNumber, 1);
+
+        // Reproduce the turn's connectivity hot-path work via the threaded
+        // `metrics` parameter (Refs #3544 AC3) instead of a module-level test
+        // hook. Resolving on the turn's start state mirrors the work done by
+        // the extraction (GP) and world-market (non-GP) phases that call these
+        // resolvers internally.
+        final metrics = ConnectivityHotPathMetrics();
+        resolveConnectivity(
+          game: game,
+          tileMapByRegion: tileMapByRegion,
+          topology: topology,
+          metrics: metrics,
+        );
+        resolveNonGreatPowerConnectivity(
+          game: game,
+          tileMapByRegion: tileMapByRegion,
+          topology: topology,
+          metrics: metrics,
+        );
 
         // (a) Town-rule worklist: each dequeue expands at most one town tile; bounded by provinces.
         expect(

@@ -3,6 +3,7 @@ import 'package:colonizethis_world/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'connectivity_blockade_target.dart';
+import 'connectivity_metrics.dart';
 import 'connectivity_propagation.dart';
 import 'connectivity_result.dart';
 import 'connectivity_tile_helpers.dart';
@@ -62,6 +63,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
   Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
+  ConnectivityHotPathMetrics? metrics,
 }) {
   worldLog.d(
     'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
@@ -104,6 +106,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
       townByTileKey:
           townByTileKeyByPlayer[player.id] ?? const <String, Province>{},
       blockadedPortProvinces: blockadedByPlayer[player.id] ?? const {},
+      metrics: metrics,
     );
     result[player.id] = cr;
   }
@@ -148,6 +151,7 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
+  ConnectivityHotPathMetrics? metrics,
 }) {
   if (game.minorNations.isEmpty && game.tribes.isEmpty) {
     return const <String, ConnectivityResult>{};
@@ -195,6 +199,7 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
       townByTileKey:
           townByTileKeyByFaction[factionId] ?? const <String, Province>{},
       blockadedPortProvinces: const <String>{},
+      metrics: metrics,
     );
     result[factionId] = cr;
   }
