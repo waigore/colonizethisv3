@@ -130,6 +130,9 @@ Game _applyCallToArmsRefuse(
   IntraTurnEventTally? eventTally,
 }) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  // Single isolated upsert for one call-to-arms refusal (not a loop), so the
+  // standalone helper is acceptable here over RelationUpsertIndex (Refs #3562
+  // AC5).
   relations = upsertRelation(relations, allyGpId, defenderGpId, (existing) {
     final base = existing?.score ?? relationScoreNeutral;
     var newScore = (base - callToArmsRefusalScorePenalty).clamp(

@@ -8,8 +8,92 @@ import 'test_fixtures.dart';
 /// Coverage for the diplomacy deduplication helpers introduced by Refs #3562:
 /// the generic [indexByKey] builder (AC2), the relocated
 /// [isAiControlledForEvidence] helper now living in the diplomacy shared
-/// helpers (AC6), and the [logDiplomaticEvent] append+log helper (AC4).
+/// helpers (AC6), the [logDiplomaticEvent] append+log helper (AC4), and the
+/// canonical [clearOverturesBetweenGpAndFaction] overture-clearing helper (AC1).
 void main() {
+  group('clearOverturesBetweenGpAndFaction (AC1)', () {
+    Game gameWithOvertures(List<OvertureState> overtures) =>
+        TestFixtures.minimalGame(
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          overtureStates: overtures,
+        );
+
+    test('positive: directional clear removes only (gpId -> factionId)', () {
+      final game = gameWithOvertures(const [
+        OvertureState(gpId: 'gp1', targetId: 'minor1'),
+        OvertureState(gpId: 'gp1', targetId: 'minor2'),
+        OvertureState(gpId: 'gp2', targetId: 'gp1'),
+      ]);
+
+      final result = clearOverturesBetweenGpAndFaction(game, 'gp1', 'minor1');
+
+      expect(result.removed, hasLength(1));
+      expect(result.removed.single.targetId, 'minor1');
+      expect(result.game.overtureStates.map((o) => '${o.gpId}|${o.targetId}'), [
+        'gp1|minor2',
+        'gp2|gp1',
+      ]);
+    });
+
+    test('negative: directional clear ignores the reverse direction', () {
+      final game = gameWithOvertures(const [
+        OvertureState(gpId: 'gp2', targetId: 'gp1'),
+      ]);
+
+      final result = clearOverturesBetweenGpAndFaction(game, 'gp1', 'gp2');
+
+      expect(result.removed, isEmpty);
+      // Unchanged game instance is returned when nothing matches.
+      expect(identical(result.game, game), isTrue);
+    });
+
+    test('positive: bidirectional clear removes both directions', () {
+      final game = gameWithOvertures(const [
+        OvertureState(gpId: 'gp1', targetId: 'gp2'),
+        OvertureState(gpId: 'gp2', targetId: 'gp1'),
+        OvertureState(gpId: 'gp1', targetId: 'minor1'),
+      ]);
+
+      final result = clearOverturesBetweenGpAndFaction(
+        game,
+        'gp1',
+        'gp2',
+        bidirectional: true,
+      );
+
+      expect(result.removed, hasLength(2));
+      expect(result.game.overtureStates, hasLength(1));
+      expect(result.game.overtureStates.single.targetId, 'minor1');
+    });
+
+    test('positive: removed list preserves original overtureStates order', () {
+      final game = gameWithOvertures(const [
+        OvertureState(gpId: 'gp2', targetId: 'gp1'),
+        OvertureState(gpId: 'gp1', targetId: 'minor1'),
+        OvertureState(gpId: 'gp1', targetId: 'gp2'),
+      ]);
+
+      final result = clearOverturesBetweenGpAndFaction(
+        game,
+        'gp1',
+        'gp2',
+        bidirectional: true,
+      );
+
+      expect(result.removed.map((o) => '${o.gpId}|${o.targetId}'), [
+        'gp2|gp1',
+        'gp1|gp2',
+      ]);
+    });
+
+    test('negative: empty overtures yields no removals and same game', () {
+      final game = gameWithOvertures(const []);
+      final result = clearOverturesBetweenGpAndFaction(game, 'gp1', 'minor1');
+      expect(result.removed, isEmpty);
+      expect(identical(result.game, game), isTrue);
+    });
+  });
+
   group('indexByKey (AC2)', () {
     test('positive: builds key -> position index over a list', () {
       const players = [

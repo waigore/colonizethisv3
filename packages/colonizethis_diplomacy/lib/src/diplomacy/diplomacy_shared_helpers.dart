@@ -67,6 +67,46 @@ bool isAiControlledForEvidence(Game game, String playerId) {
   return p != null && !p.isHuman;
 }
 
+/// Removes overtures between [gpId] and [factionId] from [game].
+///
+/// Canonical replacement for the per-resolver inline overture-clearing filter
+/// blocks (Refs #3562). By default only the directional overture
+/// (`gpId -> factionId`) is cleared, matching the do-nothing intervention path.
+/// When [bidirectional] is true the reverse overture (`factionId -> gpId`) is
+/// also cleared, matching war-termination clearing.
+///
+/// Returns the (possibly unchanged) game alongside the overtures that were
+/// removed, in their original `game.overtureStates` order. When nothing matches
+/// the original [game] instance is returned with an empty `removed` list, so
+/// callers can cheaply skip follow-up work (event logging, copy churn). Callers
+/// that log per-removed overture should consume `removed` instead of re-deriving
+/// the diff.
+///
+/// Note: this clears a single GP↔faction pair. Full faction teardown (removing
+/// every overture that involves an absorbed faction, regardless of counterpart)
+/// is a distinct single-faction operation and is intentionally not expressed
+/// through this pair-scoped helper.
+({Game game, List<OvertureState> removed}) clearOverturesBetweenGpAndFaction(
+  Game game,
+  String gpId,
+  String factionId, {
+  bool bidirectional = false,
+}) {
+  final removed = <OvertureState>[];
+  final kept = <OvertureState>[];
+  for (final o in game.overtureStates) {
+    final directional = o.gpId == gpId && o.targetId == factionId;
+    final reverse = bidirectional && o.gpId == factionId && o.targetId == gpId;
+    if (directional || reverse) {
+      removed.add(o);
+    } else {
+      kept.add(o);
+    }
+  }
+  if (removed.isEmpty) return (game: game, removed: const <OvertureState>[]);
+  return (game: game.copyWith(overtureStates: kept), removed: removed);
+}
+
 /// Returns the first decision in [decisions] for which [matches] is true, or
 /// null when [decisions] is null or no entry matches.
 ///
@@ -86,11 +126,7 @@ T? findHumanDecision<T>(List<T>? decisions, bool Function(T) matches) {
 /// Returns [players] unchanged when [index] is out of range or [amount] is not
 /// positive, so callers can pass an unresolved index (`-1`) safely. When a
 /// debit is applied the returned list is a fresh copy, preserving the original.
-List<Player> debitPlayerTreasury(
-  List<Player> players,
-  int index,
-  int amount,
-) {
+List<Player> debitPlayerTreasury(List<Player> players, int index, int amount) {
   if (amount <= 0 || index < 0 || index >= players.length) return players;
   final next = List<Player>.from(players);
   next[index] = next[index].copyWith(treasury: next[index].treasury - amount);

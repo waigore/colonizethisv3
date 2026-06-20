@@ -4,6 +4,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'overture_resolver.dart';
 
 /// True when [gpId] has purchased land tiles inside provinces owned by
@@ -28,18 +29,6 @@ bool gpHasPurchasedLandInFactionProvinces(
   return false;
 }
 
-Game _clearOverturesBetweenGpAndMinorTribe(
-  Game game,
-  String gpId,
-  String minorOrTribeId,
-) {
-  final overtures = game.overtureStates
-      .where((o) => !(o.gpId == gpId && o.targetId == minorOrTribeId))
-      .toList();
-  if (overtures.length == game.overtureStates.length) return game;
-  return game.copyWith(overtureStates: overtures);
-}
-
 /// Applies intervention for one aggressor GP (Diplomacy phase when a GP declares
 /// war on a Minor/Tribe; legacy combat hook may use [applyInterventionChoice]).
 /// SPEC/game/diplomacy.md § Intervention.
@@ -59,11 +48,11 @@ Game applyInterventionAgainstAggressor(
   if (!aggressorIsGp) return game;
 
   if (choice == InterventionChoice.doNothing) {
-    var g = _clearOverturesBetweenGpAndMinorTribe(
+    var g = clearOverturesBetweenGpAndFaction(
       game,
       interveningGpId,
       defenderMinorOrTribeId,
-    );
+    ).game;
     g = appendDiplomaticEvent(
       g,
       turn,
@@ -80,6 +69,9 @@ Game applyInterventionAgainstAggressor(
 
   if (choice == InterventionChoice.intervene) {
     final ids = canonicalPairIds(interveningGpId, aggressorGpId);
+    // Single isolated upsert for one intervention choice (not a loop), so the
+    // standalone helper is acceptable here over RelationUpsertIndex (Refs #3562
+    // AC5).
     relations = upsertRelation(relations, interveningGpId, aggressorGpId, (
       existing,
     ) {
@@ -110,6 +102,8 @@ Game applyInterventionAgainstAggressor(
     });
   } else if (choice == InterventionChoice.protest) {
     final ids = canonicalPairIds(interveningGpId, aggressorGpId);
+    // Single isolated upsert for one intervention choice (not a loop); see AC5
+    // note above (Refs #3562).
     relations = upsertRelation(relations, interveningGpId, aggressorGpId, (
       existing,
     ) {

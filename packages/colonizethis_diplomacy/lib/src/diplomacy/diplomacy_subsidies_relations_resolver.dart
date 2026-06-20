@@ -12,28 +12,28 @@ String _subsidyPairKey(String payerId, String targetId) =>
 
 Game terminateAgreementsOnWar(Game game, {IntraTurnEventTally? eventTally}) {
   final turn = game.worldState.turnState.turnNumber;
-  var overtures = game.overtureStates;
+  final before = game.overtureStates;
+  // Clear each at-war pair bidirectionally via the canonical helper (Refs
+  // #3562). The per-removed event order is re-derived below in the original
+  // `overtureStates` order so the appended history is identical to the prior
+  // single-pass filter regardless of war-relation iteration order.
   for (final rel in game.diplomacyRelations) {
     if (!rel.atWar) continue;
-    final id1 = rel.factionId1;
-    final id2 = rel.factionId2;
-    overtures = overtures
-        .where(
-          (o) =>
-              !((o.gpId == id1 && o.targetId == id2) ||
-                  (o.gpId == id2 && o.targetId == id1)),
-        )
-        .toList();
+    game = clearOverturesBetweenGpAndFaction(
+      game,
+      rel.factionId1,
+      rel.factionId2,
+      bidirectional: true,
+    ).game;
   }
-  if (overtures.length != game.overtureStates.length) {
-    final removed = game.overtureStates
-        .where(
-          (o) => !overtures.any(
-            (n) => n.gpId == o.gpId && n.targetId == o.targetId,
-          ),
-        )
+  final overtures = game.overtureStates;
+  if (overtures.length != before.length) {
+    final keptKeys = {
+      for (final n in overtures) _subsidyPairKey(n.gpId, n.targetId),
+    };
+    final removed = before
+        .where((o) => !keptKeys.contains(_subsidyPairKey(o.gpId, o.targetId)))
         .toList();
-    game = game.copyWith(overtureStates: overtures);
     for (final o in removed) {
       game = appendDiplomaticEvent(
         game,
@@ -88,7 +88,11 @@ Game applyRelationModifiersAndUpdateScores(
       final overture = getOverture(game, gpId, targetId);
       if (overture == null || !overture.hasEmbassy) continue;
 
-      players = debitPlayerTreasury(players, playerIndexById[gpId] ?? -1, amount);
+      players = debitPlayerTreasury(
+        players,
+        playerIndexById[gpId] ?? -1,
+        amount,
+      );
 
       relationsIndex.upsert(
         gpId,
@@ -144,7 +148,11 @@ Game applyRelationModifiersAndUpdateScores(
       if (overture == null || !overture.hasConsulate) continue;
 
       // Deduct initial payment
-      players = debitPlayerTreasury(players, playerIndexById[gpId] ?? -1, amount);
+      players = debitPlayerTreasury(
+        players,
+        playerIndexById[gpId] ?? -1,
+        amount,
+      );
 
       // Store/update ongoing subsidy state
       final pairKey = _subsidyPairKey(gpId, targetId);

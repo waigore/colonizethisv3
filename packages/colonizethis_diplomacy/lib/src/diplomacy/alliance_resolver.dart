@@ -172,6 +172,10 @@ Game processAlliances(
   required DiplomacyFactionMembership factionMembership,
   IntraTurnEventTally? eventTally,
 }) {
+  // Single per-phase relation index so each accepted alliance upsert is
+  // amortized O(1) instead of rebuilding the pair-key index per order
+  // (Refs #3562 AC5).
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
@@ -181,8 +185,7 @@ Game processAlliances(
       if (!factionMembership.isGreatPower(targetId)) continue;
 
       final ids = canonicalPairIds(gpId, targetId);
-      final relations = upsertRelation(
-        List<DiplomacyRelation>.from(game.diplomacyRelations),
+      relationsIndex.upsert(
         gpId,
         targetId,
         (existing) => existing == null
@@ -204,7 +207,7 @@ Game processAlliances(
                 lastInteractionTurn: turn,
               ),
       );
-      game = game.copyWith(diplomacyRelations: relations);
+      game = game.copyWith(diplomacyRelations: relationsIndex.toList());
       game = logDiplomaticEvent(
         game,
         turn,
