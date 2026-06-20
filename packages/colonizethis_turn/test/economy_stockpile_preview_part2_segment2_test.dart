@@ -98,7 +98,7 @@ void main() {
             game: game,
             topology: const MapTopology(),
             playerId: 'p1',
-            currentOrders: orders,
+            inputs: economyPreviewInputs(currentOrders: orders),
           );
           final pending =
               phases[EconomyPreviewStockpilePhase.pendingBuildCosts]!;
@@ -213,7 +213,7 @@ void main() {
             game: game,
             topology: const MapTopology(),
             playerId: 'p1',
-            currentOrders: orders,
+            inputs: economyPreviewInputs(currentOrders: orders),
           );
           final pending =
               phases[EconomyPreviewStockpilePhase.pendingBuildCosts]!;
@@ -287,7 +287,7 @@ void main() {
             game: game,
             topology: const MapTopology(),
             playerId: 'p1',
-            currentOrders: orders,
+            inputs: economyPreviewInputs(currentOrders: orders),
           );
           final pending =
               phases[EconomyPreviewStockpilePhase.pendingBuildCosts]!;

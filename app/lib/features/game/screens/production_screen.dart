@@ -126,13 +126,15 @@ class ProductionScreen extends ConsumerWidget {
               game: displayGame,
               topology: panelTopology,
               playerId: displayPlayer.id,
-              tileMapByRegion: panelTileMaps,
-              currentOrders: currentOrders,
-              defaultAssignmentsByPlayerId: {
-                displayPlayer.id: assignedRecipesFromDesiredOutput(
-                  desiredOutputByRecipe,
-                ),
-              },
+              inputs: economyPreviewInputs(
+                tileMapByRegion: panelTileMaps,
+                currentOrders: currentOrders,
+                defaultAssignmentsByPlayerId: {
+                  displayPlayer.id: assignedRecipesFromDesiredOutput(
+                    desiredOutputByRecipe,
+                  ),
+                },
+              ),
             );
         final canEdit = shell.canMutateViaUi;
         final labourCallbacks = ProductionLabourCallbacks(

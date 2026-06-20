@@ -44,9 +44,11 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        extractedByPlayerId: {
-          'p1': {CommodityCatalog.grain.id: 4},
-        },
+        inputs: economyPreviewInputs(
+          extractedByPlayerId: {
+            'p1': {CommodityCatalog.grain.id: 4},
+          },
+        ),
       );
       expect(delta[CommodityCatalog.grain.id], 4);
       expect(delta.length, 1);
@@ -137,11 +139,13 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        defaultAssignmentsByPlayerId: {
-          'p1': const [
-            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
-          ],
-        },
+        inputs: economyPreviewInputs(
+          defaultAssignmentsByPlayerId: {
+            'p1': const [
+              AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
+            ],
+          },
+        ),
       );
       expect(delta[CommodityCatalog.timber.id], -10);
       expect(delta[CommodityCatalog.lumber.id], 5);
@@ -190,13 +194,13 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       expect(delta[CommodityCatalog.paper.id], -4);
       expect(

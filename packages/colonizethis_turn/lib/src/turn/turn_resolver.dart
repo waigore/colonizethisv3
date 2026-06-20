@@ -7,8 +7,11 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import '../projections/order_projections.dart';
 export 'economy_preview_pipeline.dart'
     show
+        EconomyPreviewInputs,
         applyEconomyPhasesForPreview,
+        economyPreviewInputs,
         economyPreviewStockpilePhaseDeltasForPlayer,
+        emptyEconomyPreviewInputs,
         previewStockpileNetDeltaByCommodityForPlayer,
         previewStockpilePhaseDeltasByCommodityForPlayer;
 import 'turn_order_acceptance.dart';
