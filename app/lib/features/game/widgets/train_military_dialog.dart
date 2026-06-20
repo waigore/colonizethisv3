@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
 import '../../../config/app_assets.dart';
 import '../../../widgets/ct_dialog_shell.dart';
@@ -301,40 +302,44 @@ class _MilitaryResourceBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 6,
-          children: [
-            TrainDialogResourceChip(
-              child: Text(l10n.trainUnits_treasury('$treasury')),
-            ),
-            TrainDialogResourceChip(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const WorkerIcon(workerType: 'peasant', size: 14),
-                  const SizedBox(width: 4),
-                  Text(l10n.trainUnits_peasants(peasants)),
-                ],
+        TrainDialogResourceBarBox(
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 6,
+            children: [
+              TrainDialogResourceChip(
+                child: Text(
+                  l10n.trainUnits_treasury(formatTreasuryCurrency(treasury)),
+                ),
               ),
-            ),
-            for (final commodityId in _militaryCommodityIds)
               TrainDialogResourceChip(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ResourceIcon(commodityId: commodityId, size: 14),
+                    const WorkerIcon(workerType: 'peasant', size: 14),
                     const SizedBox(width: 4),
-                    Text(
-                      l10n.trainMilitary_commodityAmount(
-                        _label(commodityId),
-                        stockpile.quantityOf(commodityId),
-                      ),
-                    ),
+                    Text(l10n.trainUnits_peasants(peasants)),
                   ],
                 ),
               ),
-          ],
+              for (final commodityId in _militaryCommodityIds)
+                TrainDialogResourceChip(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ResourceIcon(commodityId: commodityId, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        l10n.trainMilitary_commodityAmount(
+                          _label(commodityId),
+                          stockpile.quantityOf(commodityId),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
         if (deficitHint != null) ...[
           const SizedBox(height: 4),
@@ -381,18 +386,27 @@ class _RegimentRow extends StatelessWidget {
     return Opacity(
       opacity: isLocked ? kTrainDialogLockedOpacity : 1.0,
       child: TrainDialogUnitRowSurface(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildHeader(theme),
-            const SizedBox(height: 2),
-            _buildCostWrap(),
-            ..._buildLockedHint(theme),
-            const SizedBox(height: 4),
+            Expanded(child: _buildInfo(theme)),
+            const SizedBox(width: 8),
             _buildStepper(theme),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInfo(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHeader(theme),
+        const SizedBox(height: 2),
+        _buildCostWrap(),
+        ..._buildLockedHint(theme),
+      ],
     );
   }
 
@@ -414,10 +428,6 @@ class _RegimentRow extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-        ),
-        Text(
-          econ.buildTreasuryCost.toString(),
-          style: theme.textTheme.bodyMedium,
         ),
       ],
     );
@@ -462,7 +472,7 @@ class _RegimentRow extends StatelessWidget {
 
   Widget _buildStepper(ThemeData theme) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
       children: [
         CtNinePatchButton(
           onPressed: isLocked || !canDecrement ? null : onDecrement,
