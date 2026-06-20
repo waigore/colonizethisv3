@@ -107,7 +107,7 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
-  String get naval_transferToHome_confirm => 'Confirm Transfer';
+  String get naval_transferToHome_confirm => 'Transfer';
 
   @override
   String get diplomacy_section_greatPowers => 'Great Powers';
@@ -117,6 +117,15 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
 
   @override
   String get diplomacy_section_tribes => 'Tribes';
+
+  @override
+  String get diplomacy_filter_all => 'All';
+
+  @override
+  String get diplomacy_filter_greatPowersOnly => 'Great Powers only';
+
+  @override
+  String get diplomacy_filter_minorsOnly => 'Minors only';
 
   @override
   String get diplomacy_relationState_war => 'War';

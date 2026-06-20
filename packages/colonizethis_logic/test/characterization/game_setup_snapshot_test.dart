@@ -258,5 +258,24 @@ void main() {
     test('turnTimeMapping is set', () {
       expect(result.game.turnTimeMapping, isNotNull);
     });
+
+    test(
+      'each GP starts with general cap 1 and exactly one 0-medal general',
+      () {
+        // SPEC/game/military-generals.md § Count and tech-gated cap.
+        for (final p in result.game.players) {
+          expect(
+            p.generalCap,
+            1,
+            reason: '${p.id} must start at general cap 1',
+          );
+          final generals = result.game.generals
+              .where((g) => g.ownerId == p.id)
+              .toList();
+          expect(generals.length, 1, reason: '${p.id} must have one general');
+          expect(generals.single.medals, 0);
+        }
+      },
+    );
   });
 }

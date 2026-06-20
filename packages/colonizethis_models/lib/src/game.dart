@@ -7,6 +7,7 @@ import 'minor_nation.dart';
 import 'player.dart';
 import 'tribe.dart';
 import 'turn_time_mapping.dart';
+import 'world_market.dart';
 import 'world_state.dart';
 
 /// Victory type. Phase 5: military only (31+ OW provinces). SPEC/game/victory.md.
@@ -79,18 +80,23 @@ class Game {
     this.subsidyStates = const [],
     this.aiControlByGpId = const {},
     this.aiSeedByGpId = const {},
+    this.aiProfileByGpId = const {},
     this.hiddenAgendaByGpId = const {},
     this.dossierEvidenceEntries = const [],
     this.diplomaticHistoryEvents = const [],
     this.globalGameSeed,
     this.greatPowerColorOverride,
     this.victory,
+    this.calendarCampaignHalted = false,
+    this.infiniteMode = false,
     this.richesCashMultiplier = 1.0,
     this.capitalTileGrainBonusPerTurn = 5,
     this.politicalGlyphByPlayerId = const {},
     this.lastHumanCompletedResearchCategory,
     this.lastHumanResearchCategoryCompletionTurn,
     this.mapViewState = MapViewState.defaults,
+    this.worldMarketState = WorldMarketState.empty,
+    this.ftpPartnershipKeys = const {},
   });
 
   final String id;
@@ -126,6 +132,10 @@ class Game {
   /// Per-AI seed for determinism. Phase 4.
   final Map<String, int> aiSeedByGpId;
 
+  /// Blessed tuned-profile name per AI Great Power; `null` value = normal AI.
+  /// Only AI slots are populated. Refs #3444.
+  final Map<String, String?> aiProfileByGpId;
+
   /// Hidden agenda id per AI Great Power. Phase 6. Never exposed to player.
   final Map<String, String> hiddenAgendaByGpId;
 
@@ -143,6 +153,14 @@ class Game {
 
   /// Victory state when game has been won. Null when game is ongoing.
   final VictoryState? victory;
+
+  /// When true, the campaign calendar cap has been reached without military victory;
+  /// no further full-turn resolution mutates state. SPEC/game/turn-time-mapping.md.
+  final bool calendarCampaignHalted;
+
+  /// When true, turns continue past the calendar year-1800 cap until military victory.
+  /// Set at game creation from [GameSetupConfig.infiniteMode]; immutable in play.
+  final bool infiniteMode;
 
   /// Multiplier for riches-to-treasury conversion. Default 1.0. Scenario/ruleset
   /// may override (e.g. El Dorado 1.5). Per SPEC/program/turn-resolution-phase-details.md.
@@ -168,6 +186,16 @@ class Game {
   /// Persisted Empire overview map state (zoom + display toggles).
   final MapViewState mapViewState;
 
+  /// World market prices and last-turn activity. SPEC/game/world-market.md,
+  /// SPEC/program/world-market-resolution.md. Defaults to
+  /// [WorldMarketState.empty]; populated from `ResourceRules.defaultMarketPrice`
+  /// at game start via [WorldMarketState.withDefaultPrices].
+  final WorldMarketState worldMarketState;
+
+  /// Canonical bilateral FTP pair keys (`factionA|factionB`, sorted).
+  /// SPEC/game/world-market.md § Favored Trading Partner.
+  final Set<String> ftpPartnershipKeys;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -188,6 +216,10 @@ class Game {
       'subsidyStates': subsidyStates.map((s) => s.toJson()).toList(),
     if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
     if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
+    if (aiProfileByGpId.isNotEmpty)
+      'aiProfileByGpId': aiProfileByGpId.map(
+        (k, v) => MapEntry(k, v),
+      ),
     if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
     if (dossierEvidenceEntries.isNotEmpty)
       'dossierEvidenceEntries': dossierEvidenceEntries
@@ -203,6 +235,8 @@ class Game {
         (k, v) => MapEntry(k, v),
       ),
     if (victory != null) 'victory': victory!.toJson(),
+    if (calendarCampaignHalted) 'calendarCampaignHalted': true,
+    if (infiniteMode) 'infiniteMode': true,
     if (richesCashMultiplier != 1.0)
       'richesCashMultiplier': richesCashMultiplier,
     if (capitalTileGrainBonusPerTurn != 5)
@@ -218,6 +252,10 @@ class Game {
           lastHumanResearchCategoryCompletionTurn,
     if (mapViewState != MapViewState.defaults)
       'mapViewState': mapViewState.toJson(),
+    if (worldMarketState != WorldMarketState.empty)
+      'worldMarketState': worldMarketState.toJson(),
+    if (ftpPartnershipKeys.isNotEmpty)
+      'ftpPartnershipKeys': ftpPartnershipKeys.toList()..sort(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -269,6 +307,14 @@ class Game {
     final aiSeedRaw = json['aiSeedByGpId'] as Map<dynamic, dynamic>? ?? {};
     final aiSeedByGpId = aiSeedRaw.map(
       (k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0),
+    );
+    final aiProfileRaw =
+        json['aiProfileByGpId'] as Map<dynamic, dynamic>? ?? {};
+    final aiProfileByGpId = aiProfileRaw.map(
+      (k, v) => MapEntry<String, String?>(
+        k.toString(),
+        v == null ? null : v.toString(),
+      ),
     );
     final hiddenAgendaRaw =
         json['hiddenAgendaByGpId'] as Map<dynamic, dynamic>? ?? {};
@@ -334,6 +380,14 @@ class Game {
     final mapViewState = mapViewStateRaw is Map<dynamic, dynamic>
         ? MapViewState.fromJson(Map<String, dynamic>.from(mapViewStateRaw))
         : MapViewState.defaults;
+    final worldMarketStateRaw = json['worldMarketState'];
+    final worldMarketState = worldMarketStateRaw is Map<dynamic, dynamic>
+        ? WorldMarketState.fromJson(
+            Map<String, dynamic>.from(worldMarketStateRaw),
+          )
+        : WorldMarketState.empty;
+    final ftpKeysList = json['ftpPartnershipKeys'] as List<dynamic>? ?? [];
+    final ftpPartnershipKeys = ftpKeysList.map((e) => e.toString()).toSet();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -371,6 +425,7 @@ class Game {
       subsidyStates: subsidyStates,
       aiControlByGpId: aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId,
+      aiProfileByGpId: aiProfileByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId,
       dossierEvidenceEntries: dossierEvidenceEntries,
       diplomaticHistoryEvents: diplomaticHistoryEvents,
@@ -393,6 +448,11 @@ class Game {
       lastHumanResearchCategoryCompletionTurn:
           (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
       mapViewState: mapViewState,
+      calendarCampaignHalted:
+          json['calendarCampaignHalted'] as bool? ?? false,
+      infiniteMode: json['infiniteMode'] as bool? ?? false,
+      worldMarketState: worldMarketState,
+      ftpPartnershipKeys: ftpPartnershipKeys,
     );
   }
 
@@ -411,18 +471,23 @@ class Game {
     List<SubsidyState>? subsidyStates,
     Map<String, bool>? aiControlByGpId,
     Map<String, int>? aiSeedByGpId,
+    Map<String, String?>? aiProfileByGpId,
     Map<String, String>? hiddenAgendaByGpId,
     List<DossierEvidenceEntry>? dossierEvidenceEntries,
     List<DiplomaticEvent>? diplomaticHistoryEvents,
     int? globalGameSeed,
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
+    bool? calendarCampaignHalted,
+    bool? infiniteMode,
     double? richesCashMultiplier,
     int? capitalTileGrainBonusPerTurn,
     Map<String, String>? politicalGlyphByPlayerId,
     String? lastHumanCompletedResearchCategory,
     int? lastHumanResearchCategoryCompletionTurn,
     MapViewState? mapViewState,
+    WorldMarketState? worldMarketState,
+    Set<String>? ftpPartnershipKeys,
   }) {
     return Game(
       id: id ?? this.id,
@@ -440,6 +505,7 @@ class Game {
       subsidyStates: subsidyStates ?? this.subsidyStates,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
+      aiProfileByGpId: aiProfileByGpId ?? this.aiProfileByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
       dossierEvidenceEntries:
           dossierEvidenceEntries ?? this.dossierEvidenceEntries,
@@ -449,6 +515,9 @@ class Game {
       greatPowerColorOverride:
           greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
+      calendarCampaignHalted:
+          calendarCampaignHalted ?? this.calendarCampaignHalted,
+      infiniteMode: infiniteMode ?? this.infiniteMode,
       richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
       capitalTileGrainBonusPerTurn:
           capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
@@ -461,6 +530,8 @@ class Game {
           lastHumanResearchCategoryCompletionTurn ??
           this.lastHumanResearchCategoryCompletionTurn,
       mapViewState: mapViewState ?? this.mapViewState,
+      worldMarketState: worldMarketState ?? this.worldMarketState,
+      ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
     );
   }
 
@@ -483,6 +554,7 @@ class Game {
           _listEquals(subsidyStates, other.subsidyStates) &&
           _mapEquals(aiControlByGpId, other.aiControlByGpId) &&
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
+          _nullableStringMapEquals(aiProfileByGpId, other.aiProfileByGpId) &&
           _mapEquals(hiddenAgendaByGpId, other.hiddenAgendaByGpId) &&
           _listEquals(dossierEvidenceEntries, other.dossierEvidenceEntries) &&
           _listEquals(diplomaticHistoryEvents, other.diplomaticHistoryEvents) &&
@@ -492,6 +564,8 @@ class Game {
             other.greatPowerColorOverride,
           ) &&
           victory == other.victory &&
+          calendarCampaignHalted == other.calendarCampaignHalted &&
+          infiniteMode == other.infiniteMode &&
           richesCashMultiplier == other.richesCashMultiplier &&
           capitalTileGrainBonusPerTurn == other.capitalTileGrainBonusPerTurn &&
           _mapEquals(
@@ -502,7 +576,9 @@ class Game {
               other.lastHumanCompletedResearchCategory &&
           lastHumanResearchCategoryCompletionTurn ==
               other.lastHumanResearchCategoryCompletionTurn &&
-          mapViewState == other.mapViewState;
+          mapViewState == other.mapViewState &&
+          worldMarketState == other.worldMarketState &&
+          _setEquals(ftpPartnershipKeys, other.ftpPartnershipKeys);
 
   @override
   int get hashCode => Object.hash(
@@ -520,6 +596,7 @@ class Game {
     Object.hashAll(subsidyStates),
     Object.hashAll(aiControlByGpId.entries),
     Object.hashAll(aiSeedByGpId.entries),
+    Object.hashAll(aiProfileByGpId.entries),
     Object.hashAll(hiddenAgendaByGpId.entries),
     Object.hash(
       Object.hashAll(dossierEvidenceEntries),
@@ -529,16 +606,28 @@ class Game {
     greatPowerColorOverride != null
         ? Object.hashAll(greatPowerColorOverride!.entries)
         : null,
-    victory,
     Object.hash(
+      victory,
+      calendarCampaignHalted,
+      infiniteMode,
       richesCashMultiplier,
       capitalTileGrainBonusPerTurn,
       Object.hashAll(politicalGlyphByPlayerId.entries),
       lastHumanCompletedResearchCategory,
       lastHumanResearchCategoryCompletionTurn,
       mapViewState,
+      worldMarketState,
+      Object.hashAll(ftpPartnershipKeys),
     ),
   );
+
+  static bool _setEquals<T>(Set<T> a, Set<T> b) {
+    if (a.length != b.length) return false;
+    for (final value in a) {
+      if (!b.contains(value)) return false;
+    }
+    return true;
+  }
 
   static bool _mapListEquals(
     Map<String, List<int>>? a,
@@ -563,6 +652,12 @@ class Game {
     }
     return true;
   }
+
+  static bool _nullableStringMapEquals(
+    Map<String, String?> a,
+    Map<String, String?> b,
+  ) =>
+      _mapEquals(a, b);
 
   static bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;

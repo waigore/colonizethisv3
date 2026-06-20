@@ -12,11 +12,16 @@ The order engine (colonizethis_logic) maintains the **current-turn order list pe
 
 ## Validation
 
-**Trigger:** On every add/remove, re-validates the entire list for that player against world state (costs, caps, tile/province legality, tech per [orders.md](orders.md)).
+**Trigger:** Validation runs in **two distinct contexts**:
+
+- **Final-order-submission context (existing):** On every add/remove via `addXxxOrderWithContext` / `removeXxxOrder`, the engine re-validates the entire list for that player against world state (costs, caps, tile/province legality, tech per [orders.md](orders.md)). This is the contract for human draft edits, scenario runners, and external/manual callers.
+- **Candidate-probe context (new):** The order suggestion API exposes an **incremental candidate validation primitive** that evaluates one candidate against an already-accepted prefix without running full-list `validatePlayerOrdersWithContext`. The primitive is internal to suggestion code and does not change the public `addXxxOrderWithContext` / `validatePlayerOrdersWithContext` API surface used by the final-submission context. See [order-suggestions.md](order-suggestions.md) § Incremental candidate validation for the algorithm and equivalence guarantee.
 
 **Scope:** The engine validates **move** (civilian), **army move**, **build**, **work**, **diplomatic**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. Diplomatic orders are held and validated per-player like other order types (preconditions for war/peace, alliances, overtures, grants, and subsidies) and then passed into the merge step.
 
 **Rule:** Validate in **submission order**. First failure rejects that order and all after it. Orders 1..N-1 remain.
+
+**Equivalence:** For any candidate evaluated through the incremental primitive against an already-accepted `basePrefix`, the accept/reject result is identical to running `validatePlayerOrdersWithContext` over `basePrefix ⊕ candidate` and inspecting the candidate's result. The two contexts are equivalent for accept/reject decisions; they differ only in cost (incremental skips redundant re-validation of `basePrefix`).
 
 **With context:** Uses a PlayerView for visibility rules (move/work orders). Source province = unit's location; need not be owned by player. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 
@@ -53,6 +58,15 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 
 `projectedEffects` accepts an optional `tileMapByRegion`. When omitted or empty, the dry-run uses no tile maps and **expected extraction is zero**; callers (e.g. SimGameController) may pass tile maps when available so projected extraction is non-zero. See [order-projections.md](order-projections.md).
 
+### Injected projector seam (Refs #3290 C2)
+
+The concrete dry-run (`projectOrderEffects`) runs the turn resolver (`resolveTurnForGame`) and therefore lives in the neutral `lib/src/projections/` core module, which sits **above** the `orders` domain in the package-split DAG. To let the `orders` domain (the future `colonizethis_orders` package) compile without importing that core module, `OrderEngine` accepts the projector as an injected dependency `OrderEffectsProjector? projector` (mirroring the existing injected `validatorFactory`). The seam is invoked in exactly two places: `projectedEffects` and trade-order validation (the non-bid treasury projection). The turn orchestrator (`turn/turn_resolver.dart`) and the app / ctdev / sim-scenario consumers construct `OrderEngine(projector: projectOrderEffects)`; the `OrderEffectsProjector` typedef and the `ProjectedEffects` value type live in the `orders` domain so the public `package:colonizethis_logic` barrel surface is unchanged.
+
+- **Given** an `OrderEngine` constructed with `projector: projectOrderEffects`, when `projectedEffects(game, topology, playerId)` is called, then it returns the same `ProjectedEffects` the injected projector produces for those inputs (worker count, treasury delta, unit locations, stockpile deltas).
+- **Given** an `OrderEngine` constructed with no `projector` (default `null`), when `projectedEffects(...)` is called, then the engine throws a `StateError` naming the missing `OrderEffectsProjector` rather than silently returning empty effects.
+- **Given** an `OrderEngine` constructed with no `projector` and a player whose staged orders contain at least one `TradeOrder`, when `validatePlayerOrdersWithContext(...)` runs the trade-order phase, then the engine throws a `StateError` naming the missing `OrderEffectsProjector` (the non-bid treasury projection cannot be computed without it).
+- **Given** an `OrderEngine` constructed with no `projector` and a player whose staged orders contain no `TradeOrder`, when `validatePlayerOrdersWithContext(...)` runs, then it completes without invoking the projector (the trade phase short-circuits on empty trade orders).
+
 ### ProjectedEffects fields
 
 | Field | Required for current product | Implemented |
@@ -69,6 +83,19 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 ## Turn Resolution Integration
 
 Before applying orders, TurnResolver runs a **merge** step: combine per-player lists (human + AI) with **human over AI** precedence for conflicts. Merge includes **diplomatic** orders (human over AI per type+target), using only those diplomatic orders that passed OrderEngine validation for each player. Then resolve cross-player effects (conflict detection, diplomacy). Then apply in phase order per [turn-resolution-phases.md](turn-resolution-phases.md). The order engine does not perform merge or application.
+
+### Trusted-source resolution
+
+The resolver exposes **two public turn-entry points** so the per-player pre-apply validation pass (`filterAcceptedOrdersForAllPlayers` in `turn_order_acceptance.dart`) is **skipped only for callers that already validated their inputs**:
+
+- **Untrusted entry point — `validateOrdersAndResolveTurn`:** Runs `filterAcceptedOrdersForAllPlayers` over the merged `Orders` before applying. Required for any caller whose orders may contain invalid entries (scenario runners, ad-hoc test orders, manual JSON-loaded orders, future external/manual sources). Behavior is unchanged from prior releases.
+- **Trusted entry point — `validateOrdersAndResolveTurnFromTrustedOrders`:** Skips `filterAcceptedOrdersForAllPlayers` and dispatches straight to `resolveTurnForGame`. Caller contract: every order in the supplied `Orders` must already have been accepted by either (a) `OrderEngine.addXxxOrderWithContext` for human draft orders, or (b) the order suggestion API (which guarantees `validatePlayerOrdersWithContext` returns `accepted` when the suggestion is appended; see [order-suggestions.md](order-suggestions.md) § Guarantees) for AI-generated orders. Mixing untrusted orders into the trusted entry point breaks the contract; new callers must justify use of this entry point in code review.
+
+**Worker isolate (main app next turn):** The merged `Orders` passed to `validateOrdersAndResolveTurnFromTrustedOrders` may be assembled **on the turn-resolution worker isolate**: AI orders are produced by the staged Full AI planner, combined with human draft orders via `mergeOrderLists` in `colonizethis_logic`, then resolved without returning to the Flutter main isolate first ([turn-resolution.md](turn-resolution.md), [ai-planner.md](ai-planner.md)). The trusted-path contract is unchanged—only **where** merge and planner validation run moves off the UI thread.
+
+A separate function name (not a boolean flag on `Orders`) is the chosen mechanism so trust does not propagate silently through copies, merges, or future refactors. Each trusted-path caller is auditable by grep.
+
+**Equivalence:** Given identical merged `Orders` inputs whose every order is `accepted` by `validatePlayerOrdersWithContext`, the trusted and untrusted entry points produce identical post-merge accepted order sets and identical resulting `WorldState`.
 
 ---
 
@@ -131,14 +158,20 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
 - **Work subset move:** Given a civilian work order whose `targetTileKey` the unit may not legally occupy under shared civilian occupancy rules, when validated with context, then the order engine rejects that work order before application.
 - **Validator injection seam:** Given a caller constructs `OrderEngine` with a custom validator factory, when `validatePlayerOrdersWithContext` runs, then the engine uses validators from that factory for move/army/build/work/diplomatic/naval validation without changing public order-storage APIs.
+- **Incremental candidate equivalence:** Given a `basePrefix` whose every order is `accepted` by `validatePlayerOrdersWithContext` for its player and a candidate `c` of a stateless type (move, army move, naval move, or naval mission), when the system evaluates `c` via the incremental candidate validation primitive (per [order-suggestions.md](order-suggestions.md) § Incremental candidate validation) and via the existing `OrderEngine(initialOrders: basePrefix).addXxxOrderWithContext(...)` path on the same inputs, then both paths return the same boolean accept/reject decision for `c`.
+- **Trusted-path equivalence:** Given a merged `Orders` value whose every order is `accepted` by `validatePlayerOrdersWithContext` for its player, when the system runs `validateOrdersAndResolveTurnFromTrustedOrders` and `validateOrdersAndResolveTurn` against the same inputs, then both entry points return a `TurnResolutionComplete` whose post-merge accepted order sets per player and whose resulting `WorldState` are identical.
+- **Trusted-path bypass:** Given a merged `Orders` value passed to `validateOrdersAndResolveTurnFromTrustedOrders`, when the system resolves the turn, then it does **not** invoke `filterAcceptedOrdersForAllPlayers`; orders are dispatched to the phase pipeline as-supplied.
+- **Untrusted-path preservation:** Given a merged `Orders` value containing at least one rejected order, when the system runs `validateOrdersAndResolveTurn`, then `filterAcceptedOrdersForAllPlayers` removes each rejected order from the per-player order sets before phase application; the resulting `WorldState` reflects only accepted orders.
 
 ---
 
 ## Code generation (OrderEngine slots)
 
-**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`_OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
+**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
 
-**Manifest:** `packages/colonizethis_logic/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
+**Extraction shape:** `order_engine.g.dart` is a **standalone library** with explicit `import` declarations, not a `part of 'order_engine.dart'` fragment (Refs #3543; per `SPEC/program/dart-file-non-comment-line-size.md` § Extraction shape and the `repo.orders_no_part_directives` gate). The slot descriptor `OrderSlot<T>` and the `copyMapOfOrderLists` helper shared between the hand-written engine and the generated library live in `order_engine_slot.dart` (a package-internal library not re-exported from the barrel), so generation stays standalone without widening the package's public API.
+
+**Manifest:** `packages/colonizethis_orders/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
 
 **CI / workflow:** `melos run codegen_order_engine` regenerates output; `melos run codegen_verify` (runs `tool/verify_order_engine_codegen.sh`) must pass on PRs — committed `order_engine.g.dart` must match the generator.
 

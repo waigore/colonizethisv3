@@ -6,14 +6,33 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
+import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../widgets/chrome/ct_nine_patch_button.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
-import '../../../../widgets/ct_region_map.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode, CtRegionMap;
+import 'region_map_component.dart'
+    show BaseLayerDisplayMode, CtMapVisibilityMode;
+import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'game_map_province_detail_side_panel.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'region_map_viewport_snapshot.dart';
+
+/// Compact minimum tap-target height applied to the selection-prompt
+/// banner's `cancel` [CtNinePatchButton]. Pinned to keep the inline
+/// affordance vertically proportional to the surrounding banner row
+/// (banner padding is 8 logical px vertical) without inflating the prompt
+/// to the catalog default 48 dp button. SPEC: `SPEC/ui/map-widget.md`
+/// § Dark-theme selection prompt overlay tokens.
+const double kMapSelectionPromptCancelMinHeight = 34;
+
+/// Canonical alpha applied to [EditorialMonoclePalette.bgDeep] for the
+/// work-target selection prompt overlay banner background. Pinned at
+/// `0.85` per `SPEC/ui/map-widget.md` § Dark-theme selection prompt overlay
+/// tokens so the banner reads as a framed dark surface against the lit
+/// map while still allowing terrain to glimmer through.
+const double kMapSelectionPromptBackgroundAlpha = 0.85;
 
 /// Renders the Flame-backed map and the wide right-side detail panel.
 /// Map and panel communicate only via [mapProvincePanelProvider].
@@ -34,11 +53,13 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
     required this.selectedCivilianTileKey,
-    required this.onCivilianTileTapped,
-    this.onFleetMarkerTapped,
+    required this.onCivilianTileStateChanged,
     required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
     required this.zoomMultiplier,
+    this.visibilityMode = CtMapVisibilityMode.playerConstrained,
+    this.omniscientDetail = false,
+    this.canMutateViaUi = true,
     this.bus,
     super.key,
   });
@@ -59,17 +80,14 @@ class GameMapCanvasStack extends ConsumerWidget {
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
   final String? selectedCivilianTileKey;
-  final void Function(String tileKey)? onCivilianTileTapped;
-  final void Function(
-    String locationScopeKey,
-    String? initialFleetId,
-    String markerTileKey,
-  )?
-  onFleetMarkerTapped;
+  final void Function(String tileKey)? onCivilianTileStateChanged;
   final VoidCallback? onCivilianTileSelectionCleared;
   final void Function(RegionMapViewportSnapshot snapshot)
   onRegionViewportSnapshot;
   final double zoomMultiplier;
+  final CtMapVisibilityMode visibilityMode;
+  final bool omniscientDetail;
+  final bool canMutateViaUi;
   final ct_models.AppEventBus? bus;
 
   @override
@@ -89,8 +107,11 @@ class GameMapCanvasStack extends ConsumerWidget {
                   showProvinceOverlay: showProvinceOverlay,
                   showProvinceOwnershipTint: showProvinceOwnershipTint,
                   showProvinceNamesLayer: showProvinceNamesLayer,
-                  visibilityMode: CtMapVisibilityMode.playerConstrained,
-                  playerViewForResources: playerView,
+                  visibilityMode: visibilityMode,
+                  playerViewForResources:
+                      visibilityMode == CtMapVisibilityMode.playerConstrained
+                      ? playerView
+                      : null,
                   baseLayerDisplayMode: baseLayerDisplayMode,
                   onProvinceSelected: null,
                   onMapTileTappedForDetail: inWorkTargetSelectionMode
@@ -100,12 +121,9 @@ class GameMapCanvasStack extends ConsumerWidget {
                             .reportMapTileTapped(tk),
                   onProvinceHovered: (_) {},
                   onTileHovered: (_) {},
-                  onCivilianTileTapped: inWorkTargetSelectionMode
+                  onCivilianTileStateChanged: inWorkTargetSelectionMode
                       ? null
-                      : onCivilianTileTapped,
-                  onFleetMarkerTapped: inWorkTargetSelectionMode
-                      ? null
-                      : onFleetMarkerTapped,
+                      : onCivilianTileStateChanged,
                   onCivilianTileSelectionCleared: inWorkTargetSelectionMode
                       ? null
                       : onCivilianTileSelectionCleared,
@@ -117,7 +135,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   onTileSelected: onTileSelectedForWork,
                   onWorkTargetSelectionCancelled:
                       onWorkTargetSelectionCancelled,
-                  bus: bus,
+                  bus: inWorkTargetSelectionMode ? null : bus,
                   onViewportSnapshotChanged: onRegionViewportSnapshot,
                   zoomMultiplier: zoomMultiplier,
                 ),
@@ -128,6 +146,8 @@ class GameMapCanvasStack extends ConsumerWidget {
                   region: region,
                   humanPlayerId: humanPlayerId,
                   playerView: playerView,
+                  omniscientDetail: omniscientDetail,
+                  canMutateViaUi: canMutateViaUi,
                   workTargetSelectionCache: workTargetSelectionCache,
                 ),
             ],
@@ -142,13 +162,19 @@ class GameMapCanvasStack extends ConsumerWidget {
               child: Center(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.72),
+                    color: EditorialMonoclePalette.bgDeep.withValues(
+                      alpha: kMapSelectionPromptBackgroundAlpha,
+                    ),
                     borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: EditorialMonoclePalette.accentDim,
+                      width: 1,
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
-                      vertical: 8,
+                      vertical: CtSpacing.m,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -156,24 +182,22 @@ class GameMapCanvasStack extends ConsumerWidget {
                         Text(
                           l10n.map_selectionMode_prompt,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: EditorialMonoclePalette.fg,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(width: 10),
-                        TextButton(
+                        CtNinePatchButton(
                           onPressed: onWorkTargetSelectionCancelled,
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            minimumSize: const Size(0, 34),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          minHeight: kMapSelectionPromptCancelMinHeight,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: CtSpacing.ml,
+                            vertical: 4,
                           ),
                           child: Text(
                             l10n.map_selectionMode_cancel,
-                            style: TextStyle(fontWeight: FontWeight.w700),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
                       ],

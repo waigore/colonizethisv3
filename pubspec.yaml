@@ -15,12 +15,22 @@ workspace:
   - packages/colonizethis_data
   - packages/colonizethis_save
   - packages/colonizethis_logic
+  - packages/colonizethis_world
+  - packages/colonizethis_combat
+  - packages/colonizethis_economy
+  - packages/colonizethis_diplomacy
+  - packages/colonizethis_setup
+  - packages/colonizethis_orders
+  - packages/colonizethis_turn
   - packages/colonizethis_ai
+  - packages/colonizethis_ai_contracts
   - packages/colonizethis_debug_console
   - packages/colonizethis_map
   - packages/colonizethis_test
   - tool/generate_map
   - tool/init_game
+  - tool/run_observer_game
+  - tool/ga_runner
   - tool/sim_economy
   - tool/sim_combat
   - tool/sim_combat_montecarlo
@@ -29,13 +39,13 @@ workspace:
   - tool/check_gdd_coverage
 
 dev_dependencies:
-  analyzer: ^8.4.0
+  analyzer: 8.4.0
   colonizethis_exception_lint:
     path: packages/colonizethis_exception_lint
   image: ^4.5.4
-  melos: ^7.6.0
+  melos: ^7.7.0
   path: ^1.9.1
-  test: ^1.24.0
+  test: 1.30.0
   yaml: ^3.1.3
 
 melos:
@@ -49,6 +59,12 @@ melos:
     init_game:
       description: Game creation (map gen, province/capital assignment). SPEC/program/init-game-tool.md.
       run: dart run init_game
+    run_observer_game:
+      description: Full-AI observer runner; traces and snapshots. SPEC/program/run_observer_game-tool.md.
+      run: dart run run_observer_game
+    ga_runner:
+      description: GA orchestration for AI profile tuning. SPEC/program/ga-runner.md.
+      run: dart run ga_runner
     sim_economy:
       description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
       run: dart run sim_economy

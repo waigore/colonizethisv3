@@ -1,13 +1,33 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_panel.dart';
+import '../utils/research_slot_preview.dart';
+import '../../../widgets/ct_brass_divider.dart';
+import '../../../widgets/ct_section_label.dart';
+import '../../../widgets/ct_spacing.dart';
+import 'technology_panel_orders.dart';
+import 'technology_panel_widgets.dart';
 
-/// Technology panel (UXD 03k). Shows researched techs and research slots for a player.
+// Re-export the research slot-card widget family (extracted to keep this file
+// under the `repo.game_widgets_file_size` cap) so existing importers and tests
+// keep resolving `ResearchSlotCard`, `LockedResearchSlotCard`, the slot
+// constants, `TechSectionHeading`, and `ResearchedTechChip` from this panel
+// entrypoint.
+export 'technology_panel_widgets.dart';
+
+/// Always-rendered slot count on the Slots tab.
+///
+/// SPEC/ui/technology-panel.md § Slot behaviour: "The Slots tab always
+/// renders exactly four slot cards in slot-index order regardless of
+/// `player.researchSlots`." Refs #2864 S0/S3.
+const int kTechnologyResearchSlotCount = 4;
+
+/// Technology panel (UXD 03k / GAME40001). Shows researched techs and
+/// research slots for a player under the dark editorial-monocle theme.
 class TechnologyPanel extends StatelessWidget {
   const TechnologyPanel({
     super.key,
@@ -16,6 +36,10 @@ class TechnologyPanel extends StatelessWidget {
     this.currentOrders = const Orders(),
     this.onOrdersChanged,
   });
+
+  /// SPEC/ui/technology-panel.md — [UiScreenIds.technologyScreen]. Hosted by
+  /// `TechnologyScreen`; shares its stable surface ID.
+  static const screenId = UiScreenIds.technologyScreen;
 
   final Game game;
   final Player player;
@@ -33,19 +57,16 @@ class TechnologyPanel extends StatelessWidget {
     final canEdit = onOrdersChanged != null;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: CtPanel(
-        padding: const EdgeInsets.all(16),
-        child: _buildPanelContent(
-          context: context,
-          l10n: l10n,
-          researchedIds: researchedIds,
-          progress: progress,
-          slots: slots,
-          humanPlayerId: humanPlayerId,
-          researchOrdersForPlayer: researchOrdersForPlayer,
-          canEdit: canEdit,
-        ),
+      padding: const EdgeInsets.all(CtSpacing.l),
+      child: _buildPanelContent(
+        context: context,
+        l10n: l10n,
+        researchedIds: researchedIds,
+        progress: progress,
+        slots: slots,
+        humanPlayerId: humanPlayerId,
+        researchOrdersForPlayer: researchOrdersForPlayer,
+        canEdit: canEdit,
       ),
     );
   }
@@ -64,25 +85,60 @@ class TechnologyPanel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.technologyPanel_title(player.displayName),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Text(l10n.technologyPanel_researchSlotsCount(slots)),
-        const SizedBox(height: 8),
-        Text(
-          l10n.technologyPanel_researchSlots,
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        const SizedBox(height: 4),
+        // No dev-only panel header block: the per-player title and the
+        // research-slot count line are intentionally omitted so the Slots
+        // tab body opens directly with the Researched Techs heading, matching
+        // the mockup (`SPEC/ui/mockups/GAME40001-technology-panel.html` opens
+        // with `.researched-heading`). Player identity and the `Technology`
+        // title are carried by the `CtTopBar` chrome. Refs #3510.
+        // Researched Techs renders ABOVE Research Slots per
+        // SPEC/ui/technology-panel.md § Layout / wireframe > Body section
+        // ordering and matches the mockup body markup in
+        // SPEC/ui/mockups/GAME40001-technology-panel.html where
+        // `.researched-heading` precedes `.slots-heading`. Refs #2864 S0/S6.
+        // The two canonical Slots-tab headings use the mockup-faithful
+        // accent display-font `TechSectionHeading` (mockup
+        // `.researched-heading` / `.slots-heading`) rather than the small-caps
+        // `CtSectionLabel` chrome; per the issue source-of-truth precedence
+        // the mockup wins on this purely visual heading detail. Refs #3510.
+        TechSectionHeading(l10n.technologyPanel_researchedTechsHeading),
+        const SizedBox(height: 6),
+        if (researchedIds.isEmpty)
+          Text(
+            l10n.technologyPanel_noneYet,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: EditorialMonoclePalette.muted,
+                  fontStyle: FontStyle.italic,
+                ),
+          )
+        else
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final id in researchedIds)
+                ResearchedTechChip(techId: id),
+            ],
+          ),
+        const SizedBox(height: 16),
+        const CtBrassDivider(),
+        const SizedBox(height: 12),
+        TechSectionHeading(l10n.technologyPanel_researchSlotsHeading),
+        const SizedBox(height: 6),
+        // Stretch every slot card to the full panel content width so the
+        // locked Slot 4 placeholder is the same width as the active Slots
+        // 1–3 (mockup `.slot-card` is a full-width block element).
+        // SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4.
+        // Refs #3510.
         Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: List.generate(
-            slots,
-            (index) => _buildResearchSlotTile(
+            kTechnologyResearchSlotCount,
+            (index) => _buildResearchSlot(
               context: context,
               l10n: l10n,
               index: index,
+              slots: slots,
               progress: progress,
               humanPlayerId: humanPlayerId,
               researchOrdersForPlayer: researchOrdersForPlayer,
@@ -90,35 +146,9 @@ class TechnologyPanel extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Divider(color: Theme.of(context).dividerColor),
-        const SizedBox(height: 8),
-        Text(
-          l10n.technologyPanel_researched(researchedIds.length),
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        const SizedBox(height: 4),
-        if (researchedIds.isEmpty)
-          Text(l10n.technologyPanel_noneYet)
-        else
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: researchedIds
-                .map(
-                  (id) => Chip(
-                    label: Text(techDisplayName(id)),
-                    labelStyle: Theme.of(context).textTheme.bodySmall,
-                  ),
-                )
-                .toList(),
-          ),
         if (progress.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text(
-            l10n.technologyPanel_inProgress,
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
+          CtSectionLabel(l10n.technologyPanel_inProgress),
           const SizedBox(height: 4),
           ...progress.entries.map(
             (entry) => Padding(
@@ -128,7 +158,9 @@ class TechnologyPanel extends StatelessWidget {
                   techDisplayName(entry.key),
                   entry.value,
                 ),
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: EditorialMonoclePalette.muted,
+                    ),
               ),
             ),
           ),
@@ -162,39 +194,87 @@ class TechnologyPanel extends StatelessWidget {
         const <ResearchOrder>[];
   }
 
-  Widget _buildResearchSlotTile({
+  Widget _buildResearchSlot({
     required BuildContext context,
     required AppLocalizations l10n,
     required int index,
+    required int slots,
     required Map<String, int> progress,
     required String humanPlayerId,
     required List<ResearchOrder> researchOrdersForPlayer,
     required bool canEdit,
   }) {
+    final isLockedFourthSlot =
+        index == kTechnologyResearchSlotCount - 1 && slots < 4;
+    if (isLockedFourthSlot) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: LockedResearchSlotCard(slotNumber: index + 1),
+      );
+    }
     final order = _researchOrderForSlot(researchOrdersForPlayer, index);
     final techId = _slotTechId(order);
     final tech = techId == null ? null : techById(techId);
-    final displayName = techId == null
-        ? l10n.technologyPanel_empty
-        : techDisplayName(techId);
     final techProgress = techId == null ? 0 : (progress[techId] ?? 0);
     final cost = tech?.cost ?? 0;
     final hasTech = techId != null;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(l10n.technologyPanel_slot(index + 1)),
-      subtitle: hasTech
-          ? Text(
-              l10n.technologyPanel_slotSubtitle(
-                displayName,
-                techProgress,
-                cost > 0 ? '$cost' : '—',
-              ),
-            )
-          : Text(l10n.technologyPanel_noTechAssigned),
-      trailing: canEdit
-          ? _buildSlotActions(context, l10n, index, humanPlayerId, hasTech)
-          : null,
+    final funding = order?.funding ?? ResearchFundingLevel.medium;
+    // The turn preview accompanies the editable funding controls, so it renders
+    // only on the editable (human, own-orders) panel; read-only panels keep the
+    // simple committed-progress bar. Refs #3512.
+    final turnPreview = (tech == null || !canEdit)
+        ? null
+        : computeResearchSlotTurnPreview(
+            player: player,
+            tech: tech,
+            committedProgress: techProgress,
+            funding: funding,
+          );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: ResearchSlotCard(
+        slotIndex: index,
+        techId: techId,
+        progress: techProgress,
+        cost: cost,
+        canEdit: canEdit,
+        funding: funding,
+        turnPreview: turnPreview,
+        onFundingChanged: hasTech && canEdit
+            ? (level) => onOrdersChanged!(
+                  applySetSlotFunding(
+                    currentOrders: currentOrders,
+                    humanPlayerId: humanPlayerId,
+                    slotIndex: index,
+                    funding: level,
+                  ),
+                )
+            : null,
+        onCancel: hasTech && canEdit
+            ? () {
+                applyCancelSlotOrder(
+                  context: context,
+                  slotIndex: index,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: currentOrders,
+                  onOrdersChanged: onOrdersChanged!,
+                );
+              }
+            : null,
+        onChooseTech: canEdit
+            ? () {
+                showChooseTechDialog(
+                  context: context,
+                  game: game,
+                  slotIndex: index,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: currentOrders,
+                  player: player,
+                  onOrdersChanged: onOrdersChanged!,
+                );
+              }
+            : null,
+      ),
     );
   }
 
@@ -213,201 +293,5 @@ class TechnologyPanel extends StatelessWidget {
     }
     return order.techId;
   }
-
-  Widget _buildSlotActions(
-    BuildContext context,
-    AppLocalizations l10n,
-    int index,
-    String humanPlayerId,
-    bool hasTech,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (hasTech)
-          CtNinePatchButton(
-            onPressed: () {
-              _cancelSlot(
-                context: context,
-                slotIndex: index,
-                humanPlayerId: humanPlayerId,
-                currentOrders: currentOrders,
-                onOrdersChanged: onOrdersChanged!,
-              );
-            },
-            child: Text(l10n.common_cancel),
-          ),
-        const SizedBox(width: 4),
-        CtNinePatchButton(
-          onPressed: () {
-            _showAssignDialog(
-              context: context,
-              game: game,
-              slotIndex: index,
-              humanPlayerId: humanPlayerId,
-              currentOrders: currentOrders,
-              player: player,
-              onOrdersChanged: onOrdersChanged!,
-            );
-          },
-          child: Text(l10n.technologyPanel_chooseTech),
-        ),
-      ],
-    );
-  }
 }
 
-void _showAssignDialog({
-  required BuildContext context,
-  required Game game,
-  required int slotIndex,
-  required String humanPlayerId,
-  required Orders currentOrders,
-  required Player player,
-  required void Function(Orders orders) onOrdersChanged,
-}) {
-  final l10n = appL10n(context);
-  final techUnlocked = player.techUnlocked ?? {};
-  final existingOrders =
-      currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
-      const <ResearchOrder>[];
-  final currentlyAssignedIds = existingOrders
-      .where((o) => o.techId.isNotEmpty)
-      .map((o) => o.techId)
-      .toSet();
-
-  final researchableIds = researchableTechIds(
-    techUnlocked,
-    hasDiscoveredResource: (r) =>
-        hasRevealedResourceForPlayer(game, player.id, r),
-  );
-  final choosableIds = researchableIds
-      .where((id) => !currentlyAssignedIds.contains(id))
-      .toList();
-  final availableTechs =
-      choosableIds
-          .map((id) => techById(id))
-          .whereType<TechDefinition>()
-          .toList()
-        ..sort((a, b) {
-          final eraCmp = a.era.compareTo(b.era);
-          if (eraCmp != 0) return eraCmp;
-          return techDisplayName(a.id).compareTo(techDisplayName(b.id));
-        });
-
-  showModalBottomSheet<void>(
-    context: context,
-    builder: (ctx) {
-      if (availableTechs.isEmpty) {
-        return Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(l10n.technologyPanel_noTechsAvailable),
-        );
-      }
-      return ListView.builder(
-        itemCount: availableTechs.length,
-        itemBuilder: (context, index) {
-          final tech = availableTechs[index];
-          return ListTile(
-            title: Text(techDisplayName(tech.id)),
-            subtitle: Text(
-              l10n.technologyPanel_pickSubtitle(
-                _eraRoman(tech.era),
-                _categoryLabel(tech.category),
-                tech.cost,
-              ),
-            ),
-            onTap: () {
-              final updatedOrders = _assignTechToSlot(
-                currentOrders: currentOrders,
-                humanPlayerId: humanPlayerId,
-                slotIndex: slotIndex,
-                techId: tech.id,
-                existingOrders: existingOrders,
-              );
-              onOrdersChanged(updatedOrders);
-              Navigator.of(ctx).pop();
-            },
-          );
-        },
-      );
-    },
-  );
-}
-
-Orders _assignTechToSlot({
-  required Orders currentOrders,
-  required String humanPlayerId,
-  required int slotIndex,
-  required String techId,
-  required List<ResearchOrder> existingOrders,
-}) {
-  final ordersForPlayer = List<ResearchOrder>.from(existingOrders);
-  final existingIndex = ordersForPlayer.indexWhere(
-    (o) => o.slotIndex == slotIndex,
-  );
-  final funding = existingIndex >= 0
-      ? ordersForPlayer[existingIndex].funding
-      : ResearchFundingLevel.medium;
-  final newOrder = ResearchOrder(
-    slotIndex: slotIndex,
-    techId: techId,
-    funding: funding,
-  );
-  if (existingIndex >= 0) {
-    ordersForPlayer[existingIndex] = newOrder;
-  } else {
-    ordersForPlayer.add(newOrder);
-  }
-
-  final updatedMap = {
-    ...currentOrders.researchOrdersByPlayerId,
-    humanPlayerId: ordersForPlayer,
-  };
-  return currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
-}
-
-void _cancelSlot({
-  required BuildContext context,
-  required int slotIndex,
-  required String humanPlayerId,
-  required Orders currentOrders,
-  required void Function(Orders orders) onOrdersChanged,
-}) {
-  final l10n = appL10n(context);
-  final existingOrders =
-      currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
-      const <ResearchOrder>[];
-  final remaining = existingOrders
-      .where((o) => o.slotIndex != slotIndex)
-      .toList(growable: false);
-  final updatedMap = {
-    ...currentOrders.researchOrdersByPlayerId,
-    humanPlayerId: remaining,
-  };
-  final updated = currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  messenger?.showSnackBar(
-    SnackBar(content: Text(l10n.technologyPanel_slotCancelled)),
-  );
-  onOrdersChanged(updated);
-}
-
-String _categoryLabel(String category) {
-  const labels = {
-    'gathering': 'Gathering',
-    'transport': 'Transport',
-    'labour': 'Labour',
-    'civilian': 'Civilian',
-    'diplomacy': 'Diplomacy',
-    'naval': 'Naval',
-    'military': 'Military',
-    'new-world': 'New World',
-  };
-  return labels[category] ?? category;
-}
-
-String _eraRoman(int era) {
-  const romans = ['I', 'II', 'III', 'IV'];
-  return era >= 1 && era <= romans.length ? romans[era - 1] : '$era';
-}

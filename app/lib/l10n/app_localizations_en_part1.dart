@@ -19,6 +19,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get mainMenu_title => 'ColonizeThis V3';
 
   @override
+  String get mainMenu_eyebrow => 'A Game of Empire & Discovery';
+
+  @override
   String get mainMenu_subtitleAfterVictory =>
       'Congratulations, you won your last game.';
 
@@ -45,7 +48,22 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_pauseMenu_debugLog => 'Debug log';
 
   @override
+  String get game_pauseMenu_title => 'Game Paused';
+
+  @override
   String get game_pauseMenu_resume => 'Resume';
+
+  @override
+  String get game_pauseMenu_saveGame => 'Save Game';
+
+  @override
+  String get game_pauseMenu_loadGame => 'Load Game';
+
+  @override
+  String get game_pauseMenu_settings => 'Settings';
+
+  @override
+  String get game_pauseMenu_exitToMainMenu => 'Exit to Main Menu';
 
   @override
   String get game_pauseMenu_tooltip => 'Pause menu';
@@ -69,12 +87,23 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String game_turnDisplay(int turn, int year) {
+    return 'Turn $turn / Year $year';
+  }
+
+  @override
   String get game_nextTurnConfirm_title => 'End turn?';
 
   @override
   String game_nextTurnConfirm_body(int turn) {
     return 'Turn $turn will end. Continue?';
   }
+
+  @override
+  String get game_turnResolutionProcessingTitle => 'Processing Turn';
+
+  @override
+  String get game_turnResolutionFailedMessage => 'Turn resolution failed.';
 
   @override
   String get common_no => 'No';
@@ -145,10 +174,27 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get shell_leaderDialog_intro =>
-      'Assign each player slot a Great Power and leader. Default map colours appear beside each nation in the nation picker.';
+      'Choose six great powers and a leader variant for each';
 
   @override
   String get shell_leaderDialog_selectLeaderHint => 'Select leader';
+
+  @override
+  String get shell_leaderDialog_aiProfileLabel => 'AI Profile';
+
+  @override
+  String get shell_leaderDialog_aiProfileNormal => 'Normal';
+
+  @override
+  String get shell_leaderDialog_aiProfileInlineLabel => 'AI Profile:';
+
+  @override
+  String shell_leaderDialog_slotLabel(int slotNumber) {
+    return 'Slot $slotNumber';
+  }
+
+  @override
+  String get shell_leaderDialog_slotYouTag => 'You';
 
   @override
   String get common_cancel => 'Cancel';
@@ -163,7 +209,7 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get common_start => 'Start';
 
   @override
-  String get shell_leaderDialog_title => 'New game — Setup';
+  String get shell_leaderDialog_title => 'Choose nations and leaders';
 
   @override
   String get shell_newGame_selectNation => 'Select nation';
@@ -179,11 +225,48 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
-  String get shell_leaderDialog_seedLabel => 'Game / world seed';
+  String get shell_leaderDialog_seedLabel => 'Game seed';
 
   @override
-  String get shell_leaderDialog_seedHelper =>
-      'Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.';
+  String get shell_leaderDialog_seedHelper => 'Enter 0 for a random seed';
+
+  @override
+  String get shell_leaderDialog_infiniteModeLabel =>
+      'Infinite mode (no victory condition)';
+
+  @override
+  String get shell_leaderDialog_infiniteModeHelper =>
+      'The game will continue indefinitely';
+
+  @override
+  String get shell_leaderDialog_terrainVariationLabel => 'Terrain variation:';
+
+  @override
+  String shell_leaderDialog_terrainVariationValue(int percent) => '$percent%';
+
+  @override
+  String get shell_leaderDialog_terrainVariationHelper =>
+      '0% flat — 100% extreme';
+
+  @override
+  String get gameParameters_title => 'Game Parameters';
+
+  @override
+  String get gameParameters_menuEntry => 'Game Parameters';
+
+  @override
+  String get gameParameters_infiniteModeHeading => 'Infinite mode';
+
+  @override
+  String get gameParameters_infiniteModeOn => 'On';
+
+  @override
+  String get gameParameters_infiniteModeOff => 'Off';
+
+  @override
+  String gameParameters_infiniteModeLine(String value) {
+    return 'Infinite mode: $value';
+  }
 
   @override
   String get shell_newGameProgress_title => 'Creating game';
@@ -265,6 +348,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get game_intervention_protest => 'Diplomatic protest';
+
+  @override
+  String get game_intervention_overlayTitle => 'Pending Intervention';
 
   @override
   String turnNews_title(int turn) {

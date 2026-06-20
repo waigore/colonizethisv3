@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
 
@@ -47,7 +48,7 @@ class SplitArmyDialog extends StatelessWidget {
 
   String _locationLabel() {
     final pid = army.stationedProvinceId;
-    final province = tryGetProvince(game.worldState, pid);
+    final province = game.worldState.tryGetProvince(pid);
     final regionId = army.regionId;
     final regionLabel = regionDisplayLabel(regionId);
     final name = province?.displayName ?? pid;
@@ -77,7 +78,7 @@ class SplitArmyDialog extends StatelessWidget {
       maxWidth: 520,
       maxHeight: 500,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(CtSpacing.l),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

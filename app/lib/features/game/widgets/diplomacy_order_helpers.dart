@@ -21,6 +21,8 @@ String diplomacyActionLabel(DiplomaticOrder order) {
       return order.amount != null
           ? 'Set Subsidy (£${order.amount})'
           : 'Set Subsidy';
+    case DiplomaticOrderType.establishFtp:
+      return 'Establish FTP';
   }
 }
 

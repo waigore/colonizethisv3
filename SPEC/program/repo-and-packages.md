@@ -18,21 +18,55 @@ Monorepo layout:
 
 ## Package list and responsibilities
 
-Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _save into _logic; we use **five separate packages**.
+Game logic ships as a set of one-way-dependent Dart packages under `packages/`. The former `colonizethis_logic` monolith has been split into per-domain packages plus a thin `colonizethis_logic` re-export core (Refs #3290); the five `src/ai/` planning files moved into `colonizethis_ai_contracts`.
 
-| Package | Contents (TDD 15) | Internal package deps |
-|---------|-------------------|------------------------|
+**Foundational packages (no logic-domain deps):**
+
+| Package | Contents | Internal package deps |
+|---------|----------|------------------------|
 | **colonizethis_models** | Data models, schemas, serialization (Game, Player, Orders, WorldState, Province, Unit, etc.). Stockpile, WorkerPool. | None |
 | **colonizethis_data** | Constants, tech tree, **static map data**: (1) **region topology** (nodes: provinces, sea zones; links P<->P, P<->S; cross-region); (2) **tile maps** (per region). Ruleset/config (e.g. `rules/` for JSON later). Topology and tile map **formats** and loaders; topology/tile-map **describe** helpers. | None |
-| **colonizethis_map** | Topology and tile map **generation** (tile-based map generator), topology inference from tile map, tile map topology validation, and tile map **PNG visualization**. Implements TDD map generation algorithms; consumed by tools and loaders. | colonizethis_data |
+| **colonizethis_logger** | Shared logging seam (`CtLogger`, per-package log prefixes). | None |
+| **colonizethis_map** | Topology and tile map **generation**, topology inference from tile map, tile map topology validation, and tile map **PNG visualization**. Implements TDD map generation algorithms; consumed by tools and loaders. | colonizethis_data |
 | **colonizethis_save** | Save format, schema, migrations | colonizethis_models |
-| **colonizethis_logic** | Turn resolution, combat, economy, diplomacy, victory checks, order validation (uses map topology for movement). Extraction, production, stockpile, worker models; tile map or terrain data for costs/combat. | colonizethis_models, colonizethis_data |
-| **colonizethis_ai** | AI behavior, planning, personalities | colonizethis_logic (narrow AI-facing contracts only: `order_suggestion_api.dart`, `ai_api.dart`) |
+
+**Logic domain packages (extracted from the former `colonizethis_logic` monolith, Refs #3290):**
+
+| Package | Contents | Internal package deps (beyond models/data/logger) |
+|---------|----------|------------------------|
+| **colonizethis_world** | World state, province lookup/traversal, connectivity, fog, game-world mutation helpers, event bus, shared utils. Foundation of the logic domain. | — |
+| **colonizethis_combat** | Combat resolution. | colonizethis_world |
+| **colonizethis_economy** | Extraction, production, stockpile, worker allocation, world market. | colonizethis_world |
+| **colonizethis_diplomacy** | Diplomacy relations/resolution, dossier. | colonizethis_world, colonizethis_combat, colonizethis_economy |
+| **colonizethis_orders** | Order engine, order validation (incl. diplomatic sub-validators), order suggestions, work-order handlers. | colonizethis_world, colonizethis_diplomacy, colonizethis_economy |
+| **colonizethis_setup** | Game setup/creation, capital choice, hidden-agenda assignment. | colonizethis_world, colonizethis_diplomacy, colonizethis_map |
+| **colonizethis_turn** | Turn-resolution orchestration, phase handlers, turn trace. The orchestrator — imported by no other logic-domain package. | colonizethis_world, colonizethis_combat, colonizethis_economy, colonizethis_diplomacy, colonizethis_orders |
+
+**Core, contracts, and consumers:**
+
+| Package | Contents | Internal package deps |
+|---------|----------|------------------------|
+| **colonizethis_logic** | Thin core + backward-compat surface: `src/constants.dart`, logging seam, `turn_to_year.dart`, cross-package DI providers (`di/logic_providers.dart`), the public re-export barrel (`colonizethis_logic.dart`), and narrow contract libraries (`ai_api.dart`, `order_suggestion_api.dart`, `debug_console_api.dart`). Re-exports the domain packages so existing consumers import `colonizethis_logic` unchanged. | colonizethis_world, _combat, _economy, _diplomacy, _setup, _orders, _turn, _map, _models, _data, _logger |
+| **colonizethis_ai_contracts** | AI planning contract implementations moved out of logic: `ai_planner.dart`, `ai_control.dart`, `sim_game_ai.dart`, `simple_ai_heuristics.dart`, `full_ai_civilian_work_selection.dart`. **Not** depended on by `colonizethis_logic` core. | colonizethis_world, colonizethis_orders |
+| **colonizethis_ai** | AI behavior, planning, personalities. | colonizethis_logic (narrow AI-facing contracts only: `order_suggestion_api.dart`, `ai_api.dart`), colonizethis_ai_contracts |
 | **colonizethis_debug_console** | Debug-console command parsing/execution contracts and history state for in-game debug tooling. | colonizethis_logic (narrow debug-console contract only: `debug_console_api.dart`), colonizethis_models |
 
-**Config consumers:** colonizethis_logic and colonizethis_ai consume resolved config; app receives config at game load. See [ruleset-config.md](ruleset-config.md). Flutter does not perform merge or file parsing.
+**Config consumers:** the logic-domain packages and colonizethis_ai consume resolved config; app receives config at game load. See [ruleset-config.md](ruleset-config.md). Flutter does not perform merge or file parsing.
 
 **Rule:** No UI in shared packages. Game logic lives only in shared packages; app is shell, routing, and integration.
+
+### Logic domain packages — canonical abstractions
+
+The logic domain packages are organized around a small set of canonical abstractions that keep validation, suggestion, and resolution code thin and consistent across order types and phases. Refs #2560, #3290.
+
+- **Mutation helpers (`colonizethis_world` `src/world/game_world_mutations.dart`, `colonizethis_turn` `src/turn/turn_pipeline_state.dart`).** Turn pipelines and order application mutate nested `Game` → `WorldState` → `TurnState` fields frequently. Call sites use **`Game.updateWorldState`**, **`WorldState.updateTurnState`**, and **`TurnPipelineState.updateWorldState`** instead of three-level `copyWith` chains.
+- **Province traversal (`colonizethis_world` `src/world/province_traversal.dart`).** Dual-region province scans use **`forEachWorldRegion`** / **`traverseProvinces`** instead of duplicating old-world/new-world iteration in connectivity, fog, naval, and similar resolvers (see `SPEC/program/logic-dual-region-province-access.md` for the broader sanctioned dual-region access policy).
+- **Diplomatic sub-validators (`colonizethis_orders` `src/orders/validators/diplomatic/`).** Type-specific diplomatic rules live in per-type factory functions backed by `DiplomaticSubValidator` helpers (`relationDiplomaticSubValidator`, `delegatedDiplomaticSubValidator`). The parent `DiplomaticOrderValidator` runs cross-cutting checks before dispatch. See [orders.md](orders.md) § Diplomatic sub-validators (implementation).
+- **Work-order handler registry (`colonizethis_orders` `src/orders/work_handlers/work_order_handler_registry.dart`).** Work-order application uses a single `workOrderHandlersByTarget` map keyed by work target string (one `WorkOrderHandler` per target; standard multi-turn build targets share `StandardBuildWorkOrderHandler`). `orders_application_work_phase.dart` resolves handlers by target lookup only. See [orders.md](orders.md) § Implementation (structure, not extra rules).
+- **Work suggestion pipeline (`colonizethis_orders` `src/orders/work_suggestion_pipeline.dart`).** Civilian work suggestion for Explorer, Worker, Spy, and Merchant unit types uses the shared `WorkSuggestionPipeline.run()` loop with per-type `candidatesProvider` callbacks. See [order-suggestions.md](order-suggestions.md) § Work suggestion pipeline (`WorkSuggestionPipeline`).
+- **Turn-phase handler registry (`colonizethis_turn` `src/turn/phases/`, `src/turn/turn_phase_handler_registry.dart`).** Each turn phase is implemented by a `TurnPhaseHandler` in `turn/phases/*.dart` (one phase per file, re-exported by `turn/phases.dart`). The canonical map is `TurnPhaseHandlerRegistry.defaults`; tests and callers may override individual phases via `TurnResolverConfig.phaseHandlerOverrides`. See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § Phase handler registry.
+
+The shared abstractions above are the canonical extension points: new validators, handlers, suggestion paths, and phases plug into these registries and helpers rather than introducing parallel `switch` dispatch or new copy-paste structures. Repo-lint rules (for example `repo.logic_diplomatic_sub_validator_size`, and `repo.logic_work_target_switch` for the work-order registry path) keep adapters bounded so the canonical shapes do not silently regress.
 
 **Riverpod in packages:** Canonical `Provider`s for logic/map/AI seams live in optional `di.dart` libraries; see [dependency-injection.md](dependency-injection.md).
 
@@ -40,28 +74,60 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 
 ## Dependency direction
 
+The logic-domain packages form a strict one-way DAG (Refs #3290); `colonizethis_turn` is the orchestrator at the top of the domain layer and is imported by no other domain package, while `colonizethis_world` is the shared foundation imported by all of them.
+
 ```
 app
- └── colonizethis_logic, colonizethis_models, colonizethis_ai, colonizethis_data, colonizethis_save, colonizethis_debug_console
+ └── colonizethis_logic, colonizethis_models, colonizethis_ai, colonizethis_data,
+     colonizethis_save, colonizethis_debug_console
 
 colonizethis_ai
- └── colonizethis_logic
+ └── colonizethis_logic (narrow contracts), colonizethis_ai_contracts
 
 colonizethis_debug_console
- └── colonizethis_logic
+ └── colonizethis_logic, colonizethis_models
 
-colonizethis_logic
- └── colonizethis_models, colonizethis_data
+colonizethis_logic  (thin core + re-export barrel)
+ └── colonizethis_world, colonizethis_combat, colonizethis_economy, colonizethis_diplomacy,
+     colonizethis_setup, colonizethis_orders, colonizethis_turn, colonizethis_map
+
+colonizethis_ai_contracts
+ └── colonizethis_world, colonizethis_orders        (NOT depended on by colonizethis_logic)
+
+colonizethis_turn
+ └── colonizethis_world, colonizethis_combat, colonizethis_economy, colonizethis_diplomacy,
+     colonizethis_orders
+
+colonizethis_orders
+ └── colonizethis_world, colonizethis_diplomacy, colonizethis_economy
+
+colonizethis_setup
+ └── colonizethis_world, colonizethis_diplomacy, colonizethis_map
+
+colonizethis_diplomacy
+ └── colonizethis_world, colonizethis_combat, colonizethis_economy
+
+colonizethis_combat
+ └── colonizethis_world
+
+colonizethis_economy
+ └── colonizethis_world
+
+colonizethis_world
+ └── colonizethis_models, colonizethis_data, colonizethis_logger
 
 colonizethis_save
  └── colonizethis_models
 
-colonizethis_models  (no package deps)
-colonizethis_data    (no package deps)
+colonizethis_map
+ └── colonizethis_data
+
+colonizethis_models   (no package deps)
+colonizethis_data     (no package deps)
+colonizethis_logger   (no package deps)
 ```
 
-`colonizethis_logic` must not depend on `colonizethis_ai` in either `dependencies` or
-`dev_dependencies`; tests that exercise AI behavior belong in `colonizethis_ai/test`.
+Neither `colonizethis_logic` nor any logic-domain package (`colonizethis_world`, `_combat`, `_economy`, `_diplomacy`, `_orders`, `_setup`, `_turn`) may depend on `colonizethis_ai` or `colonizethis_ai_contracts` in either `dependencies` or `dev_dependencies`; tests that exercise AI behavior belong in `colonizethis_ai/test`. The post-split graph contains no bidirectional edges between domain packages.
 
 ### Dependency boundary acceptance criteria
 
@@ -82,7 +148,7 @@ colonizethis_data    (no package deps)
 The repository enforces this boundary in CI via:
 
 - `dart run tool/ct_repo_lint.dart` (Quality workflow), including rules `repo.logic_ai_decoupling`, `repo.app_lib_no_broad_suggest_work_orders`, `repo.asset_path_constants`, `repo.tech_id_constants`, `repo.work_target_constants`, and `repo.civilian_unit_type_constants` (see `tool/ct_repo_lint_manifest.yaml` and `SPEC/program/repo-lint.md`).
-- `tool/check_logic_ai_decoupling.sh`, `tool/check_asset_path_constants.dart` (also runnable via `tool/check_asset_path_constants.sh`), and the other `tool/check_*` entrypoints invoked by repo lint.
+- `tool/check_logic_ai_decoupling.sh`, `tool/check_asset_path_constants.dart`, and the other `tool/check_*` entrypoints invoked by repo lint.
 - `.github/workflows/quality.yml` steps that run unit tests for individual convention checkers (e.g. `test/check_asset_path_constants_test.dart`, `test/check_work_target_constants_test.dart`, …) so checker logic stays covered in CI.
 
 Guard behavior:
@@ -116,7 +182,7 @@ Asset-path guard remediation:
 
 ## Pub workspace toolchain
 
-Dart/Flutter pin, `pub.dev` advisories expectations, and intentional “not at Latest” dependency caps (until upstream unblocks) are documented in **[pub-workspace-toolchain.md](pub-workspace-toolchain.md)** and **[CONTRIBUTING.md](../../CONTRIBUTING.md)**. See **GitHub #2073** for the rolling upgrade issue.
+Dart/Flutter pin, `pub.dev` advisories expectations, and intentional “not at Latest” dependency caps (until upstream unblocks) are documented in **[pub-workspace-toolchain.md](pub-workspace-toolchain.md)** (with manual audit driver in **[workspace-outdated-audit.md](workspace-outdated-audit.md)**). See **GitHub #2073** for the rolling upgrade issue.
 
 ---
 

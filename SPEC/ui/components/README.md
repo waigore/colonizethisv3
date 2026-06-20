@@ -1,0 +1,24 @@
+# UI component specs
+
+**SPEC/ui/components/** — Reusable composite widgets referenced from screen specs. Each file documents layout hierarchy, props, states, and behavior **without** a screen ID.
+
+Authoring rules: [`.cursor/rules/colonizethis-ui-documentation.mdc`](../../../.cursor/rules/colonizethis-ui-documentation.mdc) (§ Component specs). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md).
+
+Create `<kebab-name>.md` before duplicating composite layout in multiple screen specs.
+
+## Index
+
+| Component | File | Consumed by |
+|-----------|------|-------------|
+| `CtDarkScaffold` | [`ct-dark-scaffold.md`](ct-dark-scaffold.md) | `CtGameFeatureScreenShell` (dark-chrome path) and any dark-theme screen. |
+| `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention). |
+| `CtGameFeatureScreenShell` | [`ct-game-feature-screen-shell.md`](ct-game-feature-screen-shell.md) | `GAME20001` (production), `GAME30001` (diplomacy), `GAME40001` (technology), `GAME60001` (trade). |
+| `CtPanelWithTopBar` | [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md) | `CtScreenShell`, `UnitsPanelShell`. |
+| `CtTransferList` | [`ct-transfer-list.md`](ct-transfer-list.md) | `DLG40001` (transfer to home fleet), Split Fleet dialog, Split Army dialog. |
+| `MoveUnitsDialogState` / `MoveDialogDestinationRow` | [`move-units-dialog-base.md`](move-units-dialog-base.md) | `DLG20001` (move army dialog), `DLG30001` (move fleet dialog). |
+| `ProductionAllocationRow` | [`production-allocation-row.md`](production-allocation-row.md) | `GAME20001` (production panel). |
+| `TrainDialogChrome` | [`train-dialog-chrome.md`](train-dialog-chrome.md) | `UNIT40001` (train civilians dialog), `UNIT50001` (train military dialog). |
+| `UnitsEntityActionRow` | [`units-entity-action-row.md`](units-entity-action-row.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
+| `UnitsEntityCard` | [`units-entity-card.md`](units-entity-card.md) | `UNIT20001` (military units panel). |
+| `UnitsPanelSheetSurface` | [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
+| `UnitsPanelShell` | [`units-panel-shell.md`](units-panel-shell.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |

@@ -23,6 +23,7 @@ Define map-generation inputs, configurable parameters, and grid size derivation.
 **Pass 6a (mountain ridges):** Mountain ranges factor, min/max, min length per ridge.
 **Pass 6b (region-growing):** Terrain seeds factor, min/max, terrain macro fraction.
 **Pass 6b (pattern refinement):** Pattern min blob size, max fraction per blob, seed factor, max seeds per blob, max changes per seed, max radius.
+**Pass 6b.5 (noise perturbation):** `terrainVariation` (range `0.0`–`1.0`, **default `0.5`**) — controls the expected interior-cell change fraction (`terrainVariation / 2` for noise uniformly distributed in `[-1, 1]`). `0.0` bypasses the pass entirely (byte-identical legacy output, no RNG advance). `1.0` perturbs ~50% of eligible interior cells. Operates only on blobs of size `>= patternMinBlobSize`; never modifies mountains or blob-edge cells.
 **Pass 10b (jitter):** Jitter homogeneity threshold, max fraction, probability, min province size, neighbour support threshold.
 **Pass 7:** Multi-region resource cap fraction (default 0.30).
 

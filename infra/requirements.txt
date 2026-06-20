@@ -1,4 +1,0 @@
-# Daytona sandbox scripts + tests (Refs #2065). Install: pip install -r infra/requirements.txt
-daytona>=0.160,<1
-pytest>=8.0
-PyYAML>=6.0

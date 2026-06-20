@@ -20,11 +20,12 @@ Hard constraints:
 - Any gap, inconsistency, or violation resolves to `NO`, except the conditional policy below.
 - `CONDITIONAL YES` is allowed only when the PR is partially complete **and** the PR comment explicitly documents remaining gaps and planned follow-up.
 - `Architecture` and `Linting compliance` are non-negotiable: if violations exist, they must resolve to `NO` (never `CONDITIONAL YES`).
+- `UI visual fidelity` may resolve to `CONDITIONAL YES` only for explicitly deferred per-screen visual polish that the PR comment links to a sibling alignment issue; Material-chrome violations and hardcoded light-theme colors are always `NO`.
 - Lint allowlist additions/expansions are disallowed and count as linting non-compliance.
 
 ## Required checklist
 
-Evaluate these four criteria in order:
+Evaluate these criteria in order:
 
 1. **Alignment with issue**
    - Does implementation satisfy the issue requirements and design constraints?
@@ -34,6 +35,11 @@ Evaluate these four criteria in order:
    - Does implementation align with existing coding and architecture conventions, especially `.cursor/rules/` constraints?
 4. **Linting compliance**
    - Does the PR comply with all linting rules without adding/changing allowlists?
+5. **UI visual fidelity** (apply only when the PR touches app UI — widgets, screens, dialogs, overlays, theme, or Widgetbook stories)
+   - Do Widgetbook stories render under `AppThemes.editorialMonocle` without functional regressions (crashes, missing widgets, layout breakage)?
+   - Are user-facing surfaces free of Material chrome (no `ElevatedButton`, `AlertDialog`, `Card`, `ChoiceChip`, etc. per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban) and built only from the Ct-* catalog?
+   - Do color values match the canonical editorial-monocle palette in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette — no hardcoded light-theme colors (parchment `#F5F5DC`, raw Material primaries) sneaking into theme/widget code?
+   - Per-screen visual polish (washed-out text, contrast tuning, residual parchment-colored regions inside a specific widget) is **tracked in sibling per-screen alignment issues** and is **not** a blocker on this criterion; only crashes, functional regressions, Material-chrome violations, and hardcoded light-theme colors are.
 
 ## Review workflow
 
@@ -49,8 +55,9 @@ Evaluate these four criteria in order:
 3. **Score each criterion strictly**
    - Start each criterion at `YES`.
    - Downgrade to `NO` on any detected gap/violation.
-   - For criteria eligible for conditional handling (`Alignment with issue`, `AC coverage` only), upgrade `NO` to `CONDITIONAL YES` only if the PR discussion explicitly and concretely documents the gap and follow-up.
-   - Never apply conditional handling to `Architecture` or `Linting compliance`.
+   - For criteria eligible for conditional handling (`Alignment with issue`, `AC coverage`, and `UI visual fidelity` for deferred per-screen polish only), upgrade `NO` to `CONDITIONAL YES` only if the PR discussion explicitly and concretely documents the gap and follow-up.
+   - Never apply conditional handling to `Architecture` or `Linting compliance`. For `UI visual fidelity`, never apply conditional handling to Material-chrome violations or hardcoded light-theme colors.
+   - If the PR does **not** touch app UI, mark `UI visual fidelity` as `N/A` and explain briefly.
 
 4. **Explain failures precisely**
    - For every `NO` or `CONDITIONAL YES`, list concrete evidence:
@@ -60,7 +67,7 @@ Evaluate these four criteria in order:
      - lint rule failures or allowlist changes
 
 5. **Return merge-readiness**
-   - PR is fully compliant only when all four criteria are `YES`.
+   - PR is fully compliant only when every applicable criterion is `YES` (treat `N/A` for `UI visual fidelity` on non-UI PRs as compliant).
    - Any `NO` means not merge-ready.
    - `CONDITIONAL YES` means intentionally partial and documented, but not full compliance.
 
@@ -86,6 +93,8 @@ Checklist:
   - Evidence: <rule/pattern alignment or violation list>
 - Linting compliance: YES | NO
   - Evidence: <lint status and confirmation no allowlist changes>
+- UI visual fidelity: YES | CONDITIONAL YES | NO | N/A
+  - Evidence: <dark-theme adherence, Ct-* catalog use, palette match against `SPEC/ui/pixel-art-ui-catalog.md`, or `N/A: non-UI PR`>
 
 Violations / Gaps:
 - <clear, specific item>

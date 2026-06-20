@@ -1,0 +1,32 @@
+/// Economy, extraction, production, and world-market resolution (Refs #3290).
+library colonizethis_economy;
+
+export 'src/economy/build_cost.dart';
+export 'src/economy/economy_consumption.dart';
+export 'src/economy/economy_extraction.dart';
+export 'src/economy/economy_preview_stockpile_phase.dart';
+export 'src/economy/economy_production.dart';
+export 'src/economy/economy_riches_to_treasury.dart';
+export 'src/economy/non_gp_auto_offers.dart';
+export 'src/economy/non_gp_extraction.dart';
+export 'src/economy/projected_cost_engine.dart';
+export 'src/economy/resource_extractor.dart';
+export 'src/economy/sea_transport.dart';
+export 'src/economy/trade_cargo_capacity.dart';
+export 'src/economy/trade_interception.dart';
+export 'src/economy/worker_action_cost.dart';
+export 'src/economy/worker_economy.dart';
+export 'src/economy/world_market/bid_type_cap.dart';
+export 'src/economy/world_market/deal_matcher.dart';
+export 'src/economy/world_market/first_right_credits.dart';
+export 'src/economy/world_market/first_right_profit.dart';
+export 'src/economy/world_market/lock_recovery_minor_bids.dart';
+export 'src/economy/world_market/price_discovery.dart';
+export 'src/economy/world_market/purchased_tile_index.dart';
+export 'src/economy/world_market/purchased_tile_riches.dart';
+export 'src/economy/world_market/sellable_quantity.dart';
+export 'src/economy/world_market/trade_order_suggester.dart';
+export 'src/economy/world_market/trade_order_validation_context.dart';
+export 'src/economy/world_market/trade_order_validator.dart';
+export 'src/economy/world_market/treasury_bid_budget.dart';
+export 'src/validation/order_validation_result.dart';

@@ -5,18 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/services/region_map_widget_bindings.dart';
 import '../core/services/subscription_tracker.dart';
-import '../features/game/flame/ct_region_map_game.dart';
-import '../features/game/flame/region_map_component.dart';
-import '../features/game/flame/region_map_viewport_snapshot.dart'
-    show RegionMapViewportSnapshot;
-import '../features/game/widgets/chrome/region_map_game_viewport.dart';
-
-export '../features/game/flame/region_map_component.dart'
-    show
-        assertCtMapPlayerViewRequired,
-        BaseLayerDisplayMode,
-        CtMapVisibilityMode;
 
 /// Flutter wrapper for the region map; renders via Flame. SPEC/ui/map-widget.md.
 class CtRegionMap extends StatefulWidget {
@@ -35,8 +25,7 @@ class CtRegionMap extends StatefulWidget {
     this.onRegionViewChanged,
     this.onProvinceHovered,
     this.onTileHovered,
-    this.onCivilianTileTapped,
-    this.onFleetMarkerTapped,
+    this.onCivilianTileStateChanged,
     this.onCivilianTileSelectionCleared,
     this.selectedTileKey,
     this.selectedCivilianTileKey,
@@ -66,13 +55,7 @@ class CtRegionMap extends StatefulWidget {
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
   final void Function(String? tileKey)? onTileHovered;
-  final void Function(String tileKey)? onCivilianTileTapped;
-  final void Function(
-    String locationScopeKey,
-    String? initialFleetId,
-    String markerTileKey,
-  )?
-  onFleetMarkerTapped;
+  final void Function(String tileKey)? onCivilianTileStateChanged;
   final VoidCallback? onCivilianTileSelectionCleared;
   final String? selectedTileKey;
   final String? selectedCivilianTileKey;
@@ -152,8 +135,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
-        widget.onCivilianTileTapped != oldWidget.onCivilianTileTapped ||
-        widget.onFleetMarkerTapped != oldWidget.onFleetMarkerTapped ||
+        widget.onCivilianTileStateChanged !=
+            oldWidget.onCivilianTileStateChanged ||
         widget.onCivilianTileSelectionCleared !=
             oldWidget.onCivilianTileSelectionCleared ||
         widget.selectedTileKey != oldWidget.selectedTileKey ||
@@ -189,8 +172,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
-        onCivilianTileTapped: widget.onCivilianTileTapped,
-        onFleetMarkerTapped: widget.onFleetMarkerTapped,
+        onCivilianTileTapped: _handleCivilianTileTapped,
+        onFleetMarkerTapped: _handleFleetMarkerTapped,
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
@@ -209,7 +192,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
   }
 
   CtRegionMapGame _buildGame() {
-    return CtRegionMapGame(
+    return defaultCreateCtRegionMapGame(
       region: widget.region,
       cellSizePx: widget.cellSizePx,
       showPoliticalOverlay: widget.showPoliticalOverlay,
@@ -225,8 +208,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
       onRegionViewChanged: widget.onRegionViewChanged,
       onProvinceHovered: widget.onProvinceHovered,
       onTileHovered: widget.onTileHovered,
-      onCivilianTileTapped: widget.onCivilianTileTapped,
-      onFleetMarkerTapped: widget.onFleetMarkerTapped,
+      onCivilianTileTapped: _handleCivilianTileTapped,
+      onFleetMarkerTapped: _handleFleetMarkerTapped,
       onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
       selectedTileKey: widget.selectedTileKey,
       selectedCivilianTileKey: widget.selectedCivilianTileKey,
@@ -242,6 +225,41 @@ class _CtRegionMapState extends State<CtRegionMap> {
       playerViewForResources: widget.playerViewForResources,
       onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
       initialZoomMultiplier: widget.zoomMultiplier ?? 1.0,
+    );
+  }
+
+  void _handleCivilianTileTapped(String tileKey) {
+    widget.onCivilianTileStateChanged?.call(tileKey);
+    final bus = widget.bus;
+    if (bus == null) {
+      return;
+    }
+    String? initialSelectedUnitId;
+    for (final marker in widget.region.civilianTileMarkers) {
+      if (marker.tileKey == tileKey && marker.unitIds.isNotEmpty) {
+        initialSelectedUnitId = marker.unitIds.first;
+        break;
+      }
+    }
+    bus.emit(
+      OpenCivilianUnitsPanelEvent(
+        tileScopeTileKey: tileKey,
+        initialSelectedUnitId: initialSelectedUnitId,
+      ),
+    );
+  }
+
+  void _handleFleetMarkerTapped(
+    String locationScopeKey,
+    String? initialFleetId,
+    String markerTileKey,
+  ) {
+    widget.bus?.emit(
+      OpenNavalUnitsPanelEvent(
+        locationScopeKey: locationScopeKey,
+        initialSelectedFleetId: initialFleetId,
+        tileScopeTileKey: markerTileKey,
+      ),
     );
   }
 
@@ -296,7 +314,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
                 }
                 _game.panBy(details.focalPointDelta);
               },
-              child: RegionMapGameViewport(game: _game),
+              child: buildRegionMapGameViewport(_game),
             ),
           ),
         ),

@@ -2,6 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -17,6 +19,17 @@ class QuickBattleScreen extends StatefulWidget {
     required this.onComplete,
     this.interactive = false,
   });
+
+  /// SPEC/ui/quick-battle-screen.md — [UiScreenIds.quickBattleScreen].
+  static const screenId = UiScreenIds.quickBattleScreen;
+
+  /// Letter-spacing applied to the round-counter title text.
+  ///
+  /// Matches the `0.05em` setter on `.round-counter` in
+  /// `SPEC/ui/mockups/CMPT20001-quick-battle-screen.html`. Documented in
+  /// `SPEC/ui/quick-battle-screen.md` § Layout / wireframe and pinned by
+  /// the round-counter palette AC.
+  static const double roundCounterLetterSpacing = 0.05;
 
   final QuickBattleInput input;
   final ValueChanged<QuickBattleResult> onComplete;
@@ -68,6 +81,11 @@ class _QuickBattleScreenState extends State<QuickBattleScreen> {
         },
       );
     }
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? roundCounterStyle = theme.textTheme.titleMedium?.copyWith(
+      color: EditorialMonoclePalette.accent,
+      letterSpacing: QuickBattleScreen.roundCounterLetterSpacing,
+    );
     return CtDialogShell(
       maxWidth: 400,
       maxHeight: 500,
@@ -77,7 +95,7 @@ class _QuickBattleScreenState extends State<QuickBattleScreen> {
         children: [
           Text(
             l10n.quickBattle_round(_round, widget.input.maxRounds),
-            style: Theme.of(context).textTheme.titleMedium,
+            style: roundCounterStyle,
           ),
           const SizedBox(height: 12),
           QuickBattleDeploymentView(
@@ -114,6 +132,7 @@ class _ResultView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final theme = Theme.of(context);
     final winnerText = switch (result.winner) {
       QuickBattleWinner.attacker => l10n.quickBattle_attackerWins(
         l10n.quickBattle_attackerDefaultName,
@@ -130,13 +149,18 @@ class _ResultView extends StatelessWidget {
         children: [
           Text(
             l10n.quickBattle_battleResult(winnerText),
-            style: Theme.of(context).textTheme.titleMedium,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 8),
           if (result.provinceFlips)
             Text(
               l10n.quickBattle_provinceCaptured,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.error,
+              ),
             ),
           const SizedBox(height: 8),
           Text(
@@ -144,12 +168,14 @@ class _ResultView extends StatelessWidget {
               l10n.quickBattle_attackerDefaultName,
               result.attackerCasualties.length,
             ),
+            style: theme.textTheme.bodySmall,
           ),
           Text(
             l10n.quickBattle_casualties(
               l10n.quickBattle_defenderDefaultName,
               result.defenderCasualties.length,
             ),
+            style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           Align(

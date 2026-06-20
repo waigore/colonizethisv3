@@ -7,11 +7,29 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
+/// Canonical source of truth for the `kWorkTarget*` constant definitions.
+///
+/// The order/work-domain constants now live in the orders domain (Refs #3290);
+/// `lib/src/constants.dart` only re-exports them, so it no longer carries the
+/// definitions this check parses.
 const _workTargetConstantsRelPath =
+    'packages/colonizethis_orders/lib/src/orders/order_work_constants.dart';
+
+/// Neutral re-export shim that still exposes the constants to consumers.
+/// Excluded from scanning so its `export` line is never treated as usage.
+const _workTargetConstantsShimRelPath =
     'packages/colonizethis_logic/lib/src/constants.dart';
+
+/// Ownership test that asserts the canonical `kWorkTarget*` values against
+/// their raw string literals (Refs #3290). Like the definition source, it must
+/// reference the raw literals to verify them, so it is exempt from the gate.
+const _workTargetConstantsOwnershipTestRelPath =
+    'packages/colonizethis_orders/test/orders/order_work_constants_test.dart';
 
 const _excludedPaths = <String>{
   _workTargetConstantsRelPath,
+  _workTargetConstantsShimRelPath,
+  _workTargetConstantsOwnershipTestRelPath,
   'app/lib/l10n/app_localizations_en.dart',
   'app/lib/widgetbook.dart',
   'app/lib/widgetbook/catalog.dart',

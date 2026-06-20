@@ -12,6 +12,12 @@ enum DisallowedAstMatchKind {
   unprefixedProvinceIdStringLiteralArgument,
   provinceLocalSegmentBoundaryOnly,
   scopedPackageImportContract,
+  simpleReceiverRemoveAtZero,
+  linearCollectionWhereFirstOrNull,
+  incrementalValidatorForPlayerInLoop,
+  redundantWhereToListWhereChain,
+  nestedWorldStateCopyWith,
+  staticMemberAccess,
 }
 
 class DisallowedPatternRule {
@@ -31,6 +37,14 @@ class DisallowedPatternRule {
     required this.scopedRelativePathPrefixes,
     required this.packageName,
     required this.allowedPackageImports,
+    this.removeAtZeroReceiverPathPrefix,
+    this.removeAtZeroReceiverIdentifier,
+    this.linearCollectionNames = const {},
+    this.linearCollectionPathPrefixes = const [],
+    this.nestedCopyWithOuterArgumentName,
+    this.staticMemberTypeName,
+    this.staticMemberName,
+    this.staticMemberPathPrefix,
   });
 
   final String id;
@@ -48,6 +62,45 @@ class DisallowedPatternRule {
   final Set<String> scopedRelativePathPrefixes;
   final String? packageName;
   final Set<String> allowedPackageImports;
+
+  /// When [kind] is [DisallowedAstMatchKind.simpleReceiverRemoveAtZero]: relative
+  /// path prefix (POSIX slashes) limiting matches, e.g. `packages/colonizethis_logic/lib/src/`.
+  final String? removeAtZeroReceiverPathPrefix;
+
+  /// When [kind] is [DisallowedAstMatchKind.simpleReceiverRemoveAtZero]: simple
+  /// identifier of the receiver for `removeAt(0)` (typically `queue`).
+  final String? removeAtZeroReceiverIdentifier;
+
+  /// When [kind] is [DisallowedAstMatchKind.linearCollectionWhereFirstOrNull]:
+  /// names of getters/no-arg methods whose `.where(...).firstOrNull` chains
+  /// are linear-scan anti-patterns (for example `provinces`).
+  final Set<String> linearCollectionNames;
+
+  /// When [kind] is [DisallowedAstMatchKind.linearCollectionWhereFirstOrNull]
+  /// or other path-scoped rules (e.g. [DisallowedAstMatchKind.nestedWorldStateCopyWith]):
+  /// path prefixes (POSIX slashes) limiting matches, for example
+  /// `packages/colonizethis_logic/lib/src/`.
+  final List<String> linearCollectionPathPrefixes;
+
+  /// When [kind] is [DisallowedAstMatchKind.nestedWorldStateCopyWith]: the
+  /// outer `copyWith(<arg>:`) named-argument label that anchors the chain
+  /// (defaults to `worldState`). Only chains whose outermost `copyWith` passes
+  /// that named argument are scanned for deeper nesting.
+  final String? nestedCopyWithOuterArgumentName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: the simple
+  /// type-name prefix of the disallowed static access (for example
+  /// `ProductionRecipesCatalog` in `ProductionRecipesCatalog.all`).
+  final String? staticMemberTypeName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: the accessed
+  /// member name (for example `all`).
+  final String? staticMemberName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: path prefix
+  /// (POSIX slashes) limiting matches, for example
+  /// `packages/colonizethis_ai/lib/`.
+  final String? staticMemberPathPrefix;
 }
 
 class DisallowedAstViolation {
@@ -333,6 +386,184 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           allowedPackageImports: const {},
         ),
       );
+    } else if (kind == 'simple_receiver_remove_at_zero') {
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      final receiver = match['receiver_identifier']?.toString();
+      if (prefix == null ||
+          prefix.isEmpty ||
+          receiver == null ||
+          receiver.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.simpleReceiverRemoveAtZero,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          removeAtZeroReceiverPathPrefix: prefix,
+          removeAtZeroReceiverIdentifier: receiver,
+        ),
+      );
+    } else if (kind == 'linear_collection_where_first_or_null') {
+      final namesNode = match['collection_names'];
+      final prefixes = parseRelativePathPrefixesFromYamlMatch(match);
+      if (namesNode is! YamlList || prefixes.isEmpty) {
+        continue;
+      }
+      final names = <String>{};
+      for (final n in namesNode.nodes) {
+        final s = n.value?.toString();
+        if (s != null && s.isNotEmpty) {
+          names.add(s);
+        }
+      }
+      if (names.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.linearCollectionWhereFirstOrNull,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          linearCollectionNames: names,
+          linearCollectionPathPrefixes: prefixes,
+        ),
+      );
+    } else if (kind == 'redundant_where_to_list_where_chain') {
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.redundantWhereToListWhereChain,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+        ),
+      );
+    } else if (kind == 'incremental_validator_for_player_in_loop') {
+      final prefixes = parseRelativePathPrefixesFromYamlMatch(match);
+      if (prefixes.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.incrementalValidatorForPlayerInLoop,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          linearCollectionPathPrefixes: prefixes,
+        ),
+      );
+    } else if (kind == 'nested_world_state_copywith') {
+      final prefixes = parseRelativePathPrefixesFromYamlMatch(match);
+      if (prefixes.isEmpty) {
+        continue;
+      }
+      final outerArgumentName = match['outer_argument_name']?.toString();
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.nestedWorldStateCopyWith,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          linearCollectionPathPrefixes: prefixes,
+          nestedCopyWithOuterArgumentName:
+              outerArgumentName != null && outerArgumentName.isNotEmpty
+                  ? outerArgumentName
+                  : 'worldState',
+        ),
+      );
+    } else if (kind == 'static_member_access') {
+      final typeName = match['type_name']?.toString();
+      final memberName = match['member_name']?.toString();
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      if (typeName == null ||
+          typeName.isEmpty ||
+          memberName == null ||
+          memberName.isEmpty ||
+          prefix == null ||
+          prefix.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.staticMemberAccess,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          staticMemberTypeName: typeName,
+          staticMemberName: memberName,
+          staticMemberPathPrefix: prefix,
+        ),
+      );
     } else if (kind == 'scoped_package_import_contract') {
       final scopeNode = match['scoped_relative_path_prefixes'];
       final packageName = match['package_name']?.toString();
@@ -382,4 +613,27 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
     }
   }
   return out;
+}
+
+/// Resolves [relative_path_prefix] or [relative_path_prefixes] from a YAML match
+/// node into POSIX path prefixes.
+List<String> parseRelativePathPrefixesFromYamlMatch(YamlMap match) {
+  final prefixesNode = match['relative_path_prefixes'];
+  if (prefixesNode is YamlList) {
+    final out = <String>[];
+    for (final n in prefixesNode.nodes) {
+      final s = n.value?.toString().replaceAll('\\', '/');
+      if (s != null && s.isNotEmpty) {
+        out.add(s);
+      }
+    }
+    if (out.isNotEmpty) {
+      return out;
+    }
+  }
+  final single = match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+  if (single != null && single.isNotEmpty) {
+    return [single];
+  }
+  return const [];
 }

@@ -1,9 +1,8 @@
-
 /// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
 
 part of 'tile_map_generator.dart';
 
-const String _landSentinel = '_land';
+const String _landSentinel = kTileMapLandSentinel;
 
 /// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 class MapGenerationParams {
@@ -198,6 +197,8 @@ class TileMapParams implements TileMapLandSeedParams {
     this.patternMaxSeedsPerBlob = 6,
     this.patternMaxChangesPerSeed = 12,
     this.patternMaxRadius = 4,
+    // Pass 6b.5 — noise perturbation
+    this.terrainVariation = 0.5,
     // Pass 10b — jitter
     this.jitterHomogeneityThreshold = 0.85,
     this.jitterMaxFraction = 0.1,
@@ -224,6 +225,7 @@ class TileMapParams implements TileMapLandSeedParams {
        assert(patternMaxSeedsPerBlob >= 0),
        assert(patternMaxChangesPerSeed >= 0),
        assert(patternMaxRadius >= 0),
+       assert(terrainVariation >= 0 && terrainVariation <= 1),
        assert(
          jitterHomogeneityThreshold >= 0 && jitterHomogeneityThreshold <= 1,
        ),
@@ -288,6 +290,13 @@ class TileMapParams implements TileMapLandSeedParams {
   final int patternMaxChangesPerSeed;
   final int patternMaxRadius;
 
+  // --- Pass 6b.5 (noise perturbation)
+  /// 0.0–1.0; controls expected interior-cell change fraction
+  /// (`terrainVariation / 2` for noise uniformly distributed in `[-1, 1]`).
+  /// 0.0 bypasses the pass entirely (byte-identical legacy output, no RNG advance).
+  /// SPEC/program/tile-map-gen-algorithm.md § Pass 6b.5.
+  final double terrainVariation;
+
   // --- Pass 10b (jitter)
   final double jitterHomogeneityThreshold;
   final double jitterMaxFraction;
@@ -300,20 +309,28 @@ class TileMapParams implements TileMapLandSeedParams {
   final double multiRegionResourceCapFraction;
 
   /// Returns a copy with selected fields overridden (e.g. bumped map seed for tests/tools).
-  TileMapParams copyWith({int? seed}) {
+  TileMapParams copyWith({
+    int? seed,
+    double? seaFraction,
+    bool? skipFillLakes,
+    bool? joinContinents,
+    bool? seedBeforeAssignment,
+    double? borderNoise,
+    double? terrainVariation,
+  }) {
     return TileMapParams(
       width: width,
       height: height,
       seed: seed ?? this.seed,
-      seaFraction: seaFraction,
-      borderNoise: borderNoise,
+      seaFraction: seaFraction ?? this.seaFraction,
+      borderNoise: borderNoise ?? this.borderNoise,
       maxEnforceIterations: maxEnforceIterations,
       clusterShape: clusterShape,
       voronoiNoiseScale: voronoiNoiseScale,
       continentBufferTiles: continentBufferTiles,
-      skipFillLakes: skipFillLakes,
-      joinContinents: joinContinents,
-      seedBeforeAssignment: seedBeforeAssignment,
+      skipFillLakes: skipFillLakes ?? this.skipFillLakes,
+      joinContinents: joinContinents ?? this.joinContinents,
+      seedBeforeAssignment: seedBeforeAssignment ?? this.seedBeforeAssignment,
       maxSeaZoneFraction: maxSeaZoneFraction,
       mountainRangesFactor: mountainRangesFactor,
       mountainRangesMin: mountainRangesMin,
@@ -329,6 +346,7 @@ class TileMapParams implements TileMapLandSeedParams {
       patternMaxSeedsPerBlob: patternMaxSeedsPerBlob,
       patternMaxChangesPerSeed: patternMaxChangesPerSeed,
       patternMaxRadius: patternMaxRadius,
+      terrainVariation: terrainVariation ?? this.terrainVariation,
       jitterHomogeneityThreshold: jitterHomogeneityThreshold,
       jitterMaxFraction: jitterMaxFraction,
       jitterProbability: jitterProbability,
@@ -336,57 +354,5 @@ class TileMapParams implements TileMapLandSeedParams {
       jitterNeighborSupportThreshold: jitterNeighborSupportThreshold,
       multiRegionResourceCapFraction: multiRegionResourceCapFraction,
     );
-  }
-}
-
-/// Tracks both-count and total for multi-region resource cap (Pass 7). SPEC/game/resource-terrain-region-rules.md.
-class _MultiRegionCapState {
-  _MultiRegionCapState(this.capFraction, this.rules, this.regionId);
-
-  factory _MultiRegionCapState.fromExisting(
-    double capFraction,
-    ResourceRules rules,
-    String regionId,
-    List<List<Resource?>> resourceGrid,
-  ) {
-    var both = 0, total = 0;
-    for (final row in resourceGrid) {
-      for (final r in row) {
-        if (r == null) continue;
-        total++;
-        if (rules.regionRule[r] == ResourceRegionRule.both) both++;
-      }
-    }
-    final s = _MultiRegionCapState(capFraction, rules, regionId);
-    s.bothCount = both;
-    s.totalCount = total;
-    return s;
-  }
-
-  int bothCount = 0;
-  int totalCount = 0;
-  final double capFraction;
-  final ResourceRules rules;
-  final String regionId;
-
-  bool shouldRestrictToRegionOnly(List<Resource> allowed) {
-    if (totalCount == 0) return false;
-    if (bothCount / totalCount < capFraction) return false;
-    final hasBoth = allowed.any(
-      (r) => rules.regionRule[r] == ResourceRegionRule.both,
-    );
-    final hasRegionOnly = allowed.any(
-      (r) => rules.regionRule[r] != ResourceRegionRule.both,
-    );
-    return hasBoth && hasRegionOnly;
-  }
-
-  List<Resource> filterToRegionOnly(List<Resource> allowed) => allowed
-      .where((r) => rules.regionRule[r] != ResourceRegionRule.both)
-      .toList();
-
-  void record(Resource r) {
-    totalCount++;
-    if (rules.regionRule[r] == ResourceRegionRule.both) bothCount++;
   }
 }

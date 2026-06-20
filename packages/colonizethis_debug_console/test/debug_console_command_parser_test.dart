@@ -73,6 +73,52 @@ void main() {
       expect(result.message, contains('at least 1'));
     });
 
+    test('parses add_worker with canonical tier after case-insensitive input', () {
+      final result = parser.parse('/add_worker PEASANTS 10');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleWorkerPoolCredit;
+      expect(credit.workerTierId, 'peasants');
+      expect(credit.requestedAmount, 10);
+      expect(credit.creditedAmount, 10);
+    });
+
+    test('rejects add_worker unknown tier', () {
+      final result = parser.parse('/add_worker nobles 1');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown worker tier'));
+    });
+
+    test('rejects add_worker non-integer amount', () {
+      final result = parser.parse('/add_worker peasants abc');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Amount must be an integer'));
+    });
+
+    test('rejects add_worker amount below 1', () {
+      final result = parser.parse('/add_worker peasants 0');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('at least 1'));
+    });
+
+    test('clamps add_worker above cap in parser', () {
+      final result = parser.parse('/add_worker apprentices 12000');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleWorkerPoolCredit;
+      expect(credit.workerTierId, 'apprentices');
+      expect(credit.requestedAmount, 12000);
+      expect(credit.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+    });
+
+    test('help lists add_worker tier ids', () {
+      final result = parser.parse('/help');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('/add_worker'));
+      expect(result.message, contains('apprentices'));
+      expect(result.message, contains('journeymen'));
+      expect(result.message, contains('masters'));
+      expect(result.message, contains('peasants'));
+    });
+
     test('help lists add_money bounds', () {
       final result = parser.parse('/help');
       expect(result.isError, isTrue);
@@ -229,6 +275,73 @@ void main() {
       expect(message, contains('/reveal_province <regionId|localId'));
       expect(message, contains('/flip_province <regionId|localId>'));
       expect(message, contains('ambiguous'));
+    });
+
+    test('parses get_tile_basic_info successfully', () {
+      final result = parser.parse('/get_tile_basic_info');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleGetTileBasicInfo>());
+    });
+
+    test('rejects get_tile_basic_info extra args with usage', () {
+      final result = parser.parse('/get_tile_basic_info extra');
+      expect(result.isError, isTrue);
+      expect(result.message, 'Usage: /get_tile_basic_info');
+    });
+
+    test('help includes get_tile_basic_info exactly once', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final matches = RegExp(
+        r'/get_tile_basic_info',
+      ).allMatches(message).length;
+      expect(matches, 1);
+    });
+
+    test('parses list_players successfully', () {
+      final result = parser.parse('/list_players');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleListPlayers>());
+    });
+
+    test('rejects list_players extra args with usage', () {
+      final result = parser.parse('/list_players foo');
+      expect(result.isError, isTrue);
+      expect(result.message, 'Usage: /list_players');
+    });
+
+    test('help includes list_players exactly once', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final matches = RegExp(r'/list_players').allMatches(message).length;
+      expect(matches, 1);
+    });
+
+    test('parses /observe as global mode', () {
+      final result = parser.parse('/observe');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleSetObserveGlobal>());
+    });
+
+    test('parses /observe off', () {
+      final result = parser.parse('/observe off');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleSetObserveOff>());
+    });
+
+    test('parses /observe with display name target', () {
+      final result = parser.parse('/observe France');
+      expect(result.isError, isFalse);
+      final inv = result.invocation! as DebugConsoleSetObservePlayer;
+      expect(inv.target, 'France');
+    });
+
+    test('help includes observe forms', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      expect(message, contains('/observe\n'));
+      expect(message, contains('/observe off'));
+      expect(message, contains('/observe <player_id | display_name>'));
     });
   });
 }

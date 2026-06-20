@@ -25,9 +25,11 @@ dependencies:
   colonizethis_data:
   colonizethis_save:
   colonizethis_logic:
+  colonizethis_turn:
+  colonizethis_setup:
   colonizethis_ai:
   colonizethis_debug_console:
-  widgetbook: ^3.22.0
+  widgetbook: ^3.23.0
   google_fonts: ^8.1.0
   intl: ^0.20.2
   window_manager: ^0.5.1
@@ -41,8 +43,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   colonizethis_exception_lint:
     path: ../packages/colonizethis_exception_lint
-  custom_lint: ^0.8.1
-  hardcoded_strings_lint: ^1.0.4
+  custom_lint: 0.8.1
+  hardcoded_strings_lint: 1.0.4
 
 flutter:
   generate: true
@@ -58,4 +60,16 @@ flutter:
     - assets/images/terrain/base_32/
     - assets/images/terrain/tilesets/
     - assets/dialogue/
+    - assets/profiles/
+    - google_fonts/
+  fonts:
+    - family: Cinzel
+      fonts:
+        - asset: google_fonts/Cinzel-Regular.ttf
+        - asset: google_fonts/Cinzel-Medium.ttf
+          weight: 500
+        - asset: google_fonts/Cinzel-SemiBold.ttf
+          weight: 600
+        - asset: google_fonts/Cinzel-Bold.ttf
+          weight: 700
 

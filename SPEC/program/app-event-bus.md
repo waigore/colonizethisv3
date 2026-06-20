@@ -26,6 +26,15 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 
 **Local-by-design exception:** **`Navigator.pop`** / **`showDialog`** entirely **inside one widget’s local UX** (same panel subtree, confirm steps, internal pickers; see **Local by design** in app-ui-wiring) remain allowed; they must not replace the bus for cross-cutting actions.
 
+### Turn-resolution active guards (#2160)
+
+While background **turn resolution** is active from the map, **`turnResolutionBlockingProvider`** is `true`. In that window:
+
+- **`AppEventHandler`** suppresses **`UIActionEvent`** types that drive navigation/panels/dialogs (**not** **`OpenPauseMenuPanelEvent`** nor **`ClosePanelEvent`**) and logs **`logic:`** rejects for blocked actions.
+- **`AppEventHandlerScope`** session-command listeners suppress mutations (orders/game/debug session commands); **`LandArmiesUpdatedEvent`** ingestion is also guarded so routed updates cannot slip past map **`IgnorePointer`**.
+
+Locate intents (**`LocateMapTileEvent`**) remain map-local listeners; the handler ignores them regardless (unchanged routing).
+
 ---
 
 ## Architecture
@@ -164,7 +173,8 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 ### AppEventHandler
 
 - Given **`AppEventHandler`** is bound with a registered **`train_civilians`** dialog builder, When the system emits **`OpenDialogEvent('train_civilians')`**, Then **`showDialog`** runs and the dialog widget tree is present.
-- Given **`AppEventHandler`** is bound, When the system emits **`OpenPauseMenuPanelEvent`**, Then a modal bottom sheet appears listing Debug log and Resume.
+- Given **`AppEventHandler`** is bound, When the system emits **`OpenPauseMenuPanelEvent`**, Then a `showDialog`-hosted modal appears containing the five-button `PauseMenuPanel` (Resume, Save Game, Load Game, Settings, Exit to Main Menu) per [`pause-menu-panel.md`](../ui/pause-menu-panel.md).
+- Given **`AppEventHandler`** is bound, When the system emits **`RequestExitToMainMenuFlowEvent`**, Then `showExitToMainMenuConfirmDialog` runs; on confirm the handler emits **`NavigateToShellEvent`**; on cancel no further event fires.
 - Given **`AppEventHandler`** is bound with routes **`shell`** and **`game`** on the stack, When the system emits **`NavigateToShellEvent`**, Then the navigator returns to the **`shell`** route.
 - Given **`AppEventHandler`** is bound, When the system emits **`OpenDialogEvent`** with an unknown **`dialogId`**, Then the handler logs a debug warning and does not throw.
 - Given **`ConfirmDialogEvent`** with **`onResult`**, When the user taps confirm, Then **`onResult(true)`** runs; When the user taps cancel, Then **`onResult(false)`** runs.

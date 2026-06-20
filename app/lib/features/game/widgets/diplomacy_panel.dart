@@ -6,20 +6,52 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
+import '../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
+import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_radius.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'diplomacy_order_helpers.dart';
+import 'game_panel_contract.dart';
 import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
 
 export 'diplomacy_panel_rows.dart';
 
+part 'diplomacy_panel_chrome.dart';
+part 'diplomacy_panel_mode_bar.dart';
+part 'diplomacy_panel_row.dart';
+
+/// Maximum viewport width (Flutter dp) at which the diplomacy faction-row
+/// body switches to its narrow stacked variant (info column above the
+/// action-button cluster, left-aligned).
+///
+/// SPEC/ui/diplomacy-panel.md § Responsive layout — mirrors the
+/// `@media (max-width: 500px)` cutoff in
+/// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
+/// and the `≤ 500 dp` Diplomacy entry in
+/// [mobile-adaptation.md](../../../../../SPEC/ui/mobile-adaptation.md) § 4.
+///
+/// Exposed at library scope so widget tests can pin the boundary
+/// deterministically without re-deriving the constant.
+const double kDiplomacyRowNarrowMaxWidth = 500.0;
+
+/// Key prefix attached to a faction-row body widget so tests can resolve
+/// the live Row (wide) vs Column (narrow) layout selection driven by
+/// [kDiplomacyRowNarrowMaxWidth].
+///
+/// Each row uses `ValueKey('${kDiplomacyRowBodyKeyPrefix}<factionId>')`.
+/// SPEC/ui/diplomacy-panel.md § Responsive layout cites this key so
+/// widget tests can pin both variants without touching private types.
+const String kDiplomacyRowBodyKeyPrefix = 'diplomacyRowBody:';
+
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
-class DiplomacyPanel extends StatefulWidget {
+class DiplomacyPanel extends StatefulWidget with GamePanelMixin {
   const DiplomacyPanel({
     super.key,
     required this.game,
@@ -28,14 +60,24 @@ class DiplomacyPanel extends StatefulWidget {
     required this.currentOrders,
     required this.bus,
     this.onClose,
+    this.readOnly = false,
   });
 
+  /// SPEC/ui/diplomacy-panel.md — [UiScreenIds.diplomacyScreen]. Hosted by
+  /// `DiplomacyScreen`; shares its stable surface ID.
+  static const screenId = UiScreenIds.diplomacyScreen;
+
+  @override
   final Game game;
+  @override
   final String humanPlayerId;
   final MapTopology topology;
   final Orders currentOrders;
+  @override
   final AppEventBus bus;
   final VoidCallback? onClose;
+  @override
+  final bool readOnly;
 
   @override
   State<DiplomacyPanel> createState() => _DiplomacyPanelState();
@@ -44,6 +86,10 @@ class DiplomacyPanel extends StatefulWidget {
 class _DiplomacyPanelState extends State<DiplomacyPanel> {
   final Map<String, String> _moodByLeaderId = <String, String>{};
   final SubscriptionTracker _subscriptions = SubscriptionTracker();
+
+  /// Bottom-mode-bar filter (SPEC/ui/diplomacy-panel.md § Mode bar (filter)).
+  /// Local UI state — does not persist across panel close/reopen.
+  DiplomacyFilterMode _filterMode = DiplomacyFilterMode.all;
 
   @override
   void initState() {
@@ -70,63 +116,122 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
       widget.humanPlayerId,
       widget.currentOrders,
     );
-    final gps = rows.where((r) => r.kind == FactionKind.greatPower).toList();
-    final minors = rows.where((r) => r.kind == FactionKind.minor).toList();
-    final tribes = rows.where((r) => r.kind == FactionKind.tribe).toList();
+    final gps = <DiplomacyRowData>[];
+    final minors = <DiplomacyRowData>[];
+    final tribes = <DiplomacyRowData>[];
+    for (final r in rows) {
+      switch (r.kind) {
+        case FactionKind.greatPower:
+          gps.add(r);
+        case FactionKind.minor:
+          minors.add(r);
+        case FactionKind.tribe:
+          tribes.add(r);
+      }
+    }
+    final showGps = diplomacyFilterShowsKind(
+      _filterMode,
+      FactionKind.greatPower,
+    );
+    final showMinors = diplomacyFilterShowsKind(_filterMode, FactionKind.minor);
+    final showTribes = diplomacyFilterShowsKind(_filterMode, FactionKind.tribe);
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    final list = ListView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: CtSpacing.l,
+        vertical: CtSpacing.m,
+      ),
       children: [
-        if (gps.isNotEmpty) ...[
+        // SPEC/ui/diplomacy-panel.md § Section headings: each section
+        // heading is always rendered (subject to the mode-bar filter),
+        // even when the section has no rows. An empty visible section
+        // renders placeholder copy beneath its heading.
+        if (showGps) ...[
           _sectionHeader(context, l10n.diplomacy_section_greatPowers),
-          ...gps.map(
-            (r) => _DiplomacyRow(
-              data: r,
-              onAction: _submitOrDialog,
-              onTap: () => _openDetail(r),
+          if (gps.isEmpty)
+            _emptySectionPlaceholder(
+              context,
+              l10n.diplomacy_panel_noGreatPowers,
+            )
+          else
+            ...gps.map(
+              (r) => _DiplomacyRow(
+                data: r,
+                onAction: _submitOrDialog,
+                onTap: () => _openDetail(r),
+                readOnly: widget.readOnly,
+              ),
             ),
-          ),
         ],
-        if (minors.isNotEmpty) ...[
+        if (showMinors) ...[
           _sectionHeader(context, l10n.diplomacy_section_minorNations),
-          ...minors.map(
-            (r) => _DiplomacyRow(
-              data: r,
-              onAction: _submitOrDialog,
-              onTap: () => _openDetail(r),
+          if (minors.isEmpty)
+            _emptySectionPlaceholder(
+              context,
+              l10n.diplomacy_panel_noMinorNations,
+            )
+          else
+            ...minors.map(
+              (r) => _DiplomacyRow(
+                data: r,
+                onAction: _submitOrDialog,
+                onTap: () => _openDetail(r),
+                readOnly: widget.readOnly,
+              ),
             ),
-          ),
         ],
-        if (tribes.isNotEmpty) ...[
+        if (showTribes) ...[
           _sectionHeader(context, l10n.diplomacy_section_tribes),
-          ...tribes.map(
-            (r) => _DiplomacyRow(
-              data: r,
-              onAction: _submitOrDialog,
-              onTap: () => _openDetail(r),
+          if (tribes.isEmpty)
+            _emptySectionPlaceholder(context, l10n.diplomacy_panel_noTribes)
+          else
+            ...tribes.map(
+              (r) => _DiplomacyRow(
+                data: r,
+                onAction: _submitOrDialog,
+                onTap: () => _openDetail(r),
+                readOnly: widget.readOnly,
+              ),
             ),
-          ),
         ],
-        if (rows.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              l10n.diplomacy_panel_noFactions,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ),
+      ],
+    );
+
+    return Column(
+      children: [
+        Expanded(child: list),
+        _DiplomacyModeBar(
+          mode: _filterMode,
+          onModeChanged: (next) {
+            if (next == _filterMode) return;
+            setState(() => _filterMode = next);
+          },
+        ),
       ],
     );
   }
 
   Widget _sectionHeader(BuildContext context, String title) {
+    return _DiplomacySectionHeader(title: title);
+  }
+
+  /// Placeholder copy rendered beneath an empty (but always-visible)
+  /// section heading. SPEC/ui/diplomacy-panel.md § Section headings —
+  /// muted italic text using the editorial-monocle `--muted` token
+  /// (matches the mockup `.empty` style), e.g. the Tribes section before
+  /// any tribe has been contacted shows "No tribes contacted yet.".
+  Widget _emptySectionPlaceholder(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: CtSpacing.s,
+        vertical: CtSpacing.m,
+      ),
       child: Text(
-        title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        text,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: EditorialMonoclePalette.muted,
+          fontStyle: FontStyle.italic,
+        ),
       ),
     );
   }
@@ -262,6 +367,8 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         return 0.7;
       case DiplomaticOrderType.setSubsidy:
         return 0.5;
+      case DiplomaticOrderType.establishFtp:
+        return 0.5;
     }
   }
 
@@ -299,228 +406,6 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           discriminator: discriminator,
           stallCounter: stallCounter,
         ),
-      ),
-    );
-  }
-}
-
-class _DiplomacyRow extends StatelessWidget {
-  const _DiplomacyRow({required this.data, required this.onAction, this.onTap});
-
-  final DiplomacyRowData data;
-  final void Function(DiplomaticOrder) onAction;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        child: CtPanel(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildInfoColumn(context)),
-              _buildActionButtons(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoColumn(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildHeaderRow(context),
-        const SizedBox(height: 4),
-        Text(
-          _relationSummary(context),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        ..._buildOptionalStatusLines(context),
-      ],
-    );
-  }
-
-  Widget _buildHeaderRow(BuildContext context) {
-    final l10n = appL10n(context);
-    return Row(
-      children: [
-        Text(
-          data.displayName,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(width: 8),
-        _kindChip(context, data.kind),
-        if (data.powerScore != null) ...[
-          const SizedBox(width: 8),
-          Text(
-            l10n.diplomacy_panel_powerScore(data.powerScore!),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color:
-                  data.playerPowerScore != null &&
-                      data.powerScore! > data.playerPowerScore!
-                  ? Colors.red
-                  : Colors.green,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  String _relationSummary(BuildContext context) {
-    final l10n = appL10n(context);
-    final rel = data.relation;
-    final stateLabel = rel == null
-        ? '—'
-        : rel.atWar
-        ? l10n.diplomacy_relationState_war
-        : l10n.diplomacy_relationState_peace;
-    // SPEC/game/diplomacy.md § Player-facing relation display: show one-word state, hide score.
-    final relationStateLabel = rel == null
-        ? ''
-        : relationScoreToDisplayLabel(rel.score);
-    final overtureLabel = data.overture == null
-        ? ''
-        : ' · ${_overtureStageLabel(data.overture!.stage)}';
-    if (relationStateLabel.isEmpty) {
-      return '$stateLabel$overtureLabel';
-    }
-    return '$stateLabel · $relationStateLabel$overtureLabel';
-  }
-
-  List<Widget> _buildOptionalStatusLines(BuildContext context) {
-    final l10n = appL10n(context);
-    final lines = <Widget>[];
-    if (data.activeSubsidyPerTurn != null) {
-      lines.addAll([
-        const SizedBox(height: 4),
-        Text(
-          l10n.diplomacy_panel_outgoingSubsidy(
-            data.activeSubsidyPerTurn!,
-            data.displayName,
-          ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-        ),
-      ]);
-    }
-    if (data.pendingGrantAmount != null) {
-      lines.addAll([
-        const SizedBox(height: 4),
-        Text(
-          l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
-        ),
-      ]);
-    }
-    if (data.pendingSubsidyAmount != null) {
-      lines.addAll([
-        const SizedBox(height: 4),
-        Text(
-          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
-        ),
-      ]);
-    }
-    return lines;
-  }
-
-  Widget _buildActionButtons() {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        for (final order in data.actions)
-          if (!data.pendingOrderTypes.contains(order.type))
-            _ActionButton(order: order, onPressed: () => onAction(order)),
-        for (final orderType in data.pendingOrderTypes)
-          _ActionButton(
-            order: DiplomaticOrder(
-              type: orderType,
-              targetFactionId: data.factionId,
-            ),
-            onPressed: () {},
-            isPending: true,
-            onCancel: () => onAction(
-              DiplomaticOrder(type: orderType, targetFactionId: data.factionId),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _kindChip(BuildContext context, FactionKind kind) {
-    final (label, color) = switch (kind) {
-      FactionKind.greatPower => ('GP', Colors.blue),
-      FactionKind.minor => ('Minor', Colors.grey),
-      FactionKind.tribe => ('Tribe', Colors.orange),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  String _overtureStageLabel(OvertureStage stage) {
-    return switch (stage) {
-      OvertureStage.none => 'None',
-      OvertureStage.tradeConsulate => 'Consulate',
-      OvertureStage.embassy => 'Embassy',
-      OvertureStage.nap => 'NAP',
-      OvertureStage.joinEmpire => 'Join Empire',
-    };
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.order,
-    required this.onPressed,
-    this.isPending = false,
-    this.onCancel,
-  });
-
-  final DiplomaticOrder order;
-  final VoidCallback onPressed;
-  final bool isPending;
-  final VoidCallback? onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
-    return SizedBox(
-      height: 32,
-      child: CtNinePatchButton(
-        onPressed: isPending ? onCancel : onPressed,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        child: Text(label, style: const TextStyle(fontSize: 12)),
       ),
     );
   }

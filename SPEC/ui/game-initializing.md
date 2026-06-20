@@ -1,13 +1,14 @@
 # Game initialization (new game)
 
+**Screen ID:** `SHEL30001` — stable; do not reassign.
 **SPEC/ui** — User-visible progress and errors while the app builds a new game (map generation, setup pipeline, persistence). Aligns with pipeline phases in [game-setup-pipeline.md](../program/game-setup-pipeline.md).
 
+**Mockup:** [mockups/SHEL30001-game-initializing.html](mockups/SHEL30001-game-initializing.html)
 ---
 
 ## Scope
 
-- **In scope:** Shell flow after the user confirms **Start** on the **new game setup dialog** (`new_game_leader_selection`, `NewGameLeaderSelectionDialog`): nation + leader per slot and **game / world seed** (see [game-setup.md](game-setup.md) § Shell new game dialog). Then show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate). Province assignment follows the **locked assigner** pipeline in [game-setup-pipeline.md](../program/game-setup-pipeline.md) and [locked-province-assigner.md](../program/locked-province-assigner.md).
-- **Also applies:** Any future full-screen Game Setup (`CtGameSetup`) path that uses the same app setup API should match the same progress and error behavior unless a separate spec says otherwise.
+- **In scope:** Shell flow after the user confirms **Start** on the **new game setup dialog** (`new_game_leader_selection`, `NewGameLeaderSelectionDialog`): nation + leader per slot and **game / world seed** (see [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md)). Then show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate). Province assignment follows the **locked assigner** pipeline in [game-setup-pipeline.md](../program/game-setup-pipeline.md) and [locked-province-assigner.md](../program/locked-province-assigner.md).
 - **Out of scope:** Cancel mid-setup; fine-grained per-tile progress.
 
 ---
@@ -22,6 +23,16 @@ The shell may use a **modal progress dialog** (blocking the shell) or a dedicate
 | Step text | One **coarse** label visible at a time; updates when the pipeline advances. |
 | Indicator | Indeterminate progress (e.g. circular progress) is sufficient. |
 | Dismiss | None while work is in progress. |
+
+### Dark-theme visual contract (Refs #2867)
+
+These visual values are the dark editorial-monocle canon and resolve from the palette in [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette. Implementations must use the palette tokens directly — no hard-coded hex.
+
+| Element | Visual contract |
+|---------|-----------------|
+| Spinner ring | 48 px circular indicator painted with the `--accent` token (renders as the rotating arc / "top border" of the ring). |
+| Error frame | The error dialog content card paints a 1 px border colored `--danger` on all four sides, inside the regular `CtDialogShell` chrome. |
+| Buttons | Action buttons (Retry, Close) use `CtNinePatchButton`; Retry is positioned as the trailing (primary-positioned) action and Close as the leading (secondary-positioned) action. |
 
 **Coarse steps (minimum set):** The UI layer must expose at least these phases in order (labels are implementation-defined; l10n keys in `app/lib/l10n/`). Program indices `0..4` match `GameService.newGameSetupProgressStepCount` (`app/lib/core/services/game_service.dart`):
 
@@ -68,6 +79,10 @@ The implementation may merge adjacent steps for fewer on-screen updates if every
 - Given the user had chosen a **non-zero** base seed **`B`** before the first attempt and the error dialog is shown after a failed attempt with **`attemptIndex == N`** (non-negative: 0 = first failure before any retry, 1 = after one retry, …), when the user taps **Retry**, then the error dialog closes and setup runs again with `GameSetupConfig.seed` set to **`B + (N + 1)`**, and the progress UI appears again from the first step.
 - Given the user had chosen **`B == 0`** and setup failed, when the user taps **Retry**, then the next attempt uses **`GameSetupConfig.seed == 0`** again (not `1` or `N+1`), and a new time-based effective seed is chosen when that attempt’s setup runs.
 - Given the error dialog is shown, when the user taps **Close** (or **OK**), then the dialog closes and the shell does not navigate to the game and does not set a new current game from that failed run.
+- Given the progress UI is visible, when the indicator paints, then it renders as a 48 px circular ring whose arc color resolves from the `--accent` palette token (no hard-coded hex). (Refs #2867 dark-theme visual contract)
+- Given the new-game pipeline throws and the error dialog is shown, when the error card paints, then the card draws a 1 px border on all four sides using the `--danger` palette token (Refs #2867 dark-theme visual contract).
+- Given the viewport is exactly `kMinViewportWidth × 640` (320 × 640 dp), when the `NewGameSetupProgressView` body renders for any coarse phase index in `0..4`, then the UI layer emits no `RenderFlex` overflow exception and the localised `shell_newGameProgress_title` (`Creating game`) header, the 48 px `--accent` `CtLoadingIndicator`, and the matching localised `shell_newGameProgress_step*` phase label all render inside the single `CtDialogShell` content column. (Refs #2870 S8 + S10; `SPEC/ui/mobile-adaptation.md` § 7)
+- Given the viewport is exactly `kMinViewportWidth × 640` (320 × 640 dp), when the shell error dialog renders the `NewGameErrorCard` inside its `CtDialogShell` host, then the UI layer emits no `RenderFlex` overflow exception and the localised title (`shell_newGameError_title`), the exception body text, and the trailing `Close` (`common_close`) + `Retry` (`shell_newGameError_retry`) `CtNinePatchButton` pair all render within the dialog content column without horizontal overflow. (Refs #2870 S8 + S10; `SPEC/ui/mobile-adaptation.md` § 7)
 
 ---
 
@@ -80,5 +95,5 @@ The implementation may merge adjacent steps for fewer on-screen updates if every
 
 ## Related
 
-- [game-setup.md](game-setup.md) — full Game Setup screen (six slots); § App flow references initializing behavior.
+- [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) — six-slot leader selection dialog; § App flow references initializing behavior.
 - [SPEC/program/game-setup-pipeline.md](../program/game-setup-pipeline.md) — pipeline phases.

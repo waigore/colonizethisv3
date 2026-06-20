@@ -350,6 +350,240 @@ bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
   return src.contains('tileKeysByRegionAndProvince[');
 }
 
+/// True when [node] is a `.where(...)` invocation whose receiver chain is
+/// `<expr>.where(...).toList()` (i.e. a `.where(...).toList().where(...)`
+/// chain), allocating an intermediate `List` before the next filter.
+bool _isRedundantWhereToListWhereChainPattern(MethodInvocation node) {
+  if (node.methodName.name != 'where') {
+    return false;
+  }
+  if (node.argumentList.arguments.length != 1) {
+    return false;
+  }
+  final outerTarget = node.target;
+  if (outerTarget is! MethodInvocation) {
+    return false;
+  }
+  if (outerTarget.methodName.name != 'toList') {
+    return false;
+  }
+  if (outerTarget.argumentList.arguments.isNotEmpty) {
+    return false;
+  }
+  final innerTarget = outerTarget.target;
+  if (innerTarget is! MethodInvocation) {
+    return false;
+  }
+  if (innerTarget.methodName.name != 'where') {
+    return false;
+  }
+  if (innerTarget.argumentList.arguments.length != 1) {
+    return false;
+  }
+  return true;
+}
+
+bool _pathUnderAnyPrefix(String relativePath, List<String> prefixes) {
+  if (prefixes.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  return prefixes.any((prefix) => slashPath.startsWith(prefix));
+}
+
+bool _isLinearCollectionWhereFirstOrNullPattern(
+  PropertyAccess node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
+    return false;
+  }
+  if (rule.linearCollectionNames.isEmpty) {
+    return false;
+  }
+  if (node.propertyName.name != 'firstOrNull') {
+    return false;
+  }
+  final whereTarget = node.target;
+  if (whereTarget is! MethodInvocation) {
+    return false;
+  }
+  if (whereTarget.methodName.name != 'where') {
+    return false;
+  }
+  if (whereTarget.argumentList.arguments.length != 1) {
+    return false;
+  }
+  final collectionTarget = whereTarget.target;
+  if (collectionTarget == null) {
+    return false;
+  }
+  return _expressionEndsInNamedCollection(
+    collectionTarget,
+    rule.linearCollectionNames,
+  );
+}
+
+bool _expressionEndsInNamedCollection(
+  Expression target,
+  Set<String> collectionNames,
+) {
+  final expr = _unwrapParenthesized(target);
+  if (expr is PropertyAccess) {
+    return collectionNames.contains(expr.propertyName.name);
+  }
+  if (expr is PrefixedIdentifier) {
+    return collectionNames.contains(expr.identifier.name);
+  }
+  if (expr is SimpleIdentifier) {
+    return collectionNames.contains(expr.name);
+  }
+  return false;
+}
+
+bool _isIncrementalValidatorForPlayerInLoopPattern(
+  AstNode node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
+    return false;
+  }
+  if (node is InstanceCreationExpression) {
+    final typeName = node.constructorName.type.name.lexeme;
+    final constructorName = node.constructorName.name?.name;
+    return typeName == 'IncrementalCandidateValidator' &&
+        constructorName == 'forPlayer';
+  }
+  if (node is MethodInvocation) {
+    if (node.target == null) {
+      return node.methodName.name == 'buildIncrementalCandidateValidator';
+    }
+    final target = node.target;
+    if (node.methodName.name == 'forPlayer') {
+      if (target is SimpleIdentifier) {
+        return target.name == 'IncrementalCandidateValidator';
+      }
+      if (target is PrefixedIdentifier) {
+        return target.identifier.name == 'IncrementalCandidateValidator';
+      }
+    }
+  }
+  return false;
+}
+
+/// True when [node] is a `copyWith(...)` invocation that anchors a chain
+/// **three or more** `copyWith` levels deep through the configured outer
+/// named argument (default `worldState`). The detection is structural and
+/// path-scoped to [DisallowedPatternRule.linearCollectionPathPrefixes]:
+///
+/// * Level 1: `<expr>.copyWith(<outerArgName>: <inner>)`.
+/// * Level 2: `<inner>` is a `<expr2>.copyWith(<args2>)` invocation.
+/// * Level 3: any named-argument value in `<args2>` is itself a
+///   `<expr3>.copyWith(...)` invocation.
+///
+/// Two-level chains (`game.copyWith(worldState: world.copyWith(oldWorld: ow))`)
+/// are **not** flagged so callers retain a thin escape hatch; deeper chains
+/// must funnel through `updateWorldState` / `updateTurnState` helpers.
+bool _isNestedWorldStateCopyWithChain(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
+    return false;
+  }
+  if (node.methodName.name != 'copyWith') {
+    return false;
+  }
+  final outerArgumentName = rule.nestedCopyWithOuterArgumentName;
+  if (outerArgumentName == null || outerArgumentName.isEmpty) {
+    return false;
+  }
+  Expression? innerExpression;
+  for (final arg in node.argumentList.arguments) {
+    if (arg is! NamedExpression) {
+      continue;
+    }
+    if (arg.name.label.name != outerArgumentName) {
+      continue;
+    }
+    innerExpression = arg.expression;
+    break;
+  }
+  if (innerExpression == null) {
+    return false;
+  }
+  final inner = _unwrapParenthesized(innerExpression);
+  if (inner is! MethodInvocation) {
+    return false;
+  }
+  if (inner.methodName.name != 'copyWith') {
+    return false;
+  }
+  for (final arg in inner.argumentList.arguments) {
+    if (arg is! NamedExpression) {
+      continue;
+    }
+    final value = _unwrapParenthesized(arg.expression);
+    if (value is MethodInvocation && value.methodName.name == 'copyWith') {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _isSimpleReceiverRemoveAtZeroPattern(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.removeAtZeroReceiverPathPrefix;
+  final receiverName = rule.removeAtZeroReceiverIdentifier;
+  if (prefix == null || receiverName == null) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node.methodName.name != 'removeAt') {
+    return false;
+  }
+  final target = node.target;
+  if (target is! SimpleIdentifier || target.name != receiverName) {
+    return false;
+  }
+  final args = node.argumentList.arguments;
+  if (args.length != 1) {
+    return false;
+  }
+  final arg0 = args.first;
+  if (arg0 is! IntegerLiteral) {
+    return false;
+  }
+  return arg0.value == 0;
+}
+
+bool _isStaticMemberAccessPattern(
+  PrefixedIdentifier node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final typeName = rule.staticMemberTypeName;
+  final memberName = rule.staticMemberName;
+  final prefix = rule.staticMemberPathPrefix;
+  if (typeName == null || memberName == null || prefix == null) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  return node.prefix.name == typeName && node.identifier.name == memberName;
+}
+
 bool _isUnprefixedProvinceIdStringLiteralInvocation(
   MethodInvocation node,
   DisallowedPatternRule rule,
@@ -384,6 +618,7 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
   final LineInfo lineInfo;
   final List<DisallowedPatternRule> rules;
   final List<DisallowedAstViolation> violations = [];
+  int _loopDepth = 0;
 
   void _recordIfAllowed(AstNode anchor, DisallowedPatternRule rule) {
     final line = lineInfo.getLocation(anchor.offset).lineNumber;
@@ -403,8 +638,50 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
     );
   }
 
+  void _recordIncrementalValidatorInLoopIfMatched(AstNode node) {
+    if (_loopDepth == 0) {
+      return;
+    }
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.incrementalValidatorForPlayerInLoop) {
+        continue;
+      }
+      if (_isIncrementalValidatorForPlayerInLoopPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+  }
+
+  @override
+  void visitForStatement(ForStatement node) {
+    _loopDepth++;
+    super.visitForStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitWhileStatement(WhileStatement node) {
+    _loopDepth++;
+    super.visitWhileStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitDoStatement(DoStatement node) {
+    _loopDepth++;
+    super.visitDoStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    _recordIncrementalValidatorInLoopIfMatched(node);
+    super.visitInstanceCreationExpression(node);
+  }
+
   @override
   void visitMethodInvocation(MethodInvocation node) {
+    _recordIncrementalValidatorInLoopIfMatched(node);
     for (final rule in rules) {
       if (rule.kind == DisallowedAstMatchKind.streamWhereIsMapAs &&
           _isRedundantWhereIsMapAsChain(node)) {
@@ -416,6 +693,18 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       } else if (rule.kind ==
               DisallowedAstMatchKind.provinceLocalSegmentBoundaryOnly &&
           _isProvinceLocalSegmentInvocation(node)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.simpleReceiverRemoveAtZero &&
+          _isSimpleReceiverRemoveAtZeroPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.redundantWhereToListWhereChain &&
+          _isRedundantWhereToListWhereChainPattern(node)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.nestedWorldStateCopyWith &&
+          _isNestedWorldStateCopyWithChain(node, rule, path)) {
         _recordIfAllowed(node, rule);
       }
       if (rule.kind ==
@@ -438,6 +727,33 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       }
     }
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.staticMemberAccess) {
+        continue;
+      }
+      if (_isStaticMemberAccessPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitPrefixedIdentifier(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    for (final rule in rules) {
+      if (rule.kind !=
+          DisallowedAstMatchKind.linearCollectionWhereFirstOrNull) {
+        continue;
+      }
+      if (_isLinearCollectionWhereFirstOrNullPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitPropertyAccess(node);
   }
 
   @override

@@ -136,12 +136,100 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'No techs available to research';
 
   @override
+  String get technologyPanel_researchedTechsHeading => 'Researched Techs';
+
+  @override
+  String get technologyPanel_researchSlotsHeading => 'Research Slots';
+
+  @override
+  String technologyPanel_lockedSlotLabel(int slot) {
+    return 'Slot $slot (University)';
+  }
+
+  @override
+  String get technologyPanel_lockedSlotFootnote => 'Requires University tech';
+
+  @override
+  String technologyPanel_slotRpProgress(int progress, int cost) {
+    return '$progress / $cost RP';
+  }
+
+  @override
   String technologyPanel_pickSubtitle(String era, String category, int cost) {
     return 'Era $era - $category - $cost RP';
   }
 
   @override
+  String technologyPanel_chooseTechDialogTitle(int slot) {
+    return 'Choose Tech \u2014 Slot $slot';
+  }
+
+  @override
   String get technologyPanel_slotCancelled => 'Research slot cancelled';
+
+  @override
+  String get technologyPanel_fundingNone => 'None';
+
+  @override
+  String get technologyPanel_fundingLow => 'Low';
+
+  @override
+  String get technologyPanel_fundingMedium => 'Medium';
+
+  @override
+  String get technologyPanel_fundingHigh => 'High';
+
+  @override
+  String get technologyPanel_fundingMaximum => 'Maximum';
+
+  @override
+  String technologyPanel_rpDeltaPreview(int rp) {
+    return '+$rp RP';
+  }
+
+  @override
+  String technologyPanel_goldSpendPerTurn(int gold) {
+    return '\u2212$gold/turn';
+  }
+
+  @override
+  String technologyPanel_goldNoSpendPerTurn(int gold) {
+    return '$gold/turn';
+  }
+
+  @override
+  String get technologyPanel_rpBreakdownTitle => 'Research points this turn';
+
+  @override
+  String technologyPanel_rpBreakdownBaseLabel(String funding) {
+    return 'Base \u2014 $funding funding';
+  }
+
+  @override
+  String get technologyPanel_rpBreakdownIndustrialLabel =>
+      'Industrial Funding +20%';
+
+  @override
+  String get technologyPanel_rpBreakdownEffectiveLabel =>
+      'Effective RP this turn';
+
+  @override
+  String get technologyPanel_rpBreakdownTreasuryLabel =>
+      'Treasury cost this turn';
+
+  @override
+  String get technologyPanel_rpBreakdownDebtBlocked =>
+      'Treasury below the research debt floor \u2014 0 RP applied this turn.';
+
+  @override
+  String technologyPanel_rpValue(int rp) {
+    return '$rp RP';
+  }
+
+  @override
+  String technologyPanel_goldValue(int gold) {
+    return '$gold gold';
+  }
 
   @override
   String get techTree_noTechsInCatalog => 'No techs in catalog';
@@ -263,6 +351,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_tileProspectedYes => 'yes';
+
+  @override
+  String get provinceOverlay_tileProspectedNo => 'no';
+
+  @override
   String get provinceOverlay_tileProspectWithExplorerTooltip =>
       'Prospect with explorer';
 
@@ -280,6 +374,56 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_tileRoadNone => 'Road / railroad: -';
+
+  @override
+  String provinceOverlay_tileRoadTransportLevel(int level) {
+    return 'Road / railroad: transport level $level';
+  }
+
+  @override
+  String get provinceOverlay_tileRoadLabelNone => 'none';
+
+  @override
+  String get provinceOverlay_tileRoadLabelPrimitiveRoad => 'primitive road';
+
+  @override
+  String get provinceOverlay_tileRoadLabelImprovedRoad => 'improved road';
+
+  @override
+  String get provinceOverlay_tileRoadLabelPortOrRailroad => 'port or railroad';
+
+  @override
+  String get provinceOverlay_tileRoadLabelNonStandard =>
+      'non-standard transport level';
+
+  @override
+  String get provinceOverlay_tileRoadRailGloss =>
+      'Basic land link for connectivity and yield caps. '
+      'Railroads are transport level 4.';
+
+  @override
+  String get provinceOverlay_improvementGeneric => 'Improvement';
+
+  @override
+  String get provinceOverlay_improvementFarm => 'Farm';
+
+  @override
+  String get provinceOverlay_improvementRanch => 'Ranch';
+
+  @override
+  String get provinceOverlay_improvementPasture => 'Pasture';
+
+  @override
+  String get provinceOverlay_improvementLumberCamp => 'Lumber camp';
+
+  @override
+  String get provinceOverlay_improvementPlantation => 'Plantation';
+
+  @override
+  String get provinceOverlay_improvementFurPost => 'Fur post';
+
+  @override
+  String get provinceOverlay_improvementMine => 'Mine';
 
   @override
   String provinceOverlay_tileCivilianUnits(int count) {
@@ -302,23 +446,36 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_ownerUnclaimed => 'Unclaimed';
+
+  @override
+  String provinceOverlay_region(String region) {
+    return 'Region: $region';
+  }
+
+  @override
+  String get provinceOverlay_capitalYes => 'Capital: Yes';
+
+  @override
+  String get provinceOverlay_capitalNo => 'Capital: No';
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }
 
   @override
-  String provinceOverlay_unitTarget(String type, String id, String target) {
-    return '$type ($id): $target';
+  String provinceOverlay_unitTarget(String type, String target) {
+    return '$type: $target';
   }
 
   @override
   String provinceOverlay_foreignUnitStatus(
     String owner,
     String type,
-    String id,
     String status,
   ) {
-    return '$owner — $type ($id): $status';
+    return '$owner — $type: $status';
   }
 
   @override
@@ -349,30 +506,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_sectionNaval => 'Naval';
 
   @override
-  String get gameSetup_title => 'Game Setup';
+  String get provinceOverlay_titleProvince => 'Province';
 
   @override
-  String get gameSetup_starting => 'Starting…';
-
-  @override
-  String get gameSetup_startGame => 'Start Game';
-
-  @override
-  String get gameSetup_back => 'Back';
-
-  @override
-  String get gameSetup_player1You => 'Player 1 (You)';
-
-  @override
-  String gameSetup_playerAiSlot(int n) {
-    return 'Player $n (AI)';
-  }
-
-  @override
-  String get gameSetup_selectNation => 'Select nation';
-
-  @override
-  String get gameSetup_selectLeader => 'Select leader';
+  String get provinceOverlay_titleSeaZone => 'Sea zone';
 
   @override
   String get mapCorner_tooltipBaseLayer =>
@@ -441,6 +578,15 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get diplomacy_panel_noFactions => 'No other factions discovered yet.';
 
   @override
+  String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
+
+  @override
+  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
+
+  @override
+  String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
+
+  @override
   String diplomacy_panel_powerScore(int score) {
     return 'Power: $score';
   }
@@ -483,6 +629,51 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String get production_labourInsufficient =>
       'Insufficient labour — production will be capped next turn';
+
+  @override
+  String production_labourQueued(int count) {
+    return 'Queued: $count';
+  }
+
+  @override
+  String production_labourRecruitTier(String tier) {
+    return 'Recruit $tier';
+  }
+
+  @override
+  String production_labourTrainTier(String tier) {
+    return 'Train $tier';
+  }
+
+  @override
+  String production_labourDequeueTier(String tier) {
+    return 'Cancel last queued $tier';
+  }
+
+  @override
+  String production_labourDisbandTier(String tier) {
+    return 'Disband $tier';
+  }
+
+  @override
+  String get production_labourDisband => 'Disband';
+
+  @override
+  String get production_labourTierUnlocked => '(unlocked)';
+
+  @override
+  String get production_labourTierLocked => '(locked)';
+
+  @override
+  String get production_recipeLocked => '(locked)';
+
+  @override
+  String production_labourTierLabel(String tier, String state) {
+    return '$tier $state';
+  }
+
+  @override
+  String get production_labourControlsSectionLabel => 'Labour Controls';
 
   @override
   String production_workerCount(String name, int count) {

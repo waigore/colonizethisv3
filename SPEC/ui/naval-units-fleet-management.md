@@ -92,7 +92,10 @@ Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 
 Split Fleet uses a reusable app-level transfer component (`CtTransferList`) for
 dual-list quantity movement. The naval split dialog configures this component
-with fleet-specific labels and validation.
+with fleet-specific labels and validation. The canonical composite contract
+(props, layout, narrow-stack threshold) lives in
+[`components/ct-transfer-list.md`](components/ct-transfer-list.md); this
+section restates only the naval-specific API surface (Refs #2914 S9).
 
 `CtTransferList` API requirements:
 
@@ -102,6 +105,7 @@ with fleet-specific labels and validation.
 - Confirm callback: `onConfirm(leftCounts, rightCounts)`
 - Optional cancel callback and customizable action labels
 - Customizable item label and empty-state labels
+- **Narrow-viewport layout:** Below `kCtTransferListSideBySideMinWidth` (`360` dp) — measured against the host's `LayoutBuilder` constraint, not the raw viewport — the two side panels stack vertically (left panel → 16 dp gap → right panel → 16 dp gap → action row) and the trailing Cancel / Confirm action row flows through a `Wrap(alignment: end)` so the long Cinzel engraved-label `CtNinePatchButton` pair (e.g. "Cancel" + "Confirm Split", "Cancel" + "Transfer") never overflows horizontally on narrow shells like `CtDialogShell` at `kMinViewportWidth` (`320` dp). Wider hosts keep the canonical side-by-side `Row` layout and the right-aligned single-run action `Row` so existing widget tests + SPEC mockups see unchanged chrome.
 
 **Ship type labels:** The dialog passes `itemLabelBuilder: shipTypeDisplayName` so each row shows the same human-readable ship name as the Naval Units panel composition table ([ships-and-naval.md](../game/ships-and-naval.md)), not raw `ship_type_id` strings.
 

@@ -5,6 +5,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart'
     show GameStartIntroLoadingIndicator, GameStartIntroOverlay;
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
@@ -24,29 +25,29 @@ void main() {
   group(
     'GameStartIntroOverlay — SPEC/ai/dialogue-management.md § First dialogue emission point',
     () {
-      testWidgets('GameStartIntroLoadingIndicator uses ColorScheme.primary', (
-        WidgetTester tester,
-      ) async {
-        const seedColor = Color(0xFF112233);
-        final theme = ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: seedColor,
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        );
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: theme,
-            home: const Scaffold(body: GameStartIntroLoadingIndicator()),
-          ),
-        );
-        final indicator = tester.widget<CircularProgressIndicator>(
-          find.byType(CircularProgressIndicator),
-        );
-        expect(indicator.color, theme.colorScheme.primary);
-        expect(indicator.strokeWidth, 2);
-      });
+      testWidgets(
+        'GameStartIntroLoadingIndicator uses 48 px --accent spinner (Refs #2867 R28)',
+        (WidgetTester tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: Scaffold(body: GameStartIntroLoadingIndicator()),
+            ),
+          );
+          final indicator = tester.widget<CircularProgressIndicator>(
+            find.byType(CircularProgressIndicator),
+          );
+          expect(indicator.color, EditorialMonoclePalette.accent);
+          expect(indicator.strokeWidth, 2);
+          final sizedBox = tester.widget<SizedBox>(
+            find.ancestor(
+              of: find.byType(CircularProgressIndicator),
+              matching: find.byType(SizedBox),
+            ),
+          );
+          expect(sizedBox.width, 48);
+          expect(sizedBox.height, 48);
+        },
+      );
 
       testWidgets(
         'AC: asset load failure shows error shell; Continue invokes onDismissed',

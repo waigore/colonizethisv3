@@ -100,6 +100,23 @@ Player partialAvailabilityProductionPlayer() {
   );
 }
 
+/// Full-availability player with `cotton_weaving` **not** unlocked, so the
+/// `fabric_from_cotton` Allocation row renders locked (visible-but-grayed with
+/// the `(locked)` marker) while every other recipe remains available.
+/// SPEC/ui/production-panel.md § Tech-gated recipe rows.
+Player cottonWeavingLockedProductionPlayer() =>
+    fullAvailabilityProductionPlayer().copyWith(
+      techUnlocked: const <String, bool>{},
+    );
+
+/// Full-availability player with `cotton_weaving` unlocked, so the
+/// `fabric_from_cotton` Allocation row renders normally (no `(locked)` marker,
+/// interactive). SPEC/ui/production-panel.md § Tech-gated recipe rows.
+Player cottonWeavingUnlockedProductionPlayer() =>
+    fullAvailabilityProductionPlayer().copyWith(
+      techUnlocked: const <String, bool>{kTechIdCottonWeaving: true},
+    );
+
 /// Stockpile/worker presets for fast widget tests (avoid `demoGameForOverlay` / debug init).
 Stockpile get productionPanelTestFullStockpile => _fullStockpile;
 

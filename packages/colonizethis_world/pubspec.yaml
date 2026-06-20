@@ -1,0 +1,25 @@
+name: colonizethis_world
+description: World-state helpers, connectivity, movement, and tracing for Colonize This.
+version: 0.0.1
+publish_to: none
+repository: https://github.com/colonizethisv3/colonizethisv3
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  logger: ^2.0.2
+  colonizethis_logger:
+  colonizethis_data:
+  colonizethis_models:
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../colonizethis_exception_lint
+  colonizethis_logic:
+  colonizethis_turn:
+  colonizethis_test:
+  coverage: ^1.15.0
+  custom_lint: 0.8.1
+  test: 1.30.0

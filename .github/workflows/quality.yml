@@ -25,10 +25,19 @@ jobs:
     outputs:
       tests: ${{ steps.filter.outputs.tests }}
       opencode_scope: ${{ steps.filter.outputs.opencode_scope }}
-      infra_daytona: ${{ steps.filter.outputs.infra_daytona }}
+      packages_changed: ${{ steps.filter.outputs.packages_changed }}
+      packages_to_test: ${{ steps.test_plan.outputs.packages }}
+      app_mode: ${{ steps.app_test_plan.outputs.app_mode }}
+      app_tests: ${{ steps.app_test_plan.outputs.app_tests }}
+      # True iff the post-processed `app_tests` equals the full sorted
+      # `app/test/**/*_test.dart` list (irreducible fallback fired or the
+      # `ci:full-app` label was applied). Drives the coverage merge job.
+      app_is_full_list: ${{ steps.app_test_plan.outputs.app_is_full_list }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Detect source changes
         id: filter
@@ -45,12 +54,16 @@ jobs:
               - 'tool/init_game/**'
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
+              - 'tool/run_observer_game/**'
+              - 'tool/ga_runner/**'
               - 'tool/check_long_string_switches.dart'
               - 'tool/generate_tech_effect_yaml.dart'
               - 'tool/generate_tech_effect_l10n.dart'
               - 'tool/embed_tech_effect_summary.dart'
               - 'tool/generate_order_engine_slots.dart'
               - 'tool/verify_order_engine_codegen.sh'
+              - 'tool/compute_app_test_plan.dart'
+              - 'test/compute_app_test_plan_test.dart'
             # True when any changed path is outside repo-root dot-directories (CI/editor meta). OpenCode
             # review is skipped when the PR only touches those paths (e.g. .github, .cursor).
             opencode_scope:
@@ -60,32 +73,151 @@ jobs:
               - '!.vscode/**'
               - '!.idea/**'
               - '!.husky/**'
-            infra_daytona:
-              - 'infra/**'
+            # True when any path that can affect package_tests outcomes changed.
+            # Includes packages/** plus workspace + test-runner files that change how
+            # package tests resolve, execute, or gate coverage. Used to skip the
+            # heavy `package_tests` job for app-only / tool-only / SPEC-only PRs
+            # where the one-way dependency direction (app/tool/ctdev -> packages,
+            # never the reverse) makes re-running package tests unnecessary.
+            packages_changed:
+              - 'packages/**'
+              - 'pubspec.yaml'
+              - 'analysis_options.yaml'
+              - 'tool/run_package_tests.sh'
+              - 'tool/compute_package_test_plan.py'
+              - 'tool/check_coverage_threshold.sh'
+            # Per-package change detection for transitive-downstream selective execution.
+            # Used by compute_package_test_plan.py → packages_to_test output.
+            pkg_models:
+              - 'packages/colonizethis_models/**'
+            pkg_data:
+              - 'packages/colonizethis_data/**'
+            pkg_save:
+              - 'packages/colonizethis_save/**'
+            pkg_map:
+              - 'packages/colonizethis_map/**'
+            pkg_world:
+              - 'packages/colonizethis_world/**'
+            pkg_combat:
+              - 'packages/colonizethis_combat/**'
+            pkg_economy:
+              - 'packages/colonizethis_economy/**'
+            pkg_diplomacy:
+              - 'packages/colonizethis_diplomacy/**'
+            pkg_setup:
+              - 'packages/colonizethis_setup/**'
+            pkg_turn:
+              - 'packages/colonizethis_turn/**'
+            pkg_ai_contracts:
+              - 'packages/colonizethis_ai_contracts/**'
+            pkg_logic:
+              - 'packages/colonizethis_logic/**'
+            pkg_ai:
+              - 'packages/colonizethis_ai/**'
 
-  # AC1 strong gate: real `docker build` for Daytona tools image when infra/** changes (Refs #2065).
-  infra_daytona_docker_build:
-    name: Infra Daytona docker build (linux/amd64)
-    needs: changes
-    if: always() && needs.changes.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Skip when infra paths unchanged
-        if: needs.changes.outputs.infra_daytona != 'true'
+      - name: Compute transitive downstream test plan
+        id: test_plan
+        if: steps.filter.outputs.tests == 'true'
         run: |
-          echo "No infra/** changes; skipping docker build (AC1)."
-          echo "Strong gate runs in this job when infra_daytona filter is true."
+          PLAN=$(python3 tool/compute_package_test_plan.py \
+            --changed-models="${{ steps.filter.outputs.pkg_models }}" \
+            --changed-data="${{ steps.filter.outputs.pkg_data }}" \
+            --changed-save="${{ steps.filter.outputs.pkg_save }}" \
+            --changed-map="${{ steps.filter.outputs.pkg_map }}" \
+            --changed-world="${{ steps.filter.outputs.pkg_world }}" \
+            --changed-combat="${{ steps.filter.outputs.pkg_combat }}" \
+            --changed-economy="${{ steps.filter.outputs.pkg_economy }}" \
+            --changed-diplomacy="${{ steps.filter.outputs.pkg_diplomacy }}" \
+            --changed-setup="${{ steps.filter.outputs.pkg_setup }}" \
+            --changed-turn="${{ steps.filter.outputs.pkg_turn }}" \
+            --changed-ai_contracts="${{ steps.filter.outputs.pkg_ai_contracts }}" \
+            --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
+            --changed-ai="${{ steps.filter.outputs.pkg_ai }}" \
+            | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)))")
+          echo "packages=$PLAN" >> "$GITHUB_OUTPUT"
 
-      - name: Docker build tools image (AC1)
-        if: needs.changes.outputs.infra_daytona == 'true'
+      - name: Setup Flutter
+        if: steps.filter.outputs.tests == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Resolve workspace for app test selector
+        if: steps.filter.outputs.tests == 'true'
+        run: dart pub get
+
+      # Selector contract per SPEC/program/ci-app-selective-tests.md:
+      #   - The selector binary is a pure function of `--changed-files` and
+      #     workspace state. It emits {mode: selective|skip, tests: [...]}
+      #     and is unaware of PR labels / env. The irreducible fallback
+      #     paths (assets, root configs, selector tool, this workflow) emit
+      #     `selective` with the full app-test list, not `full`.
+      #   - The workflow owns the `ci:full-app` label override and the
+      #     base-SHA-missing fallback: both expand the post-processed
+      #     `app_tests` to the full sorted `app/test/**/*_test.dart` list.
+      #   - `app_is_full_list` is `true` iff the post-processed `app_tests`
+      #     equals that full list; only then does coverage merge run.
+      - name: Compute app test plan
+        id: app_test_plan
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          LABEL_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full-app') }}
         run: |
           set -euo pipefail
-          docker build --platform linux/amd64 -f infra/Dockerfile infra
-
+          full_list() {
+            find app/test -type f -name '*_test.dart' | LC_ALL=C sort | paste -sd, -
+          }
+          emit_full_list() {
+            local reason="$1"
+            echo "Forcing full app-test list ($reason)."
+            local FULL
+            FULL=$(full_list)
+            echo "app_mode=selective" >> "$GITHUB_OUTPUT"
+            echo "app_tests=$FULL" >> "$GITHUB_OUTPUT"
+            echo "app_is_full_list=true" >> "$GITHUB_OUTPUT"
+          }
+          if [ "${{ steps.filter.outputs.tests }}" != "true" ]; then
+            echo "app_mode=skip" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            echo "app_is_full_list=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$LABEL_FULL" = "true" ]; then
+            emit_full_list "ci:full-app label set on PR"
+            exit 0
+          fi
+          if [ -z "$BASE_SHA" ]; then
+            emit_full_list "BASE_SHA missing (cannot diff)"
+            exit 0
+          fi
+          git fetch --no-tags origin "$BASE_SHA" >/dev/null 2>&1 || true
+          if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            emit_full_list "BASE_SHA $BASE_SHA not reachable"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
+          echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
+          # head closes the pipe early; GNU sed exits 4 under pipefail — do not fail the job.
+          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20 || true
+          dart pub get >/dev/null
+          PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
+          echo "Selector plan: $PLAN"
+          MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
+          TESTS=$(echo "$PLAN" | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)['tests']))")
+          if [ "$MODE" != "selective" ] && [ "$MODE" != "skip" ]; then
+            echo "Selector emitted unsupported mode=$MODE; failing."
+            exit 1
+          fi
+          FULL=$(full_list)
+          IS_FULL=false
+          if [ "$TESTS" = "$FULL" ]; then
+            IS_FULL=true
+          fi
+          echo "app_mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "app_tests=$TESTS" >> "$GITHUB_OUTPUT"
+          echo "app_is_full_list=$IS_FULL" >> "$GITHUB_OUTPUT"
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   # `app_build_linux` reuses the same artifact to compile the Linux desktop target (release), catching
   # linker/gen-l10n issues that `flutter analyze` alone can miss.
@@ -127,10 +259,6 @@ jobs:
           cd app
           flutter gen-l10n
 
-      - name: Check long string switches (AST)
-        if: needs.changes.outputs.tests == 'true'
-        run: dart tool/check_long_string_switches.dart
-
       - name: Compile app entrypoints (Flutter analyze)
         if: needs.changes.outputs.tests == 'true'
         run: |
@@ -169,8 +297,8 @@ jobs:
           path: app-test-cache.tar.gz
           retention-days: 2
 
-  # Linux compile gate: parallel to `app_tests_shard` (same cache). Not wired into `app_e2e_linux`
-  # (e2e job is intentionally a no-op); add this job to branch protection if merges must wait on it.
+  # Linux compile gate: parallel to `app_tests_shard` (same cache).
+  # Add this job to branch protection if merges must wait on it.
   app_build_linux:
     name: App Linux desktop build (release)
     needs: [changes, app_tests_cache]
@@ -253,6 +381,91 @@ jobs:
           done
           git diff --exit-code -- "${rels[@]}"
 
+  # New Game init smoke (e2e): unconditionally-required PR quality gate, parallel
+  # to `app_build_linux` (same `app_tests_cache` artifact). Runs ONLY the
+  # sub-20s New Game -> default leaders -> begin smoke
+  # (`integration_test/new_game_smoke_init_e2e_test.dart`) under Xvfb on the
+  # Linux desktop target, guarding the critical init UX against app/package
+  # regressions per SPEC/program/e2e-integration-tests.md. The smoke file
+  # itself enforces the 20s wall-clock budget (fail fast inside the test).
+  # Add this job to branch protection if merges must wait on it.
+  # When no test-relevant paths change the only step is the skip echo, so the
+  # job reports success and stays a stable required check (parallel to
+  # `app_build_linux`).
+  app_e2e_smoke_init:
+    name: App e2e smoke (New Game init)
+    needs: [changes, app_tests_cache]
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      (
+        needs.changes.outputs.tests != 'true' ||
+        needs.app_tests_cache.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+    steps:
+      - name: Skip when no test-relevant paths changed
+        if: needs.changes.outputs.tests != 'true'
+        run: echo "No test-relevant paths matched; skipping New Game init smoke."
+
+      - name: Checkout
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        if: needs.changes.outputs.tests == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Install Linux desktop + Xvfb dependencies
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev xvfb
+
+      - name: Download app test cache
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: app-test-cache
+          path: _app_test_cache
+
+      - name: Restore pub + Dart tool cache
+        if: needs.changes.outputs.tests == 'true'
+        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
+
+      - name: Run New Game init smoke (Linux desktop, Xvfb, CT_E2E)
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          cd app
+          # Gitignored linux/flutter/generated_plugins.cmake; workspace dart pub get does not emit it.
+          flutter pub get
+          flutter config --enable-linux-desktop
+          xvfb-run -a flutter test \
+            integration_test/new_game_smoke_init_e2e_test.dart \
+            -d linux --dart-define=CT_E2E=true --no-pub
+
+  # Always-selective app-test matrix per SPEC/program/ci-app-selective-tests.md.
+  #
+  # Runs the partitioned subset of `needs.changes.outputs.app_tests` for each
+  # shard (round-robin by sorted index, `i % APP_TEST_TOTAL_SHARDS == shard`).
+  # When `app_mode == 'skip'` or `app_tests` is empty, every shard skips with
+  # success. Coverage flags are enabled only when `app_is_full_list == 'true'`
+  # (full app-test list, i.e. irreducible fallback or `ci:full-app` label).
+  #
+  # The previous separate `app_tests_selective` job is removed; the single
+  # matrix now handles every non-skip case. The `App tests (shard 0/2)` /
+  # `App tests (shard 1/2)` required-check names are preserved.
   app_tests_shard:
     # job.name cannot use env.* (GitHub limitation); keep "2" in sync with APP_TEST_TOTAL_SHARDS and matrix.shard.
     name: App tests (shard ${{ matrix.shard }}/2)
@@ -274,16 +487,16 @@ jobs:
       PUB_CACHE: ${{ github.workspace }}/.pub-cache
       SUPPRESS_IMAGE_VIEWER: "1"
     steps:
-      - name: Skip when no test-relevant paths changed
-        if: needs.changes.outputs.tests != 'true'
-        run: echo "No test-relevant paths matched; skipping app tests."
+      - name: Skip when no app tests selected for this run
+        if: needs.changes.outputs.app_mode == 'skip' || needs.changes.outputs.app_tests == ''
+        run: echo "app_mode=${{ needs.changes.outputs.app_mode }}; nothing to run on this shard."
 
       - name: Checkout
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode != 'skip' && needs.changes.outputs.app_tests != ''
         uses: actions/checkout@v6
 
       - name: Setup Flutter
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode != 'skip' && needs.changes.outputs.app_tests != ''
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -291,63 +504,147 @@ jobs:
           cache: true
 
       - name: Download app test cache
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode != 'skip' && needs.changes.outputs.app_tests != ''
         uses: actions/download-artifact@v4
         with:
           name: app-test-cache
           path: _app_test_cache
 
       - name: Restore pub + Dart tool cache
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode != 'skip' && needs.changes.outputs.app_tests != ''
         run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
 
-      - name: Run Flutter tests (shard)
-        if: needs.changes.outputs.tests == 'true'
+      - name: Partition selected tests for this shard
+        if: needs.changes.outputs.app_mode != 'skip' && needs.changes.outputs.app_tests != ''
+        id: partition
+        env:
+          APP_TESTS: ${{ needs.changes.outputs.app_tests }}
+          SHARD_INDEX: ${{ matrix.shard }}
+          TOTAL_SHARDS: ${{ env.APP_TEST_TOTAL_SHARDS }}
         run: |
-          set -e
+          set -euo pipefail
+          # Deterministic round-robin partition over sorted test paths.
+          # Test i (0-indexed in the sorted list) runs on shard (i % total).
+          # Selector already emits a sorted list; we re-sort for safety so
+          # reruns and label-override paths produce identical partitions.
+          mapfile -t all_tests < <(echo "$APP_TESTS" | tr ',' '\n' | LC_ALL=C sort -u)
+          partition=()
+          for i in "${!all_tests[@]}"; do
+            test="${all_tests[$i]}"
+            [ -z "$test" ] && continue
+            if [ $((i % TOTAL_SHARDS)) -eq "$SHARD_INDEX" ]; then
+              partition+=("${test#app/}")
+            fi
+          done
+          if [ "${#partition[@]}" -eq 0 ]; then
+            echo "Shard $SHARD_INDEX has no tests in this partition; exiting clean."
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Persist newline-separated relative test paths for the next step.
+          printf '%s\n' "${partition[@]}" > _partition.txt
+          echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          echo "Partitioned ${#partition[@]} tests for shard $SHARD_INDEX:"
+          printf '  %s\n' "${partition[@]}" | head -20
+
+      - name: Run Flutter tests (partition)
+        if: |
+          needs.changes.outputs.app_mode != 'skip' &&
+          needs.changes.outputs.app_tests != '' &&
+          steps.partition.outputs.has_tests == 'true'
+        env:
+          APP_IS_FULL_LIST: ${{ needs.changes.outputs.app_is_full_list }}
+          SHARD_INDEX: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
           mkdir -p app/coverage
+          # _partition.txt was written by the partition step at workspace root.
+          mapfile -t rel_tests < _partition.txt
           cd app
-          # --no-pub: use packed .pub-cache + .dart_tool from app_tests_cache (same workspace path as build job).
-          flutter test test/ --no-pub --coverage \
-            --coverage-path=coverage/lcov.shard${{ matrix.shard }}.info \
-            --reporter=compact -j 1 --no-track-widget-creation \
-            --total-shards=${{ env.APP_TEST_TOTAL_SHARDS }} --shard-index=${{ matrix.shard }}
+          # Coverage flags only on full-list runs (irreducible fallback or
+          # ci:full-app label); selective subsets skip coverage to stay
+          # under the 10 min budget.
+          coverage_args=()
+          if [ "$APP_IS_FULL_LIST" = "true" ]; then
+            coverage_args+=(--coverage --coverage-path=coverage/lcov.shard${SHARD_INDEX}.info)
+          fi
+          flutter test "${rel_tests[@]}" --no-pub "${coverage_args[@]}" \
+            --reporter=compact -j 1 --no-track-widget-creation
 
       - name: Upload shard coverage
-        if: needs.changes.outputs.tests == 'true'
+        if: |
+          needs.changes.outputs.app_mode != 'skip' &&
+          needs.changes.outputs.app_is_full_list == 'true' &&
+          steps.partition.outputs.has_tests == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-lcov-shard-${{ matrix.shard }}
           path: app/coverage/lcov.shard${{ matrix.shard }}.info
           retention-days: 2
 
-  # No integration_test runs: single skip step (see SPEC/program/e2e-integration-tests.md).
-  app_e2e_linux:
-    name: App e2e (Linux desktop + xvfb)
-    needs: [changes, app_tests_shard]
-    if: |
-      always() &&
-      needs.changes.result == 'success' &&
-      (
-        needs.changes.outputs.tests != 'true' ||
-        needs.app_tests_shard.result == 'success'
-      )
+  # colonizethis_* package unit tests + package coverage gates (parallel to quality / app tests).
+  # One `dart test` per package with `-j 4` (no intra-package sharding). Packages are run
+  # sequentially (`PACKAGE_TEST_MAX_JOBS=1`) on the 4-vCPU `ubuntu-latest` runner to avoid
+  # oversubscribing the runner with multiple heavy `dart test` processes (Refs #2963).
+  #
+  # Skipped (step-level) when no path under `packages/**` and no package-test
+  # infrastructure file changed. Safe because every `colonizethis_*` package only
+  # depends on other `colonizethis_*` packages (production deps); `app/`, `tool/*`,
+  # `ctdev/`, and `widgetbook_host/` are downstream consumers. App-only / tool-only
+  # / SPEC-only PRs cannot regress package code. Cross-cutting gates (OrderEngine
+  # codegen, workspace analyzer, custom_lint, repo-lint) live in the `quality` job
+  # and continue to run. Job itself is not gated so required branch checks still
+  # report success.
+  package_tests:
+    name: Package tests (colonizethis)
+    needs: changes
+    if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 30
     steps:
-      - name: Skip app e2e (temporarily disabled for CI stability/speed)
-        run: |
-          echo "app_e2e_linux gate intentionally skipped."
-          echo "Reason: e2e tests are currently flaky and too slow for PR quality pace."
-          echo "Behavior: this job remains as a required gate but does not execute integration_test suites."
+      - name: Skip when no package paths changed
+        if: needs.changes.outputs.packages_changed != 'true'
+        run: echo "No packages/** or package-test infra paths matched; skipping package tests."
+
+      - name: Checkout
+        if: needs.changes.outputs.packages_changed == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        if: needs.changes.outputs.packages_changed == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Install lcov
+        if: needs.changes.outputs.packages_changed == 'true'
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Resolve dependencies
+        if: needs.changes.outputs.packages_changed == 'true'
+        run: dart pub get
+
+      - name: Package tests and coverage gates
+        if: needs.changes.outputs.packages_changed == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+          PACKAGES_TO_TEST: ${{ needs.changes.outputs.packages_to_test }}
+          # Run packages sequentially on the 4-vCPU runner to avoid oversubscription;
+          # each package still uses `-j 4` for intra-package test workers.
+          PACKAGE_TEST_MAX_JOBS: "1"
+          PACKAGE_TEST_CONCURRENCY: "4"
+        run: bash tool/run_package_tests.sh
 
   quality:
+    name: Quality (lint, analyze, observer)
     needs: changes
     runs-on: ubuntu-latest
-    # Dart coverage + package matrix; Flutter app tests run in parallel shards (app_tests_shard).
+    # Lint, analyze, checker tests, run_observer_game; package tests run in package_tests.
     # Workspace analyzer runs flutter/dart analyze per member (many packages); allow enough time
     # so the job is not cancelled mid-analyze when the workspace grows (Refs #2036).
-    timeout-minutes: 150
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -359,33 +656,12 @@ jobs:
           flutter-version: '3.41.9'
           cache: true
 
-      - name: Install melos
-        if: needs.changes.outputs.tests == 'true'
-        run: dart pub global activate melos
-
-      - name: Check melos version
-        if: needs.changes.outputs.tests == 'true'
-        run: melos --version
-
       - name: Install lcov
         if: needs.changes.outputs.tests == 'true'
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Resolve dependencies
         run: dart pub get
-
-      - name: Skip infra pytest when infra/** unchanged
-        if: needs.changes.outputs.infra_daytona != 'true'
-        run: |
-          echo "No infra/** changes; skipping infra Daytona Python tests (Refs #2065)."
-
-      - name: Infra Daytona Python tests (Refs #2065)
-        if: needs.changes.outputs.infra_daytona == 'true'
-        run: |
-          set -euo pipefail
-          python3 -m venv /tmp/infra-venv-ci
-          /tmp/infra-venv-ci/bin/pip install -q -r infra/requirements.txt
-          (cd infra && /tmp/infra-venv-ci/bin/pytest test/ -q --tb=short)
 
       - name: Workspace analyzer gate (errors only; includes test/ and integration_test/)
         run: dart run tool/run_workspace_analyze_errors_only.dart
@@ -407,38 +683,37 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: dart run tool/ct_repo_lint.dart
 
+      - name: Logic test file-size gate (<= 400 physical lines)
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          mapfile -t changed_logic_tests < <(
+            git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD -- \
+              ':(glob)packages/colonizethis_logic/test/**/*.dart'
+          )
+          if [ "${#changed_logic_tests[@]}" -eq 0 ]; then
+            echo "No changed colonizethis_logic tests; skipping size gate."
+            exit 0
+          fi
+          dart run tool/check_logic_test_file_size.dart "${changed_logic_tests[@]}"
+
       - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)
         run: bash tool/run_custom_lint_domain_exceptions.sh
 
-      - name: Test colonizethis_exception_lint (SPEC/program/exception-enforcement.md)
+      - name: Test checker suites (group 1/3)
         run: dart test packages/colonizethis_exception_lint/test --reporter=compact
 
-      - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
-        run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
+      - name: Test checker suites (group 2/3)
+        run: dart test test/check_*_test.dart --reporter=compact
 
-      - name: Test repeated magic numbers checker (SPEC/program/repeated-magic-numbers.md)
-        run: dart test test/check_repeated_magic_numbers_test.dart --reporter=compact
+      - name: Test checker suites (group 3/3)
+        run: dart test test/ct_repo_lint*_test.dart --reporter=compact
 
       - name: Test OrderEngine slot generator (SPEC/program/order-engine.md)
         run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
 
-      - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
-        run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
-
-      - name: Test work target constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_work_target_constants_test.dart --reporter=compact
-
-      - name: Test asset path constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_asset_path_constants_test.dart --reporter=compact
-
-      - name: Test civilian unit type constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_civilian_unit_type_constants_test.dart --reporter=compact
-
-      - name: Test canonical province tile-key checker (SPEC/game/world-model-identity.md)
-        run: dart test test/check_canonical_province_tile_keys_test.dart --reporter=compact
-
-      - name: Test colonizethis_map lib pipe-split checker (SPEC/program/map-visualization.md)
-        run: dart test test/check_colonizethis_map_lib_pipe_split_test.dart --reporter=compact
+      - name: Test app test plan selector (SPEC/program/ci-app-selective-tests.md)
+        run: dart test test/compute_app_test_plan_test.dart --reporter=compact
 
       - name: Wang incremental assets gate (Python)
         run: |
@@ -447,76 +722,23 @@ jobs:
           sudo apt-get install -y --no-install-recommends python3-pil
           cd pytool && python3 test_wang_incremental_assets_and_preview.py
 
-      - name: Test colonizethis_models (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_models/test ]; then
-            (cd packages/colonizethis_models && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_models && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_data (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_data/test ]; then
-            (cd packages/colonizethis_data && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_data && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_save (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_save/test ]; then
-            (cd packages/colonizethis_save && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_save && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_logic (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_logic/test ]; then
-            (cd packages/colonizethis_logic && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_logic && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_ai (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_ai/test ]; then
-            (cd packages/colonizethis_ai && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_ai && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_map (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_map/test ]; then
-            (cd packages/colonizethis_map && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_map && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test tool packages (Dart)
+      - name: Test run_observer_game (Dart, coverage)
         if: needs.changes.outputs.tests == 'true'
         env:
           SUPPRESS_IMAGE_VIEWER: "1"
         run: |
           set -e
-          for dir in tool/sim_scenarios tool/sim_combat_montecarlo tool/sim_combat tool/generate_map tool/init_game tool/sim_economy tool/show_tech; do
-            [ -d "$dir/test" ] || continue
-            (cd "$dir" && dart test -j 2 --reporter=compact)
-          done
+          (cd tool/run_observer_game && dart test --coverage=coverage -j 2 --reporter=compact)
+          (cd tool/run_observer_game && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+
+      - name: Test ga_runner (Dart, coverage)
+        if: needs.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          set -e
+          (cd tool/ga_runner && dart test --coverage=coverage -j 2 --reporter=compact)
+          (cd tool/ga_runner && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
 
       - name: App localization gate (flutter gen-l10n untranslated check)
         if: needs.changes.outputs.tests == 'true'
@@ -535,41 +757,44 @@ jobs:
             fi
           fi
 
-      - name: Coverage gate (logic/map/ai >= 90%)
+      - name: Coverage gate (run_observer_game lib >= 80%)
         if: needs.changes.outputs.tests == 'true'
-        run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
+        run: tool/check_coverage_threshold.sh 80 tool/run_observer_game
 
-      - name: sim_scenarios integration gate (all scenarios must pass)
+      - name: Coverage gate (ga_runner lib >= 80%)
         if: needs.changes.outputs.tests == 'true'
-        run: melos run sim_scenarios
+        run: tool/check_coverage_threshold.sh 80 tool/ga_runner
 
+  # Runs only when the post-processed `app_tests` is the full app-test list
+  # (irreducible fallback fired or `ci:full-app` label was applied). For any
+  # narrower selective run the merge + 80% `app/lib/` gate is intentionally
+  # skipped; nightly remains the authoritative full-coverage safety net.
   quality_app_coverage:
     name: App coverage (merge shards)
-    needs: [changes, quality, app_tests_shard]
+    needs: [changes, app_tests_shard]
     if: |
       always() &&
       needs.changes.result == 'success' &&
-      needs.quality.result == 'success' &&
       (
         needs.changes.outputs.tests != 'true' ||
         needs.app_tests_shard.result == 'success'
       )
     runs-on: ubuntu-latest
     steps:
-      - name: Skip when no test-relevant paths changed
-        if: needs.changes.outputs.tests != 'true'
-        run: echo "No test-relevant paths matched; skipping app coverage merge."
+      - name: Skip when partial-list run (coverage merge not required)
+        if: needs.changes.outputs.app_is_full_list != 'true'
+        run: echo "app_is_full_list=${{ needs.changes.outputs.app_is_full_list }}; skipping app coverage merge."
 
       - name: Checkout
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_is_full_list == 'true'
         uses: actions/checkout@v6
 
       - name: Install lcov
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_is_full_list == 'true'
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Download shard coverage
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_is_full_list == 'true'
         uses: actions/download-artifact@v4
         with:
           pattern: app-lcov-shard-*
@@ -577,7 +802,7 @@ jobs:
           path: _lcov_shards
 
       - name: Merge shard lcov into app/coverage/lcov.info
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_is_full_list == 'true'
         run: |
           set -euo pipefail
           mkdir -p app/coverage
@@ -590,84 +815,6 @@ jobs:
           tool/merge_app_lcov_shards.sh "${APP_TEST_TOTAL_SHARDS}"
 
       - name: App coverage gate (app/lib/ >= 80%)
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_is_full_list == 'true'
         run: tool/check_coverage_threshold.sh 80 app
 
-  # OpenCode post-quality review: same workflow as Quality; runs only for same-repo PRs into dev after
-  # app_e2e_linux succeeds (currently a no-op required gate), when the PR changes paths outside dot-prefixed meta dirs (see changes.opencode_scope),
-  # and when either the PR has the `help wanted` label or more than 10 files changed (otherwise skipped).
-  # CI currently does not invoke OpenCode or enforce PR-comment verdicts (no-op); prompt is preserved on the job below.
-  opencode_review:
-    name: OpenCode review
-    needs: [changes, app_e2e_linux]
-    if: >-
-      github.base_ref == 'dev' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      needs.changes.result == 'success' &&
-      needs.changes.outputs.opencode_scope == 'true' &&
-      needs.app_e2e_linux.result == 'success' &&
-      (contains(github.event.pull_request.labels.*.name, 'help wanted') || github.event.pull_request.changed_files > 10)
-    runs-on: ubuntu-latest
-    # Large PRs can exceed 45m (tooling + diff reads + a long sticky-comment PATCH); cancellation fails the verdict gate.
-    timeout-minutes: 90
-    permissions:
-      pull-requests: write
-      issues: write
-      id-token: write
-      # OpenCode ends with `git push` when the workspace has local commits; the checkout
-      # token must allow contents writes and stay configured for HTTPS (persist-credentials).
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: true
-
-      # OpenCode invocation disabled (flaky); gate remains defined for branch protection / re-enable.
-      # Original model: ${{ vars.OPENCODE_REVIEW_MODEL || 'opencode-go/minimax-m2.7' }} (see anomalyco/opencode/github@latest `with.model`).
-      - name: Run OpenCode (PR review)
-        run: |
-          echo "OpenCode review gate is a no-op (OpenCode not invoked in CI)."
-        env:
-          # Preserved verbatim for restore; not passed to any runner service while disabled.
-          OPENCODE_REVIEW_PROMPT_PRESERVED: |
-            You are the final OpenCode reviewer for this pull request after the app_e2e_linux quality gate passed.
-
-            The repository is checked out in the workspace. Read and apply these files in full:
-            - .cursor/rules/colonizethis-code-review.mdc
-            - .cursor/rules/colonizethis-component-structure.mdc
-
-            Also verify:
-            - The PR diff implements what linked closing issues and the PR description request (use GitHub context available to you).
-            - SPEC documents under SPEC/ stay aligned with code for behavior touched by this diff.
-
-            Deliverables (must all be satisfied):
-            1) Put **all** detailed review text in **one** GitHub pull request **issue comment** on **this** pull request (use the PR number from the active review context, not linked issue numbers). Do not rely on CI or workflow logs for the long-form review; the PR comment is the source of truth for details.
-
-            2) **Single sticky comment only**: If a PR issue comment already exists whose body contains the literal HTML marker `<!-- ct-opencode-quality-review -->`, **edit that same comment** with your updated review (keep the marker in the updated body). If none exists, create **one** new PR issue comment that includes that marker exactly once. **Do not** post any **other** new issue comments on this PR for this review (no follow-up “review complete”, session recap, or duplicate summaries—optional links may appear only inside that sticky comment body).
-
-            3) **Comment body layout** (strict — CI parses line 1 and HTML markers):
-            - **Line 1** must be exactly the ASCII word `PASS` or `FAIL` (uppercase, no backticks, no markdown, no leading/trailing spaces).
-            - **Line 2** must be empty (no spaces).
-            - **Line 3** must be exactly: `<!-- ct-opencode-quality-review -->`
-            - **Line 4** must be exactly one of the following (must match line 1: use PASS line only with `PASS` on line 1, FAIL line only with `FAIL` on line 1):
-              - `<!-- ct-opencode-verdict:PASS -->`
-              - `<!-- ct-opencode-verdict:FAIL -->`
-            - **Line 5** must be empty.
-            - From **line 6** onward, use Markdown for the full human-readable review.
-
-            4) Use line 1 `FAIL` and line 4 `<!-- ct-opencode-verdict:FAIL -->` if anything material must change before merge (bugs, spec violations, missing tests for critical behavior, violations of the rule files above, or mismatch with linked issue intent). Otherwise use `PASS` and `<!-- ct-opencode-verdict:PASS -->`.
-
-  opencode_review_verdict:
-    name: OpenCode review verdict
-    needs: [opencode_review]
-    if: always()
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      # Verdict parsing disabled with OpenCode no-op; prior jq/sed logic preserved in git history.
-      - name: OpenCode review verdict (no-op)
-        run: |
-          echo "OpenCode review verdict gate is a no-op. opencode_review result: ${{ needs.opencode_review.result }}"

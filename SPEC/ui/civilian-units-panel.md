@@ -1,24 +1,19 @@
 # Civilian Units Panel
 
-**SPEC/ui** — Panel that lists all civilian units under the human player's control and supports locating them on the map. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), and [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md). Game model: [civilian-units.md](../game/civilian-units.md), [world-model.md](../game/world-model.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `UNIT10001` — stable; do not reassign.
+**SPEC/ui** — Civilian units bottom sheet / panel. Implementation: `app/lib/features/game/widgets/civilian_units_panel.dart`.
+**Widgetbook:** `Civilian Units Panel` → `app/lib/widgetbook/catalog.dart`. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md). Game model: [civilian-units.md](../game/civilian-units.md).
+
+**Mockup:** [mockups/UNIT10001-civilian-units-panel.html](mockups/UNIT10001-civilian-units-panel.html)
+---
+
+## Widget contract
+
+`CivilianUnitsPanel` — lists human-owned civilian units; emits `LocateMapTileEvent`, work-order and panel bus events per row actions. Parents supply `Game`, `Orders`, `PlayerView`, and optional tile-scope filters.
 
 ---
 
-## Purpose
-
-The civilian units panel gives the player a single place to see every civilian unit they control: status, location (province + region), and current assignment (when not idle). Selecting a unit in the panel highlights that unit's tile on the map, pans/centers the map on it, and switches the region tab if needed so the player sees the unit right away.
-
----
-
-## Scope: which units are shown
-
-- **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as the development flow (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
-- **Excluded:** Military regiments and naval units. Units owned by other players or by Minor Nations/Tribes are not shown.
-- **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from the **projected civilian tile** (pending draft `WorkOrder.targetTileKey` for that unit when present, else non-empty `assignedTileKey`, else `tileKey`).
-
----
-
-## Panel placement and opening
+## Trigger conditions
 
 - **Access:** The panel is opened from the in-game shell **toolbar**, in the same way as the Production panel (e.g. a toolbar button such as "Civilian Units" or "Units" that opens the panel).
 - **Map tile access (tile scope):** The panel may also be opened from a **civilian map marker tap** (see [map-widget.md](map-widget.md)). In this mode the panel is scoped to one tile key (`regionId|provinceId|x|y`) and shows only player-owned civilians whose **rendered tile** equals that tile key (assigned civilians use `assignedTileKey` when present; otherwise `tileKey`).
@@ -27,6 +22,93 @@ The civilian units panel gives the player a single place to see every civilian u
 - **Presentation:** The panel **appears from the bottom** as a **bottom sheet** that slides up from the bottom edge (same pattern as the province/sea zone detail overlay on narrow viewports; see [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)). This applies on both desktop and narrow viewports so behaviour is consistent and the map remains visible above.
 - **Max height:** Bottom sheet is constrained (e.g. up to one-third of screen height on narrow, or similar cap on wide) so the map stays visible; content scrolls inside the sheet.
 - **Mobile / narrow viewport:** Same bottom-sheet presentation; touch targets per [mobile-adaptation.md](mobile-adaptation.md).
+
+---
+
+## Purpose
+
+The civilian units panel gives the player a single place to see every civilian unit they control: status, location (province + region), and current assignment (when not idle). Selecting a unit highlights that unit's tile on the map, pans/centers the map on it, and switches the region tab if needed.
+
+---
+
+## Scope: which units are shown
+
+- **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as the development flow (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
+- **Excluded:** Military regiments and naval units.
+- **Normal play:** Units owned by the human great power only; Minor Nations/Tribes and other GPs are not shown.
+- **Observe mode:** See § Observe mode below; owner filter follows the same `civilianMarkerOwnerIds` rules as map markers ([observe-mode.md](observe-mode.md)).
+- **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from the **projected civilian tile** (pending draft `WorkOrder.targetTileKey` for that unit when present, else non-empty `assignedTileKey`, else `tileKey`).
+
+---
+
+## Layout / wireframe
+
+Bottom sheet (up to ~⅓ screen height); scrollable grouped list by region; per-unit rows with locate and assign actions on the right. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite.
+
+### Row card chrome (R30; mockup `.unit-row`)
+
+Each civilian unit row renders as a single bordered rectangular card matching `SPEC/ui/mockups/UNIT10001-civilian-units-panel.html` `.unit-row`. The card wraps both the left detail stack and the right-aligned action cluster inside one decorated container (no `ListTile` root).
+
+| Token / property | Source | Value |
+|------------------|--------|-------|
+| Background gradient | `EditorialMonoclePalette.bgDeep` → `EditorialMonoclePalette.surface` | Vertical (`begin: topCenter`, `end: bottomCenter`) |
+| Default border | `EditorialMonoclePalette.border` | 1 px |
+| Hover / selection border | `EditorialMonoclePalette.accentDim` | 1 px |
+| Internal padding | — | 8 dp horizontal · 8 dp vertical |
+| Spacing between cards | — | 4 dp (`EdgeInsets.only(bottom: 4)`) |
+| Min row height | — | 44 dp (mobile touch-target floor per `mobile-adaptation.md` § 1) |
+
+The card layout is `Row(crossAxisAlignment: start)` with the detail stack on the left wrapped in `Expanded` and the action cluster on the right. The detail stack is a vertical `Column` of: unit-type title (`unit.type`), `Status: …`, `Location: …`, `Assigned to: …`, and any pending cost chip strip. The locate icon does **not** appear in the title row; it lives at the right end of the action cluster (see *Per-unit row content* — *Dedicated locate control*).
+
+The card is hover-aware via `MouseRegion`: pointer enter switches the border to `--accent-dim`. Tile-scope selection also paints the border `--accent-dim` so the selected row is visually distinct without relying on Material `ListTile.selected` chrome.
+
+### Region heading chrome (mockup `.region-heading`; issue #3514 owner decision #10)
+
+Each region group heading (`Old World` / `New World`) matches `SPEC/ui/mockups/UNIT10001-civilian-units-panel.html` `.region-heading` chrome rather than the legacy `CtSectionLabel` (`--accent-dim`) bottom border. It renders via `RegionSectionHeader(variant: RegionHeaderVariant.bottomBorderMuted)`:
+
+| Token / property | Source | Value |
+|------------------|--------|-------|
+| Label text | region display label | Upper-cased (`Old World` → `OLD WORLD`) |
+| Label font | `editorialMonocleDisplayFontFamily` | Display (Cinzel/Iowan) `12` dp · `FontWeight.w600` · `0.06em` tracking |
+| Label colour | `EditorialMonoclePalette.muted` | `var(--muted)` |
+| Bottom border | `EditorialMonoclePalette.border` | 1 dp (`var(--border)`, not `--accent-dim`) |
+
+The observe-mode multi-owner sub-heading (per-faction grouping) is not part of the mockup and keeps the default `CtSectionLabel` treatment.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Toolbar | Civilian Units button | Bottom sheet opens (full list or scoped — see opening modes below). |
+| Map / province shortcuts | `OpenCivilianUnitsPanelEvent` with tile or shortcut fields | Filtered list or direct-assign modes. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Row tap (full list) | Full-list mode | `ClosePanelEvent` + `LocateMapTileEvent` | Panel closes; map pans. |
+| Locate icon | Always in scoped mode | `LocateMapTileEvent` | Panel stays open. |
+| Assign | Idle, no pending work | Work-target selection or shortcut commit | Per row rules in **Per-unit row content**. |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Full list | Default toolbar open | All human civilians by region. |
+| Tile-scoped | Map marker tap | Units on one tile only. |
+| Explorer / Builder shortcut | Province tile actions | Filtered + direct assign. |
+
+---
+
+## Components
+
+- `CivilianUnitsPanel`, shared unit row-action widgets under `app/lib/features/game/widgets/units/shared/`.
 
 ---
 
@@ -47,11 +129,12 @@ For each civilian unit, the panel shows:
 | **Location**| projected civilian tile key | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from projected tile). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
 | **Assigned to** | pending `WorkOrder` first, else `Unit.currentWork` when `status == working` | If idle and no pending work: show "—". If pending or in-progress: show work target, target location, and localized inline turn counter on the first line (e.g. `X turns`), where pending uses assign-time `totalTurns` and in-progress uses `remainingTurns/totalTurns`. **Pending cost preview (this turn only):** when the pending order has a **stockpile material** cost per `WorkOrderCostCalculator(game).calculateCost(...)` (same inputs as order validation: `target`, `targetTileKey`, `improvementLevel` from tile state for `build_improvement` only, `fortLevel` / `roadLevel` from game state), show a second line (below "Assigned to") of **dense chips**: each commodity as **`ResourceIcon` + required quantity** (canonical pattern; align with training / production panels, `app/lib/widgets/resource_icon.dart`). **Pending `purchase_land` (Merchant):** show **treasury** cost via `purchaseLandCost(resourceId)` with `resourceId` from `game.worldState.resourceByTileKey[order.targetTileKey]`, using the same **treasury chip/string** pattern as military training (`trainUnits_treasury` / `train_military_dialog.dart`) — **not** a commodity `ResourceIcon` for cash. **No literal ` (pending)` suffix is shown for any pending target.** **No affordability UI** on this panel: show required amounts only; do not compare to stockpile/treasury or use deficit/error styling. |
 
-- **Unit identity:** Each row is associated with one `Unit` (e.g. `unit.id`). Show unit type (Explorer, Builder, etc.) and a short id or label so the player can tell units apart.
-- **Shared row-action layout convention:** Civilian rows use the shared unit-panel row-action widget from `app/lib/features/game/widgets/units/shared/` (same abstraction used by Military/Navy rows): details stay left, row actions stay right, actions are ordered left-to-right, action group top-aligns to the first detail line, and narrow widths switch action buttons to icon-only.
-- **Dedicated locate control:** Each row includes a compact **Locate** icon button matching the naval units panel fleet locate chrome (`Icons.my_location`, `iconSize` 18, `VisualDensity.compact`; tooltip uses the shared **Locate** label). Tapping it emits **`LocateMapTileEvent` only** — the panel stays open (no **`ClosePanelEvent`**), same contract as naval’s per-fleet locate icon.
+- **Unit identity:** Each row is associated with one `Unit` (e.g. `unit.id` for selection and orders). Show **unit type** (Explorer, Builder, etc.) as the row title only; **do not** show raw `unit.id` in any player-visible title, subtitle, or status line. Disambiguate duplicate types using **status**, **location**, and **assigned-to** lines only.
+- **Shared row-action layout convention:** Civilian rows use the bordered row card chrome (see § Layout / wireframe — Row card chrome). Inside the card, the action cluster sits to the right of the detail stack as a right-aligned `Wrap`; actions are ordered left-to-right and top-align to the first detail line, wrapping onto a second line at narrow widths rather than overflowing horizontally.
+- **Row-action button family (mockup `.u-actions`; issue #3514 owner decisions #6/#7):** Civilian row actions render as the **compact pill** family (no `CtNinePatchButton` corner-bracket chrome): neutral actions (e.g. **Assign**) use `CtActionTextButton` with an icon + label (`icon` set; the neutral, non-`primary` variant maps to mockup `.u-actions button`); destructive actions (e.g. **Cancel**) use `CtDangerTextButton` with an icon + label (mockup `.u-actions .cancel-btn`). **Assign keeps its icon + label** (owner decision #7) and is **not** regressed to text-only. (Military / naval rows still render `UnitsEntityActionRow` `CtNinePatchButton` pills; their migration is tracked separately under #3514.)
+- **Dedicated locate control (mockup `.u-actions .locate-btn`):** Each row includes a compact **Locate** action at the **right end** of the action cluster, rendered as a circular icon-only `CtCircularLocateButton` (22 dp circle, `Icons.my_location`) via `UnitsEntityAction(iconOnly: true, icon: Icons.my_location, label: …, tooltip: …)`. The locate control is **not** placed in the title row. Tapping it emits **`LocateMapTileEvent` only** — the panel stays open (no **`ClosePanelEvent`**), same contract as naval's per-fleet locate icon.
 - **Clickable row:** In **full-list** mode, tapping the row body (outside row actions) closes the panel then locates on the map (post-frame **`LocateMapTileEvent`**). In **tile-scoped** mode, tapping the row body only changes **selection**; use the locate icon to highlight/pan on the map without closing the panel.
-- **Assign (idle only):** For each unit with `Unit.status == idle` and no pending work order for this turn, the row shows an **Assign** button. Clicking it opens a menu of **allowed work orders** for that unit type only (per [civilian-units.md](../game/civilian-units.md) Work Order Summary and `workOrderTargetsByUnitType`). **Draft xor with Move:** The human shell must not keep a pending civilian **`MoveOrder`** and a **`WorkOrder`** for the **same** `unitId` in one turn; committing work via Assign clears a conflicting move in the draft helper `GameMapAreaStateLogic.addHumanWorkOrder`, matching [orders.md](../program/orders.md) § Civilian `WorkOrder` bundling (implicit move leg) and xor draft. After the user selects an order from the menu, the shell enters **work-target selection mode**: for `explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, and `build_rail`, the shell reads valid target tiles from the app-owned per-player work-target selection cache (shared with province shortcut states); for other targets it computes valid tiles once using `getValidWorkOrderTileKeysWithVisibility`, passing **per-region tile maps** when loaded. For cache-first protected targets (`explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`), the shell applies runtime stale-tile filtering on cached keys using current draft/in-progress conflicts and does not trigger live fallback recomputation in the interaction. The shell passes a **global** tile set (all regions) unchanged to the map widget. The map shows **valid target tiles** with a **flashing yellow selector** and an **orange hover cursor** (see [map-widget.md](map-widget.md) § Work target selection mode). The user may **switch region tabs** to select a target in the other region; tab changes update rendering from the same global cache and do not recompute or overwrite the cached set. Clicking a **valid** tile commits the work order and exits selection mode. For **province-level** orders (`explore`, `steal_tech`, `counter_spy`), the clicked tile is translated to the province (e.g. `regionId|provinceId|0|0`) per [orders.md](../program/orders.md). **Back-out:** Invalid/empty tile clicks are no-op (selection mode persists); explicit cancel via the top-centered prompt `cancel`, `Esc` while selection mode is active, or any left-rail map icon exits selection mode without submitting while preserving each icon's existing action.
+- **Assign (idle only):** For each unit with `Unit.status == idle` and no pending work order for this turn, the row shows an **Assign** button. Clicking it opens a menu of **allowed work orders** for that unit type only (per [civilian-units.md](../game/civilian-units.md) Work Order Summary and `workOrderTargetsByUnitType`). **Draft xor with Move:** The human shell must not keep a pending civilian **`MoveOrder`** and a **`WorkOrder`** for the **same** `unitId` in one turn; committing work via Assign clears a conflicting move in the draft helper `GameMapAreaStateLogic.addHumanWorkOrder`, matching [orders.md](../program/orders.md) § Civilian `WorkOrder` bundling (implicit move leg) and xor draft. After the user selects an order from the menu, the shell enters **work-target selection mode**: for `explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, and `build_rail`, the shell reads valid target tiles from its **`PerPlayerWorkTargetSelectionCache`** instance ([order-suggestions.md](../program/order-suggestions.md) § Per-player work-target selection cache; shared semantics with province shortcut states); for other targets it computes valid tiles once using `getValidWorkOrderTileKeysWithVisibility`, passing **per-region tile maps** when loaded. For cache-first protected targets (`explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`), the shell applies runtime stale-tile filtering on cached keys using current draft/in-progress conflicts and does not trigger live fallback recomputation in the interaction. The shell passes a **global** tile set (all regions) unchanged to the map widget. The map shows **valid target tiles** with a **flashing yellow selector** and an **orange hover cursor** (see [map-widget.md](map-widget.md) § Work target selection mode). The user may **switch region tabs** to select a target in the other region; tab changes update rendering from the same global cache and do not recompute or overwrite the cached set. Clicking a **valid** tile commits the work order and exits selection mode. For **province-level** orders (`explore`, `steal_tech`, `counter_spy`), the clicked tile is translated to the province (e.g. `regionId|provinceId|0|0`) per [orders.md](../program/orders.md). **Back-out:** Invalid/empty tile clicks are no-op (selection mode persists); explicit cancel via the top-centered prompt `cancel`, `Esc` while selection mode is active, or any left-rail map icon exits selection mode without submitting while preserving each icon's existing action.
 - **Assign (explorer shortcut mode):** In explorer-filtered shortcut mode opened from province Tile actions, pressing **Assign** on an eligible Explorer bypasses the generic choose-order menu and directly commits a pending work order targeting the already selected province-panel tile. The UI must not enter work-target selection mode for this shortcut. If assignment is no longer valid at click-time (state drift), the UI performs a silent no-op and does not commit a pending work order.
 - **Assign (builder shortcut mode):** In builder-filtered shortcut mode opened from province Tile `Build improvement`, pressing **Assign** on an eligible idle/no-pending Builder bypasses the generic choose-order menu and directly commits pending `WorkOrder(target: build_improvement, targetTileKey: <exact selected tile key>)`. Builder rows with pending/in-progress work keep standard row content and do not show Assign. If assignment is no longer valid at click-time (state drift), the UI performs a silent no-op and does not commit a pending work order.
 - **Explicit shortcut contract:** `OpenCivilianUnitsPanelEvent` carries explicit shortcut target fields; `prospectShortcutTargetTileKey` opens direct-assign `prospect`, `exploreShortcutTargetTileKey` opens direct-assign `explore`, `buildImprovementShortcutTargetTileKey` opens direct-assign `build_improvement`. At most one shortcut field is non-null for a given panel open request.
@@ -72,12 +155,20 @@ For each civilian unit, the panel shows:
 - **Selection swap:** In tile scope, tapping a different row changes selected unit id immediately.
 - **Action target:** In tile scope, row actions (**Assign**, **Cancel**) apply to the selected row only.
 - **Header actions (tile scope only):** The panel title row includes **Tile** then **Train** (left to right after the title). **Tile** opens province/tile detail for the **currently selected** unit’s **rendered tile** (`assignedTileKey` when present, otherwise `tileKey`). When there is no selected unit or no rendered tile key, **Tile** is disabled (or equivalent). **Full-list mode** (panel opened from the rail, no tile scope): the title row has **Train** only—no **Tile** in the header.
+- **Header action chrome (mockup `.train-btn` / `.hdr-btn` primary; issue #3514 owner decision #5):** Both header actions (**Train**, and tile-scope **Tile**) render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The primary pill is visually distinct from a neutral secondary `CtActionTextButton` (static `--border`, `--accent-dim` label). Bus emissions are unchanged: **Train** emits `ClosePanelEvent` then `OpenDialogEvent(trainCiviliansDialogId)` on the next frame; **Tile** emits `ClosePanelEvent` then `OpenMapTileDetailEvent` for the selected row’s rendered tile. The mockup `Close` pill and `mode-tag` remain preview-only scaffolding (no production `Close` pill is added). The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
+- **Status line in mockup (issue #3514 owner decision #8):** The live panel always shows an explicit `Status: …` line in each row detail stack (see § Per-unit row content). The `UNIT10001` HTML mockup renders the same explicit `Status: <Idle|Working>` line (`.u-status`) between the unit-type title and the location line so the mockup stays consistent with the implementation.
 
 ---
 
+## Observe mode
+
+- **Global observe:** Panel opens read-only with civilians for **all factions** that own civilians (great powers, minor nations, tribes). Rows are grouped by region, then by **owner display name** when more than one owner is listed. Header **Train** is disabled; Assign/Cancel/work-target flows are disabled via `readOnly` and `canMutateViaUi`.
+- **Player observe:** Same read-only rules; lists only the observed GP's civilians (same filter as map `civilianMarkerOwnerIds` for player mode).
+- **Not** routed through `ObserveModeNotDefinedPanel` (unlike treasury/production in global observe).
+
 ## Empty state
 
-- When the human player has **no** civilian units, the panel still opens and shows an empty state message (e.g. "No civilian units") so the entry point is always available and the behaviour is consistent.
+- When no civilians match the active owner filter, the panel still opens and shows an empty state message (e.g. "No civilian units") so the entry point is always available and the behaviour is consistent.
 
 ---
 
@@ -93,6 +184,7 @@ For each civilian unit, the panel shows:
 
 - **Given** the user is on the in-game shell (Empire overview), **when** the user opens the Civilian Units panel, **then** the UI layer displays a panel that lists every civilian unit owned by the human player (Explorer, Builder, Engineer, Spy, Merchant, Rail Builder), and each row shows that unit's status, location (province name + region), and assigned-to information (or "—" when idle).
 
+- **Given** the Civilian Units panel is open and at least one unit row is visible, **when** the user views any row title, subtitle, or status line, **then** the UI layer does **not** show the raw internal `unit.id` string (e.g. `gp1_explorer_1`).
 - **Given** the Civilian Units panel is open and at least one unit has `Unit.status == working` and `Unit.currentWork != null`, **when** the user views the row for that unit, **then** the UI layer shows the work target, target location (province name + region derived from `currentWork.tileKey`), and localized in-progress turn progress.
 
 - **Given** the Civilian Units panel is open and the human player has zero civilian units, **when** the panel is displayed, **then** the UI layer shows an empty state message (e.g. "No civilian units") and does not show any unit rows.
@@ -149,6 +241,20 @@ For each civilian unit, the panel shows:
 
 - **Given** the civilian units panel is open in **full-list** mode (no tile scope), **when** the panel is displayed, **then** the title row shows **Train** only and does not show a header **Tile** button.
 
+- **Given** the Civilian Units panel is open (issue #3514 owner decision #5), **when** the header **Train** action renders, **then** the UI layer renders it as a `CtActionTextButton` with `primary == true` (compact primary gradient pill, no `CtNinePatchButton` corner-bracket chrome), and tapping it still emits `OpenDialogEvent(trainCiviliansDialogId)`.
+
+- **Given** the Civilian Units panel is open in tile scope (issue #3514 owner decision #5), **when** the header **Tile** action renders, **then** the UI layer renders it as a `CtActionTextButton` with `primary == true`, and the header mounts no `CtNinePatchButton` descendant for its actions.
+
+- **Given** a civilian unit row with the **Assign** action visible (issue #3514 owner decisions #6/#7), **when** the row-action cluster renders, **then** the UI layer renders **Assign** as a neutral `CtActionTextButton` (`primary == false`) with `icon == Icons.playlist_add` and label `Assign` (icon + label retained), and the row card mounts no `CtNinePatchButton` descendant for its actions.
+
+- **Given** a civilian unit row with a pending or in-progress work order (issue #3514 owner decision #6), **when** the row-action cluster renders, **then** the UI layer renders **Cancel** as a `CtDangerTextButton` with an icon + label (mockup `.u-actions .cancel-btn`), and invoking its `onPressed` shows the cancel-confirmation dialog.
+
+- **Given** a civilian unit row (issue #3514 owner decision #6), **when** the row-action cluster renders, **then** the UI layer renders the **Locate** control as a circular icon-only `CtCircularLocateButton` (`Icons.my_location`) at the right end of the cluster, and tapping it emits `LocateMapTileEvent` without `ClosePanelEvent`.
+
+- **Given** the Civilian Units panel is open in observe/read-only mode (`readOnly == true`), **when** a unit row renders, **then** the UI layer mounts no row-action pills (no `CtActionTextButton`, `CtDangerTextButton`, or `CtCircularLocateButton`) inside the row card.
+
+- **Given** the `UNIT10001` HTML mockup (`SPEC/ui/mockups/UNIT10001-civilian-units-panel.html`) is opened in a browser (issue #3514 owner decision #8), **when** a sample row is viewed, **then** the row shows an explicit `Status:` line (`.u-status`) between the unit-type title and the location line, consistent with the live panel.
+
 - **Given** the civilian units panel is open in tile scope with **no** listed units for that tile (empty scoped list), **when** the panel is displayed, **then** the header **Tile** control does not open detail incorrectly (disabled or non-actionable).
 
 - **Given** the human player has a **pending** `WorkOrder` for a civilian with a **material-backed** target (e.g. Builder `build_improvement` or `upgrade_town`, Engineer / Rail Builder targets with a non-null material map from `WorkOrderCostCalculator`), **when** the Civilian Units panel renders that row, **then** the UI layer shows **Assigned to** with work label and location and displays **each required commodity** with **`ResourceIcon` and quantity**, and does **not** show the literal suffix **` (pending)`** for that row.
@@ -168,6 +274,18 @@ For each civilian unit, the panel shows:
 - **Given** any row showing a pending cost preview (materials or treasury), **when** the panel renders, **then** the UI layer does **not** add stockpile/treasury deficit or “can’t afford” styling (required amounts only).
 
 - **Given** the Civilian Units panel renders civilian rows, **when** row actions are visible, **then** the UI layer uses the shared unit-panel row-action abstraction with left details and right actions, keeps locate where specified, and switches row actions to icon-only on narrow widths without changing action availability.
+
+- **Given** the Civilian Units panel renders at least one civilian unit row (R30; mockup `.unit-row`), **when** the panel is displayed, **then** the UI layer renders the row inside a single `DecoratedBox`/`Container` card (not a bare `ListTile` root) that wraps both the detail stack (unit type, status, location, assigned-to, cost chips) and the right-aligned action cluster, paints a vertical `EditorialMonoclePalette.bgDeep` → `EditorialMonoclePalette.surface` gradient (`begin: topCenter`, `end: bottomCenter`), draws a 1 dp default border resolved to `EditorialMonoclePalette.border`, applies `EdgeInsets.only(bottom: 4)` outer spacing, and uses internal padding of ~8 dp.
+
+- **Given** the Civilian Units panel is open in tile-scoped mode and a unit row is selected (R30), **when** the selected row paints, **then** the UI layer resolves the row card border colour to `EditorialMonoclePalette.accentDim` instead of `EditorialMonoclePalette.border` so the selection state is visually distinct without relying on Material `ListTile.selected` chrome.
+
+- **Given** the Civilian Units panel renders a civilian unit row with a locate action (R30; mockup `.u-actions .locate-btn`), **when** the user reads the row's right-aligned action cluster left-to-right, **then** the **Locate** action is the rightmost child, renders as an icon-only `CtNinePatchButton` (`UnitsEntityAction.iconOnly == true`, `icon: Icons.my_location`), and the title row does **not** mount any `CtIconAction` locate descendant.
+
+- **Given** the Civilian Units panel renders any civilian unit row, **when** the user reads the row's left detail stack top-to-bottom, **then** the unit-type title appears above the `Status:` line, which appears above the `Location:` line, which appears above the `Assigned to:` line — all inside the single bordered card from R30 (no separate `ListTile.subtitle` rendering outside the card chrome).
+
+- **Given** the Civilian Units panel lists civilian units in at least one region (issue #3514 owner decision #10; mockup `.region-heading`), **when** a region group heading renders, **then** the UI layer renders it via `RegionSectionHeader(variant: RegionHeaderVariant.bottomBorderMuted)` — an upper-cased `EditorialMonoclePalette.muted` display label over a 1 dp `EditorialMonoclePalette.border` bottom border (not the legacy `CtSectionLabel` `--accent-dim` border), and mounts no `CtSectionLabel` for that region heading.
+
+- **(Golden coverage, issue #3514)** **Given** `UNIT10001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), **when** `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), **then** the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_civilian_default.png` and the panel raises no exception (`WidgetTester.takeException()` is `null`).
 
 ---
 

@@ -1,6 +1,4 @@
-// Move fleet dialog. SPEC/ui/naval-units-panel.md, SPEC/program/app-ui-wiring.md.
-
-// ignore_for_file: deprecated_member_use
+// Move fleet dialog. SPEC/ui/move-fleet-dialog.md, SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -8,10 +6,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/ct_e2e.dart';
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_icon_action.dart';
+import '../../../widgets/ct_section_label.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../utils/map_location_resolver.dart';
+import '../utils/region_labels.dart';
 import '../utils/sea_zone_name_resolver.dart';
-import 'units/shared/units_panel_region_label.dart';
+import 'move_units_dialog_base.dart';
 
 sealed class _MovePick {
   const _MovePick();
@@ -65,7 +69,7 @@ final class _PickPort extends _MovePick {
 
   @override
   void emitLocate(AppEventBus bus, Game game) {
-    final province = tryGetProvince(game.worldState, fullProvinceId);
+    final province = game.worldState.tryGetProvince(fullProvinceId);
     if (province == null) return;
     final key = tileKeyForProvinceLocation(game, province);
     if (key == null) return;
@@ -103,7 +107,7 @@ List<_MovePick> _buildNavalMovePicks({
 
   for (final z in topo.adjacentSeaZoneIds) {
     final zReg = regionIdForSeaZone(topology, z) ?? fleetSeaRegion;
-    final regLabel = unitsPanelRegionLabel(zReg);
+    final regLabel = regionDisplayLabel(zReg);
     final cross = zReg != fleetSeaRegion;
     final isWarp = isWarpZoneSeaZone(topology, z);
     final zoneLabel = seaZoneDisplayName(
@@ -125,7 +129,7 @@ List<_MovePick> _buildNavalMovePicks({
     final portRows = <({String fullId, String label})>[];
     for (final lp in topo.adjacentProvinceIdsForDock) {
       final full = _fullProvinceIdForTopologyProvince(lp, rz);
-      final province = tryGetProvince(game.worldState, full);
+      final province = game.worldState.tryGetProvince(full);
       if (province == null || province.ownerId != humanPlayerId) continue;
       final name = province.displayName ?? province.id;
       final isCap = dockOrderTargetsPlayerCapital(game, humanPlayerId, full);
@@ -157,6 +161,9 @@ class MoveFleetDialog extends StatefulWidget {
     required this.bus,
   });
 
+  /// SPEC/ui/move-fleet-dialog.md — [UiScreenIds.moveFleetDialog].
+  static const screenId = UiScreenIds.moveFleetDialog;
+
   final Game game;
   final MapTopology topology;
   final String humanPlayerId;
@@ -167,7 +174,7 @@ class MoveFleetDialog extends StatefulWidget {
   State<MoveFleetDialog> createState() => _MoveFleetDialogState();
 }
 
-class _MoveFleetDialogState extends State<MoveFleetDialog> {
+class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
   late final List<_MovePick> _picks;
   _MovePick? _selected;
   var _picksInitialized = false;
@@ -189,92 +196,110 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  String get moveDialogTitle {
     final l10n = appL10n(context);
-    final picks = _picks;
-    final seaPicks = picks.whereType<_PickSeaZone>().toList();
-    final portPicks = picks.whereType<_PickPort>().toList();
     final fleetLabel = _fleetMoveDialogTitleLabel(widget.fleet);
-    final titleText = picks.isEmpty
+    return _picks.isEmpty
         ? l10n.moveFleet_title(fleetLabel)
-        : l10n.moveFleet_titleWithDestinations(fleetLabel, picks.length);
+        : l10n.moveFleet_titleWithDestinations(fleetLabel, _picks.length);
+  }
+
+  @override
+  bool get moveDialogHasDestinations => _picks.isNotEmpty;
+
+  @override
+  String get moveDialogEmptyText =>
+      appL10n(context).moveFleet_noAdjacentSeaZones;
+
+  @override
+  bool get moveDialogCanConfirm => _selected != null;
+
+  @override
+  void onMoveDialogConfirm() {
+    final selected = _selected;
+    if (selected == null) return;
+    widget.bus.emit(
+      NavalMoveFleetRequestedEvent(
+        humanPlayerId: widget.humanPlayerId,
+        moveOrder: selected.toOrder(widget.fleet.id),
+      ),
+    );
+    Navigator.pop(context, true);
+  }
+
+  @override
+  void onMoveDialogCancel() => Navigator.pop(context, false);
+
+  @override
+  Widget build(BuildContext context) => buildMoveDialogScaffold(context);
+
+  @override
+  Widget buildMoveDialogDestinations(BuildContext context) {
+    final l10n = appL10n(context);
+    final seaPicks = _picks.whereType<_PickSeaZone>().toList();
+    final portPicks = _picks.whereType<_PickPort>().toList();
 
     final moveColumns = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (seaPicks.isNotEmpty) ...[
-          Text(
-            l10n.moveFleet_seaZonesSection,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          ...seaPicks.map(_row),
+          CtSectionLabel(l10n.moveFleet_seaZonesSection),
+          const SizedBox(height: CtSpacing.s),
+          for (var i = 0; i < seaPicks.length; i++) _row(seaPicks[i], i),
         ],
         if (portPicks.isNotEmpty) ...[
-          if (seaPicks.isNotEmpty) const SizedBox(height: 12),
-          Text(
-            l10n.moveFleet_provincesDockSection,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          ...portPicks.map(_row),
+          if (seaPicks.isNotEmpty) const SizedBox(height: CtSpacing.ml),
+          CtSectionLabel(l10n.moveFleet_provincesDockSection),
+          const SizedBox(height: CtSpacing.s),
+          for (var i = 0; i < portPicks.length; i++)
+            _row(portPicks[i], seaPicks.length + i),
         ],
       ],
     );
 
-    return AlertDialog(
-      title: Text(titleText),
-      content: SizedBox(
-        width: 420,
-        child: picks.isEmpty
-            ? Text(l10n.moveFleet_noAdjacentSeaZones)
-            : SingleChildScrollView(
-                child: kCtE2EEnabled
-                    ? KeyedSubtree(
-                        key: kCtE2EMoveFleetDialogScrollRootKey,
-                        child: moveColumns,
-                      )
-                    : moveColumns,
-              ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.common_cancel),
-        ),
-        TextButton(
-          onPressed: _selected == null
-              ? null
-              : () {
-                  widget.bus.emit(
-                    NavalMoveFleetRequestedEvent(
-                      humanPlayerId: widget.humanPlayerId,
-                      moveOrder: _selected!.toOrder(widget.fleet.id),
-                    ),
-                  );
-                  Navigator.pop(context);
-                },
-          child: Text(l10n.common_confirm),
-        ),
-      ],
-    );
+    // When `kCtE2EEnabled`, wrap the rows column so fleet-reach e2e helpers can
+    // scope a scroll root without Material chrome (Refs #2336).
+    return kCtE2EEnabled
+        ? KeyedSubtree(
+            key: kCtE2EMoveFleetDialogScrollRootKey,
+            child: moveColumns,
+          )
+        : moveColumns;
   }
 
-  Widget _row(_MovePick pick) {
-    return RadioListTile<_MovePick>(
-      value: pick,
-      groupValue: _selected,
-      onChanged: (v) => setState(() => _selected = v),
-      title: Row(
-        children: [
-          Expanded(child: Text(pick.rowLabel)),
-          IconButton(
-            tooltip: appL10n(context).moveFleet_locateOnMap,
-            icon: const Icon(Icons.my_location, size: 18),
-            onPressed: () => pick.emitLocate(widget.bus, widget.game),
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
+  Widget _row(_MovePick pick, int index) {
+    final bool selected = identical(pick, _selected);
+    final row = MoveDialogDestinationRow(
+      // Deterministic per-row key (CT_E2E only) so fleet-reach e2e helpers can
+      // select the first available destination without Material `RadioListTile`
+      // chrome (Refs #2336).
+      key: kCtE2EEnabled ? kCtE2EMoveFleetDestinationRowKey(index) : null,
+      selected: selected,
+      semanticsLabel: pick.rowLabel,
+      onTap: () => setState(() => _selected = pick),
+      content: Text(
+        pick.rowLabel,
+        style: moveDialogRowLabelStyle(Theme.of(context), selected: selected),
+      ),
+      trailing: CtIconAction(
+        tooltip: appL10n(context).moveFleet_locateOnMap,
+        icon: Icons.my_location,
+        iconColor: EditorialMonoclePalette.muted,
+        onPressed: () => pick.emitLocate(widget.bus, widget.game),
       ),
     );
+    // Additionally expose sea-zone rows by their topology id (CT_E2E only) so
+    // the fleet-reach helper can tap the adjacent sea zone that makes BFS
+    // progress toward the New World warp rather than the alphabetically-first
+    // row. Wrapping in a `KeyedSubtree` keeps the inner row's positional key
+    // (and rendered chrome) unchanged (Refs #2336 AC6/AC7).
+    if (kCtE2EEnabled && pick is _PickSeaZone) {
+      return KeyedSubtree(
+        key: kCtE2EMoveFleetDestinationSeaZoneRowKey(pick.seaZoneId),
+        child: row,
+      );
+    }
+    return row;
   }
 }

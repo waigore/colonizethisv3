@@ -7,25 +7,15 @@ import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'region_map_view_inputs.dart';
+import 'tile_map_grid.dart';
+import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
 import 'init_game_map_view_data.dart';
 import 'region_constants.dart';
 import 'tile_key_util.dart';
-
-Map<String, String> _provinceIdToOwnerIdFromProvinces(
-  List<Province> provinces,
-) {
-  final out = <String, String>{};
-  for (final p in provinces) {
-    final oid = p.ownerId;
-    if (oid != null && oid.isNotEmpty) {
-      out[p.id] = oid;
-    }
-  }
-  return out;
-}
 
 void _appendPortTileToRegionLists(
   String tileKey,
@@ -71,10 +61,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   Map<String, (int r, int g, int b)>? factionColorsOverride,
   List<({int x, int y})> portTiles = const [],
 }) {
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
 
   final List<String> factionIds;
   final Map<String, (int r, int g, int b)> factionColors;
@@ -143,7 +130,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   var legendY = legendY0;
   img.drawString(
     image,
-    'Ownership by faction. Black = land borders; light blue = sea borders.',
+    kGameWorldMapOwnershipLegendBlurb,
     font: img.arial14,
     x: legendPadding,
     y: legendY,
@@ -213,58 +200,14 @@ Uint8List renderInitGameMapToPng({
   required Map<String, MapTopology> topologyByRegion,
   int cellSize = 24,
 }) {
-  final owOwnerByProvinceId = _provinceIdToOwnerIdFromProvinces(
-    game.worldState.oldWorld.provinces,
+  final owInputs = regionMapRenderInputs(
+    game: game,
+    regionId: kRegionOldWorld,
   );
-  final nwOwnerByProvinceId = _provinceIdToOwnerIdFromProvinces(
-    game.worldState.newWorld.provinces,
+  final nwInputs = regionMapRenderInputs(
+    game: game,
+    regionId: kRegionNewWorld,
   );
-
-  final owCapitals = <({String factionId, String displayName, int x, int y})>[];
-  for (final p in game.players) {
-    final cap = p.capitalTile;
-    if (cap != null && cap.regionId == kRegionOldWorld) {
-      owCapitals.add((
-        factionId: p.id,
-        displayName: p.displayName,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-  for (final m in game.minorNations) {
-    final cap = m.capitalTile;
-    if (cap != null && cap.regionId == kRegionOldWorld) {
-      owCapitals.add((
-        factionId: m.id,
-        displayName: m.displayName ?? m.id,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-  final nwCapitals = <({String factionId, String displayName, int x, int y})>[];
-  for (final t in game.tribes) {
-    final cap = t.capitalTile;
-    if (cap != null && cap.regionId == kRegionNewWorld) {
-      nwCapitals.add((
-        factionId: t.id,
-        displayName: t.displayName ?? t.id,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-
-  // Ownership colours by faction type (GP vibrant, minors grey, tribes vibrant)
-  final owGreatPowerIds = game.players.map((p) => p.id).toList()..sort();
-  final owMinorNationIds = game.minorNations.map((m) => m.id).toList()..sort();
-  final owFactionColors = factionOwnershipColorMap(
-    greatPowerIds: owGreatPowerIds,
-    minorNationIds: owMinorNationIds,
-  );
-  final nwTribeIds = game.tribes.map((t) => t.id).toList()..sort();
-  final nwFactionColors = factionOwnershipColorMap(tribeIds: nwTribeIds);
 
   // Port tile positions from WorldState.portsByProvinceSeaboard (value = regionId|provinceId|x|y)
   final owPortTiles = <({int x, int y})>[];
@@ -282,20 +225,20 @@ Uint8List renderInitGameMapToPng({
     result: owResult,
     topology: owTopo,
     regionId: kRegionOldWorld,
-    ownerByProvinceId: owOwnerByProvinceId,
-    capitalTiles: owCapitals,
+    ownerByProvinceId: owInputs.ownerByProvinceId,
+    capitalTiles: owInputs.capitalTiles,
     cellSize: cellSize,
-    factionColorsOverride: owFactionColors,
+    factionColorsOverride: owInputs.factionColors,
     portTiles: owPortTiles,
   );
   final nwPng = renderSingleRegionGameStateMapToPng(
     result: nwResult,
     topology: nwTopo,
     regionId: kRegionNewWorld,
-    ownerByProvinceId: nwOwnerByProvinceId,
-    capitalTiles: nwCapitals,
+    ownerByProvinceId: nwInputs.ownerByProvinceId,
+    capitalTiles: nwInputs.capitalTiles,
     cellSize: cellSize,
-    factionColorsOverride: nwFactionColors,
+    factionColorsOverride: nwInputs.factionColors,
     portTiles: nwPortTiles,
   );
 
@@ -315,13 +258,7 @@ Uint8List renderInitGameMapToPngFromViewData({
     final mapW = region.width * region.cellSize;
     final mapH = region.height * region.cellSize;
 
-    // Determine sea zone ids from cells marked as sea.
-    final seaZoneIds = <String>{};
-    for (final cell in region.cells) {
-      if (cell.isSea) {
-        seaZoneIds.add(cell.regionCellId);
-      }
-    }
+    final seaZoneIds = seaZoneLocalIdsFromRegionCells(region.cells);
 
     // Legend height: geographic = title + Sea + terrains + "Resources:" + g/t/i + ports; else title + factions + ports.
     final legendLines = geographicMode
@@ -369,12 +306,10 @@ Uint8List renderInitGameMapToPngFromViewData({
     final tmpResult = TileMapResult(
       width: region.width,
       height: region.height,
-      grid: List.generate(
+      grid: TileMapGrid.generate(
         region.height,
-        (y) => List.generate(
-          region.width,
-          (x) => region.cellAt(x, y).regionCellId,
-        ),
+        region.width,
+        (y, x) => region.cellAt(x, y).regionCellId,
       ),
     );
     drawBorders(
@@ -450,23 +385,17 @@ Uint8List renderInitGameMapToPngFromViewData({
         color: black,
       );
       legendY += legendLineHeight;
-      for (final r in geographicGameWorldLegendResources) {
-        final letter = resourceToLegendLetter(r);
-        final label = resourceToLegendLabel(r);
-        img.drawString(
-          image,
-          '$letter  $label',
-          font: img.arial14,
-          x: legendPadding,
-          y: legendY,
-          color: black,
-        );
-        legendY += legendLineHeight;
-      }
+      legendY = drawResourceLegendRows(
+        image,
+        legendY: legendY,
+        textColor: black,
+        resources: geographicGameWorldLegendResources,
+        style: ResourceLegendRowsStyle.compactInline,
+      );
     } else {
       img.drawString(
         image,
-        'Ownership by faction. Black = land borders; light blue = sea borders.',
+        kGameWorldMapOwnershipLegendBlurb,
         font: img.arial14,
         x: legendPadding,
         y: legendY,

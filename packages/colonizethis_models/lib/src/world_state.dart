@@ -5,6 +5,8 @@ import 'region_data.dart';
 import 'tile_map_state.dart';
 import 'turn_state.dart';
 
+part 'world_state/focused_accessors.dart';
+
 /// Snapshot at a point in time. Turn state + region data + tile state. SPEC/game/world-model.
 class WorldState {
   const WorldState({

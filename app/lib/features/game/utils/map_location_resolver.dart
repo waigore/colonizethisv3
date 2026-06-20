@@ -1,6 +1,7 @@
 // Tile keys for centering the map on provinces and sea zones from game UI.
 // SPEC/ui/military-units-panel.md, SPEC/ui/naval-units-panel.md.
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show seaZoneCentroidTileKey;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -34,14 +35,14 @@ String? tileKeyForSeaZoneLocation(
   String regionId,
   String seaZoneId,
 ) {
-  final localSeaZone = seaZoneId.contains('|')
-      ? seaZoneId.split('|').last
-      : seaZoneId;
+  final localSeaZone = prefixedIdLocalSegment(seaZoneId);
   for (final e in game.worldState.portsByProvinceSeaboard.entries) {
-    final parts = e.key.split('|');
-    if (parts.length < 2) continue;
-    final keyRegion = parts[0];
-    final keySeaZone = parts.last;
+    final key = e.key;
+    final firstPipe = key.indexOf('|');
+    if (firstPipe <= 0 || firstPipe + 1 >= key.length) continue;
+    final lastPipe = key.lastIndexOf('|');
+    final keyRegion = key.substring(0, firstPipe);
+    final keySeaZone = key.substring(lastPipe + 1);
     if (keyRegion == regionId && keySeaZone == localSeaZone) {
       return e.value;
     }
@@ -58,7 +59,7 @@ String? tileKeyForNavalFleetAtSea({
   TileMapResult? tileMap,
   MapTopology? regionTopology,
 }) {
-  final local = seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
+  final local = prefixedIdLocalSegment(seaZoneId);
   if (tileMap != null && regionTopology != null) {
     final nodeIds = _seaZoneLocalIdsForRegion(regionTopology, regionId);
     final centroid = seaZoneCentroidTileKey(

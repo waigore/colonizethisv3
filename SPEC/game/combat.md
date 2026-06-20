@@ -28,11 +28,17 @@ Auto-resolved combat triggers when **armies** move into enemy-controlled provinc
 
 **Province Flip:** After **defender armies are eliminated** (no defending regiments remain in the province for the defender faction). Army casualties and army removal are applied **before** ownership flips; see [military-armies.md](military-armies.md). Flip is immediate when the defender has no regiments left, before later same-province battles in the chain. Connectivity/extraction recompute next turn.
 
+**Unopposed capture:** When a Great Power **army** ends movement in a province owned by a faction **at war** with that GP, and the province contains **no** combat-capable units belonging to the province owner and **no** combat-capable units of any third faction, the province transfers to the capturing GP **immediately** at the start of the combat phase (before standard battle detection). If multiple eligible GPs moved armies into the same province this turn, the capturer is the **lexicographically smallest** eligible GP id. Implementation: `applyUnopposedProvinceCaptures` in `packages/colonizethis_logic`.
+
 ## Acceptance Criteria
 
 - Given a province owned by a defending faction with fort level between 0 and 3 inclusive and at least one defending regiment (via a defending army)  
   When a Great Power moves an **attacking army** into that province and the move ends in that province  
   Then the system starts a combat resolution for that province, designates the moving faction as the attacker, designates the province owner (or, on ownership ties, the lowest faction id) as the defender, and selects `Field` battle mode when fort level = 0 or `Siege` battle mode when fort level ≥ 1.
+
+- Given a province owned by faction O at war with Great Power GP, and the province contains no combat-capable units of O and no combat-capable units of any third faction  
+  When GP’s army ends movement in that province this turn  
+  Then the system transfers province ownership from O to GP at the start of the combat phase without creating a battle context for that province.
 
 - Given one defender and two or more attacking factions each with at least one regiment in the same province  
   When the system resolves combat for that province  

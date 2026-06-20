@@ -54,3 +54,54 @@ const Key kCtE2ERegionTabNewWorldKey = Key('ct_e2e_region_tab_new_world');
 const Key kCtE2EMoveFleetDialogScrollRootKey = Key(
   'ct_e2e_move_fleet_dialog_scroll_root',
 );
+
+// ignore: public_member_api_docs
+/// Stable locator for the fleet-row **Move** action button. The naval action
+/// cluster collapses to icon-only at narrow (test-host) viewports, so the
+/// rendered button carries no `Text('Move')`; e2e helpers must locate it by
+/// this key rather than the conditionally-rendered label (Refs #2336 AC4 and
+/// the deterministic-locator rule in `colonizethis-e2e-ui-stability.mdc`).
+const Key kCtE2EFleetMoveActionKey = Key('ct_e2e_fleet_move_action');
+
+// ignore: public_member_api_docs
+/// Stable locator for the fleet-row **Split** action button. Like Move, Split
+/// collapses to icon-only at narrow test-host viewports, so
+/// `e2eSplitHomeFleetOnce` locates Split by this key rather than the label
+/// (Refs #2336 AC4 H8; deterministic-locator rule in
+/// `colonizethis-e2e-ui-stability.mdc`).
+const Key kCtE2EFleetSplitActionKey = Key('ct_e2e_fleet_split_action');
+
+// ignore: public_member_api_docs
+/// Prefix for the per-destination-row keys inside [MoveFleetDialog]. The
+/// production dialog renders custom destination rows (`_MoveFleetDestinationRow`,
+/// a `CtDialogShell` body) rather than Material `RadioListTile`, so the
+/// fleet-reach e2e helpers select the first available sea destination by this
+/// key prefix (the warp destination is still located by its label text). The
+/// zero-based row index is appended so sibling row keys stay unique
+/// (Refs #2336; deterministic-locator rule in `colonizethis-e2e-ui-stability.mdc`).
+const String kCtE2EMoveFleetDestinationRowKeyPrefix =
+    'ct_e2e_move_fleet_destination_row_';
+
+// ignore: public_member_api_docs
+/// Builds the stable key for the destination row at [index] inside
+/// [MoveFleetDialog] under [CT_E2E] (Refs #2336).
+Key kCtE2EMoveFleetDestinationRowKey(int index) =>
+    Key('$kCtE2EMoveFleetDestinationRowKeyPrefix$index');
+
+// ignore: public_member_api_docs
+/// Prefix for the per-sea-zone destination-row keys inside [MoveFleetDialog].
+/// Unlike [kCtE2EMoveFleetDestinationRowKeyPrefix] (which appends a positional
+/// index), this prefix encodes the underlying sea-zone topology id so the
+/// fleet-reach e2e helper can select a *specific* adjacent sea zone — the one
+/// that makes BFS progress toward the New World warp — instead of the
+/// alphabetically-first row. Only sea-zone rows carry this key; port rows do
+/// not (Refs #2336 AC6/AC7 fleet-reach navigation; deterministic-locator rule
+/// in `colonizethis-e2e-ui-stability.mdc`).
+const String kCtE2EMoveFleetDestinationSeaZoneRowKeyPrefix =
+    'ct_e2e_move_fleet_sea_zone_row_';
+
+// ignore: public_member_api_docs
+/// Builds the stable key for the sea-zone destination row whose topology id is
+/// [seaZoneId] inside [MoveFleetDialog] under [CT_E2E] (Refs #2336).
+Key kCtE2EMoveFleetDestinationSeaZoneRowKey(String seaZoneId) =>
+    Key('$kCtE2EMoveFleetDestinationSeaZoneRowKeyPrefix$seaZoneId');

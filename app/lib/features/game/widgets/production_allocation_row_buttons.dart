@@ -3,8 +3,70 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'production_allocation_repeat_timing.dart';
+
+/// Fixed tappable surface size for the dark editorial-monocle step buttons
+/// per `SPEC/ui/production-panel.md` § Allocation step buttons. The leading
+/// icon keeps its existing ~14–16 px size centered inside this surface.
+const double kProductionAllocationStepButtonSize = 26;
+
+/// Disabled opacity for the entire step-button surface (gradient + border +
+/// icon), per `SPEC/ui/production-panel.md` § Allocation step buttons (R14:
+/// "disabled at 0.3 opacity").
+const double kProductionAllocationStepButtonDisabledOpacity = 0.3;
+
+/// Wraps an icon child in the dark editorial-monocle step-button chrome
+/// (26 × 26 surface with [CtGradients.buttonGradient] inside a 1 px
+/// `EditorialMonoclePalette.border` outline) and fades the entire surface
+/// to [kProductionAllocationStepButtonDisabledOpacity] when disabled.
+///
+/// Shared by the Allocation subpanel's per-recipe ± / maximize / clear
+/// controls **and** the Available subpanel's per-tier labour ± controls,
+/// per `SPEC/ui/production-panel.md` § Allocation step buttons (R51 —
+/// "Enabled tap / long-press semantics and the per-tier production tier
+/// labour controls reuse the same step-button surface contract").
+class ProductionStepButtonSurface extends StatelessWidget {
+  const ProductionStepButtonSurface({
+    super.key,
+    required this.enabled,
+    required this.iconAssetPath,
+    required this.iconSize,
+  });
+
+  final bool enabled;
+  final String iconAssetPath;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1.0 : kProductionAllocationStepButtonDisabledOpacity,
+      child: SizedBox(
+        width: kProductionAllocationStepButtonSize,
+        height: kProductionAllocationStepButtonSize,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: CtGradients.buttonGradient,
+            border: Border.all(
+              color: EditorialMonoclePalette.border,
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: StrictAssetIcon(
+              assetPath: iconAssetPath,
+              width: iconSize,
+              height: iconSize,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 typedef ProductionDesiredMapReader = Map<String, int> Function();
 
@@ -78,16 +140,10 @@ class _ProductionAllocationStepButtonState
   @override
   Widget build(BuildContext context) {
     final path = '$kAppIconAssetPrefix${widget.assetFileName}';
-    final icon = Opacity(
-      opacity: widget.enabled ? 1 : 0.35,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-        child: StrictAssetIcon(
-          assetPath: path,
-          width: widget.iconSize,
-          height: widget.iconSize,
-        ),
-      ),
+    final surface = ProductionStepButtonSurface(
+      enabled: widget.enabled,
+      iconAssetPath: path,
+      iconSize: widget.iconSize,
     );
 
     return Semantics(
@@ -106,7 +162,7 @@ class _ProductionAllocationStepButtonState
           onLongPress: widget.enabled ? _onLongPress : null,
           onLongPressEnd: (_) => _stopRepeat(),
           onLongPressCancel: () => _stopRepeat(),
-          child: icon,
+          child: surface,
         ),
       ),
     );
@@ -137,16 +193,10 @@ class ProductionAllocationActionIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = '$kAppIconAssetPrefix$assetFileName';
-    final child = Opacity(
-      opacity: enabled ? 1 : 0.35,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-        child: StrictAssetIcon(
-          assetPath: path,
-          width: iconSize,
-          height: iconSize,
-        ),
-      ),
+    final surface = ProductionStepButtonSurface(
+      enabled: enabled,
+      iconAssetPath: path,
+      iconSize: iconSize,
     );
 
     return Semantics(
@@ -159,7 +209,7 @@ class ProductionAllocationActionIconButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: enabled ? () => onPressedFromCurrent(readDesired()) : null,
-            child: child,
+            child: surface,
           ),
         ),
       ),

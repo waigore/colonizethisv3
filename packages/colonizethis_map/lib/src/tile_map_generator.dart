@@ -4,21 +4,30 @@ import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/package_logger.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'grid_voronoi.dart';
 import 'map_validation_exception.dart';
 import 'tile_map_generator_land_seeds.dart';
+import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_distance_sentinels.dart';
+import 'tile_map_directions.dart';
+import 'map_gen_stage.dart';
+import 'tile_map_grid.dart';
+import 'tile_map_grid_graph.dart';
+import 'tile_map_resource_cap_state.dart';
+import 'tile_map_resource_placement.dart';
 import 'topology_inference.dart';
 
 /// Shared params for [TileMapGenerator] (generation orchestration only).
 
 part 'tile_map_generator_types.dart';
-part 'tile_map_grid_graph.dart';
 part 'tile_map_generator_join_sea.dart';
+part 'tile_map_generator_join_sea_bridge_part.dart';
+part 'tile_map_generator_join_sea_jitter_part.dart';
+part 'tile_map_generator_join_sea_subdivide_part.dart';
 part 'tile_map_generator_terrain_assign.dart';
+part 'tile_map_generator_terrain_noise.dart';
 part 'tile_map_generator_lakes_provinces.dart';
 
 abstract class _TileMapGeneratorShell {
@@ -104,10 +113,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     );
     final rnd = Random(params.seed);
 
-    var grid = List.generate(
-      params.height,
-      (_) => List.filled(params.width, seaZoneId),
-    );
+    var grid = TileMapGrid.filled(params.height, params.width, seaZoneId);
     onLog?.call(
       'Pass 1: Grid initialized (${params.width}x${params.height}), all sea',
     );

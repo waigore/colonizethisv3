@@ -206,6 +206,53 @@ List<File> collectRepoLintDomainDartFiles(String repoRoot) {
   return files;
 }
 
+/// Shared repo-wide Dart collector used by checks that intentionally scan beyond
+/// domain-only `lib/`/`test/`/`integration_test/` trees.
+///
+/// Excludes generated Dart suffixes, fixture trees, and hidden/tool-cache/build
+/// directories while preserving broad coverage semantics for legacy whole-repo
+/// checks (for example `check_long_string_switches`).
+bool repoLintRepoWideDartCollectorShouldSkip(String relativePathFromRepo) {
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  if (!slash.endsWith('.dart')) {
+    return true;
+  }
+  if (slash.endsWith('.g.dart') ||
+      slash.endsWith('.freezed.dart') ||
+      slash.endsWith('.mocks.dart') ||
+      slash.endsWith('tech_effect_summary_embed.dart')) {
+    return true;
+  }
+  if (_repoLintSlashPathContainsFixtureMarker(slash)) {
+    return true;
+  }
+  if (slash.split('/').contains('.dart_tool') ||
+      slash.split('/').contains('.pub-cache') ||
+      slash.split('/').contains('build')) {
+    return true;
+  }
+  return false;
+}
+
+List<File> collectRepoLintRepoWideDartFiles(String repoRoot) {
+  final root = Directory(repoRoot);
+  if (!root.existsSync()) {
+    return <File>[];
+  }
+  final out = <File>[];
+  for (final entity in root.listSync(recursive: true, followLinks: false)) {
+    if (entity is! File) {
+      continue;
+    }
+    final rel = p.relative(entity.path, from: repoRoot);
+    if (repoLintRepoWideDartCollectorShouldSkip(rel)) {
+      continue;
+    }
+    out.add(entity);
+  }
+  return out;
+}
+
 /// Splits comma/newline-separated repo-relative paths (same as `check_* --files`).
 List<String> repoLintSplitRelativeDartPathsArg(String value) {
   if (value.trim().isEmpty) {

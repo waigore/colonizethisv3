@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
@@ -99,7 +100,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Tile'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('TILE'), findsOneWidget);
       expect(find.text('Coordinates: (${coords.x}, ${coords.y})'), findsOneWidget);
       expect(find.textContaining('Terrain:'), findsOneWidget);
       expect(find.textContaining('Prospected:'), findsOneWidget);
@@ -128,7 +131,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Tile'), findsOneWidget);
+      expect(find.text('TILE'), findsOneWidget);
       expect(find.textContaining('Coordinates:'), findsNothing);
       expect(find.text('—'), findsAtLeastNWidgets(1));
     });
@@ -168,8 +171,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sea zone'), findsOneWidget);
-      expect(find.text('Political'), findsOneWidget);
-      expect(find.text('Naval'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('POLITICAL'), findsOneWidget);
+      expect(find.text('NAVAL'), findsOneWidget);
+      // Sea-zone overlay never emits the Tile section header in any casing.
+      expect(find.text('TILE'), findsNothing);
       expect(find.text('Tile'), findsNothing);
       expect(find.textContaining('Coordinates:'), findsNothing);
     });
@@ -210,7 +217,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Province'), findsOneWidget);
-      expect(find.text('Tile'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('TILE'), findsOneWidget);
     });
 
     testWidgets('AC: Narrow layout uses tab strip for overlay sections', (
@@ -262,6 +271,96 @@ void main() {
 
       expect(find.byType(CtTabStrip), findsOneWidget);
     });
+
+    testWidgets(
+      'AC: Wide layout renders a single scrollable column of all six '
+      'sections without a tab strip',
+      (WidgetTester tester) async {
+        // SPEC § Layout / Acceptance criteria — "Wide viewport side panel":
+        // at viewport width >= the shell breakpoint the overlay renders the
+        // sections as a single scrollable column and **without a tab strip**.
+        // The narrow case above pins the CtTabStrip-present path; this is the
+        // complementary wide-path regression guard (CtTabStrip absent +
+        // scrollable column) so a regression that re-applies the narrow tab
+        // layout to wide hosts fails explicitly.
+        final binding = tester.view;
+        final oldSize = binding.physicalSize;
+        final oldRatio = binding.devicePixelRatio;
+        addTearDown(() {
+          binding.physicalSize = oldSize;
+          binding.devicePixelRatio = oldRatio;
+        });
+        // Width clearly >= kNarrowBreakpoint (600); tall so the wide
+        // scrollable column lays out all six sections without overflow.
+        binding.physicalSize = const Size(1200, 2000);
+        binding.devicePixelRatio = 1.0;
+
+        final game = demoGameForOverlay;
+        final region = demoRegionForOverlay;
+        final humanPlayerId = game.players.first.id;
+        final landCell = region.cells.firstWhere(
+          (c) => !c.isSea && c.visibility != TileVisibility.unrevealed,
+        );
+        final provinceId = '${region.regionId}|${landCell.regionCellId}';
+        final possibleTiles =
+            game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
+                const <String>[];
+        String? selectedTileKey;
+        for (final tk in possibleTiles) {
+          final c = coordsFromTileKey(tk);
+          if (c.x < 0 || c.x >= region.width || c.y < 0 || c.y >= region.height) {
+            continue;
+          }
+          final cell = region.cellAt(c.x, c.y);
+          if (cell.visibility != TileVisibility.unrevealed) {
+            selectedTileKey = tk;
+            break;
+          }
+        }
+        expect(selectedTileKey, isNotNull);
+
+        await tester.pumpWidget(
+          buildOverlay(
+            game: game,
+            region: region,
+            displayId: provinceId,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Primary AC: the wide side panel must not use a tab strip.
+        expect(find.byType(CtTabStrip), findsNothing);
+        // The sections render as a single scrollable column.
+        expect(
+          find.descendant(
+            of: find.byType(ProvinceSeaZoneDetailOverlay),
+            matching: find.byType(SingleChildScrollView),
+          ),
+          findsOneWidget,
+        );
+        // All six province sections are present at once (one CtSectionLabel
+        // header each), confirming the single-column layout rather than the
+        // one-section-per-tab narrow layout.
+        expect(find.byType(CtSectionLabel), findsNWidgets(6));
+        for (final header in const <String>[
+          'POLITICAL',
+          'TILE',
+          'ECONOMIC',
+          'MILITARY',
+          'CIVILIAN',
+          'NAVAL',
+        ]) {
+          expect(
+            find.text(header),
+            findsOneWidget,
+            reason: 'Wide layout must render the $header section header in the '
+                'single scrollable column.',
+          );
+        }
+      },
+    );
   });
 }
 

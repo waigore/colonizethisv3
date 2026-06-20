@@ -1,95 +1,13 @@
 import 'package:test/test.dart';
 
 import '../tool/check_disallowed_ast_patterns.dart';
-
-const _testYaml = r'''
-rules:
-  - id: cascade_void_clear
-    message: 'no cascade clear'
-    match:
-      kind: cascaded_method_invocation
-      method_names:
-        - clear
-  - id: stream_where_is_map_as
-    message: 'use whereType'
-    match:
-      kind: stream_where_is_map_as
-  - id: avoid_print_suppression
-    message: 'do not suppress avoid_print'
-    match:
-      kind: comment_substring
-      contains: 'ignore: avoid_print'
-  - id: strict_raw_types
-    message: 'no raw generic core types'
-    match:
-      kind: raw_named_type
-      type_names:
-        - List
-        - Map
-        - Set
-        - Iterable
-        - Future
-        - Stream
-  - id: widget_build_method_too_long
-    message: 'widget build body too long'
-    match:
-      kind: method_body_line_span
-      function_name: build
-      max_body_line_span: 3
-      require_widget_class_extends: true
-  - id: sea_zone_local_id_extraction
-    message: 'do not strip sea-zone ids to local'
-    match:
-      kind: sea_zone_local_id_extraction
-  - id: sea_zone_bucket_lookup_without_canonical_key
-    message: 'sea-zone bucket lookup requires canonical key'
-    match:
-      kind: sea_zone_bucket_lookup_without_canonical_key
-  - id: province_lookup_unprefixed_literal
-    message: 'prefixed province id literals required for lookup'
-    match:
-      kind: unprefixed_province_id_string_literal_argument
-      method_names:
-        - getProvince
-        - tryGetProvince
-        - resolveToFullProvinceId
-      argument_index: 1
-  - id: province_world_state_lookup_unprefixed_literal
-    message: 'prefixed province id literals required for WorldState lookup'
-    match:
-      kind: unprefixed_province_id_string_literal_argument
-      method_names:
-        - tryGetProvince
-        - getProvince
-        - resolveToFullProvinceId
-      argument_index: 0
-  - id: province_local_id_from_unprefixed_literal
-    message: 'prefixed province id literals required for localIdFrom'
-    match:
-      kind: unprefixed_province_id_string_literal_argument
-      method_names:
-        - localIdFrom
-      argument_index: 0
-  - id: province_local_segment_boundary_only
-    message: 'localSegmentFromStoredGameState is boundary-only'
-    match:
-      kind: province_local_segment_boundary_only
-  - id: debug_console_logic_contract_boundary
-    message: 'debug console must use logic contract imports only'
-    match:
-      kind: scoped_package_import_contract
-      scoped_relative_path_prefixes:
-        - packages/colonizethis_debug_console/lib/
-      package_name: colonizethis_logic
-      allowed_imports:
-        - package:colonizethis_logic/debug_console_api.dart
-''';
+import 'disallowed_ast_patterns_test_yaml_fixture.dart';
 
 void main() {
   late List<DisallowedPatternRule> rules;
 
   setUp(() {
-    rules = loadDisallowedAstRulesForTest(_testYaml);
+    rules = loadDisallowedAstRulesForTest(disallowedAstPatternsTestYaml);
   });
 
   group('findDisallowedAstViolations', () {
@@ -683,6 +601,271 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
       );
       expect(violations, isNotEmpty);
       expect(violations.first.ruleId, 'debug_console_logic_contract_boundary');
+    });
+  });
+
+  group('logic_lib_list_queue_remove_at_zero', () {
+    test('flags queue.removeAt(0) under colonizethis_logic lib/src', () {
+      const src = r'''
+void f(List<String> queue) {
+  final x = queue.removeAt(0);
+}
+''';
+      final violations = findDisallowedAstViolations(
+        'packages/colonizethis_logic/lib/src/x.dart',
+        src,
+        rules,
+      );
+      expect(
+        violations.where(
+          (e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero',
+        ),
+        isNotEmpty,
+      );
+    });
+
+    test('ignores queue.removeAt(0) outside lib/src tree', () {
+      const src = r'''
+void f(List<String> queue) {
+  final x = queue.removeAt(0);
+}
+''';
+      final violations = findDisallowedAstViolations(
+        'packages/colonizethis_logic/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(
+        violations.where(
+          (e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero',
+        ),
+        isEmpty,
+      );
+    });
+
+    test('respects same-line ignore for queue.removeAt(0)', () {
+      const src = r'''
+void f(List<String> queue) {
+  final x = queue.removeAt(0); // ignore: disallowed_ast_logic_lib_list_queue_remove_at_zero
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/colonizethis_logic/lib/src/x.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero'),
+        isEmpty,
+      );
+    });
+  });
+
+  group('prohibited_linear_province_lookup', () {
+    test('flags region.provinces.where(...).firstOrNull under lib/src', () {
+      const src = r'''
+class Province { final String id = ''; final String ownerId = ''; }
+class Region { List<Province> get provinces => const []; }
+Province? bad(Region region, String ownerId) {
+  return region.provinces.where((p) => p.ownerId == ownerId).firstOrNull;
+}
+''';
+      final violations = findDisallowedAstViolations(
+        'packages/colonizethis_logic/lib/src/world/x.dart',
+        src,
+        rules,
+      );
+      expect(
+        violations.where(
+          (e) => e.ruleId == 'prohibited_linear_province_lookup',
+        ),
+        isNotEmpty,
+      );
+    });
+
+    test(
+      'flags deep receiver world.oldWorld.provinces.where(...).firstOrNull',
+      () {
+        const src = r'''
+class Province { final String id = ''; }
+class Region { List<Province> get provinces => const []; }
+class World { Region get oldWorld => Region(); }
+class Game { World get worldState => World(); }
+Province? bad(Game game, String id) {
+  return game.worldState.oldWorld.provinces
+      .where((p) => p.id == id)
+      .firstOrNull;
+}
+''';
+        final violations = findDisallowedAstViolations(
+          'packages/colonizethis_orders/lib/src/orders/x.dart',
+          src,
+          rules,
+        );
+        expect(
+          violations.where(
+            (e) => e.ruleId == 'prohibited_linear_province_lookup',
+          ),
+          isNotEmpty,
+        );
+      },
+    );
+
+    test('flags local variable provinces.where(...).firstOrNull', () {
+      const src = r'''
+class Province { final String id = ''; }
+Province? bad(List<Province> provinces, String id) {
+  return provinces.where((p) => p.id == id).firstOrNull;
+}
+''';
+      final violations = findDisallowedAstViolations(
+        'packages/colonizethis_logic/lib/src/x.dart',
+        src,
+        rules,
+      );
+      expect(
+        violations.where(
+          (e) => e.ruleId == 'prohibited_linear_province_lookup',
+        ),
+        isNotEmpty,
+      );
+    });
+
+    test('allows tryGetProvince O(1) lookup helper instead of where chain', () {
+      const src = r'''
+class Province { final String id = ''; }
+Province? tryGetProvince(world, String fullId) => null;
+Province? ok(world, String id) {
+  return tryGetProvince(world, id);
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/colonizethis_logic/lib/src/x.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+        isEmpty,
+      );
+    });
+
+    test(
+      'allows .provinces.where(...) without .firstOrNull (iterable use)',
+      () {
+        const src = r'''
+class Province { final String id = ''; final String ownerId = ''; }
+class Region { List<Province> get provinces => const []; }
+int countOwned(Region region, String ownerId) {
+  return region.provinces.where((p) => p.ownerId == ownerId).length;
+}
+''';
+        expect(
+          findDisallowedAstViolations(
+            'packages/colonizethis_logic/lib/src/x.dart',
+            src,
+            rules,
+          ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'ignores .provinces.where(...).firstOrNull outside scoped path prefix',
+      () {
+        const src = r'''
+class Province { final String id = ''; }
+class Region { List<Province> get provinces => const []; }
+Province? still(Region region, String id) {
+  return region.provinces.where((p) => p.id == id).firstOrNull;
+}
+''';
+        expect(
+          findDisallowedAstViolations(
+            'app/lib/widgets/x.dart',
+            src,
+            rules,
+          ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'ignores .units.where(...).firstOrNull (collection name not configured)',
+      () {
+        const src = r'''
+class Unit { final String id = ''; }
+class Region { List<Unit> get units => const []; }
+Unit? bad(Region region, String id) {
+  return region.units.where((u) => u.id == id).firstOrNull;
+}
+''';
+        expect(
+          findDisallowedAstViolations(
+            'packages/colonizethis_logic/lib/src/x.dart',
+            src,
+            rules,
+          ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+          isEmpty,
+        );
+      },
+    );
+
+    test('respects same-line ignore for prohibited_linear_province_lookup', () {
+      const src = r'''
+class Province { final String id = ''; }
+class Region { List<Province> get provinces => const []; }
+Province? f(Region region, String id) {
+  return region.provinces.where((p) => p.id == id).firstOrNull; // ignore: disallowed_ast_prohibited_linear_province_lookup
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/colonizethis_logic/lib/src/x.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+        isEmpty,
+      );
+    });
+
+    test('respects ignore on previous line', () {
+      const src = r'''
+class Province { final String id = ''; }
+class Region { List<Province> get provinces => const []; }
+Province? f(Region region, String id) {
+  // ignore: disallowed_ast_prohibited_linear_province_lookup
+  return region.provinces.where((p) => p.id == id).firstOrNull;
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/colonizethis_logic/lib/src/x.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+        isEmpty,
+      );
+    });
+
+    test('respects ignore_for_file for prohibited_linear_province_lookup', () {
+      const src = r'''
+// ignore_for_file: disallowed_ast_prohibited_linear_province_lookup
+
+class Province { final String id = ''; }
+class Region { List<Province> get provinces => const []; }
+Province? f(Region region, String id) {
+  return region.provinces.where((p) => p.id == id).firstOrNull;
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/colonizethis_logic/lib/src/x.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+        isEmpty,
+      );
     });
   });
 }

@@ -1,134 +1,60 @@
 ---
 name: backlog-implement-agent
-description: Picks one open GitHub issue labeled backlog:implementation, prefers merging existing open PRs for that issue (unblocking stalled ones via fix-pr first), otherwise applies implement-github-issue strictly; opens or advances PRs documenting implemented vs deferred work; relabels to backlog:verification only when no outstanding work remains.
+description: Optimizes code throughput across open issues labeled backlog:implementation. Each run does substantial work and never waits for CI, reviews, or merges. Unblocks stalled PRs (conflicts, failing checks, or open with checks not running) via strict fix-pr toward merge readiness, then moves on. Only PRs that reference those labelled issues. Applies strict implement-github-issue for new work. Each PR targets exactly one issue. Relabels to backlog:verification only when an issue is fully done.
 ---
 
 # Backlog Implement Agent (ColonizeThis)
 
 ## When this applies
 
-Use when the user asks to run backlog implementation workflow and move one issue forward from `backlog:implementation`.
+Use when the user asks to run backlog implementation work and push `backlog:implementation` issues forward.
 
 ## Required dependencies
 
-Before executing this skill:
+Read and apply these strictly — do not invent lighter substitutes:
 
-- Read and apply `.cursor/skills/implement-github-issue/SKILL.md` strictly for issue quality gate, SPEC-first behavior, slicing rules, implementation quality, testing, and PR workflow.
-- When a pull request needs unblocking (see §2), read and apply `.cursor/skills/fix-pr/SKILL.md` strictly for diagnosis, minimal fixes, conflict resolution, and verification—do not invent a lighter substitute.
-- Follow `AGENTS.md`, `CONTRIBUTING.md`, and repository rules.
+- `.cursor/skills/implement-github-issue/SKILL.md` — readiness gate, SPEC-first behavior, scope/slicing, tests, PR workflow.
+- `.cursor/skills/fix-pr/SKILL.md` — used whenever an in-scope PR is stalled. The agent discovers the PR via `gh` (this run’s labelled issues); then apply that skill’s workflow end-to-end for that PR number/URL.
 
-Do not weaken or substitute the implementation method from `implement-github-issue`, or the unblock method from `fix-pr`.
+Also follow `AGENTS.md`, `CONTRIBUTING.md`, and repository rules.
 
-## Workflow
+## Operating principles
 
-### 1) Select one candidate issue
+1. **Throughput across issues.** Optimize for productive code shipped across the set of open `backlog:implementation` issues. A run may touch **multiple issues** — pick whatever combination of work moves the most quality code forward.
 
-Pick any open issue with label `backlog:implementation`.
+2. **One issue per PR.** Every PR opened or pushed to in this run targets exactly **one** issue (`Refs #<n>`). Never bundle multiple issues into one PR.
 
-Example:
+3. **Never wait.** Do not wait for CI, reviews, or merges at any point. After any push, PR creation, or successful unblock, move on to the next useful unit of work in the same run.
 
-```bash
-gh issue list --state open --label "backlog:implementation" --limit 100 --json number,title,url,labels,updatedAt
-```
+4. **Unblock first, then move on (goal: merge-ready PRs).** For **open PRs that reference a candidate `backlog:implementation` issue** only: if the PR is **stalled**, unblock it via strict `fix-pr` before opening new implementation work for that same issue. Treat as stalled when **any** of these holds: merge conflicts against the PR’s **configured base branch** (read from PR metadata — often `dev`, always verify), **failing checks**, or the PR is **open but checks are not running** (for example required workflows not triggered, stuck pending, or branch/base state that blocks CI until updated). Prefer the oldest stalled PR first. After pushing fixes or bringing the branch current with its base, **do not** wait for remote CI, reviews, or merge confirmation — **no dallying**; move on immediately. This is a hard rule.
 
-Selection policy:
+5. **Agent picks scope.** Use issue-defined slicing where it exists; otherwise apply `implement-github-issue` scope triage. No fixed slice-size requirement is imposed here — implement as much as is responsibly testable and reviewable in one PR.
 
-- Prefer oldest `updatedAt` first unless the user specifies a different ordering.
-- If no matching issue exists, report that and stop without side effects.
+6. **SPEC-first and tested.** All new behavior must be SPEC-authorized. Add positive and negative tests mapped to ACs; run relevant tests until green before pushing.
 
-### 2) Open PRs for this issue: discover, stall check, unblock (merge-first)
+7. **Disclose scope in the PR.** PR body states what was implemented, what was deferred and why, and which ACs/spec sections are covered now vs follow-up.
 
-**Discover associated open PRs** by searching the repo for open PRs whose title or body references the issue (for example `Refs #<n>`, `Fixes #<n>`, `in:body` / `in:title` patterns, or the bare issue token where reliable). Use `gh pr list` with `--search` (GitHub search syntax) and `--json` so results are de-duplicated by PR number. Default scope is the current repository; if context is ambiguous, resolve repo once before searching.
+8. **Conservative label transitions.** Move an issue from `backlog:implementation` to `backlog:verification` only when the issue is fully implemented **and** every linked PR is merged. If anything is still open or deferred, leave the label. Never close the issue.
 
-**Sort** matching open PRs **oldest first** (prefer `createdAt` ascending; if unavailable, use PR number ascending as a tie-break).
+## Selecting work
 
-**Stalled** means either:
-
-- The PR branch **has merge conflicts** against its base (for example `mergeable` is `CONFLICTING`, or the PR is reported as not mergeable due to conflicts), or
-- The PR has **failing checks** (any check run / status rollup conclusion indicating failure, such as `FAILURE` or `TIMED_OUT`, per `gh` JSON such as `statusCheckRollup`—treat red / failed required checks as stalled).
-
-**Priority:** Prefer **merging existing PRs** that already carry issue work over **opening new implementation slices**. The objective for the issue is **full scope implemented and merged into `dev`**; the agent may choose how much of this run goes to unblocking and merging versus new work, but must not skip stall handling when open stalled PRs exist for the issue.
-
-For each stalled PR, **oldest first**, read `.cursor/skills/fix-pr/SKILL.md` and execute that workflow for that PR until it is unblocked or fix-pr’s own outcome shows remaining blockers the agent cannot clear in this run. After merges or successful unblocks, **re-query** open PRs for the issue before starting new implementation, so the merge path stays preferred.
-
-If there are no open PRs for the issue, or none are stalled, continue to scope (§3) and implementation (§4) as needed.
-
-### 3) Determine scope for this run
-
-For the selected issue, decide whether to implement fully or as a slice **only where merge-first work does not already satisfy the next step**:
-
-- Prefer slicing/scoping criteria already present in the issue body (subtasks, phases, explicit boundaries).
-- If not explicit, apply `.cursor/skills/implement-github-issue/SKILL.md` scope triage and choose one isolatable, testable slice when needed.
-- Keep scope explicit and reviewable before changing code.
-
-### 4) Execute strict implement-github-issue workflow
-
-When new implementation (or follow-up slices) is required after §2–§3:
-
-- Run the full readiness gate and SPEC updates if needed.
-- Implement only SPEC-authorized behavior.
-- Add/adjust tests (positive and negative where applicable) mapped to targeted ACs.
-- Run relevant test commands until green.
-- Create a PR targeting `dev` using neutral issue reference (`Refs #<n>` or equivalent) and never auto-close the issue.
-
-### 5) Document implemented vs deferred work in PR
-
-In the PR body, include:
-
-- What was implemented in this PR.
-- What remains deferred (if any) and why.
-- Which ACs/spec sections are covered now vs left for follow-up.
-
-If this run focused on unblocking, summarize that PR’s fix scope per `fix-pr` output style where helpful.
-
-The reviewer must be able to tell whether the PR is full completion or a partial slice.
-
-### 6) Decide issue completion status
-
-Complete condition:
-
-- The issue requirements are fully implemented and validated.
-- No substantive work remains for the issue.
-- All open PRs linked to this issue are successfully merged. If any linked PR is still open (including draft), the issue is not complete by definition.
-
-Partial condition:
-
-- Any material work remains (including intentionally deferred scope).
-- Any PR linked to the issue remains open or unmerged.
-
-### 7) Move label only when complete
-
-If complete:
-
-- Remove `backlog:implementation`
-- Add `backlog:verification`
-
-If partial:
-
-- Leave `backlog:implementation` in place.
-
-Example completion command:
-
-```bash
-gh issue edit <issue-number> --remove-label "backlog:implementation" --add-label "backlog:verification"
-```
-
-Do not apply `backlog:verification` while outstanding work remains.
+- Candidate issues: open issues with label `backlog:implementation`.
+- Candidate PRs: **only** open PRs that reference a candidate issue (title/body refs like `Refs #<n>`, `Fixes #<n>`). Do not run `fix-pr` for unrelated open PRs. Use `gh pr list --search` and `gh issue list --state open --label "backlog:implementation"`.
+- For each candidate PR, read **base branch** from PR metadata (`gh pr view`) and use that (not a hardcoded branch name) when merging/rebasing to resolve drift or conflicts — `dev` is typical but not guaranteed.
+- A run may handle several issues; for each, follow the principles above.
 
 ## Output in chat
 
-After completion, report:
+For each issue touched, report:
 
-- Issue number/title/URL implemented.
-- Any **open PRs found** for the issue, **stall status**, and **fix-pr** actions or outcomes (per PR, oldest-first order).
-- Scope decision (`FULL` or `SLICE`) and rationale.
-- PR URL(s) and whether each represents full completion, partial delivery, or unblock-only work.
-- Implemented work and deferred work summary.
-- Label transition performed (or explicitly not performed, with reason).
+- Issue number / title / URL.
+- Whether the run unblocked a stalled PR (which one) or opened/advanced a new PR (which one).
+- One-line scope summary (implemented vs deferred).
+- Label transition performed, or explicitly not performed with reason.
 
 ## Guardrails
 
-- Implement exactly one issue per run unless user requests batching.
-- Never close the issue in this workflow.
-- If `gh` is unavailable or fails, return prepared PR body text and exact commands needed for manual issue label transition.
-- If labels change unexpectedly during the run, re-read current labels and apply the intended final state idempotently.
+- Never wait for CI, reviews, or merges (including after a `fix-pr` push aimed at merge readiness).
+- Never bundle multiple issues into one PR.
+- Never close an issue in this workflow.
+- If `gh` is unavailable, return prepared PR body text and the exact commands needed for manual follow-up.

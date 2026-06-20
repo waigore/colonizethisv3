@@ -1,0 +1,174 @@
+part of 'capital_and_gp_fall.dart';
+
+RegionData _transferFactionProvinceAndUnits(
+  RegionData region, {
+  required String fromFactionId,
+  required String toFactionId,
+}) {
+  final updatedProvinces = region.provinces
+      .map(
+        (p) => p.ownerId == fromFactionId ? p.copyWith(ownerId: toFactionId) : p,
+      )
+      .toList();
+  final remainingUnits = region.units
+      .where((u) => u.ownerId != fromFactionId)
+      .toList();
+  return RegionData(provinces: updatedProvinces, units: remainingUnits);
+}
+
+WorldState _transferFactionWorldStateAssets(
+  WorldState worldState, {
+  required String fromFactionId,
+  required String toFactionId,
+}) {
+  final updatedWorldState = worldState.mapBothRegions(
+    (_, region) => _transferFactionProvinceAndUnits(
+      region,
+      fromFactionId: fromFactionId,
+      toFactionId: toFactionId,
+    ),
+  );
+  final remainingFleets = worldState.fleets
+      .where((f) => f.ownerId != fromFactionId)
+      .toList();
+  return updatedWorldState.copyWith(fleets: remainingFleets);
+}
+
+/// Terminal fall for **Minor Nations** and **Tribes** after combat resolution
+/// and capital reassignment. Parallel to [applyGreatPowerFall] but the
+/// eligibility check is **no owned provinces in the original capital region**
+/// (matches the `evaluateCapitalReassignmentEligibility`
+/// `no_owned_provinces_in_region` branch). When the trigger fires, all
+/// provinces previously owned by the falling faction are transferred to the
+/// faction that currently owns its lost capital province, the faction is
+/// removed from `Game.minorNations` / `Game.tribes`, and any remaining units
+/// and fleets owned by the falling faction are removed from world state.
+/// SPEC/game/capital-and-connectivity § Minor Nation and Tribe terminal fall.
+Game applyFactionTerminalFall(
+  Game state, {
+  required Map<String, String?> previousCapitalByMinor,
+  required Map<String, String?> previousCapitalByTribe,
+}) {
+  var game = state;
+
+  for (final minorId in previousCapitalByMinor.keys.toList()..sort()) {
+    final prevCapitalId = previousCapitalByMinor[minorId];
+    if (prevCapitalId == null || prevCapitalId.isEmpty) continue;
+    if (!game.minorNations.any((m) => m.id == minorId)) continue;
+    final result = _applyTerminalFallForFaction(
+      game: game,
+      factionId: minorId,
+      previousCapitalId: prevCapitalId,
+      factionLabel: 'minor',
+      removeFaction: (g) => g.copyWith(
+        minorNations: g.minorNations.where((m) => m.id != minorId).toList(),
+      ),
+    );
+    game = result;
+  }
+
+  for (final tribeId in previousCapitalByTribe.keys.toList()..sort()) {
+    final prevCapitalId = previousCapitalByTribe[tribeId];
+    if (prevCapitalId == null || prevCapitalId.isEmpty) continue;
+    if (!game.tribes.any((t) => t.id == tribeId)) continue;
+    final result = _applyTerminalFallForFaction(
+      game: game,
+      factionId: tribeId,
+      previousCapitalId: prevCapitalId,
+      factionLabel: 'tribe',
+      removeFaction: (g) =>
+          g.copyWith(tribes: g.tribes.where((t) => t.id != tribeId).toList()),
+    );
+    game = result;
+  }
+
+  return game;
+}
+
+Game _applyTerminalFallForFaction({
+  required Game game,
+  required String factionId,
+  required String previousCapitalId,
+  required String factionLabel,
+  required Game Function(Game) removeFaction,
+}) {
+  final prevCapital = game.worldState.tryGetProvince(previousCapitalId);
+  if (prevCapital == null) return game;
+  final conquerorId = prevCapital.ownerId;
+  if (conquerorId == null || conquerorId.isEmpty || conquerorId == factionId) {
+    return game;
+  }
+  final originalRegionId = ProvinceId.regionIdFrom(previousCapitalId);
+  final originalRegion = regionDataForId(game.worldState, originalRegionId);
+  if (originalRegion == null) return game;
+  final hasProvinceInOriginalRegion = ProvinceOwnerCache.of(
+    game.worldState,
+  ).ownsAnyInRegion(factionId, originalRegionId);
+  if (hasProvinceInOriginalRegion) return game;
+
+  final nextWorldState = _transferFactionWorldStateAssets(
+    game.worldState,
+    fromFactionId: factionId,
+    toFactionId: conquerorId,
+  );
+  var next = game.withWorldState(nextWorldState);
+  next = removeFaction(next);
+  worldLog.i(
+    '$factionLabel $factionId fell after capital loss; '
+    'provinces and assets transferred to $conquerorId',
+  );
+  return next;
+}
+
+Game applyGreatPowerFall(
+  Game state,
+  Map<String, String?> previousCapitalByPlayer,
+) {
+  var game = state;
+
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
+
+  final portsByProvince = <String, List<String>>{};
+  game.worldState.portsByProvinceSeaboard.forEach((key, _) {
+    final decoded = decodePortSeaboardRegistryKey(key);
+    if (decoded == null || !decoded.isPrefixedKey) return;
+    portsByProvince.putIfAbsent(decoded.fullProvinceId, () => []).add(key);
+  });
+
+  for (final player in game.players) {
+    final playerId = player.id;
+    final prevCapitalId = previousCapitalByPlayer[playerId];
+    if (prevCapitalId == null || prevCapitalId.isEmpty) continue;
+
+    final prevCapitalOwner = ownerCache.ownerOf(prevCapitalId);
+    if (prevCapitalOwner == null || prevCapitalOwner == playerId) {
+      continue;
+    }
+
+    var hasPortProvince = false;
+    for (final p in ownerCache.provincesOwnedBy(playerId)) {
+      if (portsByProvince.containsKey(p.id)) {
+        hasPortProvince = true;
+        break;
+      }
+    }
+    if (hasPortProvince) continue;
+
+    final conquerorId = prevCapitalOwner;
+
+    final nextWorldState = _transferFactionWorldStateAssets(
+      game.worldState,
+      fromFactionId: playerId,
+      toFactionId: conquerorId,
+    );
+    game = game
+        .withWorldState(nextWorldState)
+        .mapPlayers(
+          (p) => p.id == playerId
+              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+              : p,
+        );
+  }
+
+  return game;
+}

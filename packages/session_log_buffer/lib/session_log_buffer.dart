@@ -1,5 +1,6 @@
 // Session log buffer for debug log viewer. SPEC/program/debug-log-viewer.md.
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:logger/logger.dart';
 
 /// Default maximum number of log entries to retain (oldest dropped when exceeded).
@@ -64,7 +65,7 @@ class SessionLogEntry {
 
   /// Formatted main line: timestamp level message.
   String get formattedLine {
-    final timeStr = time.toUtc().toIso8601String();
+    final timeStr = formatOperatorLogTimestamp(time);
     final levelName = level.name.toUpperCase();
     return '$timeStr $levelName $message';
   }

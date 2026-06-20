@@ -1,0 +1,3 @@
+# Project-scoped Grok configuration (ColonizeThis)
+# Thin skill shims live in .grok/skills/ and delegate to the source of truth
+# under .cursor/skills/. No extra paths or disables are required for normal use.

@@ -1,0 +1,191 @@
+name: Nightly
+
+# 23:00 Asia/Hong_Kong daily (15:00 UTC). Refs #2509.
+on:
+  schedule:
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+
+env:
+  APP_TEST_TOTAL_SHARDS: "2"
+
+jobs:
+  integration:
+    name: Tool packages + sim_scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Run nightly integration gate
+        run: bash tool/run_nightly_integration_gate.sh
+
+  observer_conquest_verify:
+    name: Full-AI observer verify (seed 42, turns 150)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Resolve dependencies (workspace)
+        run: dart pub get
+
+      - name: Run observer game with conquest, colonial, and workforce verification
+        run: |
+          dart run tool/run_observer_game/bin/run_observer_game.dart \
+            --seed 42 \
+            --max-turns 150 \
+            --verify-conquest \
+            --verify-colonial-expansion \
+            --verify-workforce \
+            --output /tmp/observer_nightly
+
+  app_full_tests_cache:
+    name: App full tests (cache)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Resolve dependencies (workspace)
+        run: dart pub get
+
+      - name: Generate app localizations
+        run: |
+          set -e
+          cd app
+          flutter gen-l10n
+
+      - name: Compile app entrypoints (Flutter analyze)
+        run: |
+          set -e
+          cd app
+          output=$(flutter analyze 2>&1 || true)
+          echo "$output"
+          error_count=$(echo "$output" | grep -c "^[[:space:]]*error" || true)
+          if [ "$error_count" -gt 0 ]; then
+            echo "Errors found: $error_count"
+            exit 1
+          fi
+
+      - name: Pack cache for test shards
+        run: |
+          set -e
+          parts=()
+          [ -d .pub-cache ] && parts+=(.pub-cache)
+          [ -d .dart_tool ] && parts+=(.dart_tool)
+          [ -d app/.dart_tool ] && parts+=(app/.dart_tool)
+          [ -d app/lib/l10n ] && parts+=(app/lib/l10n)
+          tar czf app-test-cache.tar.gz "${parts[@]}"
+
+      - name: Upload app test cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-nightly-test-cache
+          path: app-test-cache.tar.gz
+          retention-days: 2
+
+  app_full_tests_shard:
+    name: App full tests (shard ${{ matrix.shard }}/2)
+    needs: app_full_tests_cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1]
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+      SUPPRESS_IMAGE_VIEWER: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Download app test cache
+        uses: actions/download-artifact@v4
+        with:
+          name: app-nightly-test-cache
+          path: _app_test_cache
+
+      - name: Restore pub + Dart tool cache
+        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
+
+      - name: Run Flutter tests (shard)
+        run: |
+          set -e
+          mkdir -p app/coverage
+          cd app
+          flutter test test/ --no-pub --coverage \
+            --coverage-path=coverage/lcov.shard${{ matrix.shard }}.info \
+            --reporter=compact -j 1 --no-track-widget-creation \
+            --total-shards=${{ env.APP_TEST_TOTAL_SHARDS }} --shard-index=${{ matrix.shard }}
+
+      - name: Upload shard coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-nightly-lcov-shard-${{ matrix.shard }}
+          path: app/coverage/lcov.shard${{ matrix.shard }}.info
+          retention-days: 2
+
+  app_full_tests_coverage:
+    name: App full tests (coverage gate)
+    needs: app_full_tests_shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Download shard coverage
+        uses: actions/download-artifact@v4
+        with:
+          pattern: app-nightly-lcov-shard-*
+          merge-multiple: true
+          path: _lcov_shards
+
+      - name: Merge shard lcov into app/coverage/lcov.info
+        run: |
+          set -euo pipefail
+          mkdir -p app/coverage
+          mapfile -t shards < <(find _lcov_shards -type f -name 'lcov.shard*.info' | sort)
+          cp "${shards[@]}" app/coverage/
+          tool/merge_app_lcov_shards.sh "${APP_TEST_TOTAL_SHARDS}"
+
+      - name: App coverage gate (app/lib/ >= 80%)
+        run: tool/check_coverage_threshold.sh 80 app

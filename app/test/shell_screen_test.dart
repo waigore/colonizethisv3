@@ -7,6 +7,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/features/shell/new_game_leader_dialog_builder.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -89,6 +90,12 @@ void main() {
         appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
       ],
       child: AppEventHandlerScope(
+        // Mirror the composition root (main.dart): the shell new-game leader
+        // dialog builder lives in features/shell and is injected here so the
+        // New Game flow can open its dialog (Refs #3546).
+        extraDialogBuilders: const {
+          newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
+        },
         child: MaterialApp(
           navigatorKey: appNavigatorKey,
           initialRoute: Routes.shell,
@@ -112,7 +119,7 @@ void main() {
       await tester.tap(find.text('New Game'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Player 1 (You)'), findsOneWidget);
+      expect(find.text('Slot 1'), findsOneWidget);
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
 
       // Dialog should appear with Start and Cancel buttons.
