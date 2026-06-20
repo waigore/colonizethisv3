@@ -1,16 +1,22 @@
-/// Connectivity hot-path counters and the test-only recording hook.
+/// Connectivity hot-path counters, threaded as a parameter through the
+/// connectivity resolution call chain (Refs #3544 AC3).
 ///
 /// Standalone library (extracted from the former `connectivity_resolver.dart`
-/// `part` chain, Refs #3544 Step 3). The mutable counter container
-/// [ConnectivityHotPathMetrics] is encapsulated here; the only module-level
-/// mutable state ([_connectivityHotPathMetricsForTests]) is private to this
-/// library and reachable solely through the public `record*`/`set*` functions
-/// below, so the standalone `connectivity_propagation.dart` core records via
-/// these functions rather than reaching into another library's privates.
+/// `part` chain, Refs #3544 Step 3). This library holds **no module-level
+/// mutable state**: callers that want to measure hot-path work construct a
+/// [ConnectivityHotPathMetrics] and pass it via the `metrics` parameter of
+/// `resolveConnectivity` / `resolveNonGreatPowerConnectivity`. The propagation
+/// core increments the supplied instance through its `record*` methods. A null
+/// metrics argument disables recording, so the production hot path pays nothing
+/// (no allocation, no per-dequeue dispatch beyond a null-aware tear-off).
 library;
 
-/// Counters for connectivity hot paths (Refs #2268 AC-10); used with
-/// [setConnectivityHotPathMetricsForTests] from tests only.
+/// Counters for connectivity hot paths (Refs #2268 AC-10).
+///
+/// Construct an instance and pass it via the `metrics` parameter of
+/// `resolveConnectivity` / `resolveNonGreatPowerConnectivity` to record
+/// dequeue counts from tests. The instance is mutated in place by the
+/// connectivity propagation core via the `record*` methods below.
 class ConnectivityHotPathMetrics {
   int townRuleWorklistDequeues = 0;
   int connectivityBottleneckDequeues = 0;
@@ -19,28 +25,13 @@ class ConnectivityHotPathMetrics {
   /// Sum of tile bottleneck propagation dequeues and sea-zone plain BFS dequeues.
   int get connectivityBfsTotalDequeues =>
       connectivityBottleneckDequeues + seaZoneBreadthFirstDequeues;
-}
 
-ConnectivityHotPathMetrics? _connectivityHotPathMetricsForTests;
+  /// Increments the town-rule worklist dequeue counter.
+  void recordTownRuleWorklistDequeue() => townRuleWorklistDequeues++;
 
-/// When non-null, connectivity resolution increments [metrics] (test hook).
-void setConnectivityHotPathMetricsForTests(
-  ConnectivityHotPathMetrics? metrics,
-) {
-  _connectivityHotPathMetricsForTests = metrics;
-}
+  /// Increments the bottleneck-propagation dequeue counter.
+  void recordConnectivityBottleneckDequeue() => connectivityBottleneckDequeues++;
 
-/// Increments the town-rule worklist dequeue counter when a test hook is active.
-void recordTownRuleWorklistDequeue() {
-  _connectivityHotPathMetricsForTests?.townRuleWorklistDequeues++;
-}
-
-/// Increments the bottleneck-propagation dequeue counter when a test hook is active.
-void recordConnectivityBottleneckDequeue() {
-  _connectivityHotPathMetricsForTests?.connectivityBottleneckDequeues++;
-}
-
-/// Increments the sea-zone BFS dequeue counter when a test hook is active.
-void recordSeaZoneBfsDequeue() {
-  _connectivityHotPathMetricsForTests?.seaZoneBreadthFirstDequeues++;
+  /// Increments the sea-zone BFS dequeue counter.
+  void recordSeaZoneBfsDequeue() => seaZoneBreadthFirstDequeues++;
 }

@@ -73,6 +73,7 @@ ConnectivityResult connectedTilesForPlayer({
   required Set<String> owned,
   required Map<String, Province> townByTileKey,
   Set<String> blockadedPortProvinces = const {},
+  ConnectivityHotPathMetrics? metrics,
 }) {
   final worldState = game.worldState;
   final tileState = worldState.tileState;
@@ -108,6 +109,7 @@ ConnectivityResult connectedTilesForPlayer({
     ownedProvinceIds: owned,
     canExpandFrom: (tileKey) =>
         (tileKey == capitalKey) || expandsViaRoadOrPort(tileKey),
+    metrics: metrics,
   );
 
   // Port connection rule: (1) capital on seaboard → ports reachable via sea-path (BFS S–S); (2) else only ports reachable by road/rail from capital. SPEC/game/capital-and-connectivity § Port connection to capital, Sea paths.
@@ -128,6 +130,7 @@ ConnectivityResult connectedTilesForPlayer({
     ownedProvinceIds: owned,
     blockadedPortProvinces: blockadedPortProvinces,
     capitalRegionPortKeys: capitalRegionPortKeys,
+    metrics: metrics,
   );
   // When capital province is blockaded, seaConnectedPortKeys stays empty (no sea connectivity). SPEC § Blockade.
 
@@ -153,6 +156,7 @@ ConnectivityResult connectedTilesForPlayer({
     provinceIdsByType: provinceIdsByType,
     ownedProvinceIds: owned,
     canExpandFrom: expandsViaRoadOrPort,
+    metrics: metrics,
   );
 
   // SPEC § Blockade: no tiles in a blockaded port province contribute; remove any tile in such a province (except capital province: its tiles remain when it is blockaded, only sea connectivity is severed).
@@ -174,6 +178,7 @@ ConnectivityResult connectedTilesForPlayer({
     portTileToProvinceSeaZone: portInfo,
     connected: connected,
     pathCap: pathCap,
+    metrics: metrics,
   );
 
   return ConnectivityResult(
@@ -193,12 +198,13 @@ void _runConnectivityPropagation({
   required Set<String> provinceIdsByType,
   required Set<String> ownedProvinceIds,
   required bool Function(String tileKey) canExpandFrom,
+  ConnectivityHotPathMetrics? metrics,
 }) {
   propagateConnectivityBottleneckQueue(
     queue: queue,
     connected: connected,
     pathCap: pathCap,
-    onDequeue: recordConnectivityBottleneckDequeue,
+    onDequeue: metrics?.recordConnectivityBottleneckDequeue,
     shouldExpandEdgesFrom: (key) {
       final coords = parseTileKeyCoordinates(key);
       if (coords == null) return false;
@@ -239,6 +245,7 @@ Set<String> _seaConnectedPortKeysForCapital({
   required Set<String> ownedProvinceIds,
   required Set<String> blockadedPortProvinces,
   required Set<String> capitalRegionPortKeys,
+  ConnectivityHotPathMetrics? metrics,
 }) {
   final out = <String>{};
   final capitalProvinceBlockaded = blockadedPortProvinces.contains(
@@ -266,7 +273,7 @@ Set<String> _seaConnectedPortKeysForCapital({
     final seaReachable = seaZonesReachableBySeaPath(
       topology,
       capitalSeaZones,
-      onDequeue: recordSeaZoneBfsDequeue,
+      onDequeue: metrics?.recordSeaZoneBfsDequeue,
     );
     for (final entry in worldState.portsByProvinceSeaboard.entries) {
       final portMeta = decodePortSeaboardRegistryKey(entry.key);
@@ -308,6 +315,7 @@ void _applyTownRuleConnectivityClosure({
   required Map<String, (String, String)> portTileToProvinceSeaZone,
   required Set<String> connected,
   required Map<String, int> pathCap,
+  ConnectivityHotPathMetrics? metrics,
 }) {
   final pendingTowns = Queue<String>();
   final queuedTowns = <String>{};
@@ -329,7 +337,7 @@ void _applyTownRuleConnectivityClosure({
 
   while (pendingTowns.isNotEmpty) {
     final tk = pendingTowns.removeFirst();
-    recordTownRuleWorklistDequeue();
+    metrics?.recordTownRuleWorklistDequeue();
     queuedTowns.remove(tk);
     expandedTowns.add(tk);
 
