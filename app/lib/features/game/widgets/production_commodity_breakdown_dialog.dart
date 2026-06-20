@@ -232,9 +232,11 @@ class _ProductionCommodityBreakdownDialogState
       game: widget.game,
       topology: widget.topology,
       playerId: widget.player.id,
-      tileMapByRegion: widget.tileMapByRegion,
-      currentOrders: widget.currentOrders,
-      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      inputs: economyPreviewInputs(
+        tileMapByRegion: widget.tileMapByRegion,
+        currentOrders: widget.currentOrders,
+        defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      ),
     );
 
     final inputCommodityIds = <String>{};

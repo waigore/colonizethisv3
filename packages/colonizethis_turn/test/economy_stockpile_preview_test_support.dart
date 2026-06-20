@@ -13,23 +13,23 @@ void expectPhaseDeltasSumToNet({
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
 }) {
-  final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
-    game: game,
-    topology: const MapTopology(),
-    playerId: playerId,
+  final inputs = economyPreviewInputs(
     extractedByPlayerId: extractedByPlayerId,
     currentOrders: currentOrders,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
   );
+  final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
+    game: game,
+    topology: const MapTopology(),
+    playerId: playerId,
+    inputs: inputs,
+  );
   final net = previewStockpileNetDeltaByCommodityForPlayer(
     game: game,
     topology: const MapTopology(),
     playerId: playerId,
-    extractedByPlayerId: extractedByPlayerId,
-    currentOrders: currentOrders,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    inputs: inputs,
   );
   final keys = <String>{};
   for (final m in phases.values) {

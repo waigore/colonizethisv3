@@ -96,7 +96,7 @@ void main() {
                 game: missingUnitGame,
                 topology: const MapTopology(),
                 playerId: 'p1',
-                currentOrders: missingUnitOrders,
+                inputs: economyPreviewInputs(currentOrders: missingUnitOrders),
               )[EconomyPreviewStockpilePhase.pendingBuildCosts],
               isEmpty,
               reason: 'missing unit target=${t.target}',
@@ -138,7 +138,7 @@ void main() {
                 game: busyUnitGame,
                 topology: const MapTopology(),
                 playerId: 'p1',
-                currentOrders: busyOrders,
+                inputs: economyPreviewInputs(currentOrders: busyOrders),
               )[EconomyPreviewStockpilePhase.pendingBuildCosts],
               isEmpty,
               reason: 'busy unit target=${t.target}',
@@ -173,7 +173,7 @@ void main() {
                 game: disallowedUnitGame,
                 topology: const MapTopology(),
                 playerId: 'p1',
-                currentOrders: disallowedOrders,
+                inputs: economyPreviewInputs(currentOrders: disallowedOrders),
               )[EconomyPreviewStockpilePhase.pendingBuildCosts],
               isEmpty,
               reason: 'disallowed unit target=${t.target}',
@@ -204,7 +204,7 @@ void main() {
                 game: invalidTileGame,
                 topology: const MapTopology(),
                 playerId: 'p1',
-                currentOrders: invalidTileOrders,
+                inputs: economyPreviewInputs(currentOrders: invalidTileOrders),
               )[EconomyPreviewStockpilePhase.pendingBuildCosts],
               isEmpty,
               reason: 'invalid target key target=${t.target}',
@@ -248,7 +248,9 @@ void main() {
                 game: insufficientGame,
                 topology: const MapTopology(),
                 playerId: 'p1',
-                currentOrders: insufficientOrders,
+                inputs: economyPreviewInputs(
+                  currentOrders: insufficientOrders,
+                ),
               )[EconomyPreviewStockpilePhase.pendingBuildCosts],
               isEmpty,
               reason: 'insufficient stockpile target=${t.target}',
@@ -295,14 +297,16 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        extractedByPlayerId: {
-          'p1': {CommodityCatalog.grain.id: 5},
-        },
-        defaultAssignmentsByPlayerId: {
-          'p1': const [
-            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 4),
-          ],
-        },
+        inputs: economyPreviewInputs(
+          extractedByPlayerId: {
+            'p1': {CommodityCatalog.grain.id: 5},
+          },
+          defaultAssignmentsByPlayerId: {
+            'p1': const [
+              AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 4),
+            ],
+          },
+        ),
       );
       expect(delta[CommodityCatalog.gems.id], -1);
       expect(delta[CommodityCatalog.timber.id], -2);
