@@ -69,8 +69,7 @@ Game runCombatPhase(
   };
   Game state = game;
   final turn = state.worldState.turnState.turnNumber;
-  final preBattleDialogueSeed =
-      (game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix);
+  final preBattleDialogueSeed = mixTurnSeed(game, turn);
   state = applyUnopposedProvinceCaptures(state, orders);
   turnLog.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
@@ -93,7 +92,7 @@ Game runCombatPhase(
     ledger: combatGeneralLedger,
   );
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
-  var seed = (game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix);
+  var seed = mixTurnSeed(game, turn);
   var battleIndex = 0;
   for (final ctx in boundBattles) {
     final mode = resolveCombatModeForBattle(

@@ -1,3 +1,4 @@
+import '../turn_phase_handler_helpers.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 
@@ -9,4 +10,4 @@ TurnPhaseStepOutcome ordersTurnPhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) => TurnPhaseStepContinue(acc);
+) => simplePipelinePhase((pipeline) => pipeline)(acc, config, turn);
