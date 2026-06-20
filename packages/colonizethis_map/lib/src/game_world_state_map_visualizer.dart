@@ -96,25 +96,23 @@ Uint8List renderSingleRegionGameStateMapToPng({
   );
   image.clear(white);
 
-  // Fill: provinces by owner color, sea zones deep blue
-  TileMapGrid.forEachIndex(result.height, result.width, (y, x) {
-    final id = result.cell(x, y);
-    final isSea = seaZoneIds.contains(id);
-    final fullProvinceId = isSea ? null : ProvinceId.full(regionId, id);
-    final (r, g, b) = isSea
-        ? seaColorRgb
-        : (factionColors[ownerByProvinceId[fullProvinceId] ?? ''] ??
-              (128, 128, 128));
-    final color = image.getColor(r, g, b);
-    img.fillRect(
-      image,
-      x1: x * cellSize,
-      y1: y * cellSize,
-      x2: (x + 1) * cellSize - 1,
-      y2: (y + 1) * cellSize - 1,
-      color: color,
-    );
-  });
+  // Fill: provinces by owner color, sea zones deep blue. Shares the canonical
+  // cell-fill render pipeline (fillTileGridCells) with the base visualizer;
+  // this path differs only by its ownership colour strategy (Refs #3574).
+  fillTileGridCells(
+    image,
+    height: result.height,
+    width: result.width,
+    cellSize: cellSize,
+    colorAt: (x, y) {
+      final id = result.cell(x, y);
+      final isSea = seaZoneIds.contains(id);
+      if (isSea) return seaColorRgb;
+      final fullProvinceId = ProvinceId.full(regionId, id);
+      return factionColors[ownerByProvinceId[fullProvinceId] ?? ''] ??
+          (128, 128, 128);
+    },
+  );
 
   drawBorders(image, result, seaZoneIds, cellSize, seaZoneBorderColor);
 
@@ -277,24 +275,21 @@ Uint8List renderInitGameMapToPngFromViewData({
     );
     image.clear(white);
 
-    // Fill: by terrain (geographic) or by ownership.
-    for (final cell in region.cells) {
-      final (r, g, b) = cell.isSea
-          ? seaColorRgb
-          : (geographicMode
-                ? _terrainRgbForCell(cell, region)
-                : (region.factionColors[cell.ownerFactionId ?? ''] ??
-                      (128, 128, 128)));
-      final color = image.getColor(r, g, b);
-      img.fillRect(
-        image,
-        x1: cell.x * region.cellSize,
-        y1: cell.y * region.cellSize,
-        x2: (cell.x + 1) * region.cellSize - 1,
-        y2: (cell.y + 1) * region.cellSize - 1,
-        color: color,
-      );
-    }
+    // Fill: by terrain (geographic) or by ownership. Shares the canonical
+    // cell-fill render pipeline (fillRegionViewCells); political vs geographic
+    // differ only by this colour strategy (Refs #3574).
+    fillRegionViewCells(
+      image,
+      cells: region.cells,
+      cellSize: region.cellSize,
+      colorAt: (cell) {
+        if (cell.isSea) return seaColorRgb;
+        return geographicMode
+            ? _terrainRgbForCell(cell, region)
+            : (region.factionColors[cell.ownerFactionId ?? ''] ??
+                  (128, 128, 128));
+      },
+    );
 
     // Reconstruct a minimal TileMapResult-like structure for border drawing.
     final tmpResult = TileMapResult(

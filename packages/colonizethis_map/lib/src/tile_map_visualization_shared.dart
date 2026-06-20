@@ -37,6 +37,86 @@ Set<String> seaZoneLocalIdsFromRegionCells(List<CellViewData> cells) {
   return out;
 }
 
+// --- Render pipeline: shared cell-fill ---
+// SPEC/program/map-visualization.md § Cell-fill render pipeline.
+
+/// Fills the [cellSize]×[cellSize] pixel block for tile cell ([cellX],[cellY])
+/// with [color].
+///
+/// Single source of truth for the per-cell rectangle geometry shared by every
+/// PNG fill path (terrain, region, and ownership). Keeping the
+/// `x1/y1/x2/y2` math in one place guarantees the three render paths produce
+/// byte-identical fills and differ only by their colour strategy
+/// (Refs #3574 render-pipeline dedup).
+void fillCellRect(
+  img.Image image, {
+  required int cellX,
+  required int cellY,
+  required int cellSize,
+  required img.Color color,
+}) {
+  img.fillRect(
+    image,
+    x1: cellX * cellSize,
+    y1: cellY * cellSize,
+    x2: (cellX + 1) * cellSize - 1,
+    y2: (cellY + 1) * cellSize - 1,
+    color: color,
+  );
+}
+
+/// Fills every cell of a [height] rows × [width] columns tile grid using the
+/// RGB colour returned by [colorAt] for cell `(x, y)`.
+///
+/// Iteration routes through [TileMapGrid.forEachIndex] (the canonical row-major
+/// walk) so fill order matches the borders/markers drawn afterwards and stays
+/// bit-for-bit deterministic. The geographic/region/ownership PNG paths differ
+/// only by the [colorAt] **fill strategy**, not by a copy-pasted double loop
+/// (Refs #3574).
+void fillTileGridCells(
+  img.Image image, {
+  required int height,
+  required int width,
+  required int cellSize,
+  required (int r, int g, int b) Function(int x, int y) colorAt,
+}) {
+  TileMapGrid.forEachIndex(height, width, (y, x) {
+    final (r, g, b) = colorAt(x, y);
+    fillCellRect(
+      image,
+      cellX: x,
+      cellY: y,
+      cellSize: cellSize,
+      color: image.getColor(r, g, b),
+    );
+  });
+}
+
+/// Fills each cell in [cells] (flattened [CellViewData] from a
+/// [RegionMapViewData]) using the RGB colour returned by [colorAt].
+///
+/// View-data render paths walk a pre-flattened cell list rather than a 2D grid,
+/// so this companion of [fillTileGridCells] shares the same [fillCellRect]
+/// primitive and lets political vs geographic view-data fills differ only by
+/// the [colorAt] strategy (Refs #3574).
+void fillRegionViewCells(
+  img.Image image, {
+  required Iterable<CellViewData> cells,
+  required int cellSize,
+  required (int r, int g, int b) Function(CellViewData cell) colorAt,
+}) {
+  for (final cell in cells) {
+    final (r, g, b) = colorAt(cell);
+    fillCellRect(
+      image,
+      cellX: cell.x,
+      cellY: cell.y,
+      cellSize: cellSize,
+      color: image.getColor(r, g, b),
+    );
+  }
+}
+
 img.Color _borderColorForAdjacentCells(
   String id,
   String other,
