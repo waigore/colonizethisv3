@@ -406,6 +406,13 @@ rules:
     runner: dart
     script: tool/check_logic_reduced_surface.dart
 
+  - rule_id: repo.logic_no_map_deps
+    group: architecture
+    title: colonizethis_logic must not depend on colonizethis_map in lib/ (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_no_map_deps.dart
+
   - rule_id: repo.world_no_logic_deps
     group: architecture
     title: colonizethis_world must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
