@@ -3,7 +3,7 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'tile_key_util.dart';
+import '../tile_key_util.dart';
 
 /// Simple RGB tuple alias for readability.
 typedef Rgb = (int r, int g, int b);

@@ -2,7 +2,7 @@
 /// SPEC/ui/map-widget.md § Layer model (province names).
 library;
 
-import 'init_game_map_view_data.dart';
+import 'view/init_game_map_view_data.dart';
 
 /// Alpha for GP-tinted label plate (semi-transparent; matches legacy neutral plate strength).
 const double kProvinceLabelPlateTintAlpha = 0.55;

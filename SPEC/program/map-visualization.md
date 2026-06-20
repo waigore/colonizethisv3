@@ -8,7 +8,7 @@
 
 Render tile maps and topology to PNG; provide view models for tools. Two visualizers share border drawing, legend layout, swatches.
 
-### Internal layering (render layer)
+### Internal layering (view and render layers)
 
 `colonizethis_map` is layered one-directionally: **generation → view inputs → render** (Refs #3574). The **render layer** — the only modules permitted to depend on `package:image` for PNG encoding — lives under `packages/colonizethis_map/lib/src/render/`:
 
@@ -18,7 +18,13 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 - `render/multi_region_map_rendering.dart` — OW+NW composite rendering.
 - `render/tile_map_resource_legend.dart` — resource legend drawing.
 
-Generation passes and view-model builders (flat `lib/src/`) must stay image-free. The boundary is enforced by `repo.map_gen_no_image_import`, which permits `package:image` only for files under `lib/src/render/` ([repo-lint.md](repo-lint.md)). The public `colonizethis_map.dart` barrel re-exports the render modules, so consumers (`app/`, `ctdev/`, `tool/`) are unaffected by the relocation.
+The **view layer** — view-model building that converts generation/topology output into the `RegionMapViewData` / `CellViewData` shapes consumed by the player app — lives under `packages/colonizethis_map/lib/src/view/`:
+
+- `view/init_game_map_view_builder.dart` (+ fleet/orchestration/cells/map-markers part files) — builds per-region map view data.
+- `view/init_game_map_view_data.dart` — view-data value types.
+- `view/region_map_view_inputs.dart` — region view-input bundling (colour/capital/port scopes).
+
+The view layer depends only on generation/topology and shared data; the render layer may depend on the view layer (for the view-data shapes it draws), never the reverse. Generation passes and view-model builders must stay image-free. The boundary is enforced by `repo.map_gen_no_image_import`, which permits `package:image` only for files under `lib/src/render/` ([repo-lint.md](repo-lint.md)). The public `colonizethis_map.dart` barrel re-exports the relocated render and view modules, so consumers (`app/`, `ctdev/`, `tool/`) are unaffected by the relocation.
 
 ---
 

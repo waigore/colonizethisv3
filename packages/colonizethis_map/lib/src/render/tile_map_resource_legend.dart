@@ -4,7 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:image/image.dart' as img;
 
-import '../init_game_map_view_data.dart';
+import '../view/init_game_map_view_data.dart';
 
 /// Single-letter legend glyph for a resource (e.g. grain -> 'g').
 String resourceToLegendLetter(Resource r) {
