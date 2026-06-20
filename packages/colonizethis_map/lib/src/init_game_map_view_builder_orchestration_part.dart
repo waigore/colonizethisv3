@@ -35,10 +35,9 @@ InitGameMapViewData buildInitGameMapViewData({
   Set<String>? civilianMarkerOwnerIds,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
-  RegionMapViewData? oldWorld;
-  RegionMapViewData? newWorld;
+  final viewByRegion = <String, RegionMapViewData>{};
   for (final regionId in const [kRegionOldWorld, kRegionNewWorld]) {
-    final regionView = _buildRegionViewData(
+    viewByRegion[regionId] = _buildRegionViewData(
       regionId: regionId,
       tileMap: tileMapByRegion[regionId]!,
       topology: topologyByRegion[regionId]!,
@@ -54,11 +53,6 @@ InitGameMapViewData buildInitGameMapViewData({
           resourceExtractionBlockedUnitsByTile,
       civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
-    if (regionId == kRegionOldWorld) {
-      oldWorld = regionView;
-    } else {
-      newWorld = regionView;
-    }
   }
 
   _log.i('buildInitGameMapViewData end');
@@ -67,8 +61,8 @@ InitGameMapViewData buildInitGameMapViewData({
     warpLinks: warpLinks ?? const [],
   );
   return InitGameMapViewData(
-    oldWorld: oldWorld!,
-    newWorld: newWorld!,
+    oldWorld: viewByRegion[kRegionOldWorld]!,
+    newWorld: viewByRegion[kRegionNewWorld]!,
     combinedTopology: combinedTopology,
     seed: seed,
     configSummary: configSummary,

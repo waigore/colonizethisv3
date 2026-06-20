@@ -41,6 +41,7 @@ import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
+import 'check_map_region_dispatch_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
@@ -767,6 +768,14 @@ int? _tryRunDartRuleInProcess({
     return logicResult;
   }
 
+  final int? mapResult = _tryRunMapRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (mapResult != null) {
+    return mapResult;
+  }
+
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
@@ -850,20 +859,6 @@ int? _tryRunDartRuleInProcess({
       );
     case 'repo.canonical_province_tile_keys':
       return runCheckCanonicalProvinceTileKeys(repoRoot);
-    case 'repo.colonizethis_map_lib_pipe_split':
-      return runCheckColonizethisMapLibPipeSplit(repoRoot);
-    case 'repo.tile_map_inline_cardinal_directions':
-      return runCheckTileMapInlineCardinalDirections(repoRoot);
-    case 'repo.map_grid_ops_central':
-      return runCheckMapGridOpsCentral(repoRoot);
-    case 'repo.map_grid_cell_iteration_central':
-      return runCheckMapGridCellIterationCentral(repoRoot);
-    case 'repo.map_gen_stage_protocol':
-      return runCheckMapGenStageProtocol(repoRoot);
-    case 'repo.map_public_barrel_surface':
-      return runCheckMapPublicBarrelSurface(repoRoot);
-    case 'repo.map_region_data_access_central':
-      return runCheckMapRegionDataAccessCentral(repoRoot);
     case 'repo.land_province_bucket_keys':
       return runCheckLandProvinceBucketKeys(repoRoot);
     case 'repo.orders_dedup_map_clones':
@@ -973,6 +968,37 @@ int? _tryRunLogicRuleInProcess({
       return runCheckLogicDedupLogger(repoRoot);
     case 'repo.economy_cost_check_shared_helper':
       return runCheckEconomyCostCheckSharedHelper(repoRoot);
+    default:
+      return null;
+  }
+}
+
+/// Dispatch helper for `colonizethis_map` package manifest rules. Keeps the
+/// main `_tryRunDartRuleInProcess` switch under the
+/// `repo.dart_long_string_switches` 49-case ceiling as new map-scoped rules are
+/// added (Refs #3574). Returns `null` for non-map rule ids so the caller falls
+/// back to the generic dispatch.
+int? _tryRunMapRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+}) {
+  switch (ruleId) {
+    case 'repo.colonizethis_map_lib_pipe_split':
+      return runCheckColonizethisMapLibPipeSplit(repoRoot);
+    case 'repo.tile_map_inline_cardinal_directions':
+      return runCheckTileMapInlineCardinalDirections(repoRoot);
+    case 'repo.map_grid_ops_central':
+      return runCheckMapGridOpsCentral(repoRoot);
+    case 'repo.map_grid_cell_iteration_central':
+      return runCheckMapGridCellIterationCentral(repoRoot);
+    case 'repo.map_gen_stage_protocol':
+      return runCheckMapGenStageProtocol(repoRoot);
+    case 'repo.map_public_barrel_surface':
+      return runCheckMapPublicBarrelSurface(repoRoot);
+    case 'repo.map_region_data_access_central':
+      return runCheckMapRegionDataAccessCentral(repoRoot);
+    case 'repo.map_region_dispatch_central':
+      return runCheckMapRegionDispatchCentral(repoRoot);
     default:
       return null;
   }

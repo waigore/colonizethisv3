@@ -11,10 +11,11 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'province_ownership_view.dart';
-import 'region_constants.dart';
 import 'region_data_access.dart';
 import 'tile_map_capital_markers.dart';
 import 'tile_map_colors.dart';
+
+export 'map_region_dispatch.dart' show isOldWorldRegionId;
 
 /// Capital marker coordinates plus ownership and colour inputs for one region.
 typedef RegionMapRenderInputs = ({
@@ -22,9 +23,6 @@ typedef RegionMapRenderInputs = ({
   List<TileMapCapitalMarker> capitalTiles,
   Map<String, (int r, int g, int b)> factionColors,
 });
-
-/// Returns true when [regionId] is the Old World region constant.
-bool isOldWorldRegionId(String regionId) => regionId == kRegionOldWorld;
 
 /// Provinces for [regionId] from [game]'s world state.
 List<Province> provincesForGameRegion(Game game, String regionId) {
