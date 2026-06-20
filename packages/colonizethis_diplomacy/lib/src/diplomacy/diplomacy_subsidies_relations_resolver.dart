@@ -2,35 +2,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../dossier/evidence_rules.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
 import 'diplomacy_shared_helpers.dart';
 import 'overture_resolver.dart';
 
-/// O(1) lookup of list index by player id for [players] snapshots.
-///
-/// Callers that replace [players] with `List<Player>.from(players)` preserve
-/// index order, so the returned map remains valid for the new list instance.
-Map<String, int> _playerListIndexById(List<Player> players) {
-  final out = <String, int>{};
-  for (var i = 0; i < players.length; i++) {
-    out[players[i].id] = i;
-  }
-  return out;
-}
-
 String _subsidyPairKey(String payerId, String targetId) =>
     '$payerId\x1F$targetId';
-
-Map<String, int> _subsidyStateIndexByPair(List<SubsidyState> states) {
-  final out = <String, int>{};
-  for (var i = 0; i < states.length; i++) {
-    final s = states[i];
-    out[_subsidyPairKey(s.payerId, s.targetId)] = i;
-  }
-  return out;
-}
 
 Game terminateAgreementsOnWar(Game game, {IntraTurnEventTally? eventTally}) {
   final turn = game.worldState.turnState.turnNumber;
@@ -81,7 +59,7 @@ Game applyRelationModifiersAndUpdateScores(
 }) {
   var players = game.players;
   // Stable id → row index while [players] order/count is unchanged (Refs #2394).
-  final playerIndexById = _playerListIndexById(players);
+  final playerIndexById = indexByKey(players, (p) => p.id);
   // Pair-key index built once for the phase; grant-aid upserts are amortized
   // O(1) instead of rebuilding the index per order (Refs #3419 step 5).
   final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
@@ -121,7 +99,7 @@ Game applyRelationModifiersAndUpdateScores(
         players: players,
         diplomacyRelations: relationsIndex.toList(),
       );
-      game = appendDiplomaticEvent(
+      game = logDiplomaticEvent(
         game,
         turn,
         DiplomaticEventType.grantAidApplied,
@@ -131,15 +109,18 @@ Game applyRelationModifiersAndUpdateScores(
         amount: amount,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
         eventTally: eventTally,
+        logMessage: 'diplomacy GrantAid $gpId -> $targetId amount $amount',
       );
-      diploLog.i('diplomacy GrantAid $gpId -> $targetId amount $amount');
     }
   }
 
   // SetSubsidy: Create or update ongoing subsidy. Requires Consulate or Embassy.
   // Deducts initial payment immediately; ongoing payments processed each turn.
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
-  var subsidyIndexByPair = _subsidyStateIndexByPair(subsidyStates);
+  var subsidyIndexByPair = indexByKey(
+    subsidyStates,
+    (s) => _subsidyPairKey(s.payerId, s.targetId),
+  );
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
 
@@ -184,7 +165,11 @@ Game applyRelationModifiersAndUpdateScores(
       }
 
       game = game.copyWith(players: players, subsidyStates: subsidyStates);
-      game = appendDiplomaticEvent(
+      final subsidyTargetIsPlayer = game.playerById(targetId) != null;
+      final subsidyLogSuffix = subsidyTargetIsPlayer
+          ? '(ongoing)'
+          : '(ongoing relation boost)';
+      game = logDiplomaticEvent(
         game,
         turn,
         isUpdate
@@ -196,17 +181,9 @@ Game applyRelationModifiersAndUpdateScores(
         amount: amount,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
         eventTally: eventTally,
+        logMessage:
+            'diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn $subsidyLogSuffix',
       );
-      final targetPlayer = game.playerById(targetId);
-      if (targetPlayer != null) {
-        diploLog.i(
-          'diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing)',
-        );
-      } else {
-        diploLog.i(
-          'diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing relation boost)',
-        );
-      }
     }
   }
 
@@ -223,7 +200,7 @@ Game processOngoingSubsidies(
   IntraTurnEventTally? eventTally,
 }) {
   var players = game.players;
-  final playerIndexById = _playerListIndexById(players);
+  final playerIndexById = indexByKey(players, (p) => p.id);
   // Single index built once for the whole phase; each boost is amortized O(1)
   // and the list is copied only at the end (Refs #3419 step 5).
   final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
@@ -237,7 +214,7 @@ Game processOngoingSubsidies(
     // Check if payer can afford subsidy
     final payer = game.playerById(payerId);
     if (payer == null || payer.treasury < amount) {
-      game = appendDiplomaticEvent(
+      game = logDiplomaticEvent(
         game,
         turn,
         DiplomaticEventType.subsidyCancelled,
@@ -247,20 +224,19 @@ Game processOngoingSubsidies(
         reason: 'insufficient funds',
         wasAiInitiator: isAiControlledForEvidence(game, payerId),
         eventTally: eventTally,
+        logMessage:
+            'diplomacy subsidy cancelled $payerId -> $targetId (insufficient funds)',
       );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
-      diploLog.i(
-        'diplomacy subsidy cancelled $payerId -> $targetId (insufficient funds)',
-      );
       continue;
     }
 
     // Check if still at peace (subsidies cancel on war)
     final rel = getRelation(game, payerId, targetId);
     if (rel != null && rel.atWar) {
-      game = appendDiplomaticEvent(
+      game = logDiplomaticEvent(
         game,
         turn,
         DiplomaticEventType.subsidyCancelled,
@@ -270,13 +246,12 @@ Game processOngoingSubsidies(
         reason: 'war declared',
         wasAiInitiator: isAiControlledForEvidence(game, payerId),
         eventTally: eventTally,
+        logMessage:
+            'diplomacy subsidy cancelled $payerId -> $targetId (war declared)',
       );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
-      diploLog.i(
-        'diplomacy subsidy cancelled $payerId -> $targetId (war declared)',
-      );
       continue;
     }
 

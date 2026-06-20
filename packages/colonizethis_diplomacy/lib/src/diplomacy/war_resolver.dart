@@ -1,7 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../dossier/evidence_rules.dart';
+import '../dossier/evidence_rules.dart'
+    show evidenceForDeclareWar, evidenceForOfferPeace;
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
 import 'diplomacy_shared_helpers.dart';
@@ -192,7 +193,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     turn,
     eventTally: eventTally,
   );
-  nextGame = appendDiplomaticEvent(
+  nextGame = logDiplomaticEvent(
     nextGame,
     turn,
     DiplomaticEventType.declareWar,
@@ -201,8 +202,9 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     toFactionId: targetId,
     wasAiInitiator: isAiControlledForEvidence(nextGame, gpId),
     eventTally: eventTally,
+    logMessage:
+        'diplomacy war declared $gpId vs $targetId (scores reset to 20)',
   );
-  diploLog.i('diplomacy war declared $gpId vs $targetId (scores reset to 20)');
   return (game: nextGame, relations: nextRelations);
 }
 
@@ -302,7 +304,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     diplomacyRelations: nextRelations,
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
   );
-  nextGame = appendDiplomaticEvent(
+  nextGame = logDiplomaticEvent(
     nextGame,
     turn,
     DiplomaticEventType.peace,
@@ -311,7 +313,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     toFactionId: targetId,
     wasAiInitiator: isAiControlledForEvidence(nextGame, gpId),
     eventTally: eventTally,
+    logMessage: 'diplomacy peace $gpId-$targetId',
   );
-  diploLog.i('diplomacy peace $gpId-$targetId');
   return (game: nextGame, relations: nextRelations);
 }

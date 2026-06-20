@@ -38,6 +38,35 @@ int atWarGreatPowerCount(
   return count;
 }
 
+/// Builds a `key -> position` index over [items] using [keyOf].
+///
+/// Single canonical implementation for the per-resolver "build a `String key ->
+/// int position` map from a `List<T>`" pattern (Refs #3562). On duplicate keys
+/// the later entry wins, matching the previous inline builders which assigned
+/// `out[key] = i` while iterating. O(n) single pass.
+Map<String, int> indexByKey<T>(List<T> items, String Function(T) keyOf) {
+  final out = <String, int>{};
+  for (var i = 0; i < items.length; i++) {
+    out[keyOf(items[i])] = i;
+  }
+  return out;
+}
+
+/// True if [playerId] is AI-controlled (evidence/dialogue/event metadata only
+/// applies to AI subjects).
+///
+/// Lives in the diplomacy shared helpers — not the dossier evidence layer — so
+/// diplomacy resolvers can read the AI-control flag without importing from
+/// `../dossier/` (Refs #3562). Named to avoid an export clash with
+/// `ai_planner.isAiControlled`. An explicit `aiControlByGpId` override wins;
+/// otherwise a non-human player is treated as AI-controlled.
+bool isAiControlledForEvidence(Game game, String playerId) {
+  final explicit = game.aiControlByGpId[playerId];
+  if (explicit != null) return explicit;
+  final p = game.playerById(playerId);
+  return p != null && !p.isHuman;
+}
+
 /// Returns the first decision in [decisions] for which [matches] is true, or
 /// null when [decisions] is null or no entry matches.
 ///

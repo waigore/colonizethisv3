@@ -1,7 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../dossier/evidence_rules.dart';
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
@@ -47,7 +46,7 @@ Game _addFtpPartnership(
   if (game.ftpPartnershipKeys.contains(key)) return game;
   final nextKeys = {...game.ftpPartnershipKeys, key};
   var next = game.copyWith(ftpPartnershipKeys: nextKeys);
-  next = appendDiplomaticEvent(
+  next = logDiplomaticEvent(
     next,
     turn,
     DiplomaticEventType.ftpFormed,
@@ -56,8 +55,8 @@ Game _addFtpPartnership(
     toFactionId: targetGpId,
     wasAiInitiator: isAiControlledForEvidence(next, proposerGpId),
     eventTally: eventTally,
+    logMessage: 'diplomacy ftp formed $proposerGpId-$targetGpId',
   );
-  diploLog.i('diplomacy ftp formed $proposerGpId-$targetGpId');
   return next;
 }
 

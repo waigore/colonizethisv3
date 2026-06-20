@@ -2,7 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../dossier/evidence_rules.dart';
+import '../dossier/evidence_rules.dart'
+    show evidenceForIsolationistCallToArmsRefuse;
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
@@ -106,7 +107,7 @@ Game _applyCallToArmsAccept(
     turn,
     eventTally: eventTally,
   );
-  g = appendDiplomaticEvent(
+  g = logDiplomaticEvent(
     g,
     turn,
     DiplomaticEventType.callToArmsAccepted,
@@ -115,9 +116,8 @@ Game _applyCallToArmsAccept(
     toFactionId: aggressorGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
     eventTally: eventTally,
-  );
-  diploLog.i(
-    'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
+    logMessage:
+        'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
   );
   return g;
 }
@@ -167,7 +167,7 @@ Game _applyCallToArmsRefuse(
     diplomacyRelations: relations,
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...refuseEvidence],
   );
-  g = appendDiplomaticEvent(
+  g = logDiplomaticEvent(
     g,
     turn,
     DiplomaticEventType.callToArmsRefused,
@@ -176,9 +176,8 @@ Game _applyCallToArmsRefuse(
     toFactionId: defenderGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
     eventTally: eventTally,
-  );
-  diploLog.i(
-    'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
+    logMessage:
+        'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
   );
   return g;
 }

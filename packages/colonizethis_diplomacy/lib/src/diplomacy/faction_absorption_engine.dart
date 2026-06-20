@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_world/src/world/civilian_ownership_legality.dart';
 import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_shared_helpers.dart';
 
 /// Join-Empire absorption shared between minor/tribe and GP targets.
 /// SPEC/game/diplomacy.md. Refs #2071.
@@ -94,28 +95,20 @@ Game _absorbIntoGp(
   final cost = joinEmpireCostForMinorOrTribe(game, absorbedFactionId);
   var players = List<Player>.from(game.players);
 
+  // Shared id → row index (Refs #3562) replacing the bespoke index scans
+  // (originally Refs #2394 Category C). Last-wins on duplicate ids matches the
+  // prior single-pass assignment.
+  final playerIndexById = indexByKey(players, (p) => p.id);
   if (kind == _AbsorptionKind.greatPower) {
-    // Single pass replaces two indexWhere scans (Refs #2394 Category C).
-    var gpIdx = -1;
-    var targetIdx = -1;
-    for (var i = 0; i < players.length; i++) {
-      final id = players[i].id;
-      if (id == gpId) gpIdx = i;
-      if (id == absorbedFactionId) targetIdx = i;
-    }
+    final gpIdx = playerIndexById[gpId] ?? -1;
+    final targetIdx = playerIndexById[absorbedFactionId] ?? -1;
     if (gpIdx < 0 || targetIdx < 0) return game;
     players[gpIdx] = players[gpIdx].copyWith(
       treasury: players[gpIdx].treasury - cost,
     );
     players.removeAt(targetIdx);
   } else {
-    var gpIdx = -1;
-    for (var i = 0; i < players.length; i++) {
-      if (players[i].id == gpId) {
-        gpIdx = i;
-        break;
-      }
-    }
+    final gpIdx = playerIndexById[gpId] ?? -1;
     if (gpIdx >= 0) {
       players[gpIdx] = players[gpIdx].copyWith(
         treasury: players[gpIdx].treasury - cost,
