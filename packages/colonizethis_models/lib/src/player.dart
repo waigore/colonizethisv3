@@ -1,5 +1,6 @@
 import 'capital_tile.dart';
 import 'province_id.dart';
+import 'research_slot_assignment.dart';
 import 'stockpile.dart';
 import 'worker_pool.dart';
 
@@ -20,6 +21,7 @@ class Player {
     this.personalityId,
     this.researchProgressByTechId,
     this.researchSlots,
+    this.researchSlotAssignments,
     this.generalCap,
   });
 
@@ -59,6 +61,13 @@ class Player {
   /// Default is 3; University tech can raise this to 4. When null, treat as 3.
   final int? researchSlots;
 
+  /// Persisted slot index (`0..researchSlots-1`) → `{techId, funding}` occupancy.
+  /// Durable record of which tech occupies each slot, surviving turn resolution
+  /// and save/load; distinct from the per-turn `Orders.researchOrdersByPlayerId`
+  /// UI mutation surface. Null/empty on legacy saves = no slot assignments.
+  /// SPEC/game/research-state.md § Slot Occupancy Persistence.
+  final Map<int, ResearchSlotAssignment>? researchSlotAssignments;
+
   /// Tech-gated general cap for this Great Power (min/max generals in the pool).
   /// 1 at game start; grows with military/diplomacy techs. Null in legacy saves
   /// (treated as derive-from-tech or 1 on load). SPEC/game/military-generals.md.
@@ -83,6 +92,11 @@ class Player {
         researchProgressByTechId!.isNotEmpty)
       'researchProgressByTechId': researchProgressByTechId,
     if (researchSlots != null) 'researchSlots': researchSlots,
+    if (researchSlotAssignments != null && researchSlotAssignments!.isNotEmpty)
+      'researchSlotAssignments': {
+        for (final e in researchSlotAssignments!.entries)
+          e.key.toString(): e.value.toJson(),
+      },
     if (generalCap != null) 'generalCap': generalCap,
   };
 
@@ -139,6 +153,23 @@ class Player {
       );
     }
 
+    Map<int, ResearchSlotAssignment>? _readResearchSlotAssignments() {
+      final raw = json['researchSlotAssignments'];
+      if (raw is! Map<Object?, Object?>) return null;
+      final out = <int, ResearchSlotAssignment>{};
+      raw.forEach((key, value) {
+        final slotIndex = int.tryParse(key.toString());
+        if (slotIndex == null || slotIndex < 0) return;
+        if (value is! Map<Object?, Object?>) return;
+        final assignment = ResearchSlotAssignment.fromJson(
+          Map<String, dynamic>.from(value),
+        );
+        if (assignment.techId.isEmpty) return;
+        out[slotIndex] = assignment;
+      });
+      return out;
+    }
+
     return Player(
       id: json['id'] as String,
       displayName: json['displayName'] as String,
@@ -157,6 +188,7 @@ class Player {
       personalityId: json['personalityId'] as String?,
       researchProgressByTechId: _readResearchProgress(),
       researchSlots: (json['researchSlots'] as num?)?.toInt(),
+      researchSlotAssignments: _readResearchSlotAssignments(),
       generalCap: (json['generalCap'] as num?)?.toInt(),
     );
   }
@@ -176,6 +208,7 @@ class Player {
     String? personalityId,
     Map<String, int>? researchProgressByTechId,
     int? researchSlots,
+    Map<int, ResearchSlotAssignment>? researchSlotAssignments,
     int? generalCap,
   }) {
     return Player(
@@ -194,6 +227,8 @@ class Player {
       researchProgressByTechId:
           researchProgressByTechId ?? this.researchProgressByTechId,
       researchSlots: researchSlots ?? this.researchSlots,
+      researchSlotAssignments:
+          researchSlotAssignments ?? this.researchSlotAssignments,
       generalCap: generalCap ?? this.generalCap,
     );
   }
@@ -220,6 +255,10 @@ class Player {
             other.researchProgressByTechId,
           ) &&
           researchSlots == other.researchSlots &&
+          _slotAssignmentsEqual(
+            researchSlotAssignments,
+            other.researchSlotAssignments,
+          ) &&
           generalCap == other.generalCap;
 
   @override
@@ -240,6 +279,12 @@ class Player {
         ? null
         : Object.hashAll(researchProgressByTechId!.entries),
     researchSlots,
+    researchSlotAssignments == null
+        ? null
+        : Object.hashAll([
+            for (final key in researchSlotAssignments!.keys.toList()..sort())
+              Object.hash(key, researchSlotAssignments![key]),
+          ]),
     generalCap,
   );
 
@@ -253,6 +298,18 @@ class Player {
   }
 
   static bool _intMapEquals(Map<String, int>? a, Map<String, int>? b) {
+    if (a == b) return true;
+    if (a == null || b == null || a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
+  }
+
+  static bool _slotAssignmentsEqual(
+    Map<int, ResearchSlotAssignment>? a,
+    Map<int, ResearchSlotAssignment>? b,
+  ) {
     if (a == b) return true;
     if (a == null || b == null || a.length != b.length) return false;
     for (final e in a.entries) {

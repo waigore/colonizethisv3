@@ -64,5 +64,94 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+
+    test('researchSlotAssignments round-trip preserves techId and funding', () {
+      final p = Player(
+        id: 'p1',
+        displayName: 'Spain',
+        isHuman: true,
+        researchSlotAssignments: {
+          0: const ResearchSlotAssignment(
+            techId: kTechIdRoadConstruction,
+            funding: ResearchFundingLevel.medium,
+          ),
+          2: const ResearchSlotAssignment(
+            techId: kTechIdBanking,
+            funding: ResearchFundingLevel.high,
+          ),
+        },
+      );
+      final p2 = Player.fromJson(p.toJson());
+      expect(p2.researchSlotAssignments?[0]?.techId, kTechIdRoadConstruction);
+      expect(
+        p2.researchSlotAssignments?[0]?.funding,
+        ResearchFundingLevel.medium,
+      );
+      expect(p2.researchSlotAssignments?[2]?.techId, kTechIdBanking);
+      expect(p2.researchSlotAssignments?[2]?.funding, ResearchFundingLevel.high);
+      expect(p2, p);
+    });
+
+    test('legacy save without researchSlotAssignments defaults to empty', () {
+      final p = Player.fromJson({
+        'id': 'p1',
+        'displayName': 'Spain',
+        'isHuman': true,
+      });
+      final assignments = p.researchSlotAssignments;
+      expect(assignments == null || assignments.isEmpty, true);
+    });
+
+    test('fromJson drops invalid slot assignments', () {
+      final p = Player.fromJson({
+        'id': 'p1',
+        'displayName': 'Spain',
+        'isHuman': true,
+        'researchSlotAssignments': {
+          '0': {'techId': kTechIdBanking, 'funding': 'medium'},
+          '-1': {'techId': kTechIdRoadConstruction, 'funding': 'low'},
+          '1': {'techId': '', 'funding': 'high'},
+        },
+      });
+      expect(p.researchSlotAssignments?.length, 1);
+      expect(p.researchSlotAssignments?[0]?.techId, kTechIdBanking);
+      expect(p.researchSlotAssignments?.containsKey(-1), false);
+      expect(p.researchSlotAssignments?.containsKey(1), false);
+    });
+
+    test('slot assignment funding defaults to none when omitted', () {
+      final p = Player.fromJson({
+        'id': 'p1',
+        'displayName': 'Spain',
+        'isHuman': true,
+        'researchSlotAssignments': {
+          '0': {'techId': kTechIdBanking},
+        },
+      });
+      expect(p.researchSlotAssignments?[0]?.funding, ResearchFundingLevel.none);
+    });
+
+    test('equality differs by researchSlotAssignments', () {
+      const base = Player(id: 'p1', displayName: 'Spain', isHuman: true);
+      final withSlot = base.copyWith(
+        researchSlotAssignments: {
+          0: const ResearchSlotAssignment(
+            techId: kTechIdBanking,
+            funding: ResearchFundingLevel.medium,
+          ),
+        },
+      );
+      expect(withSlot == base, false);
+      final withSameSlot = base.copyWith(
+        researchSlotAssignments: {
+          0: const ResearchSlotAssignment(
+            techId: kTechIdBanking,
+            funding: ResearchFundingLevel.medium,
+          ),
+        },
+      );
+      expect(withSlot, withSameSlot);
+      expect(withSlot.hashCode, withSameSlot.hashCode);
+    });
   });
 }
