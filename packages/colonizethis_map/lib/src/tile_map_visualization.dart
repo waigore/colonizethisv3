@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'tile_map_grid.dart';
 import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization_shared.dart'
     show
@@ -166,22 +167,20 @@ void _drawMapCells({
   required Set<String> seaZoneIds,
   required Map<String, (int, int, int)>? regionColors,
 }) {
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final id = result.cell(x, y);
-      final (r, g, b) = useTerrain
-          ? _terrainOrSeaCellColor(result, seaZoneIds, x, y, id)
-          : regionColors![id]!;
-      img.fillRect(
-        image,
-        x1: x * cellSize,
-        y1: y * cellSize,
-        x2: (x + 1) * cellSize - 1,
-        y2: (y + 1) * cellSize - 1,
-        color: image.getColor(r, g, b),
-      );
-    }
-  }
+  TileMapGrid.forEachIndex(result.height, result.width, (y, x) {
+    final id = result.cell(x, y);
+    final (r, g, b) = useTerrain
+        ? _terrainOrSeaCellColor(result, seaZoneIds, x, y, id)
+        : regionColors![id]!;
+    img.fillRect(
+      image,
+      x1: x * cellSize,
+      y1: y * cellSize,
+      x2: (x + 1) * cellSize - 1,
+      y2: (y + 1) * cellSize - 1,
+      color: image.getColor(r, g, b),
+    );
+  });
 }
 
 (int, int, int) _terrainOrSeaCellColor(
@@ -256,19 +255,17 @@ void _drawRegionIdLabels({
     regionIdLabelRgb.$3,
   );
   const idInset = 2;
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final id = result.cell(x, y);
-      img.drawString(
-        image,
-        id,
-        font: img.arial14,
-        x: x * cellSize + idInset,
-        y: y * cellSize + idInset,
-        color: regionIdColor,
-      );
-    }
-  }
+  TileMapGrid.forEachIndex(result.height, result.width, (y, x) {
+    final id = result.cell(x, y);
+    img.drawString(
+      image,
+      id,
+      font: img.arial14,
+      x: x * cellSize + idInset,
+      y: y * cellSize + idInset,
+      color: regionIdColor,
+    );
+  });
 }
 
 void _drawResourceLettersOnMap({
