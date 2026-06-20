@@ -26,22 +26,24 @@ InitGameMapViewData buildInitGameMapViewData({
 
   /// Optional per-tile transport-blocked extraction units for map overlays.
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
+
+  /// Optional explicit owner set for civilian tile markers. When null, the
+  /// builder falls back to `Player.isHuman` players (legacy single-player
+  /// behavior). When provided, only civilians owned by ids in this set get
+  /// markers; pass all faction ids in global observe and the observed GP id in
+  /// player observe per SPEC/ui/observe-mode.md.
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
   RegionMapViewData? oldWorld;
   RegionMapViewData? newWorld;
-  final regionConfigs = [
-    (regionId: kRegionOldWorld, isOldWorld: true),
-    (regionId: kRegionNewWorld, isOldWorld: false),
-  ];
-  for (final region in regionConfigs) {
+  for (final regionId in const [kRegionOldWorld, kRegionNewWorld]) {
     final regionView = _buildRegionViewData(
-      regionId: region.regionId,
-      tileMap: tileMapByRegion[region.regionId]!,
-      topology: topologyByRegion[region.regionId]!,
+      regionId: regionId,
+      tileMap: tileMapByRegion[regionId]!,
+      topology: topologyByRegion[regionId]!,
       game: game,
       cellSize: cellSize,
-      isOldWorld: region.isOldWorld,
       greatPowerColorOverride: greatPowerColorOverride,
       visibilityByTile: visibilityByTile,
       warpLinks: warpLinks,
@@ -50,8 +52,9 @@ InitGameMapViewData buildInitGameMapViewData({
           resourceExtractionEffectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile:
           resourceExtractionBlockedUnitsByTile,
+      civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
-    if (region.isOldWorld) {
+    if (regionId == kRegionOldWorld) {
       oldWorld = regionView;
     } else {
       newWorld = regionView;
@@ -78,28 +81,27 @@ RegionMapViewData _buildRegionViewData({
   required MapTopology topology,
   required Game game,
   required int cellSize,
-  required bool isOldWorld,
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
   Map<String, TileVisibility>? visibilityByTile,
   List<WarpLink>? warpLinks,
   Map<String, int>? resourceExtractionUnitsByTile,
   Map<String, int>? resourceExtractionEffectiveUnitsByTile,
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   final provinceMeta = _buildProvinceMetadata(
     game: game,
-    isOldWorld: isOldWorld,
+    regionId: regionId,
     topology: topology,
   );
-  final factionData = _buildFactionColorData(
-    game: game,
+  final factionData = initGameFactionColorData(
+    game,
     greatPowerColorOverride: greatPowerColorOverride,
   );
   final cellAndUnitData = _buildCellAndUnitData(
     game: game,
     regionId: regionId,
     tileMap: tileMap,
-    isOldWorld: isOldWorld,
     provinces: provinceMeta.provinces,
     seaZoneIds: provinceMeta.seaZoneIds,
     ownerByProvinceId: provinceMeta.ownerByProvinceId,
@@ -109,6 +111,7 @@ RegionMapViewData _buildRegionViewData({
     resourceExtractionEffectiveUnitsByTile:
         resourceExtractionEffectiveUnitsByTile,
     resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+    civilianMarkerOwnerIds: civilianMarkerOwnerIds,
   );
   final markerData = _buildMarkerData(
     game: game,
@@ -198,24 +201,19 @@ RegionMapViewData _buildRegionMapViewDataFromParts({
 })
 _buildProvinceMetadata({
   required Game game,
-  required bool isOldWorld,
+  required String regionId,
   required MapTopology topology,
 }) {
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
-  final provinces = isOldWorld
-      ? game.worldState.oldWorld.provinces
-      : game.worldState.newWorld.provinces;
-  final ownerByProvinceId = <String, String>{};
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
+  final provinces = regionDataForMapRegionId(
+    game.worldState,
+    regionId,
+  ).provinces;
+  final ownerByProvinceId = provinceOwnerByIdFromProvinces(provinces);
   final provinceDisplayNameById = <String, String>{};
   final provincePoliticalOwnerByPrefixedProvinceId = <String, String?>{};
   for (final p in provinces) {
     provincePoliticalOwnerByPrefixedProvinceId[p.id] = p.ownerId;
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      ownerByProvinceId[p.id] = p.ownerId!;
-    }
     if (p.displayName != null && p.displayName!.isNotEmpty) {
       provinceDisplayNameById[p.id] = p.displayName!;
     }
@@ -227,28 +225,6 @@ _buildProvinceMetadata({
     provinceDisplayNameById: provinceDisplayNameById,
     provincePoliticalOwnerByPrefixedProvinceId:
         provincePoliticalOwnerByPrefixedProvinceId,
-  );
-}
-
-({
-  Set<String> greatPowerFactionIds,
-  Map<String, (int r, int g, int b)> factionColors,
-})
-_buildFactionColorData({
-  required Game game,
-  required Map<String, (int r, int g, int b)>? greatPowerColorOverride,
-}) {
-  final greatPowerIds = [for (final player in game.players) player.id];
-  final minorNationIds = [for (final nation in game.minorNations) nation.id];
-  final tribeIds = [for (final tribe in game.tribes) tribe.id];
-  return (
-    greatPowerFactionIds: greatPowerIds.toSet(),
-    factionColors: factionOwnershipColorMap(
-      greatPowerIds: greatPowerIds,
-      minorNationIds: minorNationIds,
-      tribeIds: tribeIds,
-      greatPowerColorOverride: greatPowerColorOverride,
-    ),
   );
 }
 
@@ -279,7 +255,6 @@ _buildCellAndUnitData({
   required Game game,
   required String regionId,
   required TileMapResult tileMap,
-  required bool isOldWorld,
   required List<Province> provinces,
   required Set<String> seaZoneIds,
   required Map<String, String> ownerByProvinceId,
@@ -288,6 +263,7 @@ _buildCellAndUnitData({
   required Map<String, int>? resourceExtractionUnitsByTile,
   required Map<String, int>? resourceExtractionEffectiveUnitsByTile,
   required Map<String, int>? resourceExtractionBlockedUnitsByTile,
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   final cells = _buildCellViewDataList(
     regionId: regionId,
@@ -310,10 +286,10 @@ _buildCellAndUnitData({
   final unitOverlayData = _buildUnitAndCivilianMarkerData(
     game: game,
     regionId: regionId,
-    isOldWorld: isOldWorld,
     provinces: provinces,
     cells: cells,
     provinceToTile: provinceToTile,
+    civilianMarkerOwnerIds: civilianMarkerOwnerIds,
   );
   return (
     cells: cells,

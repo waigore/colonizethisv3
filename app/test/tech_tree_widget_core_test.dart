@@ -9,8 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -102,29 +102,13 @@ void main() {
     expect(find.text('Technology'), findsOneWidget);
   });
 
-  testWidgets('TechnologyScreen uses CtScreenShell with showBackButton', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      scopedTechnology(
-        game,
-        MaterialApp(
-          home: Navigator(
-            pages: [
-              MaterialPage(
-                child: TechnologyScreen(game: game, player: player),
-              ),
-            ],
-            onDidRemovePage: (_) {},
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CtScreenShell), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-  });
+  // Note: the legacy "TechnologyScreen uses CtScreenShell with showBackButton"
+  // test was removed in #2864 S1. The dark editorial-monocle chrome replaces
+  // CtScreenShell with CtGameFeatureScreenShell + CtTopBar + CtBackButton,
+  // and SPEC/ui/technology-panel.md § Acceptance criteria explicitly forbids
+  // any fallback to the legacy parchment chrome. The replacement assertions
+  // (CtTopBar, no CtScreenShell, CtBackButton inside the top bar) live in
+  // app/test/technology_screen_dark_chrome_test.dart.
 
   testWidgets('TechnologyScreen back button pops navigator', (
     WidgetTester tester,
@@ -150,7 +134,7 @@ void main() {
 
     expect(find.text('Technology'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byType(CtBackButton));
     await tester.pumpAndSettle();
 
     expect(find.text('Home'), findsOneWidget);

@@ -14,8 +14,10 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
+import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
@@ -424,16 +426,19 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final showProvinceOverlayFinder = find.widgetWithText(
-          SwitchListTile,
-          'Show province overlay',
+        final overlayToggleFinder = find.byKey(
+          kGameMapOptionsShowProvinceOverlayToggleKey,
         );
-        expect(showProvinceOverlayFinder, findsOneWidget);
+        expect(overlayToggleFinder, findsOneWidget);
+        expect(
+          tester.widget<CtToggleSwitch>(overlayToggleFinder).value,
+          isTrue,
+        );
 
         // Toggle off.
-        await tester.tap(showProvinceOverlayFinder);
+        await tester.tap(overlayToggleFinder);
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 200));
 
         // Close dialog.
         await tester.tap(find.text('Close'));
@@ -445,10 +450,14 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final switchTile = tester.widget<SwitchListTile>(
-          showProvinceOverlayFinder,
+        expect(
+          tester
+              .widget<CtToggleSwitch>(
+                find.byKey(kGameMapOptionsShowProvinceOverlayToggleKey),
+              )
+              .value,
+          isFalse,
         );
-        expect(switchTile.value, isFalse);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
@@ -467,16 +476,15 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final ownershipFinder = find.widgetWithText(
-          SwitchListTile,
-          'Show province ownership',
+        final ownershipFinder = find.byKey(
+          kGameMapOptionsShowProvinceOwnershipToggleKey,
         );
         expect(ownershipFinder, findsOneWidget);
 
         // Default OFF — turn ON and persist.
         await tester.tap(ownershipFinder);
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 200));
 
         await tester.tap(find.text('Close'));
         await tester.pump();
@@ -486,21 +494,35 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        var ownershipTile = tester.widget<SwitchListTile>(ownershipFinder);
-        expect(ownershipTile.value, isTrue);
+        expect(
+          tester
+              .widget<CtToggleSwitch>(
+                find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
+              )
+              .value,
+          isTrue,
+        );
 
         // Turn OFF again and persist.
-        await tester.tap(ownershipFinder);
+        await tester.tap(
+          find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
+        );
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 200));
         await tester.tap(find.text('Close'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
         await tester.tap(optionsButtonFinder);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
-        ownershipTile = tester.widget<SwitchListTile>(ownershipFinder);
-        expect(ownershipTile.value, isFalse);
+        expect(
+          tester
+              .widget<CtToggleSwitch>(
+                find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
+              )
+              .value,
+          isFalse,
+        );
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
@@ -518,18 +540,30 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final overlayTile = tester.widget<SwitchListTile>(
-          find.widgetWithText(SwitchListTile, 'Show province overlay'),
+        expect(
+          tester
+              .widget<CtToggleSwitch>(
+                find.byKey(kGameMapOptionsShowProvinceOverlayToggleKey),
+              )
+              .value,
+          isTrue,
         );
-        final ownershipTile = tester.widget<SwitchListTile>(
-          find.widgetWithText(SwitchListTile, 'Show province ownership'),
+        expect(
+          tester
+              .widget<CtToggleSwitch>(
+                find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
+              )
+              .value,
+          isFalse,
         );
-        final namesTile = tester.widget<SwitchListTile>(
-          find.widgetWithText(SwitchListTile, 'Show province names'),
+        expect(
+          tester
+              .widget<CtToggleSwitch>(
+                find.byKey(kGameMapOptionsShowProvinceNamesToggleKey),
+              )
+              .value,
+          isTrue,
         );
-        expect(overlayTile.value, isTrue);
-        expect(ownershipTile.value, isFalse);
-        expect(namesTile.value, isTrue);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
@@ -548,15 +582,14 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final showNamesFinder = find.widgetWithText(
-          SwitchListTile,
-          'Show province names',
+        final namesToggleFinder = find.byKey(
+          kGameMapOptionsShowProvinceNamesToggleKey,
         );
-        expect(showNamesFinder, findsOneWidget);
+        expect(namesToggleFinder, findsOneWidget);
 
-        await tester.tap(showNamesFinder);
+        await tester.tap(namesToggleFinder);
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 200));
 
         await tester.tap(find.text('Close'));
         await tester.pump();
@@ -566,8 +599,14 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final namesTile = tester.widget<SwitchListTile>(showNamesFinder);
-        expect(namesTile.value, isFalse);
+        expect(
+          tester
+              .widget<CtToggleSwitch>(
+                find.byKey(kGameMapOptionsShowProvinceNamesToggleKey),
+              )
+              .value,
+          isFalse,
+        );
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
@@ -674,7 +713,7 @@ void main() {
     }
 
     testWidgets(
-      'pause menu opens bottom sheet and shows debug log entry',
+      'pause menu opens modal with Resume and Exit to Main Menu actions (no Debug log)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           buildGameScreenWithPauseMenu(game: debugResult.game),
@@ -685,7 +724,10 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 200));
 
-        expect(find.text('Debug log'), findsOneWidget);
+        expect(find.text('Game Paused'), findsOneWidget);
+        expect(find.text('Resume'), findsOneWidget);
+        expect(find.text('Exit to Main Menu'), findsOneWidget);
+        expect(find.text('Debug log'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
@@ -718,13 +760,22 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 200));
 
-        expect(find.textContaining('victory'), findsOneWidget);
+        // The restyled overlay (Refs #2861, SPEC/ui/victory-overlay.md) renders
+        // the title in uppercase ("MILITARY VICTORY"); accept either case so a
+        // future copy tweak doesn't silently break this assertion.
+        expect(
+          find.textContaining(RegExp('victory', caseSensitive: false)),
+          findsOneWidget,
+        );
 
         await tester.tap(find.text('View final state'));
         await tester.pump(const Duration(milliseconds: 200));
 
         // Overlay should be gone but we should still be on the Game screen shell.
-        expect(find.textContaining('victory'), findsNothing);
+        expect(
+          find.textContaining(RegExp('victory', caseSensitive: false)),
+          findsNothing,
+        );
         expect(find.byType(GameScreen), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),

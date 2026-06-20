@@ -26,6 +26,12 @@ sealed class DebugConsoleParsedInvocation {
     required int creditedAmount,
   }) = DebugConsoleTreasuryCredit;
 
+  const factory DebugConsoleParsedInvocation.workerPoolCredit({
+    required String workerTierId,
+    required int requestedAmount,
+    required int creditedAmount,
+  }) = DebugConsoleWorkerPoolCredit;
+
   const factory DebugConsoleParsedInvocation.stockpileCredit({
     required String commodityId,
     required int requestedAmount,
@@ -42,6 +48,22 @@ sealed class DebugConsoleParsedInvocation {
     required String target,
     required bool targetIsFullProvinceId,
   }) = DebugConsoleRevealProvince;
+
+  const factory DebugConsoleParsedInvocation.getTileBasicInfo() =
+      DebugConsoleGetTileBasicInfo;
+
+  const factory DebugConsoleParsedInvocation.listPlayers() =
+      DebugConsoleListPlayers;
+
+  const factory DebugConsoleParsedInvocation.setObserveOff() =
+      DebugConsoleSetObserveOff;
+
+  const factory DebugConsoleParsedInvocation.setObserveGlobal() =
+      DebugConsoleSetObserveGlobal;
+
+  const factory DebugConsoleParsedInvocation.setObservePlayer({
+    required String target,
+  }) = DebugConsoleSetObservePlayer;
 }
 
 final class DebugConsoleSpawnCivilianAtCapital
@@ -90,6 +112,23 @@ final class DebugConsoleTreasuryCredit extends DebugConsoleParsedInvocation {
   final int creditedAmount;
 }
 
+final class DebugConsoleWorkerPoolCredit extends DebugConsoleParsedInvocation {
+  const DebugConsoleWorkerPoolCredit({
+    required this.workerTierId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  /// Canonical `WorkerPool` tier field name (`peasants`, `apprentices`, …).
+  final String workerTierId;
+
+  /// Raw integer from user input before upper-bound clamp.
+  final int requestedAmount;
+
+  /// Amount applied after clamp to the debug-console credit cap (9999).
+  final int creditedAmount;
+}
+
 final class DebugConsoleStockpileCredit extends DebugConsoleParsedInvocation {
   const DebugConsoleStockpileCredit({
     required this.commodityId,
@@ -134,4 +173,26 @@ final class DebugConsoleRevealProvince extends DebugConsoleParsedInvocation {
 
   final String target;
   final bool targetIsFullProvinceId;
+}
+
+final class DebugConsoleGetTileBasicInfo extends DebugConsoleParsedInvocation {
+  const DebugConsoleGetTileBasicInfo();
+}
+
+final class DebugConsoleListPlayers extends DebugConsoleParsedInvocation {
+  const DebugConsoleListPlayers();
+}
+
+final class DebugConsoleSetObserveOff extends DebugConsoleParsedInvocation {
+  const DebugConsoleSetObserveOff();
+}
+
+final class DebugConsoleSetObserveGlobal extends DebugConsoleParsedInvocation {
+  const DebugConsoleSetObserveGlobal();
+}
+
+final class DebugConsoleSetObservePlayer extends DebugConsoleParsedInvocation {
+  const DebugConsoleSetObservePlayer({required this.target});
+
+  final String target;
 }

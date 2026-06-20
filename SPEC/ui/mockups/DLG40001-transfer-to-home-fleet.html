@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Transfer to Home Fleet</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.dialog{position:relative;z-index:1;width:min(94vw,560px);background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 15%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:clamp(14px,3vw,20px)}
+.dialog h3{font-family:var(--font-display);font-size:clamp(16px,2.2vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center;margin-bottom:12px}
+.transfer{display:flex;gap:12px;margin-bottom:16px}
+.col{flex:1;background:var(--surface);border:1px solid var(--border);padding:10px}.col h4{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.04em;color:var(--fg);margin-bottom:2px}.col .loc{font-size:10px;color:var(--muted);margin-bottom:8px;font-style:italic}
+.ship-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}.ship-row:last-child{border-bottom:none}.ship-row .name{flex:1}.ship-row .total{font-family:monospace;font-size:12px;color:var(--muted);margin-top:4px}
+.btn{padding:4px 10px;font-family:monospace;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:color 0.15s;min-width:32px}
+.btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.btn-minus:hover{color:var(--fg)}.btn-minus:disabled{opacity:0.3;cursor:not-allowed}
+.btn-plus{background:var(--surface-lite);border:1px solid var(--accent-dim);color:var(--accent)}.btn-plus:hover{color:var(--accent)}.btn-plus:disabled{opacity:0.3;cursor:not-allowed}
+.count{font-family:monospace;font-size:14px;font-weight:700;color:var(--fg);min-width:20px;text-align:center}
+.actions{display:flex;gap:10px;justify-content:flex-end}
+.btn-act{padding:10px 22px;font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;border:none;transition:color 0.15s}
+.btn-cancel{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-cancel:hover{color:var(--fg)}
+.btn-confirm{background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg)}.btn-confirm:hover:not(:disabled){color:var(--accent)}.btn-confirm:disabled{opacity:0.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="scrim" onclick="location.reload()"></div>
+<div class="dialog">
+  <h3>Transfer Ships to Home Fleet</h3>
+  <div class="transfer">
+    <div class="col" id="source-col">
+      <h4>Fleet 2</h4>
+      <div class="loc">London, England — Old World</div>
+      <div class="ship-row"><span class="name">Carrack</span><button class="btn btn-minus" onclick="move('source','carrack',-1)">−</button><span class="count" id="s-carrack">2</span><button class="btn btn-plus" onclick="move('source','carrack',1)">+</button></div>
+      <div class="ship-row"><span class="name">Fluyte</span><button class="btn btn-minus" onclick="move('source','fluyte',-1)">−</button><span class="count" id="s-fluyte">1</span><button class="btn btn-plus" onclick="move('source','fluyte',1)">+</button></div>
+      <div class="total" id="src-total">Total: 3 ships</div>
+    </div>
+    <div class="col">
+      <h4>Home Fleet</h4>
+      <div class="loc">London, England — Old World</div>
+      <div class="ship-row"><span class="name">Carrack</span><span class="count" id="h-carrack">1</span></div>
+      <div class="ship-row"><span class="name">Fluyte</span><span class="count" id="h-fluyte">0</span></div>
+      <div class="total" id="home-total">Total: 1 ship</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-act btn-cancel" onclick="location.reload()">Cancel</button>
+    <button class="btn btn-act btn-confirm" id="confirm" disabled onclick="location.reload()">Confirm Transfer</button>
+  </div>
+</div>
+<script>
+const counts={source:{carrack:2,fluyte:1},home:{carrack:1,fluyte:0}}
+function move(from,ship,delta){
+  const f=counts[from];const t=counts[from==='source'?'home':'source']
+  const nv=f[ship]+delta
+  if(nv<0){const v=t[ship]+(-delta);if(v<0)t[ship]=v;f[ship]=0}
+  else if(delta<0){f[ship]=nv;t[ship]-=delta}
+  else{if(nv>f[ship])return;f[ship]=nv;t[ship]-=delta}
+  if(f[ship]<0)f[ship]=0;if(t[ship]<0)t[ship]=0
+  render()
+}
+function render(){
+  document.getElementById('s-carrack').textContent=counts.source.carrack
+  document.getElementById('s-fluyte').textContent=counts.source.fluyte
+  document.getElementById('h-carrack').textContent=counts.home.carrack
+  document.getElementById('h-fluyte').textContent=counts.home.fluyte
+  document.getElementById('src-total').textContent=`Total: ${counts.source.carrack+counts.source.fluyte} ships`
+  document.getElementById('home-total').textContent=`Total: ${counts.home.carrack+counts.home.fluyte} ships`
+  const moved=counts.source.carrack<2||counts.source.fluyte<1
+  document.getElementById('confirm').disabled=!moved
+}
+render()
+</script>
+</body>
+</html>

@@ -13,6 +13,8 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
+        BaseLayerDisplayMode,
+        CtMapVisibilityMode,
         CtRegionMapComponent,
         extractionIndicatorDisplaySizePx,
         extractionIndicatorRectsForIconRect,
@@ -36,8 +38,7 @@ import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/ct_region_map_game.dart';
 import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
-import 'package:colonizethis_app/widgets/ct_region_map.dart'
-    show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
+import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 

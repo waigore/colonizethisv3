@@ -1,3 +1,9 @@
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for CivilianUnitsPanel (bottom sheet). Mirrors
 // app/lib/features/game/widgets/civilian_units_panel.dart for e2e.
 // If drift fails tests, align this file with the panel widget.
@@ -7,7 +13,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/widgets/civilian_units_sort.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 const Map<String, String> _workTargetLabels = {
@@ -24,64 +31,9 @@ const Map<String, String> _workTargetLabels = {
   kWorkTargetPurchaseLand: 'Purchase land',
 };
 
-Map<String, String> _provinceNamesByPrefixedId(Game game) {
-  final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  return out;
-}
-
-bool _isCivilianUnit(Unit unit) {
-  final role = unitRoleForType(unit.type);
-  if (role == null) return false;
-  return role != UnitRole.military && role != UnitRole.naval;
-}
-
-List<Unit> _civilianUnitsInRegion(
-  List<Unit> units,
-  String humanPlayerId,
-  Map<String, String> provinceNames,
-  Orders currentOrders,
-) {
-  final list = units
-      .where(
-        (u) =>
-            u.ownerId == humanPlayerId &&
-            u.tileKey != null &&
-            _isCivilianUnit(u),
-      )
-      .toList();
-  list.sort((a, b) {
-    final tileA = projectedCivilianTileKey(
-      unit: a,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final tileB = projectedCivilianTileKey(
-      unit: b,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final provA = Unit.provinceIdFromTileKey(tileA);
-    final provB = Unit.provinceIdFromTileKey(tileB);
-    final regionA = Unit.regionIdFromTileKey(tileA) ?? '';
-    final regionB = Unit.regionIdFromTileKey(tileB) ?? '';
-    final prefixedA = '$regionA|$provA';
-    final prefixedB = '$regionB|$provB';
-    final nameA = provinceNames[prefixedA] ?? prefixedA;
-    final nameB = provinceNames[prefixedB] ?? prefixedB;
-    final nameCmp = nameA.compareTo(nameB);
-    if (nameCmp != 0) return nameCmp;
-    final typeCmp = a.type.compareTo(b.type);
-    if (typeCmp != 0) return typeCmp;
-    return a.id.compareTo(b.id);
-  });
-  return list;
-}
+// Sort/partition helpers live in `civilian_units_sort.dart` (public). This
+// file delegates to them to keep e2e expectations aligned with the panel
+// rendering. Refs #2575.
 
 class _PendingAssignedResolution {
   const _PendingAssignedResolution({
@@ -110,7 +62,7 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
   if (regionId != null && provinceId != null) {
     final name =
         provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+    location = ' (${regionDisplayLabel(regionId)} — $name)';
   }
   final base = '$workLabel$location';
   final totalTurns = previewTotalTurnsForPendingWorkOrder(
@@ -195,7 +147,7 @@ String _locationLabel(
   if (regionId == null || provinceId == null) return '—';
   final prefixed = '$regionId|$provinceId';
   final name = provinceNames[prefixed] ?? prefixed;
-  final regionLabel = unitsPanelRegionLabel(regionId);
+  final regionLabel = regionDisplayLabel(regionId);
   return '$regionLabel — $name';
 }
 
@@ -215,7 +167,7 @@ String _assignedToLabelNonPending(
   if (regionId != null && provinceId != null) {
     final name =
         provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+    location = ' (${regionDisplayLabel(regionId)} — $name)';
   }
   final progress = cw.totalTurns > 0
       ? l10n.civilian_units_turnProgress(
@@ -283,14 +235,6 @@ void _addUnitRowTexts({
   final showActions = !isTileScope || resolvedSelectedUnitId == unit.id;
 
   out.add(unit.type);
-  if (showActions) {
-    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
-      out.add(l10n.civilian_units_assign);
-    }
-    if (_hasWork(unit, currentOrders, humanPlayerId)) {
-      out.add(l10n.common_cancel);
-    }
-  }
   out.add(l10n.civilian_units_status(statusLabel));
   out.add(
     l10n.civilian_units_location(
@@ -306,6 +250,19 @@ void _addUnitRowTexts({
     provinceNames,
     l10n,
   );
+  // Action labels render in the row card's trailing slot, after the details
+  // column (type/status/location/assignedTo) — see _UnitRow.build /
+  // CivilianUnitRowCard in civilian_units_panel_support.dart (Refs #2866 R30
+  // card layout). The Locate action is icon-only and contributes no Text, so
+  // it is intentionally omitted here (Refs #2336).
+  if (showActions) {
+    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.civilian_units_assign);
+    }
+    if (_hasWork(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.common_cancel);
+    }
+  }
 }
 
 /// In-order [Text.data] strings for [CivilianUnitsPanel] preorder traversal.
@@ -315,14 +272,14 @@ List<String> civilianUnitsPanelExpectedTexts(
 ) {
   final game = snap.game;
   final humanPlayerId = snap.humanPlayerId;
-  final provinceNames = _provinceNamesByPrefixedId(game);
-  final ow = _civilianUnitsInRegion(
+  final provinceNames = provinceNamesByPrefixedId(game);
+  final ow = civilianUnitsInRegion(
     game.worldState.oldWorld.units,
     humanPlayerId,
     provinceNames,
     snap.currentOrders,
   );
-  final nw = _civilianUnitsInRegion(
+  final nw = civilianUnitsInRegion(
     game.worldState.newWorld.units,
     humanPlayerId,
     provinceNames,
@@ -379,7 +336,11 @@ List<String> civilianUnitsPanelExpectedTexts(
   }
 
   if (scopedOw.isNotEmpty) {
-    out.add(unitsPanelRegionLabel('oldWorld'));
+    // Region section headers render via RegionSectionHeader -> CtSectionLabel
+    // under the dark editorial-monocle theme (Refs #2859 R9 / #2866 S1-S3),
+    // which upper-cases the label (`Text(text.toUpperCase())`). The expected
+    // mirror must upper-case to match the rendered Text.data (Refs #2336).
+    out.add(regionDisplayLabel('oldWorld').toUpperCase());
     for (final u in scopedOw) {
       _addUnitRowTexts(
         out: out,
@@ -400,7 +361,9 @@ List<String> civilianUnitsPanelExpectedTexts(
     }
   }
   if (scopedNw.isNotEmpty) {
-    out.add(unitsPanelRegionLabel('newWorld'));
+    // Upper-cased to match the RegionSectionHeader -> CtSectionLabel render
+    // (see oldWorld header above; Refs #2859 R9 / #2866 S1-S3 / #2336).
+    out.add(regionDisplayLabel('newWorld').toUpperCase());
     for (final u in scopedNw) {
       _addUnitRowTexts(
         out: out,

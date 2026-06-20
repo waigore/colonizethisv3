@@ -1,0 +1,36 @@
+# Logic package: validator unitsById parameter threading (repo lint)
+
+**SPEC/program** — Enforces Refs [#2836](https://github.com/waigore/colonizethisv3/issues/2836) AC 3 guidance: order-suggestion and validation helpers under `packages/colonizethis_orders/lib/src/orders/` thread the canonical `OrderResolutionContext` record (`view` + `unitsById` + `provinceById`) instead of accepting `Map<String, Unit> unitsById` as a free-standing function parameter. The cached per-pass snapshots flow through one shared record so probe loops do not rebuild equivalent maps and so candidate validation reuses the validated context already built by the engine entry point.
+
+## Policy
+
+- **Canonical typedef:** `packages/colonizethis_orders/lib/src/orders/order_resolution_context.dart` defines the `OrderResolutionContext` record and the two builders (`buildOrderResolutionContext`, `orderResolutionContextFromView`). The record itself ships a `Map<String, Unit> unitsById` field; that single declaration is intentionally exempt from the budget below.
+- **Elsewhere under** `packages/colonizethis_orders/lib/src/orders/`: helpers and validators should accept `OrderResolutionContext` (or an internal context object built from it) rather than taking `Map<String, Unit> unitsById` as a function parameter.
+- **Class fields not counted:** `final Map<String, Unit> unitsById;` declarations on internal classes such as `IncrementalCandidateValidator` and `WorkOrderValidator` represent constructor-bound state, not parameter threading. They are not counted by this checker; their migration is orthogonal and tracked separately.
+- **Out of scope:** Test files and Dart code outside `packages/colonizethis_orders/lib/src/orders/`. Order-application phase helpers under `lib/src/turn/phases/` still build `OrderResolutionContext` inline via `orderResolutionContextFromView` when calling into `orders/` helpers.
+
+## CI rule
+
+| Field | Value |
+|-------|--------|
+| `rule_id` | `repo.logic_validator_units_params` |
+| Checker | `tool/check_logic_validator_units_params.dart` |
+| Scan root | `packages/colonizethis_orders/lib/src/orders/` (non-generated `.dart` only) |
+| Excluded file | `packages/colonizethis_orders/lib/src/orders/order_resolution_context.dart` |
+| Pattern | `Map<String, Unit> unitsById` followed by `,` or `)` (function-parameter declaration). Lines starting with `final ` (class field) or `//` / `///` (comment) are skipped. |
+| Budget | At most **2** physical source lines (total) outside the excluded file may contain a matching `Map<String, Unit> unitsById` function-parameter declaration. |
+
+Raising the budget requires a SPEC update in this file and a maintainer-reviewed PR (same PR as the checker constant change). Lowering the budget tracks the smallest value the latest audit confirms is achievable; future migration of more helpers to `OrderResolutionContext` should drop the budget further in the same PR.
+
+## Audit history
+
+- Refs #2836 AC 3 (initial PR): migrated `firstLegalBundledEntryTileKeyInProvince` and `validateCivilianBundledWorkMoveLeg` in `orders/bundled_civilian_work_order.dart` to accept `OrderResolutionContext`, lowering the budget from **12 → 10**.
+- Refs #2836 AC 3 (this PR): migrated `buildWorkOrderValidationContext` and `createWorkOrderValidator` in `orders/validator_bundle.dart` to accept `OrderResolutionContext`, lowering the budget from **10 → 8**. The work-order probe layer now reuses the same per-pass snapshot the engine entry-point already built; the two `IncrementalCandidateValidator` call sites (`isWorkAccepted`, `_ensurePostWorkPrefixState`) construct the record verbatim from their class-field `view` + `unitsById` so per-suggestion-pass throughput is unchanged. Remaining 8 hits live in `validator_bundle.dart` (1 — `createOrderValidators`, kept on the legacy signature because the public `OrderValidatorFactory` typedef in `order_engine.dart` still threads `view` + `unitsById` positionally), `order_engine.dart` (4 including the typedef itself), `orders_application.dart` (2), and `validators/move_validator.dart` (1). Threading the record into the `OrderValidatorFactory` typedef and the engine validation phases is tracked as follow-up.
+- Refs #2836 AC 3 (this PR — follow-up slice): migrated `MoveValidator.validate` in `orders/validators/move_validator.dart` to accept `OrderResolutionContext` in place of free-standing `Map<String, Unit> unitsById` + `PlayerView view` parameters, lowering the budget from **8 → 7**. Production callers updated: `bundled_civilian_work_order.dart` (passes its already-built `resolution`), `incremental_candidate_validator.dart` (new per-pass cached `_orderResolutionContext()` getter mirrors `_factionMembership()` / `_armiesById()`), and `order_engine.dart` (`_runMovePhase` builds one `moveContext` per phase via `orderResolutionContextFromView` and threads it through every per-move probe). The `OrderValidatorFactory` typedef and other engine surface still thread `view` + `unitsById` positionally — those are tracked as separate follow-ups. Remaining 7 hits live in `validator_bundle.dart` (1 — `createOrderValidators`), `order_engine.dart` (4), and `orders_application.dart` (2).
+- Refs #2836 AC 3 (this PR — engine entry-point slice): migrated the public `OrderValidatorFactory` typedef and the default `_defaultOrderValidatorFactory` in `orders/order_engine.dart`, plus `createOrderValidators` in `orders/validator_bundle.dart`, to accept the canonical `OrderResolutionContext resolution` record in place of free-standing `PlayerView view` + `Map<String, Unit> unitsById` parameters. The engine entry point now builds **one** per-pass `resolution` snapshot in `validatePlayerOrdersWithContext` and threads it through `_runOrderValidationPhases` → `_runMovePhase` and through every validator-factory invocation so refresh-bundle-per-phase rebuilds share the same `view`+`unitsById` references. Test factories in `order_engine_validator_injection_test.dart` and `validator_bundle_test.dart` were updated to match. Budget lowered from **7 → 2**. Remaining 2 hits both live in `orders_application.dart` (`_resolveCounterSpyTick`, `_advanceWorkUnitTick`); both are work-resolution mutation paths that destructively edit the `unitsById` map per-tick, which is fundamentally incompatible with the immutable per-pass `OrderResolutionContext` record. Migrating those would require a different abstraction (mutable work-tick ledger) and is out of scope for this SPEC.
+
+## Acceptance criteria
+
+- Given the repository at `dev` with `packages/colonizethis_orders/lib/src/orders/**` sources, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_validator_units_params`, then the checker counts matching `Map<String, Unit> unitsById` function-parameter declarations outside `order_resolution_context.dart` and the run passes when the count is at most 2.
+- Given a contributor adds a 3rd matching line outside `order_resolution_context.dart` without updating the budget in this SPEC and the checker constant, when repo lint runs, then the run fails and lists each `path:line` hit.
+- Given a contributor declares `final Map<String, Unit> unitsById;` as a class field inside `lib/src/orders/`, when repo lint runs, then the checker does **not** count the field and the rule passes if the function-parameter total is within budget.

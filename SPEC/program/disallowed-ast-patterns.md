@@ -170,6 +170,153 @@ decoupled from logic internals behind narrow contracts.
 
 Rule id: `debug_console_logic_contract_boundary` (`match.kind`:
 `scoped_package_import_contract`).
+
+### List-as-queue `queue.removeAt(0)` in `colonizethis_logic` sources
+
+In `packages/colonizethis_logic/lib/src/**`, a method invocation
+**`queue.removeAt(0)`** (receiver is the simple identifier `queue`, method
+`removeAt`, literal `0`) is disallowed.
+
+Rationale: using a growable `List` as a FIFO frontier makes each dequeue **O(n)**
+in the frontier size; **`dart:collection` `Queue.removeFirst()`** keeps
+breadth-first expansion **O(1)** per tile.
+
+Rule id: `logic_lib_list_queue_remove_at_zero` (`match.kind`:
+`simple_receiver_remove_at_zero`, `match.receiver_identifier`: `queue`,
+`match.relative_path_prefix`: `packages/colonizethis_logic/lib/src/`).
+
+### Linear province lookups via `.provinces.where(...).firstOrNull`
+
+In `packages/colonizethis_logic/lib/src/**`, chaining a `.where(...)` filter on
+a `.provinces` collection followed by the `.firstOrNull` getter is disallowed.
+This includes nested receivers such as `region.provinces.where(...).firstOrNull`
+or `game.worldState.oldWorld.provinces.where(...).firstOrNull`.
+
+Rationale: scanning the full province list to find one entry is **O(P)** per
+lookup and easily becomes **O(P·N)** inside hot loops. Use the O(1) province
+lookup helpers in `world/province_lookup.dart` (`tryGetProvince`,
+`getProvince`, `tryGetProvinceByRegion`, `tryGetProvinceByRegion`) keyed by the
+canonical full province id (`regionId|localId`) instead. See
+`SPEC/program/world-model.md` and the world-state lookup helpers.
+
+Rule id: `prohibited_linear_province_lookup` (`match.kind`:
+`linear_collection_where_first_or_null`, `match.collection_names`:
+`provinces`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/src/`).
+
+### Linear unit/army/fleet lookups via `.units`/`.armies`/`.fleets` + `.where(...).firstOrNull`
+
+In `packages/colonizethis_logic/lib/src/**`, chaining a `.where(...)` filter on
+a `.units`, `.armies`, or `.fleets` collection followed by the `.firstOrNull`
+getter is disallowed (same structural match as province linear scans).
+
+Rationale: id-keyed lookups on world-state entity lists belong in **O(1) maps**
+built once per outward scope (see `SPEC/program/order-suggestions.md` throughput
+bounds and issue #2394 Category C). Reintroducing `.where(...).firstOrNull` on
+those collections in hot paths risks **O(n)** per probe inside nested loops.
+
+Rule id: `prohibited_linear_units_armies_fleets_lookup` (`match.kind`:
+`linear_collection_where_first_or_null`, `match.collection_names`: `units`,
+`armies`, `fleets`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/src/`).
+
+### Incremental validator construction inside loops (`colonizethis_logic`)
+
+In `packages/colonizethis_logic/lib/src/**`, calling
+`IncrementalCandidateValidator.forPlayer(...)` or
+`buildIncrementalCandidateValidator(...)` inside a `for` / `for-in` / `while` /
+`do-while` loop body is disallowed.
+
+Rationale: each construction pays a full `buildPlayerView` / units index /
+membership setup. Hot suggestion paths must build **one** validator per pass
+(or hoist before the loop) and rebind with `forBasePrefix` when the trial
+`Orders` prefix changes. See `SPEC/program/order-suggestions.md` § Throughput
+bounds (Refs #2394).
+
+Rule id: `prohibited_incremental_validator_per_item` (`match.kind`:
+`incremental_validator_for_player_in_loop`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/src/`).
+
+### Redundant `.where(...).toList().where(...)` chains
+
+In runtime domain code, chaining `.where(...).toList().where(...)` is
+disallowed. The intermediate `.toList()` allocates a `List` that the trailing
+`.where(...)` only re-iterates lazily; collapsing into one combined predicate
+(`.where((x) => predA(x) && predB(x))`) or a single-pass accumulator
+eliminates the wasted allocation **and** the duplicate scan.
+
+The check matches the direct chained form only: a `MethodInvocation` whose
+`methodName` is `where` and whose target is `<expr>.where(...).toList()`.
+Statement-level reassignment (`ys = ys.where(...).toList(); ys = ys.where(...).toList();`)
+and lazy `.where(...).where(...)` chains without an intermediate `.toList()`
+are intentionally **not** flagged by this rule.
+
+Rationale: an Expando-style audit of `app/lib/` hot paths (Refs #2575
+Phase 5) found that direct `.where(...).toList().where(...)` chains were the
+worst case for `build()`-time wasted iteration — the consolidation work in
+#2575 Phases 1–4 removed every then-extant chain, and this rule prevents
+silent regression. Statement-level reassignment patterns remain on the
+follow-up list because they require flow-sensitive analysis to distinguish
+legitimate “narrow then partition” patterns from genuine redundant filtering.
+
+Rule id: `redundant_where_to_list_where_chain` (`match.kind`:
+`redundant_where_to_list_where_chain`).
+
+### Nested `Game.copyWith(worldState: ...)` chains in `colonizethis_logic`
+
+In `packages/colonizethis_logic/lib/**`, a `copyWith(worldState: …)`
+invocation that anchors a chain **three or more `copyWith` levels deep** is
+disallowed:
+
+- Level 1 is the outer `<expr>.copyWith(worldState: <inner>)`.
+- Level 2 is `<inner>` resolving to `<expr2>.copyWith(<named-args>)`.
+- Level 3 is any named-argument value inside the level-2 call that itself
+  resolves to a `<expr3>.copyWith(…)` invocation.
+
+Two-level chains
+(`game.copyWith(worldState: world.copyWith(oldWorld: ow))`) remain allowed so
+straight-line single-field updates do not pay an indirection cost. Deeper
+chains must funnel through the shallow mutation helpers in
+`packages/colonizethis_logic/lib/src/world/game_world_mutations.dart`
+(`Game.updateWorldState(...)`, `WorldState.updateTurnState(...)`) so each call
+site stays at one mutation level. The level-3 detection only fires when the
+inner-argument value is **directly** a `.copyWith(...)` invocation, not when
+a `.copyWith(...)` call appears inside a container (for example a list
+literal or function call argument).
+
+Rationale: deep `Game.copyWith(worldState: ws.copyWith(turnState: ts.copyWith(...)))`
+nesting hides which fields are mutated, encourages partial / inconsistent
+state copies, and was the dominant smell flagged by **Refs #2560**. The
+established mutation helpers express the same update one level at a time
+and read top-to-bottom at the call site.
+
+Rule id: `nested_world_state_copywith` (`match.kind`:
+`nested_world_state_copywith`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/`, `match.outer_argument_name`:
+`worldState`).
+
+### Full production-recipe-catalog scans in `colonizethis_ai`
+
+In `packages/colonizethis_ai/lib/**`, accessing the static member
+**`ProductionRecipesCatalog.all`** is disallowed. AI planning must resolve
+recipes through the O(1) indexes **`ProductionRecipesCatalog.producing(commodityId)`**
+(output index) or **`ProductionRecipesCatalog.byId[recipeId]`** (id index)
+instead of iterating the whole catalog per commodity / per turn.
+
+Rationale: per-turn AI planning runs inside the 15-second next-turn-resolution
+budget. A full `ProductionRecipesCatalog.all` scan is `O(recipes)` per lookup
+and, in hot feedstock/market loops, easily becomes `O(recipes × commodities)`
+per player per turn. The index conversions in Refs #3288 removed every
+output-keyed full scan from the economy and treasury planners; this rule
+prevents silent regression. A genuine all-recipes loop (for example labour
+allocation that must score every feasible recipe, not look one up by output)
+may suppress with an inline `// ignore: disallowed_ast_ai_full_recipe_catalog_scan`
+and a rationale comment.
+
+Rule id: `ai_full_recipe_catalog_scan` (`match.kind`: `static_member_access`,
+`match.type_name`: `ProductionRecipesCatalog`, `match.member_name`: `all`,
+`match.relative_path_prefix`: `packages/colonizethis_ai/lib/`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -287,3 +434,142 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   **when** the disallowed AST checker runs, **then** it reports at least one
   `debug_console_logic_contract_boundary` violation with the correct file and
   line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that calls `queue.removeAt(0)`,
+  **when** the disallowed AST checker runs, **then** it reports at least one
+  violation for `logic_lib_list_queue_remove_at_zero` with the correct file
+  and line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that dequeues with
+  `queue.removeFirst()` on a `Queue`, **when** the disallowed AST checker runs,
+  **then** it does not report a `logic_lib_list_queue_remove_at_zero`
+  violation for that call.
+
+- **Given** runtime Dart source outside
+  `packages/colonizethis_logic/lib/src/` that calls `queue.removeAt(0)`,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `logic_lib_list_queue_remove_at_zero` violation for that call.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that chains
+  `<receiver>.provinces.where((p) => ...).firstOrNull` (where `<receiver>` is
+  a `RegionData`, `WorldState`, or any expression whose `.provinces` getter
+  returns a province list), **when** the disallowed AST checker runs, **then**
+  it reports at least one violation for `prohibited_linear_province_lookup`
+  with the correct file and line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that uses
+  `tryGetProvince(world, fullId)` or another O(1) province lookup helper
+  instead of `.provinces.where(...).firstOrNull`, **when** the disallowed AST
+  checker runs, **then** it does not report a
+  `prohibited_linear_province_lookup` violation for that lookup.
+
+- **Given** runtime Dart source outside
+  `packages/colonizethis_logic/lib/src/` that chains
+  `.provinces.where(...).firstOrNull`, **when** the disallowed AST checker
+  runs, **then** it does not report a `prohibited_linear_province_lookup`
+  violation for that chain.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that filters provinces but consumes
+  the result as an `Iterable` (for example
+  `region.provinces.where((p) => p.ownerId == playerId)` without
+  `.firstOrNull`), **when** the disallowed AST checker runs, **then** it does
+  not report a `prohibited_linear_province_lookup` violation for that
+  expression.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that chains
+  `<receiver>.units.where((u) => ...).firstOrNull`,
+  `<receiver>.armies.where((a) => ...).firstOrNull`, or
+  `<receiver>.fleets.where((f) => ...).firstOrNull`, **when** the disallowed
+  AST checker runs, **then** it reports at least one violation for
+  `prohibited_linear_units_armies_fleets_lookup` with the correct file and
+  line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that resolves a unit, army, or fleet
+  by id via a map or other O(1) structure (not `.where(...).firstOrNull` on
+  `.units`/`.armies`/`.fleets`), **when** the disallowed AST checker runs,
+  **then** it does not report a
+  `prohibited_linear_units_armies_fleets_lookup` violation for that lookup.
+
+- **Given** runtime Dart source that chains
+  `<expr>.where(...).toList().where(...)` (the trailing `.where(...)` is the
+  receiver call after the intermediate `.toList()`), **when** the disallowed
+  AST checker runs, **then** it reports at least one violation for
+  `redundant_where_to_list_where_chain` with the correct file and line.
+
+- **Given** runtime Dart source that chains `<expr>.where(...).where(...)`
+  with **no** intermediate `.toList()` between the two `.where(...)` calls,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `redundant_where_to_list_where_chain` violation for that chain.
+
+- **Given** runtime Dart source that reassigns a list across statements via
+  `ys = ys.where(...).toList();` followed by `ys = ys.where(...).toList();`,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `redundant_where_to_list_where_chain` violation (this rule targets the
+  direct expression chain only).
+
+- **Given** runtime Dart source that includes
+  `// ignore: disallowed_ast_redundant_where_to_list_where_chain` on the
+  violating line or the line above, **when** the disallowed AST checker
+  runs, **then** it does not report that violation for
+  `redundant_where_to_list_where_chain`.
+
+- **Given** runtime Dart source under `packages/colonizethis_logic/lib/`
+  that chains
+  `game.copyWith(worldState: ws.copyWith(oldWorld: ow.copyWith(...)))`
+  (three nested `copyWith` levels through the outer `worldState:` named
+  argument), **when** the disallowed AST checker runs, **then** it reports
+  at least one violation for `nested_world_state_copywith` with the correct
+  file and line.
+
+- **Given** runtime Dart source under `packages/colonizethis_logic/lib/`
+  that chains a two-level `game.copyWith(worldState: ws.copyWith(turn: 1))`
+  update only, **when** the disallowed AST checker runs, **then** it does
+  not report a `nested_world_state_copywith` violation for that call.
+
+- **Given** runtime Dart source under `packages/colonizethis_logic/lib/`
+  that calls `game.copyWith(worldState: updateWorldState(ws))` (outer
+  `copyWith` argument is a function-call result, not a `copyWith`
+  invocation), **when** the disallowed AST checker runs, **then** it does
+  not report a `nested_world_state_copywith` violation for that call.
+
+- **Given** runtime Dart source outside `packages/colonizethis_logic/lib/`
+  that chains
+  `game.copyWith(worldState: ws.copyWith(oldWorld: ow.copyWith(...)))`,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `nested_world_state_copywith` violation for that chain.
+
+- **Given** runtime Dart source that includes
+  `// ignore: disallowed_ast_nested_world_state_copywith` on the violating
+  line or the line above, or a file-level
+  `// ignore_for_file: disallowed_ast_nested_world_state_copywith` marker,
+  **when** the disallowed AST checker runs, **then** it does not report
+  that violation for `nested_world_state_copywith`.
+
+- **Given** runtime Dart source under `packages/colonizethis_ai/lib/`
+  that accesses `ProductionRecipesCatalog.all`, **when** the disallowed AST
+  checker runs, **then** it reports at least one violation for
+  `ai_full_recipe_catalog_scan` with the correct file and line.
+
+- **Given** runtime Dart source under `packages/colonizethis_ai/lib/`
+  that resolves recipes via `ProductionRecipesCatalog.producing(commodityId)`
+  or `ProductionRecipesCatalog.byId[recipeId]` instead of `.all`, **when** the
+  disallowed AST checker runs, **then** it does not report an
+  `ai_full_recipe_catalog_scan` violation for that access.
+
+- **Given** runtime Dart source outside `packages/colonizethis_ai/lib/`
+  that accesses `ProductionRecipesCatalog.all`, **when** the disallowed AST
+  checker runs, **then** it does not report an `ai_full_recipe_catalog_scan`
+  violation for that access.
+
+- **Given** runtime Dart source under `packages/colonizethis_ai/lib/`
+  that accesses `ProductionRecipesCatalog.all` with
+  `// ignore: disallowed_ast_ai_full_recipe_catalog_scan` on the violating
+  line or the line above, **when** the disallowed AST checker runs, **then**
+  it does not report that violation for `ai_full_recipe_catalog_scan`.

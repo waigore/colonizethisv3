@@ -158,6 +158,51 @@ void main() {
       expect(snap.opportunities.weakNeighbors.length, 1);
     });
 
+    test(
+      'with prefixed combined topology: invadable and adjacent owners resolve',
+      () {
+        const r = 'oldWorld';
+        final view = _view(
+          playerId: 'gp1',
+          provincesById: {
+            '$r|p1': Province(id: 'p1', regionId: r, ownerId: 'gp1', displayName: 'P1'),
+            '$r|p2': Province(id: 'p2', regionId: r, ownerId: 'gp2', displayName: 'P2'),
+            '$r|p3': Province(id: 'p3', regionId: r, ownerId: 'minor1', displayName: 'M1'),
+          },
+        );
+        final topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: '$r|p1',
+              regionId: r,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: '$r|p2',
+              regionId: r,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: '$r|p3',
+              regionId: r,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [
+            TopologyEdge(id1: '$r|p1', id2: '$r|p2'),
+            TopologyEdge(id1: '$r|p1', id2: '$r|p3'),
+          ],
+        );
+        final snap = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+        expect(snap.conquest.invadableProvinceIdsSorted, contains('$r|p2'));
+        expect(snap.conquest.invadableProvinceIdsSorted, contains('$r|p3'));
+        expect(
+          snap.conquest.adjacentOwnerFactionIdsSorted,
+          containsAll(['gp2', 'minor1']),
+        );
+      },
+    );
+
     test('richUnexploitedProvinces counts unclaimed and others with development', () {
       const r = 'oldWorld';
       final view = _view(

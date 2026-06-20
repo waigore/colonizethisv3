@@ -91,5 +91,37 @@ void f() {
       );
       expect(violations, isEmpty);
     });
+
+    test(
+      'skips hand-maintained app l10n part files (display labels may '
+      'coincide with civilian unit type ids)',
+      () {
+        const src = r'''
+mixin _AppLocalizationsEnStrings2 on AppLocalizations {
+  @override
+  String get example_role_label => 'Builder';
+}
+''';
+        for (final relPath in <String>[
+          'app/lib/l10n/app_localizations_en_part1.dart',
+          'app/lib/l10n/app_localizations_en_part2.dart',
+          'app/lib/l10n/app_localizations_en_part3.dart',
+          'app/lib/l10n/app_localizations_en_part4.dart',
+          'app/lib/l10n/app_localizations_en_part5.dart',
+        ]) {
+          final violations = findCivilianUnitTypeConstantViolations(
+            relativePath: relPath,
+            source: src,
+            canonicalCivilianUnitTypeIds: canonicalCivilianUnitTypeIds,
+            constantNameById: constantNameById,
+          );
+          expect(
+            violations,
+            isEmpty,
+            reason: 'expected $relPath to be skipped by the l10n carve-out',
+          );
+        }
+      },
+    );
   });
 }

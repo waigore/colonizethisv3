@@ -2,23 +2,15 @@
 
 ## Rule routing (summary)
 
-Authoritative index: **`AGENTS.md`** (“Rule location” / tables). Rules live in **`.cursor/rules/*.mdc`**. When scanning `app/` or `packages/<pkg>/lib/**`:
+Use the canonical routing map at `.cursor/rules/routing-index.md` for:
 
-| Concern | Typical rule file |
-|---------|-------------------|
-| SPEC-first, doc boundaries | `colonizethis-spec-required.mdc` |
-| Flutter vs Flame, typing, logging, province ids, `AppEventBus` | `colonizethis-core-principles.mdc` |
-| Logic ↔ AI dependency direction | `colonizethis-logic-ai-decoupling.mdc` |
-| Folders, extraction, naming | `colonizethis-component-structure.mdc` |
-| Review checklist | `colonizethis-code-review.mdc` |
-| Widget/Flame lifecycle | `colonizethis-lifecycle.mdc` |
-| Tests, coverage expectations | `colonizethis-testing.mdc` |
-| E2E / integration tests | `colonizethis-e2e-ui-stability.mdc` |
-| UI specs / widgets | `colonizethis-ui-design.mdc` |
-| Assets / pubspec | `colonizethis-assets.mdc` |
-| AC quality in SPEC | `colonizethis-acceptance-criteria.mdc` |
+- applicability matrix (which rules apply in each context),
+- precedence (always-applied baseline + context overlays), and
+- non-duplication expectations for pointers vs policy text.
 
-Read the **frontmatter `globs`** on each `.mdc` when unsure; multiple rules can apply additively.
+Normative policy wording lives only in `.cursor/rules/*.mdc`. OpenCode references should link to those files instead of restating policy clauses.
+
+**Player-app UI structure** (screen IDs, layout/behavior/variants, Widgetbook contracts): `colonizethis-ui-documentation.mdc`. **Style/pixel-art:** `colonizethis-ui-design.mdc`. Implementation/docs workflow: `.opencode/skills/document-app-ui/SKILL.md` (Cursor: `.cursor/skills/document-app-ui/SKILL.md`).
 
 ## Existing CI gates (extension points)
 

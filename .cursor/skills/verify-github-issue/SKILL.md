@@ -1,82 +1,74 @@
 ---
 name: verify-github-issue
-description: Verifies one open GitHub issue against acceptance criteria, specs, tests, and CONTRIBUTING workflow; uses the gh CLI directly to read the issue and post a consolidated verification comment; proposes concrete gap fixes when work is incomplete. Use when the user gives an issue number or issue URL and wants verification or gap analysis aligned with dev-branch PRs.
+description: Verifies one open GitHub issue against acceptance criteria, specs, tests, and CONTRIBUTING; posts a verification comment via gh. UI issues require passing widget goldens on latest dev with PNG proof uploaded to the issue (hard-fail if goldens cannot be captured or fix is not merged). Never relabels issues.
 ---
 
 # Verify a GitHub issue (ColonizeThis)
 
 ## When this applies
 
-The user supplies an **issue reference**: issue **number** (e.g. `42`) and repo context if not obvious, or a **full issue URL**. If they only give a GitHub **username**, ask whether they meant an **issue number/URL** or assignee-based triage.
+Issue **number** or **URL**. If only a GitHub username is given, ask for issue number/URL.
 
-## Non-negotiables (repo policy)
+## Policy
 
-Follow **[AGENTS.md](../../../AGENTS.md)** (Cursor rules under `.cursor/rules/`) and **[CONTRIBUTING.md](../../../CONTRIBUTING.md)** for all implementation and PR guidance.
+Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONTRIBUTING.md)**. SPEC-first. PRs target **`dev`**.
 
-**Hard failures to avoid** (treat as checklist, not suggestions):
+**Hard-fail** (never **Complete**):
 
-- Skipping or hand-waving **acceptance criteria** from the issue (and linked **SPEC** ACs if referenced).
-- Claiming “done” without **tests** that cover the change and meet coverage gates (**90%** logic/ai/map; **80%** elsewhere — see `colonizethis-testing.mdc` and CONTRIBUTING).
-- Opening or describing a PR that does **not** target **`dev`** (default branch for PRs per CONTRIBUTING).
+- ACs hand-waved or untested (coverage: 90% logic/ai/map, 80% elsewhere).
+- Fix not on **`origin/dev`** (local-only or unmerged PR).
+- **UI issue** without passing widget golden + PNG proof on the issue comment.
+- Any golden test failure, missing golden mapping for a visual AC, or gist upload/embed failure.
 
-Also respect **SPEC-first** (`colonizethis-spec-required.mdc`): no behavior that contradicts GDD/TDD; extend SPEC before implementing unauthorized scope.
-
-## GitHub CLI (`gh`) — required path
-
-Use the **`gh`** binary **directly** from the workspace repo clone. Issue **read** uses **`gh issue view`**; posting the verification uses **`gh issue comment`**.
+**Never** change labels, milestones, or issue state — **`gh issue comment` only**.
 
 ## Workflow
 
-1. **Load the issue**  
-   Run **`gh issue view <n> --json title,body,labels,state,url`** (add **`--repo owner/name`** when the issue is not on the clone’s default remote). Confirm state is **open**.
+1. `gh issue view <n> --json title,body,labels,state,url` — issue must be open.
+2. Extract ACs from body/comments; flag vague ACs before claiming complete.
+3. **`git fetch origin && git checkout dev && git pull`** — verify only on **latest `dev`**. Unmerged or local-only work → **Gaps remain**.
+4. Map ACs → code, SPEC, tests, merged PR(s) referencing the issue.
+5. Run relevant tests (`melos`, `cd app && flutter test …`).
+6. **UI issues** (see below): widget golden procedure + gist upload.
+7. `gh issue comment <n> --body-file …` using the template below.
 
-2. **Extract requirements**  
-   From the issue body (and comments): goals, **acceptance criteria**, links to SPEC/files, edge cases. If ACs are missing or vague, **state that gap** and propose minimal AC text before claiming full verification.
+### UI issues
 
-3. **Trace to code and specs**  
-   Search the repo for implementations, related PRs/commits, and SPEC sections. Map each AC item to: implemented / partial / missing / unknown.
+**UI** = references `SPEC/ui/` or screen registry / IDs, user-visible ACs (CONTRIBUTING § UI changes), or merged player-app UI code under `app/lib/features|widgets|ui` / `app/lib/features/game/flame/`.
 
-4. **Verify tests and quality gates**  
-   Identify or run relevant tests (`melos`, `flutter test` per project conventions in AGENTS/testing rule). Note coverage expectations from CONTRIBUTING; flag if tests are absent or clearly insufficient.
+**Exempt:** ctdev-only surfaces (`SPEC/program/ctdev-app.md`).
 
-5. **Branch and PR posture**  
-   Any fix must be described as a PR **into `dev`**, following CONTRIBUTING pre-PR checklist (SPEC/AC updates, logging alignment if applicable, coverage).
+**Proof:** widget `matchesGoldenFile` only — not integration screenshots, e2e text snapshots, or Widgetbook.
 
-6. **Post the verification on GitHub**  
-   **Always** publish the result as an **issue comment** on that issue (same number/repo as step 1) using **`gh issue comment`**: `gh issue comment <n> --body-file <path>` or `gh issue comment <n> --body "<markdown>"`. Use **`--repo owner/name`** when the issue is not on the clone’s default remote.
+1. `rg 'matchesGoldenFile' app/test --glob '*_test.dart' -l`
+2. Map **each visual AC to the letter of the issue** to a passing golden (one golden may cover several ACs). No mappable golden → **Gaps remain**; remedy: add host test in `app/test/` + PNG in `app/test/goldens/` (package UI → host in `app/test/`).
+3. `cd app && flutter test test/<file>.dart` — no `--update-goldens`. Fail or missing PNG → **Gaps remain**.
+4. Copy passing PNGs to `tmp/verify-issue-<n>/`, upload via **`gh gist create --public`**, embed raw URLs (`https://gist.githubusercontent.com/OWNER/GIST_ID/raw/<file>.png`) in the comment. Upload/embed failure → **Gaps remain**. Delete `tmp/verify-issue-<n>/` after posting.
 
-7. **Comment body**
+Follow existing golden patterns: `AppThemes.editorialMonocle`, `suppressLogsForTests()`, deterministic fixtures (`province_build_improvement_shortcut_host_goldens_test.dart`, `region_map_*_test.dart`).
 
-   **If there are gaps**  
-   - List each gap with severity (blocks “verified complete” vs follow-up).  
-   - Propose a **concrete** remedy: files to touch, SPEC updates, test cases, and PR scope.
-
-   **If fully addressed**  
-   - Summarize evidence: AC → implementation → tests → target branch (`dev`).
-
-   In both cases, use a neutral, factual tone. The **only** required GitHub write for this skill is the verification **comment**—not labels, milestones, or issue state.
-
-## Verification comment template
-
-Use a neutral, factual tone:
+## Comment template
 
 ```markdown
 **Verification** (ACs / SPEC / tests)
 
-- [AC summary bullets tied to code/tests; mark partial/missing where applicable]
+- [AC bullets → code/tests; partial/missing marked]
 
-Implementation: [PR link or commit refs if known]. Tests: [what was run / added]. PR targets `dev` per CONTRIBUTING.
+Implementation: [merged PR on `dev`]. Tests: [commands run].
+
+**Visual proof** (UI only)
+
+| AC | Golden test | PNG |
+|----|-------------|-----|
+| … | `app/test/<file>.dart` | ![…](https://gist.githubusercontent.com/OWNER/GIST_ID/raw/file.png) |
+
+`dev` @ `<sha>` — golden run **pass**.
 
 Outcome: [Complete | Gaps remain — see above].
 ```
 
-If some work exists but is not merged yet, state that verification is **conditional on merge** and list what must land before a “complete” outcome.
+**Complete** only when ACs are met on **merged `dev`**, tests pass, and UI proof is embedded. Unmerged PR → **Gaps remain**.
 
 ## Tools
 
-- **`gh`** for GitHub: `gh issue view`, **`gh issue comment`**.  
-- Repo search and test commands per AGENTS/CONTRIBUTING; do not invent branch or review policy.
-
-## Additional resources
-
-- [reference.md](reference.md) — CONTRIBUTING/AGENTS excerpts and command hints
+`gh` (issue view/comment, gist create), `rg`, `cd app && flutter test`, `curl -sfI` (gist URLs). Commands: [reference.md](reference.md).

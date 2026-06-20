@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Grant or Subsidy</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --danger: oklch(58% 0.16 22);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.dialog{position:relative;z-index:1;width:min(88vw,340px);background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 20%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.dialog h3{font-family:var(--font-display);font-size:clamp(17px,2.3vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center}
+.treasury-info{font-family:var(--font-body);font-size:12px;color:var(--muted);text-align:center}
+.stepper{display:flex;align-items:center;gap:14px}
+.stepper .btn{padding:8px 14px;font-family:monospace;font-size:16px;font-weight:700;cursor:pointer;border:none;transition:color 0.15s;min-width:40px}
+.stepper .btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.stepper .btn-minus:hover:not(:disabled){color:var(--fg)}.stepper .btn-minus:disabled{opacity:0.3;cursor:not-allowed}
+.stepper .btn-plus{background:var(--surface-lite);border:1px solid var(--accent-dim);color:var(--accent)}.stepper .btn-plus:hover:not(:disabled){color:var(--accent)}.stepper .btn-plus:disabled{opacity:0.3;cursor:not-allowed}
+.amount{font-family:var(--font-display);font-size:clamp(22px,3vw,28px);font-weight:700;color:var(--fg);letter-spacing:0.04em;min-width:80px;text-align:center}
+.warning{font-size:11px;color:var(--danger);font-style:italic}
+.divider-thin{width:100%;height:1px;background:var(--border)}
+.actions{display:flex;gap:10px;justify-content:center;width:100%}
+.btn-act{padding:10px 22px;font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;border:none;transition:color 0.15s}
+.btn-cancel{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-cancel:hover{color:var(--fg)}
+.btn-submit{background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg)}.btn-submit:hover:not(:disabled){color:var(--accent)}.btn-submit:disabled{opacity:0.4;cursor:not-allowed}
+/* Variants */
+.vars{position:fixed;bottom:10px;right:10px;z-index:10;display:flex;gap:4px}
+.vars button{padding:4px 10px;border:1px solid var(--border);background:var(--bg-deep);color:var(--muted);font-family:monospace;font-size:10px;cursor:pointer}.vars button:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="scrim" onclick="location.reload()"></div>
+<div class="dialog">
+  <h3 id="title">Grant aid</h3>
+  <p class="treasury-info" id="treasury">Treasury: &#xa3;8,400 &nbsp; Step: &#xa3;500</p>
+  <div class="divider-thin"></div>
+  <div class="stepper">
+    <button class="btn btn-minus" id="minus" onclick="adjust(-1)">&#x2212;</button>
+    <span class="amount" id="amt">&#xa3;1,000</span>
+    <button class="btn btn-plus" id="plus" onclick="adjust(1)">+</button>
+  </div>
+  <p class="warning" id="warning" style="display:none">Treasury below minimum &#xa3;500.</p>
+  <div class="actions">
+    <button class="btn btn-act btn-cancel" onclick="location.reload()">Cancel</button>
+    <button class="btn btn-act btn-submit" id="submit" onclick="location.reload()">Submit</button>
+  </div>
+</div>
+<div class="vars">
+  <button onclick="setMode('grant','normal')">Grant (OK)</button>
+  <button onclick="setMode('subsidy','normal')">Subsidy (OK)</button>
+  <button onclick="setMode('grant','poor')">Grant (low)</button>
+</div>
+<script>
+let step=500, treasury=8400, amount=1000, isSubsidy=false
+const poorTreasure=200
+function render(){
+  document.getElementById('title').textContent=isSubsidy?'Set subsidy':'Grant aid'
+  document.getElementById('treasury').textContent=`Treasury: \u00a3${treasury.toLocaleString()}   Step: \u00a3${step}`
+  document.getElementById('amt').textContent=`\u00a3${amount.toLocaleString()}`
+  const canMinus=amount>step,canPlus=amount+step<=treasury
+  document.getElementById('minus').disabled=!canMinus
+  document.getElementById('plus').disabled=!canPlus
+  document.getElementById('submit').disabled=amount<step||amount>treasury||amount%step!==0
+  document.getElementById('warning').style.display=treasury<step?'block':'none'
+}
+function adjust(d){
+  amount=Math.max(step,Math.min(treasury-(treasury%step),amount+d*step))
+  render()
+}
+function setMode(mode,t){
+  isSubsidy=mode==='subsidy'
+  step=isSubsidy?250:500
+  if(t==='poor'){treasury=poorTreasure;amount=0}
+  else{treasury=8400;amount=isSubsidy?500:1000}
+  render()
+}
+render()
+</script>
+</body>
+</html>

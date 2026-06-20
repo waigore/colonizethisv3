@@ -1,13 +1,18 @@
 // Pure data for Naval Units panel tree. SPEC/ui/naval-units-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
+    show
+        GamePlayerLookup,
+        homeFleetIdFor,
+        regionIdForSeaZone,
+        WorldStateProvinceLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../l10n/l10n.dart';
-import '../units/shared/units_panel_region_label.dart';
 import '../../utils/map_location_resolver.dart';
+import '../../utils/region_labels.dart';
 import '../../utils/sea_zone_name_resolver.dart';
 import 'fleet_mission_label.dart';
 
@@ -25,13 +30,13 @@ String? navalDraftMoveLineForFleet({
     if (o.fleetId != fleetId) continue;
     if (o.isDock) {
       final pid = o.destinationPortProvinceId!;
-      final p = tryGetProvince(game.worldState, pid);
+      final p = game.worldState.tryGetProvince(pid);
       final name = p?.displayName ?? p?.id ?? pid;
       return 'Moving to: $name (dock)';
     }
     final z = o.destinationSeaZoneId!;
     final zReg = regionIdForSeaZone(topology, z) ?? fleetRegionId;
-    final zoneKey = z.contains('|') ? z : '$zReg|$z';
+    final zoneKey = prefixedIdHasDelimiter(z) ? z : '$zReg|$z';
     final label = seaZoneDisplayName(
       game: game,
       regionId: zReg,
@@ -153,7 +158,8 @@ List<FleetRow> flattenNavalTree(
   int merchants,
   int cargoCapacity,
   double strength,
-}) _navalFleetShipAggregates(Fleet fleet) {
+})
+_navalFleetShipAggregates(Fleet fleet) {
   final shipCounts = <String, int>{};
   var totalShips = 0;
   var warships = 0;
@@ -182,12 +188,21 @@ List<FleetRow> flattenNavalTree(
   );
 }
 
-({String? regionId, String? localId}) _capitalTileRegionParts(CapitalTile? tile) {
+({String? regionId, String? localId}) _capitalTileRegionParts(
+  CapitalTile? tile,
+) {
   if (tile == null) return (regionId: null, localId: null);
   final tileKey = tile.toTileKey();
-  final parts = tileKey.split('|');
-  if (parts.length < 2) return (regionId: null, localId: null);
-  return (regionId: parts[0], localId: parts[1]);
+  final parsed = tryParseTileKey(tileKey);
+  if (parsed != null) {
+    return (regionId: parsed.regionId, localId: parsed.provinceLocalId);
+  }
+  final regionPart = prefixedIdRegionSegment(tileKey);
+  if (regionPart == null) return (regionId: null, localId: null);
+  final localTail = prefixedIdLocalSegment(tileKey);
+  final i = localTail.indexOf('|');
+  final localProv = i < 0 ? localTail : localTail.substring(0, i);
+  return (regionId: regionPart, localId: localProv);
 }
 
 String _navalNormalizedPortScopeForProvince(Province province) {
@@ -204,12 +219,10 @@ String _navalResolveSeaZoneRegionId(
 ) {
   final byTopology = regionIdForSeaZone(topology, seaZoneId);
   if (byTopology != null) return byTopology;
-  final localSeaZoneId =
-      seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
+  final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
   for (final node in topology.nodes) {
     if (node.type != TopologyNodeType.seaZone) continue;
-    final nodeLocal =
-        node.id.contains('|') ? node.id.split('|').last : node.id;
+    final nodeLocal = prefixedIdLocalSegment(node.id);
     if (nodeLocal == localSeaZoneId) {
       return node.regionId;
     }
@@ -227,8 +240,7 @@ String _navalNormalizedSeaScope(
     seaZoneId,
     fallbackRegionId,
   );
-  final local =
-      seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
+  final local = prefixedIdLocalSegment(seaZoneId);
   return 'sea:$regionId|$local';
 }
 
@@ -237,8 +249,7 @@ String? _navalRegionIdFromScopeKey(String? scopeKey) {
   final colon = scopeKey.indexOf(':');
   if (colon == -1 || colon >= scopeKey.length - 1) return null;
   final payload = scopeKey.substring(colon + 1);
-  if (!payload.contains('|')) return null;
-  return payload.split('|').first;
+  return prefixedIdRegionSegment(payload);
 }
 
 String? _navalProjectedLocationScopeForFleet({
@@ -251,7 +262,7 @@ String? _navalProjectedLocationScopeForFleet({
   if (move != null) {
     if (move.isDock) {
       final pid = move.destinationPortProvinceId!;
-      final province = tryGetProvince(game.worldState, pid);
+      final province = game.worldState.tryGetProvince(pid);
       if (province != null) {
         return _navalNormalizedPortScopeForProvince(province);
       }
@@ -264,17 +275,10 @@ String? _navalProjectedLocationScopeForFleet({
     );
   }
   if (fleet.isAtSea && fleet.seaZoneId != null) {
-    return _navalNormalizedSeaScope(
-      topology,
-      fleet.seaZoneId!,
-      fleet.regionId,
-    );
+    return _navalNormalizedSeaScope(topology, fleet.seaZoneId!, fleet.regionId);
   }
   if (fleet.inPortAtProvinceId != null) {
-    final province = tryGetProvince(
-      game.worldState,
-      fleet.inPortAtProvinceId!,
-    );
+    final province = game.worldState.tryGetProvince(fleet.inPortAtProvinceId!);
     if (province != null) {
       return _navalNormalizedPortScopeForProvince(province);
     }
@@ -303,7 +307,8 @@ void _appendNavalAtSeaFleetRow({
     double strength,
     Map<String, int> shipCounts,
     int cargoCapacity,
-  }) agg,
+  })
+  agg,
   required Map<String, List<FleetRow>> seas,
 }) {
   final seaZoneId =
@@ -312,15 +317,17 @@ void _appendNavalAtSeaFleetRow({
           projectedScope.startsWith('sea:')
       ? projectedScope.substring(4)
       : fleet.seaZoneId!;
-  final zoneKey =
-      seaZoneId.contains('|') ? seaZoneId : '$rowRegionId|$seaZoneId';
+  final zoneKey = prefixedIdHasDelimiter(seaZoneId)
+      ? seaZoneId
+      : '$rowRegionId|$seaZoneId';
   final locationKey = 'sea:$zoneKey';
   final zoneLabel = seaZoneDisplayName(
     game: game,
     regionId: rowRegionId,
     seaZoneId: zoneKey,
   );
-  final locationLabel = '${unitsPanelRegionLabel(rowRegionId)} — $zoneLabel';
+  final locationLabel =
+      '${regionDisplayLabel(rowRegionId)} — $zoneLabel ${l10n.naval_units_locAtSea}';
   final tileKey = tileKeyForNavalFleetAtSea(
     game: game,
     regionId: rowRegionId,
@@ -377,7 +384,8 @@ void _appendNavalInPortFleetRow({
     double strength,
     Map<String, int> shipCounts,
     int cargoCapacity,
-  }) agg,
+  })
+  agg,
   required Map<String, List<FleetRow>> ports,
   required List<FleetRow?> homeFleetSlot,
 }) {
@@ -396,7 +404,7 @@ void _appendNavalInPortFleetRow({
   final locationKey = _navalNormalizedPortScopeForProvince(province);
   final tileKey = tileKeyForProvinceLocation(game, province);
   final locationLabel =
-      '${unitsPanelRegionLabel(rowRegionId)} — ${province.displayName ?? province.id}';
+      '${regionDisplayLabel(rowRegionId)} — ${province.displayName ?? province.id} ${l10n.naval_units_locInPort}';
   final row = FleetRow(
     fleetId: fleet.id,
     label: isHomeFleet
@@ -435,11 +443,8 @@ void _appendNavalInPortFleetRow({
   ports.putIfAbsent(fullProvinceId, () => []).add(row);
 }
 
-({
-  String regionId,
-  FleetRow? homeFleet,
-  List<NavalTreeLocationNode> locations,
-})? _navalTreeGroupForRegion({
+({String regionId, FleetRow? homeFleet, List<NavalTreeLocationNode> locations})?
+_navalTreeGroupForRegion({
   required Game game,
   required String humanPlayerId,
   required MapTopology topology,
@@ -590,11 +595,7 @@ void _appendNavalInPortFleetRow({
   if (homeFleetRow == null && locations.isEmpty) {
     return null;
   }
-  return (
-    regionId: regionId,
-    homeFleet: homeFleetRow,
-    locations: locations,
-  );
+  return (regionId: regionId, homeFleet: homeFleetRow, locations: locations);
 }
 
 List<
@@ -614,10 +615,7 @@ buildNavalTree(
   Map<String, MapTopology>? topologyByRegion,
   String? locationScopeKeyFilter,
 }) {
-  final player = game.players.firstWhere(
-    (p) => p.id == humanPlayerId,
-    orElse: () => game.players.first,
-  );
+  final player = game.playerById(humanPlayerId) ?? game.players.first;
   final capParts = _capitalTileRegionParts(player.capitalTile);
   final capitalRegionId = capParts.regionId;
   final capitalProvinceLocalId = capParts.localId;

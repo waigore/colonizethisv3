@@ -10,6 +10,10 @@ When building or rebuilding game overlays (widget `build`, scroll/pan, selection
 
 Authoritative world and player-view updates happen primarily at **turn resolution** and other explicit commit boundaries. Overlays read **stable** models (`Game`, `PlayerView`, map view data, draft orders) and **cheap** pure predicates shared with the engine (for example `isMineralEligibleTile` with visibility and prospected-tile state), not re-run the engine solely to paint affordances. Province detail prospect shortcut behavior is specified in [province-sea-zone-detail-overlay.md](../ui/province-sea-zone-detail-overlay.md).
 
+### Turn resolution in progress (#2160)
+
+While **`turnResolutionBlockingProvider`** is true (background turn resolution from the map), **bus-driven** navigation, dialogs, and unit panels must not open except **`OpenPauseMenuPanelEvent`** and **`ClosePanelEvent`** as documented in [app-event-bus.md](app-event-bus.md). The map uses local **`IgnorePointer`** for gameplay taps; the **pause / hamburger** path stays available. Do not bypass this with direct **`Navigator`** calls for cross-cutting UI.
+
 ---
 
 ## When to use the bus vs local Flutter APIs
@@ -51,36 +55,41 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker | `NavalUnitsPanel` (optional tile/location scope fields on event) |
 | `ToggleDebugConsolePanelEvent` | `GameMapEmpireLeftRail` (debug-gated) | `GameMapArea` in-map non-modal overlay (`DebugConsoleOverlayPanel`) |
+| `SetObserveModeOffEvent` / `SetObserveModeGlobalEvent` / `SetObserveModePlayerEvent` | `/observe` debug console | `AppEventHandlerScope` updates `observeSessionProvider` + in-memory `Game` control handoff |
 
 Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEvent`) from the handler.
+
+**Observe mode:** While `observeSessionProvider.mode != off`, UI mutation via bus `SessionCommandEvent`s (work, naval, army, diplomacy draft) is rejected when `shellPlayerContextProvider.canMutateViaUi` is false. Debug spawn/credit commands use `debugCommandTargetPlayerId` (see [observe-mode.md](../ui/observe-mode.md)).
 
 ---
 
 ## Dialog IDs (`OpenDialogEvent`)
 
-Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
+Register core (game-feature) builders in **`app/lib/core/services/app_event_handler_scope.dart`**. **Feature-layer dialog builders that would otherwise force `core/services/` to import `features/`** (for example the shell `new_game_leader_selection` dialog) live in their owning feature and are injected into the scope at the **composition root** (`app/lib/main.dart`) via **`AppEventHandlerScope.extraDialogBuilders`** — a `Map<String, NavigatorKeyDialogBuilder>` (each value a `DialogBuilder Function(GlobalKey<NavigatorState>)`) merged over the core builders by `OpenDialogEvent` id. The scope resolves each factory with `appNavigatorKey` so the feature threads the navigator key **explicitly** rather than reading the global; `appNavigatorKey` access stays confined to `core/services/` + `app.dart` (enforced by `repo.app_event_bus_decoupling`). This keeps `core/services/` free of `features/shell/` imports while preserving the single choke point for `navigatorKey` / `ProviderScope.containerOf` (Refs #3546).
 
 | ID | Widget | Constant |
 |----|--------|----------|
 | `train_civilians` | `TrainCiviliansDialog` | `trainCiviliansDialogId` |
 | `train_military` | `TrainMilitaryDialog` | `trainMilitaryDialogId` |
-| `grant_or_subsidy` | `GrantOrSubsidyDialog` | `grantOrSubsidyDialogId` |
-| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
+| `grant_or_subsidy` | `GrantOrSubsidyDialog` (see [grant-or-subsidy-dialog.md](../ui/grant-or-subsidy-dialog.md)) | `grantOrSubsidyDialogId` |
+| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`; see [new-game-leader-selection-dialog.md](../ui/new-game-leader-selection-dialog.md)) | `newGameLeaderSelectionDialogId` |
 
 For `train_civilians` and `train_military`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
 
 | ID | Widget | Status |
 |----|--------|--------|
-| `quick_battle_result` | `QuickBattleResultDialog` | `quickBattleResultDialogId` |
-| `combat_mode_choice` | `CombatModeChoiceDialog` (`CombatModeChosenEvent` on choice) | `combatModeChoiceDialogId` |
+| `quick_battle_result` | [`QuickBattleResultDialog`](../ui/quick-battle-result-dialog.md) | `quickBattleResultDialogId` |
+| `combat_mode_choice` | [`CombatModeChoiceDialog`](../ui/combat-mode-choice-dialog.md) (`CombatModeChosenEvent` on choice) | `combatModeChoiceDialogId` |
 
-**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), in-game Android back exit confirmation (`GameScreen`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**).
+Combat-flow non-dialog screens (constructed directly by the orchestrator, not via `OpenDialogEvent`) are documented in [`quick-battle-screen.md`](../ui/quick-battle-screen.md), with sub-views [`quick-battle-deployment-view.md`](../ui/quick-battle-deployment-view.md) and [`quick-battle-action-selector.md`](../ui/quick-battle-action-selector.md).
+
+**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), in-game Android back exit confirmation (`GameScreen`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**), **`TransferToHomeFleetDialog`** (opened from `NavalUnitsPanel` via local `showDialog` for the regular-fleet → Home Fleet ship merge flow, commits via **`NavalTransferShipsRequestedEvent`**; see [SPEC/ui/transfer-to-home-fleet-dialog.md](../ui/transfer-to-home-fleet-dialog.md)), **`ProductionCommodityBreakdownDialog`** (opened from `ProductionScreen` via local `showDialog` as a read-only commodity preview; see [SPEC/ui/production-commodity-breakdown-dialog.md](../ui/production-commodity-breakdown-dialog.md)), **`ResearchFundingBreakdownDialog`** (opened from the `TechnologyPanel` slot turn-preview view via local `showDialog` as a read-only RP/treasury funding breakdown, split out of `technology_panel.dart` to keep that file under the widget file-size cap; see [SPEC/ui/technology-panel.md](../ui/technology-panel.md) § Slot turn preview).
 
 **Split fleet:** `NavalUnitsPanel` uses local `showDialog` for `SplitFleetDialog`, but the dialog commits via **`NavalSplitFleetRequestedEvent`** → `AppEventHandlerScope` (applies `applyNavalSplitFleet`, then emits **`NavalFleetsUpdatedEvent`**) so the dialog does not receive panel merge callbacks. Widgetbook / tests without the shell wire the same request event or listen for `NavalFleetsUpdatedEvent` only.
 
-**Move fleet:** `NavalUnitsPanel` uses local `showDialog` for `MoveFleetDialog`. On confirm, emit **`NavalMoveFleetRequestedEvent`** → `AppEventHandlerScope` updates **`currentOrdersProvider`** via **`applyNavalMoveOrderForPlayer`** (replaces any prior naval move for that fleet and removes naval mission orders for that fleet from the draft). No merge callback into the dialog.
+**Move fleet:** `NavalUnitsPanel` uses local `showDialog` for `MoveFleetDialog` (see [SPEC/ui/move-fleet-dialog.md](../ui/move-fleet-dialog.md)). On confirm, emit **`NavalMoveFleetRequestedEvent`** → `AppEventHandlerScope` updates **`currentOrdersProvider`** via **`applyNavalMoveOrderForPlayer`** (replaces any prior naval move for that fleet and removes naval mission orders for that fleet from the draft). No merge callback into the dialog.
 
-**Land armies (`MilitaryUnitsPanel`):** **Move army** uses local `showDialog` like naval move and confirms via **`ArmyMoveRequestedEvent`**. The dialog lists **only** destinations returned by **`colonizethis_logic`** as **order-engine-valid** for the current draft (visibility, adjacency, ownership, war/declare-war rules). The dropdown is **grouped by owning faction** with **player-owned** provinces first; **invasion** into another GP / Minor / Tribe without war uses a **second confirm** and sets optional **`declareWarTargetFactionId`** on the event so the shell merges **`declareWar`** and **`ArmyMoveOrder`** atomically. **`AppEventHandler`** opens the panel with **`ref.watch(currentOrdersProvider)`** and passes **`draftOrders`** into **`MilitaryUnitsPanel`** (naval parity for pending move lines). The scope handler applies the move (and declare war when present), runs **full draft validation** for that player; on failure it **does not** update `currentOrders`, logs **`error`**, emits **`ShowSnackBarEvent`**, and **asserts** in debug (per [orders.md](orders.md) shell contract). **Split** / **combine** use **`ArmySplitRequestedEvent`** / **`ArmyCombineRequestedEvent`** → handler mutates `Game`; panel refreshes from updated state. Same decoupling pattern as naval split (`NavalSplitFleetRequestedEvent`).
+**Land armies (`MilitaryUnitsPanel`):** **Move army** uses local `showDialog` like naval move (see [SPEC/ui/move-army-dialog.md](../ui/move-army-dialog.md)) and confirms via **`ArmyMoveRequestedEvent`**. The dialog lists **only** destinations returned by **`colonizethis_logic`** as **order-engine-valid** for the current draft (visibility, adjacency, ownership, war/declare-war rules). The dropdown is **grouped by owning faction** with **player-owned** provinces first; **invasion** into another GP / Minor / Tribe without war uses a **second confirm** and sets optional **`declareWarTargetFactionId`** on the event so the shell merges **`declareWar`** and **`ArmyMoveOrder`** atomically. **`AppEventHandler`** opens the panel with **`ref.watch(currentOrdersProvider)`** and passes **`draftOrders`** into **`MilitaryUnitsPanel`** (naval parity for pending move lines). The scope handler applies the move (and declare war when present), runs **full draft validation** for that player; on failure it **does not** update `currentOrders`, logs **`error`**, emits **`ShowSnackBarEvent`**, and **asserts** in debug (per [orders.md](orders.md) shell contract). **Split** / **combine** use **`ArmySplitRequestedEvent`** / **`ArmyCombineRequestedEvent`** → handler mutates `Game`; panel refreshes from updated state. Same decoupling pattern as naval split (`NavalSplitFleetRequestedEvent`).
 
 **Train at-capital dialogs:** `TrainCiviliansDialog` / `TrainMilitaryDialog` emit **`TrainCivilianBuildOrdersCommittedEvent`** / **`TrainMilitaryBuildOrdersCommittedEvent`** on close; `AppEventHandlerScope` merges into orders. No `onOrdersChanged` callback from the shell into the dialog.
 
@@ -101,6 +110,8 @@ Handled by **`AppEventHandler`** via **`pushNamed`**. Common names:
 Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart`).
 
 **Return to main menu from in-game / victory:** emit **`NavigateToShellEvent`**; **`AppEventHandler`** pops until **`Routes.shell`** or **`pushNamedAndRemoveUntil`** as needed. Do not call **`Navigator.popUntil`** from **`GameScreen`** / victory UI for that flow.
+
+**Pause-menu exit flow (`RequestExitToMainMenuFlowEvent`):** the pause menu's **Exit to Main Menu** action emits **`ClosePanelEvent`** first (to dismiss the pause modal), then **`RequestExitToMainMenuFlowEvent`** on the bus. **`AppEventHandler`** reacts by scheduling a post-frame `showExitToMainMenuConfirmDialog`; on confirm it emits **`NavigateToShellEvent`** (which then runs the standard pop-until-shell flow); on cancel no further event fires. See [`SPEC/ui/pause-menu-panel.md`](../ui/pause-menu-panel.md) and [`SPEC/ui/in-game-shell-narrow.md`](../ui/in-game-shell-narrow.md) § Android back confirm for the shared confirm-dialog contract.
 
 ---
 
@@ -144,6 +155,14 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 - **Cross-cutting UI** must not use **`Ref` / `BuildContext` / `Navigator` chains** between unrelated widgets; use **`AppEventBus`** and **`AppEventHandler`**. **Panel-to-panel `onXxx` orchestration is disallowed.**
 - **Dialog builders** and route handling: one place at shell init — see [app-event-bus.md](app-event-bus.md) constraints for package boundaries and event payload rules.
 
+### CI gate — `repo.app_event_bus_decoupling` (Refs #2626)
+
+`tool/check_app_event_bus_decoupling.dart` (wired through `tool/ct_repo_lint_manifest.yaml`) enforces three invariants against `app/lib/**`:
+
+- **No `AppEventBus()` singleton** in production code (under `app/lib/**`, excluding `app/lib/widgetbook/**`). Use `appEventBusProvider` (or an `AppEventBus.create()` instance held by the owning widget/service).
+- **`appNavigatorKey.currentContext` / `.currentState` / equivalent property access** is restricted to `app/lib/core/services/**` and `app/lib/app.dart`. Other layers must thread an explicit `GlobalKey<NavigatorState>` parameter or use the bus.
+- **`showDialog` / `showModalBottomSheet` calls under `app/lib/features/**`** are restricted to the documented "Local by design" allow-list above (plus the per-panel carve-outs for split/move fleet, move army, train at-capital). New call sites outside the allow-list must use a typed `AppEvent` instead. Adding a new local-by-design dialog requires extending **both** this SPEC section **and** the lint allow-list.
+
 ---
 
 ## Acceptance Criteria (Given–When–Then)
@@ -158,10 +177,15 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 - Given debug console input submits `/spawn_regiment <regiment_type_id> [count]`, When command parsing succeeds, Then the panel emits `SpawnDebugRegimentAtCapitalEvent` and the shell listener applies immediate capital regiment spawn for the active human player and persists via `GameService.saveGame`.
 - Given debug console input submits `/spawn_ship <ship_type_id> [count]`, When command parsing succeeds, Then the panel emits `SpawnDebugShipAtCapitalHomeFleetEvent` and the shell listener applies immediate home-fleet ship spawn for the active human player and persists via `GameService.saveGame`.
 - Given debug console input submits `/add_money <amount>` with a valid integer amount, When command parsing succeeds, Then the panel emits `CreditDebugTreasuryEvent` and the shell listener applies immediate treasury credit to the active human player and persists via `GameService.saveGame`.
+- Given debug console input submits `/add_worker <worker_tier> <amount>` with a valid tier id and integer amount, When command parsing succeeds, Then the panel emits `CreditDebugWorkerPoolEvent` and the shell listener applies immediate worker-pool tier credit to the active human player and persists via `GameService.saveGame`.
 - Given debug console input submits `/flip_province <regionId> <province_display_name>`, When command parsing succeeds, Then the panel emits `FlipDebugProvinceOwnershipEvent` and the shell listener validates human-turn + target eligibility, applies canonical province transfer semantics, and persists via `GameService.saveGame` on success.
+- Given debug console input submits `/get_tile_basic_info`, When command parsing succeeds, Then the panel reads `mapProvincePanelProvider.selectedTileKey` at submit-time, appends read-only info output, emits no `SessionCommandEvent`, and does not trigger `GameService.saveGame`.
+- Given debug console input submits `/list_players`, When command parsing succeeds, Then the panel builds a submit-time `DebugConsoleReadOnlyContext` from current `Game.players`, appends read-only player-list output, emits no `SessionCommandEvent`, and does not trigger `GameService.saveGame`.
 - Given a units sheet should close before the map reacts, When the player triggers locate or work-target selection from that sheet, Then the system emits `ClosePanelEvent` before `LocateMapTileEvent` or `StartCivilianWorkTargetSelectionEvent`; the map widget does not call `Navigator.maybePop` for that teardown.
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps Grant Aid or Set Subsidy, Then the system emits `OpenDialogEvent('grant_or_subsidy')` (panel does not call `showDialog` directly).
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps a faction row, Then the system emits `NavigateToRouteEvent(Routes.diplomacyDetail)` (panel does not call `Navigator.push` directly).
+- Given `CT_DEBUG_CONSOLE=true`, When the app shell computes a localized app title for desktop or web title surfaces, Then the shell appends the exact terminal suffix ` (debug)` using the shared debug-aware title formatter.
+- Given `CT_DEBUG_CONSOLE=false` or undefined, When the app shell computes a localized app title for desktop or web title surfaces, Then the shell keeps the title unchanged and does not alter debug-console commands, routing, persistence, or game behavior.
 
 ### Coupling rules
 

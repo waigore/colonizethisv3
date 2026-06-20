@@ -2,35 +2,120 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/location_section_header.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_section_header.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_row_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
+import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 
 void main() {
   suppressLogsForTests();
 
-  group('unitsPanelRegionLabel', () {
+  group('regionDisplayLabel', () {
     test('maps known region ids', () {
-      expect(unitsPanelRegionLabel('oldWorld'), 'Old World');
-      expect(unitsPanelRegionLabel('newWorld'), 'New World');
+      expect(regionDisplayLabel('oldWorld'), 'Old World');
+      expect(regionDisplayLabel('newWorld'), 'New World');
     });
 
     test('passes through unknown ids', () {
-      expect(unitsPanelRegionLabel('custom'), 'custom');
+      expect(regionDisplayLabel('custom'), 'custom');
     });
   });
 
   group('RegionSectionHeader', () {
-    testWidgets('shows label text', (WidgetTester tester) async {
+    testWidgets('renders label via CtSectionLabel (#2866)', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: RegionSectionHeader(label: 'Old World')),
         ),
       );
-      expect(find.text('Old World'), findsOneWidget);
+      expect(find.byType(CtSectionLabel), findsOneWidget);
+      expect(find.text('OLD WORLD'), findsOneWidget);
     });
+
+    testWidgets(
+      'leftBar variant renders a left accent-dim bar without CtSectionLabel '
+      '(Refs #3514)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: RegionSectionHeader(
+                label: 'New World',
+                variant: RegionHeaderVariant.leftBar,
+              ),
+            ),
+          ),
+        );
+
+        // Mockup `.region-label` / `.region-heading` chrome: upper-cased label,
+        // no bottom-border CtSectionLabel.
+        expect(find.text('NEW WORLD'), findsOneWidget);
+        expect(find.byType(CtSectionLabel), findsNothing);
+
+        final DecoratedBox decoratedBox = tester.widget<DecoratedBox>(
+          find.descendant(
+            of: find.byType(RegionSectionHeader),
+            matching: find.byType(DecoratedBox),
+          ),
+        );
+        final Border border =
+            (decoratedBox.decoration as BoxDecoration).border! as Border;
+        expect(border.left.width, RegionSectionHeader.leftBarWidth);
+        expect(border.left.color, EditorialMonoclePalette.accentDim);
+        expect(border.bottom, BorderSide.none);
+      },
+    );
+
+    testWidgets(
+      'bottomBorderMuted variant renders a 1dp --border bottom border '
+      'without CtSectionLabel (Refs #3514)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: RegionSectionHeader(
+                label: 'Old World',
+                variant: RegionHeaderVariant.bottomBorderMuted,
+              ),
+            ),
+          ),
+        );
+
+        // Civilian mockup `.region-heading` chrome: upper-cased muted label
+        // over a `var(--border)` bottom border (not the legacy CtSectionLabel
+        // `--accent-dim` border).
+        expect(find.text('OLD WORLD'), findsOneWidget);
+        expect(find.byType(CtSectionLabel), findsNothing);
+
+        final Text label = tester.widget<Text>(find.text('OLD WORLD'));
+        expect(label.style?.color, EditorialMonoclePalette.muted);
+        expect(label.style?.fontWeight, FontWeight.w600);
+
+        final DecoratedBox decoratedBox = tester.widget<DecoratedBox>(
+          find.descendant(
+            of: find.byType(RegionSectionHeader),
+            matching: find.byType(DecoratedBox),
+          ),
+        );
+        final Border border =
+            (decoratedBox.decoration as BoxDecoration).border! as Border;
+        expect(border.bottom.width, RegionSectionHeader.bottomBorderWidth);
+        expect(border.bottom.color, EditorialMonoclePalette.border);
+        expect(border.left, BorderSide.none);
+      },
+    );
   });
 
   group('LocationSectionHeader', () {
@@ -47,6 +132,34 @@ void main() {
       );
       expect(find.text('Province A — New World'), findsOneWidget);
     });
+
+    testWidgets(
+      'renders semi-bold fg-at-0.8 chrome per mockup .province-label '
+      '(Refs #3514)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: LocationSectionHeader(
+                label: 'Province A',
+                regionLabel: 'New World',
+              ),
+            ),
+          ),
+        );
+
+        final Text text = tester.widget<Text>(
+          find.text('Province A — New World'),
+        );
+        expect(text.style?.fontWeight, FontWeight.w600);
+        expect(
+          text.style?.color,
+          EditorialMonoclePalette.fg.withValues(
+            alpha: LocationSectionHeader.labelOpacity,
+          ),
+        );
+      },
+    );
   });
 
   group('UnitsPanelShell', () {
@@ -110,6 +223,158 @@ void main() {
       );
       expect(find.text('Action'), findsOneWidget);
     });
+
+    testWidgets(
+      'renders title via CtTopBar (showBackButton: false; #2866 S1 chrome)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: UnitsPanelShell(
+                title: 'Civilian Units',
+                hasContent: false,
+                listChildren: [],
+                emptyMessage: 'No civilian units',
+              ),
+            ),
+          ),
+        );
+
+        final Finder topBarFinder = find.byType(CtTopBar);
+        expect(topBarFinder, findsOneWidget);
+        final CtTopBar topBar = tester.widget(topBarFinder);
+        expect(topBar.title, 'Civilian Units');
+        expect(topBar.showBackButton, isFalse);
+        expect(topBar.trailing, isNull);
+
+        // showBackButton: false MUST suppress the chevron + label so the
+        // bottom-sheet panel does not surface a navigator back affordance.
+        expect(find.byType(CtBackButton), findsNothing);
+
+        // The chrome SizedBox sits inside the DecoratedBox surface and is
+        // pinned to CtTopBar.height (36 px per #2859 R11).
+        final Finder topBarSizedBoxFinder = find.descendant(
+          of: topBarFinder,
+          matching: find.byWidgetPredicate(
+            (Widget w) => w is SizedBox && w.height == CtTopBar.height,
+          ),
+        );
+        expect(topBarSizedBoxFinder, findsOneWidget);
+
+        // Title text colour resolves to the canonical --accent token.
+        final Text titleText = tester.widget(
+          find.descendant(of: topBarFinder, matching: find.text('Civilian Units')),
+        );
+        expect(titleText.style?.color, EditorialMonoclePalette.accent);
+      },
+    );
+
+    testWidgets(
+      'wraps multiple trailing actions in a Row inside CtTopBar trailing slot',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: UnitsPanelShell(
+                title: 'Civilian Units',
+                actions: [
+                  TextButton(onPressed: () {}, child: const Text('Tile')),
+                  TextButton(onPressed: () {}, child: const Text('Train')),
+                ],
+                hasContent: false,
+                listChildren: const [],
+                emptyMessage: 'E',
+              ),
+            ),
+          ),
+        );
+
+        final CtTopBar topBar = tester.widget(find.byType(CtTopBar));
+        expect(topBar.trailing, isA<Row>());
+        final Row trailingRow = topBar.trailing! as Row;
+        // 2 actions + 1 spacer between them => 3 children.
+        expect(trailingRow.mainAxisSize, MainAxisSize.min);
+        expect(trailingRow.children.length, 3);
+        final Widget spacer = trailingRow.children[1];
+        expect(spacer, isA<SizedBox>());
+        expect((spacer as SizedBox).width, isNonZero);
+
+        // Both action labels remain in the tree.
+        expect(find.text('Tile'), findsOneWidget);
+        expect(find.text('Train'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'passes a single trailing action through unchanged (no Row wrapper)',
+      (WidgetTester tester) async {
+        final TextButton soloAction = TextButton(
+          onPressed: () {},
+          child: const Text('Train'),
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: UnitsPanelShell(
+                title: 'Civilian Units',
+                actions: [soloAction],
+                hasContent: false,
+                listChildren: const [],
+                emptyMessage: 'E',
+              ),
+            ),
+          ),
+        );
+
+        final CtTopBar topBar = tester.widget(find.byType(CtTopBar));
+        expect(topBar.trailing, same(soloAction));
+      },
+    );
+
+    testWidgets(
+      'renders empty message in italic --muted (#2866 S1 dark-theme palette)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: UnitsPanelShell(
+                title: 'Civilian Units',
+                hasContent: false,
+                listChildren: [],
+                emptyMessage: 'No civilian units',
+              ),
+            ),
+          ),
+        );
+
+        final Text emptyText = tester.widget(find.text('No civilian units'));
+        expect(emptyText.style?.color, EditorialMonoclePalette.muted);
+        expect(emptyText.style?.fontStyle, FontStyle.italic);
+      },
+    );
+
+    testWidgets(
+      'omits the empty message when hasContent is true',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: UnitsPanelShell(
+                title: 'Civilian Units',
+                hasContent: true,
+                listChildren: const [
+                  ListTile(title: Text('Row one')),
+                ],
+                emptyMessage: 'No civilian units',
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Row one'), findsOneWidget);
+        expect(find.text('No civilian units'), findsNothing);
+      },
+    );
   });
 
   group('UnitsEntityActionRow', () {
@@ -139,6 +404,7 @@ void main() {
 
       expect(find.text('Left details'), findsOneWidget);
       expect(find.text('Move'), findsOneWidget);
+      expect(find.byType(UnitsPanelRowChrome), findsOneWidget);
     });
 
     testWidgets('switches action button to icon-only on narrow width', (
@@ -168,5 +434,85 @@ void main() {
       expect(find.byIcon(Icons.route), findsOneWidget);
       expect(find.text('Move'), findsNothing);
     });
+
+    testWidgets(
+      'renders mockup compact-pill family per action variant (#3514): '
+      'neutral -> CtActionTextButton, danger -> CtDangerTextButton, '
+      'iconOnly -> CtCircularLocateButton, and no CtNinePatchButton',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 420,
+                child: UnitsEntityActionRow(
+                  details: const Text('Left details'),
+                  actions: [
+                    UnitsEntityAction(
+                      tooltip: 'Move',
+                      icon: Icons.route,
+                      label: 'Move',
+                      onPressed: () {},
+                    ),
+                    UnitsEntityAction(
+                      tooltip: 'Cancel',
+                      icon: Icons.cancel_outlined,
+                      label: 'Cancel',
+                      variant: UnitsEntityActionVariant.danger,
+                      onPressed: () {},
+                    ),
+                    UnitsEntityAction(
+                      tooltip: 'Locate',
+                      icon: Icons.my_location,
+                      label: 'Locate',
+                      iconOnly: true,
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.byType(CtActionTextButton), findsOneWidget);
+        expect(find.byType(CtDangerTextButton), findsOneWidget);
+        expect(find.byType(CtCircularLocateButton), findsOneWidget);
+        expect(find.byType(CtNinePatchButton), findsNothing);
+        // The iconOnly Locate control renders no text label (circular pill).
+        expect(find.text('Locate'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'disabled action (onPressed == null) renders a disabled pill (#3514)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 420,
+                child: UnitsEntityActionRow(
+                  details: const Text('Left details'),
+                  actions: const [
+                    UnitsEntityAction(
+                      tooltip: 'Move',
+                      icon: Icons.route,
+                      label: 'Move',
+                      onPressed: null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final pill = tester.widget<CtActionTextButton>(
+          find.byType(CtActionTextButton),
+        );
+        expect(pill.onPressed, isNull);
+      },
+    );
   });
 }

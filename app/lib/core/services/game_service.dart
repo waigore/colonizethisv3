@@ -1,13 +1,17 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart'
+import 'package:colonizethis_setup/colonizethis_setup.dart'
     show assignHiddenAgendasForGame;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
+
+part 'game_service_new_game_setup.dart';
+part 'game_service_turn_trace.dart';
 
 /// Cached map data for a game (topology and tile maps for turn resolution).
 class _GameMapCache {
@@ -23,16 +27,41 @@ class _GameMapCache {
   final List<WarpLink>? warpLinks;
 }
 
+/// Public record type for [GameService.getMapData] (Refs #2575 Phase 4).
+/// Lets callers replace `dynamic` with an explicit type while still using
+/// record-style access (`mapData.combinedTopology`, etc.).
+typedef GameMapData = ({
+  MapTopology combinedTopology,
+  Map<String, TileMapResult> tileMapByRegion,
+  Map<String, MapTopology> topologyByRegion,
+  List<WarpLink>? warpLinks,
+});
+
 /// Pass milestones for in-app tile map generation (SPEC/program/logging/map-generation.md).
 final _mapGenPassLog = packageLogger('tile_map');
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
 class GameService {
-  GameService(this._box, this._adapter);
+  /// Number of coarse progress steps reported by [createNewGameAsync]. SPEC/ui/game-initializing.md.
+  static const int newGameSetupProgressStepCount = 5;
+  GameService(
+    this._box,
+    this._adapter, {
+    bool? turnTraceEnabled,
+    String? turnTraceRootDirectory,
+  }) : _turnTraceEnabled = turnTraceEnabled ?? kCtDebugConsoleEnabled,
+       turnTraceRootDirectory =
+           turnTraceRootDirectory ?? kCtTurnTraceDirectory;
 
   final Box<dynamic> _box;
   final GameSaveAdapter _adapter;
+  final bool _turnTraceEnabled;
+  final String turnTraceRootDirectory;
+  final Map<String, _TurnTraceSession> _turnTraceSessionsByGameId = {};
+
+  /// Whether merged JSON turn traces are emitted (app debug console gate).
+  bool get isTurnTraceEnabled => _turnTraceEnabled;
 
   /// Optional app-level bus for [GameToUIEvent] (turn complete, new game, overtures, etc.).
   /// When set, those events are emitted from turn resolution and [createNewGame].
@@ -88,13 +117,7 @@ class GameService {
   ///
   /// Returns null only when no game exists for [gameId]. For existing games, map data
   /// is required and missing/invalid map data raises [StateError].
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
+  GameMapData? getMapData(String gameId) {
     final cached = _mapCache[gameId];
     if (cached != null) {
       return (
@@ -131,8 +154,14 @@ class GameService {
     );
   }
 
+  /// Optional strip for session-only observe control overrides before persist.
+  Game Function(Game)? prepareGameForPersistence;
+
   /// Saves game to storage.
-  void saveGame(Game game) => _adapter.save(_box, game);
+  void saveGame(Game game) {
+    final toSave = prepareGameForPersistence?.call(game) ?? game;
+    _adapter.save(_box, toSave);
+  }
 
   /// Lists all saved game ids.
   List<String> listGameIds() => _adapter.listGameIds(_box);
@@ -200,6 +229,7 @@ class GameService {
     Game current, {
     Orders? orders,
     Orders? aiOrders,
+    List<TurnTraceAiSection>? aiTraceSections,
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
@@ -211,13 +241,17 @@ class GameService {
     final resolvedOrders = aiOrders != null
         ? mergeOrderLists(humanOrders: humanOrders, aiOrders: aiOrders)
         : humanOrders;
-    final result = resolveTurnForGame(
+    final result = _gameServiceResolveTurnWithTrace(
+      this,
       game: current,
-      topology: topo,
-      orders: resolvedOrders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      aiTraceSections: aiTraceSections,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: resolvedOrders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -233,14 +267,18 @@ class GameService {
     final mapData = _requiredMapDataView(game.id);
     final topo = mapData.combinedTopology;
     final tileMaps = mapData.tileMapByRegion;
-    final result = resumeTurnResolutionWithCallToArmsDecisions(
+    final result = _gameServiceResolveTurnWithTrace(
+      this,
       game: game,
-      decisions: decisions,
-      topology: topo,
-      orders: orders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        callToArmsDecisions: decisions,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -251,7 +289,7 @@ class GameService {
   /// When [TurnResolutionComplete], saves the game. SPEC/program/dialogue-system.md.
   TurnResolutionResult resumeOvertureDecisions(
     Game game,
-    List<OvertureOffer> pendingOvertures,
+    List<OvertureOffer> _pendingOvertures,
     List<OvertureDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
@@ -259,15 +297,46 @@ class GameService {
     final mapData = _requiredMapDataView(game.id);
     final topo = mapData.combinedTopology;
     final tileMaps = mapData.tileMapByRegion;
-    final result = resumeTurnResolutionWithOvertureDecisions(
+    final result = _gameServiceResolveTurnWithTrace(
+      this,
       game: game,
-      pendingOvertures: pendingOvertures,
-      decisions: decisions,
-      topology: topo,
-      orders: orders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        overtureDecisions: decisions,
+      ),
+    );
+    _emitTurnResolutionEvents(result);
+    return result;
+  }
+
+  /// Resumes turn resolution after FTP accept/reject decisions (Diplomacy phase).
+  TurnResolutionResult resumeFtpDecisions(
+    Game game,
+    List<FtpOffer> _pendingFtpOffers,
+    List<FtpDecision> decisions,
+    Orders orders, {
+    void Function(GameEvent)? onGameEvent,
+  }) {
+    final mapData = _requiredMapDataView(game.id);
+    final topo = mapData.combinedTopology;
+    final tileMaps = mapData.tileMapByRegion;
+    final result = _gameServiceResolveTurnWithTrace(
+      this,
+      game: game,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        ftpDecisions: decisions,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -283,14 +352,18 @@ class GameService {
     final mapData = _requiredMapDataView(game.id);
     final topo = mapData.combinedTopology;
     final tileMaps = mapData.tileMapByRegion;
-    final result = resumeTurnResolutionWithInterventionDecisions(
+    final result = _gameServiceResolveTurnWithTrace(
+      this,
       game: game,
-      decisions: decisions,
-      topology: topo,
-      orders: orders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        interventionDecisions: decisions,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -315,350 +388,22 @@ class GameService {
     return requireTurnResolutionComplete(result);
   }
 
-  /// Number of coarse progress steps reported by [createNewGameAsync]. SPEC/ui/game-initializing.md.
-  static const int newGameSetupProgressStepCount = 5;
-
   /// Creates a new game via the full game-setup pipeline (map gen, province assignment, capital auto-choice).
-  /// Uses [config] (defaults to GameSetupConfig.defaultConfig) and saves the game; map data is cached for nextTurn.
-  Game createNewGame({String? id, GameSetupConfig? config}) {
-    final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
-    final cfg = config ?? GameSetupConfig.defaultConfig;
-    final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
-    late final GameSetupResult setupResult;
-    if (cfg.isLockedFullInitProfile) {
-      setupResult = _lockedFullInitMapsWarpSetupWithRetry(
-        cfg: cfg,
-        gameId: gameId,
-        effectiveSeed: effectiveSeed,
-      );
-    } else {
-      setupResult = _freeformMapsWarpSetupWithRetry(
-        cfg: cfg,
-        gameId: gameId,
-        effectiveSeed: effectiveSeed,
-      );
-    }
-    final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
-    _persistNewGame(gameId: gameId, result: result);
-    return result.game;
-  }
+  Game createNewGame({String? id, GameSetupConfig? config}) =>
+      _gameServiceCreateNewGame(this, id: id, config: config);
 
   /// Same pipeline as [createNewGame], but yields between coarse steps so the UI isolate can paint.
-  /// [onProgress] is invoked with `(stepIndex, newGameSetupProgressStepCount)` before each major phase
-  /// (0 = Old World map … 4 = saving). SPEC/ui/game-initializing.md.
   Future<Game> createNewGameAsync({
     String? id,
     GameSetupConfig? config,
     void Function(int stepIndex, int totalSteps)? onProgress,
-  }) async {
-    final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
-    final cfg = config ?? GameSetupConfig.defaultConfig;
-    final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
-    const total = newGameSetupProgressStepCount;
-    final log = packageLogger();
-    Future<void> yieldUi() => Future<void>.delayed(Duration.zero);
-
-    // Let any pending frame (e.g. progress modal paint) run before step 0 work.
-    await yieldUi();
-
-    void reportPhase(int stepIndex) {
-      ctAppPerfInstant('newGameAsync.phase_$stepIndex');
-      log.i('newGameAsync phase step=$stepIndex total=$total gameId=$gameId');
-      onProgress?.call(stepIndex, total);
-    }
-
-    ctAppPerfInstant('newGameAsync.begin');
-    log.i('newGameAsync begin gameId=$gameId');
-
-    reportPhase(0);
-    await yieldUi();
-    late final GameSetupResult setupResult;
-    if (cfg.isLockedFullInitProfile) {
-      setupResult = _lockedFullInitMapsWarpSetupWithRetry(
-        cfg: cfg,
-        gameId: gameId,
-        effectiveSeed: effectiveSeed,
+  }) =>
+      _gameServiceCreateNewGameAsync(
+        this,
+        id: id,
+        config: config,
+        onProgress: onProgress,
       );
-      reportPhase(1);
-      await yieldUi();
-      reportPhase(2);
-      await yieldUi();
-      reportPhase(3);
-      await yieldUi();
-    } else {
-      setupResult = _freeformMapsWarpSetupWithRetry(
-        cfg: cfg,
-        gameId: gameId,
-        effectiveSeed: effectiveSeed,
-      );
-      reportPhase(1);
-      await yieldUi();
-      reportPhase(2);
-      await yieldUi();
-      reportPhase(3);
-      await yieldUi();
-    }
-    final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
-
-    reportPhase(4);
-    await yieldUi();
-    _persistNewGame(gameId: gameId, result: result);
-    ctAppPerfInstant('newGameAsync.complete');
-    log.i('newGameAsync complete gameId=$gameId');
-    return result.game;
-  }
-
-  GameSetupResult _setupResultWithFinalizedGame(
-    GameSetupResult setup,
-    int effectiveSeed,
-  ) {
-    var game = setup.game.copyWith(
-      globalGameSeed: effectiveSeed,
-      aiSeedByGpId: {
-        for (final p in setup.game.players) p.id: effectiveSeed + p.id.hashCode,
-      },
-    );
-    game = assignHiddenAgendasForGame(game);
-    return GameSetupResult(
-      game: game,
-      tileMapByRegion: setup.tileMapByRegion,
-      topologyByRegion: setup.topologyByRegion,
-      combinedTopology: setup.combinedTopology,
-      warpLinks: setup.warpLinks,
-    );
-  }
-
-  /// OW+NW maps, warp, and [createGameFromGeneratedMaps] with bounded retries when
-  /// partition gates or locked assigner fail (SPEC: locked full-init default).
-  static const int _kLockedFullInitPipelineMaxAttempts = 64;
-
-  /// Same retriable topology codes as [runInitGame] freeform path (`init_game_orchestrator.dart`).
-  static const int _kFreeformPipelineMaxAttempts = 64;
-
-  GameSetupResult _freeformMapsWarpSetupWithRetry({
-    required GameSetupConfig cfg,
-    required String gameId,
-    required int effectiveSeed,
-  }) {
-    final log = packageLogger();
-    for (var attempt = 0; attempt < _kFreeformPipelineMaxAttempts; attempt++) {
-      final mapSeed = effectiveSeed + attempt * 100003;
-      try {
-        final ow = _generateTileMapOldWorld(cfg, mapSeed);
-        final nw = _generateTileMapNewWorld(cfg, mapSeed);
-        final warpLinks = _generateWarpLinks(
-          effectiveSeed: mapSeed,
-          tileMapOW: ow.$1,
-          topoOW: ow.$2,
-          tileMapNW: nw.$1,
-          topoNW: nw.$2,
-        );
-        return createGameFromGeneratedMaps(
-          config: cfg,
-          tileMapOldWorld: ow.$1,
-          topologyOldWorld: ow.$2,
-          tileMapNewWorld: nw.$1,
-          topologyNewWorld: nw.$2,
-          gameId: gameId,
-          namingSeed: effectiveSeed,
-          warpLinks: warpLinks,
-        );
-      } on SetupTopologyDataException catch (e, st) {
-        final retriableTopology =
-            e.code == 'assigner_exhausted' ||
-            e.code == 'faction_component_bin_pack_failed' ||
-            e.code == 'assignment_remainder_not_connected';
-        if (retriableTopology && attempt < _kFreeformPipelineMaxAttempts - 1) {
-          log.w(
-            'app: freeform init topology retry at attempt=$attempt '
-            '(code=${e.code}; mapSeed=$mapSeed): $e',
-          );
-          continue;
-        }
-        log.e('app: freeform init setup failed: $e', error: e, stackTrace: st);
-        rethrow;
-      }
-    }
-    throw SetupTopologyDataException(
-      code: 'assigner_exhausted',
-      details:
-          'Freeform init pipeline exhausted after '
-          '$_kFreeformPipelineMaxAttempts attempts',
-    );
-  }
-
-  GameSetupResult _lockedFullInitMapsWarpSetupWithRetry({
-    required GameSetupConfig cfg,
-    required String gameId,
-    required int effectiveSeed,
-  }) {
-    final log = packageLogger();
-    for (
-      var attempt = 0;
-      attempt < _kLockedFullInitPipelineMaxAttempts;
-      attempt++
-    ) {
-      final mapSeed = effectiveSeed + attempt * 100003;
-      try {
-        final r = generateLockedFullInitTileMapPair(
-          config: cfg,
-          effectiveSeed: mapSeed,
-          onLog: _mapGenPassLog.d,
-        );
-        final warpLinks = _generateWarpLinks(
-          effectiveSeed: mapSeed,
-          tileMapOW: r.tileOw,
-          topoOW: r.topoOw,
-          tileMapNW: r.tileNw,
-          topoNW: r.topoNw,
-        );
-        return createGameFromGeneratedMaps(
-          config: cfg,
-          tileMapOldWorld: r.tileOw,
-          topologyOldWorld: r.topoOw,
-          tileMapNewWorld: r.tileNw,
-          topologyNewWorld: r.topoNw,
-          gameId: gameId,
-          namingSeed: effectiveSeed,
-          warpLinks: warpLinks,
-        );
-      } on MapPartitionGatesExhaustedException catch (e) {
-        if (attempt < _kLockedFullInitPipelineMaxAttempts - 1) {
-          log.w(
-            'app: locked full-init partition gates exhausted; retrying '
-            '(attempt=$attempt mapSeed=$mapSeed): $e',
-          );
-          continue;
-        }
-        throw SetupTopologyDataException(
-          code: MapPartitionGatesExhaustedException.codeValue,
-          details: e.toString(),
-        );
-      } on SetupTopologyDataException catch (e, st) {
-        final retriableTopology =
-            e.code == 'assigner_exhausted' ||
-            e.code == 'faction_component_bin_pack_failed' ||
-            e.code == 'assignment_remainder_not_connected';
-        if (retriableTopology &&
-            attempt < _kLockedFullInitPipelineMaxAttempts - 1) {
-          log.w(
-            'app: locked full-init setup topology retry '
-            '(attempt=$attempt mapSeed=$mapSeed code=${e.code}): $e',
-          );
-          continue;
-        }
-        log.e(
-          'app: locked full-init setup failed: $e',
-          error: e,
-          stackTrace: st,
-        );
-        rethrow;
-      }
-    }
-    throw SetupTopologyDataException(
-      code: 'assigner_exhausted',
-      details:
-          'Locked full-init pipeline exhausted after '
-          '$_kLockedFullInitPipelineMaxAttempts attempts',
-    );
-  }
-
-  (TileMapResult, MapTopology) _generateTileMapOldWorld(
-    GameSetupConfig cfg,
-    int effectiveSeed,
-  ) {
-    final mapGenParams = MapGenerationParams(
-      numContinents: cfg.continentCount,
-      seed: effectiveSeed,
-      seaFraction: kDefaultSeaFraction,
-    );
-    final sizeOW = computeGridSizeFromParams(
-      cfg.numProvincesOldWorld,
-      mapGenParams,
-    );
-    final paramsOW = TileMapParams(
-      width: sizeOW.width,
-      height: sizeOW.height,
-      seed: effectiveSeed,
-      seaFraction: kDefaultSeaFraction,
-    );
-    return TileMapGenerator(params: paramsOW).generate(
-      numProvinces: cfg.numProvincesOldWorld,
-      numContinents: cfg.continentCount,
-      regionId: 'oldWorld',
-      resourceRules: ResourceRules.defaultRules,
-      onLog: _mapGenPassLog.d,
-    );
-  }
-
-  (TileMapResult, MapTopology) _generateTileMapNewWorld(
-    GameSetupConfig cfg,
-    int effectiveSeed,
-  ) {
-    final mapGenParams = MapGenerationParams(
-      numContinents: cfg.continentCount,
-      seed: effectiveSeed,
-      seaFraction: kDefaultSeaFraction,
-    );
-    final sizeNW = computeGridSizeFromParams(
-      cfg.numProvincesNewWorld,
-      mapGenParams,
-    );
-    final paramsNW = TileMapParams(
-      width: sizeNW.width,
-      height: sizeNW.height,
-      seed: effectiveSeed + 1,
-      seaFraction: kDefaultSeaFraction,
-    );
-    return TileMapGenerator(params: paramsNW).generate(
-      numProvinces: cfg.numProvincesNewWorld,
-      numContinents: cfg.continentCount.clamp(1, cfg.numProvincesNewWorld),
-      regionId: 'newWorld',
-      resourceRules: ResourceRules.defaultRules,
-      onLog: _mapGenPassLog.d,
-    );
-  }
-
-  List<WarpLink> _generateWarpLinks({
-    required int effectiveSeed,
-    required TileMapResult tileMapOW,
-    required MapTopology topoOW,
-    required TileMapResult tileMapNW,
-    required MapTopology topoNW,
-  }) {
-    return generateWarpZones(
-      tileMapOldWorld: tileMapOW,
-      topologyOldWorld: topoOW,
-      tileMapNewWorld: tileMapNW,
-      topologyNewWorld: topoNW,
-      regionIdOld: 'oldWorld',
-      regionIdNew: 'newWorld',
-      seed: effectiveSeed,
-    );
-  }
-
-  void _persistNewGame({
-    required String gameId,
-    required GameSetupResult result,
-  }) {
-    _mapCache[gameId] = _GameMapCache(
-      combinedTopology: result.combinedTopology,
-      tileMapByRegion: result.tileMapByRegion,
-      topologyByRegion: result.topologyByRegion,
-      warpLinks: result.warpLinks,
-    );
-    _adapter.saveMapData(
-      _box,
-      gameId,
-      tileMapByRegion: result.tileMapByRegion,
-      topologyByRegion: result.topologyByRegion,
-      combinedTopology: result.combinedTopology,
-      warpLinks: result.warpLinks,
-    );
-    saveGame(result.game);
-    _mirrorAutoSave(result.game);
-    eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
-  }
 
   /// Maps [TurnResolutionResult] to app-level bus events and persists when complete.
   /// SPEC/program/app-event-bus.md.
@@ -680,6 +425,11 @@ class GameService {
       eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
       return;
     }
+    if (result is TurnResolutionPendingFtp) {
+      // FTP accept/reject UI is follow-up work; pending state is set via
+      // [applyTurnResolutionResult] / [pendingDiplomacyProvider].
+      return;
+    }
     if (result is TurnResolutionPendingIntervention) {
       eventBus?.emit(
         InterventionRequiredEvent(prompts: result.pendingInterventions),
@@ -691,5 +441,32 @@ class GameService {
         CallToArmsRequiredEvent(pending: result.pendingCallToArms),
       );
     }
+  }
+
+  /// Emits app-level events and persistence side effects for externally resolved turns.
+  void handleExternallyResolvedTurnResult(TurnResolutionResult result) {
+    _emitTurnResolutionEvents(result);
+  }
+
+  /// Writes merged turn trace after resolution ran outside [runTurnResolution]
+  /// (e.g. worker isolate). No-op when [isTurnTraceEnabled] is false.
+  void exportTurnTraceForExternallyResolvedTurn({
+    required Game gameAtResolutionStart,
+    required Game turnEndState,
+    required List<TurnTracePhaseTrace> phases,
+    required List<TurnTraceAiSection> ai,
+    required DateTime turnStartAtUtc,
+  }) {
+    if (!_turnTraceEnabled) {
+      return;
+    }
+    _gameServiceExportTurnTrace(
+      this,
+      gameAtResolutionStart: gameAtResolutionStart,
+      turnEndState: turnEndState,
+      phases: phases,
+      turnStartAt: turnStartAtUtc,
+      ai: ai,
+    );
   }
 }

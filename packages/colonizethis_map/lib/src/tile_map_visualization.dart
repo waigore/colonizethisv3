@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization_shared.dart'
     show
         colorMapFromIds,
@@ -13,18 +14,18 @@ import 'tile_map_visualization_shared.dart'
         drawBorders,
         drawLegendContinentSeedMarker,
         drawLegendLandSeedMarker,
-        drawLegendSwatch,
+        drawLegendLine,
+        drawResourceLegendRows,
         drawResourceLetterAtCellCenter,
         landSeedMarkerRgb,
         legendLineHeight,
         legendPadding,
         regionPalette,
-        resourceToLegendLabel,
-        resourceToLegendLetter,
         swatchGap,
         swatchSize,
         terrainColorRgb,
         tileMapResourceGlyphs;
+export 'tile_map_image_viewer.dart' show openInDefaultViewer;
 
 /// Deep blue for sea zones. SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
@@ -36,6 +37,34 @@ const (int, int, int) seaZoneBorderRgb = (173, 216, 230);
 const (int, int, int) regionIdLabelRgb = (220, 0, 0);
 
 const int _titleLines = 2;
+
+/// Legend rows after the fixed title + primary swatch block (Refs #2489 D7).
+int _optionalLegendSectionLineCount({
+  required bool showContinentSeeds,
+  required bool showLandSeeds,
+  required bool useLandSeedByContinent,
+  List<int>? landSeedContinentIndices,
+  required bool hasResourceGrid,
+}) {
+  var rows = 0;
+  if (showContinentSeeds) {
+    rows++;
+  }
+  if (showLandSeeds) {
+    if (useLandSeedByContinent && landSeedContinentIndices != null) {
+      final maxContinent = landSeedContinentIndices.reduce(
+        (a, b) => a > b ? a : b,
+      );
+      rows += maxContinent + 1;
+    } else {
+      rows++;
+    }
+  }
+  if (hasResourceGrid) {
+    rows += Resource.values.length;
+  }
+  return rows;
+}
 
 /// Draws optional legend sections (continent seeds, land seeds, resources). Returns updated row.
 int _drawOptionalLegendSections(
@@ -68,18 +97,10 @@ int _drawOptionalLegendSections(
         (a, b) => a > b ? a : b,
       );
       for (var c = 0; c <= maxContinent; c++) {
-        final y = legendY0 + row * legendLineHeight;
+        var y = legendY0 + row * legendLineHeight;
         final (r, g, b) = regionPalette[c % regionPalette.length];
-        drawLegendSwatch(image, y, r, g, b);
-        img.drawString(
-          image,
-          'Continent $c',
-          font: img.arial14,
-          x: legendPadding + swatchSize + swatchGap,
-          y: y,
-          color: black,
-        );
-        row++;
+        y = drawLegendLine(image, y, r, g, b, 'Continent $c');
+        row = (y - legendY0) ~/ legendLineHeight;
       }
     } else {
       final y = legendY0 + row * legendLineHeight;
@@ -96,26 +117,13 @@ int _drawOptionalLegendSections(
     }
   }
   if (hasResourceGrid) {
-    for (final r in Resource.values) {
-      final y = legendY0 + row * legendLineHeight;
-      img.drawString(
-        image,
-        resourceToLegendLetter(r),
-        font: img.arial14,
-        x: legendPadding,
-        y: y,
-        color: black,
-      );
-      img.drawString(
-        image,
-        '  ${resourceToLegendLabel(r)}',
-        font: img.arial14,
-        x: legendPadding + swatchSize + swatchGap,
-        y: y,
-        color: black,
-      );
-      row++;
-    }
+    final yAfter = drawResourceLegendRows(
+      image,
+      legendY: legendY0 + row * legendLineHeight,
+      textColor: black,
+      resources: Resource.values,
+    );
+    row += (yAfter - (legendY0 + row * legendLineHeight)) ~/ legendLineHeight;
   }
   return row;
 }
@@ -137,26 +145,17 @@ int _legendLineCount({
   required List<int>? landSeedContinentIndices,
   required bool hasResourceGrid,
 }) {
-  var lines = useTerrain
+  final primaryLines = useTerrain
       ? _titleLines + 1 + TerrainType.values.length
       : _titleLines + topology.nodes.length;
-  if (showContinentSeeds) {
-    lines += 1;
-  }
-  if (showLandSeeds) {
-    if (useLandSeedByContinent) {
-      final maxContinent = landSeedContinentIndices!.reduce(
-        (a, b) => a > b ? a : b,
+  return primaryLines +
+      _optionalLegendSectionLineCount(
+        showContinentSeeds: showContinentSeeds,
+        showLandSeeds: showLandSeeds,
+        useLandSeedByContinent: useLandSeedByContinent,
+        landSeedContinentIndices: landSeedContinentIndices,
+        hasResourceGrid: hasResourceGrid,
       );
-      lines += maxContinent + 1;
-    } else {
-      lines += 1;
-    }
-  }
-  if (hasResourceGrid) {
-    lines += Resource.values.length;
-  }
-  return lines;
 }
 
 void _drawMapCells({
@@ -357,40 +356,23 @@ void _drawTerrainLegend({
     y: legendY0 + legendLineHeight,
     color: black,
   );
-  var row = _titleLines;
-  drawLegendSwatch(
+  var y = legendY0 + _titleLines * legendLineHeight;
+  y = drawLegendLine(
     image,
-    legendY0 + row * legendLineHeight,
+    y,
     seaColorRgb.$1,
     seaColorRgb.$2,
     seaColorRgb.$3,
-  );
-  img.drawString(
-    image,
     'Sea',
-    font: img.arial14,
-    x: legendPadding + swatchSize + swatchGap,
-    y: legendY0 + row * legendLineHeight,
-    color: black,
   );
-  row++;
   for (final t in TerrainType.values) {
     final (r, g, b) = terrainColorRgb[t]!;
-    drawLegendSwatch(image, legendY0 + row * legendLineHeight, r, g, b);
-    img.drawString(
-      image,
-      _terrainLabel(t),
-      font: img.arial14,
-      x: legendPadding + swatchSize + swatchGap,
-      y: legendY0 + row * legendLineHeight,
-      color: black,
-    );
-    row++;
+    y = drawLegendLine(image, y, r, g, b, _terrainLabel(t));
   }
   _drawOptionalLegendSections(
     image,
     legendY0,
-    row,
+    (y - legendY0) ~/ legendLineHeight,
     showContinentSeeds: showContinentSeeds,
     showLandSeeds: showLandSeeds,
     useLandSeedByContinent: useLandSeedByContinent,
@@ -429,25 +411,22 @@ void _drawRegionLegend({
   );
   final nodesSorted = List<TopologyNode>.from(topology.nodes)
     ..sort((a, b) => a.id.compareTo(b.id));
-  var row = _titleLines;
+  var y = legendY0 + _titleLines * legendLineHeight;
   for (final n in nodesSorted) {
-    final y = legendY0 + row * legendLineHeight;
     final c = regionColors[n.id]!;
-    drawLegendSwatch(image, y, c.$1, c.$2, c.$3);
-    img.drawString(
+    y = drawLegendLine(
       image,
+      y,
+      c.$1,
+      c.$2,
+      c.$3,
       '${n.id} (${n.type == TopologyNodeType.province ? 'P' : 'S'})',
-      font: img.arial14,
-      x: legendPadding + swatchSize + swatchGap,
-      y: y,
-      color: black,
     );
-    row++;
   }
   _drawOptionalLegendSections(
     image,
     legendY0,
-    row,
+    (y - legendY0) ~/ legendLineHeight,
     showContinentSeeds: showContinentSeeds,
     showLandSeeds: showLandSeeds,
     useLandSeedByContinent: useLandSeedByContinent,
@@ -478,10 +457,7 @@ Uint8List renderTileMapToPng(
       landSeedContinentIndices.length == landSeedPositions.length;
   final showContinentSeeds =
       continentSeedPositions != null && continentSeedPositions.isNotEmpty;
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
 
   final mapW = result.width * cellSize;
   final mapH = result.height * cellSize;
@@ -526,7 +502,7 @@ Uint8List renderTileMapToPng(
   if (showContinentSeeds) {
     _drawContinentSeedMarkers(
       image: image,
-      continentSeedPositions: continentSeedPositions!,
+      continentSeedPositions: continentSeedPositions,
       cellSize: cellSize,
       black: black,
     );
@@ -535,7 +511,7 @@ Uint8List renderTileMapToPng(
   if (showLandSeeds) {
     _drawLandSeedMarkers(
       image: image,
-      landSeedPositions: landSeedPositions!,
+      landSeedPositions: landSeedPositions,
       cellSize: cellSize,
       black: black,
       useLandSeedByContinent: useLandSeedByContinent,
@@ -632,29 +608,4 @@ String writeTileMapImageToTempFile(
     continentSeedPositions: continentSeedPositions,
   );
   return file.absolute.path;
-}
-
-/// Tries to open [path] in the system default image viewer.
-/// Respects SUPPRESS_IMAGE_VIEWER=1 env var to skip opening in non-interactive contexts.
-bool openInDefaultViewer(String path) {
-  if (Platform.environment['SUPPRESS_IMAGE_VIEWER'] == '1') {
-    return false;
-  }
-  try {
-    if (Platform.isMacOS) {
-      Process.runSync('open', [path]);
-      return true;
-    } else if (Platform.isLinux) {
-      Process.runSync('xdg-open', [path]);
-      return true;
-    } else if (Platform.isWindows) {
-      Process.runSync('explorer', [path]);
-      return true;
-    }
-  } on ProcessException {
-    return false;
-  } on ArgumentError {
-    return false;
-  }
-  return false;
 }

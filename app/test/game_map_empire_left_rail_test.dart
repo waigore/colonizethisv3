@@ -11,7 +11,9 @@ import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -315,7 +317,15 @@ void main() {
     await tester.tap(find.text('Train'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.close));
+    // Per #2866 S4, the train dialog migrated from Material IconButton +
+    // Icons.close to a CtNinePatchButton with a '×' glyph inside
+    // TrainDialogHeader.
+    final closeButton = find.descendant(
+      of: find.byType(TrainDialogHeader),
+      matching: find.byType(CtNinePatchButton),
+    );
+    expect(closeButton, findsOneWidget);
+    await tester.tap(closeButton);
     await tester.pumpAndSettle();
 
     expect(find.byType(TrainCiviliansDialog), findsNothing);

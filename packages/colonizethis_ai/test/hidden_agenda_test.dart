@@ -2,101 +2,101 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 
 void main() {
-  group('agendaConquerModifier', () {
+  group('getAgendaConquerModifier', () {
     test('warmonger positive', () {
-      expect(agendaConquerModifier('warmonger'), 40);
+      expect(getAgendaConquerModifier('warmonger'), 40);
     });
     test('peacemaker negative', () {
-      expect(agendaConquerModifier('peacemaker'), -50);
+      expect(getAgendaConquerModifier('peacemaker'), -50);
     });
     test('backstabber positive', () {
-      expect(agendaConquerModifier('backstabber'), 20);
+      expect(getAgendaConquerModifier('backstabber'), 20);
     });
     test('isolationist negative', () {
-      expect(agendaConquerModifier('isolationist'), -30);
+      expect(getAgendaConquerModifier('isolationist'), -30);
     });
     test('unknown returns 0', () {
-      expect(agendaConquerModifier('tech_thief'), 0);
-      expect(agendaConquerModifier('envy'), 0);
+      expect(getAgendaConquerModifier('tech_thief'), 0);
+      expect(getAgendaConquerModifier('envy'), 0);
     });
   });
 
-  group('agendaDiplomacyModifier', () {
+  group('getAgendaDiplomacyModifier', () {
     test('isolationist negative', () {
-      expect(agendaDiplomacyModifier('isolationist'), -50);
+      expect(getAgendaDiplomacyModifier('isolationist'), -50);
     });
     test('peacemaker positive', () {
-      expect(agendaDiplomacyModifier('peacemaker'), 30);
+      expect(getAgendaDiplomacyModifier('peacemaker'), 30);
     });
     test('others return 0', () {
-      expect(agendaDiplomacyModifier('warmonger'), 0);
-      expect(agendaDiplomacyModifier('backstabber'), 0);
+      expect(getAgendaDiplomacyModifier('warmonger'), 0);
+      expect(getAgendaDiplomacyModifier('backstabber'), 0);
     });
   });
 
-  group('agendaResearchModifier', () {
+  group('getAgendaResearchModifier', () {
     test('tech_thief positive', () {
-      expect(agendaResearchModifier('tech_thief'), 35);
+      expect(getAgendaResearchModifier('tech_thief'), 35);
     });
     test('others return 0', () {
-      expect(agendaResearchModifier('warmonger'), 0);
-      expect(agendaResearchModifier('envy'), 0);
+      expect(getAgendaResearchModifier('warmonger'), 0);
+      expect(getAgendaResearchModifier('envy'), 0);
     });
   });
 
-  group('agendaBuildOrderModifier', () {
+  group('getAgendaBuildOrderModifier', () {
     test('envy positive', () {
-      expect(agendaBuildOrderModifier('envy'), 20);
+      expect(getAgendaBuildOrderModifier('envy'), 20);
     });
     test('others return 0', () {
-      expect(agendaBuildOrderModifier('tech_thief'), 0);
-      expect(agendaBuildOrderModifier('warmonger'), 0);
+      expect(getAgendaBuildOrderModifier('tech_thief'), 0);
+      expect(getAgendaBuildOrderModifier('warmonger'), 0);
     });
   });
 
-  group('agendaPeaceAcceptanceModifier', () {
+  group('getAgendaPeaceAcceptanceModifier', () {
     test('peacemaker positive', () {
-      expect(agendaPeaceAcceptanceModifier('peacemaker'), 30);
+      expect(getAgendaPeaceAcceptanceModifier('peacemaker'), 30);
     });
     test('warmonger negative', () {
-      expect(agendaPeaceAcceptanceModifier('warmonger'), -25);
+      expect(getAgendaPeaceAcceptanceModifier('warmonger'), -25);
     });
     test('others return 0', () {
-      expect(agendaPeaceAcceptanceModifier('tech_thief'), 0);
+      expect(getAgendaPeaceAcceptanceModifier('tech_thief'), 0);
     });
   });
 
-  group('agendaAllianceAcceptanceModifier', () {
+  group('getAgendaAllianceAcceptanceModifier', () {
     test('isolationist negative', () {
-      expect(agendaAllianceAcceptanceModifier('isolationist'), -40);
+      expect(getAgendaAllianceAcceptanceModifier('isolationist'), -40);
     });
     test('peacemaker positive', () {
-      expect(agendaAllianceAcceptanceModifier('peacemaker'), 10);
+      expect(getAgendaAllianceAcceptanceModifier('peacemaker'), 10);
     });
     test('others return 0', () {
-      expect(agendaAllianceAcceptanceModifier('warmonger'), 0);
+      expect(getAgendaAllianceAcceptanceModifier('warmonger'), 0);
     });
   });
 
-  group('agendaTreatyBreakingModifier', () {
+  group('getAgendaTreatyBreakingModifier', () {
     test('backstabber positive', () {
-      expect(agendaTreatyBreakingModifier('backstabber'), 25);
+      expect(getAgendaTreatyBreakingModifier('backstabber'), 25);
     });
     test('warmonger positive', () {
-      expect(agendaTreatyBreakingModifier('warmonger'), 20);
+      expect(getAgendaTreatyBreakingModifier('warmonger'), 20);
     });
     test('others return 0', () {
-      expect(agendaTreatyBreakingModifier('peacemaker'), 0);
+      expect(getAgendaTreatyBreakingModifier('peacemaker'), 0);
     });
   });
 
-  group('agendaSpyOrderModifier', () {
+  group('getAgendaSpyOrderModifier', () {
     test('tech_thief positive', () {
-      expect(agendaSpyOrderModifier('tech_thief'), 25);
+      expect(getAgendaSpyOrderModifier('tech_thief'), 25);
     });
     test('others return 0', () {
-      expect(agendaSpyOrderModifier('warmonger'), 0);
-      expect(agendaSpyOrderModifier('envy'), 0);
+      expect(getAgendaSpyOrderModifier('warmonger'), 0);
+      expect(getAgendaSpyOrderModifier('envy'), 0);
     });
   });
 }

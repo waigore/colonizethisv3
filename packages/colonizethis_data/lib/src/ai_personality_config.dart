@@ -46,6 +46,8 @@ class PersonalityThresholds {
     this.researchMilitary = 50,
     this.researchEconomic = 50,
     this.researchExploration = 50,
+    this.researchFundingAggression = 50,
+    this.researchSlotFillAggression = 70,
   });
 
   final int warLikelihood;
@@ -55,6 +57,14 @@ class PersonalityThresholds {
   final int researchMilitary;
   final int researchEconomic;
   final int researchExploration;
+
+  /// Scales the target uniform funding tier for Full-AI research (0–100).
+  /// SPEC/ai/ai-architecture.md § Research. Refs #3472.
+  final int researchFundingAggression;
+
+  /// Target fraction of empty research slots to fill each turn (0–100) when
+  /// `primaryGoal != tech`. SPEC/ai/ai-architecture.md § Research. Refs #3472.
+  final int researchSlotFillAggression;
 }
 
 /// Personality config per leader id. Used by colonizethis_ai for goal and utility scoring.

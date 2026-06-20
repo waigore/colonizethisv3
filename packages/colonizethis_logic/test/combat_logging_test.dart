@@ -1,35 +1,18 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-List<String> _combatMessages(List<LogEvent> events) => [
-  for (final e in events)
-    if (e.message.contains('logic: combat')) e.message,
-];
+import 'package:colonizethis_test/combat_logging_test_support.dart';
 
 void main() {
-  group('land combat logging', () {
-    late List<LogEvent> capturedEvents;
-    late void Function(LogEvent) listener;
-
-    setUp(() {
-      capturedEvents = [];
-      listener = capturedEvents.add;
-      Logger.addLogListener(listener);
-      Logger.level = Level.debug;
-    });
-
-    tearDown(() {
-      Logger.removeLogListener(listener);
-      capturedEvents.clear();
-      Logger.level = Level.info;
-    });
+  group('land combat logging (resolveBattleContext)', () {
+    final getCapture = setupCombatLogCapture();
 
     test(
       'resolveBattleContext emits engagement (debug) and battle_apply (info)',
       () {
+        final capture = getCapture();
         final attackerUnits = [
           Unit(
             id: 'a1',
@@ -96,13 +79,13 @@ void main() {
 
         resolveBattleContext(game, ctx);
 
-        final combat = _combatMessages(capturedEvents);
+        final combat = capture.combat;
         expect(
-          combat.where((m) => m.contains('logic: combat engagement')).length,
+          combat.where((m) => m.contains('combat: combat engagement')).length,
           1,
         );
         final engagement = combat.firstWhere(
-          (m) => m.contains('logic: combat engagement'),
+          (m) => m.contains('combat: combat engagement'),
         );
         expect(engagement, contains('result='));
         expect(engagement, contains('attackerFactionId=att'));
@@ -110,7 +93,7 @@ void main() {
         expect(engagement, contains('defCasualties='));
 
         final apply = combat.firstWhere(
-          (m) => m.contains('logic: combat battle_apply'),
+          (m) => m.contains('combat: combat battle_apply'),
         );
         expect(apply, contains('mode=autoResolve'));
         expect(apply, contains('provinceFlipped='));
@@ -118,18 +101,18 @@ void main() {
         expect(apply, contains('ownerAfter='));
 
         expect(
-          capturedEvents.any(
+          capture.events.any(
             (e) =>
                 e.level == Level.debug &&
-                e.message.contains('logic: combat engagement'),
+                e.message.contains('combat: combat engagement'),
           ),
           isTrue,
         );
         expect(
-          capturedEvents.any(
+          capture.events.any(
             (e) =>
                 e.level == Level.info &&
-                e.message.contains('logic: combat battle_apply'),
+                e.message.contains('combat: combat battle_apply'),
           ),
           isTrue,
         );
@@ -137,6 +120,7 @@ void main() {
     );
 
     test('two attacker sides emit one debug line per executed engagement', () {
+      final capture = getCapture();
       // First attacker must lose (defender still holds); otherwise a decisive
       // first attacker victory skips remaining attackers (no second engagement).
       final game = Game(
@@ -200,9 +184,9 @@ void main() {
 
       resolveBattleContext(game, ctx);
 
-      final engagementLines = _combatMessages(
-        capturedEvents,
-      ).where((m) => m.contains('logic: combat engagement')).toList();
+      final engagementLines = capture.combat
+          .where((m) => m.contains('combat: combat engagement'))
+          .toList();
       expect(engagementLines.length, 2);
       expect(
         engagementLines
@@ -217,303 +201,5 @@ void main() {
         1,
       );
     });
-
-    test(
-      'Combat phase logs conflict_detection and battle_start for moved-in attack',
-      () {
-        final topology = MapTopology(
-          nodes: [
-            const TopologyNode(
-              id: 'P1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            const TopologyNode(
-              id: 'P2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-        );
-
-        const ow = 'oldWorld';
-        final game = ensureMilitaryArmiesForGame(
-          Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-                ],
-                units: [
-                  Unit(
-                    id: 'u1',
-                    type: 'grenadiers',
-                    ownerId: 'p1',
-                    locationProvinceId: '$ow|P1',
-                    medals: 2,
-                  ),
-                  Unit(
-                    id: 'u2',
-                    type: 'peasant_levies',
-                    ownerId: 'p2',
-                    locationProvinceId: '$ow|P2',
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(),
-            ),
-            players: [
-              Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
-              Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
-            ],
-          ),
-        );
-
-        final orders = Orders(
-          armyMoveOrdersByPlayerId: {
-            'p1': [
-              ArmyMoveOrder(
-                armyId: fieldArmyIdFor('p1', '$ow|P1'),
-                destinationProvinceId: '$ow|P2',
-              ),
-            ],
-          },
-        );
-
-        requireTurnResolutionComplete(
-          resolveTurnForGame(
-            game: game,
-            topology: topology,
-            orders: orders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
-          ),
-        );
-
-        final combat = _combatMessages(capturedEvents);
-        expect(
-          combat.any(
-            (m) => m.contains('logic: combat conflict_detection start'),
-          ),
-          isTrue,
-        );
-        expect(
-          combat.any(
-            (m) =>
-                m.contains('logic: combat conflict_detection end') &&
-                m.contains('battleContexts=1'),
-          ),
-          isTrue,
-        );
-        expect(
-          combat.any(
-            (m) =>
-                m.contains('logic: combat battle_start') &&
-                m.contains('attackerSides=1') &&
-                m.contains('attackerUnitsTotal=1') &&
-                m.contains('mode=autoResolve'),
-          ),
-          isTrue,
-        );
-        expect(
-          combat.any((m) => m.contains('logic: combat engagement')),
-          isTrue,
-        );
-        expect(
-          combat.any(
-            (m) =>
-                m.contains('logic: combat battle_apply') &&
-                m.contains('mode=autoResolve'),
-          ),
-          isTrue,
-        );
-        expect(
-          capturedEvents.any(
-            (e) =>
-                e.level == Level.info &&
-                e.message.contains('logic: phase combat start'),
-          ),
-          isTrue,
-        );
-        expect(
-          capturedEvents.any(
-            (e) =>
-                e.level == Level.info &&
-                e.message.contains('logic: phase combat end'),
-          ),
-          isTrue,
-        );
-      },
-    );
-
-    test(
-      'Quick Battle path logs battle_apply quickBattle not auto engagement',
-      () {
-        final topology = MapTopology(
-          nodes: [
-            const TopologyNode(
-              id: 'P1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            const TopologyNode(
-              id: 'P2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-        );
-
-        const ow = 'oldWorld';
-        final game = ensureMilitaryArmiesForGame(
-          Game(
-            id: 'g1',
-            defaultCombatMode: CombatMode.quickBattle,
-            worldState: WorldState(
-              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-                ],
-                units: [
-                  Unit(
-                    id: 'u1',
-                    type: 'grenadiers',
-                    ownerId: 'p1',
-                    locationProvinceId: '$ow|P1',
-                    medals: 2,
-                  ),
-                  Unit(
-                    id: 'u2',
-                    type: 'peasant_levies',
-                    ownerId: 'p2',
-                    locationProvinceId: '$ow|P2',
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(),
-            ),
-            players: [
-              Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
-              Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
-            ],
-          ),
-        );
-
-        final orders = Orders(
-          armyMoveOrdersByPlayerId: {
-            'p1': [
-              ArmyMoveOrder(
-                armyId: fieldArmyIdFor('p1', '$ow|P1'),
-                destinationProvinceId: '$ow|P2',
-              ),
-            ],
-          },
-        );
-
-        requireTurnResolutionComplete(
-          resolveTurnForGame(
-            game: game,
-            topology: topology,
-            orders: orders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
-          ),
-        );
-
-        final combat = _combatMessages(capturedEvents);
-        expect(
-          combat.any(
-            (m) =>
-                m.contains('logic: combat battle_start') &&
-                m.contains('mode=quickBattle'),
-          ),
-          isTrue,
-        );
-        expect(
-          combat.any(
-            (m) =>
-                m.contains('logic: combat battle_apply') &&
-                m.contains('mode=quickBattle') &&
-                m.contains('winner='),
-          ),
-          isTrue,
-        );
-        expect(
-          combat.any((m) => m.contains('logic: combat engagement')),
-          isFalse,
-        );
-      },
-    );
-
-    test(
-      'no land battles still logs conflict_detection end with battleContexts=0',
-      () {
-        final topology = MapTopology(
-          nodes: [
-            const TopologyNode(
-              id: 'P1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
-        );
-
-        const ow = 'oldWorld';
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: 'grenadiers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  medals: 2,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
-          ],
-        );
-
-        requireTurnResolutionComplete(
-          resolveTurnForGame(
-            game: game,
-            topology: topology,
-            orders: const Orders(),
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
-          ),
-        );
-
-        final combat = _combatMessages(capturedEvents);
-        expect(
-          combat.any(
-            (m) =>
-                m.contains('logic: combat conflict_detection end') &&
-                m.contains('battleContexts=0'),
-          ),
-          isTrue,
-        );
-        expect(
-          combat.any((m) => m.contains('logic: combat battle_start')),
-          isFalse,
-        );
-      },
-    );
   });
 }

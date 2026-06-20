@@ -11,10 +11,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -183,15 +182,15 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final locateBtn = find.byTooltip('Locate');
+        // R30 (#3514): Locate is the rightmost circular CtCircularLocateButton
+        // (icon-only) in the action cluster per SPEC/ui/civilian-units-panel.md.
+        final locateBtn = find.byType(CtCircularLocateButton);
         expect(locateBtn, findsOneWidget);
-        final iconButtons = find.byType(IconButton);
-        expect(iconButtons, findsOneWidget);
-        final iconBtn = tester.widget<IconButton>(iconButtons.first);
-        expect(iconBtn.iconSize, 18);
-        expect(iconBtn.visualDensity, VisualDensity.compact);
-
-        await tester.tap(locateBtn);
+        final locatePressed = tester
+            .widget<CtCircularLocateButton>(locateBtn.first)
+            .onPressed;
+        expect(locatePressed, isNotNull);
+        locatePressed!();
         await tester.pump();
 
         expect(closeCount, 0);
@@ -270,10 +269,17 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final locateIcons = find.byTooltip('Locate');
+        // R30 (#3514): every visible row exposes a circular
+        // CtCircularLocateButton in the action cluster (per
+        // SPEC/ui/civilian-units-panel.md), even rows that are not the
+        // tile-scope selection.
+        final locateIcons = find.byType(CtCircularLocateButton);
         expect(locateIcons, findsNWidgets(2));
-
-        await tester.tap(locateIcons.at(1));
+        final locatePressed = tester
+            .widget<CtCircularLocateButton>(locateIcons.at(1))
+            .onPressed;
+        expect(locatePressed, isNotNull);
+        locatePressed!();
         await tester.pump();
 
         expect(closeCount, 0);
@@ -351,7 +357,7 @@ void main() {
           find.textContaining('Location: Old World — Beta'),
           findsOneWidget,
         );
-        await tester.tap(find.byType(ListTile).first);
+        await tester.tap(find.byType(CivilianUnitRowCard).first);
         await tester.pump();
         await tester.pumpAndSettle();
 
@@ -405,16 +411,19 @@ void main() {
         await tester.tap(assignButton.first);
         await tester.pumpAndSettle();
 
-        final enabledTargetTile = find.descendant(
+        // Work-target menu rows render through InkWell over palette-token
+        // chrome (Refs #2914 S8 — no Material ListTile); an enabled row has a
+        // non-null onTap.
+        final enabledTargetRow = find.descendant(
           of: find.byType(BottomSheet),
           matching: find.byWidgetPredicate(
-            (w) => w is ListTile && w.enabled == true,
+            (w) => w is InkWell && w.onTap != null,
           ),
         );
-        if (enabledTargetTile.evaluate().isEmpty) return;
-        final targetTile = tester.widget<ListTile>(enabledTargetTile.first);
-        expect(targetTile.onTap, isNotNull);
-        targetTile.onTap!();
+        if (enabledTargetRow.evaluate().isEmpty) return;
+        final targetRow = tester.widget<InkWell>(enabledTargetRow.first);
+        expect(targetRow.onTap, isNotNull);
+        targetRow.onTap!();
         await tester.pump();
         await tester.pumpAndSettle();
 
@@ -468,24 +477,26 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Scope to the row with our pending order — avoid `.first` on "Cancel"
-        // (debug game may show multiple Cancel buttons; first may be off-stage / obscured).
-        final pendingRow = find.ancestor(
-          of: find.text(idleCivilian.type),
-          matching: find.byType(ListTile),
+        // Scope to the row with our pending order via the stable ValueKey
+        // exposed by CivilianUnitRowCard (`civilian-unit-card-<unitId>`).
+        // `find.text(...)` can miss offstage rows in scrollable lists, so the
+        // keyed finder is more robust than ancestor lookup by unit-type text.
+        final pendingRow = find.byKey(
+          ValueKey('civilian-unit-card-${idleCivilian.id}'),
+          skipOffstage: false,
         );
         expect(pendingRow, findsOneWidget);
-        // Tap the nine-patch control (InkWell), not the Text center — avoids
-        // hit-test misses when the label sits off the interactive region.
+        // R30 (#3514): pending rows expose the destructive Cancel pill
+        // (CtDangerTextButton, mockup `.u-actions .cancel-btn`) + circular
+        // Locate in the action cluster.
         final cancelOnPendingRow = find.descendant(
           of: pendingRow,
-          matching: find.byType(CtNinePatchButton),
+          matching: find.byType(CtDangerTextButton, skipOffstage: false),
         );
         expect(cancelOnPendingRow, findsOneWidget);
-        await tester.ensureVisible(cancelOnPendingRow);
-        // CtNinePatchButton + Flame nine-patch often fail widget hit tests at the
-        // label center; invoke the callback to assert confirm + bus emission.
-        final cancelBtn = tester.widget<CtNinePatchButton>(cancelOnPendingRow);
+        // Invoke the callback directly to assert confirm + bus emission without
+        // depending on headless-Linux hit-test geometry.
+        final cancelBtn = tester.widget<CtDangerTextButton>(cancelOnPendingRow);
         expect(cancelBtn.onPressed, isNotNull);
         cancelBtn.onPressed!();
         await tester.pumpAndSettle();
@@ -543,18 +554,17 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final pendingRow = find.ancestor(
-          of: find.text(idleCivilian.type),
-          matching: find.byType(ListTile),
+        final pendingRow = find.byKey(
+          ValueKey('civilian-unit-card-${idleCivilian.id}'),
+          skipOffstage: false,
         );
         expect(pendingRow, findsOneWidget);
         final cancelOnPendingRow = find.descendant(
           of: pendingRow,
-          matching: find.byType(CtNinePatchButton),
+          matching: find.byType(CtDangerTextButton, skipOffstage: false),
         );
         expect(cancelOnPendingRow, findsOneWidget);
-        await tester.ensureVisible(cancelOnPendingRow);
-        final cancelBtn = tester.widget<CtNinePatchButton>(cancelOnPendingRow);
+        final cancelBtn = tester.widget<CtDangerTextButton>(cancelOnPendingRow);
         expect(cancelBtn.onPressed, isNotNull);
         cancelBtn.onPressed!();
         await tester.pumpAndSettle();
@@ -619,7 +629,8 @@ void main() {
                   children: [
                     ValueListenableBuilder<int>(
                       valueListenable: observedRemovals,
-                      builder: (_, count, _) => Text('observed-removals:$count'),
+                      builder: (_, count, _) =>
+                          Text('observed-removals:$count'),
                     ),
                     Expanded(
                       child: _EventHandlingWrapper(
@@ -642,16 +653,16 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('observed-removals:0'), findsOneWidget);
 
-        final pendingRow = find.ancestor(
-          of: find.text(idleCivilian.type),
-          matching: find.byType(ListTile),
+        final pendingRow = find.byKey(
+          ValueKey('civilian-unit-card-${idleCivilian.id}'),
+          skipOffstage: false,
         );
         expect(pendingRow, findsOneWidget);
         final cancelOnPendingRow = find.descendant(
           of: pendingRow,
-          matching: find.byType(CtNinePatchButton),
+          matching: find.byType(CtDangerTextButton, skipOffstage: false),
         );
-        final cancelBtn = tester.widget<CtNinePatchButton>(cancelOnPendingRow);
+        final cancelBtn = tester.widget<CtDangerTextButton>(cancelOnPendingRow);
         cancelBtn.onPressed!();
         await tester.pumpAndSettle();
         await tester.tap(find.text('Yes'));

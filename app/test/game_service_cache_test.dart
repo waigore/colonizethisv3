@@ -1,4 +1,5 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
+import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 
 class _CountingGameSaveAdapter extends GameSaveAdapter {
@@ -45,6 +47,53 @@ void main() {
     test('getMapData returns null for unknown game id', () {
       final result = service.getMapData('no-such-game');
       expect(result, isNull);
+    });
+
+    test('default turn trace root directory matches startup config constant', () {
+      final defaultService = GameService(box, GameSaveAdapter());
+      expect(defaultService.turnTraceRootDirectory, kCtTurnTraceDirectory);
+    });
+
+    test('constructor turn trace root directory override takes precedence', () {
+      const overridePath = '/tmp/custom-turn-traces';
+      final overriddenService = GameService(
+        box,
+        GameSaveAdapter(),
+        turnTraceRootDirectory: overridePath,
+      );
+      expect(overriddenService.turnTraceRootDirectory, overridePath);
+    });
+
+    test('saveGame strips observe handoff when prepareGameForPersistence set', () {
+      const gameId = 'observe_strip';
+      final game = Game(
+        id: gameId,
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: false),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+        aiControlByGpId: {'gp1': true, 'gp2': true},
+      );
+      service.prepareGameForPersistence = (_) => Game(
+        id: gameId,
+        worldState: game.worldState,
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+        aiControlByGpId: const {},
+      );
+      service.saveGame(game);
+
+      final loaded = GameSaveAdapter().load(box, gameId);
+      expect(loaded, isNotNull);
+      expect(loaded!.players.firstWhere((p) => p.id == 'gp1').isHuman, isTrue);
+      expect(loaded.aiControlByGpId, isEmpty);
     });
 
     test('loadGame returns null when required map data is missing', () {
@@ -155,5 +204,74 @@ void main() {
       final g = service.createNewGame(config: config);
       expect(g.id, startsWith('game_'));
     });
+
+    test(
+      'runTurnResolution exports merged turn trace when debug trace is enabled',
+      () async {
+        final traceRoot = await Directory.systemTemp.createTemp(
+          'ct_turn_trace_app_',
+        );
+        addTearDown(() async {
+          if (await traceRoot.exists()) {
+            await traceRoot.delete(recursive: true);
+          }
+        });
+        final traceService = GameService(
+          box,
+          GameSaveAdapter(),
+          turnTraceEnabled: true,
+          turnTraceRootDirectory: traceRoot.path,
+        );
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 3,
+          numProvincesNewWorld: 2,
+        );
+        final game = traceService.createNewGame(
+          id: 'trace_app_game',
+          config: config,
+        );
+        final aiEnabledGame = game.copyWith(
+          aiControlByGpId: {for (final player in game.players) player.id: true},
+        );
+
+        final result = traceService.runTurnResolution(
+          aiEnabledGame,
+          orders: const Orders(),
+        );
+        expect(result, isA<TurnResolutionComplete>());
+
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        final traceDir = Directory('${traceRoot.path}/turn-traces/${game.id}');
+        expect(await traceDir.exists(), isTrue);
+        final files = traceDir
+            .listSync()
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.json'))
+            .toList();
+        expect(files.length, 1);
+        final payload =
+            jsonDecode(await files.single.readAsString())
+                as Map<String, dynamic>;
+        expect(payload['schemaVersion'], 'v1');
+        final meta = payload['meta'] as Map<String, dynamic>;
+        expect(meta['source'], 'app');
+        expect(meta['traceEnabled'], isTrue);
+        final phases =
+            ((payload['turnResolution'] as Map<String, dynamic>)['phases']
+                as List<dynamic>);
+        expect(phases, isNotEmpty);
+        final ai = payload['ai'] as List<dynamic>;
+        expect(ai, isNotEmpty);
+        final firstAi = ai.first as Map<String, dynamic>;
+        expect(firstAi['factionId'], isNotEmpty);
+        expect(firstAi['state'], isA<Map<String, dynamic>>());
+        expect(firstAi['thresholds'], isA<Map<String, dynamic>>());
+        expect(firstAi['outcome'], isA<Map<String, dynamic>>());
+      },
+    );
   });
 }

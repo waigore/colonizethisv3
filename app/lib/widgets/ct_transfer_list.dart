@@ -3,6 +3,19 @@ import 'package:flutter/material.dart';
 
 import 'ct_nine_patch_button.dart';
 import 'ct_panel.dart';
+import 'ct_spacing.dart';
+
+/// Side-by-side two-panel layout requires at least this many logical pixels of
+/// inner width (the constraint passed to [CtTransferList] by its parent shell,
+/// e.g. `CtDialogShell` body). Below this threshold the two panels stack
+/// vertically so the per-row label + transfer buttons can render without a
+/// `RenderFlex` overflow at the minimum supported viewport
+/// (`kMinViewportWidth = 320` dp). Normative narrow stacking behavior is
+/// documented in `SPEC/ui/naval-units-fleet-management.md`,
+/// `SPEC/ui/military-units-army-management.md`, and
+/// `SPEC/ui/transfer-to-home-fleet-dialog.md`.
+@visibleForTesting
+const double kCtTransferListSideBySideMinWidth = 360;
 
 /// Generic dual-list transfer widget for moving counted items between two sides.
 ///
@@ -10,6 +23,10 @@ import 'ct_panel.dart';
 /// - per-row single-item and move-all controls (no selection step)
 /// - configurable validation before confirm
 /// - customizable labels and item rendering
+///
+/// Below [kCtTransferListSideBySideMinWidth] the two side panels stack
+/// vertically (panel → 16 dp gap → panel → action row) so the host shell can
+/// honour the `kMinViewportWidth = 320` dp pin without overflow.
 class CtTransferList extends StatefulWidget {
   const CtTransferList({
     super.key,
@@ -168,78 +185,127 @@ class _CtTransferListState extends State<CtTransferList> {
     );
   }
 
+  Widget _leftPanel() {
+    return _TransferSidePanel(
+      title: widget.leftTitle,
+      subtitle: widget.leftSubtitle,
+      counts: _leftCounts,
+      total: _leftTotal,
+      listHeight: widget.listHeight,
+      emptyLabel: widget.leftEmptyLabel,
+      itemLabelBuilder: _itemLabel,
+      totalLabelBuilder: widget.totalLabelBuilder,
+      placeActionsAfterLabel: true,
+      moveAllToLeftLabel: widget.moveAllToLeftLabel,
+      moveOneToLeftLabel: widget.moveOneToLeftLabel,
+      moveOneToRightLabel: widget.moveOneToRightLabel,
+      moveAllToRightLabel: widget.moveAllToRightLabel,
+      onMoveOneToRight: _moveOneToRight,
+      onMoveAllToRight: _moveAllToRight,
+      onMoveOneToLeft: _moveOneToLeft,
+      onMoveAllToLeft: _moveAllToLeft,
+    );
+  }
+
+  Widget _rightPanel() {
+    return _TransferSidePanel(
+      title: widget.rightTitle,
+      subtitle: widget.rightSubtitle,
+      counts: _rightCounts,
+      total: _rightTotal,
+      listHeight: widget.listHeight,
+      emptyLabel: widget.rightEmptyLabel,
+      itemLabelBuilder: _itemLabel,
+      totalLabelBuilder: widget.totalLabelBuilder,
+      placeActionsAfterLabel: false,
+      moveAllToLeftLabel: widget.moveAllToLeftLabel,
+      moveOneToLeftLabel: widget.moveOneToLeftLabel,
+      moveOneToRightLabel: widget.moveOneToRightLabel,
+      moveAllToRightLabel: widget.moveAllToRightLabel,
+      onMoveOneToRight: _moveOneToRight,
+      onMoveAllToRight: _moveAllToRight,
+      onMoveOneToLeft: _moveOneToLeft,
+      onMoveAllToLeft: _moveAllToLeft,
+    );
+  }
+
+  Widget _actionRow(BuildContext context, {required bool useWrap}) {
+    // At the minimum supported viewport (`kMinViewportWidth = 320` dp) the
+    // Cinzel engraved-label text in `CtNinePatchButton` overflows a single
+    // right-aligned `Row` for `Cancel` + a long `confirmLabel` (e.g.
+    // "Confirm Split", "Transfer"). The narrow stack therefore uses `Wrap`
+    // so Cancel + Confirm can flow onto a second run when needed. Wider
+    // viewports keep the canonical single-row right-aligned layout so
+    // existing dialog tests (and SPEC mockups) see the unchanged chrome.
+    final cancel = widget.onCancel == null
+        ? null
+        : CtNinePatchButton(
+            onPressed: widget.onCancel,
+            child: Text(widget.cancelLabel),
+          );
+    final confirm = CtNinePatchButton(
+      onPressed: _handleConfirm,
+      enabled: _canConfirm,
+      child: Text(widget.confirmLabel),
+    );
+    if (useWrap) {
+      return Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          ?cancel,
+          confirm,
+        ],
+      );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (cancel != null) ...[cancel, const SizedBox(width: 8)],
+        confirm,
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _TransferSidePanel(
-                title: widget.leftTitle,
-                subtitle: widget.leftSubtitle,
-                counts: _leftCounts,
-                total: _leftTotal,
-                listHeight: widget.listHeight,
-                emptyLabel: widget.leftEmptyLabel,
-                itemLabelBuilder: _itemLabel,
-                totalLabelBuilder: widget.totalLabelBuilder,
-                placeActionsAfterLabel: true,
-                moveAllToLeftLabel: widget.moveAllToLeftLabel,
-                moveOneToLeftLabel: widget.moveOneToLeftLabel,
-                moveOneToRightLabel: widget.moveOneToRightLabel,
-                moveAllToRightLabel: widget.moveAllToRightLabel,
-                onMoveOneToRight: _moveOneToRight,
-                onMoveAllToRight: _moveAllToRight,
-                onMoveOneToLeft: _moveOneToLeft,
-                onMoveAllToLeft: _moveAllToLeft,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _TransferSidePanel(
-                title: widget.rightTitle,
-                subtitle: widget.rightSubtitle,
-                counts: _rightCounts,
-                total: _rightTotal,
-                listHeight: widget.listHeight,
-                emptyLabel: widget.rightEmptyLabel,
-                itemLabelBuilder: _itemLabel,
-                totalLabelBuilder: widget.totalLabelBuilder,
-                placeActionsAfterLabel: false,
-                moveAllToLeftLabel: widget.moveAllToLeftLabel,
-                moveOneToLeftLabel: widget.moveOneToLeftLabel,
-                moveOneToRightLabel: widget.moveOneToRightLabel,
-                moveAllToRightLabel: widget.moveAllToRightLabel,
-                onMoveOneToRight: _moveOneToRight,
-                onMoveAllToRight: _moveAllToRight,
-                onMoveOneToLeft: _moveOneToLeft,
-                onMoveAllToLeft: _moveAllToLeft,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (widget.onCancel != null) ...[
-              CtNinePatchButton(
-                onPressed: widget.onCancel,
-                child: Text(widget.cancelLabel),
-              ),
-              const SizedBox(width: 8),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool stackVertically =
+            constraints.maxWidth.isFinite &&
+            constraints.maxWidth < kCtTransferListSideBySideMinWidth;
+        if (stackVertically) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _leftPanel(),
+              const SizedBox(height: 16),
+              _rightPanel(),
+              const SizedBox(height: 16),
+              _actionRow(context, useWrap: true),
             ],
-            CtNinePatchButton(
-              onPressed: _handleConfirm,
-              enabled: _canConfirm,
-              child: Text(widget.confirmLabel),
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _leftPanel()),
+                const SizedBox(width: 16),
+                Expanded(child: _rightPanel()),
+              ],
             ),
+            const SizedBox(height: 16),
+            _actionRow(context, useWrap: false),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -286,9 +352,13 @@ class _TransferSidePanel extends StatelessWidget {
   final void Function(String itemId) onMoveAllToLeft;
 
   static const double _rowButtonMinHeight = 40;
+
+  /// Per-row transfer-button padding. Horizontal `CtSpacing.m` (8 px) and
+  /// vertical `CtSpacing.s` (6 px) per
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § *Spacing tokens*.
   static const EdgeInsets _rowButtonPadding = EdgeInsets.symmetric(
-    horizontal: 8,
-    vertical: 6,
+    horizontal: CtSpacing.m,
+    vertical: CtSpacing.s,
   );
 
   @override
@@ -301,11 +371,11 @@ class _TransferSidePanel extends StatelessWidget {
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           if (subtitle != null)
             Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           const Divider(height: 1),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           _buildListArea(context),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           const Divider(height: 1),
           const SizedBox(height: 4),
           Text(
@@ -352,7 +422,7 @@ class _TransferSidePanel extends StatelessWidget {
       style: Theme.of(context).textTheme.bodyMedium,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: CtSpacing.xs),
       child: Material(
         color: Colors.transparent,
         child: Padding(

@@ -1,12 +1,29 @@
 # Naval Units Panel
 
-**SPEC/ui** — Panel that lists all naval fleets owned by the human player, grouped by region then by location (port province or sea zone). Shows key fleet info at a glance, with expandable details for composition and capabilities, and supports locating each fleet on the map. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), [game-toolbar-icons.md](game-toolbar-icons.md), and [empire-buttons.md](empire-buttons.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md), [world-model.md](../game/world-model.md); movement: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `UNIT30001` — stable; do not reassign.
+**SPEC/ui** — Naval fleets panel. Implementation: `app/lib/features/game/widgets/naval_units_panel.dart`.
+**Widgetbook:** `Naval Units Panel` → `app/lib/widgetbook/catalog.dart`. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md).
+
+**Mockup:** [mockups/UNIT30001-naval-units-panel.html](mockups/UNIT30001-naval-units-panel.html)
+---
+
+## Widget contract
+
+`NavalUnitsPanel` — fleet rows by region/location; Move, Transfer, split/combine, locate; emits naval bus events per [move-fleet-dialog.md](move-fleet-dialog.md) and fleet management spec.
+
+---
+
+## Trigger conditions
+
+- **Access:** The panel is opened from the in-game shell **toolbar** via a dedicated **Naval Units** button, alongside Production, Civilian Units, Military Units, Diplomacy, and Technology per [empire-buttons.md](empire-buttons.md) and [in-game-shell-narrow.md](in-game-shell-narrow.md).
+- **Desktop / wide viewport:** Panel appears as a **side panel** (CtPanel) next to the map (map remains visible). At viewport widths **>=1280px**, panel width is derived from viewport width using a bounded scale rule (not a fixed `maxWidth: 400`), while preserving sensible min/max limits.
+- **Mobile / narrow viewport:** Behaviour matches the wide layout but may adapt to a narrower side panel or overlay per [mobile-adaptation.md](mobile-adaptation.md); interaction (list + locate) remains the same.
 
 ---
 
 ## Purpose
 
-The naval units panel gives the player a single place to see every **fleet** they control, including the **Home Fleet**. **Split** and **combine** fleet actions (checkbox multi-select, locality rules, Home Fleet merge target) are specified in [naval-units-fleet-management.md](naval-units-fleet-management.md). The panel:
+The naval units panel gives the player a single place to see every **fleet** they control, including the **Home Fleet**. **Split** and **combine** fleet actions are specified in [naval-units-fleet-management.md](naval-units-fleet-management.md). The panel:
 
 - Lists fleets grouped by **region** and by **location** (in port at a province vs at sea in a sea zone).
 - Always shows the **Home Fleet** as a special entry at the top for the player’s capital, even when it currently has zero ships.
@@ -21,7 +38,7 @@ The naval units panel gives the player a single place to see every **fleet** the
 
 For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the **collapsed row header area** includes a **Move** action next to **Split** so orders can be issued without expansion. The **Home Fleet** row does **not** show **Move** (cannot move).
 
-**Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal where the player:
+**Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal (see [move-fleet-dialog.md](move-fleet-dialog.md) for the authoritative widget contract, layout, states, and bus events) where the player:
 
 **Title:** **Fleet \<id\>** (or equivalent) and, when there is at least one destination, **(N destinations)** so numeric ids are not mistaken for option counts.
 
@@ -41,6 +58,12 @@ For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the 
 
 When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `locationScopeKey`, optional `initialSelectedFleetId`, and optional `tileScopeTileKey`, the list shows only fleets at that location scope, the title uses the tile-scoped string, and the **Tile** header action emits **`OpenMapTileDetailEvent`** for `tileScopeTileKey` (after **`ClosePanelEvent`**, same pattern as civilians).
 
+**Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header actions — tile-scope **Tile** and **Combine** — render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. The naval panel has **no** Train action. Bus emissions and enable/disable rules are unchanged: **Tile** is disabled when `tileScopeTileKey` is empty; **Combine** is enabled only when the current selection is combinable. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
+
+**No production Close pill (mockup `.close-btn` preview-only; issue #3514 owner decision #14):** The `UNIT30001` mockup header (`mockups/UNIT30001-naval-units-panel.html`) depicts a **Close** pill purely as a static preview affordance. The shipped panel renders **no** production Close pill: it is hosted in a side-panel / bottom-sheet surface that owns its own dismissal (the shared [`UnitsPanelShell`](components/units-panel-shell.md) `CtTopBar` renders **without** a back/close button). The mockup HTML is **not** edited to remove the preview Close; this divergence is recorded here so the panel matches the mockup style without adding a redundant Close control.
+
+**No panel subtitle (mockup `.panel-subtitle` out of scope; issue #3514 owner decision #16):** The `UNIT30001` mockup includes a `.panel-subtitle` line under the header. This spec defines **no** panel subtitle, so the shipped panel renders none; the mockup `.panel-subtitle` is **out of scope** and is not implemented. The mockup HTML is **not** edited to remove it; this divergence is recorded here.
+
 ---
 
 ## Scope: which fleets are shown
@@ -58,11 +81,59 @@ When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `location
 
 ---
 
-## Panel placement and opening
+## Layout / wireframe
 
-- **Access:** The panel is opened from the in-game shell **toolbar** via a dedicated **Naval Units** button, alongside Production, Civilian Units, Military Units, Diplomacy, and Technology per [empire-buttons.md](empire-buttons.md) and [in-game-shell-narrow.md](in-game-shell-narrow.md).
-- **Desktop / wide viewport:** Panel appears as a **side panel** (CtPanel) next to the map (map remains visible). At viewport widths **>=1280px**, panel width is derived from viewport width using a bounded scale rule (not a fixed `maxWidth: 400`), while preserving sensible min/max limits.
-- **Mobile / narrow viewport:** Behaviour matches the wide layout but may adapt to a narrower side panel or overlay per [mobile-adaptation.md](mobile-adaptation.md); interaction (list + locate) remains the same.
+Side panel (CtPanel) beside map on wide viewports; scrollable fleet tree grouped by region → Home Fleet → ports → sea zones. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite (with the panel widening its `panelConstraints` on `>= 1280` dp viewports).
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Toolbar Naval Units | In-game | Panel opens full fleet list. |
+| `OpenNavalUnitsPanelEvent` | Tile / fleet scope | Filtered list + optional selection. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Move | Sea-going fleet | Opens [move-fleet-dialog.md](move-fleet-dialog.md) | `NavalMoveFleetRequestedEvent` on confirm. |
+| Transfer to Home Fleet | At capital port | Opens [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | Transfer event on confirm. |
+| Locate | Row action | `LocateMapTileEvent` | Map centers on fleet. |
+| Split / Combine | Per fleet management spec | Bus events | See [naval-units-fleet-management.md](naval-units-fleet-management.md). |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Home Fleet row | Capital region | Pinned first; no Move. |
+| Pending move | Draft naval move order | **Moving to:** line on row. |
+| Tile-scoped | Map marker open | Filtered title + Tile header action. |
+
+---
+
+## Components
+
+- `NavalUnitsPanel`, [move-fleet-dialog.md](move-fleet-dialog.md), [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md).
+- `RegionSectionHeader` (`app/lib/features/game/widgets/units/shared/region_section_header.dart`) — rendered with the `RegionHeaderVariant.leftBar` chrome on this panel (Refs #3514); see § Region / location header chrome.
+- `LocationSectionHeader` (`app/lib/features/game/widgets/units/shared/location_section_header.dart`) — location (Home Fleet / port / sea-zone) sub-header; see § Region / location header chrome.
+
+---
+
+## Region / location header chrome (Refs #3514)
+
+The region and location group headers follow the naval mockup
+(`SPEC/ui/mockups/UNIT30001-naval-units-panel.html`) for **visual chrome**;
+the displayed header text content (`name — region` on location headers) is
+unchanged.
+
+- **Region header (`.region-heading`):** Each region grouping heading (`Old World` / `New World`) renders via `RegionSectionHeader` with `variant: RegionHeaderVariant.leftBar` — an upper-cased `EditorialMonoclePalette.muted` Cinzel display label (`editorialMonocleDisplayFontFamily`, `12` logical px, `FontWeight.w600`) preceded by a `3` dp `EditorialMonoclePalette.accentDim` **left** border (`RegionSectionHeader.leftBarWidth`) with `6 × 3` dp inner padding. The bottom-border `CtSectionLabel` chrome (`RegionHeaderVariant.bottomBorder`) is **not** used on this panel.
+- **Location header (`.location-label`):** Each location sub-header (Home Fleet / In Port / At Sea / named node) renders via `LocationSectionHeader` as an indented body-font line in `EditorialMonoclePalette.fg` at `0.8` opacity (`LocationSectionHeader.labelOpacity`), `FontWeight.w600`. The previous muted `titleSmall` styling is replaced; the leading `CtSpacing.ml` indent is retained.
 
 ---
 
@@ -92,27 +163,27 @@ For every fleet (including the Home Fleet), the collapsed row shows:
 
 | Field             | Source                                   | Notes |
 |-------------------|------------------------------------------|-------|
-| **Fleet name**    | Fleet id or display name                | For Home Fleet, label is “Home Fleet”. For other fleets, use a human-readable label (e.g. “Fleet #3”, “Atlantic Squadron” if available; otherwise a stable fallback). |
-| **Location**      | `inPortAtProvinceId` or `seaZoneId`     | Display as `Region — Province` for in-port fleets (province display name) or `Region — Sea zone` for at-sea fleets. Region label uses same mapping as Military Units panel. |
+| **Fleet name**    | Fleet id or display name                | For Home Fleet, label is “Home Fleet” followed by a compact uppercase **`HOME`** chip (mockup `.home-tag`). For other fleets, use a human-readable label (e.g. “Fleet #3”, “Atlantic Squadron” if available; otherwise a stable fallback) and **no** `HOME` chip. See [Naval mockup fidelity (R25–R29)](#naval-mockup-fidelity-r25r29). |
+| **Location**      | `inPortAtProvinceId` or `seaZoneId`     | Display as `Region — Province (in port)` for in-port fleets (province display name + localised `(in port)` qualifier per `AppLocalizations.naval_units_locInPort`) or `Region — Sea zone (at sea)` for at-sea fleets (`naval_units_locAtSea`). Region label uses same mapping as Military Units panel. The qualifier is appended by `naval_tree_builder.dart` so both the collapsed subtitle and any snapshot view reading `FleetRow.locationLabel` see the same suffix. |
 | **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. When the shell’s draft **`Orders`** contains a **naval move** for this fleet, show **Moving to:** \<display name of destination sea zone or dock province\> (dock targets may suffix **(dock)** in UI copy). |
-| **Inline actions** | Fleet action availability rules | `Split` is always visible. `Move` is visible for sea-going fleets and hidden for Home Fleet. Fleet rows use the shared unit-panel row-action widget convention from `app/lib/features/game/widgets/units/shared/` (left details, right left-to-right actions); narrow layouts switch row actions to icon-only while keeping controls tappable. |
+| **Inline actions** | Fleet action availability rules | `Split` is always visible. `Move` is visible for sea-going fleets and hidden for Home Fleet. `Locate` is always visible and is rendered **icon-only** at the **right end** of the actions cluster. Fleet rows render via the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite with `dense: true` so Move/Split render as **compact inline pills** (mockup `.f-actions button`) on a single horizontal row; narrow layouts switch row actions to icon-only while keeping controls tappable. See [Naval mockup fidelity (R25–R29)](#naval-mockup-fidelity-r25r29). |
 
 Collapsed row content stays compact and focused on: location, mission (and draft move line when present), and inline actions.
 
 ### Expanded details (on demand)
 
-When a row is **expanded**, additional details are shown **within the same panel**:
+Each fleet row renders inside the shared [`UnitsEntityCard`](components/units-entity-card.md) mockup `.fleet-row` bordered gradient card (collapsed `--bg-deep` → `--surface` gradient + 1 px `--border`; expanded flat `--surface` + 1 px `--accent-dim` with a 1 px `--border` child top divider), not the bare Material `ExpansionTile` chrome — the same card migration delivered for military army rows (issue #3514 owner decision #6 / AC-6). The dense [`UnitsEntityActionRow`](components/units-entity-action-row.md) title cluster is hosted with `chrome: false` so the card border is not double-painted, and stays on one inline row (collapsing to icon-only when its flex share drops below the label+icon footprint).
 
-- **Composition table:** One row per ship type in the fleet:
+When a row is **expanded**, additional details are shown **within the same panel** as a single compact band — composition `Table` widget, optional Home-Fleet cargo line, and a single-line composition summary — mirroring mockup `.fleet-row .f-expanded` (`SPEC/ui/mockups/UNIT30001-naval-units-panel.html`). The legacy per-stat `ListTile` stack is **no longer used**; see [Naval mockup fidelity (R25–R29)](#naval-mockup-fidelity-r25r29) for the layout pin.
+
+- **Composition table:** A single `Table` widget with one row per ship type:
   - Type name: **display label** from `shipTypeDisplayName` in `colonizethis_data` (aligned with [ships-and-naval.md](../game/ships-and-naval.md) roster, e.g. “Frigate”, “Merchant Steamship”, “Ship of the Line”), not raw `ship_type_id` (e.g. not `frigate`, `merchant_steamship`, `ship_of_the_line`). Unknown ids fall back to the raw id.
-  - Count of ships of that type.
-  - Role tag (e.g. “Warship” vs “Merchant”) per [ships-and-naval.md](../game/ships-and-naval.md).
+  - `×Count` cell (`AppLocalizations.naval_units_compositionCount`) styled with the `--accent-dim` token.
+  - Role tag — `Warship` (`naval_units_compositionRoleWarship`) when the ship type has `cargoHold == 0`, otherwise `Merchant` (`naval_units_compositionRoleMerchant`), per [ships-and-naval.md](../game/ships-and-naval.md).
 - **Capabilities:**
-  - For **Home Fleet**:
-    - **Cargo capacity**: total cargo holds, computed as the sum of `cargoHold` for all merchant ships in the Home Fleet per [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet, Cargo holds and capacity). Display as `Cargo capacity: X holds`.
-  - For **sea-going fleets**:
-    - A simple **strength summary** derived from naval combat aggregation (e.g. a single “Strength” value or short label that reflects FRP/RNG/HULL per [ships-and-naval.md](../game/ships-and-naval.md) § Naval Strength Aggregation Formula). Exact numeric display may be minimal for v1; underlying formula remains per game spec.
-- **Secondary summary fields:** `Total ships`, `Warships`, and `Merchants` are displayed in expanded content (not in collapsed summary text).
+  - For **Home Fleet** only: a single `Cargo capacity: X holds` line rendered between the table and the summary band (`AppLocalizations.naval_units_cargoCapacityHolds`); cargo holds are the sum of `cargoHold` over all merchant ships in the Home Fleet per [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet, Cargo holds and capacity). **Non-home** fleets render no cargo line in the expanded view.
+  - For **all fleets**: a retained `Strength: V` line (single `Text`, not its own `ListTile`) derived from the naval combat aggregation formula per [ships-and-naval.md](../game/ships-and-naval.md) § Naval Strength Aggregation Formula.
+- **Composition summary line:** A **single** `Text` widget `Total ships: X · Warships: Y · Merchants: Z` rendered below the table / cargo line (`AppLocalizations.naval_units_compositionSummary`). Replaces the legacy `Total ships`, `Warships`, and `Merchants` per-stat `ListTile`s.
 - **Additional status:** Optional badges such as “In port”, “At sea”, or mission badges (Patrol, Blockade, Beachhead, Defend).
 
 ---
@@ -148,6 +219,7 @@ When a row is **expanded**, additional details are shown **within the same panel
 - **Province lookup:** Always use **prefixed province ids** (`regionId|localId`) when resolving provinces from fleet location or Home Fleet capital per [world-model-identity.md](../game/world-model-identity.md). Display **province names** (e.g. `Province.displayName`) and **never raw province ids** to the user.
 - **Sea zone identity:** Sea zones are identified by `seaZoneId` on the fleet and displayed via sea-zone display names stored in world state (prefixed `regionId|seaZoneId` key). The UI must show the resolved sea-zone display name (not raw id) and include the **region label** with it.
 - **Home Fleet detection:** The Home Fleet is identified via the rules in [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet): it is the fleet in port at the capital province that cannot move and whose mission is effectively none. Implementation may use a dedicated flag if provided by the model, but behaviour must remain consistent with the spec.
+- **Transfer to Home Fleet:** Regular-fleet rows expose a **Transfer to Home Fleet** action when a same-region Home Fleet exists; tapping it opens a local `showDialog` modal (see [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) for the authoritative widget contract, layout, states, and bus event). The Home Fleet row never shows this action.
 
 ---
 
@@ -173,6 +245,18 @@ The naval units panel participates in the Widgetbook catalog for review and test
 
 ---
 
+## Naval mockup fidelity (R25–R29)
+
+The first implementation pass for [#2866](https://github.com/) (PR #2906 + #2919) delivered the shared dark editorial-monocle theme and unit-panel row chrome but diverged from [`SPEC/ui/mockups/UNIT30001-naval-units-panel.html`](mockups/UNIT30001-naval-units-panel.html) in five concrete ways. The S8 slice (PR series referencing #2866) closes those gaps. The mockup is the visual source of truth for each item below; this section pins implementation, localisation, and AC expectations so future regressions point at the right line.
+
+- **R25 — compact inline action pills.** Move and Split (and any sibling fleet action added later) render as the mockup compact-pill family `CtActionTextButton` (`.f-actions button`; issue #3514 owner decision #6) on a single horizontal row inside the right-aligned actions cluster. They MUST NOT wrap onto a second line at the panel’s default width (clamped 420–640 dp by `_panelConstraints`) and MUST NOT use `CtNinePatchButton` corner-bracket chrome. Naval rows opt in by passing `dense: true` to `UnitsEntityActionRow`; civilian/military rows keep the default density. Narrow icon-only fallback below the existing `iconOnlyBreakpoint` is still allowed (the pills collapse to icon-only via `CtActionTextButton.iconOnly`).
+- **R26 — `HOME` chip on the Home Fleet row.** Mockup `.home-tag` is rendered as a compact uppercase chip immediately after the “Home Fleet” name (background `--accent-dim`, foreground `--bg-deep`, monospace font, ~8 px size, ~1 px horizontal padding) sourced from the editorial-monocle tokens (no inline hex). The chip is shown **only** on the Home Fleet row and never on regular fleet rows. The existing “Home Fleet” section/location header (per [Grouping and order](#grouping-and-order)) is preserved alongside the chip.
+- **R27 — locate icon at the right end of the actions cluster.** The locate control for a fleet row lives **inside** the right-aligned actions cluster (not in the left title-details row). It renders as the circular icon-only `CtCircularLocateButton` (mockup `.f-actions .locate-btn` — 22 × 22 px round icon; issue #3514) at the right end of the actions cluster, kept compact alongside the other actions (R25). It continues to emit `LocateMapTileEvent` for the fleet’s resolved tile (no behavioral regression). Sea-going fleets show `Move`, `Split`, `Locate` left-to-right; the Home Fleet shows `Split`, `Locate` left-to-right (no Move, per [Move fleet](#move-fleet)).
+- **R28 — `(in port)` / `(at sea)` qualifier on the location label.** Fleet location text appends `(in port)` for fleets with `inPortAtProvinceId` and `(at sea)` for fleets with `seaZoneId`, e.g. `Old World — London (in port)` and `New World — Caribbean Sea (at sea)`. Both qualifiers resolve through `AppLocalizations.naval_units_locInPort` / `naval_units_locAtSea` (no hard-coded English in widgets) and are appended by `naval_tree_builder.dart` to `FleetRow.locationLabel` so the qualifier appears in both the collapsed row subtitle and in any logging/snapshot view that reads the same field.
+- **R29 — expanded fleet panel matches the mockup.** The expanded view renders (a) a compact composition `Table` widget (one row per ship type — `Type | ×Count | Role`, monospace font, `--accent-dim` count column, 1 px `--border` row separators), (b) for the Home Fleet only, a single `Cargo capacity: X holds` line between the table and the summary band (via `AppLocalizations.naval_units_cargoCapacityHolds`; non-home fleets render **no** cargo line), and (c) a single-line composition summary `Total ships: X · Warships: Y · Merchants: Z` (via `AppLocalizations.naval_units_compositionSummary`) plus the retained `Strength: V` line, replacing the previous per-stat `ListTile` stack for `Total ships`, `Warships`, and `Merchants`.
+
+---
+
 ## Acceptance criteria
 
 - **Given** the user is on the in-game shell (Empire overview) and the human player has at least one fleet, **when** the user opens the Naval Units panel from the toolbar, **then** the UI layer displays a panel that lists all fleets owned by the human player grouped by region and by location (ports and sea zones), with the capital region’s **Home Fleet** shown as the first entry in that region even when it currently has zero ships.
@@ -186,6 +270,8 @@ The naval units panel participates in the Widgetbook catalog for review and test
 - **Given** the Naval Units panel is open and the user expands a fleet row, **when** the fleet has one or more ships, **then** the UI layer shows a composition table with one row per ship type (including type name, count, and role tag) and a capabilities section (cargo capacity for the Home Fleet, strength summary for sea-going fleets) as defined in this spec.
 
 - **Given** the Naval Units panel is open and the user expands a fleet that includes ships of type `carrack`, **when** the user reads the composition row for that type, **then** the UI layer shows **Carrack** (or the mapped `shipTypeDisplayName` label) with the count, and does **not** show the raw id string `carrack:` as the row title.
+
+- **Given** the Naval Units panel is open (issue #3514 owner decisions #5 / #15), **when** the header **Combine** action (and the tile-scope **Tile** action, when present) renders, **then** the UI layer renders each as a `CtActionTextButton` with `primary == true` (compact primary gradient pill), and the header mounts no `CtNinePatchButton` descendant for its actions.
 
 - **Given** the Naval Units panel is open and renders one or more at-sea fleets, **when** the UI shows sea-zone location labels (group headers or row subtitles), **then** the UI resolves and displays sea-zone display names from world-state sea-zone naming data (prefixed key) and does not show raw `seaZoneId` values as user-facing labels.
 
@@ -203,9 +289,33 @@ The naval units panel participates in the Widgetbook catalog for review and test
 
 - **Given** the panel is rendered on narrower widths, **when** inline actions have limited horizontal space, **then** action controls can wrap to a second line and may switch to icon-only mode while staying accessible and clickable.
 
-- **Given** the Naval Units panel renders collapsed fleet rows with actions, **when** the row is displayed, **then** the UI layer uses the shared unit-panel row-action abstraction for left-details/right-actions layout while preserving Home Fleet `Move` hiding and split availability rules.
+- **Given** the Naval Units panel renders collapsed fleet rows with actions, **when** the row is displayed, **then** the UI layer renders the row via the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite for left-details/right-actions layout while preserving Home Fleet `Move` hiding and split availability rules.
 
 - **Given** the Move dialog is open with at least one destination, **when** the user selects a destination and taps **Confirm**, **then** the UI layer emits **`NavalMoveFleetRequestedEvent`** with a **naval move** order matching the selection (sea zone id or dock province id per `NavalMoveOrder`) and closes the dialog.
 
 - **Given** the Move dialog is open, **when** the user taps **Cancel**, **then** the UI layer closes the dialog without emitting **`NavalMoveFleetRequestedEvent`**.
+
+- **Given** the Naval Units panel is opened with `locationScopeKey` and currently shows at least one scoped fleet row, **when** the user confirms a fleet move from that panel and the projected scoped list becomes empty after draft-order application, **then** the UI layer emits **`ClosePanelEvent`** and the naval panel dismisses automatically.
+
+- **Given** the Naval Units panel is opened in full-list mode (no `locationScopeKey`), **when** the user confirms a fleet move, **then** the UI layer keeps the panel open and updates list content without auto-close.
+
+- **Given** the Naval Units panel is opened with `locationScopeKey`, **when** the panel list becomes empty for reasons other than a move confirmation emitted from that scoped panel, **then** the UI layer does not emit **`ClosePanelEvent`** for automatic dismissal.
+
+- **(R25)** **Given** the Naval Units panel is open against `AppThemes.editorialMonocle` at the default panel width (`_panelConstraints` clamp 420–640 px) and shows a sea-going fleet row, **when** the user views the row’s right-aligned actions cluster, **then** the UI layer renders **Move, Split, and the icon-only Locate button on one row** without wrapping; Move and Split render as `CtActionTextButton` pills (mockup `.f-actions button`, label + icon visible above the existing `iconOnlyBreakpoint`) and the row mounts no `CtNinePatchButton` action chrome.
+
+- **(R26)** **Given** the Naval Units panel is open and the Home Fleet row is rendered in the capital region group, **when** the user reads the row title, **then** the UI layer renders the literal uppercase chip `HOME` immediately after the “Home Fleet” name (styled with dark-theme tokens `--accent-dim` background / `--bg-deep` text, monospace font ~8 px) and renders **no** `HOME` chip on any regular (non-home) fleet row.
+
+- **(R27)** **Given** the Naval Units panel is open and shows a fleet row with at least one action, **when** the user reads the actions cluster from left to right, **then** the rightmost child is the circular icon-only `CtCircularLocateButton` (no text label) and tapping it emits `LocateMapTileEvent` with the same tile key the previous title-side locate icon emitted (no behavioral regression). For a sea-going fleet the actions are `Move`, `Split`, `Locate` left-to-right; for the Home Fleet they are `Split`, `Locate` left-to-right (Move remains hidden per [Move fleet](#move-fleet)).
+
+- **(R28)** **Given** the Naval Units panel is open and shows a fleet **in port** at a province, **when** the user reads the row subtitle, **then** the location line ends with the literal localised qualifier `(in port)` (e.g. `Old World — London (in port)`), resolved via `AppLocalizations.naval_units_locInPort`; for a fleet **at sea** in a sea zone the location line ends with `(at sea)` (e.g. `New World — Caribbean Sea (at sea)`), resolved via `AppLocalizations.naval_units_locAtSea`. No English string for either qualifier is hard-coded in widgets.
+
+- **(R29)** **Given** the Naval Units panel is open and the user expands any fleet row, **when** the expanded content finishes rendering, **then** the UI layer renders (a) a single `Table` widget with one row per ship type with columns `Type`, `×Count`, `Role` and **not** a per-ship-type stack of `ListTile`s, (b) a single `Total ships: X · Warships: Y · Merchants: Z` summary line below the table (one `Text` widget, **not** three separate `ListTile`s) and a retained `Strength: V` line, and (c) for the Home Fleet only, a `Cargo capacity: X holds` line between the table and the summary line (non-home fleets render no cargo line).
+
+- **(Fleet card chrome, issue #3514 AC-6)** **Given** the Naval Units panel is open against `AppThemes.editorialMonocle` with at least one fleet row, **when** the row chrome finishes rendering at the default panel width, **then** each `FleetExpansionTile` renders exactly one [`UnitsEntityCard`](components/units-entity-card.md) (the mockup `.fleet-row` bordered gradient card, not bare `ExpansionTile` Material chrome), its dense `UnitsEntityActionRow` is hosted with `chrome == false` (no double border), and `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow from the dense Move/Split/Locate cluster under the card chrome).
+
+- **(Golden coverage, issue #3514)** **Given** `UNIT30001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), **when** `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), **then** the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_naval_default.png`, at least one `UnitsEntityCard` fleet-row card is present, and the panel raises no exception (`WidgetTester.takeException()` is `null`).
+
+- **Region header left-bar chrome (Refs #3514):** **Given** the Naval Units panel is open with fleets grouped into at least one region, **when** a region group heading renders, **then** the UI layer renders it via a `RegionSectionHeader` whose `variant` is `RegionHeaderVariant.leftBar` (mockup `.region-heading` left-accent-bar chrome), and renders no `CtSectionLabel` bottom-border region heading on this panel.
+
+- **Location header semi-bold fg chrome (Refs #3514):** **Given** the Naval Units panel is open with at least one location (Home Fleet / port / sea-zone) group, **when** the location sub-header renders, **then** the UI layer renders its `LocationSectionHeader` `Text` with `FontWeight.w600` and a colour resolving to `EditorialMonoclePalette.fg` at `0.8` opacity (mockup `.location-label`), while the displayed `name — region` line content is unchanged.
 

@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Leader Selection</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82); --accent-bright: oklch(82% 0.13 90);
+  --danger: oklch(58% 0.18 20);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --font-mono: 'SF Mono',ui-monospace,Menlo,monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden;overflow-y:auto}
+
+.main{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:clamp(16px,3vh,32px) 12px}
+
+.dialog-shell{
+  width:100%;max-width:540px;
+  max-height:min(720px,92vh);overflow:hidden;
+  background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 8%,var(--bg-deep) 100%);
+  border:2px solid var(--accent-dim);
+  display:flex;flex-direction:column;
+}
+.dialog-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:20px clamp(12px,3vw,24px) 24px;
+  overscroll-behavior:contain;
+}
+
+h2{
+  font-family:var(--font-display);font-size:clamp(18px,2.5vw,22px);
+  font-weight:700;letter-spacing:0.05em;color:var(--accent);
+  text-align:center;margin-bottom:4px;
+}
+.intro{
+  font-family:var(--font-body);font-size:clamp(11px,1.4vw,12px);
+  color:var(--muted);text-align:center;margin-bottom:14px;font-style:italic;
+}
+
+.brass-divider{
+  width:80px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-dim),var(--accent),var(--accent-dim),transparent);
+  margin:0 auto 16px;position:relative;
+}
+.brass-divider::before{
+  content:'';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%) rotate(45deg);
+  width:6px;height:6px;background:var(--accent);
+  border:1px solid var(--accent-bright);
+}
+
+/* ── Slot row ── */
+.slots-list{display:flex;flex-direction:column;gap:6px}
+
+.slot-row{
+  display:flex;flex-direction:column;gap:6px;
+  padding:8px 10px;
+  background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);
+  border-top:1px solid var(--accent-dim);
+  border-bottom:1px solid var(--accent-dim);
+}
+
+.slot-header{
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:18px;
+}
+.slot-label{
+  font-family:var(--font-display);font-size:12px;font-weight:600;
+  letter-spacing:0.04em;
+}
+.slot-label.you{color:var(--accent-dim)}
+.slot-label.ai{color:var(--muted);font-weight:400}
+
+.slot-label .you-tag{
+  font-family:var(--font-body);font-size:9px;letter-spacing:0.06em;
+  text-transform:uppercase;margin-left:6px;
+  color:var(--accent-dim);
+}
+
+/* ── Pickers body ── */
+.slot-pickers{
+  display:flex;flex-direction:column;gap:5px;
+}
+
+/* Narrow (< 500dp): nation + leader stack vertically */
+.slot-pickers-row{
+  display:flex;flex-direction:column;gap:5px;
+}
+
+/* Wide (>= 500dp): nation + leader side-by-side */
+@media(min-width:540px){
+  .dialog-shell{max-width:540px}
+  .slot-pickers-row{
+    flex-direction:row;gap:6px;
+  }
+  .slot-pickers-row>*{flex:1}
+}
+
+/* ── Dropdown ── */
+.dropdown-wrapper{
+  position:relative;flex:1;min-width:0;
+  border:1px solid var(--border);transition:border-color 0.2s;
+}
+.dropdown-wrapper:focus-within{border-color:var(--accent)}
+.dropdown-wrapper.duplicate{
+  border:1px solid var(--danger);
+}
+
+.dropdown-wrapper select{
+  width:100%;padding:6px 26px 6px 8px;
+  background:var(--bg-deep);border:none;
+  color:var(--fg);font-family:var(--font-body);font-size:12px;
+  cursor:pointer;appearance:none;-webkit-appearance:none;
+  min-height:34px;
+}
+.dropdown-wrapper select:focus{outline:none}
+.dropdown-wrapper select option{background:var(--surface);color:var(--fg)}
+
+.dropdown-wrapper .chevron{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:var(--accent-dim);pointer-events:none;line-height:1;
+}
+
+/* AI Profile line — always full-width below nation+leader */
+.profile-line{
+  display:flex;align-items:center;gap:6px;
+}
+.profile-label{
+  font-family:var(--font-body);font-size:10px;letter-spacing:0.04em;
+  color:var(--muted);opacity:0.7;white-space:nowrap;flex-shrink:0;
+}
+.profile-line .dropdown-wrapper{flex:1}
+
+/* ── Seed ── */
+.seed-label{
+  font-family:var(--font-display);font-size:13px;font-weight:600;
+  letter-spacing:0.04em;color:var(--fg);display:block;margin:12px 0 4px;
+}
+.seed-input{
+  width:100%;padding:8px 10px;
+  background:var(--bg-deep);border:1px solid var(--border);
+  color:var(--fg);font-family:var(--font-mono);font-size:14px;
+  letter-spacing:0.04em;margin-bottom:2px;
+}
+.seed-input:focus{outline:none;border-color:var(--accent)}
+.seed-input::placeholder{color:var(--muted);font-style:italic}
+.seed-hint{
+  font-family:var(--font-body);font-size:10px;font-style:italic;
+  color:var(--muted);opacity:0.7;margin-bottom:12px;display:block;
+}
+
+/* ── Toggles ── */
+.toggles{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.toggle-row{display:flex;align-items:flex-start;gap:10px}
+.toggle-row input[type=checkbox]{display:none}
+.toggle-switch{
+  position:relative;width:36px;height:20px;flex-shrink:0;cursor:pointer;margin-top:1px;
+}
+.toggle-switch::before{
+  content:'';position:absolute;inset:0;background:var(--bg-deep);
+  border:1px solid var(--border);border-radius:10px;transition:background 0.2s,border-color 0.2s;
+}
+.toggle-switch::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:16px;height:16px;border-radius:50%;background:var(--muted);
+  transition:left 0.2s,background 0.2s;
+}
+.toggle-switch.on::before{background:var(--surface-lite);border-color:var(--accent-dim)}
+.toggle-switch.on::after{left:18px;background:var(--accent)}
+.toggle-text{
+  font-family:var(--font-display);font-size:13px;font-weight:600;
+  letter-spacing:0.04em;color:var(--fg);
+}
+.toggle-hint{
+  font-size:10px;font-style:italic;color:var(--muted);opacity:0.7;
+  margin-left:46px;margin-top:-4px;
+}
+
+/* ── Slider ── */
+.slider-section{margin-bottom:14px}
+.slider-row{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.slider-row .slbl{
+  font-family:var(--font-display);font-size:13px;font-weight:600;
+  letter-spacing:0.04em;color:var(--fg);
+}
+.slider-row .sval{font-family:var(--font-mono);font-size:12px;color:var(--accent-dim)}
+.slider{
+  width:100%;-webkit-appearance:none;appearance:none;height:5px;
+  background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;
+  outline:none;cursor:pointer;margin-bottom:2px;
+}
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--accent-dim);cursor:pointer;
+}
+.slider-hint{
+  font-family:var(--font-body);font-size:10px;font-style:italic;
+  color:var(--muted);opacity:0.7;
+}
+
+/* ── Footer buttons ── */
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+.btn{
+  padding:10px 22px;font-family:var(--font-display);font-size:14px;
+  font-weight:600;letter-spacing:0.06em;cursor:pointer;border:none;
+  transition:color 0.15s,opacity 0.15s;
+}
+.btn-cancel{
+  background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  color:var(--muted);
+}
+.btn-cancel:hover{color:var(--fg)}
+.btn-start{
+  background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);
+  border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);
+  color:var(--fg);
+}
+.btn-start:hover:not(:disabled){color:var(--accent-bright)}
+.btn-start:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ── Demo bar ── */
+.demo-bar{
+  position:fixed;bottom:12px;right:12px;z-index:10;
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;
+}
+.demo-bar button{
+  padding:5px 10px;border:1px solid var(--border);
+  background:var(--bg-deep);color:var(--muted);
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;
+  cursor:pointer;transition:color 0.15s,border-color 0.15s;
+}
+.demo-bar button:hover,.demo-bar button.active{color:var(--accent);border-color:var(--accent-dim)}
+.demo-bar .blessed-names{
+  background:var(--bg-deep);border:1px solid var(--border);
+  color:var(--muted);font-family:var(--font-mono);font-size:10px;
+  padding:5px 8px;min-width:140px;text-align:center;
+}
+
+/* Scrollbar */
+.dialog-body::-webkit-scrollbar{width:4px}
+.dialog-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.dialog-body::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+
+<div class="main">
+<div class="dialog-shell">
+<div class="dialog-body">
+
+<h2 id="title">Choose nations and leaders</h2>
+<p class="intro" id="intro">Choose six great powers and a leader variant for each</p>
+<div class="brass-divider" id="brass-divider"></div>
+
+<div class="slots-list" id="slots"></div>
+
+<label class="seed-label" for="seed">Game seed</label>
+<input class="seed-input" type="text" value="42" placeholder="0 = random" id="seed" oninput="validate()">
+<span class="seed-hint">Enter 0 for a random seed</span>
+
+<div class="toggles">
+  <div class="toggle-row">
+    <div class="toggle-switch on" id="infinite-toggle" onclick="toggleInfinite()"></div>
+    <span class="toggle-text">Infinite mode (no victory condition)</span>
+  </div>
+  <div class="toggle-hint">The game will continue indefinitely</div>
+</div>
+
+<div class="slider-section">
+  <div class="slider-row">
+    <span class="slbl">Terrain variation:</span>
+    <span class="sval" id="tv-pct">50%</span>
+  </div>
+  <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5" id="tv" oninput="onSlider()">
+  <div class="slider-hint">0% flat — 100% extreme</div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-cancel" onclick="handleCancel()">Cancel</button>
+  <button class="btn btn-start" id="btn-start" onclick="handleStart()">Start</button>
+</div>
+
+</div><!-- .dialog-body -->
+</div><!-- .dialog-shell -->
+</div><!-- .main -->
+
+<div class="demo-bar">
+  <span class="blessed-names" id="blessed-display">Profiles: aggressive_v2, defensive_v1</span>
+  <button id="btn-blessed" onclick="toggleBlessed()" class="active">Has Profiles</button>
+  <button onclick="alert('Seed input: '+parseSeedInput(document.getElementById(\'seed\').value))">Test Seed</button>
+  <button onclick="resetAll()">Reset</button>
+</div>
+
+<script>
+/* ── Data ── */
+const nations = ['England','France','Spain','Portugal','Dutch Republic','Ottoman Empire'];
+
+const leaders = {
+  England:        ['Elizabeth I','Henry VIII','Victoria'],
+  France:         ['Louis XIV','Napoleon','Richelieu'],
+  Spain:          ['Isabella I','Philip II','Charles III'],
+  Portugal:       ['Henry the Navigator','Joao II','Manuel I'],
+  'Dutch Republic': ['William of Orange','Jan de Witt','Maurice of Nassau'],
+  'Ottoman Empire': ['Suleiman I','Mehmed II','Selim III']
+};
+
+const defaultLeaders = {
+  England:        'Elizabeth I',
+  France:         'Louis XIV',
+  Spain:          'Isabella I',
+  Portugal:       'Henry the Navigator',
+  'Dutch Republic': 'William of Orange',
+  'Ottoman Empire': 'Suleiman I'
+};
+
+let blessedProfiles = ['aggressive_v2','defensive_v1'];
+let hasBlessedProfiles = true;
+
+/* ── State ── */
+let slots    = ['England','France','Spain','Portugal','Dutch Republic','Ottoman Empire'];
+let pickLeaders = [
+  'Elizabeth I','Louis XIV','Isabella I','Henry the Navigator','William of Orange','Suleiman I'
+];
+let profileBySlot = {};
+let infiniteMode = true;
+
+/* ── Seed parsing (Refs #3444) ── */
+function parseSeedInput(raw) {
+  const trimmed = raw.trim();
+  if (trimmed === '' || trimmed === '0') return 0;
+  const num = Number(trimmed);
+  if (Number.isNaN(num)) { /* hash non-numeric to 42 */
+    let h = 0;
+    for (let i = 0; i < trimmed.length; i++) h = ((h << 5) - h) + trimmed.charCodeAt(i);
+    return Math.abs(h % BigInt ? Math.abs(h) : 42) || 42;
+  }
+  return num;
+}
+
+/* ── Render ── */
+function getAvailableNations(exceptIndex) {
+  const used = [];
+  for (let i = 0; i < slots.length; i++) {
+    if (i !== exceptIndex && slots[i]) used.push(slots[i]);
+  }
+  return nations.filter(n => !used.includes(n) || n === slots[exceptIndex]);
+}
+
+function findDuplicates() {
+  const seen = {};
+  const dupes = new Set();
+  for (let i = 0; i < slots.length; i++) {
+    const n = slots[i];
+    if (!n) continue;
+    if (seen[n] !== undefined) { dupes.add(seen[n]); dupes.add(i); }
+    seen[n] = i;
+  }
+  return dupes;
+}
+
+function render() {
+  const dupes = findDuplicates();
+  const c = document.getElementById('slots');
+  const items = slots.map((s, i) => {
+    const isDup = dupes.has(i);
+    const dupClass = isDup ? ' duplicate' : '';
+    const dupKey = isDup ? ` data-key="newGameLeaderDialogSlotDuplicateBorder_${i}"` : '';
+    const available = getAvailableNations(i);
+    const selLeaders = leaders[s] || [];
+
+    const nationOpts = ['<option value="">— Select —</option>']
+      .concat(available.map(n => `<option value="${n}" ${n===s?'selected':''}>${n}</option>`));
+
+    const leaderOpts = selLeaders.length ? ['<option value="">— Leader —</option>']
+      .concat(selLeaders.map(l => `<option value="${l}" ${l===pickLeaders[i]?'selected':''}>${l}</option>`))
+      : ['<option value="">— None —</option>'];
+
+    const isYou = i === 0;
+    const labelExtra = isYou ? '<span class="you-tag">You</span>' : '';
+
+    /* AI Profile dropdown line — slots 1–5 only */
+    let profileLine = '';
+    if (i > 0 && hasBlessedProfiles) {
+      const currentProf = profileBySlot[i] || '';
+      const profOpts = ['<option value="">Normal</option>']
+        .concat(blessedProfiles.map(bp => `<option value="${bp}" ${bp===currentProf?'selected':''}>${bp}</option>`));
+      profileLine = `
+        <div class="profile-line">
+          <span class="profile-label">AI Profile:</span>
+          <div class="dropdown-wrapper">
+            <select onchange="pickProfile(${i},this.value)">
+              ${profOpts.join('')}
+            </select>
+            <span class="chevron">▼</span>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="slot-row" data-slot="${i}">
+        <div class="slot-header">
+          <span class="slot-label ${isYou?'you':'ai'}">Slot ${i+1}${labelExtra}</span>
+        </div>
+        <div class="slot-pickers">
+          <div class="slot-pickers-row">
+            <div class="dropdown-wrapper${dupClass}"${dupKey}>
+              <select onchange="pickNation(${i},this.value)">
+                ${nationOpts.join('')}
+              </select>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="dropdown-wrapper">
+              <select onchange="pickLeader(${i},this.value)">
+                ${leaderOpts.join('')}
+              </select>
+              <span class="chevron">▼</span>
+            </div>
+          </div>
+          ${profileLine}
+        </div>
+      </div>`;
+  });
+  c.innerHTML = items.join('');
+  validate();
+}
+
+/* ── Pick handlers ── */
+function pickNation(i, v) {
+  /* Auto-swap: if new nation is already in another slot, evict it */
+  for (let j = 0; j < slots.length; j++) {
+    if (j !== i && slots[j] === v) {
+      /* Find the next available nation for slot j */
+      const used = slots.filter((s, k) => k !== j);
+      const next = nations.find(n => !used.includes(n));
+      slots[j] = next || '';
+      if (next) pickLeaders[j] = defaultLeaders[next] || '';
+      break;
+    }
+  }
+  slots[i] = v;
+  pickLeaders[i] = v ? (defaultLeaders[v] || '') : '';
+  render();
+}
+
+function pickLeader(i, v) {
+  pickLeaders[i] = v;
+  render();
+}
+
+function pickProfile(i, v) {
+  if (v === '' || v === 'Normal') {
+    delete profileBySlot[i];
+  } else {
+    profileBySlot[i] = v;
+  }
+}
+
+/* ── Validation ── */
+function validate() {
+  const btn = document.getElementById('btn-start');
+  let allFilled = true;
+  for (let i = 0; i < slots.length; i++) {
+    if (!slots[i] || !pickLeaders[i]) { allFilled = false; break; }
+  }
+  const dupes = findDuplicates();
+  const hasDupes = dupes.size > 0;
+  const enabled = allFilled && !hasDupes;
+  if (enabled) {
+    btn.disabled = false;
+    btn.title = '';
+  } else {
+    btn.disabled = true;
+    btn.title = hasDupes ? 'Duplicate nations detected' : 'All slots must have a nation and leader';
+  }
+}
+
+/* ── Toggles ── */
+function toggleInfinite() {
+  infiniteMode = !infiniteMode;
+  document.getElementById('infinite-toggle').classList.toggle('on');
+}
+
+function onSlider() {
+  const v = document.getElementById('tv').value;
+  document.getElementById('tv-pct').textContent = Math.round(v * 100) + '%';
+}
+
+function toggleBlessed() {
+  hasBlessedProfiles = !hasBlessedProfiles;
+  const btn = document.getElementById('btn-blessed');
+  btn.classList.toggle('active');
+  btn.textContent = hasBlessedProfiles ? 'Has Profiles' : 'No Profiles';
+  document.getElementById('blessed-display').textContent =
+    hasBlessedProfiles ? 'Profiles: aggressive_v2, defensive_v1' : 'Profiles: (none — dropdowns show Normal only)';
+  profileBySlot = {};
+  render();
+}
+
+/* ── Actions ── */
+function handleCancel() {
+  alert('Dialog cancelled — onCancel invoked.');
+}
+
+function handleStart() {
+  const seed = parseSeedInput(document.getElementById('seed').value);
+  const infinite = infiniteMode;
+  const terrainVar = parseFloat(document.getElementById('tv').value);
+
+  const gpIds = slots.slice();
+  const leaderMap = {};
+  for (let i = 0; i < slots.length; i++) {
+    if (slots[i]) leaderMap[slots[i]] = pickLeaders[i];
+  }
+
+  const aiProfileByGpId = {};
+  for (let i = 1; i < slots.length; i++) {
+    const gp = slots[i];
+    if (gp && profileBySlot[i]) {
+      aiProfileByGpId[gp] = profileBySlot[i];
+    }
+  }
+
+  const msg =
+    'onConfirmed(\n' +
+    '  slots:    ' + JSON.stringify(gpIds) + '\n' +
+    '  leaders:  ' + JSON.stringify(leaderMap) + '\n' +
+    '  seed:     ' + seed + '\n' +
+    '  infinite: ' + infinite + '\n' +
+    '  terrain:  ' + terrainVar.toFixed(2) + '\n' +
+    '  aiProfs:  ' + JSON.stringify(aiProfileByGpId) + '\n' +
+    ')';
+  alert(msg);
+}
+
+function resetAll() {
+  slots    = ['England','France','Spain','Portugal','Dutch Republic','Ottoman Empire'];
+  pickLeaders = [
+    'Elizabeth I','Louis XIV','Isabella I','Henry the Navigator','William of Orange','Suleiman I'
+  ];
+  profileBySlot = {};
+  infiniteMode = true;
+  document.getElementById('infinite-toggle').classList.add('on');
+  document.getElementById('tv').value = 0.5;
+  document.getElementById('tv-pct').textContent = '50%';
+  document.getElementById('seed').value = '42';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

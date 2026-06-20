@@ -1,14 +1,27 @@
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logger/package_logger.dart';
+import '../lib/src/ct_logger_console_printer.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
+
+class _RecordingLogOutput extends LogOutput {
+  final List<String> lines = [];
+
+  @override
+  void output(OutputEvent event) {
+    lines.addAll(event.lines);
+  }
+}
 
 void main() {
   group('CtLogger', () {
     late List<LogEvent> capturedEvents;
     late void Function(LogEvent) listener;
+    late LogOutput Function() previousDefaultOutput;
 
     setUp(() {
+      previousDefaultOutput = Logger.defaultOutput;
+      Logger.defaultOutput = () => MemoryOutput();
       capturedEvents = [];
       listener = (e) => capturedEvents.add(e);
       Logger.addLogListener(listener);
@@ -19,6 +32,7 @@ void main() {
       Logger.removeLogListener(listener);
       capturedEvents.clear();
       Logger.level = Level.info;
+      Logger.defaultOutput = previousDefaultOutput;
     });
 
     test('prefixes message with info level', () {
@@ -88,6 +102,63 @@ void main() {
 
     test('package logger subPrefix creates compound prefix', () {
       expect(packageLogger('ct').prefix, 'logger.ct');
+    });
+
+    test('domainPackageLogger uses the bare prefix when no subPrefix', () {
+      expect(domainPackageLogger('combat').prefix, 'combat');
+    });
+
+    test('domainPackageLogger uses the bare prefix when subPrefix is empty', () {
+      expect(domainPackageLogger('combat', '').prefix, 'combat');
+    });
+
+    test('domainPackageLogger composes prefix.subPrefix when subPrefix set', () {
+      expect(domainPackageLogger('economy', 'trade').prefix, 'economy.trade');
+    });
+
+    test(
+      'CtLoggerConsolePrinter output contains exactly one canonical timestamp',
+      () async {
+        final out = _RecordingLogOutput();
+        final logger = Logger(
+          printer: CtLoggerConsolePrinter(
+            colors: false,
+            methodCount: 0,
+            errorMethodCount: 0,
+          ),
+          output: out,
+        );
+        await logger.init;
+        final fixedWholeSecond = DateTime(2026, 5, 10, 14, 32, 5, 0);
+        logger.log(Level.debug, 'logic: probe', time: fixedWholeSecond);
+        final text = out.lines.join('\n');
+        final shape = RegExp(
+          r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2})',
+        );
+        expect(shape.allMatches(text).length, 1);
+        expect(text, contains('.000'));
+      },
+    );
+
+    test('debugEnabled and infoEnabled are false at warning level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.warning;
+      expect(log.debugEnabled, isFalse);
+      expect(log.infoEnabled, isFalse);
+    });
+
+    test('infoEnabled is true and debugEnabled is false at info level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.info;
+      expect(log.infoEnabled, isTrue);
+      expect(log.debugEnabled, isFalse);
+    });
+
+    test('debugEnabled is true at debug level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.debug;
+      expect(log.debugEnabled, isTrue);
+      expect(log.infoEnabled, isTrue);
     });
   });
 

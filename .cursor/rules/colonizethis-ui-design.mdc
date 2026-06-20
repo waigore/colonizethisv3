@@ -1,21 +1,21 @@
 ---
-description: UI spec requirements — wireframe, components, behaviors, pixel art; follow UXD 03 and 07
+description: UI style, pixel art, mobile viewports, Widgetbook registration; screen structure docs live in colonizethis-ui-documentation.mdc
 globs: "SPEC/ui/**/*.md,**/lib/widgets/**/*.dart,**/lib/ui/**/*.dart"
 alwaysApply: false
 ---
 
 # UI Design
 
-Scope: UI spec/process rules (wireframes, behavior contracts, component interaction boundaries).
+Scope: **visual/style** conventions, asset pipeline, and implementation hygiene. **Screen documentation** (stable IDs, layout hierarchy, exhaustive behavior, variants, Widgetbook contracts) is **definitive** in [`colonizethis-ui-documentation.mdc`](colonizethis-ui-documentation.mdc) and [`SPEC/ui/screen-registry.md`](../../SPEC/ui/screen-registry.md).
 
 UI specs in `SPEC/ui/` derive from GDD/TDD (spec-required rule).
 
+- **Screen docs:** Follow `colonizethis-ui-documentation.mdc` when adding or changing screens; do not duplicate its template here.
 - **Implementing UI:** Add/update Widgetbook stories for new or changed components/screens and keep the widget catalog registration current.
 - **Mobile:** Design for mobile from the start (see `SPEC/ui/mobile-adaptation.md`). Include at least one mobile viewport use case per screen; add a mobile-only Widgetbook mockup when the mobile layout differs meaningfully.
-- **Wireframe:** Every UI spec has a wireframe; positions, layout, hierarchy visible to reviewers. Prefer UXD 07 schema (canvas, regions, positions, hierarchy).
-- **Components:** Specify which components each screen uses (UXD 03, UXD 07), including names and key props. Prefer existing components before adding new ones.
+- **Components:** Prefer existing Ct-* catalog and `SPEC/ui/components/` before new widgets; see [`pixel-art-ui-catalog.md`](../../SPEC/ui/pixel-art-ui-catalog.md).
 - **Decoupling:** Keep UI components/panels decoupled. For cross-component or cross-screen coordination, use typed events via `SPEC/program/app-event-bus.md` or shared state via Riverpod; avoid direct panel-to-panel orchestration.
-- **Behavior:** Define inputs, outputs, callbacks, user-visible outcomes; document in spec or interaction manifest (UXD 07).
 - **Pixel art:** Spec must define required images and generation spec (e.g. PixelLab: subject, size, type). Record **exact prompts** and asset dimensions in spec. **Check assets first** — do not regenerate if suitable asset exists (UXD 04, 05, 07).
 - **Style:** Follow UXD 02 (pixel canon, 1x grid, no AA, 16th/17th c. aesthetic, palette, typography).
+- **Dark theme (mandatory):** `AppThemes.editorialMonocle` is the canonical visual mode for all screens, dialogs, and overlays in the running app. New or changed UI MUST match the canonical OKLCH palette and font stacks in [`pixel-art-ui-catalog.md`](../../SPEC/ui/pixel-art-ui-catalog.md) § Editorial-monocle palette (and any per-screen mockups under `SPEC/ui/mockups/` if present) in color palette, font stacks, layout proportions, visual density, and widget type (Ct-* catalog only — no Material chrome). The light `AppThemes.colonial` / `AppThemes.colonialPixelArt` themes are retained for Widgetbook fallback and debug toggles only; no production code path may render screens in the light colonial theme. Hard-coded light-theme colors (e.g. parchment `#F5F5DC`, raw Material primaries) are treated as regressions. Widgetbook stories must use `AppThemes.editorialMonocle` as the default theme and expose a Material theme toggle (e.g. via `widgetbook` `MaterialThemeAddon`) so reviewers can flip between editorial-monocle (primary) and the colonial fallbacks.
 - **Flame/Flutter:** Flutter = shell, routes, overlays, menus, list/form screens; Flame = game canvas and in-game pixel UI. Communicate via state and callbacks only.

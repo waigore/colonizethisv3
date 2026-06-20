@@ -186,6 +186,17 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String get gameStartIntroOverlay_title => 'A New World Awaits';
+
+  @override
+  String get tribeFirstContactOverlay_title => 'First Contact';
+
+  @override
+  String tribeFirstContactOverlay_loadError(String error) {
+    return 'Could not load first-contact dialogue: $error';
+  }
+
+  @override
   String game_overture_loadError(String error) {
     return 'Could not load overture dialogue: $error';
   }
@@ -228,7 +239,15 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get moveArmy_groupUnowned => 'Unowned';
 
   @override
-  String get moveArmy_invadeProvinceTitle => 'Invade province?';
+  String get moveArmy_groupInvasionTargets => 'Invasion targets';
+
+  @override
+  String moveArmy_declareWarOnTrigger(String ownerLabel) {
+    return 'declare war on $ownerLabel';
+  }
+
+  @override
+  String get moveArmy_invadeProvinceTitle => 'Declare war?';
 
   @override
   String moveArmy_invadeProvinceBody(String ownerLabel) {
@@ -240,7 +259,7 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String moveArmy_title(String armyId) {
-    return 'Move army $armyId';
+    return 'Move army — Army $armyId';
   }
 
   @override
@@ -389,6 +408,40 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String get naval_units_locInPort => '(in port)';
+
+  @override
+  String get naval_units_locAtSea => '(at sea)';
+
+  @override
+  String get naval_units_homeFleetChip => 'HOME';
+
+  @override
+  String get naval_units_compositionRoleWarship => 'Warship';
+
+  @override
+  String get naval_units_compositionRoleMerchant => 'Merchant';
+
+  @override
+  String naval_units_compositionCount(int count) {
+    return '\u00d7$count';
+  }
+
+  @override
+  String naval_units_compositionSummary(
+    int total,
+    int warships,
+    int merchants,
+  ) {
+    return 'Total ships: $total \u00b7 Warships: $warships \u00b7 Merchants: $merchants';
+  }
+
+  @override
+  String naval_units_cargoCapacityHolds(int capacity) {
+    return 'Cargo capacity: $capacity holds';
+  }
+
+  @override
   String get diplomacy_setSubsidy => 'Set subsidy';
 
   @override
@@ -478,5 +531,4 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get civilian_units_assign => 'Assign';
-
 }

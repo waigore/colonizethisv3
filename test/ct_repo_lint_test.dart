@@ -21,15 +21,32 @@ void main() {
       expect(ids, contains('repo.app_event_handler_scope_logic_boundary'));
       expect(ids, contains('repo.control_flow_nesting_depth'));
       expect(ids, contains('repo.repeated_magic_numbers'));
+      expect(ids, contains('repo.dart_long_string_switches'));
       expect(ids, contains('repo.workspace_outdated_resolvable'));
       expect(ids, contains('repo.workspace_outdated_latest_direct'));
       expect(ids, contains('repo.function_size'));
       expect(ids, contains('repo.part_unit_size'));
+      expect(ids, contains('repo.turn_no_part_directives'));
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.turn_no_part_directives')
+            .spec,
+        'SPEC/program/turn-no-part-directives.md',
+      );
+      expect(ids, contains('repo.diplomacy_no_part_of'));
+      expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.diplomacy_no_part_of').spec,
+        'SPEC/program/diplomacy-no-part-of.md',
+      );
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
+      expect(ids, contains('repo.logic_test_file_size'));
+      expect(ids, contains('repo.logic_domain_import_dag'));
+      expect(ids, contains('repo.logic_source_file_size'));
       expect(ids, contains('repo.dart_file_non_comment_line_size'));
       expect(ids, contains('repo.land_province_bucket_keys'));
       expect(ids, contains('repo.logic_dual_region_province_field_access'));
+      expect(ids, contains('repo.logic_work_target_switch'));
       expect(ids, contains('repo.app_lib_no_broad_suggest_work_orders'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(
@@ -57,6 +74,23 @@ void main() {
       expect(
         rules.firstWhere((r) => r.ruleId == 'repo.game_widgets_file_size').spec,
         'SPEC/program/game-widgets-file-size.md',
+      );
+      expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.logic_test_file_size').spec,
+        'SPEC/program/repo-lint.md',
+      );
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.logic_test_file_size')
+            .prIncremental,
+        isTrue,
+      );
+      expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.logic_test_file_size').title,
+        isNot(contains('PR-incremental')),
+        reason:
+            'GitHub #2288 transitioned this rule to full-tree enforcement; '
+            'manifest title must no longer advertise PR-incremental only.',
       );
       expect(
         rules

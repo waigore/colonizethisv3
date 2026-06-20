@@ -38,6 +38,30 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 - **App** (or a service) calls TurnResolver when user (or AI) commits “next turn”; then persists the returned state via colonizethis_save. After each **completed** resolution, the Flutter app also mirrors the same playable state into the **auto-save** slot ([save-load.md](save-load.md) § Auto-save slot).
 - **Load game** restores Game/WorldState from storage; “next turn” runs on that state and overwrites or replaces the saved state after resolve.
 
+### Background execution (app, #2160)
+
+The Flutter app may run **Full AI order generation**, **`mergeOrderLists`**, and full turn resolution in a **single worker isolate** via **`TurnResolutionRunner`** (`app/lib/core/services/turn_resolution_runner.dart`): the main isolate passes serialized **`Game`**, **human draft `Orders`**, combined **`MapTopology`**, and **`tileMapByRegion`** (same payload shape as before; the `orders` field is human-only until merged inside the worker). The isolate runs **`generateOrdersForGameFullAI`** (emitting coarse **`SendPort`** progress phases such as **`suggestionPools`**, staged **`aiStageA`**–**`aiStageG`**, and **`aiMerge`** before resolver phases), merges AI + human orders, then calls **`validateOrdersAndResolveTurnFromTrustedOrders`** with an **`onPhaseProgress`** callback so the UI can show live phase labels. When turn tracing is enabled, **`TurnTraceAiSection`** payloads and **`turnTraceStartedAtUtc`** are produced on the worker and returned in the terminal success message for the main isolate to decode. **Map** next-turn and **Flame-canvas** top-bar next-turn (when the map overlay is hidden) both use this runner; the app applies **`TurnResolutionResult`** on the main isolate when the session completes. See [logging/turn-resolution.md](logging/turn-resolution.md) for app-layer runner log lines and [app-event-bus.md](app-event-bus.md) for UI blocking while resolution is active. Refs **#2277**.
+
+### Next-turn latency budget (usability)
+
+End-to-end **next turn** (confirm through worker completion and terminal result ready for UI apply) must meet the **hard 15-second** ceiling (`kTurnProcessingWallClockBudgetMs` in **colonizethis_data**) for good usability. Normative policy lives in the Cursor rule **`.cursor/rules/colonizethis-turn-resolution-budget.mdc`** (also listed in **`AGENTS.md`** and **`.cursor/rules/routing-index.md`**). That budget governs **performance and AI suggestion throughput** only: **TurnResolver phase outcomes, order legality, and merged resolution semantics** remain authoritative per this document and [order-engine.md](order-engine.md). Heuristic caps or caching inside **suggestion enumeration** (for example move/army-move probe limits) do not change validated turn resolution; any further work to stay under budget should prefer incremental validation, memoization, and bounded search while preserving determinism. Refs **#2277**, **#2507**.
+
+### Turn processing wall-clock budget (Refs #2507)
+
+**Ceiling:** **15 000 ms** wall clock per measured segment on the project target environment (same class of machine as the `quality` workflow). Symbol: **`kTurnProcessingWallClockBudgetMs`** (`packages/colonizethis_data/lib/src/turn_processing_wall_clock_budget.dart`).
+
+**Measured segment (in scope):** From immediately before **`generateOrdersForGameFullAI`** through completion of **`validateOrdersAndResolveTurnFromTrustedOrders`** returning **`TurnResolutionComplete`** — the same path as one observer turn body (`tool/run_observer_game/lib/observer_session_runner.dart`) and the app worker’s AI + trusted resolve block. **Single aggregate** ceiling for all CPU work in that segment (all GPs’ Full AI, merge, resolver phases affecting any faction).
+
+**Excluded (out of scope):** Game **init** (`runInitGame`), isolate spawn/handoff overhead outside the measured block, **`mergeOrderLists`** when run outside the worker path under test, trace export, **`ObserverSnapshot`** / HTML, disk I/O, and main-isolate decode/apply after the worker terminal.
+
+**Turn index:** Quality-gate perf test asserts the budget on **turn 1 only** (first resolved full turn after init) using **`GameSetupConfig.defaultConfig`** with every **`game.players`** entry marked AI-controlled (`aiControlByGpId`).
+
+**On breach:** Treat as **release-blocking**. Emit phase splits at minimum **`full_ai_ms`** and **`resolve_ms`** (see [logging/turn-resolution.md](logging/turn-resolution.md)). Fix via perf work only — no semantic drift.
+
+**Enforcement:** `packages/colonizethis_ai/test/perf/full_ai_first_turn_wall_clock_budget_test.dart` runs in **`tool/run_quality_gate_tests.sh`** / **`quality.yml`** package test loop for **colonizethis_ai**; hard-fails when over budget.
+
+**Throughput regression smoke (Refs #2394):** `packages/colonizethis_logic/test/perf/resolve_turn_for_game_perf_test.dart` and `generate_orders_for_game_perf_test.dart` use a minimal two-AI fixture with generous **30 s** median ceilings — coarse guards only; the **15 s** first-turn Full AI test above is the normative gate.
+
 ---
 
 ## Stub Semantics
@@ -59,3 +83,7 @@ Map data required for resolution (`tileMapByRegion`, `topologyByRegion`, and com
 - Given a playable loaded game with required map data present
 - When TurnResolver runs the next turn
 - Then extraction, movement, combat, and AI order generation execute with map topology provided by the loaded map data
+
+## Campaign-complete guard
+
+When `Game.calendarCampaignHalted` is true, `runTurnResolutionPipeline` returns a completed result without re-entering phase handlers (see [turn-time-mapping.md](../game/turn-time-mapping.md) § Campaign calendar cap and [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn).

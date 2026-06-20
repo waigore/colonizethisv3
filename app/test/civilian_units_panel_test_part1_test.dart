@@ -12,7 +12,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -171,7 +170,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No civilian units'), findsOneWidget);
-      expect(find.byType(ListTile), findsNothing);
+      expect(find.byType(CivilianUnitRowCard), findsNothing);
     });
 
     testWidgets(
@@ -182,12 +181,14 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final listTiles = find.byType(ListTile);
-        if (listTiles.evaluate().isEmpty) {
+        final unitRows = find.byType(CivilianUnitRowCard);
+        if (unitRows.evaluate().isEmpty) {
           return;
         }
-        expect(listTiles, findsAtLeastNWidgets(1));
-        expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
+        expect(unitRows, findsAtLeastNWidgets(1));
+        // Locate is rendered for every visible row per R30 (action-cluster
+        // rightmost; see SPEC/ui/civilian-units-panel.md).
+        expect(find.byTooltip('Locate'), findsAtLeastNWidgets(1));
         expect(find.textContaining('Status:'), findsAtLeastNWidgets(1));
         expect(find.textContaining('Location:'), findsAtLeastNWidgets(1));
         expect(find.textContaining('Assigned to:'), findsAtLeastNWidgets(1));
@@ -233,22 +234,24 @@ void main() {
 
         expect(find.textContaining('Assign work'), findsOneWidget);
 
-        // Get all ListTiles - all should be disabled
-        final listTiles = find
+        // Get all target rows - all should be disabled. Work-target menu rows
+        // render through InkWell over palette-token chrome (Refs #2914 S8 —
+        // no Material ListTile); a disabled row has a null onTap.
+        final targetRows = find
             .descendant(
               of: find.byType(BottomSheet),
-              matching: find.byType(ListTile),
+              matching: find.byType(InkWell),
             )
             .evaluate();
 
-        expect(listTiles, isNotEmpty);
+        expect(targetRows, isNotEmpty);
 
         // All items should be disabled when availableWorkTargets is empty
-        for (final tile in listTiles) {
-          final widget = tile.widget as ListTile;
+        for (final row in targetRows) {
+          final widget = row.widget as InkWell;
           expect(
-            widget.enabled,
-            isFalse,
+            widget.onTap,
+            isNull,
             reason: 'All items should be disabled when no available targets',
           );
         }
@@ -267,8 +270,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isEmpty) return;
+      final unitRows = find.byType(CivilianUnitRowCard);
+      if (unitRows.evaluate().isEmpty) return;
       expect(find.text('Assign'), findsAtLeastNWidgets(1));
     });
 
@@ -595,9 +598,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final listTiles = find.byType(ListTile);
-        if (listTiles.evaluate().isEmpty) return;
-        await tester.tap(listTiles.first);
+        final unitRows = find.byType(CivilianUnitRowCard);
+        if (unitRows.evaluate().isEmpty) return;
+        await tester.tap(unitRows.first);
         await tester.pump();
         await tester.pumpAndSettle();
 

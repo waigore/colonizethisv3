@@ -1,5 +1,10 @@
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
+import 'package:colonizethis_app/widgets/ct_game_feature_screen_shell.dart';
+import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -120,8 +125,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Diplomatic history'), findsOneWidget);
-    expect(find.text('Dossier'), findsOneWidget);
+    expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
+    expect(find.text('DOSSIER'), findsOneWidget);
     expect(find.textContaining('No dossier evidence yet.'), findsOneWidget);
   });
 
@@ -189,15 +194,24 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Diplomatic history'), findsOneWidget);
+      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
       if (history.isEmpty) {
         expect(
           find.text('No recorded events with this faction.'),
           findsOneWidget,
         );
       } else {
-        // History is rendered as a list of Cards.
-        expect(find.byType(Card), findsAtLeastNWidgets(1));
+        // History rows are no longer Material Card widgets — they are the
+        // mockup `.event` chrome (left-bordered tiles) introduced by
+        // Refs #2863 S5. Verify at least one formatted event sentence
+        // renders instead so the assertion stays meaningful without
+        // coupling to the private tile widget type.
+        final formatted = formatDiplomaticEvent(
+          history.first,
+          game,
+          humanPlayerId,
+        );
+        expect(find.text(formatted), findsOneWidget);
       }
     },
   );
@@ -251,8 +265,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Diplomatic history'), findsOneWidget);
-      expect(find.text('Dossier'), findsNothing);
+      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
+      expect(find.text('DOSSIER'), findsNothing);
       expect(
         find.text('No recorded events with this faction.'),
         findsOneWidget,
@@ -294,8 +308,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Diplomatic history'), findsOneWidget);
-      expect(find.text('Dossier'), findsOneWidget);
+      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
+      expect(find.text('DOSSIER'), findsOneWidget);
       expect(find.textContaining('Turn 3:'), findsOneWidget);
       expect(find.textContaining('evidence-1'), findsOneWidget);
       expect(find.textContaining('declared war'), findsOneWidget);
@@ -334,8 +348,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Diplomatic history'), findsOneWidget);
-    expect(find.text('Dossier'), findsOneWidget);
+    expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
+    expect(find.text('DOSSIER'), findsOneWidget);
     expect(find.text('No dossier evidence yet.'), findsOneWidget);
     expect(find.text('No recorded events with this faction.'), findsOneWidget);
   });
@@ -375,8 +389,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Diplomatic history'), findsOneWidget);
-      expect(find.text('Dossier'), findsNothing);
+      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
+      expect(find.text('DOSSIER'), findsNothing);
       expect(
         find.text('No recorded events with this faction.'),
         findsOneWidget,
@@ -419,8 +433,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Diplomatic history'), findsOneWidget);
-      expect(find.text('Dossier'), findsOneWidget);
+      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
+      expect(find.text('DOSSIER'), findsOneWidget);
       expect(
         find.text('No recorded events with this faction.'),
         findsOneWidget,
@@ -465,8 +479,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Diplomatic history'), findsOneWidget);
-      expect(find.text('Dossier'), findsOneWidget);
+      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
+      expect(find.text('DOSSIER'), findsOneWidget);
       expect(find.textContaining('declared war'), findsOneWidget);
       expect(find.textContaining('War'), findsOneWidget);
       expect(find.text('No dossier evidence yet.'), findsOneWidget);
@@ -525,9 +539,182 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Diplomatic history'), findsOneWidget);
+      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
       expect(find.textContaining('Unknown faction'), findsOneWidget);
       expect(find.textContaining('declared war'), findsOneWidget);
+    },
+  );
+
+  // ----- Refs #2863 S5: GAME30002 dark-theme chrome assertions -----
+
+  testWidgets(
+    'DiplomacyDetailScreen renders dark editorial-monocle chrome '
+    '(CtTopBar + scaffold bg) per Refs #2863 S5',
+    (WidgetTester tester) async {
+      const humanPlayerId = 'gp1';
+      const otherFactionId = 'gp2';
+      final game = minimalGame(
+        humanPlayerId: humanPlayerId,
+        otherFactionId: otherFactionId,
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: DiplomacyDetailScreen(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              factionId: otherFactionId,
+              factionDisplayName: 'Other GP',
+              kind: FactionKind.greatPower,
+              relation: getRelation(game, humanPlayerId, otherFactionId),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CtTopBar), findsOneWidget);
+      expect(find.byType(CtBackButton), findsOneWidget);
+      expect(find.byType(AppBar), findsNothing);
+
+      expect(find.byType(CtGameFeatureScreenShell), findsOneWidget);
+      final CtGameFeatureScreenShell shell = tester.widget(
+        find.byType(CtGameFeatureScreenShell),
+      );
+      expect(shell.backgroundColor, EditorialMonoclePalette.bg);
+      expect(shell.attachGameToUiListener, isFalse);
+
+      final Scaffold scaffold = tester.widget(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, EditorialMonoclePalette.bg);
+    },
+  );
+
+  testWidgets(
+    'DiplomacyDetailScreen emits exactly one PopNavigationEvent when the '
+    'CtTopBar back button is tapped per Refs #2863 S5',
+    (WidgetTester tester) async {
+      const humanPlayerId = 'gp1';
+      const otherFactionId = 'gp2';
+      final game = minimalGame(
+        humanPlayerId: humanPlayerId,
+        otherFactionId: otherFactionId,
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+      );
+
+      final AppEventBus bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final List<PopNavigationEvent> popEvents = <PopNavigationEvent>[];
+      final sub = bus.on<PopNavigationEvent>().listen(popEvents.add);
+      addTearDown(sub.cancel);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appEventBusProvider.overrideWith((ref) => bus)],
+          child: MaterialApp(
+            home: DiplomacyDetailScreen(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              factionId: otherFactionId,
+              factionDisplayName: 'Other GP',
+              kind: FactionKind.greatPower,
+              relation: getRelation(game, humanPlayerId, otherFactionId),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(popEvents, isEmpty);
+      await tester.tap(find.byType(CtBackButton));
+      await tester.pump();
+      expect(popEvents, hasLength(1));
+    },
+  );
+
+  testWidgets(
+    'DiplomacyDetailScreen Current relation card shows War label '
+    'in --danger colour per mockup GAME30002 .relation-row .war',
+    (WidgetTester tester) async {
+      const humanPlayerId = 'gp1';
+      const otherFactionId = 'gp2';
+      final game = minimalGame(
+        humanPlayerId: humanPlayerId,
+        otherFactionId: otherFactionId,
+        eventType: DiplomaticEventType.declareWar,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: true,
+      );
+      final relation = getRelation(game, humanPlayerId, otherFactionId);
+      expect(relation, isNotNull);
+      expect(relation!.atWar, isTrue);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: DiplomacyDetailScreen(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              factionId: otherFactionId,
+              factionDisplayName: 'Other GP',
+              kind: FactionKind.greatPower,
+              relation: relation,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('CURRENT RELATION'), findsOneWidget);
+      final Text war = tester.widget(find.text('War'));
+      expect(war.style?.color, EditorialMonoclePalette.danger);
+    },
+  );
+
+  testWidgets(
+    'DiplomacyDetailScreen Current relation card shows Peace label '
+    'in --success colour per mockup GAME30002 .relation-row .state',
+    (WidgetTester tester) async {
+      const humanPlayerId = 'gp1';
+      const otherFactionId = 'gp2';
+      final game = minimalGame(
+        humanPlayerId: humanPlayerId,
+        otherFactionId: otherFactionId,
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+      );
+      final relation = getRelation(game, humanPlayerId, otherFactionId);
+      expect(relation, isNotNull);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: DiplomacyDetailScreen(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              factionId: otherFactionId,
+              factionDisplayName: 'Other GP',
+              kind: FactionKind.greatPower,
+              relation: relation,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('CURRENT RELATION'), findsOneWidget);
+      final Text peace = tester.widget(find.text('Peace'));
+      expect(peace.style?.color, EditorialMonoclePalette.success);
     },
   );
 }

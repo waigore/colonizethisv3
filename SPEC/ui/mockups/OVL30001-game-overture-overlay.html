@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Overture Dialogue Overlay</title>
+<style>
+:root {
+  --bg:        oklch(16% 0.018 50);
+  --bg-deep:   oklch(12% 0.015 45);
+  --surface:   oklch(24% 0.015 45);
+  --surface-lite: oklch(30% 0.016 52);
+  --fg:        oklch(88% 0.015 80);
+  --muted:     oklch(65% 0.025 70);
+  --border:    oklch(40% 0.02 55);
+  --accent:    oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82);
+  --accent-bright: oklch(82% 0.13 90);
+  --success:   oklch(55% 0.12 150);
+  --danger:    oklch(55% 0.16 22);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html,body{height:100vh;height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow:hidden;}
+
+.underlay{position:absolute;inset:0;z-index:0;background:var(--bg-deep);background-image:linear-gradient(oklch(40% 0.02 55 / 0.06) 1px,transparent 1px),linear-gradient(90deg,oklch(40% 0.02 55 / 0.06) 1px,transparent 1px);background-size:48px 48px;}
+.scrim{position:absolute;inset:0;z-index:1;background:oklch(8% 0.01 30 / 0.7);display:flex;align-items:center;justify-content:center;}
+
+.dialog{
+  background:linear-gradient(180deg,var(--surface-lite) 0%,var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim);
+  padding:clamp(16px,3vw,24px);
+  max-width:clamp(300px,88vw,520px);max-height:clamp(360px,70vh,500px);
+  width:90%;overflow-y:auto;
+  z-index:2;box-shadow:0 0 24px oklch(8% 0.01 30 / 0.6);
+  display:flex;flex-direction:column;gap:10px;
+}
+.dialog-title{
+  font-family:var(--font-display);font-size:clamp(15px,2.3vw,18px);
+  font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center;
+}
+.brass-divider{
+  width:clamp(70px,12vw,100px);height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--accent-dim) 20%,var(--accent) 50%,var(--accent-dim) 80%,transparent);
+  margin:0 auto 8px;
+}
+.dialog-intro{
+  font-family:var(--font-display);font-size:clamp(11px,1.6vw,13px);
+  color:var(--muted);text-align:center;font-style:italic;line-height:1.4;
+}
+
+/* Offer rows */
+.offer-list{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.offer-row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;
+  background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);
+  border:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.offer-info{flex:1;min-width:100px;font-size:clamp(10px,1.4vw,12px);}
+.offer-offerer{font-family:var(--font-display);font-size:clamp(11px,1.6vw,13px);font-weight:600;color:var(--accent);letter-spacing:0.03em;}
+.offer-stage{font-family:var(--font-body);font-size:10px;color:var(--muted);margin-top:1px;}
+
+.offer-actions{display:flex;gap:4px;flex-shrink:0;}
+.offer-btn{
+  padding:4px 10px;
+  border:1px solid var(--border);
+  background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);
+  color:var(--muted);
+  font-family:var(--font-display);font-size:clamp(10px,1.3vw,11px);
+  font-weight:600;letter-spacing:0.03em;
+  cursor:pointer;
+  transition:color 0.15s,border-color 0.15s,background 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.offer-btn:hover{color:var(--accent-bright);border-color:var(--accent-dim);}
+.offer-btn.accepted{color:var(--success);border-color:var(--success);background:linear-gradient(180deg,var(--surface) 0%,oklch(18% 0.03 130) 100%);}
+.offer-btn.rejected{color:var(--danger);border-color:var(--danger);background:linear-gradient(180deg,var(--surface) 0%,oklch(18% 0.03 20) 100%);}
+
+.submit-btn{
+  width:100%;padding:8px;
+  background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 50%,var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim);
+  color:var(--accent);
+  font-family:var(--font-display);font-size:clamp(12px,1.8vw,14px);
+  font-weight:700;letter-spacing:0.05em;
+  cursor:pointer;margin-top:6px;
+  transition:color 0.15s,border-color 0.15s;
+}
+.submit-btn:hover{color:var(--accent-bright);border-color:var(--accent);}
+
+.demo-bar{position:fixed;bottom:10px;right:10px;z-index:20;display:flex;gap:6px;}
+.demo-bar button{padding:4px 10px;background:var(--bg-deep);border:1px solid var(--border);color:var(--muted);font-family:var(--font-body);font-size:9px;cursor:pointer;letter-spacing:0.05em;transition:color 0.15s;}
+.demo-bar button:hover{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="underlay"></div>
+<div class="scrim">
+  <div class="dialog">
+    <div class="dialog-title">Diplomatic Overture</div>
+    <div class="brass-divider"></div>
+    <div class="dialog-intro">Several powers have sent emissaries. Decide how to respond.</div>
+
+    <div class="offer-list">
+      <div class="offer-row">
+        <div class="offer-info">
+          <div class="offer-offerer">Kingdom of Spain</div>
+          <div class="offer-stage">Trade Consulate Agreement</div>
+        </div>
+        <div class="offer-actions">
+          <button class="offer-btn accepted" data-idx="0" onclick="toggleOffer(this,'accept')" id="acc0">Accept</button>
+          <button class="offer-btn" data-idx="0" onclick="toggleOffer(this,'reject')" id="rej0">Reject</button>
+        </div>
+      </div>
+
+      <div class="offer-row">
+        <div class="offer-info">
+          <div class="offer-offerer">French Empire</div>
+          <div class="offer-stage">Mutual Defense Pact</div>
+        </div>
+        <div class="offer-actions">
+          <button class="offer-btn accepted" data-idx="1" onclick="toggleOffer(this,'accept')" id="acc1">Accept</button>
+          <button class="offer-btn" data-idx="1" onclick="toggleOffer(this,'reject')" id="rej1">Reject</button>
+        </div>
+      </div>
+
+      <div class="offer-row">
+        <div class="offer-info">
+          <div class="offer-offerer">Dutch Republic</div>
+          <div class="offer-stage">Trade Rights</div>
+        </div>
+        <div class="offer-actions">
+          <button class="offer-btn accepted" data-idx="2" onclick="toggleOffer(this,'accept')" id="acc2">Accept</button>
+          <button class="offer-btn" data-idx="2" onclick="toggleOffer(this,'reject')" id="rej2">Reject</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="submitDecisions()">Submit Decisions</button>
+  </div>
+</div>
+
+<div class="demo-bar">
+  <button onclick="resetAll()">Reset</button>
+</div>
+
+<script>
+var decisions = [true, true, true];
+
+function toggleOffer(btn, action) {
+  var idx = parseInt(btn.getAttribute('data-idx'));
+  if (action === 'accept') {
+    decisions[idx] = true;
+    document.getElementById('acc'+idx).classList.add('accepted');
+    document.getElementById('rej'+idx).classList.remove('rejected');
+  } else {
+    decisions[idx] = false;
+    document.getElementById('acc'+idx).classList.remove('accepted');
+    document.getElementById('rej'+idx).classList.add('rejected');
+  }
+}
+
+function submitDecisions() {
+  var results = [
+    { offerer:'Kingdom of Spain', accepted:decisions[0] },
+    { offerer:'French Empire', accepted:decisions[1] },
+    { offerer:'Dutch Republic', accepted:decisions[2] },
+  ];
+  var msg = 'Decisions submitted:\n\n';
+  results.forEach(function(r) {
+    msg += r.offerer + ': ' + (r.accepted ? 'ACCEPTED' : 'REJECTED') + '\n';
+  });
+  alert(msg);
+}
+
+function resetAll() {
+  decisions = [true, true, true];
+  for (var i=0;i<3;i++) {
+    document.getElementById('acc'+i).classList.add('accepted');
+    document.getElementById('rej'+i).classList.remove('rejected');
+  }
+}
+</script>
+</body>
+</html>

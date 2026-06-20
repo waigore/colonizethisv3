@@ -237,12 +237,10 @@ extension _CtRegionMapRenderMarkers on CtRegionMapComponent {
     required Color color,
     required double strokeWidth,
   }) {
-    final parts = tileKey.split('|');
-    if (parts.length < 4) return;
-    if (parts[0] != region.regionId) return;
-    final x = int.tryParse(parts[2]);
-    final y = int.tryParse(parts[3]);
-    if (x == null || y == null) return;
+    final parsed = tryParseTileKey(tileKey);
+    if (parsed == null || parsed.regionId != region.regionId) return;
+    final x = parsed.x;
+    final y = parsed.y;
     if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
     final left = x * cellSize;
     final top = y * cellSize;

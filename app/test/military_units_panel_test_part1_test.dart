@@ -12,7 +12,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -150,6 +152,65 @@ void main() {
       },
     );
 
+    testWidgets('header Train renders as a primary CtActionTextButton pill '
+        '(no CtNinePatchButton header chrome) — #3514 owner decisions #5/#15', (
+      WidgetTester tester,
+    ) async {
+      // Empty roster isolates the header so the only button chrome is the
+      // Train pill (no row Move/Split CtNinePatchButtons, no Combine).
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithNoUnits),
+      );
+      await tester.pumpAndSettle();
+
+      final headerButtons = find.descendant(
+        of: find.byType(UnitsPanelShell),
+        matching: find.byType(CtActionTextButton),
+      );
+      expect(headerButtons, findsOneWidget);
+      final train = tester.widget<CtActionTextButton>(headerButtons.first);
+      expect(train.primary, isTrue);
+      expect(train.label, 'Train');
+      expect(find.byType(CtNinePatchButton), findsNothing);
+    });
+
+    testWidgets(
+      'header Combine renders as a primary CtActionTextButton pill when a '
+      'combinable roster is present — #3514 owner decisions #5/#15',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        );
+        await tester.pumpAndSettle();
+
+        final combine = find.ancestor(
+          of: find.text('Combine'),
+          matching: find.byType(CtActionTextButton),
+        );
+        // Combine only renders for a non-empty roster; when present it must be
+        // a primary pill and never a CtNinePatchButton.
+        if (combine.evaluate().isNotEmpty) {
+          expect(
+            tester.widget<CtActionTextButton>(combine.first).primary,
+            isTrue,
+          );
+          expect(
+            find.ancestor(
+              of: find.text('Combine'),
+              matching: find.byType(CtNinePatchButton),
+            ),
+            findsNothing,
+          );
+        }
+        final train = find.ancestor(
+          of: find.text('Train'),
+          matching: find.byType(CtActionTextButton),
+        );
+        expect(train, findsOneWidget);
+        expect(tester.widget<CtActionTextButton>(train.first).primary, isTrue);
+      },
+    );
+
     testWidgets('naval location header uses sea-zone display name', (
       WidgetTester tester,
     ) async {
@@ -234,11 +295,16 @@ void main() {
             )
             .length;
         if (militaryCount > 0 || fleetCount > 0) {
-          expect(find.byType(ListTile), findsAtLeastNWidgets(1));
+          // Army/fleet entries surface their actions through the
+          // UnitsEntityActionRow composite (detail sub-rows no longer use
+          // Material ListTile chrome; Refs #2914 S8). The remaining ListTile
+          // in the tree, if any, belongs to the ExpansionTile header, not the
+          // migrated sub-rows — source-level ListTile usage is covered by the
+          // repo.app_no_material_listtile gate.
           expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
           expect(
-            find.text('Old World').evaluate().isNotEmpty ||
-                find.text('New World').evaluate().isNotEmpty,
+            find.text('OLD WORLD').evaluate().isNotEmpty ||
+                find.text('NEW WORLD').evaluate().isNotEmpty,
             isTrue,
           );
         }
@@ -344,6 +410,8 @@ void main() {
       // Army entries use ExpansionTile; subtitle includes "regiments ·".
       expect(find.textContaining('regiments ·'), findsAtLeastNWidgets(1));
       await expandAllArmyExpansions(tester);
+      // ExpansionTile headers render a framework ListTile; expanded regiment
+      // detail sub-rows use non-Material chrome (Refs #2914 S8).
       expect(find.byType(ListTile), findsAtLeastNWidgets(1));
     });
 
@@ -355,7 +423,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        if (find.byType(ListTile).evaluate().isEmpty) return;
+        // Skip when the panel has no unit content (armies → UnitsEntityActionRow,
+        // naval ship rows → "Status: …" subtitle). Detail rows no longer use
+        // Material ListTile chrome (Refs #2914 S8).
+        if (find.byType(UnitsEntityActionRow).evaluate().isEmpty &&
+            find.textContaining('Status:').evaluate().isEmpty) {
+          return;
+        }
         expect(find.textContaining(' — '), findsAtLeastNWidgets(1));
       },
     );
@@ -401,11 +475,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isNotEmpty) {
-        await tester.tap(listTiles.first);
-        await tester.pumpAndSettle();
-      }
+      // Locate-tap behavior on detail sub-rows is covered by the dedicated
+      // LocateMapTileEvent test; here we only assert the panel builds without a
+      // locate callback wired (Refs #2914 S8 migrated rows off Material
+      // ListTile chrome).
     });
 
     testWidgets('Train button emits train-military dialog open event', (

@@ -2,15 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'map_pipe_string_util.dart';
 import 'tile_key_util.dart';
+import 'tile_map_directions.dart';
 
 /// Orthogonal scan order: North, East, South, West.
 /// SPEC/ui/town-port-icons.md, GitHub #1761.
-const kPortIconSeaNeighborDeltas = <(int dx, int dy)>[
-  (0, -1),
-  (1, 0),
-  (0, 1),
-  (-1, 0),
-];
+const kPortIconSeaNeighborDeltas = kTileMapDirections4;
 
 /// Raised when [computePortDrawableSeaCellForMap] cannot resolve a sea cell.
 /// SPEC/ui/town-port-icons.md, GitHub #1761.

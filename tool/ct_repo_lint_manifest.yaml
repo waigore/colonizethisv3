@@ -27,12 +27,103 @@ rules:
     runner: shell
     argv: [tool/check_logic_ai_decoupling.sh]
 
+  - rule_id: repo.logic_dead_files
+    group: architecture
+    title: colonizethis_logic dead-file detection under lib/src
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_dead_files.dart
+
+  - rule_id: repo.logic_dedup_logger
+    group: architecture
+    title: split logic-domain packages must use a shared package logger (Refs #2391, #3290)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_dedup_logger.dart
+
+  - rule_id: repo.domain_package_logger_dedup
+    group: architecture
+    title: packages/*/lib/package_logger.dart must delegate to the shared domainPackageLogger factory (Refs #3393 Phase 2)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_domain_package_logger_dedup.dart
+
+  - rule_id: repo.ai_api_narrow_surface
+    group: architecture
+    title: ai_api.dart must re-export sibling-domain symbols through domain barrels, not barrel-bypassing deep src/ paths (Refs #3393 Phase 3)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_ai_api_narrow_surface.dart
+
+  - rule_id: repo.ai_planner_context
+    group: architecture
+    title: colonizethis_ai domain planners must use PlannerContext (Refs #2521)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planner_context.dart
+
+  - rule_id: repo.ai_dedup_gp_wars_filter
+    group: architecture
+    title: colonizethis_ai must use shared gpFactionIdsAtWarWith helper (Refs #3278)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dedup_gp_wars_filter.dart
+
+  - rule_id: repo.ai_dedup_weight_scale_clamp
+    group: architecture
+    title: colonizethis_ai must use shared scaleWeightedBonus helper (Refs #3278)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dedup_weight_scale_clamp.dart
+
+  - rule_id: repo.economy_cost_check_shared_helper
+    group: architecture
+    title: economy cost-check functions must use the shared checkPreconditionsInOrder helper (Refs #3517 Cluster 2)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_cost_check_shared_helper.dart
+
+  - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
+    group: architecture
+    title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_no_repeated_production_recipes_catalog_scan.dart
+
+  - rule_id: repo.ai_no_repeated_game_players_scan
+    group: architecture
+    title: treasury planner must use game.playerById/single-pass aggregates, not repeated game.players scans (Refs #3288)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_no_repeated_game_players_scan.dart
+
+  - rule_id: repo.dart_long_string_switches
+    group: structure
+    title: Long string-literal switch checks
+    spec: SPEC/program/show-tech-tool.md
+    runner: dart
+    script: tool/check_long_string_switches.dart
+
   - rule_id: repo.app_lib_no_broad_suggest_work_orders
     group: architecture
     title: app/lib must not call broad suggestWorkOrders (Refs #2133)
     spec: SPEC/program/order-suggestions.md
     runner: shell
     argv: [tool/check_app_lib_no_suggest_work_orders.sh]
+
+  - rule_id: repo.app_lib_player_by_id_lookup
+    group: architecture
+    title: app/lib must use game.playerById for id lookups (Refs #2575)
+    spec: SPEC/program/repo-lint.md
+    runner: shell
+    argv: [tool/check_app_lib_player_by_id_lookup.sh]
+
+  - rule_id: repo.app_lib_fleet_by_id_lookup
+    group: architecture
+    title: app/lib must use game.fleetById for id lookups (Refs #2575)
+    spec: SPEC/program/repo-lint.md
+    runner: shell
+    argv: [tool/check_app_lib_fleet_by_id_lookup.sh]
 
   - rule_id: repo.flutter_action_pins
     group: structure
@@ -116,12 +207,54 @@ rules:
     script: tool/check_debug_console_logic_contract_boundary.dart
     pr_incremental: true
 
+  - rule_id: repo.debug_console_shared_helpers
+    group: structure
+    title: debug console shared parse and executor helpers
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_debug_console_shared_helpers.dart
+
   - rule_id: repo.app_event_handler_scope_logic_boundary
     group: architecture
     title: app_event_handler_scope must not import features/game/logic directly
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_event_handler_scope_logic_boundary.dart
+
+  - rule_id: repo.app_event_bus_decoupling
+    group: architecture
+    title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
+    spec: SPEC/program/app-ui-wiring.md
+    runner: dart
+    script: tool/check_app_event_bus_decoupling.dart
+
+  - rule_id: repo.app_widget_ref_parameter_smell
+    group: architecture
+    title: app/lib helpers must not declare WidgetRef/Ref parameters (Refs #3483)
+    spec: SPEC/program/app-ui-wiring.md
+    runner: dart
+    script: tool/check_app_widget_ref_parameter_smell.dart
+
+  - rule_id: repo.app_no_shell_panel_duplication
+    group: architecture
+    title: app/lib observe-mode shell guard must stay centralized in shell_player_guarded_body (Refs #3546)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_shell_panel_dedup.dart
+
+  - rule_id: repo.app_widgetbook_file_naming
+    group: structure
+    title: Widgetbook catalog parts must use domain names, not catalog_partN (Refs #3546)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_widgetbook_file_naming.dart
+
+  - rule_id: repo.subscription_tracker
+    group: structure
+    title: app feature subscriptions must use SubscriptionTracker
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_subscription_tracker.dart
 
   - rule_id: repo.control_flow_nesting_depth
     group: structure
@@ -158,12 +291,47 @@ rules:
     runner: dart
     script: tool/check_part_unit_size.dart
 
+  - rule_id: repo.turn_no_part_directives
+    group: structure
+    title: colonizethis_turn lib must not use Dart part / part of directives (Refs #3416)
+    spec: SPEC/program/turn-no-part-directives.md
+    runner: dart
+    script: tool/check_turn_no_part_directives.dart
+
+  - rule_id: repo.turn_resume_param_budget
+    group: structure
+    title: colonizethis_turn resume entry points must forward TurnResolverConfig (param budget, Refs #3416)
+    spec: SPEC/program/turn-resume-config-dispatch.md
+    runner: dart
+    script: tool/check_turn_resume_param_budget.dart
+
+  - rule_id: repo.diplomacy_no_part_of
+    group: structure
+    title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)
+    spec: SPEC/program/diplomacy-no-part-of.md
+    runner: dart
+    script: tool/check_diplomacy_no_part_of.dart
+
+  - rule_id: repo.orders_no_part_directives
+    group: structure
+    title: colonizethis_orders lib must not use Dart part / part of directives (Refs #3543)
+    spec: SPEC/program/orders-no-part-directives.md
+    runner: dart
+    script: tool/check_orders_no_part_directives.dart
+
   - rule_id: repo.no_flame_in_widgets
     group: structure
     title: app/lib/widgets must not import package:flame directly
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_no_flame_in_widgets.dart
+
+  - rule_id: repo.app_widget_imports
+    group: structure
+    title: app/lib/widgets must not import/export app/lib/features paths
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_widget_imports.dart
 
   - rule_id: repo.no_screen_in_game_widgets
     group: structure
@@ -172,6 +340,22 @@ rules:
     runner: dart
     script: tool/check_no_screen_in_game_widgets.dart
 
+  - rule_id: repo.app_panel_screen_id
+    group: structure
+    title: game-bearing panels must declare a static const screenId (Refs #3279)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_panel_screen_id.dart
+    pr_incremental: true
+
+  - rule_id: repo.app_game_panel_mixin
+    group: structure
+    title: fully-shaped game panels must adopt the shared GamePanelMixin contract (Refs #3279)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_game_panel_mixin.dart
+    pr_incremental: true
+
   - rule_id: repo.game_widgets_file_size
     group: structure
     title: app/lib/features/game/widgets files must stay at or below 700 lines
@@ -179,12 +363,210 @@ rules:
     runner: dart
     script: tool/check_game_widgets_file_size.dart
 
+  - rule_id: repo.logic_diplomatic_sub_validator_size
+    group: architecture
+    title: colonizethis_logic diplomatic sub-validators are factory functions, not bespoke `implements DiplomaticSubValidator` classes (Refs #2560)
+    spec: SPEC/program/orders.md
+    runner: dart
+    script: tool/check_logic_diplomatic_sub_validator_size.dart
+
+  - rule_id: repo.logic_work_target_switch
+    group: architecture
+    title: colonizethis_logic work-target dispatch goes through registry maps, not enumerated `switch` on `kWorkTarget*` constants (Refs #2560)
+    spec: SPEC/program/orders.md
+    runner: dart
+    script: tool/check_logic_work_target_switch.dart
+
+  - rule_id: repo.logic_test_file_size
+    group: structure
+    title: colonizethis_logic package tests must stay at or below 400 physical lines
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_test_file_size.dart
+    pr_incremental: true
+
+  - rule_id: repo.logic_domain_import_dag
+    group: architecture
+    title: colonizethis_logic domain imports must follow one-way DAG (Refs #3290 Phase 0)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_logic_domain_import_dag.dart
+
+  - rule_id: repo.logic_source_file_size
+    group: structure
+    title: colonizethis_logic lib/src files must stay at or below 500 physical lines (baseline grandfathered)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_logic_source_file_size.dart
+
+  - rule_id: repo.logic_reduced_surface
+    group: architecture
+    title: colonizethis_logic must stay a thin re-export core of at most 15 source files (Refs #3290 Phase 4)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_logic_reduced_surface.dart
+
+  - rule_id: repo.world_no_logic_deps
+    group: architecture
+    title: colonizethis_world must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_world_no_logic_deps.dart
+
+  - rule_id: repo.world_no_circular_imports
+    group: architecture
+    title: colonizethis_world lib/ file import graph must be acyclic (Refs #3544)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_no_circular_imports.dart
+
+  - rule_id: repo.combat_no_logic_deps
+    group: architecture
+    title: colonizethis_combat must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_combat_no_logic_deps.dart
+
+  - rule_id: repo.combat_no_private_aggregate_strength
+    group: architecture
+    title: combat probabilistic resolver must use shared aggregateStrength (Refs #3433)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_no_private_aggregate_strength.dart
+
+  - rule_id: repo.combat_rng_factories
+    group: architecture
+    title: combat RNG must be constructed via combat_rng.dart factories (Refs #3448)
+    spec: SPEC/program/combat-resolution.md
+    runner: dart
+    script: tool/check_combat_rng_factories.dart
+
+  - rule_id: repo.combat_no_raw_copies_in_resolution
+    group: architecture
+    title: naval ship-list clones must use copyNavalShips() helper (Refs #3448)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_no_raw_copies_in_resolution.dart
+
+  - rule_id: repo.combat_documented_keep_copies
+    group: architecture
+    title: combat keep-copy sites must carry a copy-disposition rationale marker (Refs #3448)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_documented_keep_copies.dart
+
+  - rule_id: repo.combat_dedup_precombat_indexes
+    group: architecture
+    title: pre-combat movement scan must stay deduplicated via PreCombatMovementIndex (Refs #3448)
+    spec: SPEC/program/combat-resolution.md
+    runner: dart
+    script: tool/check_combat_dedup_precombat_indexes.dart
+
+  - rule_id: repo.economy_no_logic_deps
+    group: architecture
+    title: colonizethis_economy must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_economy_no_logic_deps.dart
+
+  - rule_id: repo.diplomacy_no_duplicate_overture_clear
+    group: architecture
+    title: colonizethis_diplomacy overture pair-clears must use clearOverturesBetweenGpAndFaction (Refs #3562)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_no_duplicate_overture_clear.dart
+
+  - rule_id: repo.diplomacy_no_logic_deps
+    group: architecture
+    title: colonizethis_diplomacy must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 2)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_diplomacy_no_logic_deps.dart
+
+  - rule_id: repo.setup_no_logic_deps
+    group: architecture
+    title: colonizethis_setup must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 2)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_setup_no_logic_deps.dart
+
+  - rule_id: repo.orders_no_logic_deps
+    group: architecture
+    title: colonizethis_orders must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 2)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_orders_no_logic_deps.dart
+
+  - rule_id: repo.orders_no_cross_package_src_imports
+    group: architecture
+    title: colonizethis_orders/lib must not import another colonizethis package's src/ tree (Refs #3543)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_orders_no_cross_package_src_imports.dart
+
+  - rule_id: repo.turn_no_logic_deps
+    group: architecture
+    title: colonizethis_turn must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 3)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_turn_no_logic_deps.dart
+
+  - rule_id: repo.ai_contracts_no_logic_deps
+    group: architecture
+    title: colonizethis_ai_contracts must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 4)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_ai_contracts_no_logic_deps.dart
+
+  - rule_id: repo.domain_package_import_dag
+    group: architecture
+    title: split domain packages must follow the one-way dependency DAG in lib/ (Refs #3290)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_domain_package_import_dag.dart
+
+  - rule_id: repo.domain_package_barrel_import
+    group: architecture
+    title: split domain packages must import sibling packages via their barrel, not barrel-bypassing deep src/ paths (Refs #3393 Phase 1)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_domain_package_barrel_import.dart
+
+  - rule_id: repo.domain_package_test_file_size
+    group: structure
+    title: split domain-package test files must stay at or below 400 physical lines (Refs #3290)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_domain_package_test_file_size.dart
+
+  - rule_id: repo.domain_package_source_file_size
+    group: structure
+    title: split domain-package lib/src files must stay at or below 500 physical lines (Refs #3290)
+    spec: SPEC/program/logic-package-split-phase0.md
+    runner: dart
+    script: tool/check_domain_package_source_file_size.dart
+
+  - rule_id: repo.domain_package_dead_files
+    group: architecture
+    title: split domain packages must have no unreferenced lib/src files (Refs #3290)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_domain_package_dead_files.dart
+
   - rule_id: repo.dart_file_non_comment_line_size
     group: structure
     title: Dart files must stay at or below 1000 non-comment lines
     spec: SPEC/program/dart-file-non-comment-line-size.md
     runner: dart
     script: tool/check_dart_file_non_comment_line_size.dart
+    pr_incremental: true
+
+  - rule_id: repo.models_file_size
+    group: structure
+    title: colonizethis_models lib/src files must stay at or below 500 non-comment lines (Refs #3393)
+    spec: SPEC/program/dart-file-non-comment-line-size.md
+    runner: dart
+    script: tool/check_models_file_size.dart
     pr_incremental: true
 
   - rule_id: repo.canonical_province_tile_keys
@@ -201,6 +583,49 @@ rules:
     runner: dart
     script: tool/check_colonizethis_map_lib_pipe_split.dart
 
+  - rule_id: repo.tile_map_inline_cardinal_directions
+    group: structure
+    title: colonizethis_map lib uses kTileMapDirections4/8 instead of inline neighbor tuples
+    spec: SPEC/program/tile-map-gen-algorithm.md
+    runner: dart
+    script: tool/check_tile_map_inline_cardinal_directions.dart
+    pr_incremental: true
+
+  - rule_id: repo.map_no_partfile_classes
+    group: structure
+    title: colonizethis_map lib/src part files must not declare non-private classes
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_no_partfile_classes.dart
+
+  - rule_id: repo.map_grid_ops_central
+    group: structure
+    title: colonizethis_map lib tile-grid deep copies must route through TileMapGrid.copy (Refs #3459)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_grid_ops_central.dart
+
+  - rule_id: repo.map_gen_stage_protocol
+    group: structure
+    title: colonizethis_map generation services must implement MapGenStage (Refs #3459)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_gen_stage_protocol.dart
+
+  - rule_id: repo.map_public_barrel_surface
+    group: structure
+    title: colonizethis_map public barrel must not re-export internal-only generation primitives (Refs #3459)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_public_barrel_surface.dart
+
+  - rule_id: repo.map_region_data_access_central
+    group: structure
+    title: colonizethis_map lib old/new-world region data must route through regionDataForMapRegionId (Refs #3459)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_region_data_access_central.dart
+
   - rule_id: repo.land_province_bucket_keys
     group: game_invariants
     title: Canonical full-id land province bucket lookups in guarded paths
@@ -208,12 +633,215 @@ rules:
     runner: dart
     script: tool/check_land_province_bucket_keys.dart
 
+  - rule_id: repo.land_tile_keys_single_definition
+    group: architecture
+    title: landTileKeysForProvinceBucket has a single canonical definition and no hide workaround (Refs #3403 Phase 1)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_land_tile_keys_single_definition.dart
+
+  - rule_id: repo.world_no_top_level_province_lookup
+    group: architecture
+    title: colonizethis_world lib must use the WorldStateProvinceLookup extension, not deprecated top-level province-lookup wrappers (Refs #3403 Phase 1 Step 2)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_world_no_top_level_province_lookup.dart
+
+  - rule_id: repo.orders_dedup_map_clones
+    group: architecture
+    title: Orders module dedup regressions (map clones, probe wrappers, visibility helpers)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_dedup_map_clones.dart
+
+  - rule_id: repo.orders_dedup_diplomatic_helpers
+    group: architecture
+    title: Diplomatic sub-validators must reuse shared helpers (Refs #3500)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_dedup_diplomatic_helpers.dart
+
+  - rule_id: repo.setup_dedup_init_pipeline_retry
+    group: architecture
+    title: setup init pipelines must delegate map+setup retry loop to runInitPipelineWithRetries (Refs #3449)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_init_pipeline_retry.dart
+
+  - rule_id: repo.setup_dedup_gp_ow_tile_scans
+    group: architecture
+    title: setup GP Old World tile scans must delegate to the shared gp_old_world_tile_scan.dart helpers (Refs #3449)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_gp_ow_tile_scans.dart
+
+  - rule_id: repo.setup_dedup_gp_ids_from_players
+    group: architecture
+    title: setup GP id list/set must use gpIdsSortedFromPlayers instead of re-inlining game.players.map((p) => p.id) (Refs #3449)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_gp_ids_from_players.dart
+
+  - rule_id: repo.orders_file_size
+    group: structure
+    title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_file_size.dart
+
+  - rule_id: repo.app_ct_loading_indicator
+    group: ui_structure
+    title: app/lib must use CtLoadingIndicator instead of raw CircularProgressIndicator
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_ct_loading_indicator.dart
+
+  - rule_id: repo.app_editorial_monocle_colors
+    group: ui_structure
+    title: "app/lib/features and app/lib/widgets must resolve colors through EditorialMonoclePalette (Refs #2914 S4/G1)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_editorial_monocle_colors.dart
+
+  - rule_id: repo.app_textstyle_fontsize_fallback
+    group: ui_structure
+    title: "app/lib/features and app/lib/widgets themed-text fallbacks must size to the canonical TextTheme slot (Refs #2914 S7)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_textstyle_fontsize_fallback.dart
+
+  - rule_id: repo.app_no_material_iconbutton
+    group: ui_structure
+    title: "app/lib/features must use CtIconAction instead of Material IconButton (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_iconbutton.dart
+
+  - rule_id: repo.app_no_material_alertdialog
+    group: ui_structure
+    title: "app/lib/features must use CtDialogShell instead of Material AlertDialog (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_alertdialog.dart
+
+  - rule_id: repo.app_no_material_textbutton
+    group: ui_structure
+    title: "app/lib/features must use CtNinePatchButton instead of Material TextButton (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_textbutton.dart
+
+  - rule_id: repo.app_no_material_scaffold
+    group: ui_structure
+    title: "app/lib/features must use CtGameFeatureScreenShell / CtScreenShell instead of Material Scaffold (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_scaffold.dart
+
+  - rule_id: repo.app_no_material_filterchip
+    group: ui_structure
+    title: "app/lib/features must use CtChoiceChip instead of Material FilterChip (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_filterchip.dart
+
+  - rule_id: repo.app_no_material_listtile
+    group: ui_structure
+    title: "app/lib/features must compose UnitsEntityActionRow / CtResourceCell / InkWell instead of Material ListTile (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_listtile.dart
+
+  - rule_id: repo.app_no_material_switchlisttile
+    group: ui_structure
+    title: "app/lib/features must compose CtSectionLabel + CtToggleSwitch instead of Material SwitchListTile (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_switchlisttile.dart
+
+  - rule_id: repo.app_no_material_chip
+    group: ui_structure
+    title: "app/lib/features must compose palette-token primitives or CtChoiceChip instead of Material Chip (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_chip.dart
+
+  - rule_id: repo.app_no_material_button
+    group: ui_structure
+    title: "app/lib/features must use CtNinePatchButton instead of Material ElevatedButton / FilledButton / OutlinedButton (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_button.dart
+
+  - rule_id: repo.app_no_material_card
+    group: ui_structure
+    title: "app/lib/features must use CtPanel instead of Material Card (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_card.dart
+
+  - rule_id: repo.app_no_material_dialog
+    group: ui_structure
+    title: "app/lib/features must use CtDialogShell / CtFullScreenDialogueShell instead of Material Dialog (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_dialog.dart
+
+  - rule_id: repo.app_no_material_choicechip
+    group: ui_structure
+    title: "app/lib/features must use CtChoiceChip instead of Material ChoiceChip (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_choicechip.dart
+
+  - rule_id: repo.app_no_material_slider
+    group: ui_structure
+    title: "app/lib/features must use CtSlider instead of Material Slider (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_slider.dart
+
+  - rule_id: repo.app_no_material_dropdownbutton
+    group: ui_structure
+    title: "app/lib/features must use CtDropdown instead of Material DropdownButton (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_dropdownbutton.dart
+
+  - rule_id: repo.app_no_material_appbar
+    group: ui_structure
+    title: "app/lib/features must use CtTopBar / CtScreenShell instead of Material AppBar (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_appbar.dart
+
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
-    title: colonizethis_logic limits direct oldWorld/newWorld province list access
+    title: colonizethis_world limits direct oldWorld/newWorld province list access
     spec: SPEC/program/logic-dual-region-province-access.md
     runner: dart
     script: tool/check_logic_dual_region_province_field_access.dart
+
+  - rule_id: repo.logic_all_provinces_sanctioned_calls
+    group: architecture
+    title: colonizethis_logic allProvinces( call sites must be YAML-sanctioned
+    spec: SPEC/program/logic-dual-region-province-access.md
+    runner: dart
+    script: tool/check_logic_all_provinces_sanctioned_calls.dart
+
+  - rule_id: repo.logic_units_by_id_rebuild
+    group: architecture
+    title: split domain packages must use WorldState.allUnitsById, not unitsByIdFromWorld( (Refs #2836, #3290)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_units_by_id_rebuild.dart
+
+  - rule_id: repo.logic_validator_units_params
+    group: architecture
+    title: colonizethis_logic orders/ helpers must thread OrderResolutionContext instead of Map<String, Unit> unitsById (Refs #2836)
+    spec: SPEC/program/logic-validator-units-params.md
+    runner: dart
+    script: tool/check_logic_validator_units_params.dart
 
   - rule_id: repo.app_hardcoded_ui_strings
     group: ui_i18n
@@ -224,3 +852,24 @@ rules:
     include_only_when_env:
       name: CT_REPO_LINT_INCLUDE_APP
       value: "true"
+
+  - rule_id: repo.app_no_duplicate_helpers
+    group: structure
+    title: "Canonical helpers from #2180 must not be redefined or duplicated"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_duplicate_helpers.dart
+
+  - rule_id: repo.screen_registry_active_paths
+    group: ui_structure
+    title: "active screen-registry rows must point to existing app/lib Dart files (Refs #2801)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_screen_registry_active_paths.dart
+
+  - rule_id: repo.dialogue_yarn_variable_bindings
+    group: ui_structure
+    title: "dialogue overlays must bind Yarn {$var} interpolations via setVariable(r'$var', …) (Refs #3463)"
+    spec: SPEC/ui/tribe-first-contact-overlay.md
+    runner: dart
+    script: tool/check_dialogue_yarn_variable_bindings.dart

@@ -14,7 +14,8 @@ Authoritative index: **`AGENTS.md`** (“Rule location” / tables). Rules live 
 | Widget/Flame lifecycle | `colonizethis-lifecycle.mdc` |
 | Tests, coverage expectations | `colonizethis-testing.mdc` |
 | E2E / integration tests | `colonizethis-e2e-ui-stability.mdc` |
-| UI specs / widgets | `colonizethis-ui-design.mdc` |
+| UI screen docs (IDs, layout, behavior, Widgetbook) | `colonizethis-ui-documentation.mdc` — implement via `document-app-ui` skill |
+| UI style / pixel-art / mobile | `colonizethis-ui-design.mdc` |
 | Assets / pubspec | `colonizethis-assets.mdc` |
 | AC quality in SPEC | `colonizethis-acceptance-criteria.mdc` |
 

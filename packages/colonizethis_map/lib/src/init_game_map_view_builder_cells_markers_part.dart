@@ -65,80 +65,6 @@ List<CellViewData> _buildCellViewDataList({
   return cells;
 }
 
-List<CapitalMarkerView> _buildCapitalMarkers({
-  required Game game,
-  required String regionId,
-}) {
-  final capitals = <CapitalMarkerView>[];
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.players,
-    idOf: (player) => player.id,
-    displayNameOf: (player) => player.displayName,
-    capitalOf: (player) {
-      final capital = player.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.minorNations,
-    idOf: (nation) => nation.id,
-    displayNameOf: (nation) => nation.displayName ?? nation.id,
-    capitalOf: (nation) {
-      final capital = nation.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.tribes,
-    idOf: (tribe) => tribe.id,
-    displayNameOf: (tribe) => tribe.displayName ?? tribe.id,
-    capitalOf: (tribe) {
-      final capital = tribe.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  return capitals;
-}
-
-void _appendCapitalMarkers<T>({
-  required List<CapitalMarkerView> capitals,
-  required String regionId,
-  required Iterable<T> factions,
-  required String Function(T) idOf,
-  required String Function(T) displayNameOf,
-  required ({String regionId, int x, int y})? Function(T) capitalOf,
-}) {
-  for (final faction in factions) {
-    final capital = capitalOf(faction);
-    if (capital == null || capital.regionId != regionId) {
-      continue;
-    }
-    capitals.add(
-      CapitalMarkerView(
-        factionId: idOf(faction),
-        displayName: displayNameOf(faction),
-        x: capital.x,
-        y: capital.y,
-      ),
-    );
-  }
-}
-
 Map<String, (int x, int y)> _buildProvinceToRepresentativeTile({
   required TileMapResult tileMap,
   required String regionId,
@@ -166,18 +92,24 @@ Map<String, (int x, int y)> _buildProvinceToRepresentativeTile({
 _buildUnitAndCivilianMarkerData({
   required Game game,
   required String regionId,
-  required bool isOldWorld,
   required List<Province> provinces,
   required List<CellViewData> cells,
   required Map<String, (int x, int y)> provinceToTile,
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   final unitMarkers = <UnitMarkerView>[];
   final civilianUnitsByTileKey = <String, List<Unit>>{};
   final playerOwnedCivilianTileMarkers = <CivilianTileMarkerView>[];
-  final humanPlayerIds = game.players
-      .where((player) => player.isHuman)
-      .map((player) => player.id)
-      .toSet();
+  // Default owner set for civilian markers is the `isHuman` players so callers
+  // that do not pass an explicit set keep legacy single-player behavior.
+  // Observe-mode call sites (see SPEC/ui/observe-mode.md) pass an explicit set
+  // because handoff clears `isHuman` on every player.
+  final civilianOwnerIds =
+      civilianMarkerOwnerIds ??
+      game.players
+          .where((player) => player.isHuman)
+          .map((player) => player.id)
+          .toSet();
   final provincePresenceById = <String, ProvinceUnitPresenceView>{};
   for (final p in provinces) {
     provincePresenceById[p.id] = const ProvinceUnitPresenceView(
@@ -205,12 +137,13 @@ _buildUnitAndCivilianMarkerData({
     );
   }
 
-  final regionUnits = isOldWorld
-      ? game.worldState.oldWorld.units
-      : game.worldState.newWorld.units;
+  final regionUnits = regionDataForMapRegionId(
+    game.worldState,
+    regionId,
+  ).units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
-        humanPlayerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
+        civilianOwnerIds.contains(u.ownerId) && isCivilianUnitType(u.type);
     if (isPlayerOwnedCivilian) {
       _addCivilianUnitToTileKeyBucket(
         unit: u,
@@ -243,9 +176,9 @@ _buildUnitAndCivilianMarkerData({
     final tileKey = entry.key;
     final units = entry.value.toList()
       ..sort((a, b) {
-        final priorityCompare = _civilianIconPriorityForType(
+        final priorityCompare = civilianUnitIconPriorityForType(
           a.type,
-        ).compareTo(_civilianIconPriorityForType(b.type));
+        ).compareTo(civilianUnitIconPriorityForType(b.type));
         if (priorityCompare != 0) {
           return priorityCompare;
         }
@@ -306,188 +239,4 @@ void _addCivilianUnitToTileKeyBucket({
     return;
   }
   civilianUnitsByTileKey.putIfAbsent(tileKey, () => []).add(unit);
-}
-
-List<PortMarkerView> _buildPortMarkers({
-  required String regionId,
-  required Map<String, String> portsByProvinceSeaboard,
-}) {
-  final ports = <PortMarkerView>[];
-  portsByProvinceSeaboard.forEach((key, tileKey) {
-    final parsed = tryParseMapTileKey(tileKey);
-    if (parsed == null || parsed.regionId != regionId) {
-      return;
-    }
-    final fromKey = localProvinceIdFromPortsSeaboardKey(key, regionId);
-    final provinceIdForMarker = fromKey ?? parsed.localId;
-    ports.add(
-      PortMarkerView(
-        x: parsed.x,
-        y: parsed.y,
-        provinceId: provinceIdForMarker,
-        seaZoneId: '',
-        seaboardKey: key,
-      ),
-    );
-  });
-  return ports;
-}
-
-Set<String> _buildCoastalProvinceIds({
-  required MapTopology topology,
-  required Set<String> seaZoneIds,
-}) {
-  final coastalProvinceIds = <String>{};
-  for (final edge in topology.edges) {
-    final id1Sea = seaZoneIds.contains(edge.id1);
-    final id2Sea = seaZoneIds.contains(edge.id2);
-    if ((id1Sea && !id2Sea) || (!id1Sea && id2Sea)) {
-      coastalProvinceIds.add(id1Sea ? edge.id2 : edge.id1);
-    }
-  }
-  return coastalProvinceIds;
-}
-
-List<TownMarkerView> _buildTownMarkers({
-  required Game game,
-  required String regionId,
-  required List<Province> provinces,
-  required List<PortMarkerView> ports,
-  required Set<String> coastalProvinceIds,
-  required TileMapResult tileMap,
-  required Set<String> seaZoneIds,
-}) {
-  final towns = <TownMarkerView>[];
-  final portProvinceIds = ports.map((p) => p.provinceId).toSet();
-  for (final p in provinces) {
-    final townTileKey = p.townTileKey;
-    if (townTileKey == null || townTileKey.isEmpty) {
-      continue;
-    }
-    final parsed = tryParseMapTileKey(townTileKey);
-    if (parsed == null || parsed.regionId != regionId) {
-      continue;
-    }
-    final localProvinceId = ProvinceId.localIdFrom(p.id);
-    final hasPort = portProvinceIds.contains(localProvinceId);
-    final portTileKey = hasPort
-        ? portLandTileKeyForProvinceInRegion(game, regionId, localProvinceId)
-        : null;
-    int? portIconX;
-    int? portIconY;
-    if (hasPort && portTileKey != null) {
-      final placed = computePortDrawableSeaCellForMap(
-        tileMap: tileMap,
-        seaZoneIds: seaZoneIds,
-        portTileKey: portTileKey,
-        contextLabel:
-            'region=$regionId province=$localProvinceId harbor sprite',
-      );
-      portIconX = placed.x;
-      portIconY = placed.y;
-    }
-    final touchesSea = coastalProvinceIds.contains(localProvinceId);
-    towns.add(
-      TownMarkerView(
-        x: parsed.x,
-        y: parsed.y,
-        provinceId: localProvinceId,
-        isCoastal: touchesSea && !hasPort,
-        isPort: hasPort,
-        touchesSea: touchesSea,
-        portIconX: portIconX,
-        portIconY: portIconY,
-      ),
-    );
-  }
-  return towns;
-}
-
-Map<String, (int x, int y)> _buildSeaZoneToRepresentativeTile({
-  required TileMapResult tileMap,
-  required Set<String> seaZoneIds,
-}) {
-  final seaZoneToTile = <String, (int x, int y)>{};
-  for (var y = 0; y < tileMap.height; y++) {
-    for (var x = 0; x < tileMap.width; x++) {
-      final localId = tileMap.cell(x, y);
-      if (!seaZoneIds.contains(localId)) {
-        continue;
-      }
-      seaZoneToTile.putIfAbsent(localId, () => (x, y));
-    }
-  }
-  return seaZoneToTile;
-}
-
-List<WarpMarkerView> _buildWarpMarkers({
-  required String regionId,
-  required Map<String, (int x, int y)> seaZoneToTile,
-  required List<WarpLink>? warpLinks,
-}) {
-  final warpMarkers = <WarpMarkerView>[];
-  if (warpLinks == null) {
-    return warpMarkers;
-  }
-  for (final link in warpLinks) {
-    if (link.regionId == regionId) {
-      final tile = seaZoneToTile[link.seaZoneId];
-      if (tile == null) {
-        continue;
-      }
-      warpMarkers.add(
-        WarpMarkerView(
-          x: tile.$1,
-          y: tile.$2,
-          seaZoneId: link.seaZoneId,
-          otherRegionId: link.otherRegionId,
-          otherSeaZoneId: link.otherSeaZoneId,
-        ),
-      );
-      continue;
-    }
-    if (link.otherRegionId != regionId) {
-      continue;
-    }
-    final tile = seaZoneToTile[link.otherSeaZoneId];
-    if (tile == null) {
-      continue;
-    }
-    warpMarkers.add(
-      WarpMarkerView(
-        x: tile.$1,
-        y: tile.$2,
-        seaZoneId: link.otherSeaZoneId,
-        otherRegionId: link.regionId,
-        otherSeaZoneId: link.seaZoneId,
-      ),
-    );
-  }
-  return warpMarkers;
-}
-
-void _applyInPortFleetShipCounts({
-  required List<Fleet> fleets,
-  required String regionId,
-  required Map<String, ProvinceUnitPresenceView> provincePresenceById,
-}) {
-  for (final fleet in fleets) {
-    if (fleet.regionId != regionId || !fleet.isInPort) {
-      continue;
-    }
-    final provinceId = fleet.inPortAtProvinceId;
-    if (provinceId == null) {
-      continue;
-    }
-    final current = provincePresenceById[provinceId];
-    if (current == null) {
-      continue;
-    }
-    provincePresenceById[provinceId] = ProvinceUnitPresenceView(
-      civilianCount: current.civilianCount,
-      regimentCount: current.regimentCount,
-      shipCount: current.shipCount + fleet.ships.length,
-      intelVisible: current.intelVisible,
-    );
-  }
 }

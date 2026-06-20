@@ -1,12 +1,13 @@
 import 'package:colonizethis_logic/debug_console_api.dart';
 
+import 'debug_console_parse_result.dart';
+import 'debug_console_parser_helpers.dart';
+import 'debug_console_parser_province_commands.dart';
 import 'debug_console_parsed_invocation.dart';
 
-const int kDebugConsoleMaxSpawnCount = 25;
-
-/// Upper bound for `/add_money` credited amount (parser clamps here).
-const int kDebugConsoleMaxTreasuryCreditAmount = 9999;
-final RegExp _localProvinceIdPattern = RegExp(r'^P[0-9]+$');
+export 'debug_console_parse_result.dart';
+export 'debug_console_parser_helpers.dart'
+    show kDebugConsoleMaxSpawnCount, kDebugConsoleMaxTreasuryCreditAmount;
 
 class DebugConsoleCommandParser {
   const DebugConsoleCommandParser();
@@ -31,9 +32,13 @@ class DebugConsoleCommandParser {
       '/spawn_regiment' => _parseSpawnRegiment(tokens),
       '/spawn_ship' => _parseSpawnShip(tokens),
       '/add_money' => _parseAddMoney(tokens),
+      '/add_worker' => _parseAddWorker(tokens),
       '/add_resource' => _parseAddResource(tokens),
-      '/flip_province' => _parseFlipProvince(tokens),
-      '/reveal_province' => _parseRevealProvince(tokens),
+      '/flip_province' => parseFlipProvinceCommand(tokens),
+      '/reveal_province' => parseRevealProvinceCommand(tokens),
+      '/get_tile_basic_info' => _parseGetTileBasicInfo(tokens),
+      '/list_players' => _parseListPlayers(tokens),
+      '/observe' => parseObserveCommand(tokens),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -53,21 +58,14 @@ class DebugConsoleCommandParser {
         'Unknown civilian type. Use explorer, builder, engineer, spy, merchant, or rail_builder.',
       );
     }
-    final parsedCount = tokens.length >= 3 ? int.tryParse(tokens[2]) : 1;
-    if (parsedCount == null) {
-      return const DebugConsoleParseResult.error(
-        'Count must be an integer between 1 and 25.',
-      );
-    }
-    if (parsedCount < 1 || parsedCount > kDebugConsoleMaxSpawnCount) {
-      return const DebugConsoleParseResult.error(
-        'Count must be between 1 and 25.',
-      );
+    final countResult = parseOptionalCount(tokens, 3);
+    if (countResult.error != null) {
+      return DebugConsoleParseResult.error(countResult.error!);
     }
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.spawnCivilianAtCapital(
         unitType: canonicalUnitType,
-        count: parsedCount,
+        count: countResult.count,
       ),
     );
   }
@@ -76,20 +74,43 @@ class DebugConsoleCommandParser {
     if (tokens.length < 2) {
       return const DebugConsoleParseResult.error('Usage: /add_money <amount>');
     }
-    final rawAmount = int.tryParse(tokens[1]);
-    if (rawAmount == null) {
-      return const DebugConsoleParseResult.error('Amount must be an integer.');
+    final amountResult = parseAmountWithClamp(tokens[1]);
+    if (amountResult.error != null) {
+      return DebugConsoleParseResult.error(amountResult.error!);
     }
-    if (rawAmount < 1) {
-      return const DebugConsoleParseResult.error('Amount must be at least 1.');
-    }
-    final creditedAmount = rawAmount > kDebugConsoleMaxTreasuryCreditAmount
-        ? kDebugConsoleMaxTreasuryCreditAmount
-        : rawAmount;
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.treasuryCredit(
-        requestedAmount: rawAmount,
-        creditedAmount: creditedAmount,
+        requestedAmount: amountResult.requested,
+        creditedAmount: amountResult.credited,
+      ),
+    );
+  }
+
+  DebugConsoleParseResult _parseAddWorker(List<String> tokens) {
+    if (tokens.length < 3) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /add_worker <peasants|apprentices|journeymen|masters> <amount>',
+      );
+    }
+    final tierInput = tokens[1].trim().toLowerCase();
+    final canonicalTierId = canonicalIdForInput(
+      tierInput,
+      debugConsoleSupportedWorkerTierIds,
+    );
+    if (canonicalTierId == null) {
+      return const DebugConsoleParseResult.error(
+        'Unknown worker tier. Use peasants, apprentices, journeymen, or masters.',
+      );
+    }
+    final amountResult = parseAmountWithClamp(tokens[2]);
+    if (amountResult.error != null) {
+      return DebugConsoleParseResult.error(amountResult.error!);
+    }
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.workerPoolCredit(
+        workerTierId: canonicalTierId,
+        requestedAmount: amountResult.requested,
+        creditedAmount: amountResult.credited,
       ),
     );
   }
@@ -102,29 +123,24 @@ class DebugConsoleCommandParser {
     }
     final requestedCommodityId = tokens[1].trim();
     final normalizedCommodityId = requestedCommodityId.toLowerCase();
-    final canonicalCommodityId = _canonicalCommodityIdForInput(
+    final canonicalCommodityId = canonicalIdForInput(
       normalizedCommodityId,
+      debugConsoleSupportedCommodityIds,
     );
     if (canonicalCommodityId == null) {
       return const DebugConsoleParseResult.error(
         'Unknown commodity id. Use /help for supported commodity ids.',
       );
     }
-    final rawAmount = int.tryParse(tokens[2]);
-    if (rawAmount == null) {
-      return const DebugConsoleParseResult.error('Amount must be an integer.');
+    final amountResult = parseAmountWithClamp(tokens[2]);
+    if (amountResult.error != null) {
+      return DebugConsoleParseResult.error(amountResult.error!);
     }
-    if (rawAmount < 1) {
-      return const DebugConsoleParseResult.error('Amount must be at least 1.');
-    }
-    final creditedAmount = rawAmount > kDebugConsoleMaxTreasuryCreditAmount
-        ? kDebugConsoleMaxTreasuryCreditAmount
-        : rawAmount;
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.stockpileCredit(
         commodityId: canonicalCommodityId,
-        requestedAmount: rawAmount,
-        creditedAmount: creditedAmount,
+        requestedAmount: amountResult.requested,
+        creditedAmount: amountResult.credited,
       ),
     );
   }
@@ -141,21 +157,14 @@ class DebugConsoleCommandParser {
         'Unknown regiment type id. Use /help for supported regiment ids.',
       );
     }
-    final parsedCount = tokens.length >= 3 ? int.tryParse(tokens[2]) : 1;
-    if (parsedCount == null) {
-      return const DebugConsoleParseResult.error(
-        'Count must be an integer between 1 and 25.',
-      );
-    }
-    if (parsedCount < 1 || parsedCount > kDebugConsoleMaxSpawnCount) {
-      return const DebugConsoleParseResult.error(
-        'Count must be between 1 and 25.',
-      );
+    final countResult = parseOptionalCount(tokens, 3);
+    if (countResult.error != null) {
+      return DebugConsoleParseResult.error(countResult.error!);
     }
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.spawnRegimentAtCapital(
         regimentTypeId: regimentTypeId,
-        count: parsedCount,
+        count: countResult.count,
       ),
     );
   }
@@ -172,104 +181,43 @@ class DebugConsoleCommandParser {
         'Unknown ship type id. Use /help for supported ship ids.',
       );
     }
-    final parsedCount = tokens.length >= 3 ? int.tryParse(tokens[2]) : 1;
-    if (parsedCount == null) {
-      return const DebugConsoleParseResult.error(
-        'Count must be an integer between 1 and 25.',
-      );
-    }
-    if (parsedCount < 1 || parsedCount > kDebugConsoleMaxSpawnCount) {
-      return const DebugConsoleParseResult.error(
-        'Count must be between 1 and 25.',
-      );
+    final countResult = parseOptionalCount(tokens, 3);
+    if (countResult.error != null) {
+      return DebugConsoleParseResult.error(countResult.error!);
     }
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.spawnShipAtCapitalHomeFleet(
         shipTypeId: shipTypeId,
-        count: parsedCount,
+        count: countResult.count,
       ),
     );
   }
 
-  DebugConsoleParseResult _parseFlipProvince(List<String> tokens) {
-    if (tokens.length == 2) {
-      final fullProvinceId = tokens[1].trim();
-      if (!_looksLikePrefixedProvinceId(fullProvinceId)) {
-        return const DebugConsoleParseResult.error(
-          'Usage: /flip_province <regionId> <province_display_name> OR /flip_province <regionId|localId>',
-        );
-      }
-      return DebugConsoleParseResult.success(
-        DebugConsoleParsedInvocation.flipProvince(
-          fullProvinceId: fullProvinceId,
-        ),
-      );
+  DebugConsoleParseResult _parseGetTileBasicInfo(List<String> tokens) {
+    if (tokens.length != 1) {
+      return const DebugConsoleParseResult.error('Usage: /get_tile_basic_info');
     }
-    if (tokens.length < 3) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /flip_province <regionId> <province_display_name> OR /flip_province <regionId|localId>',
-      );
-    }
-    final regionId = tokens[1].trim();
-    if (regionId.isEmpty) {
-      return const DebugConsoleParseResult.error(
-        'Region id must not be empty.',
-      );
-    }
-    final provinceDisplayName = tokens.sublist(2).join(' ').trim();
-    if (provinceDisplayName.isEmpty) {
-      return const DebugConsoleParseResult.error(
-        'Province display name must not be empty.',
-      );
-    }
-    return DebugConsoleParseResult.success(
-      DebugConsoleParsedInvocation.flipProvince(
-        regionId: regionId,
-        provinceDisplayName: provinceDisplayName,
-      ),
+    return const DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.getTileBasicInfo(),
     );
   }
 
-  DebugConsoleParseResult _parseRevealProvince(List<String> tokens) {
-    if (tokens.length < 2) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /reveal_province <regionId|localId | province_display_name>',
-      );
+  DebugConsoleParseResult _parseListPlayers(List<String> tokens) {
+    if (tokens.length != 1) {
+      return const DebugConsoleParseResult.error('Usage: /list_players');
     }
-    final target = tokens.sublist(1).join(' ').trim();
-    if (target.isEmpty) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /reveal_province <regionId|localId | province_display_name>',
-      );
-    }
-    if (_localProvinceIdPattern.hasMatch(target)) {
-      return const DebugConsoleParseResult.error(
-        'Use full province id format: regionId|localId',
-      );
-    }
-    final targetIsFullProvinceId = _looksLikePrefixedProvinceId(target);
-    return DebugConsoleParseResult.success(
-      DebugConsoleParsedInvocation.revealProvince(
-        target: target,
-        targetIsFullProvinceId: targetIsFullProvinceId,
-      ),
+    return const DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.listPlayers(),
     );
   }
-}
 
-String? _canonicalCommodityIdForInput(String normalizedInput) {
-  for (final candidate in debugConsoleSupportedCommodityIds) {
-    if (candidate.toLowerCase() == normalizedInput) {
-      return candidate;
-    }
-  }
-  return null;
 }
 
 String _buildHelpMessage() {
   final regimentIds = debugConsoleSupportedRegimentTypeIdsSorted.join(', ');
   final shipIds = debugConsoleSupportedShipTypeIdsSorted.join(', ');
   final commodityIds = debugConsoleSupportedCommodityIdsSorted.join(', ');
+  final workerTierIds = debugConsoleSupportedWorkerTierIdsSorted.join(', ');
   return 'Supported commands:\n'
       '- /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]\n'
       '- /spawn_regiment <regiment_type_id> [count]\n'
@@ -279,6 +227,10 @@ String _buildHelpMessage() {
       '- /add_money <amount>\n'
       '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
       '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
+      '- /add_worker <peasants|apprentices|journeymen|masters> <amount>\n'
+      '  supported tier ids: $workerTierIds\n'
+      '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
+      '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
       '- /add_resource <commodity_id> <amount>\n'
       '  supported ids: $commodityIds\n'
       '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
@@ -286,29 +238,12 @@ String _buildHelpMessage() {
       '- /flip_province <regionId> <province_display_name>\n'
       '- /flip_province <regionId|localId>\n'
       '- /reveal_province <regionId|localId | province_display_name>\n'
-      '  if name is ambiguous, retry with full province id.';
-}
-
-bool _looksLikePrefixedProvinceId(String value) {
-  final separator = value.indexOf('|');
-  if (separator <= 0 || separator == value.length - 1) {
-    return false;
-  }
-  return true;
-}
-
-class DebugConsoleParseResult {
-  const DebugConsoleParseResult.success(this.invocation)
-    : message = null,
-      isError = false;
-
-  const DebugConsoleParseResult.error(this.message)
-    : invocation = null,
-      isError = true;
-
-  final DebugConsoleParsedInvocation? invocation;
-  final String? message;
-  final bool isError;
+      '- /get_tile_basic_info\n'
+      '  if name is ambiguous, retry with full province id.\n'
+      '- /list_players\n'
+      '- /observe\n'
+      '- /observe off\n'
+      '- /observe <player_id | display_name>';
 }
 
 String? _unitTypeFromAlias(String alias) {

@@ -1,0 +1,38 @@
+---
+description: Enforce hard turn-resolution latency budget for usability
+alwaysApply: true
+---
+
+# Turn Resolution Budget
+
+- **Hard usability limit:** End-to-end next-turn resolution (from user confirm to terminal result ready for UI apply) must complete in **<= 15,000 ms** on the project target environment. Treat this as a release-blocking requirement, not a best-effort goal.
+- **No functional drift:** Performance work must preserve turn-resolution semantics and accepted-order contracts defined by `SPEC/program/turn-resolution.md`, `SPEC/program/turn-resolution-phases.md`, and `SPEC/program/order-suggestions.md`.
+- **Budget overflows are defects:** Any change or baseline showing sustained turn-resolution latency above 15 seconds must be treated as a bug and fixed before merge.
+
+## Required profiling signals
+
+- Keep timing visibility for worker and app runner boundaries (`session_start`, `session_complete`, `decode_complete`, `ai_complete`, `resolve_complete`, `success_ready`) per `SPEC/program/logging/turn-resolution.md`.
+- When investigating regressions, report phase-level timing slices (AI planning, merge, resolver phases, decode/apply) and payload size indicators.
+
+## Required optimization approach when over budget
+
+- **Bound candidate search:** Apply deterministic probe/acceptance caps to high-cardinality suggestion loops where full enumeration is not required by user-facing behavior.
+- **Reuse validation state:** Prefer incremental candidate validation and per-pass caches over repeated full-pass validation setup.
+- **Avoid repeated expensive scoring:** Memoize per-target/per-player computations inside hot loops when outcomes are deterministic for the same input set.
+- **Control logging overhead:** Keep high-frequency loops summary-only; avoid per-candidate debug logs in tight paths.
+- **Preserve determinism:** Any optimization (caps, memoization, caching) must keep deterministic ordering/selection behavior for fixed inputs.
+
+## Inefficiency no-nos (typical causes of blowouts and stalls)
+
+Treat the following as high-risk regressions whenever they appear on hot next-turn paths (worker Full AI / merge / resolver prep, isolate handoff, main runner decode/apply), especially when profiling shows spikes above budget:
+
+- **Large isolate payloads:** Shipping big trace blobs, repeated full-game JSON snapshots, or other heavyweight structures across `SendPort` on the success envelope; prefer worker-side aggregation and lean main-isolate payloads (see envelope tests and `SPEC/program/turn-resolution.md`).
+- **Port/listener deadlock patterns:** Closing or canceling isolate listen channels synchronously from inside the listener for the **same** port (classic `ReceivePort` teardown deadlock); defer teardown safely (for example scheduling after the synchronous stack unwinds).
+- **Uncapped high-cardinality loops:** Nested `units/armies × tiles/provinces/destinations` probe work without deterministic probe or acceptance ceilings for move/army-move and similar suggestion families (`SPEC/program/order-suggestions.md`).
+- **Redundant incremental validation:** Constructing validators or redoing projection work inside every probe when a single per-pass reusable validator/cache has the same inputs.
+- **Duplicate global scans:** Re-running equivalent `WorldState`/ownership/province passes inside inner loops instead of caching results once per outward scope where semantics allow.
+- **Expensive deterministic scoring duplicated per inner iteration:** Repeated war-desire, diplomacy aggregates, or other pure functions keyed by the same `(game subset, player, target)` when memoization preserves ordering determinism for fixed inputs.
+- **Hot-path verbosity:** `logger` chatter at scales proportional to provinces, tiles, or candidates (`debug/trace` floods) on paths that execute thousands of iterations per turn.
+- **UI coupling to resolver-only labels:** Blocking the dismissal of **`Processing Turn`** until after synchronous persistence/`applyTurnResolutionResult` completes; terminals first, then heavier main-isolate work (`SPEC/ui/next-turn-confirmation.md`).
+
+Canonical dual-region scans remain governed separately by **`SPEC/program/logic-dual-region-province-access.md`** and sanctioned `allProvinces(` entries; accidental new unconditional global iteration still risks budget overrun and must justify location and scope there.

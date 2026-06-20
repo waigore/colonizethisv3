@@ -11,14 +11,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildFort, kWorkTargetBuildImprovement, kWorkTargetBuildPort, kWorkTargetBuildRail, kWorkTargetBuildRoad, kWorkTargetCounterSpy, kWorkTargetExplore, kWorkTargetProspect, kWorkTargetPurchaseLand, kWorkTargetStealTech, kWorkTargetUpgradeTown;
+    show
+        kWorkTargetBuildFort,
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildPort,
+        kWorkTargetBuildRail,
+        kWorkTargetBuildRoad,
+        kWorkTargetCounterSpy,
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech,
+        kWorkTargetUpgradeTown;
 
 class _EventHandlingWrapper extends StatefulWidget {
   const _EventHandlingWrapper({
@@ -401,15 +411,31 @@ void main() {
         final cases = <({String unitType, String target, int turns})>[
           (unitType: kUnitTypeExplorer, target: kWorkTargetExplore, turns: 3),
           (unitType: kUnitTypeExplorer, target: kWorkTargetProspect, turns: 1),
-          (unitType: kUnitTypeBuilder, target: kWorkTargetBuildImprovement, turns: 1),
-          (unitType: kUnitTypeBuilder, target: kWorkTargetUpgradeTown, turns: 1),
+          (
+            unitType: kUnitTypeBuilder,
+            target: kWorkTargetBuildImprovement,
+            turns: 1,
+          ),
+          (
+            unitType: kUnitTypeBuilder,
+            target: kWorkTargetUpgradeTown,
+            turns: 1,
+          ),
           (unitType: kUnitTypeEngineer, target: kWorkTargetBuildRoad, turns: 1),
           (unitType: kUnitTypeEngineer, target: kWorkTargetBuildPort, turns: 1),
           (unitType: kUnitTypeEngineer, target: kWorkTargetBuildFort, turns: 3),
-          (unitType: kUnitTypeRailBuilder, target: kWorkTargetBuildRail, turns: 1),
+          (
+            unitType: kUnitTypeRailBuilder,
+            target: kWorkTargetBuildRail,
+            turns: 1,
+          ),
           (unitType: kUnitTypeSpy, target: kWorkTargetStealTech, turns: 5),
           (unitType: kUnitTypeSpy, target: kWorkTargetCounterSpy, turns: 1),
-          (unitType: kUnitTypeMerchant, target: kWorkTargetPurchaseLand, turns: 1),
+          (
+            unitType: kUnitTypeMerchant,
+            target: kWorkTargetPurchaseLand,
+            turns: 1,
+          ),
         ];
 
         for (var i = 0; i < cases.length; i++) {
@@ -605,7 +631,7 @@ void main() {
     });
 
     testWidgets(
-      'tile-scoped mode: Tile then Train in header; no Tile on ListTiles',
+      'tile-scoped mode: Tile then Train in header; no Tile on unit rows',
       (WidgetTester tester) async {
         final units = [
           ...game.worldState.oldWorld.units,
@@ -648,9 +674,11 @@ void main() {
         expect(find.text('Civilian Units (Tile)'), findsOneWidget);
         expect(find.text('Tile'), findsOneWidget);
 
+        // Header actions are compact primary pills (CtActionTextButton,
+        // not CtNinePatchButton) per #3514 owner decision #5.
         final shellButtons = find.descendant(
           of: find.byType(UnitsPanelShell),
-          matching: find.byType(CtNinePatchButton),
+          matching: find.byType(CtActionTextButton),
         );
         expect(
           find.descendant(of: shellButtons.at(0), matching: find.text('Tile')),
@@ -663,7 +691,7 @@ void main() {
 
         expect(
           find.descendant(
-            of: find.byType(ListTile),
+            of: find.byType(CivilianUnitRowCard),
             matching: find.text('Tile'),
           ),
           findsNothing,
@@ -701,10 +729,58 @@ void main() {
       expect(find.text('No civilian units'), findsOneWidget);
       final tileButton = find.ancestor(
         of: find.text('Tile'),
-        matching: find.byType(CtNinePatchButton),
+        matching: find.byType(CtActionTextButton),
       );
-      expect(tester.widget<CtNinePatchButton>(tileButton).enabled, isFalse);
+      expect(tester.widget<CtActionTextButton>(tileButton).enabled, isFalse);
     });
+
+    testWidgets(
+      'full-list header Train renders as a primary CtActionTextButton pill '
+      '(no CtNinePatchButton header chrome) — #3514 owner decision #5',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              availableWorkTargetIdsForUnitProvider.overrideWith(
+                (ref, _) => const <String>[],
+              ),
+            ],
+            child: MaterialApp(
+              home: Scaffold(
+                body: CivilianUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerIdWithUnits,
+                  bus: bus,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        // Scope to the header Train pill by label: row-action Assign pills are
+        // now also CtActionTextButton (#3514 row-action migration), so the
+        // header control is resolved via its 'Train' label rather than the
+        // first CtActionTextButton in the shell.
+        final trainLabel = find.descendant(
+          of: find.byType(UnitsPanelShell),
+          matching: find.text('Train'),
+        );
+        expect(trainLabel, findsOneWidget);
+        final trainButtonFinder = find.ancestor(
+          of: trainLabel,
+          matching: find.byType(CtActionTextButton),
+        );
+        expect(trainButtonFinder, findsOneWidget);
+        final trainButton = tester.widget<CtActionTextButton>(
+          trainButtonFinder,
+        );
+        expect(trainButton.primary, isTrue);
+        expect(trainButton.label, 'Train');
+      },
+    );
 
     testWidgets(
       'tile-scoped header Tile emits OpenMapTileDetailEvent for rendered tile',

@@ -17,7 +17,6 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
 
-
   /// Window title / application title.
   String get app_title;
 
@@ -32,6 +31,9 @@ abstract class AppLocalizations {
 
   /// Main menu title text when not using the pixel-art logo.
   String get mainMenu_title;
+
+  /// Small-caps eyebrow tagline shown above the title in the pixel-art editorial-monocle main menu variant.
+  String get mainMenu_eyebrow;
 
   /// Subtitle shown on the main menu after the player has won their last game.
   String get mainMenu_subtitleAfterVictory;
@@ -57,8 +59,23 @@ abstract class AppLocalizations {
   /// Pause menu option label to open the debug log screen.
   String get game_pauseMenu_debugLog;
 
+  /// Pause menu modal title (SPEC/ui/pause-menu-panel.md, issue #2867 R30).
+  String get game_pauseMenu_title;
+
   /// Pause menu option label to resume the game.
   String get game_pauseMenu_resume;
+
+  /// Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired).
+  String get game_pauseMenu_saveGame;
+
+  /// Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired).
+  String get game_pauseMenu_loadGame;
+
+  /// Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired).
+  String get game_pauseMenu_settings;
+
+  /// Pause menu danger action label to exit the current game and return to the main menu.
+  String get game_pauseMenu_exitToMainMenu;
 
   /// Tooltip for the pause menu button in the in-game UI.
   String get game_pauseMenu_tooltip;
@@ -78,11 +95,20 @@ abstract class AppLocalizations {
   /// Label for the Next Turn button showing current turn and year.
   String game_nextTurnButton(int turn, int year);
 
+  /// Centered turn/year label in the in-game top bar.
+  String game_turnDisplay(int turn, int year);
+
   /// Title of the dialog asking the user to confirm ending the current turn.
   String get game_nextTurnConfirm_title;
 
   /// Body text of the end-turn confirmation dialog.
   String game_nextTurnConfirm_body(int turn);
+
+  /// Title of the modal shown while next-turn resolution runs.
+  String get game_turnResolutionProcessingTitle;
+
+  /// Snackbar text shown when turn resolution fails.
+  String get game_turnResolutionFailedMessage;
 
   /// Generic 'No' button label.
   String get common_no;
@@ -156,6 +182,26 @@ abstract class AppLocalizations {
   /// Hint text for the leader dropdown in the leader selection dialog.
   String get shell_leaderDialog_selectLeaderHint;
 
+  /// Label / hint for the per-AI-slot tuned AI profile dropdown in the
+  /// new-game leader selection dialog.
+  String get shell_leaderDialog_aiProfileLabel;
+
+  /// Dropdown option label for the default (hardcoded personality) AI in the
+  /// per-AI-slot tuned AI profile dropdown.
+  String get shell_leaderDialog_aiProfileNormal;
+
+  /// Inline label rendered beside the per-AI-slot tuned AI profile dropdown
+  /// (mockup `.profile-line`).
+  String get shell_leaderDialog_aiProfileInlineLabel;
+
+  /// Slot heading for each player slot in the new-game setup dialog
+  /// (mockup `.slot-label`).
+  String shell_leaderDialog_slotLabel(int slotNumber);
+
+  /// Tag appended to the human player's slot label. Rendered uppercase via
+  /// presentation style (mockup `.you-tag` with text-transform:uppercase).
+  String get shell_leaderDialog_slotYouTag;
+
   /// Generic Cancel button label.
   String get common_cancel;
 
@@ -185,6 +231,42 @@ abstract class AppLocalizations {
 
   /// Helper text explaining 0 vs fixed seed for the new-game leader dialog.
   String get shell_leaderDialog_seedHelper;
+
+  /// Toggle label for infinite campaign mode in the new-game leader dialog.
+  String get shell_leaderDialog_infiniteModeLabel;
+
+  /// Helper text for infinite mode in the new-game leader dialog.
+  String get shell_leaderDialog_infiniteModeHelper;
+
+  /// Static slider label for terrain noise variation in the new-game leader
+  /// dialog. The live percent value is rendered separately via
+  /// [shell_leaderDialog_terrainVariationValue].
+  String get shell_leaderDialog_terrainVariationLabel;
+
+  /// Live terrain-variation percent value rendered beside the terrain
+  /// variation label.
+  String shell_leaderDialog_terrainVariationValue(int percent);
+
+  /// Helper text under the terrain variation slider.
+  String get shell_leaderDialog_terrainVariationHelper;
+
+  /// Title of the read-only in-game game parameters dialog.
+  String get gameParameters_title;
+
+  /// Hamburger menu entry that opens the game parameters dialog.
+  String get gameParameters_menuEntry;
+
+  /// Row label prefix for infinite mode in the game parameters dialog.
+  String get gameParameters_infiniteModeHeading;
+
+  /// Infinite mode enabled value in the game parameters dialog.
+  String get gameParameters_infiniteModeOn;
+
+  /// Infinite mode disabled value in the game parameters dialog.
+  String get gameParameters_infiniteModeOff;
+
+  /// Infinite mode row in the game parameters dialog.
+  String gameParameters_infiniteModeLine(String value);
 
   /// Title of the modal shown while a new game is being generated.
   String get shell_newGameProgress_title;
@@ -241,7 +323,11 @@ abstract class AppLocalizations {
   String game_intervention_resolutionProgress(int current, int total);
 
   /// One-line summary of the war and which GP the player decides for.
-  String game_intervention_situation(String aggressor, String defender, String intervening);
+  String game_intervention_situation(
+    String aggressor,
+    String defender,
+    String intervening,
+  );
 
   /// Button: military intervention on behalf of the defender.
   String get game_intervention_intervene;
@@ -251,6 +337,9 @@ abstract class AppLocalizations {
 
   /// Button: formal protest without military action.
   String get game_intervention_protest;
+
+  /// Title rendered at the top of the intervention overlay's CtDialogShell on every phase (Yarn intro, situation, choice picker, reaction, and degraded error). Resolved by EditorialMonoclePalette.accent per SPEC/ui/screens/pending-intervention-overlay.md § Dark editorial-monocle chrome and issue #2867 R26b.
+  String get game_intervention_overlayTitle;
 
   /// Turn-start news dialog title; turn is the current turn after resolution.
   String turnNews_title(int turn);
@@ -549,6 +638,15 @@ abstract class AppLocalizations {
   /// Error shown when intro dialogue fails to load.
   String game_intro_loadError(String error);
 
+  /// Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001).
+  String get gameStartIntroOverlay_title;
+
+  /// Display-font title for the tribe first-contact herald overlay (OVL80001).
+  String get tribeFirstContactOverlay_title;
+
+  /// Error shown when the tribe first-contact herald (OVL80001) Yarn dialogue fails to load.
+  String tribeFirstContactOverlay_loadError(String error);
+
   /// Error shown when overture dialogue fails to load.
   String game_overture_loadError(String error);
 
@@ -585,7 +683,15 @@ abstract class AppLocalizations {
   /// Header label for unowned province destinations in move army dialog.
   String get moveArmy_groupUnowned;
 
-  /// Confirm dialog title for entering hostile territory with army movement.
+  /// Section header for other-owned invasion destinations in move army dialog
+  /// (#2867 R6).
+  String get moveArmy_groupInvasionTargets;
+
+  /// Invasion row trigger label in danger italic (#2867 R8).
+  String moveArmy_declareWarOnTrigger(String ownerLabel);
+
+  /// Confirm dialog title for the destructive war-confirmation sub-dialog when
+  /// an invasion army move is requested (issue #2867 R9).
   String get moveArmy_invadeProvinceTitle;
 
   /// Confirm dialog text for hostile army movement.
@@ -649,7 +755,11 @@ abstract class AppLocalizations {
   String military_units_armySubtitle(int regiments, String location);
 
   /// Army subtitle showing regiment count, location, and a draft move line.
-  String military_units_armySubtitleWithDraft(int regiments, String location, String draftLine);
+  String military_units_armySubtitleWithDraft(
+    int regiments,
+    String location,
+    String draftLine,
+  );
 
   /// Empty-state line for army with no regiments.
   String get military_units_noRegimentsAssigned;
@@ -704,6 +814,40 @@ abstract class AppLocalizations {
 
   /// Cargo capacity line for non-home fleet.
   String naval_units_cargoCapacityIfAssigned(int capacity);
+
+  /// Inline qualifier appended to a fleet's location label when the
+  /// fleet is docked at a port province. SPEC/ui/naval-units-panel.md
+  /// R28.
+  String get naval_units_locInPort;
+
+  /// Inline qualifier appended to a fleet's location label when the
+  /// fleet is in a sea zone. SPEC/ui/naval-units-panel.md R28.
+  String get naval_units_locAtSea;
+
+  /// Uppercase chip rendered next to the Home Fleet name in the naval
+  /// units panel. SPEC/ui/naval-units-panel.md R26.
+  String get naval_units_homeFleetChip;
+
+  /// Role tag in the fleet expanded composition table for warship ship
+  /// types (cargoHold == 0). SPEC/ui/naval-units-panel.md R29.
+  String get naval_units_compositionRoleWarship;
+
+  /// Role tag in the fleet expanded composition table for merchant
+  /// ship types (cargoHold > 0). SPEC/ui/naval-units-panel.md R29.
+  String get naval_units_compositionRoleMerchant;
+
+  /// Count cell in the fleet expanded composition table, e.g. ×2.
+  /// SPEC/ui/naval-units-panel.md R29.
+  String naval_units_compositionCount(int count);
+
+  /// Single-line composition summary rendered beneath the expanded
+  /// fleet composition table. SPEC/ui/naval-units-panel.md R29.
+  String naval_units_compositionSummary(int total, int warships, int merchants);
+
+  /// Home-Fleet cargo capacity line rendered between the composition
+  /// table and the summary in the expanded fleet view.
+  /// SPEC/ui/naval-units-panel.md R29.
+  String naval_units_cargoCapacityHolds(int capacity);
 
   /// Diplomacy dialog title for setting subsidy amount.
   String get diplomacy_setSubsidy;
@@ -856,7 +1000,11 @@ abstract class AppLocalizations {
   String technologyPanel_slot(int slot);
 
   /// Research slot subtitle with tech name, progress, and cost label.
-  String technologyPanel_slotSubtitle(String name, int progress, String costLabel);
+  String technologyPanel_slotSubtitle(
+    String name,
+    int progress,
+    String costLabel,
+  );
 
   /// Empty-state subtitle when no tech is assigned to a slot.
   String get technologyPanel_noTechAssigned;
@@ -879,11 +1027,80 @@ abstract class AppLocalizations {
   /// Bottom-sheet empty-state when no selectable technologies exist.
   String get technologyPanel_noTechsAvailable;
 
-  /// Bottom-sheet row subtitle for selectable technology.
+  /// Section heading above the researched-techs chip grid (Refs #2864 S2).
+  String get technologyPanel_researchedTechsHeading;
+
+  /// Section heading above the slot cards (Refs #2864 S3).
+  String get technologyPanel_researchSlotsHeading;
+
+  /// Locked slot card header label (Refs #2864 S0/S3).
+  String technologyPanel_lockedSlotLabel(int slot);
+
+  /// Locked slot card body footnote (Refs #2864 S0/S3).
+  String get technologyPanel_lockedSlotFootnote;
+
+  /// Monospace RP progress label rendered next to the slot progress bar (Refs #2864 S3).
+  String technologyPanel_slotRpProgress(int progress, int cost);
+
+  /// Choose-tech dialog row subtitle (mono / muted) for a selectable technology.
   String technologyPanel_pickSubtitle(String era, String category, int cost);
+
+  /// Title row of the Choose-tech dialog opened from a slot card.
+  /// Uses an em dash between 'Choose Tech' and the slot number.
+  String technologyPanel_chooseTechDialogTitle(int slot);
 
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;
+
+  /// Slot funding toggle label for ResearchFundingLevel.none (Refs #3512).
+  String get technologyPanel_fundingNone;
+
+  /// Slot funding toggle label for ResearchFundingLevel.low (Refs #3512).
+  String get technologyPanel_fundingLow;
+
+  /// Slot funding toggle label for ResearchFundingLevel.medium (Refs #3512).
+  String get technologyPanel_fundingMedium;
+
+  /// Slot funding toggle label for ResearchFundingLevel.high (Refs #3512).
+  String get technologyPanel_fundingHigh;
+
+  /// Slot funding toggle label for ResearchFundingLevel.maximum (Refs #3512).
+  String get technologyPanel_fundingMaximum;
+
+  /// Green anticipated research-point delta shown on a slot card (Refs #3512).
+  String technologyPanel_rpDeltaPreview(int rp);
+
+  /// Treasury (gold) per-turn cost shown on a slot card that will spend gold
+  /// next turn (Refs #3512).
+  String technologyPanel_goldSpendPerTurn(int gold);
+
+  /// Treasury (gold) per-turn cost shown greyed on a debt-blocked slot card
+  /// (no spend occurs) (Refs #3512).
+  String technologyPanel_goldNoSpendPerTurn(int gold);
+
+  /// Title of the research-funding breakdown dialog (Refs #3512).
+  String get technologyPanel_rpBreakdownTitle;
+
+  /// Breakdown dialog row labelling the base RP for the funding level (Refs #3512).
+  String technologyPanel_rpBreakdownBaseLabel(String funding);
+
+  /// Breakdown dialog row labelling the Industrial Funding +20% bonus (Refs #3512).
+  String get technologyPanel_rpBreakdownIndustrialLabel;
+
+  /// Breakdown dialog row labelling the effective RP applied this turn (Refs #3512).
+  String get technologyPanel_rpBreakdownEffectiveLabel;
+
+  /// Breakdown dialog row labelling the per-turn treasury cost (Refs #3512).
+  String get technologyPanel_rpBreakdownTreasuryLabel;
+
+  /// Breakdown dialog note shown when the spend is debt-blocked (Refs #3512).
+  String get technologyPanel_rpBreakdownDebtBlocked;
+
+  /// Monospace research-point value used in breakdown dialog rows (Refs #3512).
+  String technologyPanel_rpValue(int rp);
+
+  /// Treasury (gold) value used in the breakdown dialog treasury row (Refs #3512).
+  String technologyPanel_goldValue(int gold);
 
   /// Tech tree empty-state text.
   String get techTree_noTechsInCatalog;
@@ -990,6 +1207,12 @@ abstract class AppLocalizations {
   /// Tile section prospecting state row.
   String provinceOverlay_tileProspected(String value);
 
+  /// Tile section prospecting state value when the tile is prospectable and prospected by the human player.
+  String get provinceOverlay_tileProspectedYes;
+
+  /// Tile section prospecting state value when the tile is prospectable but not yet prospected by the human player.
+  String get provinceOverlay_tileProspectedNo;
+
   /// Tooltip and semantics label for province tile prospect shortcut action.
   String get provinceOverlay_tileProspectWithExplorerTooltip;
 
@@ -1005,6 +1228,51 @@ abstract class AppLocalizations {
   /// Tile section road/rail row when not applicable.
   String get provinceOverlay_tileRoadNone;
 
+  /// Tile section road/rail primary numeric line on land tiles.
+  String provinceOverlay_tileRoadTransportLevel(int level);
+
+  /// Tile section road/rail supplementary GDD label for transport level 0.
+  String get provinceOverlay_tileRoadLabelNone;
+
+  /// Tile section road/rail supplementary GDD label for transport level 1.
+  String get provinceOverlay_tileRoadLabelPrimitiveRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 2.
+  String get provinceOverlay_tileRoadLabelImprovedRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 4.
+  String get provinceOverlay_tileRoadLabelPortOrRailroad;
+
+  /// Tile section road/rail supplementary GDD label for unexpected levels.
+  String get provinceOverlay_tileRoadLabelNonStandard;
+
+  /// Tile section road/rail level-1 gloss clarifying railroads are level 4.
+  String get provinceOverlay_tileRoadRailGloss;
+
+  /// Tile/Economic improvement type name for tiles with no resource (generic fallback).
+  String get provinceOverlay_improvementGeneric;
+
+  /// Tile/Economic improvement type name for grain resource tiles.
+  String get provinceOverlay_improvementFarm;
+
+  /// Tile/Economic improvement type name for meat/horses resource tiles.
+  String get provinceOverlay_improvementRanch;
+
+  /// Tile/Economic improvement type name for wool resource tiles.
+  String get provinceOverlay_improvementPasture;
+
+  /// Tile/Economic improvement type name for timber resource tiles.
+  String get provinceOverlay_improvementLumberCamp;
+
+  /// Tile/Economic improvement type name for plantation-crop resource tiles (sugar cane/tobacco/cotton/spices).
+  String get provinceOverlay_improvementPlantation;
+
+  /// Tile/Economic improvement type name for furs resource tiles.
+  String get provinceOverlay_improvementFurPost;
+
+  /// Tile/Economic improvement type name for mineral resource tiles (iron/copper/coal/silver/gold/etc.).
+  String get provinceOverlay_improvementMine;
+
   /// Tile section civilian unit count row.
   String provinceOverlay_tileCivilianUnits(int count);
 
@@ -1017,17 +1285,37 @@ abstract class AppLocalizations {
   /// Political section owner row.
   String provinceOverlay_owner(String owner);
 
+  /// Political section owner display name when a province/tile is unowned.
+  String get provinceOverlay_ownerUnclaimed;
+
+  /// Political section region row (Old World / New World label).
+  String provinceOverlay_region(String region);
+
+  /// Political section capital row when the province is the capital of its owning faction.
+  String get provinceOverlay_capitalYes;
+
+  /// Political section capital row when the province is not a faction capital.
+  String get provinceOverlay_capitalNo;
+
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
 
-  /// Civilian section line for unit target or status.
-  String provinceOverlay_unitTarget(String type, String id, String target);
+  /// Civilian section line for unit target or status (no internal unit id).
+  String provinceOverlay_unitTarget(String type, String target);
 
-  /// Civilian section line for foreign-unit status.
-  String provinceOverlay_foreignUnitStatus(String owner, String type, String id, String status);
+  /// Civilian section line for foreign-unit status (no internal unit id).
+  String provinceOverlay_foreignUnitStatus(
+    String owner,
+    String type,
+    String status,
+  );
 
   /// Naval section fleet summary line.
-  String provinceOverlay_fleetSummary(String owner, String fleetLabel, String shipParts);
+  String provinceOverlay_fleetSummary(
+    String owner,
+    String fleetLabel,
+    String shipParts,
+  );
 
   /// Province overlay section heading for political details.
   String get provinceOverlay_sectionPolitical;
@@ -1047,29 +1335,11 @@ abstract class AppLocalizations {
   /// Province overlay section heading for naval details.
   String get provinceOverlay_sectionNaval;
 
-  /// Game setup screen title.
-  String get gameSetup_title;
+  /// Province overlay header title shown above the tab strip for a province.
+  String get provinceOverlay_titleProvince;
 
-  /// Loading state label while starting a game from setup.
-  String get gameSetup_starting;
-
-  /// Primary button to begin play from game setup.
-  String get gameSetup_startGame;
-
-  /// Back button on game setup screen.
-  String get gameSetup_back;
-
-  /// Label for the human player slot on game setup.
-  String get gameSetup_player1You;
-
-  /// Label for an AI-controlled player slot (n is 2-based index for display).
-  String gameSetup_playerAiSlot(int n);
-
-  /// Dropdown hint when choosing a great power nation.
-  String get gameSetup_selectNation;
-
-  /// Dropdown hint when choosing a leader variant.
-  String get gameSetup_selectLeader;
+  /// Province overlay header title shown above the tab strip for a sea zone.
+  String get provinceOverlay_titleSeaZone;
 
   /// Tooltip for cycling map base layer display.
   String get mapCorner_tooltipBaseLayer;
@@ -1093,7 +1363,11 @@ abstract class AppLocalizations {
   String regionMinimap_zoomSemanticsValue(int pct);
 
   /// Economic row in province overlay: terrain, resource id, and localized detail suffix.
-  String province_economic_resourceRow(String terrain, String resourceId, String detail);
+  String province_economic_resourceRow(
+    String terrain,
+    String resourceId,
+    String detail,
+  );
 
   /// Heading for diplomatic event history on detail screen.
   String get diplomacy_detail_historyTitle;
@@ -1118,6 +1392,18 @@ abstract class AppLocalizations {
 
   /// Empty diplomacy list before any factions are discovered.
   String get diplomacy_panel_noFactions;
+
+  /// Placeholder copy under the Great Powers section heading when no Great
+  /// Power has been discovered yet.
+  String get diplomacy_panel_noGreatPowers;
+
+  /// Placeholder copy under the Minor Nations section heading when no Minor
+  /// Nation has been discovered yet.
+  String get diplomacy_panel_noMinorNations;
+
+  /// Placeholder copy under the Tribes section heading when no tribe has
+  /// been contacted yet.
+  String get diplomacy_panel_noTribes;
 
   /// Great power military/economic score label in diplomacy row.
   String diplomacy_panel_powerScore(int score);
@@ -1145,6 +1431,46 @@ abstract class AppLocalizations {
 
   /// Warning when allocated labour exceeds effective labour.
   String get production_labourInsufficient;
+
+  /// Pending recruit-worker order count shown on a tier row in the Labour controls.
+  String production_labourQueued(int count);
+
+  /// Tooltip and semantics label for the + stepper on the peasant row.
+  String production_labourRecruitTier(String tier);
+
+  /// Tooltip and semantics label for the + stepper on a trained-tier row.
+  String production_labourTrainTier(String tier);
+
+  /// Tooltip and semantics label for the − stepper on any tier row.
+  String production_labourDequeueTier(String tier);
+
+  /// Tooltip and semantics label for the Disband control on a trained-tier row.
+  String production_labourDisbandTier(String tier);
+
+  /// Visible label for the Disband button on trained-tier rows.
+  String get production_labourDisband;
+
+  /// Parenthetical suffix on a Labour Controls tier label when every
+  /// required tech is unlocked for the viewed player (peasant always
+  /// renders this).
+  String get production_labourTierUnlocked;
+
+  /// Parenthetical suffix on a Labour Controls tier label when one or
+  /// more required techs are missing for the viewed player.
+  String get production_labourTierLocked;
+
+  /// Parenthetical marker shown after an Allocation recipe name when the
+  /// recipe's required technology is not unlocked for the viewed player
+  /// (e.g. fabric_from_cotton before cotton_weaving).
+  String get production_recipeLocked;
+
+  /// Concatenation of the tier name and the unlock-state parenthetical for
+  /// a Labour Controls row (e.g. "Peasants (unlocked)").
+  String production_labourTierLabel(String tier, String state);
+
+  /// Title of the Labour Controls subsection in the Production panel
+  /// Available subpanel.
+  String get production_labourControlsSectionLabel;
 
   /// Worker type and count in production panel.
   String production_workerCount(String name, int count);
@@ -1244,6 +1570,15 @@ abstract class AppLocalizations {
 
   /// Diplomacy list section heading.
   String get diplomacy_section_tribes;
+
+  /// Diplomacy panel mode-bar filter label: show all factions.
+  String get diplomacy_filter_all;
+
+  /// Diplomacy panel mode-bar filter label: show only Great Powers.
+  String get diplomacy_filter_greatPowersOnly;
+
+  /// Diplomacy panel mode-bar filter label: show Minor Nations and Tribes only (no Great Powers).
+  String get diplomacy_filter_minorsOnly;
 
   /// One-word war state in diplomacy UI.
   String get diplomacy_relationState_war;

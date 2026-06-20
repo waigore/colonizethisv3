@@ -1,0 +1,34 @@
+# Sanctioned `allProvinces(` / `*.allProvinces(` call sites under colonizethis_logic
+# production sources. Canonical implementation lives in province_lookup.dart (excluded
+# from scan). See SPEC/program/logic-dual-region-province-access.md.
+version: 1
+sanctions:
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
+    line: 86
+    rationale: Turn news digest summarizes changes across all provinces.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
+    line: 205
+    rationale: Turn news digest second pass over all provinces.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_turn/lib/src/turn/phases/combat_phase.dart
+    line: 152
+    rationale: Combat phase snapshots pre-combat ownership across all provinces (unified dual-region iteration, Refs #3416).
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/3416
+
+  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
+    line: 138
+    rationale: Province-captured events scan all provinces for owner handovers (unified dual-region iteration, Refs #3416).
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/3416
+
+  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
+    line: 311
+    rationale: Per-player province discovery events scan all provinces (unified dual-region iteration, Refs #3416).
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/3416

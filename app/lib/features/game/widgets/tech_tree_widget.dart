@@ -8,15 +8,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
+import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'tech_effect_summary_lookup.dart';
 
-
 /// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
-
 
 part 'tech_tree_widget_nodes.dart';
 part 'tech_tree_widget_legend.dart';
@@ -119,7 +120,10 @@ class TechTreeWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: CtSpacing.l,
+            vertical: CtSpacing.m,
+          ),
           child: _TechTreeLegend(l10n: l10n),
         ),
         const Divider(height: 1),
@@ -331,8 +335,8 @@ class TechTreeWidget extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               l10n.techTree_eraCategory(
-                _eraRoman(tech.era),
-                _categoryLabelL10n(l10n, tech.category),
+                eraRoman(tech.era),
+                techCategoryLabelL10n(l10n, tech.category),
               ),
               style: theme.textTheme.bodySmall,
             ),
@@ -384,25 +388,6 @@ class TechTreeWidget extends StatelessWidget {
     );
   }
 
-  static String _eraRoman(int era) {
-    const romans = ['I', 'II', 'III', 'IV'];
-    return era >= 1 && era <= romans.length ? romans[era - 1] : '$era';
-  }
-
-  static String _categoryLabelL10n(AppLocalizations l10n, String category) {
-    return switch (category) {
-      'gathering' => l10n.techTree_categoryGathering,
-      'transport' => l10n.techTree_categoryTransport,
-      'labour' => l10n.techTree_categoryLabour,
-      'civilian' => l10n.techTree_categoryCivilian,
-      'diplomacy' => l10n.techTree_categoryDiplomacy,
-      'naval' => l10n.techTree_categoryNaval,
-      'military' => l10n.techTree_categoryMilitary,
-      'new-world' => l10n.techTree_categoryNewWorld,
-      _ => category,
-    };
-  }
-
   static List<String> _effectSummaryLines(
     AppLocalizations l10n,
     TechDefinition tech,
@@ -420,7 +405,7 @@ class TechTreeWidget extends StatelessWidget {
     if (list.isEmpty) {
       list.add(
         l10n.techEffect_fallbackCategoryImprovement(
-          _categoryLabelL10n(l10n, tech.category),
+          techCategoryLabelL10n(l10n, tech.category),
         ),
       );
     }

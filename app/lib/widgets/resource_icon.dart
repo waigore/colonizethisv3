@@ -63,17 +63,24 @@ class ResourceIcon extends StatelessWidget {
 
 /// Pixel [ResourceIcon] immediately before the visible resource/commodity label.
 /// Use for any UI line or chip that names a resource id (see SPEC/ui/pixel-art-ui-catalog.md).
+///
+/// [labelStyle] is forwarded to the internal commodity-id `Text(...)` so callers
+/// can pin the rendered text colour directly (no `DefaultTextStyle` fall-through).
+/// When `null`, the previous behaviour is preserved so existing call sites are
+/// not regressed.
 class ResourceLabelInline extends StatelessWidget {
   const ResourceLabelInline({
     super.key,
     required this.commodityId,
     this.label,
     this.iconSize = 16,
+    this.labelStyle,
   });
 
   final String commodityId;
   final String? label;
   final double iconSize;
+  final TextStyle? labelStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +90,7 @@ class ResourceLabelInline extends StatelessWidget {
       children: [
         ResourceIcon(commodityId: commodityId, size: iconSize),
         const SizedBox(width: 4),
-        Text(label ?? commodityId),
+        Text(label ?? commodityId, style: labelStyle),
       ],
     );
   }

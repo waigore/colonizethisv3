@@ -243,4 +243,28 @@ void main() {
       contains('refused call to arms'),
     );
   });
+
+  test('ftpFormed', () {
+    final g = minimalGame();
+    expect(
+      formatDiplomaticEvent(
+        ev(DiplomaticEventType.ftpFormed),
+        g,
+        humanId,
+      ),
+      contains('free trade partnership'),
+    );
+  });
+
+  test('ftpBroken', () {
+    final g = minimalGame();
+    expect(
+      formatDiplomaticEvent(
+        ev(DiplomaticEventType.ftpBroken, reason: 'war'),
+        g,
+        humanId,
+      ),
+      contains('ended (war)'),
+    );
+  });
 }

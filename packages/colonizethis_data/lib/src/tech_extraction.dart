@@ -91,6 +91,14 @@ const Map<String, Map<String, int>> _extractionCapByResourceByTechId = {
 /// Keep in sync with SPEC/game/tech-and-extraction-cap.md.
 const Map<String, int> extractionCapDesignExceptions = {'horses': 1, 'wool': 3};
 
+/// All tech ids that raise an extraction cap for at least one resource.
+/// Derived from [_extractionCapByResourceByTechId] so callers (e.g. the catalog
+/// effect-or-prerequisite audit) do not duplicate the extraction-cap data.
+/// SPEC/game/tech-and-extraction-cap.md.
+Set<String> get extractionCapTechIds => {
+  for (final byTech in _extractionCapByResourceByTechId.values) ...byTech.keys,
+};
+
 /// Tech catalog category used for Envy hidden-agenda mirror scoring when a player
 /// completes an extraction [build_improvement] on a tile whose [resourceId] is in
 /// the extraction-cap map. All such improvements map to **gathering** (tech tree).

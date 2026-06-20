@@ -9,7 +9,10 @@ import 'tech_ids.dart';
 
 part 'tech_catalog_chunks.dart';
 
-int _cost(int era) => 80 + era * 40; // 120, 160, 200, 240 for era 1-4
+// Cost tier == era bucket (1..4). Rebalanced so a slot at Medium funding
+// (300 RP/turn) completes a tier-1 tech in 6 turns and a tier-4 tech in 12.
+// SPEC/game/tech-tree.md § Research Model (Research point costs).
+int _cost(int tier) => 1800 + (tier - 1) * 600; // 1800, 2400, 3000, 3600
 
 /// Full catalog: 113 techs with displayName, prerequisiteIds, discoveryResourceIds (7 discovery techs), regimentUnlockIds, shipUnlockIds.
 

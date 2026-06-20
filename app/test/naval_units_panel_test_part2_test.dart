@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -145,6 +146,7 @@ void main() {
       ),
     );
   }
+
   group('NavalUnitsPanel', () {
     testWidgets(
       'AC: Header checkbox selects all fleets then second interaction clears',
@@ -354,7 +356,7 @@ void main() {
       await tester.tap(cb2);
       await tester.pumpAndSettle();
 
-      final combineFinder = find.widgetWithText(CtNinePatchButton, 'Combine');
+      final combineFinder = find.widgetWithText(CtActionTextButton, 'Combine');
       await tester.ensureVisible(combineFinder);
       await tester.tap(combineFinder);
       await tester.pumpAndSettle();
@@ -460,8 +462,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isFalse);
       },
@@ -563,14 +565,14 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
         expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
         await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('fluyte')));
         await tester.pumpAndSettle();
         final confirmTransfer = find.widgetWithText(
           CtNinePatchButton,
-          'Confirm Transfer',
+          'Transfer',
         );
         expect(confirmTransfer, findsOneWidget);
         expect(
@@ -693,7 +695,7 @@ void main() {
         }
 
         final combineBtnFinder = find.widgetWithText(
-          CtNinePatchButton,
+          CtActionTextButton,
           'Combine',
         );
         await tester.scrollUntilVisible(combineBtnFinder, 120);
@@ -804,8 +806,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isFalse);
       },
@@ -908,8 +910,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isFalse);
       },
@@ -1010,16 +1012,15 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final combineBtn = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        final combineBtn = tester.widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
         );
         expect(combineBtn.enabled, isTrue);
 
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
         expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
       },
     );
-
   });
 }

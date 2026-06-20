@@ -22,8 +22,6 @@ doc/api/
 
 # Python (pytool)
 pytool/.venv/
-infra/.venv/
-infra/.venv-ci/
 **/__pycache__/
 
 # Generated / compiled (dart2js)

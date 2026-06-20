@@ -1,0 +1,43 @@
+---
+description: After verbose CLI/test runs, agents must delete all logs, coverage, and other artifacts they created.
+alwaysApply: true
+---
+
+# Agent run cleanup (logs and artifacts)
+
+Commands in this repo (tests, coverage, observer runs, sim tools, map/init CLIs, ctdev) can write **large** logs and artifact trees. **After every such command finishes** (pass or fail), the agent **must** remove every output path tied to that invocation.
+
+## Before running
+
+1. Read the tool’s `--help` / `docs/project-tools.md` / relevant `SPEC/program/*-tool.md` for default output locations.
+2. **Record** each path the run will create or append to:
+   - Explicit flags: `--output`, `--output-map`, `--json-output`, `--tile-map-image`, etc.
+   - Implicit defaults: e.g. `logs/YYYY-MM-DD.log` ([ctdev-logging.md](../../SPEC/program/ctdev-logging.md)), per-package `coverage/`, merged `coverage_merged/`.
+3. Prefer **dedicated** dirs under repo `tmp/` or a fresh `Directory.systemTemp` subdir for one-off runs (e.g. `run_observer_game --output tmp/...`) so cleanup is a single tree delete.
+
+## After running (required)
+
+1. Delete **all** recorded paths (files and directories). Use `rm -rf` only on paths you created or flagged for this run—never repo source, `.git`, or another user’s unrelated files.
+2. If the command printed an artifact path, include it in cleanup even if not pre-recorded.
+3. Briefly note what was removed in the agent reply (paths or counts—no need to paste log contents).
+
+## Common artifact locations (gitignored; still must be cleaned)
+
+| Kind | Typical paths |
+|------|----------------|
+| Day / CLI logs | `logs/`, `.cursor/debug*.log` |
+| Test coverage | `coverage/`, `coverage_merged/`, `app/coverage_report/`, `**/coverage/lcov.info` under packages/app/ctdev/tool |
+| Observer campaign | `<output>/observer-traces/<gameId>/` |
+| Generic scratch | `tmp/`, `out/`, `.test_output.txt` |
+| Sim / map CLIs | Paths from `--output`, `--json-output`, `--output-map`, `--output-markdown` |
+| Agent-chosen temp | Any `createTempSync` / `/tmp/...` dir the agent created for the run |
+
+## Do not delete (unless the user asks)
+
+- Source, SPEC, assets, saves the user asked to keep
+- `.dart_tool/`, `build/`, `.pub-cache/` — Dart/Flutter caches (not “run artifacts”; slow to rebuild)
+- Pre-existing user data outside the paths this invocation wrote
+
+## Applies to
+
+Any shell/Melos/`dart run`/`flutter test`/`python tool/*.py` invocation the agent runs for investigation, CI reproduction, or verification—including partial runs and failed exits.

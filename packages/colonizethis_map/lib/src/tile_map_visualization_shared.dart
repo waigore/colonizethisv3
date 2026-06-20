@@ -1,10 +1,15 @@
 // Shared helpers for tile map and game world state visualization.
 // SPEC/program/map-visualization.md § Tile map visualizers, Legend layout abstraction.
 
-import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:image/image.dart' as img;
 
 import 'init_game_map_view_data.dart';
+import 'tile_map_colors.dart';
+import 'tile_map_resource_legend.dart';
+
+export 'tile_map_colors.dart';
+export 'tile_map_resource_legend.dart';
 
 /// Legend layout constants. Shared by base and game-state visualizers.
 const int legendPadding = 12;
@@ -12,254 +17,23 @@ const int legendLineHeight = 20;
 const int swatchSize = 14;
 const int swatchGap = 8;
 
-/// Distinct RGB colors for region/faction assignment. Deterministic order.
-const List<(int r, int g, int b)> regionPalette = [
-  (180, 80, 80), // red
-  (80, 140, 200), // blue
-  (90, 160, 90), // green
-  (220, 180, 60), // yellow
-  (160, 100, 180), // purple
-  (60, 180, 180), // cyan
-  (220, 140, 100), // orange
-  (140, 100, 60), // brown
-  (200, 100, 160), // pink
-  (100, 120, 200), // lighter blue
-  (120, 200, 120), // light green
-  (200, 200, 100), // light yellow
-  (180, 140, 200), // light purple
-  (100, 200, 200), // light cyan
-  (200, 160, 140), // peach
-  (160, 160, 160), // gray
-];
+/// Title line for PNG game-world ownership overlays (combined and view-data paths).
+/// SPEC/program/map-visualization.md § Game world state map visualizer.
+const String kGameWorldMapOwnershipLegendBlurb =
+    'Ownership by faction. Black = land borders; light blue = sea borders.';
 
-/// Fixed RGB per terrain type for map fill and legend. Shared by base tile map visualizer and map view builder.
-/// SPEC/program/map-visualization.md § Map view model for tools, Tile map PNG export.
-const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
-  TerrainType.plains: (200, 220, 160),
-  TerrainType.forest: (34, 100, 34),
-  TerrainType.hills: (160, 130, 90),
-  TerrainType.mountain: (120, 120, 120),
-  TerrainType.swamp: (70, 100, 90),
-  TerrainType.desert: (210, 190, 140),
-};
-
-/// Single-letter legend glyph for a resource (e.g. grain → 'g').
-/// Matches SPEC/program/map-visualization.md legend; see SPEC/game/resource-terrain-region-rules.md.
-String resourceToLegendLetter(Resource r) {
-  switch (r) {
-    case Resource.grain:
-      return 'g';
-    case Resource.meat:
-      return 'm';
-    case Resource.wool:
-      return 'w';
-    case Resource.horses:
-      return 'h';
-    case Resource.timber:
-      return 't';
-    case Resource.iron:
-      return 'i';
-    case Resource.copper:
-      return 'c';
-    case Resource.tin:
-      return 'n';
-    case Resource.coal:
-      return 'k';
-    case Resource.sugarCane:
-      return 's';
-    case Resource.tobacco:
-      return 'b';
-    case Resource.cotton:
-      return 'u';
-    case Resource.furs:
-      return 'f';
-    case Resource.spices:
-      return 'p';
-    case Resource.silver:
-      return 'v';
-    case Resource.gold:
-      return 'a';
-    case Resource.gems:
-      return 'e';
-    case Resource.diamonds:
-      return 'd';
-  }
-}
-
-/// Display label for a resource in the legend (e.g. grain → 'Grain').
-String resourceToLegendLabel(Resource r) {
-  switch (r) {
-    case Resource.grain:
-      return 'Grain';
-    case Resource.meat:
-      return 'Meat';
-    case Resource.wool:
-      return 'Wool';
-    case Resource.horses:
-      return 'Horses';
-    case Resource.timber:
-      return 'Timber';
-    case Resource.iron:
-      return 'Iron';
-    case Resource.copper:
-      return 'Copper';
-    case Resource.tin:
-      return 'Tin';
-    case Resource.coal:
-      return 'Coal';
-    case Resource.sugarCane:
-      return 'Sugar Cane';
-    case Resource.tobacco:
-      return 'Tobacco';
-    case Resource.cotton:
-      return 'Cotton';
-    case Resource.furs:
-      return 'Furs';
-    case Resource.spices:
-      return 'Spices';
-    case Resource.silver:
-      return 'Silver';
-    case Resource.gold:
-      return 'Gold';
-    case Resource.gems:
-      return 'Gems';
-    case Resource.diamonds:
-      return 'Diamonds';
-  }
-}
-
-/// Returns the single-letter legend glyph for a resource id (e.g. grain → 'g'), or null if unknown.
-/// Matches SPEC/program/map-visualization.md legend; see SPEC/game/resource-terrain-region-rules.md.
-String? resourceIdToLegendLetter(String? resourceId) {
-  if (resourceId == null || resourceId.isEmpty) return null;
-  try {
-    return resourceToLegendLetter(Resource.values.byName(resourceId));
-  } on ArgumentError {
-    return null;
-  }
-}
-
-/// Resources shown as glyphs and legend rows in game-world geographic PNG (view-data path only).
-/// SPEC/program/map-visualization.md § Geographic legend scope (subset g, t, i).
-const List<Resource> geographicGameWorldLegendResources = [
-  Resource.grain,
-  Resource.timber,
-  Resource.iron,
-];
-
-/// Single-letter glyph for [resourceId] in geographic game-world map mode, or null if not in the g/t/i subset or unknown id.
-String? geographicGameWorldResourceGlyphLetter(String? resourceId) {
-  if (resourceId == null || resourceId.isEmpty) return null;
-  try {
-    final r = Resource.values.byName(resourceId);
-    switch (r) {
-      case Resource.grain:
-      case Resource.timber:
-      case Resource.iron:
-        return resourceToLegendLetter(r);
-      default:
-        return null;
-    }
-  } on ArgumentError {
-    return null;
-  }
-}
-
-/// Returns tile positions + glyph letters for non-null tile-map resources.
-Iterable<({int x, int y, String letter})> tileMapResourceGlyphs(
-  TileMapResult result,
-) sync* {
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final resource = result.resourceAt(x, y);
-      if (resource == null) continue;
-      yield (x: x, y: y, letter: resourceToLegendLetter(resource));
-    }
-  }
-}
-
-/// Returns cell positions + glyph letters for valid geographic game-world resources.
-Iterable<({int x, int y, String letter})> geographicGameWorldResourceGlyphs(
-  Iterable<CellViewData> cells,
-) sync* {
+/// Sea-zone local ids from flattened [RegionMapViewData] cells.
+///
+/// Use when rendering from view data without a [MapTopology] (dual with
+/// [seaZoneIdsFromTopology]). Order is not preserved; ids are unique.
+Set<String> seaZoneLocalIdsFromRegionCells(List<CellViewData> cells) {
+  final out = <String>{};
   for (final cell in cells) {
-    final letter = geographicGameWorldResourceGlyphLetter(cell.resourceId);
-    if (letter == null) continue;
-    yield (x: cell.x, y: cell.y, letter: letter);
+    if (cell.isSea) {
+      out.add(cell.regionCellId);
+    }
   }
-}
-
-/// Draws a single-letter resource glyph at cell centre (PNG map export). Shared by tile map and game-world geographic renderers.
-void drawResourceLetterAtCellCenter(
-  img.Image image, {
-  required String letter,
-  required int cellX,
-  required int cellY,
-  required int cellSize,
-  required img.Color color,
-  int offsetX = 4,
-  int offsetY = 7,
-}) {
-  final cx = cellX * cellSize + cellSize ~/ 2;
-  final cy = cellY * cellSize + cellSize ~/ 2;
-  img.drawString(
-    image,
-    letter,
-    font: img.arial14,
-    x: cx - offsetX,
-    y: cy - offsetY,
-    color: color,
-  );
-}
-
-/// Grey shades for minor nations (distinct from vibrant GP colours). Deterministic order.
-const List<(int r, int g, int b)> minorNationPalette = [
-  (70, 70, 70),
-  (90, 90, 90),
-  (110, 110, 110),
-  (130, 130, 130),
-  (150, 150, 150),
-  (170, 170, 170),
-  (190, 190, 190),
-  (210, 210, 210),
-];
-
-/// Builds ownership colour map by faction type: GPs use GDD defaults (or [greatPowerColorOverride]), minors use [minorNationPalette], tribes use [regionPalette].
-/// Insertion order: GPs first, then minor nations, then tribes (legend order).
-Map<String, (int r, int g, int b)> factionOwnershipColorMap({
-  List<String> greatPowerIds = const [],
-  List<String> minorNationIds = const [],
-  List<String> tribeIds = const [],
-  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
-}) {
-  final map = <String, (int r, int g, int b)>{};
-  final gps = greatPowerIds.toList()..sort();
-  final minors = minorNationIds.toList()..sort();
-  final tribes = tribeIds.toList()..sort();
-  for (var i = 0; i < gps.length; i++) {
-    final id = gps[i];
-    final override = greatPowerColorOverride?[id];
-    final defaultColor = greatPowerDefaultColorRgb[id];
-    map[id] =
-        override ?? defaultColor ?? regionPalette[i % regionPalette.length];
-  }
-  for (var i = 0; i < minors.length; i++) {
-    map[minors[i]] = minorNationPalette[i % minorNationPalette.length];
-  }
-  for (var i = 0; i < tribes.length; i++) {
-    map[tribes[i]] = regionPalette[i % regionPalette.length];
-  }
-  return map;
-}
-
-/// Builds a map from region/faction id to (r, g, b) using deterministic palette.
-Map<String, (int r, int g, int b)> colorMapFromIds(Iterable<String> ids) {
-  final sorted = ids.toSet().toList()..sort();
-  final map = <String, (int r, int g, int b)>{};
-  for (var i = 0; i < sorted.length; i++) {
-    map[sorted[i]] = regionPalette[i % regionPalette.length];
-  }
-  return map;
+  return out;
 }
 
 img.Color _borderColorForAdjacentCells(
@@ -382,12 +156,6 @@ void drawBorders(
     }
   }
 }
-
-/// Land seed marker color (bright red).
-const (int, int, int) landSeedMarkerRgb = (255, 0, 0);
-
-/// Continent seed marker color (distinct from land seeds).
-const (int, int, int) continentSeedMarkerRgb = (255, 255, 200);
 
 /// Draws a color swatch in the legend at row y.
 void drawLegendSwatch(img.Image image, int y, int r, int g, int b) {
@@ -515,6 +283,60 @@ int drawLegendLine(img.Image image, int y, int r, int g, int b, String label) {
     color: black,
   );
   return y + legendLineHeight;
+}
+
+/// Layout variant for [drawResourceLegendRows] (Refs #2489 D7/D9 legend dedup).
+enum ResourceLegendRowsStyle {
+  /// `"<letter>  <label>"` at [legendPadding] (game-world geographic PNG).
+  compactInline,
+
+  /// Letter at [legendPadding]; label column aligned with color-swatch legends.
+  tileMapColumns,
+}
+
+/// Draws resource legend rows. Returns y after the last row.
+int drawResourceLegendRows(
+  img.Image image, {
+  required int legendY,
+  required img.Color textColor,
+  required Iterable<Resource> resources,
+  ResourceLegendRowsStyle style = ResourceLegendRowsStyle.tileMapColumns,
+}) {
+  var y = legendY;
+  for (final r in resources) {
+    final letter = resourceToLegendLetter(r);
+    final label = resourceToLegendLabel(r);
+    switch (style) {
+      case ResourceLegendRowsStyle.compactInline:
+        img.drawString(
+          image,
+          '$letter  $label',
+          font: img.arial14,
+          x: legendPadding,
+          y: y,
+          color: textColor,
+        );
+      case ResourceLegendRowsStyle.tileMapColumns:
+        img.drawString(
+          image,
+          letter,
+          font: img.arial14,
+          x: legendPadding,
+          y: y,
+          color: textColor,
+        );
+        img.drawString(
+          image,
+          '  $label',
+          font: img.arial14,
+          x: legendPadding + swatchSize + swatchGap,
+          y: y,
+          color: textColor,
+        );
+    }
+    y += legendLineHeight;
+  }
+  return y;
 }
 
 /// Draws the "Ports marked with teal square." legend line at [y]. Returns y + legendLineHeight.

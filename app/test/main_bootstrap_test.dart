@@ -24,6 +24,9 @@ void main() {
           runAppFn: (_) {
             runAppZone = Zone.current;
           },
+          // Skip Cinzel preload under unit tests; production awaits bundled
+          // registration before runApp (see `preloadEditorialMonocleFonts`).
+          preloadFonts: () async {},
         );
       },
       (Object error, StackTrace stackTrace) {
@@ -65,6 +68,9 @@ void main() {
       runAppFn: (Widget app) {
         callOrder.add('runApp');
       },
+      preloadFonts: () async {
+        callOrder.add('fonts');
+      },
     );
 
     expect(
@@ -78,6 +84,7 @@ void main() {
         'box:${HiveBoxNames.games}',
         'box:${HiveBoxNames.offlineQueue}',
         'desktop',
+        'fonts',
         'runApp',
       ]),
     );

@@ -21,6 +21,7 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 ### GP–GP Rules
 
+- **Overture chain (GP→GP):** Same four-stage chain as GP→Minor/Tribe: Trade Consulate → Embassy → Non-Aggression Pact → Join Empire. Each stage is a separate **Establish Overture** order; the target GP accepts or rejects at turn resolution. **Diplomatic Expertise** tech gates Embassy (and foreign civilian work) for **Minor/Tribe** targets only — GP→GP Embassy is **not** expertise-gated in current product (`establish_overture_validator.dart`). Grant Aid / Set Subsidy on GP rows require embassy-tier overture (`hasEmbassy`), same as Minors/Tribes.
 - **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
 - **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
 - **Alliances:** Offer/accept between GPs. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that is **allied** (`RelationLevel.allied`, `AT_PEACE`) with the **declared-upon** GP receives exactly **one** call to arms per aggressor–defender pair for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app UI; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** relation score between ally and defended GP drops by **20** (clamped 0–100), alliance ends (level no longer Allied; if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused`. Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
@@ -34,6 +35,15 @@ For current product, a Great Power is treated as **nearly defeated** when **both
 - The target **no longer controls its original capital province** (its `capitalProvinceId` in world state is not owned by that faction at the time the Join Empire overture is resolved).
 
 When these conditions hold, other Great Powers that meet the tech and overture requirements may offer **Join Empire** to that target.
+
+### GP–Tribe first contact
+
+GP–Tribe pairs are **not** initialized at game start. A human GP **discovers** a Tribe for first-contact only when the GP holds **non-`unknown` tile visibility into at least one province that Tribe owns** (`discoveredTribeIdsForFirstContact`). Sea-reachable colonial intel alone — which can connect Old World coasts to a still-unrevealed New World at turn 0 — does **not** count as first-contact discovery, so the herald and the persisted relation do not fire before the New World is genuinely revealed. On discovery, `applyGpTribeFirstContactRelations` persists `AT_PEACE`, score `50`, Neutral with `sinceTurn` = current turn, and the app presents the first-contact herald once per `(gameId, tribeId)` per session (`OVL80001`). See [`tribe-first-contact-overlay.md`](../ui/tribe-first-contact-overlay.md).
+
+The broader `knownDiplomaticTargetFactionIds` set (tile visibility, existing relations, **and** sea-reachable colonial intel) remains the source for diplomacy-panel targeting and declare-war colonial intel; only the herald + first-contact relation trigger is narrowed to tile visibility.
+
+- Given a new game where the human GP has zero non-`unknown` tiles in any Tribe-owned province, when `applyGpTribeFirstContactRelations` runs, then no GP–Tribe relation is persisted and `newlyContactedTribeIds` is empty, even if a Tribe colony is sea-reachable from the GP's Old World anchors.
+- Given the human GP holds non-`unknown` tile visibility into a province owned by Tribe `T`, when `applyGpTribeFirstContactRelations` runs and no GP–`T` relation exists, then the system persists `AT_PEACE`, score `50`, Neutral for the GP–`T` pair and includes `T` in `newlyContactedTribeIds`.
 
 ### GP–Minor Rules
 
@@ -289,6 +299,7 @@ An **absolute power score** is computed for each Great Power for display on the 
 - **Definitions:** `provinceCount` = number of provinces owned by that GP (Old + New World). `regimentStrength` = same aggregation as [military-strength](../program/military-strength.md) (FPN+FPM, era downgrade, medal multiplier). `shipCount` = total number of ships (sum of `shipTypeIds.length` over all fleets owned by that GP).
 - **Default weights:** W_province = 10, W_regiment = 1, W_ship = 5. So one province = 10, one point of army strength = 1, one ship = 5.
 - **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**.
+- **Calendar campaign end:** When summarizing a finished campaign without military victory, the same formula ranks GPs for a **declared winner**; ties yield **no-one** per [victory.md](victory.md) § Calendar campaign end.
 
 ### Where defined (current product)
 

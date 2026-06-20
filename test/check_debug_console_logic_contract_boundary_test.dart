@@ -33,7 +33,7 @@ void main() {
       _writeDartFile(
         temp.path,
         'packages/colonizethis_debug_console/lib/bad_src.dart',
-        "import 'package:colonizethis_logic/src/orders/order_visibility.dart';\n",
+        "import 'package:colonizethis_logic/src/turn/turn_resolver.dart';\n",
       );
 
       expect(runCheckDebugConsoleLogicContractBoundary(temp.path), 1);

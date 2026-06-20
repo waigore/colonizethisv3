@@ -2,22 +2,38 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Canonical dual-region province iteration lives here; all other logic `lib/src`
+/// Canonical dual-region province iteration lives here; all other world `lib/src`
 /// code should prefer `allProvinces` / `WorldState.allProvinces()` (GitHub #2071).
-const _canonicalRelativePath =
-    'packages/colonizethis_logic/lib/src/world/province_lookup.dart';
+const _canonicalProvinceRelativePath =
+    'packages/colonizethis_world/lib/src/world/province_lookup.dart';
+const _canonicalUnitRelativePath =
+    'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
-const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
+/// Post-split scan root (Refs #3290): world domain code moved out of the monolith.
+const _scanDirRelative = 'packages/colonizethis_world/lib/src';
 
-/// Target from #2071: keep direct field access rare; small buffer over current count.
-const _maxMatchingLinesOutsideCanonical = 10;
+/// Exposed for tests verifying the post-split scan root.
+String logicDualRegionProvinceFieldAccessScanDirForTests() =>
+    _scanDirRelative;
 
-final RegExp _generatedSuffix = RegExp(
-  r'\.(g|freezed|mocks|gen)\.dart$',
+/// Keep direct dual-region field access rare; budget tracks the smallest value
+/// confirmed achievable by the audit recorded in
+/// SPEC/program/logic-dual-region-province-access.md (Refs #2836 AC 5).
+const _maxMatchingLinesOutsideCanonical = 0;
+
+final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
+final RegExp _manualRegionBranchPattern = RegExp(
+  r'^\s*(if|else if)\s*\(\s*regionId\s*==\s*kRegionOldWorld\s*\)',
 );
 
 bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
-  return line.contains('oldWorld.provinces') || line.contains('newWorld.provinces');
+  return line.contains('oldWorld.provinces') ||
+      line.contains('newWorld.provinces') ||
+      line.contains('oldWorld.units') ||
+      line.contains('newWorld.units') ||
+      line.contains('copyWith(oldWorld:') ||
+      line.contains('copyWith(newWorld:') ||
+      _manualRegionBranchPattern.hasMatch(line);
 }
 
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
@@ -31,7 +47,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
   final root = p.normalize(repoRoot);
   final scanRoot = Directory(p.join(root, _scanDirRelative));
   if (!scanRoot.existsSync()) {
-    logE('ERROR: Expected logic lib tree missing: $_scanDirRelative');
+    logE('ERROR: Expected world lib tree missing: $_scanDirRelative');
     return 1;
   }
 
@@ -42,7 +58,11 @@ int runCheckLogicDualRegionProvinceFieldAccess(
     if (!fullPath.endsWith('.dart')) continue;
     if (_generatedSuffix.hasMatch(fullPath)) continue;
     final relative = p.relative(fullPath, from: root);
-    if (p.normalize(relative) == _canonicalRelativePath) continue;
+    final normalizedRelative = p.normalize(relative);
+    if (normalizedRelative == _canonicalProvinceRelativePath ||
+        normalizedRelative == _canonicalUnitRelativePath) {
+      continue;
+    }
 
     final lines = entity.readAsLinesSync();
     for (var i = 0; i < lines.length; i++) {
@@ -60,17 +80,22 @@ int runCheckLogicDualRegionProvinceFieldAccess(
 
   if (hits.length <= _maxMatchingLinesOutsideCanonical) {
     logI(
-      'Logic dual-region province field access check passed '
-      '(${hits.length}/$_maxMatchingLinesOutsideCanonical lines outside $_canonicalRelativePath).',
+      'World dual-region province field access check passed '
+      '(${hits.length}/$_maxMatchingLinesOutsideCanonical lines outside '
+      '$_canonicalProvinceRelativePath and $_canonicalUnitRelativePath).',
     );
     return 0;
   }
 
   logE(
-    'ERROR: Too many direct oldWorld.provinces / newWorld.provinces references '
-    'outside $_canonicalRelativePath '
+    'ERROR: Too many direct oldWorld/newWorld region-field references '
+    '(provinces/units/manual regionId branching/copyWith oldWorld-newWorld) outside '
+    '$_canonicalProvinceRelativePath and '
+    '$_canonicalUnitRelativePath '
     '(${hits.length} > $_maxMatchingLinesOutsideCanonical). '
-    'Prefer allProvinces(world) or WorldState.allProvinces() per SPEC/program/logic-dual-region-province-access.md.',
+    'Prefer allProvinces(world), WorldState.allProvinces(), allUnits(world), '
+    'WorldState.allUnits(), or WorldState.updateRegionById(...) per '
+    'SPEC/program/logic-dual-region-province-access.md.',
   );
   for (final h in hits) {
     logE('${h.path}:${h.line}');

@@ -6,6 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/technology_panel_orders.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
@@ -21,103 +22,116 @@ void main() {
       player = game.players.first;
     });
 
-    testWidgets('Choosing tech closes the bottom sheet (AC3)', (
-      WidgetTester tester,
-    ) async {
-      Orders last = const Orders();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TechnologyPanel(
-              game: game,
-              player: player,
-              currentOrders: const Orders(),
-              onOrdersChanged: (o) => last = o,
+    testWidgets(
+      'Choosing tech closes the Choose-tech dialog (AC3, Refs #2864 S4)',
+      (WidgetTester tester) async {
+        Orders last = const Orders();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: TechnologyPanel(
+                game: game,
+                player: player,
+                currentOrders: const Orders(),
+                onOrdersChanged: (o) => last = o,
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Choose tech').first);
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Choose tech').first);
+        await tester.pumpAndSettle();
 
-      final emptyState = find.text('No techs available to research');
-      if (emptyState.evaluate().isNotEmpty) {
-        expect(emptyState, findsOneWidget);
-        return;
-      }
+        final emptyState = find.text('No techs available to research');
+        if (emptyState.evaluate().isNotEmpty) {
+          expect(emptyState, findsOneWidget);
+          return;
+        }
 
-      final firstTechTile = find.ancestor(
-        of: find.textContaining('Era ').first,
-        matching: find.byType(ListTile),
-      );
-      await tester.ensureVisible(firstTechTile);
-      await tester.tap(firstTechTile);
-      await tester.pumpAndSettle();
+        // The Choose-tech dialog renders option rows inside the
+        // ChooseTechDialog body. Tap the first option's subtitle (era /
+        // category / cost line) to assign that tech.
+        final firstOption = find.descendant(
+          of: find.byType(ChooseTechDialog),
+          matching: find.textContaining('Era ').first,
+        );
+        await tester.ensureVisible(firstOption);
+        await tester.tap(firstOption);
+        await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('Era '),
-        findsNothing,
-        reason: 'Bottom sheet should be closed after selection',
-      );
-      final orders = last.researchOrdersByPlayerId[player.id] ?? const [];
-      expect(orders, isNotEmpty);
-      expect(orders.first.slotIndex, 0);
-      expect(orders.first.techId, isNotEmpty);
-    });
+        expect(
+          find.byType(ChooseTechDialog),
+          findsNothing,
+          reason: 'Choose-tech dialog should be closed after selection',
+        );
+        final orders = last.researchOrdersByPlayerId[player.id] ?? const [];
+        expect(orders, isNotEmpty);
+        expect(orders.first.slotIndex, 0);
+        expect(orders.first.techId, isNotEmpty);
+      },
+    );
 
-    testWidgets('Tech assigned to slot 1 does not appear in slot 2 list (AC4)', (
-      WidgetTester tester,
-    ) async {
-      final rootIds =
-          techCatalog.entries
-              .where((e) => e.value.prerequisiteIds.isEmpty)
-              .map((e) => e.key)
-              .toList()
-            ..sort();
-      final techA = rootIds.isNotEmpty ? rootIds[0] : techCatalog.keys.first;
-      final seeded = Orders(
-        researchOrdersByPlayerId: {
-          player.id: [
-            ResearchOrder(
-              slotIndex: 0,
-              techId: techA,
-              funding: ResearchFundingLevel.medium,
-            ),
-          ],
-        },
-      );
+    testWidgets(
+      'Tech assigned to slot 1 does not appear in slot 2 list (AC4)',
+      (WidgetTester tester) async {
+        final rootIds =
+            techCatalog.entries
+                .where((e) => e.value.prerequisiteIds.isEmpty)
+                .map((e) => e.key)
+                .toList()
+              ..sort();
+        final techA = rootIds.isNotEmpty ? rootIds[0] : techCatalog.keys.first;
+        final seeded = Orders(
+          researchOrdersByPlayerId: {
+            player.id: [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: techA,
+                funding: ResearchFundingLevel.medium,
+              ),
+            ],
+          },
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TechnologyPanel(
-              game: game,
-              player: player,
-              currentOrders: seeded,
-              onOrdersChanged: (_) {},
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: TechnologyPanel(
+                game: game,
+                player: player,
+                currentOrders: seeded,
+                onOrdersChanged: (_) {},
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Choose tech').last);
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Choose tech').last);
+        await tester.pumpAndSettle();
 
-      if (find.text('No techs available to research').evaluate().isNotEmpty) {
-        expect(find.text('No techs available to research'), findsOneWidget);
-        return;
-      }
+        if (find.text('No techs available to research').evaluate().isNotEmpty) {
+          expect(find.text('No techs available to research'), findsOneWidget);
+          return;
+        }
 
-      expect(
-        find.text(techDisplayName(techA)),
-        findsNothing,
-        reason:
-            'Tech already assigned to slot 1 should not appear in slot 2 list',
-      );
-    });
+        // The assigned slot card now visibly renders the tech name (Refs
+        // #2864 S3 — slot card assigned-tech body), so the assertion is
+        // scoped to the Choose-tech dialog body only (AC4: the selection
+        // list must not offer the already-assigned tech).
+        final dialogMatches = find.descendant(
+          of: find.byType(ChooseTechDialog),
+          matching: find.text(techDisplayName(techA)),
+        );
+        expect(
+          dialogMatches,
+          findsNothing,
+          reason:
+              'Tech already assigned to slot 1 should not appear in slot 2 list',
+        );
+      },
+    );
 
     testWidgets(
       'Discovery tech does NOT appear when player has not revealed the resource (AC5)',

@@ -1,6 +1,6 @@
 ---
 description: Code review checklist — concrete thresholds and repo paths; principles in other rules
-globs: "**/*.dart"
+globs: "app/lib/**/*.dart,packages/*/lib/**/*.dart,tool/**/*.dart"
 alwaysApply: false
 ---
 
@@ -9,6 +9,7 @@ alwaysApply: false
 When reviewing or generating code, apply this checklist. Canonical policy lives in `spec-required`, `core-principles`, `testing`, and `ui-design`.
 
 - **Function:** > 200 lines → refactor (extract, move to service/component).
+- **File:** > 1000 physical lines → split by concern into separate files. Enforced by `repo.dart_file_non_comment_line_size` (1000 non-comment lines, see `SPEC/program/dart-file-non-comment-line-size.md`).
 - **Widget/screen:** > ~60 lines → split; move logic out of `build`.
 - **UI vs data:** Split if class does both; UI in widget/screen/component, logic in service/provider/Flame.
 - **Strings:** User-facing or repeated → constants (`app/lib/config/constants.dart`, `routes.dart`, or feature constants).
@@ -17,5 +18,5 @@ When reviewing or generating code, apply this checklist. Canonical policy lives 
 - **Logging:** Runtime logs use `logger`; no `print` (see `colonizethis-core-principles.mdc`).
 - **Flame/Flutter boundary:** No game logic in Flutter `build`.
 - **Reuse:** Check `app/lib/core/utils/`, `app/lib/widgets/`, `app/lib/config/`, `packages/*/lib/src/` before adding.
-- **New widgets:** Catalog + Widgetbook registration (see `colonizethis-ui-design.mdc`).
+- **New screens/widgets:** Screen spec + stable ID per `colonizethis-ui-documentation.mdc`; catalog + Widgetbook per `colonizethis-ui-design.mdc`.
 - **Tests:** Critical paths covered; thresholds and test layers follow `colonizethis-testing.mdc`.

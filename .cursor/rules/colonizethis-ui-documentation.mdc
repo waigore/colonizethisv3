@@ -1,0 +1,161 @@
+---
+description: Definitive screen UI documentation — stable 8-char IDs, layout/behavior/variants/widgetbook specs; excludes style/theming
+globs: "SPEC/ui/**/*.md,app/lib/features/**/*.dart,app/lib/screens/**/*.dart,app/lib/widgets/**/*.dart,app/lib/config/ui_screen_ids.dart"
+alwaysApply: false
+---
+
+# UI Screen Documentation (definitive)
+
+Authoritative rules for documenting **player-app** screens and screen-like surfaces (routes, full-screen hosts, modal dialogs, overlays). **Style, palette, pixel-art generation, and thematic conventions** are orthogonal — see `colonizethis-ui-design.mdc` and per-screen asset sections only when assets are layout inputs.
+
+**SPEC location:** One spec per screen at `SPEC/ui/<kebab-name>.md`. **Registry:** [`SPEC/ui/screen-registry.md`](../../SPEC/ui/screen-registry.md). **Code IDs:** `app/lib/config/ui_screen_ids.dart`.
+
+---
+
+## Screen ID format (stable)
+
+Every screen gets a **unique 8-character ID**, assigned once and **never changed**.
+
+| Segment | Chars | Meaning |
+|---------|-------|---------|
+| Category | 1–3 | Uppercase flow code (see registry § Categories). Few major categories only. |
+| Sub-flow | 4 | Single digit `0`–`9` within the category. |
+| Screen | 5–8 | Four digits `0001`–`9999` within that sub-flow; allocate sequentially per sub-flow. |
+
+**Variants:** Append one lowercase letter to the base ID: `MAP10001a`, `MAP10001b`. Variants share one spec file under **States and variants** unless layout/behavior diverge enough to warrant a separate spec (then new base ID).
+
+**Examples:** `SHEL10001` (shell route host), `GAME10001` (game screen), `MAP20001` (province overlay), `DLG30001a` (dialog variant).
+
+### Code binding
+
+- Declare each base screen ID as a `static const String` on `UiScreenIds` in `app/lib/config/ui_screen_ids.dart`.
+- The screen widget (or route host) must expose the ID for traceability, e.g. `static const screenId = UiScreenIds.gameScreen;` or `UiScreenIds.of(context)` where a mixin applies.
+- Widgetbook folder names and spec headings use the human title; the **ID** is the cross-reference key in the registry and code reviews.
+- Do not embed IDs only in comments; they must be const values grep-able from tests.
+
+---
+
+## When to write or update a spec
+
+- **New** route, screen, dialog, or overlay in `app/lib/features/`, `app/lib/screens/`, or shell widgets mounted as a primary surface.
+- **Changed** layout hierarchy, triggers, bus events, provider inputs, variants, or Widgetbook use cases.
+- **New composite widget** used by multiple screens → add `SPEC/ui/components/<name>.md` first, then reference it from screen specs.
+
+ctdev-only screens stay in `SPEC/program/ctdev-app.md`; this rule does not apply there.
+
+---
+
+## Spec document template
+
+Use this section order. Keep each spec ≤1000 words; split component detail into `SPEC/ui/components/`.
+
+```markdown
+# <Human title>
+
+**Screen ID:** `<CATEGORY><sub><####>` — stable; do not reassign.
+**SPEC/ui** — <one-line purpose>. Implementation: `<relative/dart/path.dart>`.
+**Widgetbook:** `<Folder name>` → `app/lib/widgetbook/...`
+
+## Widget contract
+| Name | Type | Required | Description |
+...
+
+## Trigger conditions
+Exhaustive entry: routes (`Routes.*`), bus events (`OpenDialogEvent`, `NavigateToRouteEvent`, …),
+parent screens, provider predicates. Link `SPEC/program/app-ui-wiring.md` / `app-event-bus.md`.
+
+## Layout / wireframe
+ASCII wireframe with hierarchy indentation. List every visible control region.
+Name **Ct-*** catalog widgets and layout primitives (`Stack`, `Positioned`, …).
+Reference `SPEC/ui/components/<x>.md` for composite widgets instead of redefining them.
+
+## Behavior
+### Incoming (what shows this UI)
+| Source | Condition | Result |
+...
+
+### User actions → outcomes
+| Control / gesture | When enabled | Emits / calls | Side effects |
+...
+Bus emissions must name **event types and payload fields**. Local `Navigator` only where
+`app-ui-wiring.md` allows. No "etc." — list every interactive control.
+
+## States and variants
+| ID | Variant | Trigger | Render difference |
+...
+Base ID row required; variant suffix letter when applicable.
+
+## Components
+Bullet list: widget class, spec link, role in hierarchy.
+
+## Widgetbook
+Folder name, catalog part file, each **use case name** and what it proves
+(providers/overrides, variant ID). At least one mobile use case when layout differs
+(`SPEC/ui/mobile-adaptation.md`).
+
+## Acceptance criteria
+Given–When–Then per `colonizethis-acceptance-criteria.mdc`; map to tests.
+```
+
+---
+
+## Layout rules
+
+- Wireframe must be sufficient to recreate structure in Flutter/Flame without guessing parent/child relationships.
+- Use **region names** (e.g. `title_region`, `buttons_region`) when multiple bands exist.
+- Positions: edge anchors (`top:16`, `left:16`), flex/scroll behavior, max widths, z-order for stacks.
+- **Catalog-first:** [`pixel-art-ui-catalog.md`](../../SPEC/ui/pixel-art-ui-catalog.md), existing `SPEC/ui/components/`, and `app/widget_catalog.json` before inventing widgets.
+- **New composites:** Author `SPEC/ui/components/<kebab-name>.md` (props, sub-layout, states) and reference by link from screen specs.
+
+---
+
+## Behavior rules (exhaustive)
+
+- **Triggers:** Every path that mounts the screen (initial route, bus handler, parent callback, push from another screen).
+- **Emissions:** Every tap/gesture/submit/back that emits `AppEventBus` events or calls services — with event class and key fields.
+- **Gating:** Document disable conditions (`turnResolutionBlockingProvider`, empty lists, victory set, …) per control.
+- **Navigation:** No cross-screen `Navigator` chains unless spec-authorised in `app-ui-wiring.md`; prefer bus events.
+- **Flame vs Flutter:** Game canvas behavior stays in game/GDD specs; screen spec only describes host chrome and handoff.
+
+---
+
+## Registry maintenance
+
+When assigning an ID:
+
+1. Pick category + sub-flow from [`screen-registry.md`](../../SPEC/ui/screen-registry.md).
+2. Take next free `####` in that sub-flow.
+3. Add a row: ID, title, spec path, Dart path, Widgetbook folder, status (`draft` | `active`).
+4. Add `UiScreenIds` constant and widget `screenId` binding in the same change.
+
+---
+
+## Widgetbook linkage
+
+- Every **active** screen spec lists Widgetbook folder + use cases matching `app/lib/widgetbook/catalog*.dart`.
+- Use case names should align with **States and variants** (e.g. "Victory", "No saves", "Default (mobile)").
+- New/changed screens require catalog registration in the same PR as the spec update.
+
+---
+
+## Relationship to other rules
+
+| Topic | Rule / doc |
+|-------|------------|
+| Style, palette, pixel generation | `colonizethis-ui-design.mdc` |
+| AC quality | `colonizethis-acceptance-criteria.mdc` |
+| Bus wiring | `SPEC/program/app-ui-wiring.md` |
+| Mobile viewports | `SPEC/ui/mobile-adaptation.md` |
+| Ct-* catalog | `SPEC/ui/pixel-art-ui-catalog.md` |
+
+---
+
+## Review checklist
+
+- [ ] Screen ID new or unchanged; registry row updated
+- [ ] `UiScreenIds` + widget `screenId` binding present
+- [ ] Layout wireframe complete; composites linked not duplicated
+- [ ] All triggers and user actions documented
+- [ ] Variants table includes suffix letters where needed
+- [ ] Widgetbook section matches catalog
+- [ ] ACs are Given–When–Then and test-targetable

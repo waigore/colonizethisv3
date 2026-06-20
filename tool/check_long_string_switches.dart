@@ -5,107 +5,47 @@
 
 import 'dart:io';
 
-import 'package:analyzer/dart/analysis/features.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/source/line_info.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
 
-void main() {
-  final root = _repoRoot();
+import 'ct_repo_lint_scan_contract.dart';
+
+int runCheckLongStringSwitches(
+  String repoRoot, {
+  void Function(String line)? warn,
+  void Function(String line)? err,
+}) {
+  final logW = warn ?? stderr.writeln;
+  final logE = err ?? stderr.writeln;
   final fails = <String>[];
   final warns = <String>[];
 
-  for (final file in _dartSources(Directory(root))) {
-    final rel = p.relative(file.path, from: root);
-    if (_isExcluded(rel)) {
-      continue;
-    }
-    final parsed = parseFile(
-      path: file.path,
-      featureSet: FeatureSet.latestLanguageVersion(),
-      throwIfDiagnostics: false,
-    );
-    if (parsed.errors.isNotEmpty) {
-      stderr.writeln(
-        'warning: $rel — skipping AST switch scan (${parsed.errors.length} parse errors)',
-      );
-      continue;
-    }
-    final unit = parsed.unit;
-    unit.accept(_SwitchVisitor(rel, parsed.lineInfo, fails, warns));
+  for (final file in collectRepoLintRepoWideDartFiles(repoRoot)) {
+    final rel = p.relative(file.path, from: repoRoot);
+    final source = file.readAsStringSync();
+    warns.addAll(scanLongStringSwitchWarnings(rel, source));
+    fails.addAll(scanLongStringSwitchErrors(rel, source));
   }
 
   for (final w in warns) {
-    stderr.writeln('warning: $w');
+    logW('warning: $w');
   }
   for (final f in fails) {
-    stderr.writeln('error: $f');
+    logE('error: $f');
   }
-  if (fails.isNotEmpty) {
-    exitCode = 1;
-  }
-}
-
-bool _isExcluded(String relativePath) {
-  final normalized = p.normalize(relativePath);
-  final parts = p.split(normalized);
-  if (parts.contains('.dart_tool') ||
-      parts.contains('.pub-cache') ||
-      parts.contains('build')) {
-    return true;
-  }
-  if (normalized.endsWith('.g.dart')) {
-    return true;
-  }
-  if (normalized.endsWith('tech_effect_summary_embed.dart')) {
-    return true;
-  }
-  return false;
-}
-
-Iterable<File> _dartSources(Directory root) sync* {
-  if (!root.existsSync()) {
-    return;
-  }
-  for (final entity in root.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) {
-      continue;
-    }
-    if (!entity.path.endsWith('.dart')) {
-      continue;
-    }
-    yield entity;
-  }
-}
-
-/// Workspace root `pubspec.yaml` uses exactly `name: colonizethis` (not
-/// `colonizethis_app`, `colonizethis_data`, etc.) so nested packages are not
-/// mistaken for the monorepo root when this tool is run from a subdirectory.
-String _repoRoot() {
-  final rootName = RegExp(r'^name:\s*colonizethis\s*$', multiLine: true);
-  var dir = Directory.current;
-  while (true) {
-    final pub = File(p.join(dir.path, 'pubspec.yaml'));
-    if (pub.existsSync() && rootName.hasMatch(pub.readAsStringSync())) {
-      return dir.path;
-    }
-    final parent = dir.parent;
-    if (parent.path == dir.path) {
-      throw StateError('repo root not found');
-    }
-    dir = parent;
-  }
+  return fails.isNotEmpty ? 1 : 0;
 }
 
 class _SwitchVisitor extends RecursiveAstVisitor<void> {
-  _SwitchVisitor(this.filePath, this.lineInfo, this.fails, this.warns);
+  _SwitchVisitor(this.filePath, this.lineInfo, this.warns, this.fails);
 
   final String filePath;
   final LineInfo lineInfo;
-  final List<String> fails;
   final List<String> warns;
+  final List<String> fails;
 
   @override
   void visitSwitchStatement(SwitchStatement node) {
@@ -168,4 +108,41 @@ bool _isStringConstantPattern(AstNode? pattern) {
     return pattern.expression is SimpleStringLiteral;
   }
   return false;
+}
+
+List<String> scanLongStringSwitchWarnings(String relativePath, String content) {
+  return _scanLongStringSwitches(relativePath, content).warns;
+}
+
+List<String> scanLongStringSwitchErrors(String relativePath, String content) {
+  return _scanLongStringSwitches(relativePath, content).fails;
+}
+
+({List<String> warns, List<String> fails}) _scanLongStringSwitches(
+  String relativePath,
+  String content,
+) {
+  final parsed = parseString(
+    content: content,
+    path: relativePath,
+    throwIfDiagnostics: false,
+  );
+  if (parsed.errors.isNotEmpty) {
+    return (
+      warns: <String>[
+        '$relativePath — skipping AST switch scan (${parsed.errors.length} parse errors)',
+      ],
+      fails: <String>[],
+    );
+  }
+  final warns = <String>[];
+  final fails = <String>[];
+  parsed.unit.accept(
+    _SwitchVisitor(relativePath, parsed.lineInfo, warns, fails),
+  );
+  return (warns: warns, fails: fails);
+}
+
+void main() {
+  exit(runCheckLongStringSwitches(Directory.current.path));
 }

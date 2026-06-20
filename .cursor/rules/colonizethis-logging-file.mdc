@@ -1,10 +1,11 @@
 ---
-description: Whenever file logging is needed, use basic_logger_file. Do not implement custom file logging.
+description: Prefer basic_logger_file for file logging; ctdev may use an OutputLogger with the same contract when FileOutputLogger cannot satisfy timestamp policy (SPEC/program/ctdev-logging.md).
 alwaysApply: true
 ---
 
 # File logging
 
 - **Library:** Use [basic_logger_file](https://pub.dev/packages/basic_logger_file) for any file logging (e.g. writing logs to a file such as `ctdev.log`).
-- **Do not:** Implement your own file logging (e.g. raw `dart:io` `File`/`IOSink`, or manual `Logger.addLogListener` that writes to a file). Use the library instead.
+- **Do not:** Implement ad-hoc file logging (e.g. raw `dart:io` `File`/`IOSink`, or unrelated `Logger.addLogListener` handlers that write to disk without the buffered day-file contract).
 - **Usage:** `BasicLogger` + `FileOutputLogger` from `basic_logger` and `basic_logger_file`. Attach `FileOutputLogger` with `dir`, `ext`, and optional `bufferSize`; forward app log events to the BasicLogger so the library handles buffering and writing.
+- **Ctdev day log (exception):** Published `FileOutputLogger` is `final` and prepends `LogRecord.time`, which duplicates the canonical operator timestamp embedded in `formatLogEvent`. Ctdev therefore attaches a **`basic_logger` `OutputLogger`** implementation with the **same buffering and `logs/YYYY-MM-DD.log` append** behavior as `basic_logger_file` 0.1.3 `FileOutputLogger`, writing **message-only** lines. Normative: `SPEC/program/ctdev-logging.md`.

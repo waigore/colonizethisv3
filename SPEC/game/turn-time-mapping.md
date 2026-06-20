@@ -62,7 +62,41 @@ Turns before cutoff = `(cutoffYear - startYear) / yearsPerTurnBeforeCutoff` (e.g
 
 ## Derivation
 
-Calendar year is derived from `WorldState.turnState.turnNumber` using the game's `turnTimeMapping`. No change to turn resolution logic. See [turn-resolution.md](../program/turn-resolution.md).
+Calendar year is derived from `WorldState.turnState.turnNumber` using the game's `turnTimeMapping`. Turn resolution also applies a **campaign calendar cap** so full turns do not continue past the last turn whose start year equals the normative stop year (default **1800** for `TurnTimeMapping.gdd01`); see § Campaign calendar cap below and [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § End-of-turn.
+
+---
+
+## Campaign calendar cap
+
+- **Normative stop year (current product):** **1800** — the last full turn that may be resolved is the turn number `T` where `yearAtTurn(T) == 1800` under the game's `turnTimeMapping` (for default `gdd01`, **`T = 201`**). The engine sets `Game.calendarCampaignHalted` when that turn's end-of-turn processing completes without military victory; `Game.victory` stays null. Further `runTurnResolutionPipeline` calls are no-ops until save/load or a future session reset.
+- **Infinite mode bypass:** When `Game.infiniteMode == true` (chosen at new-game setup, persisted on `Game`), end-of-turn **does not** set `calendarCampaignHalted` at the cap turn; `turnNumber` advances and calendar years continue at post-1700 pacing (1 year per turn). Military victory still ends the campaign.
+- **Military victory first:** If `Game.victory` is set on or before this turn, military completion rules take precedence; the calendar cap does not clear victory.
+- **Custom mappings:** When no turn satisfies `yearAtTurn(T) == 1800` exactly (pacing gaps), the cap is **not applied** and campaigns may run until military victory or another future stop rule.
+- **Declared winner (no military victory):** Session summaries (e.g. observer CLI) use the Great Power with the **strictly highest** `greatPowerPowerScore` among `Game.players`; on a tie or empty result, declare **no-one**. See [victory.md](victory.md) § Calendar campaign end.
+
+---
+
+## Acceptance criteria (calendar cap)
+
+- Given default `TurnTimeMapping.gdd01` and `Game.victory == null`  
+  When the System evaluates `turnNumberForStartCalendarYear(1800)`  
+  Then the System returns turn **201** and `yearAtTurn(201) == 1800`.
+
+- Given default `TurnTimeMapping.gdd01`  
+  When the System evaluates `turnNumberForStartCalendarYear(1699)`  
+  Then the System returns **null** (no turn starts in that calendar year under the two-segment pacing).
+
+- Given a game whose `WorldState.turnState.turnNumber` is **201**, `Game.victory == null`, and `turnTimeMapping` is null or `gdd01`  
+  When the System runs the end-of-turn phase after all prior phases for that turn  
+  Then the System sets `Game.calendarCampaignHalted` to **true**, leaves `turnNumber` at **201**, sets phase to **Orders**, and leaves `Game.victory` null.
+
+- Given `Game.calendarCampaignHalted == true`  
+  When the System invokes full turn resolution again on that game  
+  Then the System returns a completed result without advancing the turn number or mutating prior world state fields beyond idempotent news-digest bookkeeping.
+
+- Given `Game.infiniteMode == true`, default `TurnTimeMapping.gdd01`, and `Game.victory == null`  
+  When the System runs the end-of-turn phase at turn **201**  
+  Then the System leaves `Game.calendarCampaignHalted` **false**, advances `turnNumber` to **202**, and `yearAtTurn(202) == 1801`.
 
 ---
 

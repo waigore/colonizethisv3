@@ -1,0 +1,175 @@
+# Combat Mode Choice Dialog
+
+**Screen ID:** `CMPT10001` — stable; do not reassign.
+**SPEC/ui** — Modal dialog that lets the player pick between Auto-Resolve and Quick Battle for an upcoming combat. Game model: [quick-battle.md](../game/quick-battle.md), [siege-mechanics.md](../game/siege-mechanics.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Dialog wiring: [app-ui-wiring.md](../program/app-ui-wiring.md). Follow-up screen: [quick-battle-screen.md](quick-battle-screen.md).
+
+**Mockup:** [mockups/CMPT10001-combat-mode-choice.html](mockups/CMPT10001-combat-mode-choice.html)
+---
+
+## Widget contract
+
+`CombatModeChoiceDialog` is a presentational `StatelessWidget` (`app/lib/features/game/combat/combat_mode_choice_dialog.dart`) wrapped in a `CtDialogShell`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `bus` | `AppEventBus` | yes | Bus used to emit `CombatModeChosenEvent(CombatMode)` once the player picks a mode. |
+| `provinceName` | `String` | yes | Display name of the contested province; rendered in the dialog title. May be empty (`''`) if upstream did not resolve a name; in that case the title shows the localized template with no name interpolated. |
+| `isCapitalSiege` | `bool` | yes | When `true`, the dialog forces Quick Battle as the only option (auto-resolve is hidden); when `false`, both options are offered. |
+
+The widget owns no internal state. It pops itself via `Navigator.of(context).pop()` once the user picks a mode.
+
+---
+
+## Trigger conditions
+
+- The dialog is opened via `OpenDialogEvent(combatModeChoiceDialogId, params)` where `combatModeChoiceDialogId == 'combat_mode_choice'` (declared in `app/lib/core/services/app_event_handler_scope.dart`). The builder for this id is registered in `app/lib/core/services/app_event_handler_scope_dialog_builders.dart` and constructs the dialog with `provinceName` and `isCapitalSiege` from the event `params`.
+- Required params:
+  - `provinceName: String` — display name of the contested province.
+  - `isCapitalSiege: bool` — `true` for capital sieges per [siege-mechanics.md](../game/siege-mechanics.md).
+- The dialog must not be opened by direct `showDialog` calls from feature panels; cross-cutting opening is bus-driven per [app-ui-wiring.md](../program/app-ui-wiring.md).
+
+---
+
+## Layout / wireframe
+
+### Regular province (`isCapitalSiege == false`)
+
+```text
++------------------------------------------------+
+| CtDialogShell                                  |
+| +--------------------------------------------+ |
+| | Combat at <provinceName>     (titleMedium) | |
+| |                                            | |
+| | Choose how to resolve this combat.         | |
+| |                                            | |
+| |               [ Auto-Resolve ] [ Quick Battle ] | |
+| +--------------------------------------------+ |
++------------------------------------------------+
+```
+
+### Capital siege (`isCapitalSiege == true`)
+
+```text
++------------------------------------------------+
+| CtDialogShell                                  |
+| +--------------------------------------------+ |
+| | Combat at <provinceName>     (titleMedium) | |
+| |                                            | |
+| | Capital sieges must be resolved with       | |
+| | Quick Battle.                              | |
+| |                                            | |
+| |                              [ Quick Battle ] | |
+| +--------------------------------------------+ |
++------------------------------------------------+
+```
+
+- Outer container: `CtDialogShell`.
+- Inner column: `Column(mainAxisSize: min, crossAxisAlignment: start)`.
+- Title: `Text` styled `Theme.of(context).textTheme.titleMedium`, rendered via `appL10n(context).quickBattle_combatAt(provinceName)`.
+- 8 dp gap, then explanatory body text:
+  - `appL10n(context).quickBattle_capitalSiegeQuickBattleOnly` when `isCapitalSiege == true`.
+  - `appL10n(context).quickBattle_chooseCombatMode` otherwise.
+- 16 dp gap, then a `Wrap(alignment: end, spacing: 8, runSpacing: 8)` with action buttons (mirrors mockup `.actions { flex-wrap: wrap }` so both labels fit at `kMinViewportWidth` without horizontal overflow):
+  - Regular: `[ Auto-Resolve ]` (`appL10n(context).quickBattle_autoResolve`) followed by `[ Quick Battle ]` (`appL10n(context).quickBattle_quickBattle`); when the content column is narrower than both buttons side-by-side, the wrap run stacks the second button beneath the first while keeping end alignment.
+  - Capital siege: only `[ Quick Battle ]`.
+- Buttons are `CtNinePatchButton`s; Material buttons are not permitted.
+
+---
+
+## States and variants
+
+| State | Trigger | Render |
+|-------|---------|--------|
+| Default (regular) | `isCapitalSiege == false` | Body text from `quickBattle_chooseCombatMode`; both action buttons visible. |
+| Capital siege | `isCapitalSiege == true` | Body text from `quickBattle_capitalSiegeQuickBattleOnly`; only Quick Battle button visible. Auto-Resolve button is **omitted from the tree**, not merely disabled. |
+| Empty province name | `provinceName == ''` | Title still renders the localized `quickBattle_combatAt` template; the empty string is interpolated as-is. |
+
+The dialog is modal; it does not auto-dismiss without a player choice.
+
+---
+
+## Navigation
+
+- **Entry:** `OpenDialogEvent(combatModeChoiceDialogId, params)` from the combat phase orchestrator.
+- **Exit on Auto-Resolve tap (regular only):** Emit `CombatModeChosenEvent(CombatMode.autoResolve)` on the supplied `bus`, then call `Navigator.of(context).pop()`.
+- **Exit on Quick Battle tap:** Emit `CombatModeChosenEvent(CombatMode.quickBattle)` on the supplied `bus`, then call `Navigator.of(context).pop()`.
+- The dialog does not push or pop other routes. Downstream wiring (e.g., opening [quick-battle-screen.md](quick-battle-screen.md)) is owned by the listener of `CombatModeChosenEvent`, not the dialog.
+
+---
+
+## Components
+
+- `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`).
+- `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`).
+- Localized strings via `appL10n(context).quickBattle_*`.
+- `AppEventBus` (`packages/colonizethis_models`) for emitting `CombatModeChosenEvent`.
+- No Material buttons.
+
+---
+
+## Dark-theme treatment
+
+Per `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette and Refs #2869 R1–R5, the dialog renders against `AppThemes.editorialMonocle`:
+
+- **Title** (`quickBattle_combatAt`): theme `titleMedium` (display font, Cinzel via `editorialMonocleDisplayFontFamily`) with `color: --accent` and `letterSpacing: 0.05` (matching `CtTopBar._titleStyle`). No `--fg` fallback for the title color — the accent reading is what marks the dialog as a combat decision point.
+- **Body** (`quickBattle_chooseCombatMode` or `quickBattle_capitalSiegeQuickBattleOnly`): theme `bodyMedium` with `color: --muted` for the secondary descriptive line. Body text never uses `--accent`.
+- **Quick Battle button (primary)**: `CtNinePatchButton`; its `child` is a `Text(quickBattle_quickBattle)` with explicit `style: titleSmall.copyWith(color: --accent)`. The brass nine-patch chrome remains the asset-driven default; the primary reading comes from the accent-coloured label.
+- **Auto-Resolve button (secondary)**: `CtNinePatchButton`; its `child` is a `Text(quickBattle_autoResolve)` with explicit `style: titleSmall.copyWith(color: --muted)`. The muted label visually de-emphasises the secondary action while keeping the same touch target geometry as Quick Battle.
+- All colors resolve from `EditorialMonoclePalette` (no hex literals in widget code) per `colonizethis-ui-design.mdc`.
+
+Outline-style chrome for the Auto-Resolve button (a dedicated `--border`-outlined `CtNinePatchButton` variant per Refs #2869 R4 mockup) is a follow-up tracked against #2859 button-variant work; it is not delivered by S2.
+
+---
+
+## Acceptance Criteria (Given–When–Then)
+
+- Given the dialog is opened via `OpenDialogEvent(combatModeChoiceDialogId, {'provinceName': 'Lisbon', 'isCapitalSiege': false})`,
+  When the UI layer renders the dialog,
+  Then the dialog displays the title `Combat at Lisbon` (localized template), the body text from `quickBattle_chooseCombatMode`, and exactly two `CtNinePatchButton`s labeled with `quickBattle_autoResolve` and `quickBattle_quickBattle`.
+
+- Given the dialog is opened with `isCapitalSiege: true`,
+  When the UI layer renders the dialog,
+  Then the body text comes from `quickBattle_capitalSiegeQuickBattleOnly`, only one `CtNinePatchButton` labeled with `quickBattle_quickBattle` is present, and no Auto-Resolve button is in the widget tree.
+
+- Given the dialog is mounted with `isCapitalSiege: false` and a bus listener subscribed to `CombatModeChosenEvent`,
+  When the user taps the Auto-Resolve button,
+  Then the dialog emits exactly one `CombatModeChosenEvent(CombatMode.autoResolve)` on the supplied bus and pops itself off the navigator stack.
+
+- Given the dialog is mounted with `isCapitalSiege: false` and a bus listener subscribed to `CombatModeChosenEvent`,
+  When the user taps the Quick Battle button,
+  Then the dialog emits exactly one `CombatModeChosenEvent(CombatMode.quickBattle)` on the supplied bus and pops itself off the navigator stack.
+
+- Given the dialog is mounted with `isCapitalSiege: true` and a bus listener subscribed to `CombatModeChosenEvent`,
+  When the user taps the Quick Battle button,
+  Then the dialog emits exactly one `CombatModeChosenEvent(CombatMode.quickBattle)` and pops itself.
+
+- Given the dialog is mounted,
+  When the UI layer renders the widget tree,
+  Then there is exactly one `CtDialogShell` and zero Material `ElevatedButton`, `TextButton`, or `OutlinedButton` widgets in the dialog subtree.
+
+- Given the dialog is mounted inside `AppThemes.editorialMonocle`,
+  When the UI layer renders the title,
+  Then the rendered `Text` for the localized `quickBattle_combatAt` line resolves `style.color` to `EditorialMonoclePalette.accent` and `style.letterSpacing` to `0.05`.
+
+- Given the dialog is mounted inside `AppThemes.editorialMonocle` with `isCapitalSiege: false`,
+  When the UI layer renders the body line,
+  Then the rendered `Text` for the localized `quickBattle_chooseCombatMode` line resolves `style.color` to `EditorialMonoclePalette.muted`.
+
+- Given the dialog is mounted inside `AppThemes.editorialMonocle` with `isCapitalSiege: false`,
+  When the UI layer renders the action row,
+  Then the `CtNinePatchButton` child `Text` for `quickBattle_autoResolve` resolves `style.color` to `EditorialMonoclePalette.muted`, and the `CtNinePatchButton` child `Text` for `quickBattle_quickBattle` resolves `style.color` to `EditorialMonoclePalette.accent`.
+
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and `isCapitalSiege: false`,
+  When the UI layer renders `CombatModeChoiceDialog` with `provinceName: 'Lisbon'`,
+  Then `WidgetTester.takeException()` returns `null`, both action labels render, and the action buttons are hosted in a `Wrap` (not a rigid `Row`) so the labels reflow within the ~288 dp `CtDialogShell` content column without horizontal overflow (Refs #2870 S8).
+
+---
+
+## Widgetbook
+
+Catalog directory: `Combat Mode Choice Dialog` (registered in `app/lib/widgetbook/catalog.dart`). Required use cases:
+
+1. **Regular province** — `provinceName: 'Lisbon'`, `isCapitalSiege: false`; both buttons visible.
+2. **Capital siege** — `provinceName: 'Madrid'`, `isCapitalSiege: true`; Quick Battle only.
+
+Each use case wires a fresh `AppEventBus.create()` so the catalog story does not leak `CombatModeChosenEvent` listeners between runs.

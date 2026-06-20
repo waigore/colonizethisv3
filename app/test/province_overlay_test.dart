@@ -75,12 +75,14 @@ void main() {
 
         expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
         expect(find.text('Province'), findsOneWidget);
-        expect(find.text('Tile'), findsOneWidget);
-        expect(find.text('Political'), findsOneWidget);
-        expect(find.text('Economic'), findsOneWidget);
-        expect(find.text('Military'), findsOneWidget);
-        expect(find.text('Civilian'), findsOneWidget);
-        expect(find.text('Naval'), findsOneWidget);
+        // Section headers render via CtSectionLabel (Refs #2865 S4) which
+        // upper-cases the label per SPEC § Dark-theme section labels.
+        expect(find.text('TILE'), findsOneWidget);
+        expect(find.text('POLITICAL'), findsOneWidget);
+        expect(find.text('ECONOMIC'), findsOneWidget);
+        expect(find.text('MILITARY'), findsOneWidget);
+        expect(find.text('CIVILIAN'), findsOneWidget);
+        expect(find.text('NAVAL'), findsOneWidget);
         expect(find.byKey(const Key('overlay_close')), findsOneWidget);
       },
     );
@@ -131,8 +133,10 @@ void main() {
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
       expect(find.text('Sea zone'), findsOneWidget);
-      expect(find.text('Political'), findsOneWidget);
-      expect(find.text('Naval'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('POLITICAL'), findsOneWidget);
+      expect(find.text('NAVAL'), findsOneWidget);
     });
 
     testWidgets('sea zone overlay uses sea-zone display name field', (
@@ -525,26 +529,35 @@ void main() {
       'Tile section shows ??? for unrevealed tiles in player-constrained view',
       (WidgetTester tester) async {
         final baseRegion = demoRegionForOverlay;
-        final cells = <CellViewData>[];
-        for (var i = 0; i < baseRegion.cells.length; i++) {
-          final c = baseRegion.cells[i];
-          cells.add(
-            CellViewData(
-              x: c.x,
-              y: c.y,
-              regionCellId: c.regionCellId,
-              isSea: c.isSea,
-              terrainTypeId: c.terrainTypeId,
-              terrainType: c.terrainType,
-              resourceId: c.resourceId,
-              ownerFactionId: c.ownerFactionId,
-              provinceDisplayName: c.provinceDisplayName,
-              improvementLevel: c.improvementLevel,
-              roadLevel: c.roadLevel,
-              visibility: i == 0 ? TileVisibility.unrevealed : c.visibility,
-            ),
-          );
-        }
+        final targetCell = baseRegion.cells.firstWhere(
+          (c) =>
+              !c.isSea &&
+              baseRegion.cells.any(
+                (other) =>
+                    other.regionCellId == c.regionCellId &&
+                    other.visibility != TileVisibility.unrevealed,
+              ),
+        );
+        final cells = baseRegion.cells
+            .map(
+              (c) => CellViewData(
+                x: c.x,
+                y: c.y,
+                regionCellId: c.regionCellId,
+                isSea: c.isSea,
+                terrainTypeId: c.terrainTypeId,
+                terrainType: c.terrainType,
+                resourceId: c.resourceId,
+                ownerFactionId: c.ownerFactionId,
+                provinceDisplayName: c.provinceDisplayName,
+                improvementLevel: c.improvementLevel,
+                roadLevel: c.roadLevel,
+                visibility: c.x == targetCell.x && c.y == targetCell.y
+                    ? TileVisibility.unrevealed
+                    : c.visibility,
+              ),
+            )
+            .toList();
         final region = RegionMapViewData(
           regionId: baseRegion.regionId,
           width: baseRegion.width,
@@ -559,10 +572,9 @@ void main() {
           unitMarkers: baseRegion.unitMarkers,
         );
 
-        final hoveredCell = region.cells.first;
         final selectedTileKey =
-            '${region.regionId}|${hoveredCell.regionCellId}|${hoveredCell.x}|${hoveredCell.y}';
-        final provinceId = '${region.regionId}|${hoveredCell.regionCellId}';
+            '${region.regionId}|${targetCell.regionCellId}|${targetCell.x}|${targetCell.y}';
+        final provinceId = '${region.regionId}|${targetCell.regionCellId}';
 
         await tester.pumpWidget(
           MaterialApp(

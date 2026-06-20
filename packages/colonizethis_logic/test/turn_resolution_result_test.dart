@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void main() {
   late Game baseGame;
@@ -228,65 +228,30 @@ void main() {
     });
   });
 
-  group('TurnResolutionResult', () {
-    test('TurnResolutionComplete holds game and optional digest', () {
-      final result = TurnResolutionComplete(
-        baseGame,
-        turnNewsDigest: const TurnNewsDigest(
-          resolvedTurnNumber: 1,
-          lines: [],
-        ),
+  group('gameFromTurnResolutionResult', () {
+    test('reads carried game for TurnResolutionComplete', () {
+      final complete = TurnResolutionComplete(baseGame);
+      expect(
+        identical(gameFromTurnResolutionResult(complete), baseGame),
+        isTrue,
       );
-      expect(result.game, baseGame);
-      expect(result.turnNewsDigest, isNotNull);
     });
 
-    test('TurnResolutionPendingOvertures holds game and list', () {
-      final offers = [
-        OvertureOffer(
-          offererGpId: 'gp1',
-          targetFactionId: 'gp2',
-          stage: OvertureStage.embassy,
-        ),
-      ];
-      final result = TurnResolutionPendingOvertures(
+    test('reads carried game for TurnResolutionPendingOvertures', () {
+      final pending = TurnResolutionPendingOvertures(
         game: baseGame,
-        pendingOvertures: offers,
+        pendingOvertures: [
+          OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'gp2',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
       );
-      expect(result.game, baseGame);
-      expect(result.pendingOvertures, offers);
-    });
-
-    test('TurnResolutionPendingIntervention holds game and list', () {
-      final prompts = [
-        InterventionPrompt(
-          aggressorGpId: 'gp2',
-          defenderMinorOrTribeId: 'minor1',
-          interveningGpId: 'gp1',
-        ),
-      ];
-      final result = TurnResolutionPendingIntervention(
-        game: baseGame,
-        pendingInterventions: prompts,
+      expect(
+        identical(gameFromTurnResolutionResult(pending), baseGame),
+        isTrue,
       );
-      expect(result.game, baseGame);
-      expect(result.pendingInterventions, prompts);
-    });
-
-    test('TurnResolutionPendingCallToArms holds game and list', () {
-      final pending = [
-        CallToArmsPending(
-          allyGpId: 'gp1',
-          defenderGpId: 'gp2',
-          aggressorGpId: 'gp3',
-        ),
-      ];
-      final result = TurnResolutionPendingCallToArms(
-        game: baseGame,
-        pendingCallToArms: pending,
-      );
-      expect(result.game, baseGame);
-      expect(result.pendingCallToArms, pending);
     });
   });
 }

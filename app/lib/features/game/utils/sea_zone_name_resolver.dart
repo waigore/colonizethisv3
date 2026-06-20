@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 String seaZoneDisplayName({
@@ -5,9 +6,7 @@ String seaZoneDisplayName({
   required String regionId,
   required String seaZoneId,
 }) {
-  final localId = seaZoneId.contains('|')
-      ? seaZoneId.split('|').last
-      : seaZoneId;
+  final localId = prefixedIdLocalSegment(seaZoneId);
   final prefixed = '$regionId|$localId';
   return game.worldState.seaZoneDisplayNameById[prefixed] ?? localId;
 }

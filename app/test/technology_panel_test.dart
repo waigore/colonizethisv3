@@ -21,7 +21,9 @@ void main() {
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
 
-  testWidgets('TechnologyPanel builds and shows player name and research slots', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel builds and omits the dev-only header block (Refs #3510)',
+    (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -36,9 +38,15 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(TechnologyPanel), findsOneWidget);
-    expect(find.textContaining(player.displayName), findsOneWidget);
-    expect(find.textContaining('Research slots:'), findsOneWidget);
-    expect(find.text('Researched (0):'), findsOneWidget);
+    // SPEC/ui/technology-panel.md § Slots tab — section ordering: the body
+    // MUST NOT render the legacy dev-only header block (per-player title
+    // `Technology - {name}` or `Research slots: N` count line). Refs #3510.
+    expect(find.textContaining('Technology - '), findsNothing);
+    expect(find.textContaining('Research slots:'), findsNothing);
+    // Body opens directly with the Researched Techs section heading, rendered
+    // via the mockup-faithful TechSectionHeading (normal case). Refs #3510.
+    expect(find.text('Researched Techs'), findsOneWidget);
+    expect(find.text('None yet'), findsOneWidget);
   });
 
   testWidgets('TechnologyPanel hides edit controls when onOrdersChanged is null',
@@ -86,7 +94,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('None yet'), findsOneWidget);
+    // No Material Chip on the dark-theme researched grid; no
+    // ResearchedTechChip primitive rendered in the empty state either
+    // (Refs #2864 S2).
     expect(find.byType(Chip), findsNothing);
+    expect(find.byType(ResearchedTechChip), findsNothing);
   });
 
   testWidgets('TechnologyPanel shows researched tech chips when player has techs', (WidgetTester tester) async {
@@ -109,8 +121,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Researched (3):'), findsOneWidget);
-    expect(find.byType(Chip), findsNWidgets(3));
+    // Dark theme heading (mockup-faithful TechSectionHeading, normal case)
+    // + three custom chip primitives (Refs #2864 S2 / #3510).
+    expect(find.text('Researched Techs'), findsOneWidget);
+    expect(find.byType(ResearchedTechChip), findsNWidgets(3));
+    // Material `Chip` is banned by the Ct-* catalog.
+    expect(find.byType(Chip), findsNothing);
   });
 
   testWidgets('TechnologyPanel shows in progress section when player has research progress', (WidgetTester tester) async {
@@ -134,11 +150,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('In progress:'), findsOneWidget);
+    // CtSectionLabel renders the heading in upper case (Refs #2864 S2).
+    expect(find.text('IN PROGRESS:'), findsOneWidget);
     expect(find.textContaining('RP'), findsOneWidget);
   });
 
-  testWidgets('TechnologyPanel shows custom research slots when set', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel omits the research-slot count line even at 4 slots (Refs #3510)',
+    (WidgetTester tester) async {
     const slots = 4;
     final withSlots = player.copyWith(researchSlots: slots);
     final gameWithSlots = game.copyWith(
@@ -157,7 +176,57 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Research slots: $slots'), findsOneWidget);
+    // The dev-only count line is removed regardless of slot count; with
+    // 4 active slots there is also no locked placeholder. Refs #3510.
+    expect(find.textContaining('Research slots:'), findsNothing);
+    expect(find.byType(ResearchSlotCard), findsNWidgets(4));
+    expect(find.byType(LockedResearchSlotCard), findsNothing);
+  });
+
+  testWidgets(
+    'Locked Slot 4 renders the same width as the active slot cards (Refs #3510)',
+    (WidgetTester tester) async {
+    final withLockedSlot = player.copyWith(researchSlots: 3);
+    final gameWithLockedSlot = game.copyWith(
+      players: [withLockedSlot, ...game.players.skip(1)],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 600,
+            child: SingleChildScrollView(
+              child: TechnologyPanel(
+                game: gameWithLockedSlot,
+                player: withLockedSlot,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ResearchSlotCard), findsNWidgets(3));
+    expect(find.byType(LockedResearchSlotCard), findsOneWidget);
+
+    final double lockedWidth =
+        tester.getSize(find.byType(LockedResearchSlotCard)).width;
+    final List<double> activeWidths = <double>[
+      for (final element in find.byType(ResearchSlotCard).evaluate())
+        tester.getSize(find.byWidget(element.widget)).width,
+    ];
+    expect(activeWidths, isNotEmpty);
+    for (final double activeWidth in activeWidths) {
+      expect(
+        (lockedWidth - activeWidth).abs(),
+        lessThanOrEqualTo(1.0),
+        reason:
+            'SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4: '
+            'the locked Slot 4 card must render at the same width as the '
+            'active slot cards (Refs #3510).',
+      );
+    }
   });
 
   testWidgets('TechnologyPanel "Choose tech" shows no-techs modal when none available',
@@ -185,7 +254,15 @@ void main() {
     await tester.pumpAndSettle();
 
     // Choose tech is rendered for each slot when editing is enabled.
-    await tester.tap(find.text('Choose tech').first);
+    // Scroll the button into view first: SPEC/ui/technology-panel.md §
+    // Slots tab — section ordering (Refs #2864 S0/S6) places the
+    // Researched Techs grid above the Research Slots block, and with
+    // every tech unlocked the chip grid pushes the first slot card's
+    // "Choose tech" button below the default 800×600 test viewport.
+    final chooseTech = find.text('Choose tech').first;
+    await tester.ensureVisible(chooseTech);
+    await tester.pumpAndSettle();
+    await tester.tap(chooseTech);
     await tester.pumpAndSettle();
 
     expect(find.text('No techs available to research'), findsOneWidget);

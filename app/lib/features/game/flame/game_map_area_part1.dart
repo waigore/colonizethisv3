@@ -13,22 +13,23 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       PerPlayerWorkTargetSelectionCache();
   bool _sideMenuOpen = false;
   bool _debugConsoleOpen = false;
-  final List<StreamSubscription<dynamic>> _busSubscriptions = [];
+  final SubscriptionTracker _busSubscriptions = SubscriptionTracker();
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
   List<ct_models.GameToUIEvent> _resolvedPlayerTurnEvents = const [];
+  bool _isTurnResolving = false;
+  StreamSubscription<TurnResolutionProgressEvent>? _turnResolutionProgressSub;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
       BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
-
   @override
   void initState() {
     super.initState();
     _mapViewState = widget.game.mapViewState;
     _refreshWorkTargetSelectionCache(widget.game);
     final bus = ref.read(appEventBusProvider);
-    _busSubscriptions.addAll([
+    for (final subscription in [
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
         if (!mounted) return;
         setState(() {
@@ -90,7 +91,19 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
         setState(() => _debugConsoleOpen = !_debugConsoleOpen);
       }),
-    ]);
+    ]) {
+      _busSubscriptions.track(subscription);
+    }
+    ref.listenManual(observeSessionProvider, (previous, next) {
+      if (!mounted) return;
+      final enteredObserve =
+          next.isObserving && !(previous?.isObserving ?? false);
+      final switchedMode =
+          next.isObserving && previous?.mode != next.mode;
+      if (enteredObserve || switchedMode) {
+        _cancelWorkTargetSelection();
+      }
+    });
   }
 
   void _onTurnResolutionCompleteEvent(
@@ -112,13 +125,13 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final view = buildPlayerView(
       game,
       widget.mapViewData.combinedTopology,
-      _humanPlayerId,
+      _mapPlayerId,
     );
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     _workTargetSelectionCache.refresh(
       WorkTargetSelectionSnapshot(
         game: game,
-        playerId: _humanPlayerId,
+        playerId: _mapPlayerId,
         playerView: view,
         topology: widget.mapViewData.combinedTopology,
         currentOrders: const ct_models.Orders(),
@@ -128,45 +141,45 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   void _onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
-    if (event.attackerId != _humanPlayerId &&
-        event.defenderId != _humanPlayerId) {
+    if (event.attackerId != _mapPlayerId &&
+        event.defenderId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppNavalCombatResultEvent(ct_models.AppNavalCombatResultEvent event) {
-    if (event.side1OwnerId != _humanPlayerId &&
-        event.side2OwnerId != _humanPlayerId) {
+    if (event.side1OwnerId != _mapPlayerId &&
+        event.side2OwnerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppProvinceCapturedEvent(ct_models.AppProvinceCapturedEvent event) {
-    if (event.previousOwnerId != _humanPlayerId &&
-        event.newOwnerId != _humanPlayerId) {
+    if (event.previousOwnerId != _mapPlayerId &&
+        event.newOwnerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppDiplomacyChangeEvent(ct_models.AppDiplomacyChangeEvent event) {
-    if (event.actorId != _humanPlayerId && event.targetId != _humanPlayerId) {
+    if (event.actorId != _mapPlayerId && event.targetId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppResearchCompleteEvent(ct_models.AppResearchCompleteEvent event) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppOrderRejectedEvent(ct_models.AppOrderRejectedEvent event) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -175,7 +188,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   void _onAppWorkOrderCompletedEvent(
     ct_models.AppWorkOrderCompletedEvent event,
   ) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -184,7 +197,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   void _onAppPlayerProvinceDiscoveredEvent(
     ct_models.AppPlayerProvinceDiscoveredEvent event,
   ) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -193,15 +206,15 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   void _onAppPlayerSeaZoneDiscoveredEvent(
     ct_models.AppPlayerSeaZoneDiscoveredEvent event,
   ) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppOvertureAdvancedEvent(ct_models.AppOvertureAdvancedEvent event) {
-    if (event.offererGpId != _humanPlayerId &&
-        event.targetFactionId != _humanPlayerId) {
+    if (event.offererGpId != _mapPlayerId &&
+        event.targetFactionId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -209,19 +222,18 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   @override
   void dispose() {
-    for (final s in _busSubscriptions) {
-      s.cancel();
-    }
-    _busSubscriptions.clear();
+    _turnResolutionProgressSub?.cancel();
+    _turnResolutionProgressSub = null;
+    _busSubscriptions.cancelAll();
     super.dispose();
   }
 
-  String get _humanPlayerId =>
-      widget.game.players
-          .where((p) => p.isHuman)
-          .map((p) => p.id)
-          .firstOrNull ??
-      widget.game.players.first.id;
+  String get _mapPlayerId =>
+      ref.read(shellPlayerContextProvider).mapPlayerIdFor(widget.game);
+
+  String? get _debugConsolePlayerId =>
+      ref.read(shellPlayerContextProvider).debugCommandTargetPlayerId ??
+      _mapPlayerId;
 
   RegionMapViewData get _currentRegion => _regionIndex == 0
       ? widget.mapViewData.oldWorld
@@ -268,13 +280,13 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? const MapTopology();
-    final view = buildPlayerView(game, topology, _humanPlayerId);
+    final view = buildPlayerView(game, topology, _mapPlayerId);
     final workTarget = _workTargetSelection!.workTarget;
     _cachedValidTileKeys =
         GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
           workTarget: workTarget,
           workTargetSelectionCache: _workTargetSelectionCache,
-          humanPlayerId: _humanPlayerId,
+          humanPlayerId: _mapPlayerId,
           selectedUnitId: _workTargetSelection!.unit.id,
           game: game,
           currentOrders: orders,
@@ -323,9 +335,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   void _centerOnHumanCapital() {
+    final shell = ref.read(shellPlayerContextProvider);
+    final playerId =
+        shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.isHuman).firstOrNull ??
-        widget.game.players.first;
+        widget.game.playerById(playerId) ?? widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
       return;
@@ -379,9 +393,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   /// Integration tests only ([kCtE2EEnabled]). Same effect as tapping the capital map cell.
   void _e2eOpenHumanCapitalTileDetail() {
+    final shell = ref.read(shellPlayerContextProvider);
+    final playerId =
+        shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.isHuman).firstOrNull ??
-        widget.game.players.first;
+        widget.game.playerById(playerId) ?? widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
       return;
@@ -428,6 +444,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   void _onTileSelectedForWork(String tileKey) {
+    if (!ref.read(shellPlayerContextProvider).canMutateViaUi) {
+      return;
+    }
     final sel = _workTargetSelection;
     if (sel == null) return;
     final target = sel.workTarget;
@@ -446,7 +465,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         .replaceAll(
           GameMapAreaStateLogic.addHumanWorkOrder(
             orders: orders,
-            humanPlayerId: _humanPlayerId,
+            humanPlayerId: _mapPlayerId,
             workOrder: workOrder,
           ),
         );
@@ -462,8 +481,14 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   Future<void> _onNextTurn() async {
+    if (_isTurnResolving) {
+      return;
+    }
     final game = ref.read(currentGameProvider);
     if (game == null) return;
+    if (!GameMapAreaStateLogic.allowsFullTurnResolution(game)) {
+      return;
+    }
 
     final currentTurn = game.worldState.turnState.turnNumber;
     final ok = await showNextTurnConfirmationDialog(
@@ -471,12 +496,164 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       currentTurn: currentTurn,
     );
     if (ok != true) return;
+    if (!mounted) return;
 
     final service = ref.read(gameServiceProvider);
+    final runner = ref.read(turnResolutionRunnerProvider);
+    final failureMessage = appL10n(context).game_turnResolutionFailedMessage;
+    final messenger = ScaffoldMessenger.of(context);
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
     final orders = ref.read(currentOrdersProvider);
-    final newGame = service.nextTurn(game, orders: orders);
-    ref.read(currentGameProvider.notifier).setGame(newGame);
-    ref.read(currentOrdersProvider.notifier).clear();
+    final mapData = service.getMapData(game.id);
+    if (mapData == null) {
+      throw StateError('Missing required map data for gameId=${game.id}');
+    }
+
+    final phaseNotifier = ValueNotifier<String>('Resolving turn...');
+    var processingDialogOpen = true;
+    final uiStopwatch = Stopwatch()..start();
+    setState(() {
+      _isTurnResolving = true;
+    });
+    ref.read(turnResolutionBlockingProvider.notifier).set(true);
+    _gameMapNextTurnUiLog.i(
+      'logic: next_turn_ui_map started gameId=${game.id} turn=$currentTurn '
+      'turnTraceEnabled=${service.isTurnTraceEnabled}',
+    );
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (_) => ValueListenableBuilder<String>(
+          valueListenable: phaseNotifier,
+          builder: (_, text, _) =>
+              TurnResolutionProcessingDialog(phaseText: text),
+        ),
+      ).whenComplete(() {
+        processingDialogOpen = false;
+      }),
+    );
+    await awaitTurnResolutionProcessingDialogFirstPaint();
+    _gameMapNextTurnUiLog.i(
+      'logic: next_turn_ui_map processing_dialog_painted gameId=${game.id} '
+      'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+    );
+    try {
+      final aiCatalog =
+          ref.read(blessedAiProfileCatalogProvider).value ?? const {};
+      final aiProfiles = resolveAiProfilesForGame(game, aiCatalog);
+      final session = runner.startResolution(
+        game: game,
+        orders: orders,
+        topology: mapData.combinedTopology,
+        tileMapByRegion: mapData.tileMapByRegion,
+        turnTraceEnabled: service.isTurnTraceEnabled,
+        turnTraceRootDirectory: service.turnTraceRootDirectory,
+        aiProfiles: aiProfiles,
+      );
+      final activeSessionId = session.sessionId;
+      _gameMapNextTurnUiLog.i(
+        'logic: next_turn_ui_map session_started gameId=${game.id} '
+        'sessionId=$activeSessionId elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+      );
+      await _turnResolutionProgressSub?.cancel();
+      _turnResolutionProgressSub = session.progress.listen((event) {
+        if (!mounted ||
+            event.sessionId != activeSessionId ||
+            event.marker != 'start') {
+          return;
+        }
+        phaseNotifier.value = turnResolutionProgressPhaseLabel(event.phase);
+        _gameMapNextTurnUiLog.d(
+          'logic: next_turn_ui_map phase gameId=${game.id} sessionId=$activeSessionId '
+          'phase=${event.phase} elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+        );
+      });
+      final terminal = await session.done;
+      _gameMapNextTurnUiLog.i(
+        'logic: next_turn_ui_map session_done gameId=${game.id} sessionId=$activeSessionId '
+        'terminalType=${terminal.runtimeType} elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+      );
+      if (!mounted) {
+        return;
+      }
+      if (processingDialogOpen) {
+        rootNavigator.pop();
+        processingDialogOpen = false;
+      }
+      switch (terminal) {
+        case TurnResolutionTerminalComplete c:
+          final handleStopwatch = Stopwatch()..start();
+          service.handleExternallyResolvedTurnResult(c.result);
+          _gameMapNextTurnUiLog.i(
+            'logic: next_turn_ui_map external_result_handled gameId=${game.id} '
+            'sessionId=$activeSessionId handleMs=${handleStopwatch.elapsedMilliseconds} '
+            'resultType=${c.result.runtimeType}',
+          );
+          if (service.isTurnTraceEnabled &&
+              c.result is TurnResolutionComplete &&
+              c.turnTracePhases != null &&
+              c.turnTraceStartedAtUtc != null) {
+            final complete = c.result as TurnResolutionComplete;
+            service.exportTurnTraceForExternallyResolvedTurn(
+              gameAtResolutionStart: game,
+              turnEndState: complete.game,
+              phases: c.turnTracePhases!,
+              ai: c.aiTraceSections ?? const <TurnTraceAiSection>[],
+              turnStartAtUtc: c.turnTraceStartedAtUtc!,
+            );
+          }
+          if (c.turnTraceExportPath != null) {
+            _gameMapNextTurnUiLog.i(
+              'logic: next_turn_ui_map worker_trace_export_path gameId=${game.id} '
+              'sessionId=$activeSessionId path=${c.turnTraceExportPath}',
+            );
+          }
+          final applyStopwatch = Stopwatch()..start();
+          ref.read(turnResolutionResultApplierProvider).apply(c.result);
+          _gameMapNextTurnUiLog.i(
+            'logic: next_turn_ui_map result_applied gameId=${game.id} '
+            'sessionId=$activeSessionId applyMs=${applyStopwatch.elapsedMilliseconds} '
+            'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+          );
+        case TurnResolutionTerminalError e:
+          messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+          _gameMapNextTurnUiLog.e(
+            'logic: next_turn_ui_map terminal_error gameId=${game.id} '
+            'sessionId=$activeSessionId elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+            error: e.errorMessage,
+            stackTrace: e.stackTrace.isEmpty
+                ? null
+                : StackTrace.fromString(e.stackTrace),
+          );
+          throw StateError(e.errorMessage);
+      }
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+      }
+      rethrow;
+    } finally {
+      clearTurnResolutionBlockingFlag();
+      await _turnResolutionProgressSub?.cancel();
+      _turnResolutionProgressSub = null;
+      _gameMapNextTurnUiLog.i(
+        'logic: next_turn_ui_map cleanup_complete gameId=${game.id} '
+        'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+      );
+      if (mounted && processingDialogOpen) {
+        rootNavigator.pop();
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        phaseNotifier.dispose();
+      });
+      if (mounted) {
+        setState(() {
+          _isTurnResolving = false;
+        });
+      }
+    }
   }
 
   void _e2eSelectFirstValidWorkTargetTile() {
@@ -488,28 +665,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   void _e2eOpenFirstCivilianMarkerPanel() {
     if (!mounted) return;
-    final currentOrders = ref.read(currentOrdersProvider);
-    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-      region: _currentRegion,
-      game: widget.game,
-      orders: currentOrders,
-      humanPlayerId: _humanPlayerId,
-    );
-    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projected,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: _humanPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
+    final projected = ref.read(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
     final markers = [...projected.civilianTileMarkers]
       ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
     if (markers.isEmpty) return;
@@ -528,28 +687,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   void _e2eOpenFirstFleetMarkerPanel() {
     if (!mounted) return;
-    final currentOrders = ref.read(currentOrdersProvider);
-    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-      region: _currentRegion,
-      game: widget.game,
-      orders: currentOrders,
-      humanPlayerId: _humanPlayerId,
-    );
-    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projected,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: _humanPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
+    final projected = ref.read(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
     final markers = [...projected.fleetTileMarkers]
       ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
     if (markers.isEmpty) return;
@@ -566,35 +707,12 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         );
   }
 
-  String _factionLabel(String id) {
-    for (final p in widget.game.players) {
-      if (p.id == id) return p.displayName;
-    }
-    for (final m in widget.game.minorNations) {
-      if (m.id == id) return m.displayName ?? m.id;
-    }
-    for (final t in widget.game.tribes) {
-      if (t.id == id) return t.displayName ?? t.id;
-    }
-    return id;
-  }
+  String _factionLabel(String id) =>
+      widget.game.factionDisplayNameById(id) ?? id;
 
-  String _provinceLabel(String fullProvinceId) {
-    for (final region in [
-      widget.game.worldState.oldWorld,
-      widget.game.worldState.newWorld,
-    ]) {
-      for (final province in region.provinces) {
-        final prefixed = province.id.contains('|')
-            ? province.id
-            : '${province.regionId}|${province.id}';
-        if (prefixed == fullProvinceId) {
-          return province.displayName ?? prefixed;
-        }
-      }
-    }
-    return fullProvinceId;
-  }
+  String _provinceLabel(String fullProvinceId) =>
+      widget.game.worldState.tryGetProvince(fullProvinceId)?.displayName ??
+      fullProvinceId;
 
   String _seaZoneLabel(String seaZoneId) {
     return widget.game.worldState.seaZoneDisplayNameById[seaZoneId] ??
@@ -619,23 +737,22 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   Set<String> _seaZoneRegionCandidates(String seaZoneId) {
-    if (seaZoneId.contains('|')) {
-      final parts = seaZoneId.split('|');
-      if (parts.length >= 2 && parts.first.isNotEmpty) {
-        return {parts.first};
-      }
+    final regionFromPrefix = prefixedIdRegionSegment(seaZoneId);
+    if (regionFromPrefix != null && regionFromPrefix.isNotEmpty) {
+      return {regionFromPrefix};
     }
-    final localSeaZoneId = seaZoneId.contains('|')
-        ? seaZoneId.split('|').last
-        : seaZoneId;
+    final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
     final fromPorts = <String>{};
     for (final key in widget.game.worldState.portsByProvinceSeaboard.keys) {
-      final parts = key.split('|');
-      if (parts.length < 2) {
+      final firstPipe = key.indexOf('|');
+      if (firstPipe <= 0 || firstPipe + 1 >= key.length) {
         continue;
       }
-      if (parts.last == localSeaZoneId && parts.first.isNotEmpty) {
-        fromPorts.add(parts.first);
+      final lastPipe = key.lastIndexOf('|');
+      final keyRegion = key.substring(0, firstPipe);
+      final keySeaZone = key.substring(lastPipe + 1);
+      if (keySeaZone == localSeaZoneId && keyRegion.isNotEmpty) {
+        fromPorts.add(keyRegion);
       }
     }
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
@@ -670,214 +787,15 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     );
   }
 
-  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) {
-    for (final region in [
-      widget.game.worldState.oldWorld,
-      widget.game.worldState.newWorld,
-    ]) {
-      for (final province in region.provinces) {
-        final prefixed = province.id.contains('|')
-            ? province.id
-            : '${province.regionId}|${province.id}';
-        if (prefixed == prefixedProvinceId) {
-          return province;
-        }
-      }
-    }
-    return null;
-  }
-
-  List<PlayerTurnEventFeedEntry> _feedEntries() {
-    return _resolvedPlayerTurnEvents
-        .map((event) {
-          return switch (event) {
-            ct_models.AppCombatResultEvent(
-              :final provinceId,
-              :final winnerId,
-              :final attackerId,
-              :final defenderId,
-            ) =>
-              PlayerTurnEventFeedEntry(
-                text:
-                    '${_provinceLabel(provinceId)} battle resolved! ${_factionLabel(winnerId)} defeated ${_factionLabel(winnerId == attackerId ? defenderId : attackerId)}!',
-                onTap: () {
-                  final province = _provinceByPrefixedId(provinceId);
-                  if (province == null) return;
-                  final tileKey = tileKeyForProvinceLocation(
-                    widget.game,
-                    province,
-                  );
-                  if (tileKey == null) return;
-                  ref
-                      .read(appEventBusProvider)
-                      .emit(
-                        ct_models.LocateMapTileEvent(
-                          tileKey: tileKey,
-                          regionId: province.regionId,
-                        ),
-                      );
-                },
-              ),
-            ct_models.AppProvinceCapturedEvent(
-              :final provinceId,
-              :final newOwnerId,
-            ) =>
-              PlayerTurnEventFeedEntry(
-                text:
-                    '${_provinceLabel(provinceId)} captured! ${_factionLabel(newOwnerId)} now controls it!',
-                onTap: () {
-                  final province = _provinceByPrefixedId(provinceId);
-                  if (province == null) return;
-                  final tileKey = tileKeyForProvinceLocation(
-                    widget.game,
-                    province,
-                  );
-                  if (tileKey == null) return;
-                  ref
-                      .read(appEventBusProvider)
-                      .emit(
-                        ct_models.LocateMapTileEvent(
-                          tileKey: tileKey,
-                          regionId: province.regionId,
-                        ),
-                      );
-                },
-              ),
-            ct_models.AppNavalCombatResultEvent(
-              :final seaZoneId,
-              :final outcomeName,
-            ) =>
-              PlayerTurnEventFeedEntry(
-                text:
-                    '${_seaZoneLabel(seaZoneId)} naval battle resolved! Outcome: $outcomeName!',
-                onTap: () {
-                  final tileKey = _tileKeyForSeaZoneEvent(seaZoneId);
-                  if (tileKey == null) {
-                    return;
-                  }
-                  final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
-                  if (regionId == null) {
-                    return;
-                  }
-                  ref
-                      .read(appEventBusProvider)
-                      .emit(
-                        ct_models.LocateMapTileEvent(
-                          tileKey: tileKey,
-                          regionId: regionId,
-                        ),
-                      );
-                },
-              ),
-            ct_models.AppDiplomacyChangeEvent(
-              :final actorId,
-              :final targetId,
-              :final changeType,
-            ) =>
-              PlayerTurnEventFeedEntry(
-                text: _diplomacyOutcomeLine(
-                  actorId: actorId,
-                  targetId: targetId,
-                  changeType: changeType,
-                ),
-              ),
-            ct_models.AppResearchCompleteEvent(:final techId) =>
-              PlayerTurnEventFeedEntry(
-                text: 'Research complete! $techId unlocked!',
-              ),
-            ct_models.AppOrderRejectedEvent(:final reasonCode) =>
-              PlayerTurnEventFeedEntry(
-                text: 'Order rejected! Reason: $reasonCode!',
-              ),
-            ct_models.AppWorkOrderCompletedEvent(
-              :final workTarget,
-              :final targetTileKey,
-              :final provinceId,
-            ) =>
-              PlayerTurnEventFeedEntry(
-                text:
-                    '${_provinceLabel(provinceId)} work completed! ${workTarget.toUpperCase()} finished!',
-                onTap: () {
-                  final regionId = ct_models.Unit.regionIdFromTileKey(
-                    targetTileKey,
-                  );
-                  if (regionId == null) {
-                    return;
-                  }
-                  ref
-                      .read(appEventBusProvider)
-                      .emit(
-                        ct_models.LocateMapTileEvent(
-                          tileKey: targetTileKey,
-                          regionId: regionId,
-                        ),
-                      );
-                },
-              ),
-            ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
-              PlayerTurnEventFeedEntry(
-                text: '${_provinceLabel(provinceId)} discovered!',
-                onTap: () {
-                  final province = _provinceByPrefixedId(provinceId);
-                  if (province == null) return;
-                  final tileKey = tileKeyForProvinceLocation(
-                    widget.game,
-                    province,
-                  );
-                  if (tileKey == null) return;
-                  ref
-                      .read(appEventBusProvider)
-                      .emit(
-                        ct_models.LocateMapTileEvent(
-                          tileKey: tileKey,
-                          regionId: province.regionId,
-                        ),
-                      );
-                },
-              ),
-            ct_models.AppPlayerSeaZoneDiscoveredEvent(:final seaZoneId) =>
-              PlayerTurnEventFeedEntry(
-                text: '${_seaZoneLabel(seaZoneId)} discovered!',
-                onTap: () {
-                  final tileKey = _tileKeyForSeaZoneEvent(seaZoneId);
-                  if (tileKey == null) {
-                    return;
-                  }
-                  final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
-                  if (regionId == null) {
-                    return;
-                  }
-                  ref
-                      .read(appEventBusProvider)
-                      .emit(
-                        ct_models.LocateMapTileEvent(
-                          tileKey: tileKey,
-                          regionId: regionId,
-                        ),
-                      );
-                },
-              ),
-            ct_models.AppOvertureAdvancedEvent(
-              :final offererGpId,
-              :final targetFactionId,
-              :final newStage,
-            ) =>
-              PlayerTurnEventFeedEntry(
-                text:
-                    'Overture advanced! ${_factionLabel(offererGpId)} with ${_factionLabel(targetFactionId)}: ${newStage.toUpperCase()}!',
-              ),
-            _ => const PlayerTurnEventFeedEntry(text: 'Event resolved!'),
-          };
-        })
-        .toList(growable: false);
-  }
+  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) =>
+      widget.game.worldState.tryGetProvince(prefixedProvinceId);
 
   @override
   void didUpdateWidget(covariant GameMapArea oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.game.id != widget.game.id) {
       ref.read(mapProvincePanelProvider.notifier).reset();
-      ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
+      ref.read(regionMinimapVisibleProvider.notifier).reset();
       setState(() {
         _refreshWorkTargetSelectionCache(widget.game);
         _mapViewState = widget.game.mapViewState;

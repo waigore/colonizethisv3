@@ -1,3 +1,7 @@
+// Exercises the deprecated top-level province-lookup wrappers cross-package to
+// confirm they still delegate to the WorldStateProvinceLookup extension during
+// the deprecation window (Refs #3403 Phase 1 Step 2).
+// ignore_for_file: deprecated_member_use
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -169,6 +173,108 @@ void main() {
     test('getProvince(fullId) delegates to region-scoped lookup', () {
       expect(getProvince(world, 'oldWorld|p1').displayName, 'Alpha');
       expect(getProvince(world, 'newWorld|n1').displayName, 'Gamma');
+    });
+  });
+
+  group('WorldState.updateRegionById', () {
+    test('updates oldWorld and preserves newWorld', () {
+      final updated = world.updateRegionById(
+        kRegionOldWorld,
+        (region) => RegionData(
+          provinces: [
+            ...region.provinces,
+            Province(
+              id: 'oldWorld|p3',
+              regionId: 'oldWorld',
+              displayName: 'Delta',
+            ),
+          ],
+          units: region.units,
+        ),
+      );
+
+      expect(updated.oldWorld.provinces.length, 3);
+      expect(updated.oldWorld.provinces.last.id, 'oldWorld|p3');
+      expect(updated.newWorld.provinces, hasLength(1));
+      expect(updated.newWorld.provinces.first.id, 'newWorld|n1');
+    });
+
+    test('throws for unknown region id', () {
+      expect(
+        () => world.updateRegionById('unknownRegion', (region) => region),
+        throwsStateError,
+      );
+    });
+  });
+
+  group('provinceListContainsProvinceId', () {
+    test('true when id matches a row', () {
+      expect(
+        provinceListContainsProvinceId(world.oldWorld.provinces, 'oldWorld|p1'),
+        isTrue,
+      );
+    });
+
+    test('false when absent', () {
+      expect(
+        provinceListContainsProvinceId(
+          world.oldWorld.provinces,
+          'oldWorld|missing',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('provinceListIndexOfProvinceId', () {
+    test('returns first index and matches indexWhere on duplicate ids', () {
+      final dupA = Province(
+        id: 'dup',
+        regionId: 'oldWorld',
+        displayName: 'First',
+      );
+      final dupB = Province(
+        id: 'dup',
+        regionId: 'oldWorld',
+        displayName: 'Second',
+      );
+      final provinces = [dupA, dupB];
+      expect(provinceListIndexOfProvinceId(provinces, 'dup'), 0);
+      expect(provinces.indexWhere((p) => p.id == 'dup'), 0);
+    });
+
+    test('returns null when absent', () {
+      expect(
+        provinceListIndexOfProvinceId(
+          world.oldWorld.provinces,
+          'oldWorld|missing',
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('decrementFortLevelForProvinceIdIfPresent', () {
+    test('returns same list reference when id missing', () {
+      final provinces = world.oldWorld.provinces;
+      final out = decrementFortLevelForProvinceIdIfPresent(
+        provinces,
+        'oldWorld|missing',
+      );
+      expect(identical(out, provinces), isTrue);
+    });
+
+    test('decrements fort for matching row', () {
+      final withFort = Province(
+        id: 'oldWorld|fx',
+        regionId: 'oldWorld',
+        displayName: 'Fort',
+        fortLevel: 2,
+      );
+      final list = [withFort];
+      final out = decrementFortLevelForProvinceIdIfPresent(list, 'oldWorld|fx');
+      expect(identical(out, list), isFalse);
+      expect(out.single.fortLevel, 1);
     });
   });
 }
