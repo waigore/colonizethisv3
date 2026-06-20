@@ -10,6 +10,17 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ---
 
+## Cell-fill render pipeline
+
+All PNG fill paths in `colonizethis_map` share a single cell-fill abstraction so the political (ownership), geographic (terrain), and base region/terrain renders differ **only by their colour strategy**, never by a copy-pasted nested fill loop (Refs #3574).
+
+- **Per-cell primitive:** `fillCellRect` owns the `cellSize`×`cellSize` pixel-block geometry for one tile cell. Every fill path uses it so block bounds are identical across renders.
+- **Grid fill:** `fillTileGridCells(image, height, width, cellSize, colorAt)` walks a 2D tile grid via the canonical row-major `TileMapGrid.forEachIndex` order and fills each cell with the RGB returned by the `colorAt(x, y)` strategy. Used by the base tile-map visualizer (terrain or region fill) and the game-world `Game`/topology ownership fill.
+- **View-data fill:** `fillRegionViewCells(image, cells, cellSize, colorAt)` is the companion for pre-flattened `RegionMapViewData` cells, filling each via `colorAt(cell)`. Used by `renderInitGameMapToPngFromViewData` for both political and geographic modes.
+- **Determinism:** Fill order is the same as the borders/markers drawn afterwards; the abstraction preserves byte-identical PNG output relative to the previous hand-rolled loops.
+
+---
+
 ## Tile map PNG export
 
 - **Fill:** Terrain present → color by terrain type. Sea = deep blue. Land = fixed color per terrain. No terrain → fallback to region-based coloring.
@@ -151,6 +162,9 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 - **Ownership colours:** Faction colours per GDD 09 (GPs, minors grey, tribes vibrant); keys are runtime faction id; `greatPowerColorOverride` applied when present. Capitals: gold circle; ports: distinct marker; legend includes ownership, capitals, ports.
 - **View model:** `RegionMapViewData` and `InitGameMapViewData` provide per-cell and overlay data; `renderInitGameMapToPngFromViewData` supports geographic mode param. View modes: political (ownership fill) vs geographic (terrain, resource glyphs); same view model, UI toggle. **Geographic legend:** In geographic mode the legend and map glyphs show only the subset g (Grain), t (Timber), i (Iron); full resource legend is in the base tile map visualizer.
 - **Multi-region:** `renderMultiRegionMapToPng(oldWorld, newWorld, options)` renders OW left, NW right, shared legend below; used by init_game.
+- **Given** a tile grid of `height` rows × `width` columns and a `colorAt(x, y)` strategy returning RGB, **when** `fillTileGridCells` renders the grid, **then** the System fills each cell `(x, y)` with the block `x1 = x*cellSize, y1 = y*cellSize, x2 = (x+1)*cellSize-1, y2 = (y+1)*cellSize-1` in row-major order, producing the same pixels as a hand-rolled nested `y`/`x` fill loop.
+- **Given** a flattened list of `CellViewData` and a `colorAt(cell)` strategy returning RGB, **when** `fillRegionViewCells` renders the cells, **then** the System fills each cell at `(cell.x, cell.y)` using the shared `fillCellRect` block geometry, in list order.
+- **Given** the political (ownership) and geographic (terrain) render paths, **when** either renders a region, **then** the System routes its cell fill through the shared cell-fill pipeline (`fillTileGridCells` / `fillRegionViewCells`) and the game-world visualizer contains no standalone ownership-fill nested loop duplicating the base fill logic.
 - **Integration:** Implemented in colonizethis_map; consumed by generate_map, init_game, ctdev. Terrain palette and border/legend behaviour fixed as specified.
 - **Given** a `Game` with tile maps, topology, and a `playerView` that exposes visibility per tile key `regionId|provinceId|x|y`, **when** `buildInitGameMapViewData` is invoked with that `playerView`, **then** each `CellViewData` in the resulting `InitGameMapViewData` has `visibility` set to `TileVisibility.visible`, `TileVisibility.fogged`, or `TileVisibility.unrevealed` according to the visibility entry for its tile key, defaulting to `TileVisibility.visible` when no entry exists.
 - **Given** a `Game` with at least one player in `Game.players`, **when** a tool builds a player-constrained map view for that game using `buildInitGameMapViewData`, **then** the tool uses the first player (`game.players.first`) as the source of `playerView` and sets `CellViewData.visibility` based on that player’s view.
