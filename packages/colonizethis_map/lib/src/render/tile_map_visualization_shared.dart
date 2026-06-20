@@ -4,7 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:image/image.dart' as img;
 
-import '../init_game_map_view_data.dart';
+import '../view/init_game_map_view_data.dart';
 import '../tile_map_colors.dart';
 import '../tile_map_grid.dart';
 import 'tile_map_resource_legend.dart';

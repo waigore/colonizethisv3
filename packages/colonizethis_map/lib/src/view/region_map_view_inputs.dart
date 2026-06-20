@@ -10,12 +10,12 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'province_ownership_view.dart';
-import 'region_data_access.dart';
-import 'tile_map_capital_markers.dart';
-import 'tile_map_colors.dart';
+import '../province_ownership_view.dart';
+import '../region_data_access.dart';
+import '../tile_map_capital_markers.dart';
+import '../tile_map_colors.dart';
 
-export 'map_region_dispatch.dart' show isOldWorldRegionId;
+export '../map_region_dispatch.dart' show isOldWorldRegionId;
 
 /// Capital marker coordinates plus ownership and colour inputs for one region.
 typedef RegionMapRenderInputs = ({
