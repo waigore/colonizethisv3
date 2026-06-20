@@ -88,7 +88,10 @@ void main() {
         ResearchFundingLevel.medium,
       );
       expect(p2.researchSlotAssignments?[2]?.techId, kTechIdBanking);
-      expect(p2.researchSlotAssignments?[2]?.funding, ResearchFundingLevel.high);
+      expect(
+        p2.researchSlotAssignments?[2]?.funding,
+        ResearchFundingLevel.high,
+      );
       expect(p2, p);
     });
 
@@ -130,6 +133,76 @@ void main() {
       });
       expect(p.researchSlotAssignments?[0]?.funding, ResearchFundingLevel.none);
     });
+
+    test('legacy save discards orphaned researchProgressByTechId on load', () {
+      final p = Player.fromJson({
+        'id': 'p1',
+        'displayName': 'Spain',
+        'isHuman': true,
+        'researchProgressByTechId': {
+          kTechIdBanking: 600,
+          kTechIdRoadConstruction: 120,
+        },
+      });
+      final progress = p.researchProgressByTechId;
+      expect(progress == null || progress.isEmpty, true);
+      final assignments = p.researchSlotAssignments;
+      expect(assignments == null || assignments.isEmpty, true);
+    });
+
+    test('research progress retained when its tech occupies a slot', () {
+      final p = Player.fromJson({
+        'id': 'p1',
+        'displayName': 'Spain',
+        'isHuman': true,
+        'researchProgressByTechId': {kTechIdBanking: 600},
+        'researchSlotAssignments': {
+          '0': {'techId': kTechIdBanking, 'funding': 'medium'},
+        },
+      });
+      expect(p.researchProgressByTechId?[kTechIdBanking], 600);
+    });
+
+    test('load keeps slot-bound progress and drops orphaned progress', () {
+      final p = Player.fromJson({
+        'id': 'p1',
+        'displayName': 'Spain',
+        'isHuman': true,
+        'researchProgressByTechId': {
+          kTechIdBanking: 600,
+          kTechIdRoadConstruction: 120,
+        },
+        'researchSlotAssignments': {
+          '0': {'techId': kTechIdBanking, 'funding': 'high'},
+        },
+      });
+      expect(p.researchProgressByTechId?[kTechIdBanking], 600);
+      expect(
+        p.researchProgressByTechId?.containsKey(kTechIdRoadConstruction),
+        false,
+      );
+    });
+
+    test(
+      'round-trip preserves progress for techs bound to slot assignments',
+      () {
+        final p = Player(
+          id: 'p1',
+          displayName: 'Spain',
+          isHuman: true,
+          researchProgressByTechId: const {kTechIdBanking: 600},
+          researchSlotAssignments: {
+            0: const ResearchSlotAssignment(
+              techId: kTechIdBanking,
+              funding: ResearchFundingLevel.medium,
+            ),
+          },
+        );
+        final p2 = Player.fromJson(p.toJson());
+        expect(p2.researchProgressByTechId?[kTechIdBanking], 600);
+        expect(p2, p);
+      },
+    );
 
     test('equality differs by researchSlotAssignments', () {
       const base = Player(id: 'p1', displayName: 'Spain', isHuman: true);

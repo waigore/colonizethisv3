@@ -170,6 +170,8 @@ class Player {
       return out;
     }
 
+    final slotAssignments = _readResearchSlotAssignments();
+
     return Player(
       id: json['id'] as String,
       displayName: json['displayName'] as String,
@@ -186,11 +188,36 @@ class Player {
       militaryLevel: (json['militaryLevel'] as int?),
       leaderKey: json['leaderKey'] as String?,
       personalityId: json['personalityId'] as String?,
-      researchProgressByTechId: _readResearchProgress(),
+      researchProgressByTechId: _pruneOrphanedResearchProgress(
+        _readResearchProgress(),
+        slotAssignments,
+      ),
       researchSlots: (json['researchSlots'] as num?)?.toInt(),
-      researchSlotAssignments: _readResearchSlotAssignments(),
+      researchSlotAssignments: slotAssignments,
       generalCap: (json['generalCap'] as num?)?.toInt(),
     );
+  }
+
+  /// Drops `researchProgressByTechId` entries whose tech is not bound to any
+  /// persisted slot in [assignments]. Legacy saves predate
+  /// `researchSlotAssignments` and may carry in-progress research that no
+  /// longer occupies a slot; per SPEC/game/research-state.md § Slot Occupancy
+  /// Persistence such orphaned progress is forfeited on load so every retained
+  /// in-progress tech is guaranteed to occupy a slot. Entries bound to a slot
+  /// are preserved verbatim. SPEC/game/research-state.md (load discard, d3-8).
+  static Map<String, int>? _pruneOrphanedResearchProgress(
+    Map<String, int>? progress,
+    Map<int, ResearchSlotAssignment>? assignments,
+  ) {
+    if (progress == null || progress.isEmpty) return progress;
+    final boundTechIds = <String>{
+      if (assignments != null)
+        for (final assignment in assignments.values) assignment.techId,
+    };
+    return <String, int>{
+      for (final entry in progress.entries)
+        if (boundTechIds.contains(entry.key)) entry.key: entry.value,
+    };
   }
 
   Player copyWith({
