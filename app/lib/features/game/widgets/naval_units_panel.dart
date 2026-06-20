@@ -22,6 +22,8 @@ import 'split_fleet_dialog.dart';
 import 'transfer_to_home_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
+import 'units/shared/units_combine_header_actions.dart';
+import 'units/shared/units_multi_selection_controller.dart';
 import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
@@ -65,7 +67,8 @@ class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
 }
 
 class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
-  final Set<String> _selectedFleetIds = {};
+  final UnitsMultiSelectionController _selection =
+      UnitsMultiSelectionController();
   final Set<String> _visibleScopedFleetIds = <String>{};
   static const double _desktopViewportThreshold = 1280;
   static const double _scaledWidthMin = 420;
@@ -79,7 +82,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     super.initState();
     final id = widget.initialSelectedFleetId;
     if (id != null && id.isNotEmpty) {
-      _selectedFleetIds.add(id);
+      _selection.toggle(id);
     }
     _moveRequestedSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((
       event,
@@ -107,7 +110,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final rowsById = <String, FleetRow>{
       for (final r in flat) _selectionFleetId(r): r,
     };
-    final activeIds = _selectedFleetIds.where(rowsById.containsKey).toList();
+    final activeIds =
+        _selection.selectedIds.where(rowsById.containsKey).toList();
     if (activeIds.length < 2) return false;
     final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
     if (homeTransferRows != null) {
@@ -155,48 +159,22 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   }
 
   void _toggleFleetSelection(FleetRow row) {
-    setState(() {
-      final id = _selectionFleetId(row);
-      if (_selectedFleetIds.contains(id)) {
-        _selectedFleetIds.remove(id);
-      } else {
-        _selectedFleetIds.add(id);
-      }
-    });
+    setState(() => _selection.toggle(_selectionFleetId(row)));
   }
 
-  bool? _headerSelectAllValue(List<FleetRow> flat) {
-    if (flat.isEmpty) return false;
-    final ids = flat.map(_selectionFleetId).toSet();
-    var n = 0;
-    for (final id in ids) {
-      if (_selectedFleetIds.contains(id)) n++;
-    }
-    if (n == 0) return false;
-    if (n == ids.length) return true;
-    return null;
-  }
+  Iterable<String> _fleetSelectionIds(List<FleetRow> flat) =>
+      flat.map(_selectionFleetId);
 
   /// Select-all header: from none or partial → select every row; from all → clear.
   /// Does not rely on [Checkbox] tristate `next` (indeterminate taps may pass false).
   void _onHeaderSelectAllTapped(List<FleetRow> flat) {
-    setState(() {
-      final ids = flat.map(_selectionFleetId).toSet();
-      final allSelected =
-          ids.isNotEmpty && ids.every(_selectedFleetIds.contains);
-      if (allSelected) {
-        _selectedFleetIds.clear();
-      } else {
-        _selectedFleetIds.clear();
-        _selectedFleetIds.addAll(ids);
-      }
-    });
+    setState(() => _selection.selectAllOrClear(_fleetSelectionIds(flat)));
   }
 
   void _performCombine(List<FleetRow> flat) {
     if (!_canCombineSelection(flat)) return;
 
-    final selected = Set<String>.from(_selectedFleetIds);
+    final selected = Set<String>.from(_selection.selectedIds);
     final homeTransferRows = _homeTransferRows(flat, selected);
     if (homeTransferRows != null &&
         _isEligibleHomeTransferSource(homeTransferRows.source)) {
@@ -251,7 +229,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       worldState: widget.game.worldState.copyWith(fleets: updated),
     );
 
-    setState(_selectedFleetIds.clear);
+    setState(_selection.clear);
     widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
   }
 
@@ -394,14 +372,11 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         ),
       );
       final valid = flat.map(_selectionFleetId).toSet();
-      final pruned = _selectedFleetIds.intersection(valid);
-      if (pruned.length != _selectedFleetIds.length) {
+      final prunedAny = !_selection.selectedIds.every(valid.contains);
+      if (prunedAny) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          setState(() {
-            _selectedFleetIds.clear();
-            _selectedFleetIds.addAll(pruned);
-          });
+          setState(() => _selection.retainOnly(valid));
         });
       }
       if (_pendingScopedAutoCloseAfterMove &&
@@ -491,7 +466,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
     final canCombine = !widget.readOnly && _canCombineSelection(flat);
-    final headerCheckbox = _headerSelectAllValue(flat);
+    final headerCheckbox = _selection.headerValue(_fleetSelectionIds(flat));
     final readOnly = widget.readOnly;
 
     final panel = UnitsPanelShell(
@@ -517,27 +492,16 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           ),
         if (tileScopeActive && hasAny && flat.isNotEmpty)
           const SizedBox(width: 4),
-        if (hasAny && flat.isNotEmpty && !readOnly) ...[
-          Tooltip(
-            message: headerCheckbox == true
-                ? l10n.naval_units_deselectAllFleets
-                : l10n.naval_units_selectAllFleets,
-            child: Checkbox(
-              tristate: true,
-              value: headerCheckbox,
-              onChanged: (_) => _onHeaderSelectAllTapped(flat),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
+        if (hasAny && flat.isNotEmpty && !readOnly)
+          ...unitsCombineHeaderActions(
+            headerValue: headerCheckbox,
+            selectAllTooltip: l10n.naval_units_selectAllFleets,
+            deselectAllTooltip: l10n.naval_units_deselectAllFleets,
+            combineLabel: l10n.common_combine,
+            canCombine: canCombine,
+            onSelectAll: () => _onHeaderSelectAllTapped(flat),
+            onCombine: () => _performCombine(flat),
           ),
-          const SizedBox(width: 4),
-          CtActionTextButton(
-            primary: true,
-            onPressed: canCombine ? () => _performCombine(flat) : null,
-            enabled: canCombine,
-            label: l10n.common_combine,
-          ),
-        ],
       ],
       hasContent: hasAny,
       listChildren: [
@@ -558,7 +522,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                       ),
                     )
                   : null,
-              isSelectedForCombine: _selectedFleetIds.contains(
+              isSelectedForCombine: _selection.contains(
                 _selectionFleetId(group.homeFleet!),
               ),
               combineSelectionEnabled: !readOnly,
@@ -587,7 +551,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                         ),
                       )
                     : null,
-                isSelectedForCombine: _selectedFleetIds.contains(
+                isSelectedForCombine: _selection.contains(
                   _selectionFleetId(row),
                 ),
                 combineSelectionEnabled: !readOnly,
