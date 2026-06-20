@@ -15,8 +15,8 @@ export 'src/tile_map_generator_land_seeds.dart';
 export 'src/tile_map_generation_fn.dart';
 export 'src/map_partition_gates_exhausted.dart';
 export 'src/locked_full_init_tile_map_pair.dart';
-export 'src/tile_map_visualization.dart';
-export 'src/tile_map_visualization_shared.dart'
+export 'src/render/tile_map_visualization.dart';
+export 'src/render/tile_map_visualization_shared.dart'
     show
         continentSeedMarkerRgb,
         factionOwnershipColorMapForGame,
@@ -36,6 +36,6 @@ export 'src/port_icon_placement.dart';
 export 'src/gp_ownership_tint.dart';
 export 'src/province_label_plate_tint.dart';
 export 'src/init_game_map_view_builder.dart';
-export 'src/game_world_state_map_visualizer.dart';
-export 'src/multi_region_map_rendering.dart';
+export 'src/render/game_world_state_map_visualizer.dart';
+export 'src/render/multi_region_map_rendering.dart';
 export 'src/map_format_util.dart';

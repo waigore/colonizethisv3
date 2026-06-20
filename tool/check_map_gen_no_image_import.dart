@@ -7,27 +7,25 @@ import 'package:path/path.dart' as p;
 /// Enforces the `colonizethis_map` generation→render layer boundary: only the
 /// PNG **render layer** may depend on `package:image`. Generation passes and
 /// view-model building must stay image-free so the package's internal layering
-/// (gen → view inputs → render) is one-directional and a future `lib/src/gen/`
-/// /`view/`/`render/` reorganization (issue #3574 slice 5) is a pure relocation.
+/// (gen → view inputs → render) is one-directional.
 ///
-/// A violation is any `import` / `export` of `package:image` in a
-/// `packages/colonizethis_map/lib/**` Dart file that is **not** in the
-/// documented render-layer allowlist ([_renderLayerAllowlist]). Comment lines
-/// are ignored. The allowlist is the pre-reorg definition of the render layer;
-/// after slice 5 it can be replaced by a `lib/src/render/**` path scope.
+/// As of issue #3574 slice 5 (render-layer relocation), the render layer is the
+/// `packages/colonizethis_map/lib/src/render/` directory: any Dart file under
+/// that path may depend on `package:image`. A violation is any `import` /
+/// `export` of `package:image` in a `packages/colonizethis_map/lib/**` Dart
+/// file **outside** that render directory. Comment lines are ignored.
 const _mapLibRoot = 'packages/colonizethis_map/lib';
 
-/// Render-layer files permitted to depend on `package:image` (paths relative to
-/// the repo root). These are the only `colonizethis_map` libraries that encode
-/// PNGs; everything else (generation passes, view-model builders, grid/topology
-/// helpers) must remain image-free.
-const _renderLayerAllowlist = <String>{
-  'packages/colonizethis_map/lib/src/tile_map_visualization.dart',
-  'packages/colonizethis_map/lib/src/tile_map_visualization_shared.dart',
-  'packages/colonizethis_map/lib/src/game_world_state_map_visualizer.dart',
-  'packages/colonizethis_map/lib/src/multi_region_map_rendering.dart',
-  'packages/colonizethis_map/lib/src/tile_map_resource_legend.dart',
-};
+/// Render-layer directory (relative to the repo root). Every Dart file under
+/// this path is a PNG-encoding render module permitted to depend on
+/// `package:image`; everything else (generation passes, view-model builders,
+/// grid/topology helpers) must remain image-free.
+const _renderLayerDir = 'packages/colonizethis_map/lib/src/render/';
+
+/// True when [relativePath] (repo-root-relative) is inside the render layer
+/// directory. Path separators are normalized so the check is OS-independent.
+bool isMapRenderLayerFile(String relativePath) =>
+    relativePath.replaceAll(r'\', '/').startsWith(_renderLayerDir);
 
 /// Matches an `import`/`export` directive that references `package:image`.
 /// The trailing `[/'"]` ensures a same-prefix package such as
@@ -71,7 +69,6 @@ int runCheckMapGenNoImageImport(
       findMapGenImageImportViolations(
         relativePath: relPath,
         source: file.readAsStringSync(),
-        renderLayerAllowlist: _renderLayerAllowlist,
       ),
     );
   }
@@ -83,10 +80,9 @@ int runCheckMapGenNoImageImport(
 
   logE(
     'ERROR: Only the colonizethis_map render layer may import package:image '
-    '(${_renderLayerAllowlist.length} allowlisted PNG-encoding files). '
+    '(files under $_renderLayerDir). '
     'Generation passes and view-model builders must stay image-free; move '
-    'rendering work into the render layer or extend the documented allowlist '
-    'in tool/check_map_gen_no_image_import.dart with rationale:',
+    'rendering work into the render layer (lib/src/render/):',
   );
   for (final v in violations) {
     logE('${v.path}:${v.line} ${v.message}');
@@ -97,9 +93,10 @@ int runCheckMapGenNoImageImport(
 List<MapGenImageImportViolation> findMapGenImageImportViolations({
   required String relativePath,
   required String source,
-  required Set<String> renderLayerAllowlist,
+  bool Function(String relativePath)? isRenderLayerFile,
 }) {
-  if (renderLayerAllowlist.contains(relativePath)) {
+  final isRender = isRenderLayerFile ?? isMapRenderLayerFile;
+  if (isRender(relativePath)) {
     return const [];
   }
   final lines = source.split('\n');

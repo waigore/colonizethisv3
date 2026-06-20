@@ -8,6 +8,18 @@
 
 Render tile maps and topology to PNG; provide view models for tools. Two visualizers share border drawing, legend layout, swatches.
 
+### Internal layering (render layer)
+
+`colonizethis_map` is layered one-directionally: **generation → view inputs → render** (Refs #3574). The **render layer** — the only modules permitted to depend on `package:image` for PNG encoding — lives under `packages/colonizethis_map/lib/src/render/`:
+
+- `render/tile_map_visualization.dart` — base tile map PNG visualizer.
+- `render/tile_map_visualization_shared.dart` — shared fill / borders / legend / swatch helpers.
+- `render/game_world_state_map_visualizer.dart` — game-world ownership/marker overlay visualizer.
+- `render/multi_region_map_rendering.dart` — OW+NW composite rendering.
+- `render/tile_map_resource_legend.dart` — resource legend drawing.
+
+Generation passes and view-model builders (flat `lib/src/`) must stay image-free. The boundary is enforced by `repo.map_gen_no_image_import`, which permits `package:image` only for files under `lib/src/render/` ([repo-lint.md](repo-lint.md)). The public `colonizethis_map.dart` barrel re-exports the render modules, so consumers (`app/`, `ctdev/`, `tool/`) are unaffected by the relocation.
+
 ---
 
 ## Cell-fill render pipeline
