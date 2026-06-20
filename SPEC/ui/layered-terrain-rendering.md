@@ -59,7 +59,7 @@ The map renderer draws terrain in **three passes**:
   - `tile_mountain` — Default mountain overlay
   - `tile_swamp` — Default swamp overlay
 - **Selection API note**: Terrain variant key selection is shared across L1 and L2+ terrain rendering so plains, forest, and hills variants follow one deterministic selector.
-- **Asset note (issue #3573)**: Hardwood and scrub forest currently reuse the existing `forest` / `forest_timber` PixelLab art for all four overlay keys as a placeholder; generating distinct scrub-forest art (and renaming the hardwood files) is a follow-up. The four standalone keys above are still registered and selected independently so distinct art can drop in without code changes.
+- **Asset note (issue #3573)**: Hardwood forest loads the renamed dense-canopy art `tile_hardwood_forest.png` / `tile_hardwood_forest_timber.png` (formerly `tile_forest.png` / `tile_forest_timber.png`). Scrub forest loads its own distinct sparse art `tile_scrub_forest.png` / `tile_scrub_forest_timber.png` (sparser, lighter foliage with more bare ground than hardwood). All four standalone keys are registered and selected independently, so any refreshed art (e.g. a future PixelLab pass) can drop in by replacing the PNG with no code change.
 
 ---
 

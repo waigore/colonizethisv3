@@ -30,11 +30,9 @@ enum TerrainLayer { layer0Sea, layer1LandBase, layer2Features }
 // Forest is split into hardwood and scrub variants (issue #3573 R8/R9). The
 // standalone tile keys mirror `tile_${TerrainType.name}` so
 // [TerrainTilesetCache.getStandaloneTile] resolves each base feature tile.
-//
-// NOTE (deferred, #3573 S4): distinct scrub art is not yet generated; both
-// hardwood and scrub currently load the existing `forest` / `forest_timber`
-// PixelLab art as a placeholder. The asset-rename + scrub icon generation is a
-// follow-up commit on this PR.
+// Hardwood loads the renamed `hardwood_forest` / `hardwood_forest_timber` art
+// (formerly `forest` / `forest_timber`); scrub loads its own distinct
+// `scrub_forest` / `scrub_forest_timber` art (#3573 R8/S4).
 const String _tileHardwoodForest = 'tile_hardwoodForest';
 const String _tileHardwoodForestTimber = 'tile_hardwoodForestTimber';
 const String _tileScrubForest = 'tile_scrubForest';
@@ -290,12 +288,12 @@ class TerrainTilesetCache {
       ]);
 
       for (final item in const <(String tileId, String assetStem)>[
-        // Hardwood + scrub forest reuse the existing forest art until distinct
-        // scrub art is generated (#3573 S4, deferred follow-up).
-        (_tileHardwoodForest, 'forest'),
-        (_tileHardwoodForestTimber, 'forest_timber'),
-        (_tileScrubForest, 'forest'),
-        (_tileScrubForestTimber, 'forest_timber'),
+        // Hardwood uses the renamed dense-canopy forest art; scrub uses its
+        // own distinct sparse art (#3573 R8/S4).
+        (_tileHardwoodForest, 'hardwood_forest'),
+        (_tileHardwoodForestTimber, 'hardwood_forest_timber'),
+        (_tileScrubForest, 'scrub_forest'),
+        (_tileScrubForestTimber, 'scrub_forest_timber'),
         (_tileHills, 'hills'),
         (_tileHillsMine, 'hills_mine'),
         (_tileHillsWool, 'hills_wool'),
