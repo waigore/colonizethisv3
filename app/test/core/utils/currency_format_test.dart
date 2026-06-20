@@ -2,9 +2,12 @@
 // SPEC/ui/train-civilians-dialog.md, SPEC/ui/train-military-dialog.md.
 
 import 'package:colonizethis_app/core/utils/currency_format.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('formatThousands', () {
     test('groups thousands with commas', () {
       expect(formatThousands(0), '0');
