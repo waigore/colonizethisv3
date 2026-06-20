@@ -119,6 +119,10 @@ void main() {
         playerProspectedTiles: const {
           'player_red': {'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
         },
+        tileState: const TileMapState(
+          improvementByTile: {'oldWorld|p1|0|0': 3},
+          roadLevelByTile: {'oldWorld|p1|0|0': 2},
+        ),
       );
 
       test('resourceAtTile returns mapped resource and null otherwise', () {
@@ -161,6 +165,16 @@ void main() {
           'p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
         });
         expect(state.tileKeysForRegion('newWorld'), isNull);
+      });
+
+      test('improvementLevelAtTile returns level and 0 when unrecorded', () {
+        expect(state.improvementLevelAtTile('oldWorld|p1|0|0'), 3);
+        expect(state.improvementLevelAtTile('oldWorld|p1|9|9'), 0);
+      });
+
+      test('roadLevelAtTile returns level and 0 when unrecorded', () {
+        expect(state.roadLevelAtTile('oldWorld|p1|0|0'), 2);
+        expect(state.roadLevelAtTile('oldWorld|p1|9|9'), 0);
       });
     });
 

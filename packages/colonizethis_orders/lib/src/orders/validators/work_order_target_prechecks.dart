@@ -204,7 +204,7 @@ OrderValidationResult? precheckBuildImprovement(
     resourceId: resourceId,
   );
   if (mineralRejection != null) return mineralRejection;
-  final currentLevel = ctx.game.worldState.tileState.improvementLevel(
+  final currentLevel = ctx.game.worldState.improvementLevelAtTile(
     o.targetTileKey,
   );
   if (currentLevel >= 4) {

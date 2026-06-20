@@ -30,9 +30,7 @@ int previewTotalTurnsForPendingWorkOrder({
     return max(1, totalTurnsForWork(order.target, fortLevel: fortLevel));
   }
   if (order.target == kWorkTargetBuildImprovement) {
-    final level = game.worldState.tileState.improvementLevel(
-      order.targetTileKey,
-    );
+    final level = game.worldState.improvementLevelAtTile(order.targetTileKey);
     return max(1, totalTurnsForWork(order.target, improvementLevel: level));
   }
   return max(1, totalTurnsForWork(order.target));
