@@ -633,6 +633,13 @@ rules:
     runner: dart
     script: tool/check_map_public_barrel_surface.dart
 
+  - rule_id: repo.map_gen_no_image_import
+    group: architecture
+    title: colonizethis_map generation/view code must not import package:image (render layer only) (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_gen_no_image_import.dart
+
   - rule_id: repo.map_region_data_access_central
     group: structure
     title: colonizethis_map lib old/new-world region data must route through regionDataForMapRegionId (Refs #3459)
