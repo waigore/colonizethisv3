@@ -6,8 +6,8 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-import 'tile_map_grid.dart';
-import 'tile_map_topology_helpers.dart';
+import '../tile_map_grid.dart';
+import '../tile_map_topology_helpers.dart';
 import 'tile_map_visualization_shared.dart'
     show
         colorMapFromIds,
@@ -27,7 +27,7 @@ import 'tile_map_visualization_shared.dart'
         swatchSize,
         terrainColorRgb,
         tileMapResourceGlyphs;
-export 'tile_map_image_viewer.dart' show openInDefaultViewer;
+export '../tile_map_image_viewer.dart' show openInDefaultViewer;
 
 /// Deep blue for sea zones. SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
