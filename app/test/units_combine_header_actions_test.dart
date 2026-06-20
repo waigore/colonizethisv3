@@ -1,10 +1,12 @@
 // Widget tests for the shared combine-cluster header builder extracted from the
 // military / naval unit panels (Refs #3546 AC4 / AC10).
 
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_combine_header_actions.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_combine_header_actions.dart';
 
 Future<void> _pumpActions(
   WidgetTester tester, {
@@ -34,6 +36,8 @@ Future<void> _pumpActions(
 }
 
 void main() {
+  suppressLogsForTests();
+
   group('unitsCombineHeaderActions', () {
     testWidgets('renders a tri-state checkbox plus a primary Combine pill', (
       tester,

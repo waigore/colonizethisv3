@@ -47,9 +47,8 @@ class UnitsMultiSelectionController {
 
   /// Replaces the selection with exactly [ids] (drops any stale entries).
   void replaceWith(Iterable<String> ids) {
-    _selectedIds
-      ..clear()
-      ..addAll(ids);
+    _selectedIds.clear();
+    _selectedIds.addAll(ids);
   }
 
   /// Keeps only the ids that are still present in [validIds].

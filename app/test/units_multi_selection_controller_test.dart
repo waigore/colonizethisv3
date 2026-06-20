@@ -1,8 +1,8 @@
 // Unit tests for the shared selection-dispatch contract extracted from the
 // military / naval unit panels (Refs #3546 AC4 / AC10).
 
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_multi_selection_controller.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('UnitsMultiSelectionController', () {
