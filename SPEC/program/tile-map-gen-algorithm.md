@@ -10,6 +10,17 @@ Generate per-region landmass and terrain (passes 1–6). One region (oldWorld or
 
 ---
 
+## Grid operations and traversal (canonical)
+
+All row-major tile-grid operations route through the single `TileMapGrid` helper (`packages/colonizethis_map/lib/src/tile_map_grid.dart`): deep copy (`TileMapGrid.copy`), allocation (`filled` / `generate`), and **cell traversal**.
+
+- **Canonical cell walk:** Generation passes (and downstream view/render walks) visit grid cells via `TileMapGrid.forEachIndex(height, width, (y, x) {…})` or `TileMapGrid.forEachCell(grid, (y, x, value) {…})` instead of hand-rolled nested `for (var y …) { for (var x …) }` loops, so the **row-major order (`y` outer, `x` inner)** that seeded generation depends on for bit-for-bit determinism has one definition. A guard (`return`) inside the visit callback is equivalent to a `continue` in the original loop body.
+- **Exemptions:** Passes whose correctness requires a non-row-major order (for example the **reversed** backward sweep of the Manhattan distance transform) keep their explicit loops and are documented inline.
+
+These constraints are enforced by `repo.map_grid_ops_central` (and the cell-iteration lint family) — see [repo-lint.md](repo-lint.md).
+
+---
+
 ## Voronoi assignment (reusable)
 
 Used for land (Pass 3), province (Pass 9), and sea zone (Pass 11):

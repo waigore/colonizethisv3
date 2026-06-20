@@ -55,21 +55,19 @@ void _registerCoastalSeaTilesAdjacentToLand(
   String seaZoneId,
   Map<int, List<(int x, int y)>> coastalByContinent,
 ) {
-  for (var y = 0; y < params.height; y++) {
-    for (var x = 0; x < params.width; x++) {
-      if (g[y][x] != kTileMapLandSentinel) continue;
-      final c = cg[y][x];
-      if (c < 0) continue;
-      _registerFirstOrthogonalSeaTouchingLand(
-        params,
-        g,
-        seaZoneId,
-        x,
-        y,
-        (nx, ny) => coastalByContinent[c]!.add((nx, ny)),
-      );
-    }
-  }
+  TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+    if (g[y][x] != kTileMapLandSentinel) return;
+    final c = cg[y][x];
+    if (c < 0) return;
+    _registerFirstOrthogonalSeaTouchingLand(
+      params,
+      g,
+      seaZoneId,
+      x,
+      y,
+      (nx, ny) => coastalByContinent[c]!.add((nx, ny)),
+    );
+  });
 }
 
 int _coastalNeighborScoreDelta(

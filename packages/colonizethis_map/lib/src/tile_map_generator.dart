@@ -294,11 +294,9 @@ class TileMapGenerator extends _TileMapGeneratorShell {
 
   int _countLandCells(List<List<String>> grid) {
     var landCount = 0;
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] == _landSentinel) landCount++;
-      }
-    }
+    TileMapGrid.forEachCell(grid, (_, __, value) {
+      if (value == _landSentinel) landCount++;
+    });
     return landCount;
   }
 
@@ -360,12 +358,10 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     );
     var terrainCount = 0;
     var resourceCount = 0;
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (t.$1[y][x] != null) terrainCount++;
-        if (t.$2[y][x] != null) resourceCount++;
-      }
-    }
+    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+      if (t.$1[y][x] != null) terrainCount++;
+      if (t.$2[y][x] != null) resourceCount++;
+    });
     onLog?.call('Pass 6: Terrain assigned ($terrainCount land cells)');
     onLog?.call('Pass 7: Resources placed ($resourceCount cells)');
     return t;

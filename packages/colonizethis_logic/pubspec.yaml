@@ -19,7 +19,6 @@ dependencies:
   colonizethis_orders:
   colonizethis_turn:
   colonizethis_data:
-  colonizethis_map:
   colonizethis_models:
   colonizethis_world:
 
@@ -27,6 +26,9 @@ dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
   colonizethis_test:
+  # Test-only: two integration tests import the map barrel; logic `lib/`
+  # has zero map imports, so map is a dev dependency (Refs #3574, slice 6).
+  colonizethis_map:
   coverage: ^1.15.0
   custom_lint: 0.8.1
   json_schema: ^5.2.2

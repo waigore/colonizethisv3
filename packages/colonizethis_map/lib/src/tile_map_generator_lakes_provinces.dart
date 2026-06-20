@@ -73,13 +73,11 @@ class _TileMapGenLakesProvinces implements MapGenStage {
     );
     final next = snapshotGrid(grid);
     final lakeCells = <(int x, int y)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] != seaZoneId) continue;
-        if (ocean.contains((x, y))) continue;
-        lakeCells.add((x, y));
-      }
-    }
+    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+      if (grid[y][x] != seaZoneId) return;
+      if (ocean.contains((x, y))) return;
+      lakeCells.add((x, y));
+    });
     final lakeComponents = _graph.connectedComponentsOfLand(lakeCells.toSet());
     var lakesFilled = 0;
     final coastalLandCandidates = <(int x, int y)>{};
@@ -146,45 +144,43 @@ class _TileMapGenLakesProvinces implements MapGenStage {
     final next = snapshotGrid(grid);
     final moatCells = <(int x, int y)>[];
 
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (next[y][x] != seaZoneId) continue;
-        if (!ocean.contains((x, y))) continue;
+    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+      if (next[y][x] != seaZoneId) return;
+      if (!ocean.contains((x, y))) return;
 
-        // Examine 4-neighbourhood for bordering land.
-        final neighbouringContinents = <int>{};
-        final sameContinentDirectionCounts = <int, int>{};
+      // Examine 4-neighbourhood for bordering land.
+      final neighbouringContinents = <int>{};
+      final sameContinentDirectionCounts = <int, int>{};
 
-        for (final (dx, dy) in kTileMapDirections4) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-            continue;
-          }
-          if (next[ny][nx] == seaZoneId) continue;
-          final continent = _graph.continentForLandCell(
-            nx,
-            ny,
-            landSeeds,
-            continentBySeedIndex,
-          );
-          neighbouringContinents.add(continent);
-          sameContinentDirectionCounts[continent] =
-              (sameContinentDirectionCounts[continent] ?? 0) + 1;
+      for (final (dx, dy) in kTileMapDirections4) {
+        final nx = x + dx;
+        final ny = y + dy;
+        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+          continue;
         }
-
-        if (neighbouringContinents.isEmpty) continue;
-        if (neighbouringContinents.length > 1) {
-          continue; // multi-continent strait, keep as sea
-        }
-
-        final c = neighbouringContinents.single;
-        final dirCount = sameContinentDirectionCounts[c] ?? 0;
-        if (dirCount < 2) continue; // not strongly enclosed by that continent
-
-        moatCells.add((x, y));
+        if (next[ny][nx] == seaZoneId) continue;
+        final continent = _graph.continentForLandCell(
+          nx,
+          ny,
+          landSeeds,
+          continentBySeedIndex,
+        );
+        neighbouringContinents.add(continent);
+        sameContinentDirectionCounts[continent] =
+            (sameContinentDirectionCounts[continent] ?? 0) + 1;
       }
-    }
+
+      if (neighbouringContinents.isEmpty) return;
+      if (neighbouringContinents.length > 1) {
+        return; // multi-continent strait, keep as sea
+      }
+
+      final c = neighbouringContinents.single;
+      final dirCount = sameContinentDirectionCounts[c] ?? 0;
+      if (dirCount < 2) return; // not strongly enclosed by that continent
+
+      moatCells.add((x, y));
+    });
 
     if (moatCells.isEmpty) return grid;
 
@@ -218,18 +214,16 @@ class _TileMapGenLakesProvinces implements MapGenStage {
     final byContinent = <int, List<(int x, int y)>>{
       for (var c = 0; c < numContinents; c++) c: [],
     };
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] != _landSentinel) continue;
-        final bestSeedIndex = _graph.nearestLandSeedIndexForCell(
-          x,
-          y,
-          landSeeds,
-        );
-        final c = continentBySeedIndex[bestSeedIndex];
-        byContinent[c]!.add((x, y));
-      }
-    }
+    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
+      if (grid[y][x] != _landSentinel) return;
+      final bestSeedIndex = _graph.nearestLandSeedIndexForCell(
+        x,
+        y,
+        landSeeds,
+      );
+      final c = continentBySeedIndex[bestSeedIndex];
+      byContinent[c]!.add((x, y));
+    });
     return byContinent;
   }
 
@@ -291,11 +285,9 @@ class _TileMapGenLakesProvinces implements MapGenStage {
   ) {
     if (provinceSeeds.isEmpty) return grid;
     final landCells = <(int x, int y)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] == _landSentinel) landCells.add((x, y));
-      }
-    }
+    TileMapGrid.forEachCell(grid, (y, x, value) {
+      if (value == _landSentinel) landCells.add((x, y));
+    });
     final assignment = assignCellsToNearestSeed(
       landCells,
       provinceSeeds,

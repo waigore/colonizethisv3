@@ -56,6 +56,7 @@ import 'check_logic_test_file_size.dart';
 import 'check_logic_domain_import_dag.dart';
 import 'check_logic_source_file_size.dart';
 import 'check_world_no_logic_deps.dart';
+import 'check_logic_no_map_deps.dart';
 import 'check_world_no_circular_imports.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
@@ -808,6 +809,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckGameWidgetsFileSize(repoRoot);
     case 'repo.world_no_logic_deps':
       return runCheckWorldNoLogicDeps(repoRoot);
+    case 'repo.logic_no_map_deps':
+      return runCheckLogicNoMapDeps(repoRoot);
     case 'repo.world_no_circular_imports':
       return runCheckWorldNoCircularImports(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
