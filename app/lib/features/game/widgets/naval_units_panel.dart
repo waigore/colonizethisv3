@@ -20,10 +20,9 @@ import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
 import 'transfer_to_home_fleet_dialog.dart';
+import 'units/shared/base_units_panel.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
-import 'units/shared/units_combine_header_actions.dart';
-import 'units/shared/units_multi_selection_controller.dart';
 import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
@@ -66,9 +65,7 @@ class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
 }
 
-class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
-  final UnitsMultiSelectionController _selection =
-      UnitsMultiSelectionController();
+class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
   final Set<String> _visibleScopedFleetIds = <String>{};
   static const double _desktopViewportThreshold = 1280;
   static const double _scaledWidthMin = 420;
@@ -82,7 +79,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     super.initState();
     final id = widget.initialSelectedFleetId;
     if (id != null && id.isNotEmpty) {
-      _selection.toggle(id);
+      // initState runs before the first build, so mutate the store directly
+      // rather than via the `setState`-wrapped dispatch.
+      selection.toggle(id);
     }
     _moveRequestedSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((
       event,
@@ -111,7 +110,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       for (final r in flat) _selectionFleetId(r): r,
     };
     final activeIds =
-        _selection.selectedIds.where(rowsById.containsKey).toList();
+        selection.selectedIds.where(rowsById.containsKey).toList();
     if (activeIds.length < 2) return false;
     final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
     if (homeTransferRows != null) {
@@ -159,7 +158,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   }
 
   void _toggleFleetSelection(FleetRow row) {
-    setState(() => _selection.toggle(_selectionFleetId(row)));
+    toggleSelection(_selectionFleetId(row));
   }
 
   Iterable<String> _fleetSelectionIds(List<FleetRow> flat) =>
@@ -168,13 +167,13 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   /// Select-all header: from none or partial → select every row; from all → clear.
   /// Does not rely on [Checkbox] tristate `next` (indeterminate taps may pass false).
   void _onHeaderSelectAllTapped(List<FleetRow> flat) {
-    setState(() => _selection.selectAllOrClear(_fleetSelectionIds(flat)));
+    selectAllOrClear(_fleetSelectionIds(flat));
   }
 
   void _performCombine(List<FleetRow> flat) {
     if (!_canCombineSelection(flat)) return;
 
-    final selected = Set<String>.from(_selection.selectedIds);
+    final selected = Set<String>.from(selection.selectedIds);
     final homeTransferRows = _homeTransferRows(flat, selected);
     if (homeTransferRows != null &&
         _isEligibleHomeTransferSource(homeTransferRows.source)) {
@@ -229,7 +228,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       worldState: widget.game.worldState.copyWith(fleets: updated),
     );
 
-    setState(_selection.clear);
+    clearSelection();
     widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
   }
 
@@ -372,11 +371,11 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         ),
       );
       final valid = flat.map(_selectionFleetId).toSet();
-      final prunedAny = !_selection.selectedIds.every(valid.contains);
+      final prunedAny = !selection.selectedIds.every(valid.contains);
       if (prunedAny) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          setState(() => _selection.retainOnly(valid));
+          setState(() => selection.retainOnly(valid));
         });
       }
       if (_pendingScopedAutoCloseAfterMove &&
@@ -466,17 +465,18 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
     final canCombine = !widget.readOnly && _canCombineSelection(flat);
-    final headerCheckbox = _selection.headerValue(_fleetSelectionIds(flat));
     final readOnly = widget.readOnly;
 
-    final panel = UnitsPanelShell(
+    // Header actions render as compact **primary** pills
+    // (`CtActionTextButton(primary: true)`) per SPEC/ui/naval-units-panel.md
+    // § Header actions and issue #3514 owner decisions #5 / #15. The optional
+    // tile-scope pill (and its 4px spacer) leads the shared select-all +
+    // Combine cluster assembled by `BaseUnitsPanelState.buildUnitsPanel`.
+    final panel = buildUnitsPanel(
       title: tileScopeActive
           ? l10n.naval_units_title_tile
           : l10n.naval_units_title,
-      // Header actions render as compact **primary** pills
-      // (`CtActionTextButton(primary: true)`) per SPEC/ui/naval-units-panel.md
-      // § Header actions and issue #3514 owner decisions #5 / #15.
-      actions: [
+      leadingActions: [
         if (tileScopeActive)
           CtActionTextButton(
             primary: true,
@@ -492,17 +492,15 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           ),
         if (tileScopeActive && hasAny && flat.isNotEmpty)
           const SizedBox(width: 4),
-        if (hasAny && flat.isNotEmpty && !readOnly)
-          ...unitsCombineHeaderActions(
-            headerValue: headerCheckbox,
-            selectAllTooltip: l10n.naval_units_selectAllFleets,
-            deselectAllTooltip: l10n.naval_units_deselectAllFleets,
-            combineLabel: l10n.common_combine,
-            canCombine: canCombine,
-            onSelectAll: () => _onHeaderSelectAllTapped(flat),
-            onCombine: () => _performCombine(flat),
-          ),
       ],
+      showCombineCluster: hasAny && flat.isNotEmpty && !readOnly,
+      selectableIds: _fleetSelectionIds(flat),
+      selectAllTooltip: l10n.naval_units_selectAllFleets,
+      deselectAllTooltip: l10n.naval_units_deselectAllFleets,
+      combineLabel: l10n.common_combine,
+      canCombine: canCombine,
+      onSelectAll: () => _onHeaderSelectAllTapped(flat),
+      onCombine: () => _performCombine(flat),
       hasContent: hasAny,
       listChildren: [
         for (final group in tree) ...[
@@ -522,7 +520,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                       ),
                     )
                   : null,
-              isSelectedForCombine: _selection.contains(
+              isSelectedForCombine: isSelected(
                 _selectionFleetId(group.homeFleet!),
               ),
               combineSelectionEnabled: !readOnly,
@@ -551,7 +549,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                         ),
                       )
                     : null,
-                isSelectedForCombine: _selection.contains(
+                isSelectedForCombine: isSelected(
                   _selectionFleetId(row),
                 ),
                 combineSelectionEnabled: !readOnly,
