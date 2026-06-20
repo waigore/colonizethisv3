@@ -96,6 +96,60 @@ class _ResearchAllocationContext {
   int treasury;
 }
 
+/// True when [techId] can occupy [slotIndex] given [slots] research slots: the
+/// slot index is in `0..slots-1`, the tech id is non-empty, and the tech exists
+/// in the catalog. SPEC/program/research-resolution.md § Slot occupancy
+/// persistence (catalog-aware reconciliation).
+bool _isResearchableSlotAssignment(int slotIndex, String techId, int slots) {
+  if (slotIndex < 0 || slotIndex >= slots) return false;
+  if (techId.isEmpty) return false;
+  return techById(techId) != null;
+}
+
+/// Builds the effective per-slot occupancy for one resolution pass.
+///
+/// Starts from the player's persisted [Player.researchSlotAssignments] (each
+/// entry validated against the catalog and `0..slots-1` bounds) and applies this
+/// turn's [playerOrders] as the UI mutation surface: a non-empty order
+/// assigns/updates the slot's tech and funding; an empty-techId order cancels
+/// (frees) the slot. SPEC/program/research-resolution.md § Slot occupancy
+/// persistence.
+Map<int, ResearchSlotAssignment> _effectiveSlotAssignments({
+  required Player player,
+  required List<ResearchOrder> playerOrders,
+  required int slots,
+}) {
+  final effective = <int, ResearchSlotAssignment>{};
+  final persisted = player.researchSlotAssignments;
+  if (persisted != null) {
+    for (final entry in persisted.entries) {
+      if (_isResearchableSlotAssignment(entry.key, entry.value.techId, slots)) {
+        effective[entry.key] = entry.value;
+      }
+    }
+  }
+  // One order per slot: last in the merged list wins.
+  final orderBySlot = <int, ResearchOrder>{};
+  for (final order in playerOrders) {
+    orderBySlot[order.slotIndex] = order;
+  }
+  for (final entry in orderBySlot.entries) {
+    final slotIndex = entry.key;
+    if (slotIndex < 0 || slotIndex >= slots) continue;
+    final order = entry.value;
+    if (order.techId.isEmpty) {
+      effective.remove(slotIndex);
+      continue;
+    }
+    if (techById(order.techId) == null) continue;
+    effective[slotIndex] = ResearchSlotAssignment(
+      techId: order.techId,
+      funding: order.funding,
+    );
+  }
+  return effective;
+}
+
 void _applyResearchOrderIfValid(
   _ResearchAllocationContext ctx,
   ResearchOrder order,
@@ -152,21 +206,19 @@ void _applyResearchOrderIfValid(
   );
   final maxDebt = maxDebtForPlayer(player);
 
-  final bySlot = <int, ResearchOrder>{};
-  for (final order in playerOrders) {
-    bySlot[order.slotIndex] = order;
-  }
-  final ordersPerSlot = bySlot.values.toList();
-
-  final assignedNonEmptyTechIds = <String>{};
-  for (final order in ordersPerSlot) {
-    if (order.slotIndex < 0 || order.slotIndex >= slots) continue;
-    if (order.techId.isEmpty) continue;
-    assignedNonEmptyTechIds.add(order.techId);
-  }
-  progress.removeWhere(
-    (techId, _) => !assignedNonEmptyTechIds.contains(techId),
+  // Persisted slot occupancy merged with this turn's orders. Cancelled or
+  // switched-out techs are no longer occupied and forfeit their progress.
+  final effectiveBySlot = _effectiveSlotAssignments(
+    player: player,
+    playerOrders: playerOrders,
+    slots: slots,
   );
+  final occupiedTechIds = <String>{
+    for (final a in effectiveBySlot.values) a.techId,
+  };
+  // Retain progress while the tech still occupies a slot; prune only for techs
+  // that are no longer assigned (cancellation / reassignment).
+  progress.removeWhere((techId, _) => !occupiedTechIds.contains(techId));
 
   final allocation = _ResearchAllocationContext(
     game: game,
@@ -177,8 +229,17 @@ void _applyResearchOrderIfValid(
     maxDebt: maxDebt,
     treasury: player.treasury,
   );
-  for (final order in ordersPerSlot) {
-    _applyResearchOrderIfValid(allocation, order);
+  final orderedSlots = effectiveBySlot.keys.toList()..sort();
+  for (final slotIndex in orderedSlots) {
+    final assignment = effectiveBySlot[slotIndex]!;
+    _applyResearchOrderIfValid(
+      allocation,
+      ResearchOrder(
+        slotIndex: slotIndex,
+        techId: assignment.techId,
+        funding: assignment.funding,
+      ),
+    );
   }
   final treasury = allocation.treasury;
 
@@ -193,6 +254,11 @@ void _applyResearchOrderIfValid(
   for (final techId in toUnlock) {
     workingUnlocked[techId] = true;
     progress.remove(techId);
+  }
+  // Completing a tech frees its slot; the assignment is not persisted.
+  if (toUnlock.isNotEmpty) {
+    final completed = toUnlock.toSet();
+    effectiveBySlot.removeWhere((_, a) => completed.contains(a.techId));
   }
 
   var nextState = state;
@@ -232,6 +298,7 @@ void _applyResearchOrderIfValid(
       treasury: treasury,
       techUnlocked: nextUnlocked,
       researchProgressByTechId: nextProgress,
+      researchSlotAssignments: effectiveBySlot,
       militaryLevel: militaryLevel,
       researchSlots: nextResearchSlots,
     ),
@@ -244,7 +311,12 @@ Game resolveResearchPhase(Game game, Orders orders) {
   final researchByPlayer = orders.researchOrdersByPlayerId;
   turnLog.i('research phase start turn=$turn');
 
-  if (researchByPlayer.isEmpty) {
+  // Persisted slot occupancy keeps in-progress techs researching across turns
+  // even when no fresh order is submitted for the slot this turn.
+  final anyPersistedAssignments = game.players.any(
+    (p) => p.researchSlotAssignments?.isNotEmpty ?? false,
+  );
+  if (researchByPlayer.isEmpty && !anyPersistedAssignments) {
     turnLog.i('research phase end turn=$turn playersWithOrders=0');
     return game;
   }
@@ -260,7 +332,9 @@ Game resolveResearchPhase(Game game, Orders orders) {
   for (final p in game.players) {
     final player = state.playerById(p.id)!;
     final playerOrders = researchByPlayer[player.id] ?? const <ResearchOrder>[];
-    if (playerOrders.isEmpty) {
+    final hasPersistedAssignments =
+        player.researchSlotAssignments?.isNotEmpty ?? false;
+    if (playerOrders.isEmpty && !hasPersistedAssignments) {
       updatedPlayers.add(player);
       continue;
     }

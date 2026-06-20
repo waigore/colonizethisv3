@@ -24,6 +24,7 @@ export 'src/province.dart';
 export 'src/province_id.dart';
 export 'src/quick_battle.dart';
 export 'src/regiment_transfer.dart';
+export 'src/research_slot_assignment.dart';
 export 'src/region.dart';
 export 'src/region_data.dart';
 export 'src/worker_pool.dart';

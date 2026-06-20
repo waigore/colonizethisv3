@@ -1058,6 +1058,22 @@ abstract class AppLocalizations {
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;
 
+  /// Title of the confirmation dialog shown before cancelling a slot with
+  /// accrued research progress (Refs #3512).
+  String get technologyPanel_cancelWarningTitle;
+
+  /// Body of the confirmation dialog shown before cancelling a slot with
+  /// accrued research progress (Refs #3512).
+  String technologyPanel_cancelWarningMessage(String name, int points);
+
+  /// Confirm-button label on the cancel-research forfeiture warning dialog
+  /// (Refs #3512).
+  String get technologyPanel_cancelWarningConfirm;
+
+  /// Cancel-button label on the cancel-research forfeiture warning dialog
+  /// (Refs #3512).
+  String get technologyPanel_cancelWarningKeep;
+
   /// Slot funding toggle label for ResearchFundingLevel.none (Refs #3512).
   String get technologyPanel_fundingNone;
 

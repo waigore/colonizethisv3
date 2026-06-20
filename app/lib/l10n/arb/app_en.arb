@@ -1866,6 +1866,30 @@
   "@technologyPanel_slotCancelled": {
     "description": "Snackbar shown when a research slot assignment is removed."
   },
+  "technologyPanel_cancelWarningTitle": "Forfeit research progress?",
+  "@technologyPanel_cancelWarningTitle": {
+    "description": "Title of the confirmation dialog shown before cancelling a slot with accrued research progress (Refs #3512)."
+  },
+  "technologyPanel_cancelWarningMessage": "Cancelling this slot forfeits {points} RP of progress on {name}. This cannot be undone.",
+  "@technologyPanel_cancelWarningMessage": {
+    "description": "Body of the confirmation dialog shown before cancelling a slot with accrued research progress (Refs #3512).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_cancelWarningConfirm": "Forfeit",
+  "@technologyPanel_cancelWarningConfirm": {
+    "description": "Confirm-button label on the cancel-research forfeiture warning dialog (Refs #3512)."
+  },
+  "technologyPanel_cancelWarningKeep": "Keep researching",
+  "@technologyPanel_cancelWarningKeep": {
+    "description": "Cancel-button label on the cancel-research forfeiture warning dialog (Refs #3512)."
+  },
   "technologyPanel_fundingNone": "None",
   "@technologyPanel_fundingNone": {
     "description": "Slot funding toggle label for ResearchFundingLevel.none (Refs #3512)."
