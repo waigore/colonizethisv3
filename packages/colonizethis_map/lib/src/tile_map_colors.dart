@@ -30,7 +30,8 @@ const List<(int r, int g, int b)> regionPalette = [
 /// Fixed RGB per terrain type for map fill and legend.
 const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
   TerrainType.plains: (200, 220, 160),
-  TerrainType.forest: (34, 100, 34),
+  TerrainType.hardwoodForest: (34, 100, 34),
+  TerrainType.scrubForest: (80, 140, 60),
   TerrainType.hills: (160, 130, 90),
   TerrainType.mountain: (120, 120, 120),
   TerrainType.swamp: (70, 100, 90),

@@ -112,7 +112,7 @@ void main() {
           shouldApplyFogToLandBase(
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.forest,
+            terrain: TerrainType.hardwoodForest,
           ),
           isFalse,
         );
@@ -120,7 +120,7 @@ void main() {
           shouldApplyFogToFeatureOverlay(
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.forest,
+            terrain: TerrainType.hardwoodForest,
           ),
           isTrue,
         );
@@ -678,7 +678,11 @@ void main() {
         });
 
         expect(
-          terrainTilesetCache.getStandaloneTile(TerrainType.forest),
+          terrainTilesetCache.getStandaloneTile(TerrainType.hardwoodForest),
+          isNotNull,
+        );
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.scrubForest),
           isNotNull,
         );
         expect(
@@ -721,10 +725,17 @@ void main() {
           )!,
           // Forest: non-timber should keep canonical default.
           featureOverlayTileKey(
-            terrain: TerrainType.forest,
+            terrain: TerrainType.hardwoodForest,
             resourceId: 'furs',
           ),
-          featureOverlayTileKey(terrain: TerrainType.forest, resourceId: null),
+          featureOverlayTileKey(
+            terrain: TerrainType.hardwoodForest,
+            resourceId: null,
+          ),
+          featureOverlayTileKey(
+            terrain: TerrainType.scrubForest,
+            resourceId: null,
+          ),
           // Hills: non-mine and non-wool should keep canonical default.
           featureOverlayTileKey(
             terrain: TerrainType.hills,

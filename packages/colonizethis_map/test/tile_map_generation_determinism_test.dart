@@ -37,7 +37,11 @@ void main() {
           regionId: 'oldWorld',
           resourceRules: ResourceRules.defaultRules,
         );
-        expect(tileMapGenerationDigest(result), '15ab8c90');
+        // Digest updated for the forest terrain split (#3573 R6): the
+        // hardwood/scrub weights and the plains reweight change the seeded
+        // terrain layout. Regenerate this constant whenever terrain
+        // distribution weights or generation order change intentionally.
+        expect(tileMapGenerationDigest(result), '30452b70');
       },
     );
 
