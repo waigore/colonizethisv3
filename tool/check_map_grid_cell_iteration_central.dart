@@ -35,8 +35,8 @@ const _mapLibRoot = 'packages/colonizethis_map/lib';
 ///   reverse) distance transform; it is not a forward-only row-major walk.
 const _exemptFiles = <String>{
   'packages/colonizethis_map/lib/src/tile_map_grid.dart',
-  'packages/colonizethis_map/lib/src/tile_map_grid_graph.dart',
-  'packages/colonizethis_map/lib/src/tile_map_manhattan_distance_transform.dart',
+  'packages/colonizethis_map/lib/src/gen/tile_map_grid_graph.dart',
+  'packages/colonizethis_map/lib/src/gen/tile_map_manhattan_distance_transform.dart',
 };
 
 /// Inline per-loop opt-out marker. Place on the outer `for (… y …)` header line

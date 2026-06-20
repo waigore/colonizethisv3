@@ -8,9 +8,13 @@
 
 Render tile maps and topology to PNG; provide view models for tools. Two visualizers share border drawing, legend layout, swatches.
 
-### Internal layering (view and render layers)
+### Internal layering (generation, view, and render layers)
 
-`colonizethis_map` is layered one-directionally: **generation → view inputs → render** (Refs #3574). The **render layer** — the only modules permitted to depend on `package:image` for PNG encoding — lives under `packages/colonizethis_map/lib/src/render/`:
+`colonizethis_map` is layered one-directionally: **generation → view inputs → render** (Refs #3574). The three layers map to explicit `lib/src/` subfolders — `gen/`, `view/`, `render/` — while cross-layer primitives (grid traversal, cardinal directions, region dispatch, topology helpers, tile-key/pipe utilities, validation) remain shared modules at the `lib/src/` root.
+
+The **generation layer** — the deterministic tile-map pipeline that turns `TileMapParams` into `TileMapResult` (land seeds, lakes/provinces, join-sea, terrain/resource passes) plus its generation-only helpers (Voronoi seeding, topology generation/inference, distance transforms, the `MapGenStage` / `MapGenPass` contracts, resource placement and cap state) — lives under `packages/colonizethis_map/lib/src/gen/`. Generation code must stay free of `package:image`.
+
+The **render layer** — the only modules permitted to depend on `package:image` for PNG encoding — lives under `packages/colonizethis_map/lib/src/render/`:
 
 - `render/tile_map_visualization.dart` — base tile map PNG visualizer.
 - `render/tile_map_visualization_shared.dart` — shared fill / borders / legend / swatch helpers.
@@ -24,7 +28,7 @@ The **view layer** — view-model building that converts generation/topology out
 - `view/init_game_map_view_data.dart` — view-data value types.
 - `view/region_map_view_inputs.dart` — region view-input bundling (colour/capital/port scopes).
 
-The view layer depends only on generation/topology and shared data; the render layer may depend on the view layer (for the view-data shapes it draws), never the reverse. Generation passes and view-model builders must stay image-free. The boundary is enforced by `repo.map_gen_no_image_import`, which permits `package:image` only for files under `lib/src/render/` ([repo-lint.md](repo-lint.md)). The public `colonizethis_map.dart` barrel re-exports the relocated render and view modules, so consumers (`app/`, `ctdev/`, `tool/`) are unaffected by the relocation.
+The view layer depends only on generation/topology and shared data; the render layer may depend on the view layer (for the view-data shapes it draws), never the reverse. Generation passes and view-model builders must stay image-free. The boundary is enforced by `repo.map_gen_no_image_import`, which permits `package:image` only for files under `lib/src/render/` (so `lib/src/gen/`, `lib/src/view/`, and shared root modules are all image-free) ([repo-lint.md](repo-lint.md)). The public `colonizethis_map.dart` barrel re-exports the relocated generation, render, and view modules, so consumers (`app/`, `ctdev/`, `tool/`) are unaffected by the relocation.
 
 ---
 

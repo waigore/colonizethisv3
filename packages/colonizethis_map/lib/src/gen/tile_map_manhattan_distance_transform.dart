@@ -1,6 +1,6 @@
 import 'dart:math' show min;
 
-import 'tile_map_grid.dart';
+import '../tile_map_grid.dart';
 
 /// Exact grid Manhattan (L1) distance from each cell to the nearest coordinate
 /// in [sources].

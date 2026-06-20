@@ -13,9 +13,9 @@ const _barrelFile = 'packages/colonizethis_map/lib/colonizethis_map.dart';
 
 /// Internal-only `src/` modules that must stay out of the public barrel.
 const _forbiddenBarrelExports = <String>[
-  'src/grid_voronoi.dart',
-  'src/topology_inference.dart',
-  'src/tile_map_grid_graph.dart',
+  'src/gen/grid_voronoi.dart',
+  'src/gen/topology_inference.dart',
+  'src/gen/tile_map_grid_graph.dart',
 ];
 
 /// True when [line] is a pure comment line so a mention in prose is not flagged.

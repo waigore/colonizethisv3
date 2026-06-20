@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_map/src/tile_map_manhattan_distance_maps.dart';
+import 'package:colonizethis_map/src/gen/tile_map_manhattan_distance_maps.dart';
 
 void main() {
   group('manhattanDistToOtherContinentsMaps', () {

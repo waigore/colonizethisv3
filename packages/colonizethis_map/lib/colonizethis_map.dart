@@ -3,18 +3,19 @@
 library;
 
 // Internal-only generation primitives are not re-exported from the public
-// barrel (Refs #3459 AC4): `grid_voronoi.dart` (deterministicNoise /
-// assignCellsToNearestSeed), `topology_inference.dart` (inferTopologyFromTileMap),
-// and `tile_map_grid_graph.dart` (TileMapGridGraph) are implementation details
-// of the generation passes. Same-package tests import them from `src/` directly.
+// barrel (Refs #3459 AC4): `gen/grid_voronoi.dart` (deterministicNoise /
+// assignCellsToNearestSeed), `gen/topology_inference.dart`
+// (inferTopologyFromTileMap), and `gen/tile_map_grid_graph.dart`
+// (TileMapGridGraph) are implementation details of the generation passes.
+// Same-package tests import them from `src/gen/` directly.
 // The `repo.map_public_barrel_surface` lint rule guards against re-export.
-export 'src/topology_generator.dart';
-export 'src/tile_map_topology_validation.dart';
-export 'src/tile_map_generator.dart';
-export 'src/tile_map_generator_land_seeds.dart';
-export 'src/tile_map_generation_fn.dart';
-export 'src/map_partition_gates_exhausted.dart';
-export 'src/locked_full_init_tile_map_pair.dart';
+export 'src/gen/topology_generator.dart';
+export 'src/gen/tile_map_topology_validation.dart';
+export 'src/gen/tile_map_generator.dart';
+export 'src/gen/tile_map_generator_land_seeds.dart';
+export 'src/gen/tile_map_generation_fn.dart';
+export 'src/gen/map_partition_gates_exhausted.dart';
+export 'src/gen/locked_full_init_tile_map_pair.dart';
 export 'src/render/tile_map_visualization.dart';
 export 'src/render/tile_map_visualization_shared.dart'
     show

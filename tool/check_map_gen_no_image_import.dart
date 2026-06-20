@@ -9,11 +9,13 @@ import 'package:path/path.dart' as p;
 /// view-model building must stay image-free so the package's internal layering
 /// (gen → view inputs → render) is one-directional.
 ///
-/// As of issue #3574 slice 5 (render-layer relocation), the render layer is the
-/// `packages/colonizethis_map/lib/src/render/` directory: any Dart file under
-/// that path may depend on `package:image`. A violation is any `import` /
-/// `export` of `package:image` in a `packages/colonizethis_map/lib/**` Dart
-/// file **outside** that render directory. Comment lines are ignored.
+/// As of issue #3574 slice 5 (gen/view/render relocation), the render layer is
+/// the `packages/colonizethis_map/lib/src/render/` directory: any Dart file
+/// under that path may depend on `package:image`. The generation layer
+/// (`lib/src/gen/`), the view layer (`lib/src/view/`), and shared root modules
+/// must all stay image-free. A violation is any `import` / `export` of
+/// `package:image` in a `packages/colonizethis_map/lib/**` Dart file **outside**
+/// that render directory. Comment lines are ignored.
 const _mapLibRoot = 'packages/colonizethis_map/lib';
 
 /// Render-layer directory (relative to the repo root). Every Dart file under

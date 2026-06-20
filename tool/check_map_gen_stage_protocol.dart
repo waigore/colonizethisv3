@@ -14,7 +14,7 @@ import 'package:path/path.dart' as p;
 /// [_requiredMapGenPassFamilyMinimum] of the four families to adopt it; the
 /// remaining family stays [MapGenStage]-only and is documented inline as exempt.
 const _stageContractFile =
-    'packages/colonizethis_map/lib/src/map_gen_stage.dart';
+    'packages/colonizethis_map/lib/src/gen/map_gen_stage.dart';
 
 const _requiredStageContractPattern = 'abstract interface class MapGenStage';
 
@@ -29,13 +29,13 @@ const _requiredMapGenPassFamilyMinimum = 3;
 
 /// Each generator service family must declare `implements MapGenStage`.
 const _requiredServiceBindings = <String, String>{
-  'packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart':
+  'packages/colonizethis_map/lib/src/gen/tile_map_generator_land_seeds.dart':
       'class TileMapGenLandSeeds',
-  'packages/colonizethis_map/lib/src/tile_map_generator_lakes_provinces.dart':
+  'packages/colonizethis_map/lib/src/gen/tile_map_generator_lakes_provinces.dart':
       'class _TileMapGenLakesProvinces',
-  'packages/colonizethis_map/lib/src/tile_map_generator_join_sea.dart':
+  'packages/colonizethis_map/lib/src/gen/tile_map_generator_join_sea.dart':
       'class _TileMapGenJoinSea',
-  'packages/colonizethis_map/lib/src/tile_map_generator_terrain_assign.dart':
+  'packages/colonizethis_map/lib/src/gen/tile_map_generator_terrain_assign.dart':
       'class _TileMapGenTerrainResource',
 };
 
@@ -161,7 +161,7 @@ int runCheckMapGenStageProtocol(
 
   logE(
     'ERROR: Tile-map generation services must implement MapGenStage '
-    '(packages/colonizethis_map/lib/src/map_gen_stage.dart). '
+    '(packages/colonizethis_map/lib/src/gen/map_gen_stage.dart). '
     'Refs #3459.',
   );
   for (final v in violations) {

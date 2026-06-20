@@ -15,7 +15,7 @@ class _TileMapGenJoinSea implements MapGenStage {
 ''';
       final violations = findMapGenStageProtocolViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_join_sea.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_join_sea.dart',
         source: src,
       );
       expect(violations, isEmpty);
@@ -29,7 +29,7 @@ class _TileMapGenJoinSea {
 ''';
       final violations = findMapGenStageProtocolViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_join_sea.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_join_sea.dart',
         source: src,
       );
       expect(violations, hasLength(1));
@@ -57,7 +57,7 @@ class TileMapGenLandSeeds
 ''';
       final violations = findMapGenStageProtocolViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_land_seeds.dart',
         source: src,
       );
       expect(violations, isEmpty);

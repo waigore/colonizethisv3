@@ -1,6 +1,6 @@
 import 'package:riverpod/riverpod.dart';
 
-import '../tile_map_generation_fn.dart';
+import '../gen/tile_map_generation_fn.dart';
 
 /// Default [TileMapRegionGenerator]. Override in tests via [ProviderContainer].
 final tileMapRegionGeneratorProvider = Provider<TileMapRegionGenerator>((ref) {

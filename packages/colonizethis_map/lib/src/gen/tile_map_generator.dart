@@ -7,14 +7,14 @@ import 'package:colonizethis_map/package_logger.dart';
 
 import 'grid_voronoi.dart';
 import 'map_gen_pass_payloads.dart';
-import 'map_validation_exception.dart';
+import '../map_validation_exception.dart';
 import 'tile_map_generator_land_seeds.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_distance_sentinels.dart';
-import 'tile_map_directions.dart';
+import '../tile_map_directions.dart';
 import 'map_gen_stage.dart';
-import 'tile_map_grid.dart';
+import '../tile_map_grid.dart';
 import 'tile_map_grid_graph.dart';
 import 'tile_map_resource_cap_state.dart';
 import 'tile_map_resource_placement.dart';
@@ -24,9 +24,6 @@ import 'topology_inference.dart';
 
 part 'tile_map_generator_types.dart';
 part 'tile_map_generator_join_sea.dart';
-part 'tile_map_generator_join_sea_bridge_part.dart';
-part 'tile_map_generator_join_sea_jitter_part.dart';
-part 'tile_map_generator_join_sea_subdivide_part.dart';
 part 'tile_map_generator_terrain_assign.dart';
 part 'tile_map_generator_terrain_hardwood_part.dart';
 part 'tile_map_generator_terrain_noise.dart';

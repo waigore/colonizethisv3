@@ -1,4 +1,4 @@
-import 'tile_map_grid.dart';
+import '../tile_map_grid.dart';
 import 'tile_map_land_seed_contract.dart';
 
 /// Common contract for tile-map generation service families (Refs #3459).
