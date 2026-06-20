@@ -68,12 +68,12 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
       WidgetbookUseCase(
         name: 'With map — province selected',
         builder: (context) =>
-            _MapWithOverlayStory(selectedId: sampleProvinceIdForOverlay),
+            MapWithOverlayStory(selectedId: sampleProvinceIdForOverlay),
       ),
       WidgetbookUseCase(
         name: 'With map — sea zone selected',
         builder: (context) =>
-            _MapWithOverlayStory(selectedId: sampleSeaZoneIdForOverlay),
+            MapWithOverlayStory(selectedId: sampleSeaZoneIdForOverlay),
       ),
     ],
   ),
@@ -85,8 +85,9 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
 /// `SPEC/ui/production-panel.md` § Widgetbook ("Production stories use
 /// `ProviderScope` and the same preview helpers as the app so **Breakdown**
 /// opens a live dialog") and § Integration. Refs #2862 S6.
-class _ProductionPanelStory extends StatelessWidget {
-  const _ProductionPanelStory({
+class ProductionPanelStory extends StatelessWidget {
+  const ProductionPanelStory({
+    super.key,
     this.playerOverride,
     this.useFullAvailability = true,
   });
@@ -109,7 +110,7 @@ class _ProductionPanelStory extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800, maxHeight: 500),
-            child: _ProductionPanelStoryBody(
+            child: ProductionPanelStoryBody(
               playerOverride: playerOverride,
               useFullAvailability: useFullAvailability,
             ),
@@ -120,7 +121,7 @@ class _ProductionPanelStory extends StatelessWidget {
   }
 }
 
-/// Inner consumer body for [_ProductionPanelStory]. Reads
+/// Inner consumer body for [ProductionPanelStory]. Reads
 /// [productionDesiredOutputProvider] to drive `desiredOutputByRecipe` and
 /// computes `netDeltasByCommodity` through
 /// `previewStockpileNetDeltaByCommodityForPlayer` so signed deltas on the
@@ -130,8 +131,9 @@ class _ProductionPanelStory extends StatelessWidget {
 /// re-reads the provider and recomputes the per-phase deltas from the same
 /// preview helper. SPEC/ui/production-panel.md § Widgetbook +
 /// § Acceptance criteria — Breakdown live update.
-class _ProductionPanelStoryBody extends ConsumerWidget {
-  const _ProductionPanelStoryBody({
+class ProductionPanelStoryBody extends ConsumerWidget {
+  const ProductionPanelStoryBody({
+    super.key,
     this.playerOverride,
     this.useFullAvailability = true,
   });
@@ -219,16 +221,16 @@ class _ProductionPanelStoryBody extends ConsumerWidget {
 
 /// Civilian Units Panel + map in tandem. SPEC/ui/civilian-units-panel.md.
 /// Demonstrates assign (order menu → valid tiles glow → tile click) and cancel with real game/map.
-class _CivilianPanelWithMapStory extends StatefulWidget {
-  const _CivilianPanelWithMapStory();
+class CivilianPanelWithMapStory extends StatefulWidget {
+  const CivilianPanelWithMapStory({super.key});
 
   @override
-  State<_CivilianPanelWithMapStory> createState() =>
-      _CivilianPanelWithMapStoryState();
+  State<CivilianPanelWithMapStory> createState() =>
+      CivilianPanelWithMapStoryState();
 }
 
-class _CivilianPanelWithMapStoryState
-    extends State<_CivilianPanelWithMapStory> {
+class CivilianPanelWithMapStoryState
+    extends State<CivilianPanelWithMapStory> {
   late Game _game;
   late AppEventBus _panelBus;
   final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
@@ -466,8 +468,8 @@ class _CivilianPanelWithMapStoryState
 }
 
 /// Civilian Units Panel opened as bottom sheet (slide up from bottom). SPEC/ui/civilian-units-panel.md.
-class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
-  const _CivilianPanelAsBottomSheetStory();
+class CivilianPanelAsBottomSheetStory extends StatelessWidget {
+  const CivilianPanelAsBottomSheetStory({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -554,16 +556,16 @@ class _CivilianPanelBottomSheetDemoLayout extends StatelessWidget {
 }
 
 /// Military Units Panel + map in tandem. SPEC/ui/military-units-panel.md.
-class _MilitaryPanelWithMapStory extends StatefulWidget {
-  const _MilitaryPanelWithMapStory();
+class MilitaryPanelWithMapStory extends StatefulWidget {
+  const MilitaryPanelWithMapStory({super.key});
 
   @override
-  State<_MilitaryPanelWithMapStory> createState() =>
-      _MilitaryPanelWithMapStoryState();
+  State<MilitaryPanelWithMapStory> createState() =>
+      MilitaryPanelWithMapStoryState();
 }
 
-class _MilitaryPanelWithMapStoryState
-    extends State<_MilitaryPanelWithMapStory> {
+class MilitaryPanelWithMapStoryState
+    extends State<MilitaryPanelWithMapStory> {
   int _regionIndex = 0;
   String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;
