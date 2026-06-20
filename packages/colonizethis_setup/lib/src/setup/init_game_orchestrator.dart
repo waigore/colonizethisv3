@@ -15,6 +15,7 @@ import 'setup_constants.dart';
 import 'effective_setup_seed.dart';
 import 'faction_setup_helpers.dart';
 import 'game_setup.dart';
+import 'gp_starting_grain.dart';
 import 'init_pipeline_retry.dart';
 import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
@@ -229,6 +230,22 @@ _runLockedFullInitPipeline({
     effectiveSeed: effectiveSeed,
     modeLabel: 'locked full-init',
     onAttemptError: (error, stackTrace, attempt, isLastAttempt) {
+      // A generated layout can leave a Great Power capital province with fewer
+      // than four eligible grain-bootstrap tiles (see
+      // SPEC/game/tile-map-and-generation.md § Great Power starting grain). Like
+      // partition-gate exhaustion, treat this as an infeasible layout and
+      // regenerate with a bumped map seed; the bootstrap's own fatal error still
+      // propagates once attempts are exhausted.
+      if (error is GreatPowerGrainBootstrapError) {
+        if (!isLastAttempt) {
+          setupLog.w(
+            'logic: locked full-init grain bootstrap infeasible at '
+            'attempt=$attempt; bumping mapSeed (details=$error)',
+          );
+          return InitPipelineErrorAction.retry;
+        }
+        return InitPipelineErrorAction.unhandled;
+      }
       if (error is! MapPartitionGatesExhaustedException) {
         return InitPipelineErrorAction.unhandled;
       }
@@ -285,6 +302,19 @@ _runFreeformInitPipeline({
   return runInitPipelineWithRetries(
     effectiveSeed: effectiveSeed,
     modeLabel: 'freeform init',
+    onAttemptError: (error, stackTrace, attempt, isLastAttempt) {
+      // Regenerate with a bumped seed when a layout cannot host the Great Power
+      // grain bootstrap (see locked pipeline note); the fatal error still
+      // propagates on the final attempt.
+      if (error is GreatPowerGrainBootstrapError && !isLastAttempt) {
+        setupLog.w(
+          'logic: freeform init grain bootstrap infeasible at '
+          'attempt=$attempt; bumping mapSeed (details=$error)',
+        );
+        return InitPipelineErrorAction.retry;
+      }
+      return InitPipelineErrorAction.unhandled;
+    },
     generateAndCreate: (mapSeed) {
       final mapGenParams = MapGenerationParams(
         numContinents: config.continentCount,

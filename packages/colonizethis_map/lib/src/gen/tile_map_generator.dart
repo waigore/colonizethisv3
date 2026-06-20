@@ -25,6 +25,7 @@ import 'topology_inference.dart';
 part 'tile_map_generator_types.dart';
 part 'tile_map_generator_join_sea.dart';
 part 'tile_map_generator_terrain_assign.dart';
+part 'tile_map_generator_terrain_hardwood_part.dart';
 part 'tile_map_generator_terrain_noise.dart';
 part 'tile_map_generator_lakes_provinces.dart';
 

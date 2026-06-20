@@ -53,5 +53,46 @@ void main() {
       expect(state.totalCount, 4);
       expect(state.bothCount, 2);
     });
+
+    test(
+      'fromExisting excludes forest-terrain cells from cap accounting (R3 #3573)',
+      () {
+        final rules = ResourceRules.defaultRules;
+        final resourceGrid = <List<Resource?>>[
+          [Resource.timber, Resource.grain],
+          [Resource.timber, Resource.iron],
+        ];
+        // (0,0) and (0,1) are forest timber (guaranteed); they must be excluded.
+        final terrainGrid = <List<TerrainType?>>[
+          [TerrainType.hardwoodForest, TerrainType.plains],
+          [TerrainType.scrubForest, TerrainType.hills],
+        ];
+        final state = MultiRegionCapState.fromExisting(
+          0.3,
+          rules,
+          'newWorld',
+          resourceGrid,
+          terrainGrid: terrainGrid,
+        );
+        // Only the non-forest grain (region-only) and iron (both) are counted.
+        expect(state.totalCount, 2);
+        expect(state.bothCount, 1);
+      },
+    );
+
+    test('fromExisting without terrainGrid counts every resource (regression)', () {
+      final rules = ResourceRules.defaultRules;
+      final resourceGrid = <List<Resource?>>[
+        [Resource.timber, Resource.grain],
+      ];
+      final state = MultiRegionCapState.fromExisting(
+        0.3,
+        rules,
+        'oldWorld',
+        resourceGrid,
+      );
+      expect(state.totalCount, 2);
+      expect(state.bothCount, 1);
+    });
   });
 }

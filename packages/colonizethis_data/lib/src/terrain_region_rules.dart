@@ -8,7 +8,8 @@ import 'terrain_type.dart';
 /// Phase 1: all current types; extend when adding e.g. Grain Farm, Open Range.
 const List<TerrainType> oldWorldTerrains = [
   TerrainType.plains,
-  TerrainType.forest,
+  TerrainType.hardwoodForest,
+  TerrainType.scrubForest,
   TerrainType.hills,
   TerrainType.mountain,
   TerrainType.swamp,
@@ -18,7 +19,8 @@ const List<TerrainType> oldWorldTerrains = [
 /// Includes desert (diamonds). SPEC/game/resource-terrain-region-rules.md.
 const List<TerrainType> newWorldTerrains = [
   TerrainType.plains,
-  TerrainType.forest,
+  TerrainType.hardwoodForest,
+  TerrainType.scrubForest,
   TerrainType.hills,
   TerrainType.mountain,
   TerrainType.swamp,
@@ -62,19 +64,27 @@ class TerrainDistribution {
 
 // Old World: moderately mountainous with significant plains and forest, some
 // hills and a small amount of swamp.
+//
+// Forest is split into hardwood (rare, weight 0.3) and scrub (common, weight
+// 1.2) at a 1:4 ratio; total forest weight is halved (3.0 -> 1.5) and the freed
+// 1.5 weight is added to plains (4.0 -> 5.5). See issue #3573 R6.
 const double _oldWorldMountainFraction = 0.15;
 const Map<TerrainType, double> _oldWorldNonMountainWeights = {
-  TerrainType.plains: 4.0,
-  TerrainType.forest: 3.0,
+  TerrainType.plains: 5.5,
+  TerrainType.hardwoodForest: 0.3,
+  TerrainType.scrubForest: 1.2,
   TerrainType.hills: 2.0,
   TerrainType.swamp: 1.0,
 };
 
 // New World: includes desert (diamonds). SPEC/game/resource-terrain-region-rules.md.
+// Same hardwood/scrub forest split and plains reweighting as the Old World
+// (issue #3573 R6).
 const double _newWorldMountainFraction = 0.15;
 const Map<TerrainType, double> _newWorldNonMountainWeights = {
-  TerrainType.plains: 4.0,
-  TerrainType.forest: 3.0,
+  TerrainType.plains: 5.5,
+  TerrainType.hardwoodForest: 0.3,
+  TerrainType.scrubForest: 1.2,
   TerrainType.hills: 2.0,
   TerrainType.swamp: 1.0,
   TerrainType.desert: 1.0,

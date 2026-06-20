@@ -463,6 +463,7 @@ class _TileMapGenTerrainResource
       distribution,
       rnd,
     );
+    _clusterHardwoodForest(terrainGrid, component, rnd);
   }
 
   Map<TerrainType, int> _buildComponentTargets(

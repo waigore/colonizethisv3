@@ -69,6 +69,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
             resourceRules,
             mapRegionId,
             rg,
+            terrainGrid: tg,
           )
         : null;
 

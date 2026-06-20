@@ -400,11 +400,15 @@ double medalMultiplierFor(int medals) {
 enum DifficultyLevel { introductory, normal, hard, impossible }
 
 /// Terrain modifier: multiplier applied to attacker or defender strength.
-/// Key: terrain id (plains, forest, hills, mountain, swamp, desert).
+/// Key: terrain id (`TerrainType.name`): plains, hardwoodForest, scrubForest,
+/// hills, mountain, swamp, desert.
 /// Values: attacker modifier, defender modifier (1.0 = no change).
+/// Hardwood forest gives a stronger defender bonus (dense cover, ×1.5) than
+/// scrub forest (×1.1, same as the legacy forest). Issue #3573 R5.
 const Map<String, (double attacker, double defender)> terrainModifiers = {
   'plains': (1.0, 1.0),
-  'forest': (0.9, 1.1),
+  'hardwoodForest': (0.9, 1.5),
+  'scrubForest': (0.9, 1.1),
   'hills': (0.95, 1.05),
   'mountain': (0.8, 1.2),
   'swamp': (0.85, 1.15),

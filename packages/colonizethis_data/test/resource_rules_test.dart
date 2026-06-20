@@ -39,7 +39,7 @@ void main() {
       final rules = ResourceRules.defaultRules;
       expect(rules.isAllowedOnTerrain(Resource.tin, TerrainType.swamp), isTrue);
       expect(
-        rules.isAllowedOnTerrain(Resource.tin, TerrainType.forest),
+        rules.isAllowedOnTerrain(Resource.tin, TerrainType.hardwoodForest),
         isFalse,
       );
       expect(
@@ -48,6 +48,36 @@ void main() {
       );
       expect(
         rules.isAllowedOnTerrain(Resource.gold, TerrainType.hills),
+        isFalse,
+      );
+    });
+
+    test('timber spawns on both hardwood and scrub forest (#3573 R2)', () {
+      final rules = ResourceRules.defaultRules;
+      expect(
+        rules.isAllowedOnTerrain(Resource.timber, TerrainType.hardwoodForest),
+        isTrue,
+      );
+      expect(
+        rules.isAllowedOnTerrain(Resource.timber, TerrainType.scrubForest),
+        isTrue,
+      );
+      // Negative: timber is still forest-only (not on plains).
+      expect(
+        rules.isAllowedOnTerrain(Resource.timber, TerrainType.plains),
+        isFalse,
+      );
+    });
+
+    test('furs spawns on hardwood forest only, never scrub (#3573 R2)', () {
+      final rules = ResourceRules.defaultRules;
+      expect(
+        rules.isAllowedOnTerrain(Resource.furs, TerrainType.hardwoodForest),
+        isTrue,
+      );
+      // Negative: furs never appears on scrub forest.
+      expect(
+        rules.isAllowedOnTerrain(Resource.furs, TerrainType.scrubForest),
         isFalse,
       );
     });

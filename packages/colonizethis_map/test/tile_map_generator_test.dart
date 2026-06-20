@@ -211,6 +211,12 @@ void main() {
           for (var x = 0; x < result.width; x++) {
             final r = result.resourceAt(x, y);
             if (r == null) continue;
+            // Guaranteed forest resource placements (timber/furs) are excluded
+            // from multi-region cap accounting (R3.5, issue #3573), mirroring
+            // the bootstrap-grain exclusion; the cap governs only non-forest
+            // cells. SPEC/program/tile-map-gen-resources.md.
+            final terrain = result.terrainAt(x, y);
+            if (terrain != null && isForestTerrain(terrain)) continue;
             totalCount++;
             if (rules.regionRule[r] == ResourceRegionRule.both) bothCount++;
           }

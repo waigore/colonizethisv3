@@ -248,7 +248,7 @@ void main() {
           ['s1', 's1'],
         ],
         terrainGrid: [
-          [TerrainType.plains, TerrainType.forest],
+          [TerrainType.plains, TerrainType.hardwoodForest],
           [null, null],
         ],
         resourceGrid: [
@@ -434,7 +434,7 @@ void main() {
                 regionId: 'oldWorld',
                 ownerId: 'pl1',
                 fortLevel: 2,
-                terrain: 'forest',
+                terrain: 'hardwoodForest',
               ),
             ],
             units: [
@@ -464,7 +464,10 @@ void main() {
       final loaded = adapter.load(box, 'phase3');
       expect(loaded, isNotNull);
       expect(loaded!.worldState.oldWorld.provinces.single.fortLevel, 2);
-      expect(loaded.worldState.oldWorld.provinces.single.terrain, 'forest');
+      expect(
+        loaded.worldState.oldWorld.provinces.single.terrain,
+        'hardwoodForest',
+      );
       expect(loaded.worldState.oldWorld.units.single.medals, 3);
       expect(loaded.players.single.militaryLevel, 4);
       expect(loaded.minorNations.single.effectiveMilitaryLevel, 4);
