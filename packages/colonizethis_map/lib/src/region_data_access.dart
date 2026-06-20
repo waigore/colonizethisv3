@@ -13,8 +13,7 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'map_validation_exception.dart';
-import 'region_constants.dart';
+import 'map_region_dispatch.dart';
 
 /// Returns the [RegionData] for a map [regionId] (`kRegionOldWorld` or
 /// `kRegionNewWorld`).
@@ -22,12 +21,12 @@ import 'region_constants.dart';
 /// Single source of truth for the package's old/new-world data selection so
 /// callers read `regionDataForMapRegionId(world, regionId).provinces` (or
 /// `.units`) instead of branching on the region directly. Throws
-/// [MapValidationException] for any other id so an unexpected region surfaces loudly
-/// rather than silently defaulting to one world.
-RegionData regionDataForMapRegionId(WorldState world, String regionId) {
-  if (regionId == kRegionOldWorld) return world.oldWorld;
-  if (regionId == kRegionNewWorld) return world.newWorld;
-  throw MapValidationException(
-    'map: unknown region id "$regionId" (expected $kRegionOldWorld or $kRegionNewWorld)',
-  );
-}
+/// `MapValidationException` (via [selectByMapRegionId]) for any other id so an
+/// unexpected region surfaces loudly rather than silently defaulting to one
+/// world.
+RegionData regionDataForMapRegionId(WorldState world, String regionId) =>
+    selectByMapRegionId(
+      regionId,
+      oldWorld: () => world.oldWorld,
+      newWorld: () => world.newWorld,
+    );

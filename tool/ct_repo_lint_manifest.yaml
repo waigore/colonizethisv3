@@ -640,6 +640,13 @@ rules:
     runner: dart
     script: tool/check_map_region_data_access_central.dart
 
+  - rule_id: repo.map_region_dispatch_central
+    group: structure
+    title: colonizethis_map lib old/new-world region dispatch must route through selectByMapRegionId (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_region_dispatch_central.dart
+
   - rule_id: repo.land_province_bucket_keys
     group: game_invariants
     title: Canonical full-id land province bucket lookups in guarded paths

@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'map_region_dispatch.dart';
 import 'region_map_view_inputs.dart';
 import 'tile_map_grid.dart';
 import 'tile_map_topology_helpers.dart';
@@ -24,13 +25,14 @@ void _appendPortTileToRegionLists(
 ) {
   final parsed = tryParseMapTileKey(tileKey);
   if (parsed == null) return;
-  if (parsed.regionId == kRegionOldWorld) {
-    owPortTiles.add((x: parsed.x, y: parsed.y));
-    return;
-  }
-  if (parsed.regionId == kRegionNewWorld) {
-    nwPortTiles.add((x: parsed.x, y: parsed.y));
-  }
+  // Unknown regions are silently ignored (foreign tile keys), so use the
+  // non-throwing dispatch to pick the destination bucket.
+  final bucket = selectByMapRegionIdOrNull<List<({int x, int y})>>(
+    parsed.regionId,
+    oldWorld: () => owPortTiles,
+    newWorld: () => nwPortTiles,
+  );
+  bucket?.add((x: parsed.x, y: parsed.y));
 }
 
 /// Resolves terrain RGB for a cell (geographic fill). Uses terrainType or parses terrainTypeId.
