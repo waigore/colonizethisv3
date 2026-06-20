@@ -27,7 +27,7 @@ class WorkOrderCostCalculator {
     }
     final province = _targetProvince(targetTileKey);
     final fl = fortLevel ?? province?.fortLevel ?? 0;
-    final rl = roadLevel ?? game.worldState.tileState.roadLevel(targetTileKey);
+    final rl = roadLevel ?? game.worldState.roadLevelAtTile(targetTileKey);
 
     final base = workOrderMaterialCost(
       target,

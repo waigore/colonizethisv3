@@ -275,9 +275,7 @@ class WorkOrderValidator extends StatefulValidator {
   ) {
     if (_skipsMaterialAndTechValidation(o.target)) return null;
     final improvementLevel = _improvementLevelForCost(o);
-    final roadLevel = _context.game.worldState.tileState.roadLevel(
-      o.targetTileKey,
-    );
+    final roadLevel = _context.game.worldState.roadLevelAtTile(o.targetTileKey);
     final techResult = _validateRoadFortRailTech(o, fortLevel, roadLevel);
     if (techResult != null) return techResult;
     return _validateWorkMaterialCosts(
@@ -293,7 +291,7 @@ class WorkOrderValidator extends StatefulValidator {
 
   int _improvementLevelForCost(WorkOrder o) =>
       o.target == kWorkTargetBuildImprovement
-      ? _context.game.worldState.tileState.improvementLevel(o.targetTileKey)
+      ? _context.game.worldState.improvementLevelAtTile(o.targetTileKey)
       : 0;
 
   OrderValidationResult? _validateRoadFortRailTech(
