@@ -583,7 +583,7 @@ Widget _gameMapEmpireLeftRailStoryFrame({
       currentOrdersProvider.overrideWith(
         () => CurrentOrdersNotifier(const Orders()),
       ),
-      gameServiceProvider.overrideWith((ref) => _StoryStubGameService()),
+      gameServiceProvider.overrideWith((ref) => StoryStubGameService()),
       debugConsoleEnabledProvider.overrideWithValue(debugConsoleEnabled),
     ],
     child: MaterialApp(
@@ -796,7 +796,7 @@ ProviderScope _gameMapProvinceDetailSidePanelProviderScope({
       currentOrdersProvider.overrideWith(
         () => CurrentOrdersNotifier(const Orders()),
       ),
-      gameServiceProvider.overrideWith((ref) => _StoryStubGameService()),
+      gameServiceProvider.overrideWith((ref) => StoryStubGameService()),
     ],
     child: _GameMapProvinceDetailSidePanelStoryHost(initialOpen: initialOpen),
   );
@@ -811,15 +811,15 @@ ProviderScope _gameMapProvinceDetailSidePanelProviderScope({
 /// fallback in `GameMapEmpireLeftRail.build`). All other `GameService`
 /// methods route through [_StoryStubBox.noSuchMethod] which returns
 /// `null`; the story never invokes them.
-class _StoryStubGameService extends GameService {
-  _StoryStubGameService() : super(_StoryStubBox(), GameSaveAdapter());
+class StoryStubGameService extends GameService {
+  StoryStubGameService() : super(_StoryStubBox(), GameSaveAdapter());
 
   @override
   GameMapData? getMapData(String gameId) => null;
 }
 
-/// Type-erased [Box] stub for [_StoryStubGameService]. The Hive box is
-/// never read because [_StoryStubGameService] overrides every
+/// Type-erased [Box] stub for [StoryStubGameService]. The Hive box is
+/// never read because [StoryStubGameService] overrides every
 /// `GameService` method that touches the box in the story path, so a
 /// `noSuchMethod`-only impl is safe and avoids opening a real Hive box
 /// from the Widgetbook bootstrap.

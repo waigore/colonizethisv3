@@ -116,15 +116,22 @@ import '../widgets/ct_nine_patch_button.dart';
 import '../widgets/ct_region_map.dart';
 import '../widgets/ct_transfer_list.dart';
 
-part 'catalog_part1.dart';
-part 'catalog_part2.dart';
-part 'catalog_part3.dart';
-part 'catalog_part4.dart';
-part 'catalog_part5.dart';
-part 'catalog_part6.dart';
-part 'catalog_part7.dart';
-part 'catalog_part8.dart';
-part 'catalog_part9.dart';
+// Widgetbook catalog parts grouped by UI domain (Refs #3546 item 6). Files are
+// named by the surface family they register (panels, screens, dialogs, chrome,
+// primitives, …) rather than by an arbitrary size-based `catalog_partN` index.
+// Each part stays under the `repo.part_unit_size` line cap, so a single domain
+// that exceeds the cap is split into clearly-named sibling parts rather than a
+// numbered fragment. The `repo.app_widgetbook_file_naming` gate enforces the
+// no-`catalog_partN` convention.
+part 'catalog_panel_map_stories.dart';
+part 'catalog_panels.dart';
+part 'catalog_screens_combat.dart';
+part 'catalog_dialogs.dart';
+part 'catalog_primitives.dart';
+part 'catalog_data_screens.dart';
+part 'catalog_game_chrome.dart';
+part 'catalog_shell_chrome.dart';
+part 'catalog_event_feed.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -617,11 +624,11 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
       ),
       WidgetbookUseCase(
         name: 'With map',
-        builder: (context) => const _CivilianPanelWithMapStory(),
+        builder: (context) => const CivilianPanelWithMapStory(),
       ),
       WidgetbookUseCase(
         name: 'As bottom sheet',
-        builder: (context) => const _CivilianPanelAsBottomSheetStory(),
+        builder: (context) => const CivilianPanelAsBottomSheetStory(),
       ),
     ],
   ),

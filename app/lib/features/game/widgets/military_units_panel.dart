@@ -16,13 +16,11 @@ import 'game_panel_contract.dart';
 import 'utils/military_tree_builder.dart';
 import 'move_army_dialog.dart';
 import 'split_army_dialog.dart';
+import 'units/shared/base_units_panel.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
-import 'units/shared/units_combine_header_actions.dart';
 import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_entity_card.dart';
-import 'units/shared/units_multi_selection_controller.dart';
-import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
 class MilitaryUnitsPanel extends StatefulWidget with GamePanelMixin {
@@ -54,31 +52,21 @@ class MilitaryUnitsPanel extends StatefulWidget with GamePanelMixin {
   State<MilitaryUnitsPanel> createState() => _MilitaryUnitsPanelState();
 }
 
-class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
-  final UnitsMultiSelectionController _selection =
-      UnitsMultiSelectionController();
-
+class _MilitaryUnitsPanelState
+    extends BaseUnitsPanelState<MilitaryUnitsPanel> {
   Iterable<String> _armyIds(List<ArmyBlock> flat) =>
       flat.map((b) => b.army.id);
 
-  void _toggleArmySelection(String armyId) {
-    setState(() => _selection.toggle(armyId));
-  }
-
-  void _onHeaderSelectAllTapped(List<ArmyBlock> flat) {
-    setState(() => _selection.selectAllOrClear(_armyIds(flat)));
-  }
-
   void _performCombine(List<ArmyBlock> flat) {
-    if (!canCombineArmySelection(flat, _selection.selectedIds)) return;
-    final ids = _selection.selectedIds.toList()..sort();
+    if (!canCombineArmySelection(flat, selection.selectedIds)) return;
+    final ids = selection.selectedIds.toList()..sort();
     widget.bus.emit(
       ArmyCombineRequestedEvent(
         humanPlayerId: widget.humanPlayerId,
         armyIds: ids,
       ),
     );
-    setState(_selection.clear);
+    clearSelection();
   }
 
   void _openSplitDialog(ArmyBlock block) {
@@ -120,56 +108,35 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;
-    final canCombine =
-        !widget.readOnly &&
-        canCombineArmySelection(flat, _selection.selectedIds);
-    final headerCheckbox = _selection.headerValue(_armyIds(flat));
     final readOnly = widget.readOnly;
+    final canCombine =
+        !readOnly && canCombineArmySelection(flat, selection.selectedIds);
 
-    return UnitsPanelShell(
+    // Shared select-all + Combine cluster per SPEC/ui/military-units-panel.md
+    // § Header actions and issue #3514 owner decisions #5 / #15; the trailing
+    // Train pill follows the cluster (`BaseUnitsPanelState.buildUnitsPanel`).
+    return buildUnitsPanel(
       title: l10n.military_units_title,
-      actions: _buildActions(
-        l10n: l10n,
-        hasAny: hasAny,
-        flat: flat,
-        canCombine: canCombine,
-        headerCheckbox: headerCheckbox,
-        readOnly: readOnly,
-      ),
+      showCombineCluster: hasAny && flat.isNotEmpty && !readOnly,
+      selectableIds: _armyIds(flat),
+      selectAllTooltip: l10n.military_units_selectAllArmies,
+      deselectAllTooltip: l10n.military_units_deselectAllArmies,
+      combineLabel: l10n.common_combine,
+      canCombine: canCombine,
+      onSelectAll: () => selectAllOrClear(_armyIds(flat)),
+      onCombine: () => _performCombine(flat),
+      trailingActions: [
+        CtActionTextButton(
+          primary: true,
+          onPressed: readOnly ? null : _openTrainDialog,
+          enabled: !readOnly,
+          label: l10n.common_train,
+        ),
+      ],
       hasContent: hasAny,
       listChildren: _buildListChildren(groups, l10n),
       emptyMessage: l10n.military_units_empty,
     );
-  }
-
-  List<Widget> _buildActions({
-    required AppLocalizations l10n,
-    required bool hasAny,
-    required List<ArmyBlock> flat,
-    required bool canCombine,
-    required bool? headerCheckbox,
-    required bool readOnly,
-  }) {
-    return [
-      if (hasAny && flat.isNotEmpty && !readOnly)
-        // Shared select-all + Combine cluster per SPEC/ui/military-units-panel.md
-        // § Header actions and issue #3514 owner decisions #5 / #15.
-        ...unitsCombineHeaderActions(
-          headerValue: headerCheckbox,
-          selectAllTooltip: l10n.military_units_selectAllArmies,
-          deselectAllTooltip: l10n.military_units_deselectAllArmies,
-          combineLabel: l10n.common_combine,
-          canCombine: canCombine,
-          onSelectAll: () => _onHeaderSelectAllTapped(flat),
-          onCombine: () => _performCombine(flat),
-        ),
-      CtActionTextButton(
-        primary: true,
-        onPressed: readOnly ? null : _openTrainDialog,
-        enabled: !readOnly,
-        label: l10n.common_train,
-      ),
-    ];
   }
 
   void _openTrainDialog() {
@@ -224,9 +191,9 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         armyId: block.army.id,
         draftOrders: widget.draftOrders,
       ),
-      isSelectedForCombine: _selection.contains(block.army.id),
+      isSelectedForCombine: isSelected(block.army.id),
       combineSelectionEnabled: !widget.readOnly,
-      onCombineSelectionToggle: () => _toggleArmySelection(block.army.id),
+      onCombineSelectionToggle: () => toggleSelection(block.army.id),
       onLocate: _armyLocateCallback(block),
       onSplit: widget.readOnly || block.army.regimentUnitIds.length < 2
           ? null

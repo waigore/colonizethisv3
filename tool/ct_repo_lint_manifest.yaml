@@ -242,6 +242,13 @@ rules:
     runner: dart
     script: tool/check_app_shell_panel_dedup.dart
 
+  - rule_id: repo.app_widgetbook_file_naming
+    group: structure
+    title: Widgetbook catalog parts must use domain names, not catalog_partN (Refs #3546)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_widgetbook_file_naming.dart
+
   - rule_id: repo.subscription_tracker
     group: structure
     title: app feature subscriptions must use SubscriptionTracker

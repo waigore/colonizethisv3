@@ -56,15 +56,15 @@ List<WidgetbookNode> get trainMilitaryDialogDirectories => [
 ];
 
 /// Naval Units Panel + map in tandem. SPEC/ui/naval-units-panel.md.
-class _NavalPanelWithMapStory extends StatefulWidget {
-  const _NavalPanelWithMapStory();
+class NavalPanelWithMapStory extends StatefulWidget {
+  const NavalPanelWithMapStory({super.key});
 
   @override
-  State<_NavalPanelWithMapStory> createState() =>
-      _NavalPanelWithMapStoryState();
+  State<NavalPanelWithMapStory> createState() =>
+      NavalPanelWithMapStoryState();
 }
 
-class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
+class NavalPanelWithMapStoryState extends State<NavalPanelWithMapStory> {
   int _regionIndex = 0;
   String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;
@@ -186,16 +186,16 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
 }
 
 /// Map + overlay in tandem for Widgetbook. SPEC/ui/province-sea-zone-detail-overlay.md.
-class _MapWithOverlayStory extends StatefulWidget {
-  const _MapWithOverlayStory({required this.selectedId});
+class MapWithOverlayStory extends StatefulWidget {
+  const MapWithOverlayStory({super.key, required this.selectedId});
 
   final String selectedId;
 
   @override
-  State<_MapWithOverlayStory> createState() => _MapWithOverlayStoryState();
+  State<MapWithOverlayStory> createState() => MapWithOverlayStoryState();
 }
 
-class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
+class MapWithOverlayStoryState extends State<MapWithOverlayStory> {
   late String? _selectedTileKey;
   String? _secondaryHighlightTileKey;
   var _overlayOpen = true;
@@ -228,7 +228,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   }
 
   @override
-  void didUpdateWidget(covariant _MapWithOverlayStory oldWidget) {
+  void didUpdateWidget(covariant MapWithOverlayStory oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedId != widget.selectedId) {
       final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
@@ -762,7 +762,7 @@ ProviderScope _gameScreenProviderScope({
         ref.onDispose(bus.dispose);
         return bus;
       }),
-      gameServiceProvider.overrideWith((ref) => _StoryStubGameService()),
+      gameServiceProvider.overrideWith((ref) => StoryStubGameService()),
       currentGameProvider.overrideWith(() => CurrentGameNotifier(activeGame)),
       currentOrdersProvider.overrideWith(
         () => CurrentOrdersNotifier(const Orders()),
