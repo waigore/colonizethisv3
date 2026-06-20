@@ -43,13 +43,10 @@ extension _TileMapGenJoinSeaJitterPart on _TileMapGenJoinSea {
     final width = grid[0].length;
     final tilesByProvince = <String, List<(int x, int y)>>{};
     final provinceIdPattern = RegExp(r'^p\d+$');
-    for (var y = 0; y < height; y++) {
-      for (var x = 0; x < width; x++) {
-        final id = grid[y][x];
-        if (!provinceIdPattern.hasMatch(id)) continue;
-        tilesByProvince.putIfAbsent(id, () => []).add((x, y));
-      }
-    }
+    TileMapGrid.forEachCell(grid, (y, x, id) {
+      if (!provinceIdPattern.hasMatch(id)) return;
+      tilesByProvince.putIfAbsent(id, () => []).add((x, y));
+    });
     if (tilesByProvince.isEmpty) return;
 
     const directions4 = kTileMapDirections4;
