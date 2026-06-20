@@ -8,12 +8,24 @@ import 'package:path/path.dart' as p;
 /// [MapGenStage] contract in `map_gen_stage.dart` so pass orchestration
 /// shares a uniform params + grid-in/grid-out protocol across land seeds,
 /// lakes/provinces, join-sea, and terrain/resource services.
-const _mapLibRoot = 'packages/colonizethis_map/lib';
-
+///
+/// In addition (Refs #3574, slice 4) it requires the contract to declare the
+/// uniform [MapGenPass] pass entry point and at least
+/// [_requiredMapGenPassFamilyMinimum] of the four families to adopt it; the
+/// remaining family stays [MapGenStage]-only and is documented inline as exempt.
 const _stageContractFile =
     'packages/colonizethis_map/lib/src/map_gen_stage.dart';
 
 const _requiredStageContractPattern = 'abstract interface class MapGenStage';
+
+const _requiredPassContractPattern = 'abstract interface class MapGenPass';
+
+/// Marker showing a family implements either the base stage or the uniform pass.
+const _implementsStage = 'implements MapGenStage';
+const _implementsPass = 'implements MapGenPass';
+
+/// At least this many generator families must adopt the uniform [MapGenPass].
+const _requiredMapGenPassFamilyMinimum = 3;
 
 /// Each generator service family must declare `implements MapGenStage`.
 const _requiredServiceBindings = <String, String>{
@@ -57,7 +69,7 @@ List<MapGenStageProtocolViolation> findMapGenStageProtocolViolations({
     );
     return violations;
   }
-  if (!source.contains('implements MapGenStage')) {
+  if (!source.contains(_implementsStage) && !source.contains(_implementsPass)) {
     violations.add(
       MapGenStageProtocolViolation(
         relativePath,
@@ -67,6 +79,9 @@ List<MapGenStageProtocolViolation> findMapGenStageProtocolViolations({
   }
   return violations;
 }
+
+/// True when [source] adopts the uniform [MapGenPass] entry point.
+bool sourceAdoptsMapGenPass(String source) => source.contains(_implementsPass);
 
 void main() {
   exit(runCheckMapGenStageProtocol(Directory.current.path));
@@ -97,7 +112,17 @@ int runCheckMapGenStageProtocol(
       ),
     );
   }
+  if (!contractSource.contains(_requiredPassContractPattern)) {
+    violations.add(
+      MapGenStageProtocolViolation(
+        _stageContractFile,
+        'missing `$_requiredPassContractPattern` uniform pass entry '
+        'declaration (Refs #3574)',
+      ),
+    );
+  }
 
+  var mapGenPassFamilies = 0;
   for (final entry in _requiredServiceBindings.entries) {
     final file = File(p.join(root, entry.key));
     if (!file.existsSync()) {
@@ -106,10 +131,25 @@ int runCheckMapGenStageProtocol(
       );
       continue;
     }
+    final fileSource = file.readAsStringSync();
     violations.addAll(
       findMapGenStageProtocolViolations(
         relativePath: entry.key,
-        source: file.readAsStringSync(),
+        source: fileSource,
+      ),
+    );
+    if (sourceAdoptsMapGenPass(fileSource)) {
+      mapGenPassFamilies++;
+    }
+  }
+
+  if (mapGenPassFamilies < _requiredMapGenPassFamilyMinimum) {
+    violations.add(
+      MapGenStageProtocolViolation(
+        _stageContractFile,
+        'at least $_requiredMapGenPassFamilyMinimum generator families must '
+        'adopt the uniform MapGenPass entry point '
+        '(found $mapGenPassFamilies) (Refs #3574)',
       ),
     );
   }

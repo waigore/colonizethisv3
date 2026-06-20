@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:test/test.dart';
 
 import '../tool/check_map_gen_stage_protocol.dart';
@@ -43,6 +45,51 @@ class FooBar {}
         source: src,
       );
       expect(violations, isEmpty);
+    });
+
+    test('accepts a service adopting the uniform MapGenPass entry point', () {
+      const src = r'''
+class TileMapGenLandSeeds
+    implements MapGenPass<LandSeedPassPayload, LandSeedPassResult> {
+  @override
+  final TileMapLandSeedParams params;
+}
+''';
+      final violations = findMapGenStageProtocolViolations(
+        relativePath:
+            'packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart',
+        source: src,
+      );
+      expect(violations, isEmpty);
+    });
+  });
+
+  group('sourceAdoptsMapGenPass', () {
+    test('true when the source implements MapGenPass', () {
+      expect(
+        sourceAdoptsMapGenPass('class X implements MapGenPass<A, B> {}'),
+        isTrue,
+      );
+    });
+
+    test('false when the source only implements MapGenStage', () {
+      expect(
+        sourceAdoptsMapGenPass('class X implements MapGenStage {}'),
+        isFalse,
+      );
+    });
+  });
+
+  group('runCheckMapGenStageProtocol', () {
+    test('passes on the live repository tree (>=3 families adopt MapGenPass)',
+        () {
+      final lines = <String>[];
+      final code = runCheckMapGenStageProtocol(
+        Directory.current.path,
+        info: lines.add,
+        err: lines.add,
+      );
+      expect(code, 0, reason: lines.join('\n'));
     });
   });
 }

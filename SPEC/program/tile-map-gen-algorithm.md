@@ -99,6 +99,21 @@ The implementation SHOULD keep `TileMapGenerator` as an orchestration layer and 
 
 The orchestration contract remains unchanged: pass ordering, pass semantics, and observable outputs must match this spec and [tile-map-gen-resources.md](tile-map-gen-resources.md).
 
+### Uniform pass entry point
+
+Generation service families share a single pass-driving protocol so the orchestrator does not duplicate per-family setup/logging:
+
+- **`MapGenStage`** — base contract exposing shared `params`.
+- **`MapGenPass<P, R>`** (extends `MapGenStage`) — uniform entry `R run(MapGenPassContext<P> ctx)`, where `MapGenPassContext` carries `params`, the family's typed `payload` (`P`), and an optional `onLog` hook (`log(message)`).
+
+Because the families have heterogeneous input/output shapes, each supplies its own typed payload/result rather than a single concrete signature. **At least three of the four families** adopt `MapGenPass`: land-seeds (Pass 2–3), lakes/provinces (Pass 4–5 lake/moat + border noise), and terrain/resource (Pass 6–7). The **join-sea** family is **exempt** and remains `MapGenStage`-only: its three passes (continent joining, terrain jitter, sea-zone subdivision) share no single representative payload/result; the exemption is documented inline at the class. Adoption is enforced by `repo.map_gen_stage_protocol` (see [repo-lint.md](repo-lint.md)). `run` is behaviour-preserving: routing a pass through `run` produces byte-identical grids to the prior inline orchestration for the same inputs.
+
+**Acceptance criteria (uniform pass entry):**
+
+- Given a generator service family that owns a cohesive grid-in/grid-out pass, when the repository lint `repo.map_gen_stage_protocol` runs, then The System requires that family to declare `implements MapGenPass` and requires at least 3 of the 4 families to do so, otherwise the lint fails.
+- Given `TileMapGenLandSeeds.run` is invoked with a `MapGenPassContext` whose payload sets `seedBeforeAssignment = true` and an RNG seeded with value `s`, when the pass completes, then The System returns the same `grid`, `continentSeeds`, `landSeeds`, and `continentBySeedIndex` as the legacy `placeLandSeeds` + `assignLandByLandSeeds` calls made with a freshly `s`-seeded RNG.
+- Given a `MapGenPassContext` with a `null` `onLog`, when `context.log(message)` is called, then The System performs no action and does not throw.
+
 ---
 
 ## Constraints
