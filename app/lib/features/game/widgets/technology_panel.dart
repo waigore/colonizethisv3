@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +9,6 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/research_slot_preview.dart';
 import '../../../widgets/ct_brass_divider.dart';
-import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'technology_panel_orders.dart';
 import 'technology_panel_widgets.dart';
@@ -146,25 +147,11 @@ class TechnologyPanel extends StatelessWidget {
             ),
           ),
         ),
-        if (progress.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          CtSectionLabel(l10n.technologyPanel_inProgress),
-          const SizedBox(height: 4),
-          ...progress.entries.map(
-            (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                l10n.technologyPanel_progressLine(
-                  techDisplayName(entry.key),
-                  entry.value,
-                ),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: EditorialMonoclePalette.muted,
-                    ),
-              ),
-            ),
-          ),
-        ],
+        // The standalone "In progress" auxiliary block was removed (Refs
+        // #3512): in-progress techs now keep occupying their slots via the
+        // persisted `Player.researchSlotAssignments` and render exclusively
+        // inside their slot cards, so there is no orphaned-progress list.
+        // SPEC/ui/technology-panel.md § Slots tab — section ordering.
       ],
     );
   }
@@ -212,13 +199,16 @@ class TechnologyPanel extends StatelessWidget {
         child: LockedResearchSlotCard(slotNumber: index + 1),
       );
     }
-    final order = _researchOrderForSlot(researchOrdersForPlayer, index);
-    final techId = _slotTechId(order);
+    final assignment = _effectiveAssignmentForSlot(
+      index,
+      researchOrdersForPlayer,
+    );
+    final techId = assignment?.techId;
     final tech = techId == null ? null : techById(techId);
     final techProgress = techId == null ? 0 : (progress[techId] ?? 0);
     final cost = tech?.cost ?? 0;
     final hasTech = techId != null;
-    final funding = order?.funding ?? ResearchFundingLevel.medium;
+    final funding = assignment?.funding ?? ResearchFundingLevel.medium;
     // The turn preview accompanies the editable funding controls, so it renders
     // only on the editable (human, own-orders) panel; read-only panels keep the
     // simple committed-progress bar. Refs #3512.
@@ -247,17 +237,22 @@ class TechnologyPanel extends StatelessWidget {
                     humanPlayerId: humanPlayerId,
                     slotIndex: index,
                     funding: level,
+                    techId: techId,
                   ),
                 )
             : null,
         onCancel: hasTech && canEdit
             ? () {
-                applyCancelSlotOrder(
-                  context: context,
-                  slotIndex: index,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: currentOrders,
-                  onOrdersChanged: onOrdersChanged!,
+                unawaited(
+                  applyCancelSlotOrder(
+                    context: context,
+                    slotIndex: index,
+                    humanPlayerId: humanPlayerId,
+                    currentOrders: currentOrders,
+                    onOrdersChanged: onOrdersChanged!,
+                    techId: techId,
+                    accruedProgress: techProgress,
+                  ),
                 );
               }
             : null,
@@ -278,20 +273,43 @@ class TechnologyPanel extends StatelessWidget {
     );
   }
 
-  ResearchOrder? _researchOrderForSlot(List<ResearchOrder> orders, int index) {
-    for (final order in orders) {
-      if (order.slotIndex == index) {
-        return order;
+  /// Effective tech + funding occupying [index] this turn.
+  ///
+  /// Mirrors the resolver's reconciliation (`research_resolver.dart`
+  /// `_effectiveSlotAssignments`): the durable `Player.researchSlotAssignments`
+  /// entry for the slot is the baseline, then this turn's
+  /// `Orders.researchOrdersByPlayerId` override it as the UI mutation surface —
+  /// a non-empty order assigns/updates the slot, an empty-`techId` order (the
+  /// Cancel signal) frees it. Returns `null` for an empty slot. Only
+  /// catalog-known techs are surfaced so a stale persisted id never renders an
+  /// unknown tech. SPEC/program/research-resolution.md § Slot occupancy
+  /// persistence; SPEC/ui/technology-panel.md § Slot behaviour. Refs #3512.
+  ResearchSlotAssignment? _effectiveAssignmentForSlot(
+    int index,
+    List<ResearchOrder> orders,
+  ) {
+    ResearchOrder? order;
+    for (final candidate in orders) {
+      if (candidate.slotIndex == index) {
+        order = candidate;
       }
     }
-    return null;
-  }
-
-  String? _slotTechId(ResearchOrder? order) {
-    if (order == null || order.techId.isEmpty) {
+    if (order != null) {
+      if (order.techId.isEmpty || techById(order.techId) == null) {
+        return null;
+      }
+      return ResearchSlotAssignment(
+        techId: order.techId,
+        funding: order.funding,
+      );
+    }
+    final persisted = player.researchSlotAssignments?[index];
+    if (persisted == null ||
+        persisted.techId.isEmpty ||
+        techById(persisted.techId) == null) {
       return null;
     }
-    return order.techId;
+    return persisted;
   }
 }
 

@@ -129,7 +129,14 @@ void main() {
     expect(find.byType(Chip), findsNothing);
   });
 
-  testWidgets('TechnologyPanel shows in progress section when player has research progress', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel renders no standalone In-Progress block (Refs #3512)',
+    (WidgetTester tester) async {
+    // SPEC/ui/technology-panel.md § Slots tab — section ordering: the
+    // standalone "In progress" auxiliary block was removed; in-progress techs
+    // render exclusively inside their occupied slot cards (via persisted
+    // `researchSlotAssignments`), so a player carrying loose
+    // `researchProgressByTechId` with no slot binding shows no separate list.
     final techId = techCatalog.keys.first;
     final withProgress = player.copyWith(
       researchProgressByTechId: {techId: 50},
@@ -150,9 +157,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    // CtSectionLabel renders the heading in upper case (Refs #2864 S2).
-    expect(find.text('IN PROGRESS:'), findsOneWidget);
-    expect(find.textContaining('RP'), findsOneWidget);
+    expect(find.text('IN PROGRESS:'), findsNothing);
+    expect(find.text('In progress:'), findsNothing);
   });
 
   testWidgets(
@@ -268,11 +274,14 @@ void main() {
     expect(find.text('No techs available to research'), findsOneWidget);
   });
 
-  testWidgets('TechnologyPanel slot Cancel removes the slot order and shows snackbar',
-      (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel slot Cancel (no progress) emits empty-techId cancel order '
+    'and shows snackbar (Refs #3512)',
+    (WidgetTester tester) async {
     final techId = techCatalog.keys.first;
     final withOrder = player.copyWith(
       techUnlocked: <String, bool>{}, // ensures bottom sheet can be "no techs"
+      researchProgressByTechId: <String, int>{}, // no accrued progress
     );
     final gameWithEmptyUnlocked = game.copyWith(
       players: [withOrder, ...game.players.skip(1)],
@@ -307,17 +316,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Cancel shown for slots that currently have a tech assigned.
+    // Cancel shown for slots that currently have a tech assigned. With no
+    // accrued progress no forfeiture-warning dialog is shown; the slot is
+    // freed immediately via an empty-techId cancel signal so the resolver
+    // releases any persisted assignment (Refs #3512).
     await tester.tap(find.text('Cancel').first);
     await tester.pump(); // allow scaffoldMessenger snack bar to schedule
     await tester.pumpAndSettle(const Duration(milliseconds: 200));
 
+    expect(find.text('Forfeit research progress?'), findsNothing);
     expect(find.text('Research slot cancelled'), findsOneWidget);
     expect(captured, isNotNull);
-    expect(
-      captured!.researchOrdersByPlayerId[withOrder.id],
-      isEmpty,
-    );
+    final capturedOrders =
+        captured!.researchOrdersByPlayerId[withOrder.id] ?? const [];
+    final slot0 = capturedOrders.firstWhere((o) => o.slotIndex == 0);
+    expect(slot0.techId, isEmpty);
   });
 }
 
