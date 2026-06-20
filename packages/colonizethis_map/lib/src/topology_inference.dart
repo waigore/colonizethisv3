@@ -3,16 +3,15 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'map_pipe_string_util.dart';
+import 'tile_map_grid.dart';
 
 /// Infers MapTopology from a tile map result. SPEC/program/tile-map-gen-resources.md § Topology inference.
 /// Collects unique region ids from grid; classifies province vs sea zone; builds edges from adjacencies.
 MapTopology inferTopologyFromTileMap(TileMapResult result, String regionId) {
   final ids = <String>{};
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      ids.add(result.cell(x, y));
-    }
-  }
+  TileMapGrid.forEachIndex(result.height, result.width, (y, x) {
+    ids.add(result.cell(x, y));
+  });
 
   final nodes = <TopologyNode>[];
   for (final id in ids) {

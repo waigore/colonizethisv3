@@ -14,10 +14,10 @@ import 'port_icon_placement.dart';
 import 'province_ownership_view.dart';
 import 'region_constants.dart';
 import 'region_data_access.dart';
-import 'region_map_view_inputs.dart';
 import 'sea_zone_centroid_tile.dart';
 import 'tile_key_util.dart';
 import 'tile_map_capital_markers.dart';
+import 'tile_map_grid.dart';
 import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization_shared.dart';
 

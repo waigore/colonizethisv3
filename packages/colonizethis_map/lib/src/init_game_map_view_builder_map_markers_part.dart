@@ -119,15 +119,13 @@ Map<String, (int x, int y)> _buildSeaZoneToRepresentativeTile({
   required Set<String> seaZoneIds,
 }) {
   final seaZoneToTile = <String, (int x, int y)>{};
-  for (var y = 0; y < tileMap.height; y++) {
-    for (var x = 0; x < tileMap.width; x++) {
-      final localId = tileMap.cell(x, y);
-      if (!seaZoneIds.contains(localId)) {
-        continue;
-      }
-      seaZoneToTile.putIfAbsent(localId, () => (x, y));
+  TileMapGrid.forEachIndex(tileMap.height, tileMap.width, (y, x) {
+    final localId = tileMap.cell(x, y);
+    if (!seaZoneIds.contains(localId)) {
+      return;
     }
-  }
+    seaZoneToTile.putIfAbsent(localId, () => (x, y));
+  });
   return seaZoneToTile;
 }
 

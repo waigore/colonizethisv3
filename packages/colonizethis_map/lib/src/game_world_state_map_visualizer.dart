@@ -95,26 +95,24 @@ Uint8List renderSingleRegionGameStateMapToPng({
   image.clear(white);
 
   // Fill: provinces by owner color, sea zones deep blue
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final id = result.cell(x, y);
-      final isSea = seaZoneIds.contains(id);
-      final fullProvinceId = isSea ? null : ProvinceId.full(regionId, id);
-      final (r, g, b) = isSea
-          ? seaColorRgb
-          : (factionColors[ownerByProvinceId[fullProvinceId] ?? ''] ??
-                (128, 128, 128));
-      final color = image.getColor(r, g, b);
-      img.fillRect(
-        image,
-        x1: x * cellSize,
-        y1: y * cellSize,
-        x2: (x + 1) * cellSize - 1,
-        y2: (y + 1) * cellSize - 1,
-        color: color,
-      );
-    }
-  }
+  TileMapGrid.forEachIndex(result.height, result.width, (y, x) {
+    final id = result.cell(x, y);
+    final isSea = seaZoneIds.contains(id);
+    final fullProvinceId = isSea ? null : ProvinceId.full(regionId, id);
+    final (r, g, b) = isSea
+        ? seaColorRgb
+        : (factionColors[ownerByProvinceId[fullProvinceId] ?? ''] ??
+              (128, 128, 128));
+    final color = image.getColor(r, g, b);
+    img.fillRect(
+      image,
+      x1: x * cellSize,
+      y1: y * cellSize,
+      x2: (x + 1) * cellSize - 1,
+      y2: (y + 1) * cellSize - 1,
+      color: color,
+    );
+  });
 
   drawBorders(image, result, seaZoneIds, cellSize, seaZoneBorderColor);
 
@@ -200,14 +198,8 @@ Uint8List renderInitGameMapToPng({
   required Map<String, MapTopology> topologyByRegion,
   int cellSize = 24,
 }) {
-  final owInputs = regionMapRenderInputs(
-    game: game,
-    regionId: kRegionOldWorld,
-  );
-  final nwInputs = regionMapRenderInputs(
-    game: game,
-    regionId: kRegionNewWorld,
-  );
+  final owInputs = regionMapRenderInputs(game: game, regionId: kRegionOldWorld);
+  final nwInputs = regionMapRenderInputs(game: game, regionId: kRegionNewWorld);
 
   // Port tile positions from WorldState.portsByProvinceSeaboard (value = regionId|provinceId|x|y)
   final owPortTiles = <({int x, int y})>[];
