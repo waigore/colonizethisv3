@@ -1,7 +1,7 @@
 /// Grid and connectivity helpers shared by tile map generation passes.
 /// SPEC/program/tile-map-gen-algorithm.md
 
-import 'tile_map_directions.dart';
+import '../tile_map_directions.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
 

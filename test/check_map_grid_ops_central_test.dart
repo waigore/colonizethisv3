@@ -10,7 +10,7 @@ final next = copyTileMapGrid(grid);
 ''';
       final violations = findMapGridOpsCentralViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_lakes_provinces.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_lakes_provinces.dart',
         source: src,
       );
       expect(violations, hasLength(1));
@@ -35,7 +35,7 @@ final next = TileMapGrid.copy(grid);
 ''';
       final violations = findMapGridOpsCentralViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_lakes_provinces.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_lakes_provinces.dart',
         source: src,
       );
       expect(violations, isEmpty);

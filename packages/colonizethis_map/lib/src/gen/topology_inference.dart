@@ -2,8 +2,8 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-import 'map_pipe_string_util.dart';
-import 'tile_map_grid.dart';
+import '../map_pipe_string_util.dart';
+import '../tile_map_grid.dart';
 
 /// Infers MapTopology from a tile map result. SPEC/program/tile-map-gen-resources.md § Topology inference.
 /// Collects unique region ids from grid; classifies province vs sea zone; builds edges from adjacencies.

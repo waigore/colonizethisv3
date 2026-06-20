@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 
 const _mapSrcRoot = 'packages/colonizethis_map/lib/src';
 const _allowedPartClassPaths = <String>{
-  'packages/colonizethis_map/lib/src/tile_map_generator_types.dart',
+  'packages/colonizethis_map/lib/src/gen/tile_map_generator_types.dart',
 };
 
 int runCheckMapNoPartfileClasses(

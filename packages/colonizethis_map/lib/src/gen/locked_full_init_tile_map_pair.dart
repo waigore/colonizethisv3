@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'map_partition_gates_exhausted.dart';
-import 'region_constants.dart';
+import '../region_constants.dart';
 import 'tile_map_generator.dart';
 
 const double _kDefaultSeaFraction = 0.6;

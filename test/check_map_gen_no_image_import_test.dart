@@ -13,10 +13,10 @@ void main() {
       );
     });
 
-    test('classifies flat lib/src/ files as non-render layer', () {
+    test('classifies generation-layer files as non-render layer', () {
       expect(
         isMapRenderLayerFile(
-          'packages/colonizethis_map/lib/src/tile_map_generator.dart',
+          'packages/colonizethis_map/lib/src/gen/tile_map_generator.dart',
         ),
         isFalse,
       );
@@ -31,7 +31,8 @@ import 'package:image/image.dart' as img;
 void encode() {}
 ''';
       final violations = findMapGenImageImportViolations(
-        relativePath: 'packages/colonizethis_map/lib/src/tile_map_generator.dart',
+        relativePath:
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator.dart',
         source: src,
       );
       expect(violations, hasLength(1));
@@ -45,7 +46,7 @@ export 'package:image/image.dart';
 ''';
       final violations = findMapGenImageImportViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_land_seeds.dart',
         source: src,
       );
       expect(violations, hasLength(1));
@@ -59,7 +60,7 @@ import 'package:image/image.dart' as img;
 ''';
         final violations = findMapGenImageImportViolations(
           relativePath:
-              'packages/colonizethis_map/lib/src/init_game_map_view_builder.dart',
+              'packages/colonizethis_map/lib/src/view/init_game_map_view_builder.dart',
           source: src,
         );
         expect(violations, hasLength(1));
@@ -95,7 +96,8 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 ''';
       final violations = findMapGenImageImportViolations(
-        relativePath: 'packages/colonizethis_map/lib/src/tile_map_generator.dart',
+        relativePath:
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator.dart',
         source: src,
       );
       expect(violations, isEmpty);
@@ -107,7 +109,8 @@ import 'package:image_picker/image_picker.dart';
 final grid = TileMapGrid.filled(h, w, '');
 ''';
       final violations = findMapGenImageImportViolations(
-        relativePath: 'packages/colonizethis_map/lib/src/tile_map_generator.dart',
+        relativePath:
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator.dart',
         source: src,
       );
       expect(violations, isEmpty);
@@ -119,7 +122,8 @@ import 'tile_map_grid.dart';
 import 'package:meta/meta.dart';
 ''';
       final violations = findMapGenImageImportViolations(
-        relativePath: 'packages/colonizethis_map/lib/src/tile_map_generator.dart',
+        relativePath:
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator.dart',
         source: src,
       );
       expect(violations, isEmpty);

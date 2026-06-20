@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_map/src/map_gen_pass_payloads.dart';
-import 'package:colonizethis_map/src/map_gen_stage.dart';
+import 'package:colonizethis_map/src/gen/map_gen_pass_payloads.dart';
+import 'package:colonizethis_map/src/gen/map_gen_stage.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {

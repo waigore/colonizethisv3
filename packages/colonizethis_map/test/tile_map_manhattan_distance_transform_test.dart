@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:colonizethis_map/src/tile_map_manhattan_distance_transform.dart';
+import 'package:colonizethis_map/src/gen/tile_map_manhattan_distance_transform.dart';
 import 'package:colonizethis_test/test.dart';
 
 int _bruteManhattanMin(
