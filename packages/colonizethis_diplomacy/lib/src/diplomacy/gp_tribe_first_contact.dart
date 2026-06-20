@@ -46,7 +46,10 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
 
   final discovered = discoveredTribeIdsForFirstContact(view: view, game: game);
   final turn = game.worldState.turnState.turnNumber;
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  // Batched per-phase relation index (amortized O(1) per upsert) so repeated
+  // first-contact inserts across discovered tribes don't rebuild the whole
+  // pair-key index each iteration (Refs #3562 AC5).
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
   final newlyContacted = <String>[];
 
   for (final factionId in discovered) {
@@ -54,8 +57,7 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
     if (getRelation(game, gpId, factionId) != null) continue;
 
     final ids = canonicalPairIds(gpId, factionId);
-    relations = upsertRelation(
-      relations,
+    relationsIndex.upsert(
       gpId,
       factionId,
       (_) => DiplomacyRelation(
@@ -80,7 +82,7 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
 
   newlyContacted.sort();
   return GpTribeFirstContactResult(
-    game: game.copyWith(diplomacyRelations: relations),
+    game: game.copyWith(diplomacyRelations: relationsIndex.toList()),
     newlyContactedTribeIds: newlyContacted,
   );
 }

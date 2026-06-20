@@ -153,9 +153,11 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
     )) {
       continue;
     }
-    final player = g.playerById(interveningId);
-    if (player == null) continue;
-    if (player.isHuman) {
+    if (g.playerById(interveningId) == null) continue;
+    // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
+    // human intervener applies a supplied decision or suspends pending;
+    // otherwise the AI rule resolves immediately.
+    if (isTargetHumanGp(g, interveningId)) {
       final d = findHumanDecision<InterventionDecision>(
         interventionDecisions,
         (d) =>

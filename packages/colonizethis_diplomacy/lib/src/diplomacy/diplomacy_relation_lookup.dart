@@ -197,7 +197,16 @@ String _overtureLookupKey(String gpId, String targetId) => '$gpId|$targetId';
 Map<String, OvertureState> _overtureStatesByLookupKey(Game game) =>
     _gameOvertureStatesByGpTargetIndex.get(game);
 
-/// Finds the relation, passes it (or null) to [updater], and replaces or appends the result.
+/// Finds the relation, passes it (or null) to [updater], and replaces or
+/// appends the result.
+///
+/// Each call rebuilds the `pairKey → firstIndex` map and copies the whole
+/// relations list, so it is O(relations) per call. Use it only for a **single
+/// isolated upsert** (one accepted order / one resolver event). For **repeated**
+/// upserts in a loop — multiple orders, per-tribe first contact, batched phase
+/// mutations — prefer [RelationUpsertIndex], which builds the index once and
+/// keeps each upsert amortized O(1); calling [upsertRelation] in a loop silently
+/// reintroduces an O(relations²) pattern (Refs #3562 AC5).
 List<DiplomacyRelation> upsertRelation(
   List<DiplomacyRelation> relations,
   String factionId1,

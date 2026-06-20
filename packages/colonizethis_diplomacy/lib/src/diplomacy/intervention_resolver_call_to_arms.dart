@@ -2,7 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../dossier/evidence_rules.dart';
+import '../dossier/evidence_rules.dart'
+    show evidenceForIsolationistCallToArmsRefuse;
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
@@ -106,7 +107,7 @@ Game _applyCallToArmsAccept(
     turn,
     eventTally: eventTally,
   );
-  g = appendDiplomaticEvent(
+  g = logDiplomaticEvent(
     g,
     turn,
     DiplomaticEventType.callToArmsAccepted,
@@ -115,9 +116,8 @@ Game _applyCallToArmsAccept(
     toFactionId: aggressorGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
     eventTally: eventTally,
-  );
-  diploLog.i(
-    'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
+    logMessage:
+        'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
   );
   return g;
 }
@@ -130,6 +130,9 @@ Game _applyCallToArmsRefuse(
   IntraTurnEventTally? eventTally,
 }) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  // Single isolated upsert for one call-to-arms refusal (not a loop), so the
+  // standalone helper is acceptable here over RelationUpsertIndex (Refs #3562
+  // AC5).
   relations = upsertRelation(relations, allyGpId, defenderGpId, (existing) {
     final base = existing?.score ?? relationScoreNeutral;
     var newScore = (base - callToArmsRefusalScorePenalty).clamp(
@@ -167,7 +170,7 @@ Game _applyCallToArmsRefuse(
     diplomacyRelations: relations,
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...refuseEvidence],
   );
-  g = appendDiplomaticEvent(
+  g = logDiplomaticEvent(
     g,
     turn,
     DiplomaticEventType.callToArmsRefused,
@@ -176,9 +179,8 @@ Game _applyCallToArmsRefuse(
     toFactionId: defenderGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
     eventTally: eventTally,
-  );
-  diploLog.i(
-    'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
+    logMessage:
+        'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
   );
   return g;
 }
@@ -203,31 +205,30 @@ Game _processCallToArmsForWarPair(
       continue;
     }
 
-    if (isAiControlled(state, allyGpId)) {
-      final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
-      final turn = state.worldState.turnState.turnNumber;
-      if (isBelowObserverConquestQuota(aggressorOw)) {
-        state = _applyCallToArmsRefuse(
-          state,
-          allyGpId,
-          defenderGpId,
-          turn,
-          eventTally: eventTally,
+    // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
+    // human ally applies a supplied decision or suspends pending; otherwise the
+    // AI rule resolves immediately. Call-to-arms intentionally keys the split on
+    // the override-aware isAiControlled (negated) rather than isTargetHumanGp,
+    // preserving the existing aiControlByGpId-aware behaviour.
+    if (!isAiControlled(state, allyGpId)) {
+      final decision = findHumanDecision<CallToArmsDecision>(
+        callToArmsDecisions,
+        (d) =>
+            d.allyGpId == allyGpId &&
+            d.defenderGpId == defenderGpId &&
+            d.aggressorGpId == aggressorGpId,
+      );
+      if (decision == null) {
+        pending.add(
+          CallToArmsPending(
+            allyGpId: allyGpId,
+            defenderGpId: defenderGpId,
+            aggressorGpId: aggressorGpId,
+          ),
         );
         continue;
       }
-      if (atWarGreatPowerCount(state, allyGpId, factionMembership) >= 1) {
-        state = _applyCallToArmsRefuse(
-          state,
-          allyGpId,
-          defenderGpId,
-          turn,
-          eventTally: eventTally,
-        );
-        continue;
-      }
-      final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
-      if (accept) {
+      if (decision.accepted) {
         state = _applyCallToArmsAccept(
           state,
           allyGpId,
@@ -247,29 +248,35 @@ Game _processCallToArmsForWarPair(
       continue;
     }
 
-    final decision = findHumanDecision<CallToArmsDecision>(
-      callToArmsDecisions,
-      (d) =>
-          d.allyGpId == allyGpId &&
-          d.defenderGpId == defenderGpId &&
-          d.aggressorGpId == aggressorGpId,
-    );
-    if (decision == null) {
-      pending.add(
-        CallToArmsPending(
-          allyGpId: allyGpId,
-          defenderGpId: defenderGpId,
-          aggressorGpId: aggressorGpId,
-        ),
+    final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
+    final aiTurn = state.worldState.turnState.turnNumber;
+    if (isBelowObserverConquestQuota(aggressorOw)) {
+      state = _applyCallToArmsRefuse(
+        state,
+        allyGpId,
+        defenderGpId,
+        aiTurn,
+        eventTally: eventTally,
       );
       continue;
     }
-    if (decision.accepted) {
+    if (atWarGreatPowerCount(state, allyGpId, factionMembership) >= 1) {
+      state = _applyCallToArmsRefuse(
+        state,
+        allyGpId,
+        defenderGpId,
+        aiTurn,
+        eventTally: eventTally,
+      );
+      continue;
+    }
+    final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
+    if (accept) {
       state = _applyCallToArmsAccept(
         state,
         allyGpId,
         aggressorGpId,
-        turn,
+        aiTurn,
         eventTally: eventTally,
       );
     } else {
@@ -277,7 +284,7 @@ Game _processCallToArmsForWarPair(
         state,
         allyGpId,
         defenderGpId,
-        turn,
+        aiTurn,
         eventTally: eventTally,
       );
     }

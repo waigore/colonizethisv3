@@ -1,7 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../dossier/evidence_rules.dart';
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
@@ -47,7 +46,7 @@ Game _addFtpPartnership(
   if (game.ftpPartnershipKeys.contains(key)) return game;
   final nextKeys = {...game.ftpPartnershipKeys, key};
   var next = game.copyWith(ftpPartnershipKeys: nextKeys);
-  next = appendDiplomaticEvent(
+  next = logDiplomaticEvent(
     next,
     turn,
     DiplomaticEventType.ftpFormed,
@@ -56,8 +55,8 @@ Game _addFtpPartnership(
     toFactionId: targetGpId,
     wasAiInitiator: isAiControlledForEvidence(next, proposerGpId),
     eventTally: eventTally,
+    logMessage: 'diplomacy ftp formed $proposerGpId-$targetGpId',
   );
-  diploLog.i('diplomacy ftp formed $proposerGpId-$targetGpId');
   return next;
 }
 
@@ -98,7 +97,11 @@ Game clearFtpPartnerships(
 }
 
 /// Break FTP when either side loses embassy-tier overture toward the other.
-Game breakFtpOnEmbassyLoss(Game game, int turn, {IntraTurnEventTally? eventTally}) {
+Game breakFtpOnEmbassyLoss(
+  Game game,
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   final toRemove = <String>{};
   for (final key in game.ftpPartnershipKeys) {
     final parts = key.split('|');
@@ -156,11 +159,20 @@ Game breakFtpOnWar(Game game, int turn, {IntraTurnEventTally? eventTally}) {
     return (state: state, pendingOffer: null);
   }
 
-  final decision = findHumanDecision<FtpDecision>(
-    ftpDecisions,
-    (d) => d.proposerGpId == proposerId && d.targetGpId == targetId,
-  );
-  if (decision != null) {
+  // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
+  // human target applies a supplied decision or suspends pending; otherwise the
+  // AI rule resolves immediately.
+  if (isTargetHumanGp(state, targetId)) {
+    final decision = findHumanDecision<FtpDecision>(
+      ftpDecisions,
+      (d) => d.proposerGpId == proposerId && d.targetGpId == targetId,
+    );
+    if (decision == null) {
+      return (
+        state: state,
+        pendingOffer: FtpOffer(proposerGpId: proposerId, targetGpId: targetId),
+      );
+    }
     if (decision.accepted) {
       state = _addFtpPartnership(
         state,
@@ -171,13 +183,6 @@ Game breakFtpOnWar(Game game, int turn, {IntraTurnEventTally? eventTally}) {
       );
     }
     return (state: state, pendingOffer: null);
-  }
-
-  if (isTargetHumanGp(state, targetId)) {
-    return (
-      state: state,
-      pendingOffer: FtpOffer(proposerGpId: proposerId, targetGpId: targetId),
-    );
   }
 
   if (aiGpAcceptsFtp(state, proposerId, targetId)) {

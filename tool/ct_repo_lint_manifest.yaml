@@ -469,6 +469,13 @@ rules:
     runner: dart
     script: tool/check_economy_no_logic_deps.dart
 
+  - rule_id: repo.diplomacy_no_duplicate_overture_clear
+    group: architecture
+    title: colonizethis_diplomacy overture pair-clears must use clearOverturesBetweenGpAndFaction (Refs #3562)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_no_duplicate_overture_clear.dart
+
   - rule_id: repo.diplomacy_no_logic_deps
     group: architecture
     title: colonizethis_diplomacy must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 2)

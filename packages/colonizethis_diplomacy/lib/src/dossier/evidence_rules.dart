@@ -7,6 +7,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../diplomacy/diplomacy_logging.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
+import '../diplomacy/diplomacy_shared_helpers.dart' show isAiControlledForEvidence;
+
+// `isAiControlledForEvidence` now lives in the diplomacy shared helpers so
+// diplomacy resolvers can read AI-control without importing the dossier layer
+// (Refs #3562). Re-exported here to preserve the existing public surface for
+// callers that import this file directly (e.g. the colonizethis_logic barrel).
+export '../diplomacy/diplomacy_shared_helpers.dart' show isAiControlledForEvidence;
 
 /// Human Great Power ids (observers for whom we store evidence).
 List<String> _humanObserverIds(Game game) {
@@ -24,15 +31,6 @@ List<String>? _evidenceObservers(Game game, String subjectId) {
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return null;
   return observers;
-}
-
-/// True if [playerId] is AI-controlled (evidence/dialogue only for AI subjects).
-/// Named to avoid export clash with ai_planner.isAiControlled.
-bool isAiControlledForEvidence(Game game, String playerId) {
-  final explicit = game.aiControlByGpId[playerId];
-  if (explicit != null) return explicit;
-  final p = game.playerById(playerId);
-  return p != null && !p.isHuman;
 }
 
 /// True when [actorGpId] refused call-to-arms toward [targetGpId] in the same

@@ -2,9 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../dossier/evidence_rules.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
+import 'diplomacy_shared_helpers.dart';
 import 'faction_absorption_engine.dart';
 import 'overture_resolver.dart';
 
@@ -93,7 +93,7 @@ Game _resolveJoinEmpireMinorOrTribe(
   if (player.treasury < cost) return game;
 
   var next = absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
-  next = appendDiplomaticEvent(
+  next = logDiplomaticEvent(
     next,
     turn,
     DiplomaticEventType.joinEmpireResolved,
@@ -104,8 +104,8 @@ Game _resolveJoinEmpireMinorOrTribe(
     amount: cost,
     wasAiInitiator: isAiControlledForEvidence(next, gpId),
     eventTally: eventTally,
+    logMessage: 'diplomacy join empire $gpId $targetId cost=$cost',
   );
-  diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
   return next;
 }
 
@@ -131,7 +131,7 @@ Game _resolveJoinEmpireGreatPower(
   if (player.treasury < cost) return game;
 
   var next = absorbGreatPowerIntoGp(game, gpId, targetId);
-  next = appendDiplomaticEvent(
+  next = logDiplomaticEvent(
     next,
     turn,
     DiplomaticEventType.joinEmpireResolved,
@@ -142,8 +142,8 @@ Game _resolveJoinEmpireGreatPower(
     amount: cost,
     wasAiInitiator: isAiControlledForEvidence(next, gpId),
     eventTally: eventTally,
+    logMessage: 'diplomacy join empire GP $gpId absorbs $targetId cost=$cost',
   );
-  diploLog.i('diplomacy join empire GP $gpId absorbs $targetId cost=$cost');
   return next;
 }
 
@@ -172,6 +172,10 @@ Game processAlliances(
   required DiplomacyFactionMembership factionMembership,
   IntraTurnEventTally? eventTally,
 }) {
+  // Single per-phase relation index so each accepted alliance upsert is
+  // amortized O(1) instead of rebuilding the pair-key index per order
+  // (Refs #3562 AC5).
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
@@ -181,8 +185,7 @@ Game processAlliances(
       if (!factionMembership.isGreatPower(targetId)) continue;
 
       final ids = canonicalPairIds(gpId, targetId);
-      final relations = upsertRelation(
-        List<DiplomacyRelation>.from(game.diplomacyRelations),
+      relationsIndex.upsert(
         gpId,
         targetId,
         (existing) => existing == null
@@ -204,8 +207,8 @@ Game processAlliances(
                 lastInteractionTurn: turn,
               ),
       );
-      game = game.copyWith(diplomacyRelations: relations);
-      game = appendDiplomaticEvent(
+      game = game.copyWith(diplomacyRelations: relationsIndex.toList());
+      game = logDiplomaticEvent(
         game,
         turn,
         DiplomaticEventType.allianceFormed,
@@ -214,8 +217,8 @@ Game processAlliances(
         toFactionId: targetId,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
         eventTally: eventTally,
+        logMessage: 'diplomacy alliance $gpId-$targetId',
       );
-      diploLog.i('diplomacy alliance $gpId-$targetId');
     }
   }
   return game;

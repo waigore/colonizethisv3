@@ -2,7 +2,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../dossier/evidence_rules.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_resolver.dart';
 import 'diplomacy_shared_helpers.dart';
@@ -70,6 +69,44 @@ Game appendDiplomaticEvent(
   return game.copyWith(diplomaticHistoryEvents: [...events, event]);
 }
 
+/// Appends a diplomatic [type] event via [appendDiplomaticEvent] and emits the
+/// operator-facing [logMessage] in a single call.
+///
+/// Collapses the repeated `appendDiplomaticEvent(...)` + `diploLog.i(...)`
+/// pairing duplicated across the diplomacy resolvers (Refs #3562). All event
+/// parameters mirror [appendDiplomaticEvent]; the only addition is the required
+/// [logMessage], so callers keep their existing per-site log text.
+Game logDiplomaticEvent(
+  Game game,
+  int turn,
+  DiplomaticEventType type,
+  Set<String> participants, {
+  required String logMessage,
+  String? fromFactionId,
+  String? toFactionId,
+  OvertureStage? overtureStage,
+  int? amount,
+  String? reason,
+  bool wasAiInitiator = false,
+  IntraTurnEventTally? eventTally,
+}) {
+  final next = appendDiplomaticEvent(
+    game,
+    turn,
+    type,
+    participants,
+    fromFactionId: fromFactionId,
+    toFactionId: toFactionId,
+    overtureStage: overtureStage,
+    amount: amount,
+    reason: reason,
+    wasAiInitiator: wasAiInitiator,
+    eventTally: eventTally,
+  );
+  diploLog.i(logMessage);
+  return next;
+}
+
 class OverturePaymentsResult {
   OverturePaymentsResult(this.game, [this.pendingOvertures]);
   final Game game;
@@ -122,17 +159,20 @@ int? _overtureCostForStage(OvertureStage stage) {
   if (targetIsMinorOrTribe) {
     return (accepted: _minorOrTribeAcceptsByRule(stage), pending: null);
   }
-  final decision = findHumanDecision<OvertureDecision>(
-    overtureDecisions,
-    (d) =>
-        d.offererGpId == gpId &&
-        d.targetFactionId == targetId &&
-        d.stage == stage,
-  );
-  if (decision != null) {
-    return (accepted: decision.accepted, pending: null);
-  }
+  // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
+  // human target applies a supplied decision or suspends pending; otherwise the
+  // AI rule resolves immediately.
   if (isTargetHumanGp(state, targetId)) {
+    final decision = findHumanDecision<OvertureDecision>(
+      overtureDecisions,
+      (d) =>
+          d.offererGpId == gpId &&
+          d.targetFactionId == targetId &&
+          d.stage == stage,
+    );
+    if (decision != null) {
+      return (accepted: decision.accepted, pending: null);
+    }
     final pending = [
       OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
     ];
@@ -256,7 +296,7 @@ _OvertureOrderStep _applyAcceptedOverture({
     players: nextPlayers,
     overtureStates: nextOvertures,
   );
-  nextState = appendDiplomaticEvent(
+  nextState = logDiplomaticEvent(
     nextState,
     turn,
     DiplomaticEventType.overtureAccepted,
@@ -266,8 +306,8 @@ _OvertureOrderStep _applyAcceptedOverture({
     overtureStage: stage,
     wasAiInitiator: isAiControlledForEvidence(nextState, gpId),
     eventTally: eventTally,
+    logMessage: 'diplomacy overture $gpId -> $targetId $stage (accepted)',
   );
-  diploLog.i('diplomacy overture $gpId -> $targetId $stage (accepted)');
   return (
     players: nextPlayers,
     overtures: nextOvertures,
