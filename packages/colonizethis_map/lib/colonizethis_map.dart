@@ -30,12 +30,12 @@ export 'src/render/tile_map_visualization_shared.dart'
         resourceIdToLegendLetter,
         seaZoneLocalIdsFromRegionCells,
         tileMapResourceGlyphs;
-export 'src/init_game_map_view_data.dart';
+export 'src/view/init_game_map_view_data.dart';
 export 'src/sea_zone_centroid_tile.dart';
 export 'src/port_icon_placement.dart';
 export 'src/gp_ownership_tint.dart';
 export 'src/province_label_plate_tint.dart';
-export 'src/init_game_map_view_builder.dart';
+export 'src/view/init_game_map_view_builder.dart';
 export 'src/render/game_world_state_map_visualizer.dart';
 export 'src/render/multi_region_map_rendering.dart';
 export 'src/map_format_util.dart';

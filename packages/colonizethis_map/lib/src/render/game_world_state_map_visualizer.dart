@@ -8,13 +8,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../map_region_dispatch.dart';
-import '../region_map_view_inputs.dart';
+import '../view/region_map_view_inputs.dart';
 import '../tile_map_grid.dart';
 import '../tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
-import '../init_game_map_view_data.dart';
+import '../view/init_game_map_view_data.dart';
 import '../region_constants.dart';
 import '../tile_key_util.dart';
 
