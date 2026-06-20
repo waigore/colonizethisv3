@@ -47,8 +47,10 @@ Base tiles are chained across tilesets to ensure consistent appearance.
 
 | Tile ID | Description | Status |
 |---------|-------------|--------|
-| `tile_forest` | Dense forest default overlay | ✅ Generated (from forest v2 art) |
-| `tile_forest_timber` | Forest overlay for timber tiles | ✅ Generated |
+| `tile_hardwood_forest` | Dense hardwood forest default overlay | ✅ Generated (renamed from `tile_forest`, forest v2 art) |
+| `tile_hardwood_forest_timber` | Hardwood forest overlay for timber tiles | ✅ Generated (renamed from `tile_forest_timber`) |
+| `tile_scrub_forest` | Sparse scrub forest default overlay | ✅ Generated (distinct sparse/lighter variant, #3573 R8) |
+| `tile_scrub_forest_timber` | Scrub forest overlay for timber tiles | ✅ Generated (distinct sparse/lighter variant, #3573 R8) |
 | `tile_hills` | Rolling hills default overlay | ✅ Generated (from hills v2 art) |
 | `tile_hills_mine` | Hills overlay for mine-case tiles | ✅ Generated |
 | `tile_hills_wool` | Hills overlay for wool tiles | ✅ Generated |

@@ -549,8 +549,10 @@ String _terrainLabel(TerrainType t) {
   switch (t) {
     case TerrainType.plains:
       return 'Plains';
-    case TerrainType.forest:
-      return 'Forest';
+    case TerrainType.hardwoodForest:
+      return 'Hardwood forest';
+    case TerrainType.scrubForest:
+      return 'Scrub forest';
     case TerrainType.hills:
       return 'Hills';
     case TerrainType.mountain:

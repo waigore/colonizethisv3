@@ -238,7 +238,11 @@ class GameMapAreaProvinceActionStates {
       player.techUnlocked,
       resourceId,
     );
-    if (currentLevel >= techCap) {
+    final terrain = terrainTypeForTileKey(tileMapByRegion, selectedTileKey);
+    final effectiveCap = terrain == null
+        ? techCap
+        : clampExtractionCapForTerrain(techCap, resourceId, terrain);
+    if (currentLevel >= effectiveCap) {
       return kHiddenBuilderInlineActionState;
     }
 

@@ -57,7 +57,7 @@ void main() {
             ['p1'],
           ],
           terrainGrid: [
-            [TerrainType.forest],
+            [TerrainType.hardwoodForest],
           ],
         );
         final seaOnly = TileMapResult(
@@ -98,7 +98,7 @@ void main() {
         expect(cell.ownerFactionId, 'gp1');
         expect(cell.provinceDisplayName, 'Alpha');
         expect(
-          view.oldWorld.terrainColors.containsKey(TerrainType.forest),
+          view.oldWorld.terrainColors.containsKey(TerrainType.hardwoodForest),
           isTrue,
         );
         expect(

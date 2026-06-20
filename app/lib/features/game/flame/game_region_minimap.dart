@@ -21,7 +21,8 @@ import 'region_minimap_math.dart';
 /// Terrain base colors for the region minimap (flat fills). SPEC/ui/empire-overview.md § Region minimap.
 const Map<TerrainType, Color> kRegionMinimapTerrainColors = {
   TerrainType.plains: Color(0xFFA5D6A7),
-  TerrainType.forest: Color(0xFF2E7D32),
+  TerrainType.hardwoodForest: Color(0xFF2E7D32),
+  TerrainType.scrubForest: Color(0xFF7CB342),
   TerrainType.hills: Color(0xFFB0BEC5),
   TerrainType.mountain: Color(0xFF546E7A),
   TerrainType.swamp: Color(0xFF6D4C41),

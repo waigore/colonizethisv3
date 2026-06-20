@@ -45,7 +45,8 @@ String? rejectionReasonForBuildRailOrder({
 
   switch (terrain) {
     case TerrainType.plains:
-    case TerrainType.forest:
+    case TerrainType.hardwoodForest:
+    case TerrainType.scrubForest:
     case TerrainType.desert:
       if (!early && !later && !dynamite) {
         return 'Early Steam Engine or later rail technology required for this terrain';

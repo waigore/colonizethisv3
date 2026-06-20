@@ -217,7 +217,18 @@ TileYieldContribution? computeTileYieldContribution({
     return null;
   }
 
-  final techCap = techCapForCommodity(commodityId);
+  // Terrain hard caps (R4, issue #3573): scrub-forest timber is clamped to
+  // level 1 regardless of unlocked gathering tech. The terrain is resolved from
+  // the same region map the resource came from; when terrain data is absent the
+  // tech cap is used unchanged. SPEC/game/extraction-and-improvements.md.
+  final rawTechCap = techCapForCommodity(commodityId);
+  final terrain = tileMapByRegion[tileContext.regionId]?.terrainAt(
+    tileContext.resourceContext.x,
+    tileContext.resourceContext.y,
+  );
+  final techCap = terrain == null
+      ? rawTechCap
+      : clampExtractionCapForTerrain(rawTechCap, commodityId, terrain);
   final province = tileContext.province;
   final provinceId = tileContext.provinceId;
   final townDevelopmentCap = province.townDevelopmentLevel;

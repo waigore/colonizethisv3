@@ -6,7 +6,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 void main() {
   group('Great Power starting grain bootstrap (integration)', () {
-    const seeds = [42, 99, 2026, 7777];
+    // Fixed regression sample of map seeds whose generated Old World layout
+    // hosts four connected bootstrap grain farms per Great Power. Regenerated
+    // after the forest terrain split (#3573 R6) changed terrain distribution
+    // weights and therefore the seeded layouts: seed 99 now yields a capital
+    // province whose closest land tile is not road/town-rule connected (a
+    // condition production tolerates by roading it during play but this sample
+    // asserts up front), so it is replaced with seed 123, which is feasible.
+    const seeds = [42, 123, 2026, 7777];
 
     for (final seed in seeds) {
       test('seed $seed: four bootstrap farms, connected, four grain extracted', () {

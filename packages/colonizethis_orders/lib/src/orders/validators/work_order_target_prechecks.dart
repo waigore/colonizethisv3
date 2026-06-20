@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../build_rail_work_rules.dart';
 import '../order_work_constants.dart';
 import '../diplomatic_access_helpers.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -18,12 +19,18 @@ class WorkOrderTargetPrecheckContext {
     required this.treasury,
     required this.civilianEmbassyWorkAllowed,
     this.factionMembership,
+    this.tileMapByRegion,
   });
 
   final Game game;
   final Player player;
   final String playerId;
   final int treasury;
+
+  /// Per-region tile maps, used to resolve terrain for terrain-dependent caps
+  /// (e.g. the scrub-forest timber level-1 hard cap, R4 / issue #3573). May be
+  /// `null` in contexts without map data, in which case terrain caps are skipped.
+  final Map<String, TileMapResult>? tileMapByRegion;
 
   /// When set, avoids linear scans for Minor/Tribe checks in purchase-land
   /// prevalidation (Refs #2394).
@@ -216,10 +223,23 @@ OrderValidationResult? precheckBuildImprovement(
     ctx.player.techUnlocked,
     resourceId,
   );
-  if (currentLevel + 1 > techCap) {
+  final terrain = terrainTypeForTileKey(
+    ctx.tileMapByRegion,
+    o.targetTileKey,
+  );
+  final effectiveCap = terrain == null
+      ? techCap
+      : clampExtractionCapForTerrain(techCap, resourceId, terrain);
+  if (terrain != null && effectiveCap < techCap && currentLevel + 1 > effectiveCap) {
+    return OrderValidationResult.rejected(
+      'Terrain caps $resourceId extraction at level $effectiveCap on this '
+      'terrain (scrub forest timber is hard-capped at level 1)',
+    );
+  }
+  if (currentLevel + 1 > effectiveCap) {
     return OrderValidationResult.rejected(
       'Insufficient tech for next improvement level on $resourceId '
-      '(extraction cap $techCap; unlock gathering tech to raise the cap)',
+      '(extraction cap $effectiveCap; unlock gathering tech to raise the cap)',
     );
   }
   return null;
