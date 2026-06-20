@@ -42,4 +42,17 @@ extension WorldStateFocusedAccessors on WorldState {
   /// (#3543 §4).
   Map<String, List<String>>? tileKeysForRegion(String regionId) =>
       tileKeysByRegionAndProvince[regionId];
+
+  /// Improvement level (0-4) for [tileKey], or `0` when the tile has no
+  /// recorded level. Read-only accessor that folds the
+  /// `tileState.improvementLevel(...)` two-hop drill into one call so callers
+  /// avoid reaching through [WorldState.tileState] directly (#3543 §4).
+  int improvementLevelAtTile(String tileKey) =>
+      tileState.improvementLevel(tileKey);
+
+  /// Road level (0/1/2/4) for [tileKey], or `0` when the tile has no recorded
+  /// level. Read-only accessor that folds the `tileState.roadLevel(...)`
+  /// two-hop drill into one call so callers avoid reaching through
+  /// [WorldState.tileState] directly (#3543 §4).
+  int roadLevelAtTile(String tileKey) => tileState.roadLevel(tileKey);
 }
