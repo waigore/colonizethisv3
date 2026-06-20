@@ -159,17 +159,20 @@ int? _overtureCostForStage(OvertureStage stage) {
   if (targetIsMinorOrTribe) {
     return (accepted: _minorOrTribeAcceptsByRule(stage), pending: null);
   }
-  final decision = findHumanDecision<OvertureDecision>(
-    overtureDecisions,
-    (d) =>
-        d.offererGpId == gpId &&
-        d.targetFactionId == targetId &&
-        d.stage == stage,
-  );
-  if (decision != null) {
-    return (accepted: decision.accepted, pending: null);
-  }
+  // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
+  // human target applies a supplied decision or suspends pending; otherwise the
+  // AI rule resolves immediately.
   if (isTargetHumanGp(state, targetId)) {
+    final decision = findHumanDecision<OvertureDecision>(
+      overtureDecisions,
+      (d) =>
+          d.offererGpId == gpId &&
+          d.targetFactionId == targetId &&
+          d.stage == stage,
+    );
+    if (decision != null) {
+      return (accepted: decision.accepted, pending: null);
+    }
     final pending = [
       OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
     ];

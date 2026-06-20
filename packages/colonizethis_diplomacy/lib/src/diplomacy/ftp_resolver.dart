@@ -97,7 +97,11 @@ Game clearFtpPartnerships(
 }
 
 /// Break FTP when either side loses embassy-tier overture toward the other.
-Game breakFtpOnEmbassyLoss(Game game, int turn, {IntraTurnEventTally? eventTally}) {
+Game breakFtpOnEmbassyLoss(
+  Game game,
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
   final toRemove = <String>{};
   for (final key in game.ftpPartnershipKeys) {
     final parts = key.split('|');
@@ -155,11 +159,20 @@ Game breakFtpOnWar(Game game, int turn, {IntraTurnEventTally? eventTally}) {
     return (state: state, pendingOffer: null);
   }
 
-  final decision = findHumanDecision<FtpDecision>(
-    ftpDecisions,
-    (d) => d.proposerGpId == proposerId && d.targetGpId == targetId,
-  );
-  if (decision != null) {
+  // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
+  // human target applies a supplied decision or suspends pending; otherwise the
+  // AI rule resolves immediately.
+  if (isTargetHumanGp(state, targetId)) {
+    final decision = findHumanDecision<FtpDecision>(
+      ftpDecisions,
+      (d) => d.proposerGpId == proposerId && d.targetGpId == targetId,
+    );
+    if (decision == null) {
+      return (
+        state: state,
+        pendingOffer: FtpOffer(proposerGpId: proposerId, targetGpId: targetId),
+      );
+    }
     if (decision.accepted) {
       state = _addFtpPartnership(
         state,
@@ -170,13 +183,6 @@ Game breakFtpOnWar(Game game, int turn, {IntraTurnEventTally? eventTally}) {
       );
     }
     return (state: state, pendingOffer: null);
-  }
-
-  if (isTargetHumanGp(state, targetId)) {
-    return (
-      state: state,
-      pendingOffer: FtpOffer(proposerGpId: proposerId, targetGpId: targetId),
-    );
   }
 
   if (aiGpAcceptsFtp(state, proposerId, targetId)) {

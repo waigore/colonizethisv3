@@ -112,6 +112,34 @@ bool isAiControlledForEvidence(Game game, String playerId) {
 ///
 /// Generalises the per-resolver `_find*Decision` lookups (overture, FTP,
 /// intervention, call-to-arms) into a single deterministic linear scan.
+///
+/// ## Canonical pending-human-decision flow (Refs #3562 AC3)
+///
+/// The overture, FTP, intervention, and call-to-arms resolvers each gate a
+/// human-controlled counterpart on a supplied decision using one identical
+/// control-flow shape, expressed with the two shared helpers below
+/// ([isTargetHumanGp] and [findHumanDecision]) and no per-resolver re-invention:
+///
+/// ```text
+/// final humanControlled = isTargetHumanGp(game, deciderId);
+/// if (humanControlled) {
+///   final decision = findHumanDecision<T>(decisions, matches);
+///   if (decision == null) {
+///     // no human input yet -> enqueue a pending prompt and stop processing
+///     // this decider so the phase can suspend turn resolution
+///   } else {
+///     // human input present -> apply the decision
+///   }
+/// } else {
+///   // AI-controlled decider -> resolve by rule immediately
+/// }
+/// ```
+///
+/// The human-control branch is always evaluated before any decision lookup, so
+/// decisions are only consulted for human deciders. Call-to-arms intentionally
+/// substitutes the override-aware `isAiControlled` (negated) for
+/// [isTargetHumanGp] so its AI-vs-human split honours `game.aiControlByGpId`
+/// exactly as before; the rest of the shape is identical.
 T? findHumanDecision<T>(List<T>? decisions, bool Function(T) matches) {
   if (decisions == null) return null;
   for (final decision in decisions) {
