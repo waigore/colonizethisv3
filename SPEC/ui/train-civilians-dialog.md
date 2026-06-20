@@ -27,41 +27,35 @@ The Train Civilians dialog lets the player queue training orders for civilian un
 ┌─────────────────────────────────────────┐
 │  Train Civilians                    [×] │  ← CtDialogShell title bar
 ├─────────────────────────────────────────┤
-│  Treasury: 5,000  |  Paper: 12         │  ← Resource bar
-│  (can train 5 more Builders)           │  ← Dynamic deficit hint (e.g. "Treasury low")
+│ ┌─────────────────────────────────────┐ │  ← Boxed inset resource bar
+│ │  Treasury: £5,000     Paper: 12     │ │     (mono bold values)
+│ └─────────────────────────────────────┘ │
+│  Treasury low and Paper low             │  ← Dynamic deficit hint (below box)
 ├─────────────────────────────────────────┤
-│  [icon] Explorer          1,000 + 2📄   │  ← Per-unit-type row
-│                    [−] 0 [+]            │  ← Stepper
+│  [icon] Explorer            [−] 0 [+]   │  ← Per-unit-type row (single line)
+│         £1,000 + 2 paper                │     name over cost (left), stepper (right)
 │  ─────────────────────────────────────  │
-│  [icon] Builder           1,000 + 2📄   │
-│                    [−] 0 [+]            │
+│  [icon] Builder             [−] 0 [+]   │
+│         £1,000 + 2 paper                │
 │  ─────────────────────────────────────  │
-│  [icon] Engineer         1,000 + 2📄   │
-│                    [−] 0 [+]            │
-│  ─────────────────────────────────────  │
-│  [icon] Spy              2,000 + 4📄   │
-│                    [−] 0 [+]            │
-│  ─────────────────────────────────────  │
-│  [icon] Merchant 🔒      2,000 + 4📄   │  ← Locked (tech not unlocked)
-│  Requires: Merchant Companies           │  ← Lock reason
-│                    [−] 0 [+] (disabled)│
-│  ─────────────────────────────────────  │
-│  [icon] Rail Builder 🔒  2,000 + 4📄   │  ← Locked (tech not unlocked)
-│  Requires: Early Steam Engine           │  ← Lock reason
-│                    [−] 0 [+] (disabled) │
+│  [icon] Merchant 🔒         [−] 0 [+]   │  ← Locked (tech not unlocked)
+│         £2,000 + 4 paper                │
+│         Requires: Merchant Companies    │  ← Lock reason
 └─────────────────────────────────────────┘
 ```
 
 ### Resource Bar (top)
 
-Shows current player resources relevant to civilian training:
-- **Treasury:** `Player.treasury` formatted with commas
+Renders as a **boxed inset strip** (dark `--bg-deep` background, 1 dp `--border`,
+entries spaced apart) per the mockup `.resource-bar`. Each entry shows a muted
+label and a **monospace bold value** (`--fg`):
+- **Treasury:** `Player.treasury` formatted as `£` + comma thousands grouping (e.g. `£5,000`)
 - **Paper stockpile:** `Player.stockpile.quantityOf('paper')`
 
-Below the resource bar, a **dynamic deficit hint** updates on every stepper toggle:
+Below the resource bar (outside the box), a **dynamic deficit hint** updates on every stepper toggle:
 - If treasury insufficient for any queued unit: "Treasury low"
 - If paper insufficient for any queued unit: "Paper low"
-- If both insufficient: "Treasury and Paper low"
+- If both insufficient: "Treasury low and Paper low" (each clause joined with `" and "`)
 - If no deficit: hidden
 
 ### Unit Type Rows
@@ -75,10 +69,17 @@ For each `CivilianEconomyCatalog` entry:
 | Commodity inputs | `CivilianEconomy.buildInputs` (key = commodity id, value = qty) |
 | Locked state | `unlockingTechByCivilianId[unitType]` not in `Player.techUnlocked` |
 
+Each row is a **single horizontal line**: a left info `Column` (unit name stacked
+above the cost line) takes the residual width, and the stepper sits on the right
+of the same row, vertically centered (wrapping below only when the width cannot
+fit both). This matches the mockup `.unit-row` (`flex; align-items:center`) with a
+left `.info` block and a right `.stepper`.
+
 #### Unlocked Unit Row
-- Unit type icon (or pixel-art icon from catalog)
-- Treasury cost + commodity cost (e.g. `1,000 + 2📄`)
-- **Stepper:** `[−]` / count / `[+]` buttons
+- Unit type icon (or pixel-art icon from catalog) + unit name (left info column, top)
+- Treasury cost + commodity cost on the line below the name, formatted
+  `£` + comma grouping with lowercase commodity (e.g. `£1,000 + 2 paper`)
+- **Stepper:** `[−]` / count / `[+]` buttons on the right of the same row
   - Count starts at 0
   - `[+]` increases by 1; `[−]` decreases by 1 (min 0)
   - `[+]` is disabled (greyed) if insufficient resources for +1 more
@@ -198,6 +199,14 @@ pixellab_create_map_object(
 
 - **Given** the Train Civilians dialog is open, **when** the user views the resource bar, **then** the UI shows the player's current treasury and paper stockpile quantities.
 
+- **Given** the Train Civilians dialog is open with treasury `5000`, **when** the resource bar renders, **then** the treasury value reads `£5,000` (pound symbol + comma thousands grouping), not an abbreviated `5k`.
+
+- **Given** an unlocked civilian row with treasury cost `1000` and `2` paper, **when** the cost line renders, **then** it reads `£1,000 + 2 paper` (lowercase `paper`).
+
+- **Given** any unlocked unit row, **when** it renders, **then** the unit name appears stacked above the cost on the left and the stepper `[−] n [+]` appears on the right of the same row (not on a separate line below).
+
+- **Given** the resource bar, **when** it renders, **then** it appears as a boxed inset strip with monospace bold values consistent with the mockup and editorial-monocle palette.
+
 - **Given** the Train Civilians dialog is open, **when** the user increments a stepper for an unlocked unit type, **then** the deficit hint updates to reflect whether treasury/paper is now insufficient.
 
 - **Given** the Train Civilians dialog is open, **when** the user increments a stepper beyond available resources, **then** that stepper's `[+]` button is disabled and the row is visually subdued.
@@ -212,7 +221,7 @@ pixellab_create_map_object(
 
 - **Given** the Train Civilians dialog is open, **when** the user has no capital set, **then** the UI shows an error message "No capital set — cannot train units" and all steppers are disabled.
 
-- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or both.
+- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low and Paper low".
 
 - **Given** the Train Civilians dialog is open, **when** the user taps the Reset button (if present), **then** all steppers are set to 0 and deficit hint is cleared.
 

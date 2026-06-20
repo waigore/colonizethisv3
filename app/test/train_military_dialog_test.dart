@@ -116,6 +116,18 @@ void main() {
     expect(find.text('2'), findsWidgets);
   });
 
+  testWidgets('AC: treasury renders with £ + comma grouping (£10,000)', (
+    WidgetTester tester,
+  ) async {
+    final richGame = gameWithMilitaryResources();
+    await tester.pumpWidget(
+      buildDialog(game: richGame, humanPlayerId: humanPlayerId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('£10,000'), findsOneWidget);
+  });
+
   testWidgets('AC: regiment rows show roster display names not type ids', (
     WidgetTester tester,
   ) async {

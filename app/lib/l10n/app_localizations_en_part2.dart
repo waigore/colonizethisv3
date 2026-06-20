@@ -482,6 +482,12 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String get trainUnits_treasuryLabel => 'Treasury:';
+
+  @override
+  String get trainUnits_paperLabel => 'Paper:';
+
+  @override
   String trainUnits_peasants(int value) {
     return 'Peasants: $value';
   }

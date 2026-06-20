@@ -24,13 +24,13 @@ The Train Military dialog lets the player queue military regiment build orders i
 ## Layout
 
 - **Header:** `Train Military` title + close (`X`) button.
-- **Resource bar:** Shows available `Treasury`, `Peasants`, and regiment-input commodities (as applicable): `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze`. Use existing resource/worker icons.
-- **Deficit hint:** Same wording style as civilian (`{Resource} low`, `{A} and {B} low`, etc.) using military resource names.
-- **Rows:** One row per `RegimentEconomyCatalog.all` entry.
+- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`; see [components/train-dialog-chrome.md](components/train-dialog-chrome.md)). Shows `Treasury`, `Peasants`, and regiment-input commodities `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze` as `TrainDialogResourceChip`s with existing icons. Treasury uses `£` + comma grouping (e.g. `£10,000`), matching the civilian dialog.
+- **Deficit hint:** Same wording style as civilian (`{Resource} low`, `{A} and {B} low`) below the box.
+- **Rows:** One row per `RegimentEconomyCatalog.all` entry as a single line — left info `Column` (regiment name above the icon-bearing cost summary) plus the stepper on the right (vertically centered).
   - primary label: **regiment display name** per [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (not the snake_case persistence id; e.g. `Peasant Levies` not `peasant_levies`). Text-only; no regiment icon requirement.
   - cost summary: treasury + commodity requirements with icons
-  - locked state + `Requires: {tech}` when regiment unlocking tech is missing
-  - `[-] count [+]` stepper
+  - locked state + `Requires: {tech}` when unlocking tech is missing
+  - `[-] count [+]` stepper on the right
 - **Footer:** `Reset` button that clears all row counts to `0`.
 
 ---
@@ -110,7 +110,11 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 
 - **Given** the Military Units panel is open, **when** the user taps `Train`, **then** the UI layer closes the panel and opens Train Military as a modal dialog via `OpenDialogEvent(trainMilitaryDialogId)`.
 
-- **Given** the Train Military dialog is open, **when** the user views the resource bar, **then** the UI layer shows treasury, peasants, and relevant military-input resources using existing resource/worker icon components.
+- **Given** the Train Military dialog is open, **when** the user views the resource bar, **then** the UI layer shows treasury, peasants, and military-input resources with existing icons inside the shared boxed inset strip.
+
+- **Given** treasury `10000`, **when** the resource bar renders, **then** the treasury value reads `£10,000` (pound symbol + comma grouping).
+
+- **Given** any regiment row, **when** it renders, **then** the regiment name is stacked above the cost summary on the left and the stepper `[−] n [+]` is on the right of the same row.
 
 - **Given** the Train Military dialog is open, **when** the player increments regiment steppers, **then** the UI layer enables/disables each row's `+` based on aggregate affordability across treasury, peasants, and all required commodities.
 

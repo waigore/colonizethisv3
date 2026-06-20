@@ -97,6 +97,84 @@ void main() {
       expect(find.textContaining('Paper:'), findsOneWidget);
     });
 
+    testWidgets(
+      'AC: Treasury renders with £ + comma grouping (£5,000), not 5k',
+      (WidgetTester tester) async {
+        final richGame = gameWithResources(treasury: 5000, paper: 12);
+        await tester.pumpWidget(
+          buildDialog(game: richGame, humanPlayerId: humanPlayerId),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('£5,000'), findsOneWidget);
+        expect(find.textContaining('5k'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC: Unlocked cost line reads "£1,000 + 2 paper" (lowercase paper)',
+      (WidgetTester tester) async {
+        final richGame = gameWithResources(treasury: 10000, paper: 100);
+        await tester.pumpWidget(
+          buildDialog(game: richGame, humanPlayerId: humanPlayerId),
+        );
+        await tester.pumpAndSettle();
+
+        // Builder costs 1,000 treasury + 2 paper (mockup UNIT40001).
+        expect(find.textContaining('£1,000 + 2 paper'), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'AC: Both-resource deficit reads "Treasury low and Paper low"',
+      (WidgetTester tester) async {
+        final player = getPlayer(humanPlayerId);
+        final capital =
+            player.capitalProvinceId ?? player.capitalTile?.provinceId;
+        expect(capital, isNotNull, reason: 'debug game needs capital');
+        // Treasury 1,500 + paper 3: two queued Builders (2,000 treasury,
+        // 4 paper) exceed both resources, so both deficit clauses show.
+        final limitedPlayer = player.copyWith(
+          treasury: 1500,
+          stockpile: const Stockpile(quantities: {'paper': 3}),
+          capitalProvinceId: capital,
+        );
+        final limitedGame = game.copyWith(
+          players: [
+            limitedPlayer,
+            ...game.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+        final orders = Orders(
+          buildUnitOrdersByPlayerId: {
+            humanPlayerId: [
+              BuildUnitOrder(
+                unitType: kUnitTypeBuilder,
+                isMilitary: false,
+                spawnProvinceId: capital!,
+              ),
+              BuildUnitOrder(
+                unitType: kUnitTypeBuilder,
+                isMilitary: false,
+                spawnProvinceId: capital,
+              ),
+            ],
+          },
+        );
+
+        await tester.pumpWidget(
+          buildDialog(
+            game: limitedGame,
+            humanPlayerId: humanPlayerId,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Treasury low and Paper low'), findsOneWidget);
+      },
+    );
+
     testWidgets('AC: All 6 civilian unit types are listed', (
       WidgetTester tester,
     ) async {

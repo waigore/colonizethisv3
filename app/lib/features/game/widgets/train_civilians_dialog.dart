@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_assets.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -108,7 +109,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
     final treasuryDeficit = _totalTreasuryCost() > _treasury;
     final paperDeficit = _totalPaperCost() > _paperStockpile;
     if (treasuryDeficit && paperDeficit) {
-      return 'Treasury and Paper low';
+      return 'Treasury low and Paper low';
     }
     if (treasuryDeficit) return 'Treasury low';
     if (paperDeficit) return 'Paper low';
@@ -207,9 +208,15 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
     return [
       const TrainDialogSectionDivider(),
       TrainDialogResourceBar(
-        lines: [
-          l10n.trainUnits_treasury(_formatTreasury(_treasury)),
-          l10n.trainUnits_paper(_paperStockpile),
+        entries: [
+          TrainDialogResourceEntry(
+            label: l10n.trainUnits_treasuryLabel,
+            value: formatTreasuryCurrency(_treasury),
+          ),
+          TrainDialogResourceEntry(
+            label: l10n.trainUnits_paperLabel,
+            value: '$_paperStockpile',
+          ),
         ],
         deficitHint: _deficitHint,
       ),
@@ -242,13 +249,6 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
       ),
     ];
   }
-
-  String _formatTreasury(int n) {
-    if (n >= 1000) {
-      return '${(n / 1000).toStringAsFixed(n % 1000 == 0 ? 0 : 1)}k';
-    }
-    return n.toString();
-  }
 }
 
 class _UnitTypeRow extends StatelessWidget {
@@ -280,12 +280,11 @@ class _UnitTypeRow extends StatelessWidget {
     return Opacity(
       opacity: isLocked ? kTrainDialogLockedOpacity : 1.0,
       child: TrainDialogUnitRowSurface(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildHeader(context, theme, paperQty),
-            ..._buildLockedHint(theme),
-            const SizedBox(height: 4),
+            Expanded(child: _buildInfo(context, theme, paperQty)),
+            const SizedBox(width: 8),
             _buildStepper(theme),
           ],
         ),
@@ -293,31 +292,41 @@ class _UnitTypeRow extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, ThemeData theme, int paperQty) {
-    return Row(
+  Widget _buildInfo(BuildContext context, ThemeData theme, int paperQty) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isLocked)
-          StrictAssetIcon(
-            assetPath: '${kAppIconAssetPrefix}ui_icon_lock.png',
-            width: 20,
-            height: 20,
-          ),
-        if (isLocked) const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            econ.id,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+        Row(
+          children: [
+            if (isLocked) ...[
+              StrictAssetIcon(
+                assetPath: '${kAppIconAssetPrefix}ui_icon_lock.png',
+                width: 20,
+                height: 20,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Expanded(
+              child: Text(
+                econ.id,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
+        const SizedBox(height: 2),
         Text(
           appL10n(context).trainCivilians_costLine(
-            _formatTreasury(econ.buildTreasuryCost),
+            formatTreasuryCurrency(econ.buildTreasuryCost),
             paperQty.toString(),
           ),
-          style: theme.textTheme.bodyMedium,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: EditorialMonoclePalette.muted,
+          ),
         ),
+        ..._buildLockedHint(theme),
       ],
     );
   }
@@ -339,7 +348,7 @@ class _UnitTypeRow extends StatelessWidget {
 
   Widget _buildStepper(ThemeData theme) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
       children: [
         CtNinePatchButton(
           onPressed: isLocked || !canDecrement ? null : onDecrement,
@@ -361,12 +370,5 @@ class _UnitTypeRow extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _formatTreasury(int n) {
-    if (n >= 1000) {
-      return '${(n / 1000).toStringAsFixed(n % 1000 == 0 ? 0 : 1)}k';
-    }
-    return n.toString();
   }
 }

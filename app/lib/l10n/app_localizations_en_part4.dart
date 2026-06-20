@@ -13,7 +13,7 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
 
   @override
   String trainCivilians_costLine(String treasury, String paper) {
-    return '$treasury + $paper Paper';
+    return '$treasury + $paper paper';
   }
 
   @override

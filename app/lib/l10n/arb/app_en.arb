@@ -1533,6 +1533,14 @@
       }
     }
   },
+  "trainUnits_treasuryLabel": "Treasury:",
+  "@trainUnits_treasuryLabel": {
+    "description": "Treasury label in the train-dialog boxed resource bar (value rendered separately in monospace)."
+  },
+  "trainUnits_paperLabel": "Paper:",
+  "@trainUnits_paperLabel": {
+    "description": "Paper label in the civilian train-dialog boxed resource bar (value rendered separately in monospace)."
+  },
   "trainUnits_peasants": "Peasants: {value}",
   "@trainUnits_peasants": {
     "description": "Peasants summary line in military train dialog.",
@@ -2700,7 +2708,7 @@
       }
     }
   },
-  "trainCivilians_costLine": "{treasury} + {paper} Paper",
+  "trainCivilians_costLine": "{treasury} + {paper} paper",
   "@trainCivilians_costLine": {
     "description": "Treasury cost plus paper requirement for training civilians.",
     "placeholders": {
