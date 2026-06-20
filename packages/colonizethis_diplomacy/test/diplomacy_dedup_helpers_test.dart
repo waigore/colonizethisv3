@@ -9,7 +9,9 @@ import 'test_fixtures.dart';
 /// the generic [indexByKey] builder (AC2), the relocated
 /// [isAiControlledForEvidence] helper now living in the diplomacy shared
 /// helpers (AC6), the [logDiplomaticEvent] append+log helper (AC4), and the
-/// canonical [clearOverturesBetweenGpAndFaction] overture-clearing helper (AC1).
+/// canonical [clearOverturesBetweenGpAndFaction] pair-scoped and
+/// [clearOverturesInvolvingFaction] full-faction-teardown overture-clearing
+/// helpers (AC1).
 void main() {
   group('clearOverturesBetweenGpAndFaction (AC1)', () {
     Game gameWithOvertures(List<OvertureState> overtures) =>
@@ -89,6 +91,73 @@ void main() {
     test('negative: empty overtures yields no removals and same game', () {
       final game = gameWithOvertures(const []);
       final result = clearOverturesBetweenGpAndFaction(game, 'gp1', 'minor1');
+      expect(result.removed, isEmpty);
+      expect(identical(result.game, game), isTrue);
+    });
+  });
+
+  group('clearOverturesInvolvingFaction (AC1, full-faction teardown)', () {
+    Game gameWithOvertures(List<OvertureState> overtures) =>
+        TestFixtures.minimalGame(
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          overtureStates: overtures,
+        );
+
+    test('positive: removes overtures involving the faction on either side', () {
+      final game = gameWithOvertures(const [
+        OvertureState(gpId: 'gp1', targetId: 'minor1'),
+        OvertureState(gpId: 'gp2', targetId: 'gp1'),
+        OvertureState(gpId: 'gp2', targetId: 'minor2'),
+      ]);
+
+      final result = clearOverturesInvolvingFaction(game, 'gp1');
+
+      expect(result.removed, hasLength(2));
+      expect(result.removed.map((o) => '${o.gpId}|${o.targetId}'), [
+        'gp1|minor1',
+        'gp2|gp1',
+      ]);
+      expect(
+        result.game.overtureStates.map((o) => '${o.gpId}|${o.targetId}'),
+        ['gp2|minor2'],
+      );
+    });
+
+    test(
+      'positive: minor/tribe target equivalence (only appears as targetId)',
+      () {
+        // Overtures are GP-originated, so a Minor/Tribe never appears as gpId.
+        // Either-side removal therefore matches the prior `targetId` filter.
+        final game = gameWithOvertures(const [
+          OvertureState(gpId: 'gp1', targetId: 'minor1'),
+          OvertureState(gpId: 'gp2', targetId: 'minor1'),
+          OvertureState(gpId: 'gp1', targetId: 'minor2'),
+        ]);
+
+        final result = clearOverturesInvolvingFaction(game, 'minor1');
+
+        expect(result.removed, hasLength(2));
+        expect(
+          result.game.overtureStates.map((o) => '${o.gpId}|${o.targetId}'),
+          ['gp1|minor2'],
+        );
+      },
+    );
+
+    test('negative: no matching faction leaves the game instance unchanged', () {
+      final game = gameWithOvertures(const [
+        OvertureState(gpId: 'gp1', targetId: 'minor1'),
+      ]);
+
+      final result = clearOverturesInvolvingFaction(game, 'gp9');
+
+      expect(result.removed, isEmpty);
+      expect(identical(result.game, game), isTrue);
+    });
+
+    test('negative: empty overtures yields no removals and same game', () {
+      final game = gameWithOvertures(const []);
+      final result = clearOverturesInvolvingFaction(game, 'gp1');
       expect(result.removed, isEmpty);
       expect(identical(result.game, game), isTrue);
     });

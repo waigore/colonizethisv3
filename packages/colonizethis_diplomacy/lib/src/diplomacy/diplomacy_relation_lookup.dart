@@ -200,6 +200,13 @@ Map<String, OvertureState> _overtureStatesByLookupKey(Game game) =>
 /// Finds the relation, passes it (or null) to [updater], and replaces or
 /// appends the result.
 ///
+/// **Soft-deprecated for batched/loop use in favour of [RelationUpsertIndex]**
+/// (Refs #3562 AC5). It is not annotated `@Deprecated` because it remains the
+/// correct primitive for a genuinely *single* isolated upsert, and a hard
+/// annotation would wrongly flag those legitimate call sites; instead the
+/// acceptable single-call-vs-batched guidance is documented here and at the
+/// remaining single-call sites.
+///
 /// Each call rebuilds the `pairKey → firstIndex` map and copies the whole
 /// relations list, so it is O(relations) per call. Use it only for a **single
 /// isolated upsert** (one accepted order / one resolver event). For **repeated**
