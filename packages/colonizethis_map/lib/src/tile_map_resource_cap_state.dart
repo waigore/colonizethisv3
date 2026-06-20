@@ -5,17 +5,28 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 class MultiRegionCapState {
   MultiRegionCapState(this.capFraction, this.rules, this.regionId);
 
+  /// Rebuilds cap counts from an existing [resourceGrid].
+  ///
+  /// When [terrainGrid] is supplied, cells on forest terrain are skipped:
+  /// guaranteed forest resource placements (R3, issue #3573) are excluded from
+  /// the multi-region cap accounting, mirroring the bootstrap-grain exclusion.
+  /// SPEC/program/tile-map-gen-resources.md.
   factory MultiRegionCapState.fromExisting(
     double capFraction,
     ResourceRules rules,
     String regionId,
-    List<List<Resource?>> resourceGrid,
-  ) {
+    List<List<Resource?>> resourceGrid, {
+    List<List<TerrainType?>>? terrainGrid,
+  }) {
     var both = 0;
     var total = 0;
-    for (final row in resourceGrid) {
-      for (final r in row) {
+    for (var y = 0; y < resourceGrid.length; y++) {
+      final row = resourceGrid[y];
+      for (var x = 0; x < row.length; x++) {
+        final r = row[x];
         if (r == null) continue;
+        final terrain = terrainGrid?[y][x];
+        if (terrain != null && isForestTerrain(terrain)) continue;
         total++;
         if (rules.regionRule[r] == ResourceRegionRule.both) both++;
       }

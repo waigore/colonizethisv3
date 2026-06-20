@@ -37,11 +37,12 @@ void main() {
           regionId: 'oldWorld',
           resourceRules: ResourceRules.defaultRules,
         );
-        // Digest updated for the forest terrain split (#3573 R6): the
-        // hardwood/scrub weights and the plains reweight change the seeded
-        // terrain layout. Regenerate this constant whenever terrain
-        // distribution weights or generation order change intentionally.
-        expect(tileMapGenerationDigest(result), '30452b70');
+        // Digest updated for the forest terrain split (#3573): R6 weights, the
+        // guaranteed forest resource spawn (R3), and the hardwood clustering
+        // post-pass (R7) all change the seeded terrain/resource layout.
+        // Regenerate this constant whenever terrain distribution weights,
+        // resource placement, or generation order change intentionally.
+        expect(tileMapGenerationDigest(result), '314034fe');
       },
     );
 

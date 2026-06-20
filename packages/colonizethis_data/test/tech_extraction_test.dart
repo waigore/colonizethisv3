@@ -87,6 +87,94 @@ void main() {
     });
   });
 
+  group('terrain extraction caps (R4 #3573)', () {
+    test('scrub forest hard-caps timber at level 1', () {
+      expect(
+        terrainExtractionHardCap('timber', TerrainType.scrubForest),
+        equals(1),
+      );
+    });
+
+    test('hardwood forest imposes no timber hard cap', () {
+      expect(
+        terrainExtractionHardCap('timber', TerrainType.hardwoodForest),
+        isNull,
+      );
+    });
+
+    test('scrub forest hard cap applies only to timber, not furs', () {
+      expect(
+        terrainExtractionHardCap('furs', TerrainType.scrubForest),
+        isNull,
+      );
+    });
+
+    test('scrub timber capped at 1 even with circular_saw (tech cap 4)', () {
+      final fullTech = {
+        kTechIdSawMill: true,
+        kTechIdWindSawMill: true,
+        kTechIdCircularSaw: true,
+      };
+      expect(
+        extractionCapForResourceForUnlocked(fullTech, 'timber'),
+        equals(4),
+      );
+      expect(
+        extractionCapForResourceOnTerrain(
+          fullTech,
+          'timber',
+          TerrainType.scrubForest,
+        ),
+        equals(1),
+      );
+    });
+
+    test('hardwood timber follows normal tech progression to 4', () {
+      final fullTech = {
+        kTechIdSawMill: true,
+        kTechIdWindSawMill: true,
+        kTechIdCircularSaw: true,
+      };
+      expect(
+        extractionCapForResourceOnTerrain(
+          fullTech,
+          'timber',
+          TerrainType.hardwoodForest,
+        ),
+        equals(4),
+      );
+    });
+
+    test('hardwood timber defaults to 1 with no gathering tech', () {
+      expect(
+        extractionCapForResourceOnTerrain(
+          {},
+          'timber',
+          TerrainType.hardwoodForest,
+        ),
+        equals(defaultExtractionCap),
+      );
+    });
+
+    test('clampExtractionCapForTerrain clamps scrub timber down', () {
+      expect(
+        clampExtractionCapForTerrain(4, 'timber', TerrainType.scrubForest),
+        equals(1),
+      );
+    });
+
+    test('clampExtractionCapForTerrain leaves non-capped terrain unchanged', () {
+      expect(
+        clampExtractionCapForTerrain(3, 'timber', TerrainType.hardwoodForest),
+        equals(3),
+      );
+      expect(
+        clampExtractionCapForTerrain(2, 'grain', TerrainType.plains),
+        equals(2),
+      );
+    });
+  });
+
   group('unlockingTechByShipId', () {
     test('fluyte requires superior_hull_design', () {
       expect(unlockingTechByShipId['fluyte'], kTechIdSuperiorHullDesign);
