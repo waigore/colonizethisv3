@@ -18,8 +18,10 @@ import 'move_army_dialog.dart';
 import 'split_army_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
+import 'units/shared/units_combine_header_actions.dart';
 import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_entity_card.dart';
+import 'units/shared/units_multi_selection_controller.dart';
 import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
@@ -53,52 +55,30 @@ class MilitaryUnitsPanel extends StatefulWidget with GamePanelMixin {
 }
 
 class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
-  final Set<String> _selectedArmyIds = {};
+  final UnitsMultiSelectionController _selection =
+      UnitsMultiSelectionController();
+
+  Iterable<String> _armyIds(List<ArmyBlock> flat) =>
+      flat.map((b) => b.army.id);
 
   void _toggleArmySelection(String armyId) {
-    setState(() {
-      if (_selectedArmyIds.contains(armyId)) {
-        _selectedArmyIds.remove(armyId);
-      } else {
-        _selectedArmyIds.add(armyId);
-      }
-    });
-  }
-
-  bool? _headerSelectAllValue(List<ArmyBlock> flat) {
-    if (flat.isEmpty) return false;
-    final n = flat.length;
-    final sel = _selectedArmyIds.length;
-    if (sel == 0) return false;
-    if (sel == n) return true;
-    return null;
+    setState(() => _selection.toggle(armyId));
   }
 
   void _onHeaderSelectAllTapped(List<ArmyBlock> flat) {
-    setState(() {
-      final allSelected =
-          flat.isNotEmpty &&
-          flat.every((b) => _selectedArmyIds.contains(b.army.id));
-      if (allSelected) {
-        _selectedArmyIds.clear();
-      } else {
-        for (final b in flat) {
-          _selectedArmyIds.add(b.army.id);
-        }
-      }
-    });
+    setState(() => _selection.selectAllOrClear(_armyIds(flat)));
   }
 
   void _performCombine(List<ArmyBlock> flat) {
-    if (!canCombineArmySelection(flat, _selectedArmyIds)) return;
-    final ids = _selectedArmyIds.toList()..sort();
+    if (!canCombineArmySelection(flat, _selection.selectedIds)) return;
+    final ids = _selection.selectedIds.toList()..sort();
     widget.bus.emit(
       ArmyCombineRequestedEvent(
         humanPlayerId: widget.humanPlayerId,
         armyIds: ids,
       ),
     );
-    setState(() => _selectedArmyIds.clear());
+    setState(_selection.clear);
   }
 
   void _openSplitDialog(ArmyBlock block) {
@@ -141,8 +121,9 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;
     final canCombine =
-        !widget.readOnly && canCombineArmySelection(flat, _selectedArmyIds);
-    final headerCheckbox = _headerSelectAllValue(flat);
+        !widget.readOnly &&
+        canCombineArmySelection(flat, _selection.selectedIds);
+    final headerCheckbox = _selection.headerValue(_armyIds(flat));
     final readOnly = widget.readOnly;
 
     return UnitsPanelShell(
@@ -170,30 +151,18 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     required bool readOnly,
   }) {
     return [
-      if (hasAny && flat.isNotEmpty && !readOnly) ...[
-        Tooltip(
-          message: headerCheckbox == true
-              ? l10n.military_units_deselectAllArmies
-              : l10n.military_units_selectAllArmies,
-          child: Checkbox(
-            tristate: true,
-            value: headerCheckbox,
-            onChanged: (_) => _onHeaderSelectAllTapped(flat),
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-        const SizedBox(width: 4),
-        // Combine adopts the compact **primary** header pill
-        // (`CtActionTextButton(primary: true)`) per SPEC/ui/military-units-panel.md
+      if (hasAny && flat.isNotEmpty && !readOnly)
+        // Shared select-all + Combine cluster per SPEC/ui/military-units-panel.md
         // § Header actions and issue #3514 owner decisions #5 / #15.
-        CtActionTextButton(
-          primary: true,
-          onPressed: canCombine ? () => _performCombine(flat) : null,
-          enabled: canCombine,
-          label: l10n.common_combine,
+        ...unitsCombineHeaderActions(
+          headerValue: headerCheckbox,
+          selectAllTooltip: l10n.military_units_selectAllArmies,
+          deselectAllTooltip: l10n.military_units_deselectAllArmies,
+          combineLabel: l10n.common_combine,
+          canCombine: canCombine,
+          onSelectAll: () => _onHeaderSelectAllTapped(flat),
+          onCombine: () => _performCombine(flat),
         ),
-      ],
       CtActionTextButton(
         primary: true,
         onPressed: readOnly ? null : _openTrainDialog,
@@ -255,7 +224,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         armyId: block.army.id,
         draftOrders: widget.draftOrders,
       ),
-      isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
+      isSelectedForCombine: _selection.contains(block.army.id),
       combineSelectionEnabled: !widget.readOnly,
       onCombineSelectionToggle: () => _toggleArmySelection(block.army.id),
       onLocate: _armyLocateCallback(block),
