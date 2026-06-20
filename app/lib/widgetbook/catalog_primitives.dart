@@ -237,7 +237,7 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       ),
       WidgetbookUseCase(
         name: 'CtFullScreenDialogueShell — scrim + framed body',
-        builder: (context) => _CtFullScreenDialogueShellStory(),
+        builder: (context) => CtFullScreenDialogueShellStory(),
       ),
       WidgetbookUseCase(
         name: 'CtSlider — value sweep',
@@ -293,7 +293,7 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       ),
       WidgetbookUseCase(
         name: 'CtDropdown — selected-row highlight',
-        builder: (context) => const _CtDropdownSelectedRowStory(),
+        builder: (context) => const CtDropdownSelectedRowStory(),
       ),
       WidgetbookUseCase(
         name: 'CtCompassRose — size sweep',
@@ -311,8 +311,8 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
   ),
 ];
 
-class _CtDarkPrimitiveScaffold extends StatelessWidget {
-  const _CtDarkPrimitiveScaffold({required this.child});
+class CtDarkPrimitiveScaffold extends StatelessWidget {
+  const CtDarkPrimitiveScaffold({super.key, required this.child});
 
   final Widget child;
 
@@ -389,7 +389,7 @@ class _CtGradientsStory extends StatelessWidget {
       (name: 'rowGradient', gradient: CtGradients.rowGradient),
       (name: 'topBarGradient', gradient: CtGradients.topBarGradient),
     ];
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -421,7 +421,7 @@ class _CtSliderStoryState extends State<_CtSliderStory> {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -465,7 +465,7 @@ class _CtPanelStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -510,7 +510,7 @@ class _CtPanelStory extends StatelessWidget {
 class _CtBrassDividerStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -530,7 +530,7 @@ class _CtBrassDividerStory extends StatelessWidget {
 class _CtSectionLabelStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,7 +552,7 @@ class _CtSectionLabelStory extends StatelessWidget {
 class _CtCompassRoseStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -571,7 +571,7 @@ class _CtCompassRoseStory extends StatelessWidget {
 class _CtFleurDeLisOrnamentStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -595,7 +595,7 @@ class _CtFleurDeLisOrnamentStory extends StatelessWidget {
 class _CtProgressBarStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -637,7 +637,7 @@ class _CtToggleSwitchStoryState extends State<_CtToggleSwitchStory> {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -721,7 +721,7 @@ class _CtResourceCellStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: SizedBox(
         width: 220,
         child: Column(
@@ -785,7 +785,7 @@ class _CtBackButtonStoryState extends State<_CtBackButtonStory> {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -826,7 +826,7 @@ class _CtTopBarStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -899,7 +899,7 @@ class _CtDropdownStoryState extends State<_CtDropdownStory> {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

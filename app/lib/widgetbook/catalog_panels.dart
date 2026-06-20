@@ -7,14 +7,14 @@ List<WidgetbookNode> get productionPanelDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Full availability',
-        builder: (context) => const _ProductionPanelStory(
+        builder: (context) => const ProductionPanelStory(
           playerOverride: null,
           useFullAvailability: true,
         ),
       ),
       WidgetbookUseCase(
         name: 'Partial availability',
-        builder: (context) => const _ProductionPanelStory(
+        builder: (context) => const ProductionPanelStory(
           playerOverride: null,
           useFullAvailability: false,
         ),
@@ -23,7 +23,7 @@ List<WidgetbookNode> get productionPanelDirectories => [
         name: 'Full availability (mobile)',
         builder: (context) => mobileViewport(
           context,
-          const _ProductionPanelStory(
+          const ProductionPanelStory(
             playerOverride: null,
             useFullAvailability: true,
           ),
@@ -33,7 +33,7 @@ List<WidgetbookNode> get productionPanelDirectories => [
         name: 'Partial availability (mobile)',
         builder: (context) => mobileViewport(
           context,
-          const _ProductionPanelStory(
+          const ProductionPanelStory(
             playerOverride: null,
             useFullAvailability: false,
           ),
@@ -41,13 +41,13 @@ List<WidgetbookNode> get productionPanelDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Cotton weaving locked',
-        builder: (context) => _ProductionPanelStory(
+        builder: (context) => ProductionPanelStory(
           playerOverride: cottonWeavingLockedProductionPlayer(),
         ),
       ),
       WidgetbookUseCase(
         name: 'Cotton weaving unlocked',
-        builder: (context) => _ProductionPanelStory(
+        builder: (context) => ProductionPanelStory(
           playerOverride: cottonWeavingUnlockedProductionPlayer(),
         ),
       ),
@@ -678,7 +678,7 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
       ),
       WidgetbookUseCase(
         name: 'With map',
-        builder: (context) => const _MilitaryPanelWithMapStory(),
+        builder: (context) => const MilitaryPanelWithMapStory(),
       ),
     ],
   ),
@@ -717,7 +717,7 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
       ),
       WidgetbookUseCase(
         name: 'With map',
-        builder: (context) => const _NavalPanelWithMapStory(),
+        builder: (context) => const NavalPanelWithMapStory(),
       ),
     ],
   ),

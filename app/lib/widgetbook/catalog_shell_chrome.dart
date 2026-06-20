@@ -85,7 +85,7 @@ class _CtPanelWithTopBarStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -183,7 +183,7 @@ class _CtIconActionStoryState extends State<_CtIconActionStory> {
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

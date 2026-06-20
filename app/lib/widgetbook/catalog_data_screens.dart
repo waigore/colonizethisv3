@@ -18,16 +18,16 @@ part of 'catalog.dart';
 /// `repo.part_unit_size` 1000-line ceiling.
 /// See SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog
 /// (CtDropdown) and issue #2859 R5c / S6.
-class _CtDropdownSelectedRowStory extends StatefulWidget {
-  const _CtDropdownSelectedRowStory();
+class CtDropdownSelectedRowStory extends StatefulWidget {
+  const CtDropdownSelectedRowStory({super.key});
 
   @override
-  State<_CtDropdownSelectedRowStory> createState() =>
-      _CtDropdownSelectedRowStoryState();
+  State<CtDropdownSelectedRowStory> createState() =>
+      CtDropdownSelectedRowStoryState();
 }
 
-class _CtDropdownSelectedRowStoryState
-    extends State<_CtDropdownSelectedRowStory> {
+class CtDropdownSelectedRowStoryState
+    extends State<CtDropdownSelectedRowStory> {
   static const List<String> _options = <String>[
     // ignore: avoid_hardcoded_strings_in_widgets
     'England',
@@ -42,7 +42,7 @@ class _CtDropdownSelectedRowStoryState
 
   @override
   Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
+    return CtDarkPrimitiveScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -796,7 +796,9 @@ List<WidgetbookNode> get tradeScreenDirectories => [
 /// in `catalog_part5.dart`; the class itself lives here so
 /// `catalog_part5.dart` stays under the `repo.part_unit_size` 1000-line
 /// ceiling.
-class _CtFullScreenDialogueShellStory extends StatelessWidget {
+class CtFullScreenDialogueShellStory extends StatelessWidget {
+  const CtFullScreenDialogueShellStory({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Theme(
