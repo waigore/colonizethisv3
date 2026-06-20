@@ -18,6 +18,7 @@ import 'tile_map_visualization_shared.dart'
         drawLegendLine,
         drawResourceLegendRows,
         drawResourceLetterAtCellCenter,
+        fillTileGridCells,
         landSeedMarkerRgb,
         legendLineHeight,
         legendPadding,
@@ -169,20 +170,18 @@ void _drawMapCells({
   required Set<String> seaZoneIds,
   required Map<String, (int, int, int)>? regionColors,
 }) {
-  TileMapGrid.forEachIndex(result.height, result.width, (y, x) {
-    final id = result.cell(x, y);
-    final (r, g, b) = useTerrain
-        ? _terrainOrSeaCellColor(result, seaZoneIds, x, y, id)
-        : regionColors![id]!;
-    img.fillRect(
-      image,
-      x1: x * cellSize,
-      y1: y * cellSize,
-      x2: (x + 1) * cellSize - 1,
-      y2: (y + 1) * cellSize - 1,
-      color: image.getColor(r, g, b),
-    );
-  });
+  fillTileGridCells(
+    image,
+    height: result.height,
+    width: result.width,
+    cellSize: cellSize,
+    colorAt: (x, y) {
+      final id = result.cell(x, y);
+      return useTerrain
+          ? _terrainOrSeaCellColor(result, seaZoneIds, x, y, id)
+          : regionColors![id]!;
+    },
+  );
 }
 
 (int, int, int) _terrainOrSeaCellColor(
