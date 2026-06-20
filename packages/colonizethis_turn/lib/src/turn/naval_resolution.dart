@@ -115,9 +115,7 @@ Game runNavalInterceptionCombatPhase(
     for (final b in battles)
       normalizeNavalBattleSidesForAttacker(b, game, movedFleetIds),
   ];
-  var seed =
-      (game.globalGameSeed ?? 0) ^
-      (game.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
+  var seed = mixTurnSeed(game, game.worldState.turnState.turnNumber);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   turnLog.d('naval phase after interception battles=${battles.length}');
   seed =

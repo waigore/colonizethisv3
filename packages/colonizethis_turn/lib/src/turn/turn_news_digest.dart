@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'turn_resolution_helpers.dart';
+
 /// Builds digest lines and world-state tracking updates for the completed turn.
 /// [start] is game at resolution entry (after military ensure); [end] is final
 /// state including turn increment. Returns null digest when [end.victory] is set.
@@ -87,18 +89,12 @@ List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
     final pid = _fullProvinceId(prov);
     final before = _ownerForProvince(start, pid);
     final after = _ownerForProvince(end, pid);
-    // Same predicate as emitProvinceCapturedEvents: both owners non-empty faction
-    // ids and owner changed (no null/empty "new owner" capture). See SPEC/game/world-model.md.
-    if (before != null &&
-        before.isNotEmpty &&
-        after != null &&
-        after.isNotEmpty &&
-        before != after) {
+    if (isProvinceOwnershipCaptured(before, after)) {
       out.add(
         TurnNewsProvinceCapturedLine(
           provinceId: pid,
-          previousOwnerId: before,
-          newOwnerId: after,
+          previousOwnerId: before!,
+          newOwnerId: after!,
         ),
       );
     }

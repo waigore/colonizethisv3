@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import '../turn_phase_handler_helpers.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 import '../naval_resolution.dart';
@@ -202,17 +203,14 @@ TurnPhaseStepOutcome movementTurnPhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) => TurnPhaseStepContinue(
-  acc.copyWith(
-    game: runMovementPhase(
-      acc.game,
-      config.topology,
-      config.orders,
-      onCivilianMoveOrderTrace:
-          config.turnTraceRuntime?.handleCivilianMoveOrderTrace,
-      onBundledWorkMoveTrace:
-          config.turnTraceRuntime?.handleBundledWorkMoveTrace,
-      onArmyMoveOrderTrace: config.turnTraceRuntime?.handleArmyMoveOrderTrace,
-    ),
+) => simpleGamePhase(
+  (game, config) => runMovementPhase(
+    game,
+    config.topology,
+    config.orders,
+    onCivilianMoveOrderTrace:
+        config.turnTraceRuntime?.handleCivilianMoveOrderTrace,
+    onBundledWorkMoveTrace: config.turnTraceRuntime?.handleBundledWorkMoveTrace,
+    onArmyMoveOrderTrace: config.turnTraceRuntime?.handleArmyMoveOrderTrace,
   ),
-);
+)(acc, config, turn);

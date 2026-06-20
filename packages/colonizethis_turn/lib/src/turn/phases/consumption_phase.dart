@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../economy_phase_sequence.dart';
 import '../turn_phase_handler_helpers.dart';
 import '../turn_pipeline_state.dart';
+import '../turn_resolution_helpers.dart';
 import '../turn_resolver_config.dart';
 
 /// Consumption phase; returns new pipeline state with updated feeding maps.
@@ -35,24 +36,14 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
       shipCountsById: shipCounts,
     );
 
-    double landCoverage;
-    if (result.totalRegiments <= 0) {
-      landCoverage = 1.0;
-    } else {
-      landCoverage = result.fullyFedRegiments / result.totalRegiments;
-      if (landCoverage < 0) landCoverage = 0;
-      if (landCoverage > 1) landCoverage = 1;
-    }
+    final landCoverage = result.totalRegiments <= 0
+        ? 1.0
+        : clamp01(result.fullyFedRegiments / result.totalRegiments);
     landFeeding[player.id] = landCoverage;
 
-    double navalCoverage;
-    if (result.totalShips <= 0) {
-      navalCoverage = 1.0;
-    } else {
-      navalCoverage = result.fullyFedShips / result.totalShips;
-      if (navalCoverage < 0) navalCoverage = 0;
-      if (navalCoverage > 1) navalCoverage = 1;
-    }
+    final navalCoverage = result.totalShips <= 0
+        ? 1.0
+        : clamp01(result.fullyFedShips / result.totalShips);
     navalFeeding[player.id] = navalCoverage;
     idleLabour[player.id] = result.idleLabour;
     return player.copyWith(
