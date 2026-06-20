@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// Structural regression guards for the dedup refactor in `colonizethis_turn`
 /// (Refs #3565). These lock in two single-source-of-truth helpers so the
