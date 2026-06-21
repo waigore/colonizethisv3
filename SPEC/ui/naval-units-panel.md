@@ -58,7 +58,7 @@ For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the 
 
 When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `locationScopeKey`, optional `initialSelectedFleetId`, and optional `tileScopeTileKey`, the list shows only fleets at that location scope, the title uses the tile-scoped string, and the **Tile** header action emits **`OpenMapTileDetailEvent`** for `tileScopeTileKey` (after **`ClosePanelEvent`**, same pattern as civilians).
 
-**Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header actions — tile-scope **Tile** and **Combine** — render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. The naval panel has **no** Train action. Bus emissions and enable/disable rules are unchanged: **Tile** is disabled when `tileScopeTileKey` is empty; **Combine** is enabled only when the current selection is combinable. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
+**Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header actions — tile-scope **Tile**, **Combine**, and the trailing **Train** pill — render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. The trailing **Train** action mirrors the military panel: it closes the panel (`ClosePanelEvent`) then emits `OpenDialogEvent(trainNavalDialogId)` to open the [train-naval-dialog.md](train-naval-dialog.md) modal, and is disabled in observe mode (`readOnly`). Bus emissions and enable/disable rules for the other actions are unchanged: **Tile** is disabled when `tileScopeTileKey` is empty; **Combine** is enabled only when the current selection is combinable. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
 
 **No production Close pill (mockup `.close-btn` preview-only; issue #3514 owner decision #14):** The `UNIT30001` mockup header (`mockups/UNIT30001-naval-units-panel.html`) depicts a **Close** pill purely as a static preview affordance. The shipped panel renders **no** production Close pill: it is hosted in a side-panel / bottom-sheet surface that owns its own dismissal (the shared [`UnitsPanelShell`](components/units-panel-shell.md) `CtTopBar` renders **without** a back/close button). The mockup HTML is **not** edited to remove the preview Close; this divergence is recorded here so the panel matches the mockup style without adding a redundant Close control.
 
@@ -104,6 +104,7 @@ Side panel (CtPanel) beside map on wide viewports; scrollable fleet tree grouped
 | Transfer to Home Fleet | At capital port | Opens [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | Transfer event on confirm. |
 | Locate | Row action | `LocateMapTileEvent` | Map centers on fleet. |
 | Split / Combine | Per fleet management spec | Bus events | See [naval-units-fleet-management.md](naval-units-fleet-management.md). |
+| Train | Header pill; not observe mode | `ClosePanelEvent` + `OpenDialogEvent(trainNavalDialogId)` | Opens [train-naval-dialog.md](train-naval-dialog.md). |
 
 ---
 
@@ -280,6 +281,8 @@ The first implementation pass for [#2866](https://github.com/) (PR #2906 + #2919
 - **Given** the Widgetbook “Naval Units Panel” folder is open, **when** the user selects the “Standalone” use case, **then** the UI layer displays only the Naval Units panel with demo or debug game data so that region grouping, Home Fleet pinning, collapsed vs expanded fleet rows, and composition/capabilities content can be verified in isolation.
 
 - **Given** the Widgetbook “Naval Units Panel” folder is open, **when** the user selects the “With map” use case, **then** the UI layer displays the Naval Units panel alongside a map built from a real generated map and initialized game (`getDebugInitGameResult()`), and clicking a fleet row highlights and pans/centers the map on the appropriate tile (capital port for Home Fleet, port or adjacent port for other fleets) while switching the region tab when necessary.
+
+- **Given** the Naval Units panel is open and not in observe mode, **when** the user taps the header **Train** pill, **then** the UI layer emits `ClosePanelEvent` followed by `OpenDialogEvent(trainNavalDialogId)`, opening the Train Naval dialog (`UNIT60001`).
 
 - **Given** a sea‑going fleet row is collapsed, **when** the user views row actions, **then** the UI layer shows **Move** and **Split** inline and both actions are clickable without expanding the row.
 

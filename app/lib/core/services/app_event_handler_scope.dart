@@ -13,6 +13,7 @@ import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -48,6 +49,9 @@ const String trainCiviliansDialogId = 'train_civilians';
 
 /// [OpenDialogEvent] id for [TrainMilitaryDialog]. SPEC/program/app-ui-wiring.md.
 const String trainMilitaryDialogId = 'train_military';
+
+/// [OpenDialogEvent] id for [TrainNavalDialog]. SPEC/program/app-ui-wiring.md.
+const String trainNavalDialogId = 'train_naval';
 
 /// [OpenDialogEvent] id for [GrantOrSubsidyDialog]. SPEC/program/app-ui-wiring.md.
 const String grantOrSubsidyDialogId = 'grant_or_subsidy';
@@ -146,6 +150,49 @@ Orders _mergeTrainMilitaryOrdersForPlayer({
     final isDialogManaged =
         order.isMilitary &&
         regimentIds.contains(order.unitType) &&
+        capital != null &&
+        order.spawnProvinceId == capital;
+    if (isDialogManaged) {
+      continue;
+    }
+    kept.add(order);
+  }
+  return current.copyWith(
+    buildUnitOrdersByPlayerId: {
+      ...current.buildUnitOrdersByPlayerId,
+      humanPlayerId: [...kept, ...newFromDialog],
+    },
+  );
+}
+
+/// Replaces pending train-at-capital naval [BuildUnitOrder]s for [humanPlayerId];
+/// keeps civilian, military, and other build orders. Naval shares the
+/// `isMilitary: false` flag with civilians, so dialog-managed orders are
+/// additionally filtered by [ShipEconomyCatalog] ship ids. Matches
+/// [TrainNavalDialog] semantics.
+Orders _mergeTrainNavalOrdersForPlayer({
+  required Orders current,
+  required Game game,
+  required String humanPlayerId,
+  required List<BuildUnitOrder> newFromDialog,
+}) {
+  Player? player;
+  for (final p in game.players) {
+    if (p.id == humanPlayerId) {
+      player = p;
+      break;
+    }
+  }
+  final capital = player?.capitalProvinceId;
+  final shipIds = ShipEconomyCatalog.byId.keys.toSet();
+  final existingList =
+      current.buildUnitOrdersByPlayerId[humanPlayerId] ??
+      const <BuildUnitOrder>[];
+  final kept = <BuildUnitOrder>[];
+  for (final order in existingList) {
+    final isDialogManaged =
+        !order.isMilitary &&
+        shipIds.contains(order.unitType) &&
         capital != null &&
         order.spawnProvinceId == capital;
     if (isDialogManaged) {

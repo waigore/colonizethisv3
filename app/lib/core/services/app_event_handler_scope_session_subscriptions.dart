@@ -379,6 +379,31 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           },
         );
       }),
+      bus.on<TrainNavalBuildOrdersCommittedEvent>().listen((e) {
+        _unlessTurnResolutionBlocksSession(
+          'TrainNavalBuildOrdersCommittedEvent',
+          () {
+            if (_rejectUiMutationIfObserving()) return;
+            final g = ref.read(currentGameProvider);
+            if (g == null) return;
+            final pid = resolveShellPanelPlayerId(
+              ref.read(shellPlayerContextProvider),
+              g,
+            );
+            final o = ref.read(currentOrdersProvider);
+            ref
+                .read(currentOrdersProvider.notifier)
+                .replaceAll(
+                  _mergeTrainNavalOrdersForPlayer(
+                    current: o,
+                    game: g,
+                    humanPlayerId: pid,
+                    newFromDialog: e.orders,
+                  ),
+                );
+          },
+        );
+      }),
       bus.on<SpawnDebugCivilianAtCapitalEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
           'SpawnDebugCivilianAtCapitalEvent',

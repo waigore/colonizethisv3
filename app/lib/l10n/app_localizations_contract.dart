@@ -870,6 +870,9 @@ abstract class AppLocalizations {
   /// Train military dialog title.
   String get trainMilitary_title;
 
+  /// Train naval dialog title.
+  String get trainNaval_title;
+
   /// Error text when player has no capital in train dialogs.
   String get trainUnits_noCapital;
 

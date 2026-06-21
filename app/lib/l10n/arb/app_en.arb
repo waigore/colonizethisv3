@@ -1511,6 +1511,10 @@
   "@trainMilitary_title": {
     "description": "Train military dialog title."
   },
+  "trainNaval_title": "Train Naval",
+  "@trainNaval_title": {
+    "description": "Train naval dialog title."
+  },
   "trainUnits_noCapital": "No capital set — cannot train units",
   "@trainUnits_noCapital": {
     "description": "Error text when player has no capital in train dialogs."

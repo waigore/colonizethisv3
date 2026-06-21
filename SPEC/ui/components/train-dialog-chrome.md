@@ -1,14 +1,14 @@
 # TrainDialogChrome (component)
 
-**SPEC/ui/components** — Reusable header / divider / resource-bar / row-surface chrome shared by the two train-at-capital dialogs. Implementation: [`app/lib/features/game/widgets/train_dialog_chrome.dart`](../../../app/lib/features/game/widgets/train_dialog_chrome.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtNinePatchButton*, § *CtBrassDivider*, § *CtGradients*, § *Editorial-monocle palette*.
+**SPEC/ui/components** — Reusable header / divider / resource-bar / row-surface chrome shared by the train-at-capital dialogs. Implementation: [`app/lib/features/game/widgets/train_dialog_chrome.dart`](../../../app/lib/features/game/widgets/train_dialog_chrome.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtNinePatchButton*, § *CtBrassDivider*, § *CtGradients*, § *Editorial-monocle palette*.
 
-This composite is **not** a screen and has **no** stable screen ID. It is the canonical chrome consumed by the two screen specs listed under [Consumers](#consumers).
+This composite is **not** a screen and has **no** stable screen ID. It is the canonical chrome consumed by the screen specs in [Consumers](#consumers).
 
 ---
 
 ## Purpose
 
-Consolidates the chrome (accent title + `×` dismiss, brass divider, boxed resource bar with optional deficit hint, resource chip, per-unit row surface) shared by Train Civilians and Train Military so each dialog composes only its body inside a single [`CtDialogShell`](../pixel-art-ui-catalog.md). The dark editorial-monocle contract (no Material `IconButton` / `Divider`, no raw `Colors.*`) lives in one file.
+Consolidates the chrome (accent title + `×` dismiss, brass divider, boxed resource bar with optional deficit hint, resource chip, per-unit row surface) shared by the train-at-capital dialogs so each composes only its body inside a single [`CtDialogShell`](../pixel-art-ui-catalog.md). The dark editorial-monocle contract (no Material `IconButton` / `Divider`, no raw `Colors.*`) lives in one file.
 
 ---
 
@@ -46,7 +46,7 @@ CtDialogShell(maxWidth: 480, maxHeight: 600)            -- canonical dialog fram
     Footer (consumer-owned: Reset CtNinePatchButton)
 ```
 
-The chrome widgets are independent — consumers may skip the resource bar (e.g. no capital) and still render unit rows.
+Consumers may skip the resource bar (e.g. no capital) and still render rows.
 
 ---
 
@@ -56,9 +56,9 @@ The chrome widgets are independent — consumers may skip the resource bar (e.g.
 2. **Header dismiss.** `TrainDialogHeader` mounts `CtNinePatchButton` (not Material `IconButton`) so the dark button-surface contract is preserved. Tap fires `onClose`.
 3. **Divider colour.** `TrainDialogSectionDivider` always paints `CtBrassDivider` — never Material `Divider` (guards the `check_app_no_material_*` lint ban).
 4. **Resource bar styling.** `TrainDialogResourceBar` renders entries inside a `TrainDialogResourceBarBox` (recessed `--bg-deep` strip, 1 dp `--border`) with muted labels and monospace bold `--fg` values. `deficitHint` renders below the box in `--danger`.
-5. **Resource chip.** `TrainDialogResourceChip` wraps inline icon + numeric content; military composes its treasury / peasants / six commodity chips (`fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze`) inside a `TrainDialogResourceBarBox`, sharing the boxed treatment while keeping commodity icons. Military treasury uses the same `£` + comma formatting.
+5. **Resource chip.** `TrainDialogResourceChip` wraps inline icon + numeric content; military composes its treasury / peasants / six commodity chips (`fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze`) inside a `TrainDialogResourceBarBox`, keeping commodity icons and the same `£` + comma formatting.
 6. **Unit row surface.** `TrainDialogUnitRowSurface` paints `CtGradients.rowGradient` inside a 1 dp `accentDim` border. The consumer owns internal layout (left info column with name over cost, right stepper, lock badge) and applies `kTrainDialogLockedOpacity` (`0.4`) when tech-locked.
-7. **Letter-spacing alignment.** `kTrainDialogTitleLetterSpacing = 0.05` matches `CtTopBar` and the combat-mode choice dialog so the title rhythm aligns.
+7. **Letter-spacing alignment.** `kTrainDialogTitleLetterSpacing = 0.05` matches `CtTopBar` and the combat-mode choice dialog.
 
 ---
 
@@ -71,7 +71,7 @@ The chrome widgets are independent — consumers may skip the resource bar (e.g.
 | `TrainDialogUnitRowSurface` | Locked | Host wraps the row in `Opacity(opacity: kTrainDialogLockedOpacity)` | Whole surface fades to 0.4 opacity. |
 | `TrainDialogUnitRowSurface` | Custom margin | Caller overrides `margin` | Outer `Padding` adopts the caller margin (default `EdgeInsets.only(bottom: 6)`). |
 
-The chrome widgets have no theme-mode branches; editorial-monocle is the only render target.
+The chrome widgets have no theme-mode branches; editorial-monocle is the only target.
 
 ---
 
@@ -81,8 +81,9 @@ The chrome widgets have no theme-mode branches; editorial-monocle is the only re
 |-----------|------|-------|
 | `UNIT40001` | [`train-civilians-dialog.md`](../train-civilians-dialog.md) | Civilian list + treasury / paper resource bar; six unit-type rows with optional tech-lock variant. |
 | `UNIT50001` | [`train-military-dialog.md`](../train-military-dialog.md) | Regiment list + treasury / peasants + six commodity chips; per-regiment rows with optional tech-lock variant. |
+| `UNIT60001` | [`train-naval-dialog.md`](../train-naval-dialog.md) | Ship list + treasury / peasants + four commodity chips (`lumber`, `fabric`, `castIron`, `coal`); per-ship rows with optional tech-lock variant. |
 
-Both consumer specs link back here instead of redeclaring the chrome hierarchy.
+Consumer specs link back here instead of redeclaring the chrome.
 
 ---
 
