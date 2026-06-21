@@ -2,32 +2,22 @@
 ///
 /// SPEC/program/tile-map-gen-algorithm.md.
 ///
-/// Implementation is split across part files for review-size hygiene:
-/// shared Voronoi/buffer helpers, placement (seed-before-assignment),
-/// organic interleaved placement+Voronoi+coastline driver, and coastline
-/// growth helpers. The public surface here is intentionally a thin facade
-/// so callers continue to depend on a single import and the
-/// `TileMapGenLandSeeds` class.
-library tile_map_generator_land_seeds;
+/// Implementation is split across standalone classes for review-size hygiene:
+/// shared Voronoi/buffer helpers ([LandSeedShared]), placement
+/// (seed-before-assignment, [LandSeedPlacement]), organic interleaved
+/// placement+Voronoi+coastline driver ([LandSeedOrganic]), and coastline
+/// growth helpers ([LandSeedCoast]). The public surface here is intentionally a
+/// thin facade so callers continue to depend on a single import and the
+/// `TileMapGenLandSeeds` class (see #3588).
+library;
 
 import 'dart:math';
 
-import 'grid_voronoi.dart';
 import 'map_gen_pass_payloads.dart';
 import 'map_gen_stage.dart';
-import '../tile_map_directions.dart';
-import 'tile_map_distance_sentinels.dart';
+import 'tile_map_generator_land_seeds_organic.dart';
+import 'tile_map_generator_land_seeds_placement.dart';
 import 'tile_map_land_seed_contract.dart';
-import '../tile_map_grid.dart';
-import 'tile_map_land_sentinel.dart';
-import 'tile_map_manhattan_distance_maps.dart';
-import 'tile_map_manhattan_distance_transform.dart';
-import 'tile_map_province_budget.dart';
-
-part 'tile_map_generator_land_seeds_shared_part.dart';
-part 'tile_map_generator_land_seeds_placement_part.dart';
-part 'tile_map_generator_land_seeds_organic_part.dart';
-part 'tile_map_generator_land_seeds_coast_part.dart';
 
 /// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
 class TileMapGenLandSeeds
@@ -89,7 +79,7 @@ class TileMapGenLandSeeds
   (List<(int x, int y)>, List<(int x, int y)>, List<int>) placeLandSeeds(
     Map<String, int> provinceToContinent,
     Random rnd,
-  ) => _placeLandSeedsImpl(params, provinceToContinent, rnd);
+  ) => LandSeedPlacement.placeLandSeeds(params, provinceToContinent, rnd);
 
   /// Organic land growing: interleaved seed placement + small Voronoi + coastline growth.
   /// Returns (continentSeeds, landSeeds, continentBySeedIndex, grid).
@@ -99,7 +89,7 @@ class TileMapGenLandSeeds
     Map<String, int> provinceToContinent,
     String seaZoneId,
     Random rnd,
-  ) => _placeLandSeedsOrganicImpl(
+  ) => LandSeedOrganic.placeLandSeedsOrganic(
     params,
     grid,
     provinceToContinent,
@@ -107,7 +97,7 @@ class TileMapGenLandSeeds
     rnd,
   );
 
-  /// Per-continent land budget; assign to [kTileMapLandSentinel] by smallest effective
+  /// Per-continent land budget; assign to `kTileMapLandSentinel` by smallest effective
   /// distance (with optional Voronoi noise). Each cell at most one continent.
   List<List<String>> assignLandByLandSeeds(
     List<List<String>> grid,
@@ -115,7 +105,7 @@ class TileMapGenLandSeeds
     List<int> continentBySeedIndex,
     Map<String, int> provinceToContinent,
     String seaZoneId,
-  ) => _assignLandByLandSeedsImpl(
+  ) => LandSeedPlacement.assignLandByLandSeeds(
     params,
     grid,
     landSeeds,
