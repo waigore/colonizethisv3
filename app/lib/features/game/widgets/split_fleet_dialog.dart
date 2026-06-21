@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
@@ -97,7 +98,7 @@ class SplitFleetDialog extends StatelessWidget {
               l10n.splitFleet_dialogTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            CtGap.l,
             CtTransferList(
               listHeight: 220,
               itemLabelBuilder: shipTypeDisplayName,

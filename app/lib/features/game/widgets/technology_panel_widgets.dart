@@ -8,6 +8,7 @@ import '../../../config/themes.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/research_slot_preview.dart';
 import '../utils/tech_ui_helpers.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_progress_bar.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -368,7 +369,7 @@ class _SlotAssignedBody extends StatelessWidget {
                   value: cost > 0 ? progress / cost : 0,
                 ),
               ),
-              const SizedBox(width: 8),
+              CtGap.wm,
               Text(
                 l10n.technologyPanel_slotRpProgress(progress, cost),
                 style: TextStyle(

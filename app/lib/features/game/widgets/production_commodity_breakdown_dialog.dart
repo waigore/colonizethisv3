@@ -10,6 +10,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_spacing.dart';
@@ -493,9 +494,9 @@ class _ProductionCommodityBreakdownDialogState
               color: EditorialMonoclePalette.accent,
             ),
           ),
-          const SizedBox(height: 8),
+          CtGap.m,
           tableBody,
-          const SizedBox(height: 12),
+          CtGap.ml,
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(

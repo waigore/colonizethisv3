@@ -14,6 +14,7 @@ import '../../../config/app_assets.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_spacing.dart';
@@ -65,7 +66,7 @@ class ResearchSlotTurnPreviewView extends StatelessWidget {
                 anticipatedSegmentKey: anticipatedSegmentKey(slotIndex),
               ),
             ),
-            const SizedBox(width: 8),
+            CtGap.wm,
             Text(
               l10n.technologyPanel_slotRpProgress(
                 preview.committedProgress,

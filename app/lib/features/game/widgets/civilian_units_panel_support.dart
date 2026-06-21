@@ -595,7 +595,7 @@ class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
                     children: [
                       Expanded(child: widget.details),
                       if (widget.actions.isNotEmpty) ...[
-                        const SizedBox(width: 8),
+                        CtGap.wm,
                         _CivilianUnitCardActions(actions: widget.actions),
                       ],
                     ],
