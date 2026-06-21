@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
+import 'ct_hover_button.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Compact **circular** icon-only action used for the right-most "Locate"
@@ -75,29 +76,26 @@ class CtCircularLocateButton extends StatefulWidget {
   State<CtCircularLocateButton> createState() => _CtCircularLocateButtonState();
 }
 
-class _CtCircularLocateButtonState extends State<CtCircularLocateButton> {
-  bool _hovered = false;
+class _CtCircularLocateButtonState extends State<CtCircularLocateButton>
+    with CtHoverButtonStateMixin<CtCircularLocateButton> {
+  @override
+  bool get hoverButtonEnabled => widget.enabled;
 
-  bool get _isInteractive => widget.enabled && widget.onPressed != null;
+  @override
+  VoidCallback? get hoverButtonOnPressed => widget.onPressed;
 
-  void _setHover(bool hovered) {
-    if (!_isInteractive) return;
-    if (_hovered == hovered) return;
-    setState(() => _hovered = hovered);
-  }
-
-  Color get _resolvedForeground => _hovered
+  Color get _resolvedForeground => hovered
       ? EditorialMonoclePalette.accentBright
       : EditorialMonoclePalette.accentDim;
 
-  Color get _resolvedBorderColor => _hovered
+  Color get _resolvedBorderColor => hovered
       ? EditorialMonoclePalette.accentDim
       : EditorialMonoclePalette.border;
 
   @override
   Widget build(BuildContext context) {
     final Widget surface = AnimatedContainer(
-      duration: _isInteractive
+      duration: isInteractive
           ? CtCircularLocateButton.animationDuration
           : Duration.zero,
       curve: CtNinePatchButton.animationCurve,
@@ -119,47 +117,12 @@ class _CtCircularLocateButtonState extends State<CtCircularLocateButton> {
       ),
     );
 
-    if (!widget.enabled) {
-      return Semantics(
-        button: true,
-        enabled: false,
-        label: widget.semanticLabel ?? widget.tooltip,
-        child: IgnorePointer(
-          child: Opacity(
-            opacity: CtNinePatchButton.disabledOpacity,
-            child: surface,
-          ),
-        ),
-      );
-    }
-
-    final Widget interactive = MouseRegion(
-      onEnter: (_) => _setHover(true),
-      onExit: (_) => _setHover(false),
-      cursor: SystemMouseCursors.click,
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: widget.onPressed,
-          customBorder: const CircleBorder(),
-          child: surface,
-        ),
-      ),
+    return buildHoverButton(
+      surface: surface,
+      semanticLabel: widget.semanticLabel ?? widget.tooltip,
+      tooltip: widget.tooltip,
+      inkShape: const CircleBorder(),
+      disabledOpacity: CtNinePatchButton.disabledOpacity,
     );
-
-    Widget wrapped = Semantics(
-      button: true,
-      enabled: true,
-      label: widget.semanticLabel ?? widget.tooltip,
-      child: interactive,
-    );
-
-    final String? tooltip = widget.tooltip;
-    if (tooltip != null) {
-      wrapped = Tooltip(message: tooltip, child: wrapped);
-    }
-    return wrapped;
   }
 }
