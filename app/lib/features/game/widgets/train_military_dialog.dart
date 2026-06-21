@@ -342,63 +342,78 @@ class _MilitaryResourceBar extends StatelessWidget {
             spacing: 10,
             runSpacing: 6,
             children: [
-              TrainDialogResourceChip(
-                child: Text(
-                  l10n.trainUnits_treasury(
-                    '${formatTreasuryCurrency(remainingTreasury)} / '
-                    '${formatTreasuryCurrency(treasury)}',
-                  ),
-                ),
-              ),
-              TrainDialogResourceChip(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const WorkerIcon(workerType: 'peasant', size: 14),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        l10n.trainUnits_peasantsValue(
-                          '$remainingPeasants / $peasants',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildTreasuryChip(),
+              _buildPeasantsChip(),
               for (final commodityId in _militaryCommodityIds)
-                TrainDialogResourceChip(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ResourceIcon(commodityId: commodityId, size: 14),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          l10n.trainMilitary_commodityValue(
-                            _label(commodityId),
-                            '${stockpile.quantityOf(commodityId) - (committedCommodities[commodityId] ?? 0)}'
-                            ' / ${stockpile.quantityOf(commodityId)}',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildCommodityChip(commodityId),
             ],
           ),
         ),
-        if (deficitHint != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            deficitHint!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: EditorialMonoclePalette.danger,
+        ..._buildDeficitHint(context),
+      ],
+    );
+  }
+
+  Widget _buildTreasuryChip() {
+    return TrainDialogResourceChip(
+      child: Text(
+        l10n.trainUnits_treasury(
+          '${formatTreasuryCurrency(remainingTreasury)} / '
+          '${formatTreasuryCurrency(treasury)}',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPeasantsChip() {
+    return TrainDialogResourceChip(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const WorkerIcon(workerType: 'peasant', size: 14),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              l10n.trainUnits_peasantsValue('$remainingPeasants / $peasants'),
             ),
           ),
         ],
-      ],
+      ),
     );
+  }
+
+  Widget _buildCommodityChip(String commodityId) {
+    return TrainDialogResourceChip(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ResourceIcon(commodityId: commodityId, size: 14),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              l10n.trainMilitary_commodityValue(
+                _label(commodityId),
+                '${stockpile.quantityOf(commodityId) - (committedCommodities[commodityId] ?? 0)}'
+                ' / ${stockpile.quantityOf(commodityId)}',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildDeficitHint(BuildContext context) {
+    if (deficitHint == null) return const [];
+    return [
+      const SizedBox(height: 4),
+      Text(
+        deficitHint!,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: EditorialMonoclePalette.danger,
+        ),
+      ),
+    ];
   }
 
   String _label(String commodityId) {
