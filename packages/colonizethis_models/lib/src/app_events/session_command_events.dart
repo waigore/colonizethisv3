@@ -159,6 +159,18 @@ class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
   final List<BuildUnitOrder> orders;
 }
 
+/// Train naval dialog close: shell merges into current-turn orders draft.
+///
+/// Carries naval [BuildUnitOrder]s (`isMilitary: false`, ship unit types
+/// spawned at the player's capital). The shell listener replaces only
+/// dialog-managed naval build orders, leaving civilian build orders intact.
+/// SPEC/ui/train-naval-dialog.md, SPEC/program/app-ui-wiring.md.
+class TrainNavalBuildOrdersCommittedEvent extends SessionCommandEvent {
+  TrainNavalBuildOrdersCommittedEvent({required this.orders});
+
+  final List<BuildUnitOrder> orders;
+}
+
 /// Immediate debug spawn at the human player's capital tile.
 class SpawnDebugCivilianAtCapitalEvent extends SessionCommandEvent {
   const SpawnDebugCivilianAtCapitalEvent({

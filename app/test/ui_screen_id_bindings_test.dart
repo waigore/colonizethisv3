@@ -37,6 +37,7 @@ import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
@@ -108,6 +109,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'TrainMilitaryDialog': (
     actual: TrainMilitaryDialog.screenId,
     expected: UiScreenIds.trainMilitaryDialog,
+  ),
+  'TrainNavalDialog': (
+    actual: TrainNavalDialog.screenId,
+    expected: UiScreenIds.trainNavalDialog,
   ),
   'NewGameLeaderSelectionDialog': (
     actual: NewGameLeaderSelectionDialog.screenId,

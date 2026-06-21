@@ -6,19 +6,25 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
-import '../../../config/app_assets.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import '../../../config/app_assets.dart';
 import '../utils/commodity_ui_helpers.dart';
 import 'train_dialog_chrome.dart';
 import 'train_unit_dialog_helper.dart';
 
-class TrainMilitaryDialog extends StatefulWidget {
-  const TrainMilitaryDialog({
+/// Train-at-capital dialog for naval (ship) units. Mirrors the civilian and
+/// military train dialogs: a `remaining / total` resource bar, per-row cost
+/// segments that turn red when a resource cannot cover one more ship, and a
+/// danger-styled disabled `[+]` stepper for unaffordable rows. Ships are built
+/// with `isMilitary: false` (their own unit category) and spawn into the
+/// player's home fleet at the capital. SPEC/ui/train-naval-dialog.md.
+class TrainNavalDialog extends StatefulWidget {
+  const TrainNavalDialog({
     super.key,
     required this.game,
     required this.humanPlayerId,
@@ -26,8 +32,8 @@ class TrainMilitaryDialog extends StatefulWidget {
     required this.bus,
   });
 
-  /// SPEC/ui/train-military-dialog.md — [UiScreenIds.trainMilitaryDialog].
-  static const screenId = UiScreenIds.trainMilitaryDialog;
+  /// SPEC/ui/train-naval-dialog.md — [UiScreenIds.trainNavalDialog].
+  static const screenId = UiScreenIds.trainNavalDialog;
 
   final Game game;
   final String humanPlayerId;
@@ -35,10 +41,10 @@ class TrainMilitaryDialog extends StatefulWidget {
   final AppEventBus bus;
 
   @override
-  State<TrainMilitaryDialog> createState() => _TrainMilitaryDialogState();
+  State<TrainNavalDialog> createState() => _TrainNavalDialogState();
 }
 
-class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
+class _TrainNavalDialogState extends State<TrainNavalDialog> {
   late Map<String, int> _counts;
 
   @override
@@ -49,11 +55,11 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
 
   Map<String, int> _initialCountsFromOrders() {
     return initialTrainDialogCountsFromOrders(
-      unitTypeIds: RegimentEconomyCatalog.byId.keys,
+      unitTypeIds: ShipEconomyCatalog.byId.keys,
       currentOrders: widget.currentOrders,
       humanPlayerId: widget.humanPlayerId,
       capitalProvinceId: _player?.capitalProvinceId,
-      isMilitary: true,
+      isMilitary: false,
     );
   }
 
@@ -73,34 +79,34 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   int _stockpileQty(String commodityId) =>
       _player?.stockpile.quantityOf(commodityId) ?? 0;
 
-  bool _isLocked(String unitType) {
+  bool _isLocked(String shipType) {
     return trainDialogIsLocked(
-      unitType: unitType,
-      unlockingTechByUnitType: unlockingTechByRegimentId,
+      unitType: shipType,
+      unlockingTechByUnitType: unlockingTechByShipId,
       techUnlocked: _techUnlocked,
     );
   }
 
   int _totalTreasuryCost() {
     var total = 0;
-    for (final e in RegimentEconomyCatalog.all) {
-      total += (_counts[e.id] ?? 0) * e.buildTreasuryCost;
+    for (final e in ShipEconomyCatalog.all) {
+      total += (_counts[e.shipTypeId] ?? 0) * e.buildTreasuryCost;
     }
     return total;
   }
 
   int _totalPeasantCost() {
     var total = 0;
-    for (final e in RegimentEconomyCatalog.all) {
-      total += (_counts[e.id] ?? 0);
+    for (final e in ShipEconomyCatalog.all) {
+      total += (_counts[e.shipTypeId] ?? 0);
     }
     return total;
   }
 
   Map<String, int> _totalCommodityCosts() {
     final totals = <String, int>{};
-    for (final e in RegimentEconomyCatalog.all) {
-      final count = _counts[e.id] ?? 0;
+    for (final e in ShipEconomyCatalog.all) {
+      final count = _counts[e.shipTypeId] ?? 0;
       if (count <= 0) continue;
       for (final input in e.buildInputs.entries) {
         totals[input.key] = (totals[input.key] ?? 0) + (input.value * count);
@@ -109,10 +115,10 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     return totals;
   }
 
-  bool _canAffordIncrement(String unitType) {
-    final econ = RegimentEconomyCatalog.byId[unitType];
+  bool _canAffordIncrement(String shipType) {
+    final econ = ShipEconomyCatalog.byId[shipType];
     if (econ == null) return false;
-    if (_isLocked(unitType)) return false;
+    if (_isLocked(shipType)) return false;
 
     final newTreasury = _totalTreasuryCost() + econ.buildTreasuryCost;
     final newPeasants = _totalPeasantCost() + 1;
@@ -129,10 +135,10 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     return true;
   }
 
-  /// Treasury left after subtracting all currently committed regiment costs.
+  /// Treasury left after subtracting all currently committed ship costs.
   int _remainingTreasury() => _treasury - _totalTreasuryCost();
 
-  /// Peasants left after subtracting all currently committed regiment costs.
+  /// Peasants left after subtracting all currently committed ship costs.
   int _remainingPeasants() => _peasants - _totalPeasantCost();
 
   /// Stockpile of [commodityId] left after subtracting committed costs.
@@ -156,17 +162,17 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     return '$head and ${deficits.last} low';
   }
 
-  void _increment(String unitType) {
-    if (!_canAffordIncrement(unitType)) return;
+  void _increment(String shipType) {
+    if (!_canAffordIncrement(shipType)) return;
     setState(() {
-      _counts = incrementTrainDialogCount(_counts, unitType);
+      _counts = incrementTrainDialogCount(_counts, shipType);
     });
   }
 
-  void _decrement(String unitType) {
-    if ((_counts[unitType] ?? 0) <= 0) return;
+  void _decrement(String shipType) {
+    if ((_counts[shipType] ?? 0) <= 0) return;
     setState(() {
-      _counts = decrementTrainDialogCount(_counts, unitType);
+      _counts = decrementTrainDialogCount(_counts, shipType);
     });
   }
 
@@ -180,16 +186,16 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     final capital = _player?.capitalProvinceId;
     if (capital == null) return;
     final orders = materializeTrainDialogOrdersFromCounts(
-      orderedUnitTypeIds: RegimentEconomyCatalog.byId.keys,
+      orderedUnitTypeIds: ShipEconomyCatalog.byId.keys,
       counts: _counts,
       capitalProvinceId: capital,
-      isMilitary: true,
+      isMilitary: false,
     );
-    widget.bus.emit(TrainMilitaryBuildOrdersCommittedEvent(orders: orders));
+    widget.bus.emit(TrainNavalBuildOrdersCommittedEvent(orders: orders));
   }
 
-  String _techRequiredLabel(String unitType) {
-    final techId = unlockingTechByRegimentId[unitType];
+  String _techRequiredLabel(String shipType) {
+    final techId = unlockingTechByShipId[shipType];
     if (techId == null) return '';
     return 'Requires: ${techDisplayName(techId)}';
   }
@@ -222,7 +228,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TrainDialogHeader(
-          title: l10n.trainMilitary_title,
+          title: l10n.trainNaval_title,
           onClose: () => Navigator.of(context).pop(),
         ),
         if (!_hasCapital) ...[
@@ -246,7 +252,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   List<Widget> _buildBody(AppLocalizations l10n) {
     return [
       const TrainDialogSectionDivider(),
-      _MilitaryResourceBar(
+      _NavalResourceBar(
         treasury: _treasury,
         remainingTreasury: _remainingTreasury(),
         peasants: _peasants,
@@ -260,8 +266,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
       Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final econ in RegimentEconomyCatalog.all)
-            _buildRegimentRow(econ),
+          for (final econ in ShipEconomyCatalog.all) _buildShipRow(econ),
         ],
       ),
       const TrainDialogSectionDivider(),
@@ -277,33 +282,33 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     ];
   }
 
-  Widget _buildRegimentRow(RegimentEconomy econ) {
-    final locked = _isLocked(econ.id);
+  Widget _buildShipRow(ShipEconomyEntry econ) {
+    final locked = _isLocked(econ.shipTypeId);
     final committed = _totalCommodityCosts();
     final insufficientCommodityIds = <String>{
       for (final input in econ.buildInputs.entries)
         if (!locked && _remainingCommodity(input.key, committed) < input.value)
           input.key,
     };
-    return _RegimentRow(
+    return _ShipTypeRow(
       econ: econ,
-      count: _counts[econ.id] ?? 0,
+      count: _counts[econ.shipTypeId] ?? 0,
       isLocked: locked,
-      techRequiredLabel: _techRequiredLabel(econ.id),
-      canIncrement: _canAffordIncrement(econ.id),
-      canDecrement: (_counts[econ.id] ?? 0) > 0,
+      techRequiredLabel: _techRequiredLabel(econ.shipTypeId),
+      canIncrement: _canAffordIncrement(econ.shipTypeId),
+      canDecrement: (_counts[econ.shipTypeId] ?? 0) > 0,
       treasuryInsufficient:
           !locked && _remainingTreasury() < econ.buildTreasuryCost,
       peasantInsufficient: !locked && _remainingPeasants() < 1,
       insufficientCommodityIds: insufficientCommodityIds,
-      onIncrement: () => _increment(econ.id),
-      onDecrement: () => _decrement(econ.id),
+      onIncrement: () => _increment(econ.shipTypeId),
+      onDecrement: () => _decrement(econ.shipTypeId),
     );
   }
 }
 
-class _MilitaryResourceBar extends StatelessWidget {
-  const _MilitaryResourceBar({
+class _NavalResourceBar extends StatelessWidget {
+  const _NavalResourceBar({
     required this.treasury,
     required this.remainingTreasury,
     required this.peasants,
@@ -323,13 +328,13 @@ class _MilitaryResourceBar extends StatelessWidget {
   final String? deficitHint;
   final AppLocalizations l10n;
 
-  static const _militaryCommodityIds = <String>[
+  /// Union of all commodities referenced by [ShipEconomyCatalog.buildInputs].
+  /// SPEC/ui/train-naval-dialog.md § Resource bar.
+  static const _navalCommodityIds = <String>[
+    'lumber',
     'fabric',
     'castIron',
-    'lumber',
-    'horses',
-    'steel',
-    'bronze',
+    'coal',
   ];
 
   @override
@@ -344,7 +349,7 @@ class _MilitaryResourceBar extends StatelessWidget {
             children: [
               _buildTreasuryChip(),
               _buildPeasantsChip(),
-              for (final commodityId in _militaryCommodityIds)
+              for (final commodityId in _navalCommodityIds)
                 _buildCommodityChip(commodityId),
             ],
           ),
@@ -421,8 +426,8 @@ class _MilitaryResourceBar extends StatelessWidget {
   }
 }
 
-class _RegimentRow extends StatelessWidget {
-  const _RegimentRow({
+class _ShipTypeRow extends StatelessWidget {
+  const _ShipTypeRow({
     required this.econ,
     required this.count,
     required this.isLocked,
@@ -436,21 +441,21 @@ class _RegimentRow extends StatelessWidget {
     required this.onDecrement,
   });
 
-  final RegimentEconomy econ;
+  final ShipEconomyEntry econ;
   final int count;
   final bool isLocked;
   final String techRequiredLabel;
   final bool canIncrement;
   final bool canDecrement;
 
-  /// Whether remaining treasury cannot cover one more of this regiment.
+  /// Whether remaining treasury cannot cover one more of this ship.
   final bool treasuryInsufficient;
 
-  /// Whether remaining peasants cannot cover one more of this regiment.
+  /// Whether remaining peasants cannot cover one more of this ship.
   final bool peasantInsufficient;
 
   /// Commodity ids whose remaining stockpile cannot cover one more of this
-  /// regiment (each rendered in the danger colour).
+  /// ship (each rendered in the danger colour).
   final Set<String> insufficientCommodityIds;
 
   final VoidCallback onIncrement;
@@ -499,7 +504,7 @@ class _RegimentRow extends StatelessWidget {
         ],
         Expanded(
           child: Text(
-            regimentTypeDisplayName(econ.id),
+            shipTypeDisplayName(econ.shipTypeId),
             style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -588,7 +593,7 @@ class _InlineCost extends StatelessWidget {
   final String label;
 
   /// When `true`, the label renders in [EditorialMonoclePalette.danger] to
-  /// flag that the remaining stockpile cannot cover one more of this unit.
+  /// flag that the remaining stockpile cannot cover one more of this ship.
   final bool isInsufficient;
 
   @override

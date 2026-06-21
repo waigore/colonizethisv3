@@ -1,10 +1,12 @@
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -250,5 +252,164 @@ void main() {
 
     expect(find.byType(TrainMilitaryDialog), findsOneWidget);
     expect(find.text('Train Military'), findsOneWidget);
+  });
+
+  // Issue #3601 R1–R3: dynamic remaining/total resource display, red
+  // insufficient-cost item styling, and red disabled `[+]` button styling.
+  group('TrainMilitaryDialog affordance feedback (#3601)', () {
+    /// Counts inline-cost labels (digit-only Text) that render in the danger
+    /// colour. Resource-bar chips ("19 / 20") and deficit hints ("Cast Iron
+    /// low") are word/slash strings and never match this digit-only filter.
+    int redCostLabels(WidgetTester tester) {
+      final digits = RegExp(r'^\d+$');
+      return tester.widgetList<Text>(find.byType(Text)).where((t) {
+        final data = t.data;
+        if (data == null || !digits.hasMatch(data)) return false;
+        return t.style?.color == EditorialMonoclePalette.danger;
+      }).length;
+    }
+
+    Iterable<CtNinePatchButton> plusButtons(WidgetTester tester) {
+      return tester.widgetList<CtNinePatchButton>(
+        find.byWidgetPredicate(
+          (w) => w is CtNinePatchButton &&
+              w.child is Text &&
+              (w.child as Text).data == '+',
+        ),
+      );
+    }
+
+    Orders peasantLevyOrders(int count) {
+      final player = getPlayer(humanPlayerId);
+      final capital =
+          (player.capitalProvinceId ?? player.capitalTile?.provinceId)!;
+      return Orders(
+        buildUnitOrdersByPlayerId: {
+          humanPlayerId: [
+            for (var i = 0; i < count; i++)
+              BuildUnitOrder(
+                unitType: RegimentEconomyCatalog.peasantLevies.id,
+                isMilitary: true,
+                spawnProvinceId: capital,
+              ),
+          ],
+        },
+      );
+    }
+
+    testWidgets(
+      'AC (positive): resource bar chips show remaining / total',
+      (WidgetTester tester) async {
+        // Treasury 10000, peasants 20; queue 1 Peasant Levies (£2,000 + 1
+        // peasant) → treasury 8,000 / 10,000 and peasants 19 / 20.
+        await tester.pumpWidget(
+          buildDialog(
+            game: gameWithMilitaryResources(),
+            humanPlayerId: humanPlayerId,
+            currentOrders: peasantLevyOrders(1),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('£8,000 / £10,000'), findsOneWidget);
+        expect(find.textContaining('19 / 20'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC (positive): only the deficient commodity cost renders in danger',
+      (WidgetTester tester) async {
+        // Plenty of treasury/peasants/fabric, but zero cast iron → only
+        // regiments consuming cast iron flag a red cost label.
+        final base = gameWithMilitaryResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        // Replace (not merge) the stockpile so cast iron is genuinely 0 while
+        // every other commodity stays plentiful.
+        final game = base.copyWith(
+          players: [
+            player.copyWith(
+              treasury: 1000000,
+              stockpile: const Stockpile(
+                quantities: {
+                  'fabric': 100,
+                  'castIron': 0,
+                  'lumber': 100,
+                  'horses': 100,
+                  'steel': 100,
+                  'bronze': 100,
+                },
+              ),
+            ),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+        await tester.pumpWidget(
+          buildDialog(game: game, humanPlayerId: humanPlayerId),
+        );
+        await tester.pumpAndSettle();
+
+        expect(redCostLabels(tester), greaterThan(0));
+      },
+    );
+
+    testWidgets(
+      'AC (negative): fully affordable rows colour no cost labels red',
+      (WidgetTester tester) async {
+        final base = gameWithMilitaryResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        final game = base.copyWith(
+          players: [
+            player.copyWith(treasury: 1000000),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+        await tester.pumpWidget(
+          buildDialog(game: game, humanPlayerId: humanPlayerId),
+        );
+        await tester.pumpAndSettle();
+
+        expect(redCostLabels(tester), 0);
+      },
+    );
+
+    testWidgets(
+      'AC (positive): disabled [+] uses danger variant when unaffordable',
+      (WidgetTester tester) async {
+        final base = gameWithMilitaryResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        final game = base.copyWith(
+          players: [
+            player.copyWith(treasury: 0),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+        await tester.pumpWidget(
+          buildDialog(game: game, humanPlayerId: humanPlayerId),
+        );
+        await tester.pumpAndSettle();
+
+        expect(plusButtons(tester).any((b) => b.dangerVariant), isTrue);
+      },
+    );
+
+    testWidgets(
+      'AC (negative): affordable rows never use the danger [+] variant',
+      (WidgetTester tester) async {
+        final base = gameWithMilitaryResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        final game = base.copyWith(
+          players: [
+            player.copyWith(treasury: 1000000),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+        await tester.pumpWidget(
+          buildDialog(game: game, humanPlayerId: humanPlayerId),
+        );
+        await tester.pumpAndSettle();
+
+        expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
+      },
+    );
   });
 }

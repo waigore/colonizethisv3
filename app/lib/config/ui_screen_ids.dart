@@ -29,6 +29,7 @@ abstract final class UiScreenIds {
   static const String navalUnitsPanel = 'UNIT30001';
   static const String trainCiviliansDialog = 'UNIT40001';
   static const String trainMilitaryDialog = 'UNIT50001';
+  static const String trainNavalDialog = 'UNIT60001';
 
   // DIPL — diplomacy auxiliary dialogs
   static const String grantOrSubsidyDialog = 'DIPL20001';

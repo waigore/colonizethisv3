@@ -469,6 +469,9 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainMilitary_title => 'Train Military';
 
   @override
+  String get trainNaval_title => 'Train Naval';
+
+  @override
   String get trainUnits_noCapital => 'No capital set — cannot train units';
 
   @override
@@ -489,6 +492,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String trainUnits_peasants(int value) {
+    return 'Peasants: $value';
+  }
+
+  @override
+  String trainUnits_peasantsValue(String value) {
     return 'Peasants: $value';
   }
 

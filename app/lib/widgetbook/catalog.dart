@@ -79,6 +79,7 @@ import '../features/game/widgets/move_army_dialog.dart';
 import '../features/game/widgets/move_fleet_dialog.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
+import '../features/game/widgets/train_naval_dialog.dart';
 import '../features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
 import '../features/shell/new_game_leader_selection_dialog.dart';
@@ -222,6 +223,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...civilianUnitsPanelDirectories,
   ...trainCiviliansDialogDirectories,
   ...trainMilitaryDialogDirectories,
+  ...trainNavalDialogDirectories,
   ...militaryUnitsPanelDirectories,
   ...navalUnitsPanelDirectories,
   ...diplomacyPanelDirectories,

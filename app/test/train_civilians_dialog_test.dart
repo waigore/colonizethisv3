@@ -6,7 +6,9 @@ import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -599,6 +601,230 @@ void main() {
 
         expect(find.byType(TrainCiviliansDialog), findsOneWidget);
         expect(find.text('Train Civilians'), findsOneWidget);
+      },
+    );
+  });
+
+  // Issue #3601 R1–R3: dynamic remaining/total resource display, red
+  // insufficient-cost item styling, and red disabled `[+]` button styling.
+  group('TrainCiviliansDialog affordance feedback (#3601)', () {
+    /// Returns the cost-line `Text.rich` spans for the first row whose
+    /// plain text equals [plainText] (e.g. `£1,000 + 2 paper`).
+    List<InlineSpan> costLineSpans(WidgetTester tester, String plainText) {
+      final text = tester
+          .widgetList<Text>(find.byType(Text))
+          .firstWhere(
+            (t) => t.textSpan?.toPlainText() == plainText,
+            orElse: () => throw StateError('cost line "$plainText" not found'),
+          );
+      return (text.textSpan! as TextSpan).children!;
+    }
+
+    Iterable<CtNinePatchButton> plusButtons(WidgetTester tester) {
+      return tester.widgetList<CtNinePatchButton>(
+        find.byWidgetPredicate(
+          (w) => w is CtNinePatchButton && w.child is Text &&
+              (w.child as Text).data == '+',
+        ),
+      );
+    }
+
+    Game gameWithCapital({
+      required int treasury,
+      required int paper,
+    }) {
+      final player = getPlayer(humanPlayerId);
+      final capital =
+          player.capitalProvinceId ?? player.capitalTile?.provinceId;
+      final updated = player.copyWith(
+        treasury: treasury,
+        stockpile: const Stockpile().merge(
+          Stockpile(quantities: {'paper': paper}),
+        ),
+        capitalProvinceId: capital,
+      );
+      return game.copyWith(
+        players: [
+          updated,
+          ...game.players.where((p) => p.id != humanPlayerId),
+        ],
+      );
+    }
+
+    Orders builderOrders(int count) {
+      final player = getPlayer(humanPlayerId);
+      final capital =
+          (player.capitalProvinceId ?? player.capitalTile?.provinceId)!;
+      return Orders(
+        buildUnitOrdersByPlayerId: {
+          humanPlayerId: [
+            for (var i = 0; i < count; i++)
+              BuildUnitOrder(
+                unitType: kUnitTypeBuilder,
+                isMilitary: false,
+                spawnProvinceId: capital,
+              ),
+          ],
+        },
+      );
+    }
+
+    testWidgets(
+      'AC (positive): resource bar shows remaining / total per resource',
+      (WidgetTester tester) async {
+        // Treasury 5000, paper 12; 2 Builders queued (£1,000 + 2 paper each).
+        await tester.pumpWidget(
+          buildDialog(
+            game: gameWithCapital(treasury: 5000, paper: 12),
+            humanPlayerId: humanPlayerId,
+            currentOrders: builderOrders(2),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('£3,000 / £5,000'), findsOneWidget);
+        expect(find.textContaining('8 / 12'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC (positive): Reset restores remaining == total in resource bar',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildDialog(
+            game: gameWithCapital(treasury: 5000, paper: 12),
+            humanPlayerId: humanPlayerId,
+            currentOrders: builderOrders(2),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.ensureVisible(find.text('Reset'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Reset'));
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('£5,000 / £5,000'), findsOneWidget);
+        expect(find.textContaining('12 / 12'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC (positive): only the deficient cost segment renders in danger',
+      (WidgetTester tester) async {
+        // Treasury 1500, paper 5, 1 Builder queued → remaining treasury 500
+        // (< 1000 Builder cost → red) and remaining paper 3 (>= 2 → normal).
+        await tester.pumpWidget(
+          buildDialog(
+            game: gameWithCapital(treasury: 1500, paper: 5),
+            humanPlayerId: humanPlayerId,
+            currentOrders: builderOrders(1),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final spans = costLineSpans(tester, '£1,000 + 2 paper');
+        final treasurySpan = spans.first as TextSpan;
+        final paperSpan = spans.last as TextSpan;
+        expect(treasurySpan.style?.color, EditorialMonoclePalette.danger);
+        expect(paperSpan.style?.color, isNot(EditorialMonoclePalette.danger));
+      },
+    );
+
+    testWidgets(
+      'AC (negative): sufficient resources leave cost segments uncoloured',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildDialog(
+            game: gameWithCapital(treasury: 10000, paper: 100),
+            humanPlayerId: humanPlayerId,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final spans = costLineSpans(tester, '£1,000 + 2 paper');
+        for (final span in spans) {
+          expect(
+            (span as TextSpan).style?.color,
+            isNot(EditorialMonoclePalette.danger),
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'AC (positive): disabled [+] uses danger variant when unaffordable',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildDialog(
+            game: gameWithCapital(treasury: 1500, paper: 5),
+            humanPlayerId: humanPlayerId,
+            currentOrders: builderOrders(1),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // At least one unlocked row can no longer afford +1 → danger [+].
+        expect(
+          plusButtons(tester).any((b) => b.dangerVariant),
+          isTrue,
+        );
+      },
+    );
+
+    testWidgets(
+      'AC (negative): affordable rows never use the danger [+] variant',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildDialog(
+            game: gameWithCapital(treasury: 100000, paper: 1000),
+            humanPlayerId: humanPlayerId,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          plusButtons(tester).every((b) => !b.dangerVariant),
+          isTrue,
+        );
+      },
+    );
+
+    testWidgets(
+      'AC (negative): tech-locked rows keep the non-danger disabled [+]',
+      (WidgetTester tester) async {
+        final player = getPlayer(humanPlayerId);
+        final noTechPlayer = player.copyWith(
+          treasury: 0,
+          techUnlocked: <String, bool>{},
+          capitalProvinceId:
+              player.capitalProvinceId ?? player.capitalTile?.provinceId,
+        );
+        final gameNoTech = game.copyWith(
+          players: [
+            noTechPlayer,
+            ...game.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+        await tester.pumpWidget(
+          buildDialog(game: gameNoTech, humanPlayerId: humanPlayerId),
+        );
+        await tester.pumpAndSettle();
+
+        // Locked rows (Merchant, Rail Builder) must not show the danger
+        // variant even though resources are also insufficient.
+        final lockedCount = CivilianEconomyCatalog.all
+            .where((e) => unlockingTechByCivilianId[e.id] != null)
+            .length;
+        expect(lockedCount, greaterThan(0));
+        final dangerCount =
+            plusButtons(tester).where((b) => b.dangerVariant).length;
+        // Locked rows are excluded from danger styling; only unlocked,
+        // unaffordable rows may show it.
+        expect(
+          dangerCount,
+          CivilianEconomyCatalog.all.length - lockedCount,
+        );
       },
     );
   });
