@@ -209,7 +209,8 @@ class _TileMapGenTerrainResource
     int mountainCount,
     Set<(int x, int y)> mountainAdjacentFrontier,
     List<(int x, int y)> remainingNonMountainLand,
-  }) _scanPostMountainLand(
+  })
+  _scanPostMountainLand(
     List<List<TerrainType?>> terrainGrid,
     List<List<String>> grid,
     List<(int dx, int dy)> directions,
@@ -684,7 +685,7 @@ class _TileMapGenTerrainResource
       final counts = _neighborNonMountainCounts(terrainGrid, component, x, y);
       terrainGrid[y][x] = counts.isEmpty
           ? allowed[rnd.nextInt(allowed.length)]
-          : _mostFrequentTerrain(counts);
+          : mostFrequentTerrain(counts);
     }
   }
 
@@ -708,17 +709,6 @@ class _TileMapGenTerrainResource
       counts[terrain] = (counts[terrain] ?? 0) + 1;
     }
     return counts;
-  }
-
-  TerrainType _mostFrequentTerrain(Map<TerrainType, int> counts) {
-    TerrainType best = counts.keys.first;
-    var bestCount = counts[best]!;
-    for (final entry in counts.entries) {
-      if (entry.value <= bestCount) continue;
-      best = entry.key;
-      bestCount = entry.value;
-    }
-    return best;
   }
 
   Set<(int x, int y)> _componentCellsOfTerrain(

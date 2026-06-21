@@ -96,6 +96,7 @@ The implementation SHOULD keep `TileMapGenerator` as an orchestration layer and 
 - `TerrainResourceService`: Pass 6-7 terrain and resource assignment helpers.
 - `ContinentJoinPass`: Pass 10 continent joining (land bridges). `TerrainJitterPass`: Pass 10b per-province terrain jitter. `SeaZoneSubdividePass`: Pass 11 sea-zone subdivision. (Formerly a single `JoinAndSeaService`; split into three standalone `MapGenPass` families — Refs #3588.)
 - Shared graph/connectivity helpers used by services.
+- Shared terrain dominance helper `mostFrequentTerrain` (`gen/terrain_dominance.dart`): the single argmax over a `Map<TerrainType, int>` consumed by both the terrain-assignment cleanup (Pass 6–7) and the terrain-jitter pass (Pass 10b), so dominance-counting is not duplicated across passes (Refs #3588). On count ties it returns the first-inserted key among the maxima, preserving generation determinism.
 
 The orchestration contract remains unchanged: pass ordering, pass semantics, and observable outputs must match this spec and [tile-map-gen-resources.md](tile-map-gen-resources.md).
 
@@ -113,6 +114,8 @@ Because the families have heterogeneous input/output shapes, each supplies its o
 - Given a generator service family that owns a cohesive grid-in/grid-out pass, when the repository lint `repo.map_gen_stage_protocol` runs, then The System requires that family to declare `implements MapGenPass` and requires at least 3 bound families to do so, otherwise the lint fails.
 - Given `TileMapGenLandSeeds.run` is invoked with a `MapGenPassContext` whose payload sets `seedBeforeAssignment = true` and an RNG seeded with value `s`, when the pass completes, then The System returns the same `grid`, `continentSeeds`, `landSeeds`, and `continentBySeedIndex` as the legacy `placeLandSeeds` + `assignLandByLandSeeds` calls made with a freshly `s`-seeded RNG.
 - Given a `MapGenPassContext` with a `null` `onLog`, when `context.log(message)` is called, then The System performs no action and does not throw.
+- Given a non-empty `Map<TerrainType, int>` of terrain counts, when `mostFrequentTerrain(counts)` is called, then The System returns the `TerrainType` with the strictly greatest count.
+- Given terrain counts where two or more terrains share the greatest count, when `mostFrequentTerrain(counts)` is called, then The System returns the first-inserted key among those tied maxima (deterministic for a fixed insertion order).
 
 ---
 

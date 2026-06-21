@@ -15,6 +15,7 @@ import '../tile_map_directions.dart';
 import '../tile_map_grid.dart';
 import 'map_gen_pass_payloads.dart';
 import 'map_gen_stage.dart';
+import 'terrain_dominance.dart';
 import 'tile_map_params.dart';
 
 /// Pass 10b terrain-jitter service.
@@ -102,14 +103,8 @@ class TerrainJitterPass implements MapGenPass<TerrainJitterPassPayload, void> {
       }
       if (terrainTiles == 0 || counts.isEmpty) continue;
 
-      TerrainType dominant = counts.keys.first;
-      var maxCount = counts[dominant]!;
-      for (final e in counts.entries) {
-        if (e.value > maxCount) {
-          dominant = e.key;
-          maxCount = e.value;
-        }
-      }
+      final dominant = mostFrequentTerrain(counts);
+      final maxCount = counts[dominant]!;
       final fDom = maxCount / terrainTiles;
       if (fDom < params.jitterHomogeneityThreshold) continue;
 

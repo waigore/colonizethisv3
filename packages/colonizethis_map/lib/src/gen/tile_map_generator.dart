@@ -21,6 +21,7 @@ import '../tile_map_grid.dart';
 import 'tile_map_grid_graph.dart';
 import 'tile_map_resource_cap_state.dart';
 import 'tile_map_resource_placement.dart';
+import 'terrain_dominance.dart';
 import 'topology_inference.dart';
 
 export 'tile_map_params.dart';
