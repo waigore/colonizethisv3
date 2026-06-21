@@ -11,8 +11,11 @@ import 'package:path/path.dart' as p;
 ///
 /// In addition (Refs #3574, slice 4) it requires the contract to declare the
 /// uniform [MapGenPass] pass entry point and at least
-/// [_requiredMapGenPassFamilyMinimum] of the four families to adopt it; the
-/// remaining family stays [MapGenStage]-only and is documented inline as exempt.
+/// [_requiredMapGenPassFamilyMinimum] generator families to adopt it. After the
+/// join-sea split (Refs #3588) the former exempt `_TileMapGenJoinSea` family is
+/// replaced by three standalone [MapGenPass] services ([ContinentJoinPass],
+/// [TerrainJitterPass], [SeaZoneSubdividePass]); all bound families now adopt
+/// the uniform pass entry point.
 const _stageContractFile =
     'packages/colonizethis_map/lib/src/gen/map_gen_stage.dart';
 
@@ -33,8 +36,12 @@ const _requiredServiceBindings = <String, String>{
       'class TileMapGenLandSeeds',
   'packages/colonizethis_map/lib/src/gen/tile_map_generator_lakes_provinces.dart':
       'class _TileMapGenLakesProvinces',
-  'packages/colonizethis_map/lib/src/gen/tile_map_generator_join_sea.dart':
-      'class _TileMapGenJoinSea',
+  'packages/colonizethis_map/lib/src/gen/tile_map_gen_continent_join_pass.dart':
+      'class ContinentJoinPass',
+  'packages/colonizethis_map/lib/src/gen/tile_map_gen_terrain_jitter_pass.dart':
+      'class TerrainJitterPass',
+  'packages/colonizethis_map/lib/src/gen/tile_map_gen_sea_zone_subdivide_pass.dart':
+      'class SeaZoneSubdividePass',
   'packages/colonizethis_map/lib/src/gen/tile_map_generator_terrain_assign.dart':
       'class _TileMapGenTerrainResource',
 };
@@ -60,7 +67,11 @@ List<MapGenStageProtocolViolation> findMapGenStageProtocolViolations({
   if (classDecl == null) {
     return violations;
   }
-  if (!source.contains(classDecl)) {
+  // Collapse runs of whitespace so a class declaration that the formatter wrapped
+  // across lines (e.g. `class Foo\n    implements\n        MapGenPass<...>`) still
+  // matches the single-line markers below.
+  final normalized = _collapseWhitespace(source);
+  if (!normalized.contains(classDecl)) {
     violations.add(
       MapGenStageProtocolViolation(
         relativePath,
@@ -69,7 +80,8 @@ List<MapGenStageProtocolViolation> findMapGenStageProtocolViolations({
     );
     return violations;
   }
-  if (!source.contains(_implementsStage) && !source.contains(_implementsPass)) {
+  if (!normalized.contains(_implementsStage) &&
+      !normalized.contains(_implementsPass)) {
     violations.add(
       MapGenStageProtocolViolation(
         relativePath,
@@ -80,8 +92,14 @@ List<MapGenStageProtocolViolation> findMapGenStageProtocolViolations({
   return violations;
 }
 
+/// Collapses every run of whitespace (including newlines) to a single space so
+/// multiline declarations match the single-line substring markers.
+String _collapseWhitespace(String source) =>
+    source.replaceAll(RegExp(r'\s+'), ' ');
+
 /// True when [source] adopts the uniform [MapGenPass] entry point.
-bool sourceAdoptsMapGenPass(String source) => source.contains(_implementsPass);
+bool sourceAdoptsMapGenPass(String source) =>
+    _collapseWhitespace(source).contains(_implementsPass);
 
 void main() {
   exit(runCheckMapGenStageProtocol(Directory.current.path));

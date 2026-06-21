@@ -8,22 +8,27 @@ import 'package:colonizethis_map/package_logger.dart';
 import 'grid_voronoi.dart';
 import 'map_gen_pass_payloads.dart';
 import '../map_validation_exception.dart';
+import 'tile_map_gen_continent_join_pass.dart';
+import 'tile_map_gen_sea_zone_subdivide_pass.dart';
+import 'tile_map_gen_terrain_jitter_pass.dart';
 import 'tile_map_generator_land_seeds.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
-import 'tile_map_distance_sentinels.dart';
+import 'tile_map_params.dart';
 import '../tile_map_directions.dart';
 import 'map_gen_stage.dart';
 import '../tile_map_grid.dart';
 import 'tile_map_grid_graph.dart';
 import 'tile_map_resource_cap_state.dart';
 import 'tile_map_resource_placement.dart';
+import 'terrain_dominance.dart';
 import 'topology_inference.dart';
+
+export 'tile_map_params.dart';
 
 /// Shared params for [TileMapGenerator] (generation orchestration only).
 
 part 'tile_map_generator_types.dart';
-part 'tile_map_generator_join_sea.dart';
 part 'tile_map_generator_terrain_assign.dart';
 part 'tile_map_generator_terrain_hardwood_part.dart';
 part 'tile_map_generator_terrain_noise.dart';
@@ -42,14 +47,22 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     final graph = TileMapGridGraph(params);
     final landImpl = TileMapGenLandSeeds(params);
     final terrainImpl = _TileMapGenTerrainResource(params, graph);
-    final joinImpl = _TileMapGenJoinSea(params, packageLogger(), graph);
-    final lakesImpl = _TileMapGenLakesProvinces(params, graph, joinImpl);
+    final continentJoinImpl = ContinentJoinPass(params, packageLogger(), graph);
+    final terrainJitterImpl = TerrainJitterPass(params);
+    final seaZoneSubdivideImpl = SeaZoneSubdividePass(params, graph);
+    final lakesImpl = _TileMapGenLakesProvinces(
+      params,
+      graph,
+      continentJoinImpl,
+    );
     return TileMapGenerator._(
       params: params,
       landSeedService: landImpl,
       lakeAndProvinceService: lakesImpl,
       terrainResourceService: terrainImpl,
-      joinAndSeaService: joinImpl,
+      continentJoinService: continentJoinImpl,
+      terrainJitterService: terrainJitterImpl,
+      seaZoneSubdivideService: seaZoneSubdivideImpl,
     );
   }
 
@@ -58,16 +71,22 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     required TileMapGenLandSeeds landSeedService,
     required _TileMapGenLakesProvinces lakeAndProvinceService,
     required _TileMapGenTerrainResource terrainResourceService,
-    required _TileMapGenJoinSea joinAndSeaService,
+    required ContinentJoinPass continentJoinService,
+    required TerrainJitterPass terrainJitterService,
+    required SeaZoneSubdividePass seaZoneSubdivideService,
   }) : _landSeedService = landSeedService,
        _lakeAndProvinceService = lakeAndProvinceService,
        _terrainResourceService = terrainResourceService,
-       _joinAndSeaService = joinAndSeaService;
+       _continentJoinService = continentJoinService,
+       _terrainJitterService = terrainJitterService,
+       _seaZoneSubdivideService = seaZoneSubdivideService;
 
   final TileMapGenLandSeeds _landSeedService;
   final _TileMapGenLakesProvinces _lakeAndProvinceService;
   final _TileMapGenTerrainResource _terrainResourceService;
-  final _TileMapGenJoinSea _joinAndSeaService;
+  final ContinentJoinPass _continentJoinService;
+  final TerrainJitterPass _terrainJitterService;
+  final SeaZoneSubdividePass _seaZoneSubdivideService;
 
   /// Generate a tile map from province/continent count. Returns (TileMapResult, inferred MapTopology).
   /// Optional [onLog] receives one line per pass.
@@ -349,25 +368,25 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     Random rnd,
     void Function(String)? onLog,
   ) {
-    if (!params.joinContinents) {
-      return (grid, terrainGrid, resourceGrid);
-    }
-    final joinResult = _joinAndSeaService.joinContinents(
-      grid,
-      terrainGrid,
-      resourceGrid,
-      provinceToContinent,
-      seaZoneId,
-      regionId,
-      landSeeds,
-      continentBySeedIndex,
-      resourceRules,
-      rnd,
+    final joinResult = _continentJoinService.run(
+      MapGenPassContext<ContinentJoinPassPayload>(
+        params: params,
+        payload: ContinentJoinPassPayload(
+          grid: grid,
+          terrainGrid: terrainGrid,
+          resourceGrid: resourceGrid,
+          provinceToContinent: provinceToContinent,
+          seaZoneId: seaZoneId,
+          mapRegionId: regionId,
+          landSeeds: landSeeds,
+          continentBySeedIndex: continentBySeedIndex,
+          resourceRules: resourceRules,
+          rnd: rnd,
+        ),
+        onLog: onLog,
+      ),
     );
-    if (joinResult.$4) {
-      onLog?.call('Pass 10: Join continents (land bridges added)');
-    }
-    return (joinResult.$1, joinResult.$2, joinResult.$3);
+    return (joinResult.grid, joinResult.terrainGrid, joinResult.resourceGrid);
   }
 
   void _maybeJitterTerrainByProvince(
@@ -378,12 +397,17 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     Random rnd,
   ) {
     if (terrainGrid == null || resourceGrid == null) return;
-    _joinAndSeaService.jitterTerrainByProvince(
-      grid,
-      terrainGrid,
-      resourceGrid,
-      regionId,
-      rnd,
+    _terrainJitterService.run(
+      MapGenPassContext<TerrainJitterPassPayload>(
+        params: params,
+        payload: TerrainJitterPassPayload(
+          grid: grid,
+          terrainGrid: terrainGrid,
+          resourceGrid: resourceGrid,
+          regionId: regionId,
+          rnd: rnd,
+        ),
+      ),
     );
   }
 
@@ -392,15 +416,18 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     String seaZoneId,
     void Function(String)? onLog,
   ) {
-    final totalSea = _joinAndSeaService.countSeaCells(grid, seaZoneId);
+    final totalSea = _seaZoneSubdivideService.countSeaCells(grid, seaZoneId);
     if (totalSea <= 0) return grid;
-    final (newGrid, numSeaZones) = _joinAndSeaService.subdivideSeaZonesWithCap(
-      grid,
-      seaZoneId,
-      totalSea,
-    );
-    onLog?.call(
-      'Pass 11: Sea zone subdivision ($numSeaZones sea zones, cap ${(params.maxSeaZoneFraction * 100).toInt()}% of sea)',
+    final (newGrid, _) = _seaZoneSubdivideService.run(
+      MapGenPassContext<SeaZoneSubdividePassPayload>(
+        params: params,
+        payload: SeaZoneSubdividePassPayload(
+          grid: grid,
+          seaZoneId: seaZoneId,
+          totalSea: totalSea,
+        ),
+        onLog: onLog,
+      ),
     );
     return newGrid;
   }
@@ -416,8 +443,12 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     required List<int> continentBySeedIndex,
   }) {
     final graph = TileMapGridGraph(params);
-    final joinImpl = _TileMapGenJoinSea(params, packageLogger(), graph);
-    final lakesImpl = _TileMapGenLakesProvinces(params, graph, joinImpl);
+    final continentJoinImpl = ContinentJoinPass(params, packageLogger(), graph);
+    final lakesImpl = _TileMapGenLakesProvinces(
+      params,
+      graph,
+      continentJoinImpl,
+    );
     return lakesImpl.fillLakes(
       grid,
       seaZoneId,

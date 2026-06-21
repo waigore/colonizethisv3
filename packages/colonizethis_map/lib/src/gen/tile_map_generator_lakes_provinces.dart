@@ -9,7 +9,7 @@ class _TileMapGenLakesProvinces
   @override
   final TileMapParams params;
   final TileMapGridGraph _graph;
-  final _TileMapGenJoinSea _join;
+  final ContinentJoinPass _join;
 
   /// Uniform pass entry: Pass 4 lake/moat fill (unless `skipFillLakes`) then
   /// Pass 5 border noise (when `borderNoise > 0`). Returns the updated grid;
