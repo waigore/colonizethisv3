@@ -12,6 +12,7 @@ import 'tile_map_gen_continent_join_pass.dart';
 import 'tile_map_gen_sea_zone_subdivide_pass.dart';
 import 'tile_map_gen_terrain_jitter_pass.dart';
 import 'tile_map_generator_land_seeds.dart';
+import 'tile_map_generator_lakes_provinces.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_params.dart';
@@ -32,7 +33,6 @@ part 'tile_map_generator_types.dart';
 part 'tile_map_generator_terrain_assign.dart';
 part 'tile_map_generator_terrain_hardwood_part.dart';
 part 'tile_map_generator_terrain_noise.dart';
-part 'tile_map_generator_lakes_provinces.dart';
 
 abstract class _TileMapGeneratorShell {
   _TileMapGeneratorShell({this.params = const TileMapParams()});
@@ -50,7 +50,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     final continentJoinImpl = ContinentJoinPass(params, packageLogger(), graph);
     final terrainJitterImpl = TerrainJitterPass(params);
     final seaZoneSubdivideImpl = SeaZoneSubdividePass(params, graph);
-    final lakesImpl = _TileMapGenLakesProvinces(
+    final lakesImpl = TileMapGenLakesProvinces(
       params,
       graph,
       continentJoinImpl,
@@ -69,7 +69,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
   TileMapGenerator._({
     required super.params,
     required TileMapGenLandSeeds landSeedService,
-    required _TileMapGenLakesProvinces lakeAndProvinceService,
+    required TileMapGenLakesProvinces lakeAndProvinceService,
     required _TileMapGenTerrainResource terrainResourceService,
     required ContinentJoinPass continentJoinService,
     required TerrainJitterPass terrainJitterService,
@@ -82,7 +82,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
        _seaZoneSubdivideService = seaZoneSubdivideService;
 
   final TileMapGenLandSeeds _landSeedService;
-  final _TileMapGenLakesProvinces _lakeAndProvinceService;
+  final TileMapGenLakesProvinces _lakeAndProvinceService;
   final _TileMapGenTerrainResource _terrainResourceService;
   final ContinentJoinPass _continentJoinService;
   final TerrainJitterPass _terrainJitterService;
@@ -444,7 +444,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
   }) {
     final graph = TileMapGridGraph(params);
     final continentJoinImpl = ContinentJoinPass(params, packageLogger(), graph);
-    final lakesImpl = _TileMapGenLakesProvinces(
+    final lakesImpl = TileMapGenLakesProvinces(
       params,
       graph,
       continentJoinImpl,
