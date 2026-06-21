@@ -196,15 +196,30 @@ String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
     return null;
   }
   final cell = region.cellAt(x, y);
-  final raw = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  // R13.4/R13.5 (#3573): known terrain types resolve through the canonical
+  // title-cased display-name helper (never the raw enum `.name`); only the
+  // unknown-id string fallback uses the underscore transform.
+  final terrainType = cell.terrainType;
+  if (terrainType != null) {
+    return terrainDisplayName(terrainType);
+  }
+  final raw = cell.terrainTypeId ?? '—';
   return _economicTerrainTitle(raw);
 }
 
+/// Title-cases an unknown terrain-id fallback string. Splits on underscores
+/// **and** camelCase boundaries so a multi-word id such as `hardwoodForest`
+/// renders as `Hardwood Forest` — never `HardwoodForest` (#3573 R13.5). Known
+/// terrain enums bypass this and use [terrainDisplayName] directly.
 String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
-  return raw
-      .split('_')
-      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+  final spaced = raw
+      .replaceAll('_', ' ')
+      .replaceAllMapped(RegExp(r'(?<=[a-z0-9])(?=[A-Z])'), (_) => ' ');
+  return spaced
+      .split(' ')
+      .where((w) => w.isNotEmpty)
+      .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 
@@ -473,7 +488,12 @@ Widget _buildTileSection({
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
-  final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  // R13 (#3573): the Tile-section terrain row shows the canonical title-cased
+  // display name for known terrain types, never the raw enum `.name`; the
+  // string-id fallback is title-cased (camelCase spaced) via the shared helper.
+  final terrainStr = cell.terrainType != null
+      ? terrainDisplayName(cell.terrainType!)
+      : _economicTerrainTitle(cell.terrainTypeId ?? '—');
   final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
   final visLevel = playerView.visibilityForTile(selectedTileKey);
   final resourceVisible = resourceIdVisibleInPlayerView(
