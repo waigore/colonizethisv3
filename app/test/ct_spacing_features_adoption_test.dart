@@ -407,8 +407,13 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/production_commodity_breakdown_dialog.dart',
   'lib/features/game/widgets/production_panel.dart',
   'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
-  'lib/features/game/widgets/split_army_dialog.dart',
-  'lib/features/game/widgets/split_fleet_dialog.dart',
+  // split_army_dialog.dart / split_fleet_dialog.dart dropped from the adoption
+  // list: #3594 (PR #3600) extracted the shared SplitEntityDialog base, which
+  // now owns the `Padding(EdgeInsets.all(CtSpacing.l))` body. Both dialogs
+  // delegate their scaffold to that base and no longer contain any
+  // token-eligible `EdgeInsets`/`SizedBox` spacing, so the import and
+  // token-reference invariants moved to split_entity_dialog.dart below.
+  'lib/features/game/widgets/split_entity_dialog.dart',
   'lib/features/game/widgets/tech_tree_widget.dart',
   'lib/features/game/widgets/technology_panel.dart',
   'lib/features/game/widgets/technology_panel_orders.dart',
