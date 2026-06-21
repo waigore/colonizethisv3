@@ -10,9 +10,9 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../core/services/game_service.dart' show GameMapData;
-import 'game_map_area_state_logic.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'province_action_state_calculator.dart';
+import 'province_detail_overlay_host_support.dart';
 import 'province_detail_panel_slide_transition.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
@@ -53,15 +53,10 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final panel = ref.watch(mapProvincePanelProvider);
     final draftOrders = ref.watch(currentOrdersProvider);
-    final tileKey = panel.selectedTileKey;
-    final displayId = tileKey == null || tileKey.isEmpty
-        ? ''
-        : (provinceDetailDisplayIdForPortHarborMapTile(
-                    region: region,
-                    tileKey: tileKey,
-                  ) ??
-                  displayProvinceOrSeaIdFromTileKey(tileKey)) ??
-              '';
+    final displayId = resolveProvinceDetailDisplayId(
+      region: region,
+      tileKey: panel.selectedTileKey,
+    );
     final showPanel = panel.overlayOpen && displayId.isNotEmpty;
     if (!showPanel) {
       return ProvinceDetailPanelSlideTransition(
@@ -77,7 +72,6 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       // Some widget tests render this panel without initializing persistence-backed providers.
       mapData = null;
     }
-    final topology = mapData?.combinedTopology;
     final actionStates = ProvinceActionStateCalculator.compute(
       game: game,
       humanPlayerId: humanPlayerId,
@@ -91,6 +85,20 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     final exploreState = actionStates.explore;
     final prospectState = actionStates.prospect;
     final buildImprovementState = actionStates.buildImprovement;
+    final shortcuts = buildProvinceDetailShortcutCallbacks(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      region: region,
+      playerView: playerView,
+      workTargetSelectionCache: workTargetSelectionCache,
+      draftOrders: draftOrders,
+      mapData: mapData,
+      selectedTileKey: panel.selectedTileKey,
+      exploreEnabled: exploreState.enabled,
+      prospectEnabled: prospectState.enabled,
+      buildImprovementEnabled: buildImprovementState.enabled,
+      bus: ref.read(appEventBusProvider),
+    );
     final overlay = SizedBox(
       width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
@@ -116,83 +124,9 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         buildImprovementActionEnabled:
             canMutateViaUi && buildImprovementState.enabled,
         omniscientDetail: omniscientDetail,
-        onExploreWithExplorerTap:
-            exploreState.enabled && panel.selectedTileKey != null
-            ? () {
-                final selectedTileKey = panel.selectedTileKey!;
-                final revalidatedState =
-                    GameMapAreaStateLogic.provinceExploreActionState(
-                      game: game,
-                      humanPlayerId: humanPlayerId,
-                      selectedTileKey: selectedTileKey,
-                      selectedRegion: region,
-                      workTargetSelectionCache: workTargetSelectionCache,
-                    );
-                if (!revalidatedState.enabled) {
-                  return;
-                }
-                ref
-                    .read(appEventBusProvider)
-                    .emit(
-                      ct_models.OpenCivilianUnitsPanelEvent(
-                        explorerOnly: true,
-                        exploreShortcutTargetTileKey: selectedTileKey,
-                      ),
-                    );
-              }
-            : null,
-        onProspectWithExplorerTap:
-            prospectState.enabled && panel.selectedTileKey != null
-            ? () {
-                final selectedTileKey = panel.selectedTileKey!;
-                final revalidatedState =
-                    GameMapAreaStateLogic.provinceProspectActionState(
-                      game: game,
-                      humanPlayerId: humanPlayerId,
-                      selectedTileKey: selectedTileKey,
-                      playerView: playerView,
-                      topology: topology,
-                      currentOrders: draftOrders,
-                      tileMapByRegion: mapData?.tileMapByRegion,
-                    );
-                if (!revalidatedState.enabled) {
-                  return;
-                }
-                ref
-                    .read(appEventBusProvider)
-                    .emit(
-                      ct_models.OpenCivilianUnitsPanelEvent(
-                        explorerOnly: true,
-                        prospectShortcutTargetTileKey: selectedTileKey,
-                      ),
-                    );
-              }
-            : null,
-        onBuildImprovementTap:
-            buildImprovementState.enabled && panel.selectedTileKey != null
-            ? () {
-                final selectedTileKey = panel.selectedTileKey!;
-                final revalidatedState =
-                    GameMapAreaStateLogic.provinceBuildImprovementActionState(
-                      game: game,
-                      humanPlayerId: humanPlayerId,
-                      selectedTileKey: selectedTileKey,
-                      playerView: playerView,
-                      workTargetSelectionCache: workTargetSelectionCache,
-                    );
-                if (!revalidatedState.enabled) {
-                  return;
-                }
-                ref
-                    .read(appEventBusProvider)
-                    .emit(
-                      ct_models.OpenCivilianUnitsPanelEvent(
-                        builderOnly: true,
-                        buildImprovementShortcutTargetTileKey: selectedTileKey,
-                      ),
-                    );
-              }
-            : null,
+        onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
+        onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
+        onBuildImprovementTap: shortcuts.onBuildImprovementTap,
       ),
     );
     return ProvinceDetailPanelSlideTransition(
