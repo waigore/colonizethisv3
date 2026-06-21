@@ -605,6 +605,20 @@ rules:
     runner: dart
     script: tool/check_map_no_partfile_classes.dart
 
+  - rule_id: repo.map_gen_no_new_partfiles
+    group: structure
+    title: colonizethis_map generation/view layers must not introduce new part/part-of coupling (Refs #3588)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_no_partfile_classes.dart
+
+  - rule_id: repo.map_gen_file_size
+    group: structure
+    title: colonizethis_map generation/view-layer source files must be 500 non-comment lines or fewer (Refs #3588)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_gen_file_size.dart
+
   - rule_id: repo.map_grid_ops_central
     group: structure
     title: colonizethis_map lib tile-grid deep copies must route through TileMapGrid.copy (Refs #3459)

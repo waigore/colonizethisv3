@@ -1,25 +1,41 @@
 /// Pass 6b post-processing (issue #3573): hardwood-forest clustering swaps.
+///
+/// Extracted from the former `_TileMapGenTerrainResourceHardwood` extension on
+/// the `part of 'tile_map_generator.dart'` terrain fragment into a standalone,
+/// independently importable service injected into [TileMapGenTerrainResource]
+/// (Refs #3588). Pure relocation; no logic, iteration order, or RNG-sequence
+/// change.
+library;
 
-part of 'tile_map_generator.dart';
+import 'dart:math';
 
-extension _TileMapGenTerrainResourceHardwood on _TileMapGenTerrainResource {
-  /// Pass 6b post-processing (R7, issue #3573): nudge isolated hardwood-forest
-  /// cells towards existing hardwood/scrub clusters using **reciprocal
-  /// hardwood↔scrub swaps only**. Each swap exchanges an isolated hardwood cell
-  /// with a scrub cell adjacent to other hardwood, leaving both per-terrain cell
-  /// counts (and the R6 1:4 hardwood:scrub ratio) unchanged. Hardwood never
-  /// swaps with plains, mountain, or any non-scrub terrain. The pass is bounded
-  /// by a fixed iteration cap and degrades gracefully (some hardwood may remain
-  /// isolated when no eligible scrub is available).
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import '../tile_map_directions.dart';
+import 'terrain_blob_ops.dart';
+
+/// Pass 6b post-processing (R7, issue #3573) service: clusters isolated
+/// hardwood-forest cells using reciprocal hardwood↔scrub swaps only.
+class HardwoodForestClusterer {
+  const HardwoodForestClusterer();
+
+  /// Nudge isolated hardwood-forest cells towards existing hardwood/scrub
+  /// clusters using **reciprocal hardwood↔scrub swaps only**. Each swap
+  /// exchanges an isolated hardwood cell with a scrub cell adjacent to other
+  /// hardwood, leaving both per-terrain cell counts (and the R6 1:4
+  /// hardwood:scrub ratio) unchanged. Hardwood never swaps with plains,
+  /// mountain, or any non-scrub terrain. The pass is bounded by a fixed
+  /// iteration cap and degrades gracefully (some hardwood may remain isolated
+  /// when no eligible scrub is available).
   /// SPEC/program/tile-map-gen-algorithm.md, SPEC/game/tile-map-and-generation.md.
-  void _clusterHardwoodForest(
+  void cluster(
     List<List<TerrainType?>> terrainGrid,
     Set<(int x, int y)> component,
     Random rnd,
   ) {
     const directions = kTileMapDirections4;
 
-    final hardwoodCount = _componentCellsOfTerrain(
+    final hardwoodCount = componentCellsOfTerrain(
       terrainGrid,
       component,
       TerrainType.hardwoodForest,
