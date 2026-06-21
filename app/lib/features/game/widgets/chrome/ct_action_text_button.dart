@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/themes.dart';
 import '../../../../widgets/ct_gradients.dart';
+import 'ct_hover_button.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Reusable small **neutral** text button used for secondary panel-header
@@ -129,31 +130,28 @@ class CtActionTextButton extends StatefulWidget {
   State<CtActionTextButton> createState() => _CtActionTextButtonState();
 }
 
-class _CtActionTextButtonState extends State<CtActionTextButton> {
-  bool _hovered = false;
+class _CtActionTextButtonState extends State<CtActionTextButton>
+    with CtHoverButtonStateMixin<CtActionTextButton> {
+  @override
+  bool get hoverButtonEnabled => widget.enabled;
 
-  bool get _isInteractive => widget.enabled && widget.onPressed != null;
-
-  void _setHover(bool hovered) {
-    if (!_isInteractive) return;
-    if (_hovered == hovered) return;
-    setState(() => _hovered = hovered);
-  }
+  @override
+  VoidCallback? get hoverButtonOnPressed => widget.onPressed;
 
   Color get _resolvedForeground {
     if (widget.primary) {
-      return _hovered
+      return hovered
           ? EditorialMonoclePalette.accentBright
           : EditorialMonoclePalette.accent;
     }
-    return _hovered
+    return hovered
         ? EditorialMonoclePalette.accentBright
         : EditorialMonoclePalette.accentDim;
   }
 
   Color get _resolvedBorderColor {
     if (widget.primary) {
-      return _hovered
+      return hovered
           ? EditorialMonoclePalette.accent
           : EditorialMonoclePalette.accentDim;
     }
@@ -204,7 +202,7 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
           vertical: CtActionTextButton._verticalPadding,
         ),
         child: AnimatedDefaultTextStyle(
-          duration: _isInteractive
+          duration: isInteractive
               ? CtActionTextButton.animationDuration
               : Duration.zero,
           curve: CtNinePatchButton.animationCurve,
@@ -220,41 +218,11 @@ class _CtActionTextButtonState extends State<CtActionTextButton> {
       ),
     );
 
-    if (!widget.enabled) {
-      return Semantics(
-        button: true,
-        enabled: false,
-        label: widget.semanticLabel ?? widget.label,
-        child: IgnorePointer(
-          child: Opacity(
-            opacity: CtNinePatchButton.disabledOpacity,
-            child: surface,
-          ),
-        ),
-      );
-    }
-
-    final Widget interactive = MouseRegion(
-      onEnter: (_) => _setHover(true),
-      onExit: (_) => _setHover(false),
-      cursor: SystemMouseCursors.click,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(onTap: widget.onPressed, child: surface),
-      ),
+    return buildHoverButton(
+      surface: surface,
+      semanticLabel: widget.semanticLabel ?? widget.label,
+      tooltip: widget.tooltip,
+      disabledOpacity: CtNinePatchButton.disabledOpacity,
     );
-
-    Widget wrapped = Semantics(
-      button: true,
-      enabled: true,
-      label: widget.semanticLabel ?? widget.label,
-      child: interactive,
-    );
-
-    final String? tooltip = widget.tooltip;
-    if (tooltip != null) {
-      wrapped = Tooltip(message: tooltip, child: wrapped);
-    }
-    return wrapped;
   }
 }
