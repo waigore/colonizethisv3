@@ -138,7 +138,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Carrack'), findsWidgets);
-    expect(find.text('ship_of_the_line'), findsNothing);
+    expect(find.text(kTechIdShipOfTheLine), findsNothing);
     expect(find.text('Ship of the Line'), findsWidgets);
   });
 
