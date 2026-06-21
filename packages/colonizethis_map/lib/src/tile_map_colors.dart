@@ -4,8 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'map_validation_exception.dart';
-import 'region_constants.dart';
+import 'map_region_dispatch.dart';
 
 /// Distinct RGB colors for region/faction assignment. Deterministic order.
 const List<(int r, int g, int b)> regionPalette = [
@@ -30,7 +29,8 @@ const List<(int r, int g, int b)> regionPalette = [
 /// Fixed RGB per terrain type for map fill and legend.
 const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
   TerrainType.plains: (200, 220, 160),
-  TerrainType.forest: (34, 100, 34),
+  TerrainType.hardwoodForest: (34, 100, 34),
+  TerrainType.scrubForest: (80, 140, 60),
   TerrainType.hills: (160, 130, 90),
   TerrainType.mountain: (120, 120, 120),
   TerrainType.swamp: (70, 100, 90),
@@ -118,17 +118,13 @@ Map<String, (int r, int g, int b)> factionOwnershipColorMapForRegion(
   String regionId, {
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
 }) {
-  if (regionId == kRegionOldWorld) {
-    return factionOwnershipColorMapForOldWorld(
+  return selectByMapRegionId(
+    regionId,
+    oldWorld: () => factionOwnershipColorMapForOldWorld(
       game,
       greatPowerColorOverride: greatPowerColorOverride,
-    );
-  }
-  if (regionId == kRegionNewWorld) {
-    return factionOwnershipColorMapForNewWorld(game);
-  }
-  throw MapValidationException(
-    'map: unknown region id "$regionId" (expected $kRegionOldWorld or $kRegionNewWorld)',
+    ),
+    newWorld: () => factionOwnershipColorMapForNewWorld(game),
   );
 }
 

@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_map/src/grid_voronoi.dart';
+import 'package:colonizethis_map/src/gen/grid_voronoi.dart';
 
 void main() {
   group('deterministicNoise', () {

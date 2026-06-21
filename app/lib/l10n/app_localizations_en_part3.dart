@@ -168,6 +168,21 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get technologyPanel_slotCancelled => 'Research slot cancelled';
 
   @override
+  String get technologyPanel_cancelWarningTitle => 'Forfeit research progress?';
+
+  @override
+  String technologyPanel_cancelWarningMessage(String name, int points) {
+    return 'Cancelling this slot forfeits $points RP of progress on $name. '
+        'This cannot be undone.';
+  }
+
+  @override
+  String get technologyPanel_cancelWarningConfirm => 'Forfeit';
+
+  @override
+  String get technologyPanel_cancelWarningKeep => 'Keep researching';
+
+  @override
   String get technologyPanel_fundingNone => 'None';
 
   @override

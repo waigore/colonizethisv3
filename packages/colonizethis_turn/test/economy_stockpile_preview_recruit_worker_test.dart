@@ -48,13 +48,13 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
 
       expect(delta[CommodityCatalog.fabric.id], -2);
@@ -92,13 +92,13 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
 
       expect(delta[CommodityCatalog.paper.id], -2);
@@ -111,7 +111,7 @@ void main() {
       final preview = applyEconomyPhasesForPreview(
         game: game,
         topology: const MapTopology(),
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final updated = preview.playerById('p1')!;
       expect(updated.treasury, 300);
@@ -146,13 +146,13 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
 
       expect(delta, isEmpty);
@@ -164,7 +164,7 @@ void main() {
       final preview = applyEconomyPhasesForPreview(
         game: game,
         topology: const MapTopology(),
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final updated = preview.playerById('p1')!;
       expect(updated.treasury, 1000);
@@ -191,7 +191,7 @@ void main() {
         game: game,
         topology: const MapTopology(),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
 
       expect(delta, isEmpty);
@@ -199,7 +199,7 @@ void main() {
       final preview = applyEconomyPhasesForPreview(
         game: game,
         topology: const MapTopology(),
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final updated = preview.playerById('p1')!;
       expect(updated.treasury, 1000);
@@ -262,7 +262,7 @@ void main() {
       final preview = applyEconomyPhasesForPreview(
         game: game,
         topology: const MapTopology(),
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final updated = preview.playerById('p1')!;
 
@@ -303,7 +303,7 @@ void main() {
       final preview = applyEconomyPhasesForPreview(
         game: game,
         topology: const MapTopology(),
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       final updated = preview.playerById('p1')!;
       expect(updated.workerPool.peasants, 0);

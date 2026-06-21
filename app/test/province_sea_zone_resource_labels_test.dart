@@ -380,7 +380,7 @@ void main() {
             y: 0,
             regionCellId: _localProvinceId,
             isSea: false,
-            terrainTypeId: 'forest',
+            terrainTypeId: 'hardwoodForest',
             resourceId: 'timber',
             visibility: TileVisibility.visible,
           ),

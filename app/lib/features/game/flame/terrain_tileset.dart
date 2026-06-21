@@ -27,8 +27,16 @@ const String desertTerrainId = 'desert';
 /// L2+: Features (standalone overlay tiles).
 enum TerrainLayer { layer0Sea, layer1LandBase, layer2Features }
 
-const String _tileForest = 'tile_forest';
-const String _tileForestTimber = 'tile_forest_timber';
+// Forest is split into hardwood and scrub variants (issue #3573 R8/R9). The
+// standalone tile keys mirror `tile_${TerrainType.name}` so
+// [TerrainTilesetCache.getStandaloneTile] resolves each base feature tile.
+// Hardwood loads the renamed `hardwood_forest` / `hardwood_forest_timber` art
+// (formerly `forest` / `forest_timber`); scrub loads its own distinct
+// `scrub_forest` / `scrub_forest_timber` art (#3573 R8/S4).
+const String _tileHardwoodForest = 'tile_hardwoodForest';
+const String _tileHardwoodForestTimber = 'tile_hardwoodForestTimber';
+const String _tileScrubForest = 'tile_scrubForest';
+const String _tileScrubForestTimber = 'tile_scrubForestTimber';
 const String _tileHills = 'tile_hills';
 const String _tileHillsMine = 'tile_hills_mine';
 const String _tileHillsWool = 'tile_hills_wool';
@@ -45,7 +53,8 @@ TerrainLayer terrainLayer(TerrainType terrain) {
     case TerrainType.plains:
     case TerrainType.desert:
       return TerrainLayer.layer1LandBase;
-    case TerrainType.forest:
+    case TerrainType.hardwoodForest:
+    case TerrainType.scrubForest:
     case TerrainType.hills:
     case TerrainType.mountain:
     case TerrainType.swamp:
@@ -158,8 +167,14 @@ String? terrainVariantTileKey({
       }
     case TerrainType.desert:
       return null;
-    case TerrainType.forest:
-      return resourceId == 'timber' ? _tileForestTimber : _tileForest;
+    case TerrainType.hardwoodForest:
+      return resourceId == 'timber'
+          ? _tileHardwoodForestTimber
+          : _tileHardwoodForest;
+    case TerrainType.scrubForest:
+      return resourceId == 'timber'
+          ? _tileScrubForestTimber
+          : _tileScrubForest;
     case TerrainType.hills:
       if ((improvementLevel ?? 0) > 0 && _isMineResourceId(resourceId)) {
         return _tileHillsMine;
@@ -273,8 +288,12 @@ class TerrainTilesetCache {
       ]);
 
       for (final item in const <(String tileId, String assetStem)>[
-        (_tileForest, 'forest'),
-        (_tileForestTimber, 'forest_timber'),
+        // Hardwood uses the renamed dense-canopy forest art; scrub uses its
+        // own distinct sparse art (#3573 R8/S4).
+        (_tileHardwoodForest, 'hardwood_forest'),
+        (_tileHardwoodForestTimber, 'hardwood_forest_timber'),
+        (_tileScrubForest, 'scrub_forest'),
+        (_tileScrubForestTimber, 'scrub_forest_timber'),
         (_tileHills, 'hills'),
         (_tileHillsMine, 'hills_mine'),
         (_tileHillsWool, 'hills_wool'),

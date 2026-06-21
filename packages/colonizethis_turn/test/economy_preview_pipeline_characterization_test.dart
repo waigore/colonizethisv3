@@ -86,7 +86,7 @@ void main() {
         game: game,
         topology: const MapTopology(nodes: [], edges: []),
         playerId: 'p1',
-        currentOrders: currentOrders,
+        inputs: economyPreviewInputs(currentOrders: currentOrders),
       );
       expect(
         _canonicalPreviewPhaseSnapshot(phases),

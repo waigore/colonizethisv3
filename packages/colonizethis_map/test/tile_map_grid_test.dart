@@ -74,4 +74,94 @@ void main() {
       expect(grid[1][0], 0);
     });
   });
+
+  group('TileMapGrid.forEachIndex', () {
+    test('visits every (y, x) in row-major order (y outer, x inner)', () {
+      final visited = <(int, int)>[];
+      TileMapGrid.forEachIndex(2, 3, (y, x) => visited.add((y, x)));
+      expect(visited, [
+        (0, 0),
+        (0, 1),
+        (0, 2),
+        (1, 0),
+        (1, 1),
+        (1, 2),
+      ]);
+    });
+
+    test('matches a hand-rolled nested y/x loop exactly (determinism)', () {
+      final fromHelper = <(int, int)>[];
+      TileMapGrid.forEachIndex(4, 5, (y, x) => fromHelper.add((y, x)));
+      final fromLoop = <(int, int)>[];
+      for (var y = 0; y < 4; y++) {
+        for (var x = 0; x < 5; x++) {
+          fromLoop.add((y, x));
+        }
+      }
+      expect(fromHelper, fromLoop);
+    });
+
+    test('does not invoke visit for non-positive dimensions', () {
+      var calls = 0;
+      TileMapGrid.forEachIndex(0, 5, (_, __) => calls++);
+      TileMapGrid.forEachIndex(5, 0, (_, __) => calls++);
+      expect(calls, 0);
+    });
+
+    test('early return inside visit acts as a per-cell continue', () {
+      final landCells = <(int, int)>[];
+      final grid = [
+        ['land', 'sea'],
+        ['sea', 'land'],
+      ];
+      TileMapGrid.forEachIndex(2, 2, (y, x) {
+        if (grid[y][x] != 'land') return;
+        landCells.add((x, y));
+      });
+      expect(landCells, [(0, 0), (1, 1)]);
+    });
+  });
+
+  group('TileMapGrid.forEachCell', () {
+    test('visits each cell with coordinates and value in row-major order', () {
+      final visited = <(int, int, String)>[];
+      final grid = [
+        ['a', 'b', 'c'],
+        ['d', 'e', 'f'],
+      ];
+      TileMapGrid.forEachCell(grid, (y, x, v) => visited.add((y, x, v)));
+      expect(visited, [
+        (0, 0, 'a'),
+        (0, 1, 'b'),
+        (0, 2, 'c'),
+        (1, 0, 'd'),
+        (1, 1, 'e'),
+        (1, 2, 'f'),
+      ]);
+    });
+
+    test('derives dimensions from the grid and supports ragged rows', () {
+      final visited = <(int, int, int)>[];
+      final ragged = [
+        [1, 2],
+        [3],
+        [4, 5, 6],
+      ];
+      TileMapGrid.forEachCell(ragged, (y, x, v) => visited.add((y, x, v)));
+      expect(visited, [
+        (0, 0, 1),
+        (0, 1, 2),
+        (1, 0, 3),
+        (2, 0, 4),
+        (2, 1, 5),
+        (2, 2, 6),
+      ]);
+    });
+
+    test('does not invoke visit for an empty grid', () {
+      var calls = 0;
+      TileMapGrid.forEachCell(<List<int>>[], (_, __, ___) => calls++);
+      expect(calls, 0);
+    });
+  });
 }

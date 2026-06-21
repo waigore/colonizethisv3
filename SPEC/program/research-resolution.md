@@ -33,6 +33,16 @@ Techs that require the player to have found a resource on the map carry **discov
 - **Order merge:** Human and AI research orders merged per [order-engine.md](order-engine.md) precedence.
 - **Discovery enforcement:** The Research phase resolver (`packages/colonizethis_logic`, e.g. `research_resolver.dart`) applies the discovery gate when validating slot assignments. **Research eligibility** for UI, AI order suggestions, and similar callers uses `researchableTechIds` in `packages/colonizethis_data` with a `hasDiscoveredResource` callback backed by game visibility/prospection (e.g. `hasRevealedResourceForPlayer` in `packages/colonizethis_logic`).
 
+## Slot occupancy persistence
+
+Slot→tech occupancy is persisted as `Player.researchSlotAssignments` (slot index → `{techId, funding}`; see [research-state.md](../game/research-state.md) § Slot Occupancy Persistence). The per-turn `Orders.researchOrdersByPlayerId` remains the UI mutation surface; the resolver reconciles persisted occupancy with the turn's orders and persists the surviving occupancy back.
+
+- **Effective occupancy:** For each player the resolver builds the effective per-slot occupancy from the persisted `researchSlotAssignments` (each entry validated: slot index in `0..researchSlots-1` and `techId` present in the catalog; invalid entries dropped) and then applies the turn's orders as overrides — a non-empty order assigns/updates the slot's tech and funding; an **empty-`techId`** order **cancels** (frees) the slot.
+- **Process condition:** A player is processed when they have research orders this turn **or** have non-empty persisted `researchSlotAssignments`; a player with neither is passed through unchanged. The phase short-circuits (returns the game unchanged) only when there are no research orders **and** no player has persisted assignments.
+- **Progress pruning:** `researchProgressByTechId` entries are retained while their tech still occupies a slot in the effective occupancy. Progress is pruned only on **completion** (progress ≥ cost → unlock) or when the tech **no longer occupies any slot** (slot cancelled or reassigned to a different tech).
+- **Completion frees the slot:** When a tech completes, its slot assignment is removed and is not persisted.
+- **Persistence:** After allocation/completion the surviving effective occupancy is written back to `Player.researchSlotAssignments` (empty map when no slot is occupied).
+
 ## Constraints
 - Clearing a slot loses all progress for that tech (no partial save).
 - A tech cannot be started in the same turn its prerequisite completes.
@@ -47,3 +57,11 @@ Techs that require the player to have found a resource on the map carry **discov
 - **Spend and progress:** Research spending is deducted from treasury; funding level maps to research points per GDD presets; progress is added to the slot's tech.
 - **Completion:** When progress ≥ tech cost, tech is marked unlocked, slot progress cleared, and derived state (extraction cap, military level) updated.
 - **Persistence:** Updated `techUnlocked`, research progress, and treasury are persisted; clearing a slot loses all progress for that tech (no partial save).
+
+### Slot occupancy persistence
+
+- **Given** a player assigns tech `T` to slot `i` at funding `F` (order: `slotIndex=i, techId=T, funding=F`) and the tech does not complete this turn, **when** the Research phase resolves, **then** `Player.researchSlotAssignments[i]` equals `{techId: T, funding: F}` and `Player.researchProgressByTechId[T]` is retained (> 0).
+- **Given** a player has tech `T` occupying slot `i` with `0 < researchProgressByTechId[T] < T.cost`, **when** the Research phase resolves with no cancellation order for slot `i` (no order, or an order that re-asserts `T`), **then** `Player.researchProgressByTechId[T]` is **not** removed.
+- **Given** a player has tech `T` occupying slot `i` and accrued progress reaches or exceeds `T.cost` during resolution, **when** the Research phase resolves, **then** `T` is unlocked (`techUnlocked[T] == true`), `Player.researchSlotAssignments[i]` is cleared, and `Player.researchProgressByTechId[T]` is removed.
+- **Given** a player has tech `T` occupying slot `i` with accrued progress, **when** the Research phase resolves with an empty-`techId` order for slot `i` (cancellation), **then** `Player.researchSlotAssignments[i]` is cleared and `Player.researchProgressByTechId[T]` is removed (forfeited).
+- **Given** a player has non-empty persisted `researchSlotAssignments` but submits no research order for a still-occupied slot this turn, **when** the Research phase resolves, **then** the slot remains occupied (assignment retained) and continues to accrue progress at its persisted funding.

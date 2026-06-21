@@ -8,13 +8,9 @@ import 'package:path/path.dart' as p;
 import 'package:ga_runner/ga_runner.dart';
 import 'package:ga_runner/fitness/stage_fitness.dart';
 import 'package:ga_runner/observer/observer_runner.dart';
+import 'package:ga_runner/setup/capital_resolver.dart';
 
 import 'test_ga_config.dart';
-
-const _testCapitalProvinces = <String, String>{
-  'gp1': 'oldWorld|p1',
-  'gp2': 'oldWorld|p2',
-};
 
 Map<String, dynamic> _minimalSnapshot({double gp1Treasury = 100}) =>
     <String, dynamic>{
@@ -579,16 +575,26 @@ void main() {
             'declared_winner_player_id': 'gp1',
             'termination_reason': 'military_victory',
           };
+          // The engine resolves real capital provinces per stage from each
+          // stage's own setup, while the minimal fake snapshot only declares
+          // ownership of oldWorld|p1/p2. Expected fitness must therefore score
+          // against the same per-stage capitals so the assertion stays robust
+          // to deterministic map-gen shifts (e.g. terrain-distribution changes)
+          // and validates only the stage-weight combination. Refs #3573.
+          final twoPlayerCapitals =
+              resolveCapitalProvinces(config.gameSetupConfig);
+          final sevenGpCapitals =
+              resolveCapitalProvinces(config.sevenGpGameSetupConfig);
           final twoPlayerFitness = computeFitness(
             _minimalSnapshot(gp1Treasury: twoPlayerTreasury),
             summary,
-            capitalProvinceByPlayerId: _testCapitalProvinces,
+            capitalProvinceByPlayerId: twoPlayerCapitals,
           )['gp1']!
               .total;
           final sevenGpFitness = computeFitness(
             _minimalSnapshot(gp1Treasury: sevenGpTreasury),
             summary,
-            capitalProvinceByPlayerId: _testCapitalProvinces,
+            capitalProvinceByPlayerId: sevenGpCapitals,
           )['gp1']!
               .total;
           final expected = combineStageFitness(

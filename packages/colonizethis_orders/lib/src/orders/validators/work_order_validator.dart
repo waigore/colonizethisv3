@@ -216,6 +216,7 @@ class WorkOrderValidator extends StatefulValidator {
             factionMembership: _context.factionMembership,
           ),
       factionMembership: _context.factionMembership,
+      tileMapByRegion: _context.tileMapByRegion,
     );
     return runWorkOrderTargetPrecheck(
       preCtx,

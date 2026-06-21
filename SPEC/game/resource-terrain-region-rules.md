@@ -12,7 +12,7 @@
 | meat | OW only | plains | 45 |
 | wool | OW only | hills | 40 |
 | horses | OW only | plains | 60 |
-| timber | both | forest | 30 |
+| timber | both | hardwoodForest, scrubForest | 30 |
 | iron | both | hills, mountain | 80 |
 | copper | both | hills, mountain | 70 |
 | tin | both | swamp | 75 |
@@ -20,7 +20,7 @@
 | sugarCane | NW only | plains | 35 |
 | tobacco | NW only | plains | 40 |
 | cotton | NW only | plains | 45 |
-| furs | NW only | forest | 55 |
+| furs | NW only | hardwoodForest | 55 |
 | spices | NW only | plains | 50 |
 | silver | NW only | hills | 100 |
 | gold | NW only | mountain | 166 |
@@ -30,6 +30,34 @@
 Spawn weight = 1 / default market price (higher price = rarer).
 
 **Prospect-required (per Imperialism II):** iron, copper, tin, coal, silver, gold, gems, diamonds. These minerals must be prospected by an Explorer before extraction. All others (grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices) are known from terrain when tile is revealed. See [fog-and-exploration.md](fog-and-exploration.md).
+
+---
+
+## Forest terrain split (hardwood vs scrub)
+
+The generic `forest` terrain is split into two distinct terrain types
+(`TerrainType.forest` is removed entirely; no save back-compat). See issue #3573.
+
+- **hardwoodForest** — high-quality timber, rarer. Hosts `timber` (both regions)
+  and `furs` (New World only). Combat: attacker ×0.9, defender ×1.5 (dense cover).
+  Timber extraction follows the normal gathering-tech cap progression
+  (`saw_mill`→2, `wind_saw_mill`→3, `circular_saw`→4).
+- **scrubForest** — low-quality timber, common. Hosts `timber` only (both
+  regions); never `furs`. Combat: attacker ×0.9, defender ×1.1 (same as the
+  legacy forest). Timber extraction is hard-capped at **level 1** regardless of
+  unlocked gathering tech.
+
+**Map distribution weights** (`terrain_region_rules.dart`, both regions): total
+forest weight is halved (legacy 3.0 → 1.5) at a 1:4 hardwood:scrub ratio
+(`hardwoodForest` 0.3, `scrubForest` 1.2); the freed 1.5 weight is added to
+`plains` (4.0 → 5.5).
+
+**Guaranteed forest resource spawn:** every forest cell (hardwood or scrub)
+always receives a resource (100%), overriding the global place probability.
+Scrub → always `timber`; hardwood OW → always `timber`; hardwood NW → 70% `furs`
+/ 30% `timber`. These guaranteed placements are excluded from the multi-region
+cap accounting (mirroring the bootstrap-grain exclusion) and the 30% cap applies
+only to non-forest cells.
 
 ---
 
@@ -64,3 +92,15 @@ On each map (oldWorld and newWorld), at most 30% of placed resources may be mult
 - Given a land tile in the New World with desert terrain and no Old World-only resources that are legal on desert tiles in that region  
   When the System assigns resources to land tiles for the New World  
   Then the System may assign `diamonds` to that tile even if the multi-region cap for `both` resources has already been reached, because the cap is applied only when there is a choice between `both` and region-exclusive resources.
+
+- Given the loaded resource–terrain rules after the forest split  
+  When the System evaluates allowed terrains for `timber` and `furs`  
+  Then `timber` is allowed on both `hardwoodForest` and `scrubForest`, `furs` is allowed on `hardwoodForest` only and never on `scrubForest`, and no rule references a `forest` terrain type.
+
+- Given the Old World and New World terrain distributions after the forest split  
+  When the System computes normalized terrain fractions  
+  Then the `scrubForest` weight (1.2) is exactly four times the `hardwoodForest` weight (0.3), the combined forest weight (1.5) is half of the legacy forest weight (3.0), and the `plains` weight is 5.5 in both regions.
+
+- Given a battle resolved on a province whose terrain is `hardwoodForest`  
+  When the System applies terrain combat modifiers  
+  Then the attacker strength multiplier is 0.9 and the defender strength multiplier is 1.5; for `scrubForest` the multipliers are 0.9 (attacker) and 1.1 (defender).

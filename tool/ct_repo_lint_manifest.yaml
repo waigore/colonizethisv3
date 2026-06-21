@@ -406,6 +406,13 @@ rules:
     runner: dart
     script: tool/check_logic_reduced_surface.dart
 
+  - rule_id: repo.logic_no_map_deps
+    group: architecture
+    title: colonizethis_logic must not depend on colonizethis_map in lib/ (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_no_map_deps.dart
+
   - rule_id: repo.world_no_logic_deps
     group: architecture
     title: colonizethis_world must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
@@ -605,6 +612,13 @@ rules:
     runner: dart
     script: tool/check_map_grid_ops_central.dart
 
+  - rule_id: repo.map_grid_cell_iteration_central
+    group: structure
+    title: colonizethis_map lib tile-grid cell walks must route through TileMapGrid.forEachIndex/forEachCell (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_grid_cell_iteration_central.dart
+
   - rule_id: repo.map_gen_stage_protocol
     group: structure
     title: colonizethis_map generation services must implement MapGenStage (Refs #3459)
@@ -619,12 +633,26 @@ rules:
     runner: dart
     script: tool/check_map_public_barrel_surface.dart
 
+  - rule_id: repo.map_gen_no_image_import
+    group: architecture
+    title: colonizethis_map generation/view code must not import package:image (render layer only) (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_gen_no_image_import.dart
+
   - rule_id: repo.map_region_data_access_central
     group: structure
     title: colonizethis_map lib old/new-world region data must route through regionDataForMapRegionId (Refs #3459)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_region_data_access_central.dart
+
+  - rule_id: repo.map_region_dispatch_central
+    group: structure
+    title: colonizethis_map lib old/new-world region dispatch must route through selectByMapRegionId (Refs #3574)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_region_dispatch_central.dart
 
   - rule_id: repo.land_province_bucket_keys
     group: game_invariants

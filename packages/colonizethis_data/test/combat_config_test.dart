@@ -368,9 +368,12 @@ void main() {
       expect(medalMultiplierFor(5), 1.0);
     });
 
-    test('terrainModifiers contains plains, forest, mountain, desert', () {
+    test('terrainModifiers contains plains, forests, mountain, desert', () {
       expect(terrainModifiers['plains'], (1.0, 1.0));
-      expect(terrainModifiers['forest']?.$1, 0.9);
+      expect(terrainModifiers['hardwoodForest']?.$1, 0.9);
+      expect(terrainModifiers['hardwoodForest']?.$2, 1.5);
+      expect(terrainModifiers['scrubForest']?.$1, 0.9);
+      expect(terrainModifiers['scrubForest']?.$2, 1.1);
       expect(terrainModifiers['mountain']?.$2, 1.2);
       expect(terrainModifiers['desert'], (1.0, 1.0));
     });

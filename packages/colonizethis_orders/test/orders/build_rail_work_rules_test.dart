@@ -68,7 +68,7 @@ void main() {
         rejectionReasonForBuildRailOrder(
           techUnlocked: const {early: true},
           roadLevel: 2,
-          terrain: TerrainType.forest,
+          terrain: TerrainType.hardwoodForest,
         ),
         isNull,
       );

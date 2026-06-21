@@ -1533,6 +1533,14 @@
       }
     }
   },
+  "trainUnits_treasuryLabel": "Treasury:",
+  "@trainUnits_treasuryLabel": {
+    "description": "Treasury label in the train-dialog boxed resource bar (value rendered separately in monospace)."
+  },
+  "trainUnits_paperLabel": "Paper:",
+  "@trainUnits_paperLabel": {
+    "description": "Paper label in the civilian train-dialog boxed resource bar (value rendered separately in monospace)."
+  },
   "trainUnits_peasants": "Peasants: {value}",
   "@trainUnits_peasants": {
     "description": "Peasants summary line in military train dialog.",
@@ -1857,6 +1865,30 @@
   "technologyPanel_slotCancelled": "Research slot cancelled",
   "@technologyPanel_slotCancelled": {
     "description": "Snackbar shown when a research slot assignment is removed."
+  },
+  "technologyPanel_cancelWarningTitle": "Forfeit research progress?",
+  "@technologyPanel_cancelWarningTitle": {
+    "description": "Title of the confirmation dialog shown before cancelling a slot with accrued research progress (Refs #3512)."
+  },
+  "technologyPanel_cancelWarningMessage": "Cancelling this slot forfeits {points} RP of progress on {name}. This cannot be undone.",
+  "@technologyPanel_cancelWarningMessage": {
+    "description": "Body of the confirmation dialog shown before cancelling a slot with accrued research progress (Refs #3512).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_cancelWarningConfirm": "Forfeit",
+  "@technologyPanel_cancelWarningConfirm": {
+    "description": "Confirm-button label on the cancel-research forfeiture warning dialog (Refs #3512)."
+  },
+  "technologyPanel_cancelWarningKeep": "Keep researching",
+  "@technologyPanel_cancelWarningKeep": {
+    "description": "Cancel-button label on the cancel-research forfeiture warning dialog (Refs #3512)."
   },
   "technologyPanel_fundingNone": "None",
   "@technologyPanel_fundingNone": {
@@ -2700,7 +2732,7 @@
       }
     }
   },
-  "trainCivilians_costLine": "{treasury} + {paper} Paper",
+  "trainCivilians_costLine": "{treasury} + {paper} paper",
   "@trainCivilians_costLine": {
     "description": "Treasury cost plus paper requirement for training civilians.",
     "placeholders": {

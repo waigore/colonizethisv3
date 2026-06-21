@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:test/test.dart';
 
 import '../tool/check_map_gen_stage_protocol.dart';
@@ -6,14 +8,14 @@ void main() {
   group('findMapGenStageProtocolViolations', () {
     test('accepts a service class implementing MapGenStage', () {
       const src = r'''
-class _TileMapGenJoinSea implements MapGenStage {
+class _TileMapGenLakesProvinces implements MapGenStage {
   @override
   final TileMapParams params;
 }
 ''';
       final violations = findMapGenStageProtocolViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_join_sea.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_lakes_provinces.dart',
         source: src,
       );
       expect(violations, isEmpty);
@@ -21,13 +23,13 @@ class _TileMapGenJoinSea implements MapGenStage {
 
     test('flags a service class missing MapGenStage implementation', () {
       const src = r'''
-class _TileMapGenJoinSea {
+class _TileMapGenLakesProvinces {
   final TileMapParams params;
 }
 ''';
       final violations = findMapGenStageProtocolViolations(
         relativePath:
-            'packages/colonizethis_map/lib/src/tile_map_generator_join_sea.dart',
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_lakes_provinces.dart',
         source: src,
       );
       expect(violations, hasLength(1));
@@ -44,5 +46,52 @@ class FooBar {}
       );
       expect(violations, isEmpty);
     });
+
+    test('accepts a service adopting the uniform MapGenPass entry point', () {
+      const src = r'''
+class TileMapGenLandSeeds
+    implements MapGenPass<LandSeedPassPayload, LandSeedPassResult> {
+  @override
+  final TileMapLandSeedParams params;
+}
+''';
+      final violations = findMapGenStageProtocolViolations(
+        relativePath:
+            'packages/colonizethis_map/lib/src/gen/tile_map_generator_land_seeds.dart',
+        source: src,
+      );
+      expect(violations, isEmpty);
+    });
+  });
+
+  group('sourceAdoptsMapGenPass', () {
+    test('true when the source implements MapGenPass', () {
+      expect(
+        sourceAdoptsMapGenPass('class X implements MapGenPass<A, B> {}'),
+        isTrue,
+      );
+    });
+
+    test('false when the source only implements MapGenStage', () {
+      expect(
+        sourceAdoptsMapGenPass('class X implements MapGenStage {}'),
+        isFalse,
+      );
+    });
+  });
+
+  group('runCheckMapGenStageProtocol', () {
+    test(
+      'passes on the live repository tree (>=3 families adopt MapGenPass)',
+      () {
+        final lines = <String>[];
+        final code = runCheckMapGenStageProtocol(
+          Directory.current.path,
+          info: lines.add,
+          err: lines.add,
+        );
+        expect(code, 0, reason: lines.join('\n'));
+      },
+    );
   });
 }

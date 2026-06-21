@@ -10,7 +10,8 @@ void main() {
 
     test('matches canonical mineral prospecting terrain rules', () {
       expect(kProspectableByTerrainType[TerrainType.plains], isFalse);
-      expect(kProspectableByTerrainType[TerrainType.forest], isFalse);
+      expect(kProspectableByTerrainType[TerrainType.hardwoodForest], isFalse);
+      expect(kProspectableByTerrainType[TerrainType.scrubForest], isFalse);
       expect(kProspectableByTerrainType[TerrainType.hills], isTrue);
       expect(kProspectableByTerrainType[TerrainType.mountain], isTrue);
       expect(kProspectableByTerrainType[TerrainType.swamp], isTrue);

@@ -12,3 +12,10 @@ const int kTurnResolutionSeedMix = kDeterministicHashMixPrime32;
 const int kTurnResolutionLcgMultiplier = kDeterministicLcgMultiplierGlibc;
 const int kTurnResolutionLcgIncrement = kDeterministicLcgIncrementGlibc;
 const int kTurnResolutionLcgMask = kDeterministicLcg31Mask;
+
+/// Deterministic base sub-seed for [turn], mixing [Game.globalGameSeed] with the
+/// turn number via [kTurnResolutionSeedMix]. Used as the seed root for combat
+/// dialogue, land/naval battle resolution, and overseas interception so previews
+/// and full resolution stay aligned for identical inputs.
+int mixTurnSeed(Game game, int turn) =>
+    (game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix);

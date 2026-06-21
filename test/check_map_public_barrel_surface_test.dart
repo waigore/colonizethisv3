@@ -8,8 +8,8 @@ void main() {
       const src = r'''
 library;
 
-export 'src/grid_voronoi.dart';
-export 'src/tile_map_generator.dart';
+export 'src/gen/grid_voronoi.dart';
+export 'src/gen/tile_map_generator.dart';
 ''';
       final violations = findMapPublicBarrelViolations(source: src);
       expect(violations, hasLength(1));
@@ -18,9 +18,9 @@ export 'src/tile_map_generator.dart';
 
     test('flags every forbidden internal module re-export', () {
       const src = r'''
-export 'src/grid_voronoi.dart';
-export 'src/topology_inference.dart';
-export 'src/tile_map_grid_graph.dart';
+export 'src/gen/grid_voronoi.dart';
+export 'src/gen/topology_inference.dart';
+export 'src/gen/tile_map_grid_graph.dart';
 ''';
       final violations = findMapPublicBarrelViolations(source: src);
       expect(violations, hasLength(3));
