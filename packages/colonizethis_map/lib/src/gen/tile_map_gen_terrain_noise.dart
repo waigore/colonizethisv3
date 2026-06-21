@@ -1,16 +1,37 @@
 /// Pass 6b.5: smooth-noise terrain variation perturbation.
+///
+/// Extracted from the former `_TileMapGenTerrainResourceNoise` extension on the
+/// `part of 'tile_map_generator.dart'` terrain fragment into a standalone,
+/// independently importable service injected into [TileMapGenTerrainResource]
+/// (Refs #3588). Constructor-injected [TileMapParams] and [TileMapGridGraph]
+/// replace the former shared-library-scope access; pure relocation otherwise.
+library;
 
-part of 'tile_map_generator.dart';
+import 'dart:math';
 
-extension _TileMapGenTerrainResourceNoise on _TileMapGenTerrainResource {
-  /// Pass 6b.5 — Noise perturbation. For each large non-mountain blob in
-  /// `component`, scatter small patches of other non-mountain terrains into
-  /// the blob's **interior** cells using a smooth 2D noise field. The pass
-  /// is bypassed entirely (no RNG advance, no iteration) when
-  /// `params.terrainVariation == 0.0`. Mountain cells, blob edge cells, and
-  /// blobs smaller than `params.patternMinBlobSize` are never modified.
-  /// SPEC/program/tile-map-gen-algorithm.md § Pass 6b.5.
-  void _applyTerrainNoisePerturbation(
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import '../tile_map_directions.dart';
+import 'grid_voronoi.dart';
+import 'terrain_blob_ops.dart';
+import 'tile_map_grid_graph.dart';
+import 'tile_map_land_sentinel.dart';
+import 'tile_map_params.dart';
+
+/// Pass 6b.5 smooth-noise terrain-variation service.
+class TerrainNoisePerturbation {
+  const TerrainNoisePerturbation(this.params, this._graph);
+
+  final TileMapParams params;
+  final TileMapGridGraph _graph;
+
+  /// For each large non-mountain blob in [component], scatter small patches of
+  /// other non-mountain terrains into the blob's **interior** cells using a
+  /// smooth 2D noise field. The pass is bypassed entirely (no RNG advance, no
+  /// iteration) when `params.terrainVariation == 0.0`. Mountain cells, blob edge
+  /// cells, and blobs smaller than `params.patternMinBlobSize` are never
+  /// modified. SPEC/program/tile-map-gen-algorithm.md § Pass 6b.5.
+  void apply(
     List<List<TerrainType?>> terrainGrid,
     List<List<String>> grid,
     Set<(int x, int y)> component,
@@ -25,7 +46,7 @@ extension _TileMapGenTerrainResourceNoise on _TileMapGenTerrainResource {
     final threshold = 1.0 - params.terrainVariation;
 
     for (final terrain in allowedNonMountain) {
-      final cells = _componentCellsOfTerrain(terrainGrid, component, terrain);
+      final cells = componentCellsOfTerrain(terrainGrid, component, terrain);
       if (cells.isEmpty) continue;
       final blobs = _graph.connectedComponentsOfLand(cells);
       if (blobs.isEmpty) continue;
@@ -59,7 +80,12 @@ extension _TileMapGenTerrainResourceNoise on _TileMapGenTerrainResource {
   ) {
     if (blob.length < params.patternMinBlobSize) return;
 
-    final interior = _interiorCellsOfBlob(blob, directions);
+    final interior = blobInteriorCells(
+      blob,
+      params.width,
+      params.height,
+      directions,
+    );
     if (interior.isEmpty) return;
 
     final options = allowedNonMountain
@@ -70,10 +96,10 @@ extension _TileMapGenTerrainResourceNoise on _TileMapGenTerrainResource {
     for (final (x, y) in interior) {
       if (terrainGrid[y][x] == TerrainType.mountain) continue;
       if (terrainGrid[y][x] != blobTerrain) continue;
-      if (grid[y][x] != _landSentinel) continue;
+      if (grid[y][x] != kTileMapLandSentinel) continue;
       final n = _smoothNoiseAt(x, y);
       if (n <= threshold) continue;
-      final replacement = _weightedPickTerrainFromOptions(
+      final replacement = weightedPickTerrainFromOptions(
         options,
         distribution,
         rnd,

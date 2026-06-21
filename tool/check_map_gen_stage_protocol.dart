@@ -43,7 +43,7 @@ const _requiredServiceBindings = <String, String>{
   'packages/colonizethis_map/lib/src/gen/tile_map_gen_sea_zone_subdivide_pass.dart':
       'class SeaZoneSubdividePass',
   'packages/colonizethis_map/lib/src/gen/tile_map_generator_terrain_assign.dart':
-      'class _TileMapGenTerrainResource',
+      'class TileMapGenTerrainResource',
 };
 
 class MapGenStageProtocolViolation {
