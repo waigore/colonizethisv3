@@ -545,24 +545,7 @@ Uint8List renderTileMapToPng(
   return img.encodePng(image);
 }
 
-String _terrainLabel(TerrainType t) {
-  switch (t) {
-    case TerrainType.plains:
-      return 'Plains';
-    case TerrainType.hardwoodForest:
-      return 'Hardwood forest';
-    case TerrainType.scrubForest:
-      return 'Scrub forest';
-    case TerrainType.hills:
-      return 'Hills';
-    case TerrainType.mountain:
-      return 'Mountain';
-    case TerrainType.swamp:
-      return 'Swamp';
-    case TerrainType.desert:
-      return 'Desert';
-  }
-}
+String _terrainLabel(TerrainType t) => terrainDisplayName(t);
 
 /// Writes the tile map image to [file].
 void writeTileMapImageToFile(

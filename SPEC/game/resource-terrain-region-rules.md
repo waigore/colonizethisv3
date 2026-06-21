@@ -61,6 +61,34 @@ only to non-forest cells.
 
 ---
 
+## Player-facing terrain display names
+
+Every surface that renders a terrain type to the player as a human-readable
+name (map-visualization legend, region minimap legend, the province / sea-zone
+detail overlay Tile and Economic terrain titles, and any in-app terrain
+tooltip) MUST use the canonical **title-cased** display name. These names are
+defined once in `terrainDisplayName(TerrainType)` (`colonizethis_data`,
+mirroring the `shipTypeDisplayName` / `regimentTypeDisplayName` precedent) and
+reused by every surface — no surface may show the raw enum `.name`, a
+camelCase, or a lower-cased variant.
+
+| TerrainType | Display name |
+|-------------|--------------|
+| plains | Plains |
+| hardwoodForest | Hardwood Forest |
+| scrubForest | Scrub Forest |
+| hills | Hills |
+| mountain | Mountain |
+| swamp | Swamp |
+| desert | Desert |
+
+When a surface only has the persisted terrain **id string** (no resolved
+`TerrainType`), the fallback transform spaces camelCase/underscore boundaries
+and title-cases each word (`hardwoodForest` → `Hardwood Forest`), never
+emitting `HardwoodForest` (no space) or a lower-cased variant.
+
+---
+
 ## Multi-region resource cap (Pass 7)
 
 On each map (oldWorld and newWorld), at most 30% of placed resources may be multi-region ("both") resources. The rest are reserved for region-exclusive resources. When the cap is reached and a land cell could receive either a "both" or a region-only resource, only region-only resources are eligible. When a cell can only receive "both" resources (e.g. Old World forest, mountain, swamp have no OW-only alternatives), place "both" regardless; the cap is applied only when a choice exists.
@@ -104,3 +132,11 @@ On each map (oldWorld and newWorld), at most 30% of placed resources may be mult
 - Given a battle resolved on a province whose terrain is `hardwoodForest`  
   When the System applies terrain combat modifiers  
   Then the attacker strength multiplier is 0.9 and the defender strength multiplier is 1.5; for `scrubForest` the multipliers are 0.9 (attacker) and 1.1 (defender).
+
+- Given the canonical terrain display-name helper `terrainDisplayName(TerrainType)`  
+  When the UI layer resolves the human-readable label for `TerrainType.hardwoodForest` or `TerrainType.scrubForest`  
+  Then the helper returns exactly `Hardwood Forest` and `Scrub Forest` respectively (title case, capital `F`, single space), and every player-facing terrain surface (map-visualization legend, region minimap legend, province / sea-zone detail overlay Tile and Economic terrain titles) renders these strings rather than the raw enum `.name` or any camelCase / lower-cased variant.
+
+- Given the province / sea-zone detail overlay renders a tile whose only terrain information is the persisted id string `hardwoodForest` (no resolved `TerrainType`)  
+  When the UI layer derives the displayed terrain title via the fallback transform  
+  Then the output is the spaced, title-cased `Hardwood Forest` and never `HardwoodForest` (no space) or a lower-cased / camelCase variant.

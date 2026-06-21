@@ -12,6 +12,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         provincePanelShowsFullTileDerivedIntel,
         resourceIdVisibleInPlayerView,
         VisibilityLevel;
+import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';

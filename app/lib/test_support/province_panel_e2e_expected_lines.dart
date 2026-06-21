@@ -8,7 +8,8 @@
 // Mirrors app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart for e2e.
 // If drift fails tests, align this file with the overlay widget.
 
-import 'package:colonizethis_data/colonizethis_data.dart' show isMilitaryUnit;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show isMilitaryUnit, terrainDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -192,7 +193,9 @@ List<String> provincePanelWideLayoutExpectedTexts(
       resourceRaw,
     );
     final resourceLabel = resourceVisible ?? '—';
-    final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+    final terrainStr = cell.terrainType != null
+        ? terrainDisplayName(cell.terrainType!)
+        : _economicTerrainTitle(cell.terrainTypeId ?? '—');
     final prospectable = cell.terrainType != null
         ? isProspectableTerrain(cell.terrainType!)
         : isProspectableTerrainId(cell.terrainTypeId);
@@ -434,9 +437,13 @@ String _ownerName(Game game, String? ownerId) {
 
 String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
-  return raw
-      .split('_')
-      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+  final spaced = raw
+      .replaceAll('_', ' ')
+      .replaceAllMapped(RegExp(r'(?<=[a-z0-9])(?=[A-Z])'), (_) => ' ');
+  return spaced
+      .split(' ')
+      .where((w) => w.isNotEmpty)
+      .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 
@@ -449,7 +456,11 @@ String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
     return null;
   }
   final cell = region.cellAt(x, y);
-  final raw = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  final terrainType = cell.terrainType;
+  if (terrainType != null) {
+    return terrainDisplayName(terrainType);
+  }
+  final raw = cell.terrainTypeId ?? '—';
   return _economicTerrainTitle(raw);
 }
 
