@@ -1,10 +1,34 @@
 /// Pass 4–5, Pass 8–9: lakes, moats, border noise, province seeds and assignment.
+///
+/// SPEC/program/tile-map-gen-algorithm.md.
+///
+/// Extracted from the former `part of 'tile_map_generator.dart'` fragment into a
+/// standalone, independently importable class so the lake/moat/border-noise and
+/// province seeding passes can be unit-tested without the full generator library
+/// scope (see #3588). Constructor-injected [TileMapGridGraph] and
+/// [ContinentJoinPass] dependencies replace the former shared-scope access.
+library;
 
-part of 'tile_map_generator.dart';
+import 'dart:math';
 
-class _TileMapGenLakesProvinces
+import 'grid_voronoi.dart';
+import 'map_gen_pass_payloads.dart';
+import 'map_gen_stage.dart';
+import 'tile_map_gen_continent_join_pass.dart';
+import 'tile_map_land_sentinel.dart';
+import 'tile_map_params.dart';
+import 'tile_map_grid_graph.dart';
+import '../tile_map_directions.dart';
+import '../tile_map_grid.dart';
+
+/// Pass 4–5, Pass 8–9 service: lake/moat fill, border noise, province seed
+/// placement and Voronoi province assignment. Implements [MapGenPass] so
+/// [TileMapGenerator] drives Pass 4–5 through the uniform [run] entry, while the
+/// later province passes ([placeProvinceSeedsOnLand], [assignProvincesFromSeeds])
+/// are invoked directly by the orchestrator.
+class TileMapGenLakesProvinces
     implements MapGenPass<LakesPassPayload, List<List<String>>> {
-  _TileMapGenLakesProvinces(this.params, this._graph, this._join);
+  TileMapGenLakesProvinces(this.params, this._graph, this._join);
 
   @override
   final TileMapParams params;
@@ -82,8 +106,8 @@ class _TileMapGenLakesProvinces
       final ny = y + dy;
       final nid = grid[ny][nx];
       final atBoundary =
-          (id == _landSentinel && nid == seaZoneId) ||
-          (id == seaZoneId && nid == _landSentinel);
+          (id == kTileMapLandSentinel && nid == seaZoneId) ||
+          (id == seaZoneId && nid == kTileMapLandSentinel);
       if (atBoundary) {
         next[ny][nx] = id;
         next[y][x] = nid;
@@ -117,7 +141,7 @@ class _TileMapGenLakesProvinces
     final coastalLandCandidates = <(int x, int y)>{};
     for (final component in lakeComponents) {
       for (final (x, y) in component) {
-        next[y][x] = _landSentinel;
+        next[y][x] = kTileMapLandSentinel;
         lakesFilled++;
         _addCoastalLandCandidatesAroundLakeCell(
           x,
@@ -219,7 +243,7 @@ class _TileMapGenLakesProvinces
     if (moatCells.isEmpty) return grid;
 
     for (final (x, y) in moatCells) {
-      next[y][x] = _landSentinel;
+      next[y][x] = kTileMapLandSentinel;
     }
 
     // Preserve overall sea fraction by converting an equal number of coastal
@@ -249,7 +273,7 @@ class _TileMapGenLakesProvinces
       for (var c = 0; c < numContinents; c++) c: [],
     };
     TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
-      if (grid[y][x] != _landSentinel) return;
+      if (grid[y][x] != kTileMapLandSentinel) return;
       final bestSeedIndex = _graph.nearestLandSeedIndexForCell(x, y, landSeeds);
       final c = continentBySeedIndex[bestSeedIndex];
       byContinent[c]!.add((x, y));
@@ -307,7 +331,7 @@ class _TileMapGenLakesProvinces
     return seeds;
   }
 
-  /// Replace each _landSentinel cell with nearest province seed id. Uses generic Voronoi.
+  /// Replace each kTileMapLandSentinel cell with nearest province seed id. Uses generic Voronoi.
   List<List<String>> assignProvincesFromSeeds(
     List<List<String>> grid,
     Map<String, (int x, int y)> provinceSeeds,
@@ -316,7 +340,7 @@ class _TileMapGenLakesProvinces
     if (provinceSeeds.isEmpty) return grid;
     final landCells = <(int x, int y)>[];
     TileMapGrid.forEachCell(grid, (y, x, value) {
-      if (value == _landSentinel) landCells.add((x, y));
+      if (value == kTileMapLandSentinel) landCells.add((x, y));
     });
     final assignment = assignCellsToNearestSeed(
       landCells,

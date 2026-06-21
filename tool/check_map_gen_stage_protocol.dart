@@ -35,7 +35,7 @@ const _requiredServiceBindings = <String, String>{
   'packages/colonizethis_map/lib/src/gen/tile_map_generator_land_seeds.dart':
       'class TileMapGenLandSeeds',
   'packages/colonizethis_map/lib/src/gen/tile_map_generator_lakes_provinces.dart':
-      'class _TileMapGenLakesProvinces',
+      'class TileMapGenLakesProvinces',
   'packages/colonizethis_map/lib/src/gen/tile_map_gen_continent_join_pass.dart':
       'class ContinentJoinPass',
   'packages/colonizethis_map/lib/src/gen/tile_map_gen_terrain_jitter_pass.dart':
