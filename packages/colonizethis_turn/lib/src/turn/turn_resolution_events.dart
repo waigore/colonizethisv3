@@ -4,8 +4,15 @@ import '../constants.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
+import 'turn_resolution_helpers.dart';
+
 /// Emits game events after turn resolution phases. SPEC/program/game-events.md.
 /// Keeps turn_resolver switch thin by moving event emission here.
+
+/// Deterministically ordered player ids for [game], sorted ascending. Used by
+/// the event emitters so per-player iteration order is stable across runs.
+List<String> _sortedPlayerIds(Game game) =>
+    game.players.map((p) => p.id).toList()..sort();
 
 Set<String> _techKeysUnlockedBefore(Game stateBefore) {
   final hadTechBefore = <String>{};
@@ -63,8 +70,7 @@ void emitResearchCompleteEvents(
 ) {
   final hadTechBefore = _techKeysUnlockedBefore(stateBefore);
   final firstDiscoveriesThisTurn = <String>{};
-  final sortedPlayerIds = stateAfter.players.map((p) => p.id).toList()
-    ..sort();
+  final sortedPlayerIds = _sortedPlayerIds(stateAfter);
   for (final playerId in sortedPlayerIds) {
     final player = stateAfter.playerById(playerId);
     if (player == null) continue;
@@ -138,15 +144,11 @@ void emitProvinceCapturedEvents(
   for (final prov in stateAfter.worldState.allProvinces()) {
     final previousOwner = previousOwnership[prov.id];
     final newOwner = prov.ownerId;
-    if (previousOwner != null &&
-        previousOwner.isNotEmpty &&
-        newOwner != null &&
-        newOwner.isNotEmpty &&
-        previousOwner != newOwner) {
+    if (isProvinceOwnershipCaptured(previousOwner, newOwner)) {
       final event = ProvinceCapturedEvent(
         provinceId: prov.id,
-        previousOwnerId: previousOwner,
-        newOwnerId: newOwner,
+        previousOwnerId: previousOwner!,
+        newOwnerId: newOwner!,
         turnNumber: turn,
       );
       deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
@@ -273,8 +275,7 @@ void emitPlayerDiscoveryEvents(
       beforeIndex ?? buildProvinceVisibilityIndex(stateBefore);
   final resolvedAfterIndex =
       afterIndex ?? buildProvinceVisibilityIndex(stateAfter);
-  final sortedPlayerIds = stateAfter.players.map((p) => p.id).toList()
-    ..sort();
+  final sortedPlayerIds = _sortedPlayerIds(stateAfter);
   for (final playerId in sortedPlayerIds) {
     _emitPlayerProvinceDiscoveryEvents(
       stateAfter: stateAfter,

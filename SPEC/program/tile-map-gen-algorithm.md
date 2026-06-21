@@ -10,6 +10,17 @@ Generate per-region landmass and terrain (passes 1–6). One region (oldWorld or
 
 ---
 
+## Grid operations and traversal (canonical)
+
+All row-major tile-grid operations route through the single `TileMapGrid` helper (`packages/colonizethis_map/lib/src/tile_map_grid.dart`): deep copy (`TileMapGrid.copy`), allocation (`filled` / `generate`), and **cell traversal**.
+
+- **Canonical cell walk:** Generation passes (and downstream view/render walks) visit grid cells via `TileMapGrid.forEachIndex(height, width, (y, x) {…})` or `TileMapGrid.forEachCell(grid, (y, x, value) {…})` instead of hand-rolled nested `for (var y …) { for (var x …) }` loops, so the **row-major order (`y` outer, `x` inner)** that seeded generation depends on for bit-for-bit determinism has one definition. A guard (`return`) inside the visit callback is equivalent to a `continue` in the original loop body.
+- **Exemptions:** Passes whose correctness requires a non-row-major order (for example the **reversed** backward sweep of the Manhattan distance transform) keep their explicit loops and are documented inline.
+
+These constraints are enforced by `repo.map_grid_ops_central` (and the cell-iteration lint family) — see [repo-lint.md](repo-lint.md).
+
+---
+
 ## Voronoi assignment (reusable)
 
 Used for land (Pass 3), province (Pass 9), and sea zone (Pass 11):
@@ -51,6 +62,13 @@ Used for land (Pass 3), province (Pass 9), and sea zone (Pass 11):
    - **6a — Mountain ridges:** Assign `TerrainType.mountain` via ridge paths (random walks). Per-region mountain fraction from terrain rules.
    - **6b — Region-growing:** Non-mountain land: macro phase (large blobs by terrain), micro phase (smaller patches), optional pattern refinement (pockets inside blobs). Per-region terrain weights from colonizethis_data. Sea cells stay null terrain.
    - **6b.5 — Noise perturbation (post pattern refinement):** For each connected land component, per non-mountain terrain type, find blobs whose size is **>=** `patternMinBlobSize` (smaller blobs are skipped — pattern refinement already handles those). For each interior cell of each such blob (4-neighbour fully inside blob), evaluate a smooth 2D noise field from `deterministicNoise(seed, gx, gy)` using **bilinear interpolation** of corner samples taken on a fixed grid spacing of **4 cells** (corners at `(floor(x/4)*4, floor(y/4)*4)` and the three neighbours). A cell is changed iff `noise > (1.0 - terrainVariation)`; for noise uniformly distributed in `[-1, 1]` this yields an expected interior change fraction of `terrainVariation / 2` (~25% at `0.5`, ~50% at `1.0`). Replacement terrain is picked from the other allowed non-mountain terrains by their `TerrainDistribution.nonMountainFractions` weights. Mountains, blob edge cells, and small blobs are never modified. **Bypass:** When `terrainVariation == 0.0`, the pass returns immediately at entry without sampling noise, iterating blobs, or advancing the RNG, guaranteeing byte-identical output to pre-change behaviour. Runs **after** `_refineTerrainPatternsInComponent` in the per-component flow.
+   - **6c — Hardwood forest clustering (forest split, issue #3573):** A bounded post-processing pass over each connected land component, run **after** Pass 6b.5. It nudges **isolated** `hardwoodForest` cells (no 4-neighbour hardwood cell) toward existing hardwood clusters using **reciprocal hardwood↔scrub swaps only**: an isolated hardwood cell exchanges terrain types with a `scrubForest` cell that is 4-adjacent to a hardwood cell other than the source. Each swap leaves the source as scrub and the target as hardwood, so the **per-terrain cell counts** (and the R6 1:4 hardwood:scrub ratio) are exactly preserved. Hardwood cells **never** swap with `plains`, `mountain`, or any non-scrub terrain. The pass is bounded by a fixed maximum iteration count (the component's hardwood cell count) so it cannot loop forever, and it **degrades gracefully**: when no eligible scrub cell exists for an isolated hardwood cell, that cell stays in place (some hardwood may remain isolated on maps with very few hardwood tiles). Components with fewer than two hardwood cells are skipped.
+
+**Acceptance criteria (Pass 6c — hardwood clustering):**
+
+- Given a generated map with at least four `hardwoodForest` cells in a component, when the System completes terrain assignment, then the large majority of `hardwoodForest` cells have at least one 4-adjacent `hardwoodForest` or `scrubForest` cell (hardwood tends to cluster rather than scatter as isolated single tiles).
+- Given a generated map, when comparing per-terrain cell counts before and after Pass 6c, then the `hardwoodForest` count and the `scrubForest` count are each unchanged (Pass 6c performs only reciprocal hardwood↔scrub swaps; it never converts to or from plains, mountain, or other terrains).
+- Given two map-generation runs with the same `seed` and params, when the System completes terrain assignment including Pass 6c, then both runs produce identical `terrainGrid`s (the clustering pass is deterministic per seed and bounded by a fixed iteration cap).
 
 **Acceptance criteria (Pass 6b.5 — noise perturbation):**
 
@@ -76,10 +94,28 @@ The implementation SHOULD keep `TileMapGenerator` as an orchestration layer and 
 - `LandSeedService`: Pass 2-3 seed placement and land-shape assignment.
 - `LakeAndProvinceService`: Pass 4, Pass 5, and Pass 8-9 lake/moat, border noise, and province assignment.
 - `TerrainResourceService`: Pass 6-7 terrain and resource assignment helpers.
-- `JoinAndSeaService`: Pass 10-11 join, terrain jitter, sea-zone subdivision.
+- `ContinentJoinPass`: Pass 10 continent joining (land bridges). `TerrainJitterPass`: Pass 10b per-province terrain jitter. `SeaZoneSubdividePass`: Pass 11 sea-zone subdivision. (Formerly a single `JoinAndSeaService`; split into three standalone `MapGenPass` families — Refs #3588.)
 - Shared graph/connectivity helpers used by services.
+- Shared terrain dominance helper `mostFrequentTerrain` (`gen/terrain_dominance.dart`): the single argmax over a `Map<TerrainType, int>` consumed by both the terrain-assignment cleanup (Pass 6–7) and the terrain-jitter pass (Pass 10b), so dominance-counting is not duplicated across passes (Refs #3588). On count ties it returns the first-inserted key among the maxima, preserving generation determinism.
 
 The orchestration contract remains unchanged: pass ordering, pass semantics, and observable outputs must match this spec and [tile-map-gen-resources.md](tile-map-gen-resources.md).
+
+### Uniform pass entry point
+
+Generation service families share a single pass-driving protocol so the orchestrator does not duplicate per-family setup/logging:
+
+- **`MapGenStage`** — base contract exposing shared `params`.
+- **`MapGenPass<P, R>`** (extends `MapGenStage`) — uniform entry `R run(MapGenPassContext<P> ctx)`, where `MapGenPassContext` carries `params`, the family's typed `payload` (`P`), and an optional `onLog` hook (`log(message)`).
+
+Because the families have heterogeneous input/output shapes, each supplies its own typed payload/result rather than a single concrete signature. **At least three families** must adopt `MapGenPass`. The former multi-pass **join-sea** family (previously `MapGenStage`-only and documented as exempt) is split into three standalone single-pass families that each adopt `MapGenPass` with their own typed payload/result (Refs #3588): `ContinentJoinPass` (Pass 10, `ContinentJoinPassPayload` → `ContinentJoinPassResult`), `TerrainJitterPass` (Pass 10b, `TerrainJitterPassPayload` → `void`, in-place terrain mutation), and `SeaZoneSubdividePass` (Pass 11, `SeaZoneSubdividePassPayload` → `SeaZoneSubdividePassResult`). Together with land-seeds (Pass 2–3), lakes/provinces (Pass 4–5 lake/moat + border noise), and terrain/resource (Pass 6–7), all bound families now adopt `MapGenPass`. Adoption is enforced by `repo.map_gen_stage_protocol` (see [repo-lint.md](repo-lint.md)). `run` is behaviour-preserving: routing a pass through `run` produces byte-identical grids to the prior inline orchestration for the same inputs.
+
+**Acceptance criteria (uniform pass entry):**
+
+- Given a generator service family that owns a cohesive grid-in/grid-out pass, when the repository lint `repo.map_gen_stage_protocol` runs, then The System requires that family to declare `implements MapGenPass` and requires at least 3 bound families to do so, otherwise the lint fails.
+- Given `TileMapGenLandSeeds.run` is invoked with a `MapGenPassContext` whose payload sets `seedBeforeAssignment = true` and an RNG seeded with value `s`, when the pass completes, then The System returns the same `grid`, `continentSeeds`, `landSeeds`, and `continentBySeedIndex` as the legacy `placeLandSeeds` + `assignLandByLandSeeds` calls made with a freshly `s`-seeded RNG.
+- Given a `MapGenPassContext` with a `null` `onLog`, when `context.log(message)` is called, then The System performs no action and does not throw.
+- Given a non-empty `Map<TerrainType, int>` of terrain counts, when `mostFrequentTerrain(counts)` is called, then The System returns the `TerrainType` with the strictly greatest count.
+- Given terrain counts where two or more terrains share the greatest count, when `mostFrequentTerrain(counts)` is called, then The System returns the first-inserted key among those tied maxima (deterministic for a fixed insertion order).
 
 ---
 

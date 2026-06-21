@@ -19,8 +19,18 @@ void main() {
       expect(terrainLayer(TerrainType.desert), TerrainLayer.layer1LandBase);
     });
 
-    test('forest is layer2Features', () {
-      expect(terrainLayer(TerrainType.forest), TerrainLayer.layer2Features);
+    test('hardwood forest is layer2Features', () {
+      expect(
+        terrainLayer(TerrainType.hardwoodForest),
+        TerrainLayer.layer2Features,
+      );
+    });
+
+    test('scrub forest is layer2Features', () {
+      expect(
+        terrainLayer(TerrainType.scrubForest),
+        TerrainLayer.layer2Features,
+      );
     });
 
     test('hills is layer2Features', () {
@@ -37,19 +47,39 @@ void main() {
   });
 
   group('featureOverlayTileKey', () {
-    test('forest uses timber variant only for timber resource', () {
+    test('hardwood forest uses timber variant only for timber resource', () {
       expect(
         featureOverlayTileKey(
-          terrain: TerrainType.forest,
+          terrain: TerrainType.hardwoodForest,
           resourceId: 'timber',
         ),
-        'tile_forest_timber',
+        'tile_hardwoodForestTimber',
       );
       expect(
-        featureOverlayTileKey(terrain: TerrainType.forest, resourceId: 'furs'),
-        'tile_forest',
+        featureOverlayTileKey(
+          terrain: TerrainType.hardwoodForest,
+          resourceId: 'furs',
+        ),
+        'tile_hardwoodForest',
       );
-      expect(featureOverlayTileKey(terrain: TerrainType.forest), 'tile_forest');
+      expect(
+        featureOverlayTileKey(terrain: TerrainType.hardwoodForest),
+        'tile_hardwoodForest',
+      );
+    });
+
+    test('scrub forest uses timber variant only for timber resource', () {
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.scrubForest,
+          resourceId: 'timber',
+        ),
+        'tile_scrubForestTimber',
+      );
+      expect(
+        featureOverlayTileKey(terrain: TerrainType.scrubForest),
+        'tile_scrubForest',
+      );
     });
 
     test('hills uses mine variant only for improved mineral resources', () {
@@ -224,7 +254,7 @@ void main() {
     test('returns null for feature terrain with grain (not L1 plains)', () {
       expect(
         landInteriorPlainsVariantTileKey(
-          landPlains(terrainType: TerrainType.forest, resourceId: 'grain'),
+          landPlains(terrainType: TerrainType.hardwoodForest, resourceId: 'grain'),
         ),
         isNull,
       );
@@ -386,7 +416,8 @@ void main() {
 
     test('getStandaloneTile returns null before loading for features', () {
       final cache = TerrainTilesetCache();
-      expect(cache.getStandaloneTile(TerrainType.forest), isNull);
+      expect(cache.getStandaloneTile(TerrainType.hardwoodForest), isNull);
+      expect(cache.getStandaloneTile(TerrainType.scrubForest), isNull);
       expect(cache.getStandaloneTile(TerrainType.hills), isNull);
       expect(cache.getStandaloneTile(TerrainType.mountain), isNull);
       expect(cache.getStandaloneTile(TerrainType.swamp), isNull);

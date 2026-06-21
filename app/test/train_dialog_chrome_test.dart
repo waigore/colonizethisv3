@@ -45,6 +45,54 @@ void main() {
     });
   });
 
+  group('TrainDialogResourceBar', () {
+    testWidgets(
+      'renders entries inside a boxed inset strip with no danger when '
+      'deficitHint is null',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: TrainDialogResourceBar(
+                entries: [
+                  TrainDialogResourceEntry(label: 'Treasury:', value: '£5,000'),
+                  TrainDialogResourceEntry(label: 'Paper:', value: '12'),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        expect(find.byType(TrainDialogResourceBarBox), findsOneWidget);
+        expect(find.textContaining('Treasury:'), findsOneWidget);
+        expect(find.textContaining('£5,000'), findsOneWidget);
+        expect(find.textContaining('Paper:'), findsOneWidget);
+        // No deficit row when deficitHint is null.
+        expect(find.textContaining('low'), findsNothing);
+      },
+    );
+
+    testWidgets('renders deficitHint below the box in the danger colour', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: TrainDialogResourceBar(
+              entries: [
+                TrainDialogResourceEntry(label: 'Treasury:', value: '£0'),
+              ],
+              deficitHint: 'Treasury low',
+            ),
+          ),
+        ),
+      );
+
+      final Text hint = tester.widget(find.text('Treasury low'));
+      expect(hint.style?.color, EditorialMonoclePalette.danger);
+    });
+  });
+
   test('kTrainDialogLockedOpacity is 0.4 per #2866 AC', () {
     expect(kTrainDialogLockedOpacity, 0.4);
   });

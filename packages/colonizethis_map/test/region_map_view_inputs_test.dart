@@ -1,5 +1,5 @@
 import 'package:colonizethis_map/src/region_constants.dart';
-import 'package:colonizethis_map/src/region_map_view_inputs.dart';
+import 'package:colonizethis_map/src/view/region_map_view_inputs.dart';
 import 'package:colonizethis_map/src/tile_map_capital_markers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';

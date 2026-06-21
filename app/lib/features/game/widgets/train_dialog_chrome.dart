@@ -65,32 +65,104 @@ class TrainDialogSectionDivider extends StatelessWidget {
   }
 }
 
+/// A single label + value entry in a [TrainDialogResourceBar].
+///
+/// [label] renders muted; [value] renders monospace + bold (per the mockup
+/// `.resource-bar .val`). Treasury values should be pre-formatted with the
+/// `£` symbol + comma grouping via `formatTreasuryCurrency`.
+class TrainDialogResourceEntry {
+  const TrainDialogResourceEntry({required this.label, required this.value});
+
+  final String label;
+  final String value;
+}
+
+/// Boxed inset strip wrapping a train-dialog resource readout.
+///
+/// Mirrors the mockup `.resource-bar` (recessed `--bg-deep` background, 1 dp
+/// `--border`) so both train dialogs share the same recessed treatment.
+class TrainDialogResourceBarBox extends StatelessWidget {
+  const TrainDialogResourceBarBox({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.bgDeep,
+        border: Border.all(
+          color: EditorialMonoclePalette.border,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(CtSpacing.s),
+        child: child,
+      ),
+    );
+  }
+}
+
 /// Treasury / stockpile summary strip for train dialogs.
+///
+/// Renders [entries] inside a [TrainDialogResourceBarBox] with muted labels
+/// and monospace bold values per the mockup. An optional [deficitHint]
+/// renders below the box in the danger colour.
 class TrainDialogResourceBar extends StatelessWidget {
   const TrainDialogResourceBar({
     super.key,
-    required this.lines,
+    required this.entries,
     this.deficitHint,
   });
 
-  final List<String> lines;
+  final List<TrainDialogResourceEntry> entries;
   final String? deficitHint;
+
+  /// Monospace bold value style shared with [CtResourceCell] (`tabularFigures`
+  /// + a cross-platform monospace fallback chain). Public so widget tests can
+  /// assert the value styling.
+  static TextStyle resourceValueStyle(BuildContext context) {
+    final TextStyle base =
+        Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
+    return base.copyWith(
+      color: EditorialMonoclePalette.fg,
+      fontWeight: FontWeight.w700,
+      fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
+      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final TextStyle lineStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
-        .copyWith(color: EditorialMonoclePalette.fg);
+    final TextStyle labelStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.muted);
+    final TextStyle valueStyle = resourceValueStyle(context);
     final TextStyle deficitStyle = (theme.textTheme.bodySmall ??
             const TextStyle())
         .copyWith(color: EditorialMonoclePalette.danger);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 16,
-          runSpacing: 4,
-          children: [for (final line in lines) Text(line, style: lineStyle)],
+        TrainDialogResourceBarBox(
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 4,
+            alignment: WrapAlignment.spaceAround,
+            children: [
+              for (final entry in entries)
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: entry.label, style: labelStyle),
+                      const TextSpan(text: ' '),
+                      TextSpan(text: entry.value, style: valueStyle),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
         if (deficitHint != null) ...[
           const SizedBox(height: 4),

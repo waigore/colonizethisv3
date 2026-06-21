@@ -1,4 +1,4 @@
-import 'package:colonizethis_map/src/tile_map_visualization_shared.dart';
+import 'package:colonizethis_map/src/render/tile_map_visualization_shared.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

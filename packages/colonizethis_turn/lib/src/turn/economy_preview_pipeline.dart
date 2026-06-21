@@ -17,6 +17,70 @@ const List<EconomyPreviewStockpilePhase> _economyPreviewStockpilePhases =
       EconomyPreviewStockpilePhase.production,
     ];
 
+/// Bundled optional inputs shared by the economy-preview entry points
+/// ([economyPreviewStockpilePhaseDeltasForPlayer], [applyEconomyPhasesForPreview],
+/// [previewStockpileNetDeltaByCommodityForPlayer] and
+/// [previewStockpilePhaseDeltasByCommodityForPlayer]). Bundling the formerly
+/// duplicated five-field block into one record means a new preview input is
+/// declared once here instead of in every public signature.
+typedef EconomyPreviewInputs = ({
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId,
+  Orders currentOrders,
+  List<AssignedRecipe> defaultAssignments,
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+});
+
+/// Default [EconomyPreviewInputs] with empty/unset fields, matching the prior
+/// per-parameter defaults declared individually on each preview entry point.
+const EconomyPreviewInputs emptyEconomyPreviewInputs = (
+  tileMapByRegion: null,
+  extractedByPlayerId: <String, Map<CommodityId, int>>{},
+  currentOrders: Orders(),
+  defaultAssignments: <AssignedRecipe>[],
+  defaultAssignmentsByPlayerId: null,
+);
+
+/// Builds [EconomyPreviewInputs] with the same defaults the preview entry points
+/// previously declared individually, preserving named-argument ergonomics for
+/// callers that set only a subset of fields.
+EconomyPreviewInputs economyPreviewInputs({
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  Orders currentOrders = const Orders(),
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  return (
+    tileMapByRegion: tileMapByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    currentOrders: currentOrders,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+  );
+}
+
+/// Builds the [EconomyPhaseStepContext] shared by the preview entry points
+/// ([economyPreviewStockpilePhaseDeltasForPlayer] and
+/// [applyEconomyPhasesForPreview]). Centralizing construction keeps the common
+/// economy-preview context fields in one place so a new field is threaded once
+/// (extract-at-2+-uses; preview context is identical across both call sites).
+EconomyPhaseStepContext _economyPreviewStepContext({
+  required MapTopology topology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  return EconomyPhaseStepContext(
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+  );
+}
+
 Map<String, int> _stockpileCommodityDeltaMap(
   Stockpile before,
   Stockpile after,
@@ -42,15 +106,39 @@ Map<String, int> _stockpileCommodityDeltaMap(
 /// preview clone. Re-uses [canAffordRecruitWorker] / [applyRecruitWorkerCostDeduction]
 /// so the projection shares the validator/resolver cost source of truth.
 /// SPEC/program/order-projections.md § Production panel stockpile preview phases.
-Game _applyPendingRecruitWorkerOrderCostsForPreview({
+/// Applies pending per-player [O] order costs onto a preview clone, sharing the
+/// `canAfford` → `applyDeduction` → `copyWith(workerPool, stockpile, treasury)`
+/// loop used by both the worker-pool (recruit) and unit-build sub-phases.
+///
+/// [canAffordOrder] gates each order; [applyDeduction] returns the next
+/// `(workers, stockpile, treasury)` snapshot. Both close over the order-type's
+/// validator/resolver so the projection shares the live cost source of truth.
+/// Per-player iteration follows [Game.mapPlayers] for deterministic order.
+Game _applyPendingOrderCostsForPreview<O>({
   required Game game,
-  required Orders currentOrders,
+  required Map<String, List<O>> ordersByPlayerId,
+  required bool Function(
+    Player player,
+    O order,
+    WorkerPool workers,
+    Stockpile stockpile,
+    int treasury,
+  )
+  canAffordOrder,
+  required ({WorkerPool workers, Stockpile stockpile, int treasury}) Function(
+    Player player,
+    O order,
+    WorkerPool workers,
+    Stockpile stockpile,
+    int treasury,
+  )
+  applyDeduction,
 }) {
-  if (currentOrders.recruitWorkerOrdersByPlayerId.isEmpty) {
+  if (ordersByPlayerId.isEmpty) {
     return game;
   }
   return game.mapPlayers((player) {
-    final orders = currentOrders.recruitWorkerOrdersByPlayerId[player.id];
+    final orders = ordersByPlayerId[player.id];
     if (orders == null || orders.isEmpty) {
       return player;
     }
@@ -58,68 +146,10 @@ Game _applyPendingRecruitWorkerOrderCostsForPreview({
     var stockpile = player.stockpile;
     var treasury = player.treasury;
     for (final order in orders) {
-      final check = canAffordRecruitWorker(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasury,
-      );
-      if (!check.canAfford) {
+      if (!canAffordOrder(player, order, workers, stockpile, treasury)) {
         continue;
       }
-      final after = applyRecruitWorkerCostDeduction(
-        order,
-        workers,
-        stockpile,
-        treasury,
-      );
-      workers = after.workers;
-      stockpile = after.stockpile;
-      treasury = after.treasury;
-    }
-    return player.copyWith(
-      workerPool: workers,
-      stockpile: stockpile,
-      treasury: treasury,
-    );
-  });
-}
-
-Game _applyPendingBuildOrderCostsForPreview({
-  required Game game,
-  required Orders currentOrders,
-}) {
-  if (currentOrders.buildUnitOrdersByPlayerId.isEmpty) {
-    return game;
-  }
-  return game.mapPlayers((player) {
-    var workers = player.workerPool;
-    var stockpile = player.stockpile;
-    var treasury = player.treasury;
-    final orders =
-        currentOrders.buildUnitOrdersByPlayerId[player.id] ?? const [];
-    if (orders.isEmpty) {
-      return player;
-    }
-    for (final order in orders) {
-      final check = ProjectedCostEngine.canAffordBuildOrder(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasury,
-      );
-      if (!check.canAfford) {
-        continue;
-      }
-      final after = ProjectedCostEngine.applyBuildOrderCostDeduction(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasury,
-      );
+      final after = applyDeduction(player, order, workers, stockpile, treasury);
       workers = after.workers;
       stockpile = after.stockpile;
       treasury = after.treasury;
@@ -199,13 +229,39 @@ Game _applyPendingStockpileCostsForPreview({
   required Game game,
   required Orders currentOrders,
 }) {
-  final afterRecruits = _applyPendingRecruitWorkerOrderCostsForPreview(
+  final afterRecruits = _applyPendingOrderCostsForPreview<RecruitWorkerOrder>(
     game: game,
-    currentOrders: currentOrders,
+    ordersByPlayerId: currentOrders.recruitWorkerOrdersByPlayerId,
+    canAffordOrder: (player, order, workers, stockpile, treasury) =>
+        canAffordRecruitWorker(
+          player,
+          order,
+          workers,
+          stockpile,
+          treasury,
+        ).canAfford,
+    applyDeduction: (player, order, workers, stockpile, treasury) =>
+        applyRecruitWorkerCostDeduction(order, workers, stockpile, treasury),
   );
-  final afterBuilds = _applyPendingBuildOrderCostsForPreview(
+  final afterBuilds = _applyPendingOrderCostsForPreview<BuildUnitOrder>(
     game: afterRecruits,
-    currentOrders: currentOrders,
+    ordersByPlayerId: currentOrders.buildUnitOrdersByPlayerId,
+    canAffordOrder: (player, order, workers, stockpile, treasury) =>
+        ProjectedCostEngine.canAffordBuildOrder(
+          player,
+          order,
+          workers,
+          stockpile,
+          treasury,
+        ).canAfford,
+    applyDeduction: (player, order, workers, stockpile, treasury) =>
+        ProjectedCostEngine.applyBuildOrderCostDeduction(
+          player,
+          order,
+          workers,
+          stockpile,
+          treasury,
+        ),
   );
   return _applyPendingMaterialWorkOrderCostsForPreview(
     game: afterBuilds,
@@ -220,11 +276,7 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   required Game game,
   required MapTopology topology,
   required String playerId,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  Orders currentOrders = const Orders(),
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  EconomyPreviewInputs inputs = emptyEconomyPreviewInputs,
 }) {
   final empty = {
     for (final p in EconomyPreviewStockpilePhase.values) p: <String, int>{},
@@ -244,7 +296,7 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   acc = acc.copyWith(
     game: _applyPendingStockpileCostsForPreview(
       game: acc.game,
-      currentOrders: currentOrders,
+      currentOrders: inputs.currentOrders,
     ),
   );
   final pendingBuildCosts = _stockpileCommodityDeltaMap(
@@ -252,12 +304,12 @@ economyPreviewStockpilePhaseDeltasForPlayer({
     stockpileForViewed(acc.game),
   );
 
-  final economyCtx = EconomyPhaseStepContext(
+  final economyCtx = _economyPreviewStepContext(
     topology: topology,
-    tileMapByRegion: tileMapByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    tileMapByRegion: inputs.tileMapByRegion,
+    extractedByPlayerId: inputs.extractedByPlayerId,
+    defaultAssignments: inputs.defaultAssignments,
+    defaultAssignmentsByPlayerId: inputs.defaultAssignmentsByPlayerId,
   );
   final economyDeltas = <EconomyPreviewStockpilePhase, Map<String, int>>{};
   for (var i = 0; i < economyPhaseSteps.length; i++) {
@@ -277,27 +329,23 @@ economyPreviewStockpilePhaseDeltasForPlayer({
 Game applyEconomyPhasesForPreview({
   required Game game,
   required MapTopology topology,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  Orders currentOrders = const Orders(),
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  EconomyPreviewInputs inputs = emptyEconomyPreviewInputs,
 }) {
   var acc = TurnPipelineState(game: game);
   acc = acc.copyWith(
     game: _applyPendingStockpileCostsForPreview(
       game: acc.game,
-      currentOrders: currentOrders,
+      currentOrders: inputs.currentOrders,
     ),
   );
   acc = runEconomyPhaseSequence(
     acc,
-    EconomyPhaseStepContext(
+    _economyPreviewStepContext(
       topology: topology,
-      tileMapByRegion: tileMapByRegion,
-      extractedByPlayerId: extractedByPlayerId,
-      defaultAssignments: defaultAssignments,
-      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      tileMapByRegion: inputs.tileMapByRegion,
+      extractedByPlayerId: inputs.extractedByPlayerId,
+      defaultAssignments: inputs.defaultAssignments,
+      defaultAssignmentsByPlayerId: inputs.defaultAssignmentsByPlayerId,
     ),
   );
   return acc.game;
@@ -320,11 +368,7 @@ Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({
   required Game game,
   required MapTopology topology,
   required String playerId,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  Orders currentOrders = const Orders(),
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  EconomyPreviewInputs inputs = emptyEconomyPreviewInputs,
 }) {
   final beforePlayer = game.playerById(playerId);
   if (beforePlayer == null) {
@@ -334,22 +378,10 @@ Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({
   final afterGame = applyEconomyPhasesForPreview(
     game: game,
     topology: topology,
-    tileMapByRegion: tileMapByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    currentOrders: currentOrders,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    inputs: inputs,
   );
   final after = afterGame.playerById(playerId)?.stockpile ?? before;
-  final keys = <String>{...before.quantities.keys, ...after.quantities.keys};
-  final out = <String, int>{};
-  for (final id in keys) {
-    final delta = after.quantityOf(id) - before.quantityOf(id);
-    if (delta != 0) {
-      out[id] = delta;
-    }
-  }
-  return out;
+  return _stockpileCommodityDeltaMap(before, after);
 }
 
 /// Per-phase stockpile commodity deltas for the production panel breakdown
@@ -363,20 +395,12 @@ previewStockpilePhaseDeltasByCommodityForPlayer({
   required Game game,
   required MapTopology topology,
   required String playerId,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  Orders currentOrders = const Orders(),
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  EconomyPreviewInputs inputs = emptyEconomyPreviewInputs,
 }) {
   return economyPreviewStockpilePhaseDeltasForPlayer(
     game: game,
     topology: topology,
     playerId: playerId,
-    tileMapByRegion: tileMapByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    currentOrders: currentOrders,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    inputs: inputs,
   );
 }

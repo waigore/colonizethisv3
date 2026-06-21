@@ -171,6 +171,10 @@ List<WidgetbookNode> get techTreeDirectories => [
           _technologyFundingPreviewStoryHost(context),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Slots — persisted in-progress (no fresh orders)',
+        builder: (context) => _technologyPersistedSlotStoryHost(context),
+      ),
     ],
   ),
 ];
@@ -364,6 +368,111 @@ const List<ResearchFundingLevel> _kFundingPreviewLevels = <ResearchFundingLevel>
     },
   );
   return (player: player, game: game, orders: orders);
+}
+
+/// Builds the editable `(Player, Game)` fixture for the persisted-occupancy
+/// story: a player whose first three research slots are occupied by persisted
+/// `researchSlotAssignments` (with accrued progress) but who has **no** fresh
+/// `Orders` this turn. Proves an in-progress tech keeps rendering in its slot
+/// from the persisted baseline alone (no orphaned "In progress" list).
+/// SPEC/ui/technology-panel.md § Slot occupancy + § Widgetbook. Refs #3512.
+({Player player, Game game}) technologyPersistedSlotFixture({
+  required Game baseGame,
+  required Player basePlayer,
+}) {
+  final progress = <String, int>{
+    for (var i = 0; i < _kFundingPreviewTechIds.length; i++)
+      _kFundingPreviewTechIds[i]: _kFundingPreviewCommittedRp[i],
+  };
+  final assignments = <int, ResearchSlotAssignment>{
+    for (var i = 0; i < _kFundingPreviewTechIds.length; i++)
+      i: ResearchSlotAssignment(
+        techId: _kFundingPreviewTechIds[i],
+        funding: _kFundingPreviewLevels[i],
+      ),
+  };
+  final player = basePlayer.copyWith(
+    treasury: 8000,
+    researchSlots: 3,
+    researchProgressByTechId: progress,
+    researchSlotAssignments: assignments,
+  );
+  final game = baseGame.copyWith(
+    players: [player, ...baseGame.players.skip(1)],
+  );
+  return (player: player, game: game);
+}
+
+/// Builds the persisted-occupancy Widgetbook story host. Renders the inner
+/// [TechnologyPanel] with an **empty** `currentOrders` and a non-null
+/// `onOrdersChanged`, so the slot cards are populated purely from the
+/// persisted `researchSlotAssignments`. SPEC/ui/technology-panel.md
+/// § Slot occupancy + § Widgetbook. Refs #3512.
+Widget _technologyPersistedSlotStoryHost(BuildContext context) {
+  final result = getDebugInitGameResult();
+  final game = result.game;
+  if (game.players.isEmpty) {
+    return Center(child: Text(appL10n(context).widgetbook_noPlayers));
+  }
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      body: _TechnologyPersistedSlotStory(
+        baseGame: game,
+        basePlayer: game.players.first,
+      ),
+    ),
+  );
+}
+
+/// Stateful wrapper holding the (initially empty) [Orders] so cancel / funding
+/// interactions on the persisted-occupancy story re-render the panel.
+class _TechnologyPersistedSlotStory extends StatefulWidget {
+  const _TechnologyPersistedSlotStory({
+    required this.baseGame,
+    required this.basePlayer,
+  });
+
+  final Game baseGame;
+  final Player basePlayer;
+
+  @override
+  State<_TechnologyPersistedSlotStory> createState() =>
+      _TechnologyPersistedSlotStoryState();
+}
+
+class _TechnologyPersistedSlotStoryState
+    extends State<_TechnologyPersistedSlotStory> {
+  late Player _player;
+  late Game _game;
+  Orders _orders = const Orders();
+
+  @override
+  void initState() {
+    super.initState();
+    final fixture = technologyPersistedSlotFixture(
+      baseGame: widget.baseGame,
+      basePlayer: widget.basePlayer,
+    );
+    _player = fixture.player;
+    _game = fixture.game;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(CtSpacing.l),
+      child: TechnologyPanel(
+        game: _game,
+        player: _player,
+        currentOrders: _orders,
+        onOrdersChanged: (next) => setState(() => _orders = next),
+      ),
+    );
+  }
 }
 
 /// Builds the editable funding / turn-preview Widgetbook story host. Renders

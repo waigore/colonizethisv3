@@ -163,11 +163,13 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       game: game,
       topology: topology,
       playerId: player.id,
-      tileMapByRegion: tileMapByRegion,
-      currentOrders: currentOrders,
-      defaultAssignmentsByPlayerId: {
-        player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
-      },
+      inputs: economyPreviewInputs(
+        tileMapByRegion: tileMapByRegion,
+        currentOrders: currentOrders,
+        defaultAssignmentsByPlayerId: {
+          player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
+        },
+      ),
     );
     final labourCallbacks = ProductionLabourCallbacks(
       onAppendRecruitOrder: (tier) {

@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_map/src/tile_map_grid_graph.dart';
+import 'package:colonizethis_map/src/gen/tile_map_grid_graph.dart';
 
 void main() {
   group('TileMapGridGraph', () {

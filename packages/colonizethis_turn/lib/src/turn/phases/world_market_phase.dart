@@ -168,6 +168,11 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final fleetsByIdStartOfPhase = fleetsByIdForWorld(game.worldState);
   final tradeCapacityByFactionId = <String, int>{};
   final stockpileByFactionId = <String, Stockpile>{};
+  // Raw per-GP treasury (unclamped) fed to the deal matcher's settlement.
+  // Built in the same player pass as the maps above to avoid a second full
+  // iteration (Refs #3565). Minor/tribe sellers are intentionally absent —
+  // only GP factions carry a settlement treasury here.
+  final treasuryByFactionId = <String, int>{};
   // Per-buyer treasury budget passed to the deal matcher (Refs #3115).
   // Uses `Player.treasury` at phase 13 start clamped at `0` for negative
   // balances. Phase 13 runs after phase 12 Build/Work so this value
@@ -189,6 +194,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     treasuryBudgetByBuyerFactionId[player.id] = player.treasury > 0
         ? player.treasury
         : 0;
+    treasuryByFactionId[player.id] = player.treasury;
   }
   for (final minorId in lockRecoveryMinorBidsByFactionId.keys) {
     tradeCapacityByFactionId[minorId] = kLockRecoveryMinorBidCargoCapacity;
@@ -250,9 +256,6 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
 
   final ftpPairKeys = ftpPairKeysFromGame(game);
   final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
-  final treasuryByFactionId = <String, int>{
-    for (final player in gameForMarket.players) player.id: player.treasury,
-  };
 
   final matchInputs = (
     offersByFactionId: mergedOffersByFactionId,

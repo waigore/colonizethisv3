@@ -45,7 +45,8 @@ The Slots tab body MUST NOT render a dev-only panel header block. The mockup `.c
 1. **Researched Techs** — `TechSectionHeading` heading (`technologyPanel_researchedTechsHeading`) followed by the read-only `ResearchedTechChip` `Wrap` grid (or the empty-state line when the player has no researched techs).
 2. **Section divider** — a single `CtBrassDivider` separates the Researched Techs block from the Research Slots block below it.
 3. **Research Slots** — `TechSectionHeading` heading (`technologyPanel_researchSlotsHeading`) followed by the four slot cards per § Slot behaviour.
-4. **In-progress techs (optional, auxiliary)** — When `Player.researchProgressByTechId` is non-empty, an auxiliary `In progress` block renders at the bottom of the panel below the Research Slots section. This auxiliary block is absent from the mockup and retains the app-wide `CtSectionLabel` chrome; only the two canonical headings (1) and (3) use the mockup-faithful `TechSectionHeading`.
+
+The Slots tab body MUST NOT render a standalone "In progress" auxiliary block below the Research Slots section. In-progress techs keep occupying their slots via the persisted `Player.researchSlotAssignments` (§ Slot occupancy) and render exclusively inside their slot cards. Rendering a separate `CtSectionLabel` "In progress" list (the legacy `technologyPanel_inProgress` + `technologyPanel_progressLine` block) is a regression. Refs #3512.
 
 #### Slots tab — canonical heading style (normative, Refs #3510)
 
@@ -68,7 +69,7 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | Choose tech | Slot empty or re-assign | Opens filtered tech list | Assigns `ResearchOrder` on select. |
-| Cancel | Slot assigned | Clears slot order | Progress lost on resolution per research-resolution. |
+| Cancel | Slot assigned | Emits empty-`techId` cancel signal `ResearchOrder` (after a forfeiture-warning `CtConfirmDialog` when progress `> 0`) | Persisted slot freed; progress forfeited on resolution per research-resolution. |
 | Funding toggle | Slot assigned and editing enabled | Sets `ResearchOrder.funding` for that slot | Updates `Orders.researchOrdersByPlayerId` immediately; persists until changed or cancelled. |
 
 ---
@@ -98,6 +99,7 @@ Folder: **Tech Tree** — stories for slots tab with fixture player research sta
 - **Mid-game slots (mobile)** — same fixture inside the shared `mobileViewport` frame (360 × 640 dp) per `SPEC/ui/mobile-adaptation.md` § 6 (Refs #2870 R22 / S9).
 - **Slots — funding & turn preview** — desktop editable `TechnologyPanel` (non-null `onOrdersChanged`) seeded by `technologyFundingPreviewFixture` with three prerequisite-free tier-1 techs assigned to slots 0–2 at varied funding levels (Medium / High / Low) and committed progress, with ample treasury so no slot is debt-blocked. Exercises the per-slot funding toggles and the dual-segment (committed + anticipated) turn preview with the RP delta and gold row (Refs #3512).
 - **Slots — funding & turn preview (mobile)** — same fixture inside the shared `mobileViewport` frame (360 × 640 dp) so the funding toggles and dual-segment preview can be reviewed at the mobile width per `SPEC/ui/mobile-adaptation.md` § 6 (Refs #3512).
+- **Slots — persisted in-progress (no fresh orders)** — editable `TechnologyPanel` seeded by `technologyPersistedSlotFixture`: three slots occupied by persisted `Player.researchSlotAssignments` (with accrued progress) and an **empty** `currentOrders`. Proves an in-progress tech renders inside its slot from the persisted baseline alone, with no standalone "In progress" list (Refs #3512).
 
 ---
 
@@ -144,8 +146,12 @@ Each active slot card with an assigned tech and editing enabled (`onOrdersChange
 - **Breakdown dialog:** Tapping the RP delta opens `ResearchFundingBreakdownDialog` (`CtDialogShell`, `maxWidth 360`, scrim `--dialog-scrim`) listing the base funding RP, the +20% industrial bonus row (only when it applies), the emphasised effective RP total, the treasury cost this turn, and an italic `--danger` debt-block note when the spend is blocked. A single `Close` `CtNinePatchButton` dismisses it without mutating orders.
 
 - **Choose tech:** Opens the dark editorial-monocle Choose-tech dialog (see § Choose-tech dialog) listing only the choosable techs (researchable, not in another slot). Selecting a tech assigns it to that slot and closes the dialog.
-- **Cancel:** Clears the slot (order removed); progress for that tech is lost on resolution per [research-resolution.md](../program/research-resolution.md).
+- **Cancel:** Frees the slot. Because slot occupancy is persisted (§ Slot occupancy), Cancel emits an **empty-`techId`** `ResearchOrder` cancel signal for the slot (not a mere order removal) so the resolver releases the persisted assignment; progress for that tech is forfeited on resolution per [research-resolution.md](../program/research-resolution.md). When the slot's tech has accrued progress (`Player.researchProgressByTechId[techId] > 0`), the UI first shows a `CtConfirmDialog` forfeiture warning (`technologyPanel_cancelWarningTitle` / `technologyPanel_cancelWarningMessage`); the cancel proceeds only when the player confirms. When there is no accrued progress, the slot is freed immediately with no warning dialog.
 - **Goal slot:** Out of scope for this spec; only assignment slots are defined here.
+
+### Slot occupancy (persisted) (Refs #3512)
+
+Each slot card's assigned tech and funding are the **effective** occupancy for the turn: the durable `Player.researchSlotAssignments[slotIndex]` entry is the baseline, and this turn's `Orders.researchOrdersByPlayerId` override it as the UI mutation surface — a non-empty order assigns/updates the slot, an empty-`techId` order (the Cancel signal) frees it. This mirrors the resolver's reconciliation in [research-resolution.md](../program/research-resolution.md) § Slot occupancy persistence. Consequently an in-progress tech with a persisted assignment but **no** fresh order this turn still renders in its slot (with its accumulated progress and funding), so the panel never shows an empty slot for a tech that is still researching. Only catalog-known techs are surfaced; a stale persisted tech id (not in the catalog) renders the slot as empty. Changing funding on a slot that is occupied only by a persisted assignment (no fresh order) creates a fresh `ResearchOrder` carrying the persisted tech so the funding change is applied.
 
 ## Choose-tech dialog
 
@@ -165,8 +171,8 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 
 ## Data
 
-- **Player:** `Player.techUnlocked`, `Player.researchProgressByTechId`, `Player.researchSlots`.
-- **Orders:** `Orders.researchOrdersByPlayerId[playerId]` — list of `ResearchOrder` (slotIndex, techId, funding). Assignment updates this; turn resolution applies it per [research-resolution.md](../program/research-resolution.md).
+- **Player:** `Player.techUnlocked`, `Player.researchProgressByTechId`, `Player.researchSlots`, `Player.researchSlotAssignments` (persisted slot → `{techId, funding}` occupancy; the baseline source for each slot's effective assignment, § Slot occupancy).
+- **Orders:** `Orders.researchOrdersByPlayerId[playerId]` — list of `ResearchOrder` (slotIndex, techId, funding). Assignment updates this; turn resolution applies it per [research-resolution.md](../program/research-resolution.md). An empty-`techId` `ResearchOrder` is the Cancel signal that frees a persisted slot.
 - **Game:** Required for discovery rule: visibility/revealed resources via `hasRevealedResourceForPlayer(game, player.id, resourceId)`.
 
 ## Acceptance criteria
@@ -214,6 +220,26 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **RP delta opens the breakdown dialog (Refs #3512):** **Given** an active editable slot showing a non-zero anticipated RP delta, **when** the player taps the green `+N RP` delta control, **then** the UI layer mounts the `ResearchFundingBreakdownDialog` modal listing the base funding RP, the +20% industrial bonus row only when it applies, the effective RP total, and the treasury cost this turn (plus a debt-block note when the spend is blocked).
 
 - **Slot turn-preview visual golden coverage (Refs #3512):** **Given** an assigned, editable `ResearchSlotCard` (and the `ResearchFundingBreakdownDialog`) rendered against `AppThemes.editorialMonocle` at device pixel ratio `1.0`, **when** the funded-Medium, None-funding, debt-blocked, and breakdown-dialog states are captured via a keyed `RepaintBoundary`, **then** the UI layer produces stable `matchesGoldenFile` baselines under `app/test/goldens/research_slot_card_*.png` / `research_funding_breakdown_dialog.png` that fail on visual divergence from those states and pass against the committed baselines (`app/test/research_slot_card_goldens_test.dart`).
+
+- **Persisted assignment renders in slot without a fresh order (Refs #3512):** **Given** `Player.researchSlotAssignments[i]` is `{techId: T, funding: F}` for a catalog-known tech `T` and `Orders.researchOrdersByPlayerId[playerId]` contains **no** order with `slotIndex == i`, **when** the Slots tab renders slot `i`, **then** the UI layer renders slot `i` as an assigned `ResearchSlotCard` showing tech `T`, its `Player.researchProgressByTechId[T]` progress, and funding `F` selected on the toggle row, and does **not** render the empty-state line for slot `i`.
+
+- **Fresh order overrides persisted assignment (Refs #3512):** **Given** `Player.researchSlotAssignments[i]` is `{techId: T1, funding: F1}` and `Orders.researchOrdersByPlayerId[playerId]` contains an order at `slotIndex == i` with non-empty `techId == T2`, **when** the Slots tab renders slot `i`, **then** the UI layer renders slot `i` showing tech `T2` (the order overrides the persisted baseline).
+
+- **Empty-techId order frees a persisted slot in the UI (Refs #3512):** **Given** `Player.researchSlotAssignments[i]` is `{techId: T, funding: F}` and `Orders.researchOrdersByPlayerId[playerId]` contains an order at `slotIndex == i` with empty `techId`, **when** the Slots tab renders slot `i`, **then** the UI layer renders slot `i` as an empty assignable slot (empty-state line; no tech `T`).
+
+- **Stale persisted tech id renders empty (Refs #3512):** **Given** `Player.researchSlotAssignments[i]` carries a `techId` that is not present in the tech catalog and there is no fresh order for slot `i`, **when** the Slots tab renders slot `i`, **then** the UI layer renders slot `i` as empty (no assigned-tech body).
+
+- **No standalone In-Progress block (Refs #3512):** **Given** `Player.researchProgressByTechId` is non-empty and the Slots tab is rendered for any player on any viewport, **when** the panel body widget tree is inspected, **then** the UI layer renders no `CtSectionLabel` carrying the localized `technologyPanel_inProgress` text and no `Text` carrying any `technologyPanel_progressLine` entry below the Research Slots section; in-progress techs appear only inside their occupied slot cards.
+
+- **Cancel with progress warns before forfeiting (Refs #3512):** **Given** an active editable slot `i` whose effective tech `T` has accrued progress (`Player.researchProgressByTechId[T] > 0`), **when** the player taps the slot's Cancel control, **then** the UI layer mounts a `CtConfirmDialog` whose title is `technologyPanel_cancelWarningTitle` and whose message is `technologyPanel_cancelWarningMessage(displayName(T), progress)`, and dispatches **no** `onOrdersChanged` until the player confirms.
+
+- **Cancel confirm frees slot via empty-techId order (Refs #3512):** **Given** the forfeiture-warning dialog is shown for slot `i`, **when** the player taps the confirm (`technologyPanel_cancelWarningConfirm`) button, **then** the UI layer dispatches `onOrdersChanged` with an `Orders` whose `researchOrdersByPlayerId[playerId]` contains a `ResearchOrder` at `slotIndex == i` with empty `techId` (the cancel signal that frees the persisted slot on resolution).
+
+- **Cancel keep aborts (Refs #3512):** **Given** the forfeiture-warning dialog is shown for slot `i`, **when** the player taps the keep (`technologyPanel_cancelWarningKeep`) button or dismisses the barrier, **then** the UI layer dispatches no `onOrdersChanged` and the slot remains assigned to `T`.
+
+- **Cancel without progress skips the warning (Refs #3512):** **Given** an active editable slot `i` whose effective tech `T` has no accrued progress (`Player.researchProgressByTechId[T]` missing or `0`), **when** the player taps the slot's Cancel control, **then** the UI layer dispatches `onOrdersChanged` immediately with an empty-`techId` cancel-signal `ResearchOrder` at `slotIndex == i` and mounts no `CtConfirmDialog`.
+
+- **Slot occupancy visual golden coverage (Refs #3512):** **Given** the editable `TechnologyPanel` seeded by `technologyPersistedSlotFixture` (three slots occupied by persisted `Player.researchSlotAssignments` with accrued progress and an **empty** `currentOrders`) and the cancel-forfeiture `CtConfirmDialog` (`technologyPanel_cancelWarningTitle` / `technologyPanel_cancelWarningMessage`), each rendered against `AppThemes.editorialMonocle` at device pixel ratio `1.0`, **when** the persisted in-slot in-progress panel (at the `360 × 640 dp` mobile frame) and the forfeiture-warning dialog states are captured via a keyed `RepaintBoundary`, **then** the UI layer produces stable `matchesGoldenFile` baselines under `app/test/goldens/technology_slots_persisted_in_progress_mobile_360.png` and `app/test/goldens/research_cancel_forfeiture_dialog.png` that fail on visual divergence from those states and pass against the committed baselines (`app/test/technology_slot_occupancy_goldens_test.dart`).
 
 - **Slots tab section ordering (Refs #2864 S0/S6):** **Given** the Slots tab is rendered for any player on any viewport, **when** the body widget tree is laid out, **then** the `TechSectionHeading` carrying the localized `technologyPanel_researchedTechsHeading` text appears at a strictly smaller vertical offset (smaller `Offset.dy`) than the `TechSectionHeading` carrying the localized `technologyPanel_researchSlotsHeading` text, matching the mockup body markup (`SPEC/ui/mockups/GAME40001-technology-panel.html`: `.researched-heading` precedes `.slots-heading`).
 
