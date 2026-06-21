@@ -2732,6 +2732,27 @@
       }
     }
   },
+  "trainMilitary_commodityValue": "{name}: {value}",
+  "@trainMilitary_commodityValue": {
+    "description": "Commodity name and a preformatted remaining/total value (e.g. '2 / 5') in the train military dialog resource bar.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "trainUnits_peasantsValue": "Peasants: {value}",
+  "@trainUnits_peasantsValue": {
+    "description": "Peasants label with a preformatted remaining/total value (e.g. '7 / 8') in the train military dialog resource bar.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "trainCivilians_costLine": "{treasury} + {paper} paper",
   "@trainCivilians_costLine": {
     "description": "Treasury cost plus paper requirement for training civilians.",

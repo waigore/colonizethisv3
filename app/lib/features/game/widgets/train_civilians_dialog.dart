@@ -106,6 +106,12 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
     return newTreasuryCost <= _treasury && newPaperCost <= _paperStockpile;
   }
 
+  /// Treasury left after subtracting all currently committed unit costs.
+  int _remainingTreasury() => _treasury - _totalTreasuryCost();
+
+  /// Paper left after subtracting all currently committed unit costs.
+  int _remainingPaper() => _paperStockpile - _totalPaperCost();
+
   String? get _deficitHint {
     final treasuryDeficit = _totalTreasuryCost() > _treasury;
     final paperDeficit = _totalPaperCost() > _paperStockpile;
@@ -212,11 +218,13 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
         entries: [
           TrainDialogResourceEntry(
             label: l10n.trainUnits_treasuryLabel,
-            value: formatTreasuryCurrency(_treasury),
+            value:
+                '${formatTreasuryCurrency(_remainingTreasury())} / '
+                '${formatTreasuryCurrency(_treasury)}',
           ),
           TrainDialogResourceEntry(
             label: l10n.trainUnits_paperLabel,
-            value: '$_paperStockpile',
+            value: '${_remainingPaper()} / $_paperStockpile',
           ),
         ],
         deficitHint: _deficitHint,
@@ -233,6 +241,13 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
               techRequiredLabel: _techRequiredLabel(econ.id),
               canIncrement: _canAffordIncrement(econ.id),
               canDecrement: (_counts[econ.id] ?? 0) > 0,
+              treasuryInsufficient:
+                  !_isLocked(econ.id) &&
+                  _remainingTreasury() < econ.buildTreasuryCost,
+              paperInsufficient:
+                  !_isLocked(econ.id) &&
+                  _remainingPaper() <
+                      (econ.buildInputs[CommodityCatalog.paper.id] ?? 0),
               onIncrement: () => _increment(econ.id),
               onDecrement: () => _decrement(econ.id),
             ),
@@ -260,6 +275,8 @@ class _UnitTypeRow extends StatelessWidget {
     required this.techRequiredLabel,
     required this.canIncrement,
     required this.canDecrement,
+    required this.treasuryInsufficient,
+    required this.paperInsufficient,
     required this.onIncrement,
     required this.onDecrement,
   });
@@ -270,6 +287,13 @@ class _UnitTypeRow extends StatelessWidget {
   final String techRequiredLabel;
   final bool canIncrement;
   final bool canDecrement;
+
+  /// Whether the remaining treasury cannot cover one more of this unit.
+  final bool treasuryInsufficient;
+
+  /// Whether the remaining paper cannot cover one more of this unit.
+  final bool paperInsufficient;
+
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
 
@@ -284,7 +308,7 @@ class _UnitTypeRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(child: _buildInfo(context, theme, paperQty)),
+            Expanded(child: _buildInfo(theme, paperQty)),
             CtGap.wm,
             _buildStepper(theme),
           ],
@@ -293,7 +317,7 @@ class _UnitTypeRow extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo(BuildContext context, ThemeData theme, int paperQty) {
+  Widget _buildInfo(ThemeData theme, int paperQty) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -318,17 +342,36 @@ class _UnitTypeRow extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 2),
-        Text(
-          appL10n(context).trainCivilians_costLine(
-            formatTreasuryCurrency(econ.buildTreasuryCost),
-            paperQty.toString(),
-          ),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: EditorialMonoclePalette.muted,
-          ),
-        ),
+        _buildCostLine(theme, paperQty),
         ..._buildLockedHint(theme),
       ],
+    );
+  }
+
+  /// Builds the `£X + N paper` cost line, colouring each resource segment
+  /// in [EditorialMonoclePalette.danger] independently when that resource is
+  /// insufficient for one more of this unit. Plain-text mirrors the
+  /// `trainCivilians_costLine` l10n template (`{treasury} + {paper} paper`).
+  Widget _buildCostLine(ThemeData theme, int paperQty) {
+    final baseStyle = theme.textTheme.bodySmall?.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    final dangerStyle = TextStyle(color: EditorialMonoclePalette.danger);
+    return Text.rich(
+      TextSpan(
+        style: baseStyle,
+        children: [
+          TextSpan(
+            text: formatTreasuryCurrency(econ.buildTreasuryCost),
+            style: treasuryInsufficient ? dangerStyle : null,
+          ),
+          const TextSpan(text: ' + '),
+          TextSpan(
+            text: '$paperQty paper',
+            style: paperInsufficient ? dangerStyle : null,
+          ),
+        ],
+      ),
     );
   }
 
@@ -367,6 +410,7 @@ class _UnitTypeRow extends StatelessWidget {
         CtGap.wm,
         CtNinePatchButton(
           onPressed: isLocked || !canIncrement ? null : onIncrement,
+          dangerVariant: !isLocked && !canIncrement,
           child: const Text('+'),
         ),
       ],

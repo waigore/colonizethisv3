@@ -48,9 +48,14 @@ The Train Civilians dialog lets the player queue training orders for civilian un
 
 Renders as a **boxed inset strip** (dark `--bg-deep` background, 1 dp `--border`,
 entries spaced apart) per the mockup `.resource-bar`. Each entry shows a muted
-label and a **monospace bold value** (`--fg`):
-- **Treasury:** `Player.treasury` formatted as `£` + comma thousands grouping (e.g. `£5,000`)
-- **Paper stockpile:** `Player.stockpile.quantityOf('paper')`
+label and a **monospace bold value** (`--fg`) in the dynamic **`remaining / total`**
+form, where `remaining = total − committed` (committed = sum of currently queued
+unit costs) and updates live on every stepper toggle:
+- **Treasury:** `{remaining} / {total}`, each side formatted as `£` + comma
+  thousands grouping (e.g. `£3,000 / £5,000`). `remaining` may render negative
+  (e.g. `£-500 / £1,000`) when committed exceeds available.
+- **Paper stockpile:** `{remaining} / {total}` (e.g. `8 / 12`), from
+  `Player.stockpile.quantityOf('paper')`.
 
 Below the resource bar (outside the box), a **dynamic deficit hint** updates on every stepper toggle:
 - If treasury insufficient for any queued unit: "Treasury low"
@@ -79,10 +84,21 @@ left `.info` block and a right `.stepper`.
 - Unit type icon (or pixel-art icon from catalog) + unit name (left info column, top)
 - Treasury cost + commodity cost on the line below the name, formatted
   `£` + comma grouping with lowercase commodity (e.g. `£1,000 + 2 paper`)
+- **Per-item insufficiency colour:** Each resource segment of the cost line is
+  coloured `--danger` independently when `remaining` for that resource is less
+  than this unit's cost for it (i.e. one more of this unit cannot be afforded on
+  that resource alone), considering already-committed totals. Segments whose
+  resource is sufficient stay in the normal muted cost colour. Example: with
+  remaining treasury `500` and remaining paper `3`, a Builder costing
+  `£1,000 + 2 paper` renders `£1,000` in `--danger` and `2 paper` normally.
 - **Stepper:** `[−]` / count / `[+]` buttons on the right of the same row
   - Count starts at 0
   - `[+]` increases by 1; `[−]` decreases by 1 (min 0)
-  - `[+]` is disabled (greyed) if insufficient resources for +1 more
+  - `[+]` is disabled if insufficient resources for +1 more
+  - When `[+]` is disabled **specifically** because resources are insufficient
+    (not because the unit is tech-locked), it renders the `--danger` button
+    variant (red border/label) so the resource block is visually distinct from
+    the tech-locked disabled appearance.
   - `[−]` is disabled if count is 0
 - Row is disabled visually (subdued) if resources insufficient for 1 unit AND count is 0
 
@@ -111,6 +127,8 @@ Check: `totalTreasuryCost <= Player.treasury` and `totalCommodityCosts[paper] <=
 
 - If any unit type's +1 would exceed resources, that unit type's `[+]` is disabled
 - The deficit hint in the resource bar shows which resources are insufficient
+- The resource-bar values show `remaining / total` per resource, where
+  `remaining = total − committed`
 
 ---
 
@@ -224,6 +242,16 @@ pixellab_create_map_object(
 - **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low and Paper low".
 
 - **Given** the Train Civilians dialog is open, **when** the user taps the Reset button (if present), **then** all steppers are set to 0 and deficit hint is cleared.
+
+- **Given** the Train Civilians dialog is open with treasury `5000` and paper `12`, **when** the user queues `2` Explorers (`£1,000 + 2 paper` each), **then** the resource bar treasury value reads `£3,000 / £5,000` and the paper value reads `8 / 12`.
+
+- **Given** the Train Civilians dialog has committed costs, **when** the user taps Reset, **then** the resource-bar `remaining` values equal `total` for every resource (e.g. `£5,000 / £5,000`).
+
+- **Given** the Train Civilians dialog with treasury `1500`, paper `5`, and `1` Explorer queued (`£1,000 + 2 paper`), **when** a Builder row (`£1,000 + 2 paper`) renders, **then** the `£1,000` segment renders in `EditorialMonoclePalette.danger` (remaining treasury `500 < 1000`) and the `2 paper` segment renders in the normal muted colour (remaining paper `3 ≥ 2`).
+
+- **Given** an unlocked civilian row whose `[+]` is disabled because adding one more exceeds available resources, **when** the row renders, **then** the `[+]` button uses the `danger` variant (red border/label) distinct from the normal disabled appearance.
+
+- **Given** a tech-locked civilian row, **when** the row renders, **then** the `[+]` button shows the normal (non-danger) disabled appearance with no red tint.
 
 ---
 

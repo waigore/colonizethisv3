@@ -493,6 +493,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String trainUnits_peasantsValue(String value) {
+    return 'Peasants: $value';
+  }
+
+  @override
   String get civilian_units_title => 'Civilian Units';
 
   @override

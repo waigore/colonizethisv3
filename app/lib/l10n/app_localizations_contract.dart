@@ -888,6 +888,10 @@ abstract class AppLocalizations {
   /// Peasants summary line in military train dialog.
   String trainUnits_peasants(int value);
 
+  /// Peasants label with a preformatted remaining/total value (e.g. '7 / 8')
+  /// in the train military dialog resource bar.
+  String trainUnits_peasantsValue(String value);
+
   /// Civilian units panel title.
   String get civilian_units_title;
 
@@ -1505,6 +1509,10 @@ abstract class AppLocalizations {
 
   /// Commodity name and stock quantity in train military dialog.
   String trainMilitary_commodityAmount(String name, int qty);
+
+  /// Commodity name and a preformatted remaining/total value (e.g. '2 / 5')
+  /// in the train military dialog resource bar.
+  String trainMilitary_commodityValue(String name, String value);
 
   /// Treasury cost plus paper requirement for training civilians.
   String trainCivilians_costLine(String treasury, String paper);

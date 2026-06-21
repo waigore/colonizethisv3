@@ -129,6 +129,16 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     return true;
   }
 
+  /// Treasury left after subtracting all currently committed regiment costs.
+  int _remainingTreasury() => _treasury - _totalTreasuryCost();
+
+  /// Peasants left after subtracting all currently committed regiment costs.
+  int _remainingPeasants() => _peasants - _totalPeasantCost();
+
+  /// Stockpile of [commodityId] left after subtracting committed costs.
+  int _remainingCommodity(String commodityId, Map<String, int> committed) =>
+      _stockpileQty(commodityId) - (committed[commodityId] ?? 0);
+
   String? get _deficitHint {
     final deficits = <String>[];
     if (_totalTreasuryCost() > _treasury) deficits.add('Treasury');
@@ -238,8 +248,11 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
       const TrainDialogSectionDivider(),
       _MilitaryResourceBar(
         treasury: _treasury,
+        remainingTreasury: _remainingTreasury(),
         peasants: _peasants,
+        remainingPeasants: _remainingPeasants(),
         stockpile: _player?.stockpile ?? const Stockpile(),
+        committedCommodities: _totalCommodityCosts(),
         deficitHint: _deficitHint,
         l10n: l10n,
       ),
@@ -248,16 +261,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final econ in RegimentEconomyCatalog.all)
-            _RegimentRow(
-              econ: econ,
-              count: _counts[econ.id] ?? 0,
-              isLocked: _isLocked(econ.id),
-              techRequiredLabel: _techRequiredLabel(econ.id),
-              canIncrement: _canAffordIncrement(econ.id),
-              canDecrement: (_counts[econ.id] ?? 0) > 0,
-              onIncrement: () => _increment(econ.id),
-              onDecrement: () => _decrement(econ.id),
-            ),
+            _buildRegimentRow(econ),
         ],
       ),
       const TrainDialogSectionDivider(),
@@ -272,19 +276,49 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
       ),
     ];
   }
+
+  Widget _buildRegimentRow(RegimentEconomy econ) {
+    final locked = _isLocked(econ.id);
+    final committed = _totalCommodityCosts();
+    final insufficientCommodityIds = <String>{
+      for (final input in econ.buildInputs.entries)
+        if (!locked && _remainingCommodity(input.key, committed) < input.value)
+          input.key,
+    };
+    return _RegimentRow(
+      econ: econ,
+      count: _counts[econ.id] ?? 0,
+      isLocked: locked,
+      techRequiredLabel: _techRequiredLabel(econ.id),
+      canIncrement: _canAffordIncrement(econ.id),
+      canDecrement: (_counts[econ.id] ?? 0) > 0,
+      treasuryInsufficient:
+          !locked && _remainingTreasury() < econ.buildTreasuryCost,
+      peasantInsufficient: !locked && _remainingPeasants() < 1,
+      insufficientCommodityIds: insufficientCommodityIds,
+      onIncrement: () => _increment(econ.id),
+      onDecrement: () => _decrement(econ.id),
+    );
+  }
 }
 
 class _MilitaryResourceBar extends StatelessWidget {
   const _MilitaryResourceBar({
     required this.treasury,
+    required this.remainingTreasury,
     required this.peasants,
+    required this.remainingPeasants,
     required this.stockpile,
+    required this.committedCommodities,
     required this.deficitHint,
     required this.l10n,
   });
 
   final int treasury;
+  final int remainingTreasury;
   final int peasants;
+  final int remainingPeasants;
+  final Map<String, int> committedCommodities;
   final Stockpile stockpile;
   final String? deficitHint;
   final AppLocalizations l10n;
@@ -310,7 +344,10 @@ class _MilitaryResourceBar extends StatelessWidget {
             children: [
               TrainDialogResourceChip(
                 child: Text(
-                  l10n.trainUnits_treasury(formatTreasuryCurrency(treasury)),
+                  l10n.trainUnits_treasury(
+                    '${formatTreasuryCurrency(remainingTreasury)} / '
+                    '${formatTreasuryCurrency(treasury)}',
+                  ),
                 ),
               ),
               TrainDialogResourceChip(
@@ -319,7 +356,13 @@ class _MilitaryResourceBar extends StatelessWidget {
                   children: [
                     const WorkerIcon(workerType: 'peasant', size: 14),
                     const SizedBox(width: 4),
-                    Text(l10n.trainUnits_peasants(peasants)),
+                    Flexible(
+                      child: Text(
+                        l10n.trainUnits_peasantsValue(
+                          '$remainingPeasants / $peasants',
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -330,10 +373,13 @@ class _MilitaryResourceBar extends StatelessWidget {
                     children: [
                       ResourceIcon(commodityId: commodityId, size: 14),
                       const SizedBox(width: 4),
-                      Text(
-                        l10n.trainMilitary_commodityAmount(
-                          _label(commodityId),
-                          stockpile.quantityOf(commodityId),
+                      Flexible(
+                        child: Text(
+                          l10n.trainMilitary_commodityValue(
+                            _label(commodityId),
+                            '${stockpile.quantityOf(commodityId) - (committedCommodities[commodityId] ?? 0)}'
+                            ' / ${stockpile.quantityOf(commodityId)}',
+                          ),
                         ),
                       ),
                     ],
@@ -368,6 +414,9 @@ class _RegimentRow extends StatelessWidget {
     required this.techRequiredLabel,
     required this.canIncrement,
     required this.canDecrement,
+    required this.treasuryInsufficient,
+    required this.peasantInsufficient,
+    required this.insufficientCommodityIds,
     required this.onIncrement,
     required this.onDecrement,
   });
@@ -378,6 +427,17 @@ class _RegimentRow extends StatelessWidget {
   final String techRequiredLabel;
   final bool canIncrement;
   final bool canDecrement;
+
+  /// Whether remaining treasury cannot cover one more of this regiment.
+  final bool treasuryInsufficient;
+
+  /// Whether remaining peasants cannot cover one more of this regiment.
+  final bool peasantInsufficient;
+
+  /// Commodity ids whose remaining stockpile cannot cover one more of this
+  /// regiment (each rendered in the danger colour).
+  final Set<String> insufficientCommodityIds;
+
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
 
@@ -442,15 +502,18 @@ class _RegimentRow extends StatelessWidget {
         _InlineCost(
           icon: const Icon(Icons.payments_outlined, size: 14),
           label: econ.buildTreasuryCost.toString(),
+          isInsufficient: treasuryInsufficient,
         ),
         _InlineCost(
           icon: const WorkerIcon(workerType: 'peasant', size: 14),
           label: 1.toString(),
+          isInsufficient: peasantInsufficient,
         ),
         for (final input in econ.buildInputs.entries)
           _InlineCost(
             icon: ResourceIcon(commodityId: input.key, size: 14),
             label: input.value.toString(),
+            isInsufficient: insufficientCommodityIds.contains(input.key),
           ),
       ],
     );
@@ -491,6 +554,7 @@ class _RegimentRow extends StatelessWidget {
         CtGap.wm,
         CtNinePatchButton(
           onPressed: isLocked || !canIncrement ? null : onIncrement,
+          dangerVariant: !isLocked && !canIncrement,
           child: const Text('+'),
         ),
       ],
@@ -499,19 +563,33 @@ class _RegimentRow extends StatelessWidget {
 }
 
 class _InlineCost extends StatelessWidget {
-  const _InlineCost({required this.icon, required this.label});
+  const _InlineCost({
+    required this.icon,
+    required this.label,
+    this.isInsufficient = false,
+  });
 
   final Widget icon;
   final String label;
 
+  /// When `true`, the label renders in [EditorialMonoclePalette.danger] to
+  /// flag that the remaining stockpile cannot cover one more of this unit.
+  final bool isInsufficient;
+
   @override
   Widget build(BuildContext context) {
+    final baseStyle = Theme.of(context).textTheme.bodySmall;
+    final style = isInsufficient
+        ? (baseStyle ?? const TextStyle()).copyWith(
+            color: EditorialMonoclePalette.danger,
+          )
+        : baseStyle;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         icon,
         const SizedBox(width: 3),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Text(label, style: style),
       ],
     );
   }
