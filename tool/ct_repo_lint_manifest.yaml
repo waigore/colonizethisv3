@@ -356,6 +356,14 @@ rules:
     script: tool/check_app_game_panel_mixin.dart
     pr_incremental: true
 
+  - rule_id: repo.chrome_button_base
+    group: structure
+    title: chrome `*TextButton` states must adopt the shared CtHoverButtonStateMixin base (Refs #3594)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_chrome_button_base.dart
+    pr_incremental: true
+
   - rule_id: repo.game_widgets_file_size
     group: structure
     title: app/lib/features/game/widgets files must stay at or below 700 lines

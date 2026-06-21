@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/themes.dart';
+import 'ct_hover_button.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Reusable small text button used for destructive **danger** actions that
@@ -102,22 +103,19 @@ class CtDangerTextButton extends StatefulWidget {
   State<CtDangerTextButton> createState() => _CtDangerTextButtonState();
 }
 
-class _CtDangerTextButtonState extends State<CtDangerTextButton> {
-  bool _hovered = false;
+class _CtDangerTextButtonState extends State<CtDangerTextButton>
+    with CtHoverButtonStateMixin<CtDangerTextButton> {
+  @override
+  bool get hoverButtonEnabled => widget.enabled;
 
-  bool get _isInteractive => widget.enabled && widget.onPressed != null;
-
-  void _setHover(bool hovered) {
-    if (!_isInteractive) return;
-    if (_hovered == hovered) return;
-    setState(() => _hovered = hovered);
-  }
+  @override
+  VoidCallback? get hoverButtonOnPressed => widget.onPressed;
 
   double get _resolvedOpacity {
     if (!widget.enabled) {
       return CtNinePatchButton.disabledOpacity;
     }
-    return _hovered
+    return hovered
         ? CtDangerTextButton.hoverOpacity
         : CtDangerTextButton.idleOpacity;
   }
@@ -134,7 +132,7 @@ class _CtDangerTextButtonState extends State<CtDangerTextButton> {
     );
 
     final Widget surface = AnimatedContainer(
-      duration: _isInteractive
+      duration: isInteractive
           ? CtDangerTextButton.animationDuration
           : Duration.zero,
       curve: CtNinePatchButton.animationCurve,
@@ -163,38 +161,14 @@ class _CtDangerTextButtonState extends State<CtDangerTextButton> {
             ),
     );
 
+    // The surface already bakes in its idle/hover/disabled opacity via
+    // [_resolvedOpacity], so no extra disabled fade is applied here.
     final Widget faded = Opacity(opacity: _resolvedOpacity, child: surface);
 
-    if (!widget.enabled) {
-      return Semantics(
-        button: true,
-        enabled: false,
-        label: widget.semanticLabel ?? widget.label,
-        child: IgnorePointer(child: faded),
-      );
-    }
-
-    final Widget interactive = MouseRegion(
-      onEnter: (_) => _setHover(true),
-      onExit: (_) => _setHover(false),
-      cursor: SystemMouseCursors.click,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(onTap: widget.onPressed, child: faded),
-      ),
+    return buildHoverButton(
+      surface: faded,
+      semanticLabel: widget.semanticLabel ?? widget.label,
+      tooltip: widget.tooltip,
     );
-
-    Widget wrapped = Semantics(
-      button: true,
-      enabled: true,
-      label: widget.semanticLabel ?? widget.label,
-      child: interactive,
-    );
-
-    final String? tooltip = widget.tooltip;
-    if (tooltip != null) {
-      wrapped = Tooltip(message: tooltip, child: wrapped);
-    }
-    return wrapped;
   }
 }
