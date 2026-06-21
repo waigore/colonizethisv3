@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 
@@ -156,7 +157,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
         ),
         const SizedBox(height: 10),
         const _ThinDivider(),
-        const SizedBox(height: 12),
+        CtGap.ml,
         _AmountStepper(
           amount: _amount,
           amountText: l10n.diplomacy_currencyAmount(_amount),
@@ -165,12 +166,12 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
           onIncrement: _increment,
         ),
         if (!canAdjust) ...[
-          const SizedBox(height: 8),
+          CtGap.m,
           _BelowMinimumWarning(
             text: l10n.diplomacy_treasuryBelowMinimum(_step),
           ),
         ],
-        const SizedBox(height: 16),
+        CtGap.l,
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
@@ -178,7 +179,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
               onPressed: widget.onCancel,
               child: Text(l10n.common_cancel),
             ),
-            const SizedBox(width: 8),
+            CtGap.wm,
             CtNinePatchButton(
               enabled: _canSubmit,
               onPressed: () => widget.onSubmit(_amount),

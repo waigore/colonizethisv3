@@ -8,6 +8,7 @@ import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
 import '../../../config/app_assets.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
@@ -390,7 +391,7 @@ class _RegimentRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(child: _buildInfo(theme)),
-            const SizedBox(width: 8),
+            CtGap.wm,
             _buildStepper(theme),
           ],
         ),
@@ -478,7 +479,7 @@ class _RegimentRow extends StatelessWidget {
           onPressed: isLocked || !canDecrement ? null : onDecrement,
           child: const Text('−'),
         ),
-        const SizedBox(width: 8),
+        CtGap.wm,
         SizedBox(
           width: 32,
           child: Text(
@@ -487,7 +488,7 @@ class _RegimentRow extends StatelessWidget {
             style: theme.textTheme.bodyLarge,
           ),
         ),
-        const SizedBox(width: 8),
+        CtGap.wm,
         CtNinePatchButton(
           onPressed: isLocked || !canIncrement ? null : onIncrement,
           child: const Text('+'),

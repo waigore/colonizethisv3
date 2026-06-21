@@ -10,6 +10,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -284,7 +285,7 @@ class _UnitTypeRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(child: _buildInfo(context, theme, paperQty)),
-            const SizedBox(width: 8),
+            CtGap.wm,
             _buildStepper(theme),
           ],
         ),
@@ -354,7 +355,7 @@ class _UnitTypeRow extends StatelessWidget {
           onPressed: isLocked || !canDecrement ? null : onDecrement,
           child: const Text('−'),
         ),
-        const SizedBox(width: 8),
+        CtGap.wm,
         SizedBox(
           width: 32,
           child: Text(
@@ -363,7 +364,7 @@ class _UnitTypeRow extends StatelessWidget {
             style: theme.textTheme.bodyLarge,
           ),
         ),
-        const SizedBox(width: 8),
+        CtGap.wm,
         CtNinePatchButton(
           onPressed: isLocked || !canIncrement ? null : onIncrement,
           child: const Text('+'),

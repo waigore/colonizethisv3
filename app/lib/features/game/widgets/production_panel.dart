@@ -8,6 +8,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_section_label.dart';
@@ -337,7 +338,7 @@ class _AvailableSubpanel extends StatelessWidget {
       CtSectionLabel(l10n.production_food),
       const SizedBox(height: 6),
       _buildCommodityGrid(availableFood, netChanges, sellableByCommodityId),
-      const SizedBox(height: 12),
+      CtGap.ml,
     ];
   }
 
@@ -354,7 +355,7 @@ class _AvailableSubpanel extends StatelessWidget {
     ];
     if (manufactured.isNotEmpty) {
       children.addAll([
-        const SizedBox(height: 12),
+        CtGap.ml,
         CtSectionLabel(l10n.production_manufactured),
         const SizedBox(height: 6),
         _buildCommodityGrid(manufactured, netChanges, sellableByCommodityId),
@@ -365,7 +366,7 @@ class _AvailableSubpanel extends StatelessWidget {
 
   List<Widget> _buildWorkerSection(ThemeData theme) {
     final children = <Widget>[
-      const SizedBox(height: 12),
+      CtGap.ml,
       CtSectionLabel(l10n.production_workers),
       const SizedBox(height: 6),
       AvailableCellGrid(
@@ -378,7 +379,7 @@ class _AvailableSubpanel extends StatelessWidget {
           _buildWorkerCell('master', player.workerPool.masters),
         ],
       ),
-      const SizedBox(height: 8),
+      CtGap.m,
       EffectiveLabourTotal(
         text: l10n.production_effectiveLabour(effectiveLabour),
         theme: theme,
@@ -386,7 +387,7 @@ class _AvailableSubpanel extends StatelessWidget {
     ];
     if (currentOrders != null && labourCallbacks != null) {
       children.addAll(<Widget>[
-        const SizedBox(height: 12),
+        CtGap.ml,
         CtSectionLabel(l10n.production_labourControlsSectionLabel),
         const SizedBox(height: 6),
         ProductionLabourSection(
@@ -441,7 +442,7 @@ class _AvailableSubpanel extends StatelessWidget {
         .toList();
     return <Widget>[
       _buildHeader(theme),
-      const SizedBox(height: 8),
+      CtGap.m,
       ..._buildFoodSection(
         availableFood,
         netChanges,
@@ -616,7 +617,7 @@ class _AllocationSubpanel extends StatelessWidget {
     bool labourInsufficient,
   ) {
     return <Widget>[
-      const SizedBox(height: 8),
+      CtGap.m,
       Text(
         l10n.production_totalLabour(totalRequiredLabour, effectiveLabour),
         style: theme.textTheme.bodySmall?.copyWith(
@@ -651,7 +652,7 @@ class _AllocationSubpanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(theme),
-            const SizedBox(height: 8),
+            CtGap.m,
             ..._buildAllocationRows(theme),
             ..._buildLabourSummary(
               theme,

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_toggle_switch.dart';
 import 'chrome/ct_nine_patch_button.dart';
 
@@ -83,7 +84,7 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.map_displayOptions_title, style: titleStyle),
-          const SizedBox(height: 12),
+          CtGap.ml,
           _GameMapOptionsToggleRow(
             toggleKey: kGameMapOptionsShowProvinceOverlayToggleKey,
             label: l10n.map_displayOptions_showProvinceOverlay,
@@ -92,7 +93,7 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
             onChanged: (value) =>
                 _update(_state.copyWith(showProvinceOverlay: value)),
           ),
-          const SizedBox(height: 8),
+          CtGap.m,
           _GameMapOptionsToggleRow(
             toggleKey: kGameMapOptionsShowProvinceOwnershipToggleKey,
             label: l10n.map_displayOptions_showProvinceOwnership,
@@ -101,7 +102,7 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
             onChanged: (value) =>
                 _update(_state.copyWith(showProvinceOwnershipTint: value)),
           ),
-          const SizedBox(height: 8),
+          CtGap.m,
           _GameMapOptionsToggleRow(
             toggleKey: kGameMapOptionsShowProvinceNamesToggleKey,
             label: l10n.map_displayOptions_showProvinceNames,
@@ -110,7 +111,7 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
             onChanged: (value) =>
                 _update(_state.copyWith(showProvinceNamesLayer: value)),
           ),
-          const SizedBox(height: 16),
+          CtGap.l,
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [

@@ -72,7 +72,7 @@ class _DiplomacyRow extends StatelessWidget {
       children: [
         _buildInfoColumn(context),
         if (hasActions) ...[
-          const SizedBox(height: 8),
+          CtGap.m,
           Align(alignment: Alignment.centerLeft, child: _buildActionButtons()),
         ],
       ],
@@ -118,7 +118,7 @@ class _DiplomacyRow extends StatelessWidget {
             maxLines: 1,
           ),
         ),
-        const SizedBox(width: 8),
+        CtGap.wm,
         _kindChip(context, data.kind),
         ..._buildPowerComparison(context),
       ],
@@ -142,7 +142,7 @@ class _DiplomacyRow extends StatelessWidget {
         ? EditorialMonoclePalette.danger
         : EditorialMonoclePalette.success;
     return [
-      const SizedBox(width: 8),
+      CtGap.wm,
       Text(
         text,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
