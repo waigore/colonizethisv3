@@ -15,7 +15,8 @@ import 'package:path/path.dart' as p;
 /// join-sea split (Refs #3588) the former exempt `_TileMapGenJoinSea` family is
 /// replaced by three standalone [MapGenPass] services ([ContinentJoinPass],
 /// [TerrainJitterPass], [SeaZoneSubdividePass]); all bound families now adopt
-/// the uniform pass entry point.
+/// the uniform pass entry point, so the minimum is raised from 3 to 4 (Refs
+/// #3588) to lock in that the JoinSea exemption can never return.
 const _stageContractFile =
     'packages/colonizethis_map/lib/src/gen/map_gen_stage.dart';
 
@@ -28,7 +29,10 @@ const _implementsStage = 'implements MapGenStage';
 const _implementsPass = 'implements MapGenPass';
 
 /// At least this many generator families must adopt the uniform [MapGenPass].
-const _requiredMapGenPassFamilyMinimum = 3;
+/// Raised from 3 to 4 after the join-sea split (Refs #3588): the former exempt
+/// `_TileMapGenJoinSea` family is now three standalone [MapGenPass] passes, so
+/// no MapGenStage-only exemption remains.
+const _requiredMapGenPassFamilyMinimum = 4;
 
 /// Each generator service family must declare `implements MapGenStage`.
 const _requiredServiceBindings = <String, String>{

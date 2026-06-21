@@ -36,8 +36,10 @@ import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
+import 'check_map_gen_file_size.dart';
 import 'check_map_gen_no_image_import.dart';
 import 'check_map_gen_stage_protocol.dart';
+import 'check_map_no_partfile_classes.dart';
 import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
@@ -996,6 +998,10 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapGridCellIterationCentral(repoRoot);
     case 'repo.map_gen_stage_protocol':
       return runCheckMapGenStageProtocol(repoRoot);
+    case 'repo.map_gen_no_new_partfiles':
+      return runCheckMapGenNoNewPartfiles(repoRoot);
+    case 'repo.map_gen_file_size':
+      return runCheckMapGenFileSize(repoRoot);
     case 'repo.map_public_barrel_surface':
       return runCheckMapPublicBarrelSurface(repoRoot);
     case 'repo.map_region_data_access_central':

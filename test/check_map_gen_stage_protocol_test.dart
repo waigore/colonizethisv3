@@ -82,7 +82,7 @@ class TileMapGenLandSeeds
 
   group('runCheckMapGenStageProtocol', () {
     test(
-      'passes on the live repository tree (>=3 families adopt MapGenPass)',
+      'passes on the live repository tree (>=4 families adopt MapGenPass)',
       () {
         final lines = <String>[];
         final code = runCheckMapGenStageProtocol(
