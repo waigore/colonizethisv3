@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jenny/jenny.dart';
 
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
@@ -69,69 +70,76 @@ class CtDialogueLineChoiceBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final line = view.currentLine;
-    final choice = view.currentChoice;
-    final contextLine = view.contextLine;
-
     if (line != null) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(line.text, style: lineTextStyle, textAlign: lineTextAlign),
-          SizedBox(height: gap),
-          Align(
-            alignment: continueAlignment,
-            child: CtNinePatchButton(
-              onPressed: view.advanceLine,
-              child: Text(continueLabel),
-            ),
-          ),
-        ],
-      );
+      return _buildLineStep(line.text);
     }
 
+    final choice = view.currentChoice;
     if (choice != null) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (contextLine != null) ...[
-            Text(
-              contextLine.text,
-              style: lineTextStyle,
-              textAlign: lineTextAlign,
-            ),
-            SizedBox(height: gap),
-          ],
-          ...choice.options.asMap().entries.map(
-            (entry) => Padding(
-              padding: EdgeInsets.only(bottom: optionSpacing),
-              child: CtNinePatchButton(
-                onPressed: () => view.selectOption(entry.key),
-                child: Text(entry.value.text),
-              ),
-            ),
-          ),
-        ],
-      );
+      return _buildChoiceStep(choice);
     }
 
+    final contextLine = view.contextLine;
     if (contextLine != null) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            contextLine.text,
-            style: lineTextStyle,
-            textAlign: lineTextAlign,
-          ),
-          SizedBox(height: gap),
-          loading,
-        ],
-      );
+      return _buildTransientStep(contextLine.text);
     }
 
     return loading;
+  }
+
+  Widget _lineText(String text) =>
+      Text(text, style: lineTextStyle, textAlign: lineTextAlign);
+
+  Widget _buildLineStep(String text) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _lineText(text),
+        SizedBox(height: gap),
+        Align(
+          alignment: continueAlignment,
+          child: CtNinePatchButton(
+            onPressed: view.advanceLine,
+            child: Text(continueLabel),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChoiceStep(DialogueChoice choice) {
+    final contextLine = view.contextLine;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (contextLine != null) ...[
+          _lineText(contextLine.text),
+          SizedBox(height: gap),
+        ],
+        ...choice.options.asMap().entries.map(
+          (entry) => Padding(
+            padding: EdgeInsets.only(bottom: optionSpacing),
+            child: CtNinePatchButton(
+              onPressed: () => view.selectOption(entry.key),
+              child: Text(entry.value.text),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTransientStep(String text) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _lineText(text),
+        SizedBox(height: gap),
+        loading,
+      ],
+    );
   }
 }
