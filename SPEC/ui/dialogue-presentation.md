@@ -56,6 +56,7 @@ The app presents **PendingDialoguePoint**s from the dialogue system. It uses **J
 - **Given** a blocking dialogue point (e.g. overture_target_response), **when** the app presents it, **then** the app shows a **modal** dialogue (CtDialogShell) with Jenny-driven content (node from contentKey), and the player cannot proceed until they select an option that triggers the resume API with the correct outcome type.
 - **Given** a non-blocking dialogue point with presentationMode **overlay**, **when** the app presents it, **then** the app may show a compact overlay (CtDialogShell or equivalent) over the game; dismissing or selecting “Continue” does not call the resume API; game flow is not blocked.
 - **Given** the player selects “Accept” (or “Reject”) in an overture dialogue, **then** the app calls **resumeTurnResolutionWithOvertureDecisions** with an OvertureDecision list matching the selection(s); no Material AlertDialog or Dialog is used.
+- **Given** any blocking overlay backed by `CtDialogueView` presents a Yarn node whose body is a narrative `line` followed by a `-> option` choice, **when** the choice step is shown, **then** the narrative line text and the Yarn option button(s) render together in one `CtDialogShell` body (via the shared `CtDialogueLineChoiceBody`), and the UI never shows a message-only step followed by an option-only step (Refs #3628; see [ct-dialogue-view.md](ct-dialogue-view.md) § Combined line+choice presentation).
 
 ---
 
