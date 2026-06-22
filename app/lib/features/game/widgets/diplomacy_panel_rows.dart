@@ -355,3 +355,36 @@ String formatPowerComparisonPercent(int pct) {
   if (pct < 0) return '\u2212${-pct}%';
   return '0%';
 }
+
+/// Display-only strength tier derived from a `powerComparisonPercent` value
+/// per `SPEC/ui/diplomacy-panel.md` § Relative power line. The tier is a
+/// UI-only label and never feeds AI war-desire or any logic-package model.
+enum PowerComparisonTier {
+  vastlyInferior,
+  inferior,
+  roughlyEqual,
+  superior,
+  vastlySuperior,
+}
+
+/// Maps a `powerComparisonPercent` integer to its [PowerComparisonTier] per
+/// the boundary table in `SPEC/ui/diplomacy-panel.md` § Relative power line:
+///
+/// | `pct` range | Tier |
+/// |-------------|------|
+/// | `pct >= +31` | vastlySuperior |
+/// | `+11 .. +30` | superior |
+/// | `−10 .. +10` | roughlyEqual |
+/// | `−30 .. −11` | inferior |
+/// | `pct <= −31` | vastlyInferior |
+///
+/// Boundaries are inclusive on the side shown (e.g. `+10` is roughlyEqual,
+/// `+11` is superior). Extreme values (e.g. `+4900` when the player score is
+/// near zero) clamp into [PowerComparisonTier.vastlySuperior] without a cap.
+PowerComparisonTier powerComparisonTier(int pct) {
+  if (pct <= -31) return PowerComparisonTier.vastlyInferior;
+  if (pct <= -11) return PowerComparisonTier.inferior;
+  if (pct <= 10) return PowerComparisonTier.roughlyEqual;
+  if (pct <= 30) return PowerComparisonTier.superior;
+  return PowerComparisonTier.vastlySuperior;
+}

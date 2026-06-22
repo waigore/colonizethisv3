@@ -274,7 +274,7 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 - Given the user views the diplomacy panel and the list includes at least one other Great Power  
   When the panel displays each Great Power row  
-  Then the system shows that GP’s **power score** per the Great Power power score formula (province count, regiment strength, ship count with default weights). If that GP’s score is **greater** than the human player’s power score, the value is shown in **red**; otherwise in **green**.
+  Then the system derives that GP’s strength from the Great Power power score formula (province count, regiment strength, ship count with default weights) and presents it as a **relative power line** comparing the GP to the human player. The presentation (signed percentage, tier word, red/green semantic, placement) is defined by [SPEC/ui/diplomacy-panel.md](../ui/diplomacy-panel.md) § Relative power line: a GP stronger than the human player is shown in **red**, a GP at or below the human player in **green**. The underlying power score formula here remains authoritative; the tier buckets are a display-only refinement and do not feed war-desire logic.
 
 ## Configurable Values
 

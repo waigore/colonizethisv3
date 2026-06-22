@@ -359,24 +359,6 @@ String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
   };
 }
 
-/// Whether [provinceId] is the capital province of any faction (player,
-/// minor nation, or tribe). Capital status is always-exact political intel
-/// (Refs #2865, SPEC § Province overlay content `Political / Economic /
-/// Naval`).
-@visibleForTesting
-bool provinceOverlayIsCapital(Game game, String provinceId) {
-  for (final p in game.players) {
-    if (p.capitalProvinceId == provinceId) return true;
-  }
-  for (final m in game.minorNations) {
-    if (m.capitalProvinceId == provinceId) return true;
-  }
-  for (final t in game.tribes) {
-    if (t.capitalProvinceId == provinceId) return true;
-  }
-  return false;
-}
-
 Widget _buildPoliticalSection({
   required AppLocalizations l10n,
   required String name,
@@ -582,6 +564,12 @@ Widget _buildTileSection({
   // Tile, Economic improved-row, Military owner sub-header, Civilian
   // own-unit, and Naval fleet-summary live-data rows.
   final bodyStyle = _fgBodyStyle();
+  final designationLine = provinceOverlayTileDesignationLine(
+    l10n: l10n,
+    game: game,
+    provinceId: provinceId,
+    selectedTileKey: selectedTileKey,
+  );
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
     Column(
@@ -590,6 +578,8 @@ Widget _buildTileSection({
       children: [
         Text(l10n.provinceOverlay_tileCoordinates(x, y), style: bodyStyle),
         Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
+        if (designationLine != null)
+          Text(designationLine, style: bodyStyle),
         _buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
