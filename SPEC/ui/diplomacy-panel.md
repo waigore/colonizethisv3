@@ -209,6 +209,17 @@ Per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.h
 - **Background:** unchanged from the standard action button gradient (`--surface-lite` → `--bg-deep`); only the outline and label color shift.
 - **Applies to:** `DiplomaticOrderType.declareWar` only. The pending (Cancel) variant retains its own pending styling and is not the war variant.
 
+#### Compact variant metrics (normative)
+
+The diplomacy action button is a **compact** `CtNinePatchButton`: it is materially tighter than the 48 dp / 16 × 12 dp default chrome so the trailing cluster matches the mockup `.f-actions button { padding: 3px 7px }` density. The implementation exposes these as library-scope constants so widget tests can pin them deterministically:
+
+| Metric | Constant | Value | Mockup source |
+|--------|----------|-------|---------------|
+| Button min height | `kDiplomacyActionButtonMinHeight` | **24 dp** | compact `.f-actions button` |
+| Button inner padding | `kDiplomacyActionButtonPadding` | **7 dp horizontal × 3 dp vertical** | `.f-actions button { padding: 3px 7px }` |
+
+The label still resolves through the editorial-monocle `bodySmall` text slot (no hard-coded font size) per #2914 S7; only the surrounding chrome (height + padding) is compacted. The pending **Cancel** and disabled (rejection-tooltip) states keep their existing semantics on the compact surface.
+
 Orders are submitted into the current turn's order set; resolution happens on Next Turn.
 
 ---
@@ -225,8 +236,8 @@ Orders are submitted into the current turn's order set; resolution happens on Ne
 The faction-row body adapts to a single normative breakpoint per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `@media (max-width: 500px)`. The cross-cutting narrative is owned by [mobile-adaptation.md](mobile-adaptation.md) § 4; this section codifies the diplomacy-row specifics.
 
 - **Breakpoint:** viewport width **≤ 500 dp** (Flutter dp; matches the mockup CSS `max-width: 500px` cutoff and the **`≤ 500 dp`** column in mobile-adaptation.md § 4).
-- **Wide variant (viewport width `> 500 dp`):** the faction-row body lays out the info column and the action-button cluster **side by side** in a `Row`, with the action cluster anchored to the trailing edge. Matches mockup `.faction-row { display:flex; align-items:flex-start }` plus `.f-actions { justify-content:flex-end }`.
-- **Narrow variant (viewport width `≤ 500 dp`):** the faction-row body stacks the action-button cluster **below** the info column, and the action cluster is **left-aligned**. Matches mockup `.faction-row { flex-wrap:wrap }` plus `.f-actions { max-width:none; justify-content:flex-start }`.
+- **Wide variant (viewport width `> 500 dp`):** the faction-row body lays out the info column and the action-button cluster **side by side** in a `Row`, with the action cluster anchored to the trailing edge. Matches mockup `.faction-row { display:flex; align-items:flex-start }` plus `.f-actions { justify-content:flex-end }`. The trailing cluster is wrapped in a `ConstrainedBox` whose `maxWidth` equals `kDiplomacyActionClusterMaxWidth` (**180 dp**, normative; mockup `.f-actions { max-width: 180px }`) and the action `Wrap` uses `WrapAlignment.end` with `kDiplomacyActionWrapSpacing` (**4 dp**, mockup `gap: 4px`) so the compact buttons flow **left-to-right** and wrap onto additional runs rather than stretching into a single vertical column.
+- **Narrow variant (viewport width `≤ 500 dp`):** the faction-row body stacks the action-button cluster **below** the info column, and the action cluster is **left-aligned**. Matches mockup `.faction-row { flex-wrap:wrap }` plus `.f-actions { max-width:none; justify-content:flex-start }`. The action `Wrap` uses `WrapAlignment.start` (no `maxWidth` cap) at this breakpoint.
 - The breakpoint constant exposed by the implementation (`kDiplomacyRowNarrowMaxWidth = 500.0`) is normative so widget tests can pin the boundary deterministically.
 - **Out of scope:** the panel-level mode bar, section headings, and per-row chrome (gradient, 1 dp border) are **not** re-laid-out at the narrow breakpoint — only the row's info-vs-actions arrangement changes.
 
@@ -323,6 +334,12 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 - **Faction row wide layout:** Given the Diplomacy panel is open at a viewport width strictly greater than `kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Row` whose first child is an `Expanded` containing the info column and whose trailing sibling is the action-button `Wrap`, matching `.faction-row { display:flex; align-items:flex-start }` from [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html).
 - **Faction row narrow wrap:** Given the Diplomacy panel is open at a viewport width `≤ kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Column` whose first child is the info column and whose second child is the action-button `Wrap` aligned to the leading (left) edge, matching the mockup `@media (max-width: 500px)` rule `.faction-row { flex-wrap:wrap }` + `.f-actions { justify-content:flex-start }`.
 - **Faction row narrow does not right-align actions:** Given the Diplomacy panel is open at viewport width `≤ kDiplomacyRowNarrowMaxWidth`, when a faction row renders, then no `Expanded(child: info)` + sibling action cluster `Row` arrangement is present in the row body (so the action buttons never render trailing-edge anchored under the narrow rule).
+
+- **Wide action cluster is width-capped for left-to-right flow (Refs #3621):** Given the Diplomacy panel is open at a viewport width strictly greater than `kDiplomacyRowNarrowMaxWidth` (500 dp) and a faction row has at least one action button, when the row body renders, then the trailing action cluster is wrapped in a `ConstrainedBox` whose `constraints.maxWidth` equals `kDiplomacyActionClusterMaxWidth` (180 dp) and the enclosed action `Wrap` uses `WrapAlignment.end` with `spacing` and `runSpacing` equal to `kDiplomacyActionWrapSpacing` (4 dp), so the buttons flow left-to-right on the trailing edge.
+
+- **Compact action button chrome (Refs #3621):** Given the Diplomacy panel is open and a faction row renders any action button, when that button's `CtNinePatchButton` is inspected, then its `minHeight` equals `kDiplomacyActionButtonMinHeight` (24 dp) and its `padding` equals `kDiplomacyActionButtonPadding` (7 dp horizontal × 3 dp vertical), distinguishing the compact diplomacy variant from the 48 dp / 16 × 12 dp default panel button chrome.
+
+- **Compact button chrome constants are normative (Refs #3621):** Given the diplomacy panel implementation, when the action-cluster constants are read, then `kDiplomacyActionClusterMaxWidth == 180.0`, `kDiplomacyActionWrapSpacing == 4.0`, and `kDiplomacyActionButtonMinHeight == 24.0` so widget tests pin the compact contract from a single source.
 
 - **Mobile-viewport Widgetbook story renders narrow rows:** Given the Diplomacy Panel `Mobile viewport — narrow rows (≤ 500 dp)` Widgetbook use case is mounted in a `WidgetTester`, when the builder pumps inside the shared 360 × 640 dp `mobileViewport` frame, then `WidgetTester.takeException()` returns `null` and at least one faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is a `Column` (the `≤ 500 dp` narrow variant per § Responsive layout), demonstrating the responsive contract is reviewable from Widgetbook without resizing the host window (Refs #2870 R22 / S9).
 

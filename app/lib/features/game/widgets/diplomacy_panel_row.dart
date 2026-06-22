@@ -49,12 +49,20 @@ class _DiplomacyRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: _buildInfoColumn(context)),
-        // Full action matrices can exceed one run; [Flexible] caps the
-        // trailing cluster to remaining row width so [Wrap] can flow.
+        // SPEC/ui/diplomacy-panel.md § Action button styling — the trailing
+        // cluster is capped to [kDiplomacyActionClusterMaxWidth] (mockup
+        // `.f-actions { max-width: 180px }`) so the compact buttons flow
+        // left-to-right and wrap onto additional runs instead of expanding
+        // to fill the remaining row width as a single vertical stack.
         Flexible(
           child: Align(
             alignment: Alignment.topRight,
-            child: _buildActionButtons(),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: kDiplomacyActionClusterMaxWidth,
+              ),
+              child: _buildActionButtons(alignEnd: true),
+            ),
           ),
         ),
       ],
@@ -220,13 +228,17 @@ class _DiplomacyRow extends StatelessWidget {
     return lines;
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons({bool alignEnd = false}) {
     if (readOnly) {
       return const SizedBox.shrink();
     }
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      // SPEC/ui/diplomacy-panel.md § Action button styling — mockup
+      // `.f-actions { gap: 4px; justify-content: flex-end }` (wide) /
+      // `justify-content: flex-start` (narrow).
+      alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
+      spacing: kDiplomacyActionWrapSpacing,
+      runSpacing: kDiplomacyActionWrapSpacing,
       children: [
         for (final action in data.actions)
           if (_isActionPending(action))
@@ -308,15 +320,17 @@ class _ActionButton extends StatelessWidget {
     // Refs #2914 S7.
     final TextStyle labelStyle =
         theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    final Widget button = SizedBox(
-      height: 32,
-      child: CtNinePatchButton(
-        onPressed: isPending ? onCancel : onPressed,
-        enabled: isPending || enabled,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        dangerVariant: _isWarVariant,
-        child: Text(label, style: labelStyle),
-      ),
+    // SPEC/ui/diplomacy-panel.md § Action button styling — diplomacy action
+    // buttons use the compact CtNinePatchButton variant (tighter minHeight
+    // and padding than the 48 × 16/12 dp default) to match the mockup
+    // `.f-actions button` density. Refs #3621.
+    final Widget button = CtNinePatchButton(
+      onPressed: isPending ? onCancel : onPressed,
+      enabled: isPending || enabled,
+      minHeight: kDiplomacyActionButtonMinHeight,
+      padding: kDiplomacyActionButtonPadding,
+      dangerVariant: _isWarVariant,
+      child: Text(label, style: labelStyle),
     );
     final String? reason = rejectionReason;
     if (!isPending && !enabled && reason != null && reason.isNotEmpty) {
