@@ -1,5 +1,6 @@
 // Pin the 320 dp minimum-viewport contract for the in-game train dialogs
-// (`TrainCiviliansDialog`, `TrainMilitaryDialog`) — extending the existing
+// (`TrainCiviliansDialog`, `TrainMilitaryDialog`, `TrainNavalDialog`) —
+// extending the existing
 // in-game dialog pins (`dialogs_320dp_min_viewport_test.dart`) to the two
 // CtDialogShell-hosted train dialogs opened from the empire-overview
 // Civilian / Military panels.
@@ -35,6 +36,7 @@
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // SPEC: `SPEC/ui/train-civilians-dialog.md`.
 // SPEC: `SPEC/ui/train-military-dialog.md`.
+// SPEC: `SPEC/ui/train-naval-dialog.md`.
 // Refs #2870 S8 (dialogs scale at narrow widths) + S10 (no horizontal
 // overflow at 320 dp on every covered surface).
 
@@ -42,6 +44,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -224,6 +227,68 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Train Military'), findsOneWidget);
+      expect(find.text('Reset'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — TrainNavalDialog @ 320 dp '
+      '(Refs #3601 S15 / #2870 S8/S10)', () {
+    testWidgets(
+      'AC (positive) TrainNavalDialog @ 320×640: no RenderFlex '
+      'overflow exception, "Train Naval" title + Reset action render',
+      (WidgetTester tester) async {
+        final game = getDebugInitGameResult().game;
+        final humanPlayerId = _humanPlayerId(game);
+        await _pumpDialogAtSize(
+          tester,
+          TrainNavalDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: TrainNavalDialog must '
+              'not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The CtDialogShell chrome — '
+              'TrainDialogHeader, the Wrap-based naval resource bar '
+              '(Treasury + Peasants + four commodity chips: lumber, '
+              'fabric, castIron, coal), the per-ship rows with name + '
+              'cost header + +/- stepper, and the trailing right-aligned '
+              'Reset action — must all wrap within the ~288 dp '
+              'CtDialogShell content column at 320 dp.',
+        );
+        expect(find.text('Train Naval'), findsOneWidget);
+        expect(find.text('Reset'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: TrainNavalDialog @ 1024×768 also pumps '
+        'without exception (regression sentinel for the overflow '
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      final game = getDebugInitGameResult().game;
+      final humanPlayerId = _humanPlayerId(game);
+      await _pumpDialogAtSize(
+        tester,
+        TrainNavalDialog(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: const Orders(),
+          bus: AppEventBus.create(),
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Train Naval'), findsOneWidget);
       expect(find.text('Reset'), findsOneWidget);
     });
   });
