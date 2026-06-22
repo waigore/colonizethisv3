@@ -3,6 +3,7 @@
 **Screen ID:** `UNIT60001` — stable; do not reassign.
 **SPEC/ui** — Modal dialog for queuing naval (ship) training orders. Implementation: `app/lib/features/game/widgets/train_naval_dialog.dart`. Integrates with [naval-units-panel.md](naval-units-panel.md) and the shared [components/train-dialog-chrome.md](components/train-dialog-chrome.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md), [tech-tree-naval.md](../game/tech-tree-naval.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md).
 **Widgetbook:** `Train Naval Dialog` → `app/lib/widgetbook/catalog_screens_combat.dart`.
+**Mockup:** [mockups/UNIT60001-train-naval-dialog.html](mockups/UNIT60001-train-naval-dialog.html)
 
 ---
 

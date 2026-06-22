@@ -29,9 +29,16 @@ final Color _kPeaceBadgeBackground = oklchToColor(
 /// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
 /// `.section-head`.
 class _DiplomacySectionHeader extends StatelessWidget {
-  const _DiplomacySectionHeader({required this.title});
+  const _DiplomacySectionHeader({required this.title, this.isFirst = false});
 
   final String title;
+
+  /// Whether this is the first section heading rendered in the list under the
+  /// active mode-bar filter. SPEC/ui/diplomacy-panel.md § Section headings
+  /// (first-heading top rhythm, Refs #3621): the first heading drops its top
+  /// gap to `0` (mockup `.section-head:first-child { margin-top: 0 }`) while
+  /// every subsequent heading keeps the `CtSpacing.l` leading gap.
+  final bool isFirst;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +52,10 @@ class _DiplomacySectionHeader extends StatelessWidget {
       letterSpacing: 0.5,
     );
     return Padding(
-      padding: const EdgeInsets.only(top: CtSpacing.l, bottom: CtSpacing.m),
+      padding: EdgeInsets.only(
+        top: isFirst ? 0 : CtSpacing.l,
+        bottom: CtSpacing.m,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(

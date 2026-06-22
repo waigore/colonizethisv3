@@ -13,6 +13,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_radius.dart';
 import '../../../widgets/ct_gap.dart';
@@ -52,6 +53,82 @@ const double kDiplomacyRowNarrowMaxWidth = 500.0;
 /// SPEC/ui/diplomacy-panel.md § Responsive layout cites this key so
 /// widget tests can pin both variants without touching private types.
 const String kDiplomacyRowBodyKeyPrefix = 'diplomacyRowBody:';
+
+/// Maximum width (Flutter dp) of the trailing action-button cluster on the
+/// **wide** faction-row variant. Mirrors the mockup
+/// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
+/// `.f-actions { max-width: 180px }`. Capping the cluster keeps the
+/// compact buttons flowing left-to-right (and wrapping onto additional
+/// runs) on the trailing edge instead of expanding to fill the remaining
+/// row width as a single vertical stack. SPEC/ui/diplomacy-panel.md
+/// § Action button styling (Refs #3621).
+const double kDiplomacyActionClusterMaxWidth = 180.0;
+
+/// Spacing and run-spacing (Flutter dp) between diplomacy action buttons in
+/// the trailing cluster `Wrap`. Mirrors the mockup `.f-actions { gap: 4px }`.
+/// SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621).
+const double kDiplomacyActionWrapSpacing = 4.0;
+
+/// Minimum height (Flutter dp) of a diplomacy **compact** action button —
+/// tighter than the default [CtNinePatchButton.minHeight] (48 dp) so the
+/// action cluster matches the compact mockup density
+/// (`.f-actions button`). SPEC/ui/diplomacy-panel.md § Action button
+/// styling (Refs #3621).
+const double kDiplomacyActionButtonMinHeight = 24.0;
+
+/// Inner padding for a diplomacy **compact** action button — tighter than
+/// [CtNinePatchButton.defaultPadding] (16 × 12 dp) to match the mockup
+/// `.f-actions button { padding: 3px 7px }`. SPEC/ui/diplomacy-panel.md
+/// § Action button styling (Refs #3621).
+const EdgeInsets kDiplomacyActionButtonPadding = EdgeInsets.symmetric(
+  horizontal: 7,
+  vertical: 3,
+);
+
+/// OKLCH token for the **Unfriendly** relation word (display band `30 … 49`),
+/// mirroring the mockup `.f-relation .word` color `oklch(62% 0.10 55)`
+/// (warm amber). SPEC/ui/diplomacy-panel.md § Relation word styling
+/// (Refs #3621). The lightness matches the AA-tuned `--danger` / `--success`
+/// L = 0.62 in [EditorialMonoclePalette] so the four relation words read at a
+/// consistent brightness against `--bg`.
+const OklchToken kDiplomacyRelationUnfriendlyToken = OklchToken(0.62, 0.10, 55);
+
+/// OKLCH token for the **Cordial** relation word (display band `50 … 69`),
+/// mirroring the mockup `.f-relation .word` color `oklch(58% 0.08 160)`
+/// (cool teal), lightness lifted to 0.62 for parity with the other relation
+/// words. SPEC/ui/diplomacy-panel.md § Relation word styling (Refs #3621).
+const OklchToken kDiplomacyRelationCordialToken = OklchToken(0.62, 0.08, 160);
+
+/// Resolves the editorial-monocle color for the one-word relation label
+/// derived from the hidden relation [score], per SPEC/ui/diplomacy-panel.md
+/// § Relation word styling (Refs #3621) and the mockup `.f-relation .word`
+/// `wordColors` map:
+///
+/// | Display band | Word | Color |
+/// |--------------|------|-------|
+/// | `0 … 29` | Hostile | `--danger` |
+/// | `30 … 49` | Unfriendly | [kDiplomacyRelationUnfriendlyToken] |
+/// | `50 … 69` | Cordial | [kDiplomacyRelationCordialToken] |
+/// | `70 … 100` | Friendly | `--success` |
+///
+/// The band thresholds reuse the canonical `relationScoreDisplay*` constants
+/// from `colonizethis_logic`, so the color bands stay aligned with
+/// [relationScoreToDisplayLabel]. Hostile reuses the canonical `--danger`
+/// token and Friendly reuses `--success`, matching the warm-red / cool-green
+/// semantic shared with the relation state badge.
+Color diplomacyRelationWordColor(int score) {
+  final int clamped = score.clamp(relationScoreMin, relationScoreMax);
+  if (clamped <= relationScoreDisplayHostileMax) {
+    return EditorialMonoclePalette.danger;
+  }
+  if (clamped <= relationScoreDisplayUnfriendlyMax) {
+    return oklchToColor(kDiplomacyRelationUnfriendlyToken);
+  }
+  if (clamped <= relationScoreDisplayCordialMax) {
+    return oklchToColor(kDiplomacyRelationCordialToken);
+  }
+  return EditorialMonoclePalette.success;
+}
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget with GamePanelMixin {
@@ -139,6 +216,17 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
     final showMinors = diplomacyFilterShowsKind(_filterMode, FactionKind.minor);
     final showTribes = diplomacyFilterShowsKind(_filterMode, FactionKind.tribe);
 
+    // SPEC/ui/diplomacy-panel.md § Section headings (first-heading top rhythm,
+    // Refs #3621): the first heading rendered under the active filter drops
+    // its top gap to 0 (mockup `.section-head:first-child`).
+    final FactionKind? firstShownKind = showGps
+        ? FactionKind.greatPower
+        : showMinors
+        ? FactionKind.minor
+        : showTribes
+        ? FactionKind.tribe
+        : null;
+
     final list = ListView(
       padding: const EdgeInsets.symmetric(
         horizontal: CtSpacing.l,
@@ -150,7 +238,11 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         // even when the section has no rows. An empty visible section
         // renders placeholder copy beneath its heading.
         if (showGps) ...[
-          _sectionHeader(context, l10n.diplomacy_section_greatPowers),
+          _sectionHeader(
+            context,
+            l10n.diplomacy_section_greatPowers,
+            isFirst: firstShownKind == FactionKind.greatPower,
+          ),
           if (gps.isEmpty)
             _emptySectionPlaceholder(
               context,
@@ -167,7 +259,11 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             ),
         ],
         if (showMinors) ...[
-          _sectionHeader(context, l10n.diplomacy_section_minorNations),
+          _sectionHeader(
+            context,
+            l10n.diplomacy_section_minorNations,
+            isFirst: firstShownKind == FactionKind.minor,
+          ),
           if (minors.isEmpty)
             _emptySectionPlaceholder(
               context,
@@ -184,7 +280,11 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             ),
         ],
         if (showTribes) ...[
-          _sectionHeader(context, l10n.diplomacy_section_tribes),
+          _sectionHeader(
+            context,
+            l10n.diplomacy_section_tribes,
+            isFirst: firstShownKind == FactionKind.tribe,
+          ),
           if (tribes.isEmpty)
             _emptySectionPlaceholder(context, l10n.diplomacy_panel_noTribes)
           else
@@ -214,8 +314,12 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
     );
   }
 
-  Widget _sectionHeader(BuildContext context, String title) {
-    return _DiplomacySectionHeader(title: title);
+  Widget _sectionHeader(
+    BuildContext context,
+    String title, {
+    bool isFirst = false,
+  }) {
+    return _DiplomacySectionHeader(title: title, isFirst: isFirst);
   }
 
   /// Placeholder copy rendered beneath an empty (but always-visible)
