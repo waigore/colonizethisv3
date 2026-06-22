@@ -1,10 +1,9 @@
-// Canonical shared `TradeOrder` factories for economy world-market tests.
+// Canonical shared `TradeOrder` factories for world-market tests.
 //
-// Refs #3427 step 14 — replaces the previously independent per-suite
-// implementations (`matcherBid`/`matcherOffer`, `validatorBid`/
-// `validatorOffer`, `bidOrder`/`offerOrder`, and the private `_bid`/`_offer`
-// copies). One parameterized bid/offer builder keeps the construction shape
-// consistent across every world-market test file.
+// Refs #3427 step 14 / #3615 Cluster 6 — single parameterized bid/offer
+// builder keeps the construction shape consistent across every world-market
+// test file in `colonizethis_economy` and its sibling packages
+// (`colonizethis_orders`, `colonizethis_logic`, `colonizethis_diplomacy`).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 

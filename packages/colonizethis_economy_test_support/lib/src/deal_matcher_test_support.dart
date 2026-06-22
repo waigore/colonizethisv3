@@ -1,10 +1,12 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show DealMatchInputs, PurchasedTileAttribution, PurchasedTileIndex;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'support/trade_order_factory.dart';
+import 'trade_order_factory.dart';
 
-/// Deal-matcher bid/offer builders delegate to the canonical shared
-/// `TradeOrder` factory (Refs #3427 step 14).
+/// Shared helpers for world-market `DealMatcher` tests. The bid/offer builders
+/// delegate to the canonical shared `TradeOrder` factory (Refs #3427 step 14 /
+/// #3615 Cluster 6).
 TradeOrder matcherOffer(
   String commodityId,
   int quantity, {

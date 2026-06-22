@@ -1,7 +1,7 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_trade_order_validator_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 /// Tests for `TradeOrderValidator` rules 4–6 (bid type cap, bid cargo cap,
 /// offer stockpile) and cross-rule precedence per

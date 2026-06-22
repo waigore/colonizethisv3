@@ -10,7 +10,7 @@ import 'package:colonizethis_economy/src/economy/world_market/trade_order_admiss
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../../support/trade_order_factory.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 void main() {
   group('isWorldMarketTradeableCommodity (rule 2)', () {
