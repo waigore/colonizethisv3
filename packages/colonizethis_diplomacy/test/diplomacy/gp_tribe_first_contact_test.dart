@@ -213,17 +213,19 @@ void main() {
         final game = _seaReachableGameWithoutNwVisibility();
         final view = buildPlayerView(game, _seaReachableTopology, 'gp1');
 
-        // Broad diplomacy targeting still sees the sea-reachable tribe...
+        // Diplomatic targeting no longer sees the sea-reachable tribe: the
+        // shared first-contact gate (relation or non-`unknown` tile visibility)
+        // now governs the helper too (#3620).
         expect(
           knownDiplomaticTargetFactionIds(
             view: view,
             game: game,
             topology: _seaReachableTopology,
           ),
-          contains('tribe1'),
+          isNot(contains('tribe1')),
         );
 
-        // ...but herald discovery is narrowed to actual NW tile visibility.
+        // Herald discovery is likewise narrowed to actual NW tile visibility.
         expect(
           discoveredTribeIdsForFirstContact(view: view, game: game),
           isEmpty,
