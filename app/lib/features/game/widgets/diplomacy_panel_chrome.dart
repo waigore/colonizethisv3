@@ -205,8 +205,13 @@ final Color _kAllianceBadgeBackground = oklchToColor(
 /// the [kDiplomacyAllianceBadgeLabel] text in `--accent` over a translucent
 /// accent overlay, mirroring the relation state badge chrome so it reads as a
 /// distinct gold treaty marker rather than reusing the relation-band word.
-class _AllianceBadge extends StatelessWidget {
-  const _AllianceBadge();
+///
+/// Public so the diplomacy **detail** screen (GAME30002) can surface the same
+/// treaty marker in its CURRENT RELATION card per
+/// SPEC/ui/diplomacy-detail-screen.md § Formal alliance indicator (Refs #3625),
+/// reusing one badge widget across both diplomacy surfaces.
+class DiplomacyAllianceBadge extends StatelessWidget {
+  const DiplomacyAllianceBadge({super.key});
 
   @override
   Widget build(BuildContext context) {

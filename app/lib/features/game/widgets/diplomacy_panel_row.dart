@@ -196,7 +196,7 @@ class _DiplomacyRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _RelationStateBadge(atWar: rel.atWar),
-        if (showAlliance) ...[CtGap.wm, const _AllianceBadge()],
+        if (showAlliance) ...[CtGap.wm, const DiplomacyAllianceBadge()],
         if (spans.isNotEmpty)
           Flexible(
             child: Text.rich(

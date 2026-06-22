@@ -301,6 +301,12 @@ class _RelationSummary extends StatelessWidget {
         ? EditorialMonoclePalette.danger
         : EditorialMonoclePalette.success;
     final String relationLabel = relationScoreToDisplayLabel(relation!.score);
+    // SPEC/ui/diplomacy-detail-screen.md § Formal alliance indicator
+    // (Refs #3625, AC4): a persisted formal alliance surfaces the same gold
+    // ALLIANCE treaty badge used by the panel row, distinct from the informal
+    // one-word relation label. A merely-Friendly relation in the informal
+    // RelationLevel.allied band (no treaty) never shows it.
+    final bool showAlliance = relation!.formalAlliance;
 
     return Wrap(
       spacing: 10,
@@ -321,6 +327,7 @@ class _RelationSummary extends StatelessWidget {
               color: EditorialMonoclePalette.fg,
             ),
           ),
+        if (showAlliance) const DiplomacyAllianceBadge(),
       ],
     );
   }
