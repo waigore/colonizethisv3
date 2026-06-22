@@ -85,5 +85,83 @@ void main() {
 
       expect(targets, isEmpty);
     });
+
+    test(
+      'negative (#3620): sea-reachable tribe with zero NW tile visibility is '
+      'not a diplomatic target',
+      () {
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|home',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'oldWorld|owSea',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'newWorld|nwSea',
+              regionId: 'newWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'newWorld|colony',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [
+            TopologyEdge(id1: 'oldWorld|home', id2: 'oldWorld|owSea'),
+            TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
+            TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
+          ],
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|colony',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+            playerVisibilityByTile: const {
+              'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
+            },
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                'oldWorld|home': ['oldWorld|home|0|0'],
+              },
+              'newWorld': {
+                'newWorld|colony': ['newWorld|colony|0|0'],
+              },
+            },
+          ),
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+        );
+
+        final view = buildPlayerView(game, topology, 'gp1');
+        final targets = knownDiplomaticTargetFactionIds(
+          view: view,
+          game: game,
+          topology: topology,
+        );
+
+        expect(targets, isNot(contains('tribe1')));
+      },
+    );
   });
 }
