@@ -26,10 +26,12 @@ class GpTribeFirstContactResult {
 /// only when the GP holds non-`unknown` tile visibility into a province that
 /// Tribe owns (see [discoveredTribeIdsForFirstContact]). Sea-reachable colonial
 /// intel alone — which can connect Old World coasts to an unrevealed New World
-/// at turn 0 — does **not** trigger the herald or persist a relation (#3463).
-/// Broad targeting for the diplomacy panel / declare-war intel still lives in
-/// `knownDiplomaticTargetFactionIds`. The [topology] parameter is retained for
-/// call-site compatibility but is not consulted by herald discovery.
+/// at turn 0 — does **not** trigger the herald or persist a relation (#3463),
+/// and (as of #3620) no longer makes a Tribe a diplomatic target via
+/// `knownDiplomaticTargetFactionIds` either: that helper now uses the same
+/// first-contact gate (relation or non-`unknown` tile visibility). The
+/// [topology] parameter is retained for call-site compatibility but is not
+/// consulted by herald discovery.
 GpTribeFirstContactResult applyGpTribeFirstContactRelations({
   required Game game,
   required String gpId,
