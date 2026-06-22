@@ -160,9 +160,8 @@ mixin _GameMapAreaStatePart2
                             narrow: isNarrow,
                             onCycleBaseLayerDisplayMode:
                                 _cycleBaseLayerDisplayMode,
-                            onCenterOnHomeCapital: _centerOnHumanCapital,
-                            homeToCapitalEnabled:
-                                shell.effectiveHumanPlayerId != null,
+                            onCenterOnHomeCapital: _centerOnCurrentPlayerCapital,
+                            homeToCapitalEnabled: shell.viewingPlayerId != null,
                             onOpenMapDisplayOptions: () {
                               showDialog<void>(
                                 context: context,
