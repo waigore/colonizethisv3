@@ -347,13 +347,14 @@ class _ShipTypeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = appL10n(context);
     return Opacity(
       opacity: isLocked ? kTrainDialogLockedOpacity : 1.0,
       child: TrainDialogUnitRowSurface(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(child: _buildInfo(theme)),
+            Expanded(child: _buildInfo(theme, l10n)),
             CtGap.wm,
             _buildStepper(theme),
           ],
@@ -362,13 +363,13 @@ class _ShipTypeRow extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo(ThemeData theme) {
+  Widget _buildInfo(ThemeData theme, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader(theme),
         const SizedBox(height: 2),
-        _buildCostWrap(),
+        _buildCostWrap(l10n),
         ..._buildLockedHint(theme),
       ],
     );
@@ -397,25 +398,28 @@ class _ShipTypeRow extends StatelessWidget {
     );
   }
 
-  Widget _buildCostWrap() {
+  Widget _buildCostWrap(AppLocalizations l10n) {
     return Wrap(
       spacing: 8,
       runSpacing: 4,
       children: [
-        _InlineCost(
+        TrainDialogInlineCost(
           icon: const Icon(Icons.payments_outlined, size: 14),
           label: econ.buildTreasuryCost.toString(),
+          tooltipMessage: l10n.trainDialog_costTreasuryTooltip,
           isInsufficient: treasuryInsufficient,
         ),
-        _InlineCost(
+        TrainDialogInlineCost(
           icon: const WorkerIcon(workerType: 'peasant', size: 14),
           label: 1.toString(),
+          tooltipMessage: l10n.trainDialog_costPeasantsTooltip,
           isInsufficient: peasantInsufficient,
         ),
         for (final input in econ.buildInputs.entries)
-          _InlineCost(
+          TrainDialogInlineCost(
             icon: ResourceIcon(commodityId: input.key, size: 14),
             label: input.value.toString(),
+            tooltipMessage: commodityIconTooltip(l10n, input.key),
             isInsufficient: insufficientCommodityIds.contains(input.key),
           ),
       ],
@@ -460,39 +464,6 @@ class _ShipTypeRow extends StatelessWidget {
           dangerVariant: !isLocked && !canIncrement,
           child: const Text('+'),
         ),
-      ],
-    );
-  }
-}
-
-class _InlineCost extends StatelessWidget {
-  const _InlineCost({
-    required this.icon,
-    required this.label,
-    this.isInsufficient = false,
-  });
-
-  final Widget icon;
-  final String label;
-
-  /// When `true`, the label renders in [EditorialMonoclePalette.danger] to
-  /// flag that the remaining stockpile cannot cover one more of this ship.
-  final bool isInsufficient;
-
-  @override
-  Widget build(BuildContext context) {
-    final baseStyle = Theme.of(context).textTheme.bodySmall;
-    final style = isInsufficient
-        ? (baseStyle ?? const TextStyle()).copyWith(
-            color: EditorialMonoclePalette.danger,
-          )
-        : baseStyle;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        icon,
-        const SizedBox(width: 3),
-        Text(label, style: style),
       ],
     );
   }

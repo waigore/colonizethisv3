@@ -120,3 +120,9 @@ The dialog uses the shared `app/lib/features/game/widgets/train_unit_dialog_help
 - **Given** the Train Naval dialog is open and the user closes it with non-zero counts, **when** orders are committed, **then** the UI layer writes `BuildUnitOrder` entries with `isMilitary == false` and `spawnProvinceId == Player.capitalProvinceId`, persisted in `currentOrders.buildUnitOrdersByPlayerId`.
 
 - **Given** an existing civilian train order for the player, **when** the Train Naval dialog commits orders, **then** the civilian build order is preserved (only dialog-managed naval orders are replaced).
+
+- **Given** the Train Naval dialog is open, **when** the user hovers (desktop) or taps (mobile) a commodity cost icon in a ship row's cost summary, **then** the UI layer shows a `Tooltip` reading `"{displayName} ({category})"` (e.g. `Lumber (manufactured)`, `Coal (raw material)`), per [components/resource-icon-tooltip.md](components/resource-icon-tooltip.md).
+
+- **Given** the Train Naval dialog is open, **when** the user hovers/taps the treasury coin cost icon, **then** the UI layer shows a `Tooltip` reading `Treasury`; and the peasant cost icon shows a `Tooltip` reading `Peasants`.
+
+- **Given** any cost icon in a ship row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.
