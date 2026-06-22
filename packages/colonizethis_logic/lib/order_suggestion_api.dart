@@ -21,4 +21,7 @@ export 'package:colonizethis_orders/src/orders/diplomatic_panel_actions.dart'
 export 'package:colonizethis_diplomacy/src/diplomacy/known_diplomatic_targets.dart'
     show knownDiplomaticTargetFactionIds;
 export 'package:colonizethis_diplomacy/src/diplomacy/gp_tribe_first_contact.dart'
-    show GpTribeFirstContactResult, applyGpTribeFirstContactRelations;
+    show
+        GpTribeFirstContactResult,
+        applyGpTribeFirstContactRelations,
+        discoveredTribeIdsForFirstContact;

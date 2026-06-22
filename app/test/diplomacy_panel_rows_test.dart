@@ -75,6 +75,119 @@ Game _gameWithTribeDiscoveredByVisibility() {
   );
 }
 
+/// Old World coastal province sea-connected to an unrevealed New World tribe
+/// colony, with **zero** New World tile visibility (Refs #3620 AC-1). Mirrors
+/// the colonial-intel fixture used in the diplomacy package tests.
+const _seaReachableTopology = MapTopology(
+  nodes: [
+    TopologyNode(
+      id: 'oldWorld|home',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.province,
+    ),
+    TopologyNode(
+      id: 'oldWorld|owSea',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.seaZone,
+    ),
+    TopologyNode(
+      id: 'newWorld|nwSea',
+      regionId: 'newWorld',
+      type: TopologyNodeType.seaZone,
+    ),
+    TopologyNode(
+      id: 'newWorld|colony',
+      regionId: 'newWorld',
+      type: TopologyNodeType.province,
+    ),
+  ],
+  edges: [
+    TopologyEdge(id1: 'oldWorld|home', id2: 'oldWorld|owSea'),
+    TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
+    TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
+  ],
+);
+
+/// Turn-0 fixture where Tribe `t1` owns a New-World province that is
+/// sea-reachable from the human GP's Old-World anchor, but the GP has **no**
+/// non-`unknown` New-World tile visibility and **no** GP↔Tribe relation
+/// (Refs #3620 AC-1). The tribe must not be surfaced in the Tribes section.
+Game _gameWithSeaReachableTribeNoContact() {
+  return const Game(
+    id: 'sea-reachable-no-contact',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
+        ],
+      ),
+      newWorld: RegionData(
+        provinces: [
+          Province(
+            id: 'newWorld|colony',
+            regionId: 'newWorld',
+            ownerId: 't1',
+          ),
+        ],
+      ),
+      playerVisibilityByTile: {
+        'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
+      },
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          'oldWorld|home': ['oldWorld|home|0|0'],
+        },
+        'newWorld': {
+          'newWorld|colony': ['newWorld|colony|0|0'],
+        },
+      },
+    ),
+    players: [Player(id: 'gp1', displayName: 'Solo', isHuman: true)],
+    tribes: [Tribe(id: 't1', displayName: 'Tribe One')],
+    diplomacyRelations: [],
+  );
+}
+
+/// Fixture for the contact-survives-fog-decay AC (Refs #3620 AC-7): the human
+/// GP holds a persisted GP↔Tribe relation with `t1` but currently has **no**
+/// non-`unknown` tile visibility into any province `t1` owns.
+Game _gameWithTribeRelationButNoVisibility() {
+  return const Game(
+    id: 'tribe-relation-fog-decay',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 7),
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
+        ],
+      ),
+      newWorld: RegionData(
+        provinces: [
+          Province(
+            id: 'newWorld|colony',
+            regionId: 'newWorld',
+            ownerId: 't1',
+          ),
+        ],
+      ),
+      playerVisibilityByTile: {},
+    ),
+    players: [Player(id: 'gp1', displayName: 'Solo', isHuman: true)],
+    tribes: [Tribe(id: 't1', displayName: 'Tribe One')],
+    diplomacyRelations: [
+      DiplomacyRelation(
+        factionId1: 'gp1',
+        factionId2: 't1',
+        state: RelationState.atPeace,
+        score: 50,
+        sinceTurn: 4,
+        lastInteractionTurn: 4,
+      ),
+    ],
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -145,6 +258,59 @@ void main() {
         expect(tribe.relation!.state, RelationState.atPeace);
         expect(tribe.relation!.score, 50);
         expect(tribe.relation!.level, RelationLevel.neutral);
+      },
+    );
+
+    test(
+      'AC-1 (#3620): turn-0 sea-reachable tribe with no contact yields no '
+      'tribe rows even though knownDiplomaticTargetFactionIds includes it',
+      () {
+        final game = _gameWithSeaReachableTribeNoContact();
+        final view = buildPlayerView(game, _seaReachableTopology, 'gp1');
+        // Precondition: the broad helper still includes the sea-reachable tribe
+        // (proves the panel-side first-contact gate is what excludes it).
+        expect(
+          knownDiplomaticTargetFactionIds(
+            view: view,
+            game: game,
+            topology: _seaReachableTopology,
+          ),
+          contains('t1'),
+        );
+
+        final rows = buildDiplomacyRows(
+          game,
+          _seaReachableTopology,
+          'gp1',
+          const Orders(),
+        );
+        expect(
+          rows.where((r) => r.kind == FactionKind.tribe),
+          isEmpty,
+          reason:
+              'Sea-reachable colonial intel alone must not surface a Tribe row '
+              '(SPEC § Tribes require first contact).',
+        );
+      },
+    );
+
+    test(
+      'AC-7 (#3620): tribe with persisted relation but no current visibility '
+      'still surfaces a tribe row (contact survives fog decay)',
+      () {
+        final rows = buildDiplomacyRows(
+          _gameWithTribeRelationButNoVisibility(),
+          const MapTopology(nodes: [], edges: []),
+          'gp1',
+          const Orders(),
+        );
+        final tribeRows = rows
+            .where((r) => r.kind == FactionKind.tribe)
+            .toList();
+        expect(tribeRows, hasLength(1));
+        expect(tribeRows.single.factionId, 't1');
+        expect(tribeRows.single.relation, isNotNull);
+        expect(tribeRows.single.relation!.state, RelationState.atPeace);
       },
     );
 
