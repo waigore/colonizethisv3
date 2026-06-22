@@ -545,11 +545,11 @@ jobs:
           printf '%s\n' "${partition[@]}" > _partition.txt
           echo "has_tests=true" >> "$GITHUB_OUTPUT"
           echo "Partitioned ${#partition[@]} tests for shard $SHARD_INDEX:"
-          # Preview the first 20 via an array slice (no `| head`): piping into
-          # head closes the read end early and, under `set -o pipefail`, the
-          # SIGPIPE/EPIPE from printf fails this step nondeterministically when
-          # the partition is large (full-list selection). Slicing avoids the pipe.
-          printf '  %s\n' "${partition[@]:0:20}"
+          # head closes the pipe after 20 lines; printf then races to a
+          # "write error: Broken pipe" and exits non-zero under pipefail when the
+          # partition exceeds 20 entries — this diagnostic print must never fail
+          # the job (mirrors the `|| true` guard on the changed-files preview).
+          printf '  %s\n' "${partition[@]}" | head -20 || true
 
       - name: Run Flutter tests (partition)
         if: |
