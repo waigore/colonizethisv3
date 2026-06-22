@@ -9,81 +9,53 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import 'train_dialog_base.dart';
 import 'train_dialog_chrome.dart';
-import 'train_unit_dialog_helper.dart';
 
-class TrainCiviliansDialog extends StatefulWidget {
+class TrainCiviliansDialog extends TrainDialogBase {
   const TrainCiviliansDialog({
     super.key,
-    required this.game,
-    required this.humanPlayerId,
-    required this.currentOrders,
-    required this.bus,
+    required super.game,
+    required super.humanPlayerId,
+    required super.currentOrders,
+    required super.bus,
   });
 
   /// SPEC/ui/train-civilians-dialog.md — [UiScreenIds.trainCiviliansDialog].
   static const screenId = UiScreenIds.trainCiviliansDialog;
 
-  final Game game;
-  final String humanPlayerId;
-  final Orders currentOrders;
-  final AppEventBus bus;
-
   @override
   State<TrainCiviliansDialog> createState() => _TrainCiviliansDialogState();
 }
 
-class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
-  late Map<String, int> _counts;
+class _TrainCiviliansDialogState
+    extends TrainDialogBaseState<TrainCiviliansDialog> {
+  @override
+  Iterable<String> get unitTypeIds => CivilianEconomyCatalog.byId.keys;
 
   @override
-  void initState() {
-    super.initState();
-    _counts = _initialCountsFromOrders();
+  bool get ordersAreMilitary => false;
+
+  @override
+  Map<String, String> get unlockingTechByUnitType => unlockingTechByCivilianId;
+
+  @override
+  String dialogTitle(AppLocalizations l10n) => l10n.trainCivilians_title;
+
+  @override
+  void emitCommittedOrders(List<BuildUnitOrder> orders) {
+    widget.bus.emit(TrainCivilianBuildOrdersCommittedEvent(orders: orders));
   }
 
-  /// Counts pending train-at-capital civilian builds from [widget.currentOrders].
-  Map<String, int> _initialCountsFromOrders() {
-    return initialTrainDialogCountsFromOrders(
-      unitTypeIds: CivilianEconomyCatalog.byId.keys,
-      currentOrders: widget.currentOrders,
-      humanPlayerId: widget.humanPlayerId,
-      capitalProvinceId: _player?.capitalProvinceId,
-      isMilitary: false,
-    );
-  }
-
-  Player? get _player {
-    return trainDialogPlayerById(
-      players: widget.game.players,
-      playerId: widget.humanPlayerId,
-    );
-  }
-
-  bool get _hasCapital => trainDialogHasCapital(_player);
-
-  int get _treasury => trainDialogTreasury(_player);
-  int get _paperStockpile => _player?.stockpile.quantityOf('paper') ?? 0;
-
-  Map<String, bool> get _techUnlocked => trainDialogTechUnlocked(_player);
-
-  bool _isLocked(String unitType) {
-    return trainDialogIsLocked(
-      unitType: unitType,
-      unlockingTechByUnitType: unlockingTechByCivilianId,
-      techUnlocked: _techUnlocked,
-    );
-  }
+  int get _paperStockpile => stockpileQty(CommodityCatalog.paper.id);
 
   int _totalTreasuryCost() {
     int total = 0;
     for (final e in CivilianEconomyCatalog.all) {
-      total += _counts[e.id]! * e.buildTreasuryCost;
+      total += (counts[e.id] ?? 0) * e.buildTreasuryCost;
     }
     return total;
   }
@@ -92,28 +64,29 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
     int total = 0;
     for (final e in CivilianEconomyCatalog.all) {
       final paperQty = e.buildInputs[CommodityCatalog.paper.id] ?? 0;
-      total += _counts[e.id]! * paperQty;
+      total += (counts[e.id] ?? 0) * paperQty;
     }
     return total;
   }
 
-  bool _canAffordIncrement(String unitType) {
+  @override
+  bool canAffordIncrement(String unitType) {
     final econ = CivilianEconomyCatalog.byId[unitType];
     if (econ == null) return false;
     final newTreasuryCost = _totalTreasuryCost() + econ.buildTreasuryCost;
     final newPaperCost =
         _totalPaperCost() + (econ.buildInputs[CommodityCatalog.paper.id] ?? 0);
-    return newTreasuryCost <= _treasury && newPaperCost <= _paperStockpile;
+    return newTreasuryCost <= treasury && newPaperCost <= _paperStockpile;
   }
 
   /// Treasury left after subtracting all currently committed unit costs.
-  int _remainingTreasury() => _treasury - _totalTreasuryCost();
+  int _remainingTreasury() => treasury - _totalTreasuryCost();
 
   /// Paper left after subtracting all currently committed unit costs.
   int _remainingPaper() => _paperStockpile - _totalPaperCost();
 
   String? get _deficitHint {
-    final treasuryDeficit = _totalTreasuryCost() > _treasury;
+    final treasuryDeficit = _totalTreasuryCost() > treasury;
     final paperDeficit = _totalPaperCost() > _paperStockpile;
     if (treasuryDeficit && paperDeficit) {
       return 'Treasury low and Paper low';
@@ -123,95 +96,8 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
     return null;
   }
 
-  void _increment(String unitType) {
-    if (_isLocked(unitType)) return;
-    if (!_canAffordIncrement(unitType)) return;
-    setState(() {
-      _counts = incrementTrainDialogCount(_counts, unitType);
-    });
-  }
-
-  void _decrement(String unitType) {
-    if (_counts[unitType] == null || _counts[unitType]! <= 0) return;
-    setState(() {
-      _counts = decrementTrainDialogCount(_counts, unitType);
-    });
-  }
-
-  void _reset() {
-    setState(() {
-      _counts = resetTrainDialogCounts(_counts);
-    });
-  }
-
-  void _applyOrders() {
-    final capital = _player?.capitalProvinceId;
-    if (capital == null) return;
-    final orders = materializeTrainDialogOrdersFromCounts(
-      orderedUnitTypeIds: CivilianEconomyCatalog.byId.keys,
-      counts: _counts,
-      capitalProvinceId: capital,
-      isMilitary: false,
-    );
-    widget.bus.emit(TrainCivilianBuildOrdersCommittedEvent(orders: orders));
-  }
-
-  String _techRequiredLabel(String unitType) {
-    final techId = unlockingTechByCivilianId[unitType];
-    if (techId == null) return '';
-    return 'Requires: ${techDisplayName(techId)}';
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) {
-          _applyOrders();
-        }
-      },
-      child: CtDialogShell(
-        padding: const EdgeInsets.fromLTRB(
-          CtSpacing.l,
-          CtSpacing.ml,
-          CtSpacing.l,
-          CtSpacing.l,
-        ),
-        child: _buildDialogContent(context, l10n),
-      ),
-    );
-  }
-
-  Widget _buildDialogContent(BuildContext context, AppLocalizations l10n) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TrainDialogHeader(
-          title: l10n.trainCivilians_title,
-          onClose: () => Navigator.of(context).pop(),
-        ),
-        if (!_hasCapital) ...[
-          const TrainDialogSectionDivider(),
-          _buildNoCapitalMessage(context, l10n),
-        ] else
-          ..._buildBody(l10n),
-      ],
-    );
-  }
-
-  Widget _buildNoCapitalMessage(BuildContext context, AppLocalizations l10n) {
-    return Text(
-      l10n.trainUnits_noCapital,
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        color: EditorialMonoclePalette.danger,
-      ),
-    );
-  }
-
-  List<Widget> _buildBody(AppLocalizations l10n) {
+  List<Widget> buildBody(AppLocalizations l10n) {
     return [
       const TrainDialogSectionDivider(),
       TrainDialogResourceBar(
@@ -220,7 +106,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
             label: l10n.trainUnits_treasuryLabel,
             value:
                 '${formatTreasuryCurrency(_remainingTreasury())} / '
-                '${formatTreasuryCurrency(_treasury)}',
+                '${formatTreasuryCurrency(treasury)}',
           ),
           TrainDialogResourceEntry(
             label: l10n.trainUnits_paperLabel,
@@ -236,20 +122,20 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
           for (final econ in CivilianEconomyCatalog.all)
             _UnitTypeRow(
               econ: econ,
-              count: _counts[econ.id] ?? 0,
-              isLocked: _isLocked(econ.id),
-              techRequiredLabel: _techRequiredLabel(econ.id),
-              canIncrement: _canAffordIncrement(econ.id),
-              canDecrement: (_counts[econ.id] ?? 0) > 0,
+              count: counts[econ.id] ?? 0,
+              isLocked: isLocked(econ.id),
+              techRequiredLabel: techRequiredLabel(econ.id),
+              canIncrement: canAffordIncrement(econ.id),
+              canDecrement: (counts[econ.id] ?? 0) > 0,
               treasuryInsufficient:
-                  !_isLocked(econ.id) &&
+                  !isLocked(econ.id) &&
                   _remainingTreasury() < econ.buildTreasuryCost,
               paperInsufficient:
-                  !_isLocked(econ.id) &&
+                  !isLocked(econ.id) &&
                   _remainingPaper() <
                       (econ.buildInputs[CommodityCatalog.paper.id] ?? 0),
-              onIncrement: () => _increment(econ.id),
-              onDecrement: () => _decrement(econ.id),
+              onIncrement: () => increment(econ.id),
+              onDecrement: () => decrement(econ.id),
             ),
         ],
       ),
@@ -258,7 +144,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           CtNinePatchButton(
-            onPressed: _reset,
+            onPressed: reset,
             child: Text(l10n.common_reset),
           ),
         ],

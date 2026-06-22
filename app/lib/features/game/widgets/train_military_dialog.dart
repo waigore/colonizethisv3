@@ -7,84 +7,53 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
 import '../../../config/app_assets.dart';
-import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../utils/commodity_ui_helpers.dart';
+import 'train_dialog_base.dart';
 import 'train_dialog_chrome.dart';
-import 'train_unit_dialog_helper.dart';
 
-class TrainMilitaryDialog extends StatefulWidget {
+class TrainMilitaryDialog extends TrainDialogBase {
   const TrainMilitaryDialog({
     super.key,
-    required this.game,
-    required this.humanPlayerId,
-    required this.currentOrders,
-    required this.bus,
+    required super.game,
+    required super.humanPlayerId,
+    required super.currentOrders,
+    required super.bus,
   });
 
   /// SPEC/ui/train-military-dialog.md — [UiScreenIds.trainMilitaryDialog].
   static const screenId = UiScreenIds.trainMilitaryDialog;
 
-  final Game game;
-  final String humanPlayerId;
-  final Orders currentOrders;
-  final AppEventBus bus;
-
   @override
   State<TrainMilitaryDialog> createState() => _TrainMilitaryDialogState();
 }
 
-class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
-  late Map<String, int> _counts;
+class _TrainMilitaryDialogState
+    extends TrainDialogBaseState<TrainMilitaryDialog> {
+  @override
+  Iterable<String> get unitTypeIds => RegimentEconomyCatalog.byId.keys;
 
   @override
-  void initState() {
-    super.initState();
-    _counts = _initialCountsFromOrders();
-  }
+  bool get ordersAreMilitary => true;
 
-  Map<String, int> _initialCountsFromOrders() {
-    return initialTrainDialogCountsFromOrders(
-      unitTypeIds: RegimentEconomyCatalog.byId.keys,
-      currentOrders: widget.currentOrders,
-      humanPlayerId: widget.humanPlayerId,
-      capitalProvinceId: _player?.capitalProvinceId,
-      isMilitary: true,
-    );
-  }
+  @override
+  Map<String, String> get unlockingTechByUnitType => unlockingTechByRegimentId;
 
-  Player? get _player {
-    return trainDialogPlayerById(
-      players: widget.game.players,
-      playerId: widget.humanPlayerId,
-    );
-  }
+  @override
+  String dialogTitle(AppLocalizations l10n) => l10n.trainMilitary_title;
 
-  bool get _hasCapital => trainDialogHasCapital(_player);
-
-  int get _treasury => trainDialogTreasury(_player);
-  int get _peasants => _player?.workerPool.peasants ?? 0;
-  Map<String, bool> get _techUnlocked => trainDialogTechUnlocked(_player);
-
-  int _stockpileQty(String commodityId) =>
-      _player?.stockpile.quantityOf(commodityId) ?? 0;
-
-  bool _isLocked(String unitType) {
-    return trainDialogIsLocked(
-      unitType: unitType,
-      unlockingTechByUnitType: unlockingTechByRegimentId,
-      techUnlocked: _techUnlocked,
-    );
+  @override
+  void emitCommittedOrders(List<BuildUnitOrder> orders) {
+    widget.bus.emit(TrainMilitaryBuildOrdersCommittedEvent(orders: orders));
   }
 
   int _totalTreasuryCost() {
     var total = 0;
     for (final e in RegimentEconomyCatalog.all) {
-      total += (_counts[e.id] ?? 0) * e.buildTreasuryCost;
+      total += (counts[e.id] ?? 0) * e.buildTreasuryCost;
     }
     return total;
   }
@@ -92,7 +61,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   int _totalPeasantCost() {
     var total = 0;
     for (final e in RegimentEconomyCatalog.all) {
-      total += (_counts[e.id] ?? 0);
+      total += (counts[e.id] ?? 0);
     }
     return total;
   }
@@ -100,7 +69,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   Map<String, int> _totalCommodityCosts() {
     final totals = <String, int>{};
     for (final e in RegimentEconomyCatalog.all) {
-      final count = _counts[e.id] ?? 0;
+      final count = counts[e.id] ?? 0;
       if (count <= 0) continue;
       for (final input in e.buildInputs.entries) {
         totals[input.key] = (totals[input.key] ?? 0) + (input.value * count);
@@ -109,43 +78,44 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     return totals;
   }
 
-  bool _canAffordIncrement(String unitType) {
+  @override
+  bool canAffordIncrement(String unitType) {
     final econ = RegimentEconomyCatalog.byId[unitType];
     if (econ == null) return false;
-    if (_isLocked(unitType)) return false;
+    if (isLocked(unitType)) return false;
 
     final newTreasury = _totalTreasuryCost() + econ.buildTreasuryCost;
     final newPeasants = _totalPeasantCost() + 1;
-    if (newTreasury > _treasury) return false;
-    if (newPeasants > _peasants) return false;
+    if (newTreasury > treasury) return false;
+    if (newPeasants > peasants) return false;
 
     final totals = _totalCommodityCosts();
     for (final input in econ.buildInputs.entries) {
       totals[input.key] = (totals[input.key] ?? 0) + input.value;
     }
     for (final e in totals.entries) {
-      if (e.value > _stockpileQty(e.key)) return false;
+      if (e.value > stockpileQty(e.key)) return false;
     }
     return true;
   }
 
   /// Treasury left after subtracting all currently committed regiment costs.
-  int _remainingTreasury() => _treasury - _totalTreasuryCost();
+  int _remainingTreasury() => treasury - _totalTreasuryCost();
 
   /// Peasants left after subtracting all currently committed regiment costs.
-  int _remainingPeasants() => _peasants - _totalPeasantCost();
+  int _remainingPeasants() => peasants - _totalPeasantCost();
 
   /// Stockpile of [commodityId] left after subtracting committed costs.
   int _remainingCommodity(String commodityId, Map<String, int> committed) =>
-      _stockpileQty(commodityId) - (committed[commodityId] ?? 0);
+      stockpileQty(commodityId) - (committed[commodityId] ?? 0);
 
   String? get _deficitHint {
     final deficits = <String>[];
-    if (_totalTreasuryCost() > _treasury) deficits.add('Treasury');
-    if (_totalPeasantCost() > _peasants) deficits.add('Peasants');
+    if (_totalTreasuryCost() > treasury) deficits.add('Treasury');
+    if (_totalPeasantCost() > peasants) deficits.add('Peasants');
     final totalComms = _totalCommodityCosts();
     for (final e in totalComms.entries) {
-      if (e.value > _stockpileQty(e.key)) {
+      if (e.value > stockpileQty(e.key)) {
         deficits.add(commodityDisplayName(e.key));
       }
     }
@@ -156,102 +126,16 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     return '$head and ${deficits.last} low';
   }
 
-  void _increment(String unitType) {
-    if (!_canAffordIncrement(unitType)) return;
-    setState(() {
-      _counts = incrementTrainDialogCount(_counts, unitType);
-    });
-  }
-
-  void _decrement(String unitType) {
-    if ((_counts[unitType] ?? 0) <= 0) return;
-    setState(() {
-      _counts = decrementTrainDialogCount(_counts, unitType);
-    });
-  }
-
-  void _reset() {
-    setState(() {
-      _counts = resetTrainDialogCounts(_counts);
-    });
-  }
-
-  void _applyOrders() {
-    final capital = _player?.capitalProvinceId;
-    if (capital == null) return;
-    final orders = materializeTrainDialogOrdersFromCounts(
-      orderedUnitTypeIds: RegimentEconomyCatalog.byId.keys,
-      counts: _counts,
-      capitalProvinceId: capital,
-      isMilitary: true,
-    );
-    widget.bus.emit(TrainMilitaryBuildOrdersCommittedEvent(orders: orders));
-  }
-
-  String _techRequiredLabel(String unitType) {
-    final techId = unlockingTechByRegimentId[unitType];
-    if (techId == null) return '';
-    return 'Requires: ${techDisplayName(techId)}';
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) {
-          _applyOrders();
-        }
-      },
-      child: CtDialogShell(
-        padding: const EdgeInsets.fromLTRB(
-          CtSpacing.l,
-          CtSpacing.ml,
-          CtSpacing.l,
-          CtSpacing.l,
-        ),
-        child: _buildDialogContent(context, l10n),
-      ),
-    );
-  }
-
-  Widget _buildDialogContent(BuildContext context, AppLocalizations l10n) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TrainDialogHeader(
-          title: l10n.trainMilitary_title,
-          onClose: () => Navigator.of(context).pop(),
-        ),
-        if (!_hasCapital) ...[
-          const TrainDialogSectionDivider(),
-          _buildNoCapitalMessage(context, l10n),
-        ] else
-          ..._buildBody(l10n),
-      ],
-    );
-  }
-
-  Widget _buildNoCapitalMessage(BuildContext context, AppLocalizations l10n) {
-    return Text(
-      l10n.trainUnits_noCapital,
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        color: EditorialMonoclePalette.danger,
-      ),
-    );
-  }
-
-  List<Widget> _buildBody(AppLocalizations l10n) {
+  List<Widget> buildBody(AppLocalizations l10n) {
     return [
       const TrainDialogSectionDivider(),
       _MilitaryResourceBar(
-        treasury: _treasury,
+        treasury: treasury,
         remainingTreasury: _remainingTreasury(),
-        peasants: _peasants,
+        peasants: peasants,
         remainingPeasants: _remainingPeasants(),
-        stockpile: _player?.stockpile ?? const Stockpile(),
+        stockpile: player?.stockpile ?? const Stockpile(),
         committedCommodities: _totalCommodityCosts(),
         deficitHint: _deficitHint,
         l10n: l10n,
@@ -269,7 +153,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           CtNinePatchButton(
-            onPressed: _reset,
+            onPressed: reset,
             child: Text(l10n.common_reset),
           ),
         ],
@@ -278,7 +162,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   }
 
   Widget _buildRegimentRow(RegimentEconomy econ) {
-    final locked = _isLocked(econ.id);
+    final locked = isLocked(econ.id);
     final committed = _totalCommodityCosts();
     final insufficientCommodityIds = <String>{
       for (final input in econ.buildInputs.entries)
@@ -287,17 +171,17 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     };
     return _RegimentRow(
       econ: econ,
-      count: _counts[econ.id] ?? 0,
+      count: counts[econ.id] ?? 0,
       isLocked: locked,
-      techRequiredLabel: _techRequiredLabel(econ.id),
-      canIncrement: _canAffordIncrement(econ.id),
-      canDecrement: (_counts[econ.id] ?? 0) > 0,
+      techRequiredLabel: techRequiredLabel(econ.id),
+      canIncrement: canAffordIncrement(econ.id),
+      canDecrement: (counts[econ.id] ?? 0) > 0,
       treasuryInsufficient:
           !locked && _remainingTreasury() < econ.buildTreasuryCost,
       peasantInsufficient: !locked && _remainingPeasants() < 1,
       insufficientCommodityIds: insufficientCommodityIds,
-      onIncrement: () => _increment(econ.id),
-      onDecrement: () => _decrement(econ.id),
+      onIncrement: () => increment(econ.id),
+      onDecrement: () => decrement(econ.id),
     );
   }
 }
