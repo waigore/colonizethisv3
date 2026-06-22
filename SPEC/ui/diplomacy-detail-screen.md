@@ -40,6 +40,8 @@ CtGameFeatureScreenShell (backgroundColor: --bg, attachGameToUiListener: false)
       Center / ConstrainedBox (maxWidth: 600)
         ListView (padding 14h x 14v, gap 14 between cards)
           DetailCard — title "CURRENT RELATION"
+            if kind == greatPower:
+              RelativePowerLine ("Relative power: +N% · Tier"; shared with diplomacy-panel.md § Relative power line)
             RelationSummary (state word in --danger / --success + one-word score label, or "—")
           DetailCard — title "DIPLOMATIC HISTORY"
             [empty] diplomacy_detail_noEvents (italic --muted)
@@ -85,6 +87,8 @@ Outgoing subsidy/grant pending copy from the diplomacy **list** row is **not** d
 | GP dossier | `kind == FactionKind.greatPower` | Dossier section always present (empty or populated). |
 | Non-GP | `kind != greatPower` | No dossier section (history only). |
 | Empty dossier | GP with zero matching `dossierEvidenceEntries` | `diplomacy_detail_noDossier`. |
+| GP relative power | `kind == FactionKind.greatPower` | `RelativePowerLine` rendered above the relation summary in the `CURRENT RELATION` card; `pct` recomputed from `greatPowerPowerScore(game, factionId)` vs `greatPowerPowerScore(game, humanPlayerId)` per [diplomacy-panel.md](diplomacy-panel.md) § Relative power line. |
+| Non-GP relative power | `kind != greatPower` | No relative-power line in the `CURRENT RELATION` card. |
 
 History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPair`.
 
@@ -115,6 +119,14 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
 - Given the widget builds,
   When the chrome is inspected,
   Then the screen chrome is rendered via `CtGameFeatureScreenShell` with `backgroundColor: EditorialMonoclePalette.bg` (no direct Material `Scaffold` is constructed by `DiplomacyDetailScreen` itself, per `repo.app_no_material_scaffold`), exactly one `CtTopBar` is present, the legacy Material `AppBar` is absent, and the `CtTopBar` carries a `CtBackButton` chevron.
+
+- Given `kind` is `FactionKind.greatPower` and `greatPowerPowerScore(game, factionId)` exceeds `greatPowerPowerScore(game, humanPlayerId)`,
+  When the `CURRENT RELATION` `DetailCard` renders,
+  Then the UI layer renders a `RelativePowerLine` above the relation summary whose percentage and tier word resolve their text colour to `EditorialMonoclePalette.danger` per [diplomacy-panel.md](diplomacy-panel.md) § Relative power line.
+
+- Given `kind` is not `FactionKind.greatPower`,
+  When the `CURRENT RELATION` `DetailCard` renders,
+  Then the UI layer does not render a `RelativePowerLine` widget.
 
 - Given `kind` is not `FactionKind.greatPower`,
   When the widget builds,
