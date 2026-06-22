@@ -4,7 +4,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'support/world_market_deal_matcher_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 Game _gpGameWithEmbassyPair({
   int relationScore = 70,

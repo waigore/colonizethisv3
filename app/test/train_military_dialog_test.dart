@@ -5,7 +5,6 @@ import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -188,19 +187,10 @@ void main() {
     await tester.tap(firstPlus);
     await tester.pumpAndSettle();
 
-    final shellScrollable = find.descendant(
-      of: find.byType(CtDialogShell),
-      matching: find.byType(Scrollable),
-    );
-    final closeButton = find.text('×');
-    await tester.dragUntilVisible(
-      closeButton,
-      shellScrollable,
-      const Offset(0, -120),
-    );
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(closeButton);
-    await tester.tap(closeButton);
+    // The train dialogs have no × button per #3568 chrome parity; dismiss via
+    // route pop (scrim tap / system back). Orders are still applied on close by
+    // the host PopScope.
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
     await tester.pumpAndSettle();
 
     expect(capturedOrders, isNotNull);
@@ -409,6 +399,69 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
+      },
+    );
+
+    testWidgets(
+      'AC (positive): multi-resource deficit hint joins clauses with ", "',
+      (WidgetTester tester) async {
+        // Tech unlocked + abundant fabric, but zero treasury and zero peasants.
+        // One queued Peasant Levies (£2,000 + 1 fabric + 1 peasant) makes both
+        // treasury and peasants insufficient, so the hint joins two
+        // `{Name} low` clauses with a comma (Refs #3568 comma-join).
+        final base = gameWithMilitaryResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        final game = base.copyWith(
+          players: [
+            player.copyWith(
+              treasury: 0,
+              workerPool: player.workerPool.copyWith(peasants: 0),
+            ),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: peasantLevyOrders(1),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Treasury low, Peasants low'), findsOneWidget);
+        expect(find.textContaining(' and '), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC (negative): single-resource deficit shows one "{Name} low" clause',
+      (WidgetTester tester) async {
+        // Zero treasury but abundant peasants/commodities → only the treasury
+        // clause renders, with no comma separator.
+        final base = gameWithMilitaryResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        final game = base.copyWith(
+          players: [
+            player.copyWith(treasury: 0),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: peasantLevyOrders(1),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Treasury low'), findsOneWidget);
+        // No multi-clause join (no `… low, …`) and no peasants clause.
+        expect(find.textContaining('low,'), findsNothing);
+        expect(find.textContaining('Peasants low'), findsNothing);
       },
     );
   });

@@ -139,7 +139,7 @@ void main() {
             'TrainDialogResourceBar',
             'TrainDialogResourceChip',
             'TrainDialogUnitRowSurface',
-            'kTrainDialogLockedOpacity = 0.4',
+            'kTrainDialogLockedOpacity = 0.5',
             'kTrainDialogTitleLetterSpacing = 0.05',
           ]) {
             expect(

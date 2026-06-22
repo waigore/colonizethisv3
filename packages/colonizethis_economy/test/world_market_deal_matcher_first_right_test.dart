@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_deal_matcher_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 /// SPEC: SPEC/game/world-market-first-right-of-refusal.md § Rules
 /// (#2992 D2 — First Right of Refusal absolute-priority override in

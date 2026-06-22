@@ -4,29 +4,33 @@ import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_radius.dart';
 import '../../../widgets/ct_spacing.dart';
 
 /// Locked train-dialog row opacity per `SPEC/ui/train-civilians-dialog.md` /
-/// `SPEC/ui/train-military-dialog.md` and #2866 AC (0.4).
-const double kTrainDialogLockedOpacity = 0.4;
+/// `SPEC/ui/train-military-dialog.md` / `SPEC/ui/train-naval-dialog.md` and the
+/// canonical mockup `.unit-row.locked { opacity: 0.5 }` (#3568 chrome parity).
+const double kTrainDialogLockedOpacity = 0.5;
 
 /// Title letter-spacing aligned with [CtTopBar] / combat-mode choice dialog.
 const double kTrainDialogTitleLetterSpacing = 0.05;
 
-/// Dark editorial-monocle train-dialog header: accent title + dismiss control.
+/// 🔒 (U+1F512) glyph prefixed to locked unit-type names per the canonical
+/// train-dialog mockups (`.unit-row.locked` names), replacing a separate
+/// lock-icon column. See [TrainDialogUnitNameLine].
+const String kTrainDialogLockPrefix = '\u{1F512} ';
+
+/// Dark editorial-monocle train-dialog header: a centered accent title.
 ///
-/// Implements `Refs #2866` S4/S5 — no Material [IconButton] / [Divider] chrome.
+/// Per the canonical train-dialog mockups (`.dialog h3 { text-align: center }`,
+/// title only — no `×` close button) the header renders the [title] centered
+/// with no dismiss control; the dialog is dismissed via scrim tap / system back
+/// (orders are still applied on close by the host `PopScope`). #3568 chrome
+/// parity (supersedes the original `Refs #2866` left-aligned title + `×`).
 class TrainDialogHeader extends StatelessWidget {
-  const TrainDialogHeader({
-    super.key,
-    required this.title,
-    required this.onClose,
-  });
+  const TrainDialogHeader({super.key, required this.title});
 
   final String title;
-  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -38,17 +42,31 @@ class TrainDialogHeader extends StatelessWidget {
           letterSpacing: kTrainDialogTitleLetterSpacing,
           fontWeight: FontWeight.w600,
         );
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: Text(title, style: titleStyle)),
-        CtNinePatchButton(
-          onPressed: onClose,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          minHeight: 32,
-          child: const Text('×'),
-        ),
-      ],
+    return Text(title, style: titleStyle, textAlign: TextAlign.center);
+  }
+}
+
+/// Unit-type name line for a train-dialog row.
+///
+/// Locked rows prefix [name] with [kTrainDialogLockPrefix] (🔒) per the
+/// canonical mockups instead of rendering a separate lock-icon column, so all
+/// three train dialogs share one lock affordance. #3568 chrome parity.
+class TrainDialogUnitNameLine extends StatelessWidget {
+  const TrainDialogUnitNameLine({
+    super.key,
+    required this.name,
+    required this.isLocked,
+  });
+
+  final String name;
+  final bool isLocked;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Text(
+      isLocked ? '$kTrainDialogLockPrefix$name' : name,
+      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 }
