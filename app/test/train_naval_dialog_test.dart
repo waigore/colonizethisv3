@@ -5,7 +5,6 @@ import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -185,19 +184,10 @@ void main() {
       await tester.tap(firstPlus);
       await tester.pumpAndSettle();
 
-      final shellScrollable = find.descendant(
-        of: find.byType(CtDialogShell),
-        matching: find.byType(Scrollable),
-      );
-      final closeButton = find.text('×');
-      await tester.dragUntilVisible(
-        closeButton,
-        shellScrollable,
-        const Offset(0, -120),
-      );
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(closeButton);
-      await tester.tap(closeButton);
+      // The train dialogs have no × button per #3568 chrome parity; dismiss via
+      // route pop (scrim tap / system back). Orders are still applied on close
+      // by the host PopScope.
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pumpAndSettle();
 
       expect(capturedOrders, isNotNull);

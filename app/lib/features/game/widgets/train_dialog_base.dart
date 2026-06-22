@@ -184,12 +184,9 @@ abstract class TrainDialogBaseState<T extends TrainDialogBase>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TrainDialogHeader(
-          title: dialogTitle(l10n),
-          onClose: () => Navigator.of(context).pop(),
-        ),
+        TrainDialogHeader(title: dialogTitle(l10n)),
         if (!hasCapital) ...[
-          const TrainDialogSectionDivider(),
+          const SizedBox(height: CtSpacing.m),
           _buildNoCapitalMessage(context, l10n),
         ] else
           ...buildBody(l10n),

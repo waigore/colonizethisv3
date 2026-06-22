@@ -253,6 +253,9 @@ void main() {
       expect(find.textContaining('5k'), findsNothing);
       // AC4: boxed inset resource bar present.
       expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
+      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
+      expect(find.text('×'), findsNothing);
+      expect(find.byType(TrainDialogSectionDivider), findsNothing);
 
       await expectLater(
         find.byKey(key),
@@ -413,6 +416,9 @@ void main() {
       // AC6: shared £+comma treasury and the boxed inset resource bar.
       expect(find.textContaining('£10,000'), findsOneWidget);
       expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
+      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
+      expect(find.text('×'), findsNothing);
+      expect(find.byType(TrainDialogSectionDivider), findsNothing);
 
       await expectLater(
         find.byKey(key),
@@ -475,6 +481,9 @@ void main() {
       // and the boxed inset resource bar is present.
       expect(find.textContaining('£50,000 / £50,000'), findsOneWidget);
       expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
+      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
+      expect(find.text('×'), findsNothing);
+      expect(find.byType(TrainDialogSectionDivider), findsNothing);
 
       await expectLater(
         find.byKey(key),

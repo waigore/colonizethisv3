@@ -22,7 +22,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 
 ## Layout
 
-- **Header:** `Train Naval` title + close (`X`) button.
+- **Header:** centered `Train Naval` title via `TrainDialogHeader` — no `×` close button and no brass section dividers between sections (#3568 parity); the dialog dismisses via scrim tap / system back and applies orders on close.
 - **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`). Shows `Treasury`, `Peasants`, and the union of all ship-input commodities `lumber`, `fabric`, `castIron`, `coal` (every commodity referenced by `ShipEconomyCatalog.buildInputs`) as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £42,000 / £50,000`, `Peasants: 19 / 20`, `Lumber: 8 / 10`. Treasury uses `£` + comma grouping on both sides.
 - **Per-item cost colour:** In each ship row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` (`EditorialMonoclePalette.danger`) independently when `remaining` for that resource is less than this ship's per-unit cost for it (considering committed totals). Sufficient items stay normal.
 - **Deficit hint:** Same wording style as civilian/military — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`) below the box.
@@ -40,7 +40,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 - Count initializes from existing pending naval build orders (dialog-managed set; see Order submission).
 - `+` increments by 1 only when adding one more ship remains affordable.
 - `-` decrements by 1, minimum 0.
-- Locked ships: row subdued and steppers disabled.
+- Locked ships: name prefixed with the 🔒 glyph (`kTrainDialogLockPrefix`), row subdued at `0.5` opacity (`kTrainDialogLockedOpacity`), and steppers disabled.
 - `+` uses aggregate affordability across all currently selected rows:
   - treasury
   - peasants (`workerPool.peasants`, 1 consumed per ship)
@@ -75,7 +75,7 @@ Affordability requires all constraints:
 
 ## Order submission
 
-On dialog close (`didPop` / close button), create orders from current counts:
+On dialog close (`didPop` via scrim tap / system back), create orders from current counts:
 
 1. Resolve `capitalProvinceId = Player.capitalProvinceId`.
 2. For each ship type where `count > 0`, add `count` entries of:

@@ -10,26 +10,60 @@ void main() {
   suppressLogsForTests();
 
   group('TrainDialogHeader', () {
-    testWidgets('uses CtNinePatchButton dismiss instead of IconButton', (
+    testWidgets(
+      'renders a centered accent title with no × dismiss button '
+      '(#3568 chrome parity)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: TrainDialogHeader(title: 'Train Civilians'),
+            ),
+          ),
+        );
+
+        // No dismiss control of any kind — dialog closes via scrim / back.
+        expect(find.byType(IconButton), findsNothing);
+        expect(find.byType(CtNinePatchButton), findsNothing);
+        expect(find.text('×'), findsNothing);
+
+        expect(find.text('Train Civilians'), findsOneWidget);
+        final Text title = tester.widget(find.text('Train Civilians'));
+        expect(title.style?.color, EditorialMonoclePalette.accent);
+        expect(title.textAlign, TextAlign.center);
+      },
+    );
+  });
+
+  group('TrainDialogUnitNameLine', () {
+    testWidgets('locked rows prefix the name with the 🔒 glyph', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
-            body: TrainDialogHeader(
-              title: 'Train Civilians',
-              onClose: () {},
-            ),
+            body: TrainDialogUnitNameLine(name: 'Merchant', isLocked: true),
           ),
         ),
       );
 
-      expect(find.byType(IconButton), findsNothing);
-      expect(find.byType(CtNinePatchButton), findsOneWidget);
-      expect(find.text('Train Civilians'), findsOneWidget);
+      expect(find.text('${kTrainDialogLockPrefix}Merchant'), findsOneWidget);
+      expect(find.text('Merchant'), findsNothing);
+    });
 
-      final Text title = tester.widget(find.text('Train Civilians'));
-      expect(title.style?.color, EditorialMonoclePalette.accent);
+    testWidgets('unlocked rows render the bare name with no 🔒 prefix', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: TrainDialogUnitNameLine(name: 'Builder', isLocked: false),
+          ),
+        ),
+      );
+
+      expect(find.text('Builder'), findsOneWidget);
+      expect(find.textContaining('\u{1F512}'), findsNothing);
     });
   });
 
@@ -93,7 +127,7 @@ void main() {
     });
   });
 
-  test('kTrainDialogLockedOpacity is 0.4 per #2866 AC', () {
-    expect(kTrainDialogLockedOpacity, 0.4);
+  test('kTrainDialogLockedOpacity is 0.5 per #3568 mockup parity', () {
+    expect(kTrainDialogLockedOpacity, 0.5);
   });
 }

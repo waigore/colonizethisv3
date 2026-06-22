@@ -6,11 +6,10 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
-import '../../../config/app_assets.dart';
 import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
-import '../../../widgets/strict_asset_icon.dart';
 import '../utils/commodity_ui_helpers.dart';
 import 'train_dialog_base.dart';
 import 'train_dialog_chrome.dart';
@@ -128,7 +127,7 @@ class _TrainMilitaryDialogState
   @override
   List<Widget> buildBody(AppLocalizations l10n) {
     return [
-      const TrainDialogSectionDivider(),
+      const SizedBox(height: CtSpacing.ml),
       _MilitaryResourceBar(
         treasury: treasury,
         remainingTreasury: _remainingTreasury(),
@@ -139,7 +138,7 @@ class _TrainMilitaryDialogState
         deficitHint: _deficitHint,
         l10n: l10n,
       ),
-      const TrainDialogSectionDivider(),
+      const SizedBox(height: CtSpacing.ml),
       Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -147,7 +146,7 @@ class _TrainMilitaryDialogState
             _buildRegimentRow(econ),
         ],
       ),
-      const TrainDialogSectionDivider(),
+      const SizedBox(height: CtSpacing.ml),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -362,33 +361,13 @@ class _RegimentRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(theme),
+        TrainDialogUnitNameLine(
+          name: regimentTypeDisplayName(econ.id),
+          isLocked: isLocked,
+        ),
         const SizedBox(height: 2),
         _buildCostWrap(l10n),
         ..._buildLockedHint(theme),
-      ],
-    );
-  }
-
-  Widget _buildHeader(ThemeData theme) {
-    return Row(
-      children: [
-        if (isLocked) ...[
-          StrictAssetIcon(
-            assetPath: '${kAppIconAssetPrefix}ui_icon_lock.png',
-            width: 20,
-            height: 20,
-          ),
-          const SizedBox(width: 4),
-        ],
-        Expanded(
-          child: Text(
-            regimentTypeDisplayName(econ.id),
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
       ],
     );
   }
