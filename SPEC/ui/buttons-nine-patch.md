@@ -22,7 +22,7 @@
 ## Widget contract
 
 - **Catalog:** `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`). Reusable wherever a primary or secondary button is needed.
-- **API:** `onPressed` (`VoidCallback?`), `child` (label/icon), optional `enabled` (default `true`), optional `padding` (default 16 px horizontal / 12 px vertical), optional `minHeight` (default 48 dp). Sizing: width/height from constraints or child; minimum touch target 44 dp per UXD. The historical `destTileSize` argument is retained for backward compatibility only and no longer affects rendering under the dark theme.
+- **API:** `onPressed` (`VoidCallback?`), `child` (label/icon), optional `enabled` (default `true`), optional `padding` (default 16 px horizontal / 12 px vertical), optional `minHeight` (default 48 dp), optional `shrinkWrap` (default `false`). Sizing: width/height from constraints or child; minimum touch target 44 dp per UXD. When `shrinkWrap` is `false` (default) the surface centers its content and expands to fill the available cross-axis width (legacy behaviour). When `shrinkWrap` is `true` the surface sizes to its content width instead of expanding, so several compact buttons can share a `Wrap` run and flow left-to-right rather than each filling the run as a vertical column (used by the diplomacy action cluster per `SPEC/ui/diplomacy-panel.md` § Action button styling, Refs #3621). The historical `destTileSize` argument is retained for backward compatibility only and no longer affects rendering under the dark theme.
 - **Visual contract (dark editorial-monocle, `Refs #2859` R1 / S2):**
   - Background gradient sourced from `CtGradients.buttonGradient` (top→bottom `--surface-lite` → `--surface`).
   - 1 px border in `--border` (default) shifting to `--accent` on hover.
