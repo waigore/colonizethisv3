@@ -11,9 +11,14 @@
 //   unconditionally excluded by a hard skip guard (score may be low but
 //   must remain in the candidate set; deterministic for fixed seed).
 //
+// Discovery note (#3620): a tribe becomes a diplomatic target only after
+// first contact (relation or non-`unknown` tile visibility). These tests grant
+// gp1 tile visibility into the tribe's NW colony so the tribe is a valid target
+// and the "no hard skip" scoring behaviour can be exercised.
+//
 // Companion tests:
-//   - `order_suggestion_declare_war_colonial_discovery_test.dart` (positive
-//     tribe inclusion for sea-reachable NW without tile visibility).
+//   - `order_suggestion_declare_war_colonial_discovery_test.dart` (sea-reachable
+//     NW without tile visibility is NOT a diplomatic target, #3620).
 //   - `war_desire_score_test.dart` (intervention-risk reduces minor/tribe
 //     score; pure scoring level).
 
@@ -84,8 +89,16 @@ void main() {
                 ),
               ],
             ),
+            // gp1 has first contact with tribe1 via non-`unknown` tile
+            // visibility into its NW colony (the #3620 first-contact gate), so
+            // tribe1 is a legitimate diplomatic target. The intervention-risk
+            // AC under test is the scoring "no hard skip" behaviour, not the
+            // discovery path.
             playerVisibilityByTile: const {
-              'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
+              'gp1': {
+                'oldWorld|home|0|0': 'fullyVisible',
+                'newWorld|colony|0|0': 'fullyVisible',
+              },
             },
             tileKeysByRegionAndProvince: {
               'oldWorld': {
@@ -203,8 +216,16 @@ void main() {
                 ),
               ],
             ),
+            // gp1 has first contact with tribe1 via non-`unknown` tile
+            // visibility into its NW colony (the #3620 first-contact gate), so
+            // tribe1 is a legitimate diplomatic target. The intervention-risk
+            // AC under test is the scoring "no hard skip" behaviour, not the
+            // discovery path.
             playerVisibilityByTile: const {
-              'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
+              'gp1': {
+                'oldWorld|home|0|0': 'fullyVisible',
+                'newWorld|colony|0|0': 'fullyVisible',
+              },
             },
             tileKeysByRegionAndProvince: {
               'oldWorld': {
