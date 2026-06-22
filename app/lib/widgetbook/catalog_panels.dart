@@ -325,11 +325,12 @@ const List<int> _kFundingPreviewCommittedRp = <int>[600, 300, 0];
 /// Per-slot funding levels for the funding-preview fixture, exercising the
 /// Low / Medium / High toggle-selected chrome and three distinct
 /// dual-segment / RP-delta / gold-row renderings.
-const List<ResearchFundingLevel> _kFundingPreviewLevels = <ResearchFundingLevel>[
-  ResearchFundingLevel.medium,
-  ResearchFundingLevel.high,
-  ResearchFundingLevel.low,
-];
+const List<ResearchFundingLevel> _kFundingPreviewLevels =
+    <ResearchFundingLevel>[
+      ResearchFundingLevel.medium,
+      ResearchFundingLevel.high,
+      ResearchFundingLevel.low,
+    ];
 
 /// Builds the editable `(Player, Game, Orders)` fixture for the funding /
 /// turn-preview story: a player with ample treasury (no debt block) whose
@@ -806,13 +807,13 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
               : 'gp1';
-          // Mockup `UNIT30001` clamps the panel sidebar to ~340 dp;
-          // 480 dp here keeps the standalone story comfortably inside
-          // `_panelConstraints` (420–640 dp) so reviewers see the dense
-          // R25 action cluster (Move + Split + Locate on one row), the
-          // R26 `HOME` chip on the Home Fleet row, and the R28
-          // `(in port)` / `(at sea)` location qualifier produced by
-          // `naval_tree_builder.dart`.
+          // The naval panel width is host-governed in production via
+          // `unitsPanelSheetConstraints` (70% wide / full-width narrow,
+          // Refs #3627); this standalone story pins a 480 dp host so
+          // reviewers see the dense R25 action cluster (Move + Split +
+          // Locate on one row), the R26 `HOME` chip on the Home Fleet row,
+          // and the R28 `(in port)` / `(at sea)` location qualifier produced
+          // by `naval_tree_builder.dart`.
           return ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
             child: NavalUnitsPanel(

@@ -29,6 +29,14 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 .card h3{font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .relation-row{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:14px;font-weight:600}.relation-row .state{color:var(--success)}.relation-row .war{color:var(--danger)}
 .score{font-size:12px;color:var(--muted);font-style:italic}
+/* Relative power line (GP only), above the relation summary. Wraps freely,
+   no ellipsis. SPEC/ui/diplomacy-detail-screen.md § Current relation. */
+.rp-line{font-size:13px;margin-bottom:8px;line-height:1.4}
+.rp-line .rp-label{color:var(--muted)}
+.rp-line .rp-dot{color:var(--muted)}
+.rp-line .rp-val{font-weight:600}
+.rp-line .rp-val.red,.rp-line .rp-tier.red{color:var(--danger)}
+.rp-line .rp-val.green,.rp-line .rp-tier.green{color:var(--success)}
 /* History */
 .event{padding:10px 12px;background:var(--surface);border-left:2px solid var(--accent-dim);margin-bottom:6px;font-size:13px;line-height:1.5;color:var(--fg)}
 .event .year{font-family:monospace;font-size:11px;color:var(--accent-dim);display:block;margin-bottom:3px}
@@ -49,6 +57,7 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
   <div class="content">
     <div class="card">
       <h3>Current relation</h3>
+      <div class="rp-line"><span class="rp-label">Relative power:</span> <span class="rp-val red">+35%</span><span class="rp-dot"> &#xb7; </span><span class="rp-tier red">Vastly superior</span></div>
       <div class="relation-row"><span class="state">&#x2709; Peace</span></div>
       <div class="score">Relation score: 70 &#x2014; Cordial</div>
     </div>

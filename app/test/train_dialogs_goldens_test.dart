@@ -18,7 +18,7 @@
 //
 //  - AC1 (£+comma treasury) / AC3 (name-over-cost + stepper-right row) /
 //    AC4 (boxed inset resource bar, monospace bold values): civilian default.
-//  - AC5 (both-resource deficit `Treasury low and Paper low` in danger colour):
+//  - AC5 (both-resource deficit `Treasury low, Paper low` in danger colour):
 //    civilian deficit.
 //  - AC6 (military £+comma + shared restyled resource bar): military default.
 //
@@ -253,6 +253,9 @@ void main() {
       expect(find.textContaining('5k'), findsNothing);
       // AC4: boxed inset resource bar present.
       expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
+      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
+      expect(find.text('×'), findsNothing);
+      expect(find.byType(TrainDialogSectionDivider), findsNothing);
 
       await expectLater(
         find.byKey(key),
@@ -263,7 +266,7 @@ void main() {
 
   testWidgets(
     'golden: UNIT40001 Train Civilians dialog — both-resource deficit hint '
-    '"Treasury low and Paper low" (Refs #3568 AC5)',
+    '"Treasury low, Paper low" (Refs #3568 AC5)',
     (WidgetTester tester) async {
       const key = ValueKey<String>('train_civilians_dialog_deficit_golden');
       final player = getPlayer(humanPlayerId);
@@ -311,7 +314,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Treasury low and Paper low'), findsOneWidget);
+      expect(find.text('Treasury low, Paper low'), findsOneWidget);
 
       await expectLater(
         find.byKey(key),
@@ -413,6 +416,9 @@ void main() {
       // AC6: shared £+comma treasury and the boxed inset resource bar.
       expect(find.textContaining('£10,000'), findsOneWidget);
       expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
+      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
+      expect(find.text('×'), findsNothing);
+      expect(find.byType(TrainDialogSectionDivider), findsNothing);
 
       await expectLater(
         find.byKey(key),
@@ -475,6 +481,9 @@ void main() {
       // and the boxed inset resource bar is present.
       expect(find.textContaining('£50,000 / £50,000'), findsOneWidget);
       expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
+      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
+      expect(find.text('×'), findsNothing);
+      expect(find.byType(TrainDialogSectionDivider), findsNothing);
 
       await expectLater(
         find.byKey(key),
