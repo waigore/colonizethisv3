@@ -22,6 +22,8 @@
 // AC-2 golden coverage) and SPEC/ui/tribe-first-contact-overlay.md § Acceptance
 // criteria (AC-11).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,6 +31,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -69,6 +73,74 @@ Scouts return with word of the {\$tribeName}, who hold their seat at {\$capitalN
 -> Continue
 ===
 ''';
+
+// Overture intro fixture: the production `DialoguePoint/overture_target_response`
+// node shape (one narrative line then `-> Continue`), kept short so the golden is
+// decoupled from future intro-copy edits.
+const _kOvertureYarn = '''
+title: DialoguePoint/overture_target_response
+---
+Envoys await thy word on the overtures laid before the Crown.
+-> Continue
+===
+''';
+
+// Intervention intro fixture: the production `intervention.yarn` requires all
+// five nodes to be present at parse time (intro + situation + three reactions)
+// and interpolates `{\$var}` faction names, so the fixture mirrors that shape.
+// The intro node is intentionally a single line then `-> Continue` so advancing
+// once reaches the combined choice step.
+const _kInterventionYarn = r'''
+title: DialoguePoint/intervention_intro
+---
+Heavy tidings cross thy desk from distant shores; the Crown looketh to thee.
+-> Continue
+===
+
+title: DialoguePoint/intervention_situation
+---
+Word arriveth that {$aggressorName} hath proclaimed open war against {$defenderName}; {$interveningName} cannot feign ignorance.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_intervene
+---
+{$aggressorName} rendeth the air with oaths.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_do_nothing
+---
+{$aggressorName} smirketh.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_protest
+---
+{$aggressorName} returneth a chill note.
+-> Continue
+===
+''';
+
+/// Minimal [Game] with two GPs and one minor nation, sufficient to drive the
+/// overture / intervention overlays through their phase-1 Yarn intro.
+Game _minimalGame() {
+  return Game(
+    id: 'combined_golden_game',
+    worldState: const WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: const [
+      Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false, treasury: 0),
+    ],
+    minorNations: const [
+      MinorNation(id: 'minor1', displayName: 'Powhatan'),
+    ],
+  );
+}
 
 /// Advance the active Yarn line by tapping the single line-step
 /// [CtNinePatchButton], settling on the subsequent choice step.
@@ -175,6 +247,116 @@ void main() {
         find.byKey(boundaryKey),
         matchesGoldenFile(
           'goldens/dialogue_combined_tribe_first_contact_choice.png',
+        ),
+      );
+    },
+  );
+
+  testWidgets(
+    'Overture combined-step golden: intro narrative stays above the Continue option (#3628)',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(600, 800));
+      const boundaryKey = ValueKey<String>('overture_intro_combined_golden');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppThemes.editorialMonocle,
+          home: RepaintBoundary(
+            key: boundaryKey,
+            child: OvertureDialogueOverlay(
+              game: _minimalGame(),
+              pendingOvertures: const [
+                OvertureOffer(
+                  offererGpId: 'gp2',
+                  targetFactionId: 'gp1',
+                  stage: OvertureStage.embassy,
+                ),
+              ],
+              assetBundle: _StringAssetBundle({
+                kDialogueOvertureAsset: _kOvertureYarn,
+              }),
+              onDecisions: (_) {},
+              child: const ColoredBox(color: Color(0xFF101014)),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Line step: intro narrative + one Continue affordance.
+      expect(find.textContaining('Envoys'), findsOneWidget);
+
+      await _advanceToChoice(tester);
+
+      // Combined step: narrative remains visible together with the option.
+      expect(find.byType(CtDialogShell), findsOneWidget);
+      expect(find.textContaining('Envoys'), findsOneWidget);
+      expect(find.byType(CtNinePatchButton), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/dialogue_combined_overture_intro_choice.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'Intervention combined-step golden: intro narrative stays above the Continue option (#3628)',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(600, 800));
+      const boundaryKey = ValueKey<String>('intervention_intro_combined_golden');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppThemes.editorialMonocle,
+          home: RepaintBoundary(
+            key: boundaryKey,
+            child: InterventionDialogueOverlay(
+              game: _minimalGame(),
+              prompts: const [
+                InterventionPrompt(
+                  aggressorGpId: 'gp2',
+                  defenderMinorOrTribeId: 'minor1',
+                  interveningGpId: 'gp1',
+                ),
+              ],
+              assetBundle: _StringAssetBundle({
+                kDialogueInterventionAsset: _kInterventionYarn,
+              }),
+              onDecisions: (_) {},
+              child: const ColoredBox(color: Color(0xFF101014)),
+            ),
+          ),
+        ),
+      );
+      // The intervention flow chains several async setState hops (parse →
+      // runner → startDialogue → onLineStart); pump repeatedly until the
+      // intro line resolves rather than relying on a single fixed delay.
+      await tester.pump();
+      for (var i = 0; i < 40; i++) {
+        if (find.textContaining('Heavy tidings').evaluate().isNotEmpty) break;
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      // Line step: intro narrative + one Continue affordance.
+      expect(find.textContaining('Heavy tidings'), findsOneWidget);
+
+      await _advanceToChoice(tester);
+
+      // Combined step: narrative remains visible together with the option.
+      expect(find.byType(CtDialogShell), findsOneWidget);
+      expect(find.textContaining('Heavy tidings'), findsOneWidget);
+      expect(find.byType(CtNinePatchButton), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile(
+          'goldens/dialogue_combined_intervention_intro_choice.png',
         ),
       );
     },

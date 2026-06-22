@@ -31,6 +31,7 @@ class OvertureDialogueOverlay extends StatefulWidget {
 
     /// When true, skip Jenny intro and show list immediately. For tests only.
     this.skipIntroForTest = false,
+    this.assetBundle,
   });
 
   /// SPEC/ui/overture-dialogue-overlay.md — [UiScreenIds.overtureDialogueOverlay].
@@ -42,6 +43,11 @@ class OvertureDialogueOverlay extends StatefulWidget {
   final Widget child;
   final CtLogger? logger;
   final bool skipIntroForTest;
+
+  /// Optional asset bundle override for loading the overture Yarn asset.
+  /// Defaults to [rootBundle]; tests inject a deterministic in-memory bundle
+  /// (mirrors `InterventionDialogueOverlay`).
+  final AssetBundle? assetBundle;
 
   @override
   State<OvertureDialogueOverlay> createState() =>
@@ -84,7 +90,8 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
   Future<void> _loadAndRunIntro() async {
     final log = widget.logger ?? packageLogger('dialogue');
     try {
-      final text = await rootBundle.loadString(kDialogueOvertureAsset);
+      final bundle = widget.assetBundle ?? rootBundle;
+      final text = await bundle.loadString(kDialogueOvertureAsset);
       final project = YarnProject();
       project.parse(text);
       if (!project.nodes.containsKey(_kOvertureNode)) {
