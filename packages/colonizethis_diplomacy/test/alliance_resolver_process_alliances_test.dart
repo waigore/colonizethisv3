@@ -49,6 +49,7 @@ void main() {
       expect(rel, isNotNull);
       expect(rel!.level, RelationLevel.allied);
       expect(rel.score, relationScoreMinAllied);
+      expect(rel.formalAlliance, isTrue);
       expect(rel.sinceTurn, 7);
       expect(
         after.diplomaticHistoryEvents
@@ -83,6 +84,7 @@ void main() {
       final rel = getRelation(after, 'gp1', 'gp2');
       expect(rel!.level, RelationLevel.allied);
       expect(rel.score, relationScoreMinAllied);
+      expect(rel.formalAlliance, isTrue);
       expect(rel.lastInteractionTurn, 9);
     });
 

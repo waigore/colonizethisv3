@@ -85,6 +85,23 @@ const EdgeInsets kDiplomacyActionButtonPadding = EdgeInsets.symmetric(
   vertical: 3,
 );
 
+/// Label for the formal-alliance (treaty) badge rendered on the relation line
+/// when `DiplomacyRelation.formalAlliance` is `true`. Exposed at library scope
+/// so widget tests pin the badge text from a single source.
+/// SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625).
+const String kDiplomacyAllianceBadgeLabel = 'ALLIANCE';
+
+/// OKLCH token for the translucent accent overlay behind the formal-alliance
+/// badge, mirroring the WAR/PEACE relation-state badge derivation but on the
+/// accent hue (`oklch(40% 0.06 85)`), tinted at [kDiplomacyAllianceBadgeAlpha].
+/// SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625).
+const OklchToken kDiplomacyAllianceBadgeBgToken = OklchToken(0.40, 0.06, 85);
+
+/// Alpha applied on top of [kDiplomacyAllianceBadgeBgToken] for the
+/// formal-alliance badge background overlay.
+/// SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625).
+const double kDiplomacyAllianceBadgeAlpha = 0.30;
+
 /// OKLCH token for the **Unfriendly** relation word (display band `30 … 49`),
 /// mirroring the mockup `.f-relation .word` color `oklch(62% 0.10 55)`
 /// (warm amber). SPEC/ui/diplomacy-panel.md § Relation word styling

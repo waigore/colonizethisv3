@@ -42,7 +42,8 @@ CtGameFeatureScreenShell (backgroundColor: --bg, attachGameToUiListener: false)
           DetailCard — title "CURRENT RELATION"
             if kind == greatPower:
               RelativePowerLine ("Relative power: +N% · Tier"; shared with diplomacy-panel.md § Relative power line)
-            RelationSummary (state word in --danger / --success + one-word score label, or "—")
+            RelationSummary (state word in --danger / --success + one-word score label, or "—";
+              + DiplomacyAllianceBadge "ALLIANCE" chip when relation.formalAlliance is true)
           DetailCard — title "DIPLOMATIC HISTORY"
             [empty] diplomacy_detail_noEvents (italic --muted)
             OR LeftBorderTile per event (mono --accent-dim year/turn label + sentence)
@@ -89,6 +90,8 @@ Outgoing subsidy/grant pending copy from the diplomacy **list** row is **not** d
 | Empty dossier | GP with zero matching `dossierEvidenceEntries` | `diplomacy_detail_noDossier`. |
 | GP relative power | `kind == FactionKind.greatPower` | `RelativePowerLine` rendered above the relation summary in the `CURRENT RELATION` card; `pct` recomputed from `greatPowerPowerScore(game, factionId)` vs `greatPowerPowerScore(game, humanPlayerId)` per [diplomacy-panel.md](diplomacy-panel.md) § Relative power line. |
 | Non-GP relative power | `kind != greatPower` | No relative-power line in the `CURRENT RELATION` card. |
+| Formal alliance | `relation != null`, `relation.formalAlliance == true` | The `CURRENT RELATION` summary appends a `DiplomacyAllianceBadge` (`ALLIANCE` chip, `--accent` text on a translucent accent overlay) after the relation-state/score words — the same treaty marker as [diplomacy-panel.md](diplomacy-panel.md) § Formal alliance indicator. |
+| Informal Allied (no treaty) | `relation != null`, `relation.formalAlliance == false` | No `DiplomacyAllianceBadge` is rendered, even when the relation score is in the informal `RelationLevel.allied` band (76–100); only the one-word `Friendly` label appears. |
 
 History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPair`.
 
@@ -128,6 +131,14 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
   When the `CURRENT RELATION` `DetailCard` renders,
   Then the UI layer does not render a `RelativePowerLine` widget.
 
+- Given `relation` is non-null with `relation.formalAlliance == true`,
+  When the `CURRENT RELATION` `DetailCard` renders,
+  Then the UI layer renders exactly one `DiplomacyAllianceBadge` whose text equals `kDiplomacyAllianceBadgeLabel` (`ALLIANCE`) and whose text colour resolves to `EditorialMonoclePalette.accent`, distinct from the one-word relation label (Refs #3625, AC4).
+
+- Given `relation` is non-null with a score in the informal `RelationLevel.allied` band (for example 90) but `relation.formalAlliance == false`,
+  When the `CURRENT RELATION` `DetailCard` renders,
+  Then the UI layer does not render any `DiplomacyAllianceBadge`, while the one-word `Friendly` relation label still appears (Refs #3625, AC4 negative).
+
 - Given `kind` is not `FactionKind.greatPower`,
   When the widget builds,
   Then the UI layer does not render the dossier section title (`diplomacy_detail_dossierTitle`).
@@ -166,3 +177,4 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
 
 - **Folder:** `Diplomacy Detail Screen`
 - **Default use case:** `ProviderScope` with `appEventBusProvider` → `AppEventBus.create()`; renders `DiplomacyDetailScreen` with a minimal inline `Game` fixture (human GP + rival GP, one peace relation, one history event, one dossier entry) inside `MaterialApp`.
+- **Formal alliance use case:** `Formal alliance — GP with treaty badge` renders a GP target whose relation carries `formalAlliance: true`, proving the `ALLIANCE` treaty badge appears in the `CURRENT RELATION` card (Refs #3625, AC4).

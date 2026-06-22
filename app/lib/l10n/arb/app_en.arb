@@ -417,9 +417,9 @@
   "@game_callToArms_title": {
     "description": "Title when the human must respond to an ally's call to arms."
   },
-  "game_callToArms_intro": "An allied power is at war. Join their war or refuse (alliance ends, relations worsen).",
+  "game_callToArms_intro": "A treaty ally is at war. Join their war or refuse (the formal alliance ends, relations worsen).",
   "@game_callToArms_intro": {
-    "description": "Short explanation above the list of call-to-arms choices."
+    "description": "Short explanation above the list of call-to-arms choices. References the formal alliance/treaty, not the informal Friendly relation band (Refs #3625)."
   },
   "game_callToArms_prompt": "{defender} is attacked by {aggressor}.",
   "@game_callToArms_prompt": {

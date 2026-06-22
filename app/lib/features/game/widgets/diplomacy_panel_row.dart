@@ -185,11 +185,18 @@ class _DiplomacyRow extends StatelessWidget {
     if (overtureLabel.isNotEmpty) {
       spans.add(TextSpan(text: ' · $overtureLabel'));
     }
+    // SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625): a
+    // persisted formal alliance (treaty) surfaces an explicit `ALLIANCE` badge
+    // after the WAR/PEACE state badge so a mutual-defence treaty reads as
+    // distinct from a merely-Friendly informal relation. The informal
+    // `RelationLevel.allied` score band never shows this badge on its own.
+    final bool showAlliance = rel.formalAlliance;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         _RelationStateBadge(atWar: rel.atWar),
+        if (showAlliance) ...[CtGap.wm, const DiplomacyAllianceBadge()],
         if (spans.isNotEmpty)
           Flexible(
             child: Text.rich(
