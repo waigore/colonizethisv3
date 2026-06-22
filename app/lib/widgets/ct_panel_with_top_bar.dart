@@ -32,9 +32,10 @@ class CtPanelWithTopBar extends StatelessWidget {
   /// consumer is preserved.
   final List<Widget> children;
 
-  /// Forwarded to the inner [Column]. [CtScreenShell] uses the default
-  /// [MainAxisSize.max] (it fills a [Scaffold] body); [UnitsPanelShell] uses
-  /// [MainAxisSize.min] so the constrained panel hugs its content.
+  /// Forwarded to the inner [Column]. Both [CtScreenShell] and
+  /// [UnitsPanelShell] use the default [MainAxisSize.max] so the body fills
+  /// the available height ([CtScreenShell] fills a [Scaffold] body;
+  /// [UnitsPanelShell] fills the host-allocated bottom-sheet cap, Refs #3627).
   final MainAxisSize mainAxisSize;
 
   @override
@@ -44,10 +45,7 @@ class CtPanelWithTopBar extends StatelessWidget {
       child: Column(
         mainAxisSize: mainAxisSize,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          ?topBar,
-          ...children,
-        ],
+        children: <Widget>[?topBar, ...children],
       ),
     );
   }

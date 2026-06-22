@@ -790,6 +790,31 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
         name: 'With map',
         builder: (context) => const MilitaryPanelWithMapStory(),
       ),
+      WidgetbookUseCase(
+        // Narrow sizing contract (Refs #3627 AC6): full viewport width ×
+        // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp.
+        name: 'Mobile (360x640)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return mobileViewport(
+            context,
+            ConstrainedBox(
+              constraints: unitsPanelSheetConstraints(const Size(360, 640)),
+              child: MilitaryUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                bus: AppEventBus.create(),
+                topology: result.combinedTopology,
+                draftOrders: const Orders(),
+              ),
+            ),
+          );
+        },
+      ),
     ],
   ),
 ];
@@ -828,6 +853,31 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'With map',
         builder: (context) => const NavalPanelWithMapStory(),
+      ),
+      WidgetbookUseCase(
+        // Narrow sizing contract (Refs #3627 AC6): full viewport width ×
+        // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp
+        // (naval shares the same rule, no fixed sidebar).
+        name: 'Mobile (360x640)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return mobileViewport(
+            context,
+            ConstrainedBox(
+              constraints: unitsPanelSheetConstraints(const Size(360, 640)),
+              child: NavalUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                bus: AppEventBus.create(),
+                topology: result.combinedTopology,
+              ),
+            ),
+          );
+        },
       ),
     ],
   ),

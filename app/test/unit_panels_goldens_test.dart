@@ -16,6 +16,7 @@ import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -73,6 +74,43 @@ Widget _host({required Key boundaryKey, required Widget child}) {
   );
 }
 
+/// Mobile golden viewport (`360 × 640` dp) for the narrow sizing contract
+/// (Refs #3627 AC6 / AC7). The panel is bound by the production narrow
+/// constraints from `unitsPanelSheetConstraints` (full width × `50%` height)
+/// so the committed mobile baselines exercise the same host sizing the
+/// bottom-sheet openers apply on a phone-sized viewport.
+const Size _mobileViewport = Size(360, 640);
+
+/// Narrow host constraints derived from the shared sizing helper so the
+/// mobile golden matches the in-app `50%` height / full-width contract.
+final BoxConstraints _mobilePanelConstraints = unitsPanelSheetConstraints(
+  _mobileViewport,
+);
+
+Widget _mobileHost({required Key boundaryKey, required Widget child}) {
+  return ProviderScope(
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppThemes.editorialMonocle,
+      home: Scaffold(
+        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        // The narrow sheet anchors to the bottom of the viewport; align so the
+        // golden shows the panel filling its `50%` height cap from the bottom.
+        body: Align(
+          alignment: Alignment.bottomCenter,
+          child: RepaintBoundary(
+            key: boundaryKey,
+            child: ConstrainedBox(
+              constraints: _mobilePanelConstraints,
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -90,6 +128,17 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.binding.setSurfaceSize(_hostViewport);
     await tester.pumpWidget(_host(boundaryKey: key, child: panel));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> pumpMobileHost(
+    WidgetTester tester,
+    Widget panel,
+    Key key,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(_mobileViewport);
+    await tester.pumpWidget(_mobileHost(boundaryKey: key, child: panel));
     await tester.pumpAndSettle();
   }
 
@@ -168,6 +217,86 @@ void main() {
     await expectLater(
       find.byKey(key),
       matchesGoldenFile('goldens/unit_panel_naval_default.png'),
+    );
+  });
+
+  // Mobile (narrow) golden coverage — Refs #3627 AC6 / AC7. Each panel is
+  // bound by the production narrow constraints (full width × 50% height) at a
+  // 360 × 640 dp viewport so the committed baseline pins the fill-height
+  // contract (AC3) and the narrow sizing rule together.
+  testWidgets('golden: UNIT10001 Civilian Units panel mobile (Refs #3627)', (
+    WidgetTester tester,
+  ) async {
+    const key = ValueKey('unit_panel_civilian_mobile_golden');
+    await pumpMobileHost(
+      tester,
+      CivilianUnitsPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        bus: AppEventBus.create(),
+      ),
+      key,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(CivilianUnitsPanel), findsOneWidget);
+    _expectEditorialMonocleDarkChrome(tester);
+
+    await expectLater(
+      find.byKey(key),
+      matchesGoldenFile('goldens/unit_panel_civilian_mobile.png'),
+    );
+  });
+
+  testWidgets('golden: UNIT20001 Military Units panel mobile (Refs #3627)', (
+    WidgetTester tester,
+  ) async {
+    const key = ValueKey('unit_panel_military_mobile_golden');
+    await pumpMobileHost(
+      tester,
+      MilitaryUnitsPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        bus: AppEventBus.create(),
+        topology: debugInit.combinedTopology,
+        draftOrders: const Orders(),
+      ),
+      key,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
+    _expectEditorialMonocleDarkChrome(tester);
+
+    await expectLater(
+      find.byKey(key),
+      matchesGoldenFile('goldens/unit_panel_military_mobile.png'),
+    );
+  });
+
+  testWidgets('golden: UNIT30001 Naval Units panel mobile (Refs #3627)', (
+    WidgetTester tester,
+  ) async {
+    const key = ValueKey('unit_panel_naval_mobile_golden');
+    await pumpMobileHost(
+      tester,
+      NavalUnitsPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        bus: AppEventBus.create(),
+        topology: debugInit.combinedTopology,
+      ),
+      key,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(NavalUnitsPanel), findsOneWidget);
+    expect(find.byType(UnitsEntityCard), findsWidgets);
+    _expectEditorialMonocleDarkChrome(tester);
+
+    await expectLater(
+      find.byKey(key),
+      matchesGoldenFile('goldens/unit_panel_naval_mobile.png'),
     );
   });
 }
