@@ -7,7 +7,7 @@
 import 'package:colonizethis_economy/src/economy/trade_interception_constants.dart';
 import 'package:colonizethis_economy/src/economy/trade_interception_scan.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 var _fleetSeq = 0;
 
