@@ -5,7 +5,6 @@ import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -185,19 +184,10 @@ void main() {
       await tester.tap(firstPlus);
       await tester.pumpAndSettle();
 
-      final shellScrollable = find.descendant(
-        of: find.byType(CtDialogShell),
-        matching: find.byType(Scrollable),
-      );
-      final closeButton = find.text('×');
-      await tester.dragUntilVisible(
-        closeButton,
-        shellScrollable,
-        const Offset(0, -120),
-      );
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(closeButton);
-      await tester.tap(closeButton);
+      // The train dialogs have no × button per #3568 chrome parity; dismiss via
+      // route pop (scrim tap / system back). Orders are still applied on close
+      // by the host PopScope.
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pumpAndSettle();
 
       expect(capturedOrders, isNotNull);
@@ -502,5 +492,45 @@ void main() {
 
       expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
     });
+
+    testWidgets(
+      'AC (positive): multi-resource deficit hint joins clauses with ", "',
+      (WidgetTester tester) async {
+        // Tech unlocked + abundant peasants/fabric/castIron/coal, but zero
+        // treasury and zero lumber. One queued Carrack (£8,000 + 2 lumber +
+        // 1 fabric + 1 peasant) makes treasury and lumber insufficient, so the
+        // hint joins two `{Name} low` clauses with a comma (Refs #3568).
+        final base = gameWithNavalResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        final game = base.copyWith(
+          players: [
+            player.copyWith(
+              treasury: 0,
+              stockpile: const Stockpile(
+                quantities: {
+                  'lumber': 0,
+                  'fabric': 100,
+                  'castIron': 100,
+                  'coal': 100,
+                },
+              ),
+            ),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: carrackOrders(game, 1),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Treasury low, Lumber low'), findsOneWidget);
+        expect(find.textContaining(' and '), findsNothing);
+      },
+    );
   });
 }

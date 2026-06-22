@@ -25,24 +25,24 @@ The Train Civilians dialog lets the player queue training orders for civilian un
 
 ```
 ┌─────────────────────────────────────────┐
-│  Train Civilians                    [×] │  ← CtDialogShell title bar
-├─────────────────────────────────────────┤
+│             Train Civilians             │  ← centered title, no × (scrim/back closes)
 │ ┌─────────────────────────────────────┐ │  ← Boxed inset resource bar
 │ │  Treasury: £5,000     Paper: 12     │ │     (mono bold values)
 │ └─────────────────────────────────────┘ │
-│  Treasury low and Paper low             │  ← Dynamic deficit hint (below box)
-├─────────────────────────────────────────┤
-│  [icon] Explorer            [−] 0 [+]   │  ← Per-unit-type row (single line)
-│         £1,000 + 2 paper                │     name over cost (left), stepper (right)
-│  ─────────────────────────────────────  │
-│  [icon] Builder             [−] 0 [+]   │
-│         £1,000 + 2 paper                │
-│  ─────────────────────────────────────  │
-│  [icon] Merchant 🔒         [−] 0 [+]   │  ← Locked (tech not unlocked)
-│         £2,000 + 4 paper                │
-│         Requires: Merchant Companies    │  ← Lock reason
+│  Treasury low, Paper low                │  ← Dynamic deficit hint (below box)
+│  Explorer                   [−] 0 [+]   │  ← Per-unit-type row (single line)
+│  £1,000 + 2 paper                       │     name over cost (left), stepper (right)
+│  Builder                    [−] 0 [+]   │
+│  £1,000 + 2 paper                       │
+│  🔒 Merchant                [−] 0 [+]   │  ← Locked (tech not unlocked)
+│  £2,000 + 4 paper                       │
+│  Requires: Merchant Companies           │  ← Lock reason
 └─────────────────────────────────────────┘
 ```
+
+No `×` close button and no brass section dividers between the title, resource
+bar, and unit list (flat padded column per the canonical mockup, #3568 parity).
+The dialog dismisses via scrim tap / system back; orders apply on close.
 
 ### Resource Bar (top)
 
@@ -60,7 +60,7 @@ unit costs) and updates live on every stepper toggle:
 Below the resource bar (outside the box), a **dynamic deficit hint** updates on every stepper toggle:
 - If treasury insufficient for any queued unit: "Treasury low"
 - If paper insufficient for any queued unit: "Paper low"
-- If both insufficient: "Treasury low and Paper low" (each clause joined with `" and "`)
+- If both insufficient: "Treasury low, Paper low" (each clause is `{Name} low`, joined with `", "`)
 - If no deficit: hidden
 
 ### Unit Type Rows
@@ -103,10 +103,10 @@ left `.info` block and a right `.stepper`.
 - Row is disabled visually (subdued) if resources insufficient for 1 unit AND count is 0
 
 #### Locked Unit Row
-- Unit type icon + unit name + 🔒 lock indicator
+- Unit name prefixed with the 🔒 (`kTrainDialogLockPrefix`) glyph — no separate lock-icon column (#3568 parity)
 - "Requires: {tech display name}" label below unit name
 - Stepper always disabled
-- Row visually subdued (50% opacity)
+- Row visually subdued (50% opacity, `kTrainDialogLockedOpacity`)
 
 ### Footer Actions
 - No explicit "Confirm" button — orders are applied on dialog close
@@ -165,27 +165,13 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 
 ---
 
-## Lock Icon Asset
+## Lock affordance
 
-- **Asset ID:** `ui_icon_lock`
-- **Path:** `assets/icons/ui_icon_lock.png` (bundle path; use `StrictAssetIcon` + `kAppIconAssetPrefix` in app code per [game-toolbar-icons.md](game-toolbar-icons.md))
-- **Size:** 32×32
-- **Style:** Pixel-art padlock, single color outline, medium shading, high top-down
-- **Generation:** Use `pixellab_create_map_object` with style matching to `ui_main_menu_button.png`
-
-```
-pixellab_create_map_object(
-  description='pixel art small padlock icon for locked UI elements, colonial era style, simple clean design',
-  width=32,
-  height=32,
-  view='high top-down',
-  outline='single color outline',
-  shading='medium shading',
-  detail='medium detail',
-  background_image='{"type": "path", "path": "app/assets/images/ui_main_menu_button.png"}',
-  inpainting='{"type": "oval", "percentage": 0.6}'
-)
-```
+Locked rows are flagged by prefixing the unit name with the 🔒 text glyph
+(`kTrainDialogLockPrefix` in `train_dialog_chrome.dart`) via
+`TrainDialogUnitNameLine`, per the canonical mockup `.unit-row.locked` names
+(#3568 parity). The dialog no longer renders a separate `ui_icon_lock` image
+column. The `ui_icon_lock` pixel-art asset remains available for other surfaces.
 
 ---
 
@@ -239,7 +225,7 @@ pixellab_create_map_object(
 
 - **Given** the Train Civilians dialog is open, **when** the user has no capital set, **then** the UI shows an error message "No capital set — cannot train units" and all steppers are disabled.
 
-- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low and Paper low".
+- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low, Paper low" (each clause `{Name} low`, joined with `", "`).
 
 - **Given** the Train Civilians dialog is open, **when** the user taps the Reset button (if present), **then** all steppers are set to 0 and deficit hint is cleared.
 
