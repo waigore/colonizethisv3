@@ -167,6 +167,10 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
   When the widget builds,
   Then the UI layer renders the `CURRENT RELATION` and `DIPLOMATIC HISTORY` titles but does NOT mount the `DOSSIER` title, and `WidgetTester.takeException()` returns `null` (negative AC for the GP-only branch at the minimum viewport per [mobile-adaptation.md](mobile-adaptation.md) § 7).
 
+- Given the screen is mounted under `AppThemes.editorialMonocle` for a Great Power target whose `greatPowerPowerScore` exceeds the human player's (deterministic province fixture),
+  When the golden test in `app/test/diplomacy_relative_power_goldens_test.dart` captures the screen's keyed `RepaintBoundary`,
+  Then the captured boundary matches its committed baseline `app/test/goldens/diplomacy_detail_relative_power.png` via `matchesGoldenFile`, the `CURRENT RELATION` card title renders, and exactly one `RelativePowerLine` is present (visual-regression baseline for the relative-power line on GAME30002 per [diplomacy-panel.md](diplomacy-panel.md) § Relative power line).
+
 ---
 
 ## Widgetbook
