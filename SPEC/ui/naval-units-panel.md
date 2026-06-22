@@ -243,6 +243,8 @@ The naval units panel participates in the Widgetbook catalog for review and test
   - The story demonstrates:
     - Clicking a fleet row highlights and pans/centers the map on the appropriate tile (capital port for Home Fleet, port or adjacent port for other fleets), and switches region tab if needed.
     - Expand/collapse behavior does not interfere with locate behavior.
+- **Mobile (360x640) story:**
+  - A Widgetbook use case renders the panel inside a `360 × 640` dp mobile frame bound by the production narrow constraints (`unitsPanelSheetConstraints` — full width × `50%` height, shared rule, no fixed sidebar), showing the fill-height narrow sizing contract (Refs #3627).
 
 ---
 
