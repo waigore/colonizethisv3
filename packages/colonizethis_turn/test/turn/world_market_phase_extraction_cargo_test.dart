@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/src/economy/sea_transport.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show defaultCargoHoldsStub;
 import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';

@@ -137,3 +137,9 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 - **Given** an unlocked regiment row whose `[+]` is disabled because adding one more exceeds available resources, **when** the row renders, **then** the `[+]` button uses the `danger` variant (red border/label) distinct from the normal disabled appearance.
 
 - **Given** a tech-locked regiment row, **when** the row renders, **then** the `[+]` button shows the normal (non-danger) disabled appearance with no red tint.
+
+- **Given** the Train Military dialog is open, **when** the user hovers (desktop) or taps (mobile) a commodity cost icon in a regiment row's cost summary, **then** the UI layer shows a `Tooltip` reading `"{displayName} ({category})"` (e.g. `Fabric (manufactured)`), per [components/resource-icon-tooltip.md](components/resource-icon-tooltip.md).
+
+- **Given** the Train Military dialog is open, **when** the user hovers/taps the treasury coin cost icon, **then** the UI layer shows a `Tooltip` reading `Treasury`; and the peasant cost icon shows a `Tooltip` reading `Peasants`.
+
+- **Given** any cost icon in a regiment row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.

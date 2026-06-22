@@ -1,5 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/src/economy/worker_action_cost.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show
+        kRecruitWorkerInsufficientMaterials,
+        kRecruitWorkerInsufficientTreasury,
+        kRecruitWorkerInsufficientWorkers,
+        kRecruitWorkerTechLocked;
 import 'package:colonizethis_orders/src/orders/validators/recruit_worker_order_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';

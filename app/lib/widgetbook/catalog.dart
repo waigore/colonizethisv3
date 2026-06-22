@@ -126,6 +126,7 @@ import '../widgets/ct_transfer_list.dart';
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
+part 'catalog_diplomacy_panel.dart';
 part 'catalog_screens_combat.dart';
 part 'catalog_dialogs.dart';
 part 'catalog_primitives.dart';
