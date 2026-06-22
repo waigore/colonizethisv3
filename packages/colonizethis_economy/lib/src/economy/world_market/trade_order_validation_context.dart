@@ -5,22 +5,19 @@
 /// SPEC/program/world-market-resolution.md § Trade order validation.
 ///
 /// This file carries the *context-building* concern: the stable rejection
-/// reason codes, the pre-computed [TradeOrderValidationContext] inputs, and
-/// the [tradeOrderValidationContextFromGame] factory. Rule evaluation lives in
-/// `trade_order_validator.dart`. Both are re-exported from the same
-/// `colonizethis_economy` barrel, so callers are unaffected by the split.
+/// reason codes and the pre-computed [TradeOrderValidationContext] inputs. The
+/// Game-scoped factory (`tradeOrderValidationContextFromGame`) lives in
+/// `world_market_player_context.dart` alongside the shared snapshot facade
+/// (Refs #3615 Cluster 2). Rule evaluation lives in `trade_order_validator.dart`.
+/// All are re-exported from the same `colonizethis_economy` barrel, so callers
+/// are unaffected by the split.
 ///
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'bid_type_cap.dart' show worldMarketBidTypeCap;
-import '../sea_transport.dart' show cargoHoldsForHomeFleet;
-import 'sellable_quantity.dart' show offerCapByCommodityId;
 import 'world_market_context_base.dart';
-import 'treasury_bid_budget.dart'
-    show stagedBidTotalSpendByPlayer, treasuryAvailableForBidsByPlayer;
 
 /// Stable rejection-reason codes returned by `TradeOrderValidator.validate`.
 ///
@@ -83,56 +80,4 @@ class TradeOrderValidationContext extends WorldMarketContextBase {
 
   /// Catalog fallback prices when [worldMarketState.prices] lacks an entry.
   final data.ResourceRules resourceRules;
-}
-
-/// Builds a [TradeOrderValidationContext] from live [Game] state for order
-/// submission and [OrderEngine] validation.
-///
-/// When [stagedOrders] and [projectedTreasuryDelta] are supplied, the treasury
-/// bid budget subtracts projected non-bid deficits (same composition as the
-/// Trade UI per `SPEC/ui/trade-screen.md` § treasury bid cap). The caller
-/// supplies [projectedTreasuryDelta] — the signed net treasury change for the
-/// turn under the staged orders (the `projectOrderEffects(...).treasuryDelta`
-/// dry-run, which is a `turn`-layer operation and so is computed by the order
-/// engine / UI rather than here, keeping `colonizethis_economy` free of any
-/// `orders`/`turn` dependency per `SPEC/program/logic-package-split-phase0.md`
-/// § economy ↔ orders). The non-bid contribution is reconstructed by adding
-/// this player's running bid spend back to [projectedTreasuryDelta]. When
-/// either argument is omitted the budget is raw treasury only.
-TradeOrderValidationContext tradeOrderValidationContextFromGame(
-  Game game,
-  String playerId, {
-  Orders? stagedOrders,
-  int? projectedTreasuryDelta,
-}) {
-  final rules = data.ResourceRules.defaultRules;
-  var treasuryBudget = treasuryAvailableForBidsByPlayer(
-    game: game,
-    playerId: playerId,
-  );
-  if (stagedOrders != null && projectedTreasuryDelta != null) {
-    final int bidSpend = stagedBidTotalSpendByPlayer(
-      orders: stagedOrders,
-      playerId: playerId,
-      game: game,
-      resourceRules: rules,
-    );
-    treasuryBudget = treasuryAvailableForBidsByPlayer(
-      game: game,
-      playerId: playerId,
-      projectedNonBidTreasuryDelta: projectedTreasuryDelta + bidSpend,
-    );
-  }
-  return TradeOrderValidationContext(
-    playerId: playerId,
-    bidTypeCap: worldMarketBidTypeCap(game, playerId),
-    tradeCargoCapacity: cargoHoldsForHomeFleet(game, playerId),
-    availableStockpileByCommodityId: offerCapByCommodityId(
-      game: game,
-      playerId: playerId,
-    ),
-    treasuryBudgetForBids: treasuryBudget,
-    worldMarketState: game.worldMarketState,
-    resourceRules: rules,
-  );
 }

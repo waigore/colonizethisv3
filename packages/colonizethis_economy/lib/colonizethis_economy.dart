@@ -29,4 +29,5 @@ export 'src/economy/world_market/trade_order_suggester.dart';
 export 'src/economy/world_market/trade_order_validation_context.dart';
 export 'src/economy/world_market/trade_order_validator.dart';
 export 'src/economy/world_market/treasury_bid_budget.dart';
+export 'src/economy/world_market/world_market_player_context.dart';
 export 'src/validation/order_validation_result.dart';
