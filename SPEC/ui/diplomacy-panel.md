@@ -143,6 +143,22 @@ Each faction row renders the AT_PEACE / AT_WAR state as a small mono-font chip p
 - **Peace variant:** translucent cool-green overlay background derived from the canonical `--success` token (the mockup uses `oklch(40% 0.06 150 / 0.2)`, which is the success hue desaturated and alpha-tinted at 0.20); foreground text `--success`.
 - **Forbidden:** raw `Colors.red`, `Colors.green`, or any Material chrome background. The badge resolves background and foreground from the editorial-monocle palette only.
 
+### Formal alliance indicator (Refs #3625)
+
+A **formal alliance** (treaty) between the human Great Power and another Great Power is a persisted state distinct from the informal relation score. It is recorded on `DiplomacyRelation.formalAlliance` (set when an `Alliance` order resolves — `allianceFormed` — and cleared on `allianceBroken`, e.g. a Call to Arms refusal) per [diplomacy.md](../game/diplomacy.md) § Alliances and [diplomacy-resolution.md](../program/diplomacy-resolution.md). Because the player-facing relation display only ever shows the one-word band label (`Hostile` / `Unfriendly` / `Cordial` / `Friendly`) and **never** the word "Allied", a high relation score alone must not read as a treaty. The panel therefore surfaces an explicit alliance badge so the player can distinguish a formal mutual-defence treaty from merely-Friendly relations.
+
+- **Trigger:** rendered **only** when the row's `DiplomacyRelation.formalAlliance` is `true`. A row whose relation is in the informal `RelationLevel.allied` band (score 76–100) but with `formalAlliance == false` shows **no** alliance badge. Formal alliances are GP↔GP only, so the badge appears only on Great Power rows in current product.
+- **Placement:** a compact mono chip rendered on the relation line, immediately after the WAR/PEACE relation state badge and before the one-word relation label, with a 4 dp gap on each side.
+- **Label:** uppercase `ALLIANCE` (library-scope constant `kDiplomacyAllianceBadgeLabel` so widget tests pin a single source). The label is intentionally **not** the relation-band word, so it cannot be confused with the informal `Friendly` label.
+- **Chrome:** mono font, font-size 9 sp, padding 1 dp top/bottom × 5 dp left/right, square 1 dp corners — matching the `WAR`/`PEACE` relation state badge chrome. Foreground text resolves to `--accent` (`EditorialMonoclePalette.accent`); background is a translucent accent overlay derived from the accent hue (`oklch(40% 0.06 85 / 0.30)`) so the gold treaty chip reads as distinct from both the translucent cool-green `PEACE` chip and the italic green `Friendly` word.
+- **Forbidden:** raw Material chrome colors; reusing the relation-band word to imply a treaty; rendering the badge when `formalAlliance` is `false`.
+
+#### Formal alliance indicator acceptance criteria (Refs #3625)
+
+- **Alliance badge shown for a formal alliance:** Given a faction row whose `DiplomacyRelation.formalAlliance` is `true`, when the relation line renders, then exactly one alliance badge with label `kDiplomacyAllianceBadgeLabel` (`ALLIANCE`) is present on that row, its foreground text color resolves to `EditorialMonoclePalette.accent`, and it renders after the WAR/PEACE relation state badge.
+- **Alliance badge absent without a formal alliance (negative):** Given a faction row whose relation score is in the informal `RelationLevel.allied` band (e.g. score `90`) but whose `DiplomacyRelation.formalAlliance` is `false`, when the relation line renders, then no alliance badge (`kDiplomacyAllianceBadgeLabel`) is present and the row still shows the one-word `Friendly` relation label.
+- **Alliance badge is distinct from the relation word:** Given a formally-allied faction row, when the relation line renders, then the alliance badge text equals `ALLIANCE` and is a separate widget from the one-word relation label (`Friendly`), so the treaty indicator never reuses the informal relation band word.
+
 ### Relation word styling (Refs #3621)
 
 The one-word relation label (`Hostile` / `Unfriendly` / `Cordial` / `Friendly`) rendered after the relation state badge is styled per the mockup [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-relation .word` (`font-style: italic`) with the per-level `wordColors` map:
