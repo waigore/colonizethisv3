@@ -52,6 +52,29 @@ void main() {
       expect(updated.state, RelationState.atPeace);
       expect(updated.factionId1, 'A');
     });
+
+    test('formalAlliance defaults to false and is omitted from JSON when false', () {
+      expect(relation.formalAlliance, isFalse);
+      expect(relation.toJson().containsKey('formalAlliance'), isFalse);
+      final restored = DiplomacyRelation.fromJson(relation.toJson());
+      expect(restored.formalAlliance, isFalse);
+    });
+
+    test('formalAlliance round-trips through JSON when true', () {
+      const allied = DiplomacyRelation(
+        factionId1: 'A',
+        factionId2: 'B',
+        score: 80,
+        level: RelationLevel.allied,
+        formalAlliance: true,
+      );
+      final json = allied.toJson();
+      expect(json['formalAlliance'], isTrue);
+      final restored = DiplomacyRelation.fromJson(json);
+      expect(restored.formalAlliance, isTrue);
+      expect(allied.copyWith().formalAlliance, isTrue);
+      expect(allied.copyWith(formalAlliance: false).formalAlliance, isFalse);
+    });
   });
 
   group('OvertureState', () {

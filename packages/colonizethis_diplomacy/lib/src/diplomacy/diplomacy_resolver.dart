@@ -75,6 +75,15 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   // Single scan at phase start; each append uses O(1) tally (Refs #3419 step 7).
   final eventTally = IntraTurnEventTally.fromGame(game);
 
+  // Snapshot of formal-alliance pairs at phase start (i.e. end of the preceding
+  // turn, before this turn's Alliance orders resolve in step 4). Call to arms
+  // (step 5c) gates on this snapshot so an alliance formed the same turn as a
+  // war declaration does not trigger mutual defence. SPEC/game/diplomacy.md.
+  final formalAlliancePairKeysAtPhaseStart = <String>{
+    for (final r in game.diplomacyRelations)
+      if (r.formalAlliance) pairKey(r.factionId1, r.factionId2),
+  };
+
   final diploByPlayer = orders.diplomaticOrdersByPlayerId;
   var factionMembership = DiplomacyFactionMembership.from(game);
 
@@ -171,6 +180,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     diploByPlayer,
     turn,
     factionMembership: factionMembership,
+    formalAlliancePairKeysAtPhaseStart: formalAlliancePairKeysAtPhaseStart,
     callToArmsDecisions: callToArmsDecisions,
     eventTally: eventTally,
   );

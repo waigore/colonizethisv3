@@ -113,6 +113,39 @@ Game _greatPowerRowGame() {
   );
 }
 
+/// AC-4 (#3625) fixture: the human GP `gp1` holds a Friendly-band relation
+/// (score 90) with GP `gp2` **and** a persisted formal alliance, so the GP row
+/// renders the `ALLIANCE` treaty badge on its relation line distinct from the
+/// one-word `Friendly` relation label.
+Game _alliedGreatPowerRowGame() {
+  const ow = 'oldWorld';
+  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
+  final rival = Province(id: '$ow|p2', regionId: ow, displayName: 'Rival', ownerId: 'gp2');
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
+    oldWorld: RegionData(provinces: [home, rival], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  return Game(
+    id: 'diplo-golden-gp-alliance',
+    worldState: world,
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        score: 90,
+        formalAlliance: true,
+      ),
+    ],
+  );
+}
+
 /// AC-6 fixture: the human GP `gp1` has full tile sight into a New-World
 /// province owned by Tribe `t1` but holds no relation, so the Tribe is
 /// discovered via `knownDiplomaticTargetFactionIds` and renders an overture
@@ -240,6 +273,32 @@ void main() {
     await expectLater(
       find.byKey(boundaryKey),
       matchesGoldenFile('goldens/diplomacy_panel_gp_row.png'),
+    );
+  });
+
+  testWidgets('AC-4 (#3625) golden: allied GP row shows ALLIANCE treaty badge', (
+    WidgetTester tester,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(600, 1100));
+    const boundaryKey = ValueKey<String>('diplomacy_gp_alliance_row_golden');
+
+    await tester.pumpWidget(
+      _panelHost(
+        game: _alliedGreatPowerRowGame(),
+        humanPlayerId: 'gp1',
+        boundaryKey: boundaryKey,
+      ),
+    );
+    await _pumpBuilt(tester);
+
+    expect(find.text('Castile'), findsOneWidget);
+    expect(find.text(kDiplomacyAllianceBadgeLabel), findsOneWidget);
+    expect(find.textContaining('Friendly'), findsWidgets);
+
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/diplomacy_panel_gp_alliance_row.png'),
     );
   });
 

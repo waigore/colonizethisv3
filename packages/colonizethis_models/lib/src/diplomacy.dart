@@ -16,6 +16,7 @@ class DiplomacyRelation {
     this.state = RelationState.atPeace,
     this.sinceTurn = 0,
     this.lastInteractionTurn = 0,
+    this.formalAlliance = false,
   });
 
   final String factionId1;
@@ -25,6 +26,15 @@ class DiplomacyRelation {
   final RelationState state;
   final int sinceTurn;
   final int lastInteractionTurn;
+
+  /// Persisted **formal alliance** (treaty) flag for this GP–GP pair.
+  ///
+  /// Set true when an `Alliance` diplomatic order resolves (`allianceFormed`)
+  /// and cleared on `allianceBroken` (e.g. a Call to Arms refusal). This is the
+  /// authoritative mutual-defence gate: the informal [level] `allied` band
+  /// (relation score 76–100) must NOT trigger Call to Arms by itself.
+  /// SPEC/game/diplomacy.md § Alliances.
+  final bool formalAlliance;
 
   bool get atWar => state == RelationState.atWar;
   bool get atPeace => state == RelationState.atPeace;
@@ -41,6 +51,7 @@ class DiplomacyRelation {
     RelationState? state,
     int? sinceTurn,
     int? lastInteractionTurn,
+    bool? formalAlliance,
   }) => DiplomacyRelation(
     factionId1: factionId1 ?? this.factionId1,
     factionId2: factionId2 ?? this.factionId2,
@@ -49,6 +60,7 @@ class DiplomacyRelation {
     state: state ?? this.state,
     sinceTurn: sinceTurn ?? this.sinceTurn,
     lastInteractionTurn: lastInteractionTurn ?? this.lastInteractionTurn,
+    formalAlliance: formalAlliance ?? this.formalAlliance,
   );
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +71,7 @@ class DiplomacyRelation {
     'state': state.name,
     'sinceTurn': sinceTurn,
     'lastInteractionTurn': lastInteractionTurn,
+    if (formalAlliance) 'formalAlliance': formalAlliance,
   };
 
   static DiplomacyRelation fromJson(Map<String, dynamic> json) =>
@@ -76,6 +89,7 @@ class DiplomacyRelation {
         ),
         sinceTurn: json['sinceTurn'] as int? ?? 0,
         lastInteractionTurn: json['lastInteractionTurn'] as int? ?? 0,
+        formalAlliance: json['formalAlliance'] == true,
       );
 }
 

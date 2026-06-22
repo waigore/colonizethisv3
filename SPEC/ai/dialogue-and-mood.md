@@ -97,9 +97,9 @@ Canonical `situation` strings are stable for `dialogueKeyForEvent`.
 | Category | Situation | Status | Hook | Notes |
 |---|---|---|---|---|
 | reactive | forts_on_border | implemented | build/work fort completion | Human-built fort adjacent to AI-owned province. |
-| reactive | attack_on_ally | implemented | combat phase detection | Human attacks faction that is allied with an AI speaker. |
-| reactive | attack_on_minor | implemented | combat phase detection | Human attacks a Minor Nation province. |
-| reactive | attack_on_tribe | implemented | combat phase detection | Human attacks a Tribe province. |
+| reactive | attack_on_ally | implemented | combat phase detection | Human attacks a Great Power that holds a **formal alliance** with an AI speaker (`DiplomacyRelation.formalAlliance == true`, at peace). The informal `RelationLevel.allied` relation band (score 76–100) does **not** by itself trigger this — only a treaty from a resolved `Alliance` order does. See [SPEC/game/diplomacy.md](../game/diplomacy.md) § Alliances. |
+| reactive | attack_on_minor | implemented | combat phase detection | Human attacks a Minor Nation province; AI speaker reacts when tied to the Minor via an embassy or the informal `RelationLevel.allied` band (Minors/Tribes do not form formal Great-Power alliances). |
+| reactive | attack_on_tribe | implemented | combat phase detection | Human attacks a Tribe province; AI speaker reacts when tied to the Tribe via an embassy or the informal `RelationLevel.allied` band (Minors/Tribes do not form formal Great-Power alliances). |
 | reactive | tech_first | implemented | research-complete detection | Human is first faction in match to unlock a tech. |
 | reactive | spies_caught | implemented | counter-spy kill resolution | AI owner of target province speaks when human spy is removed by counter-spy. |
 | reactive | colony_founded | deferred | n/a | Not separately observable as a player-action hook in current turn pipeline. |
@@ -121,3 +121,5 @@ Canonical `situation` strings are stable for `dialogueKeyForEvent`.
 - **Province identity:** When DialogueEvent (or any event) variables include a province id, the value MUST be in prefixed form per [world-model-identity.md](../game/world-model-identity.md).
 - **Mood values:** PortraitMoodEvent and DialogueEvent mood fields use only the fixed set: considering, pleased, gracious, calculating, skeptical, impatient, irritated, dismissive.
 - **UI contract:** UI resolves event fields (leaderId, category, situation, era, mood, variables) to dialogue keys and localized text only; no asset paths or image references in events.
+- **attack_on_ally requires a formal alliance (positive):** Given an AI Great Power speaker holds a formal alliance with another Great Power defender (`DiplomacyRelation.formalAlliance == true`, `RelationState.atPeace`), when the human attacks the defender, then the system emits one `attack_on_ally` reactive DialogueEvent for that AI speaker.
+- **attack_on_ally suppressed without a formal alliance (negative):** Given an AI Great Power speaker is at peace with another Great Power defender at the informal `RelationLevel.allied` band (relation score 76–100) but with `DiplomacyRelation.formalAlliance == false`, when the human attacks the defender, then the system emits no `attack_on_ally` DialogueEvent for that speaker.
