@@ -36,209 +36,193 @@ String _readSpec() => File(_kSpecPath).readAsStringSync();
 
 void main() {
   suppressLogsForTests();
-  group(
-    'SPEC/ui/components/units-panel-shell.md (#2914 S9)',
-    () {
-      test(
-        'spec file exists and is non-empty',
-        () {
-          final file = File(_kSpecPath);
-          expect(
-            file.existsSync(),
-            isTrue,
-            reason:
-                'The composite-component spec for UnitsPanelShell must live '
-                'at SPEC/ui/components/units-panel-shell.md per '
-                'colonizethis-ui-documentation.mdc § Component specs and '
-                'issue #2914 S9.',
-          );
-          final body = file.readAsStringSync();
-          expect(
-            body.trim(),
-            isNotEmpty,
-            reason: 'spec must not be empty',
-          );
-        },
+  group('SPEC/ui/components/units-panel-shell.md (#2914 S9)', () {
+    test('spec file exists and is non-empty', () {
+      final file = File(_kSpecPath);
+      expect(
+        file.existsSync(),
+        isTrue,
+        reason:
+            'The composite-component spec for UnitsPanelShell must live '
+            'at SPEC/ui/components/units-panel-shell.md per '
+            'colonizethis-ui-documentation.mdc § Component specs and '
+            'issue #2914 S9.',
       );
+      final body = file.readAsStringSync();
+      expect(body.trim(), isNotEmpty, reason: 'spec must not be empty');
+    });
 
-      test(
-        'spec declares all canonical sections required by the components '
+    test('spec declares all canonical sections required by the components '
         'README template (Purpose / Widget contract / Layout / Behavior / '
-        'Consumers / Acceptance criteria / Tests / Related)',
-        () {
-          final body = _readSpec();
-          for (final heading in <String>[
-            '## Purpose',
-            '## Widget contract',
-            '## Layout / wireframe',
-            '## Behavior',
-            '## Consumers',
-            '## Acceptance criteria (Given–When–Then)',
-            '## Tests',
-            '## Related',
-          ]) {
-            expect(
-              body,
-              contains(heading),
-              reason:
-                  'composite-component spec must declare the canonical '
-                  '"$heading" section.',
-            );
-          }
-        },
-      );
+        'Consumers / Acceptance criteria / Tests / Related)', () {
+      final body = _readSpec();
+      for (final heading in <String>[
+        '## Purpose',
+        '## Widget contract',
+        '## Layout / wireframe',
+        '## Behavior',
+        '## Consumers',
+        '## Acceptance criteria (Given–When–Then)',
+        '## Tests',
+        '## Related',
+      ]) {
+        expect(
+          body,
+          contains(heading),
+          reason:
+              'composite-component spec must declare the canonical '
+              '"$heading" section.',
+        );
+      }
+    });
 
-      test(
-        'spec lists all three unit-panel consumers by stable screen ID',
-        () {
-          final body = _readSpec();
-          for (final consumerId in <String>[
-            'UNIT10001',
-            'UNIT20001',
-            'UNIT30001',
-          ]) {
-            expect(
-              body,
-              contains(consumerId),
-              reason:
-                  'spec must enumerate consumer screen ID $consumerId so '
-                  'future refactors can reverse-trace the unit panels that '
-                  'depend on this composite.',
-            );
-          }
-          for (final consumerSpecFile in <String>[
-            'civilian-units-panel.md',
-            'military-units-panel.md',
-            'naval-units-panel.md',
-          ]) {
-            expect(
-              body,
-              contains(consumerSpecFile),
-              reason:
-                  'spec must link to the consumer screen spec '
-                  '$consumerSpecFile so reviewers can navigate to the '
-                  'host wireframes.',
-            );
-          }
-        },
-      );
+    test('spec lists all three unit-panel consumers by stable screen ID', () {
+      final body = _readSpec();
+      for (final consumerId in <String>[
+        'UNIT10001',
+        'UNIT20001',
+        'UNIT30001',
+      ]) {
+        expect(
+          body,
+          contains(consumerId),
+          reason:
+              'spec must enumerate consumer screen ID $consumerId so '
+              'future refactors can reverse-trace the unit panels that '
+              'depend on this composite.',
+        );
+      }
+      for (final consumerSpecFile in <String>[
+        'civilian-units-panel.md',
+        'military-units-panel.md',
+        'naval-units-panel.md',
+      ]) {
+        expect(
+          body,
+          contains(consumerSpecFile),
+          reason:
+              'spec must link to the consumer screen spec '
+              '$consumerSpecFile so reviewers can navigate to the '
+              'host wireframes.',
+        );
+      }
+    });
 
-      test(
-        'spec encodes the canonical default panel constraints and the '
-        'EditorialMonoclePalette.muted empty-state contract',
-        () {
-          final body = _readSpec();
-          expect(
-            body,
-            contains('maxWidth: 400'),
-            reason:
-                'spec must restate the canonical maxWidth: 400 default so '
-                'future readers do not have to cross-reference the source '
-                'to confirm the bottom-sheet sizing contract.',
-          );
-          expect(
-            body,
-            contains('maxHeight: 500'),
-            reason:
-                'spec must restate the canonical maxHeight: 500 default '
-                'matching UnitsPanelShell.defaultPanelConstraints.',
-          );
-          expect(
-            body,
-            contains('defaultPanelConstraints'),
-            reason:
-                'spec must mention the exposed '
-                'UnitsPanelShell.defaultPanelConstraints constant so the '
-                'consumer override path (naval >= 1280 dp) is traceable.',
-          );
-          expect(
-            body,
-            contains('EditorialMonoclePalette.muted'),
-            reason:
-                'spec must reference the canonical muted palette token '
-                'used by the empty-state copy so the editorial-monocle '
-                'dark contract is documented at the SPEC level.',
-          );
-        },
+    test('spec encodes the viewport-adaptive bottom-sheet sizing contract '
+        'and the EditorialMonoclePalette.muted empty-state contract '
+        '(Refs #3627)', () {
+      final body = _readSpec();
+      expect(
+        body,
+        contains('unitsPanelSheetConstraints'),
+        reason:
+            'spec must name the shared viewport sizing helper so the '
+            'host-owned 50% / 70% / 55vh contract is traceable.',
       );
-
-      test(
-        'spec links to the catalog atoms and tracking issue #2914',
-        () {
-          final body = _readSpec();
-          expect(
-            body,
-            contains('pixel-art-ui-catalog.md'),
-            reason:
-                'spec must link back to the catalog so reviewers can '
-                'cross-reference the CtPanel / CtTopBar atoms.',
-          );
-          expect(
-            body,
-            contains('#2914'),
-            reason:
-                'spec must reference tracking issue #2914 so progress on '
-                'the umbrella S9 step is discoverable from the file.',
-          );
-        },
+      for (final factor in <String>['0.50', '0.70', '0.55']) {
+        expect(
+          body,
+          contains(factor),
+          reason:
+              'spec must restate the $factor viewport sizing factor so '
+              'readers confirm the bottom-sheet sizing contract without '
+              'cross-referencing the source.',
+        );
+      }
+      expect(
+        body,
+        contains('maxHeight: 500'),
+        reason:
+            'spec must restate the maxHeight: 500 standalone upper bound '
+            'matching UnitsPanelShell.defaultPanelConstraints.',
       );
-
-      test(
-        'spec is at most 1000 words (colonizethis-spec-required.mdc § Layout)',
-        () {
-          final body = _readSpec();
-          final words = body
-              .split(RegExp(r'\s+'))
-              .where((token) => token.isNotEmpty)
-              .toList();
-          expect(
-            words.length <= 1000,
-            isTrue,
-            reason:
-                'SPEC documents must stay under the 1000-word ceiling per '
-                'colonizethis-spec-required.mdc § Layout. Current word '
-                'count is ${words.length}.',
-          );
-        },
+      expect(
+        body,
+        contains('defaultPanelConstraints'),
+        reason:
+            'spec must mention the exposed '
+            'UnitsPanelShell.defaultPanelConstraints constant (width '
+            'unbounded, host-governed) so the sizing path is traceable.',
       );
+      expect(
+        body,
+        contains('EditorialMonoclePalette.muted'),
+        reason:
+            'spec must reference the canonical muted palette token '
+            'used by the empty-state copy so the editorial-monocle '
+            'dark contract is documented at the SPEC level.',
+      );
+    });
 
-      test(
-        'components README index lists the UnitsPanelShell row (negative '
+    test('spec links to the catalog atoms and tracking issue #2914', () {
+      final body = _readSpec();
+      expect(
+        body,
+        contains('pixel-art-ui-catalog.md'),
+        reason:
+            'spec must link back to the catalog so reviewers can '
+            'cross-reference the CtPanel / CtTopBar atoms.',
+      );
+      expect(
+        body,
+        contains('#2914'),
+        reason:
+            'spec must reference tracking issue #2914 so progress on '
+            'the umbrella S9 step is discoverable from the file.',
+      );
+    });
+
+    test(
+      'spec is at most 1000 words (colonizethis-spec-required.mdc § Layout)',
+      () {
+        final body = _readSpec();
+        final words = body
+            .split(RegExp(r'\s+'))
+            .where((token) => token.isNotEmpty)
+            .toList();
+        expect(
+          words.length <= 1000,
+          isTrue,
+          reason:
+              'SPEC documents must stay under the 1000-word ceiling per '
+              'colonizethis-spec-required.mdc § Layout. Current word '
+              'count is ${words.length}.',
+        );
+      },
+    );
+
+    test('components README index lists the UnitsPanelShell row (negative '
         'regression guard — README must continue to enumerate every '
-        'composite spec under it)',
-        () {
-          final readme = File(_kComponentsReadmePath);
-          expect(
-            readme.existsSync(),
-            isTrue,
-            reason:
-                'SPEC/ui/components/README.md must remain in place so '
-                'authoring rules for new composite specs stay discoverable.',
-          );
-          final body = readme.readAsStringSync();
-          expect(
-            body,
-            contains('SPEC/ui/components/'),
-            reason:
-                'README must continue to introduce the components/ '
-                'directory.',
-          );
-          expect(
-            body,
-            contains('UnitsPanelShell'),
-            reason:
-                'README index must enumerate UnitsPanelShell so the '
-                'composite is discoverable from the directory landing '
-                'page (issue #2914 S9).',
-          );
-          expect(
-            body,
-            contains('units-panel-shell.md'),
-            reason:
-                'README index row must link to the spec file path.',
-          );
-        },
+        'composite spec under it)', () {
+      final readme = File(_kComponentsReadmePath);
+      expect(
+        readme.existsSync(),
+        isTrue,
+        reason:
+            'SPEC/ui/components/README.md must remain in place so '
+            'authoring rules for new composite specs stay discoverable.',
       );
-    },
-  );
+      final body = readme.readAsStringSync();
+      expect(
+        body,
+        contains('SPEC/ui/components/'),
+        reason:
+            'README must continue to introduce the components/ '
+            'directory.',
+      );
+      expect(
+        body,
+        contains('UnitsPanelShell'),
+        reason:
+            'README index must enumerate UnitsPanelShell so the '
+            'composite is discoverable from the directory landing '
+            'page (issue #2914 S9).',
+      );
+      expect(
+        body,
+        contains('units-panel-shell.md'),
+        reason: 'README index row must link to the spec file path.',
+      );
+    });
+  });
 }
