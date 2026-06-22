@@ -83,6 +83,20 @@ rules:
     runner: dart
     script: tool/check_economy_cost_check_shared_helper.dart
 
+  - rule_id: repo.economy_world_market_admission_shared
+    group: architecture
+    title: economy world-market validator/suggester must delegate to the shared trade_order_admission.dart helpers (Refs #3615 Cluster 1)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_world_market_admission_shared.dart
+
+  - rule_id: repo.economy_dedup_port_tile_keys
+    group: architecture
+    title: economy lib must collect port tile keys via collectPortTileKeys, not inline portsByProvinceSeaboard.values.toSet() (Refs #3615 Cluster 3)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_dedup_port_tile_keys.dart
+
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
     title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)
