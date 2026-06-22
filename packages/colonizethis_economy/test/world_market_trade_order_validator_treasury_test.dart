@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_trade_order_validator_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 /// Tests for `TradeOrderValidator` rule 5 — cross-commodity treasury bid cap.
 /// Refs #3093.
