@@ -501,6 +501,35 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String get trainDialog_costTreasuryTooltip => 'Treasury';
+
+  @override
+  String get trainDialog_costPeasantsTooltip => 'Peasants';
+
+  @override
+  String trainDialog_costCommodityTooltip(String name, String category) {
+    return '$name ($category)';
+  }
+
+  @override
+  String get commodityCategory_food => 'food';
+
+  @override
+  String get commodityCategory_rawMaterial => 'raw material';
+
+  @override
+  String get commodityCategory_manufactured => 'manufactured';
+
+  @override
+  String get commodityCategory_luxury => 'luxury';
+
+  @override
+  String get commodityCategory_riches => 'riches';
+
+  @override
+  String get commodityCategory_advanced => 'advanced';
+
+  @override
   String get civilian_units_title => 'Civilian Units';
 
   @override

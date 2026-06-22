@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_gradients.dart';
@@ -198,6 +199,74 @@ class TrainDialogResourceChip extends StatelessWidget {
         child: DefaultTextStyle.merge(
           style: TextStyle(color: EditorialMonoclePalette.fg),
           child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Inline `icon + number` cost segment in a train-dialog unit-row cost
+/// summary (treasury / peasant / commodity requirement).
+///
+/// The [icon] is wrapped in a [Tooltip] (`TooltipTriggerMode.tap` — hover on
+/// desktop, tap on mobile) showing [tooltipMessage] so the icon's meaning is
+/// discoverable without an adjacent name label. The tooltip-trigger region is
+/// constrained to at least [kMinTouchTargetSize] (44 dp) in both dimensions so
+/// it is reachable on narrow mobile viewports (`SPEC/ui/mobile-adaptation.md`
+/// § 1). The numeric [label] renders in [EditorialMonoclePalette.danger] when
+/// [isInsufficient] is `true` (remaining stockpile cannot cover one more unit).
+///
+/// Shared by the military and naval train dialogs; see
+/// `SPEC/ui/components/train-dialog-chrome.md` and
+/// `SPEC/ui/components/resource-icon-tooltip.md`.
+class TrainDialogInlineCost extends StatelessWidget {
+  const TrainDialogInlineCost({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.tooltipMessage,
+    this.isInsufficient = false,
+  });
+
+  final Widget icon;
+  final String label;
+
+  /// Resource name (+ category for commodities) shown on hover/tap.
+  final String tooltipMessage;
+
+  /// When `true`, [label] renders in [EditorialMonoclePalette.danger] to flag
+  /// that the remaining stockpile cannot cover one more of this unit.
+  final bool isInsufficient;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle? baseStyle = Theme.of(context).textTheme.bodySmall;
+    final TextStyle? style = isInsufficient
+        ? (baseStyle ?? const TextStyle()).copyWith(
+            color: EditorialMonoclePalette.danger,
+          )
+        : baseStyle;
+    // The whole `icon + number` segment is the tooltip trigger and touch
+    // target: a `minWidth/minHeight` of `kMinTouchTargetSize` pads narrow
+    // single-digit segments up to 44 dp while letting wider numeric labels
+    // keep their natural (icon-sized) horizontal footprint, so the cost wrap
+    // does not overflow at the 320 dp minimum viewport.
+    return Tooltip(
+      message: tooltipMessage,
+      triggerMode: TooltipTriggerMode.tap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: kMinTouchTargetSize,
+          minHeight: kMinTouchTargetSize,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(width: 3),
+            Text(label, style: style),
+          ],
         ),
       ),
     );
