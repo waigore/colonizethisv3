@@ -377,6 +377,50 @@ bool provinceOverlayIsCapital(Game game, String provinceId) {
   return false;
 }
 
+/// Display name of the faction (player, minor nation, or tribe) whose
+/// `capitalTile` resolves to [tileKey], or null when no faction's capital tile
+/// matches. Faction display-name resolution mirrors the Political `Owner`
+/// family (player `displayName`; minor/tribe `displayName` falling back to id).
+String? _capitalHolderDisplayNameForTile(Game game, String tileKey) {
+  for (final p in game.players) {
+    if (p.capitalTile?.toTileKey() == tileKey) return p.displayName;
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalTile?.toTileKey() == tileKey) return m.displayName ?? m.id;
+  }
+  for (final t in game.tribes) {
+    if (t.capitalTile?.toTileKey() == tileKey) return t.displayName ?? t.id;
+  }
+  return null;
+}
+
+/// Optional Tile-section designation line for [selectedTileKey] (between the
+/// Terrain and Resource rows). Capital takes priority over town; ordinary land
+/// tiles return null so no line renders. See SPEC/ui/province-sea-zone-detail-
+/// overlay.md § Tile town / capital designation.
+@visibleForTesting
+String? provinceOverlayTileDesignationLine({
+  required AppLocalizations l10n,
+  required Game game,
+  required String provinceId,
+  required String selectedTileKey,
+}) {
+  final province = _findProvince(game, provinceId);
+  final provinceName = province?.displayName ?? provinceId;
+  final capitalFactionName = _capitalHolderDisplayNameForTile(
+    game,
+    selectedTileKey,
+  );
+  if (capitalFactionName != null) {
+    return l10n.provinceOverlay_tileCapitalOf(provinceName, capitalFactionName);
+  }
+  final townTileKey = province?.townTileKey;
+  if (townTileKey != null && townTileKey == selectedTileKey) {
+    return l10n.provinceOverlay_tileTownOf(provinceName);
+  }
+  return null;
+}
+
 Widget _buildPoliticalSection({
   required AppLocalizations l10n,
   required String name,
@@ -582,6 +626,12 @@ Widget _buildTileSection({
   // Tile, Economic improved-row, Military owner sub-header, Civilian
   // own-unit, and Naval fleet-summary live-data rows.
   final bodyStyle = _fgBodyStyle();
+  final designationLine = provinceOverlayTileDesignationLine(
+    l10n: l10n,
+    game: game,
+    provinceId: provinceId,
+    selectedTileKey: selectedTileKey,
+  );
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
     Column(
@@ -590,6 +640,8 @@ Widget _buildTileSection({
       children: [
         Text(l10n.provinceOverlay_tileCoordinates(x, y), style: bodyStyle),
         Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
+        if (designationLine != null)
+          Text(designationLine, style: bodyStyle),
         _buildTileResourceLabelRow(
           context: context,
           l10n: l10n,

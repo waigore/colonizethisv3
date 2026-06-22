@@ -358,6 +358,19 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_tileTownOf(String provinceName) {
+    return 'The town of $provinceName';
+  }
+
+  @override
+  String provinceOverlay_tileCapitalOf(
+    String provinceName,
+    String factionName,
+  ) {
+    return '$provinceName, the capital of $factionName';
+  }
+
+  @override
   String get provinceOverlay_tileResourcePrefix => 'Resource: ';
 
   @override

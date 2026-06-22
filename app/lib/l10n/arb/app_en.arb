@@ -2151,6 +2151,27 @@
       }
     }
   },
+  "provinceOverlay_tileTownOf": "The town of {provinceName}",
+  "@provinceOverlay_tileTownOf": {
+    "description": "Tile section designation line shown when the selected tile is the province town (and not a capital).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileCapitalOf": "{provinceName}, the capital of {factionName}",
+  "@provinceOverlay_tileCapitalOf": {
+    "description": "Tile section designation line shown when the selected tile is a faction's capital tile.",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      },
+      "factionName": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileResourcePrefix": "Resource: ",
   "@provinceOverlay_tileResourcePrefix": {
     "description": "Tile section resource label prefix before inline icon/name."
