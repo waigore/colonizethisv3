@@ -1,5 +1,5 @@
-import 'package:colonizethis_economy/src/economy/world_market/deal_matcher.dart';
-import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_index.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show DealMatchInputs, PurchasedTileAttribution, PurchasedTileIndex;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 TradeOrder matcherOffer(

@@ -1554,6 +1554,50 @@
       }
     }
   },
+  "trainDialog_costTreasuryTooltip": "Treasury",
+  "@trainDialog_costTreasuryTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the treasury coin icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costPeasantsTooltip": "Peasants",
+  "@trainDialog_costPeasantsTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the peasant worker icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costCommodityTooltip": "{name} ({category})",
+  "@trainDialog_costCommodityTooltip": {
+    "description": "Tooltip shown for a commodity resource icon in a train-dialog unit-row cost summary, combining the commodity display name and its category (e.g. 'Fabric (manufactured)').",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "commodityCategory_food": "food",
+  "@commodityCategory_food": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.food."
+  },
+  "commodityCategory_rawMaterial": "raw material",
+  "@commodityCategory_rawMaterial": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.rawMaterial."
+  },
+  "commodityCategory_manufactured": "manufactured",
+  "@commodityCategory_manufactured": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.manufactured."
+  },
+  "commodityCategory_luxury": "luxury",
+  "@commodityCategory_luxury": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.luxury."
+  },
+  "commodityCategory_riches": "riches",
+  "@commodityCategory_riches": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.riches."
+  },
+  "commodityCategory_advanced": "advanced",
+  "@commodityCategory_advanced": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.advanced."
+  },
   "civilian_units_title": "Civilian Units",
   "@civilian_units_title": {
     "description": "Civilian units panel title."
@@ -2147,6 +2191,27 @@
     "description": "Tile section terrain row.",
     "placeholders": {
       "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileTownOf": "The town of {provinceName}",
+  "@provinceOverlay_tileTownOf": {
+    "description": "Tile section designation line shown when the selected tile is the province town (and not a capital).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileCapitalOf": "{provinceName}, the capital of {factionName}",
+  "@provinceOverlay_tileCapitalOf": {
+    "description": "Tile section designation line shown when the selected tile is a faction's capital tile.",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      },
+      "factionName": {
         "type": "String"
       }
     }
