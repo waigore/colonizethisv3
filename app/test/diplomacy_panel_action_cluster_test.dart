@@ -144,6 +144,75 @@ void main() {
     );
 
     testWidgets(
+      'wide (> 500 dp): the action cluster renders left-to-right runs, '
+      'not a single vertical column',
+      (WidgetTester tester) async {
+        await bindSurface(tester);
+        await tester.pumpWidget(
+          _panelHost(viewportSize: const Size(800, 1200)),
+        );
+        await _pumpBuilt(tester);
+
+        final Key bodyKey = ValueKey('${kDiplomacyRowBodyKeyPrefix}gp2');
+        final Finder buttons = find.descendant(
+          of: find.byKey(bodyKey),
+          matching: find.byType(CtNinePatchButton),
+        );
+        final int count = buttons.evaluate().length;
+        // The GP-at-peace matrix renders many actions (Declare War, Offer
+        // Peace, Alliance, four overture stages, Establish FTP, Grant Aid,
+        // Set Subsidy); the wide cluster must place several of them per run.
+        expect(
+          count,
+          greaterThanOrEqualTo(4),
+          reason:
+              'Great Power row at peace should render its full action matrix '
+              'so the trailing cluster has enough buttons to form a run.',
+        );
+
+        final List<Rect> rects = <Rect>[
+          for (int i = 0; i < count; i++) tester.getRect(buttons.at(i)),
+        ];
+
+        // Group buttons into runs by shared top y-offset (within 0.5 dp). At
+        // least one run must hold two buttons at different left x-offsets —
+        // proving the cluster flows left-to-right rather than rendering every
+        // button on its own run as a vertical column.
+        const double tol = 0.5;
+        double quantize(double v) => (v / tol).roundToDouble() * tol;
+        final Map<double, Set<double>> leftsByRunTop = <double, Set<double>>{};
+        for (final Rect r in rects) {
+          leftsByRunTop
+              .putIfAbsent(quantize(r.top), () => <double>{})
+              .add(quantize(r.left));
+        }
+        final int largestRun = leftsByRunTop.values
+            .map((Set<double> lefts) => lefts.length)
+            .reduce((int a, int b) => a > b ? a : b);
+        expect(
+          largestRun,
+          greaterThanOrEqualTo(2),
+          reason:
+              'SPEC/ui/diplomacy-panel.md § Acceptance criteria (wide action '
+              'cluster rendered geometry, Refs #3621): at 800 dp at least one '
+              'run must place two action buttons side by side so the cluster '
+              'flows left-to-right instead of stacking as a vertical column.',
+        );
+
+        // Negative guard: the buttons must not all share a single left offset
+        // (every button at the same x would be a vertical column).
+        final Set<double> allLefts = rects.map((Rect r) => quantize(r.left)).toSet();
+        expect(
+          allLefts.length,
+          greaterThanOrEqualTo(2),
+          reason:
+              'A single shared left offset for every action button would be a '
+              'vertical column, violating the wide left-to-right flow contract.',
+        );
+      },
+    );
+
+    testWidgets(
       'action buttons use the compact CtNinePatchButton variant '
       '(24 dp min height, 7 x 3 dp padding)',
       (WidgetTester tester) async {
