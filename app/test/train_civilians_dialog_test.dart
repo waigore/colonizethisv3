@@ -7,7 +7,6 @@ import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.da
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -128,7 +127,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: Both-resource deficit reads "Treasury low and Paper low"',
+      'AC: Both-resource deficit reads "Treasury low, Paper low" (comma-join)',
       (WidgetTester tester) async {
         final player = getPlayer(humanPlayerId);
         final capital =
@@ -173,7 +172,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Treasury low and Paper low'), findsOneWidget);
+        expect(find.text('Treasury low, Paper low'), findsOneWidget);
+        expect(find.textContaining(' and '), findsNothing);
       },
     );
 
@@ -186,7 +186,15 @@ void main() {
       await tester.pumpAndSettle();
 
       for (final econ in CivilianEconomyCatalog.all) {
-        expect(find.text(econ.id), findsOneWidget);
+        // Locked rows prefix the name with the 🔒 glyph (#3568 parity), so a
+        // row renders either the bare name or the lock-prefixed name.
+        final bare = find.text(econ.id);
+        final locked = find.text('\u{1F512} ${econ.id}');
+        expect(
+          bare.evaluate().isNotEmpty || locked.evaluate().isNotEmpty,
+          isTrue,
+          reason: '${econ.id} row should render (bare or 🔒-prefixed if locked)',
+        );
       }
     });
 
@@ -347,7 +355,7 @@ void main() {
       expect(find.text('1'), findsWidgets);
     });
 
-    testWidgets('AC: Locked units show lock icon and tech requirement', (
+    testWidgets('AC: Locked units show 🔒 name prefix and tech requirement', (
       WidgetTester tester,
     ) async {
       // Create a player with no tech unlocked
@@ -366,8 +374,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Merchant should show lock icon
-      expect(find.byType(Image), findsWidgets);
+      // Locked rows prefix the unit name with the 🔒 glyph (#3568 chrome
+      // parity) instead of a separate lock-icon column.
+      expect(find.textContaining('\u{1F512}'), findsWidgets);
       // Should show tech requirement for Merchant
       expect(
         find.textContaining('Requires:'),
@@ -489,20 +498,10 @@ void main() {
         // Verify count is 2
         expect(find.text('2'), findsWidgets);
 
-        // Close dialog via X button (footer may be below fold in shell scroll)
-        final shellScrollable = find.descendant(
-          of: find.byType(CtDialogShell),
-          matching: find.byType(Scrollable),
-        );
-        final closeButton = find.text('×');
-        await tester.dragUntilVisible(
-          closeButton,
-          shellScrollable,
-          const Offset(0, -120),
-        );
-        await tester.pumpAndSettle();
-        await tester.ensureVisible(closeButton);
-        await tester.tap(closeButton);
+        // The train dialogs have no × button per #3568 chrome parity; dismiss
+        // via route pop (scrim tap / system back). Orders are still applied on
+        // close by the host PopScope.
+        tester.state<NavigatorState>(find.byType(Navigator).first).pop();
         await tester.pumpAndSettle();
         await tester.pump(const Duration(milliseconds: 100));
 

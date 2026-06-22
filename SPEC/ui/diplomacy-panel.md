@@ -74,6 +74,7 @@ Faction rows are grouped into three sections in this order: **Great Powers**, **
 - Display font (`Cinzel` / `Iowan Old Style` per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette font stacks); `font-weight: 600`; small positive letter-spacing.
 - Text color `--accent`.
 - 2 px bottom border in `--accent-dim` spanning the heading container width.
+- **First-heading top rhythm (Refs #3621):** every section heading carries a leading top gap (mockup `.section-head { margin-top: clamp(10px,2vh,16px) }`) **except** the first heading rendered in the list, which has **zero** top gap (mockup `.section-head:first-child { margin-top: 0 }`). "First" is the first section heading actually emitted under the active mode-bar filter (e.g. with `Great Powers only` the `Great Powers` heading is first; with `Minors only` the `Minor Nations` heading is first). The implementation exposes a `_DiplomacySectionHeader.isFirst` flag set from the panel so the top padding resolves to `0` for the first heading and `CtSpacing.l` for the rest.
 
 The heading is otherwise an inert label (no tap target).
 
@@ -97,6 +98,7 @@ In practice the Great Powers and Minor Nations sections are populated from game 
 - **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR) rendered via the **relation state badge** (see § Relation state badge), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** a **relative power line** is shown below the header — a derived display only, not a new data field. See **Relative power line (Great Power rows only)** below.
 - **Type badge colors (editorial-monocle dark theme):** The type badge uses mono font and the canonical [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette tokens per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-badge`. Great Power rows use `--accent-dim` background with `--bg-deep` foreground; Minor Nation rows use `--muted` background with `--bg-deep` foreground; Tribe rows are **outlined** — transparent background, `--muted` border and `--muted` foreground. No hardcoded Material chrome colors are permitted.
 - **Outgoing economic diplomacy (list row only):** On the **same row**, below the relation line, when the human Great Power has **active or pending** economic diplomacy toward this faction (receiver-centric copy): **Active subsidy:** `Outgoing subsidy: £N/turn to {displayName}` when `Game.subsidyStates` has `payerId` = human GP and `targetId` = this row’s faction. **Pending grant:** `Pending grant aid: £N (resolves end of turn)` when current-turn orders include `grantAid` toward this faction. **Pending subsidy:** `Pending subsidy: £N/turn (resolves end of turn)` when current-turn orders include `setSubsidy` toward this faction. Omit each line when not applicable. Do **not** duplicate this block on the Diplomacy Detail screen for current product (list row is the source of truth).
+  - **Styling (Refs #3621):** all three economic lines (active subsidy, pending grant, pending subsidy) render with the **mono** font stack (`monospace` family, `Courier` fallback), the `--accent-dim` foreground token, and **non-italic** weight, matching the mockup `.f-subsidy` treatment (`font-family: var(--font-mono); color: var(--accent-dim)`). The earlier italic `bodySmall` / `colorScheme.tertiary` styling for the pending lines is superseded — pending and active lines share one compact mono `--accent-dim` style so the block reads uniformly.
 - **Right:** **Diplomatic action buttons** for the player toward that faction. The panel enumerates the full action matrix per faction type via `enumerateDiplomaticPanelActionsForTarget` (`packages/colonizethis_logic/lib/order_suggestion_api.dart`), probing each candidate with the same incremental diplomatic validator used for order submission. **Every applicable action is always rendered**; actions that fail validation appear as **disabled** `CtNinePatchButton` controls with validator rejection text in a `Tooltip` (not hidden). Matrix per faction type:
   - **Great Power row:** Declare War, Offer Peace, Alliance, Establish Overture stages (Consulate, Embassy, NAP, Join Empire as separate buttons), Establish FTP, Grant Aid, Set Subsidy.
   - **Minor Nation / Tribe row:** Declare War, Offer Peace, Establish Overture stages (Consulate, Embassy, NAP, Join Empire), Grant Aid, Set Subsidy.
@@ -141,11 +143,36 @@ Each faction row renders the AT_PEACE / AT_WAR state as a small mono-font chip p
 - **Peace variant:** translucent cool-green overlay background derived from the canonical `--success` token (the mockup uses `oklch(40% 0.06 150 / 0.2)`, which is the success hue desaturated and alpha-tinted at 0.20); foreground text `--success`.
 - **Forbidden:** raw `Colors.red`, `Colors.green`, or any Material chrome background. The badge resolves background and foreground from the editorial-monocle palette only.
 
+### Relation word styling (Refs #3621)
+
+The one-word relation label (`Hostile` / `Unfriendly` / `Cordial` / `Friendly`) rendered after the relation state badge is styled per the mockup [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-relation .word` (`font-style: italic`) with the per-level `wordColors` map:
+
+- **Weight / slant:** the relation word renders **italic** (mockup `.f-relation .word { font-style: italic }`) on the `bodySmall` text slot. The leading separator (a single space matching the badge's 4 px right margin) and the optional overture clause (`· {stage}`) stay `--muted`, non-italic.
+- **Per-level color:** the relation word color is resolved by `diplomacyRelationWordColor(score)` from the hidden relation score's display band (the same `relationScoreDisplay*` thresholds that drive [relationScoreToDisplayLabel](../game/diplomacy.md)):
+
+  | Display band (score) | Word | Color | Source |
+  |----------------------|------|-------|--------|
+  | `0 … 29` | Hostile | `--danger` | `EditorialMonoclePalette.danger` |
+  | `30 … 49` | Unfriendly | warm amber `oklch(62% 0.10 55)` | `kDiplomacyRelationUnfriendlyToken` |
+  | `50 … 69` | Cordial | cool teal `oklch(62% 0.08 160)` | `kDiplomacyRelationCordialToken` |
+  | `70 … 100` | Friendly | `--success` | `EditorialMonoclePalette.success` |
+
+  Hostile reuses the canonical `--danger` token and Friendly reuses `--success`, preserving the warm-red / cool-green semantic shared with the relation state badge. The Unfriendly and Cordial tokens lift their lightness to `L = 0.62` so all four words read at a consistent brightness against `--bg` (parity with the AA-tuned `--danger` / `--success`); chroma and hue are preserved from the mockup. These two tokens are diplomacy-scoped (defined in `diplomacy_panel.dart`), derived through the shared `oklchToColor` converter — not raw Material colors.
+- **Forbidden:** rendering the relation word in `--muted` (the prior plain `bodySmall` styling) or with any hardcoded Material color.
+
 ---
 
 ## Mode bar (filter)
 
 A bottom filter bar lets the player narrow the visible faction list. The bar is anchored to the bottom of the diplomacy panel with a top divider; buttons use mono font with inactive label `--muted`, active/hover label `--accent`, and `--accent-dim` border on the active item per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.mode-bar`.
+
+### Mode-bar chip chrome (Refs #3621)
+
+Each filter chip (`_DiplomacyModeButton`) renders the mockup `.mode-bar button` surface, not a bare label:
+
+- **Background:** the compact action gradient (`--surface-lite → --bg-deep`, sourced from `CtGradients.actionButtonGradient`), matching mockup `.mode-bar button { background: linear-gradient(180deg, var(--surface-lite), var(--bg-deep)) }`.
+- **Border:** a 1 px border present in **all** states — `--border` (`EditorialMonoclePalette.border`) when **inactive**, `--accent-dim` (`EditorialMonoclePalette.accentDim`) when **active** — mirroring the mockup idle `border:1px solid var(--border)` and active `border-color: var(--accent-dim)`. The previous implementation drew no border on the inactive chip; the inactive chip now always carries the `--border` outline.
+- **Label:** mono font, `--muted` inactive / `--accent` active, unchanged.
 
 | Mode | Label | Visible sections |
 |------|-------|------------------|
@@ -209,6 +236,17 @@ Per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.h
 - **Background:** unchanged from the standard action button gradient (`--surface-lite` → `--bg-deep`); only the outline and label color shift.
 - **Applies to:** `DiplomaticOrderType.declareWar` only. The pending (Cancel) variant retains its own pending styling and is not the war variant.
 
+#### Compact variant metrics (normative)
+
+The diplomacy action button is a **compact** `CtNinePatchButton`: it is materially tighter than the 48 dp / 16 × 12 dp default chrome so the trailing cluster matches the mockup `.f-actions button { padding: 3px 7px }` density. The implementation exposes these as library-scope constants so widget tests can pin them deterministically:
+
+| Metric | Constant | Value | Mockup source |
+|--------|----------|-------|---------------|
+| Button min height | `kDiplomacyActionButtonMinHeight` | **24 dp** | compact `.f-actions button` |
+| Button inner padding | `kDiplomacyActionButtonPadding` | **7 dp horizontal × 3 dp vertical** | `.f-actions button { padding: 3px 7px }` |
+
+The label still resolves through the editorial-monocle `bodySmall` text slot (no hard-coded font size) per #2914 S7; only the surrounding chrome (height + padding) is compacted. The pending **Cancel** and disabled (rejection-tooltip) states keep their existing semantics on the compact surface.
+
 Orders are submitted into the current turn's order set; resolution happens on Next Turn.
 
 ---
@@ -225,8 +263,8 @@ Orders are submitted into the current turn's order set; resolution happens on Ne
 The faction-row body adapts to a single normative breakpoint per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `@media (max-width: 500px)`. The cross-cutting narrative is owned by [mobile-adaptation.md](mobile-adaptation.md) § 4; this section codifies the diplomacy-row specifics.
 
 - **Breakpoint:** viewport width **≤ 500 dp** (Flutter dp; matches the mockup CSS `max-width: 500px` cutoff and the **`≤ 500 dp`** column in mobile-adaptation.md § 4).
-- **Wide variant (viewport width `> 500 dp`):** the faction-row body lays out the info column and the action-button cluster **side by side** in a `Row`, with the action cluster anchored to the trailing edge. Matches mockup `.faction-row { display:flex; align-items:flex-start }` plus `.f-actions { justify-content:flex-end }`.
-- **Narrow variant (viewport width `≤ 500 dp`):** the faction-row body stacks the action-button cluster **below** the info column, and the action cluster is **left-aligned**. Matches mockup `.faction-row { flex-wrap:wrap }` plus `.f-actions { max-width:none; justify-content:flex-start }`.
+- **Wide variant (viewport width `> 500 dp`):** the faction-row body lays out the info column and the action-button cluster **side by side** in a `Row`, with the action cluster anchored to the trailing edge. Matches mockup `.faction-row { display:flex; align-items:flex-start }` plus `.f-actions { justify-content:flex-end }`. The trailing cluster is wrapped in a `ConstrainedBox` whose `maxWidth` equals `kDiplomacyActionClusterMaxWidth` (**180 dp**, normative; mockup `.f-actions { max-width: 180px }`) and the action `Wrap` uses `WrapAlignment.end` with `kDiplomacyActionWrapSpacing` (**4 dp**, mockup `gap: 4px`) so the compact buttons flow **left-to-right** and wrap onto additional runs rather than stretching into a single vertical column.
+- **Narrow variant (viewport width `≤ 500 dp`):** the faction-row body stacks the action-button cluster **below** the info column, and the action cluster is **left-aligned**. Matches mockup `.faction-row { flex-wrap:wrap }` plus `.f-actions { max-width:none; justify-content:flex-start }`. The action `Wrap` uses `WrapAlignment.start` (no `maxWidth` cap) at this breakpoint.
 - The breakpoint constant exposed by the implementation (`kDiplomacyRowNarrowMaxWidth = 500.0`) is normative so widget tests can pin the boundary deterministically.
 - **Out of scope:** the panel-level mode bar, section headings, and per-row chrome (gradient, 1 dp border) are **not** re-laid-out at the narrow breakpoint — only the row's info-vs-actions arrangement changes.
 
@@ -311,6 +349,16 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 - Given the diplomacy panel is open and at least one faction row is rendered, when the row's relation state chip is inspected for a row whose `DiplomacyRelation.atWar` is `false`, then the chip label is the uppercase string `PEACE`, the foreground text color resolves to `--success`, and the chip background is a translucent cool-green overlay derived from the `--success` hue (mockup token `oklch(40% 0.06 150 / 0.2)`).
 - Given the diplomacy panel is open and a faction row has a valid `Declare War` action button, when the action button is inspected, then its label text color resolves to `--danger` and its outer outline resolves to `--danger` per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-actions button.war-btn`. The non-war action buttons (`Offer Peace`, `Alliance`, `Establish Overture`, `Grant Aid`, `Set Subsidy`) keep the standard `--accent-dim` label.
 - Given the diplomacy panel is open with default state, when the bottom mode bar is inspected, then the "All" filter button is active (text in `--accent`, `--accent-dim` border) and the other two ("Great Powers only", "Minors only") render as inactive (text in `--muted`, no accent border).
+- **Mode-bar chip gradient + idle border (Refs #3621):** Given the diplomacy panel is open with default state, when an **inactive** mode-bar chip's surface is inspected, then its `BoxDecoration` gradient equals `CtGradients.actionButtonGradient` (`--surface-lite → --bg-deep`) and its border is a 1 px side whose colour resolves to `EditorialMonoclePalette.border` (no longer a borderless label).
+- **Mode-bar chip active border (Refs #3621):** Given the diplomacy panel is open with default state, when the **active** ("All") mode-bar chip's surface is inspected, then its `BoxDecoration` gradient equals `CtGradients.actionButtonGradient` and its border is a 1 px side whose colour resolves to `EditorialMonoclePalette.accentDim`.
+- **Economic lines mono `--accent-dim` (Refs #3621):** Given a faction row with an outgoing active subsidy, a pending grant, or a pending subsidy, when each economic line renders, then its `TextStyle.fontFamily` is `monospace`, its `TextStyle.color` resolves to `EditorialMonoclePalette.accentDim`, and its `TextStyle.fontStyle` is **not** italic (mockup `.f-subsidy`).
+- **Section heading first-child top rhythm (Refs #3621):** Given the diplomacy panel is open under any mode-bar filter, when the **first** rendered `_DiplomacySectionHeader` is inspected, then its outer top padding equals `0`; and when any **subsequent** section heading is inspected, then its outer top padding equals `CtSpacing.l` (mockup `.section-head:first-child { margin-top: 0 }`).
+- **Relation word italic (Refs #3621):** Given a faction row whose relation renders a one-word relation label, when the relation row `Text.rich` is inspected, then the `TextSpan` carrying the relation word has `TextStyle.fontStyle == FontStyle.italic` while the muted separator/overture spans are not italic (mockup `.f-relation .word { font-style: italic }`).
+- **Relation word level color — Hostile (Refs #3621):** Given a faction row whose relation score is in the band `0 … 29`, when the relation word renders, then its `TextStyle.color` resolves to `EditorialMonoclePalette.danger` and `diplomacyRelationWordColor(score)` returns that same color.
+- **Relation word level color — Unfriendly (Refs #3621):** Given a faction row whose relation score is in the band `30 … 49`, when the relation word renders, then its `TextStyle.color` resolves to `oklchToColor(kDiplomacyRelationUnfriendlyToken)` (`oklch(62% 0.10 55)`).
+- **Relation word level color — Cordial (Refs #3621):** Given a faction row whose relation score is in the band `50 … 69`, when the relation word renders, then its `TextStyle.color` resolves to `oklchToColor(kDiplomacyRelationCordialToken)` (`oklch(62% 0.08 160)`).
+- **Relation word level color — Friendly (Refs #3621):** Given a faction row whose relation score is in the band `70 … 100`, when the relation word renders, then its `TextStyle.color` resolves to `EditorialMonoclePalette.success`.
+- **Relation word color band boundaries (Refs #3621):** Given the `diplomacyRelationWordColor` helper, when evaluated at the band boundaries, then `29 → --danger`, `30 → Unfriendly token`, `49 → Unfriendly token`, `50 → Cordial token`, `69 → Cordial token`, and `70 → --success`, matching the `relationScoreToDisplayLabel` bands.
 - Given the user taps "Great Powers only" in the mode bar, when the list re-renders, then only Great Power rows are visible — no Minor Nation or Tribe rows are present in the rendered widget tree.
 - Given the user taps "Minors only" in the mode bar, when the list re-renders, then both Minor Nation and Tribe rows are visible (using their normal section headings) and no Great Power rows are present in the rendered widget tree.
 
@@ -323,6 +371,12 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 - **Faction row wide layout:** Given the Diplomacy panel is open at a viewport width strictly greater than `kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Row` whose first child is an `Expanded` containing the info column and whose trailing sibling is the action-button `Wrap`, matching `.faction-row { display:flex; align-items:flex-start }` from [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html).
 - **Faction row narrow wrap:** Given the Diplomacy panel is open at a viewport width `≤ kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Column` whose first child is the info column and whose second child is the action-button `Wrap` aligned to the leading (left) edge, matching the mockup `@media (max-width: 500px)` rule `.faction-row { flex-wrap:wrap }` + `.f-actions { justify-content:flex-start }`.
 - **Faction row narrow does not right-align actions:** Given the Diplomacy panel is open at viewport width `≤ kDiplomacyRowNarrowMaxWidth`, when a faction row renders, then no `Expanded(child: info)` + sibling action cluster `Row` arrangement is present in the row body (so the action buttons never render trailing-edge anchored under the narrow rule).
+
+- **Wide action cluster is width-capped for left-to-right flow (Refs #3621):** Given the Diplomacy panel is open at a viewport width strictly greater than `kDiplomacyRowNarrowMaxWidth` (500 dp) and a faction row has at least one action button, when the row body renders, then the trailing action cluster is wrapped in a `ConstrainedBox` whose `constraints.maxWidth` equals `kDiplomacyActionClusterMaxWidth` (180 dp) and the enclosed action `Wrap` uses `WrapAlignment.end` with `spacing` and `runSpacing` equal to `kDiplomacyActionWrapSpacing` (4 dp), so the buttons flow left-to-right on the trailing edge.
+
+- **Compact action button chrome (Refs #3621):** Given the Diplomacy panel is open and a faction row renders any action button, when that button's `CtNinePatchButton` is inspected, then its `minHeight` equals `kDiplomacyActionButtonMinHeight` (24 dp) and its `padding` equals `kDiplomacyActionButtonPadding` (7 dp horizontal × 3 dp vertical), distinguishing the compact diplomacy variant from the 48 dp / 16 × 12 dp default panel button chrome.
+
+- **Compact button chrome constants are normative (Refs #3621):** Given the diplomacy panel implementation, when the action-cluster constants are read, then `kDiplomacyActionClusterMaxWidth == 180.0`, `kDiplomacyActionWrapSpacing == 4.0`, and `kDiplomacyActionButtonMinHeight == 24.0` so widget tests pin the compact contract from a single source.
 
 - **Mobile-viewport Widgetbook story renders narrow rows:** Given the Diplomacy Panel `Mobile viewport — narrow rows (≤ 500 dp)` Widgetbook use case is mounted in a `WidgetTester`, when the builder pumps inside the shared 360 × 640 dp `mobileViewport` frame, then `WidgetTester.takeException()` returns `null` and at least one faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is a `Column` (the `≤ 500 dp` narrow variant per § Responsive layout), demonstrating the responsive contract is reviewable from Widgetbook without resizing the host window (Refs #2870 R22 / S9).
 
