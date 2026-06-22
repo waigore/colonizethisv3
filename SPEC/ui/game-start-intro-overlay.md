@@ -148,6 +148,10 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
   When the overlay reaches the choice step (after the line is advanced),
   Then the imperialism narrative text (the retained `contextLine`) renders in the same `CtDialogShell` body above the `I shall.` `CtNinePatchButton`, and there is no option-only step where the narrative text is absent (Refs #3628 AC-2).
 
+- Given a `GameStartIntroOverlay` is mounted with the `game_start_intro` node and rendered under `AppThemes.editorialMonocle`,
+  When the overlay is advanced to the `-> I shall.` choice step,
+  Then a `matchesGoldenFile` baseline (`app/test/goldens/dialogue_combined_game_start_intro_choice.png`) captures the retained narrative text and the `I shall.` `CtNinePatchButton` rendered together in one `CtDialogShell` body (Refs #3628 AC-2 golden coverage).
+
 - Given the overlay has just been mounted and the Yarn `AssetBundle` resolves `kDialogueGameIntroAsset` to text that does not declare a `game_start_intro` node,
   When `_loadAndRun` reaches the node existence check,
   Then the widget catches a `StateError`, sets `_loadError`, and renders the error `CtDialogShell` with a localized error message and a single Continue button.
