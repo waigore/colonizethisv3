@@ -895,6 +895,43 @@ abstract class AppLocalizations {
   /// in the train military dialog resource bar.
   String trainUnits_peasantsValue(String value);
 
+  /// Tooltip shown when hovering (desktop) or tapping (mobile) the treasury
+  /// coin icon in a train-dialog unit-row cost summary.
+  String get trainDialog_costTreasuryTooltip;
+
+  /// Tooltip shown when hovering (desktop) or tapping (mobile) the peasant
+  /// worker icon in a train-dialog unit-row cost summary.
+  String get trainDialog_costPeasantsTooltip;
+
+  /// Tooltip shown for a commodity resource icon in a train-dialog unit-row
+  /// cost summary, combining the commodity display name and its category
+  /// (e.g. 'Fabric (manufactured)').
+  String trainDialog_costCommodityTooltip(String name, String category);
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.food.
+  String get commodityCategory_food;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.rawMaterial.
+  String get commodityCategory_rawMaterial;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.manufactured.
+  String get commodityCategory_manufactured;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.luxury.
+  String get commodityCategory_luxury;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.riches.
+  String get commodityCategory_riches;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.advanced.
+  String get commodityCategory_advanced;
+
   /// Civilian units panel title.
   String get civilian_units_title;
 
