@@ -263,19 +263,19 @@ void main() {
 
     test(
       'AC-1 (#3620): turn-0 sea-reachable tribe with no contact yields no '
-      'tribe rows even though knownDiplomaticTargetFactionIds includes it',
+      'tribe rows and is absent from knownDiplomaticTargetFactionIds',
       () {
         final game = _gameWithSeaReachableTribeNoContact();
         final view = buildPlayerView(game, _seaReachableTopology, 'gp1');
-        // Precondition: the broad helper still includes the sea-reachable tribe
-        // (proves the panel-side first-contact gate is what excludes it).
+        // The shared first-contact gate now lives in the helper itself, so the
+        // sea-reachable tribe is excluded at the source (#3620).
         expect(
           knownDiplomaticTargetFactionIds(
             view: view,
             game: game,
             topology: _seaReachableTopology,
           ),
-          contains('t1'),
+          isNot(contains('t1')),
         );
 
         final rows = buildDiplomacyRows(

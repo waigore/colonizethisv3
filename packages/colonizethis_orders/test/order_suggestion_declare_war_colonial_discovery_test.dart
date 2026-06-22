@@ -6,7 +6,8 @@ import 'package:colonizethis_test/test.dart';
 void main() {
   group('knownDiplomaticTargetFactionIds colonial discovery', () {
   test(
-    'suggestDeclareWarOrders includes sea-reachable tribe without NW tile visibility',
+    'suggestDeclareWarOrders excludes sea-reachable tribe without NW tile '
+    'visibility (#3620 first-contact gate)',
     () {
       const api = DefaultOrderSuggestionAPI();
       const topology = MapTopology(
@@ -84,7 +85,7 @@ void main() {
           game: game,
           topology: topology,
         ),
-        contains('tribe1'),
+        isNot(contains('tribe1')),
       );
       final declareOnly = api.suggestDeclareWarOrders(
         view,
@@ -98,7 +99,7 @@ void main() {
               o.targetFactionId == 'tribe1' &&
               o.type == DiplomaticOrderType.declareWar,
         ),
-        isTrue,
+        isFalse,
       );
     },
   );
