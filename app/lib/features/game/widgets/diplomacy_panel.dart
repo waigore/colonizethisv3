@@ -21,8 +21,10 @@ import 'diplomacy_order_helpers.dart';
 import 'game_panel_contract.dart';
 import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
+import 'relative_power_line.dart';
 
 export 'diplomacy_panel_rows.dart';
+export 'relative_power_line.dart';
 
 part 'diplomacy_panel_chrome.dart';
 part 'diplomacy_panel_mode_bar.dart';
