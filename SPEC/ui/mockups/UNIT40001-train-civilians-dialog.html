@@ -28,7 +28,12 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 .stepper .btn{padding:3px 10px;font-family:monospace;font-size:14px;font-weight:700;cursor:pointer;border:none;min-width:28px;transition:color 0.15s}
 .stepper .btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.stepper .btn-minus:hover:not(:disabled){color:var(--fg)}.stepper .btn-minus:disabled{opacity:0.3;cursor:not-allowed}
 .stepper .btn-plus{background:var(--surface-lite);border:1px solid var(--accent-dim);color:var(--accent)}.stepper .btn-plus:hover:not(:disabled){color:var(--accent)}.stepper .btn-plus:disabled{opacity:0.3;cursor:not-allowed}
+/* Resource-blocked [+] (insufficient stockpile, not tech-locked): danger border/label at full opacity, distinct from the neutral tech-locked disabled look. */
+.stepper .btn-plus.btn-danger:disabled{opacity:1;background:var(--bg-deep);border:1px solid var(--danger);color:var(--danger)}
 .stepper .count{font-family:monospace;font-size:14px;font-weight:700;color:var(--fg);min-width:20px;text-align:center}
+/* Per-segment cost danger: a cost item turns red when the remaining stockpile cannot cover one more of this unit. */
+.unit-row .cost .danger{color:var(--danger)}
+.resource-bar .val.danger{color:var(--danger)}
 .sep{height:1px;background:var(--border);margin:2px 0 8px}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
 .btn-act{padding:8px 18px;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.05em;cursor:pointer;border:none;transition:color 0.15s}
@@ -39,10 +44,7 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 <div class="scrim" onclick="location.reload()"></div>
 <div class="dialog">
   <h3>Train Civilians</h3>
-  <div class="resource-bar">
-    <span>Treasury: <span class="val">&#xa3;5,000</span></span>
-    <span>Paper: <span class="val">12</span></span>
-  </div>
+  <div class="resource-bar" id="resbar"></div>
   <p class="deficit" id="deficit" style="display:none"></p>
   <div id="units"></div>
   <div class="actions">
@@ -58,41 +60,60 @@ const units=[
   {id:'merchant',name:'Merchant',treasury:2000,paper:4,locked:true,tech:'Merchant Companies'},
   {id:'rail_builder',name:'Rail Builder',treasury:2000,paper:4,locked:true,tech:'Early Steam Engine'}
 ]
-let counts={} ; let treasury=5000, paper=12
-units.forEach(u=>{counts[u.id]=0})
+const treasury=5000, paper=12
+// Default deficit scenario (#3568 AC): queued explorers + spies exceed both
+// treasury and paper so the comma-joined deficit hint (`Treasury low, Paper
+// low`), per-segment danger colour, and danger [+] variant show on load.
+let counts={};units.forEach(u=>{counts[u.id]=0})
+counts.explorer=3;counts.spy=2
+function totals(){let t=0,p=0;units.forEach(u=>{t+=counts[u.id]*u.treasury;p+=counts[u.id]*u.paper});return {t,p}}
+function remaining(){const c=totals();return {t:treasury-c.t,p:paper-c.p}}
 function deficitCheck(){
-  let totalT=0,totalP=0
-  units.forEach(u=>{totalT+=counts[u.id]*u.treasury;totalP+=counts[u.id]*u.paper})
-  let msgs=[]
-  if(totalT>treasury)msgs.push('Treasury low')
-  if(totalP>paper)msgs.push('Paper low')
+  const c=totals();const msgs=[]
+  if(c.t>treasury)msgs.push('Treasury low')
+  if(c.p>paper)msgs.push('Paper low')
   const d=document.getElementById('deficit')
-  d.style.display=msgs.length?'block':'none'
-  d.textContent=msgs.join(', ')
+  d.style.display=msgs.length?'block':'none';d.textContent=msgs.join(', ')
 }
+// Affordable for one more iff remaining covers both treasury and paper.
 function canAdd(id){
   const u=units.find(x=>x.id===id);if(!u||u.locked)return false
-  let totalT=0,totalP=0
-  units.forEach(x=>{totalT+=counts[x.id]*x.treasury;totalP+=counts[x.id]*x.paper})
-  return totalT+u.treasury<=treasury && totalP+u.paper<=paper
+  const r=remaining();return r.t>=u.treasury&&r.p>=u.paper
 }
 function adjust(id,d){
   if(d<0&&counts[id]<=0)return;if(d>0&&!canAdd(id))return
-  counts[id]+=d;if(counts[id]<0)counts[id]=0;deficitCheck();render()
+  counts[id]+=d;if(counts[id]<0)counts[id]=0;render()
 }
-function resetAll(){units.forEach(u=>{counts[u.id]=0});deficitCheck();render()}
+function resetAll(){units.forEach(u=>{counts[u.id]=0});render()}
+function renderResbar(){
+  const r=remaining()
+  document.getElementById('resbar').innerHTML=
+    `<span>Treasury: <span class="val${r.t<0?' danger':''}">\u00a3${r.t.toLocaleString()} / \u00a3${treasury.toLocaleString()}</span></span>`+
+    `<span>Paper: <span class="val${r.p<0?' danger':''}">${r.p} / ${paper}</span></span>`
+}
+// Each cost segment turns danger when remaining for that resource cannot cover
+// one more of this unit (skipped for tech-locked rows, which read neutral).
+function costHtml(u,r){
+  const tDanger=!u.locked&&r.t<u.treasury,pDanger=!u.locked&&r.p<u.paper
+  return `<span class="${tDanger?'danger':''}">\u00a3${u.treasury.toLocaleString()}</span> + `+
+    `<span class="${pDanger?'danger':''}">${u.paper} paper</span>`
+}
 function render(){
-  document.getElementById('units').innerHTML=units.map(u=>`
+  renderResbar();deficitCheck()
+  const r=remaining()
+  document.getElementById('units').innerHTML=units.map(u=>{
+    const blocked=!u.locked&&!canAdd(u.id)
+    return `
     <div class="unit-row${u.locked?' locked':''}">
       <div class="info"><div class="name">${u.locked?'&#x1F512; ':''}${u.name}</div>
-      <div class="cost">\u00a3${u.treasury.toLocaleString()} + ${u.paper} paper</div>
+      <div class="cost">${costHtml(u,r)}</div>
       ${u.locked?`<div class="lock-reason">Requires: ${u.tech}</div>`:''}</div>
       <div class="stepper">
         <button class="btn btn-minus" ${u.locked?'disabled':''} onclick="adjust('${u.id}',-1)" ${counts[u.id]<=0?'disabled':''}>&#x2212;</button>
         <span class="count">${counts[u.id]}</span>
-        <button class="btn btn-plus" ${u.locked?'disabled':''} onclick="adjust('${u.id}',1)" ${!canAdd(u.id)?'disabled':''}>+</button>
+        <button class="btn btn-plus${blocked?' btn-danger':''}" ${u.locked||blocked?'disabled':''} onclick="adjust('${u.id}',1)">+</button>
       </div>
-    </div>`).join('')
+    </div>`}).join('')
 }
 render()
 </script>
