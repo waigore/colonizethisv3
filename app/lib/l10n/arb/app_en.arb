@@ -1554,6 +1554,50 @@
       }
     }
   },
+  "trainDialog_costTreasuryTooltip": "Treasury",
+  "@trainDialog_costTreasuryTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the treasury coin icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costPeasantsTooltip": "Peasants",
+  "@trainDialog_costPeasantsTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the peasant worker icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costCommodityTooltip": "{name} ({category})",
+  "@trainDialog_costCommodityTooltip": {
+    "description": "Tooltip shown for a commodity resource icon in a train-dialog unit-row cost summary, combining the commodity display name and its category (e.g. 'Fabric (manufactured)').",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "commodityCategory_food": "food",
+  "@commodityCategory_food": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.food."
+  },
+  "commodityCategory_rawMaterial": "raw material",
+  "@commodityCategory_rawMaterial": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.rawMaterial."
+  },
+  "commodityCategory_manufactured": "manufactured",
+  "@commodityCategory_manufactured": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.manufactured."
+  },
+  "commodityCategory_luxury": "luxury",
+  "@commodityCategory_luxury": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.luxury."
+  },
+  "commodityCategory_riches": "riches",
+  "@commodityCategory_riches": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.riches."
+  },
+  "commodityCategory_advanced": "advanced",
+  "@commodityCategory_advanced": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.advanced."
+  },
   "civilian_units_title": "Civilian Units",
   "@civilian_units_title": {
     "description": "Civilian units panel title."
@@ -2550,6 +2594,46 @@
     "placeholders": {
       "score": {
         "type": "int"
+      }
+    }
+  },
+  "diplomacy_relativePower_label": "Relative power:",
+  "@diplomacy_relativePower_label": {
+    "description": "Muted prefix for the Great Power relative-power line on the diplomacy panel and detail screen."
+  },
+  "diplomacy_relativePower_tierRoughlyEqual": "Roughly equal",
+  "@diplomacy_relativePower_tierRoughlyEqual": {
+    "description": "Relative-power tier word when the comparison percentage is between -10 and +10 inclusive."
+  },
+  "diplomacy_relativePower_tierSuperior": "Superior",
+  "@diplomacy_relativePower_tierSuperior": {
+    "description": "Relative-power tier word when the comparison percentage is between +11 and +30 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlySuperior": "Vastly superior",
+  "@diplomacy_relativePower_tierVastlySuperior": {
+    "description": "Relative-power tier word when the comparison percentage is +31 or greater."
+  },
+  "diplomacy_relativePower_tierInferior": "Inferior",
+  "@diplomacy_relativePower_tierInferior": {
+    "description": "Relative-power tier word when the comparison percentage is between -30 and -11 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlyInferior": "Vastly inferior",
+  "@diplomacy_relativePower_tierVastlyInferior": {
+    "description": "Relative-power tier word when the comparison percentage is -31 or lower."
+  },
+  "diplomacy_relativePower_tooltip": "Compares this Great Power's military power score (provinces, army strength, ships) to yours.",
+  "@diplomacy_relativePower_tooltip": {
+    "description": "Tooltip / long-press copy explaining what the relative-power comparison measures."
+  },
+  "diplomacy_relativePower_semantics": "Relative power {pct}, {tier}",
+  "@diplomacy_relativePower_semantics": {
+    "description": "Screen-reader label combining the relative-power percentage and tier word.",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "tier": {
+        "type": "String"
       }
     }
   },

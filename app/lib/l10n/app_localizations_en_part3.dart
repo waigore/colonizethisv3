@@ -620,6 +620,34 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get diplomacy_relativePower_label => 'Relative power:';
+
+  @override
+  String get diplomacy_relativePower_tierRoughlyEqual => 'Roughly equal';
+
+  @override
+  String get diplomacy_relativePower_tierSuperior => 'Superior';
+
+  @override
+  String get diplomacy_relativePower_tierVastlySuperior => 'Vastly superior';
+
+  @override
+  String get diplomacy_relativePower_tierInferior => 'Inferior';
+
+  @override
+  String get diplomacy_relativePower_tierVastlyInferior => 'Vastly inferior';
+
+  @override
+  String get diplomacy_relativePower_tooltip =>
+      "Compares this Great Power's military power score "
+      '(provinces, army strength, ships) to yours.';
+
+  @override
+  String diplomacy_relativePower_semantics(String pct, String tier) {
+    return 'Relative power $pct, $tier';
+  }
+
+  @override
   String diplomacy_panel_outgoingSubsidy(int amount, String target) {
     return 'Outgoing subsidy: £$amount/turn to $target';
   }

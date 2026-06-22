@@ -85,6 +85,7 @@ class _DiplomacyRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildHeaderRow(context),
+        ..._buildRelativePowerLine(context),
         const SizedBox(height: 4),
         _buildRelationRow(context),
         ..._buildOptionalStatusLines(context),
@@ -97,15 +98,14 @@ class _DiplomacyRow extends StatelessWidget {
     // `kMinViewportWidth` (320 dp) the inner Row width is ~262 dp once the
     // ListView, row padding, and chrome border are subtracted. A long
     // faction display name (e.g. `Holy Roman Empire`) plus the
-    // `_FactionKindBadge` chip and the optional `+N% / −N%` power
-    // comparison label exceeds that budget by ~162 px without a
-    // shrinkable child, producing the documented overflow. Wrap the name
-    // in `Flexible` + `TextOverflow.ellipsis` so the name absorbs all
+    // `_FactionKindBadge` chip exceeds that budget without a shrinkable
+    // child, producing the documented overflow. Wrap the name in
+    // `Flexible` + `TextOverflow.ellipsis` so the name absorbs all
     // available width and shrinks gracefully at narrow viewports while
-    // the chip + percentage retain their natural size for legibility.
-    // SPEC/ui/diplomacy-panel.md § Per-faction row text layout is
-    // preserved: the chip, optional percentage, and their leading gap
-    // continue to anchor to the name's trailing edge.
+    // the chip retains its natural size for legibility. The Great Power
+    // power comparison no longer lives here — it renders on the dedicated
+    // relative-power line below the header (SPEC/ui/diplomacy-panel.md
+    // § Relative power line).
     return Row(
       children: [
         Flexible(
@@ -120,37 +120,22 @@ class _DiplomacyRow extends StatelessWidget {
         ),
         CtGap.wm,
         _kindChip(context, data.kind),
-        ..._buildPowerComparison(context),
       ],
     );
   }
 
-  /// Renders the Great Power power-comparison percentage per
-  /// SPEC/ui/diplomacy-panel.md § Power comparison percentage.
-  List<Widget> _buildPowerComparison(BuildContext context) {
+  /// Renders the Great Power relative-power line between the header and the
+  /// relation row per SPEC/ui/diplomacy-panel.md § Relative power line. Only
+  /// Great Power rows carry the comparison scores; Minor / Tribe rows omit
+  /// the line entirely.
+  List<Widget> _buildRelativePowerLine(BuildContext context) {
     final int? gpScore = data.powerScore;
     final int? playerScore = data.playerPowerScore;
     if (gpScore == null || playerScore == null) {
       return const [];
     }
     final int pct = powerComparisonPercent(gpScore, playerScore);
-    final String text = formatPowerComparisonPercent(pct);
-    // SPEC: red (--danger) when GP stronger (pct > 0), green (--success) when
-    // weaker or equal (pct <= 0). Token colors live in the editorial-monocle
-    // palette so the row matches the dark theme rather than raw Material reds.
-    final Color color = pct > 0
-        ? EditorialMonoclePalette.danger
-        : EditorialMonoclePalette.success;
-    return [
-      CtGap.wm,
-      Text(
-        text,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ];
+    return [const SizedBox(height: 4), RelativePowerLine(pct: pct)];
   }
 
   /// Renders the relation summary row per SPEC/ui/diplomacy-panel.md

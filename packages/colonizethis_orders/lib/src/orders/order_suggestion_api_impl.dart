@@ -288,17 +288,10 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
         available[entry.key] = entry.value;
       }
     }
-    return TradeSuggestionContext(
-      playerId: view.playerId,
-      bidTypeCap: worldMarketBidTypeCap(game, view.playerId),
-      tradeCargoCapacity: cargoHoldsForHomeFleet(game, view.playerId),
+    return tradeSuggestionContextFromGame(
+      game,
+      view.playerId,
       availableStockpileByCommodityId: available,
-      commodityNeedByCommodityId: const <CommodityId, int>{},
-      treasuryBudgetForBids: treasuryAvailableForBidsByPlayer(
-        game: game,
-        playerId: view.playerId,
-      ),
-      worldMarketState: game.worldMarketState,
     );
   }
 }
