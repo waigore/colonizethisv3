@@ -49,6 +49,8 @@ import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
+import 'check_economy_dedup_port_tile_keys.dart';
+import 'check_economy_world_market_admission_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_map_clones.dart';
@@ -971,6 +973,10 @@ int? _tryRunLogicRuleInProcess({
       return runCheckLogicDedupLogger(repoRoot);
     case 'repo.economy_cost_check_shared_helper':
       return runCheckEconomyCostCheckSharedHelper(repoRoot);
+    case 'repo.economy_world_market_admission_shared':
+      return runCheckEconomyWorldMarketAdmissionShared(repoRoot);
+    case 'repo.economy_dedup_port_tile_keys':
+      return runCheckEconomyDedupPortTileKeys(repoRoot);
     default:
       return null;
   }

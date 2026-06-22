@@ -11,11 +11,12 @@
 /// turn-resolution budget (`.cursor/rules/colonizethis-turn-resolution-budget.mdc`).
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart'
     show GamePlayerLookup;
+
+import 'trade_order_admission.dart' show isWorldMarketTradeableCommodity;
 
 /// Per-commodity offer cap for [playerId] in [game].
 ///
@@ -63,7 +64,7 @@ Map<CommodityId, int> offerCapByCommodityId({
     final stockpile = entry.value;
     if (stockpile <= 0) continue;
     final commodityId = entry.key;
-    if (data.richesCommodityIds.contains(commodityId)) continue;
+    if (!isWorldMarketTradeableCommodity(commodityId)) continue;
     final reserved = reservations == null
         ? 0
         : (reservations[commodityId] ?? 0).clamp(0, stockpile);
@@ -143,7 +144,7 @@ Map<CommodityId, int> sellableHeadroomByCommodityId({
   final result = <CommodityId, int>{...cap};
   for (final entry in staged.entries) {
     final commodityId = entry.key;
-    if (data.richesCommodityIds.contains(commodityId)) continue;
+    if (!isWorldMarketTradeableCommodity(commodityId)) continue;
     final capValue = result[commodityId] ?? 0;
     final headroom = capValue - entry.value;
     if (headroom <= 0) {

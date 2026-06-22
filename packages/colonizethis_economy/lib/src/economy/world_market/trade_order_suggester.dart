@@ -18,6 +18,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'trade_order_admission.dart' show isWorldMarketTradeableCommodity;
 import 'treasury_bid_budget.dart' show effectiveMarketPriceForCommodityId;
 import 'world_market_context_base.dart';
 
@@ -127,7 +128,7 @@ class TradeOrderSuggester {
     final allowBids = context.bidTypeCap > 0;
 
     for (final commodityId in orderedCommodityIds) {
-      if (data.richesCommodityIds.contains(commodityId)) {
+      if (!isWorldMarketTradeableCommodity(commodityId)) {
         continue;
       }
       final available =
