@@ -35,8 +35,8 @@ const Map<String, Set<String>> _enforcedConsumerTargets = {
   'orders': {'diplomacy', 'economy', 'world'},
   'combat': {'world'},
   'economy': {'world'},
-  'logic': {'orders', 'world'},
-  'diplomacy': {'world'},
+  'logic': {'economy', 'orders', 'world'},
+  'diplomacy': {'economy', 'world'},
   'setup': {'diplomacy', 'world'},
 };
 

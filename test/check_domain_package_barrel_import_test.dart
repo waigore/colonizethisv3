@@ -74,6 +74,12 @@ void main() {
     // Promoted by the diplomacy/setup -> sibling slice (Refs #3393 Phase 1).
     expect(pairs['diplomacy'], containsAll(<String>{'world'}));
     expect(pairs['setup'], containsAll(<String>{'diplomacy', 'world'}));
+    // Promoted by the logic/diplomacy -> economy slice (Refs #3615 Cluster 5):
+    // the world-market admission/deal-matcher/bid-cap re-exports now route
+    // through the economy public barrel, so deep economy `src/` imports from
+    // these consumers are forbidden.
+    expect(pairs['logic'], contains('economy'));
+    expect(pairs['diplomacy'], contains('economy'));
   });
 
   test('passes for the real post-migration domain packages', () {
@@ -445,6 +451,60 @@ void main() {
       expect(code, 1);
     },
   );
+
+  test('fails on a diplomacy -> economy deep import that bypasses the barrel '
+      '(Refs #3615 Cluster 5)', () {
+    final temp = Directory.systemTemp.createTempSync('barrel_diplo_econ_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeTargetPackage(
+      temp.path,
+      'economy',
+      published: 'economy/world_market/bid_type_cap.dart',
+      subBarrelPublished: 'economy/world_market/deal_matcher.dart',
+      hidden: 'economy/world_market/internal_only.dart',
+    );
+    final diplomacyLib = Directory(
+      p.join(temp.path, 'packages', 'colonizethis_diplomacy', 'lib'),
+    )..createSync(recursive: true);
+    File(p.join(diplomacyLib.path, 'resolver.dart')).writeAsStringSync(
+      "import 'package:colonizethis_economy/src/economy/world_market/bid_type_cap.dart';\n",
+    );
+    _ensureEnforcedConsumerDirs(temp.path);
+
+    final code = runCheckDomainPackageBarrelImport(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
+  });
+
+  test('fails on a logic -> economy deep import that bypasses the barrel '
+      '(Refs #3615 Cluster 5)', () {
+    final temp = Directory.systemTemp.createTempSync('barrel_logic_econ_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeTargetPackage(
+      temp.path,
+      'economy',
+      published: 'economy/world_market/trade_order_suggester.dart',
+      subBarrelPublished: 'economy/world_market/deal_matcher.dart',
+      hidden: 'economy/world_market/internal_only.dart',
+    );
+    final logicLib = Directory(
+      p.join(temp.path, 'packages', 'colonizethis_logic', 'lib'),
+    )..createSync(recursive: true);
+    File(p.join(logicLib.path, 'order_suggestion_api.dart')).writeAsStringSync(
+      "import 'package:colonizethis_economy/src/economy/world_market/trade_order_suggester.dart';\n",
+    );
+    _ensureEnforcedConsumerDirs(temp.path);
+
+    final code = runCheckDomainPackageBarrelImport(
+      temp.path,
+      info: (_) {},
+      err: (_) {},
+    );
+    expect(code, 1);
+  });
 
   test('allows a deep import of a file the barrel does not publish', () {
     final temp = Directory.systemTemp.createTempSync('barrel_bypass_ok_');
