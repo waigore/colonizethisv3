@@ -43,6 +43,7 @@ import '../features/game/widgets/game_tab_bar.dart';
 import '../features/game/widgets/game_top_bar.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
+import '../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import '../features/game/widgets/pause_menu_panel.dart';
 import '../features/game/widgets/player_turn_event_feed.dart';
 import '../features/game/widgets/production_commodity_breakdown_dialog.dart';
@@ -632,6 +633,32 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'As bottom sheet',
         builder: (context) => const CivilianPanelAsBottomSheetStory(),
+      ),
+      WidgetbookUseCase(
+        // Narrow sizing contract (Refs #3627 AC6): full viewport width ×
+        // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp.
+        name: 'Mobile (360x640)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return civilianUnitsPanelWithRiverpod(
+            game: game,
+            child: mobileViewport(
+              context,
+              ConstrainedBox(
+                constraints: unitsPanelSheetConstraints(const Size(360, 640)),
+                child: CivilianUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  bus: AppEventBus(),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     ],
   ),

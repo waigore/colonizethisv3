@@ -183,3 +183,4 @@ the displayed text content (`name — region` on the location line) is unchanged
 
 - **Standalone:** Demo armies + fleets; verify Home Army pinning, province grouping, expanded composition, split/combine disabled states.
 - **With map:** `getDebugInitGameResult()`; army row → pan/center province.
+- **Mobile (360x640):** Panel inside a `360 × 640` dp frame bound by the production narrow constraints (`unitsPanelSheetConstraints` — full width × `50%` height), showing the fill-height narrow sizing contract (Refs #3627).
