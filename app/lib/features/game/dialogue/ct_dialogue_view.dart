@@ -6,12 +6,14 @@ import 'package:jenny/jenny.dart';
 /// Flutter/Jenny dialogue view that drives UI via callbacks and completers.
 /// SPEC/ui/dialogue-presentation.md, SPEC/ai/dialogue-content-and-yarn.md.
 class CtDialogueView extends DialogueView {
-  CtDialogueView({CtLogger? logger}) : _log = logger ?? packageLogger('dialogue');
+  CtDialogueView({CtLogger? logger})
+    : _log = logger ?? packageLogger('dialogue');
 
   final CtLogger _log;
 
   DialogueLine? _currentLine;
   DialogueChoice? _currentChoice;
+  DialogueLine? _contextLine;
   void Function(DialogueLine? line, DialogueChoice? choice)? onStateChanged;
 
   Completer<void>? _lineCompleter;
@@ -19,6 +21,15 @@ class CtDialogueView extends DialogueView {
 
   DialogueLine? get currentLine => _currentLine;
   DialogueChoice? get currentChoice => _currentChoice;
+
+  /// The narrative line most recently presented, retained through the
+  /// transient null state after [advanceLine] and through the subsequent
+  /// choice so consumers can keep the message visible while option buttons
+  /// render together with it (SPEC/ui/ct-dialogue-view.md § Combined
+  /// line+choice presentation). Reset to `null` once a choice resolves or the
+  /// dialogue finishes so only the *immediately preceding* line accompanies a
+  /// choice — earlier lines in a multi-line node do not linger. Refs #3628.
+  DialogueLine? get contextLine => _contextLine;
 
   /// Call when the user has read the line and taps to continue.
   void advanceLine() {
@@ -42,6 +53,7 @@ class CtDialogueView extends DialogueView {
   FutureOr<bool> onLineStart(DialogueLine line) {
     _log.d('line start "${line.text}"');
     _currentLine = line;
+    _contextLine = line;
     _currentChoice = null;
     _lineCompleter = Completer<void>();
     onStateChanged?.call(_currentLine, _currentChoice);
@@ -61,6 +73,7 @@ class CtDialogueView extends DialogueView {
     onStateChanged?.call(_currentLine, _currentChoice);
     return _choiceCompleter!.future.then((index) {
       _currentChoice = null;
+      _contextLine = null;
       onStateChanged?.call(null, null);
       return index;
     });
@@ -71,6 +84,7 @@ class CtDialogueView extends DialogueView {
     _log.d('dialogue finish');
     _currentLine = null;
     _currentChoice = null;
+    _contextLine = null;
     _lineCompleter = null;
     _choiceCompleter = null;
     onStateChanged?.call(null, null);

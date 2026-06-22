@@ -16,6 +16,7 @@ import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 
 /// Blocking intervention dialogue: Yarn intro, per-prompt situation + reaction, three choices.
@@ -284,36 +285,18 @@ class _InterventionDialogueOverlayState
     }
 
     if (_yarnUiActive) {
-      final line = _view!.currentLine;
-      final choice = _view!.currentChoice;
       return _buildScrimmedShell(
         context: context,
         bodyChildren: [
-          if (line != null) ...[
-            Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: CtSpacing.l),
-            Align(
-              alignment: Alignment.centerRight,
-              child: CtNinePatchButton(
-                onPressed: () => _view!.advanceLine(),
-                child: Text(l10n.game_intervention_continue),
-              ),
-            ),
-          ] else if (choice != null) ...[
-            ...choice.options.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: CtSpacing.m),
-                child: CtNinePatchButton(
-                  onPressed: () => _view!.selectOption(entry.key),
-                  child: Text(entry.value.text),
-                ),
-              ),
-            ),
-          ] else
-            const Align(
+          CtDialogueLineChoiceBody(
+            view: _view!,
+            continueLabel: l10n.game_intervention_continue,
+            lineTextStyle: Theme.of(context).textTheme.bodyLarge,
+            loading: const Align(
               alignment: Alignment.center,
               child: CtLoadingIndicator(),
             ),
+          ),
         ],
       );
     } else if (_awaitingChoice) {
@@ -332,10 +315,7 @@ class _InterventionDialogueOverlayState
           Text(
             l10n.game_intervention_situation(
               _factionDisplayName(widget.game, prompt.aggressorGpId),
-              _factionDisplayName(
-                widget.game,
-                prompt.defenderMinorOrTribeId,
-              ),
+              _factionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
               _factionDisplayName(widget.game, prompt.interveningGpId),
             ),
             style: Theme.of(context).textTheme.bodyMedium,
@@ -428,8 +408,7 @@ const String kInterventionDoNothingButtonKey =
 /// Stable key for the **Diplomatic protest** choice button (#2867 R26b).
 /// The protest button renders with `mutedVariant: true` so the affordance
 /// reads as secondary against `kInterventionInterveneButtonKey`.
-const String kInterventionProtestButtonKey =
-    'interventionOverlayProtestButton';
+const String kInterventionProtestButtonKey = 'interventionOverlayProtestButton';
 
 /// Maximum content width inside `CtDialogShell` for the intervention overlay.
 /// Shared with the prior layout (520 dp).
@@ -459,10 +438,7 @@ const double _kOverlayTitleLetterSpacingEm = 0.05;
 /// styling; `SPEC/ui/pixel-art-ui-catalog.md` § *CtNinePatchButton*
 /// (Muted variant).
 class InterventionChoiceButtons extends StatelessWidget {
-  const InterventionChoiceButtons({
-    super.key,
-    required this.onPick,
-  });
+  const InterventionChoiceButtons({super.key, required this.onPick});
 
   /// Called with the selected [InterventionChoice] when the player taps
   /// any of the three buttons. The parent typically completes the

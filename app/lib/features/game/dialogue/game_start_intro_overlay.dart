@@ -13,6 +13,7 @@ import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 
 /// Spinner while intro dialogue lines are not yet available.
@@ -176,44 +177,17 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
       );
     }
 
-    final line = _view!.currentLine;
-    final choice = _view!.currentChoice;
-
     return _introChromeBody(
       l10n: l10n,
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (line != null) ...[
-            Text(
-              line.text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: CtSpacing.l),
-            Align(
-              alignment: Alignment.center,
-              child: CtNinePatchButton(
-                onPressed: () => _view!.advanceLine(),
-                child: Text(l10n.game_intervention_continue),
-              ),
-            ),
-          ] else if (choice != null) ...[
-            ...choice.options.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: CtSpacing.m),
-                child: CtNinePatchButton(
-                  onPressed: () => _view!.selectOption(entry.key),
-                  child: Text(entry.value.text),
-                ),
-              ),
-            ),
-          ] else
-            const GameStartIntroLoadingIndicator(),
-        ],
+      body: CtDialogueLineChoiceBody(
+        view: _view!,
+        continueLabel: l10n.game_intervention_continue,
+        lineTextStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+        lineTextAlign: TextAlign.center,
+        continueAlignment: Alignment.center,
+        loading: const GameStartIntroLoadingIndicator(),
       ),
     );
   }
