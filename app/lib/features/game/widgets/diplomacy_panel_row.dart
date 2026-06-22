@@ -358,6 +358,11 @@ class _ActionButton extends StatelessWidget {
       enabled: isPending || enabled,
       minHeight: kDiplomacyActionButtonMinHeight,
       padding: kDiplomacyActionButtonPadding,
+      // SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621): the
+      // compact action buttons shrink-wrap to their label so the trailing
+      // cluster flows left-to-right across the 180 dp `Wrap` instead of each
+      // button expanding to the full run width as a vertical column.
+      shrinkWrap: true,
       dangerVariant: _isWarVariant,
       child: Text(label, style: labelStyle),
     );

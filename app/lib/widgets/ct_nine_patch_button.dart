@@ -51,6 +51,7 @@ class CtNinePatchButton extends StatefulWidget {
     this.padding,
     this.destTileSize = 16,
     this.minHeight = 48,
+    this.shrinkWrap = false,
     this.dangerVariant = false,
     this.mutedVariant = false,
     this.disabledOpacityOverride,
@@ -98,6 +99,20 @@ class CtNinePatchButton extends StatefulWidget {
   /// the 44 dp accessibility threshold called out in
   /// `SPEC/ui/buttons-nine-patch.md`.
   final double minHeight;
+
+  /// When `false` (default), the button content is centered and the surface
+  /// **expands to fill** the available cross-axis width handed down by the
+  /// parent (the legacy behaviour: a `Center` inside loose constraints grows
+  /// to the maximum width, so buttons in a `Column`/`Wrap` fill the run).
+  ///
+  /// When `true`, the surface **shrink-wraps to its content width** (label +
+  /// [padding]) instead of expanding. This lets several compact buttons share
+  /// a single `Wrap` run and flow left-to-right rather than each occupying the
+  /// full run width as a vertical column. Used by the diplomacy panel action
+  /// cluster per `SPEC/ui/diplomacy-panel.md` § Action button styling
+  /// (Refs #3621). The [minHeight] tap target is unchanged. Defaults to
+  /// `false` so every existing call site keeps its expanding layout.
+  final bool shrinkWrap;
 
   /// When `true`, the resolved border and engraved label foreground swap
   /// from the brass `--border` / `--accent` family to the `--danger` token
@@ -295,17 +310,21 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
       ],
     );
 
+    final Widget label = DefaultTextStyle.merge(
+      style: engravedStyle,
+      child: IconTheme.merge(
+        data: IconThemeData(color: _textColor, size: 20),
+        child: widget.child,
+      ),
+    );
     final Widget content = Padding(
       padding: padding,
-      child: Center(
-        child: DefaultTextStyle.merge(
-          style: engravedStyle,
-          child: IconTheme.merge(
-            data: IconThemeData(color: _textColor, size: 20),
-            child: widget.child,
-          ),
-        ),
-      ),
+      // `widthFactor: 1.0` sizes the Align to its child's width so the surface
+      // shrink-wraps to its label (compact cluster flow); the default `Center`
+      // (no width factor) expands to fill the available width.
+      child: widget.shrinkWrap
+          ? Align(widthFactor: 1.0, child: label)
+          : Center(child: label),
     );
 
     final Widget surface = AnimatedContainer(
