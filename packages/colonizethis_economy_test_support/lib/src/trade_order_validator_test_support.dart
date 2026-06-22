@@ -1,12 +1,12 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'support/trade_order_factory.dart';
+import 'trade_order_factory.dart';
 
 /// Shared helpers for `TradeOrderValidator` tests per
 /// `SPEC/program/world-market-resolution.md` § Trade order validation.
 /// Refs #2989 A5. The bid/offer builders delegate to the canonical shared
-/// `TradeOrder` factory (Refs #3427 step 14).
+/// `TradeOrder` factory (Refs #3427 step 14 / #3615 Cluster 6).
 TradeOrder validatorBid(String commodityId, int quantity, {int priority = 1}) =>
     testBid(commodityId, quantity, priority: priority);
 
