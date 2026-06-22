@@ -372,6 +372,14 @@ rules:
     script: tool/check_app_split_dialog_base.dart
     pr_incremental: true
 
+  - rule_id: repo.train_dialog_base
+    group: structure
+    title: in-game `Train*Dialog` widgets must extend the shared TrainDialogBase base (Refs #3594)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_train_dialog_base.dart
+    pr_incremental: true
+
   - rule_id: repo.game_widgets_file_size
     group: structure
     title: app/lib/features/game/widgets files must stay at or below 700 lines
