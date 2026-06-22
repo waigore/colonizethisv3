@@ -82,8 +82,8 @@ The scrim color resolves from the canonical `EditorialMonoclePalette.dialogScrim
 |-------|---------|--------|
 | Loading | `_view == null && _runner == null && _loadError == null` | `Stack` with `widget.child`, scrim, and `GameStartIntroLoadingIndicator` inside `CtDialogShell` below the title + brass divider. |
 | Presenting line | `_view!.currentLine != null` | Title + brass divider, then centered line text + centered Continue button (`l10n.game_intervention_continue`); tap calls `_view!.advanceLine()`. |
-| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` | Title + brass divider, then a vertical stack of one stretched `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. |
-| Transient between Jenny events | Both `currentLine` and `currentChoice` are `null` while `_dialogueFinished == false` | Title + brass divider + loading indicator inside the shell. |
+| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` | Title + brass divider, then the retained `_view!.contextLine.text` (the immediately preceding line, centered) **above** a vertical stack of one stretched `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. The narrative message and the option(s) render together — no option-only step (Refs #3628). |
+| Transient between Jenny events | Both `currentLine` and `currentChoice` are `null` while `_dialogueFinished == false` | Title + brass divider; when `_view!.contextLine != null`, the retained line text stays visible above the loading indicator (no message flash); otherwise just the loading indicator. |
 | Error | `_loadError != null` | Title + brass divider, then localized error text + centered Continue button; tapping Continue clears `_loadError` and invokes `widget.onDismissed` so the host advances even when the Yarn asset is broken. |
 | Dismissed | `_dialogueFinished == true` **or** `_view == null && _runner == null` after error-Continue | Renders `widget.child` only — no scrim, no shell. |
 
@@ -143,6 +143,10 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 - Given the overlay is presenting a Yarn choice with `n >= 2` options,
   When the user taps the `i`-th option button,
   Then `CtDialogueView.selectOption(i)` is invoked exactly once with the same index and the dialogue advances to the next Jenny event.
+
+- Given a `GameStartIntroOverlay` is mounted with the `game_start_intro` node (one narrative line followed by `-> I shall.`),
+  When the overlay reaches the choice step (after the line is advanced),
+  Then the imperialism narrative text (the retained `contextLine`) renders in the same `CtDialogShell` body above the `I shall.` `CtNinePatchButton`, and there is no option-only step where the narrative text is absent (Refs #3628 AC-2).
 
 - Given the overlay has just been mounted and the Yarn `AssetBundle` resolves `kDialogueGameIntroAsset` to text that does not declare a `game_start_intro` node,
   When `_loadAndRun` reaches the node existence check,
