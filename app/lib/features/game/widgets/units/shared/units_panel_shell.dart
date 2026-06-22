@@ -41,8 +41,16 @@ class UnitsPanelShell extends StatelessWidget {
   final EdgeInsets listPadding;
   final BoxConstraints panelConstraints;
 
+  /// Default outer bounds when the host does not pass tighter constraints.
+  ///
+  /// Width is intentionally **unbounded** (`double.infinity`) so the
+  /// bottom-sheet host owns the panel width via the viewport-adaptive
+  /// `unitsPanelSheetConstraints` (`70%` wide / full-width narrow, Refs #3627);
+  /// the panel then fills whatever width the host allocates instead of pinning
+  /// itself to a stale fixed value. `maxHeight: 500` remains a sane upper bound
+  /// for standalone / Widgetbook / golden contexts that mount the shell without
+  /// a host height cap.
   static const BoxConstraints defaultPanelConstraints = BoxConstraints(
-    maxWidth: 400,
     maxHeight: 500,
   );
 

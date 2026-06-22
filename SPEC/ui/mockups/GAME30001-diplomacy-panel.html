@@ -46,9 +46,15 @@ html{overflow-y:auto;scroll-behavior:smooth}
 .faction-row .f-relation .state.war{background:oklch(40% 0.06 20 / .4);color:var(--danger)}
 .faction-row .f-relation .state.peace{background:oklch(40% 0.06 150 / .2);color:var(--success)}
 .faction-row .f-relation .word{color:var(--muted);font-style:italic}
-.faction-row .f-relation .power{font-family:var(--font-mono);font-size:9px;margin-left:8px}
-.faction-row .f-relation .power.green{color:var(--success)}
-.faction-row .f-relation .power.red{color:var(--danger)}
+/* Relative power line (GP rows only): muted prefix + signed % + tier word,
+   placed above the relation row. Wraps freely at narrow widths (no ellipsis).
+   SPEC/ui/diplomacy-panel.md § Relative power line. */
+.f-power{font-family:var(--font-body);font-size:clamp(9px,1.2vw,11px);margin-top:2px;line-height:1.3}
+.rp-label{color:var(--muted)}
+.rp-dot{color:var(--muted)}
+.rp-val{font-weight:600}
+.rp-val.red,.rp-tier.red{color:var(--danger)}
+.rp-val.green,.rp-tier.green{color:var(--success)}
 .faction-row .f-subsidy{font-family:var(--font-mono);font-size:clamp(8px,1vw,9px);color:var(--accent-dim);margin-top:2px}
 .faction-row .f-overture{font-family:var(--font-body);font-size:clamp(8px,1vw,9px);color:var(--muted);margin-top:1px}
 .faction-row .f-actions{display:flex;flex-wrap:wrap;gap:4px;flex-shrink:0;padding-top:2px;max-width:180px;justify-content:flex-end}
@@ -97,25 +103,52 @@ html{overflow-y:auto;scroll-behavior:smooth}
 
 <script>
 let currentMode='all';
+// GP rows carry an integer `pct` (powerComparisonPercent). Minors/Tribes omit
+// `pct` so no relative-power line renders. SPEC/ui/diplomacy-panel.md.
 const factions=[
-  {id:'spain',name:'Spain',type:'GP',state:'AT_WAR',word:'Hostile',power:'+12%',powerGood:false,overture:'',actions:['Offer Peace'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
-  {id:'france',name:'France',type:'GP',state:'AT_PEACE',word:'Unfriendly',power:'−8%',powerGood:true,overture:'',actions:['Declare War','Alliance','Grant Aid'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
-  {id:'portugal',name:'Portugal',type:'GP',state:'AT_PEACE',word:'Cordial',power:'−22%',powerGood:true,overture:'',actions:[],subsidy:'Outgoing subsidy: £1,500/turn to Portugal',pendingGrant:'',pendingSubsidy:''},
-  {id:'dutch',name:'Dutch Republic',type:'GP',state:'AT_PEACE',word:'Friendly',power:'−15%',powerGood:true,overture:'',actions:['Set Subsidy'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
-  {id:'bavaria',name:'Bavaria',type:'Minor',state:'AT_PEACE',word:'Cordial',power:'',powerGood:true,overture:'Consulate → Embassy next',actions:['Establish Overture','Grant Aid'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
-  {id:'saxony',name:'Saxony',type:'Minor',state:'AT_PEACE',word:'Friendly',power:'',powerGood:true,overture:'Already at Embassy',actions:['Set Subsidy'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
-  {id:'creek',name:'Creek',type:'Tribe',state:'AT_PEACE',word:'Unfriendly',power:'',powerGood:true,overture:'No overture yet',actions:['Establish Overture'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'spain',name:'Spain',type:'GP',state:'AT_WAR',word:'Hostile',pct:35,overture:'',actions:['Offer Peace'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'france',name:'France',type:'GP',state:'AT_PEACE',word:'Unfriendly',pct:12,overture:'',actions:['Declare War','Alliance','Grant Aid'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'portugal',name:'Portugal',type:'GP',state:'AT_PEACE',word:'Cordial',pct:-8,overture:'',actions:[],subsidy:'Outgoing subsidy: £1,500/turn to Portugal',pendingGrant:'',pendingSubsidy:''},
+  {id:'dutch',name:'Dutch Republic',type:'GP',state:'AT_PEACE',word:'Friendly',pct:-40,overture:'',actions:['Set Subsidy'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'bavaria',name:'Bavaria',type:'Minor',state:'AT_PEACE',word:'Cordial',overture:'Consulate → Embassy next',actions:['Establish Overture','Grant Aid'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'saxony',name:'Saxony',type:'Minor',state:'AT_PEACE',word:'Friendly',overture:'Already at Embassy',actions:['Set Subsidy'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'creek',name:'Creek',type:'Tribe',state:'AT_PEACE',word:'Unfriendly',overture:'No overture yet',actions:['Establish Overture'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
 ];
+
+// Display-only tier word from powerComparisonPercent, per the boundary table
+// in SPEC/ui/diplomacy-panel.md § Relative power line.
+function relativePowerTier(pct){
+  if(pct<=-31)return 'Vastly inferior';
+  if(pct<=-11)return 'Inferior';
+  if(pct<=10)return 'Roughly equal';
+  if(pct<=30)return 'Superior';
+  return 'Vastly superior';
+}
+// Signed percentage: +N%, −N% (U+2212 minus), or 0%.
+function formatPct(pct){
+  if(pct>0)return '+'+pct+'%';
+  if(pct<0)return '\u2212'+(-pct)+'%';
+  return '0%';
+}
+// Shared "Relative power: +N% · Tier" markup. Color (danger when pct>0,
+// success when pct<=0) is shared by the percentage and tier word.
+function relativePowerLine(pct){
+  const cls=pct>0?'red':'green';
+  return `<span class="rp-label">Relative power:</span> `+
+    `<span class="rp-val ${cls}">${formatPct(pct)}</span>`+
+    `<span class="rp-dot"> · </span>`+
+    `<span class="rp-tier ${cls}">${relativePowerTier(pct)}</span>`;
+}
 
 function makeFactionRow(f){
   const wordColors={Hostile:'oklch(55% 0.16 22)',Unfriendly:'oklch(62% 0.10 55)',Cordial:'oklch(58% 0.08 160)',Friendly:'oklch(55% 0.12 150)'};
   return `<div class="faction-row" onclick="openDetail('${f.id}')">
     <div class="f-details">
       <div class="f-name">${f.name}<span class="f-badge ${f.type==='GP'?'gp':f.type==='Minor'?'minor':'tribe'}">${f.type}</span></div>
+      ${f.type==='GP'&&f.pct!==undefined?`<div class="f-power">${relativePowerLine(f.pct)}</div>`:''}
       <div class="f-relation">
         <span class="state ${f.state==='AT_WAR'?'war':'peace'}">${f.state==='AT_WAR'?'WAR':'PEACE'}</span>
         <span class="word" style="color:${wordColors[f.word]||'var(--muted)'}">${f.word}</span>
-        ${f.power?`<span class="power ${f.powerGood?'green':'red'}">${f.power}</span>`:''}
         ${f.type!=='GP'?`<span class="f-overture"> · ${f.overture}</span>`:''}
       </div>
       ${f.subsidy?`<div class="f-subsidy">${f.subsidy}</div>`:''}
@@ -164,8 +197,8 @@ function openDetail(id){
   if(f.type==='GP')hist=hist.concat([{yr:'1525 (Turn 21)',txt:`Our treasury surpassed ${f.name}'s in composite power.`}]);
   document.getElementById('detail-card').innerHTML=`
     <h3>${f.name} <span class="f-badge ${f.type==='GP'?'gp':f.type==='Minor'?'minor':'tribe'}" style="vertical-align:middle">${f.type}</span></h3>
+    ${f.type==='GP'&&f.pct!==undefined?`<div class="f-power" style="margin-bottom:6px">${relativePowerLine(f.pct)}</div>`:''}
     <div class="dl"><span class="lk">Relation</span><span class="lv"><span class="state ${f.state==='AT_WAR'?'war':'peace'}" style="margin-right:6px">${f.state==='AT_WAR'?'WAR':'PEACE'}</span> <span style="color:${wordColors[f.word]||'var(--muted)'}">${f.word}</span></span></div>
-    ${f.power?`<div class="dl"><span class="lk">Power Score</span><span class="lv" style="color:${f.powerGood?'var(--success)':'var(--danger)'}">${f.power} vs your GP</span></div>`:''}
     ${f.overture?`<div class="dl"><span class="lk">Overture</span><span class="lv">${f.overture}</span></div>`:''}
     <div class="history"><h4>Diplomatic History</h4>${hist.map(h=>`<div class="ev"><span class="yr">${h.yr}</span>${h.txt}</div>`).join('')}</div>
     <button class="close-detail" onclick="document.getElementById('detail-overlay').classList.remove('show')">Close</button>
