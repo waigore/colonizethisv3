@@ -35,6 +35,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../game_lookup_helpers.dart';
 import '../tile_extraction_pipeline.dart';
 import '../tile_extraction_yield.dart';
 import 'purchased_tile_index.dart';
@@ -177,7 +178,7 @@ PurchasedTileRichesResult computePurchasedTileRichesCredits({
     return PurchasedTileRichesResult.empty;
   }
 
-  final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
+  final portTileKeys = collectPortTileKeys(game);
   final tileState = game.worldState.tileState;
 
   final credits = <PurchasedTileRichesCredit>[];
