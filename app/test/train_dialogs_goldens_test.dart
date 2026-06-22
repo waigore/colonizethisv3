@@ -30,6 +30,12 @@
 //  - #3601 AC6 (danger `[+]`) + per-item red cost text: naval deficit (zero
 //    treasury) and military deficit (zero treasury).
 //
+// Issue #3601 verification gap G2: the civilian reset path (AC3 — `Reset`
+// restores `remaining == total`) had no pixel baseline. This adds:
+//  - #3601 AC3 (Reset restores the resource bar to `£5,000 / £5,000`, `12 / 12`
+//    after queued Builders dropped it to `£3,000 / £5,000`, `8 / 12`):
+//    civilian reset.
+//
 // SPEC: SPEC/ui/train-civilians-dialog.md (`UNIT40001`),
 // SPEC/ui/components/train-dialog-chrome.md, SPEC/ui/train-military-dialog.md,
 // SPEC/ui/train-naval-dialog.md (`UNIT60001`).
@@ -310,6 +316,76 @@ void main() {
       await expectLater(
         find.byKey(key),
         matchesGoldenFile('goldens/train_civilians_dialog_deficit.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: UNIT40001 Train Civilians dialog — Reset restores remaining == '
+    'total in the resource bar (Refs #3601 AC3, gap G2)',
+    (WidgetTester tester) async {
+      const key = ValueKey<String>('train_civilians_dialog_reset_golden');
+      final player = getPlayer(humanPlayerId);
+      final capital =
+          (player.capitalProvinceId ?? player.capitalTile?.provinceId)!;
+      // Clean stockpile (paper == 12 exactly) so the bar totals are
+      // deterministic across debug-fixture stockpile changes.
+      final richGame = game.copyWith(
+        players: [
+          player.copyWith(
+            treasury: 5000,
+            stockpile: const Stockpile(quantities: {'paper': 12}),
+            capitalProvinceId: capital,
+          ),
+          ...game.players.where((p) => p.id != humanPlayerId),
+        ],
+      );
+      // Two queued Builders (£1,000 + 2 paper each) drop the bar to
+      // `£3,000 / £5,000` and `8 / 12` before the reset under test.
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          humanPlayerId: [
+            for (var i = 0; i < 2; i++)
+              BuildUnitOrder(
+                unitType: kUnitTypeBuilder,
+                isMilitary: false,
+                spawnProvinceId: capital,
+              ),
+          ],
+        },
+      );
+
+      await pumpHost(
+        tester,
+        TrainCiviliansDialog(
+          game: richGame,
+          humanPlayerId: humanPlayerId,
+          currentOrders: orders,
+          bus: AppEventBus.create(),
+        ),
+        key,
+      );
+
+      // Pre-reset the queued orders render remaining below total (AC1 dynamic
+      // display) so the reset golden proves a real state transition.
+      expect(find.textContaining('£3,000 / £5,000'), findsOneWidget);
+      expect(find.textContaining('8 / 12'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Reset'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reset'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(TrainCiviliansDialog), findsOneWidget);
+      _expectEditorialMonocleDarkChrome(tester);
+      // AC3: after reset the bar shows remaining == total for both resources.
+      expect(find.textContaining('£5,000 / £5,000'), findsOneWidget);
+      expect(find.textContaining('12 / 12'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(key),
+        matchesGoldenFile('goldens/train_civilians_dialog_reset.png'),
       );
     },
   );
