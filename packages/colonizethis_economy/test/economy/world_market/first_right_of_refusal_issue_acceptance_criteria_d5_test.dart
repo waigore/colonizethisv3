@@ -39,7 +39,7 @@ import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_ind
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../../support/trade_order_factory.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 const String _gpA = 'gpA';
 const String _gpB = 'gpB';

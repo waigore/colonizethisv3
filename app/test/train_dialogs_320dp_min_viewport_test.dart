@@ -6,10 +6,10 @@
 // Civilian / Military panels.
 //
 // Both dialogs render their chrome via [CtDialogShell] with the shared
-// [TrainDialogHeader] (Cinzel accent title + 32 dp close `×`), a brass
-// [TrainDialogSectionDivider] family, a `Wrap`-based resource bar
-// (treasury / paper for civilians; treasury / peasants / six commodity
-// chips for military), a column of per-unit-type rows, and a trailing
+// [TrainDialogHeader] (centered Cinzel accent title, no `×` close button —
+// #3568 parity), `SizedBox` section gaps (no brass dividers), a `Wrap`-based
+// resource bar (treasury / paper for civilians; treasury / peasants / six
+// commodity chips for military), a column of per-unit-type rows, and a trailing
 // right-aligned Reset action row. At `kMinViewportWidth` (320 dp) the
 // shell collapses to the same ~288 dp content width as the shells pinned
 // in `dialogs_320dp_min_viewport_test.dart` — `Dialog.insetPadding`

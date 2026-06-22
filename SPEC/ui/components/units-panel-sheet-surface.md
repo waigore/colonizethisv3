@@ -33,7 +33,7 @@ Exposed constants:
 - `UnitsPanelSheetSurface.topEdgeWidth = 2.0` — width of the `--accent-dim` top edge.
 - `UnitsPanelSheetSurface.topCornerRadius = CtRadius.medium` (`4` dp) — top corner radius.
 
-The surface contributes only the outer frame; it does **not** constrain the panel's own sizing. Mockup `max-width` / `max-height` sizing parity (Civilian `680` / Military `720` / Naval sidebar `340`) is tracked as follow-up work on #3514.
+The surface contributes only the outer frame; it does **not** constrain the panel's own sizing. The host wraps [child] in a `ConstrainedBox` derived from the shared `unitsPanelSheetConstraints(viewport)` rule (`50%` height narrow / `70%` width · `55vh` wide — see [`units-panel-shell.md`](units-panel-shell.md) § Bottom-sheet sizing, Refs #3627).
 
 ---
 
@@ -75,8 +75,8 @@ The composite has no internal state and no variants. The same frame is painted f
 | Screen ID | Spec | Notes |
 |-----------|------|-------|
 | `UNIT10001` | [`civilian-units-panel.md`](../civilian-units-panel.md) | Bottom-sheet host (`isScrollControlled: true`). |
-| `UNIT20001` | [`military-units-panel.md`](../military-units-panel.md) | Bottom-sheet host. |
-| `UNIT30001` | [`naval-units-panel.md`](../naval-units-panel.md) | Bottom-sheet host. |
+| `UNIT20001` | [`military-units-panel.md`](../military-units-panel.md) | Bottom-sheet host (`isScrollControlled: true`, Refs #3627). |
+| `UNIT30001` | [`naval-units-panel.md`](../naval-units-panel.md) | Bottom-sheet host (`isScrollControlled: true`, Refs #3627). |
 
 ---
 

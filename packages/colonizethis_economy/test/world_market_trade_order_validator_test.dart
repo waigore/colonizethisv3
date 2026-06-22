@@ -1,7 +1,7 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_trade_order_validator_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 /// Tests for `TradeOrderValidator` rules 1–3 (invalid quantity, riches not
 /// tradeable, mutual exclusion) plus empty / accept paths per

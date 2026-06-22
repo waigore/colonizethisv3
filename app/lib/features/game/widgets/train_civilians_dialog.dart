@@ -4,14 +4,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/app_assets.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../core/utils/currency_format.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/strict_asset_icon.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'train_dialog_base.dart';
 import 'train_dialog_chrome.dart';
 
@@ -85,21 +84,21 @@ class _TrainCiviliansDialogState
   /// Paper left after subtracting all currently committed unit costs.
   int _remainingPaper() => _paperStockpile - _totalPaperCost();
 
+  /// Per-clause deficit hint per `SPEC/ui/train-civilians-dialog.md`
+  /// § Deficit hint: each deficient resource renders as `{Name} low` and the
+  /// clauses join with `", "` (e.g. `Treasury low, Paper low`).
   String? get _deficitHint {
-    final treasuryDeficit = _totalTreasuryCost() > treasury;
-    final paperDeficit = _totalPaperCost() > _paperStockpile;
-    if (treasuryDeficit && paperDeficit) {
-      return 'Treasury low and Paper low';
-    }
-    if (treasuryDeficit) return 'Treasury low';
-    if (paperDeficit) return 'Paper low';
-    return null;
+    final deficits = <String>[];
+    if (_totalTreasuryCost() > treasury) deficits.add('Treasury');
+    if (_totalPaperCost() > _paperStockpile) deficits.add('Paper');
+    if (deficits.isEmpty) return null;
+    return deficits.map((name) => '$name low').join(', ');
   }
 
   @override
   List<Widget> buildBody(AppLocalizations l10n) {
     return [
-      const TrainDialogSectionDivider(),
+      const SizedBox(height: CtSpacing.ml),
       TrainDialogResourceBar(
         entries: [
           TrainDialogResourceEntry(
@@ -115,7 +114,7 @@ class _TrainCiviliansDialogState
         ],
         deficitHint: _deficitHint,
       ),
-      const TrainDialogSectionDivider(),
+      const SizedBox(height: CtSpacing.ml),
       Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -139,7 +138,7 @@ class _TrainCiviliansDialogState
             ),
         ],
       ),
-      const TrainDialogSectionDivider(),
+      const SizedBox(height: CtSpacing.ml),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -207,26 +206,7 @@ class _UnitTypeRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            if (isLocked) ...[
-              StrictAssetIcon(
-                assetPath: '${kAppIconAssetPrefix}ui_icon_lock.png',
-                width: 20,
-                height: 20,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Expanded(
-              child: Text(
-                econ.id,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
+        TrainDialogUnitNameLine(name: econ.id, isLocked: isLocked),
         const SizedBox(height: 2),
         _buildCostLine(theme, paperQty),
         ..._buildLockedHint(theme),

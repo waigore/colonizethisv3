@@ -25,7 +25,6 @@ import 'transfer_to_home_fleet_dialog.dart';
 import 'units/shared/base_units_panel.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
-import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
 class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
@@ -69,10 +68,6 @@ class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
 
 class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
   final Set<String> _visibleScopedFleetIds = <String>{};
-  static const double _desktopViewportThreshold = 1280;
-  static const double _scaledWidthMin = 420;
-  static const double _scaledWidthMax = 640;
-  static const double _scaledViewportFactor = 0.36;
   StreamSubscription<NavalMoveFleetRequestedEvent>? _moveRequestedSub;
   bool _pendingScopedAutoCloseAfterMove = false;
 
@@ -111,8 +106,9 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
     final rowsById = <String, FleetRow>{
       for (final r in flat) _selectionFleetId(r): r,
     };
-    final activeIds =
-        selection.selectedIds.where(rowsById.containsKey).toList();
+    final activeIds = selection.selectedIds
+        .where(rowsById.containsKey)
+        .toList();
     if (activeIds.length < 2) return false;
     final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
     if (homeTransferRows != null) {
@@ -437,21 +433,6 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
     );
   }
 
-  BoxConstraints _panelConstraints(BuildContext context) {
-    final viewportWidth = MediaQuery.sizeOf(context).width;
-    if (viewportWidth < _desktopViewportThreshold) {
-      return UnitsPanelShell.defaultPanelConstraints;
-    }
-    final scaledWidth = (viewportWidth * _scaledViewportFactor).clamp(
-      _scaledWidthMin,
-      _scaledWidthMax,
-    );
-    return BoxConstraints(
-      maxWidth: scaledWidth,
-      maxHeight: UnitsPanelShell.defaultPanelConstraints.maxHeight,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
@@ -566,9 +547,7 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
                         ),
                       )
                     : null,
-                isSelectedForCombine: isSelected(
-                  _selectionFleetId(row),
-                ),
+                isSelectedForCombine: isSelected(_selectionFleetId(row)),
                 combineSelectionEnabled: !readOnly,
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
                 onSplitFleet: readOnly ? null : () => _openSplitDialog(row),
@@ -579,7 +558,6 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
         ],
       ],
       emptyMessage: l10n.naval_units_empty,
-      panelConstraints: _panelConstraints(context),
     );
     if (kCtE2EEnabled) {
       updateCtE2eNavalPanelSnapshotIfEnabled(
