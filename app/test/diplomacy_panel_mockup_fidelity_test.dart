@@ -54,6 +54,42 @@ Game _emptyStateGame() {
   );
 }
 
+/// Human GP `gp1` with a single discovered GP `gp2` whose relation [score]
+/// drives the one-word relation label and its level color.
+Game _gpRelationGame(int score) {
+  const ow = 'oldWorld';
+  final home = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'Home',
+    ownerId: 'gp1',
+  );
+  final rival = Province(
+    id: '$ow|p2',
+    regionId: ow,
+    displayName: 'Rival',
+    ownerId: 'gp2',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+    oldWorld: RegionData(provinces: [home, rival], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  return Game(
+    id: 'diplo-fidelity-relation-$score',
+    worldState: world,
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+    ],
+    diplomacyRelations: [
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: score),
+    ],
+  );
+}
+
 /// Human GP `gp1` pays an ongoing subsidy to GP `gp2`, so the `gp2` row
 /// renders the outgoing-subsidy economic line.
 Game _subsidyGame() {
@@ -192,6 +228,85 @@ void main() {
       expect(text.style?.fontFamily, 'monospace');
       expect(text.style?.color, EditorialMonoclePalette.accentDim);
       expect(text.style?.fontStyle, isNot(FontStyle.italic));
+    });
+  });
+
+  group('Diplomacy relation word styling (AC5, Refs #3621)', () {
+    /// Locates the relation-word [TextSpan] (the colored italic word, e.g.
+    /// "Cordial") inside the relation-row `Text.rich` for the single GP row.
+    TextSpan relationWordSpan(WidgetTester tester, String word) {
+      for (final Text t in tester.widgetList<Text>(find.byType(Text))) {
+        final InlineSpan? span = t.textSpan;
+        if (span is! TextSpan) continue;
+        final List<InlineSpan>? children = span.children;
+        if (children == null) continue;
+        for (final InlineSpan child in children) {
+          if (child is TextSpan && child.text == word) {
+            return child;
+          }
+        }
+      }
+      fail('relation word span "$word" was not found in the panel');
+    }
+
+    Future<void> pumpRelation(WidgetTester tester, int score) async {
+      await bindSurface(tester);
+      await tester.pumpWidget(_panelHost(_gpRelationGame(score)));
+      await _pumpBuilt(tester);
+    }
+
+    testWidgets('relation word renders italic in its level color', (
+      WidgetTester tester,
+    ) async {
+      await pumpRelation(tester, 60); // Cordial band (50 … 69)
+      final TextSpan word = relationWordSpan(tester, 'Cordial');
+      expect(word.style?.fontStyle, FontStyle.italic);
+      expect(word.style?.color, oklchToColor(kDiplomacyRelationCordialToken));
+    });
+
+    testWidgets('Hostile word resolves to --danger', (
+      WidgetTester tester,
+    ) async {
+      await pumpRelation(tester, 20); // Hostile band (0 … 29)
+      final TextSpan word = relationWordSpan(tester, 'Hostile');
+      expect(word.style?.color, EditorialMonoclePalette.danger);
+      expect(word.style?.fontStyle, FontStyle.italic);
+    });
+
+    testWidgets('Unfriendly word resolves to the warm-amber token', (
+      WidgetTester tester,
+    ) async {
+      await pumpRelation(tester, 40); // Unfriendly band (30 … 49)
+      final TextSpan word = relationWordSpan(tester, 'Unfriendly');
+      expect(
+        word.style?.color,
+        oklchToColor(kDiplomacyRelationUnfriendlyToken),
+      );
+    });
+
+    testWidgets('Friendly word resolves to --success', (
+      WidgetTester tester,
+    ) async {
+      await pumpRelation(tester, 80); // Friendly band (70 … 100)
+      final TextSpan word = relationWordSpan(tester, 'Friendly');
+      expect(word.style?.color, EditorialMonoclePalette.success);
+    });
+
+    test('diplomacyRelationWordColor maps display bands and boundaries', () {
+      final Color unfriendly = oklchToColor(kDiplomacyRelationUnfriendlyToken);
+      final Color cordial = oklchToColor(kDiplomacyRelationCordialToken);
+      // Hostile 0 … 29.
+      expect(diplomacyRelationWordColor(0), EditorialMonoclePalette.danger);
+      expect(diplomacyRelationWordColor(29), EditorialMonoclePalette.danger);
+      // Unfriendly 30 … 49.
+      expect(diplomacyRelationWordColor(30), unfriendly);
+      expect(diplomacyRelationWordColor(49), unfriendly);
+      // Cordial 50 … 69.
+      expect(diplomacyRelationWordColor(50), cordial);
+      expect(diplomacyRelationWordColor(69), cordial);
+      // Friendly 70 … 100.
+      expect(diplomacyRelationWordColor(70), EditorialMonoclePalette.success);
+      expect(diplomacyRelationWordColor(100), EditorialMonoclePalette.success);
     });
   });
 

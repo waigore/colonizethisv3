@@ -143,6 +143,23 @@ Each faction row renders the AT_PEACE / AT_WAR state as a small mono-font chip p
 - **Peace variant:** translucent cool-green overlay background derived from the canonical `--success` token (the mockup uses `oklch(40% 0.06 150 / 0.2)`, which is the success hue desaturated and alpha-tinted at 0.20); foreground text `--success`.
 - **Forbidden:** raw `Colors.red`, `Colors.green`, or any Material chrome background. The badge resolves background and foreground from the editorial-monocle palette only.
 
+### Relation word styling (Refs #3621)
+
+The one-word relation label (`Hostile` / `Unfriendly` / `Cordial` / `Friendly`) rendered after the relation state badge is styled per the mockup [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-relation .word` (`font-style: italic`) with the per-level `wordColors` map:
+
+- **Weight / slant:** the relation word renders **italic** (mockup `.f-relation .word { font-style: italic }`) on the `bodySmall` text slot. The leading separator (a single space matching the badge's 4 px right margin) and the optional overture clause (`· {stage}`) stay `--muted`, non-italic.
+- **Per-level color:** the relation word color is resolved by `diplomacyRelationWordColor(score)` from the hidden relation score's display band (the same `relationScoreDisplay*` thresholds that drive [relationScoreToDisplayLabel](../game/diplomacy.md)):
+
+  | Display band (score) | Word | Color | Source |
+  |----------------------|------|-------|--------|
+  | `0 … 29` | Hostile | `--danger` | `EditorialMonoclePalette.danger` |
+  | `30 … 49` | Unfriendly | warm amber `oklch(62% 0.10 55)` | `kDiplomacyRelationUnfriendlyToken` |
+  | `50 … 69` | Cordial | cool teal `oklch(62% 0.08 160)` | `kDiplomacyRelationCordialToken` |
+  | `70 … 100` | Friendly | `--success` | `EditorialMonoclePalette.success` |
+
+  Hostile reuses the canonical `--danger` token and Friendly reuses `--success`, preserving the warm-red / cool-green semantic shared with the relation state badge. The Unfriendly and Cordial tokens lift their lightness to `L = 0.62` so all four words read at a consistent brightness against `--bg` (parity with the AA-tuned `--danger` / `--success`); chroma and hue are preserved from the mockup. These two tokens are diplomacy-scoped (defined in `diplomacy_panel.dart`), derived through the shared `oklchToColor` converter — not raw Material colors.
+- **Forbidden:** rendering the relation word in `--muted` (the prior plain `bodySmall` styling) or with any hardcoded Material color.
+
 ---
 
 ## Mode bar (filter)
@@ -336,6 +353,12 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 - **Mode-bar chip active border (Refs #3621):** Given the diplomacy panel is open with default state, when the **active** ("All") mode-bar chip's surface is inspected, then its `BoxDecoration` gradient equals `CtGradients.actionButtonGradient` and its border is a 1 px side whose colour resolves to `EditorialMonoclePalette.accentDim`.
 - **Economic lines mono `--accent-dim` (Refs #3621):** Given a faction row with an outgoing active subsidy, a pending grant, or a pending subsidy, when each economic line renders, then its `TextStyle.fontFamily` is `monospace`, its `TextStyle.color` resolves to `EditorialMonoclePalette.accentDim`, and its `TextStyle.fontStyle` is **not** italic (mockup `.f-subsidy`).
 - **Section heading first-child top rhythm (Refs #3621):** Given the diplomacy panel is open under any mode-bar filter, when the **first** rendered `_DiplomacySectionHeader` is inspected, then its outer top padding equals `0`; and when any **subsequent** section heading is inspected, then its outer top padding equals `CtSpacing.l` (mockup `.section-head:first-child { margin-top: 0 }`).
+- **Relation word italic (Refs #3621):** Given a faction row whose relation renders a one-word relation label, when the relation row `Text.rich` is inspected, then the `TextSpan` carrying the relation word has `TextStyle.fontStyle == FontStyle.italic` while the muted separator/overture spans are not italic (mockup `.f-relation .word { font-style: italic }`).
+- **Relation word level color — Hostile (Refs #3621):** Given a faction row whose relation score is in the band `0 … 29`, when the relation word renders, then its `TextStyle.color` resolves to `EditorialMonoclePalette.danger` and `diplomacyRelationWordColor(score)` returns that same color.
+- **Relation word level color — Unfriendly (Refs #3621):** Given a faction row whose relation score is in the band `30 … 49`, when the relation word renders, then its `TextStyle.color` resolves to `oklchToColor(kDiplomacyRelationUnfriendlyToken)` (`oklch(62% 0.10 55)`).
+- **Relation word level color — Cordial (Refs #3621):** Given a faction row whose relation score is in the band `50 … 69`, when the relation word renders, then its `TextStyle.color` resolves to `oklchToColor(kDiplomacyRelationCordialToken)` (`oklch(62% 0.08 160)`).
+- **Relation word level color — Friendly (Refs #3621):** Given a faction row whose relation score is in the band `70 … 100`, when the relation word renders, then its `TextStyle.color` resolves to `EditorialMonoclePalette.success`.
+- **Relation word color band boundaries (Refs #3621):** Given the `diplomacyRelationWordColor` helper, when evaluated at the band boundaries, then `29 → --danger`, `30 → Unfriendly token`, `49 → Unfriendly token`, `50 → Cordial token`, `69 → Cordial token`, and `70 → --success`, matching the `relationScoreToDisplayLabel` bands.
 - Given the user taps "Great Powers only" in the mode bar, when the list re-renders, then only Great Power rows are visible — no Minor Nation or Tribe rows are present in the rendered widget tree.
 - Given the user taps "Minors only" in the mode bar, when the list re-renders, then both Minor Nation and Tribe rows are visible (using their normal section headings) and no Great Power rows are present in the rendered widget tree.
 

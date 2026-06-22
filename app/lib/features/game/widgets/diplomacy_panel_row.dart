@@ -144,12 +144,16 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   /// Renders the relation summary row per SPEC/ui/diplomacy-panel.md
-  /// § Relation state badge + § Per-faction row. The WAR/PEACE chip uses
-  /// the dedicated [_RelationStateBadge]; the one-word relation state
-  /// (Hostile / Unfriendly / Cordial / Friendly) and the optional
-  /// overture stage stay as inline text.
+  /// § Relation state badge + § Per-faction row + § Relation word styling.
+  /// The WAR/PEACE chip uses the dedicated [_RelationStateBadge]; the
+  /// one-word relation state (Hostile / Unfriendly / Cordial / Friendly)
+  /// renders **italic** in its level-appropriate color
+  /// ([diplomacyRelationWordColor]) per the mockup `.f-relation .word`,
+  /// while the muted separator and the optional overture stage keep the
+  /// `--muted` body styling (mockup `.f-overture`).
   Widget _buildRelationRow(BuildContext context) {
-    final TextStyle? bodySmall = Theme.of(context).textTheme.bodySmall;
+    final TextStyle bodySmall =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
     final DiplomacyRelation? rel = data.relation;
     if (rel == null) {
       return Text('—', style: bodySmall);
@@ -159,20 +163,37 @@ class _DiplomacyRow extends StatelessWidget {
     final String relationStateLabel = relationScoreToDisplayLabel(rel.score);
     final String overtureLabel = data.overture == null
         ? ''
-        : ' · ${_overtureStageLabel(data.overture!.stage)}';
-    final String trailing = relationStateLabel.isEmpty
-        ? overtureLabel
-        : ' · $relationStateLabel$overtureLabel';
+        : _overtureStageLabel(data.overture!.stage);
+    // SPEC/ui/diplomacy-panel.md § Relation word styling (Refs #3621): the
+    // `·` separators and overture text stay `--muted`; only the relation
+    // word carries the level color + italic treatment.
+    final TextStyle mutedStyle = bodySmall.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    final TextStyle wordStyle = bodySmall.copyWith(
+      color: diplomacyRelationWordColor(rel.score),
+      fontStyle: FontStyle.italic,
+    );
+    // Mockup `.f-relation`: the WAR/PEACE badge carries a 4 px right margin
+    // before the relation word (no leading `·`); the overture clause keeps a
+    // `·` separator. The leading single space here reproduces the badge gap.
+    final List<InlineSpan> spans = <InlineSpan>[];
+    if (relationStateLabel.isNotEmpty) {
+      spans.add(const TextSpan(text: ' '));
+      spans.add(TextSpan(text: relationStateLabel, style: wordStyle));
+    }
+    if (overtureLabel.isNotEmpty) {
+      spans.add(TextSpan(text: ' · $overtureLabel'));
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         _RelationStateBadge(atWar: rel.atWar),
-        if (trailing.isNotEmpty)
+        if (spans.isNotEmpty)
           Flexible(
-            child: Text(
-              trailing,
-              style: bodySmall,
+            child: Text.rich(
+              TextSpan(style: mutedStyle, children: spans),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             ),
