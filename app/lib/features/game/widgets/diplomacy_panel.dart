@@ -13,6 +13,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_radius.dart';
 import '../../../widgets/ct_gap.dart';
@@ -170,6 +171,17 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
     final showMinors = diplomacyFilterShowsKind(_filterMode, FactionKind.minor);
     final showTribes = diplomacyFilterShowsKind(_filterMode, FactionKind.tribe);
 
+    // SPEC/ui/diplomacy-panel.md § Section headings (first-heading top rhythm,
+    // Refs #3621): the first heading rendered under the active filter drops
+    // its top gap to 0 (mockup `.section-head:first-child`).
+    final FactionKind? firstShownKind = showGps
+        ? FactionKind.greatPower
+        : showMinors
+        ? FactionKind.minor
+        : showTribes
+        ? FactionKind.tribe
+        : null;
+
     final list = ListView(
       padding: const EdgeInsets.symmetric(
         horizontal: CtSpacing.l,
@@ -181,7 +193,11 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         // even when the section has no rows. An empty visible section
         // renders placeholder copy beneath its heading.
         if (showGps) ...[
-          _sectionHeader(context, l10n.diplomacy_section_greatPowers),
+          _sectionHeader(
+            context,
+            l10n.diplomacy_section_greatPowers,
+            isFirst: firstShownKind == FactionKind.greatPower,
+          ),
           if (gps.isEmpty)
             _emptySectionPlaceholder(
               context,
@@ -198,7 +214,11 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             ),
         ],
         if (showMinors) ...[
-          _sectionHeader(context, l10n.diplomacy_section_minorNations),
+          _sectionHeader(
+            context,
+            l10n.diplomacy_section_minorNations,
+            isFirst: firstShownKind == FactionKind.minor,
+          ),
           if (minors.isEmpty)
             _emptySectionPlaceholder(
               context,
@@ -215,7 +235,11 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             ),
         ],
         if (showTribes) ...[
-          _sectionHeader(context, l10n.diplomacy_section_tribes),
+          _sectionHeader(
+            context,
+            l10n.diplomacy_section_tribes,
+            isFirst: firstShownKind == FactionKind.tribe,
+          ),
           if (tribes.isEmpty)
             _emptySectionPlaceholder(context, l10n.diplomacy_panel_noTribes)
           else
@@ -245,8 +269,12 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
     );
   }
 
-  Widget _sectionHeader(BuildContext context, String title) {
-    return _DiplomacySectionHeader(title: title);
+  Widget _sectionHeader(
+    BuildContext context,
+    String title, {
+    bool isFirst = false,
+  }) {
+    return _DiplomacySectionHeader(title: title, isFirst: isFirst);
   }
 
   /// Placeholder copy rendered beneath an empty (but always-visible)

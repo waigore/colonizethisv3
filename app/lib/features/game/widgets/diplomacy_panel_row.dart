@@ -30,16 +30,13 @@ class _DiplomacyRow extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(CtSpacing.ml),
-          child: narrow
-              ? _buildNarrowBody(context)
-              : _buildWideBody(context),
+          child: narrow ? _buildNarrowBody(context) : _buildWideBody(context),
         ),
       ),
     );
   }
 
-  Key get _bodyKey =>
-      ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
+  Key get _bodyKey => ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
 
   // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant): info
   // column shares a Row with the action cluster, anchored trailing-edge.
@@ -184,8 +181,27 @@ class _DiplomacyRow extends StatelessWidget {
     );
   }
 
+  /// Shared style for the outgoing economic-diplomacy lines (active subsidy,
+  /// pending grant, pending subsidy). SPEC/ui/diplomacy-panel.md
+  /// § Per-faction row → Outgoing economic diplomacy (styling, Refs #3621):
+  /// the mockup `.f-subsidy` treatment is mono, `--accent-dim`, and
+  /// non-italic. All three lines share one compact mono style so the block
+  /// reads uniformly (superseding the prior italic / `colorScheme.tertiary`
+  /// pending styling).
+  TextStyle _economicLineStyle(BuildContext context) {
+    final TextStyle base =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+    return base.copyWith(
+      color: EditorialMonoclePalette.accentDim,
+      fontFamily: 'monospace',
+      fontFamilyFallback: const ['Courier'],
+      fontStyle: FontStyle.normal,
+    );
+  }
+
   List<Widget> _buildOptionalStatusLines(BuildContext context) {
     final l10n = appL10n(context);
+    final TextStyle style = _economicLineStyle(context);
     final lines = <Widget>[];
     if (data.activeSubsidyPerTurn != null) {
       lines.addAll([
@@ -195,9 +211,7 @@ class _DiplomacyRow extends StatelessWidget {
             data.activeSubsidyPerTurn!,
             data.displayName,
           ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+          style: style,
         ),
       ]);
     }
@@ -206,10 +220,7 @@ class _DiplomacyRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
+          style: style,
         ),
       ]);
     }
@@ -218,10 +229,7 @@ class _DiplomacyRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
+          style: style,
         ),
       ]);
     }
