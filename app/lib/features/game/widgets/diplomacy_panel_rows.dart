@@ -150,11 +150,18 @@ DiplomacyRelation _defaultFirstContactRelation(
 /// Builds list of discovered factions and their available actions.
 ///
 /// Discovery follows `knownDiplomaticTargetFactionIds`
-/// (SPEC/ui/diplomacy-panel.md § Discovered factions): an existing
-/// [DiplomacyRelation], non-`unknown` tile visibility into a faction-owned
-/// province, or a sea-reachable New-World Tribe province (colonial intel).
-/// A discovered faction without a persisted relation is surfaced with the
-/// default neutral first-contact standing.
+/// (SPEC/ui/diplomacy-panel.md § Discovered factions) for Great Powers and
+/// Minor Nations: an existing [DiplomacyRelation] or non-`unknown` tile
+/// visibility into a faction-owned province. A discovered faction without a
+/// persisted relation is surfaced with the default neutral first-contact
+/// standing.
+///
+/// **Tribes require first contact (Refs #3620):** a Tribe is surfaced only
+/// after first contact — a persisted GP↔Tribe relation **or** non-`unknown`
+/// tile visibility into a province that Tribe owns
+/// ([discoveredTribeIdsForFirstContact]). Sea-reachable colonial intel alone
+/// no longer surfaces a Tribe row (SPEC/ui/diplomacy-panel.md § Tribes require
+/// first contact).
 List<DiplomacyRowData> buildDiplomacyRows(
   Game game,
   MapTopology topology,
@@ -170,6 +177,21 @@ List<DiplomacyRowData> buildDiplomacyRows(
       topology: topology,
     ),
   };
+  // First-contact gate for Tribes (Refs #3620): drop tribe ids that are only
+  // sea-reachable colonial intel (present in `knownDiplomaticTargetFactionIds`
+  // without a persisted relation or tile visibility). A tribe is contacted iff
+  // a GP↔Tribe relation is persisted or the GP holds non-`unknown` tile
+  // visibility into a province it owns.
+  final contactedTribeIds = discoveredTribeIdsForFirstContact(
+    view: view,
+    game: game,
+  );
+  discoveredIds.removeWhere((id) {
+    final isTribe = game.tribes.any((t) => t.id == id);
+    if (!isTribe) return false;
+    final hasRelation = view.diplomacyByOtherId.containsKey(id);
+    return !hasRelation && !contactedTribeIds.contains(id);
+  });
   final currentTurn = game.worldState.turnState.turnNumber;
   final factionMembership = DiplomacyFactionMembership.from(game);
   final actionsByTarget = <String, List<DiplomaticPanelAction>>{};

@@ -26,13 +26,23 @@ The player can view all **discovered** factions (Great Powers, Minor Nations, Tr
 
 ## Discovered factions
 
-A faction is **discovered** for the human player when its id appears in the canonical discovery set produced by `knownDiplomaticTargetFactionIds` (`packages/colonizethis_logic/lib/order_suggestion_api.dart`, normative rules in [order-suggestions.md](../program/order-suggestions.md) § Diplomatic orders (visibility)). That helper unions three sources, so a faction is discovered when **any** of the following holds:
+A **Great Power** or **Minor Nation** is **discovered** for the human player when its id appears in the canonical discovery set produced by `knownDiplomaticTargetFactionIds` (`packages/colonizethis_logic/lib/order_suggestion_api.dart`, normative rules in [order-suggestions.md](../program/order-suggestions.md) § Diplomatic orders (visibility)). For Great Powers and Minor Nations, a faction is discovered when **either** of the following holds:
 
 1. A `DiplomacyRelation` exists between the human player and that faction.
 2. The human player has **non-`unknown` tile visibility** (fogged or fully visible) in a province owned by that faction.
-3. The faction is a **Tribe** whose New-World province is **sea-reachable** from the player's anchor provinces/units (colonial intel, Refs #2509).
 
-This decouples discovery from the relation table alone. At game start same-region (GP–GP, GP–Minor) relations are initialized, so Great Powers and Minor Nations are discovered immediately; cross-region (GP–Tribe) relations are **not** initialized, so a Tribe becomes discovered the first time the player gains tile visibility into, or sea-reachability to, that tribe's territory — **not** only after establishing a consulate.
+At game start same-region (GP–GP, GP–Minor) relations are initialized, so Great Powers and Minor Nations are discovered immediately.
+
+### Tribes require first contact (Refs #3620)
+
+A **Tribe** is **never** surfaced via sea-reachable colonial intel. A Tribe `T` appears in the Tribes section for the human GP `G` only after **first contact**, defined per `(G, T)` pair as **either** of:
+
+1. A persisted `DiplomacyRelation` exists between `G` and `T`, **or**
+2. `G` holds **non-`unknown` tile visibility** (fogged or fully visible) in at least one province owned by `T` (the canonical `discoveredTribeIdsForFirstContact` set).
+
+This supersedes the colonial-intel discovery path documented for #3341/#2509: cross-region (GP–Tribe) relations are **not** initialized at game start, and **sea-reachability alone does not surface a Tribe row** even when a tribe colony is sea-reachable from the GP's Old World anchors at turn 0. First contact is per-GP (each GP discovers each Tribe independently) and irreversible (the persisted relation keeps the Tribe row visible even if visibility later decays to fogged/unknown).
+
+> **Deferred (tracked by #3620):** the broader `knownDiplomaticTargetFactionIds` helper still includes sea-reachable tribes for **order-suggestion / AI declare-war** targeting; unifying those non-panel consumers (and persisting GP↔Tribe relations for AI GPs during turn resolution) is follow-up work on the same issue. This section governs the **diplomacy panel** surface only.
 
 **First-contact standing.** When a Tribe is discovered before a GP–Tribe relation exists, `syncGpTribeFirstContact` (`applyGpTribeFirstContactRelations` in logic) persists `AT_PEACE`, score `50`, Neutral on the same turn index, and enqueues the first-contact herald (`OVL80001`, [`tribe-first-contact-overlay.md`](tribe-first-contact-overlay.md)). Until sync runs, the panel still surfaces the same default standing for display (`RelationState.atPeace`, score `50`, `RelationLevel.neutral`).
 
@@ -301,9 +311,13 @@ Finally, an **empty-state** use case named `No factions discovered (empty state)
 
 - **Discovery via tile visibility (no prior relation):** Given the human player has non-`unknown` tile visibility in a province owned by a Tribe `T` and **no** `DiplomacyRelation` with `T`, when `buildDiplomacyRows` runs, then the returned rows include exactly one row whose `factionId == T` and `kind == FactionKind.tribe`, and that row's `relation` is non-null with `state == RelationState.atPeace`, `score == 50`, and `level == RelationLevel.neutral`. Refs #3341.
 
-- **Discovery does not depend solely on relation table (consulate fix):** Given a Tribe `T` is discovered for the human player by tile visibility or sea-reachability (per § Discovered factions) and `T` has no game-setup `DiplomacyRelation` with the player, when the Diplomacy panel renders, then the Tribe row for `T` is present under the `Tribes` section (the previously documented "tribes appear only after establishing a consulate" behavior no longer governs discovery). Refs #3341.
+- **Discovery does not depend solely on relation table (consulate fix):** Given a Tribe `T` is discovered for the human player by **tile visibility** (per § Tribes require first contact) and `T` has no game-setup `DiplomacyRelation` with the player, when the Diplomacy panel renders, then the Tribe row for `T` is present under the `Tribes` section (the previously documented "tribes appear only after establishing a consulate" behavior no longer governs discovery). Refs #3341.
 
 - **No spurious discovery (negative):** Given the human player has no `DiplomacyRelation`, no non-`unknown` tile visibility into any other faction's province, and no sea-reachable Tribe province, when `buildDiplomacyRows` runs, then it returns an empty list (no synthesized rows are added for undiscovered factions). Refs #3341.
+
+- **AC-1 (#3620) — turn-0 sea-reachable Tribe is not surfaced:** Given a new game at turn 0 where the human GP has **no** non-`unknown` tiles in any Tribe-owned province and **no** persisted `DiplomacyRelation` with that Tribe, **and** that Tribe owns a New-World province that is sea-reachable from the GP's Old-World anchor provinces/units, when `buildDiplomacyRows` runs, then the returned rows contain **no** row whose `kind == FactionKind.tribe`, even though `knownDiplomaticTargetFactionIds` still includes the tribe id. Refs #3620.
+
+- **AC-7 (#3620) — contact survives fog decay:** Given the human GP has a persisted GP↔Tribe `DiplomacyRelation` with Tribe `T` and currently holds **no** non-`unknown` tile visibility in any province owned by `T` (visibility decayed to fogged/unknown), when `buildDiplomacyRows` runs, then the returned rows include exactly one row whose `factionId == T` and `kind == FactionKind.tribe`, carrying the persisted relation. Refs #3620.
 
 - **Overture buttons shown disabled (AC-6):** Given a Minor or Tribe row at overture stage `none` and no pending diplomatic orders, when the panel renders action buttons, then `Consulate`, `Embassy`, `NAP`, and `Join Empire` buttons are all present; only `Consulate` (or the next validator-valid stage) is enabled; disabled stages expose non-empty rejection text via `Tooltip`. Refs #3341.
 
