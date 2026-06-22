@@ -2,6 +2,7 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,13 +43,19 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: TrainDialogUnitNameLine(name: 'Merchant', isLocked: true),
+            body: TrainDialogUnitNameLine(
+              name: kUnitTypeMerchant,
+              isLocked: true,
+            ),
           ),
         ),
       );
 
-      expect(find.text('${kTrainDialogLockPrefix}Merchant'), findsOneWidget);
-      expect(find.text('Merchant'), findsNothing);
+      expect(
+        find.text('$kTrainDialogLockPrefix$kUnitTypeMerchant'),
+        findsOneWidget,
+      );
+      expect(find.text(kUnitTypeMerchant), findsNothing);
     });
 
     testWidgets('unlocked rows render the bare name with no 🔒 prefix', (
@@ -57,12 +64,15 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: TrainDialogUnitNameLine(name: 'Builder', isLocked: false),
+            body: TrainDialogUnitNameLine(
+              name: kUnitTypeBuilder,
+              isLocked: false,
+            ),
           ),
         ),
       );
 
-      expect(find.text('Builder'), findsOneWidget);
+      expect(find.text(kUnitTypeBuilder), findsOneWidget);
       expect(find.textContaining('\u{1F512}'), findsNothing);
     });
   });
