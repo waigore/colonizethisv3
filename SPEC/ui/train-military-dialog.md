@@ -23,10 +23,10 @@ The Train Military dialog lets the player queue military regiment build orders i
 
 ## Layout
 
-- **Header:** `Train Military` title + close (`X`) button.
+- **Header:** centered `Train Military` title via `TrainDialogHeader` — no `×` close button and no brass section dividers between sections (#3568 parity); the dialog dismisses via scrim tap / system back and applies orders on close.
 - **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`; see [components/train-dialog-chrome.md](components/train-dialog-chrome.md)). Shows `Treasury`, `Peasants`, and regiment-input commodities `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze` as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £8,000 / £10,000`, `Peasants: 7 / 8`, `Lumber: 2 / 5`. Treasury uses `£` + comma grouping on both sides (e.g. `£10,000`), matching the civilian dialog.
 - **Per-item cost colour:** In each regiment row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` independently when `remaining` for that resource is less than this regiment's per-unit cost for it (considering committed totals). Sufficient items stay in the normal colour. Only the deficient item turns red.
-- **Deficit hint:** Same wording style as civilian (`{Resource} low`, `{A} and {B} low`) below the box.
+- **Deficit hint:** Same wording style as civilian — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Peasants low`) below the box.
 - **Rows:** One row per `RegimentEconomyCatalog.all` entry as a single line — left info `Column` (regiment name above the icon-bearing cost summary) plus the stepper on the right (vertically centered).
   - primary label: **regiment display name** per [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (not the snake_case persistence id; e.g. `Peasant Levies` not `peasant_levies`). Text-only; no regiment icon requirement.
   - cost summary: treasury + commodity requirements with icons
@@ -41,7 +41,7 @@ The Train Military dialog lets the player queue military regiment build orders i
 - Count initializes from existing pending military build orders (dialog-managed set; see Order submission).
 - `+` increments by 1 only when adding one more unit remains affordable.
 - `-` decrements by 1, minimum 0.
-- Locked regiments: row subdued and steppers disabled.
+- Locked regiments: name prefixed with the 🔒 glyph (`kTrainDialogLockPrefix`), row subdued at `0.5` opacity (`kTrainDialogLockedOpacity`), and steppers disabled.
 - `+` uses aggregate affordability across all currently selected regiment rows:
   - treasury
   - peasants (`workerPool.peasants`, 1 consumed per military regiment)
@@ -76,7 +76,7 @@ Affordability requires all constraints:
 
 ## Order submission
 
-On dialog close (`didPop` / close button), create orders from current counts:
+On dialog close (`didPop` via scrim tap / system back), create orders from current counts:
 
 1. Resolve `capitalProvinceId = Player.capitalProvinceId`.
 2. For each regiment type where `count > 0`, add `count` entries of:
@@ -143,3 +143,5 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 - **Given** the Train Military dialog is open, **when** the user hovers/taps the treasury coin cost icon, **then** the UI layer shows a `Tooltip` reading `Treasury`; and the peasant cost icon shows a `Tooltip` reading `Peasants`.
 
 - **Given** any cost icon in a regiment row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.
+
+- **Given** the Train Military dialog is open and two or more resources are insufficient for the queued regiments (e.g. treasury and peasants), **when** the deficit hint renders, **then** each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Peasants low`), with no `" and "` connector.

@@ -68,7 +68,7 @@ function deficitCheck(){
   if(totalP>paper)msgs.push('Paper low')
   const d=document.getElementById('deficit')
   d.style.display=msgs.length?'block':'none'
-  d.textContent=msgs.join(' and ')
+  d.textContent=msgs.join(', ')
 }
 function canAdd(id){
   const u=units.find(x=>x.id===id);if(!u||u.locked)return false

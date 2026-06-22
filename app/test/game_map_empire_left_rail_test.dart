@@ -317,15 +317,17 @@ void main() {
     await tester.tap(find.text('Train'));
     await tester.pumpAndSettle();
 
-    // Per #2866 S4, the train dialog migrated from Material IconButton +
-    // Icons.close to a CtNinePatchButton with a '×' glyph inside
-    // TrainDialogHeader.
-    final closeButton = find.descendant(
-      of: find.byType(TrainDialogHeader),
-      matching: find.byType(CtNinePatchButton),
+    expect(find.byType(TrainCiviliansDialog), findsOneWidget);
+    // Per #3568 chrome parity the dialog has no × close button (the header
+    // renders a centered title only); it dismisses via scrim tap / system back.
+    expect(
+      find.descendant(
+        of: find.byType(TrainDialogHeader),
+        matching: find.byType(CtNinePatchButton),
+      ),
+      findsNothing,
     );
-    expect(closeButton, findsOneWidget);
-    await tester.tap(closeButton);
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
     await tester.pumpAndSettle();
 
     expect(find.byType(TrainCiviliansDialog), findsNothing);
