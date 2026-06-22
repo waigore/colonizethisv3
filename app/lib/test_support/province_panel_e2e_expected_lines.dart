@@ -213,6 +213,15 @@ List<String> provincePanelWideLayoutExpectedTexts(
 
     out.add('Coordinates: ($x, $y)');
     out.add('Terrain: $terrainStr');
+    final designationLine = _tileDesignationLine(
+      l10n: l10n,
+      game: game,
+      provinceId: provinceId,
+      selectedTileKey: selectedTileKey,
+    );
+    if (designationLine != null) {
+      out.add(designationLine);
+    }
     out.add('Resource: ');
     out.add(resourceVisible ?? resourceLabel);
     out.add('Prospected: $prospectedLabel');
@@ -419,6 +428,46 @@ bool _isCapitalProvince(Game game, String provinceId) {
     if (t.capitalProvinceId == provinceId) return true;
   }
   return false;
+}
+
+/// Mirrors `provinceOverlayTileDesignationLine` from
+/// province_sea_zone_detail_overlay_sections.dart (duplicated rather than
+/// imported to keep this fixture free of `@visibleForTesting` production
+/// symbols, per the file header convention). Capital takes priority over town.
+String? _tileDesignationLine({
+  required AppLocalizations l10n,
+  required Game game,
+  required String provinceId,
+  required String selectedTileKey,
+}) {
+  final province = _findProvince(game, provinceId);
+  final provinceName = province?.displayName ?? provinceId;
+  for (final p in game.players) {
+    if (p.capitalTile?.toTileKey() == selectedTileKey) {
+      return l10n.provinceOverlay_tileCapitalOf(provinceName, p.displayName);
+    }
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalTile?.toTileKey() == selectedTileKey) {
+      return l10n.provinceOverlay_tileCapitalOf(
+        provinceName,
+        m.displayName ?? m.id,
+      );
+    }
+  }
+  for (final t in game.tribes) {
+    if (t.capitalTile?.toTileKey() == selectedTileKey) {
+      return l10n.provinceOverlay_tileCapitalOf(
+        provinceName,
+        t.displayName ?? t.id,
+      );
+    }
+  }
+  final townTileKey = province?.townTileKey;
+  if (townTileKey != null && townTileKey == selectedTileKey) {
+    return l10n.provinceOverlay_tileTownOf(provinceName);
+  }
+  return null;
 }
 
 String _ownerName(Game game, String? ownerId) {

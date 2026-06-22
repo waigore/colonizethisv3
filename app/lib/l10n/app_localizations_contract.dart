@@ -1267,6 +1267,14 @@ abstract class AppLocalizations {
   /// Tile section terrain row.
   String provinceOverlay_tileTerrain(String terrain);
 
+  /// Tile section designation line shown when the selected tile is the
+  /// province town (and not a capital).
+  String provinceOverlay_tileTownOf(String provinceName);
+
+  /// Tile section designation line shown when the selected tile is a
+  /// faction's capital tile.
+  String provinceOverlay_tileCapitalOf(String provinceName, String factionName);
+
   /// Tile section resource label prefix before inline icon/name.
   String get provinceOverlay_tileResourcePrefix;
 
