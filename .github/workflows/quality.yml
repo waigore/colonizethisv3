@@ -545,7 +545,11 @@ jobs:
           printf '%s\n' "${partition[@]}" > _partition.txt
           echo "has_tests=true" >> "$GITHUB_OUTPUT"
           echo "Partitioned ${#partition[@]} tests for shard $SHARD_INDEX:"
-          printf '  %s\n' "${partition[@]}" | head -20
+          # head closes the pipe after 20 lines; printf then races to a
+          # "write error: Broken pipe" and exits non-zero under pipefail when the
+          # partition exceeds 20 entries — this diagnostic print must never fail
+          # the job (mirrors the `|| true` guard on the changed-files preview).
+          printf '  %s\n' "${partition[@]}" | head -20 || true
 
       - name: Run Flutter tests (partition)
         if: |
