@@ -30,16 +30,13 @@ class _DiplomacyRow extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(CtSpacing.ml),
-          child: narrow
-              ? _buildNarrowBody(context)
-              : _buildWideBody(context),
+          child: narrow ? _buildNarrowBody(context) : _buildWideBody(context),
         ),
       ),
     );
   }
 
-  Key get _bodyKey =>
-      ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
+  Key get _bodyKey => ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
 
   // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant): info
   // column shares a Row with the action cluster, anchored trailing-edge.
@@ -49,12 +46,20 @@ class _DiplomacyRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: _buildInfoColumn(context)),
-        // Full action matrices can exceed one run; [Flexible] caps the
-        // trailing cluster to remaining row width so [Wrap] can flow.
+        // SPEC/ui/diplomacy-panel.md § Action button styling — the trailing
+        // cluster is capped to [kDiplomacyActionClusterMaxWidth] (mockup
+        // `.f-actions { max-width: 180px }`) so the compact buttons flow
+        // left-to-right and wrap onto additional runs instead of expanding
+        // to fill the remaining row width as a single vertical stack.
         Flexible(
           child: Align(
             alignment: Alignment.topRight,
-            child: _buildActionButtons(),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: kDiplomacyActionClusterMaxWidth,
+              ),
+              child: _buildActionButtons(alignEnd: true),
+            ),
           ),
         ),
       ],
@@ -139,12 +144,16 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   /// Renders the relation summary row per SPEC/ui/diplomacy-panel.md
-  /// § Relation state badge + § Per-faction row. The WAR/PEACE chip uses
-  /// the dedicated [_RelationStateBadge]; the one-word relation state
-  /// (Hostile / Unfriendly / Cordial / Friendly) and the optional
-  /// overture stage stay as inline text.
+  /// § Relation state badge + § Per-faction row + § Relation word styling.
+  /// The WAR/PEACE chip uses the dedicated [_RelationStateBadge]; the
+  /// one-word relation state (Hostile / Unfriendly / Cordial / Friendly)
+  /// renders **italic** in its level-appropriate color
+  /// ([diplomacyRelationWordColor]) per the mockup `.f-relation .word`,
+  /// while the muted separator and the optional overture stage keep the
+  /// `--muted` body styling (mockup `.f-overture`).
   Widget _buildRelationRow(BuildContext context) {
-    final TextStyle? bodySmall = Theme.of(context).textTheme.bodySmall;
+    final TextStyle bodySmall =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
     final DiplomacyRelation? rel = data.relation;
     if (rel == null) {
       return Text('—', style: bodySmall);
@@ -154,20 +163,37 @@ class _DiplomacyRow extends StatelessWidget {
     final String relationStateLabel = relationScoreToDisplayLabel(rel.score);
     final String overtureLabel = data.overture == null
         ? ''
-        : ' · ${_overtureStageLabel(data.overture!.stage)}';
-    final String trailing = relationStateLabel.isEmpty
-        ? overtureLabel
-        : ' · $relationStateLabel$overtureLabel';
+        : _overtureStageLabel(data.overture!.stage);
+    // SPEC/ui/diplomacy-panel.md § Relation word styling (Refs #3621): the
+    // `·` separators and overture text stay `--muted`; only the relation
+    // word carries the level color + italic treatment.
+    final TextStyle mutedStyle = bodySmall.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    final TextStyle wordStyle = bodySmall.copyWith(
+      color: diplomacyRelationWordColor(rel.score),
+      fontStyle: FontStyle.italic,
+    );
+    // Mockup `.f-relation`: the WAR/PEACE badge carries a 4 px right margin
+    // before the relation word (no leading `·`); the overture clause keeps a
+    // `·` separator. The leading single space here reproduces the badge gap.
+    final List<InlineSpan> spans = <InlineSpan>[];
+    if (relationStateLabel.isNotEmpty) {
+      spans.add(const TextSpan(text: ' '));
+      spans.add(TextSpan(text: relationStateLabel, style: wordStyle));
+    }
+    if (overtureLabel.isNotEmpty) {
+      spans.add(TextSpan(text: ' · $overtureLabel'));
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         _RelationStateBadge(atWar: rel.atWar),
-        if (trailing.isNotEmpty)
+        if (spans.isNotEmpty)
           Flexible(
-            child: Text(
-              trailing,
-              style: bodySmall,
+            child: Text.rich(
+              TextSpan(style: mutedStyle, children: spans),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             ),
@@ -176,8 +202,27 @@ class _DiplomacyRow extends StatelessWidget {
     );
   }
 
+  /// Shared style for the outgoing economic-diplomacy lines (active subsidy,
+  /// pending grant, pending subsidy). SPEC/ui/diplomacy-panel.md
+  /// § Per-faction row → Outgoing economic diplomacy (styling, Refs #3621):
+  /// the mockup `.f-subsidy` treatment is mono, `--accent-dim`, and
+  /// non-italic. All three lines share one compact mono style so the block
+  /// reads uniformly (superseding the prior italic / `colorScheme.tertiary`
+  /// pending styling).
+  TextStyle _economicLineStyle(BuildContext context) {
+    final TextStyle base =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+    return base.copyWith(
+      color: EditorialMonoclePalette.accentDim,
+      fontFamily: 'monospace',
+      fontFamilyFallback: const ['Courier'],
+      fontStyle: FontStyle.normal,
+    );
+  }
+
   List<Widget> _buildOptionalStatusLines(BuildContext context) {
     final l10n = appL10n(context);
+    final TextStyle style = _economicLineStyle(context);
     final lines = <Widget>[];
     if (data.activeSubsidyPerTurn != null) {
       lines.addAll([
@@ -187,9 +232,7 @@ class _DiplomacyRow extends StatelessWidget {
             data.activeSubsidyPerTurn!,
             data.displayName,
           ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+          style: style,
         ),
       ]);
     }
@@ -198,10 +241,7 @@ class _DiplomacyRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
+          style: style,
         ),
       ]);
     }
@@ -210,23 +250,24 @@ class _DiplomacyRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
+          style: style,
         ),
       ]);
     }
     return lines;
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons({bool alignEnd = false}) {
     if (readOnly) {
       return const SizedBox.shrink();
     }
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      // SPEC/ui/diplomacy-panel.md § Action button styling — mockup
+      // `.f-actions { gap: 4px; justify-content: flex-end }` (wide) /
+      // `justify-content: flex-start` (narrow).
+      alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
+      spacing: kDiplomacyActionWrapSpacing,
+      runSpacing: kDiplomacyActionWrapSpacing,
       children: [
         for (final action in data.actions)
           if (_isActionPending(action))
@@ -308,15 +349,17 @@ class _ActionButton extends StatelessWidget {
     // Refs #2914 S7.
     final TextStyle labelStyle =
         theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    final Widget button = SizedBox(
-      height: 32,
-      child: CtNinePatchButton(
-        onPressed: isPending ? onCancel : onPressed,
-        enabled: isPending || enabled,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        dangerVariant: _isWarVariant,
-        child: Text(label, style: labelStyle),
-      ),
+    // SPEC/ui/diplomacy-panel.md § Action button styling — diplomacy action
+    // buttons use the compact CtNinePatchButton variant (tighter minHeight
+    // and padding than the 48 × 16/12 dp default) to match the mockup
+    // `.f-actions button` density. Refs #3621.
+    final Widget button = CtNinePatchButton(
+      onPressed: isPending ? onCancel : onPressed,
+      enabled: isPending || enabled,
+      minHeight: kDiplomacyActionButtonMinHeight,
+      padding: kDiplomacyActionButtonPadding,
+      dangerVariant: _isWarVariant,
+      child: Text(label, style: labelStyle),
     );
     final String? reason = rejectionReason;
     if (!isPending && !enabled && reason != null && reason.isNotEmpty) {
