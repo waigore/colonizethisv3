@@ -61,6 +61,7 @@ Variables are set on `YarnProject.variables` before `startDialogue`.
 - Given the player has selected a choice for prompt k, when the reaction Yarn node finishes, then the UI layer either advances to prompt k+1 or, if k+1 == N, invokes the callback with N `InterventionDecision` values whose triples match the prompts and whose `InterventionChoice` values match the selections.
 - Given Yarn fails to load, when the overlay is shown, then the UI layer shows an error affordance and still allows submitting decisions (degraded path) so the player is not soft-locked.
 - Given turn resolution returns a different pending type after intervention resume, when the parent applies the result, then `pendingDiplomacyProvider` reflects only the new pending type (never two kinds at once).
+- Given the intervention intro Yarn node ends in `-> Continue`, when the player advances past the narrative line to the choice step, then the immediately preceding intro line text and the `Continue` option button render together inside one `CtDialogShell` body (no option-only step) and the combined layout matches the `matchesGoldenFile` baseline `app/test/goldens/dialogue_combined_intervention_intro_choice.png` (Refs #3628 AC-5 golden coverage).
 
 ### Dark editorial-monocle chrome (#2867 S9)
 

@@ -158,6 +158,10 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 ## Acceptance Criteria (Given–When–Then)
 
+- Given an `OvertureDialogueOverlay` is mounted with the phase-1 intro Yarn node (a narrative line followed by `-> Continue`, loaded via an injected `assetBundle`),
+  When the player advances past the intro narrative line to the choice step,
+  Then the retained intro line text and the `Continue` option button render together inside one `CtDialogShell` body (no option-only step) and the combined layout matches the `matchesGoldenFile` baseline `app/test/goldens/dialogue_combined_overture_intro_choice.png` (Refs #3628 AC-4 golden coverage).
+
 - Given an `OvertureDialogueOverlay` is mounted with `skipIntroForTest: true` and exactly one pending overture from offerer `gp_spain` at stage `tradeConsulate`,
   When the widget tree settles,
   Then the overlay renders one offer row inside a `CtDialogShell`, the row contains a `Text` widget whose content equals `gp_spain.displayName` rendered in `EditorialMonoclePalette.accent` and a `Text` widget whose content equals the localized `tradeConsulate` stage label rendered in `EditorialMonoclePalette.muted`, and two `CtToggleSwitch` widgets (one keyed `overtureAcceptToggle_0` and one keyed `overtureRejectToggle_0`) are visible alongside a Submit `CtNinePatchButton`.
