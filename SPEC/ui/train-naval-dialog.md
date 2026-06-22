@@ -25,7 +25,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 - **Header:** `Train Naval` title + close (`X`) button.
 - **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`). Shows `Treasury`, `Peasants`, and the union of all ship-input commodities `lumber`, `fabric`, `castIron`, `coal` (every commodity referenced by `ShipEconomyCatalog.buildInputs`) as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £42,000 / £50,000`, `Peasants: 19 / 20`, `Lumber: 8 / 10`. Treasury uses `£` + comma grouping on both sides.
 - **Per-item cost colour:** In each ship row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` (`EditorialMonoclePalette.danger`) independently when `remaining` for that resource is less than this ship's per-unit cost for it (considering committed totals). Sufficient items stay normal.
-- **Deficit hint:** Same wording style as civilian/military (`{Resource} low`, `{A} and {B} low`) below the box.
+- **Deficit hint:** Same wording style as civilian/military — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`) below the box.
 - **Rows:** One row per `ShipEconomyCatalog.all` entry (all 12 ship types) as a single line — left info `Column` (ship name above the icon-bearing cost summary) plus the stepper on the right.
   - primary label: **ship display name** via `shipTypeDisplayName` in `colonizethis_data` (e.g. `Ship of the Line`, not `ship_of_the_line`).
   - cost summary: treasury + 1 peasant + commodity requirements with icons.
@@ -126,3 +126,5 @@ The dialog uses the shared `app/lib/features/game/widgets/train_unit_dialog_help
 - **Given** the Train Naval dialog is open, **when** the user hovers/taps the treasury coin cost icon, **then** the UI layer shows a `Tooltip` reading `Treasury`; and the peasant cost icon shows a `Tooltip` reading `Peasants`.
 
 - **Given** any cost icon in a ship row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.
+
+- **Given** the Train Naval dialog is open and two or more resources are insufficient for the queued ships (e.g. treasury and lumber), **when** the deficit hint renders, **then** each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`), with no `" and "` connector.

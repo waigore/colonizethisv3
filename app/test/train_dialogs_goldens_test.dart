@@ -18,7 +18,7 @@
 //
 //  - AC1 (£+comma treasury) / AC3 (name-over-cost + stepper-right row) /
 //    AC4 (boxed inset resource bar, monospace bold values): civilian default.
-//  - AC5 (both-resource deficit `Treasury low and Paper low` in danger colour):
+//  - AC5 (both-resource deficit `Treasury low, Paper low` in danger colour):
 //    civilian deficit.
 //  - AC6 (military £+comma + shared restyled resource bar): military default.
 //
@@ -263,7 +263,7 @@ void main() {
 
   testWidgets(
     'golden: UNIT40001 Train Civilians dialog — both-resource deficit hint '
-    '"Treasury low and Paper low" (Refs #3568 AC5)',
+    '"Treasury low, Paper low" (Refs #3568 AC5)',
     (WidgetTester tester) async {
       const key = ValueKey<String>('train_civilians_dialog_deficit_golden');
       final player = getPlayer(humanPlayerId);
@@ -311,7 +311,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Treasury low and Paper low'), findsOneWidget);
+      expect(find.text('Treasury low, Paper low'), findsOneWidget);
 
       await expectLater(
         find.byKey(key),

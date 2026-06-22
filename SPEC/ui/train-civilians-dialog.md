@@ -30,7 +30,7 @@ The Train Civilians dialog lets the player queue training orders for civilian un
 │ ┌─────────────────────────────────────┐ │  ← Boxed inset resource bar
 │ │  Treasury: £5,000     Paper: 12     │ │     (mono bold values)
 │ └─────────────────────────────────────┘ │
-│  Treasury low and Paper low             │  ← Dynamic deficit hint (below box)
+│  Treasury low, Paper low                │  ← Dynamic deficit hint (below box)
 ├─────────────────────────────────────────┤
 │  [icon] Explorer            [−] 0 [+]   │  ← Per-unit-type row (single line)
 │         £1,000 + 2 paper                │     name over cost (left), stepper (right)
@@ -60,7 +60,7 @@ unit costs) and updates live on every stepper toggle:
 Below the resource bar (outside the box), a **dynamic deficit hint** updates on every stepper toggle:
 - If treasury insufficient for any queued unit: "Treasury low"
 - If paper insufficient for any queued unit: "Paper low"
-- If both insufficient: "Treasury low and Paper low" (each clause joined with `" and "`)
+- If both insufficient: "Treasury low, Paper low" (each clause is `{Name} low`, joined with `", "`)
 - If no deficit: hidden
 
 ### Unit Type Rows
@@ -239,7 +239,7 @@ pixellab_create_map_object(
 
 - **Given** the Train Civilians dialog is open, **when** the user has no capital set, **then** the UI shows an error message "No capital set — cannot train units" and all steppers are disabled.
 
-- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low and Paper low".
+- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low, Paper low" (each clause `{Name} low`, joined with `", "`).
 
 - **Given** the Train Civilians dialog is open, **when** the user taps the Reset button (if present), **then** all steppers are set to 0 and deficit hint is cleared.
 

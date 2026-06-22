@@ -85,15 +85,15 @@ class _TrainCiviliansDialogState
   /// Paper left after subtracting all currently committed unit costs.
   int _remainingPaper() => _paperStockpile - _totalPaperCost();
 
+  /// Per-clause deficit hint per `SPEC/ui/train-civilians-dialog.md`
+  /// § Deficit hint: each deficient resource renders as `{Name} low` and the
+  /// clauses join with `", "` (e.g. `Treasury low, Paper low`).
   String? get _deficitHint {
-    final treasuryDeficit = _totalTreasuryCost() > treasury;
-    final paperDeficit = _totalPaperCost() > _paperStockpile;
-    if (treasuryDeficit && paperDeficit) {
-      return 'Treasury low and Paper low';
-    }
-    if (treasuryDeficit) return 'Treasury low';
-    if (paperDeficit) return 'Paper low';
-    return null;
+    final deficits = <String>[];
+    if (_totalTreasuryCost() > treasury) deficits.add('Treasury');
+    if (_totalPaperCost() > _paperStockpile) deficits.add('Paper');
+    if (deficits.isEmpty) return null;
+    return deficits.map((name) => '$name low').join(', ');
   }
 
   @override

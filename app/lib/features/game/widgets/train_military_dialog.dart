@@ -120,10 +120,9 @@ class _TrainMilitaryDialogState
       }
     }
     if (deficits.isEmpty) return null;
-    if (deficits.length == 1) return '${deficits.first} low';
-    if (deficits.length == 2) return '${deficits[0]} and ${deficits[1]} low';
-    final head = deficits.sublist(0, deficits.length - 1).join(', ');
-    return '$head and ${deficits.last} low';
+    // Per-clause `{Name} low` joined with `", "` per
+    // `SPEC/ui/train-military-dialog.md` § Deficit hint.
+    return deficits.map((name) => '$name low').join(', ');
   }
 
   @override

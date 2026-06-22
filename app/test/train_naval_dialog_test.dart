@@ -502,5 +502,45 @@ void main() {
 
       expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
     });
+
+    testWidgets(
+      'AC (positive): multi-resource deficit hint joins clauses with ", "',
+      (WidgetTester tester) async {
+        // Tech unlocked + abundant peasants/fabric/castIron/coal, but zero
+        // treasury and zero lumber. One queued Carrack (£8,000 + 2 lumber +
+        // 1 fabric + 1 peasant) makes treasury and lumber insufficient, so the
+        // hint joins two `{Name} low` clauses with a comma (Refs #3568).
+        final base = gameWithNavalResources();
+        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+        final game = base.copyWith(
+          players: [
+            player.copyWith(
+              treasury: 0,
+              stockpile: const Stockpile(
+                quantities: {
+                  'lumber': 0,
+                  'fabric': 100,
+                  'castIron': 100,
+                  'coal': 100,
+                },
+              ),
+            ),
+            ...base.players.where((p) => p.id != humanPlayerId),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: carrackOrders(game, 1),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Treasury low, Lumber low'), findsOneWidget);
+        expect(find.textContaining(' and '), findsNothing);
+      },
+    );
   });
 }

@@ -128,7 +128,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: Both-resource deficit reads "Treasury low and Paper low"',
+      'AC: Both-resource deficit reads "Treasury low, Paper low" (comma-join)',
       (WidgetTester tester) async {
         final player = getPlayer(humanPlayerId);
         final capital =
@@ -173,7 +173,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Treasury low and Paper low'), findsOneWidget);
+        expect(find.text('Treasury low, Paper low'), findsOneWidget);
+        expect(find.textContaining(' and '), findsNothing);
       },
     );
 
