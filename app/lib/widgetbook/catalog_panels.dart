@@ -919,7 +919,65 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
       ),
     ],
   ),
+  // SPEC/ui/diplomacy-panel.md § Relative power line — isolated stories for
+  // the shared `RelativePowerLine` widget covering all five tiers plus the
+  // boundary percentages (±10, ±11, ±30, ±31) and the narrow-viewport wrap.
+  WidgetbookFolder(
+    name: 'Relative Power Line',
+    children: [
+      WidgetbookUseCase(
+        name: 'Tiers (all five)',
+        builder: (context) => _relativePowerLineStory(
+          const <int>[-50, -20, 0, 20, 50],
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Boundaries (±10, ±11, ±30, ±31)',
+        builder: (context) => _relativePowerLineStory(
+          const <int>[10, 11, 30, 31, -10, -11, -30, -31],
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow viewport wrap (320 dp)',
+        builder: (context) => _relativePowerLineStory(
+          const <int>[31, -31],
+          maxWidth: 320,
+        ),
+      ),
+    ],
+  ),
 ];
+
+/// Renders a vertical stack of [RelativePowerLine] widgets at the given
+/// [percents] inside the editorial-monocle dark theme with full localization
+/// delegates so the muted prefix and tier words resolve. SPEC/ui/diplomacy-
+/// panel.md § Relative power line Widgetbook.
+Widget _relativePowerLineStory(List<int> percents, {double? maxWidth}) {
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      backgroundColor: EditorialMonoclePalette.bg,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth ?? 480),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final pct in percents)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: RelativePowerLine(pct: pct),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 /// Stable human-player id used by the Diplomacy Panel empty-state
 /// Widgetbook story. SPEC/ui/diplomacy-panel.md § Widgetbook.

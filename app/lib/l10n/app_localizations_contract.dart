@@ -1437,6 +1437,30 @@ abstract class AppLocalizations {
   /// Great power military/economic score label in diplomacy row.
   String diplomacy_panel_powerScore(int score);
 
+  /// Muted prefix for the Great Power relative-power line.
+  String get diplomacy_relativePower_label;
+
+  /// Relative-power tier word for `−10 … +10` (roughly equal).
+  String get diplomacy_relativePower_tierRoughlyEqual;
+
+  /// Relative-power tier word for `+11 … +30` (superior).
+  String get diplomacy_relativePower_tierSuperior;
+
+  /// Relative-power tier word for `>= +31` (vastly superior).
+  String get diplomacy_relativePower_tierVastlySuperior;
+
+  /// Relative-power tier word for `−30 … −11` (inferior).
+  String get diplomacy_relativePower_tierInferior;
+
+  /// Relative-power tier word for `<= −31` (vastly inferior).
+  String get diplomacy_relativePower_tierVastlyInferior;
+
+  /// Tooltip explaining what the relative-power comparison measures.
+  String get diplomacy_relativePower_tooltip;
+
+  /// Screen-reader label combining the relative-power percentage and tier.
+  String diplomacy_relativePower_semantics(String pct, String tier);
+
   /// Line showing active subsidy to another faction.
   String diplomacy_panel_outgoingSubsidy(int amount, String target);
 

@@ -489,6 +489,50 @@ void main() {
     });
   });
 
+  group('powerComparisonTier (SPEC § Relative power line boundary table)', () {
+    test('roughly-equal band: −10 … +10 inclusive (and 0)', () {
+      expect(powerComparisonTier(0), PowerComparisonTier.roughlyEqual);
+      expect(powerComparisonTier(10), PowerComparisonTier.roughlyEqual);
+      expect(powerComparisonTier(-10), PowerComparisonTier.roughlyEqual);
+      expect(powerComparisonTier(5), PowerComparisonTier.roughlyEqual);
+      expect(powerComparisonTier(-7), PowerComparisonTier.roughlyEqual);
+    });
+
+    test('superior band: +11 … +30 inclusive', () {
+      expect(powerComparisonTier(11), PowerComparisonTier.superior);
+      expect(powerComparisonTier(30), PowerComparisonTier.superior);
+      expect(powerComparisonTier(22), PowerComparisonTier.superior);
+    });
+
+    test('vastly-superior band: ≥ +31 (no cap)', () {
+      expect(powerComparisonTier(31), PowerComparisonTier.vastlySuperior);
+      expect(powerComparisonTier(100), PowerComparisonTier.vastlySuperior);
+      expect(powerComparisonTier(4900), PowerComparisonTier.vastlySuperior);
+    });
+
+    test('inferior band: −30 … −11 inclusive', () {
+      expect(powerComparisonTier(-11), PowerComparisonTier.inferior);
+      expect(powerComparisonTier(-30), PowerComparisonTier.inferior);
+      expect(powerComparisonTier(-22), PowerComparisonTier.inferior);
+    });
+
+    test('vastly-inferior band: ≤ −31', () {
+      expect(powerComparisonTier(-31), PowerComparisonTier.vastlyInferior);
+      expect(powerComparisonTier(-90), PowerComparisonTier.vastlyInferior);
+    });
+
+    test('exact boundary integers map per the confirmed table', () {
+      expect(powerComparisonTier(10), PowerComparisonTier.roughlyEqual);
+      expect(powerComparisonTier(11), PowerComparisonTier.superior);
+      expect(powerComparisonTier(30), PowerComparisonTier.superior);
+      expect(powerComparisonTier(31), PowerComparisonTier.vastlySuperior);
+      expect(powerComparisonTier(-10), PowerComparisonTier.roughlyEqual);
+      expect(powerComparisonTier(-11), PowerComparisonTier.inferior);
+      expect(powerComparisonTier(-30), PowerComparisonTier.inferior);
+      expect(powerComparisonTier(-31), PowerComparisonTier.vastlyInferior);
+    });
+  });
+
   group('diplomacyFilterShowsKind', () {
     test('mode `all` shows every faction kind', () {
       for (final kind in FactionKind.values) {

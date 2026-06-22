@@ -2532,6 +2532,46 @@
       }
     }
   },
+  "diplomacy_relativePower_label": "Relative power:",
+  "@diplomacy_relativePower_label": {
+    "description": "Muted prefix for the Great Power relative-power line on the diplomacy panel and detail screen."
+  },
+  "diplomacy_relativePower_tierRoughlyEqual": "Roughly equal",
+  "@diplomacy_relativePower_tierRoughlyEqual": {
+    "description": "Relative-power tier word when the comparison percentage is between -10 and +10 inclusive."
+  },
+  "diplomacy_relativePower_tierSuperior": "Superior",
+  "@diplomacy_relativePower_tierSuperior": {
+    "description": "Relative-power tier word when the comparison percentage is between +11 and +30 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlySuperior": "Vastly superior",
+  "@diplomacy_relativePower_tierVastlySuperior": {
+    "description": "Relative-power tier word when the comparison percentage is +31 or greater."
+  },
+  "diplomacy_relativePower_tierInferior": "Inferior",
+  "@diplomacy_relativePower_tierInferior": {
+    "description": "Relative-power tier word when the comparison percentage is between -30 and -11 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlyInferior": "Vastly inferior",
+  "@diplomacy_relativePower_tierVastlyInferior": {
+    "description": "Relative-power tier word when the comparison percentage is -31 or lower."
+  },
+  "diplomacy_relativePower_tooltip": "Compares this Great Power's military power score (provinces, army strength, ships) to yours.",
+  "@diplomacy_relativePower_tooltip": {
+    "description": "Tooltip / long-press copy explaining what the relative-power comparison measures."
+  },
+  "diplomacy_relativePower_semantics": "Relative power {pct}, {tier}",
+  "@diplomacy_relativePower_semantics": {
+    "description": "Screen-reader label combining the relative-power percentage and tier word.",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "diplomacy_panel_outgoingSubsidy": "Outgoing subsidy: £{amount}/turn to {target}",
   "@diplomacy_panel_outgoingSubsidy": {
     "description": "Line showing active subsidy to another faction.",
