@@ -14,7 +14,6 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
@@ -29,6 +28,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetPurchaseLand,
         kWorkTargetStealTech,
         kWorkTargetUpgradeTown;
+
+import 'support/panel_test_fixtures.dart';
 
 class _EventHandlingWrapper extends StatefulWidget {
   const _EventHandlingWrapper({
@@ -98,10 +99,8 @@ void main() {
   const String humanPlayerIdWithNoUnits = 'no-such-player';
 
   setUpAll(() {
-    game = getDebugInitGameResult().game;
-    humanPlayerIdWithUnits = game.players.isNotEmpty
-        ? game.players.first.id
-        : 'gp1';
+    game = buildCivilianPanelTestGame();
+    humanPlayerIdWithUnits = game.players.first.id;
   });
 
   Widget buildPanel({
