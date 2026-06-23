@@ -42,7 +42,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/game_map_empire_left_rail_narrow_test.dart',
   'app/test/game_map_empire_left_rail_test.dart',
   'app/test/game_map_players_bar_narrow_test.dart',
-  'app/test/game_map_players_bar_test.dart',
   'app/test/game_map_selection_prompt_dark_tokens_test.dart',
   'app/test/game_screen_320dp_min_viewport_test.dart',
   'app/test/game_screen_branches_test.dart',

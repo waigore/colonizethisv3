@@ -41,6 +41,7 @@ Game buildPanelTestGame({
   Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
       const {},
   Map<String, String> seaZoneDisplayNameById = const {},
+  List<Tribe> tribes = const [],
   String id = 'panel-widget-test',
   TurnState turnState = const TurnState(
     phase: TurnPhase.orders,
@@ -66,6 +67,7 @@ Game buildPanelTestGame({
       seaZoneDisplayNameById: seaZoneDisplayNameById,
     ),
     players: players ?? [panelTestHumanPlayer()],
+    tribes: tribes,
   );
 }
 
@@ -178,6 +180,44 @@ Game buildVictoryPanelTestGame() {
       panelTestHumanPlayer(),
       Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
     ],
+  );
+}
+
+/// Lightweight game shaped for the `game_map_players_bar_test` standalone
+/// widget contract.
+///
+/// `GameMapPlayersBar` reads only `game.players` (via
+/// `GameMapPlayersBar.greatPowerRoster`, which excludes `game.tribes` ids and
+/// sorts by `Player.id`), `game.worldState.oldWorld.provinces[].ownerId` (the
+/// chip score), and `factionOwnershipColorMapForOldWorld(game)` (which colours
+/// every `game.players` id regardless of province ownership). None of that
+/// needs generated map/topology data.
+///
+/// The fixture provides:
+/// - **three** great powers (`gp1` human, `gp2`/`gp3` AI) so the id-sorted chip
+///   order and the "further GPs own 0 provinces" assertions are non-vacuous;
+/// - **six** unowned Old World provinces — the suite's `gameWithOwnership`
+///   helper clears ownership and reassigns province 0 → `gp1` and provinces
+///   1–4 → `gp2`, so it requires `provinces.length >= 6`;
+/// - one **tribe** (`t1`) so the tribe-exclusion and empty-roster assertions
+///   (which derive a tribe-only player list from `game.tribes`) stay meaningful.
+Game buildPlayersBarTestGame() {
+  return buildPanelTestGame(
+    id: 'players-bar-widget-test',
+    players: [
+      panelTestHumanPlayer(),
+      const Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+      const Player(id: 'gp3', displayName: 'Third Power', isHuman: false),
+    ],
+    oldWorldProvinces: const [
+      Province(id: 'oldWorld|p0', regionId: 'oldWorld', displayName: 'Alpha'),
+      Province(id: 'oldWorld|p1', regionId: 'oldWorld', displayName: 'Beta'),
+      Province(id: 'oldWorld|p2', regionId: 'oldWorld', displayName: 'Gamma'),
+      Province(id: 'oldWorld|p3', regionId: 'oldWorld', displayName: 'Delta'),
+      Province(id: 'oldWorld|p4', regionId: 'oldWorld', displayName: 'Epsilon'),
+      Province(id: 'oldWorld|p5', regionId: 'oldWorld', displayName: 'Zeta'),
+    ],
+    tribes: const [Tribe(id: 't1', displayName: 'Tribe One')],
   );
 }
 
