@@ -11,7 +11,8 @@ import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 Future<void> expandFirstArmyExpansion(WidgetTester tester) async {
   final tiles = find.byType(ExpansionTile);
@@ -39,10 +40,8 @@ void main() {
   const String humanPlayerIdWithNoUnits = 'no-such-player';
 
   setUpAll(() {
-    game = getDebugInitGameResult().game;
-    humanPlayerIdWithUnits = game.players.isNotEmpty
-        ? game.players.first.id
-        : 'gp1';
+    game = buildMilitaryPanelTestGame();
+    humanPlayerIdWithUnits = game.players.first.id;
   });
 
   Widget buildPanel({

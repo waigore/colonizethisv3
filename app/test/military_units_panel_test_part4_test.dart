@@ -17,7 +17,8 @@ import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Applies [ArmySplitRequestedEvent] like [AppEventHandlerScope] and rebuilds
 /// the panel with updated [Game] (widget tests do not mount full shell).
@@ -99,10 +100,8 @@ void main() {
   const String humanPlayerIdWithNoUnits = 'no-such-player';
 
   setUpAll(() {
-    game = getDebugInitGameResult().game;
-    humanPlayerIdWithUnits = game.players.isNotEmpty
-        ? game.players.first.id
-        : 'gp1';
+    game = buildMilitaryPanelTestGame();
+    humanPlayerIdWithUnits = game.players.first.id;
   });
 
   Widget buildPanel({
