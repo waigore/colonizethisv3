@@ -46,11 +46,12 @@ import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.da
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -94,7 +95,7 @@ Future<void> _pumpDialogAtSize(
   await tester.pumpAndSettle();
 }
 
-/// Resolves the seeded human player id from the cached debug init game.
+/// Resolves the human player id from the lightweight train fixture.
 String _humanPlayerId(Game game) {
   return game.players.firstWhere((p) => p.isHuman).id;
 }
@@ -108,7 +109,7 @@ void main() {
       'AC (positive) TrainCiviliansDialog @ 320×640: no RenderFlex '
       'overflow exception, "Train Civilians" title + Reset action render',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         final humanPlayerId = _humanPlayerId(game);
         await _pumpDialogAtSize(
           tester,
@@ -147,7 +148,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      final game = getDebugInitGameResult().game;
+      final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
       await _pumpDialogAtSize(
         tester,
@@ -172,7 +173,7 @@ void main() {
       'AC (positive) TrainMilitaryDialog @ 320×640: no RenderFlex '
       'overflow exception, "Train Military" title + Reset action render',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         final humanPlayerId = _humanPlayerId(game);
         await _pumpDialogAtSize(
           tester,
@@ -212,7 +213,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      final game = getDebugInitGameResult().game;
+      final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
       await _pumpDialogAtSize(
         tester,
@@ -237,7 +238,7 @@ void main() {
       'AC (positive) TrainNavalDialog @ 320×640: no RenderFlex '
       'overflow exception, "Train Naval" title + Reset action render',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         final humanPlayerId = _humanPlayerId(game);
         await _pumpDialogAtSize(
           tester,
@@ -274,7 +275,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      final game = getDebugInitGameResult().game;
+      final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
       await _pumpDialogAtSize(
         tester,

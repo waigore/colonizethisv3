@@ -24,13 +24,14 @@ import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart'
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 Widget _localizedHost(Widget child) {
   return MaterialApp(
@@ -176,7 +177,7 @@ void main() {
       'AC: treasury / peasant / commodity cost icons carry resource-name '
       'tooltips',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         await _pumpDialog(
           tester,
           TrainMilitaryDialog(
@@ -210,7 +211,7 @@ void main() {
       'AC: treasury / peasant / commodity cost icons carry resource-name '
       'tooltips',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         await _pumpDialog(
           tester,
           TrainNavalDialog(
@@ -288,7 +289,7 @@ void main() {
     testWidgets(
       'AC (positive): Train Military (UNIT50001) cost icons render at 30 dp',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         await _pumpDialog(
           tester,
           TrainMilitaryDialog(
@@ -305,7 +306,7 @@ void main() {
     testWidgets(
       'AC (positive): Train Naval (UNIT60001) cost icons render at 30 dp',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         await _pumpDialog(
           tester,
           TrainNavalDialog(
@@ -323,7 +324,7 @@ void main() {
       'AC (negative): resource-bar chips stay small (14 dp), so the size bump '
       'is scoped to the cost summary',
       (WidgetTester tester) async {
-        final game = getDebugInitGameResult().game;
+        final game = buildTrainPanelTestGame();
         await _pumpDialog(
           tester,
           TrainMilitaryDialog(
