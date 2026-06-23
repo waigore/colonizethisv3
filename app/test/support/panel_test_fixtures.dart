@@ -206,7 +206,8 @@ Game buildTechnologyPanelTestGame() {
 }
 
 /// Lightweight game shaped for the `trade_screen_*` scaffold/viewport family
-/// (`trade_screen_scaffold_test`, `trade_screen_320dp_min_viewport_test`).
+/// (`trade_screen_scaffold_test`, `trade_screen_320dp_min_viewport_test`,
+/// `trade_screen_issue_acceptance_criteria_e8_test` route-host tests).
 ///
 /// `TradeScreen` (via `CtGameFeatureScreenShell`) reads only `game.players` for
 /// the supplied `player`, the static `CommodityCatalog` for the read-only

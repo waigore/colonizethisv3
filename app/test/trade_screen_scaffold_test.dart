@@ -22,7 +22,6 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -32,6 +31,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
@@ -42,8 +42,12 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    // Lightweight fixture (Refs #3656): the trade route host, left rail, and
+    // TradeScreen body read only `game.players` (for the supplied player), the
+    // static CommodityCatalog, and a default-empty WorldMarketState — no
+    // generated map/topology data — so the ~7-11s procedural map generator is
+    // avoided.
+    game = buildTradePanelTestGame();
     humanPlayer = game.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => game.players.first,

@@ -68,7 +68,6 @@ import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show homeFleetIdFor;
@@ -80,12 +79,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
 // Player ids used by the isolated `_pumpTradeScreenStandalone` harness
 // (AC #2, #3, #4, #5, and observe-variant tests). The route-host
-// fixture (AC #1, #6) uses the human player baked into
-// `getDebugInitGameResult()`.
+// fixture (AC #1, #6) uses the human player from the shared lightweight
+// `buildTradePanelTestGame()` fixture (Refs #3656).
 const String _humanPlayerId = 'gp_h';
 const String _capProvinceId = 'oldWorld|cap1';
 
@@ -299,8 +299,11 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    final result = getDebugInitGameResult();
-    routeHostGame = result.game;
+    // Lightweight fixture (Refs #3656): the route-host + left-rail tests
+    // (AC #1, #6) only need a Game with a human player for navigation and the
+    // TradeScreen chrome — no generated map/topology data — so the ~7-11s
+    // procedural map generator is avoided.
+    routeHostGame = buildTradePanelTestGame();
     routeHostPlayer = routeHostGame.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => routeHostGame.players.first,
