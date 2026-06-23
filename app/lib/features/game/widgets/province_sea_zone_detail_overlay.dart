@@ -466,9 +466,7 @@ _OverlayContent _provinceContent({
     final visibleRes = omniscientDetail
         ? res
         : resourceIdVisibleInPlayerView(playerView, tk, res);
-
     if (visibleRes == null) continue;
-
     final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
     if (imp > 0) {
       final impBase = _improvementBaseNameForPlayer(
