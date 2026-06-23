@@ -1,5 +1,4 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
@@ -11,95 +10,13 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 /// file exercises the matcher integration only.
 void main() {
   group('DealMatcher.matchDeals — First Right of Refusal (#2992 D2)', () {
-    test('owning GP bid fills purchased-tile offer ahead of higher-priority '
-        'bid from another GP (FRR overrides priority tier)', () {
-      const tileKey = 'oldWorld|M1|0|0';
-      final result = DealMatcher.matchDeals(
-        matcherInputs(
-          offersByFactionId: {
-            'M1': [matcherOffer('timber', 10, originTileKey: tileKey)],
-          },
-          bidsByFactionId: {
-            // Owning GP only bids at the lowest precedence (priority 5).
-            'gpA': [matcherBid('timber', 10, priority: 5)],
-            // Rival GP bids at the highest precedence (priority 1).
-            'gpB': [matcherBid('timber', 10, priority: 1)],
-          },
-          tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-          purchasedTileIndex: frrMatcherTestIndex(),
-        ),
-      );
-
-      expect(result.filledDeals.length, 1);
-      final deal = result.filledDeals.single;
-      expect(deal.sellerFactionId, 'M1');
-      expect(deal.buyerFactionId, 'gpA');
-      expect(deal.commodityId, 'timber');
-      expect(deal.quantity, 10);
-      expect(deal.isFirstRightOfRefusalMatch, isTrue);
-      expect(deal.isFtpMatch, isFalse);
-
-      // Rival GP's bid carries forward intact (no offer remaining).
-      expect(result.unfilledBidsByFactionId['gpB'], [
-        matcherBid('timber', 10, priority: 1),
-      ]);
-      expect(result.unfilledOffersByFactionId, isEmpty);
-    });
-
-    test('FRR overrides FTP: owning GP bid fills purchased-tile offer before '
-        'an FTP-paired bid at the same priority', () {
-      const tileKey = 'oldWorld|M1|0|0';
-      final result = DealMatcher.matchDeals(
-        matcherInputs(
-          offersByFactionId: {
-            'M1': [matcherOffer('timber', 6, originTileKey: tileKey)],
-          },
-          bidsByFactionId: {
-            'gpA': [matcherBid('timber', 6, priority: 1)],
-            'gpFtp': [matcherBid('timber', 6, priority: 1)],
-          },
-          tradeCapacityByFactionId: {'gpA': 100, 'gpFtp': 100},
-          ftpPairKeys: {DealMatcher.pairKey('M1', 'gpFtp')},
-          purchasedTileIndex: frrMatcherTestIndex(),
-        ),
-      );
-
-      // Offer is consumed by FRR fill — FTP pair receives nothing.
-      expect(result.filledDeals.length, 1);
-      expect(result.filledDeals.single.buyerFactionId, 'gpA');
-      expect(result.filledDeals.single.isFirstRightOfRefusalMatch, isTrue);
-      expect(result.filledDeals.single.isFtpMatch, isFalse);
-
-      expect(result.unfilledBidsByFactionId['gpFtp'], [
-        matcherBid('timber', 6, priority: 1),
-      ]);
-    });
-
-    test('no FRR override when owning GP does not bid: purchased-tile offer '
-        'falls back to normal tier matching against other GPs', () {
-      const tileKey = 'oldWorld|M1|0|0';
-      final result = DealMatcher.matchDeals(
-        matcherInputs(
-          offersByFactionId: {
-            'M1': [matcherOffer('timber', 10, originTileKey: tileKey)],
-          },
-          bidsByFactionId: {
-            // Owning GP gpA submits NO bid — fallthrough to gpB.
-            'gpB': [matcherBid('timber', 10, priority: 1)],
-          },
-          tradeCapacityByFactionId: {'gpB': 100},
-          purchasedTileIndex: frrMatcherTestIndex(),
-        ),
-      );
-
-      expect(result.filledDeals.length, 1);
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, 'gpB');
-      // FRR did not apply — the deal flows through standard tier matching.
-      expect(deal.isFirstRightOfRefusalMatch, isFalse);
-      expect(deal.isFtpMatch, isFalse);
-    });
-
+    // The three base AC #1 matcher scenarios (owning-GP priority override,
+    // FRR-overrides-FTP, and the owning-GP-does-not-bid fallback) are pinned
+    // 1:1 by the issue-AC audit file
+    // `economy/world_market/first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`
+    // (group "AC #1"). This file keeps only the matcher behaviors that the
+    // d5 contract does not cover (partial fill, cargo caps, tile-key
+    // attribution edge cases, null index, multi-tile / multi-bid passes).
     test('partial FRR fill: residual offer quantity becomes available for '
         'other GPs at their normal priority tier', () {
       const tileKey = 'oldWorld|M1|0|0';

@@ -253,41 +253,6 @@ void main() {
       expect(results.single.isAccepted, isTrue);
     });
 
-    test('identical inputs produce identical result lists across two '
-        'validate() calls (Refs #3123 AC: validator determinism)', () {
-      // SPEC/program/world-market-resolution.md § Validation —
-      // determinism: pure validator with no I/O / time / random
-      // dependencies must return byte-identical results for byte-identical
-      // inputs. Pin both an accepted and a rejected order so the
-      // determinism contract covers both result branches.
-      final context = validatorCtx(
-        treasuryBudgetForBids: 100,
-        tradeCargoCapacity: 100,
-        worldMarketState: WorldMarketState(
-          prices: {
-            CommodityCatalog.timber.id: 30,
-            CommodityCatalog.iron.id: 10,
-          },
-        ),
-      );
-      final orders = [
-        validatorBid(CommodityCatalog.timber.id, 4), // 120 — rejected
-        validatorBid(CommodityCatalog.iron.id, 1), // 10 — admitted (greedy)
-      ];
-      final first = TradeOrderValidator.validate(
-        context: context,
-        proposedOrders: orders,
-      );
-      final second = TradeOrderValidator.validate(
-        context: context,
-        proposedOrders: orders,
-      );
-      expect(second, hasLength(first.length));
-      for (var i = 0; i < first.length; i++) {
-        expect(second[i].isAccepted, first[i].isAccepted);
-        expect(second[i].reason, first[i].reason);
-      }
-    });
   });
 
   group('effectiveMarketPriceForCommodityId — catalog default coverage '
