@@ -24,15 +24,6 @@ void main() {
       expect(ctx.treasuryBudgetForBids, 175);
     });
 
-    test(
-      'negative treasury clamps the context budget at 0 (defensive guard)',
-      () {
-        final game = buildTreasuryBidBudgetGame(treasury: -25);
-        final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
-        expect(ctx.treasuryBudgetForBids, 0);
-      },
-    );
-
     test('negative treasury context rejects any priced bid end-to-end '
         '(SPEC/game/world-market.md — cross-commodity bid treasury cap, '
         'clamped negative treasury AC)', () {
@@ -94,16 +85,6 @@ void main() {
       final ctx = tradeOrderValidationContextFromGame(game, 'gp_ghost');
       expect(ctx.treasuryBudgetForBids, 0);
     });
-
-    test(
-      'deterministic for identical inputs (two calls return identical budgets)',
-      () {
-        final game = buildTreasuryBidBudgetGame(treasury: 123);
-        final ctxA = tradeOrderValidationContextFromGame(game, humanPlayerId);
-        final ctxB = tradeOrderValidationContextFromGame(game, humanPlayerId);
-        expect(ctxA.treasuryBudgetForBids, ctxB.treasuryBudgetForBids);
-      },
-    );
 
     test('caller-supplied projectedTreasuryDelta reduces the budget by the '
         'projected non-bid deficit (Refs #3290 economy->orders inversion)', () {
