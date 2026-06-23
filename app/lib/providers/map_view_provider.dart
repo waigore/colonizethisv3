@@ -113,7 +113,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         final regionId = parsed.regionId;
         final localProvinceId = parsed.provinceLocalId;
         final ownedByHuman =
-            (regionId == 'oldWorld'
+            (regionId == kRegionOldWorld
                     ? game.worldState.oldWorld.provinces
                     : game.worldState.newWorld.provinces)
                 .any(

@@ -8,6 +8,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         isProspectableTerrain,
         isProspectableTerrainId,
         kProspectRequiredResourceIds,
+        kRegionNewWorld,
+        kRegionOldWorld,
         PlayerView,
         provincePanelShowsFullTileDerivedIntel,
         resourceIdVisibleInPlayerView,
@@ -419,7 +421,7 @@ _OverlayContent _provinceContent({
     );
   }
   final province = _findProvince(game, provinceId);
-  final regionData = provinceId.startsWith('newWorld')
+  final regionData = provinceId.startsWith(kRegionNewWorld)
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
   final partitioned = partitionProvinceOverlayUnits(
@@ -622,7 +624,7 @@ _OverlayContent _seaZoneContent({
   required String humanPlayerId,
   required Orders draftOrders,
 }) {
-  final regionId = prefixedIdRegionSegment(seaZoneId) ?? 'oldWorld';
+  final regionId = prefixedIdRegionSegment(seaZoneId) ?? kRegionOldWorld;
   final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
   final fleets = game.worldState.fleets
       .where((f) => f.regionId == regionId && f.seaZoneId == localSeaZoneId)
