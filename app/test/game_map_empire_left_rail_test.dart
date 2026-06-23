@@ -19,7 +19,6 @@ import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -28,6 +27,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/panel_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -35,8 +36,12 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    // Lightweight fixture (Refs #3656): the rail opens the Military / Naval /
+    // Civilian panels and their Train dialogs, so the train-panel shape (a human
+    // with a capital, regiments/army, home + non-home fleets, idle civilians and
+    // unlock tech) supplies everything those flows render without the ~10s
+    // procedural map generation paid by getDebugInitGameResult().
+    game = buildTrainPanelTestGame();
 
     Hive.init('./.dart_tool/test_hive_empire_rail');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
