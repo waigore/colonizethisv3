@@ -101,10 +101,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       final prospected =
           game.worldState.playerProspectedTiles[mapPlayer.id] ??
           const <String>{};
-      final provincesByFullId = {
-        for (final p in game.worldState.oldWorld.provinces) p.id: p,
-        for (final p in game.worldState.newWorld.provinces) p.id: p,
-      };
+      final provincesByFullId = game.worldState.allProvincesById;
       for (final tileKey in connectivityForHuman.connected) {
         final parsed = tryParseTileKey(tileKey);
         if (parsed == null) {
