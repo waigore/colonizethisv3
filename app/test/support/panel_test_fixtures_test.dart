@@ -127,6 +127,29 @@ void main() {
     });
   });
 
+  group('buildTechnologyPanelTestGame', () {
+    test('exposes a single human player with no researched tech', () {
+      final game = buildTechnologyPanelTestGame();
+      expect(game.players, hasLength(1));
+      final player = game.players.first;
+      expect(player.id, kPanelTestHumanPlayerId);
+      expect(player.isHuman, isTrue);
+      // Base player starts with no researched tech so the "None yet" /
+      // all-techs-available assertions hold without a copyWith override.
+      expect(player.techUnlocked ?? const <String, bool>{}, isEmpty);
+      // No generated map/topology data is needed by TechnologyPanel.
+      expect(game.worldState.oldWorld.units, isEmpty);
+      expect(game.worldState.newWorld.units, isEmpty);
+    });
+
+    test('uses the default research-slot count (player.researchSlots null)', () {
+      final game = buildTechnologyPanelTestGame();
+      // Null defers to TechnologyPanel's `player.researchSlots ?? 3` default
+      // (three active + one locked slot card).
+      expect(game.players.first.researchSlots, isNull);
+    });
+  });
+
   group('buildNavalPanelTestGame', () {
     test('human owns a home fleet and a non-home fleet, both with ships', () {
       final game = buildNavalPanelTestGame();

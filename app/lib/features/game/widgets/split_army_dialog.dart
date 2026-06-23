@@ -24,15 +24,7 @@ class SplitArmyDialog extends SplitEntityDialog {
   final AppEventBus bus;
   final bool isHomeArmy;
 
-  Unit? _unit(String id) {
-    for (final u in game.worldState.oldWorld.units) {
-      if (u.id == id) return u;
-    }
-    for (final u in game.worldState.newWorld.units) {
-      if (u.id == id) return u;
-    }
-    return null;
-  }
+  Unit? _unit(String id) => game.worldState.tryGetUnitById(id);
 
   Map<String, int> _initialLeftCounts() {
     final counts = <String, int>{};

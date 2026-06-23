@@ -21,7 +21,8 @@ import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_progress_bar.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -30,8 +31,7 @@ void main() {
   late Player basePlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    game = buildTechnologyPanelTestGame();
     basePlayer = game.players.first;
   });
 

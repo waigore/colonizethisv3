@@ -2,7 +2,7 @@
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show resolveToFullProvinceId, WorldStateProvinceLookup;
+    show resolveToFullProvinceId, WorldStateProvinceLookup, WorldStateUnitLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../utils/map_location_resolver.dart';
@@ -299,22 +299,13 @@ List<MilitarySeaZoneNode> _militarySeaZoneNodesForRegion({
 }
 
 List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
-  final unitsById = <String, Unit>{
-    for (final u in game.worldState.oldWorld.units) u.id: u,
-    for (final u in game.worldState.newWorld.units) u.id: u,
-  };
+  final unitsById = game.worldState.allUnitsById;
 
   final armies = _armiesForMilitaryPanel(game, humanPlayerId);
 
   final result = <RegionMilitaryGroup>[];
 
-  for (final regionEntry in {
-    'oldWorld': game.worldState.oldWorld,
-    'newWorld': game.worldState.newWorld,
-  }.entries) {
-    final regionKey = regionEntry.key;
-    final regionData = regionEntry.value;
-
+  game.worldState.forEachRegion((regionKey, regionData) {
     final provinceNodes = _provinceArmyNodesForRegion(
       game: game,
       regionKey: regionKey,
@@ -338,7 +329,7 @@ List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
         ),
       );
     }
-  }
+  });
 
   return result;
 }

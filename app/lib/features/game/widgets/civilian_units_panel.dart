@@ -343,7 +343,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       hasContent: hasAny,
       listChildren: [
         ..._civilianListChildrenForRegion(
-          regionId: 'oldWorld',
+          regionId: kRegionOldWorld,
           units: scopedOw,
           multiOwner: multiOwner,
           game: widget.game,
@@ -353,7 +353,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
           onSelectUnit: (id) => setState(() => _selectedUnitId = id),
         ),
         ..._civilianListChildrenForRegion(
-          regionId: 'newWorld',
+          regionId: kRegionNewWorld,
           units: scopedNw,
           multiOwner: multiOwner,
           game: widget.game,

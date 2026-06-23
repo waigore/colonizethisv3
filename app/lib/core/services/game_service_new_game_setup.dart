@@ -273,7 +273,7 @@ GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
   return TileMapGenerator(params: paramsOW).generate(
     numProvinces: cfg.numProvincesOldWorld,
     numContinents: cfg.continentCount,
-    regionId: 'oldWorld',
+    regionId: kRegionOldWorld,
     resourceRules: ResourceRules.defaultRules,
     onLog: _mapGenPassLog.d,
   );
@@ -302,7 +302,7 @@ GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
   return TileMapGenerator(params: paramsNW).generate(
     numProvinces: cfg.numProvincesNewWorld,
     numContinents: cfg.continentCount.clamp(1, cfg.numProvincesNewWorld),
-    regionId: 'newWorld',
+    regionId: kRegionNewWorld,
     resourceRules: ResourceRules.defaultRules,
     onLog: _mapGenPassLog.d,
   );
@@ -320,8 +320,8 @@ List<WarpLink> _gameServiceGenerateWarpLinks({
     topologyOldWorld: topoOW,
     tileMapNewWorld: tileMapNW,
     topologyNewWorld: topoNW,
-    regionIdOld: 'oldWorld',
-    regionIdNew: 'newWorld',
+    regionIdOld: kRegionOldWorld,
+    regionIdNew: kRegionNewWorld,
     seed: effectiveSeed,
   );
 }

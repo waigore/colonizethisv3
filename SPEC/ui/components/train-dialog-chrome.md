@@ -32,7 +32,7 @@ Consolidates the chrome (centered accent title, locked-name line, boxed resource
 
 `TrainDialogInlineCost` — inline cost segment (`icon`, numeric `label`, `tooltipMessage`, `isInsufficient`). The `icon + label` `Row` sits in a tap/hover `Tooltip` (`triggerMode: TooltipTriggerMode.tap`) within a `>= kMinTouchTargetSize` (44 dp) `ConstrainedBox`; `label` turns `danger` when `isInsufficient`. Rules: [`resource-icon-tooltip.md`](resource-icon-tooltip.md).
 
-Exported constants: `kTrainDialogLockedOpacity = 0.5` (canonical mockup `.unit-row.locked`, #3568 parity — supersedes the [#2866](https://github.com/waigore/colonizethisv3/issues/2866) `0.4`); `kTrainDialogTitleLetterSpacing = 0.05`; `kTrainDialogLockPrefix` (🔒 + space).
+Exported constants: `kTrainDialogLockedOpacity = 0.5` (canonical mockup `.unit-row.locked`, #3568 parity — supersedes the [#2866](https://github.com/waigore/colonizethisv3/issues/2866) `0.4`); `kTrainDialogTitleLetterSpacing = 0.05`; `kTrainDialogLockPrefix` (🔒 + space); `kTrainDialogCostIconSize = 30`.
 
 ---
 
@@ -99,7 +99,7 @@ Consumer specs link back here instead of redeclaring the chrome.
 - **Given** a `TrainDialogResourceBar` (`deficitHint = 'Treasury low'`), **When** settled, **Then** `Text('Treasury low')` resolves to `EditorialMonoclePalette.danger`.
 - **Given** a `TrainDialogUnitRowSurface`, **When** resolved, **Then** the `DecoratedBox` border is `accentDim` 1 dp and gradient is `CtGradients.rowGradient`.
 - **Given** `train_dialog_chrome.dart`, **When** read, **Then** it declares `kTrainDialogLockedOpacity = 0.5` and `kTrainDialogTitleLetterSpacing = 0.05`.
-- **Given** a `TrainDialogInlineCost` (`tooltipMessage = 'Treasury'`), **When** settled, **Then** one `Tooltip` (`triggerMode == TooltipTriggerMode.tap`) mounts with a `>= 44` dp trigger height.
+- **Given** a `TrainDialogInlineCost` (`tooltipMessage = 'Treasury'`), **When** settled, **Then** one `Tooltip` (`triggerMode == TooltipTriggerMode.tap`) mounts with a `>= 44` dp trigger height and its icon renders at `kTrainDialogCostIconSize` (30 dp).
 
 ---
 

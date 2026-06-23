@@ -382,20 +382,29 @@ class _ShipTypeRow extends StatelessWidget {
       runSpacing: 4,
       children: [
         TrainDialogInlineCost(
-          icon: const Icon(Icons.payments_outlined, size: 14),
+          icon: const Icon(
+            Icons.payments_outlined,
+            size: kTrainDialogCostIconSize,
+          ),
           label: econ.buildTreasuryCost.toString(),
           tooltipMessage: l10n.trainDialog_costTreasuryTooltip,
           isInsufficient: treasuryInsufficient,
         ),
         TrainDialogInlineCost(
-          icon: const WorkerIcon(workerType: 'peasant', size: 14),
+          icon: const WorkerIcon(
+            workerType: 'peasant',
+            size: kTrainDialogCostIconSize,
+          ),
           label: 1.toString(),
           tooltipMessage: l10n.trainDialog_costPeasantsTooltip,
           isInsufficient: peasantInsufficient,
         ),
         for (final input in econ.buildInputs.entries)
           TrainDialogInlineCost(
-            icon: ResourceIcon(commodityId: input.key, size: 14),
+            icon: ResourceIcon(
+              commodityId: input.key,
+              size: kTrainDialogCostIconSize,
+            ),
             label: input.value.toString(),
             tooltipMessage: commodityIconTooltip(l10n, input.key),
             isInsufficient: insufficientCommodityIds.contains(input.key),
