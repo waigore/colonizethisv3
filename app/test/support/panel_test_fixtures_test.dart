@@ -190,6 +190,36 @@ void main() {
     });
   });
 
+  group('buildDiplomacyPanelTestGame', () {
+    test('human first player with an affordable treasury and an AI opponent', () {
+      final game = buildDiplomacyPanelTestGame();
+      expect(game.players, hasLength(2));
+      final human = game.players.first;
+      expect(human.id, kPanelTestHumanPlayerId);
+      expect(human.isHuman, isTrue);
+      expect(human.treasury, greaterThanOrEqualTo(1000));
+      expect(game.players[1].id, 'gp2');
+      expect(game.players[1].isHuman, isFalse);
+    });
+
+    test('seeds an at-peace GP relation so the opponent is discovered', () {
+      final game = buildDiplomacyPanelTestGame();
+      // Unlike the screen fixture, the panel suites need a discovered row, so a
+      // persisted relation (indexed by buildPlayerView.diplomacyByOtherId) is
+      // seeded between the human and the AI great power.
+      expect(game.diplomacyRelations, hasLength(1));
+      final relation = game.diplomacyRelations.single;
+      expect(
+        {relation.factionId1, relation.factionId2},
+        {kPanelTestHumanPlayerId, 'gp2'},
+      );
+      expect(relation.state, RelationState.atPeace);
+      // No generated map/topology data is consumed by the panel chrome.
+      expect(game.worldState.oldWorld.units, isEmpty);
+      expect(game.worldState.newWorld.units, isEmpty);
+    });
+  });
+
   group('buildNavalPanelTestGame', () {
     test('human owns a home fleet and a non-home fleet, both with ships', () {
       final game = buildNavalPanelTestGame();
