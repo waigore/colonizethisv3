@@ -947,6 +947,13 @@ rules:
     runner: dart
     script: tool/check_app_no_duplicate_helpers.dart
 
+  - rule_id: repo.app_test_no_debug_init
+    group: structure
+    title: "app/test files must not call getDebugInitGameResult() outside the documented migration allowlist (Refs #3656)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_debug_init.dart
+
   - rule_id: repo.screen_registry_active_paths
     group: ui_structure
     title: "active screen-registry rows must point to existing app/lib Dart files (Refs #2801)"
