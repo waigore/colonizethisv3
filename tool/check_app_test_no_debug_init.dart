@@ -45,7 +45,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/game_side_menu_test.dart',
   'app/test/grant_or_subsidy_listener_test.dart',
   'app/test/human_draft_projected_region_provider_test.dart',
-  'app/test/naval_units_panel_mockup_fidelity_test.dart',
   'app/test/panels_320dp_min_viewport_test.dart',
   'app/test/pause_menu_side_menu_specs_test.dart',
   'app/test/player_turn_event_feed_narrow_inset_test.dart',
@@ -63,9 +62,7 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/province_sea_zone_overlay_detail_paths_test.dart',
   'app/test/shell_game_screen_specs_test.dart',
   'app/test/train_dialogs_goldens_test.dart',
-  'app/test/unit_panels_320dp_min_viewport_test.dart',
   'app/test/unit_panels_goldens_test.dart',
-  'app/test/unit_panels_widgetbook_dark_chrome_test.dart',
   'app/test/widgetbook_technology_screen_mobile_viewport_test.dart',
 };
 
