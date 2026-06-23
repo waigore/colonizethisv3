@@ -602,15 +602,8 @@ Widget _buildTileSection({
   );
 }
 
-Province? _findProvince(Game game, String provinceId) {
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  return null;
-}
+Province? _findProvince(Game game, String provinceId) =>
+    game.worldState.allProvincesById[provinceId];
 
 // Section header band shared by every province / sea-zone tab body and the
 // wide-layout `sections` column. Renders the canonical CtSectionLabel

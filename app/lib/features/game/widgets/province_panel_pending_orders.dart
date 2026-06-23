@@ -1,22 +1,12 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show fleetsInPortAtProvince;
+    show fleetsInPortAtProvince, WorldStateProvinceLookup, WorldStateUnitLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../l10n/l10n.dart';
 import 'province_panel_labels.dart';
 
-Province? _provinceById(Game game, String provinceId) {
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  return null;
-}
-
 String _destinationProvinceLabel(Game game, String provinceId) =>
-    _provinceById(game, provinceId)?.displayName ?? provinceId;
+    game.worldState.allProvincesById[provinceId]?.displayName ?? provinceId;
 
 Army? _findOwnedArmyInProvinceForOrder({
   required WorldState worldState,
@@ -36,16 +26,8 @@ Army? _findOwnedArmyInProvinceForOrder({
   return null;
 }
 
-Unit? _findUnitForMoveOrder(WorldState worldState, MoveOrder order) {
-  for (final region in [worldState.oldWorld, worldState.newWorld]) {
-    for (final unit in region.units) {
-      if (unit.id == order.unitId) {
-        return unit;
-      }
-    }
-  }
-  return null;
-}
+Unit? _findUnitForMoveOrder(WorldState worldState, MoveOrder order) =>
+    worldState.tryGetUnitById(order.unitId);
 
 /// Pending land military orders for [humanPlayerId] affecting units/armies in [provinceId].
 List<String> provincePanelPendingMilitaryLines({
