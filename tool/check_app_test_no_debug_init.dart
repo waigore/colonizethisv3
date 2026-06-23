@@ -97,9 +97,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/unit_panels_320dp_min_viewport_test.dart',
   'app/test/unit_panels_goldens_test.dart',
   'app/test/unit_panels_widgetbook_dark_chrome_test.dart',
-  'app/test/victory_overlay_320dp_min_viewport_test.dart',
-  'app/test/victory_overlay_narrow_test.dart',
-  'app/test/victory_overlay_test.dart',
   'app/test/widgetbook_technology_screen_mobile_viewport_test.dart',
   'app/test/widgetbook_technology_slots_variants_test.dart',
 };

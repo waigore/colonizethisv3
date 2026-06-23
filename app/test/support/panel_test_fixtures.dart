@@ -162,6 +162,23 @@ Game buildCivilianPanelTestGame() {
   );
 }
 
+/// Lightweight game shaped for the `victory_overlay_*` family.
+///
+/// `VictoryOverlay` / `VictoryPanel` only read `game.playerById(winnerId)` with
+/// a `game.players.first` fallback, so the fixture just needs a deterministic
+/// players list: the human ([kPanelTestHumanPlayerId]) first (used as the
+/// `winnerPlayerId` and the unknown-winner fallback name) plus one AI opponent
+/// so the winner-lookup path is non-vacuous. No map/topology data is required.
+Game buildVictoryPanelTestGame() {
+  return buildPanelTestGame(
+    id: 'victory-panel-widget-test',
+    players: [
+      panelTestHumanPlayer(),
+      Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+    ],
+  );
+}
+
 /// Military regiment type id used by the lightweight military fixture. Matches
 /// the regiment ids the `military_units_panel_test_part*` mini-games use, so
 /// `isMilitaryUnit`/`regimentTypeDisplayName` resolve identically.

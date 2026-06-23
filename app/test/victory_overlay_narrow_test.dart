@@ -8,11 +8,12 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 Widget _wrapPanel({
   required ct_models.Game game,
@@ -54,7 +55,7 @@ void main() {
   setUp(() {
     ct_models.AppEventBus.reset();
     victoryTestBus = ct_models.AppEventBus.create();
-    game = getDebugInitGameResult().game;
+    game = buildVictoryPanelTestGame();
     winnerPlayerId = game.players.first.id;
   });
 
