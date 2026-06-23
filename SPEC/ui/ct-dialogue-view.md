@@ -16,9 +16,11 @@
 |------------|------|---------|-----------|
 | `currentLine` | `DialogueLine?` | UI build | Non-null exactly while a line is awaiting `advanceLine()`. |
 | `currentChoice` | `DialogueChoice?` | UI build | Non-null exactly while a choice is awaiting `selectOption(...)`. |
-| `contextLine` | `DialogueLine?` | UI build | The **immediately preceding** narrative line, retained from `onLineStart` through the transient null state after `advanceLine()` **and** through the subsequent choice. Cleared to `null` only when a choice resolves (`selectOption`) or the dialogue finishes. Lets consumers keep the message visible above option buttons (see § Combined line+choice presentation). Refs #3628. |
-| `onStateChanged` | `void Function(DialogueLine?, DialogueChoice?)?` | Consumer | Invoked once per state transition (line shown, choice shown, line/choice cleared, dialogue finished). Carries `currentLine` / `currentChoice` only; consumers read `contextLine` from the view when rebuilding. |
+| `contextLine` | `DialogueLine?` | UI build | The **immediately preceding** narrative line, retained from `onLineStart` through the transient null state after `advanceLine()` **and** through the subsequent multi-option choice. Cleared to `null` only when a choice resolves (`selectOption`) or the dialogue finishes. Lets consumers keep the message visible above option buttons (see § Combined line+choice presentation). Refs #3628. |
+| `pendingSingleOptionLabel` | `String?` | UI build | Non-null only while the active line is **immediately followed by a choice with exactly one option**. Holds that option's evaluated Yarn label (e.g. `I shall.`). Consumers render a single combined step (line text + one button labelled with this value) wired to `confirmCombinedLineOption()`. `null` for normal advance-only lines and for any multi-option choice. Refs #3628. |
+| `onStateChanged` | `void Function(DialogueLine?, DialogueChoice?)?` | Consumer | Invoked once per state transition (line shown, choice shown, line/choice cleared, dialogue finished). Carries `currentLine` / `currentChoice` only; consumers read `contextLine` / `pendingSingleOptionLabel` from the view when rebuilding. |
 | `advanceLine()` | `void` | Consumer | Completes the line completer at most once; no-op when no line is pending. Retains `contextLine`. |
+| `confirmCombinedLineOption()` | `void` | Consumer | Tapped on the combined line+single-option step: advances the active line **and** arms auto-selection of the sole trailing option, so the trailing single-option choice resolves with index `0` without rendering a second step. Refs #3628. |
 | `selectOption(int index)` | `void` | Consumer | Completes the choice completer with `index` at most once; no-op when no choice is pending. Clears `contextLine`. |
 
 Idempotency is guaranteed: `advanceLine` / `selectOption` are safe to call after completion (each clears its completer on first use; a second call short-circuits to a no-op rather than throwing).
@@ -28,34 +30,42 @@ Idempotency is guaranteed: `advanceLine` / `selectOption` are safe to call after
 ## Trigger conditions
 
 - **Construction:** Created by a consumer overlay during `initState` (or equivalent), then passed in the `dialogueViews:` list of a `jenny.DialogueRunner`.
-- **Lifecycle:** `onDialogueStart`, `onLineStart`, `onChoiceStart`, `onDialogueFinish` are invoked by Jenny as the runner walks a Yarn node. No direct user input is wired into the view; consumers wire UI buttons to `advanceLine` / `selectOption`.
+- **Lifecycle:** `onNodeStart`, `onLineStart`, `onChoiceStart`, `onDialogueFinish` are invoked by Jenny as the runner walks a Yarn node. `onNodeStart` scans the node's top-level entries to record which lines are immediately followed by a single-option choice (drives `pendingSingleOptionLabel`). No direct user input is wired into the view; consumers wire UI buttons to `advanceLine` / `selectOption` / `confirmCombinedLineOption`.
 - **Termination:** When `onDialogueFinish` fires, the view nulls `currentLine`, `currentChoice`, and both completers, then notifies the consumer one last time so the UI can transition out.
 
 ---
 
 ## States and variants
 
-| State | When | `currentLine` | `currentChoice` | `contextLine` | UI render expectation |
-|-------|------|----------------|-----------------|----------------|------------------------|
-| Idle | Before `onDialogueStart`, after `onDialogueFinish`, or while consumers are between transitions | `null` | `null` | `null` | Loading indicator or pass-through child. |
-| Presenting line | Inside `onLineStart` until `advanceLine` resolves the line completer | the active `DialogueLine` | `null` | same as `currentLine` | Show `line.text` plus a single Continue affordance. |
-| Presenting choice | Inside `onChoiceStart` until `selectOption(i)` resolves the choice completer | `null` | the active `DialogueChoice` | the immediately preceding line (or `null` if the node opened with a choice) | Show the retained `contextLine.text` (when non-null) **above** the option buttons, so the narrative message and the option(s) render together. |
-| Transient between line and choice | Brief moment after `advanceLine` returns and before Jenny dispatches the next event | `null` | `null` | the immediately preceding line | Keep the `contextLine.text` visible above a loading indicator (no message-only flash before the choice appears). |
+| State | When | `currentLine` | `currentChoice` | `contextLine` | `pendingSingleOptionLabel` | UI render expectation |
+|-------|------|----------------|-----------------|----------------|----------------------------|------------------------|
+| Idle | Before `onDialogueStart`, after `onDialogueFinish`, or while consumers are between transitions | `null` | `null` | `null` | `null` | Loading indicator or pass-through child. |
+| Presenting line | Inside `onLineStart` until `advanceLine` resolves the line completer (line is **not** immediately followed by a single-option choice) | the active `DialogueLine` | `null` | same as `currentLine` | `null` | Show `line.text` plus a single Continue affordance. |
+| Presenting combined line+option | Inside `onLineStart` until `confirmCombinedLineOption` resolves the line **and** auto-selects the sole option (line **is** immediately followed by a single-option choice) | the active `DialogueLine` | `null` | same as `currentLine` | the sole option's label | Show `line.text` plus **one** button labelled with `pendingSingleOptionLabel`; one tap advances the line and selects the sole option (no second step). |
+| Presenting choice | Inside `onChoiceStart` for a choice with **2+ options** until `selectOption(i)` resolves the choice completer | `null` | the active `DialogueChoice` | the immediately preceding line (or `null` if the node opened with a choice) | `null` | Show the retained `contextLine.text` (when non-null) **above** the option buttons, so the narrative message and the option(s) render together. |
+| Transient between line and multi-option choice | Brief moment after `advanceLine` returns and before Jenny dispatches the next event | `null` | `null` | the immediately preceding line | `null` | Keep the `contextLine.text` visible above a loading indicator (no message-only flash before the choice appears). |
 
 Exactly one of `currentLine` / `currentChoice` is non-null at any time; consumers must treat that pair as mutually exclusive when choosing the active affordance, but `contextLine` is **orthogonal** — it remains set across the line→choice boundary so the message stays on screen.
 
 ### Combined line+choice presentation (Refs #3628)
 
-Yarn nodes in this app model narrative as a `line` event followed by a `-> option` `choice` event. Rendering those two events in mutually exclusive branches dropped the message the instant the choice appeared (a message-only step followed by an option-only step). `contextLine` fixes this systemically:
+Yarn nodes in this app model narrative as a `line` event followed by a `-> option` `choice` event. Jenny dispatches these as **two** sequential, completer-gated events (`onLineStart` then `onChoiceStart`). Rendering them as two mutually exclusive full-screen steps made the player read the message and tap twice. The view resolves this in two ways depending on the option count.
 
-- `onLineStart(L)` sets `contextLine = L` (alongside `currentLine = L`).
+**Single trivial option — collapse to one step / one tap (the common case).** Every blocking overlay uses `line(s) -> <single option>`. `onNodeStart(node)` scans the node's top-level entries; any `DialogueLine` immediately followed by a `DialogueChoice` whose `options.length == 1` is recorded (identity match) with that option's evaluated label.
+
+- `onLineStart(L)` sets `currentLine = L`, `contextLine = L`, and (for a recorded line) `pendingSingleOptionLabel = <option label>`.
+- Consumers render `L.text` plus **one** button labelled with `pendingSingleOptionLabel` (the Yarn option text, so `I shall.` is preserved — never replaced by a generic Continue).
+- `confirmCombinedLineOption()` advances the line and arms auto-selection. When `onChoiceStart(C)` fires with one option it selects index `0` synchronously, clears `currentLine` / `currentChoice` / `contextLine` / `pendingSingleOptionLabel`, and **does not render a choice step**. The narrative is shown **once** and confirmed with **one** tap.
+- **Multi-line nodes** (e.g. `intervention_intro`): only the line immediately preceding the single option is recorded; earlier lines render as normal advance-only line steps (each keeps its own tap).
+
+**Two or more options — retained context line (unchanged).** When the trailing choice has `options.length >= 2`, the collapse does not apply:
+
 - `advanceLine()` clears `currentLine` but **retains** `contextLine = L`.
-- `onChoiceStart(C)` sets `currentChoice = C` while **retaining** `contextLine = L`; consumers render `L.text` above `C`'s option buttons.
+- `onChoiceStart(C)` sets `currentChoice = C` while retaining `contextLine = L`; consumers render `L.text` above `C`'s option buttons.
 - `selectOption(i)` clears both `currentChoice` and `contextLine`.
-- A later `onLineStart(L2)` overwrites `contextLine = L2`, so only the line **immediately** preceding a choice accompanies it (earlier lines in a multi-line node do not linger).
-- `onDialogueFinish` clears `contextLine`.
+- A later `onLineStart(L2)` overwrites `contextLine = L2`; `onDialogueFinish` clears `contextLine`.
 
-The shared widget `CtDialogueLineChoiceBody` (`app/lib/features/game/dialogue/ct_dialogue_line_choice_body.dart`) encapsulates this render contract for all blocking dialogue overlays.
+The shared widget `CtDialogueLineChoiceBody` (`app/lib/features/game/dialogue/ct_dialogue_line_choice_body.dart`) encapsulates both render contracts for all blocking dialogue overlays.
 
 ---
 
@@ -122,6 +132,22 @@ Logging follows the [logging core principle](../program/logging/logging.md): no 
 - Given the view presented line `L1`, advanced it, and then `onLineStart(L2)` is invoked,
   When the consumer reads `contextLine`,
   Then `contextLine == L2` (the most recent line overwrites the previous), so a multi-line node shows only the line immediately preceding a choice.
+
+- Given a node whose top-level entries are a line `L` immediately followed by a `DialogueChoice` with exactly one option labelled `"I shall."`,
+  When the runner invokes `onNodeStart(node)` and then `onLineStart(L)`,
+  Then `currentLine == L` and `pendingSingleOptionLabel == "I shall."` so the consumer renders one combined step (no separate choice step).
+
+- Given the view is presenting the combined step for line `L` followed by a single option (`pendingSingleOptionLabel != null`),
+  When the consumer calls `confirmCombinedLineOption()` and the runner then invokes `onChoiceStart(C)` with `C.options.length == 1`,
+  Then `onChoiceStart` returns `0`, the choice completer is **not** allocated, and `currentLine`, `currentChoice`, `contextLine`, and `pendingSingleOptionLabel` are all `null` (the dialogue proceeds with one tap and no second step).
+
+- Given a node whose top-level entries are line `L1`, then line `L2`, then a single-option choice,
+  When the runner invokes `onNodeStart(node)` and `onLineStart(L1)`,
+  Then `pendingSingleOptionLabel == null` for `L1` (only `L2`, the line immediately preceding the option, collapses).
+
+- Given the runner invokes `onChoiceStart(C)` with `C.options.length >= 2`,
+  When the consumer reads the view state,
+  Then `pendingSingleOptionLabel == null`, `currentChoice == C`, and the choice completer is allocated (no collapse for multi-option choices).
 
 - Given a `CtDialogueView` has just emitted `currentLine == null` and `currentChoice == null` after a line transition,
   When the runner invokes `onDialogueFinish`,
