@@ -1,16 +1,16 @@
-// Widget goldens proving the combined line+choice presentation step for the
-// blocking Jenny dialogue overlays (Refs #3628). The core fix (retained
-// `CtDialogueView.contextLine` rendered by the shared `CtDialogueLineChoiceBody`)
-// shipped in #3634; these goldens close the visual-proof gap flagged during
-// verification: the pre-existing OVL80001 herald golden freezes the *line* step
-// before advancing, so no `matchesGoldenFile` baseline captured the combined
-// line+choice layout that is the deliverable of #3628.
+// Widget goldens proving the collapsed single-step presentation for the
+// blocking Jenny dialogue overlays (Refs #3628). Every blocking node is a
+// narrative line immediately followed by a single trivial option
+// (`-> Continue` / `-> I shall.`), so `CtDialogueView` collapses the line and
+// the option into ONE `CtDialogShell` step: the narrative renders once above a
+// single button labelled with the Yarn option text, and one tap advances the
+// line and selects the sole option (no duplicate message-bearing step).
 //
-// Each test advances the overlay past the narrative line to the Yarn `-> option`
-// choice step, then asserts both (a) the narrative text and the option button
-// render together (structural finders, so the AC still holds when goldens are
-// regenerated on another platform) and (b) the pixel baseline under
-// `app/test/goldens/`.
+// Each test asserts both (a) the narrative text and the single option button
+// render together at the FIRST dialogue body (structural finders, so the AC
+// still holds when goldens are regenerated on another platform) and (b) the
+// pixel baseline under `app/test/goldens/`. No advance tap is needed — the
+// combined step is the first thing shown.
 //
 // Harness mirrors `diplomacy_panel_goldens_test.dart`: a keyed `RepaintBoundary`
 // wraps the surface, an in-memory `AssetBundle` pins deterministic Yarn, and
@@ -19,8 +19,8 @@
 // the goldens are deterministic across platforms.
 //
 // SPEC: SPEC/ui/game-start-intro-overlay.md § Acceptance Criteria (Refs #3628
-// AC-2 golden coverage) and SPEC/ui/tribe-first-contact-overlay.md § Acceptance
-// criteria (AC-11).
+// AC-1/AC-3 golden coverage) and SPEC/ui/tribe-first-contact-overlay.md §
+// Acceptance criteria (AC-11).
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -142,21 +142,12 @@ Game _minimalGame() {
   );
 }
 
-/// Advance the active Yarn line by tapping the single line-step
-/// [CtNinePatchButton], settling on the subsequent choice step.
-Future<void> _advanceToChoice(WidgetTester tester) async {
-  expect(find.byType(CtNinePatchButton), findsOneWidget);
-  await tester.tap(find.byType(CtNinePatchButton));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 50));
-}
-
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'OVL10001 combined-step golden: intro narrative stays above the "I shall." option (#3628)',
+    'OVL10001 collapsed-step golden: intro narrative renders once above the single "I shall." option (#3628)',
     (WidgetTester tester) async {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(600, 800));
@@ -181,12 +172,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Line step: narrative + a single Continue affordance.
-      expect(find.textContaining('imperialism'), findsOneWidget);
-
-      await _advanceToChoice(tester);
-
-      // Combined step: narrative remains visible together with the option.
+      // Collapsed step (first body): narrative once + a single button labelled
+      // with the Yarn option text "I shall." (not a generic Continue).
       expect(find.byType(CtDialogShell), findsOneWidget);
       expect(find.textContaining('imperialism'), findsOneWidget);
       expect(find.text('I shall.'), findsOneWidget);
@@ -229,14 +216,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Line step: scout narrative with interpolated names + one Continue.
-      expect(find.textContaining('Scouts'), findsOneWidget);
-      expect(find.textContaining('Powhatan'), findsOneWidget);
-
-      await _advanceToChoice(tester);
-
-      // Combined step: narrative (with interpolated names) remains visible
-      // together with the Continue option button.
+      // Collapsed step (first body): scout narrative (with interpolated names)
+      // renders once together with a single Continue option button.
       expect(find.byType(CtDialogShell), findsOneWidget);
       expect(find.textContaining('Scouts'), findsOneWidget);
       expect(find.textContaining('Powhatan'), findsOneWidget);
@@ -286,12 +267,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Line step: intro narrative + one Continue affordance.
-      expect(find.textContaining('Envoys'), findsOneWidget);
-
-      await _advanceToChoice(tester);
-
-      // Combined step: narrative remains visible together with the option.
+      // Collapsed step (first body): intro narrative once + a single Continue
+      // option button.
       expect(find.byType(CtDialogShell), findsOneWidget);
       expect(find.textContaining('Envoys'), findsOneWidget);
       expect(find.byType(CtNinePatchButton), findsOneWidget);
@@ -343,12 +320,8 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
       }
 
-      // Line step: intro narrative + one Continue affordance.
-      expect(find.textContaining('Heavy tidings'), findsOneWidget);
-
-      await _advanceToChoice(tester);
-
-      // Combined step: narrative remains visible together with the option.
+      // Collapsed step (first body): intro narrative once + a single Continue
+      // option button (the intro fixture is one line, so it collapses directly).
       expect(find.byType(CtDialogShell), findsOneWidget);
       expect(find.textContaining('Heavy tidings'), findsOneWidget);
       expect(find.byType(CtNinePatchButton), findsOneWidget);

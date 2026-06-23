@@ -112,7 +112,14 @@ const String kE2eAdvanceGameStartIntroIterationsCounter =
     'advance_game_start_intro_until_dismissed_iterations';
 
 /// Yarn intro control labels tried in order each loop iteration (GitHub #2336).
-const List<String> kE2eGameStartIntroControlLabels = ['Continue', 'I shall.'];
+///
+/// The production `game_start_intro` node (one narrative line then
+/// `-> I shall.`) is collapsed by `CtDialogueView` into a **single** step whose
+/// only control is the Yarn option label `I shall.` (Refs #3628): there is no
+/// intermediate Continue line step, so one tap of `I shall.` dismisses the
+/// intro. The legacy generic `Continue` label is retained as a defensive
+/// fallback (e.g. the asset-load error shell) and tried only after `I shall.`.
+const List<String> kE2eGameStartIntroControlLabels = ['I shall.', 'Continue'];
 
 /// Per-control post-tap settle budget after an intro button tap.
 ///
