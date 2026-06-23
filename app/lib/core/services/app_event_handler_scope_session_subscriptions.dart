@@ -504,6 +504,17 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           _applyDebugCommand(result);
         });
       }),
+      bus.on<SetDebugDiplomacyRelationEvent>().listen((e) {
+        _unlessTurnResolutionBlocksSession(
+          'SetDebugDiplomacyRelationEvent',
+          () {
+            final current = ref.read(currentGameProvider);
+            _applyDebugCommand(
+              applyDebugSetDiplomacyRelation(currentGame: current, event: e),
+            );
+          },
+        );
+      }),
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
           'AppendDiplomaticOrderRequestedEvent',

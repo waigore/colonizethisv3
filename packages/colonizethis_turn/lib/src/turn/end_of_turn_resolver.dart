@@ -88,19 +88,23 @@ Game runEndOfTurnPhase(
     return _applyAiFirstContact(halted, topology);
   }
 
-  final advanced = game.updateWorldState(
-    (ws) => ws
-        .updateTurnState(
-          (ts) => ts.copyWith(
-            turnNumber: ts.turnNumber + 1,
-            phase: TurnPhase.orders,
-          ),
-        )
-        .copyWith(
-          playerVisibilityByTile: nextVisibility,
-          spyRevealTurnsByPlayer: nextSpyTimers,
-        ),
-  );
+  final advanced = game
+      .updateWorldState(
+        (ws) => ws
+            .updateTurnState(
+              (ts) => ts.copyWith(
+                turnNumber: ts.turnNumber + 1,
+                phase: TurnPhase.orders,
+              ),
+            )
+            .copyWith(
+              playerVisibilityByTile: nextVisibility,
+              spyRevealTurnsByPlayer: nextSpyTimers,
+            ),
+      )
+      // Per-turn `/set_diplomacy` debug-mutation quota resets on turn advance.
+      // SPEC/ui/debug-console-panel.md.
+      .copyWith(debugDiplomacyUsedPairKeys: const <String>{});
   return _applyAiFirstContact(advanced, topology);
 }
 
