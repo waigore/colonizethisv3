@@ -10,6 +10,7 @@
 // `production_commodity_breakdown_dialog_spec_test.dart` and
 // `production_commodity_breakdown_dialog_320dp_min_viewport_test.dart`.
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -22,7 +23,8 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -113,10 +115,8 @@ void main() {
         tester.view.physicalSize = surfaceSize;
         tester.view.devicePixelRatio = 1.0;
 
-        final result = getDebugInitGameResult();
-        final game = result.game;
-        final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
-        final player = game.playerById(humanPlayerId) ?? game.players.first;
+        final game = buildProductionBreakdownPanelTestGame();
+        final player = game.players.firstWhere((p) => p.isHuman);
 
         await tester.pumpWidget(
           ProviderScope(
@@ -135,8 +135,8 @@ void main() {
                         builder: (_) => ProductionCommodityBreakdownDialog(
                           game: game,
                           player: player,
-                          topology: result.combinedTopology,
-                          tileMapByRegion: result.tileMapByRegion,
+                          topology: const MapTopology(nodes: [], edges: []),
+                          tileMapByRegion: null,
                           currentOrders: const Orders(),
                         ),
                       );
