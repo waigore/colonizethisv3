@@ -76,4 +76,53 @@ void main() {
       expect(owned, isEmpty);
     });
   });
+
+  group('buildMilitaryPanelTestGame', () {
+    test('human owns military regiments and armies in both regions', () {
+      final game = buildMilitaryPanelTestGame();
+      final human = game.players.first.id;
+      final oldRegiments = game.worldState.oldWorld.units.where(
+        (u) => u.ownerId == human && u.type == kPanelTestRegimentType,
+      );
+      final newRegiments = game.worldState.newWorld.units.where(
+        (u) => u.ownerId == human && u.type == kPanelTestRegimentType,
+      );
+      expect(oldRegiments, isNotEmpty);
+      expect(newRegiments, isNotEmpty);
+
+      final armies = game.worldState.armies.where((a) => a.ownerId == human);
+      expect(armies.map((a) => a.regionId).toSet(), {'oldWorld', 'newWorld'});
+      // Old-world army has >=2 regiments so the Split action renders.
+      expect(
+        armies.firstWhere((a) => a.regionId == 'oldWorld').regimentUnitIds,
+        hasLength(2),
+      );
+    });
+
+    test('stationed provinces carry display names and town tile keys', () {
+      final game = buildMilitaryPanelTestGame();
+      final provinces = [
+        ...game.worldState.oldWorld.provinces,
+        ...game.worldState.newWorld.provinces,
+      ];
+      for (final province in provinces) {
+        expect(province.displayName, isNotNull);
+        expect(province.townTileKey, isNotNull);
+      }
+    });
+
+    test('a non-owning player id yields no armies or regiments (empty state)',
+        () {
+      final game = buildMilitaryPanelTestGame();
+      expect(
+        game.worldState.armies.where((a) => a.ownerId == 'no-such-player'),
+        isEmpty,
+      );
+      final owned = [
+        ...game.worldState.oldWorld.units,
+        ...game.worldState.newWorld.units,
+      ].where((u) => u.ownerId == 'no-such-player');
+      expect(owned, isEmpty);
+    });
+  });
 }
