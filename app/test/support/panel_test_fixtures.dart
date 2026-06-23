@@ -689,3 +689,18 @@ Game buildTrainPanelTestGame() {
     ],
   );
 }
+
+/// Lightweight game shaped for the in-game unit-panel chrome family
+/// (`unit_panels_320dp_min_viewport_test`,
+/// `unit_panels_widgetbook_dark_chrome_test`).
+///
+/// These suites mount the Civilian / Military / Naval `UnitsPanelShell` (and the
+/// Widgetbook Train dialogs) together and assert **chrome only** — the panel
+/// title text, the absence of banned Material chrome, no `RenderFlex` overflow,
+/// and the editorial-monocle dark theme — never reading generated
+/// map/topology data. The combined train fixture already carries a single human
+/// (with a capital, all train tech, and treasury/stockpile) plus civilians, an
+/// army with regiments, and home/non-home fleets across both regions, so it is
+/// exactly the multi-family shape these panels render. A `const MapTopology()`
+/// replaces the debug-init `combinedTopology` the assertions never inspect.
+Game buildUnitPanelsTestGame() => buildTrainPanelTestGame();
