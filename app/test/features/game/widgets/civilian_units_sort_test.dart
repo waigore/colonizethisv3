@@ -81,6 +81,27 @@ void main() {
       expect(names['newWorld|newWorld|p1'], 'Cibola');
       expect(names, hasLength(3));
     });
+
+    test('iterates old-world entries before new-world (allProvinces order)', () {
+      final game = _gameWith(
+        oldProvinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+        ],
+        newProvinces: const [
+          Province(id: 'newWorld|p1', regionId: 'newWorld'),
+        ],
+      );
+
+      final keys = provinceNamesByPrefixedId(game).keys.toList();
+
+      expect(keys, ['oldWorld|oldWorld|p1', 'newWorld|newWorld|p1']);
+    });
+
+    test('returns an empty index when neither region has provinces', () {
+      final names = provinceNamesByPrefixedId(_gameWith());
+
+      expect(names, isEmpty);
+    });
   });
 
   group('isCivilianUnit', () {

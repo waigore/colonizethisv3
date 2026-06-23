@@ -109,15 +109,13 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         }
         final regionId = parsed.regionId;
         final localProvinceId = parsed.provinceLocalId;
-        final ownedByHuman =
-            (regionId == kRegionOldWorld
-                    ? game.worldState.oldWorld.provinces
-                    : game.worldState.newWorld.provinces)
-                .any(
-                  (province) =>
-                      province.id == '$regionId|$localProvinceId' &&
-                      province.ownerId == mapPlayer.id,
-                );
+        final ownedByHuman = game.worldState
+            .provincesForRegion(regionId)
+            .any(
+              (province) =>
+                  province.id == '$regionId|$localProvinceId' &&
+                  province.ownerId == mapPlayer.id,
+            );
         if (!ownedByHuman) {
           continue;
         }
