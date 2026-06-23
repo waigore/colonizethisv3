@@ -1,5 +1,6 @@
 // Focused tests for the shared lightweight panel fixtures (Refs #3656).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -123,6 +124,54 @@ void main() {
         ...game.worldState.newWorld.units,
       ].where((u) => u.ownerId == 'no-such-player');
       expect(owned, isEmpty);
+    });
+  });
+
+  group('buildNavalPanelTestGame', () {
+    test('human owns a home fleet and a non-home fleet, both with ships', () {
+      final game = buildNavalPanelTestGame();
+      final human = game.players.first.id;
+      final ownedWithShips = game.worldState.fleets
+          .where((f) => f.ownerId == human && f.shipTypeIds.isNotEmpty)
+          .toList();
+      expect(ownedWithShips, hasLength(2));
+
+      final homeId = homeFleetIdFor(human);
+      final homeFleet = ownedWithShips.firstWhere((f) => f.id == homeId);
+      expect(homeFleet.inPortAtProvinceId, isNotNull);
+      expect(homeFleet.shipTypeIds, hasLength(2));
+
+      final nonHome = ownedWithShips.where((f) => f.id != homeId);
+      expect(nonHome, isNotEmpty);
+      expect(nonHome.first.seaZoneId, isNotNull);
+    });
+
+    test('player has a capital tile and provinces exist in both regions', () {
+      final game = buildNavalPanelTestGame();
+      expect(game.players.first.capitalTile, isNotNull);
+      expect(game.worldState.oldWorld.provinces, isNotEmpty);
+      expect(game.worldState.newWorld.provinces, isNotEmpty);
+    });
+
+    test('exposes port/sea-zone tile data for locate resolution', () {
+      final game = buildNavalPanelTestGame();
+      final ports = game.worldState.portsByProvinceSeaboard;
+      expect(ports, isNotEmpty);
+      // A `region|province|seazone` key (>= 2 segments) so the sea-zone locate
+      // assertions can resolve a port tile key.
+      expect(
+        ports.keys.any((k) => k.split('|').length >= 2),
+        isTrue,
+      );
+      expect(game.worldState.tileKeysByRegionAndProvince, isNotEmpty);
+    });
+
+    test('a non-owning player id yields no fleets (empty state)', () {
+      final game = buildNavalPanelTestGame();
+      expect(
+        game.worldState.fleets.where((f) => f.ownerId == 'no-such-player'),
+        isEmpty,
+      );
     });
   });
 }

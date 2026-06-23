@@ -26,7 +26,6 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 /// Mirrors shell handling of [NavalSplitFleetRequestedEvent] for widget tests.
 StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
@@ -65,10 +64,6 @@ wireNavalTransferForWidgetTest({
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  late Game game;
-  late String humanPlayerIdWithFleets;
-  const String humanPlayerIdWithNoFleets = 'no-such-player';
 
   // Fallback 1x1 transparent PNG if the real asset cannot be read.
   final ninePatchFallbackPng = base64Decode(
@@ -113,10 +108,6 @@ void main() {
       // still validate behavior where possible.
     }
 
-    game = getDebugInitGameResult().game;
-    humanPlayerIdWithFleets = game.players.isNotEmpty
-        ? game.players.first.id
-        : 'gp1';
   });
 
   tearDownAll(() {
