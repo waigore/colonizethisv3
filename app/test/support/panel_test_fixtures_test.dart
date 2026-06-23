@@ -150,6 +150,21 @@ void main() {
     });
   });
 
+  group('buildSideMenuTestGame', () {
+    test('exposes a single human player and defaults infiniteMode to false', () {
+      final game = buildSideMenuTestGame();
+      expect(game.players, hasLength(1));
+      expect(game.players.first.id, kPanelTestHumanPlayerId);
+      expect(game.players.first.isHuman, isTrue);
+      // The Game Parameters dialog reads `infiniteMode`; suites opt into the
+      // "Infinite mode: On" line via copyWith, so the base must be false.
+      expect(game.infiniteMode, isFalse);
+      // No generated map/topology data is consumed by the menu chrome.
+      expect(game.worldState.oldWorld.units, isEmpty);
+      expect(game.worldState.newWorld.units, isEmpty);
+    });
+  });
+
   group('buildNavalPanelTestGame', () {
     test('human owns a home fleet and a non-home fleet, both with ships', () {
       final game = buildNavalPanelTestGame();
