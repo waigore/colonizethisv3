@@ -11,12 +11,13 @@ import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.da
 import 'package:colonizethis_app/features/game/widgets/train_dialog_base.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -25,7 +26,7 @@ void main() {
   late String humanPlayerId;
 
   setUpAll(() {
-    game = getDebugInitGameResult().game;
+    game = buildTrainPanelTestGame();
     humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   });
 
