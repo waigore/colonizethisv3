@@ -72,8 +72,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/province_overlay_tile_section_remaining_live_data_dark_tokens_test.dart',
   'app/test/province_sea_zone_overlay_detail_paths_test.dart',
   'app/test/shell_game_screen_specs_test.dart',
-  'app/test/trade_screen_issue_acceptance_criteria_e8_test.dart',
-  'app/test/trade_screen_scaffold_test.dart',
   'app/test/train_dialogs_goldens_test.dart',
   'app/test/unit_panels_320dp_min_viewport_test.dart',
   'app/test/unit_panels_goldens_test.dart',
