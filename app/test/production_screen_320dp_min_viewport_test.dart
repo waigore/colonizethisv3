@@ -60,13 +60,14 @@ import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'production_panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -164,12 +165,15 @@ void main() {
   late Player humanPlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
-    humanPlayer = game.players.firstWhere(
-      (p) => p.isHuman,
-      orElse: () => game.players.first,
-    );
+    // Refs #3656: ProductionScreen takes its `game`/`player` directly and is
+    // pumped with `panelTopologyOverride: const MapTopology()` +
+    // `panelTileMapByRegionOverride: null`, so it consumes no generated
+    // map/topology data. The hand-built production fixture (a single human with
+    // a full stockpile/worker pool) renders the same default-path
+    // `ProductionPanel` Available/Allocation body the heavier panels pin uses,
+    // replacing the ~11s procedural map generation.
+    humanPlayer = productionPanelTestFullPlayer();
+    game = productionPanelTestGameFor(humanPlayer);
   });
 
   group(
