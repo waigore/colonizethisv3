@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 
+import 'resource_extractor_test_support.dart';
 import 'test_fixtures.dart';
 
 void main() {
@@ -313,35 +314,7 @@ void main() {
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 3)
           .setRoadLevel('oldWorld|p1|0|0', 3);
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        capitalTileGrainBonusPerTurn: 0,
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              ownerId: 'pl1',
-              townDevelopmentLevel: 4,
-            ),
-          ],
-        ),
-        tileState: tileState,
-        players: [
-          Player(
-            id: 'pl1',
-            displayName: 'Spain',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|p1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|p1',
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-      );
+      final game = resourceExtractorGame(tileState: tileState);
       final connectivity = resolveConnectivity(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},

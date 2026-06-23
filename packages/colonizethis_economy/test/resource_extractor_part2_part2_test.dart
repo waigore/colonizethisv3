@@ -5,6 +5,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'package:logger/logger.dart';
 
+import 'resource_extractor_test_support.dart';
 import 'test_fixtures.dart';
 
 void main() {
@@ -12,32 +13,8 @@ void main() {
     test(
       'returns empty ExtractionTotals when player has no connected tiles',
       () {
-        final player = Player(
-          id: 'pl1',
-          displayName: 'Spain',
-          isHuman: true,
-          capitalProvinceId: 'oldWorld|p1',
-          capitalTile: CapitalTile(
-            regionId: 'oldWorld',
-            provinceId: 'oldWorld|p1',
-            x: 0,
-            y: 0,
-          ),
-        );
-        final game = TestFixtures.minimalGame(
-          id: 'g1',
-          capitalTileGrainBonusPerTurn: 0,
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: 'pl1',
-                townDevelopmentLevel: 4,
-              ),
-            ],
-          ),
-          players: [player],
+        final game = resourceExtractorGame(
+          tileState: const TileMapState(),
         );
         final result = computeExtraction(
           game: game,
