@@ -241,6 +241,43 @@ Game buildSideMenuTestGame() {
   );
 }
 
+/// Lightweight game shaped for the in-game Diplomacy *screen* family
+/// (`diplomacy_screen_test`, `diplomacy_screen_top_bar_test`,
+/// `diplomacy_screen_320dp_min_viewport_test`, `diplomacy_dialogs_test`).
+///
+/// These suites exercise the `DiplomacyScreen` chrome (`CtTopBar` + back
+/// affordance + min-viewport overflow) and the `GrantOrSubsidyDialog`, none of
+/// which read generated map/topology data. `DiplomacyScreen` derives its
+/// `MapTopology` from `gameServiceProvider.getMapData(...)` inside a `try`
+/// (which is absent in widget tests, so the panel falls back to an empty
+/// topology), and the `DiplomacyPanel` always renders the three faction-section
+/// headings (`Great Powers` / `Minor Nations` / `Tribes`) even with no
+/// discovered factions — so the screen suites' `find.text('Great Powers')`
+/// pins hold without a generated game.
+///
+/// The fixture provides:
+/// - the human ([kPanelTestHumanPlayerId]) as `players.first` with a non-zero
+///   `treasury` so the grant-aid dialog's default amount is affordable (suites
+///   override the treasury via `copyWith` for the disabled/warning cases);
+/// - one AI great power (`gp2`) so `players[1]` resolves as a grant/subsidy
+///   target faction. The opponent is intentionally **not** seeded with a
+///   `DiplomacyRelation`, so it stays undiscovered and the GP section heading
+///   still renders without a row (the screen suites only assert the heading).
+Game buildDiplomacyScreenTestGame() {
+  return buildPanelTestGame(
+    id: 'diplomacy-screen-widget-test',
+    players: const [
+      Player(
+        id: kPanelTestHumanPlayerId,
+        displayName: 'Test Human',
+        isHuman: true,
+        treasury: 5000,
+      ),
+      Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+    ],
+  );
+}
+
 /// Lightweight game shaped for the `technology_panel_*` family
 /// (`technology_panel_test`, `technology_panel_dark_chrome_test`,
 /// `technology_panel_funding_toggles_test`,
