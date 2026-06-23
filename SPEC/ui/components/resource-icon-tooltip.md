@@ -21,7 +21,7 @@ Any `ResourceIcon`, treasury coin icon, or `WorkerIcon` rendered **without** adj
    - **Commodity icon:** `"{displayName} ({category})"` — display name from `CommodityCatalog`, category from the localized lowercase `CommodityCategory` name (e.g. `Fabric (manufactured)`, `Coal (raw material)`). Built by `commodityIconTooltip(l10n, commodityId)` in `app/lib/features/game/utils/commodity_ui_helpers.dart`.
    - **Treasury coin icon:** the localized `Treasury` label (`trainDialog_costTreasuryTooltip`).
    - **Worker (peasant) icon:** the localized `Peasants` label (`trainDialog_costPeasantsTooltip`).
-3. **Meet the touch target.** The tooltip-trigger region is at least `kMinTouchTargetSize` (44 dp) in both dimensions (`SPEC/ui/mobile-adaptation.md` § 1), even though the underlying glyph is smaller (e.g. 14 dp).
+3. **Meet the touch target.** The tooltip-trigger region is at least `kMinTouchTargetSize` (44 dp) in both dimensions (`SPEC/ui/mobile-adaptation.md` § 1), even though the underlying glyph is smaller (the train-dialog cost icons render at `kTrainDialogCostIconSize` = 30 dp).
 
 Icons that already render an adjacent name label (for example `ResourceLabelInline`, `TrainDialogResourceChip` value lines) are **exempt** — the name is already discoverable.
 
