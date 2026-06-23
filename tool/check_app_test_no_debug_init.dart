@@ -55,7 +55,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/grant_or_subsidy_listener_test.dart',
   'app/test/human_draft_projected_region_provider_test.dart',
   'app/test/naval_units_panel_mockup_fidelity_test.dart',
-  'app/test/naval_units_panel_test_part1_test.dart',
   'app/test/panels_320dp_min_viewport_test.dart',
   'app/test/pause_menu_side_menu_specs_test.dart',
   'app/test/player_turn_event_feed_narrow_inset_test.dart',

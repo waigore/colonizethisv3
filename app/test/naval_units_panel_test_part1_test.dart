@@ -18,15 +18,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
-import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Mirrors shell handling of [NavalSplitFleetRequestedEvent] for widget tests.
 StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
@@ -113,7 +112,21 @@ void main() {
       // still validate behavior where possible.
     }
 
-    game = getDebugInitGameResult().game;
+    // Refs #3656: lightweight hand-built fixture replaces the ~11s procedural
+    // map generation of getDebugInitGameResult(); this family asserts only on
+    // fleets/provinces/ports/sea-zone names, which the fixture provides.
+    //
+    // Like the original demo game, the human starts with a single Home Fleet so
+    // the panel renders exactly one fleet row by default (the global
+    // `find.byTooltip('Split')` assertions expect one). The tests that need a
+    // second non-home/sea/port fleet inject it themselves via `copyWith`.
+    final base = buildNavalPanelTestGame();
+    final homeFleet = base.worldState.fleets.firstWhere(
+      (f) => f.inPortAtProvinceId != null,
+    );
+    game = base.copyWith(
+      worldState: base.worldState.copyWith(fleets: [homeFleet]),
+    );
     humanPlayerIdWithFleets = game.players.isNotEmpty
         ? game.players.first.id
         : 'gp1';
@@ -1064,7 +1077,7 @@ void main() {
                       game: game,
                       humanPlayerId: humanId,
                       bus: bus,
-                      topology: getDebugInitGameResult().combinedTopology,
+                      topology: const MapTopology(),
                     ),
                   ),
                 ],
