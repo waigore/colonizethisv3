@@ -18,17 +18,24 @@ import 'ct_dialogue_view.dart';
 /// buttons, eliminating the message-only-then-option-only flicker.
 ///
 /// Rendering, in priority order:
-/// 1. **Active line** ([CtDialogueView.currentLine] non-null): the line text
+/// 1. **Collapsed line+option** ([CtDialogueView.currentLine] non-null and
+///    [CtDialogueView.pendingSingleOptionLabel] non-null): the line text plus a
+///    single [CtNinePatchButton] labelled with the Yarn option text, wired to
+///    [CtDialogueView.confirmCombinedLineOption]. One tap advances the line and
+///    selects the sole trailing option, so a `line -> <single option>` node is
+///    shown once and confirmed once (no duplicate step). Refs #3628.
+/// 2. **Active line** ([CtDialogueView.currentLine] non-null): the line text
 ///    plus a single `continueLabel` [CtNinePatchButton] that calls
 ///    [CtDialogueView.advanceLine].
-/// 2. **Active choice** ([CtDialogueView.currentChoice] non-null): the retained
+/// 3. **Active choice** ([CtDialogueView.currentChoice] non-null): the retained
 ///    [CtDialogueView.contextLine] text (when present) above one stretched
 ///    [CtNinePatchButton] per option, each calling
-///    [CtDialogueView.selectOption].
-/// 3. **Transient** (no active line/choice but a retained context line): the
+///    [CtDialogueView.selectOption]. Only reached for choices with two or more
+///    options; single-option choices are collapsed into the line step above.
+/// 4. **Transient** (no active line/choice but a retained context line): the
 ///    context line text above the [loading] widget, so the message does not
 ///    flash away between the line advance and the next Jenny event.
-/// 4. **Idle / loading**: the [loading] widget alone.
+/// 5. **Idle / loading**: the [loading] widget alone.
 class CtDialogueLineChoiceBody extends StatelessWidget {
   const CtDialogueLineChoiceBody({
     super.key,
@@ -71,6 +78,10 @@ class CtDialogueLineChoiceBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final line = view.currentLine;
     if (line != null) {
+      final collapsedLabel = view.pendingSingleOptionLabel;
+      if (collapsedLabel != null) {
+        return _buildCollapsedStep(line.text, collapsedLabel);
+      }
       return _buildLineStep(line.text);
     }
 
@@ -102,6 +113,28 @@ class CtDialogueLineChoiceBody extends StatelessWidget {
           child: CtNinePatchButton(
             onPressed: view.advanceLine,
             child: Text(continueLabel),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Combined line + single-option step (Refs #3628): the narrative text above
+  /// one button labelled with the Yarn option [optionLabel] (e.g. `I shall.`).
+  /// Tapping it advances the line and selects the sole option in one action via
+  /// [CtDialogueView.confirmCombinedLineOption].
+  Widget _buildCollapsedStep(String text, String optionLabel) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _lineText(text),
+        SizedBox(height: gap),
+        Align(
+          alignment: continueAlignment,
+          child: CtNinePatchButton(
+            onPressed: view.confirmCombinedLineOption,
+            child: Text(optionLabel),
           ),
         ),
       ],

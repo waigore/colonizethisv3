@@ -71,8 +71,10 @@ void main() {
     );
 
     testWidgets(
-      'AC-10: narrative stays visible above the option at the choice step (#3628)',
+      'AC-10: single combined step — narrative + one Continue, one tap '
+      'dismisses the herald (#3628)',
       (tester) async {
+        var dismissed = 0;
         await tester.pumpWidget(
           MaterialApp(
             home: TribeFirstContactOverlay(
@@ -81,7 +83,7 @@ void main() {
               assetBundle: _StringAssetBundle({
                 kDialogueTribeFirstContactAsset: _kTestYarn,
               }),
-              onDismissed: () {},
+              onDismissed: () => dismissed++,
               child: const Text('underlay'),
             ),
           ),
@@ -89,21 +91,23 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
 
-        // Line step: narrative + a single Continue affordance.
-        expect(find.textContaining('Scouts'), findsOneWidget);
-        expect(find.byType(CtNinePatchButton), findsOneWidget);
-
-        // Advance the line; the Yarn `-> Continue` choice becomes active.
-        await tester.tap(find.byType(CtNinePatchButton));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
-
-        // Combined step: the scout narrative (with interpolated names) remains
-        // visible together with the option button — no option-only step.
+        // Combined step: the scout narrative (with interpolated names) renders
+        // together with a single Continue button — no separate line step and
+        // no option-only step. The herald message appears exactly once.
         expect(find.textContaining('Scouts'), findsOneWidget);
         expect(find.textContaining('Maya'), findsOneWidget);
         expect(find.textContaining('Chichen'), findsOneWidget);
         expect(find.byType(CtNinePatchButton), findsOneWidget);
+        expect(find.text('Continue'), findsOneWidget);
+
+        // One tap advances the line, selects the sole option, and dismisses.
+        await tester.tap(find.byType(CtNinePatchButton));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(dismissed, 1);
+        expect(find.byType(CtDialogShell), findsNothing);
+        expect(find.text('underlay'), findsOneWidget);
       },
     );
 
