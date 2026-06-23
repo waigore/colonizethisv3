@@ -298,6 +298,13 @@ rules:
     runner: dart
     script: tool/check_debug_handler_one_per_file.dart
 
+  - rule_id: repo.app_debug_handler_guard_helpers
+    group: structure
+    title: app debug handlers must use shared guard helpers, not inline guard strings (Refs #3655)
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_app_debug_handler_guard_helpers.dart
+
   - rule_id: repo.part_unit_size
     group: structure
     title: Dart part fragment physical line limit (repo-lint domain)

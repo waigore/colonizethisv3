@@ -9,23 +9,15 @@ DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
   required Game? currentGame,
   required SpawnDebugShipAtCapitalHomeFleetEvent event,
 }) {
-  if (currentGame == null) {
-    return (game: null, message: 'Debug spawn ignored: no active game.');
-  }
-  final player = findPlayerById(currentGame, event.humanPlayerId);
-  if (player == null) {
-    return (
-      game: null,
-      message: 'Debug spawn ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
-  if (!player.isHuman) {
-    return (
-      game: null,
-      message:
-          'Debug spawn ignored: player ${event.humanPlayerId} is not human.',
-    );
-  }
+  final guard = resolveSpawnDebugGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.spawn,
+    playerId: event.humanPlayerId,
+    requireHuman: true,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
+  final player = guard.player;
   if (ShipEconomyCatalog.byId[event.shipTypeId] == null) {
     return (
       game: null,
@@ -34,17 +26,14 @@ DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
     );
   }
   if (event.count < 1) {
-    return (game: null, message: 'Debug spawn ignored: count must be >= 1.');
+    return debugCountBelowMin(DebugCommandLabel.spawn);
   }
   final capitalProvinceId = player.capitalProvinceId;
   if (capitalProvinceId == null || capitalProvinceId.isEmpty) {
-    return (
-      game: null,
-      message: 'Debug spawn ignored: player has no capital province.',
-    );
+    return debugNoCapitalProvince(DebugCommandLabel.spawn);
   }
   final homeFleetId = homeFleetIdFor(event.humanPlayerId);
-  final fleetIndex = currentGame.worldState.fleets.indexWhere(
+  final fleetIndex = guard.game.worldState.fleets.indexWhere(
     (fleet) =>
         fleet.id == homeFleetId &&
         fleet.ownerId == event.humanPlayerId &&
@@ -59,7 +48,7 @@ DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
     );
   }
   final boundedCount = event.count > 25 ? 25 : event.count;
-  final world = currentGame.worldState;
+  final world = guard.game.worldState;
   final fleets = List<Fleet>.from(world.fleets);
   final fleet = fleets[fleetIndex];
   var nextShipSeq = world.nextShipInstanceSeq;
@@ -75,7 +64,7 @@ DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
     nextShipSeq++;
   }
   fleets[fleetIndex] = fleet.copyWith(ships: [...fleet.ships, ...spawned]);
-  final nextGame = currentGame.copyWith(
+  final nextGame = guard.game.copyWith(
     worldState: world.copyWith(
       fleets: fleets,
       nextShipInstanceSeq: nextShipSeq,

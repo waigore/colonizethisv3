@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show appendMilitaryRegimentToArmy, kRegionNewWorld;
+    show appendMilitaryRegimentToArmy;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_command_helpers.dart';
@@ -10,23 +10,15 @@ DebugCommandResult applyDebugRegimentSpawnAtCapital({
   required Game? currentGame,
   required SpawnDebugRegimentAtCapitalEvent event,
 }) {
-  if (currentGame == null) {
-    return (game: null, message: 'Debug spawn ignored: no active game.');
-  }
-  final player = findPlayerById(currentGame, event.humanPlayerId);
-  if (player == null) {
-    return (
-      game: null,
-      message: 'Debug spawn ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
-  if (!player.isHuman) {
-    return (
-      game: null,
-      message:
-          'Debug spawn ignored: player ${event.humanPlayerId} is not human.',
-    );
-  }
+  final guard = resolveSpawnDebugGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.spawn,
+    playerId: event.humanPlayerId,
+    requireHuman: true,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
+  final player = guard.player;
   if (RegimentEconomyCatalog.byId[event.regimentTypeId] == null) {
     return (
       game: null,
@@ -35,14 +27,11 @@ DebugCommandResult applyDebugRegimentSpawnAtCapital({
     );
   }
   if (event.count < 1) {
-    return (game: null, message: 'Debug spawn ignored: count must be >= 1.');
+    return debugCountBelowMin(DebugCommandLabel.spawn);
   }
   final capitalProvinceId = player.capitalProvinceId;
   if (capitalProvinceId == null || capitalProvinceId.isEmpty) {
-    return (
-      game: null,
-      message: 'Debug spawn ignored: player has no capital province.',
-    );
+    return debugNoCapitalProvince(DebugCommandLabel.spawn);
   }
   String? spawnRegionId;
   try {
@@ -58,12 +47,12 @@ DebugCommandResult applyDebugRegimentSpawnAtCapital({
   }
   final boundedCount = event.count > 25 ? 25 : event.count;
   final allUnits = <Unit>[
-    ...currentGame.worldState.oldWorld.units,
-    ...currentGame.worldState.newWorld.units,
+    ...guard.game.worldState.oldWorld.units,
+    ...guard.game.worldState.newWorld.units,
   ];
   final usedUnitIds = {for (final unit in allUnits) unit.id};
   var nextUnitSeq = nextCanonicalUnitSequence(units: allUnits);
-  var game = currentGame;
+  var game = guard.game;
   for (var i = 0; i < boundedCount; i++) {
     final unitId = mintCanonicalUnitId(
       usedUnitIds: usedUnitIds,
@@ -80,23 +69,10 @@ DebugCommandResult applyDebugRegimentSpawnAtCapital({
       status: UnitStatus.idle,
       currentWork: null,
     );
-    final world = game.worldState;
-    final oldUnits = List<Unit>.from(world.oldWorld.units);
-    final newUnits = List<Unit>.from(world.newWorld.units);
-    if (spawnRegionId == kRegionNewWorld) {
-      newUnits.add(unit);
-    } else {
-      oldUnits.add(unit);
-    }
-    final updatedWorld = world.copyWith(
-      oldWorld: RegionData(
-        provinces: world.oldWorld.provinces,
-        units: oldUnits,
-      ),
-      newWorld: RegionData(
-        provinces: world.newWorld.provinces,
-        units: newUnits,
-      ),
+    final updatedWorld = appendUnitsToRegion(
+      game.worldState,
+      spawnRegionId,
+      [unit],
     );
     game = game.copyWith(worldState: updatedWorld);
     game = appendMilitaryRegimentToArmy(

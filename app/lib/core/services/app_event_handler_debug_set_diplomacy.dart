@@ -8,7 +8,7 @@ import 'debug_command_helpers.dart';
 /// ([game]+[message]) or [error] is populated.
 typedef _DiplomacyActionOutcome = ({Game? game, String? message, String? error});
 
-const _kPrefix = 'Debug set_diplomacy';
+const _kPrefix = 'Debug ${DebugCommandLabel.setDiplomacy}';
 
 /// Applies an immediate, direct diplomacy-relation mutation between two factions
 /// from the debug console (`/set_diplomacy`).
@@ -22,16 +22,12 @@ DebugCommandResult applyDebugSetDiplomacyRelation({
   required Game? currentGame,
   required SetDebugDiplomacyRelationEvent event,
 }) {
-  final game = currentGame;
-  if (game == null) {
-    return (game: null, message: '$_kPrefix ignored: no active game.');
+  if (currentGame == null) {
+    return debugNoActiveGame(DebugCommandLabel.setDiplomacy);
   }
+  final game = currentGame;
   if (game.worldState.turnState.phase != TurnPhase.orders) {
-    return (
-      game: null,
-      message: '$_kPrefix rejected: command is allowed only during human '
-          'Orders phase.',
-    );
+    return debugOrdersPhaseRejected(DebugCommandLabel.setDiplomacy);
   }
 
   final resolvedA = _resolveFaction(game, event.factionA ?? event.humanPlayerId);
