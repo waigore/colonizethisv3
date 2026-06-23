@@ -353,8 +353,8 @@ String _improvementLabelForTileDetail({
 @visibleForTesting
 String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
   return switch (regionId) {
-    'oldWorld' => l10n.region_oldWorld,
-    'newWorld' => l10n.region_newWorld,
+    kRegionOldWorld => l10n.region_oldWorld,
+    kRegionNewWorld => l10n.region_newWorld,
     _ => regionId,
   };
 }

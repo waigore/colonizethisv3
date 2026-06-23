@@ -954,6 +954,13 @@ rules:
     runner: dart
     script: tool/check_app_test_no_debug_init.dart
 
+  - rule_id: repo.app_region_string_literals
+    group: architecture
+    title: "app/lib must use kRegionOldWorld / kRegionNewWorld instead of bare 'oldWorld' / 'newWorld' string literals (Refs #3658)"
+    spec: SPEC/program/logic-dual-region-province-access.md
+    runner: dart
+    script: tool/check_app_region_string_literals.dart
+
   - rule_id: repo.screen_registry_active_paths
     group: ui_structure
     title: "active screen-registry rows must point to existing app/lib Dart files (Refs #2801)"
