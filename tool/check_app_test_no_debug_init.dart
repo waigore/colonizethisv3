@@ -72,11 +72,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/province_overlay_tile_section_remaining_live_data_dark_tokens_test.dart',
   'app/test/province_sea_zone_overlay_detail_paths_test.dart',
   'app/test/shell_game_screen_specs_test.dart',
-  'app/test/technology_slot_occupancy_goldens_test.dart',
-  'app/test/technology_slots_panel_parity_goldens_test.dart',
-  'app/test/tech_tree_widget_core_test.dart',
-  'app/test/tech_tree_widget_description_batches_test.dart',
-  'app/test/tech_tree_widget_palette_test.dart',
   'app/test/trade_screen_issue_acceptance_criteria_e8_test.dart',
   'app/test/trade_screen_scaffold_test.dart',
   'app/test/train_dialogs_goldens_test.dart',
@@ -84,7 +79,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/unit_panels_goldens_test.dart',
   'app/test/unit_panels_widgetbook_dark_chrome_test.dart',
   'app/test/widgetbook_technology_screen_mobile_viewport_test.dart',
-  'app/test/widgetbook_technology_slots_variants_test.dart',
 };
 
 /// Symbol whose invocation is gated.

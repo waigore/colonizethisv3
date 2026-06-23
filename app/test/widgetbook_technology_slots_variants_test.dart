@@ -9,9 +9,9 @@
 //     Choose-tech list collapses to the muted empty-state line.
 //
 // The test pumps the same `(Player, Game)` fixtures the Widgetbook story
-// builders use (seeded directly here from public `getDebugInitGameResult`,
-// `techCatalog`, and `Player.copyWith` APIs so the story file does not need
-// to expose private helpers). Each variant must:
+// builders use (seeded here from the lightweight `buildTechnologyPanelTestGame`
+// fixture (Refs #3656), `techCatalog`, and `Player.copyWith` APIs so the story
+// file does not need to expose private helpers). Each variant must:
 //
 //   * render under `AppThemes.editorialMonocle`,
 //   * not throw during pump + settle,
@@ -22,7 +22,6 @@ import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -31,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
@@ -41,8 +41,7 @@ void main() {
   late List<String> allTechIds;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    baseGame = result.game;
+    baseGame = buildTechnologyPanelTestGame();
     basePlayer = baseGame.players.first;
     allTechIds = techCatalog.keys.toList()..sort();
   });
