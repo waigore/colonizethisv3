@@ -19,6 +19,7 @@ import 'check_app_no_material_scaffold.dart';
 import 'check_app_no_material_switchlisttile.dart';
 import 'check_app_no_material_textbutton.dart';
 import 'check_app_shell_panel_dedup.dart';
+import 'check_app_debug_handler_guard_helpers.dart';
 import 'check_app_widgetbook_file_naming.dart';
 import 'check_app_textstyle_fontsize_fallback.dart';
 import 'check_app_widget_imports.dart';
@@ -930,6 +931,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppNoMaterialScaffold(repoRoot);
     case 'repo.app_widgetbook_file_naming':
       return runCheckAppWidgetbookFileNaming(repoRoot);
+    case 'repo.app_debug_handler_guard_helpers':
+      return runCheckAppDebugHandlerGuardHelpers(repoRoot);
     default:
       return null;
   }
