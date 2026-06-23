@@ -5,7 +5,6 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_game_feature_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -103,7 +102,17 @@ void main() {
   testWidgets('DiplomacyDetailScreen shows dossier header for great powers', (
     WidgetTester tester,
   ) async {
-    final game = getDebugInitGameResult().game;
+    // Refs #3656: lightweight gp1/gp2 fixture replaces the ~7-11s
+    // getDebugInitGameResult(); the detail screen only reads players, relations,
+    // history, and dossier entries — no generated map/topology data.
+    final game = minimalGame(
+      humanPlayerId: 'gp1',
+      otherFactionId: 'gp2',
+      eventType: DiplomaticEventType.peace,
+      includeHistory: false,
+      includeDossier: false,
+      atWar: false,
+    );
     final humanPlayerId = game.players.first.id;
 
     final otherPlayer =
@@ -136,7 +145,14 @@ void main() {
   testWidgets(
     'DiplomacyDetailScreen renders either empty or non-empty history',
     (WidgetTester tester) async {
-      final game = getDebugInitGameResult().game;
+      final game = minimalGame(
+        humanPlayerId: 'gp1',
+        otherFactionId: 'gp2',
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+      );
       final humanPlayerId = game.players.first.id;
 
       final allFactionIds = <String>[
@@ -222,7 +238,14 @@ void main() {
   testWidgets(
     'DiplomacyDetailScreen hides Dossier when kind != greatPower and relation is null (empty history)',
     (WidgetTester tester) async {
-      final game = getDebugInitGameResult().game;
+      final game = minimalGame(
+        humanPlayerId: 'gp1',
+        otherFactionId: 'gp2',
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+      );
       final humanPlayerId = game.players.first.id;
 
       final allFactionIds = <String>[

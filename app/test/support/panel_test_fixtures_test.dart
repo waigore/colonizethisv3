@@ -165,6 +165,31 @@ void main() {
     });
   });
 
+  group('buildDiplomacyScreenTestGame', () {
+    test('human first player has an affordable treasury and an AI opponent', () {
+      final game = buildDiplomacyScreenTestGame();
+      expect(game.players, hasLength(2));
+      final human = game.players.first;
+      expect(human.id, kPanelTestHumanPlayerId);
+      expect(human.isHuman, isTrue);
+      // Grant-aid dialog default amount (1000) must be affordable by default.
+      expect(human.treasury, greaterThanOrEqualTo(1000));
+      // players[1] resolves as a grant/subsidy target faction.
+      expect(game.players[1].id, 'gp2');
+      expect(game.players[1].isHuman, isFalse);
+    });
+
+    test('seeds no diplomacy relations (opponent stays undiscovered)', () {
+      final game = buildDiplomacyScreenTestGame();
+      // The screen suites only assert the always-rendered section headings, so
+      // the opponent is intentionally left undiscovered (no relation seeded).
+      expect(game.diplomacyRelations, isEmpty);
+      // No generated map/topology data is consumed by the screen chrome.
+      expect(game.worldState.oldWorld.units, isEmpty);
+      expect(game.worldState.newWorld.units, isEmpty);
+    });
+  });
+
   group('buildNavalPanelTestGame', () {
     test('human owns a home fleet and a non-home fleet, both with ships', () {
       final game = buildNavalPanelTestGame();

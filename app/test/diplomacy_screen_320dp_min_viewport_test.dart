@@ -55,12 +55,13 @@ import 'package:colonizethis_app/features/game/widgets/observe_mode_not_defined_
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -144,12 +145,15 @@ Future<void> _pumpDiplomacyScreenAtSize(
 void main() {
   suppressLogsForTests();
 
+  // Refs #3656: lightweight hand-built game replaces the ~7-11s
+  // getDebugInitGameResult(). The 320 dp overflow + chrome pins only need the
+  // screen to lay out and the panel's `Great Powers` heading (always rendered)
+  // to be present; no generated map/topology data is read.
   late Game game;
   late String humanPlayerId;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    game = buildDiplomacyScreenTestGame();
     humanPlayerId = game.players
         .firstWhere(
           (p) => p.isHuman,
