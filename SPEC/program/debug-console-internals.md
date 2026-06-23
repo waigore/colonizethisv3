@@ -24,7 +24,7 @@ Spawn parsers (`_parseSpawnCivilian`, `_parseSpawnRegiment`, `_parseSpawnShip`) 
 
 | Helper | Role |
 |--------|------|
-| `dispatchDebugConsoleSessionEvents` | Maps spawn/credit/flip/reveal invocations + `humanPlayerId` to `(events, message)`. |
+| `dispatchDebugConsoleSessionEvents` | Maps spawn/credit/flip/reveal/set-diplomacy invocations + `humanPlayerId` to `(events, message)`. The `DebugConsoleSetDiplomacy` branch emits one `SetDebugDiplomacyRelationEvent` (raw faction inputs + `DebugDiplomacyAction`; `factionA` null for the one-faction form). |
 | `creditExecutorMessage` | Single formatter for treasury, worker-pool, and stockpile credit success messages (requested vs credited clamp text). |
 
 `_executeInvocation` in `debug_console_command_executor.dart` MUST delegate spawn, credit, flip, and reveal branches to `dispatchDebugConsoleSessionEvents` rather than inlining per-command `DebugConsoleExecutionResult.success` event construction.
@@ -34,6 +34,7 @@ Spawn parsers (`_parseSpawnCivilian`, `_parseSpawnRegiment`, `_parseSpawnShip`) 
 - `debug_console_command_parser.dart` — verb dispatch and spawn/credit arg extraction (≤ 270 lines).
 - `debug_console_parser_helpers.dart` — shared parse helpers and credit/spawn caps (package-private top-level).
 - `debug_console_parser_province_commands.dart` — flip, reveal, and observe parse functions.
+- `debug_console_parser_diplomacy_commands.dart` — `/set_diplomacy` parse function (`parseSetDiplomacyCommand`) with quote-aware tokenization for multi-word faction display names.
 - `debug_console_parse_result.dart` — `DebugConsoleParseResult` type.
 - `debug_console_command_executor.dart` — parse → execute orchestration and read-only commands (≤ 220 lines).
 - `debug_console_executor_helpers.dart` — event dispatch and credit message formatting.
