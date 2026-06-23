@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainNavalDialogId;
 import '../../../l10n/l10n.dart';
@@ -392,10 +393,7 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
   }
 
   void _openTrainDialog() {
-    widget.bus.emit(const ClosePanelEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.bus.emit(OpenDialogEvent(trainNavalDialogId));
-    });
+    widget.bus.closePanelThenEmit(OpenDialogEvent(trainNavalDialogId));
   }
 
   void _openSplitDialog(FleetRow row) {
@@ -473,10 +471,9 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
             enabled: widget.tileScopeTileKey!.isNotEmpty,
             onPressed: () {
               final key = widget.tileScopeTileKey!;
-              widget.bus.emit(const ClosePanelEvent());
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
-              });
+              widget.bus.closePanelThenEmit(
+                OpenMapTileDetailEvent(tileKey: key),
+              );
             },
             label: l10n.civilian_units_tile,
           ),
