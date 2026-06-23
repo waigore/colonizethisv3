@@ -25,6 +25,7 @@ import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dar
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -233,6 +234,117 @@ void main() {
               '"{name} ({category})" tooltip per '
               'SPEC/ui/components/resource-icon-tooltip.md.',
         );
+      },
+    );
+  });
+
+  group('cost-summary icon size (#3631 Phase 2 legibility)', () {
+    test('shared cost-icon size constant is 30 dp', () {
+      expect(kTrainDialogCostIconSize, 30);
+    });
+
+    /// Asserts every commodity / treasury / peasant icon nested inside a
+    /// [TrainDialogInlineCost] renders at [kTrainDialogCostIconSize] (30 dp)
+    /// and each cost segment keeps its >= 44 dp touch target.
+    Future<void> expectEnlargedCostIcons(WidgetTester tester) async {
+      final Finder treasuryIcon = find.descendant(
+        of: find.byType(TrainDialogInlineCost),
+        matching: find.byIcon(Icons.payments_outlined),
+      );
+      expect(treasuryIcon, findsWidgets);
+      for (final Icon icon in tester.widgetList<Icon>(treasuryIcon)) {
+        expect(icon.size, kTrainDialogCostIconSize);
+      }
+
+      final Finder peasantIcon = find.descendant(
+        of: find.byType(TrainDialogInlineCost),
+        matching: find.byType(WorkerIcon),
+      );
+      expect(peasantIcon, findsWidgets);
+      for (final WorkerIcon icon
+          in tester.widgetList<WorkerIcon>(peasantIcon)) {
+        expect(icon.size, kTrainDialogCostIconSize);
+      }
+
+      final Finder commodityIcon = find.descendant(
+        of: find.byType(TrainDialogInlineCost),
+        matching: find.byType(ResourceIcon),
+      );
+      expect(commodityIcon, findsWidgets);
+      for (final ResourceIcon icon
+          in tester.widgetList<ResourceIcon>(commodityIcon)) {
+        expect(icon.size, kTrainDialogCostIconSize);
+      }
+
+      // Larger icons must still nest inside the >= 44 dp touch target.
+      final int segments = find.byType(TrainDialogInlineCost).evaluate().length;
+      for (int i = 0; i < segments; i++) {
+        final Size size = tester.getSize(find.byType(TrainDialogInlineCost).at(i));
+        expect(size.height, greaterThanOrEqualTo(kMinTouchTargetSize));
+        expect(size.width, greaterThanOrEqualTo(kMinTouchTargetSize));
+      }
+    }
+
+    testWidgets(
+      'AC (positive): Train Military (UNIT50001) cost icons render at 30 dp',
+      (WidgetTester tester) async {
+        final game = getDebugInitGameResult().game;
+        await _pumpDialog(
+          tester,
+          TrainMilitaryDialog(
+            game: game,
+            humanPlayerId: _humanPlayerId(game),
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+        );
+        await expectEnlargedCostIcons(tester);
+      },
+    );
+
+    testWidgets(
+      'AC (positive): Train Naval (UNIT60001) cost icons render at 30 dp',
+      (WidgetTester tester) async {
+        final game = getDebugInitGameResult().game;
+        await _pumpDialog(
+          tester,
+          TrainNavalDialog(
+            game: game,
+            humanPlayerId: _humanPlayerId(game),
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+        );
+        await expectEnlargedCostIcons(tester);
+      },
+    );
+
+    testWidgets(
+      'AC (negative): resource-bar chips stay small (14 dp), so the size bump '
+      'is scoped to the cost summary',
+      (WidgetTester tester) async {
+        final game = getDebugInitGameResult().game;
+        await _pumpDialog(
+          tester,
+          TrainMilitaryDialog(
+            game: game,
+            humanPlayerId: _humanPlayerId(game),
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+        );
+
+        // The resource-bar peasant chip icon is NOT a cost-summary icon and
+        // must remain 14 dp (out of #3631 Phase 2 scope).
+        final Finder barPeasant = find.descendant(
+          of: find.byType(TrainDialogResourceChip),
+          matching: find.byType(WorkerIcon),
+        );
+        expect(barPeasant, findsWidgets);
+        for (final WorkerIcon icon
+            in tester.widgetList<WorkerIcon>(barPeasant)) {
+          expect(icon.size, 14);
+        }
       },
     );
   });
