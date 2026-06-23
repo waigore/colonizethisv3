@@ -27,7 +27,8 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_confirm_dialog.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 // Three prerequisite-free tier-1 techs occupy slots 0-2, mirroring the
 // `technologyPersistedSlotFixture` Widgetbook fixture so the golden matches the
@@ -98,8 +99,7 @@ void main() {
   late Player basePlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    baseGame = result.game;
+    baseGame = buildTechnologyPanelTestGame();
     basePlayer = baseGame.players.first;
   });
 
