@@ -292,6 +292,32 @@ class RevealDebugProvinceEvent extends SessionCommandEvent {
   final bool targetIsFullProvinceId;
 }
 
+/// Immediate debug diplomacy relation mutation between two factions.
+///
+/// When [factionA] is `null`, the active human player ([humanPlayerId]) is the
+/// first faction. [factionB] and the optional [factionA] are raw identifier
+/// inputs (faction id or display name) resolved by the app apply handler.
+/// Directly mutates `Game` state (bypasses normal diplomacy resolution).
+/// SPEC/ui/debug-console-panel.md, SPEC/program/debug-console-internals.md.
+class SetDebugDiplomacyRelationEvent extends SessionCommandEvent {
+  const SetDebugDiplomacyRelationEvent({
+    required this.humanPlayerId,
+    required this.factionB,
+    required this.action,
+    this.factionA,
+  });
+
+  final String humanPlayerId;
+
+  /// First faction (initiator) raw input; `null` means the active human player.
+  final String? factionA;
+
+  /// Second faction (target) raw input. Never empty.
+  final String factionB;
+
+  final DebugDiplomacyAction action;
+}
+
 /// Exit in-app observe mode. SPEC/ui/observe-mode.md.
 class SetObserveModeOffEvent extends SessionCommandEvent {
   const SetObserveModeOffEvent();

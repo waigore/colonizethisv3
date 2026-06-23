@@ -24,16 +24,26 @@ Spawn parsers (`_parseSpawnCivilian`, `_parseSpawnRegiment`, `_parseSpawnShip`) 
 
 | Helper | Role |
 |--------|------|
-| `dispatchDebugConsoleSessionEvents` | Maps spawn/credit/flip/reveal invocations + `humanPlayerId` to `(events, message)`. |
+| `dispatchDebugConsoleSessionEvents` | Maps spawn/credit/flip/reveal/set-diplomacy invocations + `humanPlayerId` to `(events, message)`. The `DebugConsoleSetDiplomacy` branch emits one `SetDebugDiplomacyRelationEvent` (raw faction inputs + `DebugDiplomacyAction`; `factionA` null for the one-faction form). |
 | `creditExecutorMessage` | Single formatter for treasury, worker-pool, and stockpile credit success messages (requested vs credited clamp text). |
 
 `_executeInvocation` in `debug_console_command_executor.dart` MUST delegate spawn, credit, flip, and reveal branches to `dispatchDebugConsoleSessionEvents` rather than inlining per-command `DebugConsoleExecutionResult.success` event construction.
+
+## App apply handler (`/set_diplomacy`)
+
+`SetDebugDiplomacyRelationEvent` is applied in the app shell, not in this package, mirroring the other mutating debug commands (`/add_money`, `/flip_province`).
+
+- **Location:** `app/lib/core/services/app_event_handler_debug_set_diplomacy.dart` — `applyDebugSetDiplomacyRelation({required Game? currentGame, required SetDebugDiplomacyRelationEvent event})` returns a `DebugCommandResult` (`(Game?, message)`); a null `game` signals rejection.
+- **Subscription:** registered in `app_event_handler_scope_session_subscriptions.dart` via `bus.on<SetDebugDiplomacyRelationEvent>()`, guarded by `_unlessTurnResolutionBlocksSession`, and applied with `_applyDebugCommand` (persist + snackbar).
+- **Responsibilities, in order:** (1) `TurnPhase.orders` gate; (2) faction resolution of `factionA` (defaulting to `humanPlayerId` when null) and `factionB` — exact canonical id wins, else case-insensitive display-name match across `players`, `minorNations`, and `tribes`, with ambiguous/unknown inputs rejected; (3) self-target rejection (`factionA == factionB`); (4) per-pair-per-turn quota check against `Game.debugDiplomacyUsedPairKeys` (sorted `pairKey`); (5) per-action hard-incompatibility validation; (6) direct `Game` mutation (relation state/`formalAlliance`, overture upsert/clear, FTP set/remove); (7) `war` side effects (clear overtures both directions, remove FTP); (8) `DiplomaticEvent` history append with sequential `intraTurnIndex`; (9) record the pair key in `debugDiplomacyUsedPairKeys`.
+- **Quota reset:** `runEndOfTurnPhase` (`packages/colonizethis_turn`) clears `Game.debugDiplomacyUsedPairKeys` when the turn advances.
 
 ## File organization
 
 - `debug_console_command_parser.dart` — verb dispatch and spawn/credit arg extraction (≤ 270 lines).
 - `debug_console_parser_helpers.dart` — shared parse helpers and credit/spawn caps (package-private top-level).
 - `debug_console_parser_province_commands.dart` — flip, reveal, and observe parse functions.
+- `debug_console_parser_diplomacy_commands.dart` — `/set_diplomacy` parse function (`parseSetDiplomacyCommand`) with quote-aware tokenization for multi-word faction display names.
 - `debug_console_parse_result.dart` — `DebugConsoleParseResult` type.
 - `debug_console_command_executor.dart` — parse → execute orchestration and read-only commands (≤ 220 lines).
 - `debug_console_executor_helpers.dart` — event dispatch and credit message formatting.

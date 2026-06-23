@@ -35,6 +35,41 @@ void main() {
       expect(restored.calendarCampaignHalted, isTrue);
     });
 
+    test('debugDiplomacyUsedPairKeys round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        debugDiplomacyUsedPairKeys: const {'England|France', 'England|Ireland'},
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(
+        restored.debugDiplomacyUsedPairKeys,
+        {'England|France', 'England|Ireland'},
+      );
+      expect(restored, game);
+    });
+
+    test('debugDiplomacyUsedPairKeys defaults empty when missing from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson();
+      expect(json.containsKey('debugDiplomacyUsedPairKeys'), isFalse);
+      final restored = Game.fromJson(json);
+      expect(restored.debugDiplomacyUsedPairKeys, isEmpty);
+    });
+
     test('infiniteMode round-trip JSON', () {
       final game = Game(
         id: 'g1',
