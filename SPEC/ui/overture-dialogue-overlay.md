@@ -103,8 +103,9 @@ Error mode renders the same `Stack` but the `CtDialogShell` body is the localize
 | State | Trigger | Render |
 |-------|---------|--------|
 | Loading (phase 1) | `!_introDone && _loadError == null && _view == null` | `Stack` with `widget.child`, scrim, and `CtLoadingIndicator` inside `CtDialogShell`. |
-| Presenting line (phase 1) | `!_introDone && _view!.currentLine != null` | Line text + right-aligned Continue button; tap calls `_view!.advanceLine()`. |
-| Presenting choice (phase 1) | `!_introDone && _view!.currentLine == null && _view!.currentChoice != null` | The retained `_view!.contextLine.text` (the immediately preceding intro line) **above** a vertical stack of one `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. Rendered via the shared `CtDialogueLineChoiceBody` so the intro line and the option(s) appear together (Refs #3628). |
+| Presenting combined line+option (phase 1) | `!_introDone && _view!.currentLine != null && _view!.pendingSingleOptionLabel != null` (the overture intro: one line then `-> Continue`) | Intro line text + **one** right-aligned `CtNinePatchButton` labelled with the Yarn option text (`Continue`); tap calls `_view!.confirmCombinedLineOption()`, advancing the line and selecting the sole option in one action. Rendered via the shared `CtDialogueLineChoiceBody` — the intro is shown once and confirmed once, with no separate choice step (Refs #3628). |
+| Presenting line (phase 1) | `!_introDone && _view!.currentLine != null && _view!.pendingSingleOptionLabel == null` | Line text + right-aligned Continue button; tap calls `_view!.advanceLine()`. |
+| Presenting choice (phase 1) | `!_introDone && _view!.currentLine == null && _view!.currentChoice != null` (only choices with `n >= 2` options) | The retained `_view!.contextLine.text` (the immediately preceding intro line) **above** a vertical stack of one `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. Rendered via the shared `CtDialogueLineChoiceBody` so the intro line and the option(s) appear together (Refs #3628). |
 | Transient (phase 1) | `!_introDone && _view!.currentLine == null && _view!.currentChoice == null` | When `_view!.contextLine != null`, the retained line text above a `CtLoadingIndicator`; otherwise `CtLoadingIndicator` alone, inside the shell. |
 | Offer list (phase 2) | `_introDone && _loadError == null` | Title + intro + one Accept/Reject `CtToggleSwitch` row per `pendingOvertures[i]`; every entry starts undecided (`_accepted[i] == null`, so both toggles render in their off state). Tapping the Accept toggle commits `_accepted[i] = true` (Accept on, Reject off); tapping the Reject toggle commits `_accepted[i] = false` (Reject on, Accept off); tapping a currently-on toggle reverts the row to `null`. Submit is **disabled** while any entry is still `null` (issue #2867 R23); when every entry is non-null, Submit becomes enabled and a tap calls `onDecisions(...)` with one `OvertureDecision` per offer using the resolved `_accepted!` value. |
 | Error | `_loadError != null` | Localized error text (`game_overture_loadError`) + single Continue button; tapping Continue invokes `_submit()` immediately (so the host advances even when the Yarn asset is broken). |
@@ -158,9 +159,9 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 ## Acceptance Criteria (Given–When–Then)
 
-- Given an `OvertureDialogueOverlay` is mounted with the phase-1 intro Yarn node (a narrative line followed by `-> Continue`, loaded via an injected `assetBundle`),
-  When the player advances past the intro narrative line to the choice step,
-  Then the retained intro line text and the `Continue` option button render together inside one `CtDialogShell` body (no option-only step) and the combined layout matches the `matchesGoldenFile` baseline `app/test/goldens/dialogue_combined_overture_intro_choice.png` (Refs #3628 AC-4 golden coverage).
+- Given an `OvertureDialogueOverlay` is mounted with the phase-1 intro Yarn node (a narrative line immediately followed by `-> Continue`, loaded via an injected `assetBundle`),
+  When the overlay renders the phase-1 intro body,
+  Then the intro line text and a **single** `Continue` option button render together inside one `CtDialogShell` step (no separate Continue line step and no option-only step), one tap advances to phase 2, and the combined layout matches the `matchesGoldenFile` baseline `app/test/goldens/dialogue_combined_overture_intro_choice.png` (Refs #3628 AC-5 golden coverage).
 
 - Given an `OvertureDialogueOverlay` is mounted with `skipIntroForTest: true` and exactly one pending overture from offerer `gp_spain` at stage `tradeConsulate`,
   When the widget tree settles,

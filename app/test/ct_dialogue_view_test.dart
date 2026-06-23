@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -122,6 +124,130 @@ void main() {
       expect(view.currentChoice, isNull);
     },
   );
+
+  group('single line + single option collapse (#3628)', () {
+    DialogueLine firstLine(Node node) {
+      final entry = node.toList(growable: false).first;
+      return (entry as DialogueLine)..evaluate();
+    }
+
+    test(
+      'onNodeStart marks a line before a single-option choice; '
+      'onLineStart exposes the option label',
+      () {
+        final project = YarnProject()
+          ..parse('''
+title: n
+---
+The age of imperialism draweth nigh.
+-> I shall.
+===
+''');
+        final view = CtDialogueView(logger: packageLogger('dialogue'));
+        final node = project.nodes['n']!;
+
+        view.onNodeStart(node);
+        view.onLineStart(firstLine(node));
+
+        // The collapsed step exposes the Yarn option label (not a generic
+        // Continue) so consumers render one combined button.
+        expect(view.currentLine, isNotNull);
+        expect(view.pendingSingleOptionLabel, 'I shall.');
+      },
+    );
+
+    test('confirmCombinedLineOption advances the line and auto-selects the '
+        'sole option without a second step', () async {
+      final project = YarnProject()
+        ..parse('''
+title: n
+---
+The age of imperialism draweth nigh.
+-> I shall.
+===
+''');
+      final view = CtDialogueView(logger: packageLogger('dialogue'));
+      final runner = DialogueRunner(
+        yarnProject: project,
+        dialogueViews: [view],
+      );
+
+      String? labelWhenLineShown;
+      var confirmCount = 0;
+      var choiceStepsRendered = 0;
+      view.onStateChanged = (line, choice) {
+        if (choice != null) choiceStepsRendered++;
+        if (line != null &&
+            view.pendingSingleOptionLabel != null &&
+            confirmCount == 0) {
+          confirmCount++;
+          labelWhenLineShown = view.pendingSingleOptionLabel;
+          // Defer the confirm so it mirrors a real button tap after the frame.
+          scheduleMicrotask(view.confirmCombinedLineOption);
+        }
+      };
+
+      await runner.startDialogue('n');
+
+      // One confirmation tap shown, the narrative option label preserved, and
+      // no separate choice step was ever rendered (the single option was
+      // auto-selected). State is fully cleared at finish.
+      expect(labelWhenLineShown, 'I shall.');
+      expect(choiceStepsRendered, 0);
+      expect(view.currentLine, isNull);
+      expect(view.currentChoice, isNull);
+      expect(view.contextLine, isNull);
+      expect(view.pendingSingleOptionLabel, isNull);
+    });
+
+    test('multi-line node collapses only the final line before the option',
+        () {
+      final project = YarnProject()
+        ..parse('''
+title: n
+---
+Heavy tidings cross thy desk.
+Each matter shall be judged in turn.
+-> Continue
+===
+''');
+      final view = CtDialogueView(logger: packageLogger('dialogue'));
+      final node = project.nodes['n']!;
+      final entries = node.toList(growable: false);
+      final line1 = (entries[0] as DialogueLine)..evaluate();
+      final line2 = (entries[1] as DialogueLine)..evaluate();
+
+      view.onNodeStart(node);
+
+      // The first line keeps its own advance tap (not collapsed).
+      view.onLineStart(line1);
+      expect(view.pendingSingleOptionLabel, isNull);
+      view.advanceLine();
+
+      // Only the final line (immediately preceding the single option) collapses.
+      view.onLineStart(line2);
+      expect(view.pendingSingleOptionLabel, 'Continue');
+    });
+
+    test('a choice with two or more options never collapses', () {
+      final project = YarnProject()
+        ..parse('''
+title: n
+---
+Choose thy path.
+-> Onward
+-> Retreat
+===
+''');
+      final view = CtDialogueView(logger: packageLogger('dialogue'));
+      final node = project.nodes['n']!;
+
+      view.onNodeStart(node);
+      view.onLineStart(firstLine(node));
+
+      expect(view.pendingSingleOptionLabel, isNull);
+    });
+  });
 
   test(
     'CtDialogueView onDialogueFinish clears state and signals nulls',

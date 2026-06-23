@@ -58,8 +58,12 @@ void main() {
     });
 
     test('close button vertical padding uses CtSpacing.m / 2', () {
+      // `_OverlayCloseButton` was extracted into the economic/military sections
+      // file during the #3658 overlay refactor; scan it for the close control's
+      // symmetric padding token.
       final source = File(
-        'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
+        'lib/features/game/widgets/'
+        'province_sea_zone_detail_overlay_economic_military_sections.dart',
       ).readAsStringSync();
       expect(source, contains('vertical: CtSpacing.m / 2'));
       expect(

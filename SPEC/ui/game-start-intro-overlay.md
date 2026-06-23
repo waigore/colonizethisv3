@@ -81,8 +81,9 @@ The scrim color resolves from the canonical `EditorialMonoclePalette.dialogScrim
 | State | Trigger | Render |
 |-------|---------|--------|
 | Loading | `_view == null && _runner == null && _loadError == null` | `Stack` with `widget.child`, scrim, and `GameStartIntroLoadingIndicator` inside `CtDialogShell` below the title + brass divider. |
-| Presenting line | `_view!.currentLine != null` | Title + brass divider, then centered line text + centered Continue button (`l10n.game_intervention_continue`); tap calls `_view!.advanceLine()`. |
-| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` | Title + brass divider, then the retained `_view!.contextLine.text` (the immediately preceding line, centered) **above** a vertical stack of one stretched `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. The narrative message and the option(s) render together — no option-only step (Refs #3628). |
+| Presenting combined line+option | `_view!.currentLine != null && _view!.pendingSingleOptionLabel != null` (the `game_start_intro` case: one line then `-> I shall.`) | Title + brass divider, then centered line text + **one** centered `CtNinePatchButton` labelled `I shall.` (the Yarn option text); tap calls `_view!.confirmCombinedLineOption()`, advancing the line and selecting the sole option in one action. The narrative is shown once and confirmed once — no separate choice step (Refs #3628). |
+| Presenting line | `_view!.currentLine != null && _view!.pendingSingleOptionLabel == null` | Title + brass divider, then centered line text + centered Continue button (`l10n.game_intervention_continue`); tap calls `_view!.advanceLine()`. |
+| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` (only for choices with `n >= 2` options) | Title + brass divider, then the retained `_view!.contextLine.text` (the immediately preceding line, centered) **above** a vertical stack of one stretched `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. The narrative message and the option(s) render together — no option-only step (Refs #3628). |
 | Transient between Jenny events | Both `currentLine` and `currentChoice` are `null` while `_dialogueFinished == false` | Title + brass divider; when `_view!.contextLine != null`, the retained line text stays visible above the loading indicator (no message flash); otherwise just the loading indicator. |
 | Error | `_loadError != null` | Title + brass divider, then localized error text + centered Continue button; tapping Continue clears `_loadError` and invokes `widget.onDismissed` so the host advances even when the Yarn asset is broken. |
 | Dismissed | `_dialogueFinished == true` **or** `_view == null && _runner == null` after error-Continue | Renders `widget.child` only — no scrim, no shell. |
@@ -145,12 +146,16 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
   Then `CtDialogueView.selectOption(i)` is invoked exactly once with the same index and the dialogue advances to the next Jenny event.
 
 - Given a `GameStartIntroOverlay` is mounted with the `game_start_intro` node (one narrative line followed by `-> I shall.`),
-  When the overlay reaches the choice step (after the line is advanced),
-  Then the imperialism narrative text (the retained `contextLine`) renders in the same `CtDialogShell` body above the `I shall.` `CtNinePatchButton`, and there is no option-only step where the narrative text is absent (Refs #3628 AC-2).
+  When the overlay first renders the dialogue body,
+  Then the imperialism narrative text renders in one `CtDialogShell` body above a single `CtNinePatchButton` labelled `I shall.` (the Yarn option text, not a generic Continue), and there is no separate Continue line step or separate option-only step (Refs #3628 AC-1, AC-3).
+
+- Given a `GameStartIntroOverlay` is presenting the combined `game_start_intro` step,
+  When the user taps the `I shall.` button once,
+  Then `CtDialogueView.confirmCombinedLineOption()` is invoked once, the line is advanced and the sole option selected, the dialogue finishes, and `widget.onDismissed` is called exactly once — the herald is shown once and confirmed with one tap (Refs #3628 AC-2).
 
 - Given a `GameStartIntroOverlay` is mounted with the `game_start_intro` node and rendered under `AppThemes.editorialMonocle`,
-  When the overlay is advanced to the `-> I shall.` choice step,
-  Then a `matchesGoldenFile` baseline (`app/test/goldens/dialogue_combined_game_start_intro_choice.png`) captures the retained narrative text and the `I shall.` `CtNinePatchButton` rendered together in one `CtDialogShell` body (Refs #3628 AC-2 golden coverage).
+  When the overlay renders the combined line+option step,
+  Then a `matchesGoldenFile` baseline (`app/test/goldens/dialogue_combined_game_start_intro_choice.png`) captures the narrative text and the `I shall.` `CtNinePatchButton` rendered together in one `CtDialogShell` body (Refs #3628 AC-2 golden coverage).
 
 - Given the overlay has just been mounted and the Yarn `AssetBundle` resolves `kDialogueGameIntroAsset` to text that does not declare a `game_start_intro` node,
   When `_loadAndRun` reaches the node existence check,
