@@ -221,6 +221,26 @@ Game buildPlayersBarTestGame() {
   );
 }
 
+/// Lightweight game shaped for the in-game side/pause-menu chrome family
+/// (`game_side_menu_test`, `game_side_menu_320dp_min_viewport_test`,
+/// `pause_menu_side_menu_specs_test`).
+///
+/// `GameSideMenu` reads only the active `Game` from `currentGameProvider` and,
+/// for the read-only Game Parameters dialog, `game.infiniteMode`
+/// (`GameParametersDialog` takes just that bool). The pause menu reads no game
+/// state at all. None of these surfaces touch generated map/topology data, so a
+/// single-human default game is the full shape they need.
+///
+/// Suites that assert the "Infinite mode: On" line apply
+/// `game.copyWith(infiniteMode: true)` themselves; the base fixture leaves
+/// `infiniteMode` at its default (`false`).
+Game buildSideMenuTestGame() {
+  return buildPanelTestGame(
+    id: 'side-menu-widget-test',
+    players: [panelTestHumanPlayer()],
+  );
+}
+
 /// Lightweight game shaped for the `technology_panel_*` family
 /// (`technology_panel_test`, `technology_panel_dark_chrome_test`,
 /// `technology_panel_funding_toggles_test`,
