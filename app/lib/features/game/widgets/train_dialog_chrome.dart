@@ -20,6 +20,14 @@ const double kTrainDialogTitleLetterSpacing = 0.05;
 /// lock-icon column. See [TrainDialogUnitNameLine].
 const String kTrainDialogLockPrefix = '\u{1F512} ';
 
+/// Rendered size (dp) of the cost-summary icons (commodity / treasury /
+/// peasant) inside a [TrainDialogInlineCost].
+///
+/// Enlarged from 14 dp so the icons are legible at a glance (#3631 Phase 2);
+/// the icon still nests inside the [kMinTouchTargetSize] (44 dp) tooltip/touch
+/// region. See `SPEC/ui/components/train-dialog-chrome.md`.
+const double kTrainDialogCostIconSize = 30;
+
 /// Dark editorial-monocle train-dialog header: a centered accent title.
 ///
 /// Per the canonical train-dialog mockups (`.dialog h3 { text-align: center }`,
@@ -267,8 +275,13 @@ class TrainDialogInlineCost extends StatelessWidget {
     // The whole `icon + number` segment is the tooltip trigger and touch
     // target: a `minWidth/minHeight` of `kMinTouchTargetSize` pads narrow
     // single-digit segments up to 44 dp while letting wider numeric labels
-    // keep their natural (icon-sized) horizontal footprint, so the cost wrap
-    // does not overflow at the 320 dp minimum viewport.
+    // keep their natural footprint. With the enlarged 30 dp cost icon
+    // (#3631 Phase 2) a single segment can be slightly wider than the narrow
+    // cost-wrap column at the 320 dp minimum viewport, so the numeric label is
+    // wrapped in a `Flexible` + `BoxFit.scaleDown` `FittedBox`: it renders at
+    // its natural size when there is room and shrinks losslessly (no clipped
+    // digits, no ellipsis) only when the column is too tight, keeping the cost
+    // `Wrap` overflow-free.
     return Tooltip(
       message: tooltipMessage,
       triggerMode: TooltipTriggerMode.tap,
@@ -283,7 +296,13 @@ class TrainDialogInlineCost extends StatelessWidget {
           children: [
             icon,
             const SizedBox(width: 3),
-            Text(label, style: style),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(label, style: style),
+              ),
+            ),
           ],
         ),
       ),
