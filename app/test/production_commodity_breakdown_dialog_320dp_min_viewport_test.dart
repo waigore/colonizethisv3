@@ -63,13 +63,15 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -103,10 +105,8 @@ Future<void> _pumpDialogAtSize(
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.binding.setSurfaceSize(size);
 
-  final result = getDebugInitGameResult();
-  final game = result.game;
-  final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
-  final player = game.playerById(humanPlayerId) ?? game.players.first;
+  final game = buildProductionBreakdownPanelTestGame();
+  final player = game.players.firstWhere((p) => p.isHuman);
 
   await tester.pumpWidget(
     ProviderScope(
@@ -127,8 +127,8 @@ Future<void> _pumpDialogAtSize(
                     builder: (_) => ProductionCommodityBreakdownDialog(
                       game: game,
                       player: player,
-                      topology: result.combinedTopology,
-                      tileMapByRegion: result.tileMapByRegion,
+                      topology: const MapTopology(nodes: [], edges: []),
+                      tileMapByRegion: null,
                       currentOrders: const Orders(),
                     ),
                   );
@@ -273,11 +273,12 @@ void main() {
           // The dialog renders three sections in fixed order — Food,
           // Raw materials, Manufactured. Section headers use small-caps
           // styling so the rendered Text data is the upper-cased label.
-          // The `getDebugInitGameResult()` fixture has non-trivial
-          // production setups, so at least one section header MUST
-          // render at 320 dp. Asserting on the localized labels
-          // (upper-cased by `_sectionHeaderCell`) keeps the AC robust
-          // to ruleset commodity rebalances.
+          // Section rows are catalog-derived (the static `CommodityCatalog`
+          // always has Food commodities), so at least one section header
+          // MUST render at 320 dp even with the lightweight tile-less
+          // fixture. Asserting on the localized labels (upper-cased by
+          // `_sectionHeaderCell`) keeps the AC robust to ruleset commodity
+          // rebalances.
           expect(
             find.byWidgetPredicate(
               (Widget w) =>

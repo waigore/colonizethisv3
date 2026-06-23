@@ -4,7 +4,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -16,8 +16,7 @@ void main() {
   testWidgets('GrantOrSubsidyListener emits append command after confirm', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
+    final game = buildGrantOrSubsidyListenerTestGame();
     final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
     final targetFactionId = game.players.firstWhere((p) => !p.isHuman).id;
     final bus = AppEventBus.create();
