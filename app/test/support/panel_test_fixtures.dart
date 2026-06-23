@@ -42,6 +42,7 @@ Game buildPanelTestGame({
       const {},
   Map<String, String> seaZoneDisplayNameById = const {},
   List<Tribe> tribes = const [],
+  List<MinorNation> minorNations = const [],
   String id = 'panel-widget-test',
   TurnState turnState = const TurnState(
     phase: TurnPhase.orders,
@@ -68,6 +69,7 @@ Game buildPanelTestGame({
     ),
     players: players ?? [panelTestHumanPlayer()],
     tribes: tribes,
+    minorNations: minorNations,
   );
 }
 
@@ -318,6 +320,126 @@ Game buildDiplomacyPanelTestGame() {
       DiplomacyRelation(
         factionId1: human,
         factionId2: rival,
+        state: RelationState.atPeace,
+        score: 50,
+        sinceTurn: 0,
+        lastInteractionTurn: 0,
+      ),
+    ],
+  );
+}
+
+/// Lightweight game shaped for the full diplomacy-*panel* suites that
+/// previously paid `getDebugInitGameResult()` for a game seeded with multiple
+/// discovered Great Powers, a Minor Nation offering overture stages, and a
+/// discovered Tribe (`diplomacy_panel_test`, `diplomacy_panel_rows_test`;
+/// Refs #3656).
+///
+/// Unlike [buildDiplomacyPanelTestGame] (a single discovered GP for the
+/// orders/chrome/narrow suites), these suites assert GP-section sorting, the
+/// relative-power line colours, the minor overture matrix, and the Tribes
+/// section, so the fixture seeds **three** Great Powers, **one** Minor Nation,
+/// and **one** Tribe — all discovered through persisted [DiplomacyRelation]s
+/// involving the human (`buildDiplomacyRows` → `buildPlayerView` indexes each
+/// opponent in `PlayerView.diplomacyByOtherId`). No generated map/topology
+/// data is read; pass `const MapTopology()` as the panel topology.
+///
+/// Shape:
+/// - the human ([kPanelTestHumanPlayerId] = `gp1`, `players.first`) with a
+///   non-zero `treasury` (so the economic/overture actions render) and one
+///   regiment, so its power score is non-vacuous;
+/// - `gp2` **at peace** (score 50 → "Cordial" one-word label + `PEACE` badge)
+///   with **two** regiments, so it sorts ahead of `gp3` by military strength
+///   and reads as the stronger GP (relative-power line → `--danger`);
+/// - `gp3` **at war** (score 20 → "Hostile" one-word label + `WAR` badge) with
+///   **one** regiment, so it is roughly equal to the human (relative-power line
+///   → `--success`) and the GP rows are a non-vacuous two-element sort;
+/// - one Minor Nation `m1` at peace, so the minor row enumerates all four
+///   overture stages (Consulate/Embassy/NAP/Join Empire) with the
+///   disabled-with-reason states the AC-6 assertions read;
+/// - one Tribe `t1` at peace, so the Tribes section renders a discovered row
+///   (badge + minors-only filter assertions).
+///
+/// `gp1` is a defensive power floor for the relative-power maths; regiments use
+/// [kPanelTestRegimentType] so `regimentStatsById`/`unitStrength` resolve
+/// identically to a generated game.
+Game buildDiplomacyRichPanelTestGame() {
+  const human = kPanelTestHumanPlayerId;
+  const gp2 = 'gp2';
+  const gp3 = 'gp3';
+  const minorId = 'm1';
+  const tribeId = 't1';
+  const type = kPanelTestRegimentType;
+  const dummyProvince = 'oldWorld|p1';
+  return buildPanelTestGame(
+    id: 'diplomacy-rich-panel-widget-test',
+    players: [
+      const Player(
+        id: human,
+        displayName: 'Test Human',
+        isHuman: true,
+        treasury: 5000,
+      ),
+      const Player(id: gp2, displayName: 'Rival Power', isHuman: false),
+      const Player(id: gp3, displayName: 'Third Power', isHuman: false),
+    ],
+    minorNations: const [MinorNation(id: minorId, displayName: 'Free City')],
+    tribes: const [Tribe(id: tribeId, displayName: 'Tribe One')],
+    oldWorldUnits: [
+      Unit(
+        id: 'reg_gp1',
+        type: type,
+        ownerId: human,
+        locationProvinceId: dummyProvince,
+      ),
+      Unit(
+        id: 'reg_gp2_a',
+        type: type,
+        ownerId: gp2,
+        locationProvinceId: dummyProvince,
+      ),
+      Unit(
+        id: 'reg_gp2_b',
+        type: type,
+        ownerId: gp2,
+        locationProvinceId: dummyProvince,
+      ),
+      Unit(
+        id: 'reg_gp3',
+        type: type,
+        ownerId: gp3,
+        locationProvinceId: dummyProvince,
+      ),
+    ],
+  ).copyWith(
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: human,
+        factionId2: gp2,
+        state: RelationState.atPeace,
+        score: 50,
+        sinceTurn: 0,
+        lastInteractionTurn: 0,
+      ),
+      DiplomacyRelation(
+        factionId1: human,
+        factionId2: gp3,
+        state: RelationState.atWar,
+        score: 20,
+        sinceTurn: 0,
+        lastInteractionTurn: 0,
+      ),
+      DiplomacyRelation(
+        factionId1: human,
+        factionId2: minorId,
+        state: RelationState.atPeace,
+        score: 50,
+        sinceTurn: 0,
+        lastInteractionTurn: 0,
+      ),
+      DiplomacyRelation(
+        factionId1: human,
+        factionId2: tribeId,
         state: RelationState.atPeace,
         score: 50,
         sinceTurn: 0,
