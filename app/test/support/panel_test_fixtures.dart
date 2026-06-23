@@ -704,3 +704,43 @@ Game buildTrainPanelTestGame() {
 /// exactly the multi-family shape these panels render. A `const MapTopology()`
 /// replaces the debug-init `combinedTopology` the assertions never inspect.
 Game buildUnitPanelsTestGame() => buildTrainPanelTestGame();
+
+/// Lightweight game shaped for the structural `ProductionCommodityBreakdownDialog`
+/// (PROD20001) suites that only pin **dialog chrome / table layout**
+/// (`production_commodity_breakdown_dialog_320dp_min_viewport_test`,
+/// `production_commodity_breakdown_dialog_wide_full_width_test`).
+///
+/// Those suites assert structure only — the localized title, the `Close`
+/// `CtNinePatchButton`, the 7-column `DataTable` (commodity + per-phase +
+/// total), the wide-path full-width column distribution / no-scrollbar, the
+/// narrow-path horizontal `Scrollbar`, and at least one catalog-derived section
+/// header (`FOOD` / `RAW MATERIALS` / `MANUFACTURED`). None of that depends on
+/// generated map/topology data: the section rows come from the static
+/// `CommodityCatalog`, and the per-phase deltas are driven by the
+/// `productionDesiredOutputProvider` recipe assignments, not owned tiles. Tests
+/// pass `topology: const MapTopology()` and `tileMapByRegion: null`; the
+/// economy-preview pipeline returns empty (zero) deltas for a tile-less game, so
+/// every commodity renders its `0` cells and the layout assertions hold without
+/// the ~7-11 s `getDebugInitGameResult()` map generation.
+///
+/// Delta-colour pins (positive/negative/zero cell colours) and the committed
+/// wide golden stay on the `getDebugInitGameResult()` allowlist — they need a
+/// generated game with real extraction/production to exercise non-zero deltas.
+Game buildProductionBreakdownPanelTestGame() =>
+    buildPanelTestGame(id: 'production-breakdown-widget-test');
+
+/// Lightweight game shaped for `grant_or_subsidy_listener_test`.
+///
+/// `GrantOrSubsidyListener` reads only `game.playerById(targetFactionId)` (and
+/// `minorNations` / `tribes` fallbacks) for the confirmation-dialog target name,
+/// plus `game.worldState.turnState.turnNumber` and `game.globalGameSeed` for the
+/// negotiation-mood event seed — never any generated map/topology data. The
+/// fixture provides one human ([kPanelTestHumanPlayerId]) and one AI great power
+/// so the suite can resolve a human payer and a non-human grant/subsidy target.
+Game buildGrantOrSubsidyListenerTestGame() => buildPanelTestGame(
+  id: 'grant-subsidy-listener-widget-test',
+  players: [
+    panelTestHumanPlayer(),
+    const Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+  ],
+);
