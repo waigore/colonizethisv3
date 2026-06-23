@@ -13,7 +13,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         PlayerView,
         provincePanelShowsFullTileDerivedIntel,
         resourceIdVisibleInPlayerView,
-        VisibilityLevel;
+        VisibilityLevel,
+        WorldStateProvinceLookup;
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

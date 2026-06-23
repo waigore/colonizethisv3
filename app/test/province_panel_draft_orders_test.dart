@@ -459,6 +459,244 @@ void main() {
       },
     );
 
+    // Refs #3658: destination province label resolution migrated from a
+    // hand-rolled dual-region scan to the cached cross-region
+    // `WorldState.allProvincesById`. These two cases prove the migrated lookup
+    // still resolves a *new-world* destination (positive) and degrades to the
+    // raw id for an unknown destination (negative).
+    testWidgets(
+      'Military pending move resolves a new-world destination province name',
+      (WidgetTester tester) async {
+        const newWorldDestId = 'newWorld|pDestNW';
+        final tk = _tileKey(0, 0);
+        final game = Game(
+          id: 'mil_pending_cross_region_test',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: _fullProvinceId,
+                  regionId: _regionId,
+                  displayName: 'FromProv',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'r_move',
+                  type: 'peasant_levies',
+                  ownerId: 'gp1',
+                  locationProvinceId: _fullProvinceId,
+                  tileKey: tk,
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|pDestNW',
+                  regionId: 'newWorld',
+                  displayName: 'NewWorldDest',
+                ),
+              ],
+            ),
+            tileKeysByRegionAndProvince: {
+              _regionId: {
+                _fullProvinceId: [tk],
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          ],
+        );
+        final region = RegionMapViewData(
+          regionId: _regionId,
+          width: 1,
+          height: 1,
+          cellSize: 32,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              visibility: TileVisibility.visible,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {'gp1'},
+          terrainColors: const {},
+        );
+        final view = PlayerView(
+          playerId: 'gp1',
+          player: const Player(
+            id: 'gp1',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+          ownUnitsById: const {},
+          provincesById: const {},
+          visibilityByTile: {tk: VisibilityLevel.fullyVisible},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final orders = Orders(
+          moveOrdersByPlayerId: {
+            'gp1': [
+              const MoveOrder(
+                unitId: 'r_move',
+                destinationTileKey: '$newWorldDestId|0|0',
+              ),
+            ],
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                displayId: _fullProvinceId,
+                selectedTileKey: tk,
+                humanPlayerId: 'gp1',
+                playerView: view,
+                draftOrders: orders,
+              ),
+            ),
+          ),
+        );
+        await _pumpOverlayLayout(tester);
+
+        expect(
+          find.textContaining('Ordered: move regiment to'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('NewWorldDest'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Military pending move falls back to raw id for unknown destination',
+      (WidgetTester tester) async {
+        final tk = _tileKey(0, 0);
+        final game = Game(
+          id: 'mil_pending_unknown_dest_test',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: _fullProvinceId,
+                  regionId: _regionId,
+                  displayName: 'FromProv',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'r_move',
+                  type: 'peasant_levies',
+                  ownerId: 'gp1',
+                  locationProvinceId: _fullProvinceId,
+                  tileKey: tk,
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              _regionId: {
+                _fullProvinceId: [tk],
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          ],
+        );
+        final region = RegionMapViewData(
+          regionId: _regionId,
+          width: 1,
+          height: 1,
+          cellSize: 32,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              visibility: TileVisibility.visible,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {'gp1'},
+          terrainColors: const {},
+        );
+        final view = PlayerView(
+          playerId: 'gp1',
+          player: const Player(
+            id: 'gp1',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+          ownUnitsById: const {},
+          provincesById: const {},
+          visibilityByTile: {tk: VisibilityLevel.fullyVisible},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final orders = Orders(
+          moveOrdersByPlayerId: {
+            'gp1': [
+              const MoveOrder(
+                unitId: 'r_move',
+                destinationTileKey: 'newWorld|ghostNW|0|0',
+              ),
+            ],
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                displayId: _fullProvinceId,
+                selectedTileKey: tk,
+                humanPlayerId: 'gp1',
+                playerView: view,
+                draftOrders: orders,
+              ),
+            ),
+          ),
+        );
+        await _pumpOverlayLayout(tester);
+
+        expect(
+          find.textContaining('Ordered: move regiment to'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('newWorld|ghostNW'), findsOneWidget);
+      },
+    );
+
     testWidgets(
       'Naval section shows pending dock move and mission from draftOrders',
       (WidgetTester tester) async {
