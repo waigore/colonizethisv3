@@ -1,18 +1,21 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
 
   testWidgets('GrantOrSubsidyDialog submits default valid grant amount',
       (WidgetTester tester) async {
-    final game = getDebugInitGameResult().game;
+    // Refs #3656: lightweight fixture (gp1 human treasury 5000 + gp2) replaces
+    // the ~7-11s getDebugInitGameResult(); the grant dialog only reads players.
+    final game = buildDiplomacyScreenTestGame();
     final humanPlayerId = game.players.first.id;
     final treasury = game.players.first.treasury;
     if (treasury < 1000) {
@@ -70,7 +73,7 @@ void main() {
   testWidgets(
       'GrantOrSubsidyDialog submit disabled when treasury below minimum',
       (WidgetTester tester) async {
-    final base = getDebugInitGameResult().game;
+    final base = buildDiplomacyScreenTestGame();
     final humanPlayerId = base.players.first.id;
     final targetFactionId = base.players.length >= 2
         ? base.players[1].id
@@ -131,7 +134,7 @@ void main() {
 
   testWidgets('GrantOrSubsidyDialog Cancel closes dialog',
       (WidgetTester tester) async {
-    final game = getDebugInitGameResult().game;
+    final game = buildDiplomacyScreenTestGame();
     final humanPlayerId = game.players.first.id;
     final targetFactionId = game.players.length >= 2
         ? game.players[1].id
@@ -191,7 +194,7 @@ void main() {
     required int humanTreasury,
     bool isSubsidy = false,
   }) async {
-    final base = getDebugInitGameResult().game;
+    final base = buildDiplomacyScreenTestGame();
     final humanPlayerId = base.players.first.id;
     final targetFactionId = base.players.length >= 2
         ? base.players[1].id
