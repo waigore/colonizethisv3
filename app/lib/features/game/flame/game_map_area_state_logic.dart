@@ -45,7 +45,7 @@ class GameMapAreaStateLogic {
       GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState;
 
   static int regionIndexFromWorldRegionId(String regionId) {
-    if (regionId == 'newWorld') return 1;
+    if (regionId == kRegionNewWorld) return 1;
     return 0; // oldWorld (default)
   }
 

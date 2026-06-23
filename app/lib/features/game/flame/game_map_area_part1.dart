@@ -391,9 +391,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
       _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
+      if (regionId == kRegionNewWorld) {
         _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
+      } else if (regionId == kRegionOldWorld) {
         _regionIndex = 0;
       }
     });
@@ -407,9 +407,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     if (regionId == null) return;
     ref.read(mapProvincePanelProvider.notifier).reportMapTileTapped(tileKey);
     setState(() {
-      if (regionId == 'newWorld') {
+      if (regionId == kRegionNewWorld) {
         _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
+      } else if (regionId == kRegionOldWorld) {
         _regionIndex = 0;
       }
     });
