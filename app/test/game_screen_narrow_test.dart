@@ -18,8 +18,6 @@ import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.d
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -30,14 +28,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugResult;
+  // Refs #3656: the narrow in-game shell assertions read only chrome (top bar,
+  // side menu, left rail, players-bar gating, options dialog); the map canvas
+  // just needs *a* mapViewData to mount. The lightweight game + minimal
+  // mapViewData replace the ~7-11s getDebugInitGameResult() map generation.
+  final Game baseGame = buildPlayersBarTestGame();
+  final InitGameMapViewData lightMapViewData = buildLightweightMapViewData();
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    debugResult = getDebugInitGameResult();
     Hive.init('./.dart_tool/test_hive_game_screen_narrow');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
@@ -73,8 +78,8 @@ void main() {
   Widget buildGameScreen({required double width, required double height}) {
     return ProviderScope(
       overrides: gameShellOverrides(
-        game: debugResult.game,
-        mapViewData: debugResult.mapViewData,
+        game: baseGame,
+        mapViewData: lightMapViewData,
       ),
       child: AppEventHandlerScope(
         child: MaterialApp(
@@ -96,8 +101,8 @@ void main() {
   }) {
     return ProviderScope(
       overrides: gameShellOverrides(
-        game: debugResult.game,
-        mapViewData: debugResult.mapViewData,
+        game: baseGame,
+        mapViewData: lightMapViewData,
       ),
       child: AppEventHandlerScope(
         child: MaterialApp(
@@ -156,8 +161,8 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: gameShellOverrides(
-              game: debugResult.game,
-              mapViewData: debugResult.mapViewData,
+              game: baseGame,
+              mapViewData: lightMapViewData,
               treasurySummary: const TreasurySummary(
                 treasury: 12345,
                 projectedDelta: 250,
@@ -225,8 +230,8 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: gameShellOverrides(
-              game: debugResult.game,
-              mapViewData: debugResult.mapViewData,
+              game: baseGame,
+              mapViewData: lightMapViewData,
               treasurySummary: const TreasurySummary(
                 treasury: 12345,
                 projectedDelta: 250,
@@ -253,8 +258,8 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: gameShellOverrides(
-              game: debugResult.game,
-              mapViewData: debugResult.mapViewData,
+              game: baseGame,
+              mapViewData: lightMapViewData,
               treasurySummary: const TreasurySummary(
                 treasury: 12345,
                 projectedDelta: -400,
@@ -281,8 +286,8 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: gameShellOverrides(
-              game: debugResult.game,
-              mapViewData: debugResult.mapViewData,
+              game: baseGame,
+              mapViewData: lightMapViewData,
               treasurySummary: const TreasurySummary(
                 treasury: 12345,
                 projectedDelta: 0,
@@ -668,7 +673,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final turnNumber = debugResult.game.worldState.turnState.turnNumber;
+        final turnNumber = baseGame.worldState.turnState.turnNumber;
         expect(
           find.textContaining('Turn $turnNumber will end'),
           findsOneWidget,
@@ -716,7 +721,7 @@ void main() {
       'pause menu opens modal with Resume and Exit to Main Menu actions (no Debug log)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildGameScreenWithPauseMenu(game: debugResult.game),
+          buildGameScreenWithPauseMenu(game: baseGame),
         );
         await tester.pump();
 
@@ -735,11 +740,11 @@ void main() {
     testWidgets(
       'victory overlay shows and View final state hides it',
       (WidgetTester tester) async {
-        final victoryGame = debugResult.game.copyWith(
+        final victoryGame = baseGame.copyWith(
           victory: VictoryState(
-            winnerPlayerId: debugResult.game.players.first.id,
+            winnerPlayerId: baseGame.players.first.id,
             type: VictoryType.military,
-            turnNumber: debugResult.game.worldState.turnState.turnNumber,
+            turnNumber: baseGame.worldState.turnState.turnNumber,
           ),
         );
 
@@ -747,7 +752,7 @@ void main() {
           ProviderScope(
             overrides: gameShellOverrides(
               game: victoryGame,
-              mapViewData: debugResult.mapViewData,
+              mapViewData: lightMapViewData,
             ),
             child: AppEventHandlerScope(
               child: MaterialApp(
