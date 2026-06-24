@@ -104,4 +104,57 @@ void main() {
 
     expect(code, 0);
   });
+
+  test('fails on a stale allowlist entry whose file no longer calls the helper',
+      () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_debug_init_stale_migrated_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    // The file exists and is allowlisted, but has been migrated so it only
+    // mentions the symbol in a comment — the allowlist slot is now slack.
+    _writeAppTest(temp, 'migrated_test.dart', _kCommentOnlyContents);
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDebugInit(
+      temp.path,
+      allowlist: const <String>{'app/test/migrated_test.dart'},
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains(
+        'app/test/migrated_test.dart: allowlisted file no longer invokes '
+        'getDebugInitGameResult()',
+      ),
+    );
+  });
+
+  test('fails on a stale allowlist entry whose file is missing', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_debug_init_stale_missing_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    // app/test exists (so the scan runs) but the allowlisted file is gone.
+    _writeAppTest(temp, 'clean_test.dart', _kCleanTestContents);
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDebugInit(
+      temp.path,
+      allowlist: const <String>{'app/test/removed_test.dart'},
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains(
+        'app/test/removed_test.dart: allowlisted file does not exist.',
+      ),
+    );
+  });
 }
