@@ -48,9 +48,9 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 import 'production_panel_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -249,12 +249,12 @@ void main() {
 
       setUpAll(() async {
         await _preWarmFlameImageCache();
-        final result = getDebugInitGameResult();
-        game = result.game;
-        topology = result.combinedTopology;
-        humanPlayerId = game.players.isNotEmpty
-            ? game.players.first.id
-            : 'gp1';
+        // Lightweight fixture (Refs #3656): a single discovered Great Power is
+        // enough to exercise the narrow faction-row body; no generated
+        // map/topology data is read, so an empty `MapTopology` suffices.
+        game = buildDiplomacyPanelTestGame();
+        topology = const MapTopology();
+        humanPlayerId = game.players.first.id;
         final rows = buildDiplomacyRows(
           game,
           topology,
@@ -265,8 +265,8 @@ void main() {
           rows,
           isNotEmpty,
           reason:
-              'Debug init game must seed at least one discovered faction so '
-              'a 320 dp render exercises the narrow faction-row body.',
+              'Lightweight diplomacy fixture must seed at least one discovered '
+              'faction so a 320 dp render exercises the narrow faction-row body.',
         );
         firstNonHumanFactionId = rows.first.factionId;
       });
@@ -347,9 +347,10 @@ void main() {
       late Player player;
 
       setUpAll(() {
-        final result = getDebugInitGameResult();
-        game = result.game;
-        expect(game.players, isNotEmpty);
+        // Lightweight fixture (Refs #3656): the Technology panel reads only
+        // `game.players`; the single human starts with the default research-slot
+        // count (3 active + 1 locked), matching the assertions below.
+        game = buildTechnologyPanelTestGame();
         player = game.players.first;
       });
 
