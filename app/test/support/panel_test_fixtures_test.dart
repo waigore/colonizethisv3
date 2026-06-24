@@ -165,6 +165,23 @@ void main() {
     });
   });
 
+  group('buildGameScreenSpecsTestGame', () {
+    test('exposes a single human player usable as the victory winner', () {
+      final game = buildGameScreenSpecsTestGame();
+      expect(game.players, hasLength(1));
+      final human = game.players.first;
+      expect(human.id, kPanelTestHumanPlayerId);
+      expect(human.isHuman, isTrue);
+      // The victory spec keys `VictoryState.winnerPlayerId` off players.first,
+      // so the list must be non-empty.
+      expect(game.players, isNotEmpty);
+      // No generated map/topology data is consumed (mapViewData is null).
+      expect(game.worldState.oldWorld.units, isEmpty);
+      expect(game.worldState.newWorld.units, isEmpty);
+      expect(game.victory, isNull);
+    });
+  });
+
   group('buildDiplomacyScreenTestGame', () {
     test('human first player has an affordable treasury and an AI opponent', () {
       final game = buildDiplomacyScreenTestGame();
