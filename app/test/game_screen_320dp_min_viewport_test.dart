@@ -63,8 +63,6 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -73,6 +71,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -93,11 +94,15 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugResult;
+  // Refs #3656: this min-viewport pin asserts only narrow/wide shell chrome
+  // (top bar, left rail, players-bar gating, no overflow); the map canvas just
+  // needs *a* mapViewData to mount. The lightweight game + minimal mapViewData
+  // replace the ~7-11s getDebugInitGameResult() map generation.
+  final Game baseGame = buildPlayersBarTestGame();
+  final InitGameMapViewData lightMapViewData = buildLightweightMapViewData();
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    debugResult = getDebugInitGameResult();
     Hive.init('./.dart_tool/test_hive_game_screen_320dp');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
@@ -155,8 +160,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: gameShellOverrides(
-          game: debugResult.game,
-          mapViewData: debugResult.mapViewData,
+          game: baseGame,
+          mapViewData: lightMapViewData,
         ),
         child: AppEventHandlerScope(
           child: MaterialApp(
