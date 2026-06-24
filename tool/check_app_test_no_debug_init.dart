@@ -18,7 +18,9 @@ import 'package:path/path.dart' as p;
 ///
 /// The allowlist below is the migration backlog: every `app/test/**` file that
 /// still calls the helper. It must only ever **shrink** as families migrate to
-/// lightweight or serialized fixtures; new entries require justification.
+/// lightweight or serialized fixtures; new entries require justification. The
+/// check fails on a **stale** entry (file missing, or migrated so it no longer
+/// invokes the helper) so the backlog cannot silently retain slack.
 const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/ct_region_map_debug_init_test.dart',
   'app/test/ct_region_map_test_support.dart',
@@ -45,7 +47,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/province_overlay_tile_section_dark_tokens_test.dart',
   'app/test/province_overlay_tile_section_remaining_live_data_dark_tokens_test.dart',
   'app/test/province_sea_zone_overlay_detail_paths_test.dart',
-  'app/test/shell_game_screen_specs_test.dart',
   'app/test/train_dialogs_goldens_test.dart',
   'app/test/unit_panels_goldens_test.dart',
   'app/test/widgetbook_technology_screen_mobile_viewport_test.dart',
@@ -56,6 +57,11 @@ const String _kDebugInitSymbol = 'getDebugInitGameResult';
 
 /// Scans `app/test/**/*.dart` and fails when any non-allowlisted file invokes
 /// [_kDebugInitSymbol]. Returns 0 on success, 1 on violations.
+///
+/// Also enforces that the allowlist only ever **shrinks**: an allowlist entry
+/// whose file is missing or no longer invokes the helper (a migrated suite left
+/// behind in the backlog) is reported as a **stale allowlist entry** so it must
+/// be removed rather than silently retaining slack in the gate.
 ///
 /// [allowlist] overrides the baked-in [_kDebugInitAllowlist] (used by tests).
 int runCheckAppTestNoDebugInit(
@@ -95,16 +101,12 @@ int runCheckAppTestNoDebugInit(
     if (!content.contains(_kDebugInitSymbol)) {
       continue;
     }
-    final parsed = parseString(content: content, path: relativePath);
-    final visitor = _DebugInitInvocationVisitor(
-      relativePath: relativePath,
-      lineInfo: parsed.unit.lineInfo,
-    );
-    parsed.unit.accept(visitor);
-    violations.addAll(visitor.sites);
+    violations.addAll(_invocationSites(content, relativePath));
   }
 
-  if (violations.isEmpty) {
+  final staleEntries = _staleAllowlistEntries(repoRoot, effectiveAllowlist);
+
+  if (violations.isEmpty && staleEntries.isEmpty) {
     logI(
       'check_app_test_no_debug_init: no disallowed getDebugInitGameResult() '
       'usage found in app/test/**.',
@@ -112,21 +114,76 @@ int runCheckAppTestNoDebugInit(
     return 0;
   }
 
-  violations.sort();
-  logE(
-    'check_app_test_no_debug_init: found ${violations.length} disallowed '
-    'getDebugInitGameResult() call site(s):',
-  );
-  for (final v in violations) {
-    logE(' - $v');
+  if (violations.isNotEmpty) {
+    violations.sort();
+    logE(
+      'check_app_test_no_debug_init: found ${violations.length} disallowed '
+      'getDebugInitGameResult() call site(s):',
+    );
+    for (final v in violations) {
+      logE(' - $v');
+    }
+    logE(
+      'Use the shared lightweight fixtures in '
+      'app/test/support/panel_test_fixtures.dart, a committed serialized '
+      'fixture, or add the file to the documented allowlist only when it '
+      'genuinely needs generated map/topology data (Refs #3656).',
+    );
   }
-  logE(
-    'Use the shared lightweight fixtures in '
-    'app/test/support/panel_test_fixtures.dart, a committed serialized '
-    'fixture, or add the file to the documented allowlist only when it '
-    'genuinely needs generated map/topology data (Refs #3656).',
-  );
+
+  if (staleEntries.isNotEmpty) {
+    staleEntries.sort();
+    logE(
+      'check_app_test_no_debug_init: found ${staleEntries.length} stale '
+      'allowlist entr${staleEntries.length == 1 ? 'y' : 'ies'} (the allowlist '
+      'must only ever shrink):',
+    );
+    for (final e in staleEntries) {
+      logE(' - $e');
+    }
+    logE(
+      'Remove these entries from the allowlist: the file is missing or no '
+      'longer invokes getDebugInitGameResult() (Refs #3656).',
+    );
+  }
+
   return 1;
+}
+
+/// Parses [content] and returns the formatted `path:line` invocation sites of
+/// [_kDebugInitSymbol] (empty when the symbol only appears in comments/strings).
+List<String> _invocationSites(String content, String relativePath) {
+  final parsed = parseString(content: content, path: relativePath);
+  final visitor = _DebugInitInvocationVisitor(
+    relativePath: relativePath,
+    lineInfo: parsed.unit.lineInfo,
+  );
+  parsed.unit.accept(visitor);
+  return visitor.sites;
+}
+
+/// Returns allowlist entries that no longer justify their slot: the file is
+/// missing, or it no longer invokes [_kDebugInitSymbol] (AST match, so a
+/// comment-only mention does not keep an entry alive).
+List<String> _staleAllowlistEntries(String repoRoot, Set<String> allowlist) {
+  final stale = <String>[];
+  for (final entry in allowlist) {
+    final file = File(p.join(repoRoot, entry));
+    if (!file.existsSync()) {
+      stale.add('$entry: allowlisted file does not exist.');
+      continue;
+    }
+    final content = file.readAsStringSync();
+    final invokes =
+        content.contains(_kDebugInitSymbol) &&
+        _invocationSites(content, entry).isNotEmpty;
+    if (!invokes) {
+      stale.add(
+        '$entry: allowlisted file no longer invokes $_kDebugInitSymbol().',
+      );
+    }
+  }
+  return stale;
 }
 
 class _DebugInitInvocationVisitor extends RecursiveAstVisitor<void> {
