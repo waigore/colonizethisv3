@@ -7,6 +7,7 @@
 /// dart` copies into one canonical location (Refs #3615 Cluster 6).
 library colonizethis_economy_test_support;
 
+export 'src/bid_spend_game_factory.dart';
 export 'src/deal_matcher_test_support.dart';
 export 'src/trade_order_factory.dart';
 export 'src/trade_order_validator_test_support.dart';
