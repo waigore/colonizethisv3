@@ -46,20 +46,19 @@ class _DiplomacyRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: _buildInfoColumn(context)),
-        // SPEC/ui/diplomacy-panel.md § Action button styling — the trailing
-        // cluster is capped to [kDiplomacyActionClusterMaxWidth] (mockup
-        // `.f-actions { max-width: 180px }`) so the compact buttons flow
-        // left-to-right and wrap onto additional runs instead of expanding
-        // to fill the remaining row width as a single vertical stack.
+        // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant,
+        // Refs #3621) — the trailing cluster is bounded only by the
+        // available faction-row width (the `Flexible` action area), with no
+        // fixed dp cap. `Align(topRight)` keeps the cluster flush to the
+        // row's trailing edge while the end-aligned `Wrap` flows the compact
+        // buttons left-to-right and wraps onto a new run only once the
+        // remaining row width cannot fit the next button — matching the
+        // mockup `.f-actions { flex-wrap: wrap; justify-content: flex-end }`
+        // with its `max-width: 180px` cap removed.
         Flexible(
           child: Align(
             alignment: Alignment.topRight,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: kDiplomacyActionClusterMaxWidth,
-              ),
-              child: _buildActionButtons(alignEnd: true),
-            ),
+            child: _buildActionButtons(alignEnd: true),
           ),
         ),
       ],
@@ -349,13 +348,20 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
     final ThemeData theme = Theme.of(context);
-    // SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle text theme —
-    // the action-button caption resolves through the M3 `bodySmall` slot
-    // (12 dp) so font, weight, and colour flow from
-    // `AppThemes.editorialMonocle` instead of a hard-coded literal.
-    // Refs #2914 S7.
+    // SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621) — the
+    // action-button caption seeds its weight/colour from the M3 `bodySmall`
+    // slot (so it still flows from `AppThemes.editorialMonocle` per
+    // Refs #2914 S7) but overrides the family to the editorial-monocle
+    // **display** stack ([editorialMonocleDisplayFontFamily], Cinzel) and the
+    // size to the compact [kDiplomacyActionButtonFontSize] (mockup
+    // `.f-actions button { font-size: 8px; font-family: var(--font-display) }`).
+    // The smaller display label packs more buttons per trailing-cluster run so
+    // the wide cluster extends horizontally instead of stacking vertically.
     final TextStyle labelStyle =
-        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+          fontFamily: editorialMonocleDisplayFontFamily,
+          fontSize: kDiplomacyActionButtonFontSize,
+        );
     // SPEC/ui/diplomacy-panel.md § Action button styling — diplomacy action
     // buttons use the compact CtNinePatchButton variant (tighter minHeight
     // and padding than the 48 × 16/12 dp default) to match the mockup
@@ -367,8 +373,8 @@ class _ActionButton extends StatelessWidget {
       padding: kDiplomacyActionButtonPadding,
       // SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621): the
       // compact action buttons shrink-wrap to their label so the trailing
-      // cluster flows left-to-right across the 180 dp `Wrap` instead of each
-      // button expanding to the full run width as a vertical column.
+      // cluster flows left-to-right within the available row width instead of
+      // each button expanding to the full run width as a vertical column.
       shrinkWrap: true,
       dangerVariant: _isWarVariant,
       child: Text(label, style: labelStyle),
