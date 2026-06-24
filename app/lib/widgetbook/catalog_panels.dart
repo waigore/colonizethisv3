@@ -57,13 +57,31 @@ List<WidgetbookNode> get productionPanelDirectories => [
 
 /// Mid-game [TechnologyScreen] fixture (Slots tab default) for Widgetbook.
 /// SPEC/ui/technology-panel.md § Widgetbook; Refs #2870 R22 / S9.
+///
+/// Refs #3656: built from a lightweight hand-constructed [Game] instead of the
+/// ~7-11s procedural `getDebugInitGameResult()` map generator. The Technology
+/// screen reads only `game.players` plus the static `techCatalog`, so the
+/// slots/tree chrome renders identically without any generated map/topology
+/// data. The single human ([_kMidGameTechPlayerId]) carries the same id the
+/// lightweight panel test fixtures use (`kPanelTestHumanPlayerId`), so the
+/// `CtGameFeatureScreenShell` `displayGame.playerById(...)` lookup resolves
+/// whether the shell falls back to this game or to a test-provided
+/// `currentGameProvider` override of the same shape.
 Widget _midGameTechnologyScreenStory(BuildContext context) {
-  final result = getDebugInitGameResult();
-  final game = result.game;
-  if (game.players.isEmpty) {
-    return Center(child: Text(appL10n(context).widgetbook_noPlayers));
-  }
-  final basePlayer = game.players.first;
+  const basePlayer = Player(
+    id: _kMidGameTechPlayerId,
+    displayName: 'Test Human',
+    isHuman: true,
+  );
+  const baseGame = Game(
+    id: kWidgetbookTechnologyStoryGameId,
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: [basePlayer],
+  );
   // Unlock roughly half of all techs (first 22 from catalog order).
   final allIds = techCatalog.keys.toList()..sort();
   final half = (allIds.length / 2).floor();
@@ -80,11 +98,24 @@ Widget _midGameTechnologyScreenStory(BuildContext context) {
     techUnlocked: techUnlocked,
     researchProgressByTechId: researchProgressByTechId,
   );
-  final midGame = game.copyWith(
-    players: [midGamePlayer, ...game.players.skip(1)],
-  );
+  final midGame = baseGame.copyWith(players: [midGamePlayer]);
   return TechnologyScreen(game: midGame, player: midGamePlayer);
 }
+
+/// Human player id for the lightweight mid-game Technology story. Matches the
+/// lightweight panel test fixtures' `kPanelTestHumanPlayerId` so a
+/// test-provided `currentGameProvider` of the same shape resolves the same
+/// player. Refs #3656.
+const String _kMidGameTechPlayerId = 'gp1';
+
+/// Stable game id for the lightweight mid-game Technology Widgetbook story.
+///
+/// Exposed so widget tests can build a `currentGameProvider` game of the same
+/// id and player shape: `CtGameFeatureScreenShell` renders the live
+/// `currentGameProvider` game when its id matches the screen's `game.id`
+/// (otherwise it falls back to the screen's own game), so tests pinning this
+/// story drive the rendered player deterministically. Refs #3656.
+const String kWidgetbookTechnologyStoryGameId = 'wb_technology_midgame';
 
 /// Tech Tree Widget stories. SPEC/ui/tech-tree-widget.md.
 List<WidgetbookNode> get techTreeDirectories => [

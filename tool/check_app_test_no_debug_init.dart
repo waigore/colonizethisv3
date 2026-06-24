@@ -47,7 +47,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/province_sea_zone_overlay_detail_paths_test.dart',
   'app/test/train_dialogs_goldens_test.dart',
   'app/test/unit_panels_goldens_test.dart',
-  'app/test/widgetbook_technology_screen_mobile_viewport_test.dart',
 };
 
 /// Symbol whose invocation is gated.
