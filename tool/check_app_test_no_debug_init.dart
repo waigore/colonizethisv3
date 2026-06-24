@@ -27,7 +27,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/game_map_area_event_feed_test.dart',
   'app/test/game_map_area_region_minimap_test.dart',
   'app/test/game_map_area_selection_mode_test.dart',
-  'app/test/game_map_area_shell_entry_center_test.dart',
   'app/test/game_map_selection_prompt_dark_tokens_test.dart',
   'app/test/human_draft_projected_region_provider_test.dart',
   'app/test/player_turn_event_feed_narrow_inset_test.dart',

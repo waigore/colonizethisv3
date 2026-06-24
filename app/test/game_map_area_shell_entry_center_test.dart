@@ -19,8 +19,6 @@ import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -29,6 +27,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -173,11 +174,18 @@ void main() {
   });
 
   group('GameMapArea shell-entry auto-center (widget) (Refs #3616)', () {
-    late InitGameResult debugResult;
+    // Refs #3656: this group only asserts shell-entry chrome derived from
+    // `game.players` + observe state (secondary highlight on the current
+    // player's capital tile, province overlay closed, home-to-capital gating).
+    // The lightweight game + minimal mapViewData replace the ~7-11s
+    // getDebugInitGameResult() map generation with identical behaviour — the
+    // capital-center camera move and highlight paint safely no-op for the
+    // off-map capital tile.
+    final Game lightweightGame = buildShellEntryCenterTestGame();
+    final InitGameMapViewData mapViewData = buildLightweightMapViewData();
     late Box<dynamic> gamesBox;
 
     setUpAll(() async {
-      debugResult = getDebugInitGameResult();
       Hive.init('./.dart_tool/test_hive_shell_entry_center');
       gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
     });
@@ -242,17 +250,17 @@ void main() {
       'AC: mount sets secondary highlight on the current player capital and '
       'does not open the province overlay',
       (tester) async {
-        final human = debugResult.game.players.firstWhere((p) => p.isHuman);
+        final human = lightweightGame.players.firstWhere((p) => p.isHuman);
         final capital = human.capitalTile;
         expect(
           capital,
           isNotNull,
-          reason: 'debug fixture human player must have a capital tile',
+          reason: 'lightweight fixture human player must have a capital tile',
         );
         final container = await pumpShell(
           tester,
-          game: debugResult.game,
-          mapViewData: debugResult.mapViewData,
+          game: lightweightGame,
+          mapViewData: mapViewData,
         );
         final panel = container.read(mapProvincePanelProvider);
         expect(panel.secondaryHighlightTileKey, capital!.toTileKey());
@@ -266,8 +274,8 @@ void main() {
       (tester) async {
         await pumpShell(
           tester,
-          game: debugResult.game,
-          mapViewData: debugResult.mapViewData,
+          game: lightweightGame,
+          mapViewData: mapViewData,
         );
         final controls = tester.widget<GameMapCornerControls>(
           find.byType(GameMapCornerControls),
@@ -282,8 +290,8 @@ void main() {
       (tester) async {
         final container = await pumpShell(
           tester,
-          game: debugResult.game,
-          mapViewData: debugResult.mapViewData,
+          game: lightweightGame,
+          mapViewData: mapViewData,
         );
         container.read(observeSessionProvider.notifier).setModeGlobal();
         await tester.pump();
@@ -300,12 +308,12 @@ void main() {
       (tester) async {
         final container = await pumpShell(
           tester,
-          game: debugResult.game,
-          mapViewData: debugResult.mapViewData,
+          game: lightweightGame,
+          mapViewData: mapViewData,
         );
         container
             .read(observeSessionProvider.notifier)
-            .setModePlayer(debugResult.game.players.first.id);
+            .setModePlayer(lightweightGame.players.first.id);
         await tester.pump();
         final controls = tester.widget<GameMapCornerControls>(
           find.byType(GameMapCornerControls),
