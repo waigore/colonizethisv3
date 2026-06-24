@@ -5,23 +5,20 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/package_logger.dart';
 
-import 'grid_voronoi.dart';
 import 'map_gen_pass_payloads.dart';
 import '../map_validation_exception.dart';
 import 'tile_map_gen_continent_join_pass.dart';
 import 'tile_map_gen_sea_zone_subdivide_pass.dart';
 import 'tile_map_gen_terrain_jitter_pass.dart';
 import 'tile_map_generator_land_seeds.dart';
+import 'tile_map_generator_lakes_provinces.dart';
+import 'tile_map_generator_terrain_assign.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_params.dart';
-import '../tile_map_directions.dart';
 import 'map_gen_stage.dart';
 import '../tile_map_grid.dart';
 import 'tile_map_grid_graph.dart';
-import 'tile_map_resource_cap_state.dart';
-import 'tile_map_resource_placement.dart';
-import 'terrain_dominance.dart';
 import 'topology_inference.dart';
 
 export 'tile_map_params.dart';
@@ -29,10 +26,6 @@ export 'tile_map_params.dart';
 /// Shared params for [TileMapGenerator] (generation orchestration only).
 
 part 'tile_map_generator_types.dart';
-part 'tile_map_generator_terrain_assign.dart';
-part 'tile_map_generator_terrain_hardwood_part.dart';
-part 'tile_map_generator_terrain_noise.dart';
-part 'tile_map_generator_lakes_provinces.dart';
 
 abstract class _TileMapGeneratorShell {
   _TileMapGeneratorShell({this.params = const TileMapParams()});
@@ -46,11 +39,11 @@ class TileMapGenerator extends _TileMapGeneratorShell {
   factory TileMapGenerator({TileMapParams params = const TileMapParams()}) {
     final graph = TileMapGridGraph(params);
     final landImpl = TileMapGenLandSeeds(params);
-    final terrainImpl = _TileMapGenTerrainResource(params, graph);
+    final terrainImpl = TileMapGenTerrainResource(params, graph);
     final continentJoinImpl = ContinentJoinPass(params, packageLogger(), graph);
     final terrainJitterImpl = TerrainJitterPass(params);
     final seaZoneSubdivideImpl = SeaZoneSubdividePass(params, graph);
-    final lakesImpl = _TileMapGenLakesProvinces(
+    final lakesImpl = TileMapGenLakesProvinces(
       params,
       graph,
       continentJoinImpl,
@@ -69,8 +62,8 @@ class TileMapGenerator extends _TileMapGeneratorShell {
   TileMapGenerator._({
     required super.params,
     required TileMapGenLandSeeds landSeedService,
-    required _TileMapGenLakesProvinces lakeAndProvinceService,
-    required _TileMapGenTerrainResource terrainResourceService,
+    required TileMapGenLakesProvinces lakeAndProvinceService,
+    required TileMapGenTerrainResource terrainResourceService,
     required ContinentJoinPass continentJoinService,
     required TerrainJitterPass terrainJitterService,
     required SeaZoneSubdividePass seaZoneSubdivideService,
@@ -82,8 +75,8 @@ class TileMapGenerator extends _TileMapGeneratorShell {
        _seaZoneSubdivideService = seaZoneSubdivideService;
 
   final TileMapGenLandSeeds _landSeedService;
-  final _TileMapGenLakesProvinces _lakeAndProvinceService;
-  final _TileMapGenTerrainResource _terrainResourceService;
+  final TileMapGenLakesProvinces _lakeAndProvinceService;
+  final TileMapGenTerrainResource _terrainResourceService;
   final ContinentJoinPass _continentJoinService;
   final TerrainJitterPass _terrainJitterService;
   final SeaZoneSubdividePass _seaZoneSubdivideService;
@@ -444,7 +437,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
   }) {
     final graph = TileMapGridGraph(params);
     final continentJoinImpl = ContinentJoinPass(params, packageLogger(), graph);
-    final lakesImpl = _TileMapGenLakesProvinces(
+    final lakesImpl = TileMapGenLakesProvinces(
       params,
       graph,
       continentJoinImpl,

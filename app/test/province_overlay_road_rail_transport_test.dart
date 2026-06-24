@@ -1,5 +1,6 @@
 // Issue #1537 — Tile section shows numeric road/rail transport level + supplementary GDD labels.
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show buildPlayerView;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -9,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/l10n/app_localizations_en.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
   suppressLogsForTests();
@@ -97,10 +97,12 @@ void main() {
         final region = demoRegionForOverlay;
         final tileKey = sampleTileKeyForProvinceOverlay;
         final humanPlayerId = base.players.first.id;
-        final init = getDebugInitGameResult();
+        // Refs #3656: buildPlayerView ignores its topology argument, so an
+        // empty const MapTopology() replaces the ~11s getDebugInitGameResult()
+        // map generation with identical PlayerView output for this demo game.
         final playerView = buildPlayerView(
           base,
-          init.combinedTopology,
+          const MapTopology(),
           humanPlayerId,
         );
 

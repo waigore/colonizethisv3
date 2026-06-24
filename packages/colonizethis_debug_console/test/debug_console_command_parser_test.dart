@@ -1,5 +1,6 @@
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_logic/debug_console_api.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
@@ -342,6 +343,78 @@ void main() {
       expect(message, contains('/observe\n'));
       expect(message, contains('/observe off'));
       expect(message, contains('/observe <player_id | display_name>'));
+    });
+
+    test('parses /set_diplomacy one-faction form', () {
+      final result = parser.parse('/set_diplomacy Ireland war');
+      expect(result.isError, isFalse);
+      final inv = result.invocation! as DebugConsoleSetDiplomacy;
+      expect(inv.factionA, isNull);
+      expect(inv.factionB, 'Ireland');
+      expect(inv.action, DebugDiplomacyAction.war);
+    });
+
+    test('parses /set_diplomacy two-faction form', () {
+      final result = parser.parse('/set_diplomacy England France alliance');
+      expect(result.isError, isFalse);
+      final inv = result.invocation! as DebugConsoleSetDiplomacy;
+      expect(inv.factionA, 'England');
+      expect(inv.factionB, 'France');
+      expect(inv.action, DebugDiplomacyAction.alliance);
+    });
+
+    test('parses /set_diplomacy multi-word quoted faction name', () {
+      final result = parser.parse('/set_diplomacy "Zulu Kingdom" war');
+      expect(result.isError, isFalse);
+      final inv = result.invocation! as DebugConsoleSetDiplomacy;
+      expect(inv.factionA, isNull);
+      expect(inv.factionB, 'Zulu Kingdom');
+      expect(inv.action, DebugDiplomacyAction.war);
+    });
+
+    test('parses /set_diplomacy snake_case action keyword', () {
+      final result = parser.parse('/set_diplomacy England France no_alliance');
+      expect(result.isError, isFalse);
+      final inv = result.invocation! as DebugConsoleSetDiplomacy;
+      expect(inv.action, DebugDiplomacyAction.noAlliance);
+    });
+
+    test('parses /set_diplomacy action keyword case-insensitively', () {
+      final result = parser.parse('/set_diplomacy Ireland JOIN_EMPIRE');
+      expect(result.isError, isFalse);
+      final inv = result.invocation! as DebugConsoleSetDiplomacy;
+      expect(inv.action, DebugDiplomacyAction.joinEmpire);
+    });
+
+    test('rejects /set_diplomacy with unknown action', () {
+      final result = parser.parse('/set_diplomacy Ireland befriend');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown diplomacy action'));
+    });
+
+    test('rejects /set_diplomacy with no action token', () {
+      final result = parser.parse('/set_diplomacy Ireland');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Usage: /set_diplomacy'));
+    });
+
+    test('rejects /set_diplomacy with too many faction tokens', () {
+      final result = parser.parse('/set_diplomacy A B C war');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Usage: /set_diplomacy'));
+    });
+
+    test('help includes set_diplomacy forms and all actions', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      expect(message, contains('/set_diplomacy <faction> <action>'));
+      expect(
+        message,
+        contains('/set_diplomacy <faction_a> <faction_b> <action>'),
+      );
+      for (final keyword in DebugDiplomacyActionTokens.sortedKeywords) {
+        expect(message, contains(keyword));
+      }
     });
   });
 }

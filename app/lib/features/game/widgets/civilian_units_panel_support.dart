@@ -288,15 +288,12 @@ class _UnitRow extends ConsumerWidget {
                 onTap: isAvailable
                     ? () {
                         Navigator.of(ctx).pop();
-                        bus.emit(const ClosePanelEvent());
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          bus.emit(
-                            StartCivilianWorkTargetSelectionEvent(
-                              unitId: unit.id,
-                              workTarget: target,
-                            ),
-                          );
-                        });
+                        bus.closePanelThenEmit(
+                          StartCivilianWorkTargetSelectionEvent(
+                            unitId: unit.id,
+                            workTarget: target,
+                          ),
+                        );
                       }
                     : null,
                 child: Padding(
@@ -347,19 +344,16 @@ class _UnitRow extends ConsumerWidget {
     if (!_isIdleNoPending || !availableWorkTargetIds.contains(workTarget)) {
       return;
     }
-    bus.emit(const ClosePanelEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      bus.emit(
-        UpsertPendingCivilianWorkOrderRequestedEvent(
-          playerId: humanPlayerId,
-          workOrder: WorkOrder(
-            unitId: unit.id,
-            target: workTarget,
-            targetTileKey: targetTileKey,
-          ),
+    bus.closePanelThenEmit(
+      UpsertPendingCivilianWorkOrderRequestedEvent(
+        playerId: humanPlayerId,
+        workOrder: WorkOrder(
+          unitId: unit.id,
+          target: workTarget,
+          targetTileKey: targetTileKey,
         ),
-      );
-    });
+      ),
+    );
   }
 
   Future<void> _confirmCancel(BuildContext context) async {
@@ -455,10 +449,9 @@ class _UnitRow extends ConsumerWidget {
     if (tileKey == null) return;
     final regionId = Unit.regionIdFromTileKey(tileKey);
     if (regionId == null) return;
-    bus.emit(const ClosePanelEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
-    });
+    bus.closePanelThenEmit(
+      LocateMapTileEvent(tileKey: tileKey, regionId: regionId),
+    );
   }
 
   @override
@@ -595,7 +588,7 @@ class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
                     children: [
                       Expanded(child: widget.details),
                       if (widget.actions.isNotEmpty) ...[
-                        const SizedBox(width: 8),
+                        CtGap.wm,
                         _CivilianUnitCardActions(actions: widget.actions),
                       ],
                     ],

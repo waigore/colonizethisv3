@@ -196,15 +196,30 @@ String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
     return null;
   }
   final cell = region.cellAt(x, y);
-  final raw = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  // R13.4/R13.5 (#3573): known terrain types resolve through the canonical
+  // title-cased display-name helper (never the raw enum `.name`); only the
+  // unknown-id string fallback uses the underscore transform.
+  final terrainType = cell.terrainType;
+  if (terrainType != null) {
+    return terrainDisplayName(terrainType);
+  }
+  final raw = cell.terrainTypeId ?? '—';
   return _economicTerrainTitle(raw);
 }
 
+/// Title-cases an unknown terrain-id fallback string. Splits on underscores
+/// **and** camelCase boundaries so a multi-word id such as `hardwoodForest`
+/// renders as `Hardwood Forest` — never `HardwoodForest` (#3573 R13.5). Known
+/// terrain enums bypass this and use [terrainDisplayName] directly.
 String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
-  return raw
-      .split('_')
-      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+  final spaced = raw
+      .replaceAll('_', ' ')
+      .replaceAllMapped(RegExp(r'(?<=[a-z0-9])(?=[A-Z])'), (_) => ' ');
+  return spaced
+      .split(' ')
+      .where((w) => w.isNotEmpty)
+      .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 
@@ -338,28 +353,10 @@ String _improvementLabelForTileDetail({
 @visibleForTesting
 String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
   return switch (regionId) {
-    'oldWorld' => l10n.region_oldWorld,
-    'newWorld' => l10n.region_newWorld,
+    kRegionOldWorld => l10n.region_oldWorld,
+    kRegionNewWorld => l10n.region_newWorld,
     _ => regionId,
   };
-}
-
-/// Whether [provinceId] is the capital province of any faction (player,
-/// minor nation, or tribe). Capital status is always-exact political intel
-/// (Refs #2865, SPEC § Province overlay content `Political / Economic /
-/// Naval`).
-@visibleForTesting
-bool provinceOverlayIsCapital(Game game, String provinceId) {
-  for (final p in game.players) {
-    if (p.capitalProvinceId == provinceId) return true;
-  }
-  for (final m in game.minorNations) {
-    if (m.capitalProvinceId == provinceId) return true;
-  }
-  for (final t in game.tribes) {
-    if (t.capitalProvinceId == provinceId) return true;
-  }
-  return false;
 }
 
 Widget _buildPoliticalSection({
@@ -473,7 +470,12 @@ Widget _buildTileSection({
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
-  final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  // R13 (#3573): the Tile-section terrain row shows the canonical title-cased
+  // display name for known terrain types, never the raw enum `.name`; the
+  // string-id fallback is title-cased (camelCase spaced) via the shared helper.
+  final terrainStr = cell.terrainType != null
+      ? terrainDisplayName(cell.terrainType!)
+      : _economicTerrainTitle(cell.terrainTypeId ?? '—');
   final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
   final visLevel = playerView.visibilityForTile(selectedTileKey);
   final resourceVisible = resourceIdVisibleInPlayerView(
@@ -562,6 +564,12 @@ Widget _buildTileSection({
   // Tile, Economic improved-row, Military owner sub-header, Civilian
   // own-unit, and Naval fleet-summary live-data rows.
   final bodyStyle = _fgBodyStyle();
+  final designationLine = provinceOverlayTileDesignationLine(
+    l10n: l10n,
+    game: game,
+    provinceId: provinceId,
+    selectedTileKey: selectedTileKey,
+  );
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
     Column(
@@ -570,6 +578,8 @@ Widget _buildTileSection({
       children: [
         Text(l10n.provinceOverlay_tileCoordinates(x, y), style: bodyStyle),
         Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
+        if (designationLine != null)
+          Text(designationLine, style: bodyStyle),
         _buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
@@ -592,15 +602,8 @@ Widget _buildTileSection({
   );
 }
 
-Province? _findProvince(Game game, String provinceId) {
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  return null;
-}
+Province? _findProvince(Game game, String provinceId) =>
+    game.worldState.allProvincesById[provinceId];
 
 // Section header band shared by every province / sea-zone tab body and the
 // wide-layout `sections` column. Renders the canonical CtSectionLabel

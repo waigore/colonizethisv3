@@ -21,6 +21,8 @@
 
 **Banner:** `GameMapControls` shows `Observing: global` or `Observing: <id> (<displayName>)`.
 
+**Shell-entry auto-center:** The in-game map's one-shot capital auto-center and home-to-capital button gate on the current player (`viewingPlayerId`). **Player observe** auto-centers on the observed GP's capital and **enables** the home-to-capital button; **global observe** (`viewingPlayerId == null`) **skips** auto-centering and **disables** the button. See [empire-overview.md](empire-overview.md) § Initial map viewport (shell entry) and § Home-to-capital button.
+
 ---
 
 ## Player-scoped surfaces (P1–P17)

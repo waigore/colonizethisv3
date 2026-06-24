@@ -5,7 +5,6 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_game_feature_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -39,6 +38,8 @@ void main() {
     required bool includeHistory,
     required bool includeDossier,
     required bool atWar,
+    int score = 70,
+    bool formalAlliance = false,
   }) {
     final otherPlayer = Player(
       id: otherFactionId,
@@ -57,8 +58,9 @@ void main() {
     final relation = DiplomacyRelation(
       factionId1: humanPlayerId,
       factionId2: otherFactionId,
-      score: 70,
+      score: score,
       state: atWar ? RelationState.atWar : RelationState.atPeace,
+      formalAlliance: formalAlliance,
     );
 
     return Game(
@@ -100,7 +102,17 @@ void main() {
   testWidgets('DiplomacyDetailScreen shows dossier header for great powers', (
     WidgetTester tester,
   ) async {
-    final game = getDebugInitGameResult().game;
+    // Refs #3656: lightweight gp1/gp2 fixture replaces the ~7-11s
+    // getDebugInitGameResult(); the detail screen only reads players, relations,
+    // history, and dossier entries — no generated map/topology data.
+    final game = minimalGame(
+      humanPlayerId: 'gp1',
+      otherFactionId: 'gp2',
+      eventType: DiplomaticEventType.peace,
+      includeHistory: false,
+      includeDossier: false,
+      atWar: false,
+    );
     final humanPlayerId = game.players.first.id;
 
     final otherPlayer =
@@ -133,7 +145,14 @@ void main() {
   testWidgets(
     'DiplomacyDetailScreen renders either empty or non-empty history',
     (WidgetTester tester) async {
-      final game = getDebugInitGameResult().game;
+      final game = minimalGame(
+        humanPlayerId: 'gp1',
+        otherFactionId: 'gp2',
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+      );
       final humanPlayerId = game.players.first.id;
 
       final allFactionIds = <String>[
@@ -219,7 +238,14 @@ void main() {
   testWidgets(
     'DiplomacyDetailScreen hides Dossier when kind != greatPower and relation is null (empty history)',
     (WidgetTester tester) async {
-      final game = getDebugInitGameResult().game;
+      final game = minimalGame(
+        humanPlayerId: 'gp1',
+        otherFactionId: 'gp2',
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+      );
       final humanPlayerId = game.players.first.id;
 
       final allFactionIds = <String>[
@@ -715,6 +741,97 @@ void main() {
       expect(find.text('CURRENT RELATION'), findsOneWidget);
       final Text peace = tester.widget(find.text('Peace'));
       expect(peace.style?.color, EditorialMonoclePalette.success);
+    },
+  );
+
+  // ----- Refs #3625 AC4: formal-alliance treaty indicator on GAME30002 -----
+
+  testWidgets(
+    'DiplomacyDetailScreen Current relation card shows the ALLIANCE badge '
+    'in --accent for a formal alliance (Refs #3625 AC4)',
+    (WidgetTester tester) async {
+      const humanPlayerId = 'gp1';
+      const otherFactionId = 'gp2';
+      final game = minimalGame(
+        humanPlayerId: humanPlayerId,
+        otherFactionId: otherFactionId,
+        eventType: DiplomaticEventType.allianceFormed,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+        score: 90,
+        formalAlliance: true,
+      );
+      final relation = getRelation(game, humanPlayerId, otherFactionId);
+      expect(relation, isNotNull);
+      expect(relation!.formalAlliance, isTrue);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: DiplomacyDetailScreen(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              factionId: otherFactionId,
+              factionDisplayName: 'Other GP',
+              kind: FactionKind.greatPower,
+              relation: relation,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('CURRENT RELATION'), findsOneWidget);
+      final Finder badge = find.text(kDiplomacyAllianceBadgeLabel);
+      expect(badge, findsOneWidget);
+      final Text badgeText = tester.widget<Text>(badge);
+      expect(badgeText.style?.color, EditorialMonoclePalette.accent);
+      // The treaty marker is distinct from the one-word relation label.
+      expect(kDiplomacyAllianceBadgeLabel, isNot('Friendly'));
+    },
+  );
+
+  testWidgets(
+    'DiplomacyDetailScreen Current relation card omits the ALLIANCE badge '
+    'for the informal Allied band without a treaty (Refs #3625 AC4 negative)',
+    (WidgetTester tester) async {
+      const humanPlayerId = 'gp1';
+      const otherFactionId = 'gp2';
+      final game = minimalGame(
+        humanPlayerId: humanPlayerId,
+        otherFactionId: otherFactionId,
+        eventType: DiplomaticEventType.peace,
+        includeHistory: false,
+        includeDossier: false,
+        atWar: false,
+        score: 90,
+        formalAlliance: false,
+      );
+      final relation = getRelation(game, humanPlayerId, otherFactionId);
+      expect(relation, isNotNull);
+      expect(relation!.formalAlliance, isFalse);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: DiplomacyDetailScreen(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              factionId: otherFactionId,
+              factionDisplayName: 'Other GP',
+              kind: FactionKind.greatPower,
+              relation: relation,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('CURRENT RELATION'), findsOneWidget);
+      expect(find.text(kDiplomacyAllianceBadgeLabel), findsNothing);
+      // The informal high-relation row still shows the one-word label.
+      expect(find.textContaining('Friendly'), findsOneWidget);
     },
   );
 }

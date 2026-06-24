@@ -2,9 +2,9 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'package:logger/logger.dart';
 
+import 'resource_extractor_test_support.dart';
 import 'test_fixtures.dart';
 
 void main() {
@@ -12,37 +12,13 @@ void main() {
     test(
       'returns empty ExtractionTotals when player has no connected tiles',
       () {
-        final player = Player(
-          id: 'pl1',
-          displayName: 'Spain',
-          isHuman: true,
-          capitalProvinceId: 'oldWorld|p1',
-          capitalTile: CapitalTile(
-            regionId: 'oldWorld',
-            provinceId: 'oldWorld|p1',
-            x: 0,
-            y: 0,
-          ),
-        );
-        final game = TestFixtures.minimalGame(
-          id: 'g1',
-          capitalTileGrainBonusPerTurn: 0,
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: 'pl1',
-                townDevelopmentLevel: 4,
-              ),
-            ],
-          ),
-          players: [player],
+        final game = resourceExtractorGame(
+          tileState: const TileMapState(),
         );
         final result = computeExtraction(
           game: game,
           tileMapByRegion: const {},
-          connectivityResult: {'pl1': ConnectivityResult(connected: {})},
+          connectivityResult: connectivityFor(const {}),
           techCapForPlayer: (_) => 4,
         );
         expect(result['pl1']!.land, isEmpty);
@@ -63,17 +39,7 @@ void main() {
         Logger.level = Level.error;
         addTearDown(() => Logger.level = Level.off);
 
-        final grid = [
-          ['p1'],
-        ];
-        final tileMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: grid,
-          resourceGrid: [
-            [Resource.grain],
-          ],
-        );
+        final tileMap = singleTileMap(Resource.grain);
         final tileState = TileMapState()
             .setImprovement('oldWorld|p1|0|0', 2)
             .setRoadLevel('oldWorld|p1|0|0', 2);
@@ -99,9 +65,7 @@ void main() {
         final result = computeExtraction(
           game: game,
           tileMapByRegion: {'oldWorld': tileMap},
-          connectivityResult: {
-            'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-          },
+          connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
           techCapForPlayer: (_) => 4,
         );
         expect(result['pl1']!.land['grain'], isNull);
@@ -144,7 +108,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: const {},
-        connectivityResult: {'pl1': const ConnectivityResult(connected: {})},
+        connectivityResult: connectivityFor(const {}),
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['grain'], 5);
@@ -154,16 +118,7 @@ void main() {
     test(
       'tile extraction contribution excludes aggregate capital grain bonus',
       () {
-        final tileMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: const [
-            ['p1'],
-          ],
-          resourceGrid: const [
-            [Resource.grain],
-          ],
-        );
+        final tileMap = singleTileMap(Resource.grain);
         final player = Player(
           id: 'pl1',
           displayName: 'Spain',
@@ -237,16 +192,7 @@ void main() {
     );
 
     test('tile extraction contribution is null for disconnected tile', () {
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: const [
-          ['p1'],
-        ],
-        resourceGrid: const [
-          [Resource.grain],
-        ],
-      );
+      final tileMap = singleTileMap(Resource.grain);
       final player = Player(
         id: 'pl1',
         displayName: 'Spain',

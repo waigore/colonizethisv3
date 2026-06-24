@@ -1,6 +1,8 @@
 import 'package:colonizethis_logic/debug_console_api.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_console_parse_result.dart';
+import 'debug_console_parser_diplomacy_commands.dart';
 import 'debug_console_parser_helpers.dart';
 import 'debug_console_parser_province_commands.dart';
 import 'debug_console_parsed_invocation.dart';
@@ -39,6 +41,7 @@ class DebugConsoleCommandParser {
       '/get_tile_basic_info' => _parseGetTileBasicInfo(tokens),
       '/list_players' => _parseListPlayers(tokens),
       '/observe' => parseObserveCommand(tokens),
+      '/set_diplomacy' => parseSetDiplomacyCommand(trimmed),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -218,6 +221,7 @@ String _buildHelpMessage() {
   final shipIds = debugConsoleSupportedShipTypeIdsSorted.join(', ');
   final commodityIds = debugConsoleSupportedCommodityIdsSorted.join(', ');
   final workerTierIds = debugConsoleSupportedWorkerTierIdsSorted.join(', ');
+  final diplomacyActions = DebugDiplomacyActionTokens.sortedKeywords.join(', ');
   return 'Supported commands:\n'
       '- /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]\n'
       '- /spawn_regiment <regiment_type_id> [count]\n'
@@ -243,7 +247,10 @@ String _buildHelpMessage() {
       '- /list_players\n'
       '- /observe\n'
       '- /observe off\n'
-      '- /observe <player_id | display_name>';
+      '- /observe <player_id | display_name>\n'
+      '- /set_diplomacy <faction> <action>\n'
+      '- /set_diplomacy <faction_a> <faction_b> <action>\n'
+      '  supported actions: $diplomacyActions';
 }
 
 String? _unitTypeFromAlias(String alias) {

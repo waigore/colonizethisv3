@@ -20,6 +20,7 @@ dependencies:
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
+  colonizethis_economy_test_support:
   colonizethis_logic:
   colonizethis_test:
   coverage: ^1.15.0

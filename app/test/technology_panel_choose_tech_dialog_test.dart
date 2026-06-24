@@ -14,7 +14,8 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_dialog_shell.da
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel_orders.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -23,9 +24,8 @@ void main() {
   late Player basePlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
-    basePlayer = result.game.players.first;
+    game = buildTechnologyPanelTestGame();
+    basePlayer = game.players.first;
   });
 
   Widget host(Game g, Player p, {Orders orders = const Orders()}) {

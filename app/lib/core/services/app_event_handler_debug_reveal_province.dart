@@ -11,28 +11,17 @@ DebugCommandResult applyDebugRevealProvince({
   required MapTopology combinedTopology,
   Map<String, MapTopology>? topologyByRegion,
 }) {
-  if (currentGame == null) {
-    return (
-      game: null,
-      message: 'Debug reveal_province ignored: no active game.',
-    );
-  }
-  if (currentGame.worldState.turnState.phase != TurnPhase.orders) {
-    return (
-      game: null,
-      message:
-          'Debug reveal_province rejected: command is allowed only during human Orders phase.',
-    );
-  }
-  if (findPlayerById(currentGame, event.humanPlayerId) == null) {
-    return (
-      game: null,
-      message:
-          'Debug reveal_province ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
+  final guard = resolveDebugCommandGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.revealProvince,
+    ordersPhaseLabel: DebugCommandLabel.revealProvince,
+    playerId: event.humanPlayerId,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
+  final game = guard.game;
 
-  final resolved = _resolveRevealTarget(currentGame.worldState, event);
+  final resolved = _resolveRevealTarget(game.worldState, event);
   if (resolved.failureMessage != null) {
     return (game: null, message: resolved.failureMessage!);
   }
@@ -45,19 +34,19 @@ DebugCommandResult applyDebugRevealProvince({
   }
 
   final landTileKeys = landTileKeysForProvinceBucket(
-    currentGame.worldState,
+    game.worldState,
     province.regionId,
     province.id,
   );
   final beforeByPlayer =
-      currentGame.worldState.playerVisibilityByTile[event.humanPlayerId] ??
+      game.worldState.playerVisibilityByTile[event.humanPlayerId] ??
       const <String, String>{};
   final afterLand = Map<String, String>.from(beforeByPlayer);
   for (final tileKey in landTileKeys) {
     afterLand[tileKey] = VisibilityLevel.fullyVisible.name;
   }
   final afterWithCoastal = applyCoastalSeaZoneFullVisibilityForProvinceTargets(
-    game: currentGame,
+    game: game,
     playerId: event.humanPlayerId,
     targetProvinceIds: [province.id],
     visibility: afterLand,
@@ -70,16 +59,16 @@ DebugCommandResult applyDebugRevealProvince({
   );
   if (changedCount == 0) {
     return (
-      game: currentGame,
+      game: game,
       message:
           'Debug reveal_province no-op: ${province.id} is already fully revealed for ${event.humanPlayerId}.',
     );
   }
   final visibilityByPlayer = Map<String, Map<String, String>>.from(
-    currentGame.worldState.playerVisibilityByTile,
+    game.worldState.playerVisibilityByTile,
   )..[event.humanPlayerId] = afterWithCoastal;
-  final nextGame = currentGame.copyWith(
-    worldState: currentGame.worldState.copyWith(
+  final nextGame = game.copyWith(
+    worldState: game.worldState.copyWith(
       playerVisibilityByTile: visibilityByPlayer,
     ),
   );

@@ -33,8 +33,6 @@ import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -43,6 +41,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 const Size _kWideViewport = Size(1024, 768);
 
@@ -64,11 +65,15 @@ List<Element> _preorder(Element root) {
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugResult;
+  // Refs #3656: the S13 fidelity pins assert only shell chrome (title-band
+  // suppression, players-bar vs news-card z-order); the map canvas just needs
+  // *a* mapViewData to mount. The lightweight game + minimal mapViewData replace
+  // the ~7-11s getDebugInitGameResult() map generation.
+  final Game baseGame = buildPlayersBarTestGame();
+  final InitGameMapViewData lightMapViewData = buildLightweightMapViewData();
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    debugResult = getDebugInitGameResult();
     Hive.init('./.dart_tool/test_hive_game_screen_s13');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
@@ -111,8 +116,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: gameShellOverrides(
-          game: debugResult.game,
-          mapViewData: debugResult.mapViewData,
+          game: baseGame,
+          mapViewData: lightMapViewData,
         ),
         child: AppEventHandlerScope(
           child: MaterialApp(

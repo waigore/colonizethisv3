@@ -18,13 +18,15 @@ import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 int _argb(Color c) {
   final int a = (c.a * 255.0).round() & 0xFF;
@@ -75,16 +77,17 @@ Widget _editorialMonocleHost({required Widget child}) {
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugInit;
   late Game game;
   late String humanPlayerId;
 
   setUpAll(() {
-    debugInit = getDebugInitGameResult();
-    game = debugInit.game;
-    humanPlayerId = game.players.isNotEmpty
-        ? game.players.firstWhere((p) => p.isHuman).id
-        : game.players.first.id;
+    // Refs #3656: a shared lightweight fixture (civilians + army/regiments +
+    // home/non-home fleets, with capital + train tech) replaces the ~11s
+    // `getDebugInitGameResult()` map generation. These stories assert chrome
+    // only (no exception, no Material chrome, editorial-monocle theme) and never
+    // read generated map/topology data.
+    game = buildUnitPanelsTestGame();
+    humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   });
 
   group('Widgetbook unit panel / train dialog dark chrome (#2866 S6)', () {
@@ -123,7 +126,7 @@ void main() {
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
-              topology: debugInit.combinedTopology,
+              topology: const MapTopology(),
               draftOrders: const Orders(),
             ),
           ),
@@ -147,7 +150,7 @@ void main() {
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
-              topology: debugInit.combinedTopology,
+              topology: const MapTopology(),
             ),
           ),
         ),

@@ -50,12 +50,13 @@ import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/observe_mode_not_defined_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -147,8 +148,11 @@ void main() {
   late Player humanPlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    // Lightweight fixture (Refs #3656): `TradeScreen` reads only `game.players`
+    // (for the supplied `player`), the static `CommodityCatalog` for the market
+    // table, and a default-empty `WorldMarketState` for the Deal Book — no
+    // generated map/topology data — so the procedural map generator is avoided.
+    game = buildTradePanelTestGame();
     humanPlayer = game.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => game.players.first,

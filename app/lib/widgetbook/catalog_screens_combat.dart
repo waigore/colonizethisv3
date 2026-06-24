@@ -55,6 +55,60 @@ List<WidgetbookNode> get trainMilitaryDialogDirectories => [
   ),
 ];
 
+/// Train Naval Dialog stories. SPEC/ui/train-naval-dialog.md.
+List<WidgetbookNode> get trainNavalDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Train Naval Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Standalone',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players
+                    .firstWhere(
+                      (p) => p.isHuman,
+                      orElse: () => game.players.first,
+                    )
+                    .id
+              : game.players.first.id;
+          final player = game.playerById(humanPlayerId) ?? game.players.first;
+          final richGame = game.copyWith(
+            players: [
+              player.copyWith(
+                treasury: 50000,
+                workerPool: player.workerPool.copyWith(peasants: 20),
+                stockpile: player.stockpile.merge(
+                  const Stockpile(
+                    quantities: {
+                      'lumber': 50,
+                      'fabric': 50,
+                      'castIron': 50,
+                      'coal': 50,
+                    },
+                  ),
+                ),
+              ),
+              ...game.players.where((p) => p.id != humanPlayerId),
+            ],
+          );
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainNavalDialog(
+                game: richGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
+
 /// Naval Units Panel + map in tandem. SPEC/ui/naval-units-panel.md.
 class NavalPanelWithMapStory extends StatefulWidget {
   const NavalPanelWithMapStory({super.key});

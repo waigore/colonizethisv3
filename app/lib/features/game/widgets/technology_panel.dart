@@ -9,6 +9,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/research_slot_preview.dart';
 import '../../../widgets/ct_brass_divider.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'technology_panel_orders.dart';
 import 'technology_panel_widgets.dart';
@@ -121,9 +122,9 @@ class TechnologyPanel extends StatelessWidget {
                 ResearchedTechChip(techId: id),
             ],
           ),
-        const SizedBox(height: 16),
+        CtGap.l,
         const CtBrassDivider(),
-        const SizedBox(height: 12),
+        CtGap.ml,
         TechSectionHeading(l10n.technologyPanel_researchSlotsHeading),
         const SizedBox(height: 6),
         // Stretch every slot card to the full panel content width so the

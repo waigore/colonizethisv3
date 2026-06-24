@@ -17,7 +17,8 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | `CtTransferList` | [`ct-transfer-list.md`](ct-transfer-list.md) | `DLG40001` (transfer to home fleet), Split Fleet dialog, Split Army dialog. |
 | `MoveUnitsDialogState` / `MoveDialogDestinationRow` | [`move-units-dialog-base.md`](move-units-dialog-base.md) | `DLG20001` (move army dialog), `DLG30001` (move fleet dialog). |
 | `ProductionAllocationRow` | [`production-allocation-row.md`](production-allocation-row.md) | `GAME20001` (production panel). |
-| `TrainDialogChrome` | [`train-dialog-chrome.md`](train-dialog-chrome.md) | `UNIT40001` (train civilians dialog), `UNIT50001` (train military dialog). |
+| `ResourceIconTooltip` (convention) | [`resource-icon-tooltip.md`](resource-icon-tooltip.md) | `UNIT50001` (train military dialog), `UNIT60001` (train naval dialog), and any icon-only resource glyph. |
+| `TrainDialogChrome` | [`train-dialog-chrome.md`](train-dialog-chrome.md) | `UNIT40001` (train civilians dialog), `UNIT50001` (train military dialog), `UNIT60001` (train naval dialog). |
 | `UnitsEntityActionRow` | [`units-entity-action-row.md`](units-entity-action-row.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
 | `UnitsEntityCard` | [`units-entity-card.md`](units-entity-card.md) | `UNIT20001` (military units panel). |
 | `UnitsPanelSheetSurface` | [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |

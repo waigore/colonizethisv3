@@ -96,6 +96,10 @@ class _CtDialogueViewStoryHarnessState
     }
     final line = view.currentLine;
     final choice = view.currentChoice;
+    // Refs #3628: when a choice is active the immediately-preceding line
+    // (view.contextLine) stays visible above the options so the message and
+    // the confirmation render together — mirroring CtDialogueLineChoiceBody.
+    final contextLine = view.contextLine;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -110,6 +114,10 @@ class _CtDialogueViewStoryHarnessState
               child: const Icon(Icons.arrow_forward),
             ),
           ] else if (choice != null) ...[
+            if (contextLine != null) ...[
+              Text(contextLine.text),
+              const SizedBox(height: 16),
+            ],
             for (var i = 0; i < choice.options.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),

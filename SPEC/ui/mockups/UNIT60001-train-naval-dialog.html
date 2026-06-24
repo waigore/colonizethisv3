@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Train Naval</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --danger: oklch(58% 0.16 22);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.dialog{position:relative;z-index:1;width:min(92vw,440px);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 15%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:16px 20px}
+.dialog h3{font-family:var(--font-display);font-size:clamp(16px,2.2vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center;margin-bottom:10px}
+.resource-bar{display:flex;flex-wrap:wrap;justify-content:space-around;align-items:center;gap:6px;padding:8px;background:var(--bg-deep);border:1px solid var(--border);margin-bottom:6px;font-size:11px}.resource-bar span{color:var(--muted)}.resource-bar .val{color:var(--fg);font-family:monospace;font-weight:700;margin-left:3px}
+.resource-bar .val.danger{color:var(--danger)}
+.deficit{font-size:11px;color:var(--danger);font-style:italic;text-align:center;margin-bottom:8px}
+.unit-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);margin-bottom:6px;flex-wrap:wrap}
+.unit-row.locked{opacity:0.5}
+.unit-row .info{flex:1;min-width:120px}.unit-row .name{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--fg);letter-spacing:0.03em;margin-bottom:3px}.unit-row .cost{font-size:11px;color:var(--muted)}.unit-row .cost .danger{color:var(--danger)}.unit-row .lock-reason{font-size:10px;color:var(--muted);font-style:italic}
+.stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.stepper .btn{padding:3px 10px;font-family:monospace;font-size:14px;font-weight:700;cursor:pointer;border:none;min-width:28px;transition:color 0.15s}
+.stepper .btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.stepper .btn-minus:hover:not(:disabled){color:var(--fg)}.stepper .btn-minus:disabled{opacity:0.3;cursor:not-allowed}
+.stepper .btn-plus{background:var(--surface-lite);border:1px solid var(--accent-dim);color:var(--accent)}.stepper .btn-plus:hover:not(:disabled){color:var(--accent)}.stepper .btn-plus:disabled{opacity:0.3;cursor:not-allowed}
+/* Resource-blocked [+] (insufficient stockpile, not tech-locked): danger border/label at full opacity, distinct from the neutral tech-locked disabled look. */
+.stepper .btn-plus.btn-danger:disabled{opacity:1;background:var(--bg-deep);border:1px solid var(--danger);color:var(--danger)}
+.stepper .count{font-family:monospace;font-size:14px;font-weight:700;color:var(--fg);min-width:20px;text-align:center}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+.btn-act{padding:8px 18px;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.05em;cursor:pointer;border:none;transition:color 0.15s}
+.btn-reset{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-reset:hover{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="scrim" onclick="location.reload()"></div>
+<div class="dialog">
+  <h3>Train Naval</h3>
+  <div class="resource-bar" id="resbar"></div>
+  <p class="deficit" id="deficit" style="display:none"></p>
+  <div id="units"></div>
+  <div class="actions">
+    <button class="btn-act btn-reset" onclick="resetAll()">Reset</button>
+  </div>
+</div>
+<script>
+// Resource keys consumed by naval training, in display order: treasury,
+// peasants, and the union of all ship-input commodities (lumber, fabric,
+// cast iron, coal) per SPEC/ui/train-naval-dialog.md § Resource bar.
+const KEYS=['treasury','peasants','lumber','fabric','castIron','coal']
+const LABEL={treasury:'Treasury',peasants:'Peasants',lumber:'Lumber',fabric:'Fabric',castIron:'Cast Iron',coal:'Coal'}
+// Cost-line segment labels (resource noun shown next to the quantity).
+const COST_LABEL={peasants:'peasant',lumber:'lumber',fabric:'fabric',castIron:'cast iron',coal:'coal'}
+// Every ship costs 1 peasant. Costs mirror ShipEconomyCatalog; lock/unlock
+// state here is illustrative (a representative mid-game tech state) rather
+// than a literal tech-tree projection.
+const units=[
+  {id:'carrack',name:'Carrack',treasury:8000,peasants:1,lumber:2,fabric:1,locked:false},
+  {id:'fluyte',name:'Fluyte',treasury:6000,peasants:1,lumber:1,fabric:1,locked:false},
+  {id:'sloop',name:'Sloop',treasury:5500,peasants:1,lumber:1,fabric:1,locked:false},
+  {id:'trader',name:'Trader',treasury:7500,peasants:1,lumber:2,fabric:2,locked:false},
+  {id:'galleon',name:'Galleon',treasury:9500,peasants:1,lumber:3,fabric:2,locked:false},
+  {id:'raider',name:'Raider',treasury:11500,peasants:1,lumber:2,fabric:1,castIron:2,locked:false},
+  {id:'indiaman',name:'Indiaman',treasury:11000,peasants:1,lumber:3,fabric:3,locked:true,tech:'Large Hulls'},
+  {id:'frigate',name:'Frigate',treasury:10500,peasants:1,lumber:2,fabric:2,locked:true,tech:'Advanced Hull Design'},
+  {id:'ship_of_the_line',name:'Ship of the Line',treasury:16500,peasants:1,lumber:5,fabric:3,locked:true,tech:'Ship of the Line'},
+  {id:'clipper',name:'Clipper',treasury:13500,peasants:1,lumber:3,fabric:3,locked:true,tech:'Clipper Ships'},
+  {id:'merchant_steamship',name:'Merchant Steamship',treasury:15500,peasants:1,lumber:2,fabric:2,coal:3,locked:true,tech:'Merchant Steamships'},
+  {id:'ironclad',name:'Ironclad',treasury:21000,peasants:1,lumber:2,fabric:2,castIron:5,locked:true,tech:'Advanced Iron Working'}
+]
+const res={treasury:50000,peasants:20,lumber:10,fabric:10,castIron:1,coal:6}
+// Default deficit scenario (#3568 AC): one queued Raider commits 2 cast iron
+// against a stockpile of 1, so the `Cast Iron low` hint, the cast-iron cost
+// segment danger colour, and the Raider's danger [+] variant show on load,
+// while the cast-iron-free hulls stay affordable (mixed state).
+let counts={};units.forEach(u=>{counts[u.id]=0})
+counts.raider=1
+function committed(){
+  let tot={};KEYS.forEach(k=>tot[k]=0)
+  units.forEach(u=>{KEYS.forEach(k=>{tot[k]+=counts[u.id]*(u[k]||0)})})
+  return tot
+}
+function remaining(){const tot=committed();let r={};KEYS.forEach(k=>r[k]=res[k]-tot[k]);return r}
+function fmt(k,v){return k==='treasury'?'\u00a3'+v.toLocaleString():''+v}
+function deficitCheck(){
+  const tot=committed()
+  const msgs=KEYS.filter(k=>tot[k]>res[k]).map(k=>LABEL[k]+' low')
+  const d=document.getElementById('deficit')
+  d.style.display=msgs.length?'block':'none';d.textContent=msgs.join(', ')
+}
+// Affordable for one more iff remaining covers every resource the ship needs.
+function canAdd(id){
+  const u=units.find(x=>x.id===id);if(!u||u.locked)return false
+  const r=remaining();return KEYS.every(k=>r[k]>=(u[k]||0))
+}
+function adjust(id,d){
+  if(d<0&&counts[id]<=0)return;if(d>0&&!canAdd(id))return
+  counts[id]+=d;if(counts[id]<0)counts[id]=0;render()
+}
+function resetAll(){units.forEach(u=>{counts[u.id]=0});render()}
+function renderResbar(){
+  const r=remaining()
+  document.getElementById('resbar').innerHTML=KEYS.map(k=>
+    `<span>${LABEL[k]}: <span class="val${r[k]<0?' danger':''}">${fmt(k,r[k])} / ${fmt(k,res[k])}</span></span>`
+  ).join('')
+}
+// Each cost segment turns danger when remaining for that resource cannot cover
+// one more of this ship (skipped for tech-locked rows, which read neutral).
+function costHtml(u,r){
+  const seg=k=>{const q=u[k]||0;if(!q)return null
+    const danger=!u.locked&&r[k]<q;const label=k==='treasury'?fmt('treasury',u.treasury):q+' '+COST_LABEL[k]
+    return `<span class="${danger?'danger':''}">${label}</span>`}
+  const parts=KEYS.map(seg).filter(Boolean)
+  return parts[0]+' + '+parts.slice(1).join(', ')
+}
+function render(){
+  renderResbar();deficitCheck()
+  const r=remaining()
+  document.getElementById('units').innerHTML=units.map(u=>{
+    const blocked=!u.locked&&!canAdd(u.id)
+    return `
+    <div class="unit-row${u.locked?' locked':''}">
+      <div class="info"><div class="name">${u.locked?'&#x1F512; ':''}${u.name}</div>
+      <div class="cost">${costHtml(u,r)}</div>
+      ${u.locked?`<div class="lock-reason">Requires: ${u.tech}</div>`:''}</div>
+      <div class="stepper">
+        <button class="btn btn-minus" ${u.locked?'disabled':''} onclick="adjust('${u.id}',-1)" ${counts[u.id]<=0?'disabled':''}>&#x2212;</button>
+        <span class="count">${counts[u.id]}</span>
+        <button class="btn btn-plus${blocked?' btn-danger':''}" ${u.locked||blocked?'disabled':''} onclick="adjust('${u.id}',1)">+</button>
+      </div>
+    </div>`}).join('')
+}
+render()
+</script>
+</body>
+</html>

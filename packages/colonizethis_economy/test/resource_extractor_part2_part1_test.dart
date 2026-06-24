@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 
+import 'resource_extractor_test_support.dart';
 import 'test_fixtures.dart';
 
 void main() {
@@ -69,13 +70,10 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(
-            connected: {tileKey},
-            pathTransportCap: {tileKey: 4},
-            connectedByRoadRule: const {},
-          ),
-        },
+        connectivityResult: connectivityFor(
+          {tileKey},
+          pathTransportCap: {tileKey: 4},
+        ),
         techCapForPlayer: (_) => 4,
       );
       expect(
@@ -88,17 +86,7 @@ void main() {
     });
 
     test('overseas totals when connected tile in different region', () {
-      final gridNw = [
-        ['n1'],
-      ];
-      final tileMapNw = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: gridNw,
-        resourceGrid: [
-          [Resource.sugarCane],
-        ],
-      );
+      final tileMapNw = singleTileMap(Resource.sugarCane, province: 'n1');
       final tileState = TileMapState()
           .setImprovement('newWorld|n1|0|0', 1)
           .setRoadLevel('newWorld|n1|0|0', 1);
@@ -138,21 +126,10 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {
-          'oldWorld': TileMapResult(
-            width: 1,
-            height: 1,
-            grid: [
-              ['p1'],
-            ],
-            resourceGrid: [
-              [null],
-            ],
-          ),
+          'oldWorld': singleTileMap(null),
           'newWorld': tileMapNw,
         },
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: {'newWorld|n1|0|0'}),
-        },
+        connectivityResult: connectivityFor({'newWorld|n1|0|0'}),
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.overseas['sugarCane'], 1);
@@ -299,49 +276,11 @@ void main() {
     test('effective yield capped by min transport level along path to capital', () {
       // SPEC: effective yield = min(production, tech cap, town dev, min transport along path).
       // When pathTransportCap is provided, it caps yield (e.g. path with road-1 segment → cap 1).
-      final grid = [
-        ['p1'],
-      ];
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: grid,
-        resourceGrid: [
-          [Resource.grain],
-        ],
-      );
+      final tileMap = singleTileMap(Resource.grain);
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 3)
           .setRoadLevel('oldWorld|p1|0|0', 3);
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        capitalTileGrainBonusPerTurn: 0,
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              ownerId: 'pl1',
-              townDevelopmentLevel: 4,
-            ),
-          ],
-        ),
-        tileState: tileState,
-        players: [
-          Player(
-            id: 'pl1',
-            displayName: 'Spain',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|p1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|p1',
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-      );
+      final game = resourceExtractorGame(tileState: tileState);
       final connectivity = resolveConnectivity(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
@@ -360,12 +299,10 @@ void main() {
       final resultWithPathCap = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(
-            connected: {'oldWorld|p1|0|0'},
-            pathTransportCap: {'oldWorld|p1|0|0': 1},
-          ),
-        },
+        connectivityResult: connectivityFor(
+          {'oldWorld|p1|0|0'},
+          pathTransportCap: {'oldWorld|p1|0|0': 1},
+        ),
         techCapForPlayer: (_) => 4,
       );
       expect(resultWithPathCap['pl1']!.land['grain'], 1);

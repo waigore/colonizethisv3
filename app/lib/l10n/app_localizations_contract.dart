@@ -870,6 +870,9 @@ abstract class AppLocalizations {
   /// Train military dialog title.
   String get trainMilitary_title;
 
+  /// Train naval dialog title.
+  String get trainNaval_title;
+
   /// Error text when player has no capital in train dialogs.
   String get trainUnits_noCapital;
 
@@ -887,6 +890,47 @@ abstract class AppLocalizations {
 
   /// Peasants summary line in military train dialog.
   String trainUnits_peasants(int value);
+
+  /// Peasants label with a preformatted remaining/total value (e.g. '7 / 8')
+  /// in the train military dialog resource bar.
+  String trainUnits_peasantsValue(String value);
+
+  /// Tooltip shown when hovering (desktop) or tapping (mobile) the treasury
+  /// coin icon in a train-dialog unit-row cost summary.
+  String get trainDialog_costTreasuryTooltip;
+
+  /// Tooltip shown when hovering (desktop) or tapping (mobile) the peasant
+  /// worker icon in a train-dialog unit-row cost summary.
+  String get trainDialog_costPeasantsTooltip;
+
+  /// Tooltip shown for a commodity resource icon in a train-dialog unit-row
+  /// cost summary, combining the commodity display name and its category
+  /// (e.g. 'Fabric (manufactured)').
+  String trainDialog_costCommodityTooltip(String name, String category);
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.food.
+  String get commodityCategory_food;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.rawMaterial.
+  String get commodityCategory_rawMaterial;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.manufactured.
+  String get commodityCategory_manufactured;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.luxury.
+  String get commodityCategory_luxury;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.riches.
+  String get commodityCategory_riches;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.advanced.
+  String get commodityCategory_advanced;
 
   /// Civilian units panel title.
   String get civilian_units_title;
@@ -1223,6 +1267,14 @@ abstract class AppLocalizations {
   /// Tile section terrain row.
   String provinceOverlay_tileTerrain(String terrain);
 
+  /// Tile section designation line shown when the selected tile is the
+  /// province town (and not a capital).
+  String provinceOverlay_tileTownOf(String provinceName);
+
+  /// Tile section designation line shown when the selected tile is a
+  /// faction's capital tile.
+  String provinceOverlay_tileCapitalOf(String provinceName, String factionName);
+
   /// Tile section resource label prefix before inline icon/name.
   String get provinceOverlay_tileResourcePrefix;
 
@@ -1430,6 +1482,30 @@ abstract class AppLocalizations {
   /// Great power military/economic score label in diplomacy row.
   String diplomacy_panel_powerScore(int score);
 
+  /// Muted prefix for the Great Power relative-power line.
+  String get diplomacy_relativePower_label;
+
+  /// Relative-power tier word for `−10 … +10` (roughly equal).
+  String get diplomacy_relativePower_tierRoughlyEqual;
+
+  /// Relative-power tier word for `+11 … +30` (superior).
+  String get diplomacy_relativePower_tierSuperior;
+
+  /// Relative-power tier word for `>= +31` (vastly superior).
+  String get diplomacy_relativePower_tierVastlySuperior;
+
+  /// Relative-power tier word for `−30 … −11` (inferior).
+  String get diplomacy_relativePower_tierInferior;
+
+  /// Relative-power tier word for `<= −31` (vastly inferior).
+  String get diplomacy_relativePower_tierVastlyInferior;
+
+  /// Tooltip explaining what the relative-power comparison measures.
+  String get diplomacy_relativePower_tooltip;
+
+  /// Screen-reader label combining the relative-power percentage and tier.
+  String diplomacy_relativePower_semantics(String pct, String tier);
+
   /// Line showing active subsidy to another faction.
   String diplomacy_panel_outgoingSubsidy(int amount, String target);
 
@@ -1505,6 +1581,10 @@ abstract class AppLocalizations {
 
   /// Commodity name and stock quantity in train military dialog.
   String trainMilitary_commodityAmount(String name, int qty);
+
+  /// Commodity name and a preformatted remaining/total value (e.g. '2 / 5')
+  /// in the train military dialog resource bar.
+  String trainMilitary_commodityValue(String name, String value);
 
   /// Treasury cost plus paper requirement for training civilians.
   String trainCivilians_costLine(String treasury, String paper);

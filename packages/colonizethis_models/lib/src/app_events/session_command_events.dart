@@ -159,6 +159,18 @@ class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
   final List<BuildUnitOrder> orders;
 }
 
+/// Train naval dialog close: shell merges into current-turn orders draft.
+///
+/// Carries naval [BuildUnitOrder]s (`isMilitary: false`, ship unit types
+/// spawned at the player's capital). The shell listener replaces only
+/// dialog-managed naval build orders, leaving civilian build orders intact.
+/// SPEC/ui/train-naval-dialog.md, SPEC/program/app-ui-wiring.md.
+class TrainNavalBuildOrdersCommittedEvent extends SessionCommandEvent {
+  TrainNavalBuildOrdersCommittedEvent({required this.orders});
+
+  final List<BuildUnitOrder> orders;
+}
+
 /// Immediate debug spawn at the human player's capital tile.
 class SpawnDebugCivilianAtCapitalEvent extends SessionCommandEvent {
   const SpawnDebugCivilianAtCapitalEvent({
@@ -278,6 +290,32 @@ class RevealDebugProvinceEvent extends SessionCommandEvent {
   final String humanPlayerId;
   final String target;
   final bool targetIsFullProvinceId;
+}
+
+/// Immediate debug diplomacy relation mutation between two factions.
+///
+/// When [factionA] is `null`, the active human player ([humanPlayerId]) is the
+/// first faction. [factionB] and the optional [factionA] are raw identifier
+/// inputs (faction id or display name) resolved by the app apply handler.
+/// Directly mutates `Game` state (bypasses normal diplomacy resolution).
+/// SPEC/ui/debug-console-panel.md, SPEC/program/debug-console-internals.md.
+class SetDebugDiplomacyRelationEvent extends SessionCommandEvent {
+  const SetDebugDiplomacyRelationEvent({
+    required this.humanPlayerId,
+    required this.factionB,
+    required this.action,
+    this.factionA,
+  });
+
+  final String humanPlayerId;
+
+  /// First faction (initiator) raw input; `null` means the active human player.
+  final String? factionA;
+
+  /// Second faction (target) raw input. Never empty.
+  final String factionB;
+
+  final DebugDiplomacyAction action;
 }
 
 /// Exit in-app observe mode. SPEC/ui/observe-mode.md.

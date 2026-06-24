@@ -1,5 +1,4 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show kRegionNewWorld;
 import 'package:colonizethis_logic/debug_console_api.dart'
     show resolveCivilianSpawnTileKey;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -11,16 +10,14 @@ DebugCommandResult applyDebugCivilianSpawnAtCapital({
   required Game? currentGame,
   required SpawnDebugCivilianAtCapitalEvent event,
 }) {
-  if (currentGame == null) {
-    return (game: null, message: 'Debug spawn ignored: no active game.');
-  }
-  final player = findPlayerById(currentGame, event.humanPlayerId);
-  if (player == null) {
-    return (
-      game: null,
-      message: 'Debug spawn ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
+  final guard = resolveSpawnDebugGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.spawn,
+    playerId: event.humanPlayerId,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
+  final player = guard.player;
   if (CivilianEconomyCatalog.byId[event.unitType] == null) {
     return (
       game: null,
@@ -29,11 +26,11 @@ DebugCommandResult applyDebugCivilianSpawnAtCapital({
     );
   }
   if (event.count < 1) {
-    return (game: null, message: 'Debug spawn ignored: count must be >= 1.');
+    return debugCountBelowMin(DebugCommandLabel.spawn);
   }
   final spawnTileKey = resolveCivilianSpawnTileKey(
     player: player,
-    worldState: currentGame.worldState,
+    worldState: guard.game.worldState,
   );
   final spawnProvinceId = Unit.provinceIdFromTileKey(spawnTileKey);
   final spawnRegionId = Unit.regionIdFromTileKey(spawnTileKey);
@@ -47,8 +44,8 @@ DebugCommandResult applyDebugCivilianSpawnAtCapital({
   }
   final boundedCount = event.count > 25 ? 25 : event.count;
   final allUnits = <Unit>[
-    ...currentGame.worldState.oldWorld.units,
-    ...currentGame.worldState.newWorld.units,
+    ...guard.game.worldState.oldWorld.units,
+    ...guard.game.worldState.newWorld.units,
   ];
   final usedUnitIds = {for (final unit in allUnits) unit.id};
   var nextUnitSeq = nextCanonicalUnitSequence(units: allUnits);
@@ -69,20 +66,13 @@ DebugCommandResult applyDebugCivilianSpawnAtCapital({
       ),
     );
   }
-  final world = currentGame.worldState;
-  final oldUnits = List<Unit>.from(world.oldWorld.units);
-  final newUnits = List<Unit>.from(world.newWorld.units);
-  if (spawnRegionId == kRegionNewWorld) {
-    newUnits.addAll(spawned);
-  } else {
-    oldUnits.addAll(spawned);
-  }
-  final updatedWorld = world.copyWith(
-    oldWorld: RegionData(provinces: world.oldWorld.provinces, units: oldUnits),
-    newWorld: RegionData(provinces: world.newWorld.provinces, units: newUnits),
+  final updatedWorld = appendUnitsToRegion(
+    guard.game.worldState,
+    spawnRegionId,
+    spawned,
   );
   return (
-    game: currentGame.copyWith(worldState: updatedWorld),
+    game: guard.game.copyWith(worldState: updatedWorld),
     message:
         'Spawned ${spawned.length} ${event.unitType} at ${player.displayName} capital.',
   );

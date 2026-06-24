@@ -11,10 +11,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
 import '../../../config/editorial_monocle_palette.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'chrome/ct_action_text_button.dart';
 import 'chrome/ct_circular_locate_button.dart';
@@ -319,10 +321,9 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
               if (key == null || key.isEmpty) {
                 return;
               }
-              widget.bus.emit(const ClosePanelEvent());
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
-              });
+              widget.bus.closePanelThenEmit(
+                OpenMapTileDetailEvent(tileKey: key),
+              );
             },
             label: l10n.civilian_units_tile,
           ),
@@ -332,10 +333,9 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
           onPressed: widget.readOnly
               ? null
               : () {
-                  widget.bus.emit(const ClosePanelEvent());
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    widget.bus.emit(OpenDialogEvent(trainCiviliansDialogId));
-                  });
+                  widget.bus.closePanelThenEmit(
+                    OpenDialogEvent(trainCiviliansDialogId),
+                  );
                 },
           label: l10n.common_train,
         ),
@@ -343,7 +343,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       hasContent: hasAny,
       listChildren: [
         ..._civilianListChildrenForRegion(
-          regionId: 'oldWorld',
+          regionId: kRegionOldWorld,
           units: scopedOw,
           multiOwner: multiOwner,
           game: widget.game,
@@ -353,7 +353,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
           onSelectUnit: (id) => setState(() => _selectedUnitId = id),
         ),
         ..._civilianListChildrenForRegion(
-          regionId: 'newWorld',
+          regionId: kRegionNewWorld,
           units: scopedNw,
           multiOwner: multiOwner,
           game: widget.game,

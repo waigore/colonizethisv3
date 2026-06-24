@@ -17,7 +17,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -167,9 +168,13 @@ void main() {
 
   setUpAll(() async {
     await _preWarmFlameImageCache();
-    final result = getDebugInitGameResult();
-    gameWithFactions = result.game;
-    topology = result.combinedTopology;
+    // Refs #3656: lightweight discovered-GP fixture replaces the ~7-11s
+    // getDebugInitGameResult() map generation. These chrome suites only read a
+    // discovered Great Power row (relation badges + action buttons), which the
+    // fixture's at-peace gp1↔gp2 relation provides; no generated map/topology
+    // data is consumed.
+    gameWithFactions = buildDiplomacyPanelTestGame();
+    topology = const MapTopology();
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';

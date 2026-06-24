@@ -28,7 +28,12 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 .stepper .btn{padding:3px 10px;font-family:monospace;font-size:14px;font-weight:700;cursor:pointer;border:none;min-width:28px;transition:color 0.15s}
 .stepper .btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.stepper .btn-minus:hover:not(:disabled){color:var(--fg)}.stepper .btn-minus:disabled{opacity:0.3;cursor:not-allowed}
 .stepper .btn-plus{background:var(--surface-lite);border:1px solid var(--accent-dim);color:var(--accent)}.stepper .btn-plus:hover:not(:disabled){color:var(--accent)}.stepper .btn-plus:disabled{opacity:0.3;cursor:not-allowed}
+/* Resource-blocked [+] (insufficient stockpile, not tech-locked): danger border/label at full opacity, distinct from the neutral tech-locked disabled look. */
+.stepper .btn-plus.btn-danger:disabled{opacity:1;background:var(--bg-deep);border:1px solid var(--danger);color:var(--danger)}
 .stepper .count{font-family:monospace;font-size:14px;font-weight:700;color:var(--fg);min-width:20px;text-align:center}
+/* Per-segment cost danger: a cost item turns red when the remaining stockpile cannot cover one more of this unit. */
+.unit-row .cost .danger{color:var(--danger)}
+.resource-bar .val.danger{color:var(--danger)}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
 .btn-act{padding:8px 18px;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.05em;cursor:pointer;border:none;transition:color 0.15s}
 .btn-reset{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-reset:hover{color:var(--fg)}
@@ -38,13 +43,7 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 <div class="scrim" onclick="location.reload()"></div>
 <div class="dialog">
   <h3>Train Military</h3>
-  <div class="resource-bar">
-    <span>Treasury: <span class="val">&#xa3;8,000</span></span>
-    <span>Peasants: <span class="val">24</span></span>
-    <span>Fabric: <span class="val">8</span></span>
-    <span>Cast Iron: <span class="val">6</span></span>
-    <span>Horses: <span class="val">4</span></span>
-  </div>
+  <div class="resource-bar" id="resbar"></div>
   <p class="deficit" id="deficit" style="display:none"></p>
   <div id="units"></div>
   <div class="actions">
@@ -52,6 +51,11 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
   </div>
 </div>
 <script>
+// Resource keys consumed by military training, in display order.
+const KEYS=['treasury','peasants','fabric','castIron','horses']
+const LABEL={treasury:'Treasury',peasants:'Peasants',fabric:'Fabric',castIron:'Cast Iron',horses:'Horses'}
+// Cost-line segment labels (singular resource noun shown next to the quantity).
+const COST_LABEL={peasants:'peasant',fabric:'fabric',castIron:'cast iron',horses:'horses'}
 const units=[
   {id:'peasant_levies',name:'Peasant Levies',treasury:500,fabric:1,peasants:1,locked:false},
   {id:'line_infantry',name:'Line Infantry',treasury:1200,fabric:2,castIron:1,peasants:1,locked:false},
@@ -60,50 +64,66 @@ const units=[
   {id:'dragoons',name:'Dragoons',treasury:2500,fabric:2,horses:3,castIron:1,peasants:1,locked:true,tech:'Dragoon Regiments'},
   {id:'siege_guns',name:'Siege Guns',treasury:3000,castIron:3,peasants:1,locked:true,tech:'Siege Artillery'}
 ]
+const res={treasury:8000,peasants:24,fabric:8,castIron:6,horses:4}
+// Default deficit scenario (#3568 AC): queued line infantry + light cavalry
+// exceed treasury, fabric, and horses so the comma-joined deficit hint,
+// per-segment danger colour, and danger [+] variant are all visible on load.
 let counts={};units.forEach(u=>{counts[u.id]=0})
-let res={treasury:8000,peasants:24,fabric:8,castIron:6,horses:4}
+counts.line_infantry=3;counts.light_cavalry=3
+function committed(){
+  let tot={};KEYS.forEach(k=>tot[k]=0)
+  units.forEach(u=>{KEYS.forEach(k=>{tot[k]+=counts[u.id]*(u[k]||0)})})
+  return tot
+}
+function remaining(){const tot=committed();let r={};KEYS.forEach(k=>r[k]=res[k]-tot[k]);return r}
+function fmt(k,v){return k==='treasury'?'\u00a3'+v.toLocaleString():''+v}
 function deficitCheck(){
-  let tot={treasury:0,peasants:0,fabric:0,castIron:0,horses:0}
-  units.forEach(u=>{
-    Object.keys(tot).forEach(k=>{tot[k]+=counts[u.id]*(u[k]||0)})
-    tot.peasants+=counts[u.id]*(u.peasants||0)
-  })
-  let msgs=[]
-  if(tot.treasury>res.treasury)msgs.push('Treasury low')
-  if(tot.peasants>res.peasants)msgs.push('Peasants low')
-  if(tot.fabric>res.fabric)msgs.push('Fabric low')
-  if(tot.castIron>res.castIron)msgs.push('Cast Iron low')
-  if(tot.horses>res.horses)msgs.push('Horses low')
+  const tot=committed()
+  const msgs=KEYS.filter(k=>tot[k]>res[k]).map(k=>LABEL[k]+' low')
   const d=document.getElementById('deficit')
   d.style.display=msgs.length?'block':'none';d.textContent=msgs.join(', ')
 }
+// A unit is affordable for one more iff remaining covers every resource it needs.
 function canAdd(id){
   const u=units.find(x=>x.id===id);if(!u||u.locked)return false
-  let tot={treasury:0,peasants:0,fabric:0,castIron:0,horses:0}
-  units.forEach(x=>{
-    Object.keys(tot).forEach(k=>{tot[k]+=counts[x.id]*(x[k]||0)})
-    tot.peasants+=counts[x.id]*(x.peasants||0)
-  })
-  const test={treasury:tot.treasury+(u.treasury||0),peasants:tot.peasants+(u.peasants||0),fabric:tot.fabric+(u.fabric||0),castIron:tot.castIron+(u.castIron||0),horses:tot.horses+(u.horses||0)}
-  return test.treasury<=res.treasury&&test.peasants<=res.peasants&&test.fabric<=res.fabric&&test.castIron<=res.castIron&&test.horses<=res.horses
+  const r=remaining();return KEYS.every(k=>r[k]>=(u[k]||0))
 }
 function adjust(id,d){
   if(d<0&&counts[id]<=0)return;if(d>0&&!canAdd(id))return
-  counts[id]+=d;if(counts[id]<0)counts[id]=0;deficitCheck();render()
+  counts[id]+=d;if(counts[id]<0)counts[id]=0;render()
 }
-function resetAll(){units.forEach(u=>{counts[u.id]=0});deficitCheck();render()}
+function resetAll(){units.forEach(u=>{counts[u.id]=0});render()}
+function renderResbar(){
+  const r=remaining()
+  document.getElementById('resbar').innerHTML=KEYS.map(k=>
+    `<span>${LABEL[k]}: <span class="val${r[k]<0?' danger':''}">${fmt(k,r[k])} / ${fmt(k,res[k])}</span></span>`
+  ).join('')
+}
+// Each cost segment turns danger when remaining for that resource cannot cover
+// one more of this unit (skipped for tech-locked rows, which read neutral).
+function costHtml(u,r){
+  const seg=k=>{const q=u[k]||0;if(!q)return null
+    const danger=!u.locked&&r[k]<q;const label=k==='treasury'?fmt('treasury',u.treasury):q+' '+COST_LABEL[k]
+    return `<span class="${danger?'danger':''}">${label}</span>`}
+  const parts=KEYS.map(seg).filter(Boolean)
+  return parts[0]+' + '+parts.slice(1).join(', ')
+}
 function render(){
-  document.getElementById('units').innerHTML=units.map(u=>`
+  renderResbar();deficitCheck()
+  const r=remaining()
+  document.getElementById('units').innerHTML=units.map(u=>{
+    const blocked=!u.locked&&!canAdd(u.id)
+    return `
     <div class="unit-row${u.locked?' locked':''}">
       <div class="info"><div class="name">${u.locked?'&#x1F512; ':''}${u.name}</div>
-      <div class="cost">\u00a3${u.treasury.toLocaleString()} + ${[u.peasants?u.peasants+' peasant':null,u.fabric?u.fabric+' fabric':null,u.castIron?u.castIron+' cast iron':null,u.horses?u.horses+' horses':null].filter(Boolean).join(', ')}</div>
+      <div class="cost">${costHtml(u,r)}</div>
       ${u.locked?`<div class="lock-reason">Requires: ${u.tech}</div>`:''}</div>
       <div class="stepper">
         <button class="btn btn-minus" ${u.locked?'disabled':''} onclick="adjust('${u.id}',-1)" ${counts[u.id]<=0?'disabled':''}>&#x2212;</button>
         <span class="count">${counts[u.id]}</span>
-        <button class="btn btn-plus" ${u.locked?'disabled':''} onclick="adjust('${u.id}',1)" ${!canAdd(u.id)?'disabled':''}>+</button>
+        <button class="btn btn-plus${blocked?' btn-danger':''}" ${u.locked||blocked?'disabled':''} onclick="adjust('${u.id}',1)">+</button>
       </div>
-    </div>`).join('')
+    </div>`}).join('')
 }
 render()
 </script>

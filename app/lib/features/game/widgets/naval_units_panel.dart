@@ -12,6 +12,9 @@ import 'package:flutter/material.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/services/app_event_bus_panel_nav.dart';
+import '../../../core/services/app_event_handler_scope.dart'
+    show trainNavalDialogId;
 import '../../../l10n/l10n.dart';
 import 'chrome/ct_action_text_button.dart';
 import 'fleet_expansion_tile.dart';
@@ -23,7 +26,6 @@ import 'transfer_to_home_fleet_dialog.dart';
 import 'units/shared/base_units_panel.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
-import 'units/shared/units_panel_shell.dart';
 import '../utils/region_labels.dart';
 
 class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
@@ -67,10 +69,6 @@ class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
 
 class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
   final Set<String> _visibleScopedFleetIds = <String>{};
-  static const double _desktopViewportThreshold = 1280;
-  static const double _scaledWidthMin = 420;
-  static const double _scaledWidthMax = 640;
-  static const double _scaledViewportFactor = 0.36;
   StreamSubscription<NavalMoveFleetRequestedEvent>? _moveRequestedSub;
   bool _pendingScopedAutoCloseAfterMove = false;
 
@@ -109,8 +107,9 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
     final rowsById = <String, FleetRow>{
       for (final r in flat) _selectionFleetId(r): r,
     };
-    final activeIds =
-        selection.selectedIds.where(rowsById.containsKey).toList();
+    final activeIds = selection.selectedIds
+        .where(rowsById.containsKey)
+        .toList();
     if (activeIds.length < 2) return false;
     final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
     if (homeTransferRows != null) {
@@ -393,6 +392,10 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
     }
   }
 
+  void _openTrainDialog() {
+    widget.bus.closePanelThenEmit(OpenDialogEvent(trainNavalDialogId));
+  }
+
   void _openSplitDialog(FleetRow row) {
     final id = _selectionFleetId(row);
     final fleet = widget.game.fleetById(id);
@@ -425,21 +428,6 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
         fleet: nonNullFleet,
         bus: widget.bus,
       ),
-    );
-  }
-
-  BoxConstraints _panelConstraints(BuildContext context) {
-    final viewportWidth = MediaQuery.sizeOf(context).width;
-    if (viewportWidth < _desktopViewportThreshold) {
-      return UnitsPanelShell.defaultPanelConstraints;
-    }
-    final scaledWidth = (viewportWidth * _scaledViewportFactor).clamp(
-      _scaledWidthMin,
-      _scaledWidthMax,
-    );
-    return BoxConstraints(
-      maxWidth: scaledWidth,
-      maxHeight: UnitsPanelShell.defaultPanelConstraints.maxHeight,
     );
   }
 
@@ -483,15 +471,22 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
             enabled: widget.tileScopeTileKey!.isNotEmpty,
             onPressed: () {
               final key = widget.tileScopeTileKey!;
-              widget.bus.emit(const ClosePanelEvent());
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
-              });
+              widget.bus.closePanelThenEmit(
+                OpenMapTileDetailEvent(tileKey: key),
+              );
             },
             label: l10n.civilian_units_tile,
           ),
         if (tileScopeActive && hasAny && flat.isNotEmpty)
           const SizedBox(width: 4),
+      ],
+      trailingActions: [
+        CtActionTextButton(
+          primary: true,
+          onPressed: readOnly ? null : _openTrainDialog,
+          enabled: !readOnly,
+          label: l10n.common_train,
+        ),
       ],
       showCombineCluster: hasAny && flat.isNotEmpty && !readOnly,
       selectableIds: _fleetSelectionIds(flat),
@@ -549,9 +544,7 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
                         ),
                       )
                     : null,
-                isSelectedForCombine: isSelected(
-                  _selectionFleetId(row),
-                ),
+                isSelectedForCombine: isSelected(_selectionFleetId(row)),
                 combineSelectionEnabled: !readOnly,
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
                 onSplitFleet: readOnly ? null : () => _openSplitDialog(row),
@@ -562,7 +555,6 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
         ],
       ],
       emptyMessage: l10n.naval_units_empty,
-      panelConstraints: _panelConstraints(context),
     );
     if (kCtE2EEnabled) {
       updateCtE2eNavalPanelSnapshotIfEnabled(

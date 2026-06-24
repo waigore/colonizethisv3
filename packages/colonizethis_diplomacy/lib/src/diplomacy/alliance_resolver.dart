@@ -197,6 +197,7 @@ Game processAlliances(
                 state: RelationState.atPeace,
                 sinceTurn: turn,
                 lastInteractionTurn: turn,
+                formalAlliance: true,
               )
             : existing.copyWith(
                 level: RelationLevel.allied,
@@ -205,6 +206,7 @@ Game processAlliances(
                   relationScoreMax,
                 ),
                 lastInteractionTurn: turn,
+                formalAlliance: true,
               ),
       );
       game = game.copyWith(diplomacyRelations: relationsIndex.toList());

@@ -97,6 +97,7 @@ class Game {
     this.mapViewState = MapViewState.defaults,
     this.worldMarketState = WorldMarketState.empty,
     this.ftpPartnershipKeys = const {},
+    this.debugDiplomacyUsedPairKeys = const {},
   });
 
   final String id;
@@ -196,6 +197,11 @@ class Game {
   /// SPEC/game/world-market.md § Favored Trading Partner.
   final Set<String> ftpPartnershipKeys;
 
+  /// Faction-pair keys that have already consumed their per-turn `/set_diplomacy`
+  /// debug-mutation quota this turn (sorted `factionA|factionB`). Cleared on
+  /// turn advance. Debug tool only. SPEC/ui/debug-console-panel.md.
+  final Set<String> debugDiplomacyUsedPairKeys;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -256,6 +262,8 @@ class Game {
       'worldMarketState': worldMarketState.toJson(),
     if (ftpPartnershipKeys.isNotEmpty)
       'ftpPartnershipKeys': ftpPartnershipKeys.toList()..sort(),
+    if (debugDiplomacyUsedPairKeys.isNotEmpty)
+      'debugDiplomacyUsedPairKeys': debugDiplomacyUsedPairKeys.toList()..sort(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -388,6 +396,10 @@ class Game {
         : WorldMarketState.empty;
     final ftpKeysList = json['ftpPartnershipKeys'] as List<dynamic>? ?? [];
     final ftpPartnershipKeys = ftpKeysList.map((e) => e.toString()).toSet();
+    final debugDiploKeysList =
+        json['debugDiplomacyUsedPairKeys'] as List<dynamic>? ?? [];
+    final debugDiplomacyUsedPairKeys =
+        debugDiploKeysList.map((e) => e.toString()).toSet();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -453,6 +465,7 @@ class Game {
       infiniteMode: json['infiniteMode'] as bool? ?? false,
       worldMarketState: worldMarketState,
       ftpPartnershipKeys: ftpPartnershipKeys,
+      debugDiplomacyUsedPairKeys: debugDiplomacyUsedPairKeys,
     );
   }
 
@@ -488,6 +501,7 @@ class Game {
     MapViewState? mapViewState,
     WorldMarketState? worldMarketState,
     Set<String>? ftpPartnershipKeys,
+    Set<String>? debugDiplomacyUsedPairKeys,
   }) {
     return Game(
       id: id ?? this.id,
@@ -532,6 +546,8 @@ class Game {
       mapViewState: mapViewState ?? this.mapViewState,
       worldMarketState: worldMarketState ?? this.worldMarketState,
       ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
+      debugDiplomacyUsedPairKeys:
+          debugDiplomacyUsedPairKeys ?? this.debugDiplomacyUsedPairKeys,
     );
   }
 
@@ -578,7 +594,11 @@ class Game {
               other.lastHumanResearchCategoryCompletionTurn &&
           mapViewState == other.mapViewState &&
           worldMarketState == other.worldMarketState &&
-          _setEquals(ftpPartnershipKeys, other.ftpPartnershipKeys);
+          _setEquals(ftpPartnershipKeys, other.ftpPartnershipKeys) &&
+          _setEquals(
+            debugDiplomacyUsedPairKeys,
+            other.debugDiplomacyUsedPairKeys,
+          );
 
   @override
   int get hashCode => Object.hash(
@@ -618,6 +638,7 @@ class Game {
       mapViewState,
       worldMarketState,
       Object.hashAll(ftpPartnershipKeys),
+      Object.hashAll(debugDiplomacyUsedPairKeys),
     ),
   );
 

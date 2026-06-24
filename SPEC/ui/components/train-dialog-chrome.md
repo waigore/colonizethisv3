@@ -1,77 +1,84 @@
 # TrainDialogChrome (component)
 
-**SPEC/ui/components** — Reusable header / divider / resource-bar / row-surface chrome shared by the two train-at-capital dialogs. Implementation: [`app/lib/features/game/widgets/train_dialog_chrome.dart`](../../../app/lib/features/game/widgets/train_dialog_chrome.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtNinePatchButton*, § *CtBrassDivider*, § *CtGradients*, § *Editorial-monocle palette*.
+**SPEC/ui/components** — Reusable header / divider / resource-bar / row-surface chrome shared by the train-at-capital dialogs. Implementation: [`app/lib/features/game/widgets/train_dialog_chrome.dart`](../../../app/lib/features/game/widgets/train_dialog_chrome.dart). Catalog atoms in [Related](#related).
 
-This composite is **not** a screen and has **no** stable screen ID. It is the canonical chrome consumed by the two screen specs listed under [Consumers](#consumers).
+This composite is **not** a screen and has **no** stable screen ID; consumers are listed in [Consumers](#consumers).
 
 ---
 
 ## Purpose
 
-Consolidates the chrome (accent title + `×` dismiss, brass divider, boxed resource bar with optional deficit hint, resource chip, per-unit row surface) shared by Train Civilians and Train Military so each dialog composes only its body inside a single [`CtDialogShell`](../pixel-art-ui-catalog.md). The dark editorial-monocle contract (no Material `IconButton` / `Divider`, no raw `Colors.*`) lives in one file.
+Consolidates the chrome (title, locked-name line, boxed resource bar + deficit hint, resource chip, inline cost segment, row surface, locked hint, stepper, brass divider) shared by the train-at-capital dialogs so each composes only its body inside one [`CtDialogShell`](../pixel-art-ui-catalog.md). The dark editorial-monocle contract (no Material `IconButton` / `Divider`, no raw `Colors.*`) lives in one file. Per #3568 parity the dialogs use a **centered title with no `×` dismiss** and **no brass section dividers** (dismiss via scrim / back; orders apply on close).
 
 ---
 
 ## Widget contract
 
-`TrainDialogHeader` — `title` (`String`) rendered in `theme.textTheme.titleMedium` with `EditorialMonoclePalette.accent`, `kTrainDialogTitleLetterSpacing` (`0.05`), and `FontWeight.w600`; `onClose` (`VoidCallback`) fires when the trailing `×` `CtNinePatchButton` (32 dp min-height; padding `10 × 6`) is tapped.
+`TrainDialogHeader` — `title` (`String`) rendered **centered** (`TextAlign.center`) in `theme.textTheme.titleMedium` with `EditorialMonoclePalette.accent`, `kTrainDialogTitleLetterSpacing` (`0.05`), and `FontWeight.w600`. No dismiss control — the dialog closes via scrim tap / system back (#3568 parity, supersedes the original `×` `CtNinePatchButton`).
 
-`TrainDialogSectionDivider` — no props; renders `CtBrassDivider` inside `EdgeInsets.symmetric(vertical: 8)`.
+`TrainDialogUnitNameLine` — `name` (`String`) + `isLocked` (`bool`). Renders the unit name in `bodyLarge` `w600`; locked rows prefix `name` with `kTrainDialogLockPrefix` (🔒) instead of a separate lock-icon column.
 
-`TrainDialogResourceBarBox` — single `child` inside a boxed inset strip (`bgDeep` background, 1 dp `border`, `EdgeInsets.all(8)`) per mockup `.resource-bar`. Shared by both dialogs.
+`TrainDialogSectionDivider` — no props; renders `CtBrassDivider` inside `EdgeInsets.symmetric(vertical: 8)`. Retained but **not placed between sections** by the train dialogs (#3568 parity); sections use `SizedBox(height: 12)` gaps.
+
+`TrainDialogResourceBarBox` — single `child` inside a boxed inset strip (`bgDeep` background, 1 dp `border`, `EdgeInsets.all(8)`) per mockup `.resource-bar`.
 
 `TrainDialogResourceEntry` — value object `{ label, value }` (`String`).
 
-`TrainDialogResourceBar` — `entries` (`List<TrainDialogResourceEntry>`) inside a `TrainDialogResourceBarBox` as `Wrap(spacing 16, runSpacing 4, spaceAround)`; each entry is a muted label (`bodyMedium`, `muted`) + a **monospace bold** value (`w700`, `fontFamilyFallback: [SF Mono, Menlo, monospace]`, `tabularFigures`, `fg`). Treasury is `£` + comma-grouped (`£5,000`). Optional `deficitHint` (`String?`) renders below the box in `bodySmall` `danger`.
+`TrainDialogResourceBar` — `entries` inside a `TrainDialogResourceBarBox` as `Wrap(spacing 16, runSpacing 4, spaceAround)`; each entry is a muted label + **monospace bold** value (`w700`, `tabularFigures`, `fg`). Treasury is `£` + comma-grouped (`£5,000`). Optional `deficitHint` renders below in `bodySmall` `danger`.
 
-`TrainDialogResourceChip` — single `child` in a 4 dp-radius `BoxDecoration` (`CtGradients.rowGradient` + 1 dp `accentDim` border, padding `6 × 4`); content renders inside `DefaultTextStyle.merge(color: fg)`.
+`TrainDialogResourceChip` — single `child` in a 4 dp-radius `BoxDecoration` (`CtGradients.rowGradient` + 1 dp `accentDim` border); content in `DefaultTextStyle.merge(color: fg)`.
 
-`TrainDialogUnitRowSurface` — single `child` in `CtGradients.rowGradient` + 1 dp `accentDim` border (padding `12 × 8`). Optional `margin` defaults to `EdgeInsets.only(bottom: 6)`.
+`TrainDialogUnitRowSurface` — single `child` in `CtGradients.rowGradient` + 1 dp `accentDim` border. Optional `margin` defaults to `EdgeInsets.only(bottom: 6)`.
 
-Exported constants: `kTrainDialogLockedOpacity = 0.4` (per [#2866](https://github.com/waigore/colonizethisv3/issues/2866) AC); `kTrainDialogTitleLetterSpacing = 0.05`.
+`TrainDialogLockedHint` — `isLocked` + `techRequiredLabel`; renders nothing when unlocked, else `techRequiredLabel` in `muted` with a 2 dp top gap.
+
+`TrainDialogStepper` — `count`, `isLocked`/`canIncrement`/`canDecrement`, `onIncrement`/`onDecrement`: the `[−] count [+]` `CtNinePatchButton` stepper; `[+]` uses the danger variant when `!isLocked && !canIncrement`.
+
+`TrainDialogInlineCost` — inline cost segment (`icon`, numeric `label`, `tooltipMessage`, `isInsufficient`). The `icon + label` `Row` sits in a tap/hover `Tooltip` (`triggerMode: TooltipTriggerMode.tap`) within a `>= kMinTouchTargetSize` (44 dp) `ConstrainedBox`; `label` turns `danger` when `isInsufficient`. See [`resource-icon-tooltip.md`](resource-icon-tooltip.md).
+
+Exported constants: `kTrainDialogLockedOpacity = 0.5` (canonical mockup `.unit-row.locked`, #3568 parity — supersedes the [#2866](https://github.com/waigore/colonizethisv3/issues/2866) `0.4`); `kTrainDialogTitleLetterSpacing = 0.05`; `kTrainDialogLockPrefix` (🔒 + space); `kTrainDialogCostIconSize = 30`.
 
 ---
 
 ## Layout / wireframe
 
 ```text
-CtDialogShell(maxWidth: 480, maxHeight: 600)            -- canonical dialog frame
-  Column(min, start)
-    TrainDialogHeader(title, onClose)                   -- Row(start) [Expanded(title), CtNinePatchButton('×')]
-    TrainDialogSectionDivider()                          -- Padding(8/8) CtBrassDivider
-    TrainDialogResourceBar(entries, deficitHint?)       -- boxed inset strip (mono bold values) + optional danger hint
-    TrainDialogSectionDivider()
-    ListView/Column of TrainDialogUnitRowSurface(...)   -- per unit/regiment row
-      Row(...)                                          -- icon + name + cost / stepper / lock badge
+CtDialogShell(maxWidth: 480, maxHeight: 600)
+  Column(min, stretch)
+    TrainDialogHeader(title)                            -- centered; no × button
+    SizedBox(height: 12)
+    TrainDialogResourceBar(entries, deficitHint?)
+    SizedBox(height: 12)
+    Column of TrainDialogUnitRowSurface(...)            -- per unit row
+      Row(...)                                          -- TrainDialogUnitNameLine (🔒 prefix when locked)
+                                                        --   + TrainDialogInlineCost wrap / stepper
+    SizedBox(height: 12)
     Footer (consumer-owned: Reset CtNinePatchButton)
 ```
 
-The chrome widgets are independent — consumers may skip the resource bar (e.g. no capital) and still render unit rows.
+Consumers may omit the resource bar.
 
 ---
 
 ## Behavior
 
-1. **Stateless surfaces.** Every chrome widget is a `StatelessWidget`; affordance recomputation and stepper mutation belong to the host dialog state.
-2. **Header dismiss.** `TrainDialogHeader` mounts `CtNinePatchButton` (not Material `IconButton`) so the dark button-surface contract is preserved. Tap fires `onClose`.
-3. **Divider colour.** `TrainDialogSectionDivider` always paints `CtBrassDivider` — never Material `Divider` (guards the `check_app_no_material_*` lint ban).
-4. **Resource bar styling.** `TrainDialogResourceBar` renders entries inside a `TrainDialogResourceBarBox` (recessed `--bg-deep` strip, 1 dp `--border`) with muted labels and monospace bold `--fg` values. `deficitHint` renders below the box in `--danger`.
-5. **Resource chip.** `TrainDialogResourceChip` wraps inline icon + numeric content; military composes its treasury / peasants / six commodity chips (`fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze`) inside a `TrainDialogResourceBarBox`, sharing the boxed treatment while keeping commodity icons. Military treasury uses the same `£` + comma formatting.
-6. **Unit row surface.** `TrainDialogUnitRowSurface` paints `CtGradients.rowGradient` inside a 1 dp `accentDim` border. The consumer owns internal layout (left info column with name over cost, right stepper, lock badge) and applies `kTrainDialogLockedOpacity` (`0.4`) when tech-locked.
-7. **Letter-spacing alignment.** `kTrainDialogTitleLetterSpacing = 0.05` matches `CtTopBar` and the combat-mode choice dialog so the title rhythm aligns.
+1. **Stateless surfaces.** Every chrome widget is a `StatelessWidget`; affordance recomputation and stepper mutation belong to the host dialog state. `Reset` and steppers use `CtNinePatchButton`, never Material `IconButton`.
+2. **Header / dismiss.** `TrainDialogHeader` is a centered title with no dismiss control; the host dismisses via scrim/back and applies orders on close via `PopScope` (#3568 parity).
+3. **No section dividers.** `TrainDialogSectionDivider` paints `CtBrassDivider` (never Material `Divider`) but is not placed between sections (#3568 parity); plain `SizedBox` gaps are used.
+4. **Row styling.** `TrainDialogResourceBar` / `TrainDialogResourceChip` / `TrainDialogUnitRowSurface` use muted labels + monospace bold `--fg` values, `£`+comma treasury, `CtGradients.rowGradient`, and `kTrainDialogLockedOpacity` when tech-locked; locked names use the `TrainDialogUnitNameLine` 🔒 prefix.
+5. **Inline cost tooltips.** `TrainDialogInlineCost` wraps each `icon + number` in a tap/hover `Tooltip` with a `>= 44` dp touch region; content: [`resource-icon-tooltip.md`](resource-icon-tooltip.md).
 
 ---
 
 ## States and variants
 
-| Widget | Variant | Trigger | Render difference |
-|--------|---------|---------|--------------------|
-| `TrainDialogResourceBar` | No-deficit | `deficitHint == null` | Hint row omitted; only the `Wrap` renders. |
-| `TrainDialogResourceBar` | Deficit | `deficitHint != null` | `SizedBox(height: 4)` + danger-coloured hint row appended. |
-| `TrainDialogUnitRowSurface` | Locked | Host wraps the row in `Opacity(opacity: kTrainDialogLockedOpacity)` | Whole surface fades to 0.4 opacity. |
-| `TrainDialogUnitRowSurface` | Custom margin | Caller overrides `margin` | Outer `Padding` adopts the caller margin (default `EdgeInsets.only(bottom: 6)`). |
+| Widget | Variant | Render difference |
+|--------|---------|--------------------|
+| `TrainDialogResourceBar` | `deficitHint == null` | Hint row omitted. |
+| `TrainDialogResourceBar` | `deficitHint != null` | Danger-coloured hint row appended below the box. |
+| `TrainDialogUnitRowSurface` | Locked | Host applies `Opacity(kTrainDialogLockedOpacity)` (0.5) + `TrainDialogUnitNameLine(isLocked: true)` 🔒 prefix. |
 
-The chrome widgets have no theme-mode branches; editorial-monocle is the only render target.
+Editorial-monocle is the only target (no theme-mode branches).
 
 ---
 
@@ -79,34 +86,38 @@ The chrome widgets have no theme-mode branches; editorial-monocle is the only re
 
 | Screen ID | Spec | Notes |
 |-----------|------|-------|
-| `UNIT40001` | [`train-civilians-dialog.md`](../train-civilians-dialog.md) | Civilian list + treasury / paper resource bar; six unit-type rows with optional tech-lock variant. |
-| `UNIT50001` | [`train-military-dialog.md`](../train-military-dialog.md) | Regiment list + treasury / peasants + six commodity chips; per-regiment rows with optional tech-lock variant. |
+| `UNIT40001` | [`train-civilians-dialog.md`](../train-civilians-dialog.md) | Civilian list + treasury / paper bar; six unit rows. |
+| `UNIT50001` | [`train-military-dialog.md`](../train-military-dialog.md) | Regiment list + treasury / peasants + six commodity chips. |
+| `UNIT60001` | [`train-naval-dialog.md`](../train-naval-dialog.md) | Ship list + treasury / peasants + four commodity chips. |
 
-Both consumer specs link back here instead of redeclaring the chrome hierarchy.
+Consumer specs link back here instead of redeclaring the chrome. `UNIT50001` / `UNIT60001` share cost math, resource bar, and rows via `CommodityCostTrainDialogState` (`train_commodity_cost_dialog_base.dart`, gate `repo.app_train_dialog_commodity_cost_shared`, Refs #3686).
 
 ---
 
 ## Acceptance criteria (Given–When–Then)
 
-- **Given** a `TrainDialogHeader` mounted with `title = 'Train Civilians'`, **When** the tree settles, **Then** exactly one `CtNinePatchButton` is mounted, zero Material `IconButton` widgets are mounted, `Text('Train Civilians')` renders, and its resolved `TextStyle.color` equals `EditorialMonoclePalette.accent`.
-- **Given** a `TrainDialogSectionDivider` mounted under any host, **When** the tree settles, **Then** exactly one `CtBrassDivider` is mounted and zero Material `Divider` widgets are mounted.
-- **Given** a `TrainDialogResourceBar` mounted with two entries and `deficitHint == null`, **When** the tree settles, **Then** exactly one `TrainDialogResourceBarBox` is mounted, both entry labels + values render, and no descendant carries `EditorialMonoclePalette.danger`.
-- **Given** a `TrainDialogResourceBar` mounted with a treasury entry of `5000`, **When** the tree settles, **Then** the rendered value reads `£5,000` (pound symbol + comma grouping).
-- **Given** a `TrainDialogResourceBar` mounted with `deficitHint = 'Treasury low'`, **When** the tree settles, **Then** a `Text('Treasury low')` mounts whose resolved `TextStyle.color` equals `EditorialMonoclePalette.danger`.
-- **Given** a `TrainDialogUnitRowSurface` mounted around any child, **When** the inner `DecoratedBox` resolves, **Then** its `BoxDecoration.border` is `Border.all(color: EditorialMonoclePalette.accentDim, width: 1)` and its `BoxDecoration.gradient` is `CtGradients.rowGradient`.
-- **Given** the source `app/lib/features/game/widgets/train_dialog_chrome.dart`, **When** read, **Then** it declares `kTrainDialogLockedOpacity = 0.4` and `kTrainDialogTitleLetterSpacing = 0.05` (canonical regression guard).
+- **Given** a `TrainDialogHeader` (`title = 'Train Civilians'`), **When** settled, **Then** zero `CtNinePatchButton`s / `IconButton`s and no `×` mount, and the centered `Text` resolves to `EditorialMonoclePalette.accent`.
+- **Given** a `TrainDialogUnitNameLine` (`name = 'Merchant'`), **When** `isLocked`, **Then** the text is `🔒 Merchant`; otherwise bare `Merchant`.
+- **Given** any train dialog, **When** rendered, **Then** zero `TrainDialogSectionDivider`s mount; a `TrainDialogSectionDivider` mounted directly renders one `CtBrassDivider` and zero Material `Divider`s.
+- **Given** a `TrainDialogResourceBar` (treasury `5000`, no `deficitHint`), **When** settled, **Then** one `TrainDialogResourceBarBox` mounts, the value reads `£5,000`, and no descendant carries `EditorialMonoclePalette.danger`.
+- **Given** a `TrainDialogResourceBar` (`deficitHint = 'Treasury low'`), **When** settled, **Then** `Text('Treasury low')` is `EditorialMonoclePalette.danger`.
+- **Given** a `TrainDialogUnitRowSurface`, **When** resolved, **Then** the `DecoratedBox` border is `accentDim` 1 dp and gradient is `CtGradients.rowGradient`.
+- **Given** a `TrainDialogInlineCost` (`tooltipMessage = 'Treasury'`), **When** settled, **Then** one `Tooltip` (`triggerMode == TooltipTriggerMode.tap`) mounts with a `>= 44` dp trigger height and its icon renders at `kTrainDialogCostIconSize` (30 dp).
 
 ---
 
 ## Tests
 
-- `app/test/train_dialog_chrome_test.dart` — pins `TrainDialogHeader` accent title + `CtNinePatchButton` dismiss, `TrainDialogSectionDivider` selection, the resource-bar box + `£`/comma formatting, and `kTrainDialogLockedOpacity`.
-- `app/test/train_dialogs_320dp_min_viewport_test.dart` — pins both dialogs at `kMinViewportWidth = 320` dp (Refs [#2870](https://github.com/waigore/colonizethisv3/issues/2870) S8/S10).
-- `app/test/spec_components_train_dialog_chrome_test.dart` — spec-pinning test (sections, consumers, constants, ≤1000-word ceiling).
+- `app/test/train_dialog_chrome_test.dart` — header, 🔒 name prefix, divider, resource-bar box + `£`/comma, `kTrainDialogLockedOpacity`.
+- `app/test/train_dialogs_goldens_test.dart` — per-dialog chrome parity + visual baselines.
+- `app/test/train_dialogs_320dp_min_viewport_test.dart` — both dialogs at 320 dp ([#2870](https://github.com/waigore/colonizethisv3/issues/2870)).
+- `app/test/spec_components_train_dialog_chrome_test.dart` — spec-pinning (sections, consumers, constants, word ceiling).
+- `app/test/train_dialog_inline_cost_tooltip_test.dart` — `TrainDialogInlineCost` tooltip + 44 dp target.
+- `app/test/train_commodity_cost_dialog_base_test.dart` — `CommodityCostTrainDialogState` cost math (Refs #3686).
 
 ---
 
 ## Related
 
-- Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtDialogShell*, *CtNinePatchButton*, *CtBrassDivider*, *CtGradients*, *Editorial-monocle palette*.
-- Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
+- Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) (*CtDialogShell*, *CtNinePatchButton*, *CtBrassDivider*, *CtGradients*, *Editorial-monocle palette*).
+- Tooltip convention: [`resource-icon-tooltip.md`](resource-icon-tooltip.md). Tracking: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.

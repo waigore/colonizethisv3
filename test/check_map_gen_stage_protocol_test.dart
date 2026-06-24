@@ -8,7 +8,7 @@ void main() {
   group('findMapGenStageProtocolViolations', () {
     test('accepts a service class implementing MapGenStage', () {
       const src = r'''
-class _TileMapGenLakesProvinces implements MapGenStage {
+class TileMapGenLakesProvinces implements MapGenStage {
   @override
   final TileMapParams params;
 }
@@ -23,7 +23,7 @@ class _TileMapGenLakesProvinces implements MapGenStage {
 
     test('flags a service class missing MapGenStage implementation', () {
       const src = r'''
-class _TileMapGenLakesProvinces {
+class TileMapGenLakesProvinces {
   final TileMapParams params;
 }
 ''';
@@ -82,7 +82,7 @@ class TileMapGenLandSeeds
 
   group('runCheckMapGenStageProtocol', () {
     test(
-      'passes on the live repository tree (>=3 families adopt MapGenPass)',
+      'passes on the live repository tree (>=4 families adopt MapGenPass)',
       () {
         final lines = <String>[];
         final code = runCheckMapGenStageProtocol(

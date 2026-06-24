@@ -32,6 +32,7 @@ const Map<String, String> _expectedConstants = {
   'navalUnitsPanel': UiScreenIds.navalUnitsPanel,
   'trainCiviliansDialog': UiScreenIds.trainCiviliansDialog,
   'trainMilitaryDialog': UiScreenIds.trainMilitaryDialog,
+  'trainNavalDialog': UiScreenIds.trainNavalDialog,
   'grantOrSubsidyDialog': UiScreenIds.grantOrSubsidyDialog,
   'productionCommodityBreakdownDialog':
       UiScreenIds.productionCommodityBreakdownDialog,

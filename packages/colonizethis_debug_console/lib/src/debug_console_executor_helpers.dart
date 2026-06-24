@@ -134,6 +134,21 @@ DebugConsoleSessionDispatch? dispatchDebugConsoleSessionEvents(
           ? 'Queued debug province reveal by id: $target.'
           : 'Queued debug province reveal by name: $target.',
     ),
+    DebugConsoleSetDiplomacy(:final factionA, :final factionB, :final action) =>
+      (
+        events: [
+          SetDebugDiplomacyRelationEvent(
+            humanPlayerId: humanPlayerId,
+            factionA: factionA,
+            factionB: factionB,
+            action: action,
+          ),
+        ],
+        message: factionA == null
+            ? 'Queued debug diplomacy: ${action.keyword} with $factionB.'
+            : 'Queued debug diplomacy: ${action.keyword} between '
+                  '$factionA and $factionB.',
+      ),
     _ => null,
   };
 }

@@ -43,6 +43,7 @@ import '../features/game/widgets/game_tab_bar.dart';
 import '../features/game/widgets/game_top_bar.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
+import '../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import '../features/game/widgets/pause_menu_panel.dart';
 import '../features/game/widgets/player_turn_event_feed.dart';
 import '../features/game/widgets/production_commodity_breakdown_dialog.dart';
@@ -79,6 +80,7 @@ import '../features/game/widgets/move_army_dialog.dart';
 import '../features/game/widgets/move_fleet_dialog.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
+import '../features/game/widgets/train_naval_dialog.dart';
 import '../features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
 import '../features/shell/new_game_leader_selection_dialog.dart';
@@ -125,6 +127,7 @@ import '../widgets/ct_transfer_list.dart';
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
+part 'catalog_diplomacy_panel.dart';
 part 'catalog_screens_combat.dart';
 part 'catalog_dialogs.dart';
 part 'catalog_primitives.dart';
@@ -222,6 +225,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...civilianUnitsPanelDirectories,
   ...trainCiviliansDialogDirectories,
   ...trainMilitaryDialogDirectories,
+  ...trainNavalDialogDirectories,
   ...militaryUnitsPanelDirectories,
   ...navalUnitsPanelDirectories,
   ...diplomacyPanelDirectories,
@@ -629,6 +633,32 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'As bottom sheet',
         builder: (context) => const CivilianPanelAsBottomSheetStory(),
+      ),
+      WidgetbookUseCase(
+        // Narrow sizing contract (Refs #3627 AC6): full viewport width ×
+        // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp.
+        name: 'Mobile (360x640)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return civilianUnitsPanelWithRiverpod(
+            game: game,
+            child: mobileViewport(
+              context,
+              ConstrainedBox(
+                constraints: unitsPanelSheetConstraints(const Size(360, 640)),
+                child: CivilianUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  bus: AppEventBus(),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     ],
   ),

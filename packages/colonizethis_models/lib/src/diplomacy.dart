@@ -16,6 +16,7 @@ class DiplomacyRelation {
     this.state = RelationState.atPeace,
     this.sinceTurn = 0,
     this.lastInteractionTurn = 0,
+    this.formalAlliance = false,
   });
 
   final String factionId1;
@@ -25,6 +26,15 @@ class DiplomacyRelation {
   final RelationState state;
   final int sinceTurn;
   final int lastInteractionTurn;
+
+  /// Persisted **formal alliance** (treaty) flag for this GP–GP pair.
+  ///
+  /// Set true when an `Alliance` diplomatic order resolves (`allianceFormed`)
+  /// and cleared on `allianceBroken` (e.g. a Call to Arms refusal). This is the
+  /// authoritative mutual-defence gate: the informal [level] `allied` band
+  /// (relation score 76–100) must NOT trigger Call to Arms by itself.
+  /// SPEC/game/diplomacy.md § Alliances.
+  final bool formalAlliance;
 
   bool get atWar => state == RelationState.atWar;
   bool get atPeace => state == RelationState.atPeace;
@@ -41,6 +51,7 @@ class DiplomacyRelation {
     RelationState? state,
     int? sinceTurn,
     int? lastInteractionTurn,
+    bool? formalAlliance,
   }) => DiplomacyRelation(
     factionId1: factionId1 ?? this.factionId1,
     factionId2: factionId2 ?? this.factionId2,
@@ -49,6 +60,7 @@ class DiplomacyRelation {
     state: state ?? this.state,
     sinceTurn: sinceTurn ?? this.sinceTurn,
     lastInteractionTurn: lastInteractionTurn ?? this.lastInteractionTurn,
+    formalAlliance: formalAlliance ?? this.formalAlliance,
   );
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +71,7 @@ class DiplomacyRelation {
     'state': state.name,
     'sinceTurn': sinceTurn,
     'lastInteractionTurn': lastInteractionTurn,
+    if (formalAlliance) 'formalAlliance': formalAlliance,
   };
 
   static DiplomacyRelation fromJson(Map<String, dynamic> json) =>
@@ -76,6 +89,7 @@ class DiplomacyRelation {
         ),
         sinceTurn: json['sinceTurn'] as int? ?? 0,
         lastInteractionTurn: json['lastInteractionTurn'] as int? ?? 0,
+        formalAlliance: json['formalAlliance'] == true,
       );
 }
 
@@ -194,6 +208,56 @@ class DiplomaticOrder {
 
 /// Intervention choice when Minor with Embassy is attacked. SPEC/game/diplomacy.md.
 enum InterventionChoice { intervene, doNothing, protest }
+
+/// Debug-console `/set_diplomacy` mutation actions. Debug tool only: maps to a
+/// direct `Game`-state diplomacy mutation, bypassing normal turn resolution.
+/// SPEC/ui/debug-console-panel.md, SPEC/program/debug-console-internals.md.
+enum DebugDiplomacyAction {
+  war,
+  peace,
+  alliance,
+  noAlliance,
+  consulate,
+  embassy,
+  nap,
+  joinEmpire,
+  clearOverture,
+  ftp,
+  noFtp,
+}
+
+/// Command-keyword binding for [DebugDiplomacyAction] (`/set_diplomacy`).
+extension DebugDiplomacyActionTokens on DebugDiplomacyAction {
+  /// Canonical lowercase command keyword (e.g. `no_alliance`, `join_empire`).
+  String get keyword => switch (this) {
+    DebugDiplomacyAction.war => 'war',
+    DebugDiplomacyAction.peace => 'peace',
+    DebugDiplomacyAction.alliance => 'alliance',
+    DebugDiplomacyAction.noAlliance => 'no_alliance',
+    DebugDiplomacyAction.consulate => 'consulate',
+    DebugDiplomacyAction.embassy => 'embassy',
+    DebugDiplomacyAction.nap => 'nap',
+    DebugDiplomacyAction.joinEmpire => 'join_empire',
+    DebugDiplomacyAction.clearOverture => 'clear_overture',
+    DebugDiplomacyAction.ftp => 'ftp',
+    DebugDiplomacyAction.noFtp => 'no_ftp',
+  };
+
+  /// Resolves a case-insensitive command keyword to its action, or `null`.
+  static DebugDiplomacyAction? fromKeyword(String input) {
+    final normalized = input.trim().toLowerCase();
+    for (final action in DebugDiplomacyAction.values) {
+      if (action.keyword == normalized) {
+        return action;
+      }
+    }
+    return null;
+  }
+
+  /// All supported keywords in stable ascending order (for `/help`).
+  static List<String> get sortedKeywords =>
+      DebugDiplomacyAction.values.map((a) => a.keyword).toList()..sort();
+}
 
 /// Ongoing subsidy from a GP to a Minor/Tribe. SPEC/game/diplomacy.md.
 /// Each turn: payer loses amount, relation improves.

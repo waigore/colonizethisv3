@@ -298,7 +298,7 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get game_callToArms_intro =>
-      'An allied power is at war. Join their war or refuse (alliance ends, relations worsen).';
+      'A treaty ally is at war. Join their war or refuse (the formal alliance ends, relations worsen).';
 
   @override
   String game_callToArms_prompt(String defender, String aggressor) {

@@ -18,8 +18,9 @@
 ## Trigger conditions
 
 - **Access:** Toolbar **Military Units** button.
-- **Desktop / wide:** Side panel / bottom sheet; map visible.
+- **Desktop / wide:** Bottom-sheet panel over the map; map visible.
 - **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
+- **Bottom-sheet sizing (Refs #3627):** The host sizes the panel via the shared `unitsPanelSheetConstraints(viewport)` rule (see [`components/units-panel-shell.md`](components/units-panel-shell.md) § Bottom-sheet sizing): **narrow** (`width < 600` dp) → full width × **`50%`** height; **wide** (`width >= 600` dp) → **`70%`** width × **`55vh`**. `isScrollControlled: true`; content scrolls inside the sheet.
 - **Train button:** Header **Train** closes panel and emits `OpenDialogEvent(trainMilitaryDialogId)` for [train-military-dialog.md](train-military-dialog.md).
 - **Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header **Train** and **Combine** actions render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. Bus emissions and enable/disable rules are unchanged: **Train** is disabled in observe (read-only) mode; **Combine** is enabled only when `canCombineArmySelection` holds for the current selection. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
 - **No production Close pill (mockup `.close-btn` preview-only; issue #3514 owner decision #14):** The `UNIT20001` mockup header (`mockups/UNIT20001-military-units-panel.html`) depicts a **Close** pill purely as a static preview affordance. The shipped panel renders **no** production Close pill: it is hosted in a side-panel / bottom-sheet surface that owns its own dismissal (the shared [`UnitsPanelShell`](components/units-panel-shell.md) `CtTopBar` renders **without** a back/close button — see § *Layout / wireframe* there). The mockup HTML is **not** edited to remove the preview Close; this divergence is recorded here so the panel matches the mockup style without adding a redundant Close control.
@@ -182,3 +183,4 @@ the displayed text content (`name — region` on the location line) is unchanged
 
 - **Standalone:** Demo armies + fleets; verify Home Army pinning, province grouping, expanded composition, split/combine disabled states.
 - **With map:** `getDebugInitGameResult()`; army row → pan/center province.
+- **Mobile (360x640):** Panel inside a `360 × 640` dp frame bound by the production narrow constraints (`unitsPanelSheetConstraints` — full width × `50%` height), showing the fill-height narrow sizing contract (Refs #3627).

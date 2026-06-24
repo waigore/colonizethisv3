@@ -5,6 +5,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     return {
       trainCiviliansDialogId: _buildTrainCiviliansDialog,
       trainMilitaryDialogId: _buildTrainMilitaryDialog,
+      trainNavalDialogId: _buildTrainNavalDialog,
       grantOrSubsidyDialogId: _buildGrantOrSubsidyDialog,
       combatModeChoiceDialogId: _buildCombatModeChoiceDialog,
       quickBattleResultDialogId: _buildQuickBattleResultDialog,
@@ -44,6 +45,23 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
       return const SizedBox.shrink();
     }
     return TrainMilitaryDialog(
+      game: game,
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
+      currentOrders: container.read(currentOrdersProvider),
+      bus: container.read(appEventBusProvider),
+    );
+  }
+
+  Widget _buildTrainNavalDialog(BuildContext ctx, Map<String, Object?>? _) {
+    final container = ProviderScope.containerOf(ctx);
+    final game = container.read(currentGameProvider);
+    if (game == null) {
+      return const SizedBox.shrink();
+    }
+    return TrainNavalDialog(
       game: game,
       humanPlayerId: resolveShellPanelPlayerId(
         container.read(shellPlayerContextProvider),

@@ -12,6 +12,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -332,7 +333,7 @@ class TechTreeWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(techDisplayName(tech.id), style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
+            CtGap.m,
             Text(
               l10n.techTree_eraCategory(
                 eraRoman(tech.era),
@@ -346,7 +347,7 @@ class TechTreeWidget extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
             if (tech.prerequisiteIds.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              CtGap.m,
               Text(
                 l10n.techTree_prerequisites,
                 style: theme.textTheme.labelLarge,
@@ -362,7 +363,7 @@ class TechTreeWidget extends StatelessWidget {
               ),
             ],
             if (effects.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              CtGap.m,
               Text(l10n.techTree_effects, style: theme.textTheme.labelLarge),
               ...effects.map(
                 (e) => Padding(
@@ -374,7 +375,7 @@ class TechTreeWidget extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
+            CtGap.ml,
             Align(
               alignment: Alignment.centerRight,
               child: CtNinePatchButton(

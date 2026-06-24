@@ -83,6 +83,27 @@ rules:
     runner: dart
     script: tool/check_economy_cost_check_shared_helper.dart
 
+  - rule_id: repo.economy_world_market_admission_shared
+    group: architecture
+    title: economy world-market validator/suggester must delegate to the shared trade_order_admission.dart helpers (Refs #3615 Cluster 1)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_world_market_admission_shared.dart
+
+  - rule_id: repo.economy_dedup_port_tile_keys
+    group: architecture
+    title: economy lib must collect port tile keys via collectPortTileKeys, not inline portsByProvinceSeaboard.values.toSet() (Refs #3615 Cluster 3)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_dedup_port_tile_keys.dart
+
+  - rule_id: repo.economy_test_duplicate_descriptions
+    group: testing
+    title: economy test files must not share identical test()/testWidgets() descriptions across files (Refs #3661)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_duplicate_descriptions.dart
+
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
     title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)
@@ -284,6 +305,13 @@ rules:
     runner: dart
     script: tool/check_debug_handler_one_per_file.dart
 
+  - rule_id: repo.app_debug_handler_guard_helpers
+    group: structure
+    title: app debug handlers must use shared guard helpers, not inline guard strings (Refs #3655)
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_app_debug_handler_guard_helpers.dart
+
   - rule_id: repo.part_unit_size
     group: structure
     title: Dart part fragment physical line limit (repo-lint domain)
@@ -354,6 +382,38 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_game_panel_mixin.dart
+    pr_incremental: true
+
+  - rule_id: repo.chrome_button_base
+    group: structure
+    title: chrome `*TextButton` states must adopt the shared CtHoverButtonStateMixin base (Refs #3594)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_chrome_button_base.dart
+    pr_incremental: true
+
+  - rule_id: repo.split_dialog_base
+    group: structure
+    title: in-game `Split*Dialog` widgets must extend the shared SplitEntityDialog base (Refs #3594)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_split_dialog_base.dart
+    pr_incremental: true
+
+  - rule_id: repo.train_dialog_base
+    group: structure
+    title: in-game `Train*Dialog` widgets must extend the shared TrainDialogBase base (Refs #3594)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_train_dialog_base.dart
+    pr_incremental: true
+
+  - rule_id: repo.app_train_dialog_commodity_cost_shared
+    group: structure
+    title: commodity-cost `Train*Dialog` widgets (military/naval) must extend the shared CommodityCostTrainDialogState base, not re-declare cost math/resource-bar/row chrome (Refs #3686)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_train_dialog_commodity_cost_dedup.dart
     pr_incremental: true
 
   - rule_id: repo.game_widgets_file_size
@@ -604,6 +664,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_no_partfile_classes.dart
+
+  - rule_id: repo.map_gen_no_new_partfiles
+    group: structure
+    title: colonizethis_map generation/view layers must not introduce new part/part-of coupling (Refs #3588)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_no_partfile_classes.dart
+
+  - rule_id: repo.map_gen_file_size
+    group: structure
+    title: colonizethis_map generation/view-layer source files must be 500 non-comment lines or fewer (Refs #3588)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_gen_file_size.dart
 
   - rule_id: repo.map_grid_ops_central
     group: structure
@@ -887,6 +961,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_no_duplicate_helpers.dart
+
+  - rule_id: repo.app_test_no_debug_init
+    group: structure
+    title: "app/test files must not call getDebugInitGameResult() outside the documented migration allowlist (Refs #3656)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_debug_init.dart
+
+  - rule_id: repo.app_region_string_literals
+    group: architecture
+    title: "app/lib must use kRegionOldWorld / kRegionNewWorld instead of bare 'oldWorld' / 'newWorld' string literals (Refs #3658)"
+    spec: SPEC/program/logic-dual-region-province-access.md
+    runner: dart
+    script: tool/check_app_region_string_literals.dart
 
   - rule_id: repo.screen_registry_active_paths
     group: ui_structure

@@ -23,9 +23,10 @@ The Train Military dialog lets the player queue military regiment build orders i
 
 ## Layout
 
-- **Header:** `Train Military` title + close (`X`) button.
-- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`; see [components/train-dialog-chrome.md](components/train-dialog-chrome.md)). Shows `Treasury`, `Peasants`, and regiment-input commodities `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze` as `TrainDialogResourceChip`s with existing icons. Treasury uses `£` + comma grouping (e.g. `£10,000`), matching the civilian dialog.
-- **Deficit hint:** Same wording style as civilian (`{Resource} low`, `{A} and {B} low`) below the box.
+- **Header:** centered `Train Military` title via `TrainDialogHeader` — no `×` close button and no brass section dividers between sections (#3568 parity); the dialog dismisses via scrim tap / system back and applies orders on close.
+- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`; see [components/train-dialog-chrome.md](components/train-dialog-chrome.md)). Shows `Treasury`, `Peasants`, and regiment-input commodities `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze` as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £8,000 / £10,000`, `Peasants: 7 / 8`, `Lumber: 2 / 5`. Treasury uses `£` + comma grouping on both sides (e.g. `£10,000`), matching the civilian dialog.
+- **Per-item cost colour:** In each regiment row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` independently when `remaining` for that resource is less than this regiment's per-unit cost for it (considering committed totals). Sufficient items stay in the normal colour. Only the deficient item turns red.
+- **Deficit hint:** Same wording style as civilian — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Peasants low`) below the box.
 - **Rows:** One row per `RegimentEconomyCatalog.all` entry as a single line — left info `Column` (regiment name above the icon-bearing cost summary) plus the stepper on the right (vertically centered).
   - primary label: **regiment display name** per [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (not the snake_case persistence id; e.g. `Peasant Levies` not `peasant_levies`). Text-only; no regiment icon requirement.
   - cost summary: treasury + commodity requirements with icons
@@ -40,11 +41,12 @@ The Train Military dialog lets the player queue military regiment build orders i
 - Count initializes from existing pending military build orders (dialog-managed set; see Order submission).
 - `+` increments by 1 only when adding one more unit remains affordable.
 - `-` decrements by 1, minimum 0.
-- Locked regiments: row subdued and steppers disabled.
+- Locked regiments: name prefixed with the 🔒 glyph (`kTrainDialogLockPrefix`), row subdued at `0.5` opacity (`kTrainDialogLockedOpacity`), and steppers disabled.
 - `+` uses aggregate affordability across all currently selected regiment rows:
   - treasury
   - peasants (`workerPool.peasants`, 1 consumed per military regiment)
   - commodity stockpile requirements for all selected rows
+- When `+` is disabled **specifically** due to resource insufficiency (not a tech lock), it renders the `--danger` button variant (red border/label), distinct from the tech-locked disabled appearance.
 
 ---
 
@@ -74,7 +76,7 @@ Affordability requires all constraints:
 
 ## Order submission
 
-On dialog close (`didPop` / close button), create orders from current counts:
+On dialog close (`didPop` via scrim tap / system back), create orders from current counts:
 
 1. Resolve `capitalProvinceId = Player.capitalProvinceId`.
 2. For each regiment type where `count > 0`, add `count` entries of:
@@ -127,3 +129,19 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 - **Given** both train dialogs use shared orchestration behavior, **when** developers update train order/count conversion rules, **then** the UI layer updates `train_unit_dialog_helper.dart` and validates behavior with helper tests in `app/test/train_unit_dialog_helper_test.dart`.
 
 - **Given** the Train Military dialog is open, **when** the user reads a regiment row’s primary title text, **then** the UI layer shows the roster display name (e.g. `Peasant Levies` for `peasant_levies`), not the snake_case `unitType` id string.
+
+- **Given** the Train Military dialog is open with treasury `10000` and peasants `8`, **when** the user queues `1` Peasant Levies (`£2,000 + 1 peasant`), **then** the resource bar treasury chip reads `Treasury: £8,000 / £10,000` and the peasants chip reads `Peasants: 7 / 8`.
+
+- **Given** the Train Military dialog has a regiment row that requires `castIron` and remaining `castIron` is less than that requirement, **when** the row renders, **then** only the `castIron` inline cost item renders in `EditorialMonoclePalette.danger` and the other sufficient cost items remain in the normal colour.
+
+- **Given** an unlocked regiment row whose `[+]` is disabled because adding one more exceeds available resources, **when** the row renders, **then** the `[+]` button uses the `danger` variant (red border/label) distinct from the normal disabled appearance.
+
+- **Given** a tech-locked regiment row, **when** the row renders, **then** the `[+]` button shows the normal (non-danger) disabled appearance with no red tint.
+
+- **Given** the Train Military dialog is open, **when** the user hovers (desktop) or taps (mobile) a commodity cost icon in a regiment row's cost summary, **then** the UI layer shows a `Tooltip` reading `"{displayName} ({category})"` (e.g. `Fabric (manufactured)`), per [components/resource-icon-tooltip.md](components/resource-icon-tooltip.md).
+
+- **Given** the Train Military dialog is open, **when** the user hovers/taps the treasury coin cost icon, **then** the UI layer shows a `Tooltip` reading `Treasury`; and the peasant cost icon shows a `Tooltip` reading `Peasants`.
+
+- **Given** any cost icon in a regiment row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.
+
+- **Given** the Train Military dialog is open and two or more resources are insufficient for the queued regiments (e.g. treasury and peasants), **when** the deficit hint renders, **then** each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Peasants low`), with no `" and "` connector.

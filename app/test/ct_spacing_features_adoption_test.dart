@@ -407,14 +407,26 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/production_commodity_breakdown_dialog.dart',
   'lib/features/game/widgets/production_panel.dart',
   'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
-  'lib/features/game/widgets/split_army_dialog.dart',
-  'lib/features/game/widgets/split_fleet_dialog.dart',
+  // split_army_dialog.dart / split_fleet_dialog.dart dropped from the adoption
+  // list: #3594 (PR #3600) extracted the shared SplitEntityDialog base, which
+  // now owns the `Padding(EdgeInsets.all(CtSpacing.l))` body. Both dialogs
+  // delegate their scaffold to that base and no longer contain any
+  // token-eligible `EdgeInsets`/`SizedBox` spacing, so the import and
+  // token-reference invariants moved to split_entity_dialog.dart below.
+  'lib/features/game/widgets/split_entity_dialog.dart',
   'lib/features/game/widgets/tech_tree_widget.dart',
   'lib/features/game/widgets/technology_panel.dart',
   'lib/features/game/widgets/technology_panel_orders.dart',
-  'lib/features/game/widgets/train_civilians_dialog.dart',
+  // train_civilians_dialog.dart / train_military_dialog.dart dropped from the
+  // adoption list: #3594 extracted the shared TrainDialogBase state, which now
+  // owns the `EdgeInsets.fromLTRB(CtSpacing.l, CtSpacing.ml, ...)`
+  // PopScope/CtDialogShell scaffold. Both dialogs (and the sibling
+  // train_naval_dialog.dart, which was never token-eligible) delegate that
+  // wrapper to the base and no longer contain token-eligible
+  // `EdgeInsets`/`CtSpacing` spacing, so the import and token-reference
+  // invariants moved to train_dialog_base.dart below.
+  'lib/features/game/widgets/train_dialog_base.dart',
   'lib/features/game/widgets/train_dialog_chrome.dart',
-  'lib/features/game/widgets/train_military_dialog.dart',
   'lib/features/game/widgets/transfer_to_home_fleet_dialog.dart',
   'lib/features/game/widgets/turn_news_dialog.dart',
   'lib/features/game/widgets/units/shared/location_section_header.dart',

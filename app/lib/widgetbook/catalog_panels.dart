@@ -57,13 +57,31 @@ List<WidgetbookNode> get productionPanelDirectories => [
 
 /// Mid-game [TechnologyScreen] fixture (Slots tab default) for Widgetbook.
 /// SPEC/ui/technology-panel.md § Widgetbook; Refs #2870 R22 / S9.
+///
+/// Refs #3656: built from a lightweight hand-constructed [Game] instead of the
+/// ~7-11s procedural `getDebugInitGameResult()` map generator. The Technology
+/// screen reads only `game.players` plus the static `techCatalog`, so the
+/// slots/tree chrome renders identically without any generated map/topology
+/// data. The single human ([_kMidGameTechPlayerId]) carries the same id the
+/// lightweight panel test fixtures use (`kPanelTestHumanPlayerId`), so the
+/// `CtGameFeatureScreenShell` `displayGame.playerById(...)` lookup resolves
+/// whether the shell falls back to this game or to a test-provided
+/// `currentGameProvider` override of the same shape.
 Widget _midGameTechnologyScreenStory(BuildContext context) {
-  final result = getDebugInitGameResult();
-  final game = result.game;
-  if (game.players.isEmpty) {
-    return Center(child: Text(appL10n(context).widgetbook_noPlayers));
-  }
-  final basePlayer = game.players.first;
+  const basePlayer = Player(
+    id: _kMidGameTechPlayerId,
+    displayName: 'Test Human',
+    isHuman: true,
+  );
+  const baseGame = Game(
+    id: kWidgetbookTechnologyStoryGameId,
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: [basePlayer],
+  );
   // Unlock roughly half of all techs (first 22 from catalog order).
   final allIds = techCatalog.keys.toList()..sort();
   final half = (allIds.length / 2).floor();
@@ -80,11 +98,24 @@ Widget _midGameTechnologyScreenStory(BuildContext context) {
     techUnlocked: techUnlocked,
     researchProgressByTechId: researchProgressByTechId,
   );
-  final midGame = game.copyWith(
-    players: [midGamePlayer, ...game.players.skip(1)],
-  );
+  final midGame = baseGame.copyWith(players: [midGamePlayer]);
   return TechnologyScreen(game: midGame, player: midGamePlayer);
 }
+
+/// Human player id for the lightweight mid-game Technology story. Matches the
+/// lightweight panel test fixtures' `kPanelTestHumanPlayerId` so a
+/// test-provided `currentGameProvider` of the same shape resolves the same
+/// player. Refs #3656.
+const String _kMidGameTechPlayerId = 'gp1';
+
+/// Stable game id for the lightweight mid-game Technology Widgetbook story.
+///
+/// Exposed so widget tests can build a `currentGameProvider` game of the same
+/// id and player shape: `CtGameFeatureScreenShell` renders the live
+/// `currentGameProvider` game when its id matches the screen's `game.id`
+/// (otherwise it falls back to the screen's own game), so tests pinning this
+/// story drive the rendered player deterministically. Refs #3656.
+const String kWidgetbookTechnologyStoryGameId = 'wb_technology_midgame';
 
 /// Tech Tree Widget stories. SPEC/ui/tech-tree-widget.md.
 List<WidgetbookNode> get techTreeDirectories => [
@@ -325,11 +356,12 @@ const List<int> _kFundingPreviewCommittedRp = <int>[600, 300, 0];
 /// Per-slot funding levels for the funding-preview fixture, exercising the
 /// Low / Medium / High toggle-selected chrome and three distinct
 /// dual-segment / RP-delta / gold-row renderings.
-const List<ResearchFundingLevel> _kFundingPreviewLevels = <ResearchFundingLevel>[
-  ResearchFundingLevel.medium,
-  ResearchFundingLevel.high,
-  ResearchFundingLevel.low,
-];
+const List<ResearchFundingLevel> _kFundingPreviewLevels =
+    <ResearchFundingLevel>[
+      ResearchFundingLevel.medium,
+      ResearchFundingLevel.high,
+      ResearchFundingLevel.low,
+    ];
 
 /// Builds the editable `(Player, Game, Orders)` fixture for the funding /
 /// turn-preview story: a player with ample treasury (no debt block) whose
@@ -789,6 +821,31 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
         name: 'With map',
         builder: (context) => const MilitaryPanelWithMapStory(),
       ),
+      WidgetbookUseCase(
+        // Narrow sizing contract (Refs #3627 AC6): full viewport width ×
+        // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp.
+        name: 'Mobile (360x640)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return mobileViewport(
+            context,
+            ConstrainedBox(
+              constraints: unitsPanelSheetConstraints(const Size(360, 640)),
+              child: MilitaryUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                bus: AppEventBus.create(),
+                topology: result.combinedTopology,
+                draftOrders: const Orders(),
+              ),
+            ),
+          );
+        },
+      ),
     ],
   ),
 ];
@@ -806,13 +863,13 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
               : 'gp1';
-          // Mockup `UNIT30001` clamps the panel sidebar to ~340 dp;
-          // 480 dp here keeps the standalone story comfortably inside
-          // `_panelConstraints` (420–640 dp) so reviewers see the dense
-          // R25 action cluster (Move + Split + Locate on one row), the
-          // R26 `HOME` chip on the Home Fleet row, and the R28
-          // `(in port)` / `(at sea)` location qualifier produced by
-          // `naval_tree_builder.dart`.
+          // The naval panel width is host-governed in production via
+          // `unitsPanelSheetConstraints` (70% wide / full-width narrow,
+          // Refs #3627); this standalone story pins a 480 dp host so
+          // reviewers see the dense R25 action cluster (Move + Split +
+          // Locate on one row), the R26 `HOME` chip on the Home Fleet row,
+          // and the R28 `(in port)` / `(at sea)` location qualifier produced
+          // by `naval_tree_builder.dart`.
           return ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
             child: NavalUnitsPanel(
@@ -828,69 +885,11 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
         name: 'With map',
         builder: (context) => const NavalPanelWithMapStory(),
       ),
-    ],
-  ),
-];
-
-/// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
-List<WidgetbookNode> get diplomacyPanelDirectories => [
-  WidgetbookFolder(
-    name: 'Diplomacy Panel',
-    children: [
       WidgetbookUseCase(
-        name: 'With real game',
-        builder: (context) {
-          final result = getDebugInitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players.first.id
-              : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
-            child: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              topology: result.combinedTopology,
-              currentOrders: const Orders(),
-              bus: AppEventBus(),
-            ),
-          );
-        },
-      ),
-      // SPEC/ui/diplomacy-panel.md § Widgetbook — empty-state story.
-      // Renders the panel against a Game whose human player has no
-      // diplomacy relations with any other faction (no other Great
-      // Power, Minor Nation, or Tribe), so `buildDiplomacyRows` returns
-      // an empty list and the panel paints the three always-visible
-      // section headings plus their per-section empty placeholders —
-      // including the `diplomacy_panel_noTribes` ("No tribes contacted
-      // yet.") copy — under the editorial-monocle dark chrome.
-      // Refs #2863 S7 / #3341.
-      WidgetbookUseCase(
-        name: 'No factions discovered (empty state)',
-        builder: (context) {
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
-            child: DiplomacyPanel(
-              game: _diplomacyPanelEmptyGame,
-              humanPlayerId: _diplomacyPanelEmptyHumanPlayerId,
-              topology: const MapTopology(nodes: [], edges: []),
-              currentOrders: const Orders(),
-              bus: AppEventBus(),
-            ),
-          );
-        },
-      ),
-      WidgetbookUseCase(
-        // SPEC/ui/diplomacy-panel.md § Responsive layout and
-        // SPEC/ui/mobile-adaptation.md § 4 (`≤ 500 dp` column): under the
-        // mobile-viewport frame (360 × 640 dp via [mobileViewport]) the
-        // faction-row body adopts the narrow stacked layout — action
-        // buttons drop below the info column and are left-aligned —
-        // because 360 dp ≤ `kDiplomacyRowNarrowMaxWidth`. Refs #2870 R22
-        // / S9 — "any other screen with responsive variants" extends the
-        // R22 screen list to Diplomacy.
-        name: 'Mobile viewport — narrow rows (≤ 500 dp)',
+        // Narrow sizing contract (Refs #3627 AC6): full viewport width ×
+        // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp
+        // (naval shares the same rule, no fixed sidebar).
+        name: 'Mobile (360x640)',
         builder: (context) {
           final result = getDebugInitGameResult();
           final game = result.game;
@@ -899,19 +898,13 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
               : 'gp1';
           return mobileViewport(
             context,
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
-              localizationsDelegates:
-                  AppLocalizationsBinding.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: DiplomacyPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  topology: result.combinedTopology,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus(),
-                ),
+            ConstrainedBox(
+              constraints: unitsPanelSheetConstraints(const Size(360, 640)),
+              child: NavalUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                bus: AppEventBus.create(),
+                topology: result.combinedTopology,
               ),
             ),
           );
@@ -920,41 +913,3 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
     ],
   ),
 ];
-
-/// Stable human-player id used by the Diplomacy Panel empty-state
-/// Widgetbook story. SPEC/ui/diplomacy-panel.md § Widgetbook.
-const String _diplomacyPanelEmptyHumanPlayerId = 'gp1';
-
-/// Minimal `Game` for the Diplomacy Panel empty-state Widgetbook story:
-/// a single human-controlled Great Power with no other discovered
-/// factions and no diplomacy relations, so `buildDiplomacyRows` returns
-/// an empty list and the panel paints the three always-visible section
-/// headings plus the `diplomacy_panel_noTribes` empty placeholder copy.
-/// SPEC/ui/diplomacy-panel.md § Widgetbook empty state.
-final Game _diplomacyPanelEmptyGame = () {
-  const ow = 'oldWorld';
-  final p1 = Province(
-    id: '$ow|p1',
-    regionId: ow,
-    displayName: 'P1',
-    ownerId: _diplomacyPanelEmptyHumanPlayerId,
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: [p1], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
-  const player = Player(
-    id: _diplomacyPanelEmptyHumanPlayerId,
-    displayName: 'Solo',
-    isHuman: true,
-  );
-  return Game(
-    id: 'wb-diplomacy-empty',
-    worldState: world,
-    players: const [player],
-    diplomacyRelations: const [],
-  );
-}();

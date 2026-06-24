@@ -1,0 +1,20 @@
+name: colonizethis_economy_test_support
+description: Shared world-market test fixtures (trade-order, validator, deal-matcher builders) for Colonize This economy and its sibling test suites.
+version: 0.0.1
+publish_to: none
+repository: https://github.com/colonizethisv3/colonizethisv3
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  colonizethis_economy:
+  colonizethis_models:
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../colonizethis_exception_lint
+  colonizethis_test:
+  custom_lint: 0.8.1
+  test: 1.30.0

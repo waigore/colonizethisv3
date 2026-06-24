@@ -16,17 +16,21 @@ import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
 
+  // Refs #3656: lightweight hand-built game instead of the ~7-11s
+  // getDebugInitGameResult() map generator. DiplomacyScreen derives an empty
+  // MapTopology in widget tests and the panel always renders the section
+  // headings, so this exercises the chrome + body without a generated map.
   late Game gameWithFactions;
   late String humanPlayerId;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    gameWithFactions = result.game;
+    gameWithFactions = buildDiplomacyScreenTestGame();
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';

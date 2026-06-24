@@ -263,6 +263,68 @@ ProviderScope _diplomacyDetailScreenProviderScopeMinor() {
   );
 }
 
+ProviderScope _diplomacyDetailScreenProviderScopeAlliance() {
+  const humanId = 'gp_human';
+  const rivalId = 'gp_rival';
+  final game = Game(
+    id: 'wb_diplomacy_detail_alliance',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 6),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    turnTimeMapping: TurnTimeMapping.gdd01,
+    players: [
+      Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
+      Player(id: rivalId, displayName: 'Spain', isHuman: false, treasury: 0),
+    ],
+    diplomacyRelations: [
+      // Friendly band (90) AND a persisted formal alliance so the ALLIANCE
+      // treaty badge renders in the CURRENT RELATION card (Refs #3625, AC4).
+      DiplomacyRelation(
+        factionId1: humanId,
+        factionId2: rivalId,
+        score: 90,
+        state: RelationState.atPeace,
+        formalAlliance: true,
+      ),
+    ],
+    diplomaticHistoryEvents: [
+      DiplomaticEvent(
+        turn: 5,
+        intraTurnIndex: 0,
+        type: DiplomaticEventType.allianceFormed,
+        participants: {humanId, rivalId},
+        fromFactionId: humanId,
+        toFactionId: rivalId,
+      ),
+    ],
+    dossierEvidenceEntries: const [],
+  );
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+    ],
+    child: MaterialApp(
+      theme: AppThemes.editorialMonocle,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: DiplomacyDetailScreen(
+        game: game,
+        humanPlayerId: humanId,
+        factionId: rivalId,
+        factionDisplayName: 'Spain',
+        kind: FactionKind.greatPower,
+        relation: game.diplomacyRelations.first,
+      ),
+    ),
+  );
+}
+
 /// Diplomacy detail screen stories. SPEC/ui/diplomacy-detail-screen.md.
 List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
   WidgetbookFolder(
@@ -279,6 +341,10 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
       WidgetbookUseCase(
         name: 'Minor nation — no dossier, empty history',
         builder: (context) => _diplomacyDetailScreenProviderScopeMinor(),
+      ),
+      WidgetbookUseCase(
+        name: 'Formal alliance — GP with treaty badge',
+        builder: (context) => _diplomacyDetailScreenProviderScopeAlliance(),
       ),
     ],
   ),

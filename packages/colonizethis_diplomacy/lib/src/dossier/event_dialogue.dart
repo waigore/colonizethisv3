@@ -227,6 +227,16 @@ bool _isAllied(Game game, String a, String b) {
       rel.state == RelationState.atPeace;
 }
 
+/// True when [a] and [b] hold a persisted formal alliance treaty and are at
+/// peace. Mutual-defence reactions (attack_on_ally) gate on this, not the
+/// informal [RelationLevel.allied] band. SPEC/game/diplomacy.md § Alliances,
+/// SPEC/ai/dialogue-and-mood.md (reactive: attack_on_ally).
+bool _hasFormalAlliance(Game game, String a, String b) {
+  final rel = _relationBetween(game, a, b);
+  if (rel == null) return false;
+  return rel.formalAlliance && rel.state == RelationState.atPeace;
+}
+
 bool _hasEmbassyWithTarget(Game game, String gpId, String targetId) {
   return game.overtureStates.any(
     (o) => o.gpId == gpId && o.targetId == targetId && o.hasEmbassy,
@@ -258,7 +268,7 @@ String? _reactiveHumanAttackSituationForSpeaker(
         _isAllied(game, speakerId, defenderFactionId);
     return tiedToTribe ? 'attack_on_tribe' : null;
   }
-  if (_isAllied(game, speakerId, defenderFactionId)) {
+  if (_hasFormalAlliance(game, speakerId, defenderFactionId)) {
     return 'attack_on_ally';
   }
   return null;

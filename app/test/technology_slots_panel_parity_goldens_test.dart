@@ -7,8 +7,9 @@
 // placeholder are pinned by `matchesGoldenFile` baselines.
 //
 // Rendered against `AppThemes.editorialMonocle` (the running-app dark theme) at
-// device pixel ratio 1.0 from the deterministic `getDebugInitGameResult()`
-// fixture, inside a keyed `RepaintBoundary` over a viewport-sized
+// device pixel ratio 1.0 from the deterministic lightweight
+// `buildTechnologyPanelTestGame()` fixture (Refs #3656), inside a keyed
+// `RepaintBoundary` over a viewport-sized
 // `SingleChildScrollView`, matching the committed golden harness pattern
 // (`new_game_leader_selection_dialog_golden_test.dart`). The structural /
 // behavioural contracts (heading widget type, compact controls, locked-slot
@@ -23,7 +24,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 Future<void> _pumpPanel(
   WidgetTester tester, {
@@ -73,8 +75,7 @@ void main() {
   late Player player;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    game = buildTechnologyPanelTestGame();
     player = game.players.first;
   });
 

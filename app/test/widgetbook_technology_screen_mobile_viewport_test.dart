@@ -16,7 +16,6 @@ import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -25,6 +24,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/widgetbook/catalog.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 WidgetbookUseCase _useCase(
   List<WidgetbookNode> directories, {
@@ -54,7 +55,23 @@ void main() {
   late Game baseGame;
 
   setUpAll(() {
-    baseGame = getDebugInitGameResult().game;
+    // Refs #3656: lightweight hand-built fixture replaces the ~11s procedural
+    // map generation of getDebugInitGameResult(). The Technology screen reads
+    // only game.players + the static techCatalog, so the Slots tab renders its
+    // three active slot cards plus the locked University slot without any
+    // generated map/topology data.
+    //
+    // The game id and human player id match the Widgetbook mid-game story
+    // (kWidgetbookTechnologyStoryGameId / kPanelTestHumanPlayerId): because
+    // CtGameFeatureScreenShell renders the live currentGameProvider game when
+    // its id matches the screen's game.id, this fixture's fresh player (no
+    // researched techs) is the one rendered — mirroring the previous debug-init
+    // first-player render and keeping the Slots tab free of the wide
+    // researched-tech chips that overflow a 360 dp viewport.
+    baseGame = buildPanelTestGame(
+      id: kWidgetbookTechnologyStoryGameId,
+      players: [panelTestHumanPlayer()],
+    );
     expect(baseGame.players, isNotEmpty);
   });
 
@@ -122,7 +139,8 @@ void main() {
           );
           expect(find.byType(TechnologyScreen), findsOneWidget);
           expect(find.byType(SingleChildScrollView), findsOneWidget);
-          // Debug-init player: three active slots + locked slot 4 (University).
+          // Lightweight fixture player (researchSlots null -> default 3):
+          // three active slots + locked slot 4 (University).
           expect(find.byType(ResearchSlotCard), findsNWidgets(3));
           expect(find.byType(LockedResearchSlotCard), findsOneWidget);
         },

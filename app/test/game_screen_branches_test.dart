@@ -10,9 +10,7 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -21,16 +19,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/panel_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugResult;
   late Game baseGame;
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    debugResult = getDebugInitGameResult();
-    baseGame = debugResult.game;
+    // Refs #3656: these specs assert only GameScreen chrome (victory overlay,
+    // pause-menu modal, game-start intro overlay) — none of which read
+    // generated map/topology data. They pump GameScreen with
+    // `mapViewDataProvider` overridden to null (no map canvas mounted), so the
+    // shared lightweight fixture replaces the ~7-11s `getDebugInitGameResult()`
+    // map generator.
+    baseGame = buildGameScreenSpecsTestGame();
     Hive.init('./.dart_tool/test_hive_game_screen_branches');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
@@ -92,7 +96,7 @@ void main() {
         width: 900,
         height: 650,
         game: victoryGame,
-        mapViewData: debugResult.mapViewData,
+        mapViewData: null,
         introShownIds: {victoryGame.id},
       ),
     );
@@ -137,7 +141,7 @@ void main() {
           width: 800,
           height: 600,
           game: baseGame,
-          mapViewData: debugResult.mapViewData,
+          mapViewData: null,
           introShownIds: const <String>{},
         ),
       );

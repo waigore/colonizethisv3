@@ -15,7 +15,7 @@ Major flows only; keep this table small.
 | `SHEL` | App shell, main menu, initializing, pause menu | `1` menu/shell route, `3` game initializing, `4` pause menu panel |
 | `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route |
 | `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
-| `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military |
+| `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military, `6` train naval |
 | `DIPL` | Diplomacy panels and grant flows | `1` diplomacy panel/screen, `2` grant/subsidy dialog |
 | `PROD` | Production surfaces | `1` production panel/screen, `2` commodity breakdown dialog |
 | `TECH` | Technology surfaces | `1` technology panel/screen |
@@ -50,6 +50,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `UNIT30001` | Naval units panel | [naval-units-panel.md](naval-units-panel.md) | `app/lib/features/game/widgets/naval_units_panel.dart` | Naval Units Panel | active |
 | `UNIT40001` | Train civilians dialog | [train-civilians-dialog.md](train-civilians-dialog.md) | `app/lib/features/game/widgets/train_civilians_dialog.dart` | Train Civilians Dialog | active |
 | `UNIT50001` | Train military dialog | [train-military-dialog.md](train-military-dialog.md) | `app/lib/features/game/widgets/train_military_dialog.dart` | Train Military Dialog | active |
+| `UNIT60001` | Train naval dialog | [train-naval-dialog.md](train-naval-dialog.md) | `app/lib/features/game/widgets/train_naval_dialog.dart` | Train Naval Dialog | active |
 | `DIPL20001` | Grant or subsidy dialog | [grant-or-subsidy-dialog.md](grant-or-subsidy-dialog.md) | `app/lib/features/game/widgets/diplomacy_dialogs.dart` | Grant or Subsidy Dialog | active |
 | `PROD20001` | Production commodity breakdown dialog | [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | `app/lib/features/game/widgets/production_commodity_breakdown_dialog.dart` | Production Commodity Breakdown Dialog | active |
 | `CMPT10001` | Combat mode choice dialog | [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md) | `app/lib/features/game/combat/combat_mode_choice_dialog.dart` | Quick Battle | active |

@@ -13,7 +13,8 @@ import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -22,8 +23,7 @@ void main() {
   late Player player;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    game = buildTechnologyPanelTestGame();
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
 

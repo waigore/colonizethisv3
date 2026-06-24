@@ -75,7 +75,7 @@ Game runEndOfTurnPhase(
       'calendar campaign halt at turn=$currentTurn '
       '(year ${mapping.yearAtTurn(currentTurn)})',
     );
-    return game
+    final halted = game
         .copyWith(calendarCampaignHalted: true)
         .updateWorldState(
           (ws) => ws
@@ -85,21 +85,43 @@ Game runEndOfTurnPhase(
                 spyRevealTurnsByPlayer: nextSpyTimers,
               ),
         );
+    return _applyAiFirstContact(halted, topology);
   }
 
-  return game.updateWorldState(
-    (ws) => ws
-        .updateTurnState(
-          (ts) => ts.copyWith(
-            turnNumber: ts.turnNumber + 1,
-            phase: TurnPhase.orders,
-          ),
-        )
-        .copyWith(
-          playerVisibilityByTile: nextVisibility,
-          spyRevealTurnsByPlayer: nextSpyTimers,
-        ),
+  final advanced = game
+      .updateWorldState(
+        (ws) => ws
+            .updateTurnState(
+              (ts) => ts.copyWith(
+                turnNumber: ts.turnNumber + 1,
+                phase: TurnPhase.orders,
+              ),
+            )
+            .copyWith(
+              playerVisibilityByTile: nextVisibility,
+              spyRevealTurnsByPlayer: nextSpyTimers,
+            ),
+      )
+      // Per-turn `/set_diplomacy` debug-mutation quota resets on turn advance.
+      // SPEC/ui/debug-console-panel.md.
+      .copyWith(debugDiplomacyUsedPairKeys: const <String>{});
+  return _applyAiFirstContact(advanced, topology);
+}
+
+/// Persists GP–Tribe first-contact relations for AI-controlled GPs once the
+/// turn's visibility is finalized, so AI GPs gain the same neutral standing the
+/// human GP receives on tile reveal (no herald). Refs #3620 AC-5.
+Game _applyAiFirstContact(Game game, MapTopology topology) {
+  final before = game.diplomacyRelations.length;
+  final next = applyAiGpTribeFirstContactRelations(
+    game: game,
+    topology: topology,
   );
+  final added = next.diplomacyRelations.length - before;
+  if (added > 0) {
+    turnLog.i('ai gp-tribe first contact: persisted $added new relation(s)');
+  }
+  return next;
 }
 
 void _emitEraChangeDialogue(

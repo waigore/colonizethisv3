@@ -9,31 +9,21 @@
 // two call sites.
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'support/trade_order_factory.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 const String _gp = 'gp_h';
 
-Game _gameWith(List<TradeOrder> bids, {required Map<CommodityId, int> prices}) {
-  return Game(
-    id: 'g_bid_spend_parity',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      Player(id: _gp, displayName: 'England', isHuman: true, treasury: 10000),
-    ],
-    worldMarketState: WorldMarketState(
+Game _gameWith(List<TradeOrder> bids, {required Map<CommodityId, int> prices}) =>
+    carryForwardBidGame(
+      bids,
+      playerId: _gp,
       prices: prices,
-      carryForwardBidsByFactionId: {_gp: bids},
-    ),
-  );
-}
+      gameId: 'g_bid_spend_parity',
+    );
 
 TradeOrder _bid(String commodityId, int qty) => testBid(commodityId, qty);
 

@@ -154,10 +154,13 @@ Game _applyCallToArmsRefuse(
         lastInteractionTurn: turn,
       );
     }
+    // Refusing a call to arms breaks the formal alliance (treaty) as well as
+    // dropping the relation score below Allied. SPEC/game/diplomacy.md.
     return existing.copyWith(
       score: newScore,
       level: newLevel,
       lastInteractionTurn: turn,
+      formalAlliance: false,
     );
   });
   final refuseEvidence = evidenceForIsolationistCallToArmsRefuse(
@@ -182,6 +185,18 @@ Game _applyCallToArmsRefuse(
     logMessage:
         'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
   );
+  g = logDiplomaticEvent(
+    g,
+    turn,
+    DiplomaticEventType.allianceBroken,
+    {allyGpId, defenderGpId},
+    fromFactionId: allyGpId,
+    toFactionId: defenderGpId,
+    wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
+    eventTally: eventTally,
+    logMessage:
+        'diplomacy alliance broken $allyGpId-$defenderGpId on call to arms refuse',
+  );
   return g;
 }
 
@@ -191,7 +206,8 @@ Game _processCallToArmsForWarPair(
   int turn,
   List<CallToArmsDecision>? callToArmsDecisions,
   List<CallToArmsPending> pending,
-  DiplomacyFactionMembership factionMembership, {
+  DiplomacyFactionMembership factionMembership,
+  Set<String> formalAlliancePairKeysAtPhaseStart, {
   IntraTurnEventTally? eventTally,
 }) {
   final aggressorGpId = pair.aggressor;
@@ -201,7 +217,14 @@ Game _processCallToArmsForWarPair(
     if (allyGpId == defenderGpId || allyGpId == aggressorGpId) continue;
     if (factionsAtWar(state, allyGpId, aggressorGpId)) continue;
     final rel = getRelation(state, allyGpId, defenderGpId);
-    if (rel == null || !rel.atPeace || rel.level != RelationLevel.allied) {
+    // Mutual defence requires a persisted FORMAL alliance that existed at the
+    // end of the preceding turn (snapshot taken at phase start, before this
+    // turn's alliance orders resolve). The informal Allied relation band must
+    // not trigger Call to Arms on its own. SPEC/game/diplomacy.md § Alliances.
+    final hadFormalAlliance = formalAlliancePairKeysAtPhaseStart.contains(
+      pairKey(allyGpId, defenderGpId),
+    );
+    if (rel == null || !rel.atPeace || !hadFormalAlliance) {
       continue;
     }
 
@@ -297,6 +320,7 @@ CallToArmsResult processCallToArms(
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
   required DiplomacyFactionMembership factionMembership,
+  required Set<String> formalAlliancePairKeysAtPhaseStart,
   List<CallToArmsDecision>? callToArmsDecisions,
   IntraTurnEventTally? eventTally,
 }) {
@@ -316,6 +340,7 @@ CallToArmsResult processCallToArms(
       callToArmsDecisions,
       pending,
       factionMembership,
+      formalAlliancePairKeysAtPhaseStart,
       eventTally: eventTally,
     );
   }

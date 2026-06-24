@@ -30,16 +30,13 @@ class _DiplomacyRow extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(CtSpacing.ml),
-          child: narrow
-              ? _buildNarrowBody(context)
-              : _buildWideBody(context),
+          child: narrow ? _buildNarrowBody(context) : _buildWideBody(context),
         ),
       ),
     );
   }
 
-  Key get _bodyKey =>
-      ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
+  Key get _bodyKey => ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
 
   // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant): info
   // column shares a Row with the action cluster, anchored trailing-edge.
@@ -49,12 +46,19 @@ class _DiplomacyRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: _buildInfoColumn(context)),
-        // Full action matrices can exceed one run; [Flexible] caps the
-        // trailing cluster to remaining row width so [Wrap] can flow.
+        // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant,
+        // Refs #3621) — the trailing cluster is bounded only by the
+        // available faction-row width (the `Flexible` action area), with no
+        // fixed dp cap. `Align(topRight)` keeps the cluster flush to the
+        // row's trailing edge while the end-aligned `Wrap` flows the compact
+        // buttons left-to-right and wraps onto a new run only once the
+        // remaining row width cannot fit the next button — matching the
+        // mockup `.f-actions { flex-wrap: wrap; justify-content: flex-end }`
+        // with its `max-width: 180px` cap removed.
         Flexible(
           child: Align(
             alignment: Alignment.topRight,
-            child: _buildActionButtons(),
+            child: _buildActionButtons(alignEnd: true),
           ),
         ),
       ],
@@ -72,7 +76,7 @@ class _DiplomacyRow extends StatelessWidget {
       children: [
         _buildInfoColumn(context),
         if (hasActions) ...[
-          const SizedBox(height: 8),
+          CtGap.m,
           Align(alignment: Alignment.centerLeft, child: _buildActionButtons()),
         ],
       ],
@@ -85,6 +89,7 @@ class _DiplomacyRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildHeaderRow(context),
+        ..._buildRelativePowerLine(context),
         const SizedBox(height: 4),
         _buildRelationRow(context),
         ..._buildOptionalStatusLines(context),
@@ -97,15 +102,14 @@ class _DiplomacyRow extends StatelessWidget {
     // `kMinViewportWidth` (320 dp) the inner Row width is ~262 dp once the
     // ListView, row padding, and chrome border are subtracted. A long
     // faction display name (e.g. `Holy Roman Empire`) plus the
-    // `_FactionKindBadge` chip and the optional `+N% / −N%` power
-    // comparison label exceeds that budget by ~162 px without a
-    // shrinkable child, producing the documented overflow. Wrap the name
-    // in `Flexible` + `TextOverflow.ellipsis` so the name absorbs all
+    // `_FactionKindBadge` chip exceeds that budget without a shrinkable
+    // child, producing the documented overflow. Wrap the name in
+    // `Flexible` + `TextOverflow.ellipsis` so the name absorbs all
     // available width and shrinks gracefully at narrow viewports while
-    // the chip + percentage retain their natural size for legibility.
-    // SPEC/ui/diplomacy-panel.md § Per-faction row text layout is
-    // preserved: the chip, optional percentage, and their leading gap
-    // continue to anchor to the name's trailing edge.
+    // the chip retains its natural size for legibility. The Great Power
+    // power comparison no longer lives here — it renders on the dedicated
+    // relative-power line below the header (SPEC/ui/diplomacy-panel.md
+    // § Relative power line).
     return Row(
       children: [
         Flexible(
@@ -118,48 +122,37 @@ class _DiplomacyRow extends StatelessWidget {
             maxLines: 1,
           ),
         ),
-        const SizedBox(width: 8),
+        CtGap.wm,
         _kindChip(context, data.kind),
-        ..._buildPowerComparison(context),
       ],
     );
   }
 
-  /// Renders the Great Power power-comparison percentage per
-  /// SPEC/ui/diplomacy-panel.md § Power comparison percentage.
-  List<Widget> _buildPowerComparison(BuildContext context) {
+  /// Renders the Great Power relative-power line between the header and the
+  /// relation row per SPEC/ui/diplomacy-panel.md § Relative power line. Only
+  /// Great Power rows carry the comparison scores; Minor / Tribe rows omit
+  /// the line entirely.
+  List<Widget> _buildRelativePowerLine(BuildContext context) {
     final int? gpScore = data.powerScore;
     final int? playerScore = data.playerPowerScore;
     if (gpScore == null || playerScore == null) {
       return const [];
     }
     final int pct = powerComparisonPercent(gpScore, playerScore);
-    final String text = formatPowerComparisonPercent(pct);
-    // SPEC: red (--danger) when GP stronger (pct > 0), green (--success) when
-    // weaker or equal (pct <= 0). Token colors live in the editorial-monocle
-    // palette so the row matches the dark theme rather than raw Material reds.
-    final Color color = pct > 0
-        ? EditorialMonoclePalette.danger
-        : EditorialMonoclePalette.success;
-    return [
-      const SizedBox(width: 8),
-      Text(
-        text,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ];
+    return [const SizedBox(height: 4), RelativePowerLine(pct: pct)];
   }
 
   /// Renders the relation summary row per SPEC/ui/diplomacy-panel.md
-  /// § Relation state badge + § Per-faction row. The WAR/PEACE chip uses
-  /// the dedicated [_RelationStateBadge]; the one-word relation state
-  /// (Hostile / Unfriendly / Cordial / Friendly) and the optional
-  /// overture stage stay as inline text.
+  /// § Relation state badge + § Per-faction row + § Relation word styling.
+  /// The WAR/PEACE chip uses the dedicated [_RelationStateBadge]; the
+  /// one-word relation state (Hostile / Unfriendly / Cordial / Friendly)
+  /// renders **italic** in its level-appropriate color
+  /// ([diplomacyRelationWordColor]) per the mockup `.f-relation .word`,
+  /// while the muted separator and the optional overture stage keep the
+  /// `--muted` body styling (mockup `.f-overture`).
   Widget _buildRelationRow(BuildContext context) {
-    final TextStyle? bodySmall = Theme.of(context).textTheme.bodySmall;
+    final TextStyle bodySmall =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
     final DiplomacyRelation? rel = data.relation;
     if (rel == null) {
       return Text('—', style: bodySmall);
@@ -169,20 +162,44 @@ class _DiplomacyRow extends StatelessWidget {
     final String relationStateLabel = relationScoreToDisplayLabel(rel.score);
     final String overtureLabel = data.overture == null
         ? ''
-        : ' · ${_overtureStageLabel(data.overture!.stage)}';
-    final String trailing = relationStateLabel.isEmpty
-        ? overtureLabel
-        : ' · $relationStateLabel$overtureLabel';
+        : _overtureStageLabel(data.overture!.stage);
+    // SPEC/ui/diplomacy-panel.md § Relation word styling (Refs #3621): the
+    // `·` separators and overture text stay `--muted`; only the relation
+    // word carries the level color + italic treatment.
+    final TextStyle mutedStyle = bodySmall.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    final TextStyle wordStyle = bodySmall.copyWith(
+      color: diplomacyRelationWordColor(rel.score),
+      fontStyle: FontStyle.italic,
+    );
+    // Mockup `.f-relation`: the WAR/PEACE badge carries a 4 px right margin
+    // before the relation word (no leading `·`); the overture clause keeps a
+    // `·` separator. The leading single space here reproduces the badge gap.
+    final List<InlineSpan> spans = <InlineSpan>[];
+    if (relationStateLabel.isNotEmpty) {
+      spans.add(const TextSpan(text: ' '));
+      spans.add(TextSpan(text: relationStateLabel, style: wordStyle));
+    }
+    if (overtureLabel.isNotEmpty) {
+      spans.add(TextSpan(text: ' · $overtureLabel'));
+    }
+    // SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625): a
+    // persisted formal alliance (treaty) surfaces an explicit `ALLIANCE` badge
+    // after the WAR/PEACE state badge so a mutual-defence treaty reads as
+    // distinct from a merely-Friendly informal relation. The informal
+    // `RelationLevel.allied` score band never shows this badge on its own.
+    final bool showAlliance = rel.formalAlliance;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         _RelationStateBadge(atWar: rel.atWar),
-        if (trailing.isNotEmpty)
+        if (showAlliance) ...[CtGap.wm, const DiplomacyAllianceBadge()],
+        if (spans.isNotEmpty)
           Flexible(
-            child: Text(
-              trailing,
-              style: bodySmall,
+            child: Text.rich(
+              TextSpan(style: mutedStyle, children: spans),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             ),
@@ -191,8 +208,27 @@ class _DiplomacyRow extends StatelessWidget {
     );
   }
 
+  /// Shared style for the outgoing economic-diplomacy lines (active subsidy,
+  /// pending grant, pending subsidy). SPEC/ui/diplomacy-panel.md
+  /// § Per-faction row → Outgoing economic diplomacy (styling, Refs #3621):
+  /// the mockup `.f-subsidy` treatment is mono, `--accent-dim`, and
+  /// non-italic. All three lines share one compact mono style so the block
+  /// reads uniformly (superseding the prior italic / `colorScheme.tertiary`
+  /// pending styling).
+  TextStyle _economicLineStyle(BuildContext context) {
+    final TextStyle base =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+    return base.copyWith(
+      color: EditorialMonoclePalette.accentDim,
+      fontFamily: 'monospace',
+      fontFamilyFallback: const ['Courier'],
+      fontStyle: FontStyle.normal,
+    );
+  }
+
   List<Widget> _buildOptionalStatusLines(BuildContext context) {
     final l10n = appL10n(context);
+    final TextStyle style = _economicLineStyle(context);
     final lines = <Widget>[];
     if (data.activeSubsidyPerTurn != null) {
       lines.addAll([
@@ -202,9 +238,7 @@ class _DiplomacyRow extends StatelessWidget {
             data.activeSubsidyPerTurn!,
             data.displayName,
           ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+          style: style,
         ),
       ]);
     }
@@ -213,10 +247,7 @@ class _DiplomacyRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
+          style: style,
         ),
       ]);
     }
@@ -225,23 +256,24 @@ class _DiplomacyRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
+          style: style,
         ),
       ]);
     }
     return lines;
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons({bool alignEnd = false}) {
     if (readOnly) {
       return const SizedBox.shrink();
     }
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      // SPEC/ui/diplomacy-panel.md § Action button styling — mockup
+      // `.f-actions { gap: 4px; justify-content: flex-end }` (wide) /
+      // `justify-content: flex-start` (narrow).
+      alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
+      spacing: kDiplomacyActionWrapSpacing,
+      runSpacing: kDiplomacyActionWrapSpacing,
       children: [
         for (final action in data.actions)
           if (_isActionPending(action))
@@ -316,22 +348,36 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
     final ThemeData theme = Theme.of(context);
-    // SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle text theme —
-    // the action-button caption resolves through the M3 `bodySmall` slot
-    // (12 dp) so font, weight, and colour flow from
-    // `AppThemes.editorialMonocle` instead of a hard-coded literal.
-    // Refs #2914 S7.
+    // SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621) — the
+    // action-button caption seeds its weight/colour from the M3 `bodySmall`
+    // slot (so it still flows from `AppThemes.editorialMonocle` per
+    // Refs #2914 S7) but overrides the family to the editorial-monocle
+    // **display** stack ([editorialMonocleDisplayFontFamily], Cinzel) and the
+    // size to the compact [kDiplomacyActionButtonFontSize] (mockup
+    // `.f-actions button { font-size: 8px; font-family: var(--font-display) }`).
+    // The smaller display label packs more buttons per trailing-cluster run so
+    // the wide cluster extends horizontally instead of stacking vertically.
     final TextStyle labelStyle =
-        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    final Widget button = SizedBox(
-      height: 32,
-      child: CtNinePatchButton(
-        onPressed: isPending ? onCancel : onPressed,
-        enabled: isPending || enabled,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        dangerVariant: _isWarVariant,
-        child: Text(label, style: labelStyle),
-      ),
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+          fontFamily: editorialMonocleDisplayFontFamily,
+          fontSize: kDiplomacyActionButtonFontSize,
+        );
+    // SPEC/ui/diplomacy-panel.md § Action button styling — diplomacy action
+    // buttons use the compact CtNinePatchButton variant (tighter minHeight
+    // and padding than the 48 × 16/12 dp default) to match the mockup
+    // `.f-actions button` density. Refs #3621.
+    final Widget button = CtNinePatchButton(
+      onPressed: isPending ? onCancel : onPressed,
+      enabled: isPending || enabled,
+      minHeight: kDiplomacyActionButtonMinHeight,
+      padding: kDiplomacyActionButtonPadding,
+      // SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621): the
+      // compact action buttons shrink-wrap to their label so the trailing
+      // cluster flows left-to-right within the available row width instead of
+      // each button expanding to the full run width as a vertical column.
+      shrinkWrap: true,
+      dangerVariant: _isWarVariant,
+      child: Text(label, style: labelStyle),
     );
     final String? reason = rejectionReason;
     if (!isPending && !enabled && reason != null && reason.isNotEmpty) {

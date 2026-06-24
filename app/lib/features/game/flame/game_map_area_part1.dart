@@ -13,6 +13,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       PerPlayerWorkTargetSelectionCache();
   bool _sideMenuOpen = false;
   bool _debugConsoleOpen = false;
+
+  /// One-shot guard so shell-entry capital auto-center runs once per mounted
+  /// game. SPEC/ui/empire-overview.md § Initial map viewport (shell entry).
+  bool _didAutoCenterOnEntry = false;
   final SubscriptionTracker _busSubscriptions = SubscriptionTracker();
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
@@ -103,6 +107,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       if (enteredObserve || switchedMode) {
         _cancelWorkTargetSelection();
       }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _maybeAutoCenterOnShellEntry();
     });
   }
 
@@ -334,26 +342,42 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     );
   }
 
-  void _centerOnHumanCapital() {
-    final shell = ref.read(shellPlayerContextProvider);
-    final playerId =
-        shell.debugCommandTargetPlayerId ?? _mapPlayerId;
-    final player =
-        widget.game.playerById(playerId) ?? widget.game.players.first;
-    final capital = player.capitalTile;
-    if (capital == null) {
+  /// Runs the one-shot shell-entry auto-center on the current player's capital.
+  /// Skipped in global observe (no `viewingPlayerId`) or when the current
+  /// player has no capital. SPEC/ui/empire-overview.md § Initial map viewport.
+  void _maybeAutoCenterOnShellEntry() {
+    if (_didAutoCenterOnEntry) {
       return;
     }
-    final tileKey = capital.toTileKey();
-    final regionId = capital.regionId;
-    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
+    _didAutoCenterOnEntry = true;
+    final shell = ref.read(shellPlayerContextProvider);
+    _applyCapitalCenter(shell.viewingPlayerId);
+  }
+
+  /// Manual home-to-capital action: centers on the current player's capital.
+  /// SPEC/ui/empire-overview.md § Home-to-capital button.
+  void _centerOnCurrentPlayerCapital() {
+    final shell = ref.read(shellPlayerContextProvider);
+    _applyCapitalCenter(shell.mapPlayerIdFor(widget.game));
+  }
+
+  /// Switches the region tab, centers the camera, and sets the secondary
+  /// highlight on [currentPlayerId]'s capital tile. No-op when the resolved
+  /// target is null (global observe or no capital).
+  void _applyCapitalCenter(String? currentPlayerId) {
+    final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      game: widget.game,
+      currentPlayerId: currentPlayerId,
+    );
+    if (target == null) {
+      return;
+    }
+    ref
+        .read(mapProvincePanelProvider.notifier)
+        .setSecondaryHighlight(target.tileKey);
     setState(() {
-      _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
-        _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
-        _regionIndex = 0;
-      }
+      _centerOnTileKey = target.tileKey;
+      _regionIndex = target.regionIndex;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -367,9 +391,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
       _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
+      if (regionId == kRegionNewWorld) {
         _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
+      } else if (regionId == kRegionOldWorld) {
         _regionIndex = 0;
       }
     });
@@ -383,9 +407,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     if (regionId == null) return;
     ref.read(mapProvincePanelProvider.notifier).reportMapTileTapped(tileKey);
     setState(() {
-      if (regionId == 'newWorld') {
+      if (regionId == kRegionNewWorld) {
         _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
+      } else if (regionId == kRegionOldWorld) {
         _regionIndex = 0;
       }
     });
@@ -802,6 +826,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         _regionViewportSnapshot = null;
         _pendingRegionViewport = null;
         _regionViewportFrameScheduled = false;
+        _didAutoCenterOnEntry = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _maybeAutoCenterOnShellEntry();
       });
     } else if (oldWidget.game.mapViewState != widget.game.mapViewState) {
       _mapViewState = widget.game.mapViewState;

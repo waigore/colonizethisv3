@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../l10n/l10n.dart';
@@ -140,10 +141,7 @@ class _MilitaryUnitsPanelState
   }
 
   void _openTrainDialog() {
-    widget.bus.emit(const ClosePanelEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.bus.emit(OpenDialogEvent(trainMilitaryDialogId));
-    });
+    widget.bus.closePanelThenEmit(OpenDialogEvent(trainMilitaryDialogId));
   }
 
   List<Widget> _buildListChildren(
@@ -243,10 +241,9 @@ class _MilitaryUnitsPanelState
   }
 
   void _emitLocateMapTile({required String tileKey, required String regionId}) {
-    widget.bus.emit(const ClosePanelEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
-    });
+    widget.bus.closePanelThenEmit(
+      LocateMapTileEvent(tileKey: tileKey, regionId: regionId),
+    );
   }
 }
 

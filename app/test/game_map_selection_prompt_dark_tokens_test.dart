@@ -31,7 +31,6 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -40,6 +39,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -56,15 +58,12 @@ void main() {
   /// banner is visible. Returns the [WidgetTester] focused on the running
   /// app so the calling test can locate sub-widgets.
   Future<void> pumpAndEnterSelectionMode(WidgetTester tester) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
+    final game = buildSelectionPromptTestGame();
+    final mapViewData = buildLightweightMapViewData();
     final bus = AppEventBus.create();
     addTearDown(bus.dispose);
 
-    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-        ? game.worldState.oldWorld.units.first.id
-        : game.worldState.newWorld.units.first.id;
+    final sampleUnitId = game.worldState.oldWorld.units.first.id;
 
     await tester.pumpWidget(
       ProviderScope(
