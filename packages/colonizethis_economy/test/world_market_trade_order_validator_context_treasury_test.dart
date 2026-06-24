@@ -9,7 +9,7 @@
 // positive treasury (raw treasury surfaces directly) and negative
 // treasury (clamped at zero per § Treasury budget for bids).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

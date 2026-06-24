@@ -3,7 +3,7 @@
 // SPEC/ai/treasury-planner.md § Treasury-budget-aware bid sizing.
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
