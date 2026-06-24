@@ -404,4 +404,28 @@ void main() {
       expect(ports[key], isNotEmpty);
     });
   });
+
+  group('buildProductionBreakdownDeltaTestGame', () {
+    test(
+      'human carries fed labour + recipe-input stockpile for non-zero deltas',
+      () {
+        // The breakdown dialog's delta-colour pins need the economy-preview
+        // Consumption/Production phases to move the stockpile without owned
+        // tiles: peasants fed by grain become idle labour, and timber feeds the
+        // lumber_from_timber recipe (Refs #3656).
+        final game = buildProductionBreakdownDeltaTestGame();
+        final human = game.players.firstWhere((p) => p.isHuman);
+        expect(human.id, kPanelTestHumanPlayerId);
+        expect(human.workerPool.peasants, greaterThan(0));
+        expect(human.stockpile.quantityOf('grain'), greaterThan(0));
+        // 5 lumber runs consume 10 timber; the fixture must stock enough.
+        expect(human.stockpile.quantityOf('timber'), greaterThanOrEqualTo(10));
+      },
+    );
+
+    test('a non-owning player id resolves to no player (empty-state guard)', () {
+      final game = buildProductionBreakdownDeltaTestGame();
+      expect(game.players.where((p) => p.id == 'no-such-player'), isEmpty);
+    });
+  });
 }
