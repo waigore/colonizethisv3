@@ -4,11 +4,14 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'map_view_test_fixtures.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('buildLightweightRegionMapViewData', () {
     test('builds a single-cell land region for the given regionId', () {
       final region = buildLightweightRegionMapViewData(regionId: 'oldWorld');
