@@ -14,7 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -255,9 +256,14 @@ void main() {
 
   setUpAll(() async {
     await _preWarmFlameImageCache();
-    final result = getDebugInitGameResult();
-    gameWithFactions = result.game;
-    topology = result.combinedTopology;
+    // Refs #3656: lightweight discovered-faction fixture replaces the ~7-11s
+    // getDebugInitGameResult() map generation. It seeds discovered GPs (one at
+    // peace → PEACE badge, one at war → WAR badge), a Minor Nation with the
+    // full overture matrix, and a discovered Tribe, so the section-heading,
+    // badge, relative-power, overture/FTP, and mode-bar filter assertions all
+    // have their non-vacuous rows without generated map/topology data.
+    gameWithFactions = buildDiplomacyRichPanelTestGame();
+    topology = const MapTopology();
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';

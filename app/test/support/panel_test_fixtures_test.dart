@@ -190,6 +190,79 @@ void main() {
     });
   });
 
+  group('buildDiplomacyPanelTestGame', () {
+    test('human first player with an affordable treasury and an AI opponent', () {
+      final game = buildDiplomacyPanelTestGame();
+      expect(game.players, hasLength(2));
+      final human = game.players.first;
+      expect(human.id, kPanelTestHumanPlayerId);
+      expect(human.isHuman, isTrue);
+      expect(human.treasury, greaterThanOrEqualTo(1000));
+      expect(game.players[1].id, 'gp2');
+      expect(game.players[1].isHuman, isFalse);
+    });
+
+    test('seeds an at-peace GP relation so the opponent is discovered', () {
+      final game = buildDiplomacyPanelTestGame();
+      // Unlike the screen fixture, the panel suites need a discovered row, so a
+      // persisted relation (indexed by buildPlayerView.diplomacyByOtherId) is
+      // seeded between the human and the AI great power.
+      expect(game.diplomacyRelations, hasLength(1));
+      final relation = game.diplomacyRelations.single;
+      expect(
+        {relation.factionId1, relation.factionId2},
+        {kPanelTestHumanPlayerId, 'gp2'},
+      );
+      expect(relation.state, RelationState.atPeace);
+      // No generated map/topology data is consumed by the panel chrome.
+      expect(game.worldState.oldWorld.units, isEmpty);
+      expect(game.worldState.newWorld.units, isEmpty);
+    });
+  });
+
+  group('buildDiplomacyRichPanelTestGame', () {
+    test('seeds three GPs, one Minor Nation, and one Tribe', () {
+      final game = buildDiplomacyRichPanelTestGame();
+      expect(game.players.map((p) => p.id), [
+        kPanelTestHumanPlayerId,
+        'gp2',
+        'gp3',
+      ]);
+      expect(game.players.first.isHuman, isTrue);
+      expect(game.minorNations.map((m) => m.id), ['m1']);
+      expect(game.tribes.map((t) => t.id), ['t1']);
+    });
+
+    test('discovers every opponent via a persisted human relation', () {
+      final game = buildDiplomacyRichPanelTestGame();
+      expect(game.diplomacyRelations, hasLength(4));
+      final otherIds = game.diplomacyRelations.map((r) {
+        return r.factionId1 == kPanelTestHumanPlayerId
+            ? r.factionId2
+            : r.factionId1;
+      }).toSet();
+      expect(otherIds, {'gp2', 'gp3', 'm1', 't1'});
+      // gp2 at peace (PEACE badge), gp3 at war (WAR badge) so both relation
+      // state badges are exercised by the panel suites.
+      final byOther = {
+        for (final r in game.diplomacyRelations)
+          (r.factionId1 == kPanelTestHumanPlayerId
+              ? r.factionId2
+              : r.factionId1): r,
+      };
+      expect(byOther['gp2']!.state, RelationState.atPeace);
+      expect(byOther['gp3']!.state, RelationState.atWar);
+    });
+
+    test('gp2 outranks gp3 by military strength for a non-vacuous GP sort', () {
+      final game = buildDiplomacyRichPanelTestGame();
+      int regimentsFor(String id) => game.worldState.oldWorld.units
+          .where((u) => u.ownerId == id)
+          .length;
+      expect(regimentsFor('gp2'), greaterThan(regimentsFor('gp3')));
+    });
+  });
+
   group('buildNavalPanelTestGame', () {
     test('human owns a home fleet and a non-home fleet, both with ships', () {
       final game = buildNavalPanelTestGame();
