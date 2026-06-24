@@ -2,7 +2,6 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 
 import 'resource_extractor_test_support.dart';
 import 'test_fixtures.dart';
@@ -46,9 +45,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: connectedTiles),
-        },
+        connectivityResult: connectivityFor(connectedTiles),
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['wool'], 1);
@@ -58,17 +55,7 @@ void main() {
     });
 
     test('mineral tiles without prospected are excluded from extraction', () {
-      final grid = [
-        ['p1'],
-      ];
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: grid,
-        resourceGrid: [
-          [Resource.iron],
-        ],
-      );
+      final tileMap = singleTileMap(Resource.iron);
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 2)
           .setRoadLevel('oldWorld|p1|0|0', 2);
@@ -76,9 +63,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-        },
+        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['iron'], isNull);
@@ -86,17 +71,7 @@ void main() {
     });
 
     test('mineral from prospected tile counts in land', () {
-      final grid = [
-        ['p1'],
-      ];
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: grid,
-        resourceGrid: [
-          [Resource.iron],
-        ],
-      );
+      final tileMap = singleTileMap(Resource.iron);
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 2)
           .setRoadLevel('oldWorld|p1|0|0', 2);
@@ -109,26 +84,14 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-        },
+        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['iron'], 2);
     });
 
     test('effective extraction capped by province townDevelopmentLevel', () {
-      final grid = [
-        ['p1'],
-      ];
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: grid,
-        resourceGrid: [
-          [Resource.grain],
-        ],
-      );
+      final tileMap = singleTileMap(Resource.grain);
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 4)
           .setRoadLevel('oldWorld|p1|0|0', 4);
@@ -139,9 +102,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-        },
+        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['grain'], 1);
@@ -209,13 +170,10 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(
-            connected: {tileKey},
-            pathTransportCap: {tileKey: 4},
-            connectedByRoadRule: const {},
-          ),
-        },
+        connectivityResult: connectivityFor(
+          {tileKey},
+          pathTransportCap: {tileKey: 4},
+        ),
         techCapForPlayer: (_) => 4,
       );
       expect(

@@ -3,7 +3,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/game_player_lookup.dart';
-import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 
 import 'resource_extractor_test_support.dart';
 
@@ -32,11 +31,11 @@ void main() {
           .setRoadLevel('oldWorld|p1|1|0', 1)
           .setRoadLevel('oldWorld|p1|0|1', 0);
       final game = resourceExtractorGame(tileState: tileState);
-      final connectivity = {
-        'pl1': ConnectivityResult(
-          connected: {'oldWorld|p1|0|0', 'oldWorld|p1|1|0', 'oldWorld|p1|0|1'},
-        ),
-      };
+      final connectivity = connectivityFor({
+        'oldWorld|p1|0|0',
+        'oldWorld|p1|1|0',
+        'oldWorld|p1|0|1',
+      });
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
@@ -52,17 +51,7 @@ void main() {
     });
 
     test('effective extraction capped by transport level', () {
-      final grid = [
-        ['p1'],
-      ];
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: grid,
-        resourceGrid: [
-          [Resource.grain],
-        ],
-      );
+      final tileMap = singleTileMap(Resource.grain);
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 4)
           .setRoadLevel('oldWorld|p1|0|0', 1);
@@ -70,9 +59,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-        },
+        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['grain'], 1);
@@ -80,17 +67,7 @@ void main() {
 
     test('effective extraction capped by player tech cap when improvement and '
         'transport are high', () {
-      final grid = [
-        ['p1'],
-      ];
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: grid,
-        resourceGrid: [
-          [Resource.grain],
-        ],
-      );
+      final tileMap = singleTileMap(Resource.grain);
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 4)
           .setRoadLevel('oldWorld|p1|0|0', 4);
@@ -98,9 +75,7 @@ void main() {
       final resultCap2 = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-        },
+        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
         techCapForPlayer: (_) => 2,
       );
       expect(resultCap2['pl1']!.land['grain'], 2);
@@ -108,9 +83,7 @@ void main() {
       final resultCap3 = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {
-          'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-        },
+        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
         techCapForPlayer: (_) => 3,
       );
       expect(resultCap3['pl1']!.land['grain'], 3);
@@ -119,17 +92,7 @@ void main() {
     test(
       'tech cap from extractionCapForUnlocked matches turn_resolver wiring',
       () {
-        final grid = [
-          ['p1'],
-        ];
-        final tileMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: grid,
-          resourceGrid: [
-            [Resource.grain],
-          ],
-        );
+        final tileMap = singleTileMap(Resource.grain);
         final tileState = TileMapState()
             .setImprovement('oldWorld|p1|0|0', 4)
             .setRoadLevel('oldWorld|p1|0|0', 4);
@@ -141,9 +104,7 @@ void main() {
         final result = computeExtraction(
           game: game,
           tileMapByRegion: {'oldWorld': tileMap},
-          connectivityResult: {
-            'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
-          },
+          connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
           techCapForPlayer: (playerId) {
             final p = game.playerById(playerId);
             return extractionCapForUnlocked(p?.techUnlocked);
