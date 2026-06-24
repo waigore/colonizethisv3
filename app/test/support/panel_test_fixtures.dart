@@ -264,6 +264,46 @@ Game buildGameScreenSpecsTestGame() {
   );
 }
 
+/// Lightweight game shaped for the `GameMapArea` shell-entry auto-center widget
+/// suite (`game_map_area_shell_entry_center_test`; Refs #3656).
+///
+/// The widget group asserts only shell-entry chrome derived from `game.players`
+/// plus observe state: on mount the secondary highlight equals the current
+/// player's `capitalTile.toTileKey()`, the province overlay stays closed, and
+/// the home-to-capital corner control enables/disables purely from
+/// `shell.viewingPlayerId != null` (normal play / player observe → enabled;
+/// global observe → disabled). None of that reads generated map/topology data:
+/// `_applyCapitalCenter` (`game_map_area_part1.dart`) sets the highlight
+/// unconditionally, and both the camera move (`ct_region_map_game.dart`
+/// `centerOnTileKey`) and the highlight ring paint
+/// (`region_map_component_render_markers.dart` `_paintTileOutlineRing`) safely
+/// no-op when the capital tile falls outside the mounted region bounds.
+///
+/// The fixture provides a single human ([kPanelTestHumanPlayerId]) so
+/// `players.first`, `firstWhere((p) => p.isHuman)`, and the player-observe
+/// (`setModePlayer(players.first.id)`) lookups all resolve it. Its old-world
+/// `capitalTile` drives the highlight assertion. Pair it with
+/// `buildLightweightMapViewData()` so the canvas mounts without the ~7-11s
+/// `getDebugInitGameResult()` map generation.
+Game buildShellEntryCenterTestGame() {
+  return buildPanelTestGame(
+    id: 'shell-entry-center-widget-test',
+    players: const [
+      Player(
+        id: kPanelTestHumanPlayerId,
+        displayName: 'Test Human',
+        isHuman: true,
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'cap',
+          x: 2,
+          y: 3,
+        ),
+      ),
+    ],
+  );
+}
+
 /// Lightweight game shaped for the in-game Diplomacy *screen* family
 /// (`diplomacy_screen_test`, `diplomacy_screen_top_bar_test`,
 /// `diplomacy_screen_320dp_min_viewport_test`, `diplomacy_dialogs_test`).
