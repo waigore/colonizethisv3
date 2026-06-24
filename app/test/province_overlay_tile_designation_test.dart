@@ -15,6 +15,7 @@
 // line at all. All strings resolve through AppLocalizations parameterized
 // keys and render in EditorialMonoclePalette.fg.
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show buildPlayerView;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -33,7 +34,6 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 /// Sentinel capital tile that never coincides with a real demo tile, used to
 /// force every faction's capital away from the tile under test so the town /
@@ -110,11 +110,13 @@ Widget _darkOverlay({
   required String displayId,
   String? selectedTileKey,
 }) {
-  final init = getDebugInitGameResult();
   final humanPlayerId = game.players.first.id;
+  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
+  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
+  // generation with identical PlayerView output for these demo-data overlays.
   final playerView = buildPlayerView(
     game,
-    init.combinedTopology,
+    const MapTopology(),
     humanPlayerId,
   );
   return MaterialApp(
@@ -144,11 +146,13 @@ Widget _goldenOverlay({
   required Key boundaryKey,
   String? selectedTileKey,
 }) {
-  final init = getDebugInitGameResult();
   final humanPlayerId = game.players.first.id;
+  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
+  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
+  // generation with identical PlayerView output for these demo-data overlays.
   final playerView = buildPlayerView(
     game,
-    init.combinedTopology,
+    const MapTopology(),
     humanPlayerId,
   );
   return MaterialApp(
