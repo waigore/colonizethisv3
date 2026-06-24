@@ -1108,11 +1108,51 @@ Game buildUnitPanelsTestGame() => buildTrainPanelTestGame();
 /// every commodity renders its `0` cells and the layout assertions hold without
 /// the ~7-11 s `getDebugInitGameResult()` map generation.
 ///
-/// Delta-colour pins (positive/negative/zero cell colours) and the committed
-/// wide golden stay on the `getDebugInitGameResult()` allowlist — they need a
-/// generated game with real extraction/production to exercise non-zero deltas.
+/// The committed wide golden stays on the `getDebugInitGameResult()` allowlist —
+/// its pixel baseline was captured against the generated debug-init content, so
+/// it cannot move to a hand-built game without re-baselining. The delta-colour
+/// pins (positive/negative/zero cell colours) move to
+/// [buildProductionBreakdownDeltaTestGame] instead (Refs #3656).
 Game buildProductionBreakdownPanelTestGame() =>
     buildPanelTestGame(id: 'production-breakdown-widget-test');
+
+/// Lightweight game shaped for the `production_commodity_breakdown_dialog_spec`
+/// **delta-colour** pins (PROD20001): the zero-delta `muted` cells, the
+/// positive-delta `success` cells, and the negative-delta `danger` cells.
+///
+/// The economy-preview pipeline that feeds the dialog
+/// (`previewStockpilePhaseDeltasByCommodityForPlayer`) runs its Consumption and
+/// Production phases off the player's `workerPool` labour and `stockpile`
+/// commodities — **not** owned tiles — so non-zero deltas are reproducible
+/// without the ~7-11 s `getDebugInitGameResult()` map generation:
+/// - `peasants` are fed `grain` in Consumption (a guaranteed negative `grain`
+///   delta) and become idle labour;
+/// - that idle labour runs the `lumber_from_timber` recipe when the dialog's
+///   `productionDesiredOutputProvider` override assigns it, producing a positive
+///   `lumber` delta and consuming `timber` (a negative `timber` delta);
+/// - every other commodity stays at `0`, giving the muted zero cells.
+///
+/// Tests pass `topology: const MapTopology()` and `tileMapByRegion: null`; the
+/// Extraction and Riches-to-treasury phases contribute nothing for a tile-less,
+/// riches-less game, so only the recipe/consumption deltas above appear.
+Game buildProductionBreakdownDeltaTestGame() => buildPanelTestGame(
+  id: 'production-breakdown-delta-widget-test',
+  players: const [
+    Player(
+      id: kPanelTestHumanPlayerId,
+      displayName: 'Test Human',
+      isHuman: true,
+      workerPool: WorkerPool(peasants: 20),
+      stockpile: Stockpile(
+        quantities: {
+          'grain': 100,
+          'timber': 100,
+        },
+      ),
+    ),
+    Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+  ],
+);
 
 /// Lightweight game shaped for `grant_or_subsidy_listener_test`.
 ///
