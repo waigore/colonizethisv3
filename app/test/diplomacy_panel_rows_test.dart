@@ -9,7 +9,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 Game _gameWithNoDiscoveredFactions() {
   const ow = 'oldWorld';
@@ -197,9 +198,14 @@ void main() {
   late MapTopology topology;
 
   setUpAll(() async {
-    final result = getDebugInitGameResult();
-    gameWithFactions = result.game;
-    topology = result.combinedTopology;
+    // Refs #3656: lightweight discovered-faction fixture replaces the ~7-11s
+    // getDebugInitGameResult() map generation. It seeds three GPs (sortable by
+    // military strength), a Minor Nation with the full overture matrix, and a
+    // Tribe — all discovered via persisted DiplomacyRelations — which is the
+    // full shape these GP-sort / minor-overture / GP-action assertions read.
+    // No generated map/topology data is consumed.
+    gameWithFactions = buildDiplomacyRichPanelTestGame();
+    topology = const MapTopology();
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';

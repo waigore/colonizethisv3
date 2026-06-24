@@ -50,15 +50,13 @@ void main() {
       );
       expect(base.treasuryBudgetForBids, 125);
     });
-
-    test('is deterministic for identical inputs', () {
-      final game = buildTreasuryBidBudgetGame(treasury: 123);
-      final a = worldMarketPlayerContextFromGame(game, humanPlayerId);
-      final b = worldMarketPlayerContextFromGame(game, humanPlayerId);
-      expect(a.bidTypeCap, b.bidTypeCap);
-      expect(a.tradeCargoCapacity, b.tradeCargoCapacity);
-      expect(a.treasuryBudgetForBids, b.treasuryBudgetForBids);
-    });
+    // Refs #3661 step 2: the standalone twin-call "deterministic for identical
+    // inputs" pin was removed. `worldMarketPlayerContextFromGame` is a pure
+    // synchronous builder, and the scalars it re-asserted are already pinned
+    // here (`treasuryBudgetForBids` above) and by the factory-parity group
+    // below (`bidTypeCap`, `tradeCargoCapacity`), so double-invocation added no
+    // coverage. Determinism that matters (sort/iteration order) is pinned by
+    // dedicated ordering tests elsewhere in the suite.
   });
 
   group('factory parity over the shared snapshot (single build path)', () {
