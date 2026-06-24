@@ -54,16 +54,6 @@ const double kDiplomacyRowNarrowMaxWidth = 500.0;
 /// widget tests can pin both variants without touching private types.
 const String kDiplomacyRowBodyKeyPrefix = 'diplomacyRowBody:';
 
-/// Maximum width (Flutter dp) of the trailing action-button cluster on the
-/// **wide** faction-row variant. Mirrors the mockup
-/// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
-/// `.f-actions { max-width: 180px }`. Capping the cluster keeps the
-/// compact buttons flowing left-to-right (and wrapping onto additional
-/// runs) on the trailing edge instead of expanding to fill the remaining
-/// row width as a single vertical stack. SPEC/ui/diplomacy-panel.md
-/// § Action button styling (Refs #3621).
-const double kDiplomacyActionClusterMaxWidth = 180.0;
-
 /// Spacing and run-spacing (Flutter dp) between diplomacy action buttons in
 /// the trailing cluster `Wrap`. Mirrors the mockup `.f-actions { gap: 4px }`.
 /// SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621).
@@ -84,6 +74,16 @@ const EdgeInsets kDiplomacyActionButtonPadding = EdgeInsets.symmetric(
   horizontal: 7,
   vertical: 3,
 );
+
+/// Label font size (Flutter sp) for a diplomacy **compact** action button.
+/// The label resolves to the editorial-monocle **display** font stack
+/// ([editorialMonocleDisplayFontFamily], Cinzel) at this compact size —
+/// materially smaller than the ~12 dp M3 `bodySmall` slot — so the mockup
+/// `.f-actions button { font-size: 8px; font-family: var(--font-display) }`
+/// density is honoured and more buttons pack onto each trailing-cluster run.
+/// Pinned at library scope so widget tests assert the size from one source.
+/// SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621).
+const double kDiplomacyActionButtonFontSize = 10.0;
 
 /// Label for the formal-alliance (treaty) badge rendered on the relation line
 /// when `DiplomacyRelation.formalAlliance` is `true`. Exposed at library scope
