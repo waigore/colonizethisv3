@@ -42,32 +42,74 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('TribeFirstContactOverlay — OVL80001', () {
-    testWidgets('AC-4: blocking herald names tribe and capital in dialogue shell', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: TribeFirstContactOverlay(
-            tribeName: 'Maya',
-            capitalName: 'Chichen',
-            assetBundle: _StringAssetBundle({
-              kDialogueTribeFirstContactAsset: _kTestYarn,
-            }),
-            onDismissed: () {},
-            child: const Text('underlay'),
+    testWidgets(
+      'AC-4: blocking herald names tribe and capital in dialogue shell',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: TribeFirstContactOverlay(
+              tribeName: 'Maya',
+              capitalName: 'Chichen',
+              assetBundle: _StringAssetBundle({
+                kDialogueTribeFirstContactAsset: _kTestYarn,
+              }),
+              onDismissed: () {},
+              child: const Text('underlay'),
+            ),
           ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.byType(CtDialogShell), findsOneWidget);
-      expect(find.text('First Contact'), findsOneWidget);
-      expect(find.textContaining('Scouts'), findsOneWidget);
-      expect(find.textContaining('Maya'), findsOneWidget);
-      expect(find.textContaining('Chichen'), findsOneWidget);
-      expect(find.byType(CtNinePatchButton), findsOneWidget);
-    });
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.text('First Contact'), findsOneWidget);
+        expect(find.textContaining('Scouts'), findsOneWidget);
+        expect(find.textContaining('Maya'), findsOneWidget);
+        expect(find.textContaining('Chichen'), findsOneWidget);
+        expect(find.byType(CtNinePatchButton), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC-10: single combined step — narrative + one Continue, one tap '
+      'dismisses the herald (#3628)',
+      (tester) async {
+        var dismissed = 0;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: TribeFirstContactOverlay(
+              tribeName: 'Maya',
+              capitalName: 'Chichen',
+              assetBundle: _StringAssetBundle({
+                kDialogueTribeFirstContactAsset: _kTestYarn,
+              }),
+              onDismissed: () => dismissed++,
+              child: const Text('underlay'),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        // Combined step: the scout narrative (with interpolated names) renders
+        // together with a single Continue button — no separate line step and
+        // no option-only step. The herald message appears exactly once.
+        expect(find.textContaining('Scouts'), findsOneWidget);
+        expect(find.textContaining('Maya'), findsOneWidget);
+        expect(find.textContaining('Chichen'), findsOneWidget);
+        expect(find.byType(CtNinePatchButton), findsOneWidget);
+        expect(find.text('Continue'), findsOneWidget);
+
+        // One tap advances the line, selects the sole option, and dismisses.
+        await tester.tap(find.byType(CtNinePatchButton));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(dismissed, 1);
+        expect(find.byType(CtDialogShell), findsNothing);
+        expect(find.text('underlay'), findsOneWidget);
+      },
+    );
 
     testWidgets('error path invokes onDismissed via Continue', (tester) async {
       var dismissed = false;

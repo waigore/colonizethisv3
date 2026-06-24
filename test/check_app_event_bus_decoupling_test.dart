@@ -279,6 +279,132 @@ Future<void> open(Wrapper w) => w.showDialog();
       expect(code, 0);
     });
   });
+
+  group('features/ post-frame bus-emit sequencing check', () {
+    test(
+      'fails when a features/ addPostFrameCallback closure emits a follow-up '
+      'bus event after ClosePanelEvent',
+      () {
+        final root = _writeAppFile(
+          'app/lib/features/game/widgets/raw_panel.dart',
+          '''
+import 'package:flutter/material.dart';
+
+void openTrain(dynamic bus) {
+  bus.emit(const ClosePanelEvent());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    bus.emit(OpenDialogEvent('train_military'));
+  });
+}
+''',
+        );
+        final stderrLines = <String>[];
+        final code = runCheckAppEventBusDecoupling(
+          root.path,
+          err: stderrLines.add,
+        );
+        expect(code, 1);
+        expect(
+          stderrLines.join('\n'),
+          contains(
+            'addPostFrameCallback closures emitting a non-ClosePanelEvent '
+            'bus event',
+          ),
+        );
+        expect(
+          stderrLines.join('\n'),
+          contains('app/lib/features/game/widgets/raw_panel.dart:6'),
+        );
+      },
+    );
+
+    test('fails for widget.bus.emit(...) inside a post-frame closure', () {
+      final root = _writeAppFile(
+        'app/lib/features/game/widgets/raw_widget_panel.dart',
+        '''
+import 'package:flutter/material.dart';
+
+class P {
+  dynamic widget;
+  void locate(String tileKey, String regionId) {
+    widget.bus.emit(const ClosePanelEvent());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
+    });
+  }
+}
+''',
+      );
+      final code = runCheckAppEventBusDecoupling(root.path);
+      expect(code, 1);
+    });
+
+    test(
+      'allows a bare deferred ClosePanelEvent emit (scoped auto-close)',
+      () {
+        final root = _writeAppFile(
+          'app/lib/features/game/widgets/auto_close_panel.dart',
+          '''
+import 'package:flutter/material.dart';
+
+class P {
+  dynamic widget;
+  bool mounted = true;
+  void maybeAutoClose() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.bus.emit(const ClosePanelEvent());
+    });
+  }
+}
+''',
+        );
+        final stdoutLines = <String>[];
+        final code = runCheckAppEventBusDecoupling(
+          root.path,
+          info: stdoutLines.add,
+        );
+        expect(code, 0);
+        expect(stdoutLines.join('\n'), contains('no violations found'));
+      },
+    );
+
+    test('allows non-bus post-frame work (setState / layout)', () {
+      final root = _writeAppFile(
+        'app/lib/features/game/widgets/layout_panel.dart',
+        '''
+import 'package:flutter/material.dart';
+
+class P {
+  bool mounted = true;
+  void onResize() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+    });
+  }
+}
+''',
+      );
+      final code = runCheckAppEventBusDecoupling(root.path);
+      expect(code, 0);
+    });
+
+    test('ignores the same idiom outside features/ (e.g. core/services)', () {
+      final root = _writeAppFile(
+        'app/lib/core/services/app_event_bus_panel_nav.dart',
+        '''
+import 'package:flutter/widgets.dart';
+
+void closePanelThenEmit(dynamic bus, dynamic next) {
+  bus.emit(const ClosePanelEvent());
+  WidgetsBinding.instance.addPostFrameCallback((_) => bus.emit(next));
+}
+''',
+      );
+      final code = runCheckAppEventBusDecoupling(root.path);
+      expect(code, 0);
+    });
+  });
 }
 
 Directory _writeAppFile(String relativePath, String content) {

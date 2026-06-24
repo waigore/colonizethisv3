@@ -25,37 +25,42 @@ The Train Civilians dialog lets the player queue training orders for civilian un
 
 ```
 ┌─────────────────────────────────────────┐
-│  Train Civilians                    [×] │  ← CtDialogShell title bar
-├─────────────────────────────────────────┤
+│             Train Civilians             │  ← centered title, no × (scrim/back closes)
 │ ┌─────────────────────────────────────┐ │  ← Boxed inset resource bar
 │ │  Treasury: £5,000     Paper: 12     │ │     (mono bold values)
 │ └─────────────────────────────────────┘ │
-│  Treasury low and Paper low             │  ← Dynamic deficit hint (below box)
-├─────────────────────────────────────────┤
-│  [icon] Explorer            [−] 0 [+]   │  ← Per-unit-type row (single line)
-│         £1,000 + 2 paper                │     name over cost (left), stepper (right)
-│  ─────────────────────────────────────  │
-│  [icon] Builder             [−] 0 [+]   │
-│         £1,000 + 2 paper                │
-│  ─────────────────────────────────────  │
-│  [icon] Merchant 🔒         [−] 0 [+]   │  ← Locked (tech not unlocked)
-│         £2,000 + 4 paper                │
-│         Requires: Merchant Companies    │  ← Lock reason
+│  Treasury low, Paper low                │  ← Dynamic deficit hint (below box)
+│  Explorer                   [−] 0 [+]   │  ← Per-unit-type row (single line)
+│  £1,000 + 2 paper                       │     name over cost (left), stepper (right)
+│  Builder                    [−] 0 [+]   │
+│  £1,000 + 2 paper                       │
+│  🔒 Merchant                [−] 0 [+]   │  ← Locked (tech not unlocked)
+│  £2,000 + 4 paper                       │
+│  Requires: Merchant Companies           │  ← Lock reason
 └─────────────────────────────────────────┘
 ```
+
+No `×` close button and no brass section dividers between the title, resource
+bar, and unit list (flat padded column per the canonical mockup, #3568 parity).
+The dialog dismisses via scrim tap / system back; orders apply on close.
 
 ### Resource Bar (top)
 
 Renders as a **boxed inset strip** (dark `--bg-deep` background, 1 dp `--border`,
 entries spaced apart) per the mockup `.resource-bar`. Each entry shows a muted
-label and a **monospace bold value** (`--fg`):
-- **Treasury:** `Player.treasury` formatted as `£` + comma thousands grouping (e.g. `£5,000`)
-- **Paper stockpile:** `Player.stockpile.quantityOf('paper')`
+label and a **monospace bold value** (`--fg`) in the dynamic **`remaining / total`**
+form, where `remaining = total − committed` (committed = sum of currently queued
+unit costs) and updates live on every stepper toggle:
+- **Treasury:** `{remaining} / {total}`, each side formatted as `£` + comma
+  thousands grouping (e.g. `£3,000 / £5,000`). `remaining` may render negative
+  (e.g. `£-500 / £1,000`) when committed exceeds available.
+- **Paper stockpile:** `{remaining} / {total}` (e.g. `8 / 12`), from
+  `Player.stockpile.quantityOf('paper')`.
 
 Below the resource bar (outside the box), a **dynamic deficit hint** updates on every stepper toggle:
 - If treasury insufficient for any queued unit: "Treasury low"
 - If paper insufficient for any queued unit: "Paper low"
-- If both insufficient: "Treasury low and Paper low" (each clause joined with `" and "`)
+- If both insufficient: "Treasury low, Paper low" (each clause is `{Name} low`, joined with `", "`)
 - If no deficit: hidden
 
 ### Unit Type Rows
@@ -79,18 +84,29 @@ left `.info` block and a right `.stepper`.
 - Unit type icon (or pixel-art icon from catalog) + unit name (left info column, top)
 - Treasury cost + commodity cost on the line below the name, formatted
   `£` + comma grouping with lowercase commodity (e.g. `£1,000 + 2 paper`)
+- **Per-item insufficiency colour:** Each resource segment of the cost line is
+  coloured `--danger` independently when `remaining` for that resource is less
+  than this unit's cost for it (i.e. one more of this unit cannot be afforded on
+  that resource alone), considering already-committed totals. Segments whose
+  resource is sufficient stay in the normal muted cost colour. Example: with
+  remaining treasury `500` and remaining paper `3`, a Builder costing
+  `£1,000 + 2 paper` renders `£1,000` in `--danger` and `2 paper` normally.
 - **Stepper:** `[−]` / count / `[+]` buttons on the right of the same row
   - Count starts at 0
   - `[+]` increases by 1; `[−]` decreases by 1 (min 0)
-  - `[+]` is disabled (greyed) if insufficient resources for +1 more
+  - `[+]` is disabled if insufficient resources for +1 more
+  - When `[+]` is disabled **specifically** because resources are insufficient
+    (not because the unit is tech-locked), it renders the `--danger` button
+    variant (red border/label) so the resource block is visually distinct from
+    the tech-locked disabled appearance.
   - `[−]` is disabled if count is 0
 - Row is disabled visually (subdued) if resources insufficient for 1 unit AND count is 0
 
 #### Locked Unit Row
-- Unit type icon + unit name + 🔒 lock indicator
+- Unit name prefixed with the 🔒 (`kTrainDialogLockPrefix`) glyph — no separate lock-icon column (#3568 parity)
 - "Requires: {tech display name}" label below unit name
 - Stepper always disabled
-- Row visually subdued (50% opacity)
+- Row visually subdued (50% opacity, `kTrainDialogLockedOpacity`)
 
 ### Footer Actions
 - No explicit "Confirm" button — orders are applied on dialog close
@@ -111,6 +127,8 @@ Check: `totalTreasuryCost <= Player.treasury` and `totalCommodityCosts[paper] <=
 
 - If any unit type's +1 would exceed resources, that unit type's `[+]` is disabled
 - The deficit hint in the resource bar shows which resources are insufficient
+- The resource-bar values show `remaining / total` per resource, where
+  `remaining = total − committed`
 
 ---
 
@@ -147,27 +165,13 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 
 ---
 
-## Lock Icon Asset
+## Lock affordance
 
-- **Asset ID:** `ui_icon_lock`
-- **Path:** `assets/icons/ui_icon_lock.png` (bundle path; use `StrictAssetIcon` + `kAppIconAssetPrefix` in app code per [game-toolbar-icons.md](game-toolbar-icons.md))
-- **Size:** 32×32
-- **Style:** Pixel-art padlock, single color outline, medium shading, high top-down
-- **Generation:** Use `pixellab_create_map_object` with style matching to `ui_main_menu_button.png`
-
-```
-pixellab_create_map_object(
-  description='pixel art small padlock icon for locked UI elements, colonial era style, simple clean design',
-  width=32,
-  height=32,
-  view='high top-down',
-  outline='single color outline',
-  shading='medium shading',
-  detail='medium detail',
-  background_image='{"type": "path", "path": "app/assets/images/ui_main_menu_button.png"}',
-  inpainting='{"type": "oval", "percentage": 0.6}'
-)
-```
+Locked rows are flagged by prefixing the unit name with the 🔒 text glyph
+(`kTrainDialogLockPrefix` in `train_dialog_chrome.dart`) via
+`TrainDialogUnitNameLine`, per the canonical mockup `.unit-row.locked` names
+(#3568 parity). The dialog no longer renders a separate `ui_icon_lock` image
+column. The `ui_icon_lock` pixel-art asset remains available for other surfaces.
 
 ---
 
@@ -221,9 +225,19 @@ pixellab_create_map_object(
 
 - **Given** the Train Civilians dialog is open, **when** the user has no capital set, **then** the UI shows an error message "No capital set — cannot train units" and all steppers are disabled.
 
-- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low and Paper low".
+- **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or — when both are insufficient — "Treasury low, Paper low" (each clause `{Name} low`, joined with `", "`).
 
 - **Given** the Train Civilians dialog is open, **when** the user taps the Reset button (if present), **then** all steppers are set to 0 and deficit hint is cleared.
+
+- **Given** the Train Civilians dialog is open with treasury `5000` and paper `12`, **when** the user queues `2` Explorers (`£1,000 + 2 paper` each), **then** the resource bar treasury value reads `£3,000 / £5,000` and the paper value reads `8 / 12`.
+
+- **Given** the Train Civilians dialog has committed costs, **when** the user taps Reset, **then** the resource-bar `remaining` values equal `total` for every resource (e.g. `£5,000 / £5,000`).
+
+- **Given** the Train Civilians dialog with treasury `1500`, paper `5`, and `1` Explorer queued (`£1,000 + 2 paper`), **when** a Builder row (`£1,000 + 2 paper`) renders, **then** the `£1,000` segment renders in `EditorialMonoclePalette.danger` (remaining treasury `500 < 1000`) and the `2 paper` segment renders in the normal muted colour (remaining paper `3 ≥ 2`).
+
+- **Given** an unlocked civilian row whose `[+]` is disabled because adding one more exceeds available resources, **when** the row renders, **then** the `[+]` button uses the `danger` variant (red border/label) distinct from the normal disabled appearance.
+
+- **Given** a tech-locked civilian row, **when** the row renders, **then** the `[+]` button shows the normal (non-danger) disabled appearance with no red tint.
 
 ---
 

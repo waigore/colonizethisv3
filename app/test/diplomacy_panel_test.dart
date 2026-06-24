@@ -14,7 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -217,6 +218,30 @@ Game _gameWithTribeDiscoveredByVisibility() {
   );
 }
 
+/// Reads the percentage and tier span colors from the [RelativePowerLine]
+/// rendered inside the diplomacy row keyed by [factionId]. The line is a
+/// `Text.rich` whose root `TextSpan` children are
+/// `[prefix, percentage, separator, tier]`.
+({Color? pctColor, Color? tierColor}) _relativePowerSpanColors(
+  WidgetTester tester,
+  String factionId,
+) {
+  final lineFinder = find.descendant(
+    of: find.byKey(ValueKey('$kDiplomacyRowBodyKeyPrefix$factionId')),
+    matching: find.byType(RelativePowerLine),
+  );
+  final richText = tester.widget<RichText>(
+    find.descendant(of: lineFinder, matching: find.byType(RichText)).first,
+  );
+  // `Text.rich` nests the supplied root span under the effective-style span
+  // that `Text` builds, so the relative-power spans live one level deeper.
+  final root = (richText.text as TextSpan).children!.first as TextSpan;
+  final children = root.children!;
+  final pctSpan = children[1] as TextSpan;
+  final tierSpan = children[3] as TextSpan;
+  return (pctColor: pctSpan.style?.color, tierColor: tierSpan.style?.color);
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -231,9 +256,14 @@ void main() {
 
   setUpAll(() async {
     await _preWarmFlameImageCache();
-    final result = getDebugInitGameResult();
-    gameWithFactions = result.game;
-    topology = result.combinedTopology;
+    // Refs #3656: lightweight discovered-faction fixture replaces the ~7-11s
+    // getDebugInitGameResult() map generation. It seeds discovered GPs (one at
+    // peace → PEACE badge, one at war → WAR badge), a Minor Nation with the
+    // full overture matrix, and a discovered Tribe, so the section-heading,
+    // badge, relative-power, overture/FTP, and mode-bar filter assertions all
+    // have their non-vacuous rows without generated map/topology data.
+    gameWithFactions = buildDiplomacyRichPanelTestGame();
+    topology = const MapTopology();
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';
@@ -641,8 +671,8 @@ void main() {
     });
   });
 
-  group('DiplomacyPanel GP power-comparison rendering', () {
-    testWidgets('AC: GP +10% renders in --danger color', (
+  group('DiplomacyPanel GP relative-power line rendering', () {
+    testWidgets('AC: stronger GP relative-power line renders in --danger', (
       WidgetTester tester,
     ) async {
       await _bindTallTestSurface(tester);
@@ -667,34 +697,31 @@ void main() {
                 r.kind == FactionKind.greatPower &&
                 r.powerScore != null &&
                 r.playerPowerScore != null &&
-                r.powerScore! > r.playerPowerScore!,
+                powerComparisonPercent(r.powerScore!, r.playerPowerScore!) > 0,
           )
           .toList();
       if (stronger.isEmpty) {
         // No qualifying row in the debug-init game; skip dynamically rather
-        // than failing — the helper-level tests already pin the formula.
+        // than failing — the helper-level + RelativePowerLine widget tests
+        // already pin the formula and colors.
         return;
       }
       for (final r in stronger) {
-        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
-        if (pct <= 0) continue;
-        final expectedText = formatPowerComparisonPercent(pct);
-        final finder = find.text(expectedText);
+        final colors = _relativePowerSpanColors(tester, r.factionId);
         expect(
-          finder,
-          findsAtLeastNWidgets(1),
-          reason: 'Expected "$expectedText" for ${r.displayName}',
-        );
-        final widget = tester.widget<Text>(finder.first);
-        expect(
-          widget.style?.color,
+          colors.pctColor,
           EditorialMonoclePalette.danger,
           reason: 'Stronger GP percentage must use --danger',
+        );
+        expect(
+          colors.tierColor,
+          EditorialMonoclePalette.danger,
+          reason: 'Stronger GP tier word must match the percentage color',
         );
       }
     });
 
-    testWidgets('AC: GP ≤0% renders in --success color', (
+    testWidgets('AC: weaker/equal GP relative-power line renders in --success', (
       WidgetTester tester,
     ) async {
       await _bindTallTestSurface(tester);
@@ -719,30 +746,52 @@ void main() {
                 r.kind == FactionKind.greatPower &&
                 r.powerScore != null &&
                 r.playerPowerScore != null &&
-                r.powerScore! <= r.playerPowerScore!,
+                powerComparisonPercent(r.powerScore!, r.playerPowerScore!) <= 0,
           )
           .toList();
       if (weakerOrEqual.isEmpty) {
         return;
       }
       for (final r in weakerOrEqual) {
-        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
-        if (pct > 0) continue;
-        final expectedText = formatPowerComparisonPercent(pct);
-        final finder = find.text(expectedText);
+        final colors = _relativePowerSpanColors(tester, r.factionId);
         expect(
-          finder,
-          findsAtLeastNWidgets(1),
-          reason: 'Expected "$expectedText" for ${r.displayName}',
-        );
-        final widget = tester.widget<Text>(finder.first);
-        expect(
-          widget.style?.color,
+          colors.pctColor,
           EditorialMonoclePalette.success,
           reason: 'Weaker/equal GP percentage must use --success',
         );
+        expect(
+          colors.tierColor,
+          EditorialMonoclePalette.success,
+          reason: 'Weaker/equal GP tier word must match the percentage color',
+        );
       }
     });
+
+    testWidgets(
+      'AC: Great Power rows render the localized "Relative power:" prefix',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasGp = rows.any((r) => r.kind == FactionKind.greatPower);
+        if (!hasGp) return;
+        expect(find.byType(RelativePowerLine), findsAtLeastNWidgets(1));
+        expect(find.textContaining('Relative power:'), findsAtLeastNWidgets(1));
+      },
+    );
 
     testWidgets(
       'absolute "Power: N" score label is no longer rendered on GP rows',
@@ -757,8 +806,8 @@ void main() {
         );
         await _pumpPanelBuilt(tester);
 
-        // SPEC: percentage replaces the absolute score. No row should render
-        // text starting with "Power: ".
+        // SPEC: relative-power line replaces the absolute score. No row should
+        // render text starting with "Power: ".
         expect(find.textContaining('Power: '), findsNothing);
       },
     );

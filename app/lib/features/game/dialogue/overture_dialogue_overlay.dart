@@ -15,6 +15,7 @@ import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_toggle_switch.dart';
+import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 
 /// Modal overture dialogue: Jenny-driven intro line then Accept/Reject per offer
@@ -30,6 +31,7 @@ class OvertureDialogueOverlay extends StatefulWidget {
 
     /// When true, skip Jenny intro and show list immediately. For tests only.
     this.skipIntroForTest = false,
+    this.assetBundle,
   });
 
   /// SPEC/ui/overture-dialogue-overlay.md — [UiScreenIds.overtureDialogueOverlay].
@@ -41,6 +43,11 @@ class OvertureDialogueOverlay extends StatefulWidget {
   final Widget child;
   final CtLogger? logger;
   final bool skipIntroForTest;
+
+  /// Optional asset bundle override for loading the overture Yarn asset.
+  /// Defaults to [rootBundle]; tests inject a deterministic in-memory bundle
+  /// (mirrors `InterventionDialogueOverlay`).
+  final AssetBundle? assetBundle;
 
   @override
   State<OvertureDialogueOverlay> createState() =>
@@ -83,7 +90,8 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
   Future<void> _loadAndRunIntro() async {
     final log = widget.logger ?? packageLogger('dialogue');
     try {
-      final text = await rootBundle.loadString(kDialogueOvertureAsset);
+      final bundle = widget.assetBundle ?? rootBundle;
+      final text = await bundle.loadString(kDialogueOvertureAsset);
       final project = YarnProject();
       project.parse(text);
       if (!project.nodes.containsKey(_kOvertureNode)) {
@@ -197,38 +205,17 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
     }
 
     if (!_introDone) {
-      final line = _view?.currentLine;
-      final choice = _view?.currentChoice;
+      final view = _view;
       return CtFullScreenDialogueShell(
         backdrop: widget.child,
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (line != null) ...[
-              Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: CtSpacing.l),
-              Align(
-                alignment: Alignment.centerRight,
-                child: CtNinePatchButton(
-                  onPressed: () => _view!.advanceLine(),
-                  child: Text(l10n.game_intervention_continue),
-                ),
+        body: view == null
+            ? const CtLoadingIndicator()
+            : CtDialogueLineChoiceBody(
+                view: view,
+                continueLabel: l10n.game_intervention_continue,
+                lineTextStyle: Theme.of(context).textTheme.bodyLarge,
+                loading: const CtLoadingIndicator(),
               ),
-            ] else if (choice != null) ...[
-              ...choice.options.asMap().entries.map(
-                (entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: CtSpacing.m),
-                  child: CtNinePatchButton(
-                    onPressed: () => _view!.selectOption(entry.key),
-                    child: Text(entry.value.text),
-                  ),
-                ),
-              ),
-            ] else
-              const CtLoadingIndicator(),
-          ],
-        ),
       );
     }
 
@@ -250,9 +237,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
             style: titleStyle,
           ),
           const SizedBox(height: _titleToDividerGap),
-          const CtBrassDivider(
-            key: ValueKey<String>('overtureBrassDivider'),
-          ),
+          const CtBrassDivider(key: ValueKey<String>('overtureBrassDivider')),
           const SizedBox(height: _dividerToIntroGap),
           Text(
             l10n.game_overture_intro,

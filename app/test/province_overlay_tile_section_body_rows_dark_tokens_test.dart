@@ -20,6 +20,7 @@
 // the S6 Economic, S7 Military, S8 Civilian, Naval, and Political body
 // pin patterns).
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show buildPlayerView;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -34,7 +35,6 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         demoRegionForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 /// Builds the overlay under [AppThemes.editorialMonocle] with the
 /// debug-init full player view so the selected demo tile is revealed and
@@ -50,10 +50,12 @@ Widget _darkOverlayWithRevealedTile() {
   final region = demoRegionForOverlay;
   final tileKey = sampleTileKeyForProvinceOverlay;
   final humanPlayerId = base.players.first.id;
-  final init = getDebugInitGameResult();
+  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
+  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
+  // generation with identical PlayerView output for this demo game.
   final playerView = buildPlayerView(
     base,
-    init.combinedTopology,
+    const MapTopology(),
     humanPlayerId,
   );
   final parts = tileKey.split('|');

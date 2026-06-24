@@ -1,5 +1,4 @@
 import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
-import 'package:colonizethis_economy/src/economy/world_market/first_right_profit.dart';
 import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_index.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -46,107 +45,13 @@ void main() {
       expect(result.treasuryCreditByGpId, isEmpty);
     });
 
-    test('positive — owning GP credited for other-GP buy at relation 75', () {
-      final result = computeFirstRightCredits(
-        filledDeals: [
-          deal(
-            buyer: 'gpB',
-            quantity: 10,
-            pricePerUnit: 20.0,
-            sellerOriginTileKey: 'k1',
-          ),
-        ],
-        purchasedTileIndex: idx([
-          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-        ]),
-        relationScoreFor: (gp, src) => gp == 'gpA' && src == 'M1' ? 75 : 0,
-      );
-      expect(result.creditedDeals, hasLength(1));
-      final credit = result.creditedDeals.single;
-      expect(credit.owningGpId, 'gpA');
-      expect(credit.sourceFactionId, 'M1');
-      expect(credit.relationScore, 75);
-      expect(credit.profit.profitRate, closeTo(0.30, 1e-12));
-      // 10 * 20 * 0.30 = 60
-      expect(credit.profit.profitTreasury, closeTo(60.0, 1e-12));
-      expect(result.treasuryCreditByGpId, {'gpA': closeTo(60.0, 1e-12)});
-      expect(result.totalProfitTreasury, closeTo(60.0, 1e-12));
-    });
-
-    test(
-      'upper bound — relation 100 credits 40% of sale value to owning GP',
-      () {
-        final result = computeFirstRightCredits(
-          filledDeals: [
-            deal(
-              buyer: 'gpB',
-              quantity: 5,
-              pricePerUnit: 8.0,
-              sellerOriginTileKey: 'k1',
-            ),
-          ],
-          purchasedTileIndex: idx([
-            attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-          ]),
-          relationScoreFor: (gp, src) => 100,
-        );
-        // 5 * 8 * 0.40 = 16.0
-        expect(result.totalProfitTreasury, closeTo(16.0, 1e-12));
-        expect(
-          result.creditedDeals.single.profit.profitRate,
-          kFirstRightMaxProfitRate,
-        );
-      },
-    );
-
-    test('negative — buyer == owning GP (D2 FRR-match path) is excluded', () {
-      final result = computeFirstRightCredits(
-        filledDeals: [
-          deal(
-            buyer: 'gpA',
-            isFirstRightOfRefusalMatch: true,
-            quantity: 10,
-            pricePerUnit: 20.0,
-            sellerOriginTileKey: 'k1',
-          ),
-        ],
-        purchasedTileIndex: idx([
-          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-        ]),
-        relationScoreFor: (_, __) => 100,
-      );
-      expect(
-        result.creditedDeals,
-        isEmpty,
-        reason:
-            'D4 only fires when the owning GP is not the buyer; FRR '
-            'pre-pass matches are handled by D2 and never re-credited.',
-      );
-      expect(result.treasuryCreditByGpId, isEmpty);
-    });
-
-    test('negative — relation 0 yields a zero-treasury credit record only', () {
-      final result = computeFirstRightCredits(
-        filledDeals: [
-          deal(
-            buyer: 'gpB',
-            quantity: 10,
-            pricePerUnit: 20.0,
-            sellerOriginTileKey: 'k1',
-          ),
-        ],
-        purchasedTileIndex: idx([
-          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-        ]),
-        relationScoreFor: (_, __) => 0,
-      );
-      expect(result.creditedDeals, hasLength(1));
-      expect(result.creditedDeals.single.profit, FirstRightProfit.zero);
-      // owning GP appears in the map with 0.0 so phase handler / Deal
-      // Book can still see the audit row, but no treasury moves.
-      expect(result.treasuryCreditByGpId, {'gpA': 0.0});
-      expect(result.totalProfitTreasury, 0.0);
-    });
+    // Relation 75 / 100 / 0 credit-formula scenarios (rate + treasury), plus
+    // the "buyer == owning GP (D2 match) is excluded from D4" case, are pinned
+    // 1:1 by the issue-AC audit file
+    // `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`
+    // (groups AC #2, AC #3, AC #4) and are intentionally not duplicated here.
+    // This slice file retains only the defensive/skip branches the d5 contract
+    // does not exercise.
 
     test('negative — deal with null sellerOriginTileKey is skipped', () {
       final result = computeFirstRightCredits(

@@ -82,15 +82,21 @@ class _DiplomacyModeButton extends StatelessWidget {
     final Color labelColor = isActive
         ? EditorialMonoclePalette.accent
         : EditorialMonoclePalette.muted;
-    final Border? border = isActive
-        ? Border.all(color: EditorialMonoclePalette.accentDim, width: 1)
-        : null;
+    // SPEC/ui/diplomacy-panel.md § Mode-bar chip chrome (Refs #3621): the
+    // mockup `.mode-bar button` paints the compact action gradient
+    // (`--surface-lite → --bg-deep`) with a 1 px border in every state —
+    // `--border` when inactive, `--accent-dim` when active. The earlier
+    // implementation drew no border on the inactive chip.
+    final Color borderColor = isActive
+        ? EditorialMonoclePalette.accentDim
+        : EditorialMonoclePalette.border;
     return InkWell(
       onTap: onPressed,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          border: border,
+          gradient: CtGradients.actionButtonGradient,
+          border: Border.all(color: borderColor, width: 1),
           borderRadius: BorderRadius.circular(CtRadius.small),
         ),
         child: Text(

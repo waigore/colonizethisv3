@@ -25,6 +25,7 @@ dependencies:
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
+  colonizethis_economy_test_support:
   colonizethis_test:
   # Test-only: two integration tests import the map barrel; logic `lib/`
   # has zero map imports, so map is a dev dependency (Refs #3574, slice 6).

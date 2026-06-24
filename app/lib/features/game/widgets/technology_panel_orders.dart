@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_confirm_dialog.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
@@ -129,7 +130,7 @@ class ChooseTechDialog extends StatelessWidget {
               letterSpacing: 0.05,
             ),
           ),
-          const SizedBox(height: 8),
+          CtGap.m,
           if (isEmpty)
             _ChooseTechEmptyMessage()
           else
@@ -204,7 +205,7 @@ class _ChooseTechOptionRow extends StatelessWidget {
                   width: kChooseTechDialogIconSize,
                   height: kChooseTechDialogIconSize,
                 ),
-                const SizedBox(width: 8),
+                CtGap.wm,
               ],
               Expanded(child: _ChooseTechOptionLabels(tech: tech)),
             ],

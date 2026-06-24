@@ -54,12 +54,13 @@ import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -163,8 +164,11 @@ void main() {
   late Player humanPlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    // Lightweight fixture (Refs #3656): `TechnologyScreen` only reads
+    // `game.players` / the supplied `player` (via `CtGameFeatureScreenShell`
+    // and `TechnologyPanel`); no generated map/topology data is consumed, so
+    // the full procedural map generator is avoided.
+    game = buildTechnologyPanelTestGame();
     humanPlayer = game.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => game.players.first,

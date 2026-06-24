@@ -58,7 +58,8 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -172,14 +173,17 @@ void main() {
 
   setUpAll(() async {
     await _preWarmFlameImageCache();
-    final result = getDebugInitGameResult();
-    game = result.game;
-    topology = result.combinedTopology;
+    // Refs #3656: a shared lightweight fixture (civilians + army/regiments +
+    // home/non-home fleets in both regions) replaces the ~11s
+    // `getDebugInitGameResult()` map generation. These pins assert chrome only
+    // (no overflow + title text), so an empty `MapTopology` is sufficient.
+    game = buildUnitPanelsTestGame();
+    topology = const MapTopology();
     expect(
       game.players,
       isNotEmpty,
       reason:
-          'Debug init game must seed at least one player so the panels '
+          'Fixture must seed at least one player so the panels '
           'render a meaningful unit list at 320 dp.',
     );
     humanPlayerId = game.players.first.id;

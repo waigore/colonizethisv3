@@ -19,6 +19,7 @@ import 'check_app_no_material_scaffold.dart';
 import 'check_app_no_material_switchlisttile.dart';
 import 'check_app_no_material_textbutton.dart';
 import 'check_app_shell_panel_dedup.dart';
+import 'check_app_debug_handler_guard_helpers.dart';
 import 'check_app_widgetbook_file_naming.dart';
 import 'check_app_textstyle_fontsize_fallback.dart';
 import 'check_app_widget_imports.dart';
@@ -36,8 +37,10 @@ import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
+import 'check_map_gen_file_size.dart';
 import 'check_map_gen_no_image_import.dart';
 import 'check_map_gen_stage_protocol.dart';
+import 'check_map_no_partfile_classes.dart';
 import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
@@ -47,6 +50,8 @@ import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
+import 'check_economy_dedup_port_tile_keys.dart';
+import 'check_economy_world_market_admission_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_map_clones.dart';
@@ -926,6 +931,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppNoMaterialScaffold(repoRoot);
     case 'repo.app_widgetbook_file_naming':
       return runCheckAppWidgetbookFileNaming(repoRoot);
+    case 'repo.app_debug_handler_guard_helpers':
+      return runCheckAppDebugHandlerGuardHelpers(repoRoot);
     default:
       return null;
   }
@@ -969,6 +976,10 @@ int? _tryRunLogicRuleInProcess({
       return runCheckLogicDedupLogger(repoRoot);
     case 'repo.economy_cost_check_shared_helper':
       return runCheckEconomyCostCheckSharedHelper(repoRoot);
+    case 'repo.economy_world_market_admission_shared':
+      return runCheckEconomyWorldMarketAdmissionShared(repoRoot);
+    case 'repo.economy_dedup_port_tile_keys':
+      return runCheckEconomyDedupPortTileKeys(repoRoot);
     default:
       return null;
   }
@@ -996,6 +1007,10 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapGridCellIterationCentral(repoRoot);
     case 'repo.map_gen_stage_protocol':
       return runCheckMapGenStageProtocol(repoRoot);
+    case 'repo.map_gen_no_new_partfiles':
+      return runCheckMapGenNoNewPartfiles(repoRoot);
+    case 'repo.map_gen_file_size':
+      return runCheckMapGenFileSize(repoRoot);
     case 'repo.map_public_barrel_surface':
       return runCheckMapPublicBarrelSurface(repoRoot);
     case 'repo.map_region_data_access_central':

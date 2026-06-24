@@ -20,7 +20,7 @@
 - **Map tile access (explorer shortcut scope):** The panel may be opened from province Tile-section inline actions (`Explore with explorer`, `Prospect with explorer`) in **explorer-filtered mode**. In this mode, the list is filtered to player-owned Explorer units (across regions, including units with pending work), preserving standard row rendering and locate behavior unless explicitly overridden below.
 - **Map tile access (builder shortcut scope):** The panel may be opened from province Tile-section inline action (`Build improvement`) in **builder-filtered mode**. In this mode, the list is filtered to player-owned Builder units (across regions, including units with pending/in-progress work), preserving standard row rendering and locate behavior unless explicitly overridden below.
 - **Presentation:** The panel **appears from the bottom** as a **bottom sheet** that slides up from the bottom edge (same pattern as the province/sea zone detail overlay on narrow viewports; see [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)). This applies on both desktop and narrow viewports so behaviour is consistent and the map remains visible above.
-- **Max height:** Bottom sheet is constrained (e.g. up to one-third of screen height on narrow, or similar cap on wide) so the map stays visible; content scrolls inside the sheet.
+- **Bottom-sheet sizing (Refs #3627):** The modal bottom-sheet host sizes the panel via the shared `unitsPanelSheetConstraints(viewport)` (see [`components/units-panel-shell.md`](components/units-panel-shell.md) § Bottom-sheet sizing): **narrow** (`width < 600` dp) → full width × **`50%`** of viewport height (fixed cap); **wide** (`width >= 600` dp) → **`70%`** of viewport width × **`55vh`** (mockup `max-height: 55vh`). The map stays visible above; content scrolls inside the sheet. Under the E2E flag (`kCtE2EEnabled`) the height widens to `92%` so headless panel-text assertions mount every row.
 - **Mobile / narrow viewport:** Same bottom-sheet presentation; touch targets per [mobile-adaptation.md](mobile-adaptation.md).
 
 ---
@@ -43,7 +43,7 @@ The civilian units panel gives the player a single place to see every civilian u
 
 ## Layout / wireframe
 
-Bottom sheet (up to ~⅓ screen height); scrollable grouped list by region; per-unit rows with locate and assign actions on the right. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite.
+Bottom sheet (`50%` height narrow / `70%` width · `55vh` wide — see § Bottom-sheet sizing); scrollable grouped list by region; per-unit rows with locate and assign actions on the right. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite.
 
 ### Row card chrome (R30; mockup `.unit-row`)
 
@@ -303,6 +303,7 @@ For each civilian unit, the panel shows:
 - **Standalone story:** A Widgetbook use case shows the Civilian Units panel **standalone** (panel only, no map). Uses demo data (e.g. a game with a subset of civilian units) so the list, grouping, status, location (province name + region), and assigned-to content can be reviewed in isolation.
 - **With map story:** A Widgetbook use case shows the Civilian Units panel **in tandem with the map** with the panel **at the bottom** (same placement as province overlay "With map"): map above, panel below in a column, using a real generated map and initialized game (e.g. `getDebugInitGameResult()`). The story demonstrates: listing units grouped by region with province name and region; clicking a unit to highlight and pan/center the map and switch region tab; **Assign** and **Cancel** flows.
 - **As bottom sheet story:** A Widgetbook use case shows a toolbar button that opens the Civilian Units panel as a **modal bottom sheet** (slide up from the bottom), matching in-game shell behaviour.
+- **Mobile (360x640) story:** A Widgetbook use case renders the panel inside a `360 × 640` dp mobile frame bound by the production narrow constraints (`unitsPanelSheetConstraints` — full width × `50%` height), so reviewers see the fill-height narrow sizing contract (Refs #3627).
 - **Acceptance criteria (Widgetbook):**
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "Standalone" use case, **then** the UI layer displays only the Civilian Units panel (no map) with demo data, so that layout and row content (status, location as province name + region, assigned-to) can be verified.
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "With map" use case, **then** the UI layer displays the map above and the Civilian Units panel **at the bottom** (bottom placement like province overlay), built from a real generated map and initialized game (`getDebugInitGameResult()`), and the user can locate units, assign work, and cancel work so that the full flow is demonstrable.

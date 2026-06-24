@@ -469,6 +469,9 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainMilitary_title => 'Train Military';
 
   @override
+  String get trainNaval_title => 'Train Naval';
+
+  @override
   String get trainUnits_noCapital => 'No capital set — cannot train units';
 
   @override
@@ -491,6 +494,40 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String trainUnits_peasants(int value) {
     return 'Peasants: $value';
   }
+
+  @override
+  String trainUnits_peasantsValue(String value) {
+    return 'Peasants: $value';
+  }
+
+  @override
+  String get trainDialog_costTreasuryTooltip => 'Treasury';
+
+  @override
+  String get trainDialog_costPeasantsTooltip => 'Peasants';
+
+  @override
+  String trainDialog_costCommodityTooltip(String name, String category) {
+    return '$name ($category)';
+  }
+
+  @override
+  String get commodityCategory_food => 'food';
+
+  @override
+  String get commodityCategory_rawMaterial => 'raw material';
+
+  @override
+  String get commodityCategory_manufactured => 'manufactured';
+
+  @override
+  String get commodityCategory_luxury => 'luxury';
+
+  @override
+  String get commodityCategory_riches => 'riches';
+
+  @override
+  String get commodityCategory_advanced => 'advanced';
 
   @override
   String get civilian_units_title => 'Civilian Units';

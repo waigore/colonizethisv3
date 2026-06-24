@@ -49,13 +49,32 @@ void main() {
     );
     addTearDown(() => temp.deleteSync(recursive: true));
 
-    final allowlistedFile = File('${temp.path}/app/lib/widgets/ct_panel.dart')
-      ..createSync(recursive: true);
+    final allowlistedFile =
+        File('${temp.path}/app/lib/widgets/ct_region_map.dart')
+          ..createSync(recursive: true);
     allowlistedFile.writeAsStringSync(
-      "export '../features/game/widgets/chrome/ct_panel.dart';\n",
+      "export '../features/game/flame/ct_region_map_game.dart';\n",
     );
 
     expect(runCheckAppWidgetImports(temp.path), 0);
+  });
+
+  test('flags chrome widgets that re-export features (no longer bridged)', () {
+    // After issue #3594 item 5 the chrome source-of-truth lives in
+    // `app/lib/widgets/`, so ct_panel / ct_dialog_shell / ct_nine_patch_button
+    // must NOT re-export the features layer.
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_widget_imports_chrome_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    final movedFile = File('${temp.path}/app/lib/widgets/ct_panel.dart')
+      ..createSync(recursive: true);
+    movedFile.writeAsStringSync(
+      "export '../features/game/widgets/chrome/ct_panel.dart';\n",
+    );
+
+    expect(runCheckAppWidgetImports(temp.path, err: (_) {}), 1);
   });
 
   test('ignores line comments and non-feature imports', () {

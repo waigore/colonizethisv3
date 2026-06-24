@@ -113,6 +113,39 @@ Game _greatPowerRowGame() {
   );
 }
 
+/// AC-4 (#3625) fixture: the human GP `gp1` holds a Friendly-band relation
+/// (score 90) with GP `gp2` **and** a persisted formal alliance, so the GP row
+/// renders the `ALLIANCE` treaty badge on its relation line distinct from the
+/// one-word `Friendly` relation label.
+Game _alliedGreatPowerRowGame() {
+  const ow = 'oldWorld';
+  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
+  final rival = Province(id: '$ow|p2', regionId: ow, displayName: 'Rival', ownerId: 'gp2');
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
+    oldWorld: RegionData(provinces: [home, rival], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  return Game(
+    id: 'diplo-golden-gp-alliance',
+    worldState: world,
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        score: 90,
+        formalAlliance: true,
+      ),
+    ],
+  );
+}
+
 /// AC-6 fixture: the human GP `gp1` has full tile sight into a New-World
 /// province owned by Tribe `t1` but holds no relation, so the Tribe is
 /// discovered via `knownDiplomaticTargetFactionIds` and renders an overture
@@ -146,6 +179,12 @@ Widget _panelHost({
   required String humanPlayerId,
   required Key boundaryKey,
   MapTopology topology = _emptyTopology,
+  // SPEC/ui/diplomacy-panel.md § Responsive layout: the default 460 dp host
+  // renders the narrow (≤ 500 dp) variant; a host wider than
+  // `kDiplomacyRowNarrowMaxWidth` (500 dp) exercises the wide-variant
+  // trailing action cluster (Refs #3621).
+  double width = 460,
+  double height = 1000,
 }) {
   return MaterialApp(
     debugShowCheckedModeBanner: false,
@@ -155,8 +194,8 @@ Widget _panelHost({
         child: RepaintBoundary(
           key: boundaryKey,
           child: SizedBox(
-            width: 460,
-            height: 1000,
+            width: width,
+            height: height,
             child: DiplomacyPanel(
               game: game,
               humanPlayerId: humanPlayerId,
@@ -236,6 +275,102 @@ void main() {
       matchesGoldenFile('goldens/diplomacy_panel_gp_row.png'),
     );
   });
+
+  testWidgets('AC-4 (#3625) golden: allied GP row shows ALLIANCE treaty badge', (
+    WidgetTester tester,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(600, 1100));
+    const boundaryKey = ValueKey<String>('diplomacy_gp_alliance_row_golden');
+
+    await tester.pumpWidget(
+      _panelHost(
+        game: _alliedGreatPowerRowGame(),
+        humanPlayerId: 'gp1',
+        boundaryKey: boundaryKey,
+      ),
+    );
+    await _pumpBuilt(tester);
+
+    expect(find.text('Castile'), findsOneWidget);
+    expect(find.text(kDiplomacyAllianceBadgeLabel), findsOneWidget);
+    expect(find.textContaining('Friendly'), findsWidgets);
+
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/diplomacy_panel_gp_alliance_row.png'),
+    );
+  });
+
+  testWidgets(
+    'wide GP-row golden: trailing action cluster flows left-to-right (Refs #3621)',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      // SPEC/ui/diplomacy-panel.md § Acceptance criteria (wide-viewport GP-row
+      // golden, Refs #3621): the host panel is 800 dp wide (> 500 dp
+      // kDiplomacyRowNarrowMaxWidth) so the GP row renders the wide variant
+      // with the trailing compact action cluster, unlike the 460 dp narrow
+      // AC-7 golden above.
+      await tester.binding.setSurfaceSize(const Size(1000, 1200));
+      const boundaryKey = ValueKey<String>('diplomacy_gp_row_wide_golden');
+
+      await tester.pumpWidget(
+        _panelHost(
+          game: _greatPowerRowGame(),
+          humanPlayerId: 'gp1',
+          boundaryKey: boundaryKey,
+          width: 800,
+          height: 1200,
+        ),
+      );
+      await _pumpBuilt(tester);
+
+      // The wide variant lays the row body out as a Row (info column + trailing
+      // action cluster), not the narrow Column.
+      final Key bodyKey = ValueKey('${kDiplomacyRowBodyKeyPrefix}gp2');
+      expect(find.byKey(bodyKey), findsOneWidget);
+      expect(
+        tester.widget(find.byKey(bodyKey)),
+        isA<Row>(),
+        reason:
+            'Wide (> 500 dp) GP row body must be a Row per § Responsive layout.',
+      );
+
+      // Rendered-geometry guard: at least one run (buttons sharing a top
+      // y-offset within 0.5 dp) holds two buttons at different x-offsets, so
+      // the cluster flows left-to-right rather than stacking vertically.
+      final Finder buttons = find.descendant(
+        of: find.byKey(bodyKey),
+        matching: find.byType(CtNinePatchButton),
+      );
+      final int count = buttons.evaluate().length;
+      expect(count, greaterThanOrEqualTo(4));
+      const double tol = 0.5;
+      double quantize(double v) => (v / tol).roundToDouble() * tol;
+      final Map<double, Set<double>> leftsByRunTop = <double, Set<double>>{};
+      for (int i = 0; i < count; i++) {
+        final Rect r = tester.getRect(buttons.at(i));
+        leftsByRunTop
+            .putIfAbsent(quantize(r.top), () => <double>{})
+            .add(quantize(r.left));
+      }
+      final int largestRun = leftsByRunTop.values
+          .map((Set<double> lefts) => lefts.length)
+          .reduce((int a, int b) => a > b ? a : b);
+      expect(
+        largestRun,
+        greaterThanOrEqualTo(2),
+        reason:
+            'Wide action cluster must place at least two buttons on one run '
+            'so the cluster flows left-to-right (Refs #3621).',
+      );
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_panel_gp_row_wide.png'),
+      );
+    },
+  );
 
   testWidgets('AC-6 golden: discovered Tribe row shows overture controls', (
     WidgetTester tester,

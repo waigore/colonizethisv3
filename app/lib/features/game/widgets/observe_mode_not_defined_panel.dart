@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../providers/observe_session_provider.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_spacing.dart';
 
@@ -26,7 +27,7 @@ class ObserveModeNotDefinedPanel extends StatelessWidget {
                 title!,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 12),
+              CtGap.ml,
             ],
             Text(
               kObserveNotDefinedLabel,

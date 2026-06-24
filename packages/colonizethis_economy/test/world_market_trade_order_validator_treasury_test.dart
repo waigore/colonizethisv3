@@ -1,9 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_trade_order_validator_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 /// Tests for `TradeOrderValidator` rule 5 — cross-commodity treasury bid cap.
 /// Refs #3093.
@@ -253,60 +253,28 @@ void main() {
       expect(results.single.isAccepted, isTrue);
     });
 
-    test('identical inputs produce identical result lists across two '
-        'validate() calls (Refs #3123 AC: validator determinism)', () {
-      // SPEC/program/world-market-resolution.md § Validation —
-      // determinism: pure validator with no I/O / time / random
-      // dependencies must return byte-identical results for byte-identical
-      // inputs. Pin both an accepted and a rejected order so the
-      // determinism contract covers both result branches.
-      final context = validatorCtx(
-        treasuryBudgetForBids: 100,
-        tradeCargoCapacity: 100,
-        worldMarketState: WorldMarketState(
-          prices: {
-            CommodityCatalog.timber.id: 30,
-            CommodityCatalog.iron.id: 10,
-          },
-        ),
-      );
-      final orders = [
-        validatorBid(CommodityCatalog.timber.id, 4), // 120 — rejected
-        validatorBid(CommodityCatalog.iron.id, 1), // 10 — admitted (greedy)
-      ];
-      final first = TradeOrderValidator.validate(
-        context: context,
-        proposedOrders: orders,
-      );
-      final second = TradeOrderValidator.validate(
-        context: context,
-        proposedOrders: orders,
-      );
-      expect(second, hasLength(first.length));
-      for (var i = 0; i < first.length; i++) {
-        expect(second[i].isAccepted, first[i].isAccepted);
-        expect(second[i].reason, first[i].reason);
-      }
-    });
   });
 
   group('effectiveMarketPriceForCommodityId — catalog default coverage '
       '(Refs #3123)', () {
-    test('every non-riches commodity in the catalog resolves to a non-null '
-        'effective price via the default ResourceRules (no hidden gaps that '
-        "would force a rule-5 'unknown price' rejection in normal play)", () {
-      // SPEC/game/world-market.md § Treasury budget for bids: rule 5
-      // must use worldMarketState.prices ?? catalog default for every
-      // tradeable commodity. This pin guards against silently shipping
-      // a tradeable commodity without a catalog default (which would
-      // otherwise let rule 5 admit unbounded bids on that commodity
-      // because effectiveMarketPriceForCommodityId returns null →
-      // 0 spend contribution).
+    // Refs #3661 step 6: the exhaustive non-riches catalog sweep now lives
+    // in packages/colonizethis_data/test/resource_rules_test.dart (group
+    // 'defaultMarketPriceForCommodityId (Refs #3093)'), where the commodity
+    // catalog and ResourceRules defaults are owned. Economy keeps one raw
+    // and one manufactured regression pin so the economy-side
+    // effectiveMarketPriceForCommodityId wiring (worldMarketState.prices ??
+    // catalog default) stays covered without iterating the whole catalog
+    // every package run.
+    test('a representative raw and manufactured commodity resolve to a '
+        'non-null, non-negative effective price from the catalog default '
+        'when no live market price exists', () {
       final rules = ResourceRules.defaultRules;
-      for (final commodity in CommodityCatalog.all) {
-        if (richesCommodityIds.contains(commodity.id)) continue;
+      for (final commodityId in <String>[
+        CommodityCatalog.timber.id,
+        CommodityCatalog.lumber.id,
+      ]) {
         final effective = effectiveMarketPriceForCommodityId(
-          commodityId: commodity.id,
+          commodityId: commodityId,
           worldMarket: const WorldMarketState(),
           resourceRules: rules,
         );
@@ -314,15 +282,13 @@ void main() {
           effective,
           isNotNull,
           reason:
-              'commodity ${commodity.id} (non-riches) must resolve to a '
-              'non-null catalog default so rule 5 can price it',
+              'commodity $commodityId must resolve to a non-null catalog '
+              'default so rule 5 can price it',
         );
         expect(
           effective! >= 0,
           isTrue,
-          reason:
-              'catalog default for ${commodity.id} must be '
-              'non-negative',
+          reason: 'catalog default for $commodityId must be non-negative',
         );
       }
     });

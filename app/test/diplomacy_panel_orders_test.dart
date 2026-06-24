@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -110,8 +110,7 @@ void main() {
   testWidgets(
     'DiplomacyPanel confirm action emits AppendDiplomaticOrderRequestedEvent',
     (WidgetTester tester) async {
-      final r = getDebugInitGameResult();
-      final game = r.game;
+      final game = buildDiplomacyPanelTestGame();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
       final appendFuture = bus
@@ -130,7 +129,7 @@ void main() {
             body: DiplomacyPanel(
               game: game,
               humanPlayerId: humanId,
-              topology: r.combinedTopology,
+              topology: const MapTopology(),
               currentOrders: const Orders(),
               bus: bus,
             ),
@@ -166,8 +165,7 @@ void main() {
   testWidgets(
     'DiplomacyPanel pending cancel emits RemoveDiplomaticOrderRequestedEvent',
     (WidgetTester tester) async {
-      final r = getDebugInitGameResult();
-      final game = r.game;
+      final game = buildDiplomacyPanelTestGame();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final target = game.players.firstWhere((p) => p.id != humanId).id;
       final bus = AppEventBus.create();
@@ -193,7 +191,7 @@ void main() {
             body: DiplomacyPanel(
               game: game,
               humanPlayerId: humanId,
-              topology: r.combinedTopology,
+              topology: const MapTopology(),
               currentOrders: currentOrders,
               bus: bus,
             ),

@@ -8,7 +8,7 @@ This composite is **not** a screen and has **no** stable screen ID. It is the ca
 
 ## Purpose
 
-Consolidates the constrained-panel + `CtPanel` + `CtTopBar` + scrollable-list / empty-state chrome shared by the Civilian, Military, and Naval unit panels so each panel composes only its row content. Callers supply a title, trailing actions, `hasContent`, list children, and `emptyMessage`; the composite owns the `ConstrainedBox`, `Padding`, `CtPanel`, `CtTopBar` (no back button), `ListView`, and muted-italic empty copy. The outer modal bottom-sheet frame is the sibling [`UnitsPanelSheetSurface`](units-panel-sheet-surface.md). Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
+Consolidates the constrained-panel + `CtPanel` + `CtTopBar` + scrollable-list / empty-state chrome for the Civilian, Military, and Naval unit panels so each composes only its row content. Callers supply title, actions, `hasContent`, list children, and `emptyMessage`; the composite owns the `ConstrainedBox`, `Padding`, `CtPanel`, `CtTopBar`, `ListView`, and muted-italic empty copy. Outer frame: [`UnitsPanelSheetSurface`](units-panel-sheet-surface.md). Tracking: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
 
 ---
 
@@ -17,27 +17,38 @@ Consolidates the constrained-panel + `CtPanel` + `CtTopBar` + scrollable-list / 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `title` | `String` | required | Title rendered by the inner `CtTopBar` (back button suppressed). |
-| `actions` | `List<Widget>` | `const []` | Trailing widgets for the `CtTopBar` trailing slot. Zero widgets → no trailing; one → the widget; ≥2 → `Row(mainAxisSize: min)` separated by 4 dp `SizedBox` gaps. |
-| `hasContent` | `bool` | required | Predicate selecting between the populated `ListView` branch and the empty branch. |
-| `listChildren` | `List<Widget>` | required | Children mounted into the `ListView(shrinkWrap: true)` when `hasContent == true`. |
+| `actions` | `List<Widget>` | `const []` | `CtTopBar` trailing slot. Zero → no trailing; one → the widget; ≥2 → `Row(mainAxisSize: min)` with 4 dp `SizedBox` gaps. |
+| `hasContent` | `bool` | required | Selects the populated vs empty branch. |
+| `listChildren` | `List<Widget>` | required | Children mounted into the body `ListView` (inside an `Expanded`, no `shrinkWrap`) when `hasContent == true`. |
 | `emptyMessage` | `String` | required | Copy rendered (muted italic) in the empty branch. |
-| `listPadding` | `EdgeInsets` | `EdgeInsets.fromLTRB(8, 0, 8, 8)` | Padding applied to the `ListView` in the populated branch. |
-| `panelConstraints` | `BoxConstraints` | `UnitsPanelShell.defaultPanelConstraints` | Outer `ConstrainedBox` bounds. Default `maxWidth: 400` / `maxHeight: 500` mirrors the bottom-sheet sizing pinned by every consumer panel today. |
+| `listPadding` | `EdgeInsets` | `EdgeInsets.fromLTRB(8, 0, 8, 8)` | Padding for the populated-branch `ListView`. |
+| `panelConstraints` | `BoxConstraints` | `defaultPanelConstraints` | Inner `ConstrainedBox` bounds. **Width unbounded** (host owns width); `maxHeight: 500` upper bound for standalone / Widgetbook / golden contexts. |
 
-Exposed constant: `UnitsPanelShell.defaultPanelConstraints = BoxConstraints(maxWidth: 400, maxHeight: 500)`.
+Exposed constant: `UnitsPanelShell.defaultPanelConstraints = BoxConstraints(maxHeight: 500)` (width unbounded — host-governed). Refs #3627.
+
+### Bottom-sheet sizing (host-owned)
+
+Each host wraps the panel in a `ConstrainedBox` from `unitsPanelSheetConstraints(viewport)` — one sizing contract for all three panels (Refs #3627):
+
+| Viewport | `maxWidth` | `maxHeight` |
+|----------|------------|-------------|
+| Narrow (`width < 600` dp) | `viewport.width` (full) | `0.50 × viewport.height` (`50%` cap) |
+| Wide (`width >= 600` dp) | `0.70 × viewport.width` | `0.55 × viewport.height` (`55vh`) |
+
+Hosts set `isScrollControlled: true`; the civilian host uses `0.92 × height` only under `kCtE2EEnabled` (Refs #2336).
 
 ---
 
 ## Layout / wireframe
 
 ```text
-ConstrainedBox(panelConstraints)                 -- default 400 × 500 dp
+ConstrainedBox(panelConstraints)                 -- width host-governed, maxHeight 500
   Padding(EdgeInsets.all(8))
-    CtPanelWithTopBar(mainAxisSize: min)
+    CtPanelWithTopBar(mainAxisSize: max)         -- fills allocated height
       topBar: CtTopBar(title, showBackButton: false, trailing?)
-      Flexible
+      Expanded                                   -- body fills the sheet cap
           hasContent
-            ? ListView(shrinkWrap, padding: listPadding, children)
+            ? ListView(padding: listPadding, children)   -- scrolls internally
             : Padding(EdgeInsets.all(24))
                 Center
                   Text(emptyMessage,
@@ -46,31 +57,29 @@ ConstrainedBox(panelConstraints)                 -- default 400 × 500 dp
                          fontStyle: italic))
 ```
 
-The `CtPanel` + `Column` + top-bar skeleton is the shared
-[`CtPanelWithTopBar`](ct-panel-with-top-bar.md) (#3279 §5). The outer 8 dp
-padding is a gutter so the `CtPanel` border never touches the edge. The `CtTopBar` always renders without the leading back button — every consumer is hosted in a side panel, bottom sheet, or rail surface that owns its own back/close affordance.
+The skeleton is the shared [`CtPanelWithTopBar`](ct-panel-with-top-bar.md) (#3279 §5); `CtTopBar` renders without the back button. Body fill behavior: see Behavior 2 (Refs #3627).
 
 ---
 
 ## Behavior
 
-1. **Trailing-actions layout.** Zero actions → `CtTopBar.trailing == null`; one action → that widget; two or more → a `Row(mainAxisSize: min)` with 4 dp `SizedBox` separators. Consumers that need additional spacing wrap their actions before passing them in.
-2. **Populated branch.** With `hasContent == true`, the body is a `ListView(shrinkWrap: true)` with the supplied `listPadding`. The shell mounts no Material elevation, divider, or row of its own; row chrome is the consumer's responsibility.
-3. **Empty branch.** With `hasContent == false`, the body is a centered `Text(emptyMessage)` in `EditorialMonoclePalette.muted` italic so the empty surface honours the editorial-monocle dark contract instead of the default Material `onSurfaceVariant` token.
-4. **No internal state.** The composite is a `StatelessWidget`. Every consumer-driven mutation (selection, expansion, sort) re-runs `build` from the parent.
-5. **Constraints owner.** The outer `ConstrainedBox` defaults to `defaultPanelConstraints`. The Naval panel widens it on `>= 1280` dp viewports per [naval-units-panel.md](../naval-units-panel.md); every consumer falls back to `defaultPanelConstraints` at narrower viewports so the same 320 dp pin contract applies (see [mobile-adaptation.md](../mobile-adaptation.md) § 7).
+1. **Trailing-actions layout.** Zero actions → `CtTopBar.trailing == null`; one → that widget; ≥2 → `Row(mainAxisSize: min)` with 4 dp `SizedBox` separators.
+2. **Populated branch.** With `hasContent == true`, the body is an `Expanded` `ListView` (no `shrinkWrap`) with `listPadding`; it fills the allocated sheet height and scrolls internally (Refs #3627). Row chrome is the consumer's responsibility.
+3. **Empty branch.** With `hasContent == false`, the body is a centered `Text(emptyMessage)` in `EditorialMonoclePalette.muted` italic (dark-theme contract).
+4. **No internal state.** A `StatelessWidget`; mutations re-run `build` from the parent.
+5. **Constraints owner.** The **host** owns sizing via `unitsPanelSheetConstraints(viewport)`; the inner `ConstrainedBox` leaves width unbounded so the host rule applies. The 320 dp minimum-viewport pin holds ([mobile-adaptation.md](../mobile-adaptation.md) § 7).
 
 ---
 
 ## States and variants
 
-The composite has no internal state. Variants are driven entirely by `panelConstraints` and `hasContent`:
+No internal state. Variants follow host sizing and `hasContent`:
 
-| Variant | `panelConstraints` | `hasContent` | Body |
-|---------|---------------------|--------------|------|
-| Default populated | `defaultPanelConstraints` | `true` | `ListView` |
-| Default empty | `defaultPanelConstraints` | `false` | Muted-italic empty text |
-| Wide populated | naval `>= 1280` dp override | `true` | `ListView` |
+| Variant | Host sizing | `hasContent` | Body |
+|---------|-------------|--------------|------|
+| Narrow populated | full width × `50%` height | `true` | `ListView` |
+| Narrow empty | full width × `50%` height | `false` | Muted-italic empty text |
+| Wide populated | `70%` width × `55vh` | `true` | `ListView` |
 
 ---
 
@@ -78,37 +87,37 @@ The composite has no internal state. Variants are driven entirely by `panelConst
 
 | Screen ID | Spec | Notes |
 |-----------|------|-------|
-| `UNIT10001` | [`civilian-units-panel.md`](../civilian-units-panel.md) | Bottom-sheet host; trailing actions include sort + scope toggles. |
-| `UNIT20001` | [`military-units-panel.md`](../military-units-panel.md) | Side-panel host; trailing includes the **Train** entry-point. |
-| `UNIT30001` | [`naval-units-panel.md`](../naval-units-panel.md) | Side-panel host; widens `panelConstraints` on `>= 1280` dp viewports. |
-
-Each consumer spec links back here for the chrome contract instead of redeclaring the `ConstrainedBox` + `CtPanel` + `CtTopBar` + `ListView` hierarchy.
+| `UNIT10001` | [`civilian-units-panel.md`](../civilian-units-panel.md) | Bottom-sheet host; trailing sort + scope toggles. |
+| `UNIT20001` | [`military-units-panel.md`](../military-units-panel.md) | Bottom-sheet host; trailing **Train** entry-point. |
+| `UNIT30001` | [`naval-units-panel.md`](../naval-units-panel.md) | Bottom-sheet host; shared sizing (no fixed sidebar). |
 
 ---
 
 ## Acceptance criteria (Given–When–Then)
 
-- **Given** a `UnitsPanelShell` mounted with `title = 'Civilian Units'`, `hasContent = true`, and a single-child `listChildren`, **When** the tree settles, **Then** exactly one `CtPanel` and exactly one `CtTopBar` with `title == 'Civilian Units'` and `showBackButton == false` are mounted, and the supplied child is reachable inside a `ListView` descendant.
-- **Given** a `UnitsPanelShell` mounted with `hasContent = false` and `emptyMessage = 'No civilian units.'`, **When** the tree settles, **Then** no `ListView` is mounted, the empty message renders, and its resolved `TextStyle.color` equals `EditorialMonoclePalette.muted` with `fontStyle == FontStyle.italic`.
-- **Given** `actions = const []`, **When** the shell builds, **Then** `CtTopBar.trailing == null` in the rendered subtree.
-- **Given** `actions = [a, b]`, **When** the shell builds, **Then** the trailing slot mounts a `Row(mainAxisSize: MainAxisSize.min)` with a 4 dp `SizedBox` between the two children.
-- **Given** the host pumps the shell with no override, **When** the outer `ConstrainedBox` resolves, **Then** its `constraints.maxWidth == 400` and `constraints.maxHeight == 500`.
-- **Given** the source `app/lib/features/game/widgets/units/shared/units_panel_shell.dart`, **When** read, **Then** it contains `defaultPanelConstraints` with `maxWidth: 400` / `maxHeight: 500` and references `EditorialMonoclePalette.muted` (canonical chrome regression guard).
+- **Given** `title = 'Civilian Units'`, `hasContent = true`, and one `listChildren` child, **When** the tree settles, **Then** a `CtPanel` and a `CtTopBar` (`title == 'Civilian Units'`, `showBackButton == false`) mount with the child inside a `ListView`.
+- **Given** `hasContent = false` and `emptyMessage = 'No civilian units.'`, **When** the tree settles, **Then** no `ListView` mounts, the empty message renders, and its `TextStyle.color == EditorialMonoclePalette.muted` with `fontStyle == italic`.
+- **Given** `actions = const []`, **When** the shell builds, **Then** `CtTopBar.trailing == null`.
+- **Given** `actions = [a, b]`, **When** the shell builds, **Then** the trailing slot is a `Row(mainAxisSize: min)` with a 4 dp `SizedBox` between the children.
+- **Given** a viewport with `width < 600` dp, **When** `unitsPanelSheetConstraints(viewport)` resolves, **Then** `maxWidth == viewport.width` and `maxHeight == viewport.height * 0.50` (±0.01).
+- **Given** a viewport with `width >= 600` dp, **When** `unitsPanelSheetConstraints(viewport)` resolves, **Then** `maxWidth == viewport.width * 0.70` and `maxHeight == viewport.height * 0.55` (±0.01).
+- **Given** the shell source, **When** read, **Then** `defaultPanelConstraints` leaves width unbounded (`maxHeight: 500` only) and references `EditorialMonoclePalette.muted`.
+- **Given** `hasContent = true` under a height-capped host, **When** the tree settles, **Then** `CtPanelWithTopBar` uses `MainAxisSize.max` and the body `ListView` sits in an `Expanded` (no `shrinkWrap`), so the panel fills the cap and scrolls internally rather than hugging content (Refs #3627).
 
 ---
 
 ## Tests
 
-- `app/test/units_panel_shared_widgets_test.dart` — widget-level contract tests pinning the trailing-actions layout, populated vs empty branches, and the default panel constraints.
-- `app/test/unit_panels_320dp_min_viewport_test.dart` — pins the three hosted panels at `kMinViewportWidth = 320` dp without horizontal overflow inside `defaultPanelConstraints`.
-- `app/test/spec_components_units_panel_shell_test.dart` — spec-pinning tests asserting this spec exists, declares the canonical sections, enumerates the three consumers by stable screen id, and restates the `maxWidth: 400` / `maxHeight: 500` default constraints.
+- `app/test/units_panel_shared_widgets_test.dart` — trailing-actions layout and populated vs empty branches.
+- `app/test/unit_panels_viewport_sizing_test.dart` — `unitsPanelSheetConstraints` (narrow `50%`; wide `70%` / `55vh`; the `600` dp boundary) and host-governed width. Refs #3627.
+- `app/test/unit_panels_320dp_min_viewport_test.dart` — the three panels at 320 dp without overflow.
+- `app/test/spec_components_units_panel_shell_test.dart` — spec-pin: sections, consumers by screen id, and the viewport-adaptive sizing contract.
+- `app/test/unit_panels_goldens_test.dart` — desktop + mobile (`360 × 640` narrow-contract) golden baselines pinning the fill-height layout; Widgetbook **Mobile (360x640)** stories render the same (Refs #3627).
 
 ---
 
 ## Related
 
-- Bottom-sheet host frame: [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md).
+- Host frame: [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md). Skeleton: [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md).
 - Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtPanel*, § *CtTopBar*, § *Editorial-monocle palette*.
-- Shared skeleton: [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md).
-- Hosting surfaces: [`empire-overview.md`](../empire-overview.md), [`in-game-shell-narrow.md`](../in-game-shell-narrow.md), [`mobile-adaptation.md`](../mobile-adaptation.md) § 7.
-- Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
+- Hosting: [`empire-overview.md`](../empire-overview.md), [`mobile-adaptation.md`](../mobile-adaptation.md) § 7. Tracking: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.

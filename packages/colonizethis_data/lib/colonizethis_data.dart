@@ -25,6 +25,7 @@ export 'src/resource.dart';
 export 'src/resource_rules.dart';
 export 'src/terrain_region_rules.dart';
 export 'src/terrain_type.dart';
+export 'src/terrain_type_display_name.dart';
 export 'src/tile_map_result.dart';
 export 'src/topology_describe.dart';
 export 'src/topology_node.dart';

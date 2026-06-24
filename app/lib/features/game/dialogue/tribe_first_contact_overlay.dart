@@ -11,6 +11,7 @@ import '../../../../widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
 import 'game_start_intro_overlay.dart';
 import 'ct_dialogue_view.dart';
 
@@ -154,52 +155,22 @@ class _TribeFirstContactOverlayState extends State<TribeFirstContactOverlay> {
       );
     }
 
-    final line = _view!.currentLine;
-    final choice = _view!.currentChoice;
-
     return _chromeBody(
       l10n: l10n,
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (line != null) ...[
-            Text(
-              line.text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: CtSpacing.l),
-            Align(
-              alignment: Alignment.center,
-              child: CtNinePatchButton(
-                onPressed: () => _view!.advanceLine(),
-                child: Text(l10n.game_intervention_continue),
-              ),
-            ),
-          ] else if (choice != null) ...[
-            ...choice.options.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: CtSpacing.m),
-                child: CtNinePatchButton(
-                  onPressed: () => _view!.selectOption(entry.key),
-                  child: Text(entry.value.text),
-                ),
-              ),
-            ),
-          ] else
-            const GameStartIntroLoadingIndicator(),
-        ],
+      body: CtDialogueLineChoiceBody(
+        view: _view!,
+        continueLabel: l10n.game_intervention_continue,
+        lineTextStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+        lineTextAlign: TextAlign.center,
+        continueAlignment: Alignment.center,
+        loading: const GameStartIntroLoadingIndicator(),
       ),
     );
   }
 
-  Widget _chromeBody({
-    required AppLocalizations l10n,
-    required Widget body,
-  }) {
+  Widget _chromeBody({required AppLocalizations l10n, required Widget body}) {
     return CtFullScreenDialogueShell(
       backdrop: widget.child,
       body: Column(

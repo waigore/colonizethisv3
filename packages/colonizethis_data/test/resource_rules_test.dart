@@ -189,6 +189,36 @@ void main() {
         );
       });
 
+      test(
+          'every non-riches catalog commodity resolves to a non-null, '
+          'non-negative default market price (Refs #3661 step 6 — full '
+          'catalog sweep relocated from colonizethis_economy)', () {
+        // SPEC/game/world-market.md § Treasury budget for bids + Tradeable
+        // commodities: the bid validator (rule 5) prices a bid via
+        // worldMarketState.prices ?? catalog default. This is the single
+        // source of truth that no tradeable (non-riches) commodity silently
+        // ships without a catalog default — a null default would let the
+        // validator admit unbounded bids on that commodity (null price ->
+        // 0 spend contribution). Owned here because CommodityCatalog and the
+        // ResourceRules defaults both live in colonizethis_data.
+        for (final commodity in CommodityCatalog.all) {
+          if (richesCommodityIds.contains(commodity.id)) continue;
+          final price = rules.defaultMarketPriceForCommodityId(commodity.id);
+          expect(
+            price,
+            isNotNull,
+            reason:
+                'commodity ${commodity.id} (non-riches) must have a catalog '
+                'default so the bid validator can price it',
+          );
+          expect(
+            price! >= 0,
+            isTrue,
+            reason: 'catalog default for ${commodity.id} must be non-negative',
+          );
+        }
+      });
+
       test('returns null for riches and spices (non-tradeable on the market)',
           () {
         // SPEC/game/world-market.md § Tradeable commodities excludes the

@@ -82,8 +82,8 @@ void main() {
       await pumpOverlay(tester);
 
       final Text introText = tester.widget<Text>(find.text(
-        'An allied power is at war. Join their war or refuse '
-        '(alliance ends, relations worsen).',
+        'A treaty ally is at war. Join their war or refuse '
+        '(the formal alliance ends, relations worsen).',
       ));
       expect(introText.style?.color, EditorialMonoclePalette.muted);
       expect(introText.style?.fontStyle, FontStyle.italic);
@@ -96,8 +96,8 @@ void main() {
       expect(find.byType(CtBrassDivider), findsOneWidget);
 
       final Finder introFinder = find.text(
-        'An allied power is at war. Join their war or refuse '
-        '(alliance ends, relations worsen).',
+        'A treaty ally is at war. Join their war or refuse '
+        '(the formal alliance ends, relations worsen).',
       );
       final Finder listFinder = find.byType(ListView);
       final Finder dividerFinder = find.byType(CtBrassDivider);

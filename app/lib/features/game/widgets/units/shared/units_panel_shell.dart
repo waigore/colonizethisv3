@@ -41,8 +41,16 @@ class UnitsPanelShell extends StatelessWidget {
   final EdgeInsets listPadding;
   final BoxConstraints panelConstraints;
 
+  /// Default outer bounds when the host does not pass tighter constraints.
+  ///
+  /// Width is intentionally **unbounded** (`double.infinity`) so the
+  /// bottom-sheet host owns the panel width via the viewport-adaptive
+  /// `unitsPanelSheetConstraints` (`70%` wide / full-width narrow, Refs #3627);
+  /// the panel then fills whatever width the host allocates instead of pinning
+  /// itself to a stale fixed value. `maxHeight: 500` remains a sane upper bound
+  /// for standalone / Widgetbook / golden contexts that mount the shell without
+  /// a host height cap.
   static const BoxConstraints defaultPanelConstraints = BoxConstraints(
-    maxWidth: 400,
     maxHeight: 500,
   );
 
@@ -73,21 +81,28 @@ class UnitsPanelShell extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(CtSpacing.m),
         child: CtPanelWithTopBar(
-          mainAxisSize: MainAxisSize.min,
+          // Fill the host-allocated sheet height (50% narrow / 55vh wide,
+          // Refs #3627 AC3) instead of hugging content: the body expands to
+          // the cap and the unit roster scrolls inside it. `MainAxisSize.min`
+          // would leave the sheet content-sized below the cap.
+          mainAxisSize: MainAxisSize.max,
           topBar: CtTopBar(
             title: title,
             showBackButton: false,
             trailing: _buildTrailing(),
           ),
           children: [
-            Flexible(
+            Expanded(
               child: hasContent
                   ? ListView(
-                      shrinkWrap: true,
-                      // E2E panel-text assertions walk the full ListView
-                      // preorder; a tall unit roster virtualizes rows below the
-                      // fold. A generous cache keeps every row built once the
-                      // test helper has scrolled through the list (Refs #2336).
+                      // No `shrinkWrap`: the body is bounded by [Expanded], so
+                      // the list fills the allocated height and scrolls
+                      // internally (Refs #3627 AC3) rather than sizing to
+                      // content. E2E panel-text assertions walk the full
+                      // ListView preorder; a tall unit roster virtualizes rows
+                      // below the fold, so a generous cache keeps every row
+                      // built once the test helper has scrolled through the
+                      // list (Refs #2336).
                       cacheExtent: kCtE2EEnabled ? 10000 : null,
                       padding: listPadding,
                       children: listChildren,

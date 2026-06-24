@@ -2,13 +2,14 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
 import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show factionOwnershipColorMapForOldWorld;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 /// Tests for the in-game shell floating players bar.
 ///
@@ -25,28 +26,29 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   suppressLogsForTests();
 
-  /// Returns a debug game with a deterministic OW ownership distribution so
-  /// the score AC is testable without standing up the full setup pipeline.
+  /// Returns the lightweight players-bar fixture game with a deterministic OW
+  /// ownership distribution so the score AC is testable without standing up the
+  /// full setup pipeline (Refs #3656 — no `getDebugInitGameResult()`).
   ///
   /// First province → first GP. Second through fifth provinces → second GP.
   /// Remaining provinces remain unowned. Tribes (if any) remain untouched.
   ct_models.Game gameWithOwnership() {
-    final base = getDebugInitGameResult().game;
+    final base = buildPlayersBarTestGame();
     final greatPowers = GameMapPlayersBar.greatPowerRoster(base);
     expect(
       greatPowers.length,
       greaterThanOrEqualTo(2),
-      reason: 'Debug init game must seed at least two GPs for this test',
+      reason: 'Players-bar fixture must seed at least two GPs for this test',
     );
     final ow = base.worldState.oldWorld;
     final provinces = ow.provinces;
     expect(
       provinces.length,
       greaterThanOrEqualTo(6),
-      reason: 'Debug init game must seed at least six OW provinces',
+      reason: 'Players-bar fixture must seed at least six OW provinces',
     );
-    // Clear existing ownership first so the cached debug init game's seed
-    // distribution does not pollute the deterministic test counts below.
+    // Clear existing ownership first so the fixture's seed distribution does
+    // not pollute the deterministic test counts below.
     // `Province.copyWith` uses `??` semantics, so we reconstruct the province
     // explicitly (passing `ownerId: null`) to wipe the existing owner.
     ct_models.Province withoutOwner(ct_models.Province p) {
@@ -199,7 +201,7 @@ void main() {
   testWidgets('formats thousands separators in en_US (>= 1000 score)', (
     WidgetTester tester,
   ) async {
-    final base = getDebugInitGameResult().game;
+    final base = buildPlayersBarTestGame();
     final greatPowers = GameMapPlayersBar.greatPowerRoster(base);
     final ow = base.worldState.oldWorld;
     expect(ow.provinces.length, greaterThanOrEqualTo(1));
@@ -234,7 +236,7 @@ void main() {
   testWidgets('returns SizedBox.shrink() when the GP roster is empty', (
     WidgetTester tester,
   ) async {
-    final base = getDebugInitGameResult().game;
+    final base = buildPlayersBarTestGame();
     // Replace players with the existing tribe roster only (the widget's
     // filter must collapse to an empty chip column).
     final tribePlayers = base.tribes
@@ -256,7 +258,7 @@ void main() {
   });
 
   test('greatPowerRoster sorts by Player.id ascending and excludes tribes', () {
-    final game = getDebugInitGameResult().game;
+    final game = buildPlayersBarTestGame();
     final roster = GameMapPlayersBar.greatPowerRoster(game);
     final ids = roster.map((p) => p.id).toList();
     final sorted = List<String>.from(ids)..sort();
@@ -269,7 +271,7 @@ void main() {
 
   test('oldWorldProvinceCountFor returns ownership count for the given player',
       () {
-    final game = getDebugInitGameResult().game;
+    final game = buildPlayersBarTestGame();
     final greatPowers = GameMapPlayersBar.greatPowerRoster(game);
     final firstGpId = greatPowers.first.id;
     final ow = game.worldState.oldWorld;

@@ -71,10 +71,11 @@ Register core (game-feature) builders in **`app/lib/core/services/app_event_hand
 |----|--------|----------|
 | `train_civilians` | `TrainCiviliansDialog` | `trainCiviliansDialogId` |
 | `train_military` | `TrainMilitaryDialog` | `trainMilitaryDialogId` |
+| `train_naval` | `TrainNavalDialog` | `trainNavalDialogId` |
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` (see [grant-or-subsidy-dialog.md](../ui/grant-or-subsidy-dialog.md)) | `grantOrSubsidyDialogId` |
 | `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`; see [new-game-leader-selection-dialog.md](../ui/new-game-leader-selection-dialog.md)) | `newGameLeaderSelectionDialogId` |
 
-For `train_civilians` and `train_military`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
+For `train_civilians`, `train_military`, and `train_naval`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
 
 | ID | Widget | Status |
 |----|--------|--------|
@@ -91,7 +92,7 @@ Combat-flow non-dialog screens (constructed directly by the orchestrator, not vi
 
 **Land armies (`MilitaryUnitsPanel`):** **Move army** uses local `showDialog` like naval move (see [SPEC/ui/move-army-dialog.md](../ui/move-army-dialog.md)) and confirms via **`ArmyMoveRequestedEvent`**. The dialog lists **only** destinations returned by **`colonizethis_logic`** as **order-engine-valid** for the current draft (visibility, adjacency, ownership, war/declare-war rules). The dropdown is **grouped by owning faction** with **player-owned** provinces first; **invasion** into another GP / Minor / Tribe without war uses a **second confirm** and sets optional **`declareWarTargetFactionId`** on the event so the shell merges **`declareWar`** and **`ArmyMoveOrder`** atomically. **`AppEventHandler`** opens the panel with **`ref.watch(currentOrdersProvider)`** and passes **`draftOrders`** into **`MilitaryUnitsPanel`** (naval parity for pending move lines). The scope handler applies the move (and declare war when present), runs **full draft validation** for that player; on failure it **does not** update `currentOrders`, logs **`error`**, emits **`ShowSnackBarEvent`**, and **asserts** in debug (per [orders.md](orders.md) shell contract). **Split** / **combine** use **`ArmySplitRequestedEvent`** / **`ArmyCombineRequestedEvent`** → handler mutates `Game`; panel refreshes from updated state. Same decoupling pattern as naval split (`NavalSplitFleetRequestedEvent`).
 
-**Train at-capital dialogs:** `TrainCiviliansDialog` / `TrainMilitaryDialog` emit **`TrainCivilianBuildOrdersCommittedEvent`** / **`TrainMilitaryBuildOrdersCommittedEvent`** on close; `AppEventHandlerScope` merges into orders. No `onOrdersChanged` callback from the shell into the dialog.
+**Train at-capital dialogs:** `TrainCiviliansDialog` / `TrainMilitaryDialog` / `TrainNavalDialog` emit **`TrainCivilianBuildOrdersCommittedEvent`** / **`TrainMilitaryBuildOrdersCommittedEvent`** / **`TrainNavalBuildOrdersCommittedEvent`** on close; `AppEventHandlerScope` merges into orders. The naval merge replaces only dialog-managed naval orders (`isMilitary == false`, ship `unitType` in `ShipEconomyCatalog.byId`, spawned at capital), leaving civilian build orders intact. No `onOrdersChanged` callback from the shell into the dialog.
 
 ---
 
@@ -157,11 +158,12 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 
 ### CI gate — `repo.app_event_bus_decoupling` (Refs #2626)
 
-`tool/check_app_event_bus_decoupling.dart` (wired through `tool/ct_repo_lint_manifest.yaml`) enforces three invariants against `app/lib/**`:
+`tool/check_app_event_bus_decoupling.dart` (wired through `tool/ct_repo_lint_manifest.yaml`) enforces four invariants against `app/lib/**`:
 
 - **No `AppEventBus()` singleton** in production code (under `app/lib/**`, excluding `app/lib/widgetbook/**`). Use `appEventBusProvider` (or an `AppEventBus.create()` instance held by the owning widget/service).
 - **`appNavigatorKey.currentContext` / `.currentState` / equivalent property access** is restricted to `app/lib/core/services/**` and `app/lib/app.dart`. Other layers must thread an explicit `GlobalKey<NavigatorState>` parameter or use the bus.
 - **`showDialog` / `showModalBottomSheet` calls under `app/lib/features/**`** are restricted to the documented "Local by design" allow-list above (plus the per-panel carve-outs for split/move fleet, move army, train at-capital). New call sites outside the allow-list must use a typed `AppEvent` instead. Adding a new local-by-design dialog requires extending **both** this SPEC section **and** the lint allow-list.
+- **No raw `addPostFrameCallback` + bus-`emit` sequencing under `app/lib/features/**`.** A `addPostFrameCallback` closure must not emit a **non-`ClosePanelEvent`** bus event (`bus.emit(...)` / `widget.bus.emit(...)`). The "close the active panel, then emit a follow-up event next frame" idiom must route through the shared **`AppEventBus.closePanelThenEmit`** helper (`app/lib/core/services/app_event_bus_panel_nav.dart`), which emits `ClosePanelEvent` synchronously and defers the single follow-up by exactly one frame so the SPEC-normative ordering (Train → `ClosePanelEvent` then `OpenDialogEvent`; locate / work-target → `ClosePanelEvent` then the follow-up) and the post-frame rationale live in one place. A bare deferred `ClosePanelEvent` emit (for example a scoped auto-close once a panel becomes empty) remains allowed.
 
 ---
 
@@ -172,6 +174,7 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 - Given `GameSideMenu` is mounted with a valid `currentGameProvider`, When the user chooses Civilian Units, Then the system emits `OpenCivilianUnitsPanelEvent` (not `showModalBottomSheet` from `GameSideMenu`).
 - Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` or `Navigator.maybePop` on the handler-owned sheet for that action).
 - Given `MilitaryUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainMilitaryDialogId)` under the same rules.
+- Given `NavalUnitsPanel` is mounted with a bus and not in observe mode, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainNavalDialogId)` under the same rules.
 - Given `CT_DEBUG_CONSOLE=true` and an active game map, When the user taps Debug Console in `GameMapEmpireLeftRail`, Then the system emits `ToggleDebugConsolePanelEvent` and `GameMapArea` toggles a non-modal in-map overlay without using `OpenPanelEvent` or `showModalBottomSheet`.
 - Given debug console input submits `/spawn_civilian <type> [count]`, When command parsing succeeds, Then the panel emits `SpawnDebugCivilianAtCapitalEvent` and the shell listener applies immediate civilian spawn to the active game and persists via `GameService.saveGame`.
 - Given debug console input submits `/spawn_regiment <regiment_type_id> [count]`, When command parsing succeeds, Then the panel emits `SpawnDebugRegimentAtCapitalEvent` and the shell listener applies immediate capital regiment spawn for the active human player and persists via `GameService.saveGame`.

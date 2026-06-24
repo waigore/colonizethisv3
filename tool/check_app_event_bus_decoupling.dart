@@ -14,7 +14,7 @@ import 'package:path/path.dart' as p;
 ///   APIs; documented local-by-design dialog/sheet carve-outs).
 /// - `SPEC/program/app-event-bus.md` (bus API and `AppEventBus.create`).
 ///
-/// Three sub-checks (any violation flips the rule red):
+/// Four sub-checks (any violation flips the rule red):
 ///
 /// 1. Production code under `app/lib/**` (excluding `app/lib/widgetbook/**`)
 ///    must not call the `AppEventBus()` singleton factory — use the
@@ -37,6 +37,17 @@ import 'package:path/path.dart' as p;
 ///    carve-outs for split / move fleet, move army, train at-capital). Any
 ///    new call site outside that allow-list is a violation; emit a typed
 ///    `AppEvent` via `AppEventBus` instead.
+///
+/// 4. Inside `app/lib/features/**`, a `addPostFrameCallback` closure must not
+///    emit a non-`ClosePanelEvent` bus event (`bus.emit(...)` /
+///    `widget.bus.emit(...)`). That "close the panel, then emit a follow-up
+///    event next frame" idiom must route through the shared
+///    `AppEventBusPanelNav.closePanelThenEmit` helper
+///    (`app/lib/core/services/app_event_bus_panel_nav.dart`) so the
+///    SPEC-normative ordering and post-frame rationale live in one place
+///    (`SPEC/program/app-ui-wiring.md`). A bare deferred `ClosePanelEvent`
+///    emit (for example a scoped auto-close once a panel becomes empty) is
+///    still allowed.
 
 const _disallowedSingletonName = 'AppEventBus';
 
@@ -89,9 +100,48 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/screens/production_screen.dart',
 };
 
+/// Files allowed to emit a non-[ClosePanelEvent] bus event from inside a
+/// `addPostFrameCallback` closure. The shared `closePanelThenEmit` helper
+/// (`app/lib/core/services/app_event_bus_panel_nav.dart`) centralizes the
+/// "close panel, then emit a follow-up next frame" idiom; feature panels must
+/// call the helper instead of re-implementing the post-frame sequencing. The
+/// helper itself lives outside `app/lib/features/**` (so it is never scanned by
+/// this sub-check), but it is listed here to document intent and stay correct
+/// if it ever moves under `features/`.
+const Set<String> _allowedPostFrameBusEmitFiles = <String>{
+  'app/lib/core/services/app_event_bus_panel_nav.dart',
+};
+
 const _scanRoot = 'app/lib';
 const _excludedRoot = 'app/lib/widgetbook';
 const _featuresRoot = 'app/lib/features';
+
+const _closePanelEventName = 'ClosePanelEvent';
+
+/// Returns true when [target] looks like an `AppEventBus` reference such as
+/// `bus`, `widget.bus`, or `self.bus` (the shapes used by the unit panels).
+bool _isBusTarget(Expression? target) {
+  if (target is SimpleIdentifier) return target.name == 'bus';
+  if (target is PrefixedIdentifier) return target.identifier.name == 'bus';
+  if (target is PropertyAccess) return target.propertyName.name == 'bus';
+  return false;
+}
+
+/// Best-effort syntactic name of the event constructed in `emit(<event>)`.
+///
+/// `parseString` does not resolve types: `const ClosePanelEvent()` parses as an
+/// [InstanceCreationExpression] while `OpenDialogEvent(...)` parses as a bare
+/// [MethodInvocation]. Returns null for anything else (for example a variable),
+/// which callers treat as non-`ClosePanelEvent` (flagged) to stay conservative.
+String? _emittedEventTypeName(Expression arg) {
+  if (arg is InstanceCreationExpression) {
+    return arg.constructorName.type.name.lexeme;
+  }
+  if (arg is MethodInvocation && arg.target == null) {
+    return arg.methodName.name;
+  }
+  return null;
+}
 
 int runCheckAppEventBusDecoupling(
   String repoRoot, {
@@ -110,6 +160,7 @@ int runCheckAppEventBusDecoupling(
   final singletonViolations = <String>[];
   final navigatorKeyViolations = <String>[];
   final dialogViolations = <String>[];
+  final postFrameBusEmitViolations = <String>[];
 
   for (final entity in libDir.listSync(recursive: true, followLinks: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) {
@@ -131,11 +182,13 @@ int runCheckAppEventBusDecoupling(
     singletonViolations.addAll(visitor.singletonViolations);
     navigatorKeyViolations.addAll(visitor.navigatorKeyViolations);
     dialogViolations.addAll(visitor.dialogViolations);
+    postFrameBusEmitViolations.addAll(visitor.postFrameBusEmitViolations);
   }
 
   final total = singletonViolations.length +
       navigatorKeyViolations.length +
-      dialogViolations.length;
+      dialogViolations.length +
+      postFrameBusEmitViolations.length;
   if (total == 0) {
     logI('check_app_event_bus_decoupling: no violations found.');
     return 0;
@@ -170,6 +223,15 @@ int runCheckAppEventBusDecoupling(
       logE(' - $v');
     }
   }
+  if (postFrameBusEmitViolations.isNotEmpty) {
+    logE(
+      ' addPostFrameCallback closures emitting a non-ClosePanelEvent bus '
+      'event in features/ (use AppEventBus.closePanelThenEmit instead):',
+    );
+    for (final v in postFrameBusEmitViolations) {
+      logE(' - $v');
+    }
+  }
   return 1;
 }
 
@@ -185,6 +247,7 @@ class _AppEventBusDecouplingVisitor extends RecursiveAstVisitor<void> {
   final List<String> singletonViolations = <String>[];
   final List<String> navigatorKeyViolations = <String>[];
   final List<String> dialogViolations = <String>[];
+  final List<String> postFrameBusEmitViolations = <String>[];
 
   bool get _appNavigatorKeyAllowed {
     for (final prefix in _appNavigatorKeyAllowedPathPrefixes) {
@@ -201,6 +264,9 @@ class _AppEventBusDecouplingVisitor extends RecursiveAstVisitor<void> {
 
   bool get _featureFileAllowed =>
       _allowedFeatureLocalDialogFiles.contains(relativePath);
+
+  bool get _postFrameBusEmitAllowed =>
+      _allowedPostFrameBusEmitFiles.contains(relativePath);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -262,12 +328,49 @@ class _AppEventBusDecouplingVisitor extends RecursiveAstVisitor<void> {
         }
       }
     }
+    if (_isFeatureFile &&
+        !_postFrameBusEmitAllowed &&
+        node.methodName.name == 'addPostFrameCallback') {
+      _collectPostFrameBusEmits(node);
+    }
     super.visitMethodInvocation(node);
+  }
+
+  /// Flags `bus.emit(<non-ClosePanelEvent>)` calls inside the closure passed to
+  /// `addPostFrameCallback`. A deferred bare `ClosePanelEvent` emit is allowed.
+  void _collectPostFrameBusEmits(MethodInvocation node) {
+    for (final arg in node.argumentList.arguments) {
+      if (arg is! FunctionExpression) continue;
+      final emitVisitor = _PostFrameBusEmitVisitor();
+      arg.body.accept(emitVisitor);
+      for (final offset in emitVisitor.offendingEmitOffsets) {
+        postFrameBusEmitViolations.add(_format(offset));
+      }
+    }
   }
 
   String _format(int offset) {
     final loc = lineInfo.getLocation(offset);
     return '$relativePath:${loc.lineNumber}';
+  }
+}
+
+/// Collects offsets of `bus.emit(<event>)` calls (within a post-frame closure)
+/// whose emitted event is anything other than [ClosePanelEvent].
+class _PostFrameBusEmitVisitor extends RecursiveAstVisitor<void> {
+  final List<int> offendingEmitOffsets = <int>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'emit' &&
+        _isBusTarget(node.target) &&
+        node.argumentList.arguments.length == 1) {
+      final typeName = _emittedEventTypeName(node.argumentList.arguments.first);
+      if (typeName != _closePanelEventName) {
+        offendingEmitOffsets.add(node.offset);
+      }
+    }
+    super.visitMethodInvocation(node);
   }
 }
 

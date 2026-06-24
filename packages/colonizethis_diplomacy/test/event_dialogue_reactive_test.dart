@@ -111,7 +111,7 @@ void main() {
   });
 
   group('dialogueEventsForReactiveHumanAttack', () {
-    test('emits attack_on_ally for AI allied with defender', () {
+    test('emits attack_on_ally for AI with a formal alliance with defender', () {
       final game = dialogueGame(
         turnNumber: 5,
         players: const [
@@ -125,6 +125,7 @@ void main() {
             factionId2: 'ai2',
             level: RelationLevel.allied,
             state: RelationState.atPeace,
+            formalAlliance: true,
           ),
         ],
       );
@@ -140,6 +141,40 @@ void main() {
       expect(events.first.leaderId, 'ai1');
       expect(events.first.situation, 'attack_on_ally');
     });
+
+    test(
+      'suppresses attack_on_ally for informal Allied band without a formal '
+      'alliance',
+      () {
+        final game = dialogueGame(
+          turnNumber: 5,
+          players: const [
+            Player(id: 'human', displayName: 'Human', isHuman: true),
+            Player(id: 'ai1', displayName: 'AI', isHuman: false),
+            Player(id: 'ai2', displayName: 'AI Defender', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'ai1',
+              factionId2: 'ai2',
+              level: RelationLevel.allied,
+              state: RelationState.atPeace,
+              // No formalAlliance: informal high relation must not trigger
+              // mutual-defence reactive dialogue. Refs #3625.
+            ),
+          ],
+        );
+        final events = dialogueEventsForReactiveHumanAttack(
+          game,
+          attackerFactionId: 'human',
+          defenderFactionId: 'ai2',
+          provinceId: 'oldWorld|P1',
+          turnNumber: 5,
+          seed: 1,
+        );
+        expect(events, isEmpty);
+      },
+    );
 
     test('emits attack_on_minor and attack_on_tribe for AI with embassy', () {
       final game = dialogueGame(

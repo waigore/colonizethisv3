@@ -6,6 +6,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         GamePlayerLookup,
         homeFleetIdFor,
+        kRegionNewWorld,
+        kRegionOldWorld,
         regionIdForSeaZone,
         WorldStateProvinceLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -630,12 +632,12 @@ buildNavalTree(
       >[];
 
   final provinceByRegionAndId = <String, Map<String, Province>>{
-    'oldWorld': {
+    kRegionOldWorld: {
       for (final p in game.worldState.oldWorld.provinces)
         '${p.regionId}|${p.id}': p,
       for (final p in game.worldState.oldWorld.provinces) p.id: p,
     },
-    'newWorld': {
+    kRegionNewWorld: {
       for (final p in game.worldState.newWorld.provinces)
         '${p.regionId}|${p.id}': p,
       for (final p in game.worldState.newWorld.provinces) p.id: p,
@@ -648,11 +650,7 @@ buildNavalTree(
       order.fleetId: order,
   };
 
-  for (final regionEntry in {
-    'oldWorld': game.worldState.oldWorld,
-    'newWorld': game.worldState.newWorld,
-  }.entries) {
-    final regionId = regionEntry.key;
+  game.worldState.forEachRegion((regionId, _) {
     final group = _navalTreeGroupForRegion(
       game: game,
       humanPlayerId: humanPlayerId,
@@ -671,7 +669,7 @@ buildNavalTree(
     if (group != null) {
       result.add(group);
     }
-  }
+  });
 
   return result;
 }

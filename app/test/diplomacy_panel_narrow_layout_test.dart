@@ -16,7 +16,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 Future<void> _preWarmFlameImageCache() async {
   try {
@@ -85,9 +86,13 @@ void main() {
 
   setUpAll(() async {
     await _preWarmFlameImageCache();
-    final result = getDebugInitGameResult();
-    game = result.game;
-    topology = result.combinedTopology;
+    // Refs #3656: lightweight discovered-GP fixture replaces the ~7-11s
+    // getDebugInitGameResult() map generation. The responsive-layout pins only
+    // need one discovered faction row (keyed by faction id), which the
+    // fixture's at-peace gp1↔gp2 relation provides; no generated map/topology
+    // data is consumed.
+    game = buildDiplomacyPanelTestGame();
+    topology = const MapTopology();
     humanPlayerId = game.players.isNotEmpty ? game.players.first.id : 'gp1';
 
     // Pick the first GP/minor/tribe id that the human player has discovered
@@ -101,7 +106,7 @@ void main() {
     expect(
       rows,
       isNotEmpty,
-      reason: 'Debug init game must seed at least one discovered faction.',
+      reason: 'Fixture must seed at least one discovered faction.',
     );
     firstNonHumanFactionId = rows.first.factionId;
   });

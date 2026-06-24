@@ -18,7 +18,6 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 const _humanId = 'gp_naval_fidelity';
 const _capitalLocalId = 'cap1';
@@ -134,9 +133,10 @@ void main() {
 
   late Game game;
   setUpAll(() {
-    // Warm `getDebugInitGameResult` so any internal asset/data lookups are
-    // ready, then build the deterministic fidelity scenario.
-    getDebugInitGameResult();
+    // Build the deterministic fidelity scenario directly. Refs #3656: the panel
+    // renders entirely from this hand-built fixture, so the prior ~11s
+    // `getDebugInitGameResult()` warm call (which generated a full map this
+    // suite never reads) is removed.
     game = _buildFidelityGame();
   });
 

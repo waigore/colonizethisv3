@@ -16,29 +16,17 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
   required MapTopology combinedTopology,
   Map<String, MapTopology>? topologyByRegion,
 }) {
-  if (currentGame == null) {
-    return (
-      game: null,
-      message: 'Debug flip_province ignored: no active game.',
-    );
-  }
-  if (currentGame.worldState.turnState.phase != TurnPhase.orders) {
-    return (
-      game: null,
-      message:
-          'Debug flip_province rejected: command is allowed only during human Orders phase.',
-    );
-  }
-  final human = findPlayerById(currentGame, event.humanPlayerId);
-  if (human == null) {
-    return (
-      game: null,
-      message:
-          'Debug flip_province ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
+  final guard = resolveDebugCommandGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.flipProvince,
+    ordersPhaseLabel: DebugCommandLabel.flipProvince,
+    playerId: event.humanPlayerId,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
+  final game = guard.game;
 
-  final resolved = _resolveFlipTarget(currentGame, event);
+  final resolved = _resolveFlipTarget(game, event);
   final failure = resolved.failureMessage;
   if (failure != null) {
     return (game: null, message: failure);
@@ -63,7 +51,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
   }
 
   if (!_isProvinceKnownToPlayer(
-    game: currentGame,
+    game: game,
     playerId: event.humanPlayerId,
     province: province,
   )) {
@@ -76,18 +64,18 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
 
   try {
     final previousCapitalByPlayer = {
-      for (final player in currentGame.players)
+      for (final player in game.players)
         player.id: player.capitalProvinceId,
     };
     final previousCapitalByMinor = {
-      for (final minor in currentGame.minorNations)
+      for (final minor in game.minorNations)
         minor.id: minor.capitalProvinceId,
     };
     final previousCapitalByTribe = {
-      for (final tribe in currentGame.tribes) tribe.id: tribe.capitalProvinceId,
+      for (final tribe in game.tribes) tribe.id: tribe.capitalProvinceId,
     };
     final priorOwnerCapitalProvinceId = _capitalProvinceIdForFaction(
-      currentGame,
+      game,
       oldOwnerId,
     );
     final ownerLosesCapital = priorOwnerCapitalProvinceId == province.id;
@@ -96,7 +84,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
       final regionTopology =
           topologyByRegion?[province.regionId] ?? combinedTopology;
       final eligibility = evaluateCapitalReassignmentEligibility(
-        state: currentGame,
+        state: game,
         playerId: oldOwnerId,
         regionId: province.regionId,
         regionTopology: regionTopology,
@@ -108,7 +96,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
     }
 
     final out = applyCanonicalSingleProvinceOwnershipTransferWithResult(
-      currentGame,
+      game,
       targetProvinceId: province.id,
       oldOwnerId: oldOwnerId,
       newOwnerId: event.humanPlayerId,

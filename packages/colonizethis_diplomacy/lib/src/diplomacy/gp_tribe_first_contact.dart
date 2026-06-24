@@ -4,6 +4,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
+import 'diplomacy_shared_helpers.dart' show isAiControlledForEvidence;
 
 /// Outcome of applying GP–Tribe first-contact relations for one human GP.
 /// SPEC/game/diplomacy.md § GP–Tribe first contact (issue #3341).
@@ -26,10 +27,12 @@ class GpTribeFirstContactResult {
 /// only when the GP holds non-`unknown` tile visibility into a province that
 /// Tribe owns (see [discoveredTribeIdsForFirstContact]). Sea-reachable colonial
 /// intel alone — which can connect Old World coasts to an unrevealed New World
-/// at turn 0 — does **not** trigger the herald or persist a relation (#3463).
-/// Broad targeting for the diplomacy panel / declare-war intel still lives in
-/// `knownDiplomaticTargetFactionIds`. The [topology] parameter is retained for
-/// call-site compatibility but is not consulted by herald discovery.
+/// at turn 0 — does **not** trigger the herald or persist a relation (#3463),
+/// and (as of #3620) no longer makes a Tribe a diplomatic target via
+/// `knownDiplomaticTargetFactionIds` either: that helper now uses the same
+/// first-contact gate (relation or non-`unknown` tile visibility). The
+/// [topology] parameter is retained for call-site compatibility but is not
+/// consulted by herald discovery.
 GpTribeFirstContactResult applyGpTribeFirstContactRelations({
   required Game game,
   required String gpId,
@@ -85,6 +88,43 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
     game: game.copyWith(diplomacyRelations: relationsIndex.toList()),
     newlyContactedTribeIds: newlyContacted,
   );
+}
+
+/// Persists GP–Tribe first-contact relations for every **AI-controlled** GP that
+/// holds non-`unknown` tile visibility into a Tribe-owned province but has no
+/// existing relation with that Tribe. Mirrors the human first-contact standing
+/// (`AT_PEACE`, score `50`, Neutral, `sinceTurn` = current turn) but emits **no**
+/// herald (AI parity — SPEC/game/diplomacy.md § GP–Tribe first contact, #3620 AC-5).
+///
+/// The live human GP is intentionally skipped: human first-contact relation
+/// persistence and the once-per-`(gameId, tribeId)` session herald are owned by
+/// the app layer (`syncGpTribeFirstContact`), which depends on the relation
+/// still being absent to enqueue the herald. AI-controlled GPs (including all
+/// GPs in observer games) receive the relation here, during turn resolution,
+/// so AI diplomatic state matches what the human GP gets on visibility reveal.
+///
+/// Runs once per turn (end-of-turn, after visibility is finalized); iterates the
+/// Great Powers only, so the per-GP `buildPlayerView` cost is bounded by the GP
+/// count, not by candidates or tiles per candidate.
+Game applyAiGpTribeFirstContactRelations({
+  required Game game,
+  required MapTopology topology,
+}) {
+  if (game.tribes.isEmpty) return game;
+
+  var current = game;
+  for (final player in game.players) {
+    if (!isAiControlledForEvidence(current, player.id)) continue;
+    final view = buildPlayerView(current, topology, player.id);
+    final result = applyGpTribeFirstContactRelations(
+      game: current,
+      gpId: player.id,
+      view: view,
+      topology: topology,
+    );
+    current = result.game;
+  }
+  return current;
 }
 
 /// Tribe faction ids the human GP has actually **discovered** for first-contact

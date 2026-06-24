@@ -4,9 +4,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 const Set<String> _allowedFeatureBridgeWidgetFiles = {
-  'app/lib/widgets/ct_dialog_shell.dart',
-  'app/lib/widgets/ct_nine_patch_button.dart',
-  'app/lib/widgets/ct_panel.dart',
   'app/lib/widgets/ct_region_map.dart',
 };
 

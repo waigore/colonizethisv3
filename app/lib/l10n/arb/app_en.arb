@@ -417,9 +417,9 @@
   "@game_callToArms_title": {
     "description": "Title when the human must respond to an ally's call to arms."
   },
-  "game_callToArms_intro": "An allied power is at war. Join their war or refuse (alliance ends, relations worsen).",
+  "game_callToArms_intro": "A treaty ally is at war. Join their war or refuse (the formal alliance ends, relations worsen).",
   "@game_callToArms_intro": {
-    "description": "Short explanation above the list of call-to-arms choices."
+    "description": "Short explanation above the list of call-to-arms choices. References the formal alliance/treaty, not the informal Friendly relation band (Refs #3625)."
   },
   "game_callToArms_prompt": "{defender} is attacked by {aggressor}.",
   "@game_callToArms_prompt": {
@@ -1511,6 +1511,10 @@
   "@trainMilitary_title": {
     "description": "Train military dialog title."
   },
+  "trainNaval_title": "Train Naval",
+  "@trainNaval_title": {
+    "description": "Train naval dialog title."
+  },
   "trainUnits_noCapital": "No capital set — cannot train units",
   "@trainUnits_noCapital": {
     "description": "Error text when player has no capital in train dialogs."
@@ -1549,6 +1553,50 @@
         "type": "int"
       }
     }
+  },
+  "trainDialog_costTreasuryTooltip": "Treasury",
+  "@trainDialog_costTreasuryTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the treasury coin icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costPeasantsTooltip": "Peasants",
+  "@trainDialog_costPeasantsTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the peasant worker icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costCommodityTooltip": "{name} ({category})",
+  "@trainDialog_costCommodityTooltip": {
+    "description": "Tooltip shown for a commodity resource icon in a train-dialog unit-row cost summary, combining the commodity display name and its category (e.g. 'Fabric (manufactured)').",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "commodityCategory_food": "food",
+  "@commodityCategory_food": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.food."
+  },
+  "commodityCategory_rawMaterial": "raw material",
+  "@commodityCategory_rawMaterial": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.rawMaterial."
+  },
+  "commodityCategory_manufactured": "manufactured",
+  "@commodityCategory_manufactured": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.manufactured."
+  },
+  "commodityCategory_luxury": "luxury",
+  "@commodityCategory_luxury": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.luxury."
+  },
+  "commodityCategory_riches": "riches",
+  "@commodityCategory_riches": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.riches."
+  },
+  "commodityCategory_advanced": "advanced",
+  "@commodityCategory_advanced": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.advanced."
   },
   "civilian_units_title": "Civilian Units",
   "@civilian_units_title": {
@@ -2147,6 +2195,27 @@
       }
     }
   },
+  "provinceOverlay_tileTownOf": "The town of {provinceName}",
+  "@provinceOverlay_tileTownOf": {
+    "description": "Tile section designation line shown when the selected tile is the province town (and not a capital).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileCapitalOf": "{provinceName}, the capital of {factionName}",
+  "@provinceOverlay_tileCapitalOf": {
+    "description": "Tile section designation line shown when the selected tile is a faction's capital tile.",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      },
+      "factionName": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileResourcePrefix": "Resource: ",
   "@provinceOverlay_tileResourcePrefix": {
     "description": "Tile section resource label prefix before inline icon/name."
@@ -2528,6 +2597,46 @@
       }
     }
   },
+  "diplomacy_relativePower_label": "Relative power:",
+  "@diplomacy_relativePower_label": {
+    "description": "Muted prefix for the Great Power relative-power line on the diplomacy panel and detail screen."
+  },
+  "diplomacy_relativePower_tierRoughlyEqual": "Roughly equal",
+  "@diplomacy_relativePower_tierRoughlyEqual": {
+    "description": "Relative-power tier word when the comparison percentage is between -10 and +10 inclusive."
+  },
+  "diplomacy_relativePower_tierSuperior": "Superior",
+  "@diplomacy_relativePower_tierSuperior": {
+    "description": "Relative-power tier word when the comparison percentage is between +11 and +30 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlySuperior": "Vastly superior",
+  "@diplomacy_relativePower_tierVastlySuperior": {
+    "description": "Relative-power tier word when the comparison percentage is +31 or greater."
+  },
+  "diplomacy_relativePower_tierInferior": "Inferior",
+  "@diplomacy_relativePower_tierInferior": {
+    "description": "Relative-power tier word when the comparison percentage is between -30 and -11 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlyInferior": "Vastly inferior",
+  "@diplomacy_relativePower_tierVastlyInferior": {
+    "description": "Relative-power tier word when the comparison percentage is -31 or lower."
+  },
+  "diplomacy_relativePower_tooltip": "Compares this Great Power's military power score (provinces, army strength, ships) to yours.",
+  "@diplomacy_relativePower_tooltip": {
+    "description": "Tooltip / long-press copy explaining what the relative-power comparison measures."
+  },
+  "diplomacy_relativePower_semantics": "Relative power {pct}, {tier}",
+  "@diplomacy_relativePower_semantics": {
+    "description": "Screen-reader label combining the relative-power percentage and tier word.",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "diplomacy_panel_outgoingSubsidy": "Outgoing subsidy: £{amount}/turn to {target}",
   "@diplomacy_panel_outgoingSubsidy": {
     "description": "Line showing active subsidy to another faction.",
@@ -2729,6 +2838,27 @@
       },
       "qty": {
         "type": "int"
+      }
+    }
+  },
+  "trainMilitary_commodityValue": "{name}: {value}",
+  "@trainMilitary_commodityValue": {
+    "description": "Commodity name and a preformatted remaining/total value (e.g. '2 / 5') in the train military dialog resource bar.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "trainUnits_peasantsValue": "Peasants: {value}",
+  "@trainUnits_peasantsValue": {
+    "description": "Peasants label with a preformatted remaining/total value (e.g. '7 / 8') in the train military dialog resource bar.",
+    "placeholders": {
+      "value": {
+        "type": "String"
       }
     }
   },

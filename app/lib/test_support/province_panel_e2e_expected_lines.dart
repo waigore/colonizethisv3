@@ -8,7 +8,8 @@
 // Mirrors app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart for e2e.
 // If drift fails tests, align this file with the overlay widget.
 
-import 'package:colonizethis_data/colonizethis_data.dart' show isMilitaryUnit;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show isMilitaryUnit, terrainDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -192,7 +193,9 @@ List<String> provincePanelWideLayoutExpectedTexts(
       resourceRaw,
     );
     final resourceLabel = resourceVisible ?? '—';
-    final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+    final terrainStr = cell.terrainType != null
+        ? terrainDisplayName(cell.terrainType!)
+        : _economicTerrainTitle(cell.terrainTypeId ?? '—');
     final prospectable = cell.terrainType != null
         ? isProspectableTerrain(cell.terrainType!)
         : isProspectableTerrainId(cell.terrainTypeId);
@@ -210,6 +213,15 @@ List<String> provincePanelWideLayoutExpectedTexts(
 
     out.add('Coordinates: ($x, $y)');
     out.add('Terrain: $terrainStr');
+    final designationLine = _tileDesignationLine(
+      l10n: l10n,
+      game: game,
+      provinceId: provinceId,
+      selectedTileKey: selectedTileKey,
+    );
+    if (designationLine != null) {
+      out.add(designationLine);
+    }
     out.add('Resource: ');
     out.add(resourceVisible ?? resourceLabel);
     out.add('Prospected: $prospectedLabel');
@@ -418,6 +430,46 @@ bool _isCapitalProvince(Game game, String provinceId) {
   return false;
 }
 
+/// Mirrors `provinceOverlayTileDesignationLine` from
+/// province_sea_zone_detail_overlay_sections.dart (duplicated rather than
+/// imported to keep this fixture free of `@visibleForTesting` production
+/// symbols, per the file header convention). Capital takes priority over town.
+String? _tileDesignationLine({
+  required AppLocalizations l10n,
+  required Game game,
+  required String provinceId,
+  required String selectedTileKey,
+}) {
+  final province = _findProvince(game, provinceId);
+  final provinceName = province?.displayName ?? provinceId;
+  for (final p in game.players) {
+    if (p.capitalTile?.toTileKey() == selectedTileKey) {
+      return l10n.provinceOverlay_tileCapitalOf(provinceName, p.displayName);
+    }
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalTile?.toTileKey() == selectedTileKey) {
+      return l10n.provinceOverlay_tileCapitalOf(
+        provinceName,
+        m.displayName ?? m.id,
+      );
+    }
+  }
+  for (final t in game.tribes) {
+    if (t.capitalTile?.toTileKey() == selectedTileKey) {
+      return l10n.provinceOverlay_tileCapitalOf(
+        provinceName,
+        t.displayName ?? t.id,
+      );
+    }
+  }
+  final townTileKey = province?.townTileKey;
+  if (townTileKey != null && townTileKey == selectedTileKey) {
+    return l10n.provinceOverlay_tileTownOf(provinceName);
+  }
+  return null;
+}
+
 String _ownerName(Game game, String? ownerId) {
   if (ownerId == null || ownerId.isEmpty) return 'Unclaimed';
   for (final p in game.players) {
@@ -434,9 +486,13 @@ String _ownerName(Game game, String? ownerId) {
 
 String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
-  return raw
-      .split('_')
-      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+  final spaced = raw
+      .replaceAll('_', ' ')
+      .replaceAllMapped(RegExp(r'(?<=[a-z0-9])(?=[A-Z])'), (_) => ' ');
+  return spaced
+      .split(' ')
+      .where((w) => w.isNotEmpty)
+      .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 
@@ -449,7 +505,11 @@ String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
     return null;
   }
   final cell = region.cellAt(x, y);
-  final raw = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  final terrainType = cell.terrainType;
+  if (terrainType != null) {
+    return terrainDisplayName(terrainType);
+  }
+  final raw = cell.terrainTypeId ?? '—';
   return _economicTerrainTitle(raw);
 }
 

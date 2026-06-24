@@ -5,12 +5,28 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 /// Faction ids the player may target with diplomatic suggestions.
 ///
 /// Diplomacy-domain visibility helper: derives the targetable faction set from
-/// existing relations, tile visibility, and sea-reachable New World provinces.
+/// existing relations and non-`unknown` tile visibility only. This is the
+/// single **first-contact** gate for all diplomatic consumers (panel, order
+/// suggestions, AI declare-war targeting): a faction becomes a valid diplomatic
+/// target once the GP holds a persisted relation with it **or** non-`unknown`
+/// tile visibility into a province it owns.
+///
+/// Sea-reachable colonial intel alone — a topology path from Old World anchors
+/// to an unrevealed New World tribe province with zero tile visibility — does
+/// **not** make a Tribe a diplomatic target (Refs #3620, supersedes the
+/// colonial-intel discovery path from #2509/#3341). Colonial intel still drives
+/// non-diplomatic behaviour (Explorer explore prioritization, colonial military
+/// scoring) via `reachableNonOwnedProvinceIdsViaSeas` at those call sites.
+///
 /// Relocated from `orders/order_suggestion_helpers.dart` so the diplomacy
 /// domain owns its own targeting logic and never imports `orders/`
 /// (one-way `orders -> diplomacy` edge, Refs #3290 Phase 2).
 ///
-/// SPEC/program/order-suggestions.md § Diplomatic orders (visibility).
+/// The [topology] parameter is retained for call-site compatibility (many
+/// callers and re-exports pass it) but is no longer consulted for targeting.
+///
+/// SPEC/program/order-suggestions.md § Diplomatic orders (visibility);
+/// SPEC/game/diplomacy.md § GP–Tribe first contact.
 Set<String> knownDiplomaticTargetFactionIds({
   required PlayerView view,
   required Game game,
@@ -37,29 +53,6 @@ Set<String> knownDiplomaticTargetFactionIds({
     final province = view.provinceByRegionAndId(regionId, provinceId);
     final ownerId = province?.ownerId;
     if (ownerId != null && ownerId != playerId) {
-      knownFactionIds.add(ownerId);
-    }
-  }
-
-  final anchorProvinces = <String>{};
-  for (final p in view.provincesById.entries) {
-    if (p.value.ownerId == playerId) anchorProvinces.add(p.key);
-  }
-  for (final u in view.ownUnits) {
-    if (u.locationProvinceId.isNotEmpty) {
-      anchorProvinces.add(u.locationProvinceId);
-    }
-  }
-  final seaReachableNw = reachableNonOwnedProvinceIdsViaSeas(
-    topology,
-    anchorProvinces,
-    view,
-    regionIdFilter: kRegionNewWorld,
-  );
-  for (final provId in seaReachableNw) {
-    final ownerId = view.provincesById[provId]?.ownerId;
-    if (ownerId == null || ownerId == playerId) continue;
-    if (game.tribes.any((t) => t.id == ownerId)) {
       knownFactionIds.add(ownerId);
     }
   }

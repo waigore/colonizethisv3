@@ -35,6 +35,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
     show GamePlayerLookup;
 
+import 'trade_order_admission.dart' show isWorldMarketTradeableCommodity;
+
 /// Effective per-unit market price used by bid budget logic.
 ///
 /// Reads the integer treasury-unit price stored on
@@ -60,7 +62,7 @@ int? effectiveMarketPriceForCommodityId({
   required WorldMarketState worldMarket,
   required data.ResourceRules resourceRules,
 }) {
-  if (data.richesCommodityIds.contains(commodityId)) return null;
+  if (!isWorldMarketTradeableCommodity(commodityId)) return null;
   final int? stored = worldMarket.prices[commodityId];
   if (stored != null && stored >= 0) return stored;
   return resourceRules.defaultMarketPriceForCommodityId(commodityId);

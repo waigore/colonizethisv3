@@ -97,11 +97,12 @@ void main() {
       () {
         expect(
           kE2eGameStartIntroControlLabels,
-          ['Continue', 'I shall.'],
+          ['I shall.', 'Continue'],
           reason:
-              'Yarn intro controls must be tried in narrative order so an '
-              'intermediate Continue tap can be followed by I shall. in the '
-              'same loop iteration.',
+              'The collapsed game_start_intro step (Refs #3628) exposes only '
+              'the Yarn option label "I shall.", so it must be tried first for '
+              'a one-tap dismissal; the generic Continue stays as a defensive '
+              'fallback (e.g. the asset-load error shell).',
         );
         expect(
           kE2eDefaultIntroControlPostTapSettleTimeout,

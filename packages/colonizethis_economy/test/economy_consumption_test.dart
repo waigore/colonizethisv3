@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Tests for economy_consumption.dart. SPEC/game/workers-and-population.md.
@@ -46,27 +46,6 @@ void main() {
         result.stockpile.quantityOf(CommodityCatalog.grain.id) +
             result.stockpile.quantityOf(CommodityCatalog.meat.id),
         2,
-      );
-    });
-
-    test('military consumes 2 food per regiment when militaryUnits set', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 10)
-          .applyDelta(CommodityCatalog.meat.id, 10);
-      const workers = WorkerPool(peasants: 0);
-
-      final result = resolveConsumption(
-        stockpile: stockpile,
-        workers: workers,
-        militaryUnits: 3,
-      );
-
-      expect(result.totalRegiments, 3);
-      expect(result.fullyFedRegiments, 3);
-      expect(
-        result.stockpile.quantityOf(CommodityCatalog.grain.id) +
-            result.stockpile.quantityOf(CommodityCatalog.meat.id),
-        14,
       );
     });
 
@@ -173,39 +152,42 @@ void main() {
       );
     });
 
-    test('navy consumes food after land military and before workers', () {
-      // 1 carrack = 2 food (navy), then 5 peasants need 5 food; 6 food total.
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 6)
-          .applyDelta(CommodityCatalog.meat.id, 0);
-      const workers = WorkerPool(peasants: 5);
-      final result = resolveConsumption(
-        stockpile: stockpile,
-        workers: workers,
-        shipCountsById: const {'carrack': 1},
-      );
-      expect(result.totalShips, 1);
-      expect(result.fullyFedShips, 1);
-      // Navy 2 + 4 peasants fed = 6 grain; peasants stay in pool (strike, not removal).
-      expect(result.workerPool.peasants, 5);
-      expect(result.idleLabour.peasants, 4);
-      expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 0);
-    });
+    test(
+      'resolveConsumption wires military→navy→workers strike order and counts',
+      () {
+        // One thin resolveConsumption wiring test for military food (the
+        // per-helper math is covered by economy_consumption_phases_test.dart;
+        // ordering of military-before-workers is also pinned in
+        // worker_economy_test.dart). Demand is military 2×2 = 4, navy 1×2 = 2,
+        // workers 5×1 = 5 (total 11) against only 8 grain, so the strike order
+        // (military → navy → workers) determines who eats:
+        //   military 4 → grain 4 left, navy 2 → grain 2 left, peasants eat the
+        //   final 2 (2 fed, 3 strike).
+        var stockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, 8)
+            .applyDelta(CommodityCatalog.meat.id, 0);
+        const workers = WorkerPool(peasants: 5);
 
-    test('ships consume 2 food units each from catalog foodUpkeep', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 4)
-          .applyDelta(CommodityCatalog.meat.id, 0);
-      const workers = WorkerPool(peasants: 0);
-      final result = resolveConsumption(
-        stockpile: stockpile,
-        workers: workers,
-        shipCountsById: const {'carrack': 2},
-      );
-      expect(result.totalShips, 2);
-      expect(result.fullyFedShips, 2);
-      expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 0);
-    });
+        final result = resolveConsumption(
+          stockpile: stockpile,
+          workers: workers,
+          militaryUnits: 2,
+          shipCountsById: const {'carrack': 1},
+        );
+
+        // Land military is served first and fully fed (catalog 2 food/regiment).
+        expect(result.totalRegiments, 2);
+        expect(result.fullyFedRegiments, 2);
+        // Navy is served next and fully fed (carrack 2 food/ship).
+        expect(result.totalShips, 1);
+        expect(result.fullyFedShips, 1);
+        // Workers are served last; peasants stay in the pool (strike, not
+        // removal) and only the 2 fed by the remaining grain count for labour.
+        expect(result.workerPool.peasants, 5);
+        expect(result.idleLabour.peasants, 2);
+        expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 0);
+      },
+    );
 
     test(
       'luxury only for food-fed trained; no sugar deducted if apprentice on strike',

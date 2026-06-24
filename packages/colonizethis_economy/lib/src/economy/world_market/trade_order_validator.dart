@@ -15,10 +15,10 @@
 ///
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_economy/src/validation/order_validation_result.dart';
+import 'trade_order_admission.dart';
 import 'trade_order_validation_context.dart';
 import 'treasury_bid_budget.dart' show effectiveMarketPriceForCommodityId;
 
@@ -43,10 +43,10 @@ class TradeOrderValidator {
       return const <OrderValidationResult>[];
     }
 
-    final mutuallyExcludedCommodityIds = _commoditiesWithBidAndOffer(
+    final mutuallyExcludedCommodityIds = commoditiesWithBidAndOffer(
       proposedOrders,
     );
-    final admittedBidCommodityIds = _admittedBidCommodityIds(
+    final admittedBidCommodityIds = admittedBidCommodityIdsInSubmissionOrder(
       proposedOrders: proposedOrders,
       bidTypeCap: context.bidTypeCap,
       mutuallyExcludedCommodityIds: mutuallyExcludedCommodityIds,
@@ -86,7 +86,7 @@ class TradeOrderValidator {
         nextRunningBidTreasurySpend: runningBidTreasurySpend,
       );
     }
-    if (data.richesCommodityIds.contains(order.commodityId)) {
+    if (!isWorldMarketTradeableCommodity(order.commodityId)) {
       return (
         result: OrderValidationResult.rejected(
           TradeOrderRejectionReasons.richesNotTradeable,
@@ -161,47 +161,5 @@ class TradeOrderValidator {
     );
     if (price == null) return 0;
     return order.quantity * price;
-  }
-
-  /// Commodity ids that appear in [proposedOrders] as **both** a bid and an
-  /// offer. Used to reject every order on either side per rule 3.
-  static Set<CommodityId> _commoditiesWithBidAndOffer(
-    List<TradeOrder> proposedOrders,
-  ) {
-    final bidCommodities = <CommodityId>{};
-    final offerCommodities = <CommodityId>{};
-    for (final order in proposedOrders) {
-      if (order.type == TradeOrderType.bid) {
-        bidCommodities.add(order.commodityId);
-      } else {
-        offerCommodities.add(order.commodityId);
-      }
-    }
-    if (bidCommodities.isEmpty || offerCommodities.isEmpty) {
-      return const <CommodityId>{};
-    }
-    return bidCommodities.intersection(offerCommodities);
-  }
-
-  /// Returns the set of bid commodity ids admitted under [bidTypeCap], in
-  /// submission order. Excludes commodities already rejected by rule 3
-  /// (mutual exclusion) so they do not consume a cap slot.
-  static Set<CommodityId> _admittedBidCommodityIds({
-    required List<TradeOrder> proposedOrders,
-    required int bidTypeCap,
-    required Set<CommodityId> mutuallyExcludedCommodityIds,
-  }) {
-    if (bidTypeCap <= 0) return const <CommodityId>{};
-    final admitted = <CommodityId>{};
-    for (final order in proposedOrders) {
-      if (order.type != TradeOrderType.bid) continue;
-      if (order.quantity <= 0) continue;
-      if (data.richesCommodityIds.contains(order.commodityId)) continue;
-      if (mutuallyExcludedCommodityIds.contains(order.commodityId)) continue;
-      if (admitted.contains(order.commodityId)) continue;
-      if (admitted.length >= bidTypeCap) break;
-      admitted.add(order.commodityId);
-    }
-    return admitted;
   }
 }

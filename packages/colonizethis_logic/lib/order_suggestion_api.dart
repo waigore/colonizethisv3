@@ -2,7 +2,7 @@
 /// SPEC/program/dependency-injection.md.
 library;
 
-export 'package:colonizethis_economy/src/economy/world_market/trade_order_suggester.dart'
+export 'package:colonizethis_economy/colonizethis_economy.dart'
     show TradeOrderSuggester, TradeSuggestionContext, TradeSuggestionResult;
 export 'package:colonizethis_orders/src/orders/order_suggestion_api.dart';
 export 'package:colonizethis_orders/src/orders/order_suggestion_api_impl.dart'
@@ -21,4 +21,7 @@ export 'package:colonizethis_orders/src/orders/diplomatic_panel_actions.dart'
 export 'package:colonizethis_diplomacy/src/diplomacy/known_diplomatic_targets.dart'
     show knownDiplomaticTargetFactionIds;
 export 'package:colonizethis_diplomacy/src/diplomacy/gp_tribe_first_contact.dart'
-    show GpTribeFirstContactResult, applyGpTribeFirstContactRelations;
+    show
+        GpTribeFirstContactResult,
+        applyGpTribeFirstContactRelations,
+        discoveredTribeIdsForFirstContact;

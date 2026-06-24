@@ -7,55 +7,32 @@ DebugCommandResult applyDebugStockpileCredit({
   required Game? currentGame,
   required CreditDebugStockpileCommodityEvent event,
 }) {
-  if (currentGame == null) {
-    return (game: null, message: 'Debug add_resource ignored: no active game.');
-  }
-  if (currentGame.worldState.turnState.phase != TurnPhase.orders) {
-    return (
-      game: null,
-      message:
-          'Debug add_resource rejected: command is allowed only during human Orders phase.',
-    );
-  }
-  if (event.creditedAmount < 1) {
-    return (
-      game: null,
-      message: 'Debug add_resource ignored: credited amount must be >= 1.',
-    );
-  }
-  final player = findPlayerById(currentGame, event.humanPlayerId);
-  if (player == null) {
-    return (
-      game: null,
-      message:
-          'Debug add_resource ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
+  final guard = resolveDebugCommandGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.addResource,
+    ordersPhaseLabel: DebugCommandLabel.addResource,
+    creditedAmount: event.creditedAmount,
+    playerId: event.humanPlayerId,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
 
-  final nextStockpile = player.stockpile.applyDelta(
+  final nextStockpile = guard.player.stockpile.applyDelta(
     event.commodityId,
     event.creditedAmount,
   );
   final newQuantity = nextStockpile.quantityOf(event.commodityId);
-  final updatedPlayers = currentGame.players
-      .map(
-        (p) => p.id == event.humanPlayerId
-            ? p.copyWith(stockpile: nextStockpile)
-            : p,
-      )
-      .toList(growable: false);
-  final nextGame = currentGame.copyWith(players: updatedPlayers);
-
-  final String message;
-  if (event.requestedAmount != event.creditedAmount) {
-    message =
-        'Stockpile ${event.commodityId} +${event.creditedAmount} (requested '
-        '${event.requestedAmount}, credited ${event.creditedAmount}). '
-        'New balance: $newQuantity.';
-  } else {
-    message =
-        'Stockpile ${event.commodityId} +${event.creditedAmount}. New balance: '
-        '$newQuantity.';
-  }
+  final nextGame = updateDebugPlayer(
+    guard.game,
+    event.humanPlayerId,
+    (p) => p.copyWith(stockpile: nextStockpile),
+  );
+  final message = debugCreditedAmountMessage(
+    subject: 'Stockpile ${event.commodityId}',
+    requestedAmount: event.requestedAmount,
+    creditedAmount: event.creditedAmount,
+    balanceLabel: 'New balance',
+    balanceValue: newQuantity,
+  );
   return (game: nextGame, message: message);
 }
