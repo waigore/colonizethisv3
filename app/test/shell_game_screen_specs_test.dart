@@ -18,7 +18,6 @@ import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -26,6 +25,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 class _StubBox implements Box<dynamic> {
   @override
@@ -174,7 +175,12 @@ void main() {
     late Game baseGame;
 
     setUpAll(() {
-      baseGame = getDebugInitGameResult().game;
+      // Refs #3656: lightweight hand-built fixture replaces the ~11s procedural
+      // map generation of getDebugInitGameResult(). These specs pump GameScreen
+      // with mapViewDataProvider overridden to null, so no generated
+      // map/topology data is read — only the human player (for the synthetic
+      // victory winner) and the chrome that derives from it.
+      baseGame = buildGameScreenSpecsTestGame();
     });
 
     testWidgets(
