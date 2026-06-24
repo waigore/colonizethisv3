@@ -6,7 +6,6 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_game_feature_screen_shell.dart';
 import 'package:colonizethis_app/widgets/game_to_ui_bus_listener.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flame/flame.dart';
@@ -14,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -25,7 +26,10 @@ void main() {
   setUpAll(() async {
     await _mockNinePatchAssetBundle();
     await _preWarmPanelNinePatch();
-    final base = getDebugInitGameResult().game;
+    // Lightweight fixture (Refs #3656): the shell only reads `game.id` (for the
+    // current-vs-route id match) and `players.first.displayName` (rendered by
+    // the test body builder); no generated map/topology data is needed.
+    final base = buildPanelTestGame();
     final first = base.players.first;
     routeGame = base.copyWith(
       players: [
