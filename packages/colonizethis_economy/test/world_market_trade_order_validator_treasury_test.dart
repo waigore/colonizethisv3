@@ -257,21 +257,24 @@ void main() {
 
   group('effectiveMarketPriceForCommodityId — catalog default coverage '
       '(Refs #3123)', () {
-    test('every non-riches commodity in the catalog resolves to a non-null '
-        'effective price via the default ResourceRules (no hidden gaps that '
-        "would force a rule-5 'unknown price' rejection in normal play)", () {
-      // SPEC/game/world-market.md § Treasury budget for bids: rule 5
-      // must use worldMarketState.prices ?? catalog default for every
-      // tradeable commodity. This pin guards against silently shipping
-      // a tradeable commodity without a catalog default (which would
-      // otherwise let rule 5 admit unbounded bids on that commodity
-      // because effectiveMarketPriceForCommodityId returns null →
-      // 0 spend contribution).
+    // Refs #3661 step 6: the exhaustive non-riches catalog sweep now lives
+    // in packages/colonizethis_data/test/resource_rules_test.dart (group
+    // 'defaultMarketPriceForCommodityId (Refs #3093)'), where the commodity
+    // catalog and ResourceRules defaults are owned. Economy keeps one raw
+    // and one manufactured regression pin so the economy-side
+    // effectiveMarketPriceForCommodityId wiring (worldMarketState.prices ??
+    // catalog default) stays covered without iterating the whole catalog
+    // every package run.
+    test('a representative raw and manufactured commodity resolve to a '
+        'non-null, non-negative effective price from the catalog default '
+        'when no live market price exists', () {
       final rules = ResourceRules.defaultRules;
-      for (final commodity in CommodityCatalog.all) {
-        if (richesCommodityIds.contains(commodity.id)) continue;
+      for (final commodityId in <String>[
+        CommodityCatalog.timber.id,
+        CommodityCatalog.lumber.id,
+      ]) {
         final effective = effectiveMarketPriceForCommodityId(
-          commodityId: commodity.id,
+          commodityId: commodityId,
           worldMarket: const WorldMarketState(),
           resourceRules: rules,
         );
@@ -279,15 +282,13 @@ void main() {
           effective,
           isNotNull,
           reason:
-              'commodity ${commodity.id} (non-riches) must resolve to a '
-              'non-null catalog default so rule 5 can price it',
+              'commodity $commodityId must resolve to a non-null catalog '
+              'default so rule 5 can price it',
         );
         expect(
           effective! >= 0,
           isTrue,
-          reason:
-              'catalog default for ${commodity.id} must be '
-              'non-negative',
+          reason: 'catalog default for $commodityId must be non-negative',
         );
       }
     });
