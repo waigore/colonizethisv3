@@ -344,6 +344,39 @@ void main() {
     });
   });
 
+  group('buildEventFeedNarrowInsetTestGame', () {
+    test('single human owns one old-world province for the narrow inset suite',
+        () {
+      final game = buildEventFeedNarrowInsetTestGame();
+      expect(game.players, hasLength(1));
+      expect(game.players.first.id, kPanelTestHumanPlayerId);
+      expect(game.worldState.oldWorld.provinces, hasLength(1));
+      expect(
+        game.worldState.oldWorld.provinces.single.ownerId,
+        kPanelTestHumanPlayerId,
+      );
+      // No generated map/topology cells are needed; the suite only mounts the
+      // canvas via buildLightweightMapViewData().
+      expect(game.worldState.newWorld.units, isEmpty);
+    });
+
+    test('exposes a tappable old-world tile key mapped back to its province',
+        () {
+      final game = buildEventFeedNarrowInsetTestGame();
+      final byProv = game.worldState.tileKeysByRegionAndProvince['oldWorld'];
+      expect(byProv, isNotNull);
+      // The suite taps `_firstOldWorldTileKey`; it must resolve a non-empty
+      // tile key whose province id matches a seeded province so the opened
+      // narrow overlay resolves real province data.
+      final entry = byProv!.entries.firstWhere((e) => e.value.isNotEmpty);
+      final tileKey = entry.value.first;
+      expect(tileKey, isNotEmpty);
+      final provinceIds =
+          game.worldState.oldWorld.provinces.map((p) => p.id).toSet();
+      expect(provinceIds, contains(entry.key));
+    });
+  });
+
   group('buildMapAreaEventFeedTestGame', () {
     test('exposes a human plus a named AI opponent for feed-line lookups', () {
       final game = buildMapAreaEventFeedTestGame();
