@@ -400,6 +400,35 @@ Requires `dart` only (Melos activated by the script).
 
 ---
 
+## check_economy_test_wall_clock.sh (economy test perf gate)
+
+Measures the wall-clock time of `dart test` in `packages/colonizethis_economy` and compares the median over repeated runs against a ceiling, locking in the dedup/fixture-hoisting wall-clock gains from #3661. **Advisory by default** (always exits `0`; over-ceiling prints `WARN`); set `ECONOMY_TEST_TIMING_ENFORCE=1` to make over-ceiling a hard failure. It runs `dart test` **without** `--coverage`, so no coverage artifacts are produced. Spec: [SPEC/program/economy-test-wall-clock.md](../SPEC/program/economy-test-wall-clock.md).
+
+**Invocation**
+
+```bash
+tool/check_economy_test_wall_clock.sh
+```
+
+**Configuration (env)**
+
+- `ECONOMY_TEST_TIMING_CEILING_SECONDS` — median ceiling in seconds (default `25`).
+- `ECONOMY_TEST_TIMING_RUNS` — odd run count whose median is compared (default `3`).
+- `ECONOMY_TEST_TIMING_ENFORCE=1` — over-ceiling exits `1` instead of warning.
+- `SKIP_ECONOMY_TEST_TIMING=1` — skip measurement entirely.
+- `ECONOMY_TEST_TIMING_MEASURED_SECONDS` — test/CI hook: bypass `dart test` and treat this value as the median.
+
+Runs in advisory mode from the nightly integration gate (`tool/run_nightly_integration_gate.sh`).
+
+**Tests**
+
+```bash
+bash tool/test_check_economy_test_wall_clock.sh
+dart test test/check_economy_test_wall_clock_test.dart --reporter=compact
+```
+
+---
+
 ## scripts/nightly_dev_to_android_pr.sh (nightly APK PR)
 
 Creates a PR from `dev` → `build/app/android` for nightly APK builds. Merging that PR triggers the app Android build. The PR **source** is always `dev` (per GitHub workflow rules).
