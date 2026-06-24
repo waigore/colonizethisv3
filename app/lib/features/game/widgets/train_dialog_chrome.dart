@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_brass_divider.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_gradients.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_radius.dart';
 import '../../../widgets/ct_spacing.dart';
 
@@ -306,6 +308,94 @@ class TrainDialogInlineCost extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Tech-lock requirement hint shown under a locked train-dialog unit row's
+/// cost line.
+///
+/// Renders nothing (`SizedBox.shrink()`) when the row is unlocked; when
+/// [isLocked] is `true` it renders [techRequiredLabel] in
+/// [EditorialMonoclePalette.muted] with a 2 dp gap above (matching the legacy
+/// per-dialog `_buildLockedHint`). Shared by all three train dialogs.
+class TrainDialogLockedHint extends StatelessWidget {
+  const TrainDialogLockedHint({
+    super.key,
+    required this.isLocked,
+    required this.techRequiredLabel,
+  });
+
+  final bool isLocked;
+  final String techRequiredLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isLocked) return const SizedBox.shrink();
+    final ThemeData theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Text(
+        techRequiredLabel,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: EditorialMonoclePalette.muted,
+        ),
+      ),
+    );
+  }
+}
+
+/// `[−] count [+]` stepper control shared by all three train-dialog unit rows.
+///
+/// The `[−]` / `[+]` controls are [CtNinePatchButton]s; both disable while the
+/// row is [isLocked] (and the `[−]` also when [canDecrement] is `false`, the
+/// `[+]` when [canIncrement] is `false`). The `[+]` adopts the danger variant
+/// when the row is affordable-blocked (`!isLocked && !canIncrement`) per
+/// `SPEC/ui/components/train-dialog-chrome.md`.
+class TrainDialogStepper extends StatelessWidget {
+  const TrainDialogStepper({
+    super.key,
+    required this.count,
+    required this.isLocked,
+    required this.canIncrement,
+    required this.canDecrement,
+    required this.onIncrement,
+    required this.onDecrement,
+  });
+
+  final int count;
+  final bool isLocked;
+  final bool canIncrement;
+  final bool canDecrement;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CtNinePatchButton(
+          onPressed: isLocked || !canDecrement ? null : onDecrement,
+          child: const Text('−'),
+        ),
+        CtGap.wm,
+        SizedBox(
+          width: 32,
+          child: Text(
+            count.toString(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+        CtGap.wm,
+        CtNinePatchButton(
+          onPressed: isLocked || !canIncrement ? null : onIncrement,
+          dangerVariant: !isLocked && !canIncrement,
+          child: const Text('+'),
+        ),
+      ],
     );
   }
 }

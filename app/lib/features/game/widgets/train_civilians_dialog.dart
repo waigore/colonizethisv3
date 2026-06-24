@@ -195,7 +195,14 @@ class _UnitTypeRow extends StatelessWidget {
           children: [
             Expanded(child: _buildInfo(theme, paperQty)),
             CtGap.wm,
-            _buildStepper(theme),
+            TrainDialogStepper(
+              count: count,
+              isLocked: isLocked,
+              canIncrement: canIncrement,
+              canDecrement: canDecrement,
+              onIncrement: onIncrement,
+              onDecrement: onDecrement,
+            ),
           ],
         ),
       ),
@@ -209,7 +216,10 @@ class _UnitTypeRow extends StatelessWidget {
         TrainDialogUnitNameLine(name: econ.id, isLocked: isLocked),
         const SizedBox(height: 2),
         _buildCostLine(theme, paperQty),
-        ..._buildLockedHint(theme),
+        TrainDialogLockedHint(
+          isLocked: isLocked,
+          techRequiredLabel: techRequiredLabel,
+        ),
       ],
     );
   }
@@ -241,45 +251,4 @@ class _UnitTypeRow extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildLockedHint(ThemeData theme) {
-    if (!isLocked) {
-      return const [];
-    }
-    return [
-      const SizedBox(height: 2),
-      Text(
-        techRequiredLabel,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: EditorialMonoclePalette.muted,
-        ),
-      ),
-    ];
-  }
-
-  Widget _buildStepper(ThemeData theme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CtNinePatchButton(
-          onPressed: isLocked || !canDecrement ? null : onDecrement,
-          child: const Text('−'),
-        ),
-        CtGap.wm,
-        SizedBox(
-          width: 32,
-          child: Text(
-            count.toString(),
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyLarge,
-          ),
-        ),
-        CtGap.wm,
-        CtNinePatchButton(
-          onPressed: isLocked || !canIncrement ? null : onIncrement,
-          dangerVariant: !isLocked && !canIncrement,
-          child: const Text('+'),
-        ),
-      ],
-    );
-  }
 }
