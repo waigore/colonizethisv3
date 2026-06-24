@@ -921,6 +921,91 @@ Game buildUnitPanelsTestGame() => buildTrainPanelTestGame();
 Game buildProductionBreakdownPanelTestGame() =>
     buildPanelTestGame(id: 'production-breakdown-widget-test');
 
+/// Lightweight game shaped for the in-game map-area chrome / player-turn
+/// event-feed suites (`game_map_area_shell_entry_center_test`,
+/// `game_map_area_event_feed_test`; Refs #3656).
+///
+/// These suites mount a full `GameMapArea` / `GameScreen` so the Flame canvas
+/// exists, then assert on chrome (shell-entry capital auto-center, the
+/// home-to-capital control, observe gating) and bus-driven player-turn feed
+/// lines (research / work / naval / diplomacy / overture / discovery) — never
+/// on generated map cells or topology. They need:
+/// - a human ([kPanelTestHumanPlayerId] = `gp1`, `players.first`) with a
+///   **capital** in the old world ([CapitalTile] + `capitalProvinceId`) so the
+///   shell-entry auto-center highlights the capital tile and the
+///   home-to-capital control enables in normal/player-observe play;
+/// - a non-human opponent (`gp2`) with a display name so the feed lines that
+///   name a second faction (declare-war copy, naval combat sides, overture /
+///   discovery targets) render;
+/// - at least one old-world unit so the dispose/selection paths that read
+///   `oldWorld.units.first.id` resolve;
+/// - a `portsByProvinceSeaboard` / `seaZoneDisplayNameById` entry so the naval
+///   feed line resolves a real anchor tile key via `tileKeyForSeaZoneLocation`
+///   (which reads only world state, no generated topology).
+Game buildMapAreaChromeTestGame() {
+  const human = kPanelTestHumanPlayerId;
+  const ow = 'oldWorld';
+  const capProvince = 'oldWorld|cap';
+  const seaZoneId = 'sz0';
+  return buildPanelTestGame(
+    id: 'map-area-chrome-widget-test',
+    // Two human-owned Old World provinces so the players-bar GP chip score
+    // (`oldWorldProvinceCountFor`) reads `2`, not `1` — a chip score of `1`
+    // would collide with the single-event unread-feed badge `1` the event-feed
+    // suite asserts on (the rich debug game owned many provinces, so it never
+    // collided).
+    oldWorldProvinces: const [
+      Province(
+        id: capProvince,
+        regionId: ow,
+        ownerId: human,
+        displayName: 'Capital',
+        townTileKey: 'oldWorld|cap|0|0',
+      ),
+      Province(
+        id: 'oldWorld|p2',
+        regionId: ow,
+        ownerId: human,
+        displayName: 'Porto',
+        townTileKey: 'oldWorld|p2|0|0',
+      ),
+    ],
+    oldWorldUnits: [
+      Unit(
+        id: 'civ_explorer',
+        type: kUnitTypeExplorer,
+        ownerId: human,
+        locationProvinceId: capProvince,
+        tileKey: 'oldWorld|cap|0|0',
+      ),
+    ],
+    portsByProvinceSeaboard: const {
+      'oldWorld|cap|$seaZoneId': 'oldWorld|cap|0|0',
+    },
+    tileKeysByRegionAndProvince: const {
+      ow: {
+        capProvince: ['oldWorld|cap|0|0'],
+      },
+    },
+    seaZoneDisplayNameById: const {'oldWorld|$seaZoneId': 'Northern Sea'},
+    players: const [
+      Player(
+        id: human,
+        displayName: 'Test Human',
+        isHuman: true,
+        capitalProvinceId: capProvince,
+        capitalTile: CapitalTile(
+          regionId: ow,
+          provinceId: capProvince,
+          x: 0,
+          y: 0,
+        ),
+      ),
+      Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+    ],
+  );
+}
+
 /// Lightweight game shaped for `grant_or_subsidy_listener_test`.
 ///
 /// `GrantOrSubsidyListener` reads only `game.playerById(targetFactionId)` (and

@@ -327,4 +327,48 @@ void main() {
       );
     });
   });
+
+  group('buildMapAreaChromeTestGame', () {
+    test('human first player has a capital and an AI opponent', () {
+      final game = buildMapAreaChromeTestGame();
+      expect(game.players, hasLength(2));
+      final human = game.players.first;
+      expect(human.id, kPanelTestHumanPlayerId);
+      expect(human.isHuman, isTrue);
+      // Shell-entry auto-center reads `capitalTile.toTileKey()`.
+      expect(human.capitalTile, isNotNull);
+      expect(human.capitalProvinceId, isNotNull);
+      // A named opponent so war/naval/overture/discovery feed lines render.
+      expect(game.players[1].id, 'gp2');
+      expect(game.players[1].isHuman, isFalse);
+      expect(game.players[1].displayName, isNotEmpty);
+    });
+
+    test('exposes an old-world unit for dispose/selection paths', () {
+      final game = buildMapAreaChromeTestGame();
+      expect(game.worldState.oldWorld.units, isNotEmpty);
+    });
+
+    test('human owns >=2 Old World provinces so the chip score is not "1"', () {
+      // The players-bar GP chip score is oldWorldProvinceCountFor(human). A
+      // score of "1" would collide with the single-event unread-feed badge "1"
+      // the event-feed suite asserts on, so the fixture owns >=2 provinces.
+      final game = buildMapAreaChromeTestGame();
+      final owned = game.worldState.oldWorld.provinces.where(
+        (p) => p.ownerId == kPanelTestHumanPlayerId,
+      );
+      expect(owned.length, greaterThanOrEqualTo(2));
+    });
+
+    test('exposes port/sea-zone data so the naval feed line resolves an anchor',
+        () {
+      final game = buildMapAreaChromeTestGame();
+      final ports = game.worldState.portsByProvinceSeaboard;
+      expect(ports, isNotEmpty);
+      // A `region|province|seazone` key (>= 3 segments) so the naval-combat
+      // feed line resolves a real port tile via tileKeyForSeaZoneLocation.
+      expect(ports.keys.any((k) => k.split('|').length >= 3), isTrue);
+      expect(game.worldState.seaZoneDisplayNameById, isNotEmpty);
+    });
+  });
 }
