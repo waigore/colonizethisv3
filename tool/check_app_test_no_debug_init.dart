@@ -20,8 +20,6 @@ import 'package:path/path.dart' as p;
 /// still calls the helper. It must only ever **shrink** as families migrate to
 /// lightweight or serialized fixtures; new entries require justification.
 const Set<String> _kDebugInitAllowlist = <String>{
-  'app/test/ct_e2e_turn_snapshot_refresh_test.dart',
-  'app/test/ct_game_feature_screen_shell_test.dart',
   'app/test/ct_region_map_debug_init_test.dart',
   'app/test/ct_region_map_test_support.dart',
   'app/test/game_map_area_event_feed_test.dart',
@@ -37,7 +35,6 @@ const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/game_screen_s13_mockup_fidelity_test.dart',
   'app/test/game_screen_side_menu_toggle_test.dart',
   'app/test/human_draft_projected_region_provider_test.dart',
-  'app/test/panels_320dp_min_viewport_test.dart',
   'app/test/player_turn_event_feed_narrow_inset_test.dart',
   'app/test/production_commodity_breakdown_dialog_spec_test.dart',
   'app/test/production_commodity_breakdown_dialog_wide_golden_test.dart',
