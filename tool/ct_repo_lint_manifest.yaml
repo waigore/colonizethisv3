@@ -408,6 +408,14 @@ rules:
     script: tool/check_app_train_dialog_base.dart
     pr_incremental: true
 
+  - rule_id: repo.app_train_dialog_commodity_cost_shared
+    group: structure
+    title: commodity-cost `Train*Dialog` widgets (military/naval) must extend the shared CommodityCostTrainDialogState base, not re-declare cost math/resource-bar/row chrome (Refs #3686)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_train_dialog_commodity_cost_dedup.dart
+    pr_incremental: true
+
   - rule_id: repo.game_widgets_file_size
     group: structure
     title: app/lib/features/game/widgets files must stay at or below 700 lines

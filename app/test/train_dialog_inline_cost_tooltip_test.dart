@@ -364,6 +364,13 @@ void main() {
         final String chrome = File(
           'lib/features/game/widgets/train_dialog_chrome.dart',
         ).readAsStringSync();
+        // Refs #3686: the military/naval cost rows (incl. the inline cost
+        // segments) are now rendered by the shared commodity-cost base, so the
+        // single `TrainDialogInlineCost` reference lives there rather than in
+        // each thin dialog file.
+        final String commodityCostBase = File(
+          'lib/features/game/widgets/train_commodity_cost_dialog_base.dart',
+        ).readAsStringSync();
 
         expect(
           military.contains('class _InlineCost'),
@@ -376,14 +383,20 @@ void main() {
           reason: 'train_naval_dialog.dart must not redeclare _InlineCost.',
         );
         expect(
+          commodityCostBase.contains('class _InlineCost'),
+          isFalse,
+          reason:
+              'train_commodity_cost_dialog_base.dart must not redeclare '
+              '_InlineCost.',
+        );
+        expect(
           chrome.contains('class TrainDialogInlineCost'),
           isTrue,
           reason:
               'TrainDialogInlineCost must be the single shared cost segment in '
               'train_dialog_chrome.dart.',
         );
-        expect(military.contains('TrainDialogInlineCost'), isTrue);
-        expect(naval.contains('TrainDialogInlineCost'), isTrue);
+        expect(commodityCostBase.contains('TrainDialogInlineCost'), isTrue);
       },
     );
   });
