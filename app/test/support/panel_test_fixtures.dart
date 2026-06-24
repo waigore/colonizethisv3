@@ -243,6 +243,27 @@ Game buildSideMenuTestGame() {
   );
 }
 
+/// Lightweight game shaped for the shell/game-screen chrome specs
+/// (`shell_game_screen_specs_test`; Refs #3656).
+///
+/// The `GameScreen` group pumps the screen with `mapViewDataProvider`
+/// overridden to `null`, so the map canvas is never mounted and no generated
+/// map/topology data is read. The assertions gate only on chrome that derives
+/// from a `Game` plus provider overrides the suite supplies itself: the pause
+/// (`Icons.menu`) icon, exactly one Next-turn `CtNinePatchButton`, the
+/// `VictoryOverlay` (the victory case applies `game.copyWith(victory:)` keyed on
+/// `game.players.first.id`), the turn-resolution-blocking disable, and the
+/// game-start intro overlay.
+///
+/// A single human ([kPanelTestHumanPlayerId]) is therefore the full shape these
+/// specs need; `game.players.first` resolves the synthetic victory winner.
+Game buildGameScreenSpecsTestGame() {
+  return buildPanelTestGame(
+    id: 'game-screen-specs-widget-test',
+    players: [panelTestHumanPlayer()],
+  );
+}
+
 /// Lightweight game shaped for the in-game Diplomacy *screen* family
 /// (`diplomacy_screen_test`, `diplomacy_screen_top_bar_test`,
 /// `diplomacy_screen_320dp_min_viewport_test`, `diplomacy_dialogs_test`).
