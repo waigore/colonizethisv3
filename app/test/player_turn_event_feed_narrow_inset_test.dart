@@ -38,7 +38,6 @@ import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -48,6 +47,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Narrow viewport surface size — under `kNarrowBreakpoint` (600 dp) so
 /// `GameMapArea` selects its narrow branch and mounts the
@@ -86,6 +88,16 @@ Future<void> _pumpUntilFeedCardVisible(WidgetTester tester) async {
 double? _feedCardPositionedRight(WidgetTester tester) {
   final ctx = tester.element(find.byType(PlayerTurnEventFeedCard));
   return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
+}
+
+/// Lightweight feed-enabled game for the narrow-inset suite: the shared
+/// fixture with `mapViewState.showPlayerTurnEventsFeed` toggled on so the
+/// narrow `PlayerTurnEventFeedCard` mounts (Refs #3656).
+Game _feedEnabledGame() {
+  final base = buildEventFeedNarrowInsetTestGame();
+  return base.copyWith(
+    mapViewState: base.mapViewState.copyWith(showPlayerTurnEventsFeed: true),
+  );
 }
 
 String _firstOldWorldTileKey(Game game) {
@@ -167,19 +179,14 @@ void main() {
         'positive: narrow + feed visible + province panel CLOSED → '
         'Positioned.right equals kMapOverlayEdgeInset (no wide inset)',
         (WidgetTester tester) async {
-          final init = getDebugInitGameResult();
-          final game = init.game.copyWith(
-            mapViewState: init.game.mapViewState.copyWith(
-              showPlayerTurnEventsFeed: true,
-            ),
-          );
+          final game = _feedEnabledGame();
           final bus = AppEventBus.create();
           addTearDown(bus.dispose);
 
           await pumpNarrowGameMapArea(
             tester,
             game: game,
-            mapViewData: init.mapViewData,
+            mapViewData: buildLightweightMapViewData(),
             bus: bus,
           );
 
@@ -200,19 +207,14 @@ void main() {
         'Positioned.right still equals kMapOverlayEdgeInset (narrow '
         'bottom sheet covers from below, not from the right)',
         (WidgetTester tester) async {
-          final init = getDebugInitGameResult();
-          final game = init.game.copyWith(
-            mapViewState: init.game.mapViewState.copyWith(
-              showPlayerTurnEventsFeed: true,
-            ),
-          );
+          final game = _feedEnabledGame();
           final bus = AppEventBus.create();
           addTearDown(bus.dispose);
 
           await pumpNarrowGameMapArea(
             tester,
             game: game,
-            mapViewData: init.mapViewData,
+            mapViewData: buildLightweightMapViewData(),
             bus: bus,
           );
 
@@ -260,19 +262,14 @@ void main() {
         'gameMapWideOverlayRightInset(true) (regression guard against '
         'accidental reuse of the wide inset helper on the narrow path)',
         (WidgetTester tester) async {
-          final init = getDebugInitGameResult();
-          final game = init.game.copyWith(
-            mapViewState: init.game.mapViewState.copyWith(
-              showPlayerTurnEventsFeed: true,
-            ),
-          );
+          final game = _feedEnabledGame();
           final bus = AppEventBus.create();
           addTearDown(bus.dispose);
 
           await pumpNarrowGameMapArea(
             tester,
             game: game,
-            mapViewData: init.mapViewData,
+            mapViewData: buildLightweightMapViewData(),
             bus: bus,
           );
 
