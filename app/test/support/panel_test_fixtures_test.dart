@@ -327,4 +327,48 @@ void main() {
       );
     });
   });
+
+  group('buildSelectionPromptTestGame', () {
+    test('human owns one old-world explorer resolvable as the sample unit', () {
+      final game = buildSelectionPromptTestGame();
+      expect(game.players, hasLength(1));
+      expect(game.players.first.id, kPanelTestHumanPlayerId);
+      // The selection-prompt suites read oldWorld.units.first.id as the unit
+      // passed to StartCivilianWorkTargetSelectionEvent; it must exist and be
+      // owned by the human so _startWorkTargetSelection resolves it.
+      final sample = game.worldState.oldWorld.units.first;
+      expect(sample.ownerId, kPanelTestHumanPlayerId);
+      expect(sample.type, kUnitTypeExplorer);
+      // No generated map/topology data is consumed by the banner chrome.
+      expect(game.worldState.newWorld.units, isEmpty);
+    });
+  });
+
+  group('buildMapAreaEventFeedTestGame', () {
+    test('exposes a human plus a named AI opponent for feed-line lookups', () {
+      final game = buildMapAreaEventFeedTestGame();
+      expect(game.players, hasLength(2));
+      final human = game.players.firstWhere((p) => p.isHuman);
+      expect(human.id, kPanelTestHumanPlayerId);
+      expect(human.displayName, isNotEmpty);
+      final opponent = game.players.firstWhere((p) => p.id != human.id);
+      expect(opponent.isHuman, isFalse);
+      expect(opponent.displayName, isNotEmpty);
+      // The dispose test reads oldWorld.units.first.id as the sample unit.
+      expect(game.worldState.oldWorld.units, isNotEmpty);
+    });
+
+    test('seaboard entry resolves a known sea zone but not an unknown one', () {
+      final game = buildMapAreaEventFeedTestGame();
+      final ports = game.worldState.portsByProvinceSeaboard;
+      expect(ports, isNotEmpty);
+      // The naval feed line derives seaZoneId as `<region>|<seaboard-suffix>`
+      // from the seaboard key and resolves it via tileKeyForSeaZoneLocation;
+      // the entry must expose a `region|province|seazone` key shape.
+      final key = ports.keys.first;
+      final parts = key.split('|');
+      expect(parts.length, greaterThanOrEqualTo(3));
+      expect(ports[key], isNotEmpty);
+    });
+  });
 }

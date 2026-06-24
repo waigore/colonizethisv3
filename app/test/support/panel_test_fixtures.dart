@@ -304,6 +304,115 @@ Game buildShellEntryCenterTestGame() {
   );
 }
 
+/// Lightweight game shaped for the work-target selection-prompt overlay suites
+/// that mount a full `GameMapArea` purely to assert banner chrome
+/// (`game_map_selection_prompt_dark_tokens_test`,
+/// the explore-prompt cases in `game_map_area_selection_mode_test`; Refs #3656).
+///
+/// Entering explore selection mode (`StartCivilianWorkTargetSelectionEvent`)
+/// only requires the referenced unit to exist: `_startWorkTargetSelection`
+/// (`game_map_area_part1.dart`) looks the unit up, sets a non-null
+/// `_cachedValidTileKeys` (possibly empty) via
+/// `resolveValidTileKeysForCivilianWorkSelection`, and the canvas stack mounts
+/// the "Select a tile, or click cancel" banner whenever
+/// `validTileKeysForSelection != null` (`game_map_canvas_stack.dart`
+/// `inWorkTargetSelectionMode`). The banner chrome (dark tokens, the
+/// `CtNinePatchButton` cancel control) never reads generated map/topology data,
+/// so an off-map explorer on the 1×1 lightweight map is sufficient.
+///
+/// The fixture provides a single human ([kPanelTestHumanPlayerId]) owning one
+/// Explorer civilian in the old world so
+/// `game.worldState.oldWorld.units.first.id` resolves the sample unit those
+/// suites pass to the selection event. Pair it with
+/// `buildLightweightMapViewData()` so the canvas mounts without the ~7-11s
+/// `getDebugInitGameResult()` map generation.
+Game buildSelectionPromptTestGame() {
+  const human = kPanelTestHumanPlayerId;
+  const province = 'oldWorld|p1';
+  return buildPanelTestGame(
+    id: 'selection-prompt-widget-test',
+    oldWorldProvinces: const [
+      Province(
+        id: province,
+        regionId: 'oldWorld',
+        ownerId: human,
+        displayName: 'Alpha',
+      ),
+    ],
+    oldWorldUnits: [
+      Unit(
+        id: 'civ_explorer',
+        type: kUnitTypeExplorer,
+        ownerId: human,
+        locationProvinceId: province,
+        tileKey: 'oldWorld|p1|0|0',
+      ),
+    ],
+  );
+}
+
+/// Lightweight game shaped for the `game_map_area_event_feed_test` suite, which
+/// mounts a full `GameMapArea` and asserts only on the player-turn event-feed
+/// chrome driven by `AppEventBus` events (Refs #3656).
+///
+/// Every feed line is produced from the emitted event payload, not generated
+/// map data (`game_map_area_part1b.dart`): research/diplomacy/discovery lines
+/// read only player display names, the work-completed line locates the tile key
+/// carried by the event, and the naval-battle line resolves its locate tile via
+/// `portsByProvinceSeaboard` (`tileKeyForSeaZoneLocation`) when no
+/// `gameServiceProvider` map data is registered — so a port-seaboard entry is
+/// the only map-shaped data needed.
+///
+/// The fixture provides:
+/// - the human ([kPanelTestHumanPlayerId]) plus one AI great power (`gp2`), both
+///   with display names, so `firstWhere((p) => p.isHuman)`, the opponent
+///   `firstWhere((p) => p.id != humanId)`, and the diplomacy war-copy name
+///   lookups all resolve;
+/// - one old-world Explorer civilian so the dispose test's
+///   `oldWorld.units.first.id` sample unit exists;
+/// - a single `portsByProvinceSeaboard` entry mapping the `sz0` seaboard to a
+///   port tile, so the naval feed line resolves a non-empty anchor tile key
+///   (`oldWorld|sz0` → `oldWorld|cap|0|0`) while an unknown sea zone stays
+///   unresolved (the non-tappable-anchor case).
+Game buildMapAreaEventFeedTestGame() {
+  const human = kPanelTestHumanPlayerId;
+  const capProvince = 'oldWorld|cap';
+  const seaZoneId = 'sz0';
+  return buildPanelTestGame(
+    id: 'map-area-event-feed-widget-test',
+    players: const [
+      Player(id: human, displayName: 'Test Human', isHuman: true),
+      Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+    ],
+    // The province is intentionally left unowned: the event-feed suite mounts
+    // the players bar, whose per-player score chip renders the owned-province
+    // count. Owning exactly one province here would render a "1" chip that
+    // collides with the news-feed badge's "1" count
+    // (`find.text('1')` findsOneWidget).
+    oldWorldProvinces: const [
+      Province(
+        id: capProvince,
+        regionId: 'oldWorld',
+        displayName: 'Capital',
+        townTileKey: 'oldWorld|cap|0|0',
+      ),
+    ],
+    oldWorldUnits: [
+      Unit(
+        id: 'civ_explorer',
+        type: kUnitTypeExplorer,
+        ownerId: human,
+        locationProvinceId: capProvince,
+        tileKey: 'oldWorld|cap|0|0',
+      ),
+    ],
+    portsByProvinceSeaboard: const {
+      'oldWorld|cap|$seaZoneId': 'oldWorld|cap|0|0',
+    },
+    seaZoneDisplayNameById: const {'oldWorld|$seaZoneId': 'Northern Sea'},
+  );
+}
+
 /// Lightweight game shaped for the in-game Diplomacy *screen* family
 /// (`diplomacy_screen_test`, `diplomacy_screen_top_bar_test`,
 /// `diplomacy_screen_320dp_min_viewport_test`, `diplomacy_dialogs_test`).
