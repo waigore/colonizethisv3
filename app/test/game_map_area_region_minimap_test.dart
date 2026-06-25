@@ -21,7 +21,6 @@ import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -31,6 +30,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/game_fixture.dart';
+import 'support/map_view_fixture.dart';
+
+/// Loads the committed seed-42 `Game` + map-view fixtures instead of paying the
+/// ~7-11s `getDebugInitGameResult()` procedural map generation per isolate. This
+/// suite mounts the minimap chrome and reads only structural map data
+/// (`tileKeysByRegionAndProvince`, region geometry), so the cheap decode is
+/// sufficient (Refs #3656).
+({Game game, InitGameMapViewData mapViewData}) _loadMapAreaFixture() => (
+  game: loadSeed42Game(),
+  mapViewData: loadSeed42MapViewData(),
+);
 
 /// Avoid open-ended [pumpAndSettle] (animations/shell work can hang tests).
 Future<void> _pumpUntilMinimapPaintVisible(WidgetTester tester) async {
@@ -100,7 +112,7 @@ void main() {
   testWidgets('region minimap: toggle visibility and minimap bus pan', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
+    final init = _loadMapAreaFixture();
     final game = init.game;
     final bus = AppEventBus.create();
 
@@ -167,7 +179,7 @@ void main() {
   testWidgets('region minimap: tap emits camera center event for old world', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
+    final init = _loadMapAreaFixture();
     final bus = AppEventBus.create();
     final centers = <RequestRegionMapCameraCenterWorldEvent>[];
     final sub = bus.on<RequestRegionMapCameraCenterWorldEvent>().listen(
@@ -220,7 +232,7 @@ void main() {
   testWidgets('region minimap: drag pan deltas sum to world mapping', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
+    final init = _loadMapAreaFixture();
     final bus = AppEventBus.create();
     final pans = <RequestRegionMapCameraPanWorldDeltaEvent>[];
     final sub = bus.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen(
@@ -288,7 +300,7 @@ void main() {
   testWidgets('region minimap: New World chip switches minimap region', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
+    final init = _loadMapAreaFixture();
     final bus = AppEventBus.create();
     addTearDown(bus.dispose);
 
@@ -350,7 +362,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(900, 800));
 
-      final init = getDebugInitGameResult();
+      final init = _loadMapAreaFixture();
       final game = init.game;
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -399,7 +411,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(900, 800));
 
-      final init = getDebugInitGameResult();
+      final init = _loadMapAreaFixture();
       final game = init.game;
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -440,7 +452,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(900, 800));
 
-      final init = getDebugInitGameResult();
+      final init = _loadMapAreaFixture();
       final game = init.game.copyWith(
         mapViewState: init.game.mapViewState.copyWith(
           showPlayerTurnEventsFeed: true,
