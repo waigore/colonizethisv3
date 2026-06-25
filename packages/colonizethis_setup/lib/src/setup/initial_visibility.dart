@@ -17,7 +17,7 @@ void _indexTileMapIntoProvinceBuckets({
       final localId = map.cell(x, y);
       final fullId = ProvinceId.full(regionId, localId);
       final provinceKey = fullId;
-      final tileKey = '$regionId|$localId|$x|$y';
+      final tileKey = CapitalTile.tileKey(regionId, localId, x, y);
       bucket.putIfAbsent(provinceKey, () => <String>[]).add(tileKey);
       final res = map.resourceAt(x, y);
       if (res != null) resourceByTileKey[tileKey] = res.name;
@@ -38,7 +38,7 @@ Map<String, String> _buildOldWorldVisibilityForPlayer({
       final fullId = ProvinceId.full(kRegionOldWorld, localId);
       final isSea = owSeaZoneIds.contains(localId);
       final ownerId = ownerById[fullId];
-      final tileKey = '$kRegionOldWorld|$localId|$x|$y';
+      final tileKey = CapitalTile.tileKey(kRegionOldWorld, localId, x, y);
       if (isSea) {
         visibility[tileKey] = VisibilityLevel.fogged.name;
         continue;
@@ -60,7 +60,7 @@ void _fillNewWorldUnknownVisibility({
   for (var y = 0; y < nwMap.height; y++) {
     for (var x = 0; x < nwMap.width; x++) {
       final localId = nwMap.cell(x, y);
-      final tileKey = '$kRegionNewWorld|$localId|$x|$y';
+      final tileKey = CapitalTile.tileKey(kRegionNewWorld, localId, x, y);
       visibility[tileKey] = VisibilityLevel.unknown.name;
     }
   }

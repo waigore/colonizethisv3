@@ -21,26 +21,49 @@ Set<String> _seaZonesAdjacentToProvince(
   return out;
 }
 
-bool _isTileAdjacentToSea(
+/// Province node ids in [topology]. Single source of truth for the
+/// `topology.nodes.where(province).map(id).toSet()` construction the adjacency
+/// scans previously recomputed independently per call; callers compute it once
+/// per scan and thread it into the `_isTileAdjacentTo*` helpers.
+Set<String> _provinceNodeIds(MapTopology topology) => topology.nodes
+    .where((n) => n.type == TopologyNodeType.province)
+    .map((n) => n.id)
+    .toSet();
+
+/// Visits the in-bounds 4-neighbor cell ids of ([x], [y]) in
+/// [kGridNeighborsCardinal4] order, returning `true` as soon as [test] does.
+/// Single neighbor-iteration skeleton shared by the adjacency scans.
+bool _anyCardinalNeighborCell(
   int x,
   int y,
   TileMapResult map,
-  MapTopology topology,
+  bool Function(String cellId) test,
 ) {
-  final provinceIds = topology.nodes
-      .where((n) => n.type == TopologyNodeType.province)
-      .map((n) => n.id)
-      .toSet();
   final w = map.width;
   final h = map.height;
   for (final d in kGridNeighborsCardinal4) {
     final nx = x + d.$1;
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-    final cellId = map.cell(nx, ny);
-    if (!provinceIds.contains(cellId)) return true;
+    if (test(map.cell(nx, ny))) return true;
   }
   return false;
+}
+
+bool _isTileAdjacentToSea(
+  int x,
+  int y,
+  TileMapResult map,
+  MapTopology topology, {
+  Set<String>? provinceIds,
+}) {
+  final ids = provinceIds ?? _provinceNodeIds(topology);
+  return _anyCardinalNeighborCell(
+    x,
+    y,
+    map,
+    (cellId) => !ids.contains(cellId),
+  );
 }
 
 bool _isTileAdjacentToOtherProvince(
@@ -50,17 +73,12 @@ bool _isTileAdjacentToOtherProvince(
   Set<String> provinceIds,
   String provinceId,
 ) {
-  final w = map.width;
-  final h = map.height;
-  for (final d in kGridNeighborsCardinal4) {
-    final nx = x + d.$1;
-    final ny = y + d.$2;
-    if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-    final cellId = map.cell(nx, ny);
-    if (!provinceIds.contains(cellId)) continue;
-    if (cellId != provinceId) return true;
-  }
-  return false;
+  return _anyCardinalNeighborCell(
+    x,
+    y,
+    map,
+    (cellId) => provinceIds.contains(cellId) && cellId != provinceId,
+  );
 }
 
 (int, int)? _nearestCoastalTileInProvinceForSeaZone(
@@ -69,15 +87,26 @@ bool _isTileAdjacentToOtherProvince(
   int fromX,
   int fromY,
   MapTopology topology,
-  String seaZoneId,
-) {
+  String seaZoneId, {
+  Set<String>? provinceIds,
+}) {
+  final ids = provinceIds ?? _provinceNodeIds(topology);
   int? bestDist;
   int? bestX;
   int? bestY;
   for (var y = 0; y < map.height; y++) {
     for (var x = 0; x < map.width; x++) {
       if (map.cell(x, y) != provinceId) continue;
-      if (!_isTileAdjacentToSeaZone(x, y, map, topology, seaZoneId)) continue;
+      if (!_isTileAdjacentToSeaZone(
+        x,
+        y,
+        map,
+        topology,
+        seaZoneId,
+        provinceIds: ids,
+      )) {
+        continue;
+      }
       final dist = (x - fromX).abs() + (y - fromY).abs();
       if (bestDist == null || dist < bestDist) {
         bestDist = dist;
@@ -95,26 +124,17 @@ bool _isTileAdjacentToSeaZone(
   int y,
   TileMapResult map,
   MapTopology topology,
-  String seaZoneId,
-) {
-  final provinceIds = topology.nodes
-      .where((n) => n.type == TopologyNodeType.province)
-      .map((n) => n.id)
-      .toSet();
+  String seaZoneId, {
+  Set<String>? provinceIds,
+}) {
+  final ids = provinceIds ?? _provinceNodeIds(topology);
   final seaZoneLocal = seaZoneId.contains('|')
       ? seaZoneId.split('|').last
       : seaZoneId;
-  final w = map.width;
-  final h = map.height;
-  for (final d in kGridNeighborsCardinal4) {
-    final nx = x + d.$1;
-    final ny = y + d.$2;
-    if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-    final cellId = map.cell(nx, ny);
-    if (provinceIds.contains(cellId)) continue;
-    if (cellId == seaZoneId || cellId == seaZoneLocal) return true;
-  }
-  return false;
+  return _anyCardinalNeighborCell(x, y, map, (cellId) {
+    if (ids.contains(cellId)) return false;
+    return cellId == seaZoneId || cellId == seaZoneLocal;
+  });
 }
 
 /// Shortest path on province tiles only (BFS). Returns ordered list (start .. end) inclusive.
@@ -128,39 +148,13 @@ List<(int, int)> _shortestPathOnProvinceTiles(
   int toY,
 ) {
   if (fromX == toX && fromY == toY) return [(fromX, fromY)];
-  final w = map.width;
-  final h = map.height;
-  final visited = <String>{};
-  final parent = <String, (int, int)>{};
-  final startKey = '$fromX|$fromY';
-  visited.add(startKey);
-  final queue = Queue<(int, int)>()..add((fromX, fromY));
-  while (queue.isNotEmpty) {
-    final (cx, cy) = queue.removeFirst();
-    if (cx == toX && cy == toY) {
-      final path = <(int, int)>[];
-      var (px, py) = (toX, toY);
-      while (true) {
-        path.insert(0, (px, py));
-        final key = '$px|$py';
-        final p = parent[key];
-        if (p == null) break;
-        px = p.$1;
-        py = p.$2;
-      }
-      return path;
-    }
-    for (final d in kGridNeighborsCardinal4) {
-      final nx = cx + d.$1;
-      final ny = cy + d.$2;
-      if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-      if (map.cell(nx, ny) != localProvinceId) continue;
-      final nkey = '$nx|$ny';
-      if (visited.contains(nkey)) continue;
-      visited.add(nkey);
-      parent[nkey] = (cx, cy);
-      queue.add((nx, ny));
-    }
-  }
-  return [(fromX, fromY)];
+  final parents = bfsGridParents(
+    startX: fromX,
+    startY: fromY,
+    width: map.width,
+    height: map.height,
+    passable: (x, y) => map.cell(x, y) == localProvinceId,
+  );
+  return reconstructGridPath(parents: parents, toX: toX, toY: toY) ??
+      [(fromX, fromY)];
 }

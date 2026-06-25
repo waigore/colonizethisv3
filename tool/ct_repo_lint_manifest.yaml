@@ -784,6 +784,13 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_gp_ow_tile_scans.dart
 
+  - rule_id: repo.setup_lib_tile_key_interpolation
+    group: structure
+    title: colonizethis_setup lib builds tile keys via CapitalTile.tileKey / gpOwTileKey (no raw pipe interpolation) (Refs #3712)
+    spec: SPEC/game/world-model-identity.md
+    runner: dart
+    script: tool/check_setup_lib_tile_key_interpolation.dart
+
   - rule_id: repo.setup_dedup_gp_ids_from_players
     group: architecture
     title: setup GP id list/set must use gpIdsSortedFromPlayers instead of re-inlining game.players.map((p) => p.id) (Refs #3449)
