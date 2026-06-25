@@ -22,8 +22,6 @@ import 'package:path/path.dart' as p;
 /// check fails on a **stale** entry (file missing, or migrated so it no longer
 /// invokes the helper) so the backlog cannot silently retain slack.
 const Set<String> _kDebugInitAllowlist = <String>{
-  'app/test/ct_region_map_debug_init_test.dart',
-  'app/test/ct_region_map_test_support.dart',
   'app/test/game_map_area_region_minimap_test.dart',
   'app/test/game_map_area_selection_mode_test.dart',
   'app/test/production_commodity_breakdown_dialog_wide_golden_test.dart',
