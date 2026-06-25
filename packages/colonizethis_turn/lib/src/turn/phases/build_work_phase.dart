@@ -38,7 +38,7 @@ TurnPhaseStepOutcome buildWorkTurnPhaseHandler(
     config.orders,
     config.topology,
     config.tileMapByRegion,
-    onDialogue: config.onDialogue,
+    onDialogue: config.eventSink.onDialogue,
     onWorkOrderTrace: config.turnTraceRuntime?.handleWorkOrderTrace,
   );
   emitWorkOrderCompletedEvents(

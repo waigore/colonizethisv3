@@ -36,7 +36,7 @@ void main() {
           game: game,
           topology: topology,
           orders: const Orders(),
-          onDialogue: dialogueEvents.add,
+          eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
         ),
       );
       expect(next.worldState.turnState.turnNumber, 101);
@@ -121,7 +121,7 @@ void main() {
               ],
             },
           ),
-          onDialogue: dialogueEvents.add,
+          eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
         ),
       );
       expect(
@@ -251,7 +251,7 @@ void main() {
                 ],
               },
             ),
-            onDialogue: dialogueEvents.add,
+            eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
           ),
         );
         expect(
