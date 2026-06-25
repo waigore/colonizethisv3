@@ -4,6 +4,8 @@ import 'package:colonizethis_world/src/world/naval.dart';
 import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Exercises naval topology helpers in `lib/src/world/naval.dart`.
@@ -41,13 +43,8 @@ MapTopology _topology() => const MapTopology(
   ],
 );
 
-Game _gameWithCapital(String? capital) => Game(
+Game _gameWithCapital(String? capital) => TestFixtures.minimalGame(
   id: 'g-naval',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
   players: [
     Player(
       id: 'p1',
@@ -263,10 +260,7 @@ void main() {
 
   group('fleetsInPortAtProvince', () {
     test('finds fleets docked at a province (prefixed and legacy)', () {
-      final worldState = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
+      final worldState = TestFixtures.worldStateAtOrdersPhase(
         fleets: [
           Fleet(
             id: 'f1',

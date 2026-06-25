@@ -26,6 +26,7 @@ abstract final class TestFixtures {
         const {},
     List<Army> armies = const [],
     int nextArmySeq = 1,
+    List<Fleet> fleets = const [],
   }) {
     return WorldState(
       turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
@@ -35,6 +36,7 @@ abstract final class TestFixtures {
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
       armies: armies,
       nextArmySeq: nextArmySeq,
+      fleets: fleets,
     );
   }
 
