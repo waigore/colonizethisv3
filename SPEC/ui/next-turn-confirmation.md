@@ -76,7 +76,7 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 
 ## Implementation notes
 
-- Map next turn: `_onNextTurn` in `app/lib/features/game/flame/game_map_area_part1.dart` uses `TurnResolutionRunner` and `showNextTurnConfirmationDialog`.
+- Map next turn: `_onNextTurn` in `app/lib/features/game/flame/game_map_area_turn_resolution.dart` uses `TurnResolutionRunner` and `showNextTurnConfirmationDialog`.
 - Flame canvas next turn: `game_screen.dart` uses the same runner, confirmation dialog, and `TurnResolutionProcessingDialog` pattern.
 - Confirmation uses `showDialog<bool>` with `CtDialogShell` (same pattern as `_confirmCancel` in civilian_units_panel.dart).
 - The existing turn number should be shown in the confirmation dialog body text.
