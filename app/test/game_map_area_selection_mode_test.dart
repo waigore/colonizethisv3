@@ -1,10 +1,7 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
-import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -17,7 +14,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -32,65 +28,14 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  testWidgets('explore selection mode prompt appears under one second', (
-    WidgetTester tester,
-  ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-        ? game.worldState.oldWorld.units.first.id
-        : game.worldState.newWorld.units.first.id;
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    final sw = Stopwatch()..start();
-    bus.emit(
-      StartCivilianWorkTargetSelectionEvent(
-        unitId: sampleUnitId,
-        workTarget: kWorkTargetExplore,
-      ),
-    );
-    await tester.pump();
-
-    var selectionReady = false;
-    for (var i = 0; i < 200; i++) {
-      await tester.pump(const Duration(milliseconds: 5));
-      if (find.text('Select a tile, or click cancel').evaluate().isNotEmpty) {
-        selectionReady = true;
-        break;
-      }
-    }
-    sw.stop();
-
-    expect(selectionReady, isTrue);
-    expect(sw.elapsedMilliseconds, lessThan(1000));
-  });
+  // NOTE (Refs #3656): The explore-prompt cases that only assert the
+  // selection-prompt overlay chrome / cancel + interaction-gating behaviour
+  // were migrated to the lightweight `buildSelectionPromptTestGame` +
+  // `buildLightweightMapViewData` fixtures in
+  // `game_map_area_selection_mode_lightweight_test.dart`. The two cases below
+  // genuinely need the generated `combinedTopology` / `tileMapByRegion` to
+  // discover valid work-order target tiles, so they stay on the documented
+  // `getDebugInitGameResult()` allowlist.
 
   testWidgets(
     'build_improvement selection mode prompt appears under one second',
@@ -311,255 +256,4 @@ void main() {
       );
     },
   );
-
-  testWidgets(
-    'work target selection shows prompt overlay and cancel button exits mode',
-    (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
-      final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-          ? game.worldState.oldWorld.units.first.id
-          : game.worldState.newWorld.units.first.id;
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      bus.emit(
-        StartCivilianWorkTargetSelectionEvent(
-          unitId: sampleUnitId,
-          workTarget: kWorkTargetExplore,
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      expect(find.text('Select a tile, or click cancel'), findsOneWidget);
-      expect(find.text('cancel'), findsOneWidget);
-
-      await tester.tap(find.text('cancel'));
-      await tester.pump();
-
-      expect(find.text('Select a tile, or click cancel'), findsNothing);
-    },
-  );
-
-  testWidgets('left rail icon cancels selection mode before opening panel', (
-    WidgetTester tester,
-  ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    final openedPanels = <OpenCivilianUnitsPanelEvent>[];
-    final panelSub = bus.on<OpenCivilianUnitsPanelEvent>().listen(
-      openedPanels.add,
-    );
-    addTearDown(panelSub.cancel);
-
-    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-        ? game.worldState.oldWorld.units.first.id
-        : game.worldState.newWorld.units.first.id;
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    bus.emit(
-      StartCivilianWorkTargetSelectionEvent(
-        unitId: sampleUnitId,
-        workTarget: kWorkTargetExplore,
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-    expect(find.text('Select a tile, or click cancel'), findsOneWidget);
-
-    await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
-    await tester.pump();
-
-    expect(find.text('Select a tile, or click cancel'), findsNothing);
-    expect(openedPanels, hasLength(1));
-  });
-
-  testWidgets('escape key cancels work target selection mode', (
-    WidgetTester tester,
-  ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-        ? game.worldState.oldWorld.units.first.id
-        : game.worldState.newWorld.units.first.id;
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    bus.emit(
-      StartCivilianWorkTargetSelectionEvent(
-        unitId: sampleUnitId,
-        workTarget: kWorkTargetExplore,
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    expect(find.text('Select a tile, or click cancel'), findsOneWidget);
-    var regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
-    expect(regionMap.validTileKeys, isNotNull);
-
-    final keyHandlerFocuses = tester
-        .widgetList<Focus>(find.byType(Focus))
-        .where((focus) => focus.onKeyEvent != null);
-    var keyHandled = false;
-    for (final focus in keyHandlerFocuses) {
-      final keyResult = focus.onKeyEvent!(
-        FocusNode(),
-        const KeyDownEvent(
-          timeStamp: Duration.zero,
-          logicalKey: LogicalKeyboardKey.escape,
-          physicalKey: PhysicalKeyboardKey.escape,
-        ),
-      );
-      if (keyResult == KeyEventResult.handled) {
-        keyHandled = true;
-        break;
-      }
-    }
-    expect(keyHandled, isTrue);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    expect(find.text('Select a tile, or click cancel'), findsNothing);
-    regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
-    expect(regionMap.validTileKeys, isNull);
-  });
-
-  testWidgets('selection mode blocks non-selection map interaction callbacks', (
-    WidgetTester tester,
-  ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-        ? game.worldState.oldWorld.units.first.id
-        : game.worldState.newWorld.units.first.id;
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    var regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
-    expect(regionMap.onMapTileTappedForDetail, isNotNull);
-    expect(regionMap.onCivilianTileStateChanged, isNotNull);
-    expect(regionMap.bus, isNotNull);
-
-    bus.emit(
-      StartCivilianWorkTargetSelectionEvent(
-        unitId: sampleUnitId,
-        workTarget: kWorkTargetExplore,
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    expect(find.text('Select a tile, or click cancel'), findsOneWidget);
-    regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
-    expect(regionMap.onMapTileTappedForDetail, isNull);
-    expect(regionMap.onCivilianTileStateChanged, isNull);
-    expect(regionMap.bus, isNull);
-  });
 }
