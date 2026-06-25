@@ -9,8 +9,9 @@
 //
 // Harness mirrors the committed golden pattern
 // (`diplomacy_panel_goldens_test.dart`, `unit_panels_goldens_test.dart`): a
-// keyed `RepaintBoundary` wraps each dialog, deterministic
-// `getDebugInitGameResult()` fixtures (seed 42) pin the content, and
+// keyed `RepaintBoundary` wraps each dialog, the committed seed-42 game fixture
+// (`loadSeed42Game()`) pins the content via a cheap JSON decode instead of the
+// ~7-11s `getDebugInitGameResult()` map generation (Refs #3656), and
 // `AppThemes.editorialMonocle` supplies the dark-theme chrome
 // (`colonizethis-ui-design.mdc`). Each golden is paired with structural finder
 // assertions so the baseline keeps mapping to its AC rather than silently
@@ -47,12 +48,13 @@ import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart'
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/game_fixture.dart';
 
 /// Canonical golden host viewport for the train dialogs (tall enough to render
 /// the header, resource bar, and the first unit rows without the scroll body
@@ -96,7 +98,7 @@ void main() {
   late String humanPlayerId;
 
   setUpAll(() {
-    game = getDebugInitGameResult().game;
+    game = loadSeed42Game();
     humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   });
 
