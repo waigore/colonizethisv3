@@ -16,19 +16,19 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_turn/lib/src/turn/phases/combat_phase.dart
-    line: 151
+    line: 163
     rationale: Combat phase snapshots pre-combat ownership across all provinces (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416
 
   - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
-    line: 144
+    line: 140
     rationale: Province-captured events scan all provinces for owner handovers (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416
 
   - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
-    line: 312
+    line: 299
     rationale: Per-player province discovery events scan all provinces (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416
