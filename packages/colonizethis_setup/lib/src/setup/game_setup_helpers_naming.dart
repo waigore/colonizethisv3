@@ -71,18 +71,6 @@ void _applyGreatPowerProvinceNaming({
   required Map<String, Province> oldWorldById,
   required Set<String> usedOldWorldProvinceNames,
   required int namingSeed,
-  required void Function({
-    required List<Province> ownedProvinces,
-    required String? capitalProvinceId,
-    required String capitalName,
-    required List<String> pool,
-    required String fallbackPrefix,
-    required int rngSeed,
-    required Map<String, Province> outById,
-    required Set<String> usedInRegion,
-    required String Function(int seedOffset) generateFallback,
-  })
-  applyNamingToFaction,
   required String Function(int seedOffset) fallbackOldWorld,
 }) {
   for (var i = 0; i < game.players.length; i++) {
@@ -97,7 +85,7 @@ void _applyGreatPowerProvinceNaming({
     final variant = gpNaming.variantById(variantId);
     final capitalProvId = player.capitalProvinceId;
     if (capitalProvId == null) continue;
-    applyNamingToFaction(
+    _namingApplyNamingToFaction(
       ownedProvinces: ownedProvincesForFaction(
         oldWorldProvinces,
         player.id,
@@ -115,103 +103,103 @@ void _applyGreatPowerProvinceNaming({
   }
 }
 
-void _applyMinorNationProvinceNaming({
-  required Game game,
-  required ResolvedNamingConfig naming,
-  required List<Province> oldWorldProvinces,
-  required Map<String, Province> oldWorldById,
-  required Set<String> usedOldWorldProvinceNames,
+/// One minor/tribe faction's resolved naming inputs for the shared
+/// non-Great-Power naming pass. [empty] mirrors the prior `namingX.id.isEmpty`
+/// branch (no naming entry matched), selecting the procedural-fallback path for
+/// the capital name and the `'Territory'` fallback prefix.
+typedef _MinorOrTribeNamingEntry = ({
+  String factionId,
+  String? capitalProvinceId,
+  bool empty,
+  String displayName,
+  List<String> provinceNamePool,
+  String fallbackPrefix,
+});
+
+/// Shared naming pass for the structurally identical Minor Nation and Tribe
+/// province naming. Both previously threaded the always-constant
+/// `_namingApplyNamingToFaction` callback and duplicated the
+/// `firstWhere(..., orElse: empty)` / capital-name fallback / skip-when-empty
+/// shape, differing only in region, faction list, and `fallbackPrefix`.
+void _applyMinorOrTribeProvinceNaming({
+  required List<_MinorOrTribeNamingEntry> factions,
+  required List<Province> regionProvinces,
+  required Map<String, Province> regionById,
+  required Set<String> usedRegionProvinceNames,
   required int namingSeed,
-  required void Function({
-    required List<Province> ownedProvinces,
-    required String? capitalProvinceId,
-    required String capitalName,
-    required List<String> pool,
-    required String fallbackPrefix,
-    required int rngSeed,
-    required Map<String, Province> outById,
-    required Set<String> usedInRegion,
-    required String Function(int seedOffset) generateFallback,
-  })
-  applyNamingToFaction,
-  required String Function(int seedOffset) fallbackOldWorld,
+  required String Function(int seedOffset) fallback,
 }) {
-  for (final minor in game.minorNations) {
-    final namingMinor = naming.minorNations.firstWhere(
-      (n) => n.id == minor.id,
-      orElse: () => const MinorNationNaming(id: '', displayName: ''),
-    );
-    final owned = ownedProvincesForFaction(oldWorldProvinces, minor.id);
+  for (final faction in factions) {
+    final owned = ownedProvincesForFaction(regionProvinces, faction.factionId);
     if (owned.isEmpty) continue;
-    final capitalName = namingMinor.id.isEmpty
-        ? fallbackOldWorld(namingSeed + minor.id.hashCode)
-        : (namingMinor.provinceNamePool.isNotEmpty
-              ? namingMinor.provinceNamePool.first
-              : namingMinor.displayName);
-    applyNamingToFaction(
+    final capitalName = faction.empty
+        ? fallback(namingSeed + faction.factionId.hashCode)
+        : (faction.provinceNamePool.isNotEmpty
+              ? faction.provinceNamePool.first
+              : faction.displayName);
+    _namingApplyNamingToFaction(
       ownedProvinces: owned,
-      capitalProvinceId: minor.capitalProvinceId,
+      capitalProvinceId: faction.capitalProvinceId,
       capitalName: capitalName,
-      pool: namingMinor.provinceNamePool,
-      fallbackPrefix: namingMinor.id.isEmpty
-          ? 'Territory'
-          : namingMinor.displayName,
-      rngSeed: namingSeed + minor.id.hashCode,
-      outById: oldWorldById,
-      usedInRegion: usedOldWorldProvinceNames,
-      generateFallback: fallbackOldWorld,
+      pool: faction.provinceNamePool,
+      fallbackPrefix: faction.fallbackPrefix,
+      rngSeed: namingSeed + faction.factionId.hashCode,
+      outById: regionById,
+      usedInRegion: usedRegionProvinceNames,
+      generateFallback: fallback,
     );
   }
 }
 
-void _applyTribeProvinceNaming({
-  required Game game,
-  required ResolvedNamingConfig naming,
-  required List<Province> newWorldProvinces,
-  required Map<String, Province> newWorldById,
-  required Set<String> usedNewWorldProvinceNames,
-  required int namingSeed,
-  required void Function({
-    required List<Province> ownedProvinces,
-    required String? capitalProvinceId,
-    required String capitalName,
-    required List<String> pool,
-    required String fallbackPrefix,
-    required int rngSeed,
-    required Map<String, Province> outById,
-    required Set<String> usedInRegion,
-    required String Function(int seedOffset) generateFallback,
-  })
-  applyNamingToFaction,
-  required String Function(int seedOffset) fallbackNewWorld,
-}) {
-  for (final tribe in game.tribes) {
-    final namingTribe = naming.tribes.firstWhere(
-      (n) => n.id == tribe.id,
-      orElse: () =>
-          const TribeNaming(id: '', displayName: '', provinceNamePool: []),
-    );
-    final owned = ownedProvincesForFaction(newWorldProvinces, tribe.id);
-    if (owned.isEmpty) continue;
-    final capitalName = namingTribe.id.isEmpty
-        ? fallbackNewWorld(namingSeed + tribe.id.hashCode)
-        : (namingTribe.provinceNamePool.isNotEmpty
-              ? namingTribe.provinceNamePool.first
-              : namingTribe.displayName);
-    applyNamingToFaction(
-      ownedProvinces: owned,
-      capitalProvinceId: tribe.capitalProvinceId,
-      capitalName: capitalName,
-      pool: namingTribe.provinceNamePool,
-      fallbackPrefix: namingTribe.id.isEmpty
-          ? 'Territory'
-          : '${namingTribe.displayName} Territory',
-      rngSeed: namingSeed + tribe.id.hashCode,
-      outById: newWorldById,
-      usedInRegion: usedNewWorldProvinceNames,
-      generateFallback: fallbackNewWorld,
-    );
-  }
+List<_MinorOrTribeNamingEntry> _minorNationNamingEntries(
+  Game game,
+  ResolvedNamingConfig naming,
+) {
+  return [
+    for (final minor in game.minorNations)
+      () {
+        final namingMinor = naming.minorNations.firstWhere(
+          (n) => n.id == minor.id,
+          orElse: () => const MinorNationNaming(id: '', displayName: ''),
+        );
+        return (
+          factionId: minor.id,
+          capitalProvinceId: minor.capitalProvinceId,
+          empty: namingMinor.id.isEmpty,
+          displayName: namingMinor.displayName,
+          provinceNamePool: namingMinor.provinceNamePool,
+          fallbackPrefix: namingMinor.id.isEmpty
+              ? 'Territory'
+              : namingMinor.displayName,
+        );
+      }(),
+  ];
+}
+
+List<_MinorOrTribeNamingEntry> _tribeNamingEntries(
+  Game game,
+  ResolvedNamingConfig naming,
+) {
+  return [
+    for (final tribe in game.tribes)
+      () {
+        final namingTribe = naming.tribes.firstWhere(
+          (n) => n.id == tribe.id,
+          orElse: () =>
+              const TribeNaming(id: '', displayName: '', provinceNamePool: []),
+        );
+        return (
+          factionId: tribe.id,
+          capitalProvinceId: tribe.capitalProvinceId,
+          empty: namingTribe.id.isEmpty,
+          displayName: namingTribe.displayName,
+          provinceNamePool: namingTribe.provinceNamePool,
+          fallbackPrefix: namingTribe.id.isEmpty
+              ? 'Territory'
+              : '${namingTribe.displayName} Territory',
+        );
+      }(),
+  ];
 }
 
 List<Player> _updatedPlayersWithNaming({
@@ -366,28 +354,23 @@ Game applyNaming({
     oldWorldById: owById,
     usedOldWorldProvinceNames: usedOwProvinceDisplayNames,
     namingSeed: namingSeed,
-    applyNamingToFaction: _namingApplyNamingToFaction,
     fallbackOldWorld: fallbackOw,
   );
-  _applyMinorNationProvinceNaming(
-    game: game,
-    naming: naming,
-    oldWorldProvinces: owProvinces,
-    oldWorldById: owById,
-    usedOldWorldProvinceNames: usedOwProvinceDisplayNames,
+  _applyMinorOrTribeProvinceNaming(
+    factions: _minorNationNamingEntries(game, naming),
+    regionProvinces: owProvinces,
+    regionById: owById,
+    usedRegionProvinceNames: usedOwProvinceDisplayNames,
     namingSeed: namingSeed,
-    applyNamingToFaction: _namingApplyNamingToFaction,
-    fallbackOldWorld: fallbackOw,
+    fallback: fallbackOw,
   );
-  _applyTribeProvinceNaming(
-    game: game,
-    naming: naming,
-    newWorldProvinces: nwProvinces,
-    newWorldById: nwById,
-    usedNewWorldProvinceNames: usedNwProvinceDisplayNames,
+  _applyMinorOrTribeProvinceNaming(
+    factions: _tribeNamingEntries(game, naming),
+    regionProvinces: nwProvinces,
+    regionById: nwById,
+    usedRegionProvinceNames: usedNwProvinceDisplayNames,
     namingSeed: namingSeed,
-    applyNamingToFaction: _namingApplyNamingToFaction,
-    fallbackNewWorld: fallbackNw,
+    fallback: fallbackNw,
   );
 
   final updatedPlayers = _updatedPlayersWithNaming(

@@ -1,7 +1,103 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+/// Shared init options for orchestrator tests (no PNG render, 8px cells).
+/// Replaces the `const InitGameOptions(cellSize: 8, renderPng: false)` literal
+/// repeated across nearly every orchestrator test (Refs #3712).
+const defaultInitOptions = InitGameOptions(cellSize: 8, renderPng: false);
+
+/// Builds a [GameSetupConfig] from [GameSetupConfig.defaultConfig], overriding
+/// only the provided fields. Removes the verbose full-config rebuild blocks
+/// tests used to vary a single field — the config has no `copyWith` (#3712).
+GameSetupConfig configWithOverrides({
+  int? seed,
+  int? continentCount,
+  int? minorNationCount,
+  int? tribeCount,
+  int? numProvincesOldWorld,
+  int? numProvincesNewWorld,
+  int? minProvincesPerMinor,
+}) {
+  final base = GameSetupConfig.defaultConfig;
+  return GameSetupConfig(
+    selectedGreatPowerIds: base.selectedGreatPowerIds,
+    leaderVariantByGpId: base.leaderVariantByGpId,
+    continentCount: continentCount ?? base.continentCount,
+    minorNationCount: minorNationCount ?? base.minorNationCount,
+    tribeCount: tribeCount ?? base.tribeCount,
+    numProvincesOldWorld: numProvincesOldWorld ?? base.numProvincesOldWorld,
+    numProvincesNewWorld: numProvincesNewWorld ?? base.numProvincesNewWorld,
+    minProvincesPerMinor: minProvincesPerMinor ?? base.minProvincesPerMinor,
+    seed: seed ?? base.seed,
+    startingResources: base.startingResources,
+  );
+}
+
+/// The locked full-init profile config (#1830 AC-10..AC-12): default GP ids and
+/// starting resources with the locked partition counts and the given [seed].
+GameSetupConfig lockedFullInitConfig({required int seed}) => configWithOverrides(
+  seed: seed,
+  continentCount: 4,
+  minorNationCount: 6,
+  tribeCount: 10,
+  numProvincesOldWorld: 60,
+  numProvincesNewWorld: 30,
+  minProvincesPerMinor: 3,
+);
+
+/// Wraps [defaultTileMapRegionGenerator] for tests, exposing the per-region
+/// [TileMapParams] via [onParams] and allowing a [continentProvinceSizes]
+/// override via [resolveContinentProvinceSizes]. Removes the copy-pasted full
+/// generator signature from orchestrator tests (Refs #3712).
+TileMapRegionGenerator wrapRegionGenerator({
+  void Function(String regionId, TileMapParams params)? onParams,
+  List<int>? Function({
+    required String regionId,
+    required int numProvinces,
+    required int numContinents,
+    required List<int>? continentProvinceSizes,
+  })?
+  resolveContinentProvinceSizes,
+}) {
+  return ({
+    required TileMapParams params,
+    required int numProvinces,
+    required int numContinents,
+    required String regionId,
+    String seaZoneId = 's1',
+    ResourceRules? resourceRules,
+    void Function(String)? onLog,
+    void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
+    onLandSeedsPlaced,
+    void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+    List<int>? continentProvinceSizes,
+  }) {
+    onParams?.call(regionId, params);
+    final sizes =
+        resolveContinentProvinceSizes?.call(
+          regionId: regionId,
+          numProvinces: numProvinces,
+          numContinents: numContinents,
+          continentProvinceSizes: continentProvinceSizes,
+        ) ??
+        continentProvinceSizes;
+    return defaultTileMapRegionGenerator(
+      params: params,
+      numProvinces: numProvinces,
+      numContinents: numContinents,
+      regionId: regionId,
+      seaZoneId: seaZoneId,
+      resourceRules: resourceRules,
+      onLog: onLog,
+      onLandSeedsPlaced: onLandSeedsPlaced,
+      onContinentSeedsPlaced: onContinentSeedsPlaced,
+      continentProvinceSizes: sizes,
+    );
+  };
+}
 
 /// When OW and NW topologies both match locked multisets, assert GitHub #1830
 /// AC-1–AC-9 (subset exercised here; procedural maps often miss multisets).
