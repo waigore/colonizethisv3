@@ -14,6 +14,7 @@ import 'province_owner_cache.dart';
 import 'province_traversal.dart';
 import 'topology_helpers.dart';
 import 'unit_lookup.dart';
+import 'visibility_map_helpers.dart';
 
 part 'fog_resolution_explorer_spy_decay.dart';
 part 'fog_resolution_province_ownership.dart';

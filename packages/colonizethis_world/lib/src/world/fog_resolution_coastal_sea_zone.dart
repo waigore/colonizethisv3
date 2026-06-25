@@ -10,9 +10,7 @@ void _fullyVisibleAllTilesInSeaZoneBuckets(
     final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
     final tileKeys = regionTileKeys[seaZoneBucketKey];
     if (tileKeys == null) continue;
-    for (final tileKey in tileKeys) {
-      vis[tileKey] = VisibilityLevel.fullyVisible.name;
-    }
+    setTilesFullyVisible(vis, tileKeys);
   }
 }
 
