@@ -24,6 +24,8 @@ abstract final class TestFixtures {
     TileMapState? tileState,
     Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
         const {},
+    List<Army> armies = const [],
+    int nextArmySeq = 1,
   }) {
     return WorldState(
       turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
@@ -31,6 +33,8 @@ abstract final class TestFixtures {
       newWorld: newWorld ?? const RegionData(),
       tileState: tileState ?? const TileMapState(),
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+      armies: armies,
+      nextArmySeq: nextArmySeq,
     );
   }
 
@@ -52,6 +56,8 @@ abstract final class TestFixtures {
     Map<String, String>? portsByProvinceSeaboard,
     Map<String, Set<String>>? playerProspectedTiles,
     TileMapState? tileState,
+    List<Army> armies = const [],
+    int nextArmySeq = 1,
     double richesCashMultiplier = 1.0,
     List<MinorNation> minorNations = const [],
     List<Tribe> tribes = const [],
@@ -70,6 +76,8 @@ abstract final class TestFixtures {
       portsByProvinceSeaboard: portsByProvinceSeaboard ?? const {},
       playerProspectedTiles: playerProspectedTiles ?? const {},
       tileState: tileState ?? const TileMapState(),
+      armies: armies,
+      nextArmySeq: nextArmySeq,
     ),
     players: players,
     richesCashMultiplier: richesCashMultiplier,

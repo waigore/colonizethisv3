@@ -3,6 +3,8 @@ import 'package:colonizethis_world/src/world/army_ids.dart';
 import 'package:colonizethis_world/src/world/army_migration.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Exercises army reconstruction, home-army backfill, regiment relocation and
@@ -29,16 +31,13 @@ Game _game({
     Player(id: 'p1', displayName: 'P1', isHuman: true),
   ],
   int nextArmySeq = 1,
-}) => Game(
+}) => TestFixtures.minimalGame(
   id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(units: oldWorldUnits),
-    newWorld: RegionData(units: newWorldUnits),
-    armies: armies,
-    nextArmySeq: nextArmySeq,
-  ),
   players: players,
+  oldWorld: RegionData(units: oldWorldUnits),
+  newWorld: RegionData(units: newWorldUnits),
+  armies: armies,
+  nextArmySeq: nextArmySeq,
 );
 
 void main() {
