@@ -84,7 +84,7 @@ Future<void> _pumpUntilFeedCardVisible(WidgetTester tester) async {
 }
 
 /// Pull the `Positioned.right` from the ancestor wrapping the narrow
-/// feed card on the map stack (`game_map_area_part2.dart`).
+/// feed card on the map stack (`game_map_area_build.dart`).
 double? _feedCardPositionedRight(WidgetTester tester) {
   final ctx = tester.element(find.byType(PlayerTurnEventFeedCard));
   return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
@@ -293,7 +293,7 @@ void main() {
                 '$wideInsetWhenPanelOpen) is the wide-layout right inset '
                 'that clears the 320 dp province side panel column. The '
                 'narrow code path mounts the province panel at the bottom '
-                'instead (see game_map_area_part2.dart `if (isNarrow) … '
+                'instead (see game_map_area_build.dart `if (isNarrow) … '
                 'Align(bottomCenter, GameMapNarrowDetailOverlaySlot)`) '
                 'so the wide inset MUST NOT bleed onto the narrow news '
                 'feed card.',

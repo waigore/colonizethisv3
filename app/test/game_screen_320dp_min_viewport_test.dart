@@ -261,7 +261,7 @@ void main() {
                 'at the minimum supported viewport (320 dp). The '
                 'narrow shell suppresses it via '
                 '`if (!isNarrow && widget.game.victory == null)` in '
-                '`game_map_area_part2.dart`.',
+                '`game_map_area_build.dart`.',
           );
         },
         timeout: const Timeout(Duration(seconds: 20)),
@@ -388,7 +388,7 @@ void main() {
                 'viewport width ≥ shell breakpoint (600 dp) the '
                 '`GameMapPlayersBar` floating chip column reappears '
                 'in the widget tree (per the `!isNarrow` gate in '
-                '`game_map_area_part2.dart`). The wide control '
+                '`game_map_area_build.dart`). The wide control '
                 'pinning its presence is what keeps the narrow '
                 '`findsNothing` assertion above meaningful.',
           );

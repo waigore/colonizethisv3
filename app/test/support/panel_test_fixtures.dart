@@ -273,7 +273,7 @@ Game buildGameScreenSpecsTestGame() {
 /// the home-to-capital corner control enables/disables purely from
 /// `shell.viewingPlayerId != null` (normal play / player observe → enabled;
 /// global observe → disabled). None of that reads generated map/topology data:
-/// `_applyCapitalCenter` (`game_map_area_part1.dart`) sets the highlight
+/// `_applyCapitalCenter` (`game_map_area_view.dart`) sets the highlight
 /// unconditionally, and both the camera move (`ct_region_map_game.dart`
 /// `centerOnTileKey`) and the highlight ring paint
 /// (`region_map_component_render_markers.dart` `_paintTileOutlineRing`) safely
@@ -311,7 +311,7 @@ Game buildShellEntryCenterTestGame() {
 ///
 /// Entering explore selection mode (`StartCivilianWorkTargetSelectionEvent`)
 /// only requires the referenced unit to exist: `_startWorkTargetSelection`
-/// (`game_map_area_part1.dart`) looks the unit up, sets a non-null
+/// (`game_map_area_selection.dart`) looks the unit up, sets a non-null
 /// `_cachedValidTileKeys` (possibly empty) via
 /// `resolveValidTileKeysForCivilianWorkSelection`, and the canvas stack mounts
 /// the "Select a tile, or click cancel" banner whenever
@@ -356,7 +356,7 @@ Game buildSelectionPromptTestGame() {
 /// chrome driven by `AppEventBus` events (Refs #3656).
 ///
 /// Every feed line is produced from the emitted event payload, not generated
-/// map data (`game_map_area_part1b.dart`): research/diplomacy/discovery lines
+/// map data (`game_map_area_turn_feed.dart`): research/diplomacy/discovery lines
 /// read only player display names, the work-completed line locates the tile key
 /// carried by the event, and the naval-battle line resolves its locate tile via
 /// `portsByProvinceSeaboard` (`tileKeyForSeaZoneLocation`) when no

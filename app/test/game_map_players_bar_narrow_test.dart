@@ -8,7 +8,7 @@
 // "Hidden — not present in widget tree" at < 600 dp).
 //
 // These tests pin the GameScreen-level gating defined in
-// `game_map_area_part2.dart` (`if (!isNarrow && widget.game.victory == null)`):
+// `game_map_area_build.dart` (`if (!isNarrow && widget.game.victory == null)`):
 //
 //   - Positive: when the host viewport is below `kNarrowBreakpoint`, the
 //     players-bar widget is absent from the widget tree.
@@ -185,7 +185,7 @@ void main() {
         // chip column is hidden so it does not paint behind the victory
         // overlay scrim)." This regression guard pairs the existing
         // wide-baseline AC with the victory-state suppression so both gating
-        // predicates in `game_map_area_part2.dart` (`!isNarrow &&
+        // predicates in `game_map_area_build.dart` (`!isNarrow &&
         // widget.game.victory == null`) stay covered by tests.
         const double wideWidth = 1500.0;
         final victoryGame = baseGame.copyWith(
