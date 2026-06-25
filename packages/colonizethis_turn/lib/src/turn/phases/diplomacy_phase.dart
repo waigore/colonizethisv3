@@ -23,7 +23,7 @@ TurnPhaseStepOutcome diplomacyTurnPhaseHandler(
   final diploResult = resolveDiplomacyPhase(
     acc.game,
     config.orders,
-    onDialogue: config.onDialogue,
+    onDialogue: config.eventSink.onDialogue,
     overtureDecisions: config.overtureDecisions,
     ftpDecisions: config.ftpDecisions,
     interventionDecisions: config.interventionDecisions,

@@ -6,7 +6,6 @@ import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../combat_phase_helpers.dart';
-import '../turn_event_sink.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolver_config.dart';
@@ -171,8 +170,8 @@ TurnPhaseStepOutcome combatTurnPhaseHandler(
     config.topology,
     config.tileMapByRegion,
     topologyByRegion: config.topologyByRegion,
-    onDialogue: config.onDialogue,
-    onGameEvent: config.onGameEvent,
+    onDialogue: config.eventSink.onDialogue,
+    onGameEvent: config.eventSink.onGameEvent,
   );
   emitProvinceCapturedEvents(
     previousOwnership,
