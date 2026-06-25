@@ -2,13 +2,19 @@
 // (Civilian), UNIT20001 (Military), UNIT30001 (Naval) — closing the final
 // golden acceptance criterion of issue #3514 (align unit-panel visual chrome
 // with the HTML mockups). Each panel renders against `AppThemes.editorialMonocle`
-// from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the
-// canonical test host viewport and is captured via a keyed `RepaintBoundary`,
-// following the committed golden harness pattern
+// from the committed seed-42 serialized fixtures (`loadSeed42Game()` +
+// `loadSeed42MapViewData().combinedTopology`) at the canonical test host
+// viewport and is captured via a keyed `RepaintBoundary`, following the
+// committed golden harness pattern
 // (`province_build_improvement_shortcut_host_goldens_test.dart`,
 // `new_game_leader_selection_dialog_golden_test.dart`). Each golden is paired
 // with structural finder assertions so the baseline keeps mapping to its
 // screen (and to the post-#3514 mockup chrome) rather than silently drifting.
+//
+// Refs #3656: the panels render unit/fleet lists and the combined topology
+// only (no per-cell tile/resource data), all of which are cross-process stable,
+// so loading the committed seed-42 fixtures keeps the baselines byte-identical
+// while dropping the ~7-11s `getDebugInitGameResult()` map generation per file.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
@@ -17,13 +23,15 @@ import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/game_fixture.dart';
+import 'support/map_view_fixture.dart';
 
 /// Canonical golden host viewport for the unit panels (wide enough for the
 /// mockup row chrome without horizontal overflow at the panel constraint).
@@ -114,13 +122,13 @@ Widget _mobileHost({required Key boundaryKey, required Widget child}) {
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugInit;
-  late Game game;
-  late String humanPlayerId;
+  late final Game game;
+  late final String humanPlayerId;
+  late final MapTopology combinedTopology;
 
   setUpAll(() {
-    debugInit = getDebugInitGameResult();
-    game = debugInit.game;
+    game = loadSeed42Game();
+    combinedTopology = loadSeed42MapViewData().combinedTopology;
     humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   });
 
@@ -176,7 +184,7 @@ void main() {
         game: game,
         humanPlayerId: humanPlayerId,
         bus: AppEventBus.create(),
-        topology: debugInit.combinedTopology,
+        topology: combinedTopology,
         draftOrders: const Orders(),
       ),
       key,
@@ -202,7 +210,7 @@ void main() {
         game: game,
         humanPlayerId: humanPlayerId,
         bus: AppEventBus.create(),
-        topology: debugInit.combinedTopology,
+        topology: combinedTopology,
       ),
       key,
     );
@@ -258,7 +266,7 @@ void main() {
         game: game,
         humanPlayerId: humanPlayerId,
         bus: AppEventBus.create(),
-        topology: debugInit.combinedTopology,
+        topology: combinedTopology,
         draftOrders: const Orders(),
       ),
       key,
@@ -284,7 +292,7 @@ void main() {
         game: game,
         humanPlayerId: humanPlayerId,
         bus: AppEventBus.create(),
-        topology: debugInit.combinedTopology,
+        topology: combinedTopology,
       ),
       key,
     );
