@@ -2,6 +2,8 @@ import 'package:colonizethis_world/src/world/province_visibility_index.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   group('buildProvinceVisibilityIndex', () {
     const regionId = 'oldWorld';
@@ -22,20 +24,16 @@ void main() {
       ];
       final visibility = <String, Map<String, String>>{'gp1': gp1Visibility};
       if (gp2Visibility != null) visibility['gp2'] = gp2Visibility;
-      return Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [Province(id: fullPid, regionId: regionId, ownerId: 'gp1')],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            regionId: {fullPid: tileKeys ?? [tileKey1, tileKey2]},
-          },
-          playerVisibilityByTile: visibility,
-        ),
+      return TestFixtures.minimalGame(
+        turnNumber: 0,
         players: players,
+        oldWorld: RegionData(
+          provinces: [Province(id: fullPid, regionId: regionId, ownerId: 'gp1')],
+        ),
+        tileKeysByRegionAndProvince: {
+          regionId: {fullPid: tileKeys ?? [tileKey1, tileKey2]},
+        },
+        playerVisibilityByTile: visibility,
       );
     }
 
@@ -113,28 +111,24 @@ void main() {
         const otherLocal = 'p7';
         final otherFull = ProvinceId.full(otherRegion, otherLocal);
         final otherTile = '$otherRegion|$otherLocal|0|0';
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: const RegionData(),
-            newWorld: RegionData(
-              provinces: [
-                Province(id: otherFull, regionId: otherRegion, ownerId: 'gp1'),
-              ],
-            ),
-            tileKeysByRegionAndProvince: {
-              otherRegion: {
-                otherFull: [otherTile],
-              },
-            },
-            playerVisibilityByTile: {
-              'gp1': {otherTile: 'fullyVisible'},
-            },
-          ),
+        final game = TestFixtures.minimalGame(
+          turnNumber: 0,
           players: const [
             Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
           ],
+          newWorld: RegionData(
+            provinces: [
+              Province(id: otherFull, regionId: otherRegion, ownerId: 'gp1'),
+            ],
+          ),
+          tileKeysByRegionAndProvince: {
+            otherRegion: {
+              otherFull: [otherTile],
+            },
+          },
+          playerVisibilityByTile: {
+            'gp1': {otherTile: 'fullyVisible'},
+          },
         );
         final index = buildProvinceVisibilityIndex(game);
         expect(index.isKnownToPlayer('gp1', otherFull), isTrue);
