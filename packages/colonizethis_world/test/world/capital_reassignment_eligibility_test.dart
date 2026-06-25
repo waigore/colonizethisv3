@@ -3,30 +3,20 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   group('evaluateCapitalReassignmentEligibility', () {
     test(
       'returns deterministic candidate when owner has provinces in region',
       () {
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g-cap-eligible',
-          worldState: const WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P2',
-                  regionId: 'oldWorld',
-                  ownerId: 'p1',
-                ),
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'p1',
-                ),
-              ],
-            ),
-            newWorld: RegionData(),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
           ),
           players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         );
@@ -45,16 +35,12 @@ void main() {
     );
 
     test('reports ineligible when owner has no provinces in region', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g-cap-ineligible',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p2'),
-            ],
-          ),
-          newWorld: RegionData(),
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p2'),
+          ],
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -78,30 +64,14 @@ void main() {
     test(
       'ownedProvinceIdsInRegion matches projection in region list order',
       () {
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g-cap-projection-parity',
-          worldState: const WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P2',
-                  regionId: 'oldWorld',
-                  ownerId: 'p1',
-                ),
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'p1',
-                ),
-                Province(
-                  id: 'oldWorld|P3',
-                  regionId: 'oldWorld',
-                  ownerId: 'p2',
-                ),
-              ],
-            ),
-            newWorld: RegionData(),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'oldWorld|P3', regionId: 'oldWorld', ownerId: 'p2'),
+            ],
           ),
           players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         );
@@ -129,17 +99,13 @@ void main() {
     );
 
     test('excludedProvinceId is filtered out after the projection lookup', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g-cap-excluded',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
-            ],
-          ),
-          newWorld: RegionData(),
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p1'),
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+          ],
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );

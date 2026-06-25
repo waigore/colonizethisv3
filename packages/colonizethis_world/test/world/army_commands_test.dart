@@ -2,24 +2,20 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/army_commands.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Exercises the pure army combine/split commands in
 /// `lib/src/world/army_commands.dart`. SPEC/ui/military-units-army-management.md
 /// and SPEC/game/military-armies.md.
-Game _gameWithArmies(List<Army> armies, {int nextArmySeq = 1}) {
-  return Game(
-    id: 'g_army_cmd',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
+Game _gameWithArmies(List<Army> armies, {int nextArmySeq = 1}) =>
+    TestFixtures.minimalGame(
+      id: 'g_army_cmd',
+      players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       armies: armies,
       nextArmySeq: nextArmySeq,
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
-}
+    );
 
 Army _army(
   String id, {

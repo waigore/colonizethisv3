@@ -2,9 +2,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   group('WorldStateUnitLookup.tryGetUnitById', () {
-    const turn = TurnState(phase: TurnPhase.orders, turnNumber: 0);
     final uOld = Unit(
       id: 'u-old',
       type: kUnitTypeExplorer,
@@ -21,8 +22,8 @@ void main() {
     );
 
     test('returns unit from old world when present', () {
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: RegionData(units: [uOld]),
         newWorld: const RegionData(),
       );
@@ -30,8 +31,8 @@ void main() {
     });
 
     test('returns unit from new world when not in old world', () {
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: const RegionData(),
         newWorld: RegionData(units: [uNew]),
       );
@@ -39,8 +40,8 @@ void main() {
     });
 
     test('returns null when id is absent', () {
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: RegionData(units: [uOld]),
         newWorld: RegionData(units: [uNew]),
       );
@@ -62,8 +63,8 @@ void main() {
         locationProvinceId: 'newWorld|P2',
         tileKey: 'newWorld|P2|0|0',
       );
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: RegionData(units: [inOld]),
         newWorld: RegionData(units: [inNew]),
       );
@@ -92,8 +93,8 @@ void main() {
           tileKey: 'newWorld|P2|0|0',
         ),
       );
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: RegionData(units: oldUnits),
         newWorld: RegionData(units: newUnits),
       );
@@ -121,7 +122,6 @@ void main() {
   });
 
   group('WorldStateUnitLookup.tryGetRegionIdForUnit', () {
-    const turn = TurnState(phase: TurnPhase.orders, turnNumber: 0);
     final uOld = Unit(
       id: 'r-old',
       type: kUnitTypeExplorer,
@@ -138,8 +138,8 @@ void main() {
     );
 
     test('returns oldWorld when unit list is in old world', () {
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: RegionData(units: [uOld]),
         newWorld: const RegionData(),
       );
@@ -147,8 +147,8 @@ void main() {
     });
 
     test('returns newWorld when unit is only in new world', () {
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: const RegionData(),
         newWorld: RegionData(units: [uNew]),
       );
@@ -156,8 +156,8 @@ void main() {
     });
 
     test('returns null when unit id is in neither region', () {
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: const RegionData(),
         newWorld: const RegionData(),
       );
@@ -179,8 +179,8 @@ void main() {
         locationProvinceId: 'newWorld|P2',
         tileKey: 'newWorld|P2|0|0',
       );
-      final ws = WorldState(
-        turnState: turn,
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 0,
         oldWorld: RegionData(units: [a]),
         newWorld: RegionData(units: [b]),
       );

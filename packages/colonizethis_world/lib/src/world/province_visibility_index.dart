@@ -1,5 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'province_lookup.dart';
+
 /// Per-game-state index of which players have any non-`unknown` tile
 /// visibility inside each province.
 ///
@@ -52,8 +54,8 @@ ProvinceVisibilityIndex buildProvinceVisibilityIndex(Game game) {
   final visibilityByPlayer = game.worldState.playerVisibilityByTile;
   final playerIds = <String>[for (final p in game.players) p.id];
 
-  for (final region in [game.worldState.oldWorld, game.worldState.newWorld]) {
-    for (final province in region.provinces) {
+  for (final entry in game.worldState.regionsInOrder) {
+    for (final province in entry.region.provinces) {
       final regionId = province.regionId;
       final fullProvinceId = province.id.contains('|')
           ? province.id

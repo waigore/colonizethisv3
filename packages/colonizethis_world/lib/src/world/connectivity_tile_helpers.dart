@@ -62,7 +62,17 @@ int transportLevelAtTile(
 String? fullProvinceIdFromTileKey(String tileKey) {
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords == null) return null;
-  return '${coords.regionId}|${coords.provinceLocalId}';
+  return ProvinceId.full(coords.regionId, coords.provinceLocalId);
+}
+
+/// Grid `(x, y)` parsed from a tile key, or null when the key is malformed.
+///
+/// Shared null-guarded `parseTileKeyCoordinates` projection (Refs #3710) so the
+/// naval/fog coastal-geometry paths do not re-roll their own local copies.
+({int x, int y})? xyFromTileKey(String tileKey) {
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return null;
+  return (x: coords.x, y: coords.y);
 }
 
 /// Tile grids use local province ids (`p2`); [buildCombinedTopology] uses prefixed node ids (`oldWorld|p2`).

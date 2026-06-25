@@ -2,6 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   const turn = TurnState(phase: TurnPhase.orders, turnNumber: 0);
   final pOld = Province(
@@ -19,8 +21,8 @@ void main() {
     List<Province> oldProvinces = const [],
     List<Province> newProvinces = const [],
   }) {
-    return WorldState(
-      turnState: turn,
+    return TestFixtures.worldStateAtOrdersPhase(
+      turnNumber: 0,
       oldWorld: RegionData(provinces: oldProvinces),
       newWorld: RegionData(provinces: newProvinces),
     );

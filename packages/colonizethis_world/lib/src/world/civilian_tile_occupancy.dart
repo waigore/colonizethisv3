@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'connectivity_tile_helpers.dart' show fullProvinceIdFromTileKey;
 import 'faction_membership.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'province_lookup.dart';
@@ -12,11 +13,8 @@ bool isLandTileKeyForGame(Game game, String tileKey) {
   if (tileKey.isEmpty) return false;
   final ws = game.worldState;
   if (_landTileKeysForWorld(ws).contains(tileKey)) return true;
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords != null) {
-    final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
-    if (ws.tryGetProvince(provinceId) != null) return true;
-  }
+  final provinceId = fullProvinceIdFromTileKey(tileKey);
+  if (provinceId != null && ws.tryGetProvince(provinceId) != null) return true;
   return false;
 }
 

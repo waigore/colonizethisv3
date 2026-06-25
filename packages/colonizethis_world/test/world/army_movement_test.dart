@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/army_movement.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Exercises same-region and cross-region army move application in
@@ -28,8 +30,7 @@ WorldState _worldWith({
   List<Army> armies = const [],
   List<Province> oldWorld = const [],
   List<Province> newWorld = const [],
-}) => WorldState(
-  turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+}) => TestFixtures.worldStateAtOrdersPhase(
   oldWorld: RegionData(provinces: oldWorld),
   newWorld: RegionData(provinces: newWorld),
   armies: armies,
@@ -244,10 +245,10 @@ void main() {
           ),
         ],
       );
-      final game = Game(
-        id: 'g',
+      final game = TestFixtures.singlePlayerGame(
+        const Player(id: 'p1', displayName: 'P1', isHuman: true),
+        gameId: 'g',
         worldState: world,
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final result = applyCrossRegionArmyMovesWithinOwnedProvinces(
         game: game,
@@ -285,10 +286,10 @@ void main() {
           ),
         ],
       );
-      final game = Game(
-        id: 'g',
+      final game = TestFixtures.singlePlayerGame(
+        const Player(id: 'p1', displayName: 'P1', isHuman: true),
+        gameId: 'g',
         worldState: world,
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final result = applyCrossRegionArmyMovesWithinOwnedProvinces(
         game: game,

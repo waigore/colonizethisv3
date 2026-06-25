@@ -3,6 +3,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:logger/logger.dart';
 
+import '../test_fixtures.dart';
+
 List<String> _civilianMovementMessages(List<LogEvent> events) => [
       for (final e in events)
         if (e.message.contains('world:') && e.message.contains('civilian'))
@@ -29,26 +31,21 @@ void main() {
 
     test('applyCivilianTileMoveOrdersToWorldRegions emits apply summary (info)', () {
       const ow = 'oldWorld';
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: kUnitTypeMerchant,
-                ownerId: 'p1',
-                locationProvinceId: 'oldWorld|P1',
-                tileKey: 'oldWorld|P1|0|0',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+            Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: 'oldWorld|P1',
+              tileKey: 'oldWorld|P1|0|0',
+            ),
+          ],
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -78,17 +75,11 @@ void main() {
     test('applyCivilianTileMoveOrdersToWorldRegions emits unit_not_found at debug',
         () {
       const ow = 'oldWorld';
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
-            ],
-            units: const [],
-          ),
-          newWorld: const RegionData(),
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+          ],
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -130,17 +121,11 @@ void main() {
       () {
         Logger.level = Level.info;
         const ow = 'oldWorld';
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
-              ],
-              units: const [],
-            ),
-            newWorld: const RegionData(),
+        final game = TestFixtures.minimalGame(
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+            ],
           ),
           players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         );
