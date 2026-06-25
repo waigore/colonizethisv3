@@ -4,6 +4,7 @@ import '../constants.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
+import 'turn_event_sink.dart';
 import 'turn_resolution_helpers.dart';
 
 /// Emits game events after turn resolution phases. SPEC/program/game-events.md.
@@ -32,7 +33,7 @@ void _emitResearchDialogueForNewlyUnlockedTech({
   required int turn,
   required Set<String> hadTechBefore,
   required Set<String> firstDiscoveriesThisTurn,
-  required void Function(DialogueEvent) onDialogue,
+  required TurnEventSink sink,
 }) {
   final eventDialogue = dialogueEventsForTechDiscovered(
     stateAfter,
@@ -42,7 +43,7 @@ void _emitResearchDialogueForNewlyUnlockedTech({
     seed: turn,
   );
   for (final e in eventDialogue) {
-    onDialogue(e);
+    sink.dialogue(e);
   }
   final isFirst =
       !hadTechBefore.contains(tech) && firstDiscoveriesThisTurn.add(tech);
@@ -55,7 +56,7 @@ void _emitResearchDialogueForNewlyUnlockedTech({
     seed: turn,
   );
   for (final e in reactive) {
-    onDialogue(e);
+    sink.dialogue(e);
   }
 }
 
@@ -64,9 +65,7 @@ void emitResearchCompleteEvents(
   Game stateBefore,
   Game stateAfter,
   int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
-  void Function(DialogueEvent)? onDialogue,
+  TurnEventSink sink,
 ) {
   final hadTechBefore = _techKeysUnlockedBefore(stateBefore);
   final firstDiscoveriesThisTurn = <String>{};
@@ -91,8 +90,8 @@ void emitResearchCompleteEvents(
         techId: tech,
         turnNumber: turn,
       );
-      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
-      if (onDialogue == null) continue;
+      sink.emit(event);
+      if (!sink.hasDialogue) continue;
       _emitResearchDialogueForNewlyUnlockedTech(
         stateAfter: stateAfter,
         player: player,
@@ -100,7 +99,7 @@ void emitResearchCompleteEvents(
         turn: turn,
         hadTechBefore: hadTechBefore,
         firstDiscoveriesThisTurn: firstDiscoveriesThisTurn,
-        onDialogue: onDialogue,
+        sink: sink,
       );
     }
   }
@@ -111,8 +110,7 @@ void emitDiplomacyChangeEvents(
   Map<String, Map<String, RelationState>> previousRelations,
   Game stateAfter,
   int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink sink,
 ) {
   for (final rel in stateAfter.diplomacyRelations) {
     final prev1 = previousRelations[rel.factionId1]?[rel.factionId2];
@@ -123,7 +121,7 @@ void emitDiplomacyChangeEvents(
         changeType: rel.state.name,
         turnNumber: turn,
       );
-      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+      sink.emit(event);
     }
   }
 }
@@ -137,9 +135,7 @@ void emitProvinceCapturedEvents(
   Map<String, String?> previousOwnership,
   Game stateAfter,
   int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
-  void Function(DialogueEvent)? onDialogue,
+  TurnEventSink sink,
 ) {
   for (final prov in stateAfter.worldState.allProvinces()) {
     final previousOwner = previousOwnership[prov.id];
@@ -151,9 +147,9 @@ void emitProvinceCapturedEvents(
         newOwnerId: newOwner!,
         turnNumber: turn,
       );
-      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+      sink.emit(event);
     }
-    if (onDialogue == null) continue;
+    if (!sink.hasDialogue) continue;
     if (prov.ownerId == null || prov.ownerId!.isEmpty) continue;
     final colonyDialogue = dialogueEventsForColonyFounded(
       stateAfter,
@@ -164,25 +160,20 @@ void emitProvinceCapturedEvents(
       seed: turn,
     );
     for (final e in colonyDialogue) {
-      onDialogue(e);
+      sink.dialogue(e);
     }
   }
 }
 
 /// Emit victory_set if [state] has victory set.
-void emitVictorySetEvent(
-  Game state,
-  int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
-) {
+void emitVictorySetEvent(Game state, int turn, TurnEventSink sink) {
   if (state.victory != null) {
     final event = VictorySetEvent(
       winnerPlayerId: state.victory!.winnerPlayerId,
       victoryType: state.victory!.type.name,
       turnNumber: turn,
     );
-    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+    sink.emit(event);
   }
 }
 
@@ -212,8 +203,7 @@ void emitWorkOrderCompletedEvents(
   Game stateBefore,
   Game stateAfter,
   int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink sink,
 ) {
   final beforeById = stateBefore.worldState.allUnitsById;
   final afterById = stateAfter.worldState.allUnitsById;
@@ -249,7 +239,7 @@ void emitWorkOrderCompletedEvents(
       provinceId: provinceId,
       turnNumber: turn,
     );
-    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+    sink.emit(event);
   }
 }
 
@@ -266,8 +256,7 @@ void emitPlayerDiscoveryEvents(
   Game stateBefore,
   Game stateAfter,
   int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent, {
+  TurnEventSink sink, {
   ProvinceVisibilityIndex? beforeIndex,
   ProvinceVisibilityIndex? afterIndex,
 }) {
@@ -283,8 +272,7 @@ void emitPlayerDiscoveryEvents(
       turn: turn,
       beforeIndex: resolvedBeforeIndex,
       afterIndex: resolvedAfterIndex,
-      eventBus: eventBus,
-      onGameEvent: onGameEvent,
+      sink: sink,
     );
     final beforeSea = _seaZonesAtSeaForPlayer(stateBefore, playerId);
     final afterSea = _seaZonesAtSeaForPlayer(stateAfter, playerId);
@@ -295,7 +283,7 @@ void emitPlayerDiscoveryEvents(
         seaZoneId: seaZoneId,
         turnNumber: turn,
       );
-      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+      sink.emit(event);
     }
   }
 }
@@ -306,8 +294,7 @@ void _emitPlayerProvinceDiscoveryEvents({
   required int turn,
   required ProvinceVisibilityIndex beforeIndex,
   required ProvinceVisibilityIndex afterIndex,
-  required GameEventBus? eventBus,
-  required void Function(GameEvent)? onGameEvent,
+  required TurnEventSink sink,
 }) {
   for (final province in stateAfter.worldState.allProvinces()) {
     final fullProvinceId = _prefixedProvinceId(province);
@@ -321,7 +308,7 @@ void _emitPlayerProvinceDiscoveryEvents({
       provinceId: fullProvinceId,
       turnNumber: turn,
     );
-    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+    sink.emit(event);
   }
 }
 
@@ -330,8 +317,7 @@ void emitOvertureAdvancedEvents(
   Game stateBefore,
   Game stateAfter,
   int turn,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink sink,
 ) {
   OvertureStage beforeStage(String gpId, String targetId) {
     for (final state in stateBefore.overtureStates) {
@@ -353,6 +339,6 @@ void emitOvertureAdvancedEvents(
       newStage: overture.stage.name,
       turnNumber: turn,
     );
-    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+    sink.emit(event);
   }
 }

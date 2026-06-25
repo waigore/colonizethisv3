@@ -16,6 +16,6 @@ TurnPhaseStepOutcome endOfTurnTurnPhaseHandler(
     topologyByRegion: config.topologyByRegion,
     onDialogue: config.onDialogue,
   );
-  emitVictorySetEvent(after, turn, config.eventBus, config.onGameEvent);
+  emitVictorySetEvent(after, turn, config.eventSink);
   return TurnPhaseStepContinue(acc.copyWith(game: after));
 }

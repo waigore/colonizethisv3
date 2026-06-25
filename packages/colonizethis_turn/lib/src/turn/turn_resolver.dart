@@ -14,6 +14,7 @@ export 'economy_preview_pipeline.dart'
         emptyEconomyPreviewInputs,
         previewStockpileNetDeltaByCommodityForPlayer,
         previewStockpilePhaseDeltasByCommodityForPlayer;
+import 'turn_event_sink.dart';
 import 'turn_order_acceptance.dart';
 import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';
@@ -139,8 +140,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     engine: engine,
     game: game,
     topology: topology,
-    eventBus: eventBus,
-    onGameEvent: onGameEvent,
+    sink: TurnEventSink(eventBus: eventBus, onGameEvent: onGameEvent),
     tileMapByRegion: tileMapByRegion,
   );
   return resolveTurnForGame(
