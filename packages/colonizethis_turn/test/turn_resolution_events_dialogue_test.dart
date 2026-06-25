@@ -1,4 +1,5 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_turn/src/turn/turn_event_sink.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolution_events.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -34,7 +35,12 @@ void main() {
         ],
       );
       final dialogue = <DialogueEvent>[];
-      emitResearchCompleteEvents(before, after, 6, null, null, dialogue.add);
+      emitResearchCompleteEvents(
+        before,
+        after,
+        6,
+        TurnEventSink(onDialogue: dialogue.add),
+      );
       expect(
         dialogue.any(
           (e) =>
@@ -76,7 +82,12 @@ void main() {
         ],
       );
       final dialogue = <DialogueEvent>[];
-      emitResearchCompleteEvents(before, after, 6, null, null, dialogue.add);
+      emitResearchCompleteEvents(
+        before,
+        after,
+        6,
+        TurnEventSink(onDialogue: dialogue.add),
+      );
       expect(
         dialogue.any(
           (e) =>
@@ -113,9 +124,7 @@ void main() {
           const {'newWorld|N1': null},
           after,
           2,
-          null,
-          null,
-          dialogue.add,
+          TurnEventSink(onDialogue: dialogue.add),
         );
         expect(
           dialogue.any(
@@ -157,9 +166,7 @@ void main() {
             {fullPid: 'gp1'},
             after,
             1,
-            null,
-            captured.add,
-            null,
+            TurnEventSink(onGameEvent: captured.add),
           );
           expect(captured, isEmpty);
         },
@@ -188,9 +195,7 @@ void main() {
           {fullPid: 'gp1'},
           after,
           1,
-          null,
-          captured.add,
-          null,
+          TurnEventSink(onGameEvent: captured.add),
         );
         expect(captured, hasLength(1));
         final e = captured.single as ProvinceCapturedEvent;

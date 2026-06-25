@@ -22,3 +22,28 @@ Map<K, V> snapshotBy<T, K, V>(
   }
   return result;
 }
+
+/// Builds a symmetric nested snapshot from pairwise [items].
+///
+/// For each item, records [value] under both `[first][second]` and
+/// `[second][first]`, so callers can look the entry up from either side. This
+/// mirrors the previous inline bidirectional `previousRelations` build in the
+/// diplomacy phase: each side's map is created on first use and repeated pairs
+/// follow last-write-wins, keeping turn-resolution determinism unchanged.
+/// Refs #3701.
+Map<String, Map<String, V>> snapshotSymmetricPairs<T, V>(
+  Iterable<T> items,
+  String Function(T item) first,
+  String Function(T item) second,
+  V Function(T item) value,
+) {
+  final result = <String, Map<String, V>>{};
+  for (final item in items) {
+    final a = first(item);
+    final b = second(item);
+    final v = value(item);
+    (result[a] ??= <String, V>{})[b] = v;
+    (result[b] ??= <String, V>{})[a] = v;
+  }
+  return result;
+}

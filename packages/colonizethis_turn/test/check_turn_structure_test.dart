@@ -73,6 +73,27 @@ void main() {
       );
     });
 
+    test('deliverGameEvent dispatch lives only in TurnEventSink', () {
+      // Theme B (Refs #3701): the game-event transport is centralized in
+      // TurnEventSink.emit, so emitters and phase handlers depend on the sink
+      // instead of calling deliverGameEvent directly. Any new direct call is a
+      // regression that re-couples a call site to the raw transport.
+      final pattern = RegExp(r'deliverGameEvent\s*\(');
+      final offenders = _filesMatching(
+        libDir,
+        pattern,
+        allowed: 'turn_event_sink.dart',
+      );
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'deliverGameEvent dispatch must go through TurnEventSink.emit '
+            '(turn_event_sink.dart). Direct calls found in:\n'
+            '${offenders.join('\n')}',
+      );
+    });
+
     test('guard patterns still match their canonical helpers', () {
       // Sanity: the guards are meaningful only if the canonical sources still
       // contain the patterns. This fails loudly if a helper is renamed/moved.
@@ -100,6 +121,16 @@ void main() {
           r'kTurnResolutionLcgMultiplier\s*\+\s*kTurnResolutionLcgIncrement',
         ).hasMatch(seeds),
         isTrue,
+      );
+      final sink = File(
+        '${libDir.path}/src/turn/turn_event_sink.dart',
+      ).readAsStringSync();
+      expect(
+        RegExp(r'deliverGameEvent\s*\(').hasMatch(sink),
+        isTrue,
+        reason:
+            'TurnEventSink.emit must remain the single deliverGameEvent caller '
+            'in turn_event_sink.dart',
       );
     });
   });

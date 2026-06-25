@@ -1,6 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import '../turn_phase_snapshot.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolution_result.dart';
@@ -15,13 +14,12 @@ TurnPhaseStepOutcome diplomacyTurnPhaseHandler(
   int turn,
 ) {
   final stateBeforeDiplomacy = acc.game;
-  final previousRelations = <String, Map<String, RelationState>>{};
-  for (final rel in acc.game.diplomacyRelations) {
-    previousRelations.putIfAbsent(rel.factionId1, () => {});
-    previousRelations.putIfAbsent(rel.factionId2, () => {});
-    previousRelations[rel.factionId1]![rel.factionId2] = rel.state;
-    previousRelations[rel.factionId2]![rel.factionId1] = rel.state;
-  }
+  final previousRelations = snapshotSymmetricPairs(
+    acc.game.diplomacyRelations,
+    (rel) => rel.factionId1,
+    (rel) => rel.factionId2,
+    (rel) => rel.state,
+  );
   final diploResult = resolveDiplomacyPhase(
     acc.game,
     config.orders,
@@ -70,19 +68,8 @@ TurnPhaseStepOutcome diplomacyTurnPhaseHandler(
     }
     throw StateError('diplomacy pending but no pending lists populated');
   }
-  emitDiplomacyChangeEvents(
-    previousRelations,
-    diploResult.game,
-    turn,
-    config.eventBus,
-    config.onGameEvent,
-  );
-  emitOvertureAdvancedEvents(
-    stateBeforeDiplomacy,
-    diploResult.game,
-    turn,
-    config.eventBus,
-    config.onGameEvent,
-  );
+  final sink = config.eventSink;
+  emitDiplomacyChangeEvents(previousRelations, diploResult.game, turn, sink);
+  emitOvertureAdvancedEvents(stateBeforeDiplomacy, diploResult.game, turn, sink);
   return TurnPhaseStepContinue(acc.copyWith(game: diploResult.game));
 }

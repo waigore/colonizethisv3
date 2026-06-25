@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'turn_event_sink.dart';
 import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
 
@@ -79,6 +80,17 @@ class TurnResolverConfig {
   /// When non-null with [onTurnTracePhase], collects order-level events (for
   /// example civilian move apply/ignore) for the active phase.
   final TurnTraceRuntime? turnTraceRuntime;
+
+  /// Bundles the event transport ([eventBus], [onGameEvent], [onDialogue]) into
+  /// a single [TurnEventSink] for emitters and phase handlers, replacing the
+  /// positional `(eventBus, onGameEvent, onDialogue)` trio. Capture it once per
+  /// phase handler (`final sink = config.eventSink;`) and reuse it across the
+  /// emitters in that phase rather than re-reading it per event. Refs #3701.
+  TurnEventSink get eventSink => TurnEventSink(
+    eventBus: eventBus,
+    onGameEvent: onGameEvent,
+    onDialogue: onDialogue,
+  );
 
   /// Returns a copy with the given overrides applied. A `null` argument leaves
   /// the existing value unchanged.

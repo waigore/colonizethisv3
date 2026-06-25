@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'turn_event_sink.dart';
 import 'turn_resolution_seeds.dart';
 import 'naval_resolution_helpers.dart';
 import 'naval_resolution_move.dart';
@@ -101,9 +102,7 @@ Game runNavalInterceptionCombatPhase(
   MapTopology topology,
   Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId, {
   Map<String, double> navalFeedingCoverageByPlayerId = const {},
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
-  GameEventBus? eventBus,
+  TurnEventSink sink = const TurnEventSink(),
 }) {
   var battles = detectNavalConflicts(game);
   turnLog.d('naval phase detected battles=${battles.length}');
@@ -175,7 +174,7 @@ Game runNavalInterceptionCombatPhase(
       turn: turn,
       battleIndex: battleIndex,
       seedAfterBattle: seed,
-      onDialogue: onDialogue,
+      onDialogue: sink.onDialogue,
     );
 
     final winnerOwnerId = navalBattleWinnerOwnerId(result.outcome, battle);
@@ -189,7 +188,7 @@ Game runNavalInterceptionCombatPhase(
       side1Retreated: result.side1Retreated,
       side2Retreated: result.side2Retreated,
     );
-    deliverGameEvent(navalEv, eventBus: eventBus, onGameEvent: onGameEvent);
+    sink.emit(navalEv);
 
     battleIndex++;
   }

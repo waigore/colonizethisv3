@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 // In-package import: emitPlayerDiscoveryEvents is not re-exported via the
 // package barrel, so the turn package's own tests reach it through src/.
+import 'package:colonizethis_turn/src/turn/turn_event_sink.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolution_events.dart';
 
 import 'turn_news_digest_test_support.dart';
@@ -108,8 +109,7 @@ void main() {
         before,
         after,
         after.worldState.turnState.turnNumber,
-        null,
-        events.add,
+        TurnEventSink(onGameEvent: events.add),
         beforeIndex: beforeIndex,
         afterIndex: afterIndex,
       );

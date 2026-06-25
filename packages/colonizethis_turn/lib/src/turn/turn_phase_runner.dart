@@ -25,8 +25,7 @@ TurnResolutionResult runTurnResolutionPipeline({
       gameAtResolutionStart,
       gameAtResolutionStart,
       turn,
-      config.eventBus,
-      config.onGameEvent,
+      config.eventSink,
       beforeIndex: haltedIndex,
       afterIndex: haltedIndex,
     );
@@ -98,8 +97,7 @@ TurnResolutionResult runTurnResolutionPipeline({
     gameAtResolutionStart,
     acc.game,
     turn,
-    config.eventBus,
-    config.onGameEvent,
+    config.eventSink,
     beforeIndex: beforeIndex,
     afterIndex: afterIndex,
   );

@@ -6,6 +6,7 @@ import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../combat_phase_helpers.dart';
+import '../turn_event_sink.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolver_config.dart';
@@ -99,6 +100,13 @@ Game runCombatPhase(
     ledger: combatGeneralLedger,
   );
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
+  // Combat-result/dialogue delivery historically bypasses the configured event
+  // bus (only the onGameEvent callback + default logger), so the battle sink is
+  // built without an eventBus to preserve that exact behaviour. Refs #3701.
+  final battleSink = TurnEventSink(
+    onGameEvent: onGameEvent,
+    onDialogue: onDialogue,
+  );
   var seed = mixTurnSeed(game, turn);
   var battleIndex = 0;
   for (final ctx in boundBattles) {
@@ -119,8 +127,7 @@ Game runCombatPhase(
       battleIndex,
       seed,
       combatGeneralLedger,
-      onDialogue: onDialogue,
-      onGameEvent: onGameEvent,
+      sink: battleSink,
     );
     seed = advanceTurnSeed(seed);
     battleIndex++;
@@ -171,9 +178,7 @@ TurnPhaseStepOutcome combatTurnPhaseHandler(
     previousOwnership,
     afterCombat,
     turn,
-    config.eventBus,
-    config.onGameEvent,
-    config.onDialogue,
+    config.eventSink,
   );
   return TurnPhaseStepContinue(acc.copyWith(game: afterCombat));
 }
