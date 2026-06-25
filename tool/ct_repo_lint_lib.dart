@@ -66,6 +66,7 @@ import 'check_logic_source_file_size.dart';
 import 'check_world_no_logic_deps.dart';
 import 'check_logic_no_map_deps.dart';
 import 'check_world_no_circular_imports.dart';
+import 'check_world_no_duplicate_extension_helper.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
 import 'check_domain_package_logger_dedup.dart';
@@ -829,6 +830,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicNoMapDeps(repoRoot);
     case 'repo.world_no_circular_imports':
       return runCheckWorldNoCircularImports(repoRoot);
+    case 'repo.world_no_duplicate_extension_helper':
+      return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,

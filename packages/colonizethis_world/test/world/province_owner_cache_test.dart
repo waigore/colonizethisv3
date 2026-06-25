@@ -2,6 +2,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   const ow = kRegionOldWorld;
   const nw = kRegionNewWorld;
@@ -9,8 +11,7 @@ void main() {
   const bId = '$ow|B';
   const cId = '$nw|C';
 
-  WorldState buildWorld() => WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+  WorldState buildWorld() => TestFixtures.worldStateAtOrdersPhase(
     oldWorld: const RegionData(
       provinces: [
         Province(id: aId, regionId: ow, ownerId: 'p1'),

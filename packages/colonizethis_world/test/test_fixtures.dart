@@ -22,12 +22,15 @@ abstract final class TestFixtures {
     RegionData? oldWorld,
     RegionData? newWorld,
     TileMapState? tileState,
+    Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
+        const {},
   }) {
     return WorldState(
       turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
       oldWorld: oldWorld ?? const RegionData(),
       newWorld: newWorld ?? const RegionData(),
       tileState: tileState ?? const TileMapState(),
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     );
   }
 

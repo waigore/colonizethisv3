@@ -3,11 +3,12 @@ import 'package:colonizethis_world/src/world/province_traversal.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   group('traverseProvinces', () {
     test('yields provinces from both regions in old-then-new order', () {
-      final world = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      final world = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: RegionData(
           provinces: [
             Province(id: 'oldWorld|p1', regionId: kRegionOldWorld, ownerId: 'gp1'),
@@ -41,8 +42,7 @@ void main() {
     });
 
     test('where filter excludes provinces', () {
-      final world = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      final world = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: RegionData(
           provinces: [
             Province(id: 'oldWorld|p1', regionId: kRegionOldWorld, ownerId: 'gp1'),
@@ -63,8 +63,7 @@ void main() {
 
   group('forEachWorldRegion', () {
     test('invokes action once per region', () {
-      final world = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      final world = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: RegionData(
           provinces: [Province(id: 'oldWorld|p1', regionId: kRegionOldWorld)],
         ),
@@ -81,8 +80,7 @@ void main() {
 
   group('ownerByProvinceIdMap (Refs #2560)', () {
     test('covers both regions and preserves null ownerId entries', () {
-      final world = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      final world = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: RegionData(
           provinces: [
             Province(
@@ -116,8 +114,7 @@ void main() {
     });
 
     test('matches the inline traverseProvinces idiom it replaces', () {
-      final world = WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      final world = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: RegionData(
           provinces: [
             Province(
