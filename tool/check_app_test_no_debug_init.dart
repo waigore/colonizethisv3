@@ -24,7 +24,6 @@ import 'package:path/path.dart' as p;
 const Set<String> _kDebugInitAllowlist = <String>{
   'app/test/game_map_area_selection_mode_test.dart',
   'app/test/production_commodity_breakdown_dialog_wide_golden_test.dart',
-  'app/test/province_sea_zone_overlay_detail_paths_test.dart',
   'app/test/unit_panels_goldens_test.dart',
 };
 
