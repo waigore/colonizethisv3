@@ -8,27 +8,17 @@ import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'dart:ui' as ui;
+
+import 'support/widget_test_assets.dart';
 
 void main() {
   suppressLogsForTests();
 
   setUpAll(() async {
-    try {
-      final bytes = await rootBundle.load(
-        'assets/images/ui_button_nine_patch.png',
-      );
-      final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-      final frame = await codec.getNextFrame();
-      Flame.images.add('ui_button_nine_patch.png', frame.image);
-    } catch (e) {
-      // Silently fail - the test might still work if the image is available later
-    }
+    await preloadNinePatchImage();
   });
 
   Game minimalGame({

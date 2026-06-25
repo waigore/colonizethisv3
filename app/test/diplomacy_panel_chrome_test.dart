@@ -4,14 +4,11 @@
 // non-comment lines). SPEC/ui/diplomacy-panel.md § Per-faction row.
 
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
@@ -19,6 +16,7 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -115,19 +113,6 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
   Widget build(BuildContext context) => widget.child;
 }
 
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (e) {
-    // Silently fail - the test might still work if the image is available later
-  }
-}
-
 Widget _buildPanel({
   required Game game,
   required String humanPlayerId,
@@ -167,7 +152,7 @@ void main() {
   });
 
   setUpAll(() async {
-    await _preWarmFlameImageCache();
+    await preloadNinePatchImage();
     // Refs #3656: lightweight discovered-GP fixture replaces the ~7-11s
     // getDebugInitGameResult() map generation. These chrome suites only read a
     // discovered Great Power row (relation badges + action buttons), which the

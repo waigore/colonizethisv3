@@ -42,8 +42,6 @@
 // Refs #2870 S10 (no horizontal overflow at 320 dp on every covered
 // screen).
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
@@ -53,11 +51,11 @@ import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/widget_test_assets.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -76,28 +74,6 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 const String _kHumanPlayerId = 'gp1';
 const String _kOtherFactionId = 'gp2';
 const String _kOtherFactionDisplayName = 'Other GP';
-
-/// Pre-warms the brass nine-patch sprite into the Flame image cache so
-/// the `CtNinePatchButton` chrome that may surface inside the
-/// `CtGameFeatureScreenShell` lays out at its true declared size during
-/// the 320 dp pin rather than falling back to a `SizedBox.shrink()`
-/// silhouette while the asset bytes resolve. Mirrors the helper used by
-/// `diplomacy_detail_screen_test.dart` and `unit_panels_320dp_min_viewport_test.dart`.
-Future<void> _ensureUiNinePatchAssetLoaded() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Silently ignore — the pin still asserts the chrome lays out at the
-    // 320 dp viewport even when the asset cannot be resolved in the test
-    // sandbox; `CtNinePatchButton` falls back to a 0-size placeholder
-    // which still respects the surrounding `Wrap` / `Column` layout.
-  }
-}
 
 /// Minimal in-memory `Game` carrying a single human GP and one other GP
 /// (which acts as the detail-screen target). Mirrors the helper used by
@@ -207,7 +183,7 @@ void main() {
   suppressLogsForTests();
 
   setUpAll(() async {
-    await _ensureUiNinePatchAssetLoaded();
+    await preloadNinePatchImage();
   });
 
   group(

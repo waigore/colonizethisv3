@@ -5,33 +5,16 @@
 // layout selected via [kDiplomacyRowNarrowMaxWidth] and surfaced through
 // the public `kDiplomacyRowBodyKeyPrefix`-tagged body key.
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 
 import 'support/panel_test_fixtures.dart';
-
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Best-effort: existing diplomacy tests tolerate a missing nine-patch
-    // bundle. Layout assertions here do not require pixel-perfect chrome.
-  }
-}
+import 'support/widget_test_assets.dart';
 
 Future<void> _pumpPanelBuilt(WidgetTester tester) async {
   await tester.pump();
@@ -85,7 +68,7 @@ void main() {
   setUp(() => AppEventBus.reset());
 
   setUpAll(() async {
-    await _preWarmFlameImageCache();
+    await preloadNinePatchImage();
     // Refs #3656: lightweight discovered-GP fixture replaces the ~7-11s
     // getDebugInitGameResult() map generation. The responsive-layout pins only
     // need one discovered faction row (keyed by faction id), which the

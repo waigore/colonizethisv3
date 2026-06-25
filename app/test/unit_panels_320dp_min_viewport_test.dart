@@ -42,14 +42,10 @@
 //        `SPEC/ui/naval-units-panel.md`.
 // Refs #2870 S10.
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -60,6 +56,7 @@ import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -142,28 +139,6 @@ Widget _buildNavalUnitsPanel({
   );
 }
 
-/// Pre-warms the Flame image cache for the brass nine-patch button asset so
-/// `NavalUnitsPanel`'s `FleetExpansionTile` action chrome lays out at its
-/// true declared height (32 dp) instead of falling back to a
-/// `SizedBox.shrink()` silhouette. Mirrors the helper used by
-/// `panels_320dp_min_viewport_test.dart` (DiplomacyPanel group) and
-/// `naval_units_panel_test_part1`.
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-    Flame.images.add('assets/images/ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Best-effort: mirrors the resilience of the sibling pin file. The
-    // layout contract under test is overflow-free chrome, not a
-    // pixel-perfect nine-patch render.
-  }
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -172,7 +147,7 @@ void main() {
   late String humanPlayerId;
 
   setUpAll(() async {
-    await _preWarmFlameImageCache();
+    await preloadNinePatchImage();
     // Refs #3656: a shared lightweight fixture (civilians + army/regiments +
     // home/non-home fleets in both regions) replaces the ~11s
     // `getDebugInitGameResult()` map generation. These pins assert chrome only

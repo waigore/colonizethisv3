@@ -20,8 +20,6 @@
 // criteria (AC-15); SPEC/ui/diplomacy-detail-screen.md § Acceptance Criteria
 // (relative-power golden).
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
@@ -29,11 +27,11 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/widget_test_assets.dart';
 
 /// `pumpAndSettle` can hang on the detail surface (animated chrome keeps the
 /// ticker busy); bounded pumps flush layout and the deferred build instead.
@@ -118,16 +116,7 @@ void main() {
     // The detail screen chrome (CtTopBar / CtBackButton) may consume the
     // shared nine-patch image; preload it so the golden renders the framed
     // button rather than an error box (mirrors diplomacy_detail_screen_test).
-    try {
-      final bytes = await rootBundle.load(
-        'assets/images/ui_button_nine_patch.png',
-      );
-      final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-      final frame = await codec.getNextFrame();
-      Flame.images.add('ui_button_nine_patch.png', frame.image);
-    } catch (_) {
-      // Best-effort: the golden still captures the relative-power line.
-    }
+    await preloadNinePatchImage();
   });
 
   setUp(AppEventBus.reset);
