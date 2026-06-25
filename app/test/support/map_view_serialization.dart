@@ -358,7 +358,7 @@ InitGameMapViewData initGameMapViewDataFromJson(Map<String, dynamic> json) {
       json['newWorld'] as Map<String, dynamic>,
     ),
     combinedTopology: MapTopology.fromJson(
-      Map<String, dynamic>.from(json['combinedTopology'] as Map),
+      Map<String, dynamic>.from(json['combinedTopology'] as Map<String, dynamic>),
     ),
     seed: json['seed'] as int?,
     configSummary: json['configSummary'] as String?,

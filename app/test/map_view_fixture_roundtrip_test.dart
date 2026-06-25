@@ -38,7 +38,8 @@ import 'support/map_view_fixture.dart';
 import 'support/map_view_serialization.dart';
 
 Set<String> _cellKeyUnion(Map<String, dynamic> regionJson) {
-  final cells = (regionJson['cells'] as List).cast<Map<String, dynamic>>();
+  final cells = (regionJson['cells'] as List<dynamic>)
+      .cast<Map<String, dynamic>>();
   final keys = <String>{};
   for (final cell in cells) {
     keys.addAll(cell.keys);
@@ -56,15 +57,15 @@ Map<String, Object> _regionShape(Map<String, dynamic> regionJson) {
     'width': regionJson['width'] as int,
     'height': regionJson['height'] as int,
     'cellSize': regionJson['cellSize'] as int,
-    'cellCount': (regionJson['cells'] as List).length,
-    'capitalMarkers': (regionJson['capitalMarkers'] as List).length,
-    'portMarkers': (regionJson['portMarkers'] as List).length,
-    'townMarkers': (regionJson['townMarkers'] as List).length,
-    'warpMarkers': (regionJson['warpMarkers'] as List).length,
-    'factionColors': (regionJson['factionColors'] as Map).length,
-    'terrainColors': (regionJson['terrainColors'] as Map).length,
+    'cellCount': (regionJson['cells'] as List<dynamic>).length,
+    'capitalMarkers': (regionJson['capitalMarkers'] as List<dynamic>).length,
+    'portMarkers': (regionJson['portMarkers'] as List<dynamic>).length,
+    'townMarkers': (regionJson['townMarkers'] as List<dynamic>).length,
+    'warpMarkers': (regionJson['warpMarkers'] as List<dynamic>).length,
+    'factionColors': (regionJson['factionColors'] as Map<String, dynamic>).length,
+    'terrainColors': (regionJson['terrainColors'] as Map<String, dynamic>).length,
     'greatPowerFactionIds':
-        (regionJson['greatPowerFactionIds'] as List).length,
+        (regionJson['greatPowerFactionIds'] as List<dynamic>).length,
     'cellKeyUnion': (_cellKeyUnion(regionJson).toList()..sort()).join(','),
   };
 }
@@ -76,7 +77,9 @@ Map<String, Object> _shape(Map<String, dynamic> json) {
     'oldWorld': _regionShape(json['oldWorld'] as Map<String, dynamic>),
     'newWorld': _regionShape(json['newWorld'] as Map<String, dynamic>),
     'topologyKeys':
-        ((json['combinedTopology'] as Map).keys.toList()..sort()).join(','),
+        ((json['combinedTopology'] as Map<String, dynamic>).keys.toList()
+              ..sort())
+            .join(','),
   };
 }
 
