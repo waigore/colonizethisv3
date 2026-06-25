@@ -42,7 +42,7 @@ import '../integration_test/e2e_test_shared.dart';
 
 /// Mounts an [InkWell] keyed by [kCtE2ESelectFirstValidWorkTileKey] inside
 /// a [Material] ancestor so [WidgetTester.tap] resolves the same gesture
-/// surface as the production overlay in `game_map_area_part2.dart`. The
+/// surface as the production overlay in `game_map_area_build.dart`. The
 /// host removes the overlay on tap so the strict and best-effort
 /// `pump_until_work_tile_overlay_cleared_*` settles see the same
 /// "tap → unmount" transition the real overlay produces.

@@ -1,7 +1,17 @@
 part of 'game_map_area.dart';
 
-mixin _GameMapAreaStatePart2
-    on _GameMapAreaStatePart1, ConsumerState<GameMapArea> {
+/// View composition for [GameMapArea]: the controls bar, map canvas stack,
+/// overlays (left rail, corner controls, side menu, minimap, players bar, turn
+/// feed), debug console, and narrow-layout detail slot (Refs #3699 Theme 3).
+mixin _GameMapAreaBuild
+    on
+        ConsumerState<GameMapArea>,
+        _GameMapAreaStateBase,
+        _GameMapAreaView,
+        _GameMapAreaSelection,
+        _GameMapAreaTurnResolution,
+        _GameMapAreaTurnFeed,
+        _GameMapAreaE2e {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
@@ -23,7 +33,7 @@ mixin _GameMapAreaStatePart2
     final turnDisplayText = l10n.game_turnDisplay(turnNumber, year);
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
-    final feedEntries = (this as _GameMapAreaState)._feedEntries();
+    final feedEntries = _feedEntries();
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
     return Column(
       children: [
