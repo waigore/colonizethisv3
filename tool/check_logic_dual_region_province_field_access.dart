@@ -26,6 +26,18 @@ final RegExp _manualRegionBranchPattern = RegExp(
   r'^\s*(if|else if)\s*\(\s*regionId\s*==\s*kRegionOldWorld\s*\)',
 );
 
+/// List-literal region iteration such as
+/// `[game.worldState.oldWorld, game.worldState.newWorld]` bypasses the canonical
+/// dual-region traversal helpers (`WorldState.regionsInOrder` /
+/// `forEachWorldRegion`) and previously escaped this gate because it carries no
+/// `oldWorld.provinces` / `newWorld.provinces` substring (Refs #3710). Matches a
+/// `[` that reaches `.oldWorld` then `.newWorld` before the closing `]` on the
+/// same line; record types `(oldWorld: ..., newWorld: ...)` use `(` and are not
+/// matched.
+final RegExp _regionListLiteralPattern = RegExp(
+  r'\[[^\]]*\.oldWorld\b[^\]]*\.newWorld\b',
+);
+
 bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
   return line.contains('oldWorld.provinces') ||
       line.contains('newWorld.provinces') ||
@@ -33,7 +45,8 @@ bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
       line.contains('newWorld.units') ||
       line.contains('copyWith(oldWorld:') ||
       line.contains('copyWith(newWorld:') ||
-      _manualRegionBranchPattern.hasMatch(line);
+      _manualRegionBranchPattern.hasMatch(line) ||
+      _regionListLiteralPattern.hasMatch(line);
 }
 
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
