@@ -7,7 +7,6 @@ import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -18,8 +17,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/game_fixture.dart';
+import 'support/map_view_fixture.dart';
+import 'support/tile_map_fixture.dart';
+
 void main() {
   suppressLogsForTests();
+
+  // NOTE (Refs #3656): The explore-prompt cases that only assert the
+  // selection-prompt overlay chrome / cancel + interaction-gating behaviour
+  // were migrated to the lightweight `buildSelectionPromptTestGame` +
+  // `buildLightweightMapViewData` fixtures in
+  // `game_map_area_selection_mode_lightweight_test.dart`. The two cases below
+  // genuinely need the generated `combinedTopology` / `tileMapByRegion` to
+  // discover valid work-order target tiles, so they load the committed seed-42
+  // serialized fixtures (game + map-view topology + per-region tile maps)
+  // instead of paying the ~7-11s `getDebugInitGameResult()` map generation. The
+  // grid/terrain/topology those tiles depend on are cross-process stable, so a
+  // valid build target is discovered deterministically per isolate.
+  final seed42Game = loadSeed42Game();
+  final seed42MapView = loadSeed42MapViewData();
+  final seed42CombinedTopology = seed42MapView.combinedTopology;
+  final seed42TileMapByRegion = loadSeed42TileMapByRegion();
 
   late Box<dynamic> gamesBox;
 
@@ -28,26 +47,16 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  // NOTE (Refs #3656): The explore-prompt cases that only assert the
-  // selection-prompt overlay chrome / cancel + interaction-gating behaviour
-  // were migrated to the lightweight `buildSelectionPromptTestGame` +
-  // `buildLightweightMapViewData` fixtures in
-  // `game_map_area_selection_mode_lightweight_test.dart`. The two cases below
-  // genuinely need the generated `combinedTopology` / `tileMapByRegion` to
-  // discover valid work-order target tiles, so they stay on the documented
-  // `getDebugInitGameResult()` allowlist.
-
   testWidgets(
     'build_improvement selection mode prompt appears under one second',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = seed42Game;
+      final mapViewData = seed42MapView;
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
 
       final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
-      final topology = init.combinedTopology;
+      final topology = seed42CombinedTopology;
       final playerView = buildPlayerView(game, topology, humanPlayerId);
 
       String? builderUnitId;
@@ -68,7 +77,7 @@ void main() {
           unitId: unit.id,
           workTarget: kWorkTargetBuildImprovement,
           currentOrders: const Orders(),
-          tileMapByRegion: init.tileMapByRegion,
+          tileMapByRegion: seed42TileMapByRegion,
         );
         if (valid.isNotEmpty) {
           builderUnitId = unit.id;
@@ -135,9 +144,8 @@ void main() {
   testWidgets(
     'work target selection auto-switches to region with valid tiles when current tab has none',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = seed42Game;
+      final mapViewData = seed42MapView;
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
 
@@ -155,7 +163,7 @@ void main() {
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand,
       ];
-      final topology = init.combinedTopology;
+      final topology = seed42CombinedTopology;
       final playerView = buildPlayerView(game, topology, humanPlayerId);
       final unitById = <String, Unit>{
         for (final unit in [
@@ -175,7 +183,7 @@ void main() {
             unitId: unit.id,
             workTarget: workTarget,
             currentOrders: const Orders(),
-            tileMapByRegion: init.tileMapByRegion,
+            tileMapByRegion: seed42TileMapByRegion,
           );
           final hasOldWorld = valid.any((k) => k.startsWith('oldWorld|'));
           final hasOnlyOldWorld =

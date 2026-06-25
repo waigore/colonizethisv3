@@ -12,10 +12,19 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/game_fixture.dart';
+import 'support/map_view_fixture.dart';
 
 void main() {
   suppressLogsForTests();
+
+  // Load the committed seed-42 map-view fixture once per isolate instead of
+  // paying the ~7-11s procedural map generation of getDebugInitGameResult()
+  // (Refs #3656). The fixture's combinedTopology is byte-identical to the live
+  // generator's for the default config, so playerView visibility is unchanged.
+  final seed42MapView = loadSeed42MapViewData();
+  final seed42CombinedTopology = seed42MapView.combinedTopology;
 
   Widget buildOverlay({
     required Game game,
@@ -25,9 +34,8 @@ void main() {
     String? selectedTileKey,
     VoidCallback? onClose,
   }) {
-    final init = getDebugInitGameResult();
     final playerView =
-        buildPlayerView(game, init.combinedTopology, humanPlayerId);
+        buildPlayerView(game, seed42CombinedTopology, humanPlayerId);
     return MaterialApp(
       home: Scaffold(
         body: ProvinceSeaZoneDetailOverlay(
@@ -184,9 +192,8 @@ void main() {
     testWidgets('AC: New World province overlay resolves units from newWorld state', (
       WidgetTester tester,
     ) async {
-      final init = getDebugInitGameResult();
-      final region = init.mapViewData.newWorld;
-      final game = init.game;
+      final region = seed42MapView.newWorld;
+      final game = loadSeed42Game();
       final humanPlayerId = game.players.first.id;
       final landCell = region.cells.firstWhere((c) => !c.isSea);
       final provinceId = '${region.regionId}|${landCell.regionCellId}';

@@ -21,7 +21,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/game_fixture.dart';
+import 'support/map_view_fixture.dart';
+import 'support/tile_map_fixture.dart';
 
 void main() {
   suppressLogsForTests();
@@ -36,9 +39,10 @@ void main() {
       tester.view.physicalSize = const Size(900, 620);
       tester.view.devicePixelRatio = 1.0;
 
-      final result = getDebugInitGameResult();
-      final game = result.game;
+      final game = loadSeed42Game();
       final player = game.players.firstWhere((p) => p.isHuman);
+      final combinedTopology = loadSeed42MapViewData().combinedTopology;
+      final tileMapByRegion = loadSeed42TileMapByRegion();
 
       await tester.pumpWidget(
         ProviderScope(
@@ -54,8 +58,8 @@ void main() {
                 child: ProductionCommodityBreakdownDialog(
                   game: game,
                   player: player,
-                  topology: result.combinedTopology,
-                  tileMapByRegion: result.tileMapByRegion,
+                  topology: combinedTopology,
+                  tileMapByRegion: tileMapByRegion,
                   currentOrders: const Orders(),
                 ),
               ),

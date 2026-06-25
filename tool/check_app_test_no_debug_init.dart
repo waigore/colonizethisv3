@@ -21,13 +21,14 @@ import 'package:path/path.dart' as p;
 /// lightweight or serialized fixtures; new entries require justification. The
 /// check fails on a **stale** entry (file missing, or migrated so it no longer
 /// invokes the helper) so the backlog cannot silently retain slack.
-const Set<String> _kDebugInitAllowlist = <String>{
-  'app/test/game_map_area_selection_mode_test.dart',
-  'app/test/production_commodity_breakdown_dialog_wide_golden_test.dart',
-  'app/test/province_sea_zone_overlay_detail_paths_test.dart',
-  'app/test/train_dialogs_goldens_test.dart',
-  'app/test/unit_panels_goldens_test.dart',
-};
+///
+/// The backlog is now **empty**: every `app/test/**` suite has migrated to the
+/// shared lightweight fixtures (`app/test/support/panel_test_fixtures.dart`) or
+/// the committed seed-42 serialized fixtures (game / map-view topology /
+/// per-region tile maps under `app/test/support/fixtures/`). No `app/test/**`
+/// file may reintroduce `getDebugInitGameResult()`; add an entry here only with
+/// a documented justification for data that cannot be serialized round-trip.
+const Set<String> _kDebugInitAllowlist = <String>{};
 
 /// Symbol whose invocation is gated.
 const String _kDebugInitSymbol = 'getDebugInitGameResult';
