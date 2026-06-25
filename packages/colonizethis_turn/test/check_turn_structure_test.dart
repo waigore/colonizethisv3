@@ -12,6 +12,13 @@ import 'package:colonizethis_test/test.dart';
 /// * the turn-seed root (`(game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix)`)
 ///   must live only in `mixTurnSeed` (`turn_resolution_seeds.dart`); see issue
 ///   #3565 item #4.
+///
+/// Refs #3701 extends the same single-source pattern to the LCG seed-advance
+/// step: the `* kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement`
+/// advance arithmetic must live only in `advanceTurnSeed`
+/// (`turn_resolution_seeds.dart`). The `kTurnResolutionLcgMultiplier` token is
+/// the distinctive marker of the advance step (mask-only callers reference only
+/// `kTurnResolutionLcgMask`), so guarding it keeps inlined advance copies out.
 void main() {
   group('colonizethis_turn structure guards (Refs #3565)', () {
     final libDir = _turnLibDir();
@@ -49,6 +56,23 @@ void main() {
       );
     });
 
+    test('LCG seed-advance literal lives only in advanceTurnSeed', () {
+      final pattern = RegExp('kTurnResolutionLcgMultiplier');
+      final offenders = _filesMatching(
+        libDir,
+        pattern,
+        allowed: 'turn_resolution_seeds.dart',
+      );
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'LCG seed-advance steps must reuse advanceTurnSeed '
+            '(turn_resolution_seeds.dart). Inlined copies found in:\n'
+            '${offenders.join('\n')}',
+      );
+    });
+
     test('guard patterns still match their canonical helpers', () {
       // Sanity: the guards are meaningful only if the canonical sources still
       // contain the patterns. This fails loudly if a helper is renamed/moved.
@@ -64,6 +88,17 @@ void main() {
       );
       expect(
         RegExp(r'globalGameSeed\s*\?\?\s*0\)\s*\^').hasMatch(seeds),
+        isTrue,
+      );
+      expect(
+        seeds.contains('int advanceTurnSeed('),
+        isTrue,
+        reason: 'advanceTurnSeed must remain defined in turn_resolution_seeds.dart',
+      );
+      expect(
+        RegExp(
+          r'kTurnResolutionLcgMultiplier\s*\+\s*kTurnResolutionLcgIncrement',
+        ).hasMatch(seeds),
         isTrue,
       );
     });

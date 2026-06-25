@@ -10,6 +10,7 @@ import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolver_config.dart';
 import '../turn_resolution_seeds.dart';
+import '../turn_phase_snapshot.dart';
 
 void _emitPreBattleDialogueForConflicts(
   Game state,
@@ -58,15 +59,21 @@ Game runCombatPhase(
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
-  final previousCapitalByPlayer = {
-    for (final p in game.players) p.id: p.capitalProvinceId,
-  };
-  final previousCapitalByMinor = {
-    for (final m in game.minorNations) m.id: m.capitalProvinceId,
-  };
-  final previousCapitalByTribe = {
-    for (final t in game.tribes) t.id: t.capitalProvinceId,
-  };
+  final previousCapitalByPlayer = snapshotBy(
+    game.players,
+    (p) => p.id,
+    (p) => p.capitalProvinceId,
+  );
+  final previousCapitalByMinor = snapshotBy(
+    game.minorNations,
+    (m) => m.id,
+    (m) => m.capitalProvinceId,
+  );
+  final previousCapitalByTribe = snapshotBy(
+    game.tribes,
+    (t) => t.id,
+    (t) => t.capitalProvinceId,
+  );
   Game state = game;
   final turn = state.worldState.turnState.turnNumber;
   final preBattleDialogueSeed = mixTurnSeed(game, turn);
@@ -115,9 +122,7 @@ Game runCombatPhase(
       onDialogue: onDialogue,
       onGameEvent: onGameEvent,
     );
-    seed =
-        (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
-        kTurnResolutionLcgMask;
+    seed = advanceTurnSeed(seed);
     battleIndex++;
   }
   state = applyCapitalReassignmentAfterCombat(
@@ -147,10 +152,11 @@ TurnPhaseStepOutcome combatTurnPhaseHandler(
   TurnResolverConfig config,
   int turn,
 ) {
-  final previousOwnership = <String, String?>{};
-  for (final prov in acc.game.worldState.allProvinces()) {
-    previousOwnership[prov.id] = prov.ownerId;
-  }
+  final previousOwnership = snapshotBy(
+    acc.game.worldState.allProvinces(),
+    (prov) => prov.id,
+    (prov) => prov.ownerId,
+  );
   final afterCombat = runCombatPhase(
     acc.game,
     config.orders,

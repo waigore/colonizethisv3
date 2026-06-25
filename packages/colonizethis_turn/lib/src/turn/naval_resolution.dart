@@ -118,9 +118,7 @@ Game runNavalInterceptionCombatPhase(
   var seed = mixTurnSeed(game, game.worldState.turnState.turnNumber);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   turnLog.d('naval phase after interception battles=${battles.length}');
-  seed =
-      (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
-      kTurnResolutionLcgMask;
+  seed = advanceTurnSeed(seed);
   var state = game;
   final turn = game.worldState.turnState.turnNumber;
   var battleIndex = 0;
@@ -148,9 +146,7 @@ Game runNavalInterceptionCombatPhase(
       side2CanRetreat: retreatZoneSide2 != null,
       navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
     );
-    seed =
-        (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
-        kTurnResolutionLcgMask;
+    seed = advanceTurnSeed(seed);
     // Single-pass first-match (Refs #2394): topology lookup first; otherwise
     // fall back to the first fleet bucketed under `battle.seaZoneId` via the
     // pre-built fleets-by-sea-zone index (still single-pass; no `.where` or
