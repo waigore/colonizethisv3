@@ -16,7 +16,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_turn/lib/src/turn/phases/combat_phase.dart
-    line: 163
+    line: 162
     rationale: Combat phase snapshots pre-combat ownership across all provinces (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416
