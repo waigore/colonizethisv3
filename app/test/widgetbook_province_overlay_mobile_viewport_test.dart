@@ -18,33 +18,14 @@
 // overlay; the pump assertion guards the AC that the narrow story is
 // reviewable in Widgetbook without resizing the host window.
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 
-/// Pre-warm the brass nine-patch into Flame's image cache so the
-/// overlay's panel chrome (which can reference Flame-cached assets via
-/// shared Ct primitives) lays out at declared height. Best-effort; the
-/// pump assertions only require the use case to mount.
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Best-effort.
-  }
-}
+import 'support/widget_test_assets.dart';
 
 WidgetbookUseCase _useCase(
   List<WidgetbookNode> directories, {
@@ -71,7 +52,7 @@ void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(_preWarmFlameImageCache);
+  setUpAll(preloadNinePatchImage);
 
   group(
     'Province Overlay Widgetbook mobile-viewport story (Refs #2870 R22 / S9)',

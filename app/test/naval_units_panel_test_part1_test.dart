@@ -1,9 +1,6 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -13,9 +10,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
@@ -26,6 +21,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 /// Mirrors shell handling of [NavalSplitFleetRequestedEvent] for widget tests.
 StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
@@ -69,48 +65,8 @@ void main() {
   late String humanPlayerIdWithFleets;
   const String humanPlayerIdWithNoFleets = 'no-such-player';
 
-  // Fallback 1x1 transparent PNG if the real asset cannot be read.
-  final ninePatchFallbackPng = base64Decode(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=',
-  );
-  Uint8List ninePatchBytes = ninePatchFallbackPng;
-
   setUpAll(() async {
-    final assetCandidates = <String>[
-      'app/assets/images/ui_button_nine_patch.png',
-      'assets/images/ui_button_nine_patch.png',
-    ];
-    for (final candidate in assetCandidates) {
-      final file = File(candidate);
-      if (await file.exists()) {
-        ninePatchBytes = await file.readAsBytes();
-        break;
-      }
-    }
-
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMessageHandler('flutter/assets', (message) async {
-          final key = const StringCodec().decodeMessage(message);
-          if (key == 'assets/images/ui_button_nine_patch.png') {
-            return ByteData.view(ninePatchBytes.buffer);
-          }
-          return null;
-        });
-
-    // Preload panel nine-patch image into Flame cache so widget tests are
-    // stable regardless of invocation directory.
-    try {
-      final bytes = await rootBundle.load(
-        'assets/images/ui_button_nine_patch.png',
-      );
-      final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-      final frame = await codec.getNextFrame();
-      Flame.images.add('ui_button_nine_patch.png', frame.image);
-      Flame.images.add('assets/images/ui_button_nine_patch.png', frame.image);
-    } catch (_) {
-      // Keep tests resilient when asset prewarm fails; individual tests can
-      // still validate behavior where possible.
-    }
+    await setUpNinePatchAssets();
 
     // Refs #3656: lightweight hand-built fixture replaces the ~11s procedural
     // map generation of getDebugInitGameResult(); this family asserts only on
@@ -130,11 +86,6 @@ void main() {
     humanPlayerIdWithFleets = game.players.isNotEmpty
         ? game.players.first.id
         : 'gp1';
-  });
-
-  tearDownAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMessageHandler('flutter/assets', null);
   });
 
   Widget buildPanel({

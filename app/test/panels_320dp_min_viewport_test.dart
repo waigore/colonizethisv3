@@ -25,14 +25,10 @@
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // Refs #2870 S10.
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
@@ -51,6 +47,7 @@ import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 
 import 'production_panel_test_fixtures.dart';
 import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -63,25 +60,6 @@ const Size _kMinViewport = Size(kMinViewportWidth, 640);
 /// pins keeps the regression signal honest. Mirrors the same pattern in
 /// `mobile_320dp_min_viewport_test.dart`.
 const Size _kWideRegressionViewport = Size(1024, 768);
-
-/// Pre-warms the Flame image cache for the brass nine-patch button asset so
-/// DiplomacyPanel's `CtNinePatchButton` action chrome lays out at its true
-/// declared height (32 dp) instead of falling back to a `SizedBox.shrink()`
-/// silhouette. Mirrors the helper used by
-/// `diplomacy_panel_narrow_layout_test.dart`.
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Best-effort: existing diplomacy tests tolerate a missing nine-patch
-    // bundle. Layout assertions here do not require pixel-perfect chrome.
-  }
-}
 
 /// Pumps [child] at [size] under the running editorial-monocle theme.
 /// Sets the surface size (so the binding's render flex math sees the
@@ -248,7 +226,7 @@ void main() {
       setUp(() => AppEventBus.reset());
 
       setUpAll(() async {
-        await _preWarmFlameImageCache();
+        await preloadNinePatchImage();
         // Lightweight fixture (Refs #3656): a single discovered Great Power is
         // enough to exercise the narrow faction-row body; no generated
         // map/topology data is read, so an empty `MapTopology` suffices.
