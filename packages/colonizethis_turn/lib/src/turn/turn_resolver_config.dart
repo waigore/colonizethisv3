@@ -6,6 +6,8 @@ import 'turn_event_sink.dart';
 import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
 
+export 'turn_event_sink.dart';
+
 /// One turn-resolution phase: advance or exit the pipeline with a result.
 typedef TurnPhaseHandler =
     TurnPhaseStepOutcome Function(
@@ -26,9 +28,7 @@ class TurnResolverConfig {
     this.extractedByPlayerId = const {},
     this.defaultAssignments = const [],
     this.defaultAssignmentsByPlayerId,
-    this.eventBus,
-    this.onDialogue,
-    this.onGameEvent,
+    this.eventSink = const TurnEventSink(),
     this.onProductionComplete,
     this.startFromPhase,
     this.overtureDecisions,
@@ -51,9 +51,13 @@ class TurnResolverConfig {
   final Map<String, Map<CommodityId, int>> extractedByPlayerId;
   final List<AssignedRecipe> defaultAssignments;
   final Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId;
-  final GameEventBus? eventBus;
-  final void Function(DialogueEvent)? onDialogue;
-  final void Function(GameEvent)? onGameEvent;
+
+  /// Bundles the event transport ([GameEventBus], `onGameEvent`, `onDialogue`)
+  /// behind a single [TurnEventSink], replacing the positional
+  /// `(eventBus, onGameEvent, onDialogue)` trio that was previously threaded
+  /// through this config and every public resolver entry point. Defaults to a
+  /// no-op sink (no bus, no callbacks). Refs #3701.
+  final TurnEventSink eventSink;
   final void Function(
     Map<String, Map<String, int>> productionByRecipeByPlayerId,
   )?
@@ -81,17 +85,6 @@ class TurnResolverConfig {
   /// example civilian move apply/ignore) for the active phase.
   final TurnTraceRuntime? turnTraceRuntime;
 
-  /// Bundles the event transport ([eventBus], [onGameEvent], [onDialogue]) into
-  /// a single [TurnEventSink] for emitters and phase handlers, replacing the
-  /// positional `(eventBus, onGameEvent, onDialogue)` trio. Capture it once per
-  /// phase handler (`final sink = config.eventSink;`) and reuse it across the
-  /// emitters in that phase rather than re-reading it per event. Refs #3701.
-  TurnEventSink get eventSink => TurnEventSink(
-    eventBus: eventBus,
-    onGameEvent: onGameEvent,
-    onDialogue: onDialogue,
-  );
-
   /// Returns a copy with the given overrides applied. A `null` argument leaves
   /// the existing value unchanged.
   ///
@@ -108,9 +101,7 @@ class TurnResolverConfig {
     Map<String, Map<CommodityId, int>>? extractedByPlayerId,
     List<AssignedRecipe>? defaultAssignments,
     Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-    GameEventBus? eventBus,
-    void Function(DialogueEvent)? onDialogue,
-    void Function(GameEvent)? onGameEvent,
+    TurnEventSink? eventSink,
     void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
     onProductionComplete,
     TurnPhase? startFromPhase,
@@ -133,9 +124,7 @@ class TurnResolverConfig {
       defaultAssignments: defaultAssignments ?? this.defaultAssignments,
       defaultAssignmentsByPlayerId:
           defaultAssignmentsByPlayerId ?? this.defaultAssignmentsByPlayerId,
-      eventBus: eventBus ?? this.eventBus,
-      onDialogue: onDialogue ?? this.onDialogue,
-      onGameEvent: onGameEvent ?? this.onGameEvent,
+      eventSink: eventSink ?? this.eventSink,
       onProductionComplete: onProductionComplete ?? this.onProductionComplete,
       startFromPhase: startFromPhase ?? this.startFromPhase,
       overtureDecisions: overtureDecisions ?? this.overtureDecisions,

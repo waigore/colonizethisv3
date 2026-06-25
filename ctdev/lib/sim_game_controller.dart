@@ -367,7 +367,7 @@ class SimGameController {
         tileMapByRegion: _tileMapByRegion,
         defaultAssignments: const [],
         defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-        onGameEvent: _recordCombatGameEvent,
+        eventSink: TurnEventSink(onGameEvent: _recordCombatGameEvent),
         onTurnTracePhase: turnTraceEnabled ? phaseTraces.add : null,
         turnTraceRuntime: traceRuntime,
       ),

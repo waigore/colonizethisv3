@@ -14,7 +14,6 @@ export 'economy_preview_pipeline.dart'
         emptyEconomyPreviewInputs,
         previewStockpileNetDeltaByCommodityForPlayer,
         previewStockpilePhaseDeltasByCommodityForPlayer;
-import 'turn_event_sink.dart';
 import 'turn_order_acceptance.dart';
 import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';
@@ -72,9 +71,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink? eventSink,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
   TurnTraceRuntime? turnTraceRuntime,
 }) {
@@ -86,9 +83,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
     game: game,
     topology: topology,
     orders: merged,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
+    eventSink: eventSink,
     tileMapByRegion: tileMapByRegion,
     topologyByRegion: topologyByRegion,
     extractedByPlayerId: extractedByPlayerId,
@@ -124,9 +119,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink? eventSink,
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
   onPhaseProgress,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
@@ -140,14 +133,12 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     engine: engine,
     game: game,
     topology: topology,
-    sink: TurnEventSink(eventBus: eventBus, onGameEvent: onGameEvent),
+    sink: eventSink ?? const TurnEventSink(),
     tileMapByRegion: tileMapByRegion,
   );
   return resolveTurnForGame(
     game: game,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
+    eventSink: eventSink,
     topology: topology,
     orders: filtered,
     tileMapByRegion: tileMapByRegion,
@@ -190,9 +181,7 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink? eventSink,
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
@@ -202,9 +191,7 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
 }) {
   return resolveTurnForGame(
     game: game,
-    eventBus: eventBus,
-    onDialogue: onDialogue,
-    onGameEvent: onGameEvent,
+    eventSink: eventSink,
     onProductionComplete: onProductionComplete,
     topology: topology,
     orders: orders,
@@ -233,9 +220,7 @@ TurnResolutionResult resolveTurnForGame({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  GameEventBus? eventBus,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink? eventSink,
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
   TurnPhase? startFromPhase,
@@ -258,9 +243,7 @@ TurnResolutionResult resolveTurnForGame({
       extractedByPlayerId: extractedByPlayerId,
       defaultAssignments: defaultAssignments,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-      eventBus: eventBus,
-      onDialogue: onDialogue,
-      onGameEvent: onGameEvent,
+      eventSink: eventSink ?? const TurnEventSink(),
       onProductionComplete: onProductionComplete,
       startFromPhase: startFromPhase,
       overtureDecisions: overtureDecisions,
