@@ -62,7 +62,7 @@ int transportLevelAtTile(
 String? fullProvinceIdFromTileKey(String tileKey) {
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords == null) return null;
-  return '${coords.regionId}|${coords.provinceLocalId}';
+  return ProvinceId.full(coords.regionId, coords.provinceLocalId);
 }
 
 /// Grid `(x, y)` parsed from a tile key, or null when the key is malformed.

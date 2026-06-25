@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'connectivity_tile_helpers.dart' show fullProvinceIdFromTileKey;
 import 'game_world_mutations.dart';
 import 'naval.dart';
 import 'naval_coastal_visibility.dart'
