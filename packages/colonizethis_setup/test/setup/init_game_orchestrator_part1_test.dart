@@ -4,8 +4,9 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('runInitGame', () {
@@ -16,7 +17,7 @@ void main() {
 
         final result = runInitGame(
           config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
 
         expect(result.game, isNotNull);
@@ -75,7 +76,7 @@ void main() {
       final config = GameSetupConfig.defaultConfig;
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: defaultInitOptions,
       );
       expect(result.markdown, contains('## Faction Setup'));
       expect(result.markdown, contains('## Faction Starting State'));
@@ -109,7 +110,7 @@ void main() {
         final config = GameSetupConfig.defaultConfig;
         final result = runInitGame(
           config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
         expect(result.warpLinks, isA<List<WarpLink>>());
         final combined = result.combinedTopology;
@@ -136,18 +137,10 @@ void main() {
     );
 
     test('seed=0 uses time-based effective seed', () {
-      final config = GameSetupConfig(
-        selectedGreatPowerIds:
-            GameSetupConfig.defaultConfig.selectedGreatPowerIds,
-        numProvincesOldWorld:
-            GameSetupConfig.defaultConfig.numProvincesOldWorld,
-        numProvincesNewWorld:
-            GameSetupConfig.defaultConfig.numProvincesNewWorld,
-        seed: 0,
-      );
+      final config = configWithOverrides(seed: 0);
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: defaultInitOptions,
       );
       expect(result.game, isNotNull);
       expect(result.game.globalGameSeed, isNonZero);
@@ -155,22 +148,10 @@ void main() {
 
     test('non-zero seed: globalGameSeed matches config.seed', () {
       const k = 900_001;
-      final base = GameSetupConfig.defaultConfig;
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: base.selectedGreatPowerIds,
-        leaderVariantByGpId: base.leaderVariantByGpId,
-        continentCount: base.continentCount,
-        minorNationCount: base.minorNationCount,
-        tribeCount: base.tribeCount,
-        numProvincesOldWorld: base.numProvincesOldWorld,
-        numProvincesNewWorld: base.numProvincesNewWorld,
-        minProvincesPerMinor: base.minProvincesPerMinor,
-        seed: k,
-        startingResources: base.startingResources,
-      );
+      final config = configWithOverrides(seed: k);
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: defaultInitOptions,
       );
       expect(result.game.globalGameSeed, k);
     });
@@ -183,22 +164,9 @@ void main() {
         // Pairwise distinct sea-zone strings on one map are not required; stability
         // of (regionId|localSeaZoneId) → displayName for a fixed seed is.
         const k = 900_002;
-        final base = GameSetupConfig.defaultConfig;
-        final config = GameSetupConfig(
-          selectedGreatPowerIds: base.selectedGreatPowerIds,
-          leaderVariantByGpId: base.leaderVariantByGpId,
-          continentCount: base.continentCount,
-          minorNationCount: base.minorNationCount,
-          tribeCount: base.tribeCount,
-          numProvincesOldWorld: base.numProvincesOldWorld,
-          numProvincesNewWorld: base.numProvincesNewWorld,
-          minProvincesPerMinor: base.minProvincesPerMinor,
-          seed: k,
-          startingResources: base.startingResources,
-        );
-        const options = InitGameOptions(cellSize: 8, renderPng: false);
-        final first = runInitGame(config: config, options: options);
-        final second = runInitGame(config: config, options: options);
+        final config = configWithOverrides(seed: k);
+        final first = runInitGame(config: config, options: defaultInitOptions);
+        final second = runInitGame(config: config, options: defaultInitOptions);
         expect(
           first.game.worldState.seaZoneDisplayNameById,
           second.game.worldState.seaZoneDisplayNameById,
@@ -208,56 +176,16 @@ void main() {
 
     test('NW tile map uses effectiveSeed + 1 (OW uses effective seed)', () {
       final seedsByRegion = <String, int>{};
-      (TileMapResult, MapTopology) captureSeeds({
-        required TileMapParams params,
-        required int numProvinces,
-        required int numContinents,
-        required String regionId,
-        String seaZoneId = 's1',
-        ResourceRules? resourceRules,
-        void Function(String)? onLog,
-        void Function(
-          List<(int x, int y)> landSeeds,
-          List<int> continentIndices,
-        )?
-        onLandSeedsPlaced,
-        void Function(List<(int x, int y)> continentSeeds)?
-        onContinentSeedsPlaced,
-        List<int>? continentProvinceSizes,
-      }) {
-        seedsByRegion[regionId] = params.seed;
-        return defaultTileMapRegionGenerator(
-          params: params,
-          numProvinces: numProvinces,
-          numContinents: numContinents,
-          regionId: regionId,
-          seaZoneId: seaZoneId,
-          resourceRules: resourceRules,
-          onLog: onLog,
-          onLandSeedsPlaced: onLandSeedsPlaced,
-          onContinentSeedsPlaced: onContinentSeedsPlaced,
-          continentProvinceSizes: continentProvinceSizes,
-        );
-      }
+      final captureSeeds = wrapRegionGenerator(
+        onParams: (regionId, params) => seedsByRegion[regionId] = params.seed,
+      );
 
       const k = 77_777;
-      final base = GameSetupConfig.defaultConfig;
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: base.selectedGreatPowerIds,
-        leaderVariantByGpId: base.leaderVariantByGpId,
-        continentCount: base.continentCount,
-        minorNationCount: base.minorNationCount,
-        tribeCount: base.tribeCount,
-        numProvincesOldWorld: base.numProvincesOldWorld,
-        numProvincesNewWorld: base.numProvincesNewWorld,
-        minProvincesPerMinor: base.minProvincesPerMinor,
-        seed: k,
-        startingResources: base.startingResources,
-      );
+      final config = configWithOverrides(seed: k);
 
       runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: defaultInitOptions,
         generateRegion: captureSeeds,
       );
 
@@ -272,7 +200,7 @@ void main() {
     test('after runInitGame worldState.turnState is orders at turn 0', () {
       final result = runInitGame(
         config: GameSetupConfig.defaultConfig,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: defaultInitOptions,
       );
       expect(result.game.worldState.turnState.phase, TurnPhase.orders);
       expect(result.game.worldState.turnState.turnNumber, 0);
@@ -290,53 +218,32 @@ void main() {
 
     test('generateRegion injection is used for OW and NW map generation', () {
       var callCount = 0;
-      (TileMapResult, MapTopology) countingGen({
-        required TileMapParams params,
-        required int numProvinces,
-        required int numContinents,
-        required String regionId,
-        String seaZoneId = 's1',
-        ResourceRules? resourceRules,
-        void Function(String)? onLog,
-        void Function(
-          List<(int x, int y)> landSeeds,
-          List<int> continentIndices,
-        )?
-        onLandSeedsPlaced,
-        void Function(List<(int x, int y)> continentSeeds)?
-        onContinentSeedsPlaced,
-        List<int>? continentProvinceSizes,
-      }) {
-        callCount++;
-        final forcedSizes =
-            continentProvinceSizes ??
-            (numContinents == 4 &&
-                    numProvinces == 60 &&
-                    regionId == kRegionOldWorld
-                ? const [13, 13, 17, 17]
-                : numContinents == 4 &&
-                      numProvinces == 30 &&
-                      regionId == kRegionNewWorld
-                ? const [6, 6, 9, 9]
-                : null);
-        return defaultTileMapRegionGenerator(
-          params: params,
-          numProvinces: numProvinces,
-          numContinents: numContinents,
-          regionId: regionId,
-          seaZoneId: seaZoneId,
-          resourceRules: resourceRules,
-          onLog: onLog,
-          onLandSeedsPlaced: onLandSeedsPlaced,
-          onContinentSeedsPlaced: onContinentSeedsPlaced,
-          continentProvinceSizes: forcedSizes,
-        );
-      }
+      final countingGen = wrapRegionGenerator(
+        onParams: (_, __) => callCount++,
+        resolveContinentProvinceSizes:
+            ({
+              required regionId,
+              required numProvinces,
+              required numContinents,
+              required continentProvinceSizes,
+            }) {
+              return continentProvinceSizes ??
+                  (numContinents == 4 &&
+                          numProvinces == 60 &&
+                          regionId == kRegionOldWorld
+                      ? const [13, 13, 17, 17]
+                      : numContinents == 4 &&
+                            numProvinces == 30 &&
+                            regionId == kRegionNewWorld
+                      ? const [6, 6, 9, 9]
+                      : null);
+            },
+      );
 
       final config = GameSetupConfig.defaultConfig;
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: defaultInitOptions,
         generateRegion: countingGen,
       );
 

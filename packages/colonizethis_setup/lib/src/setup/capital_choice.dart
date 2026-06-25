@@ -1,10 +1,9 @@
-import 'dart:collection';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_world/src/world/capital_reassignment.dart';
+import 'grid_bfs.dart';
 import 'setup_exceptions.dart';
 
 export 'package:colonizethis_world/src/world/capital_reassignment.dart'
@@ -119,6 +118,7 @@ WorldState applyCapitalPortAndRoad(
   var ports = Map<String, String>.from(worldState.portsByProvinceSeaboard);
 
   final capitalKey = tile.toTileKey();
+  final provinceIds = _provinceNodeIds(topology);
   final seaZoneIds = _seaZonesAdjacentToProvince(
     topology,
     localProvinceId,
@@ -138,6 +138,7 @@ WorldState applyCapitalPortAndRoad(
       map,
       topology,
       seaZoneId,
+      provinceIds: provinceIds,
     );
     if (capitalTouchesSeaZone) {
       tileState = _setRoadLevelMax(tileState, capitalKey, 4);
@@ -152,6 +153,7 @@ WorldState applyCapitalPortAndRoad(
       tile.y,
       topology,
       seaZoneId,
+      provinceIds: provinceIds,
     );
     if (coastal == null) {
       throw SetupTopologyDataException(
@@ -328,13 +330,14 @@ CapitalTileClass classifyCapitalTile({
   required String localProvinceId,
   Set<String>? provinceIds,
 }) {
-  final knownProvinceIds =
-      provinceIds ??
-      topology.nodes
-          .where((n) => n.type == TopologyNodeType.province)
-          .map((n) => n.id)
-          .toSet();
-  final coastal = _isTileAdjacentToSea(x, y, tileMap, topology);
+  final knownProvinceIds = provinceIds ?? _provinceNodeIds(topology);
+  final coastal = _isTileAdjacentToSea(
+    x,
+    y,
+    tileMap,
+    topology,
+    provinceIds: knownProvinceIds,
+  );
   final adjacentOtherProvince = _isTileAdjacentToOtherProvince(
     x,
     y,

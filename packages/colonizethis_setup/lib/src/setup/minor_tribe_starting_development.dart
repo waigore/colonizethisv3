@@ -6,6 +6,7 @@ import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'province_tile_ranking.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
 
@@ -52,31 +53,18 @@ List<String> selectMinorTribeStartingDevelopmentTileKeys({
   if (terrainGrid == null || resGrid == null) {
     return const <String>[];
   }
-  final regionId = capital.regionId;
-  final localId = ProvinceId.isPrefixed(capital.provinceId)
-      ? ProvinceId.localIdFrom(capital.provinceId)
-      : capital.provinceId;
-  final ranked = <(int dist, int y, int x, String key)>[];
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      if (map.cell(x, y) != localId) continue;
-      if (map.terrainAt(x, y) == null) continue;
-      if (map.resourceAt(x, y) == null) continue;
-      final key = CapitalTile.tileKey(regionId, capital.provinceId, x, y);
-      if (forbiddenTileKeys.contains(key)) continue;
-      if (tileState.improvementLevel(key) != 0) continue;
-      final dist = (x - capital.x).abs() + (y - capital.y).abs();
-      ranked.add((dist, y, x, key));
-    }
-  }
-  ranked.sort((a, b) {
-    final c = a.$1.compareTo(b.$1);
-    if (c != 0) return c;
-    final cy = a.$2.compareTo(b.$2);
-    if (cy != 0) return cy;
-    return a.$3.compareTo(b.$3);
-  });
-  return ranked.take(maxTiles).map((e) => e.$4).toList();
+  return rankProvinceTileKeysByDistance(
+    map: map,
+    capital: capital,
+    accept: (x, y, key) {
+      if (map.terrainAt(x, y) == null) return false;
+      if (map.resourceAt(x, y) == null) return false;
+      if (forbiddenTileKeys.contains(key)) return false;
+      if (tileState.improvementLevel(key) != 0) return false;
+      return true;
+    },
+    maxTiles: maxTiles,
+  );
 }
 
 /// Applies SPEC/game/factions.md § Starting developed resources rule for every
