@@ -1,12 +1,7 @@
-import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/package_logger.dart';
-import 'package:flutter/services.dart';
-
 import '../../../config/app_assets.dart';
-
-final _log = packageLogger();
+import 'asset_image_cache.dart';
 
 const Map<String, String> kCivilianTypeToIconSlug = {
   'builder': 'builder',
@@ -28,48 +23,18 @@ const Set<String> kCivilianIconSlugs = {
   'spy',
 };
 
-class CivilianIconCache {
-  final Map<String, ui.Image> _icons = {};
-  bool _isLoading = false;
-  bool _isLoaded = false;
-
-  bool get isLoaded => _isLoaded;
-
+class CivilianIconCache extends AssetImageCache {
   static const double iconSize = 64.0;
 
-  Future<void> load() async {
-    if (_isLoaded || _isLoading) return;
-    _isLoading = true;
+  @override
+  Iterable<String> get assetIds => kCivilianIconSlugs;
 
-    try {
-      await Future.wait(kCivilianIconSlugs.map(_loadColorIcon));
-      _isLoaded = true;
-      _log.i('Loaded ${_icons.length} civilian map icons');
-    } catch (e, stackTrace) {
-      _icons.clear();
-      _isLoaded = false;
-      _log.e(
-        'Failed to load civilian map icons',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    } finally {
-      _isLoading = false;
-    }
-  }
+  @override
+  String assetPath(String assetId) =>
+      '${kAppIcon64AssetPrefix}ui_icon_civ_$assetId.png';
 
-  Future<void> _loadColorIcon(String slug) async {
-    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_civ_$slug.png';
-    _icons[slug] = await _decodePng(pngPath);
-  }
-
-  Future<ui.Image> _decodePng(String assetPath) async {
-    final imageData = await rootBundle.load(assetPath);
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
-    return completer.future;
-  }
+  @override
+  String get loadLogLabel => 'civilian map icons';
 
   String? _normalizeSlug(String unitType) {
     final normalized = unitType.trim().toLowerCase();
@@ -82,7 +47,7 @@ class CivilianIconCache {
     final _ = grayscale;
     final slug = _normalizeSlug(unitType);
     if (slug == null) return null;
-    return _icons[slug];
+    return imageForId(slug);
   }
 }
 
