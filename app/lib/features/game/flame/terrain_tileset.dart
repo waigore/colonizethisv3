@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
@@ -9,6 +8,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
 import 'package:flutter/services.dart';
+
+import 'asset_image_cache.dart';
 
 final _log = packageLogger();
 
@@ -358,13 +359,7 @@ class TerrainTilesetCache {
         );
       }
 
-      final imageData = await rootBundle.load(pngPath);
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(
-        imageData.buffer.asUint8List(),
-        completer.complete,
-      );
-      final image = await completer.future;
+      final image = await decodeImageAsset(pngPath);
 
       final tiles = (json['tileset_data']['tiles'] as List<dynamic>)
           .map((t) => WangTile.fromJson(t as Map<String, dynamic>))
@@ -428,13 +423,7 @@ class TerrainTilesetCache {
     final pngPath = terrainTileAssetPath(assetStem);
 
     try {
-      final imageData = await rootBundle.load(pngPath);
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(
-        imageData.buffer.asUint8List(),
-        completer.complete,
-      );
-      final image = await completer.future;
+      final image = await decodeImageAsset(pngPath);
 
       _standaloneTiles[tileId] = StandaloneTile(tileId: tileId, image: image);
     } catch (e, stackTrace) {
@@ -451,10 +440,7 @@ class TerrainTilesetCache {
     String assetStem,
   ) async {
     final pngPath = terrainTileAssetPath(assetStem);
-    final imageData = await rootBundle.load(pngPath);
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
-    final image = await completer.future;
+    final image = await decodeImageAsset(pngPath);
     _standaloneTiles[tileId] = StandaloneTile(tileId: tileId, image: image);
   }
 

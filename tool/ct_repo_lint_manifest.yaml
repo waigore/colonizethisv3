@@ -312,6 +312,13 @@ rules:
     runner: dart
     script: tool/check_app_debug_handler_guard_helpers.dart
 
+  - rule_id: repo.app_asset_image_decode_dedup
+    group: structure
+    title: app Flame caches/tilesets must decode via the shared decodeImageAsset helper and icon caches must extend AssetImageCache (Refs #3699)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_asset_image_decode_dedup.dart
+
   - rule_id: repo.part_unit_size
     group: structure
     title: Dart part fragment physical line limit (repo-lint domain)
