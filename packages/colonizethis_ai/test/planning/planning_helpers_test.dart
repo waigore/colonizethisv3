@@ -15,6 +15,10 @@
 //     peace-target collector: null-keep keep-all, keep-subset filtering,
 //     GP/tribe exclusion, keep-none edge, ascending sort/determinism
 //     (Refs #3717)
+//   - `tribeAtWarPeaceTargetsWhere` — predicate-filtered tribe at-war
+//     peace-target collector: null-keep keep-all, keep-subset filtering,
+//     GP/minor exclusion, keep-none edge, ascending sort/determinism
+//     (Refs #3717)
 //   - `peaceTargetsExcludingBlocker` — drop-blocker-then-sort peace-target
 //     skeleton: blocker exclusion, null/absent blocker keep-all, empty input,
 //     input-order independence, Set (atWarWith) input (Refs #3717)
@@ -448,6 +452,99 @@ void main() {
           snapshot: _snapshotWithAtWar(['minorC', 'minorA', 'minorB']),
         ),
         ['minorA', 'minorB', 'minorC'],
+      );
+    });
+  });
+
+  group('tribeAtWarPeaceTargetsWhere (Refs #3717)', () {
+    Game gameWithTribes() => Game(
+      id: 'g-3717-tribe-peace',
+      worldState: WorldState(
+        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+        oldWorld: const RegionData(provinces: []),
+        newWorld: const RegionData(provinces: []),
+      ),
+      players: const [Player(id: _gp1, displayName: 'GP1', isHuman: false)],
+      minorNations: const [MinorNation(id: 'minorA', displayName: 'MinorA')],
+      tribes: const [
+        Tribe(id: 'tribeA', displayName: 'TribeA'),
+        Tribe(id: 'tribeB', displayName: 'TribeB'),
+        Tribe(id: 'tribeC', displayName: 'TribeC'),
+      ],
+    );
+
+    test('keep == null keeps every at-war tribe, sorted ascending', () {
+      final game = gameWithTribes();
+      final snapshot = _snapshotWithAtWar([
+        'tribeC',
+        _gp1,
+        'tribeA',
+        'minorA',
+        'tribeB',
+      ]);
+      expect(tribeAtWarPeaceTargetsWhere(game: game, snapshot: snapshot), [
+        'tribeA',
+        'tribeB',
+        'tribeC',
+      ]);
+    });
+
+    test('keeps only tribes matching the predicate, sorted', () {
+      final game = gameWithTribes();
+      final snapshot = _snapshotWithAtWar(['tribeC', 'tribeA', 'tribeB']);
+      expect(
+        tribeAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (factionId) => factionId != 'tribeB',
+        ),
+        ['tribeA', 'tribeC'],
+      );
+    });
+
+    test('never offers a GP or minor even with a keep-all predicate', () {
+      final game = gameWithTribes();
+      final snapshot = _snapshotWithAtWar([_gp1, 'minorA', 'tribeA']);
+      expect(
+        tribeAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => true,
+        ),
+        ['tribeA'],
+      );
+    });
+
+    test('keep-none returns empty', () {
+      final game = gameWithTribes();
+      final snapshot = _snapshotWithAtWar(['tribeA', 'tribeB']);
+      expect(
+        tribeAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => false,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('returns empty when no at-war tribe is present', () {
+      final game = gameWithTribes();
+      final snapshot = _snapshotWithAtWar([_gp1, 'minorA']);
+      expect(
+        tribeAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+    });
+
+    test('result is sorted ascending regardless of atWarWith order', () {
+      final game = gameWithTribes();
+      expect(
+        tribeAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: _snapshotWithAtWar(['tribeC', 'tribeA', 'tribeB']),
+        ),
+        ['tribeA', 'tribeB', 'tribeC'],
       );
     });
   });

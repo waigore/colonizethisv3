@@ -144,6 +144,44 @@ List<String> minorAtWarPeaceTargetsWhere({
   ]..sort();
 }
 
+/// Returns the deterministic ascending-sorted list of at-war tribe
+/// `factionId`s that satisfy the optional caller-supplied [keep] predicate.
+///
+/// Tribe analogue of [gpAtWarPeaceTargetsWhere] / [minorAtWarPeaceTargetsWhere]
+/// and single source of truth for the repeated tribe at-war peace-target
+/// collector skeleton
+/// `<String>[for (final id in snapshot.threats.atWarWith) if (isTribeFaction(game, id) && <keep>) id]..sort()`
+/// duplicated across the EXPAND tribe-distraction deciders
+/// (`atWarGpDistractionTribePeaceTargets`,
+/// `belowQuotaRegimentThinTribeDistractionPeaceTargets`). Each caller now
+/// supplies only its own per-faction [keep] predicate; the [isTribeFaction]
+/// at-war filter (over [ThreatSummary.atWarWith]) and the ascending
+/// `factionId` sort are applied once here.
+///
+/// When [keep] is `null` every at-war tribe is kept, matching the inline
+/// comprehension that applied no extra per-faction filter beyond
+/// [isTribeFaction]. Minors and Great Powers in [ThreatSummary.atWarWith] are
+/// never returned (they are not [Game.tribes] entries).
+///
+/// Behaviour-preserving against the replaced comprehensions: the
+/// [isTribeFaction] membership filter, the optional [keep] conjunct, and the
+/// trailing ascending `..sort()` are retained verbatim, so results are
+/// byte-identical. [keep] (when non-`null`) is evaluated once per at-war tribe.
+///
+/// Pure and deterministic — identical inputs (and a pure [keep]) always yield
+/// identical lists (Refs #3717 expand-peace scoring-skeleton dedup).
+List<String> tribeAtWarPeaceTargetsWhere({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  bool Function(String factionId)? keep,
+}) {
+  return <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (isTribeFaction(game, factionId) && (keep == null || keep(factionId)))
+        factionId,
+  ]..sort();
+}
+
 /// Returns [factionIds] with [blocker] removed, sorted ascending by
 /// `factionId`.
 ///

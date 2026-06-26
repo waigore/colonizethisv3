@@ -336,11 +336,12 @@ List<String> atWarGpDistractionTribePeaceTargets({
   if (!atWarWithGp) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isTribeFaction(game, factionId)) factionId,
-  ]..sort();
-  return targets;
+  // Route the at-war-tribe filter + ascending sort through the shared
+  // [tribeAtWarPeaceTargetsWhere] collector (Refs #3717 expand-peace
+  // scoring-skeleton dedup), matching the sibling GP/minor collectors. This
+  // decider keeps every at-war tribe (no extra predicate), so no `keep` is
+  // supplied; byte-identical to the inline `isTribeFaction` + sort.
+  return tribeAtWarPeaceTargetsWhere(game: game, snapshot: snapshot);
 }
 
 /// Returns the deterministic ascending-sorted list of at-war tribe
@@ -414,13 +415,16 @@ List<String> belowQuotaRegimentThinTribeDistractionPeaceTargets({
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isTribeFaction(game, factionId) &&
-          oldWorldProvinceCountOwnedBy(game, factionId) == 0)
-        factionId,
-  ]..sort();
-  return targets;
+  // Route the at-war-tribe filter + ascending sort through the shared
+  // [tribeAtWarPeaceTargetsWhere] collector (Refs #3717 expand-peace
+  // scoring-skeleton dedup); only the zero-OW-province distraction exclusion
+  // remains caller-specific. Byte-identical to the inline `isTribeFaction` +
+  // zero-OW predicate + sort.
+  return tribeAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) => oldWorldProvinceCountOwnedBy(game, factionId) == 0,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war Great Power

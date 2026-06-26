@@ -129,7 +129,8 @@ import 'planning_helpers.dart'
         isOwnOldWorldBelowConquestQuota,
         isOwnOldWorldExpansionStalled,
         minorAtWarPeaceTargetsWhere,
-        peaceTargetsExcludingBlocker;
+        peaceTargetsExcludingBlocker,
+        tribeAtWarPeaceTargetsWhere;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';
