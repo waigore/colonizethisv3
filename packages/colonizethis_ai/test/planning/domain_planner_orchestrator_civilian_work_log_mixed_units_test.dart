@@ -4,8 +4,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import '../domain_planner_test_fake_api.dart';
-import '../planner_test_helpers.dart';
+import '../support/domain_planner_test_fake_api.dart';
+import '../support/planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners civilian work logging — mixed unit types', () {

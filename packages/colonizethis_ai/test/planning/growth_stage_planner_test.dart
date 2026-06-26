@@ -9,7 +9,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../growth_stage_planner_test_support.dart';
+import '../support/growth_stage_planner_test_support.dart';
 
 void main() {
   group('GrowthStage.compute — AC10 determinism', () {
