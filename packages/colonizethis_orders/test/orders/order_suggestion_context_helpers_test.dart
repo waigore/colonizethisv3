@@ -343,6 +343,65 @@ void main() {
       expect(indexed['f1'], {'seaA'});
     });
 
+    test('emitAcceptedCandidates collects accepted in iteration order', () {
+      final into = <NavalMoveOrder>[];
+      emitAcceptedCandidates<NavalMoveOrder>(
+        candidates: const [
+          NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaB'),
+          NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
+          NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaC'),
+        ],
+        // Reject only seaC so we cover both accept and reject branches.
+        accept: (o) => o.destinationSeaZoneId != 'seaC',
+        into: into,
+      );
+      expect(
+        into.map((o) => o.destinationSeaZoneId).toList(),
+        ['seaB', 'seaA'],
+        reason: 'preserves candidate order and performs no sorting',
+      );
+    });
+
+    test('emitAcceptedCandidates skips candidates already targeted', () {
+      final into = <NavalMoveOrder>[];
+      emitAcceptedCandidates<NavalMoveOrder>(
+        candidates: const [
+          NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
+          NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaB'),
+          NavalMoveOrder(fleetId: 'f2', destinationSeaZoneId: 'seaA'),
+        ],
+        accept: (_) => true,
+        into: into,
+        existingByEntity: {
+          'f1': {'seaA'},
+        },
+        entityId: (o) => o.fleetId,
+        dedupKey: (o) => o.destinationSeaZoneId ?? '',
+      );
+      expect(
+        into.map((o) => '${o.fleetId}:${o.destinationSeaZoneId}').toList(),
+        // f1:seaA is deduped; f2:seaA survives (different entity).
+        ['f1:seaB', 'f2:seaA'],
+      );
+    });
+
+    test('emitAcceptedCandidates probes every candidate without dedup args', () {
+      final into = <NavalMoveOrder>[];
+      emitAcceptedCandidates<NavalMoveOrder>(
+        candidates: const [
+          NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
+          NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
+        ],
+        accept: (_) => true,
+        into: into,
+        // entityId/dedupKey omitted -> dedup disabled even though duplicates.
+        existingByEntity: {
+          'f1': {'seaA'},
+        },
+      );
+      expect(into.length, 2);
+    });
+
     test('runCappedSuggestionProbeLoop respects acceptance and probe caps', () {
       final accepted = <int>[];
       final probes = List.generate(10, (i) => i);
