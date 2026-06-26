@@ -9,8 +9,10 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'value_equality.dart';
+
 /// One overture offer awaiting the target's accept/reject decision.
-class OvertureOffer {
+class OvertureOffer with ValueEquality {
   const OvertureOffer({
     required this.offererGpId,
     required this.targetFactionId,
@@ -22,19 +24,11 @@ class OvertureOffer {
   final OvertureStage stage;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is OvertureOffer &&
-          offererGpId == other.offererGpId &&
-          targetFactionId == other.targetFactionId &&
-          stage == other.stage;
-
-  @override
-  int get hashCode => Object.hash(offererGpId, targetFactionId, stage);
+  List<Object?> get equalityFields => [offererGpId, targetFactionId, stage];
 }
 
 /// Target's decision for one overture offer.
-class OvertureDecision {
+class OvertureDecision with ValueEquality {
   const OvertureDecision({
     required this.offererGpId,
     required this.targetFactionId,
@@ -48,15 +42,6 @@ class OvertureDecision {
   final bool accepted;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is OvertureDecision &&
-          offererGpId == other.offererGpId &&
-          targetFactionId == other.targetFactionId &&
-          stage == other.stage &&
-          accepted == other.accepted;
-
-  @override
-  int get hashCode =>
-      Object.hash(offererGpId, targetFactionId, stage, accepted);
+  List<Object?> get equalityFields =>
+      [offererGpId, targetFactionId, stage, accepted];
 }
