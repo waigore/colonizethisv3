@@ -128,6 +128,7 @@ import 'planning_helpers.dart'
         isAtWarWithAnyGreatPower,
         isOwnOldWorldBelowConquestQuota,
         isOwnOldWorldExpansionStalled,
+        minorAtWarPeaceTargetsWhere,
         peaceTargetsExcludingBlocker;
 
 part 'expand_phase_planner_peer_peace.dart';

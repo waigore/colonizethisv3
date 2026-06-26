@@ -10,7 +10,10 @@ import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planner_context.dart';
 import 'planning_helpers.dart'
-    show factionOwnsInvadableOldWorldProvince, isAtWarWithAnyGreatPower;
+    show
+        factionOwnsInvadableOldWorldProvince,
+        isAtWarWithAnyGreatPower,
+        minorAtWarPeaceTargetsWhere;
 import '../util/ai_random_utils.dart';
 import '../util/faction_query.dart';
 
@@ -31,10 +34,10 @@ String? stalledConquestDeclaredWarTarget({
   );
   if (activeMinor == null &&
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    final atWarMinors = <String>[
-      for (final factionId in snapshot.threats.atWarWith)
-        if (isMinorFaction(game, factionId)) factionId,
-    ]..sort();
+    final atWarMinors = minorAtWarPeaceTargetsWhere(
+      game: game,
+      snapshot: snapshot,
+    );
     if (atWarMinors.length == 1 &&
         snapshot.conquest.oldWorldProvincesOwned <=
             kStalledOldWorldProvinceThreshold) {

@@ -73,25 +73,26 @@ List<String> defaultStartFutileMinorPeaceTargets({
       snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return const [];
   }
+  // Route the at-war-minor filter + ascending sort through the shared
+  // [minorAtWarPeaceTargetsWhere] collector (Refs #3717 expand-peace
+  // scoring-skeleton dedup), matching the sibling GP collector
+  // [gpAtWarPeaceTargetsWhere]. Byte-identical: the GP-only arm keeps every
+  // at-war minor (no extra predicate) and the mixed arm keeps only minors that
+  // own no invadable OW province — the same `isMinorFaction` + sort skeleton
+  // the inline comprehensions used.
   if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    final targets = <String>[
-      for (final factionId in snapshot.threats.atWarWith)
-        if (isMinorFaction(game, factionId)) factionId,
-    ]..sort();
-    return targets;
+    return minorAtWarPeaceTargetsWhere(game: game, snapshot: snapshot);
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isMinorFaction(game, factionId) &&
-          !factionOwnsInvadableOldWorldProvince(
-            snapshot: snapshot,
-            provinceOwner: provinceOwner,
-            factionId: factionId,
-          ))
-        factionId,
-  ]..sort();
-  return targets;
+  return minorAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) => !factionOwnsInvadableOldWorldProvince(
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
+      factionId: factionId,
+    ),
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war Great
@@ -462,11 +463,15 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   if (focus == null) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isMinorFaction(game, factionId) && factionId != focus) factionId,
-  ]..sort();
-  return targets;
+  // Route the at-war-minor filter + ascending sort through the shared
+  // [minorAtWarPeaceTargetsWhere] collector (Refs #3717 expand-peace
+  // scoring-skeleton dedup); only the focused-minor exclusion remains
+  // caller-specific. Byte-identical to the inline `isMinorFaction` + sort.
+  return minorAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) => factionId != focus,
+  );
 }
 
 /// Returns `true` when at least one EXPAND-phase stalled-expansion

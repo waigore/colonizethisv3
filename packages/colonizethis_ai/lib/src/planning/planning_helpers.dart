@@ -106,6 +106,44 @@ List<String> gpAtWarPeaceTargetsWhere({
   ]..sort();
 }
 
+/// Returns the deterministic ascending-sorted list of at-war minor-nation
+/// `factionId`s that satisfy the optional caller-supplied [keep] predicate.
+///
+/// Minor-nation analogue of [gpAtWarPeaceTargetsWhere] and single source of
+/// truth for the repeated minor at-war peace-target collector skeleton
+/// `<String>[for (final id in snapshot.threats.atWarWith) if (isMinorFaction(game, id) && <keep>) id]..sort()`
+/// duplicated across the EXPAND default-start futile-minor / multi-minor
+/// distraction deciders (`defaultStartFutileMinorPeaceTargets`,
+/// `belowQuotaMultiMinorDistractionPeaceTargets`) and the conquest planner's
+/// below-quota active-minor pick (`conquest_planner.dart`). Each caller now
+/// supplies only its own per-faction [keep] predicate; the
+/// [isMinorFaction] at-war filter (over [ThreatSummary.atWarWith]) and the
+/// ascending `factionId` sort are applied once here.
+///
+/// When [keep] is `null` every at-war minor is kept, matching the inline
+/// comprehensions that applied no extra per-faction filter beyond
+/// [isMinorFaction]. Tribes and Great Powers in [ThreatSummary.atWarWith] are
+/// never returned (they are not [Game.minorNations] entries).
+///
+/// Behaviour-preserving against the replaced comprehensions: the
+/// [isMinorFaction] membership filter, the optional [keep] conjunct, and the
+/// trailing ascending `..sort()` are retained verbatim, so results are
+/// byte-identical. [keep] (when non-`null`) is evaluated once per at-war minor.
+///
+/// Pure and deterministic — identical inputs (and a pure [keep]) always yield
+/// identical lists (Refs #3717 expand-peace scoring-skeleton dedup).
+List<String> minorAtWarPeaceTargetsWhere({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  bool Function(String factionId)? keep,
+}) {
+  return <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (isMinorFaction(game, factionId) && (keep == null || keep(factionId)))
+        factionId,
+  ]..sort();
+}
+
 /// Returns [factionIds] with [blocker] removed, sorted ascending by
 /// `factionId`.
 ///
