@@ -7,6 +7,8 @@
 //   - `resolvePhaseExpandOrColonialLiteActive` — EXPAND / COLONIAL-lite gate
 //   - `hasRecentDiplomaticEventWithinCooldown` — newest-match-wins reversed
 //     history scan, strict `<` cooldown window, predicate filtering (Refs #3717)
+//   - `atWarPeaceTargetBonus` — at-war GP eligibility gate, lazy predicate
+//     short-circuit, flat-bonus emission (Refs #3717)
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
@@ -367,6 +369,69 @@ void main() {
         ),
         isFalse,
       );
+    });
+  });
+
+  group('atWarPeaceTargetBonus (Refs #3717)', () {
+    test('returns the bonus when eligible and the predicate matches', () {
+      expect(
+        atWarPeaceTargetBonus(
+          atWarGreatPowerTarget: true,
+          isPeaceTarget: () => true,
+          bonus: 7,
+        ),
+        equals(7),
+      );
+    });
+
+    test('returns 0 when eligible but the predicate does not match', () {
+      expect(
+        atWarPeaceTargetBonus(
+          atWarGreatPowerTarget: true,
+          isPeaceTarget: () => false,
+          bonus: 7,
+        ),
+        equals(0),
+      );
+    });
+
+    test('returns 0 when not an at-war Great Power target', () {
+      expect(
+        atWarPeaceTargetBonus(
+          atWarGreatPowerTarget: false,
+          isPeaceTarget: () => true,
+          bonus: 7,
+        ),
+        equals(0),
+      );
+    });
+
+    test('skips the predicate (short-circuit) when ineligible', () {
+      var calls = 0;
+      final result = atWarPeaceTargetBonus(
+        atWarGreatPowerTarget: false,
+        isPeaceTarget: () {
+          calls++;
+          return true;
+        },
+        bonus: 7,
+      );
+      expect(result, equals(0));
+      expect(calls, equals(0));
+    });
+
+    test('evaluates the predicate exactly once when eligible', () {
+      var calls = 0;
+      final result = atWarPeaceTargetBonus(
+        atWarGreatPowerTarget: true,
+        isPeaceTarget: () {
+          calls++;
+          return true;
+        },
+        bonus: 7,
+      );
+      expect(result, equals(7));
+      expect(calls, equals(1));
     });
   });
 }

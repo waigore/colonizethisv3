@@ -188,3 +188,29 @@ bool hasRecentDiplomaticEventWithinCooldown({
   }
   return false;
 }
+
+/// Single source of truth for the "candidate is an at-war Great Power peace
+/// target -> add a flat scoring bonus" skeleton repeated across the offer-peace
+/// scoring family (`_offerPeacePeaceTargetListAdjustments` in
+/// `diplomatic_candidate_scoring_offer_peace.dart`, Refs #3717
+/// diplomatic-scoring/peace dedup). Returns [bonus] only when
+/// [atWarGreatPowerTarget] holds *and* the lazily-evaluated [isPeaceTarget]
+/// predicate matches; otherwise 0.
+///
+/// Behaviour-preserving against the replaced inline blocks, which each guarded
+/// `targetGp != null && snapshot.threats.atWarWith.contains(target) && <peace
+/// target match>` before adding a constant. [isPeaceTarget] is a callback so
+/// the (potentially non-trivial, pure) peace-target collectors are only
+/// consulted for eligible at-war GP candidates — preserving the original `&&`
+/// short-circuit so no extra collector work runs for ineligible candidates.
+///
+/// Pure and deterministic for a given eligibility flag and predicate result
+/// (Refs #2509 Must-have #7); the constant-time wrapper adds no scan cost
+/// beyond the caller's own predicate, consistent with
+/// `colonizethis-turn-resolution-budget.mdc`.
+int atWarPeaceTargetBonus({
+  required bool atWarGreatPowerTarget,
+  required bool Function() isPeaceTarget,
+  required int bonus,
+}) =>
+    atWarGreatPowerTarget && isPeaceTarget() ? bonus : 0;

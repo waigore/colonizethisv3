@@ -121,61 +121,58 @@ int _offerPeacePeaceTargetListAdjustments({
   required AIWorldSnapshot snapshot,
   required Player? targetGp,
 }) {
+  final atWarGp = targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId);
   var s = 0;
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      unwinnableSoleGpFrontierPeaceTarget(
-            game: game,
-            snapshot: snapshot,
-          ) ==
-          order.targetFactionId) {
-    s += kOfferPeaceUnwinnableSoleGpWarBonus;
-  }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      stalledBelowQuotaGpLeadPeaceTargets(
-            game: game,
-            snapshot: snapshot,
-          )
-          .contains(order.targetFactionId)) {
-    s += kOfferPeaceUnwinnableSoleGpWarBonus;
-  }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot)
-          .contains(order.targetFactionId)) {
-    s += kOfferPeaceStalledFutileGpWarBonus;
-  }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot)
-          .contains(order.targetFactionId)) {
-    s += kOfferPeaceConsolidateGainsSoleGpWarBonus;
-  }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      quotaMetFutileBelowQuotaGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
-          )
-          .contains(order.targetFactionId)) {
-    s += kOfferPeaceStalledFutileGpWarBonus;
-  }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
-          .contains(order.targetFactionId)) {
-    s += kOfferPeaceStalledFutileGpWarBonus;
-  }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      consolidateGainsSoleGpPeaceTarget(
-            game: game,
-            snapshot: snapshot,
-          ) ==
-          order.targetFactionId) {
-    s += kOfferPeaceConsolidateGainsSoleGpWarBonus;
-  }
+  s += atWarPeaceTargetBonus(
+    atWarGreatPowerTarget: atWarGp,
+    isPeaceTarget: () =>
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
+        order.targetFactionId,
+    bonus: kOfferPeaceUnwinnableSoleGpWarBonus,
+  );
+  s += atWarPeaceTargetBonus(
+    atWarGreatPowerTarget: atWarGp,
+    isPeaceTarget: () =>
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
+            .contains(order.targetFactionId),
+    bonus: kOfferPeaceUnwinnableSoleGpWarBonus,
+  );
+  s += atWarPeaceTargetBonus(
+    atWarGreatPowerTarget: atWarGp,
+    isPeaceTarget: () =>
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot)
+            .contains(order.targetFactionId),
+    bonus: kOfferPeaceStalledFutileGpWarBonus,
+  );
+  s += atWarPeaceTargetBonus(
+    atWarGreatPowerTarget: atWarGp,
+    isPeaceTarget: () =>
+        nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot)
+            .contains(order.targetFactionId),
+    bonus: kOfferPeaceConsolidateGainsSoleGpWarBonus,
+  );
+  s += atWarPeaceTargetBonus(
+    atWarGreatPowerTarget: atWarGp,
+    isPeaceTarget: () =>
+        quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot)
+            .contains(order.targetFactionId),
+    bonus: kOfferPeaceStalledFutileGpWarBonus,
+  );
+  s += atWarPeaceTargetBonus(
+    atWarGreatPowerTarget: atWarGp,
+    isPeaceTarget: () =>
+        quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
+            .contains(order.targetFactionId),
+    bonus: kOfferPeaceStalledFutileGpWarBonus,
+  );
+  s += atWarPeaceTargetBonus(
+    atWarGreatPowerTarget: atWarGp,
+    isPeaceTarget: () =>
+        consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) ==
+        order.targetFactionId,
+    bonus: kOfferPeaceConsolidateGainsSoleGpWarBonus,
+  );
   return s;
 }
 
