@@ -443,6 +443,33 @@ int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
   return kDeclareWarNonAdjacentSuppressedScore;
 }
 
+/// Shared NW-colonial declare-war suppression skeleton (Refs #3717
+/// diplomatic-scoring dedup).
+///
+/// Single source of truth for the soft-phase NW-weight predicate that both
+/// `_declareWarSuppressedExpandColonialScore` and
+/// `_declareWarSuppressedColonialLiteScore` express identically: when the
+/// soft-phase NW acquisition weight has not collapsed
+/// (`nwAcquisitionWeight > 0.0`) NW colonial targets stay scorable (`null`);
+/// otherwise the NW colonial candidates (tribe, NW owner, colonial-adjacent
+/// owner) collapse to [kDeclareWarNonAdjacentSuppressedScore], while non-NW
+/// targets remain scorable. Both call sites previously inlined this exact
+/// three-line body, so routing them through one helper is pure delegation and
+/// byte-identical to the inline checks it replaces. The two distinct chain
+/// entries are retained at their call sites (see each delegating function) so
+/// the suppression ordering in `_declareWarSuppressedScore` and the
+/// independent Phase 4 retirement paths for the EXPAND / COLONIAL-lite Phase 2
+/// resolvers are unchanged.
+int? _declareWarSuppressedNwColonialScore(_DeclareWarTargetContext ctx) {
+  if (ctx.nwAcquisitionWeight > 0.0) {
+    return null;
+  }
+  if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  return null;
+}
+
 int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
   // Refs #2847 Phase 3 diplomacy wiring: derive EXPAND NW-colonial
   // suppression from the soft-phase NW acquisition weight on the
@@ -456,14 +483,10 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
   // scorable at low priority rather than structurally collapsing them.
   // Callers without a phase plan use the legacy-derived weight (1.0 /
   // 0.0) from `_DeclareWarTargetContext.build`, preserving the
-  // pre-soft-phase behaviour for tests and other entry points.
-  if (ctx.nwAcquisitionWeight > 0.0) {
-    return null;
-  }
-  if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
-    return kDeclareWarNonAdjacentSuppressedScore;
-  }
-  return null;
+  // pre-soft-phase behaviour for tests and other entry points. The
+  // soft-phase NW-weight predicate body is shared with the COLONIAL-lite
+  // branch via `_declareWarSuppressedNwColonialScore` (Refs #3717).
+  return _declareWarSuppressedNwColonialScore(ctx);
 }
 
 // COLONIAL-lite NW `declareWar` suppression (Refs #2509 S10).
@@ -502,14 +525,10 @@ int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
   // can retire the EXPAND / COLONIAL-lite Phase 2 boolean resolvers
   // independently of this scoring path. Callers without a phase plan
   // use the legacy-derived weight (1.0 / 0.0) from
-  // `_DeclareWarTargetContext.build`.
-  if (ctx.nwAcquisitionWeight > 0.0) {
-    return null;
-  }
-  if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
-    return kDeclareWarNonAdjacentSuppressedScore;
-  }
-  return null;
+  // `_DeclareWarTargetContext.build`. The soft-phase NW-weight predicate
+  // body is shared with the EXPAND branch via
+  // `_declareWarSuppressedNwColonialScore` (Refs #3717).
+  return _declareWarSuppressedNwColonialScore(ctx);
 }
 
 int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
