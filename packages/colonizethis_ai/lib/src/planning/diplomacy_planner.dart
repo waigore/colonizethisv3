@@ -1,4 +1,5 @@
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'planning_imports.dart';
 import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
@@ -178,7 +179,7 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
-                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+                !isTribeFaction(ctx.game, o.targetFactionId),
           )
           .toList();
     }
@@ -196,7 +197,7 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
-                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+                !isTribeFaction(ctx.game, o.targetFactionId),
           )
           .toList();
     }
@@ -613,7 +614,7 @@ int? _pickMinorDeclareCandidateIndex({
     if (order.type != DiplomaticOrderType.declareWar) {
       continue;
     }
-    if (!ctx.game.minorNations.any((m) => m.id == order.targetFactionId)) {
+    if (!isMinorFaction(ctx.game, order.targetFactionId)) {
       continue;
     }
     final score = scores[i];

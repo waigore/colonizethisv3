@@ -332,7 +332,7 @@ List<String> atWarGpDistractionTribePeaceTargets({
   }
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (game.tribes.any((t) => t.id == factionId)) factionId,
+      if (isTribeFaction(game, factionId)) factionId,
   ]..sort();
   return targets;
 }
@@ -410,7 +410,7 @@ List<String> belowQuotaRegimentThinTribeDistractionPeaceTargets({
   }
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (game.tribes.any((t) => t.id == factionId) &&
+      if (isTribeFaction(game, factionId) &&
           oldWorldProvinceCountOwnedBy(game, factionId) == 0)
         factionId,
   ]..sort();

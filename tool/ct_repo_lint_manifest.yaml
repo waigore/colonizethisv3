@@ -69,6 +69,13 @@ rules:
     runner: dart
     script: tool/check_ai_dedup_gp_wars_filter.dart
 
+  - rule_id: repo.ai_dedup_minor_tribe_membership
+    group: architecture
+    title: colonizethis_ai must use shared isMinorFaction/isTribeFaction/isMinorOrTribeFaction helpers (Refs #3717)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dedup_minor_tribe_membership.dart
+
   - rule_id: repo.ai_dedup_weight_scale_clamp
     group: architecture
     title: colonizethis_ai must use shared scaleWeightedBonus helper (Refs #3278)

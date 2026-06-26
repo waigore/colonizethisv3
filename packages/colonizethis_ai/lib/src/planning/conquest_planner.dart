@@ -33,7 +33,7 @@ String? stalledConquestDeclaredWarTarget({
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     final atWarMinors = <String>[
       for (final factionId in snapshot.threats.atWarWith)
-        if (game.minorNations.any((m) => m.id == factionId)) factionId,
+        if (isMinorFaction(game, factionId)) factionId,
     ]..sort();
     if (atWarMinors.length == 1 &&
         snapshot.conquest.oldWorldProvincesOwned <=

@@ -9,6 +9,7 @@
 // `phase_planner_declare_war_targets.dart` adapters and is unchanged.
 
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'army_conquest_prep.dart';
 import 'expand_phase_planner.dart';
 import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
@@ -50,7 +51,7 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
     final owner = provinceOwner[pid];
     if (owner == null ||
-        !game.minorNations.any((m) => m.id == owner) ||
+        !isMinorFaction(game, owner) ||
         snapshot.threats.atWarWith.contains(owner)) {
       continue;
     }
@@ -131,7 +132,7 @@ String? plateauOwMinorDeclareTarget({
   }
   final candidates = <String>{
     for (final factionId in snapshot.conquest.adjacentOwnerFactionIdsSorted)
-      if (game.minorNations.any((m) => m.id == factionId) &&
+      if (isMinorFaction(game, factionId) &&
           !snapshot.threats.atWarWith.contains(factionId))
         factionId,
   };
@@ -141,7 +142,7 @@ String? plateauOwMinorDeclareTarget({
     for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
       final owner = provinceOwner[pid];
       if (owner == null ||
-          !game.minorNations.any((m) => m.id == owner) ||
+          !isMinorFaction(game, owner) ||
           snapshot.threats.atWarWith.contains(owner)) {
         continue;
       }
@@ -188,7 +189,7 @@ String? defaultStartOwMinorDeclareTarget({
     for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
       final owner = provinceOwner[pid];
       if (owner == null ||
-          !game.minorNations.any((m) => m.id == owner) ||
+          !isMinorFaction(game, owner) ||
           snapshot.threats.atWarWith.contains(owner)) {
         continue;
       }

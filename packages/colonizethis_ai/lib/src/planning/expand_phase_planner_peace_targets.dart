@@ -61,7 +61,7 @@ bool canPivotFromSoleGpWarAfterPeace({
   }
   return snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
     final owner = getProvinceOwnerMap(game)[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
+    return owner != null && isMinorFaction(game, owner);
   });
 }
 

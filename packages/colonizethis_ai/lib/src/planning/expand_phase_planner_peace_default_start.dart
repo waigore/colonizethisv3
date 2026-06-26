@@ -76,14 +76,14 @@ List<String> defaultStartFutileMinorPeaceTargets({
   if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     final targets = <String>[
       for (final factionId in snapshot.threats.atWarWith)
-        if (game.minorNations.any((m) => m.id == factionId)) factionId,
+        if (isMinorFaction(game, factionId)) factionId,
     ]..sort();
     return targets;
   }
   final provinceOwner = getProvinceOwnerMap(game);
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (game.minorNations.any((m) => m.id == factionId) &&
+      if (isMinorFaction(game, factionId) &&
           !factionOwnsInvadableOldWorldProvince(
             snapshot: snapshot,
             provinceOwner: provinceOwner,
@@ -468,7 +468,7 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   }
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (game.minorNations.any((m) => m.id == factionId) && factionId != focus)
+      if (isMinorFaction(game, factionId) && factionId != focus)
         factionId,
   ]..sort();
   return targets;

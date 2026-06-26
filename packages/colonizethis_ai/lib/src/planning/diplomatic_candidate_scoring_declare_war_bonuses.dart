@@ -434,7 +434,7 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx.behindVictoryPace &&
       adjacentWeakMinor &&
       (ctx.targetIsInvadableOwner ||
-          ctx.game.minorNations.any((m) => m.id == ctx.order.targetFactionId))) {
+          isMinorFaction(ctx.game, ctx.order.targetFactionId))) {
     s = math.max(
       s,
       _owConquestDeclareWarBonus(
@@ -450,7 +450,7 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx.behindVictoryPace &&
       ctx.isTribeTarget &&
       ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold &&
-      ctx.invadableOwners.any((id) => ctx.game.minorNations.any((m) => m.id == id))) {
+      ctx.invadableOwners.any((id) => isMinorFaction(ctx.game, id))) {
     s = math.min(s, kDeclareWarStalledLowWarLikelihoodTribeCap);
   }
   if (ctx.stalledOwExpansion &&

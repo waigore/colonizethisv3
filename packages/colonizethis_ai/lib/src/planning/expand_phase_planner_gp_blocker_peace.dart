@@ -316,9 +316,9 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
 ///     is true); otherwise `null`.
 ///   * Walks [ThreatSummary.atWarWith] in iteration order and keeps
 ///     every minor / tribe entry that is **not** `keepMinor`, **not**
-///     `keepGp`, and is a minor or tribe per the locally-inlined
-///     `factionIsMinorOrTribe` check (`Game.minorNations` /
-///     `Game.tribes` membership). GPs are dropped because the
+///     `keepGp`, and is a minor or tribe per the shared
+///     [isMinorOrTribeFaction] predicate ([Game.minorNations] /
+///     [Game.tribes] membership). GPs are dropped because the
 ///     GP-blocker and peer-GP peace deciders own that decision.
 ///   * Sorts the result ascending so emission order is deterministic
 ///     for fixed inputs (Refs #2509 Must-have #7).
@@ -369,8 +369,7 @@ List<String> stalledExpansionDistractionPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (factionId != keepMinor &&
           factionId != keepGp &&
-          (game.minorNations.any((m) => m.id == factionId) ||
-              game.tribes.any((t) => t.id == factionId)))
+          isMinorOrTribeFaction(game, factionId))
         factionId,
   ]..sort();
   return targets;

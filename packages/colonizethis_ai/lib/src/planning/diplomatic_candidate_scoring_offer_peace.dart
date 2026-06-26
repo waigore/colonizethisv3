@@ -95,7 +95,7 @@ int _offerPeaceStalledGpWarAdjustments({
       snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
         final owner = provinceOwner[pid];
         return owner != null &&
-            (game.minorNations.any((m) => m.id == owner) ||
+            (isMinorFaction(game, owner) ||
                 game.playerById(owner) != null);
       })) {
     s += kOfferPeaceStalledFutileGpWarBonus;
@@ -219,7 +219,7 @@ int _scoreOfferPeaceDiplomaticOrder({
           !invadableOwners.contains(order.targetFactionId))) {
     s += kOfferPeaceFutileMinorWarBonus;
   }
-  if (game.minorNations.any((m) => m.id == order.targetFactionId) &&
+  if (isMinorFaction(game, order.targetFactionId) &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       invadableOwners.contains(order.targetFactionId) &&
       isBelowObserverConquestQuota(

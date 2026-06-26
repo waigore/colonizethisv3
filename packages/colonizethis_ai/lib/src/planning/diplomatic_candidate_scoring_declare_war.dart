@@ -326,7 +326,7 @@ final class _DeclareWarTargetContext {
         minorProvinces > 0 &&
         minorProvinces < snapshot.conquest.oldWorldProvincesOwned;
     final hasInvadableMinorOwner = invadableOwners.any(
-      (id) => game.minorNations.any((m) => m.id == id),
+      (id) => isMinorFaction(game, id),
     );
     final ownerCache = ProvinceOwnerCache.of(game.worldState);
     final minorsHoldOldWorldProvinces = game.minorNations.any(
@@ -334,7 +334,7 @@ final class _DeclareWarTargetContext {
     );
     final atWarInvadableOwMinor = snapshot.threats.atWarWith.any(
       (factionId) =>
-          game.minorNations.any((m) => m.id == factionId) &&
+          isMinorFaction(game, factionId) &&
           invadableOwners.contains(factionId),
     );
     final activeMinorConflicts = _activeOldWorldMinorConflictIds(
@@ -345,7 +345,7 @@ final class _DeclareWarTargetContext {
     );
     final hasAdjacentInvadableMinorOwner = adjacentOwners.any(
       (id) =>
-          game.minorNations.any((m) => m.id == id) &&
+          isMinorFaction(game, id) &&
           invadableOwners.contains(id),
     );
     final isAdjacentGp =

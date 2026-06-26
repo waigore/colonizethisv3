@@ -39,6 +39,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 
@@ -324,8 +325,9 @@ bool atWarGreatPowerOrderTarget({
 /// introduced — consistent with `colonizethis-turn-resolution-budget.mdc`.
 /// Walks [ConquestSummary.invadableProvinceIdsSorted] with the original
 /// [Iterable.any] short-circuit: returns `true` as soon as an invadable
-/// province's owner resolves to a [Game.minorNations] member; an unowned
-/// (absent / `null`) entry or a Great-Power / tribe owner never matches.
+/// province's owner resolves to a [Game.minorNations] member (via the shared
+/// [isMinorFaction] predicate); an unowned (absent / `null`) entry or a
+/// Great-Power / tribe owner never matches.
 ///
 /// Pure and deterministic — identical inputs always yield identical results
 /// (Refs #2509 Must-have #7).
@@ -336,7 +338,7 @@ bool anyInvadableProvinceOwnedByMinor({
 }) =>
     snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
       final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
+      return owner != null && isMinorFaction(game, owner);
     });
 
 /// Whether any invadable Old-World frontier province is currently owned by a
