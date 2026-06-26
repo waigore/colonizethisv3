@@ -139,47 +139,51 @@ List<String> belowQuotaPeerGpPeaceTargets({
     snapshot: snapshot,
   );
   final soleGpWar = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) {
-      continue;
-    }
-    final partnerOw = provinceCountOwnedBy(game, factionId);
-    if (!isBelowObserverConquestQuota(partnerOw)) {
-      continue;
-    }
-    final mutualPlateau = isMutualBelowQuotaPlateauPeer(
-      ownOw: ownOw,
-      partnerOw: partnerOw,
-    );
-    if (!minorsOnMap && !mutualPlateau) {
-      continue;
-    }
-    if (mutualPlateau &&
-        gpOnlyFrontier &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      targets.add(factionId);
-      continue;
-    }
-    final maxPeerOwGap =
-        hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
-        ? _kMaxPeerOwGapWithMinors
-        : _kMaxPeerOwGapWithoutMinors;
-    if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
-      continue;
-    }
-    if (!mutualPlateau && ownOw > partnerOw) {
-      continue;
-    }
-    if (gpOnlyFrontier &&
-        soleGpWar == factionId &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      continue;
-    }
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
+  // Route the GP at-war filter + ascending-`factionId` sort through the shared
+  // [gpAtWarPeaceTargetsWhere] collector skeleton (Refs #3717 expand-peace
+  // dedup). Byte-identical: the inline loop skipped non-GP `atWarWith` entries
+  // and sorted the result, exactly what the shared helper does; the per-enemy
+  // arms (below-quota partner gate, mutual-plateau carve-out, symmetric OW-gap
+  // cap, stronger-self guard, sole-GP-blocker hold-open) translate one-to-one
+  // into the caller-specific `keep` predicate with no cross-enemy state.
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) {
+      final partnerOw = provinceCountOwnedBy(game, factionId);
+      if (!isBelowObserverConquestQuota(partnerOw)) {
+        return false;
+      }
+      final mutualPlateau = isMutualBelowQuotaPlateauPeer(
+        ownOw: ownOw,
+        partnerOw: partnerOw,
+      );
+      if (!minorsOnMap && !mutualPlateau) {
+        return false;
+      }
+      if (mutualPlateau &&
+          gpOnlyFrontier &&
+          !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+        return true;
+      }
+      final maxPeerOwGap =
+          hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
+          ? _kMaxPeerOwGapWithMinors
+          : _kMaxPeerOwGapWithoutMinors;
+      if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
+        return false;
+      }
+      if (!mutualPlateau && ownOw > partnerOw) {
+        return false;
+      }
+      if (gpOnlyFrontier &&
+          soleGpWar == factionId &&
+          !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+        return false;
+      }
+      return true;
+    },
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war Great Power
@@ -254,19 +258,21 @@ List<String> stalledFutileGpPeaceTargets({
   if (!minorsOwnInvadable) {
     return const [];
   }
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) continue;
-    final ownsInvadable = factionOwnsInvadableOldWorldProvince(
+  // Route the GP at-war filter + ascending-`factionId` sort through the shared
+  // [gpAtWarPeaceTargetsWhere] collector skeleton (Refs #3717 expand-peace
+  // dedup), matching the sibling deciders in this family. Byte-identical: the
+  // inline loop skipped non-GP `atWarWith` entries and sorted the result,
+  // exactly what the shared helper does; only the invadable-owner exclusion
+  // remains caller-specific here.
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) => !factionOwnsInvadableOldWorldProvince(
       snapshot: snapshot,
       provinceOwner: provinceOwner,
       factionId: factionId,
-    );
-    if (ownsInvadable) continue;
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
+    ),
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war tribe
