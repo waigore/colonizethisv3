@@ -784,6 +784,13 @@ rules:
     runner: dart
     script: tool/check_orders_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.ai_test_no_duplicate_scaffolding
+    group: architecture
+    title: colonizethis_ai tests must keep coherent scaffolding (no _test.dart in test/support/, no confusing test_fixtures.dart, no local TestFixtures) (Refs #3717)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_no_duplicate_scaffolding.dart
+
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture
     title: setup init pipelines must delegate map+setup retry loop to runInitPipelineWithRetries (Refs #3449)

@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'faithful_full_ai_test_handoff.dart';
+import '../support/faithful_full_ai_test_handoff.dart';
 
 void main() {
   test('applyFaithfulFullAiTestHandoff clears isHuman and enables AI control '

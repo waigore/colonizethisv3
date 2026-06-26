@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'test_fixtures.dart';
+import 'ai_planner_fixtures.dart';
 
 void main() {
   group('cheapestRegimentBuildCost', () {
