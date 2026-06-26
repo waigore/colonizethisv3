@@ -38,10 +38,7 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
     ctx.order.targetFactionId,
     ctx.relationScore,
   );
-  final targetProvinceCount = provinceCountOwnedBy(
-    ctx.game,
-    ctx.order.targetFactionId,
-  );
+  final targetProvinceCount = ctx.targetProvinceCount;
   final desiredTerritory = targetProvinceCount <= 0
       ? 1
       : ((warDesire / 25).round()).clamp(1, targetProvinceCount);
@@ -300,10 +297,7 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
     }
   }
   if (ctx.stalledOwExpansion && ctx.isMinorTarget && !ctx.isTribeTarget) {
-    final targetMinorProvinces = provinceCountOwnedBy(
-      ctx.game,
-      ctx.order.targetFactionId,
-    );
+    final targetMinorProvinces = ctx.targetProvinceCount;
     if (targetMinorProvinces > 0 &&
         targetMinorProvinces < ctx.snapshot.conquest.oldWorldProvincesOwned) {
       s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledWeakerMinorBonus);
@@ -389,7 +383,7 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
       !ctx.invadableGpBlocker) {
     s -= kDeclareWarStalledGpWhenMinorsRemainPenalty;
   }
-  final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
+  final targetOw = ctx.targetProvinceCount;
   if (ctx.isAdjacentGp &&
       targetOw > 0 &&
       targetOw < ctx.snapshot.conquest.oldWorldProvincesOwned &&

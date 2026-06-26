@@ -249,6 +249,18 @@ final class _DeclareWarTargetContext {
   bool get targetIsInvadableOwner =>
       invadableOwners.contains(order.targetFactionId);
 
+  /// Number of provinces the declare-war target faction currently owns.
+  ///
+  /// Single source of truth for the
+  /// `provinceCountOwnedBy(game, order.targetFactionId)` projection repeated
+  /// across the declare-war suppression and bonus scoring branches (Refs #3717
+  /// declare-war OW-conquest scoring-skeleton dedup). Backed by the O(1)
+  /// memoised [ProvinceOwnerCache.countOwnedBy] lookup, so reading it is a pure
+  /// projection over [game] / [order]; byte-identical to the inline calls it
+  /// replaces (Refs #2509 Must-have #7).
+  int get targetProvinceCount =>
+      provinceCountOwnedBy(game, order.targetFactionId);
+
   /// Whether the active player's war-likelihood personality threshold is at or
   /// below the declare-war low-war-likelihood band
   /// (`thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold`).
@@ -641,7 +653,7 @@ int? _declareWarSuppressedAdjacentGpScore(
 }) {
   if (ctx.order.type == DiplomaticOrderType.declareWar && ctx.isAdjacentGp) {
     final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
-    final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
+    final targetOw = ctx.targetProvinceCount;
     if (ctx.targetIsGreatPower) {
       if (regimentCountForPlayer(ctx.game, ctx.nationId) == 0 &&
           isBelowObserverConquestQuota(attackerOw)) {
@@ -780,7 +792,7 @@ int? _declareWarSuppressedAdjacentGpScore(
       ctx.isAdjacentGp &&
       ctx.targetIsGreatPower &&
       ctx.stalledOwExpansion) {
-    final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
+    final targetOw = ctx.targetProvinceCount;
     if (!ctx.invadableGpBlocker &&
         targetOw <= kFewOldWorldProvincesDefendThreshold &&
         ctx.snapshot.conquest.oldWorldProvincesOwned >=
@@ -812,7 +824,7 @@ int? _declareWarSuppressedWarConcentrationScore(
       return 0;
     }
     final targetGpId = ctx.order.targetFactionId;
-    final targetOw = provinceCountOwnedBy(ctx.game, targetGpId);
+    final targetOw = ctx.targetProvinceCount;
     final targetGpWarCount = greatPowerWarCountOnTarget(
       game: ctx.game,
       targetGpId: targetGpId,
@@ -844,8 +856,7 @@ int? _declareWarSuppressedWarConcentrationScore(
   }
   if (ctx.stalledOwExpansion &&
       ctx.invadableGpBlocker &&
-      provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId) >
-          ctx.snapshot.conquest.oldWorldProvincesOwned &&
+      ctx.targetProvinceCount > ctx.snapshot.conquest.oldWorldProvincesOwned &&
       ctx.hasInvadableMinorOwner) {
     return 0;
   }
