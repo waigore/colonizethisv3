@@ -423,4 +423,77 @@ void main() {
       }
     });
   });
+
+  group('orderTargetIsAtWarInvadableBlocker (Refs #3717)', () {
+    const Player gp = Player(id: _gp2, displayName: 'GP2', isHuman: false);
+
+    AIWorldSnapshot snapshotAtWar(List<String> atWarWith) => AIWorldSnapshot(
+      playerId: _gp1,
+      threats: ThreatSummary(atWarWith: atWarWith),
+      opportunities: const OpportunitySummary(),
+      conquest: const ConquestSummary(),
+      economy: const EconomySummary(),
+      relations: const {},
+    );
+
+    test('true when target is the at-war primary invadable GP blocker', () {
+      expect(
+        orderTargetIsAtWarInvadableBlocker(
+          targetGp: gp,
+          snapshot: snapshotAtWar(const [_gp2]),
+          targetFactionId: _gp2,
+          invadableBlocker: _gp2,
+        ),
+        isTrue,
+      );
+    });
+
+    test('false when the target is not a Great Power (targetGp null)', () {
+      expect(
+        orderTargetIsAtWarInvadableBlocker(
+          targetGp: null,
+          snapshot: snapshotAtWar(const [_gp2]),
+          targetFactionId: _gp2,
+          invadableBlocker: _gp2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when there is no primary invadable blocker', () {
+      expect(
+        orderTargetIsAtWarInvadableBlocker(
+          targetGp: gp,
+          snapshot: snapshotAtWar(const [_gp2]),
+          targetFactionId: _gp2,
+          invadableBlocker: null,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when the order target is not the blocker', () {
+      expect(
+        orderTargetIsAtWarInvadableBlocker(
+          targetGp: gp,
+          snapshot: snapshotAtWar(const [_gp2, _gp3]),
+          targetFactionId: _gp2,
+          invadableBlocker: _gp3,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when the blocker target is not currently at war', () {
+      expect(
+        orderTargetIsAtWarInvadableBlocker(
+          targetGp: gp,
+          snapshot: snapshotAtWar(const [_gp3]),
+          targetFactionId: _gp2,
+          invadableBlocker: _gp2,
+        ),
+        isFalse,
+      );
+    });
+  });
 }

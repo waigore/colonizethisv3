@@ -379,6 +379,40 @@ bool atWarGreatPowerOrderTarget({
   required String targetFactionId,
 }) => targetGp != null && snapshot.threats.atWarWith.contains(targetFactionId);
 
+/// Single source of truth for the offer-peace family's repeated "the order's
+/// target is the at-war primary invadable Old World GP blocker" eligibility
+/// projection (Refs #3717 offer-peace scoring-skeleton dedup). Returns `true`
+/// only when [targetGp] resolves to a [Player] Great Power, the
+/// [primaryInvadableOldWorldGpBlocker] result passed as [invadableBlocker] is
+/// non-null, [targetFactionId] equals that blocker, *and*
+/// [AIWorldSnapshot.threats]'s `atWarWith` set contains the blocker.
+///
+/// Behaviour-preserving against the replaced inline guards in
+/// `diplomatic_candidate_scoring_offer_peace.dart`, which each spelled out
+/// `targetGp != null && blocker != null && order.targetFactionId == blocker &&
+/// snapshot.threats.atWarWith.contains(blocker)` before applying a blocker-
+/// specific offer-peace adjustment. Callers pass the already-resolved
+/// [targetGp] (`game.playerById(order.targetFactionId)`) and the single
+/// [primaryInvadableOldWorldGpBlocker] result so no extra player lookup or
+/// blocker recomputation is introduced — consistent with
+/// `colonizethis-turn-resolution-budget.mdc`.
+///
+/// The original `&&` short-circuited the later conjuncts when `targetGp` or the
+/// blocker was null; this helper always evaluates the pure, side-effect-free
+/// equality and set-membership tests, yielding an identical boolean result.
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7).
+bool orderTargetIsAtWarInvadableBlocker({
+  required Player? targetGp,
+  required AIWorldSnapshot snapshot,
+  required String targetFactionId,
+  required String? invadableBlocker,
+}) =>
+    targetGp != null &&
+    invadableBlocker != null &&
+    targetFactionId == invadableBlocker &&
+    snapshot.threats.atWarWith.contains(invadableBlocker);
+
 /// Whether any invadable Old-World frontier province is currently owned by a
 /// minor nation.
 ///

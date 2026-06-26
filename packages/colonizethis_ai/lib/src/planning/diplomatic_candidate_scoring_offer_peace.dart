@@ -237,15 +237,26 @@ int _scoreOfferPeaceDiplomaticOrder({
     game: game,
     snapshot: snapshot,
   );
-  if (targetGp != null &&
-      gpBlocker != null &&
-      order.targetFactionId == gpBlocker &&
-      snapshot.threats.atWarWith.contains(gpBlocker) &&
+  // Route the repeated "order target is the at-war primary invadable OW GP
+  // blocker" eligibility gate through the shared
+  // [orderTargetIsAtWarInvadableBlocker] helper (Refs #3717 offer-peace
+  // scoring-skeleton dedup); reuse the single [gpBlocker] result for both
+  // blocker branches below instead of recomputing
+  // [primaryInvadableOldWorldGpBlocker]. Byte-identical: the helper spells out
+  // the same `targetGp != null && blocker != null && target == blocker &&
+  // atWarWith.contains(blocker)` conjunction the inline guards used.
+  final targetIsAtWarBlocker = orderTargetIsAtWarInvadableBlocker(
+    targetGp: targetGp,
+    snapshot: snapshot,
+    targetFactionId: order.targetFactionId,
+    invadableBlocker: gpBlocker,
+  );
+  if (targetIsAtWarBlocker &&
       (snapshot.conquest.oldWorldProvincesOwned <=
               kFewOldWorldProvincesDefendThreshold ||
           (regimentCountForPlayer(game, nationId) == 0 &&
               isOwnOldWorldExpansionStalled(snapshot))) &&
-      provinceCountOwnedBy(game, gpBlocker) >=
+      provinceCountOwnedBy(game, gpBlocker!) >=
           snapshot.conquest.oldWorldProvincesOwned +
               kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
     s += kOfferPeaceWeakVsInvadableBlockerBonus;
@@ -268,14 +279,7 @@ int _scoreOfferPeaceDiplomaticOrder({
       )) {
     s += kOfferPeaceMutualExhaustedGpStalemateBonus;
   }
-  final invadableBlocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (targetGp != null &&
-      invadableBlocker != null &&
-      order.targetFactionId == invadableBlocker &&
-      snapshot.threats.atWarWith.contains(invadableBlocker) &&
+  if (targetIsAtWarBlocker &&
       isOwnOldWorldBelowConquestQuota(snapshot) &&
       snapshot.conquest.oldWorldProvincesOwned >
           kFewOldWorldProvincesDefendThreshold) {

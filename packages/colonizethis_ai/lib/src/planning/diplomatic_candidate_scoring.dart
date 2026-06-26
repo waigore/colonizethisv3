@@ -20,7 +20,8 @@ import 'planning_helpers.dart'
         hasRecentDiplomaticEventWithinCooldown,
         isAtWarWithAnyGreatPower,
         isOwnOldWorldBelowConquestQuota,
-        isOwnOldWorldExpansionStalled;
+        isOwnOldWorldExpansionStalled,
+        orderTargetIsAtWarInvadableBlocker;
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
