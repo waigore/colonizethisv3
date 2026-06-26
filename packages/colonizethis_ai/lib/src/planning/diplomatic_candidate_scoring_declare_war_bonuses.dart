@@ -111,7 +111,7 @@ int _declareWarStalledOldWorldExpansionBonuses(
       kDeclareWarStalledOwMinorPriorityBonus,
     );
     s += _owConquestDeclareWarBonus(ctx, _stalledOwMinorRecoveryBonus(ctx));
-    if (ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+    if (ctx.lowWarLikelihood) {
       s += _owConquestDeclareWarBonus(
         ctx,
         kDeclareWarLowWarLikelihoodAdjacentBonus,
@@ -230,7 +230,7 @@ int _declareWarAdjacentOwnerBonuses(
     }
     if (ctx.stalledOwExpansion &&
         ctx.isAdjacentInvadableOwMinor &&
-        ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+        ctx.lowWarLikelihood) {
       s += _owConquestDeclareWarBonus(
         ctx,
         kDeclareWarStalledLowWarLikelihoodMinorBonus,
@@ -253,7 +253,7 @@ int _declareWarAdjacentOwnerBonuses(
         ctx.isAdjacentGp) {
       s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
     }
-    if (ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+    if (ctx.lowWarLikelihood) {
       s += kDeclareWarLowWarLikelihoodAdjacentBonus;
     }
   }
@@ -278,7 +278,7 @@ int _declareWarAdjacencyAndStalledBonuses(
       ctx,
       kDeclareWarStalledExpansionMinorBonus,
     );
-    if (ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+    if (ctx.lowWarLikelihood) {
       s += _owConquestDeclareWarBonus(
         ctx,
         kDeclareWarLowWarLikelihoodAdjacentBonus,
@@ -452,14 +452,14 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
   if (ctx.stalledOwExpansion &&
       ctx.behindVictoryPace &&
       ctx.isTribeTarget &&
-      ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold &&
+      ctx.lowWarLikelihood &&
       ctx.invadableOwners.any((id) => isMinorFaction(ctx.game, id))) {
     s = math.min(s, kDeclareWarStalledLowWarLikelihoodTribeCap);
   }
   if (ctx.stalledOwExpansion &&
       ctx.behindVictoryPace &&
       ctx.isAdjacentInvadableOwMinor &&
-      ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+      ctx.lowWarLikelihood) {
     s = math.max(
       s,
       _owConquestDeclareWarBonus(

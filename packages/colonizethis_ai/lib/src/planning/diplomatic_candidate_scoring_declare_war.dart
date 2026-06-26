@@ -249,6 +249,18 @@ final class _DeclareWarTargetContext {
   bool get targetIsInvadableOwner =>
       invadableOwners.contains(order.targetFactionId);
 
+  /// Whether the active player's war-likelihood personality threshold is at or
+  /// below the declare-war low-war-likelihood band
+  /// (`thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold`).
+  ///
+  /// Single source of truth for the low-war-likelihood predicate repeated
+  /// across the declare-war suppression and bonus scoring branches (Refs #3717
+  /// diplomatic-scoring dedup). Pure projection over [thresholds];
+  /// byte-identical to the inline comparisons it replaces (Refs #2509
+  /// Must-have #7).
+  bool get lowWarLikelihood =>
+      thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold;
+
   factory _DeclareWarTargetContext.build({
     required DiplomaticOrder order,
     required String nationId,
@@ -859,7 +871,7 @@ int? _declareWarSuppressedWarConcentrationScore(
       ctx.hasInvadableMinorOwner &&
       !ctx.invadableGpBlocker &&
       !ctx.invadableGpBlockerWeaker &&
-      ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+      ctx.lowWarLikelihood) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
   return null;
