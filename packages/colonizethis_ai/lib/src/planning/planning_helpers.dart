@@ -285,6 +285,33 @@ bool isOwnOldWorldExpansionStalled(AIWorldSnapshot snapshot) =>
 bool isOwnOldWorldBelowConquestQuota(AIWorldSnapshot snapshot) =>
     isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned);
 
+/// The signed Old World province lead [factionId] holds over the active player.
+///
+/// Single source of truth for the repeated
+/// `provinceCountOwnedBy(game, <factionId>) -
+/// snapshot.conquest.oldWorldProvincesOwned` projection — another faction's Old
+/// World province count minus the active player's own — duplicated across the
+/// conquest army-move stalled-GP-blocker bonus (`conquest_planner.dart`), the
+/// orchestrator stalled min-regiment floor (`domain_planner_orchestrator.dart`),
+/// and the EXPAND stronger-blocker / weak-holdings blocker peace deciders
+/// (`expand_phase_planner_gp_blocker_peace.dart`). The active player's own OW
+/// holdings always come from [ConquestSummary.oldWorldProvincesOwned]; a
+/// positive result is the other faction's lead, which call sites treat as a
+/// `lead` (peace deciders) or `deficit` (own-side regiment/bonus scaling).
+///
+/// Pure delegation to [provinceCountOwnedBy] — byte-identical to the inline
+/// subtraction it replaces (a single O(1) memoised owner-count lookup; no extra
+/// province scan, per `colonizethis-turn-resolution-budget.mdc`) and
+/// deterministic for fixed inputs (Refs #3717 diplomatic-scoring/expand-peace
+/// dedup).
+int oldWorldProvinceLeadOver({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required String factionId,
+}) =>
+    provinceCountOwnedBy(game, factionId) -
+    snapshot.conquest.oldWorldProvincesOwned;
+
 /// Whether [factionId] (holding [ow] Old World provinces) qualifies as one side
 /// of a "mutual-exhausted below-quota Great Power stalemate".
 ///

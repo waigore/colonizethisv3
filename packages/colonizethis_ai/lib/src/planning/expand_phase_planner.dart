@@ -130,6 +130,7 @@ import 'planning_helpers.dart'
         isOwnOldWorldExpansionStalled,
         minorAtWarPeaceTargetsWhere,
         mutualExhaustedGpStalemateSideQualifies,
+        oldWorldProvinceLeadOver,
         peaceTargetsExcludingBlocker,
         tribeAtWarPeaceTargetsWhere;
 

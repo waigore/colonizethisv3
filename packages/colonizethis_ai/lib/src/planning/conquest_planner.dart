@@ -13,7 +13,8 @@ import 'planning_helpers.dart'
     show
         factionOwnsInvadableOldWorldProvince,
         isAtWarWithAnyGreatPower,
-        minorAtWarPeaceTargetsWhere;
+        minorAtWarPeaceTargetsWhere,
+        oldWorldProvinceLeadOver;
 import '../util/ai_random_utils.dart';
 import '../util/faction_query.dart';
 
@@ -715,8 +716,11 @@ double _stalledExpansionArmyMoveScoreDelta({
       delta += kConquestArmyMoveStalledDeclaredTargetBonus;
     }
     if (atWarGpInvadableBlocker) {
-      final blockerOw = provinceCountOwnedBy(game, destOwner);
-      final deficit = blockerOw - snapshot.conquest.oldWorldProvincesOwned;
+      final deficit = oldWorldProvinceLeadOver(
+        game: game,
+        snapshot: snapshot,
+        factionId: destOwner,
+      );
       if (deficit > 0) {
         delta +=
             deficit * kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince;

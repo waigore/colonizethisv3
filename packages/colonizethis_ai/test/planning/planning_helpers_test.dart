@@ -8,6 +8,10 @@
 //   - `isOwnOldWorldExpansionStalled` / `isOwnOldWorldBelowConquestQuota` —
 //     own-OW snapshot projections: stall-band / quota boundaries, negative
 //     cases, equivalence with the underlying int predicates (Refs #3717)
+//   - `oldWorldProvinceLeadOver` — another faction's OW province count minus the
+//     active player's own (`provinceCountOwnedBy - oldWorldProvincesOwned`):
+//     positive lead / negative deficit / zero, owner isolation, unowned-faction
+//     pure deficit, determinism (Refs #3717)
 //   - `gpAtWarPeaceTargetsWhere` — predicate-filtered GP at-war peace-target
 //     collector: keep-subset filtering, ascending sort/determinism, non-GP
 //     exclusion, keep-all/keep-none edges, one keep call per GP (Refs #3717)
@@ -105,6 +109,34 @@ AIWorldSnapshot _snapshotWithOwnOw(int oldWorldProvincesOwned) {
     conquest: ConquestSummary(oldWorldProvincesOwned: oldWorldProvincesOwned),
     economy: const EconomySummary(),
     relations: const {},
+  );
+}
+
+// Game where [ownerCounts] maps a factionId to the number of Old World
+// provinces it owns, so `provinceCountOwnedBy` (and hence the
+// `oldWorldProvinceLeadOver` projection under test) returns those counts
+// deterministically via the memoised province-owner cache.
+Game _gameOwning(Map<String, int> ownerCounts) {
+  final provinces = <Province>[
+    for (final entry in ownerCounts.entries)
+      for (var i = 0; i < entry.value; i++)
+        Province(
+          id: 'oldWorld|${entry.key}_$i',
+          regionId: 'oldWorld',
+          ownerId: entry.key,
+        ),
+  ];
+  return Game(
+    id: 'g-3717-ow-lead',
+    worldState: WorldState(
+      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: RegionData(provinces: provinces),
+      newWorld: const RegionData(provinces: []),
+    ),
+    players: [
+      for (final id in ownerCounts.keys)
+        Player(id: id, displayName: id.toUpperCase(), isHuman: false),
+    ],
   );
 }
 
@@ -279,6 +311,85 @@ void main() {
           reason: 'mismatch for ownOw=$ow',
         );
       }
+    });
+  });
+
+  group('oldWorldProvinceLeadOver (Refs #3717)', () {
+    test('positive when the faction owns more than the own OW count', () {
+      final game = _gameOwning({_gp2: 5});
+      expect(
+        oldWorldProvinceLeadOver(
+          game: game,
+          snapshot: _snapshotWithOwnOw(3),
+          factionId: _gp2,
+        ),
+        2,
+      );
+    });
+
+    test('negative (deficit view) when the faction owns fewer', () {
+      final game = _gameOwning({_gp2: 1});
+      expect(
+        oldWorldProvinceLeadOver(
+          game: game,
+          snapshot: _snapshotWithOwnOw(4),
+          factionId: _gp2,
+        ),
+        -3,
+      );
+    });
+
+    test('zero when the faction owns exactly the own OW count', () {
+      final game = _gameOwning({_gp2: 4});
+      expect(
+        oldWorldProvinceLeadOver(
+          game: game,
+          snapshot: _snapshotWithOwnOw(4),
+          factionId: _gp2,
+        ),
+        0,
+      );
+    });
+
+    test('counts only the queried faction (other owners excluded)', () {
+      final game = _gameOwning({_gp2: 6, _gp3: 9});
+      expect(
+        oldWorldProvinceLeadOver(
+          game: game,
+          snapshot: _snapshotWithOwnOw(2),
+          factionId: _gp2,
+        ),
+        4,
+      );
+    });
+
+    test('unowned faction yields a pure deficit (count 0)', () {
+      final game = _gameOwning({_gp2: 3});
+      expect(
+        oldWorldProvinceLeadOver(
+          game: game,
+          snapshot: _snapshotWithOwnOw(5),
+          factionId: _gp3,
+        ),
+        -5,
+      );
+    });
+
+    test('deterministic for fixed inputs', () {
+      final game = _gameOwning({_gp2: 7});
+      final snapshot = _snapshotWithOwnOw(3);
+      final a = oldWorldProvinceLeadOver(
+        game: game,
+        snapshot: snapshot,
+        factionId: _gp2,
+      );
+      final b = oldWorldProvinceLeadOver(
+        game: game,
+        snapshot: snapshot,
+        factionId: _gp2,
+      );
+      expect(a, 4);
+      expect(b, a);
     });
   });
 

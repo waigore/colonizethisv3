@@ -135,9 +135,11 @@ String? stalledStrongerGpBlockerPeaceTarget({
       factionId: factionId,
     );
     if (!ownsInvadable) continue;
-    final lead =
-        provinceCountOwnedBy(game, factionId) -
-        snapshot.conquest.oldWorldProvincesOwned;
+    final lead = oldWorldProvinceLeadOver(
+      game: game,
+      snapshot: snapshot,
+      factionId: factionId,
+    );
     if (lead <= 0) continue;
     if (lead > bestLead) {
       bestLead = lead;
@@ -301,9 +303,11 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
       game.playerById(blocker) == null) {
     return const [];
   }
-  final lead =
-      provinceCountOwnedBy(game, blocker) -
-      snapshot.conquest.oldWorldProvincesOwned;
+  final lead = oldWorldProvinceLeadOver(
+    game: game,
+    snapshot: snapshot,
+    factionId: blocker,
+  );
   final minLead = belowQuota
       ? (snapshot.conquest.oldWorldProvincesOwned <=
                 kObserverDefaultStartOldWorldProvincesPerGp + 2

@@ -10,7 +10,8 @@ import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
-import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
+import 'planning_helpers.dart'
+    show isAtWarWithAnyGreatPower, oldWorldProvinceLeadOver;
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
@@ -708,9 +709,11 @@ int _computeMinRegimentFloor({
       ? kStalledMinRegimentCountWhenGpBlockerAtWar
       : kStalledMinRegimentCountWhenAtWar;
   if (atWarWithGpBlocker && gpBlocker != null) {
-    final deficit =
-        provinceCountOwnedBy(ctx.game, gpBlocker) -
-        snapshot.conquest.oldWorldProvincesOwned;
+    final deficit = oldWorldProvinceLeadOver(
+      game: ctx.game,
+      snapshot: snapshot,
+      factionId: gpBlocker,
+    );
     if (deficit > 0) {
       minRegimentFloor +=
           deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
