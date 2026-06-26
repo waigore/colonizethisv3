@@ -15,6 +15,9 @@
 //   - `mutualExhaustedGpStalemateSideQualifies` — per-side mutual-exhausted
 //     below-quota GP stalemate qualification: min-OW floor, below-quota / stalled
 //     bands, treasury / regiment exhaustion ceilings, unknown-faction exclusion
+//   - `clampPhaseWeightUpperUnit` — `weight > 1.0 ? 1.0 : weight` upper-clamp:
+//     caps above-ceiling weights, passes in-range / negative weights through,
+//     and matches the inline ternary it replaces
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
@@ -627,6 +630,39 @@ void main() {
         ),
         isFalse,
       );
+    });
+  });
+
+  group('clampPhaseWeightUpperUnit (Refs #3717)', () {
+    test('caps weights above the unit ceiling to 1.0', () {
+      expect(clampPhaseWeightUpperUnit(1.5), 1.0);
+      expect(clampPhaseWeightUpperUnit(2.0), 1.0);
+      expect(clampPhaseWeightUpperUnit(100.0), 1.0);
+    });
+
+    test('returns the boundary weight 1.0 unchanged (strict > ceiling)', () {
+      expect(clampPhaseWeightUpperUnit(1.0), 1.0);
+    });
+
+    test('passes through in-range weights below the ceiling unchanged', () {
+      expect(clampPhaseWeightUpperUnit(0.0), 0.0);
+      expect(clampPhaseWeightUpperUnit(0.05), 0.05);
+      expect(clampPhaseWeightUpperUnit(0.6), 0.6);
+      expect(clampPhaseWeightUpperUnit(0.999), 0.999);
+    });
+
+    test(
+      'does not lower-clamp — negative inputs pass through (callers guard '
+      '<= 0.0 themselves)',
+      () {
+        expect(clampPhaseWeightUpperUnit(-0.5), -0.5);
+      },
+    );
+
+    test('matches the inline ternary it replaces for representative weights', () {
+      for (final w in <double>[-1.0, 0.0, 0.05, 0.5, 1.0, 1.0001, 3.0]) {
+        expect(clampPhaseWeightUpperUnit(w), w > 1.0 ? 1.0 : w);
+      }
     });
   });
 }

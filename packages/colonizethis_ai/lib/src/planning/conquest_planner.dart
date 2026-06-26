@@ -11,6 +11,7 @@ import 'phase_priority_weights.dart';
 import 'planner_context.dart';
 import 'planning_helpers.dart'
     show
+        clampPhaseWeightUpperUnit,
         factionOwnsInvadableOldWorldProvince,
         isAtWarWithAnyGreatPower,
         minorAtWarPeaceTargetsWhere,
@@ -759,7 +760,7 @@ double conquestOldWorldArmyMoveScaledBonus({
   if (oldWorldInvasionWeight <= 0.0) {
     return 0.0;
   }
-  final clamped = oldWorldInvasionWeight > 1.0 ? 1.0 : oldWorldInvasionWeight;
+  final clamped = clampPhaseWeightUpperUnit(oldWorldInvasionWeight);
   return baseBonus * clamped;
 }
 

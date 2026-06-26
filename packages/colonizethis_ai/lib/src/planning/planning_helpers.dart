@@ -23,6 +23,11 @@
 ///     collector for both the active player and the enemy Great Power.
 ///   - [scaleWeightedBonus] — the `<= 0.0 → 0`, clamp-to-`1.0`, `round()`
 ///     weight-scaling idiom shared by the soft-phase bonus/floor resolvers.
+///   - [clampPhaseWeightUpperUnit] — the `weight > 1.0 ? 1.0 : weight`
+///     upper-clamp idiom shared by the soft-phase weight-scaling sites
+///     ([scaleWeightedBonus], the conquest OW army-move scaled bonus, and the
+///     economy colonial-pressure threshold-cap resolvers) once each has
+///     guarded its own `<= 0.0` lower bound.
 ///   - [resolvePhaseColonialPressureActive] /
 ///     [resolvePhaseExpandOrColonialLiteActive] — the structural phase
 ///     predicates shared by the conquest / economy / diplomacy / goal filters.
@@ -384,9 +389,30 @@ int scaleWeightedBonus(double weight, int baseConstant) {
   if (weight <= 0.0) {
     return 0;
   }
-  final clamped = weight > 1.0 ? 1.0 : weight;
+  final clamped = clampPhaseWeightUpperUnit(weight);
   return (baseConstant * clamped).round();
 }
+
+/// Upper-clamps a soft-phase priority [weight] to the unit ceiling `1.0`,
+/// returning [weight] unchanged when it is already `<= 1.0`.
+///
+/// Single source of truth for the `weight > 1.0 ? 1.0 : weight` upper-clamp
+/// idiom duplicated across the soft-phase weight-scaling sites (Refs #3717
+/// phase weight-clamp dedup): [scaleWeightedBonus] above,
+/// `conquestOldWorldArmyMoveScaledBonus` (`conquest_planner.dart`), and the
+/// economy threshold-cap resolvers
+/// `economyColonialPressureCivilianWorkThresholdCap` /
+/// `economyColonialPressureBuildOrderThresholdCap`
+/// (`phase_planner_economy_filter.dart`). Each call site already guards the
+/// lower bound with its own `weight <= 0.0` early-out, so this helper only
+/// caps the ceiling — byte-identical to the inline ternary it replaces. It
+/// deliberately keeps the `> 1.0 ? 1.0 :` ternary rather than substituting
+/// `weight.clamp(0.0, 1.0)`, which would alter results for the negative
+/// inputs the callers' guards exclude.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7).
+double clampPhaseWeightUpperUnit(double weight) => weight > 1.0 ? 1.0 : weight;
 
 /// Structural predicate: `true` only under [ObserverGoalPhase.colonial].
 ///

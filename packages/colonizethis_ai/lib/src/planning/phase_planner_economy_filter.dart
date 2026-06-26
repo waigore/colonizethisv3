@@ -87,6 +87,7 @@ import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
     show
+        clampPhaseWeightUpperUnit,
         resolvePhaseColonialPressureActive,
         resolvePhaseNewWorldAcquisitionWeight,
         resolvePhaseNewWorldCivilianWeight,
@@ -457,7 +458,7 @@ int economyColonialPressureCivilianWorkThresholdCap({
   if (colonialPressureWeight <= 0.0) {
     return uncappedThreshold;
   }
-  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
+  final clamped = clampPhaseWeightUpperUnit(colonialPressureWeight);
   final span = uncappedThreshold - kColonialCivilianWorkThresholdCap;
   return (uncappedThreshold - span * clamped).round();
 }
@@ -494,7 +495,7 @@ int? economyColonialPressureBuildOrderThresholdCap({
   if (colonialPressureWeight <= 0.0) {
     return null;
   }
-  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
+  final clamped = clampPhaseWeightUpperUnit(colonialPressureWeight);
   return (kColonialBuildOrderThresholdWhenOwnedNwUnderPressure * clamped)
       .round();
 }
