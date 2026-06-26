@@ -71,6 +71,7 @@ List<String> gpFactionIdsAtWarWith(Game game, AIWorldSnapshot snapshot) {
 /// `<String>[for (final id in gpFactionIdsAtWarWith(game, snapshot)) if (<keep>) id]..sort()`
 /// duplicated across the expand-peace deciders (`defaultStartGpPeaceTargets`,
 /// `stalledBelowQuotaGpLeadPeaceTargets`, `quotaMetBelowQuotaAtWarPeaceTargets`,
+/// `quotaMetFutileBelowQuotaGpPeaceTargets`,
 /// `criticalWeakGpSurvivalPeaceTargets`). Each caller now supplies only its
 /// per-faction [keep] predicate; the GP at-war filter (via
 /// [gpFactionIdsAtWarWith]) and the ascending `factionId` sort are applied

@@ -470,10 +470,13 @@ List<String> criticalOwHoldPeaceTargets({
 ///      [quotaMetBelowQuotaAtWarPeaceTargets] / consolidate-gains
 ///      deciders take over.
 ///
-/// Per-enemy filters (each `continue`s without short-circuiting):
+/// Per-enemy filters (applied via the shared [gpAtWarPeaceTargetsWhere]
+/// collector's `keep` predicate; non-matching enemies are dropped without
+/// short-circuiting the scan):
 ///   * Skip [ThreatSummary.atWarWith] entries that are not Great
 ///     Powers ([Game.playerById] returns `null`); minors and tribes
 ///     belong to the [defaultStartFutileMinorPeaceTargets] family.
+///     (Applied once inside [gpAtWarPeaceTargetsWhere] / [gpFactionIdsAtWarWith].)
 ///   * Skip Great Power enemies whose own
 ///     [provinceCountOwnedBy] is at or above the observer quota;
 ///     consolidate-gains owns those wars.
@@ -522,20 +525,26 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
     game: game,
     snapshot: snapshot,
   );
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) continue;
-    if (!isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId))) {
-      continue;
-    }
-    final ownsInvadable = factionOwnsInvadableOldWorldProvince(
-      snapshot: snapshot,
-      provinceOwner: provinceOwner,
-      factionId: factionId,
-    );
-    if (ownsInvadable || factionId == blocker) continue;
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
+  // Route the GP at-war filter + ascending-`factionId` sort through the shared
+  // [gpAtWarPeaceTargetsWhere] collector skeleton (Refs #3717 expand-peace
+  // dedup), matching the sibling deciders [stalledBelowQuotaGpLeadPeaceTargets]
+  // and [quotaMetBelowQuotaAtWarPeaceTargets]. Byte-identical: the inline loop
+  // skipped non-GP `atWarWith` entries and sorted the result, exactly what the
+  // shared helper does; only the below-quota / invadable-owner / blocker
+  // per-enemy filters remain caller-specific here.
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) {
+      if (!isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId))) {
+        return false;
+      }
+      final ownsInvadable = factionOwnsInvadableOldWorldProvince(
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        factionId: factionId,
+      );
+      return !(ownsInvadable || factionId == blocker);
+    },
+  );
 }
