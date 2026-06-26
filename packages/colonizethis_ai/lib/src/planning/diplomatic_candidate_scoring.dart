@@ -21,6 +21,7 @@ import 'planning_helpers.dart'
         isAtWarWithAnyGreatPower,
         isOwnOldWorldBelowConquestQuota,
         isOwnOldWorldExpansionStalled,
+        mutualExhaustedGpStalemateSideQualifies,
         orderTargetIsAtWarInvadableBlocker;
 import 'war_desire_calculator.dart';
 

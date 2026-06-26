@@ -16,33 +16,33 @@ bool _mutualExhaustedBelowQuotaSoleGpStalemate({
     return false;
   }
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (ownOw < kMutualExhaustedGpStalemateMinOw ||
-      !isBelowObserverConquestQuota(ownOw) ||
-      !isStalledOldWorldExpansion(ownOw)) {
-    return false;
-  }
-  final ownPlayer = game.playerById(nationId);
-  if (ownPlayer == null ||
-      ownPlayer.treasury > kMutualExhaustedGpTreasuryMax ||
-      regimentCountForPlayer(game, nationId) > kMutualExhaustedGpRegimentMax) {
+  // Route the duplicated per-side "mutual-exhausted below-quota GP stalemate"
+  // qualification (min-OW + below-quota + stalled + treasury/regiment
+  // exhaustion) through the shared [mutualExhaustedGpStalemateSideQualifies]
+  // helper (Refs #3717 offer-peace / expand-peace scoring-skeleton dedup). The
+  // helper bundles the same side-effect-free guards the inline checks used for
+  // both the active player and the enemy GP, so results are byte-identical; the
+  // inter-side `(enemyOw - ownOw).abs()` proximity gate stays here.
+  if (!mutualExhaustedGpStalemateSideQualifies(
+    game: game,
+    factionId: nationId,
+    ow: ownOw,
+  )) {
     return false;
   }
   final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length != 1 || gpWars.single != order.targetFactionId) {
     return false;
   }
-  final enemyPlayer = game.playerById(order.targetFactionId);
-  if (enemyPlayer == null ||
-      enemyPlayer.treasury > kMutualExhaustedGpTreasuryMax ||
-      regimentCountForPlayer(game, order.targetFactionId) >
-          kMutualExhaustedGpRegimentMax) {
+  final enemyOw = provinceCountOwnedBy(game, order.targetFactionId);
+  if (!mutualExhaustedGpStalemateSideQualifies(
+    game: game,
+    factionId: order.targetFactionId,
+    ow: enemyOw,
+  )) {
     return false;
   }
-  final enemyOw = provinceCountOwnedBy(game, order.targetFactionId);
-  if (enemyOw < kMutualExhaustedGpStalemateMinOw ||
-      !isBelowObserverConquestQuota(enemyOw) ||
-      !isStalledOldWorldExpansion(enemyOw) ||
-      (enemyOw - ownOw).abs() > 1) {
+  if ((enemyOw - ownOw).abs() > 1) {
     return false;
   }
   return true;

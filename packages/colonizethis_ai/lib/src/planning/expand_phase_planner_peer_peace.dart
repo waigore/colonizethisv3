@@ -615,24 +615,19 @@ List<String> mutualExhaustedBelowQuotaGpStalematePeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (ownOw < kMutualExhaustedGpStalemateMinOw) {
-    return const [];
-  }
-  if (!isBelowObserverConquestQuota(ownOw)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(ownOw)) {
-    return const [];
-  }
-  final ownPlayer = game.playerById(snapshot.playerId);
-  if (ownPlayer == null) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, snapshot.playerId) >
-      kMutualExhaustedGpRegimentMax) {
-    return const [];
-  }
-  if (ownPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
+  // Route the duplicated per-side "mutual-exhausted below-quota GP stalemate"
+  // qualification through the shared [mutualExhaustedGpStalemateSideQualifies]
+  // helper (Refs #3717 offer-peace / expand-peace scoring-skeleton dedup). The
+  // helper bundles the same side-effect-free guards (min-OW + below-quota +
+  // stalled + known player + treasury/regiment exhaustion) the inline checks
+  // applied for both the active player and the enemy GP, so the result is
+  // byte-identical; the inter-side `(enemyOw - ownOw).abs()` proximity gate
+  // stays here.
+  if (!mutualExhaustedGpStalemateSideQualifies(
+    game: game,
+    factionId: snapshot.playerId,
+    ow: ownOw,
+  )) {
     return const [];
   }
   final gpWars = gpFactionIdsAtWarWith(game, snapshot);
@@ -640,27 +635,15 @@ List<String> mutualExhaustedBelowQuotaGpStalematePeaceTargets({
     return const [];
   }
   final enemy = gpWars.single;
-  final enemyPlayer = game.playerById(enemy);
-  if (enemyPlayer == null) {
-    return const [];
-  }
   final enemyOw = provinceCountOwnedBy(game, enemy);
-  if (enemyOw < kMutualExhaustedGpStalemateMinOw) {
-    return const [];
-  }
-  if (!isBelowObserverConquestQuota(enemyOw)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(enemyOw)) {
+  if (!mutualExhaustedGpStalemateSideQualifies(
+    game: game,
+    factionId: enemy,
+    ow: enemyOw,
+  )) {
     return const [];
   }
   if ((enemyOw - ownOw).abs() > 1) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, enemy) > kMutualExhaustedGpRegimentMax) {
-    return const [];
-  }
-  if (enemyPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
     return const [];
   }
   return [enemy];

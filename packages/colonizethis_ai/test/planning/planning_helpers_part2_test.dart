@@ -12,11 +12,20 @@
 //     ownership scan, `.any` short-circuit, absent/other-owner exclusion
 //   - `addInvadableProvinceMinorOwnersNotAtWar` — minor-owner collector skipping
 //     unowned / non-minor / already-at-war provinces, set de-dup, pre-seeded set
+//   - `mutualExhaustedGpStalemateSideQualifies` — per-side mutual-exhausted
+//     below-quota GP stalemate qualification: min-OW floor, below-quota / stalled
+//     bands, treasury / regiment exhaustion ceilings, unknown-faction exclusion
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_ai/src/util/faction_query.dart'
     show isMinorFaction;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        kMutualExhaustedGpRegimentMax,
+        kMutualExhaustedGpStalemateMinOw,
+        kMutualExhaustedGpTreasuryMax,
+        kObserverConquestMinOwProvincesPerGp;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -52,6 +61,41 @@ AIWorldSnapshot _snapshotWithInvadable(List<String> invadableProvinceIds) {
     conquest: ConquestSummary(invadableProvinceIdsSorted: invadableProvinceIds),
     economy: const EconomySummary(),
     relations: const {},
+  );
+}
+
+const String _gpExhausted = 'gpExhausted';
+
+// Single-Great-Power game whose treasury and standing-regiment totals are
+// configurable so the mutual-exhausted side qualification can be probed at its
+// economic / military exhaustion ceilings. `mutualExhaustedGpStalemateSideQualifies`
+// reads the side's Old World count from its `ow` argument (not the game), so the
+// fixture only has to back `Game.playerById` and `regimentCountForPlayer`.
+Game _gameWithExhaustedGp({int treasury = 0, int regiments = 0}) {
+  return Game(
+    id: 'g-3717-mutual-exhausted-side',
+    worldState: WorldState(
+      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: const RegionData(provinces: []),
+      newWorld: const RegionData(provinces: []),
+      armies: [
+        Army(
+          id: 'army-$_gpExhausted',
+          ownerId: _gpExhausted,
+          regionId: 'ow',
+          stationedProvinceId: 'ow|home',
+          regimentUnitIds: [for (var i = 0; i < regiments; i++) 'reg$i'],
+        ),
+      ],
+    ),
+    players: [
+      Player(
+        id: _gpExhausted,
+        displayName: 'Exhausted GP',
+        isHuman: false,
+        treasury: treasury,
+      ),
+    ],
   );
 }
 
@@ -491,6 +535,95 @@ void main() {
           snapshot: snapshotAtWar(const [_gp3]),
           targetFactionId: _gp2,
           invadableBlocker: _gp2,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('mutualExhaustedGpStalemateSideQualifies (Refs #3717)', () {
+    // 8 OW provinces sits in the late-stalled "8-9 plateau": at/above the
+    // min-OW floor, below the observer quota (10), and inside the stall band
+    // (<= 9), so it satisfies the three OW gates simultaneously.
+    final int qualifyingOw = kMutualExhaustedGpStalemateMinOw;
+
+    test('true at the min-OW / treasury / regiment exhaustion boundary', () {
+      final game = _gameWithExhaustedGp(
+        treasury: kMutualExhaustedGpTreasuryMax,
+        regiments: kMutualExhaustedGpRegimentMax,
+      );
+      expect(
+        mutualExhaustedGpStalemateSideQualifies(
+          game: game,
+          factionId: _gpExhausted,
+          ow: qualifyingOw,
+        ),
+        isTrue,
+      );
+    });
+
+    test('false below the min-OW floor (even while stalled and below quota)', () {
+      final game = _gameWithExhaustedGp();
+      expect(
+        mutualExhaustedGpStalemateSideQualifies(
+          game: game,
+          factionId: _gpExhausted,
+          ow: kMutualExhaustedGpStalemateMinOw - 1,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false at the observer conquest quota (not below quota / not stalled)', () {
+      final game = _gameWithExhaustedGp();
+      expect(
+        mutualExhaustedGpStalemateSideQualifies(
+          game: game,
+          factionId: _gpExhausted,
+          ow: kObserverConquestMinOwProvincesPerGp,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when treasury exceeds the exhaustion ceiling', () {
+      final game = _gameWithExhaustedGp(
+        treasury: kMutualExhaustedGpTreasuryMax + 1,
+      );
+      expect(
+        mutualExhaustedGpStalemateSideQualifies(
+          game: game,
+          factionId: _gpExhausted,
+          ow: qualifyingOw,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when standing regiments exceed the exhaustion ceiling', () {
+      final game = _gameWithExhaustedGp(
+        regiments: kMutualExhaustedGpRegimentMax + 1,
+      );
+      expect(
+        mutualExhaustedGpStalemateSideQualifies(
+          game: game,
+          factionId: _gpExhausted,
+          ow: qualifyingOw,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false for a faction id that does not resolve to a Great Power', () {
+      final game = _gameWithExhaustedGp(
+        treasury: kMutualExhaustedGpTreasuryMax,
+        regiments: kMutualExhaustedGpRegimentMax,
+      );
+      expect(
+        mutualExhaustedGpStalemateSideQualifies(
+          game: game,
+          factionId: 'ghost',
+          ow: qualifyingOw,
         ),
         isFalse,
       );

@@ -16,6 +16,11 @@
 ///     and `isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)`
 ///     own-OW projections repeated across the diplomatic-scoring and
 ///     expand-peace planner families.
+///   - [mutualExhaustedGpStalemateSideQualifies] — the per-side
+///     "mutual-exhausted below-quota Great Power stalemate" qualification
+///     (min-OW + below-quota + stalled + treasury/regiment exhaustion) shared
+///     by the offer-peace bonus gate and the EXPAND mutual-exhausted peace
+///     collector for both the active player and the enemy Great Power.
 ///   - [scaleWeightedBonus] — the `<= 0.0 → 0`, clamp-to-`1.0`, `round()`
 ///     weight-scaling idiom shared by the soft-phase bonus/floor resolvers.
 ///   - [resolvePhaseColonialPressureActive] /
@@ -46,12 +51,18 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show isBelowObserverConquestQuota, isStalledOldWorldExpansion;
+    show
+        isBelowObserverConquestQuota,
+        isStalledOldWorldExpansion,
+        kMutualExhaustedGpRegimentMax,
+        kMutualExhaustedGpStalemateMinOw,
+        kMutualExhaustedGpTreasuryMax;
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import '../util/faction_query.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 
@@ -273,6 +284,59 @@ bool isOwnOldWorldExpansionStalled(AIWorldSnapshot snapshot) =>
 /// dedup).
 bool isOwnOldWorldBelowConquestQuota(AIWorldSnapshot snapshot) =>
     isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned);
+
+/// Whether [factionId] (holding [ow] Old World provinces) qualifies as one side
+/// of a "mutual-exhausted below-quota Great Power stalemate".
+///
+/// Single source of truth for the per-side qualification that was duplicated
+/// for both the active player and the enemy Great Power across
+/// [mutualExhaustedBelowQuotaGpStalematePeaceTargets]
+/// (`expand_phase_planner_peer_peace.dart`) and the offer-peace bonus gate
+/// `_mutualExhaustedBelowQuotaSoleGpStalemate`
+/// (`diplomatic_candidate_scoring_offer_peace.dart`). A side qualifies when it:
+///   * holds at least [kMutualExhaustedGpStalemateMinOw] Old World provinces,
+///   * is below the observer conquest quota ([isBelowObserverConquestQuota] of
+///     [ow]),
+///   * has stalled Old World expansion ([isStalledOldWorldExpansion] of [ow]),
+///   * resolves to a known [Player] ([Game.playerById]), and
+///   * is materially exhausted: treasury `<=` [kMutualExhaustedGpTreasuryMax]
+///     and standing regiments `<=` [kMutualExhaustedGpRegimentMax].
+///
+/// Callers pass the side's already-resolved Old World count
+/// ([ConquestSummary.oldWorldProvincesOwned] for the active player,
+/// [provinceCountOwnedBy] for the enemy) so no extra province scan is added; the
+/// inter-side `(enemyOw - ownOw).abs()` proximity gate stays at the call site.
+///
+/// Pure projection over [game] — byte-identical to the inline per-side guards it
+/// replaces (every operand is a side-effect-free read, so the guard evaluation
+/// order is immaterial to the result) and deterministic for fixed inputs
+/// (Refs #3717 offer-peace / expand-peace scoring-skeleton dedup).
+bool mutualExhaustedGpStalemateSideQualifies({
+  required Game game,
+  required String factionId,
+  required int ow,
+}) {
+  if (ow < kMutualExhaustedGpStalemateMinOw) {
+    return false;
+  }
+  if (!isBelowObserverConquestQuota(ow)) {
+    return false;
+  }
+  if (!isStalledOldWorldExpansion(ow)) {
+    return false;
+  }
+  final player = game.playerById(factionId);
+  if (player == null) {
+    return false;
+  }
+  if (player.treasury > kMutualExhaustedGpTreasuryMax) {
+    return false;
+  }
+  if (regimentCountForPlayer(game, factionId) > kMutualExhaustedGpRegimentMax) {
+    return false;
+  }
+  return true;
+}
 
 /// Scales [baseConstant] by [weight] clamped to `[0.0, 1.0]`, returning the
 /// rounded integer result.

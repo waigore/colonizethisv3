@@ -129,6 +129,7 @@ import 'planning_helpers.dart'
         isOwnOldWorldBelowConquestQuota,
         isOwnOldWorldExpansionStalled,
         minorAtWarPeaceTargetsWhere,
+        mutualExhaustedGpStalemateSideQualifies,
         peaceTargetsExcludingBlocker,
         tribeAtWarPeaceTargetsWhere;
 
