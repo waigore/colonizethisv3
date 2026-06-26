@@ -3,7 +3,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_orders/src/orders/incremental_candidate_validator.dart';
 import 'package:colonizethis_orders/src/orders/order_resolution_context.dart';
-import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_test/test.dart';
