@@ -5,7 +5,9 @@ import 'package:colonizethis_test/test.dart';
 
 /// Coverage for the shared diplomacy resolution helpers consolidated from the
 /// per-resolver copy-paste duplicates (Refs #3419): [isTargetHumanGp],
-/// [atWarGreatPowerCount], [findHumanDecision], and [debitPlayerTreasury].
+/// [atWarGreatPowerCount], [findHumanDecision], and [debitPlayerTreasury];
+/// plus the [resolveHumanGatedDecision] control-flow template that routes the
+/// four resolvers' pending-human-decision branch tail (Refs #3715).
 void main() {
   group('isTargetHumanGp', () {
     test('positive: human-controlled player is reported human', () {
@@ -95,6 +97,78 @@ void main() {
         findHumanDecision<String>(decisions, (d) => d == 'z'),
         isNull,
       );
+    });
+  });
+
+  group('resolveHumanGatedDecision (Refs #3715)', () {
+    test('AI-controlled decider routes to onAiResolve only', () {
+      var matchesCalls = 0;
+      final outcome = resolveHumanGatedDecision<String, String>(
+        isHumanControlled: false,
+        decisions: const ['x'],
+        matches: (_) {
+          matchesCalls++;
+          return true;
+        },
+        onAiResolve: () => 'ai',
+        onPending: () => 'pending',
+        onHumanDecision: (_) => 'human',
+      );
+      expect(outcome, 'ai');
+      // Decisions are never consulted for an AI decider (evaluation order).
+      expect(matchesCalls, 0);
+    });
+
+    test('human decider with a matching decision routes to onHumanDecision', () {
+      final outcome = resolveHumanGatedDecision<String, String>(
+        isHumanControlled: true,
+        decisions: const ['a', 'bb', 'cc'],
+        matches: (d) => d.length == 2,
+        onAiResolve: () => 'ai',
+        onPending: () => 'pending',
+        // First match wins, mirroring findHumanDecision.
+        onHumanDecision: (decision) => 'human:$decision',
+      );
+      expect(outcome, 'human:bb');
+    });
+
+    test('human decider with no matching decision routes to onPending', () {
+      final outcome = resolveHumanGatedDecision<String, String>(
+        isHumanControlled: true,
+        decisions: const ['a', 'b'],
+        matches: (d) => d == 'z',
+        onAiResolve: () => 'ai',
+        onPending: () => 'pending',
+        onHumanDecision: (_) => 'human',
+      );
+      expect(outcome, 'pending');
+    });
+
+    test('human decider with null decisions routes to onPending', () {
+      final outcome = resolveHumanGatedDecision<String, String>(
+        isHumanControlled: true,
+        decisions: null,
+        matches: (_) => true,
+        onAiResolve: () => 'ai',
+        onPending: () => 'pending',
+        onHumanDecision: (_) => 'human',
+      );
+      expect(outcome, 'pending');
+    });
+
+    test('exactly one callback runs per invocation', () {
+      var ai = 0;
+      var pending = 0;
+      var human = 0;
+      resolveHumanGatedDecision<String, void>(
+        isHumanControlled: true,
+        decisions: const ['match'],
+        matches: (d) => d == 'match',
+        onAiResolve: () => ai++,
+        onPending: () => pending++,
+        onHumanDecision: (_) => human++,
+      );
+      expect([ai, pending, human], [0, 0, 1]);
     });
   });
 
