@@ -4,13 +4,6 @@ import 'package:colonizethis_orders/src/orders/validators/work_order_cost_calcul
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        cheapestRegimentBuildTreasuryCost,
-        kObserverConquestMinOwProvincesPerGp,
-        kRegionOldWorld,
-        kWorkTargetBuildImprovement;
-
 // Refs #2847: H8 feedstock bootstrap castIron waiver on level-0 build_improvement.
 
 const _supplierId = 'gp1';

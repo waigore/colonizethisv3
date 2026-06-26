@@ -169,10 +169,6 @@ void main() {
         final view = buildPlayerView(game, topology, 'gp1');
         const api = DefaultOrderSuggestionAPI();
         final result = api.suggestTradeOrders(view, game);
-        final available = <CommodityId, int>{
-          for (final entry in stockpile.quantities.entries)
-            if (!richesCommodityIds.contains(entry.key)) entry.key: entry.value,
-        };
         final all = <TradeOrder>[...result.offers, ...result.bids];
         final validatorResults = TradeOrderValidator.validate(
           context: tradeOrderValidationContextFromGame(game, 'gp1'),
