@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/src/game_player_lookup.dart';
 
-import 'support/diplomacy_resolver_phase_test_support.dart';
+import '../support/diplomacy_resolver_phase_test_support.dart';
 
 void main() {
   group('applyRelationModifiersAndUpdateScores (Refs #2394 index maps)', () {
