@@ -7,6 +7,25 @@ int _owConquestDeclareWarBonus(_DeclareWarTargetContext ctx, int baseBonus) =>
       oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
 
+/// Raises [currentScore] to the OW-conquest floor for [floorBonus], scaled by
+/// the context's [oldWorldConquestWeight].
+///
+/// Captures the repeated `oldWorldConquestWeight: ctx.oldWorldConquestWeight`
+/// plumbing across the five declare-war floor call sites in this file (Refs
+/// #3717 declare-war OW-conquest scoring-skeleton dedup), mirroring the sibling
+/// [_owConquestDeclareWarBonus] addend wrapper. Pure delegation to the shared
+/// [raiseToDeclareWarOldWorldConquestFloor] helper — byte-identical to the
+/// inline keyword call it replaces.
+int _raiseToOwConquestDeclareWarFloor(
+  _DeclareWarTargetContext ctx, {
+  required int currentScore,
+  required int floorBonus,
+}) => raiseToDeclareWarOldWorldConquestFloor(
+  currentScore: currentScore,
+  floorBonus: floorBonus,
+  oldWorldConquestWeight: ctx.oldWorldConquestWeight,
+);
+
 int _scoreDeclareWarBonuses(_DeclareWarTargetContext ctx) {
   var s = _declareWarCoreBonuses(ctx);
   s = _declareWarExpansionAndColonialBonuses(ctx, s);
@@ -356,10 +375,10 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx,
       kDeclareWarStalledInvadableGpBlockerBonus,
     );
-    s = raiseToDeclareWarOldWorldConquestFloor(
+    s = _raiseToOwConquestDeclareWarFloor(
+      ctx,
       currentScore: s,
       floorBonus: kDeclareWarStalledGpInvadableBlockerFloor,
-      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
   }
   if (ctx.suppressGpDeclareWar &&
@@ -389,10 +408,10 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
       kDeclareWarCriticalWeakNoGpWarMinorBonus,
     );
     if (ctx.isAdjacentOwner && ctx.targetIsInvadableOwner) {
-      s = raiseToDeclareWarOldWorldConquestFloor(
+      s = _raiseToOwConquestDeclareWarFloor(
+        ctx,
         currentScore: s,
         floorBonus: kDeclareWarWeakGpAdjacentInvadableMinorFloor,
-        oldWorldConquestWeight: ctx.oldWorldConquestWeight,
       );
     }
   }
@@ -427,10 +446,10 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
             kFewOldWorldProvincesDefendThreshold
         ? kDeclareWarWeakGpAdjacentInvadableMinorFloor
         : kDeclareWarStalledAdjacentInvadableMinorFloor;
-    s = raiseToDeclareWarOldWorldConquestFloor(
+    s = _raiseToOwConquestDeclareWarFloor(
+      ctx,
       currentScore: s,
       floorBonus: floor,
-      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
   }
   if (ctx.stalledOwExpansion &&
@@ -438,10 +457,10 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       adjacentWeakMinor &&
       (ctx.targetIsInvadableOwner ||
           isMinorFaction(ctx.game, ctx.order.targetFactionId))) {
-    s = raiseToDeclareWarOldWorldConquestFloor(
+    s = _raiseToOwConquestDeclareWarFloor(
+      ctx,
       currentScore: s,
       floorBonus: kDeclareWarStalledAdjacentInvadableMinorFloor,
-      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
   }
   if (ctx.stalledOwExpansion &&
@@ -460,10 +479,10 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx.behindVictoryPace &&
       ctx.isAdjacentInvadableOwMinor &&
       ctx.lowWarLikelihood) {
-    s = raiseToDeclareWarOldWorldConquestFloor(
+    s = _raiseToOwConquestDeclareWarFloor(
+      ctx,
       currentScore: s,
       floorBonus: kDeclareWarStalledLowWarLikelihoodMinorFloor,
-      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
   }
   return s;
