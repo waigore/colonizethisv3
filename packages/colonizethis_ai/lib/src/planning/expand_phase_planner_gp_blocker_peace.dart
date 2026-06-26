@@ -1,5 +1,59 @@
 part of 'expand_phase_planner.dart';
 
+/// Resolved minor-on-frontier / stalled GP-blocker-focus pivot inputs shared by
+/// the EXPAND stalled-expansion peace deciders, or `null` when neither pivot
+/// applies (no invadable OW province owned by an OW minor **and** not in the
+/// stalled GP-blocker-focus band).
+///
+/// Single source of truth for the
+/// `provinceOwner = getProvinceOwnerMap(game)` →
+/// `minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(...)` →
+/// `gpBlockerFocus = isStalledOldWorldGpBlockerFocus(...)` →
+/// `if (!minorsOwnInvadable && !gpBlockerFocus) return <empty>;` skeleton that
+/// was duplicated verbatim across [stalledStrongerGpBlockerPeaceTarget] and
+/// [stalledExpansionDistractionPeaceTargets] (Refs #3717 expand-peace
+/// scoring-skeleton dedup). Each caller keeps its own decider-specific outer
+/// guards (`isOwnOldWorldExpansionStalled`, the invadable-empty /
+/// `atWarWith`-empty short-circuits) before invoking this helper, so the single
+/// `getProvinceOwnerMap` ownership scan still runs only once those guards pass —
+/// consistent with `colonizethis-turn-resolution-budget.mdc` (no extra
+/// O(provinces) scan introduced). The resolved [minorsOwnInvadable] /
+/// [gpBlockerFocus] fields are returned so each caller can consume the values it
+/// needs after the shared pivot check without recomputing them.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7); evaluation order
+/// (`provinceOwner` → `minorsOwnInvadable` → `gpBlockerFocus`) is unchanged from
+/// the inlined call sites, so results are byte-identical.
+({
+  Map<String, String> provinceOwner,
+  bool minorsOwnInvadable,
+  bool gpBlockerFocus,
+})?
+resolveStalledMinorOrGpBlockerPivot({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
+  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (!minorsOwnInvadable && !gpBlockerFocus) {
+    return null;
+  }
+  return (
+    provinceOwner: provinceOwner,
+    minorsOwnInvadable: minorsOwnInvadable,
+    gpBlockerFocus: gpBlockerFocus,
+  );
+}
+
 /// Returns the `factionId` of the strongest at-war Great Power (by OW
 /// province lead over the active player) that owns invadable OW
 /// provinces while this GP is stalled, excluding the primary OW
@@ -51,19 +105,15 @@ String? stalledStrongerGpBlockerPeaceTarget({
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return null;
   }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
-    game: game,
-    snapshot: snapshot,
-    provinceOwner: provinceOwner,
-  );
-  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
+  final pivot = resolveStalledMinorOrGpBlockerPivot(
     game: game,
     snapshot: snapshot,
   );
-  if (!minorsOwnInvadable && !gpBlockerFocus) {
+  if (pivot == null) {
     return null;
   }
+  final provinceOwner = pivot.provinceOwner;
+  final gpBlockerFocus = pivot.gpBlockerFocus;
   if (gpBlockerFocus) {
     final anyMinorOwnsOw = _anyMinorOwnsOldWorldProvince(game);
     if (!anyMinorOwnsOw) {
@@ -341,19 +391,15 @@ List<String> stalledExpansionDistractionPeaceTargets({
   if (snapshot.threats.atWarWith.isEmpty) {
     return const [];
   }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
-    game: game,
-    snapshot: snapshot,
-    provinceOwner: provinceOwner,
-  );
-  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
+  final pivot = resolveStalledMinorOrGpBlockerPivot(
     game: game,
     snapshot: snapshot,
   );
-  if (!minorsOwnInvadable && !gpBlockerFocus) {
+  if (pivot == null) {
     return const [];
   }
+  final minorsOwnInvadable = pivot.minorsOwnInvadable;
+  final gpBlockerFocus = pivot.gpBlockerFocus;
   final keepMinor = minorsOwnInvadable
       ? stalledFocusMinorTarget(game: game, snapshot: snapshot)
       : null;
