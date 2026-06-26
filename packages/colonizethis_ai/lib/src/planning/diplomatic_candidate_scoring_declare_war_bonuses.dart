@@ -50,12 +50,6 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
   return s;
 }
 
-bool _isStalledOwMinorInvadableTarget(_DeclareWarTargetContext ctx) =>
-    ctx.isMinorTarget &&
-    !ctx.isTribeTarget &&
-    ctx.isAdjacentOwner &&
-    ctx.invadableOwners.contains(ctx.order.targetFactionId);
-
 int _stalledOwMinorRecoveryBonus(_DeclareWarTargetContext ctx) {
   final owned = ctx.snapshot.conquest.oldWorldProvincesOwned;
   if (owned <= kFewOldWorldProvincesDefendThreshold) {
@@ -109,7 +103,7 @@ int _declareWarStalledOldWorldExpansionBonuses(
   if (!observerExpansionPressure || !hasInvadableOldWorld) {
     return s;
   }
-  if (_isStalledOwMinorInvadableTarget(ctx)) {
+  if (ctx.isAdjacentInvadableOwMinor) {
     s += _owConquestDeclareWarBonus(
       ctx,
       kDeclareWarStalledOwMinorPriorityBonus,
@@ -140,7 +134,7 @@ int _declareWarEarlyExpansionBonuses(_DeclareWarTargetContext ctx, int s) {
       !hasInvadableOldWorld) {
     return s;
   }
-  if (_isStalledOwMinorInvadableTarget(ctx)) {
+  if (ctx.isAdjacentInvadableOwMinor) {
     s += _owConquestDeclareWarBonus(ctx, kDeclareWarEarlyExpansionMinorBonus);
   }
   if (ctx.isTribeTarget && !ctx.ownsInvadableNw) {
@@ -202,10 +196,7 @@ int _declareWarAdjacentOwnerBonuses(
         kDeclareWarMinorWithInvadableProvinceBonus,
       );
     }
-    if (ctx.isMinorTarget &&
-        !ctx.isTribeTarget &&
-        ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+    if (ctx.isAdjacentInvadableOwMinor &&
         isBelowObserverConquestQuota(
           ctx.snapshot.conquest.oldWorldProvincesOwned,
         )) {
@@ -215,18 +206,12 @@ int _declareWarAdjacentOwnerBonuses(
       );
     }
     final ownedOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
-    if (ctx.isMinorTarget &&
-        !ctx.isTribeTarget &&
-        ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+    if (ctx.isAdjacentInvadableOwMinor &&
         isBelowObserverConquestQuota(ownedOw) &&
         !_gpWarBlocksPlateauMinorDeclare(ctx)) {
       s += _owConquestDeclareWarBonus(ctx, kDeclareWarPlateauOwMinorBonus);
     }
-    if (ctx.isMinorTarget &&
-        !ctx.isTribeTarget &&
-        ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+    if (ctx.isAdjacentInvadableOwMinor &&
         ownedOw >= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
         ownedOw < kObserverConquestMinOwProvincesPerGp &&
         !_gpWarBlocksPlateauMinorDeclare(ctx)) {
@@ -242,10 +227,7 @@ int _declareWarAdjacentOwnerBonuses(
       );
     }
     if (ctx.stalledOwExpansion &&
-        ctx.isMinorTarget &&
-        !ctx.isTribeTarget &&
-        ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+        ctx.isAdjacentInvadableOwMinor &&
         ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
       s += _owConquestDeclareWarBonus(
         ctx,
@@ -445,11 +427,7 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx.isAdjacentOwner &&
       ctx.snapshot.opportunities.weakNeighbors
           .contains(ctx.order.targetFactionId);
-  if (ctx.stalledOwExpansion &&
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      ctx.isAdjacentOwner &&
-      ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
+  if (ctx.stalledOwExpansion && ctx.isAdjacentInvadableOwMinor) {
     final floor = ctx.snapshot.conquest.oldWorldProvincesOwned <=
             kFewOldWorldProvincesDefendThreshold
         ? kDeclareWarWeakGpAdjacentInvadableMinorFloor
@@ -481,10 +459,7 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
   }
   if (ctx.stalledOwExpansion &&
       ctx.behindVictoryPace &&
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      ctx.isAdjacentOwner &&
-      ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+      ctx.isAdjacentInvadableOwMinor &&
       ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
     s = math.max(
       s,

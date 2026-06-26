@@ -210,6 +210,21 @@ final class _DeclareWarTargetContext {
   bool get targetNotAlreadyAtWar =>
       !snapshot.threats.atWarWith.contains(order.targetFactionId);
 
+  /// Whether the target is an adjacent, invadable Old-World minor nation: a
+  /// non-tribe minor the active player borders and can currently invade.
+  ///
+  /// Single source of truth for the
+  /// `isMinorTarget && !isTribeTarget && isAdjacentOwner &&
+  /// invadableOwners.contains(order.targetFactionId)` projection repeated
+  /// across the declare-war OW-conquest bonus branches (Refs #3717
+  /// diplomatic-scoring dedup). Equivalent to
+  /// `isAdjacentOwner && ownsInvadableOwMinor` — [ownsInvadableOwMinor]
+  /// already folds the minor / non-tribe / invadable trio — so this getter is
+  /// a pure projection over precomputed fields and is byte-identical to the
+  /// inline checks it replaces (Refs #2509 Must-have #7).
+  bool get isAdjacentInvadableOwMinor =>
+      isAdjacentOwner && ownsInvadableOwMinor;
+
   factory _DeclareWarTargetContext.build({
     required DiplomaticOrder order,
     required String nationId,
