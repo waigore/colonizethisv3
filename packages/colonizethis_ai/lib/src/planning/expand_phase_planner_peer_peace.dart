@@ -243,7 +243,7 @@ List<String> stalledFutileGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return const [];
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
@@ -329,7 +329,7 @@ List<String> atWarGpDistractionTribePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return const [];
   }
   final atWarWithGp = isAtWarWithAnyGreatPower(game, snapshot);
@@ -403,7 +403,7 @@ List<String> belowQuotaRegimentThinTribeDistractionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
     return const [];
   }
   final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
@@ -547,7 +547,7 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return const [];
   }
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
@@ -674,7 +674,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   if (gpWars.isEmpty) {
     return const [];
   }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+  if (!isOwnOldWorldExpansionStalled(snapshot) &&
       snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return const [];
   }

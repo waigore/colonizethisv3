@@ -184,7 +184,7 @@ ExpandEconomyPlan planExpandEconomy({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
     return ExpandEconomyPlan.defaultPlan;
   }
   final player = game.playerById(snapshot.playerId);
@@ -252,7 +252,8 @@ ExpandEconomyPlan planExpandEconomy({
   return ExpandEconomyPlan(
     forceCheapestRegimentBuild: forceRebuild,
     boostTreasuryRecoveryCargo: armC,
-    boostCastIronLabourPeasantRecruitment: boostCastIronLabourPeasantRecruitment,
+    boostCastIronLabourPeasantRecruitment:
+        boostCastIronLabourPeasantRecruitment,
   );
 }
 

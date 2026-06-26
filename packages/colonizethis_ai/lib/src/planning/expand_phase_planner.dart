@@ -125,7 +125,9 @@ import 'planning_helpers.dart'
         gpAtWarPeaceTargetsWhere,
         gpFactionIdsAtWarWith,
         hasRecentDiplomaticEventWithinCooldown,
-        isAtWarWithAnyGreatPower;
+        isAtWarWithAnyGreatPower,
+        isOwnOldWorldBelowConquestQuota,
+        isOwnOldWorldExpansionStalled;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';
@@ -589,7 +591,7 @@ bool isStalledOldWorldGpBlockerFocus({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) =>
-    isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+    isOwnOldWorldBelowConquestQuota(snapshot) &&
     isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
 
 /// Returns the deterministic factionId of the next declare-war target for

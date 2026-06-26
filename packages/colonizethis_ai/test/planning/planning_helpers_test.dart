@@ -5,6 +5,9 @@
 //   - `isAtWarWithAnyGreatPower` — GP-war presence check, non-GP exclusion,
 //     empty-set false, equivalence with `gpFactionIdsAtWarWith.isNotEmpty`
 //     (Refs #3717)
+//   - `isOwnOldWorldExpansionStalled` / `isOwnOldWorldBelowConquestQuota` —
+//     own-OW snapshot projections: stall-band / quota boundaries, negative
+//     cases, equivalence with the underlying int predicates (Refs #3717)
 //   - `gpAtWarPeaceTargetsWhere` — predicate-filtered GP at-war peace-target
 //     collector: keep-subset filtering, ascending sort/determinism, non-GP
 //     exclusion, keep-all/keep-none edges, one keep call per GP (Refs #3717)
@@ -26,6 +29,12 @@ import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart'
 import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart'
     show PhasePriorityWeights;
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        isBelowObserverConquestQuota,
+        isStalledOldWorldExpansion,
+        kObserverConquestMinOwProvincesPerGp,
+        kStalledOldWorldProvinceThreshold;
 import 'package:colonizethis_ai/src/util/faction_query.dart'
     show isMinorFaction;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -76,14 +85,23 @@ AIWorldSnapshot _snapshotWithAtWar(List<String> atWarWith) {
   );
 }
 
+AIWorldSnapshot _snapshotWithOwnOw(int oldWorldProvincesOwned) {
+  return AIWorldSnapshot(
+    playerId: _gp1,
+    threats: const ThreatSummary(atWarWith: []),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(oldWorldProvincesOwned: oldWorldProvincesOwned),
+    economy: const EconomySummary(),
+    relations: const {},
+  );
+}
+
 AIWorldSnapshot _snapshotWithInvadable(List<String> invadableProvinceIds) {
   return AIWorldSnapshot(
     playerId: _gp1,
     threats: const ThreatSummary(atWarWith: []),
     opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      invadableProvinceIdsSorted: invadableProvinceIds,
-    ),
+    conquest: ConquestSummary(invadableProvinceIdsSorted: invadableProvinceIds),
     economy: const EconomySummary(),
     relations: const {},
   );
@@ -130,13 +148,7 @@ void main() {
   group('gpFactionIdsAtWarWith', () {
     test('filters to Great Powers only and sorts ascending', () {
       final game = _gameWithGps();
-      final snapshot = _snapshotWithAtWar([
-        _gp3,
-        _tribe1,
-        _gp1,
-        _minor1,
-        _gp2,
-      ]);
+      final snapshot = _snapshotWithAtWar([_gp3, _tribe1, _gp1, _minor1, _gp2]);
       expect(gpFactionIdsAtWarWith(game, snapshot), [_gp1, _gp2, _gp3]);
     });
 
@@ -195,6 +207,75 @@ void main() {
           isAtWarWithAnyGreatPower(game, snapshot),
           gpFactionIdsAtWarWith(game, snapshot).isNotEmpty,
           reason: 'mismatch for atWarWith=$atWar',
+        );
+      }
+    });
+  });
+
+  group('isOwnOldWorldExpansionStalled (Refs #3717)', () {
+    test('true inside the stalled OW band (0 < ow <= threshold)', () {
+      expect(isOwnOldWorldExpansionStalled(_snapshotWithOwnOw(1)), isTrue);
+      expect(
+        isOwnOldWorldExpansionStalled(
+          _snapshotWithOwnOw(kStalledOldWorldProvinceThreshold),
+        ),
+        isTrue,
+      );
+    });
+
+    test('false at zero OW and above the stall band (negative cases)', () {
+      expect(isOwnOldWorldExpansionStalled(_snapshotWithOwnOw(0)), isFalse);
+      expect(
+        isOwnOldWorldExpansionStalled(
+          _snapshotWithOwnOw(kStalledOldWorldProvinceThreshold + 1),
+        ),
+        isFalse,
+      );
+    });
+
+    test('matches isStalledOldWorldExpansion(ownOw) across a range', () {
+      for (var ow = 0; ow <= kStalledOldWorldProvinceThreshold + 3; ow++) {
+        expect(
+          isOwnOldWorldExpansionStalled(_snapshotWithOwnOw(ow)),
+          isStalledOldWorldExpansion(ow),
+          reason: 'mismatch for ownOw=$ow',
+        );
+      }
+    });
+  });
+
+  group('isOwnOldWorldBelowConquestQuota (Refs #3717)', () {
+    test('true below the observer conquest quota', () {
+      expect(isOwnOldWorldBelowConquestQuota(_snapshotWithOwnOw(0)), isTrue);
+      expect(
+        isOwnOldWorldBelowConquestQuota(
+          _snapshotWithOwnOw(kObserverConquestMinOwProvincesPerGp - 1),
+        ),
+        isTrue,
+      );
+    });
+
+    test('false at and above the quota (boundary negative cases)', () {
+      expect(
+        isOwnOldWorldBelowConquestQuota(
+          _snapshotWithOwnOw(kObserverConquestMinOwProvincesPerGp),
+        ),
+        isFalse,
+      );
+      expect(
+        isOwnOldWorldBelowConquestQuota(
+          _snapshotWithOwnOw(kObserverConquestMinOwProvincesPerGp + 5),
+        ),
+        isFalse,
+      );
+    });
+
+    test('matches isBelowObserverConquestQuota(ownOw) across a range', () {
+      for (var ow = 0; ow <= kObserverConquestMinOwProvincesPerGp + 3; ow++) {
+        expect(
+          isOwnOldWorldBelowConquestQuota(_snapshotWithOwnOw(ow)),
+          isBelowObserverConquestQuota(ow),
+          reason: 'mismatch for ownOw=$ow',
         );
       }
     });
@@ -449,18 +530,21 @@ void main() {
       );
     });
 
-    test('false when matching event is exactly cooldownTurns old (strict <)', () {
-      final game = _gameWithEvents([_ev(1)]);
-      expect(
-        hasRecentDiplomaticEventWithinCooldown(
-          game: game,
-          currentTurn: 5,
-          cooldownTurns: 4,
-          matches: _warFromGp1ToGp2,
-        ),
-        isFalse, // 5 - 1 = 4, not < 4
-      );
-    });
+    test(
+      'false when matching event is exactly cooldownTurns old (strict <)',
+      () {
+        final game = _gameWithEvents([_ev(1)]);
+        expect(
+          hasRecentDiplomaticEventWithinCooldown(
+            game: game,
+            currentTurn: 5,
+            cooldownTurns: 4,
+            matches: _warFromGp1ToGp2,
+          ),
+          isFalse, // 5 - 1 = 4, not < 4
+        );
+      },
+    );
 
     test('false when no event satisfies the predicate', () {
       final game = _gameWithEvents([_ev(4, type: DiplomaticEventType.peace)]);
@@ -488,24 +572,27 @@ void main() {
       );
     });
 
-    test('newest matching event decides; non-matching newer events skipped', () {
-      // History ascending by turn; `.reversed` visits turn 5 (peace, no
-      // match) first and must continue to the older matching declare-war at
-      // turn 4 rather than stopping at the first non-match.
-      final game = _gameWithEvents([
-        _ev(4),
-        _ev(5, type: DiplomaticEventType.peace),
-      ]);
-      expect(
-        hasRecentDiplomaticEventWithinCooldown(
-          game: game,
-          currentTurn: 6,
-          cooldownTurns: 4,
-          matches: _warFromGp1ToGp2,
-        ),
-        isTrue, // newest matching is turn 4: 6 - 4 = 2 < 4
-      );
-    });
+    test(
+      'newest matching event decides; non-matching newer events skipped',
+      () {
+        // History ascending by turn; `.reversed` visits turn 5 (peace, no
+        // match) first and must continue to the older matching declare-war at
+        // turn 4 rather than stopping at the first non-match.
+        final game = _gameWithEvents([
+          _ev(4),
+          _ev(5, type: DiplomaticEventType.peace),
+        ]);
+        expect(
+          hasRecentDiplomaticEventWithinCooldown(
+            game: game,
+            currentTurn: 6,
+            cooldownTurns: 4,
+            matches: _warFromGp1ToGp2,
+          ),
+          isTrue, // newest matching is turn 4: 6 - 4 = 2 < 4
+        );
+      },
+    );
 
     test('directional predicate ignores the reverse-direction event', () {
       final game = _gameWithEvents([_ev(4, from: _gp2, to: _gp1)]);
@@ -724,18 +811,21 @@ void main() {
       );
     });
 
-    test('false when invadable provinces are owned only by minors / tribes', () {
-      final game = _gameWithGps();
-      final snapshot = _snapshotWithInvadable([pA, pB]);
-      expect(
-        anyInvadableProvinceOwnedByGreatPower(
-          game: game,
-          snapshot: snapshot,
-          provinceOwner: const {pA: _minor1, pB: _tribe1},
-        ),
-        isFalse,
-      );
-    });
+    test(
+      'false when invadable provinces are owned only by minors / tribes',
+      () {
+        final game = _gameWithGps();
+        final snapshot = _snapshotWithInvadable([pA, pB]);
+        expect(
+          anyInvadableProvinceOwnedByGreatPower(
+            game: game,
+            snapshot: snapshot,
+            provinceOwner: const {pA: _minor1, pB: _tribe1},
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('false when an invadable province owner is absent from the map', () {
       // Unowned / not-yet-mapped invadable province: `?? ''` -> playerById null.
@@ -861,8 +951,9 @@ void main() {
             provinceOwner: owner,
             factionId: _gp2,
           ),
-          snapshot.conquest.invadableProvinceIdsSorted
-              .any((pid) => owner[pid] == _gp2),
+          snapshot.conquest.invadableProvinceIdsSorted.any(
+            (pid) => owner[pid] == _gp2,
+          ),
           reason: 'mismatch for provinceOwner=$owner',
         );
       }
@@ -890,17 +981,15 @@ void main() {
       tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
     );
 
-    AIWorldSnapshot snapshot(
-      List<String> invadable,
-      List<String> atWarWith,
-    ) => AIWorldSnapshot(
-      playerId: _gp1,
-      threats: ThreatSummary(atWarWith: atWarWith),
-      opportunities: const OpportunitySummary(),
-      conquest: ConquestSummary(invadableProvinceIdsSorted: invadable),
-      economy: const EconomySummary(),
-      relations: const {},
-    );
+    AIWorldSnapshot snapshot(List<String> invadable, List<String> atWarWith) =>
+        AIWorldSnapshot(
+          playerId: _gp1,
+          threats: ThreatSummary(atWarWith: atWarWith),
+          opportunities: const OpportunitySummary(),
+          conquest: ConquestSummary(invadableProvinceIdsSorted: invadable),
+          economy: const EconomySummary(),
+          relations: const {},
+        );
 
     test('collects minor owners of invadable provinces not already at war', () {
       final into = <String>{};

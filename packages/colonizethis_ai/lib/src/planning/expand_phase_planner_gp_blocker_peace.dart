@@ -45,7 +45,7 @@ String? stalledStrongerGpBlockerPeaceTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return null;
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
@@ -237,16 +237,11 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   final zeroRegiments = regimentCountForPlayer(game, snapshot.playerId) == 0;
-  final belowQuota = isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  );
+  final belowQuota = isOwnOldWorldBelowConquestQuota(snapshot);
   if (snapshot.conquest.oldWorldProvincesOwned >
           kFewOldWorldProvincesDefendThreshold &&
       !belowQuota &&
-      !(zeroRegiments &&
-          isStalledOldWorldExpansion(
-            snapshot.conquest.oldWorldProvincesOwned,
-          ))) {
+      !(zeroRegiments && isOwnOldWorldExpansionStalled(snapshot))) {
     return const [];
   }
   if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
@@ -340,7 +335,7 @@ List<String> stalledExpansionDistractionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return const [];
   }
   if (snapshot.threats.atWarWith.isEmpty) {

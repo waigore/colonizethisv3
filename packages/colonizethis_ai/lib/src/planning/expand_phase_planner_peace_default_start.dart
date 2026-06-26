@@ -381,7 +381,7 @@ String? belowQuotaActiveMinorWarTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
     return null;
   }
   return stalledFocusMinorTarget(game: game, snapshot: snapshot);
@@ -451,7 +451,7 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
     return const [];
   }
   final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
@@ -468,8 +468,7 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   }
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (isMinorFaction(game, factionId) && factionId != focus)
-        factionId,
+      if (isMinorFaction(game, factionId) && factionId != focus) factionId,
   ]..sort();
   return targets;
 }

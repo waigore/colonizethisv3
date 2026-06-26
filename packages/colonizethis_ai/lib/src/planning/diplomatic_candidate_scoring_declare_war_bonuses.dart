@@ -15,10 +15,14 @@ int _scoreDeclareWarBonuses(_DeclareWarTargetContext ctx) {
 }
 
 int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
-  final warDesire =
-      ctx.warDesireForTarget(ctx.order.targetFactionId, ctx.relationScore);
-  final targetProvinceCount =
-      provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
+  final warDesire = ctx.warDesireForTarget(
+    ctx.order.targetFactionId,
+    ctx.relationScore,
+  );
+  final targetProvinceCount = provinceCountOwnedBy(
+    ctx.game,
+    ctx.order.targetFactionId,
+  );
   final desiredTerritory = targetProvinceCount <= 0
       ? 1
       : ((warDesire / 25).round()).clamp(1, targetProvinceCount);
@@ -28,16 +32,18 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
   s += (ctx.thresholds.warLikelihood - 50);
   s += (warDesire - 50);
   if (!ctx.suppressGpDeclareWar &&
-      ctx.snapshot.opportunities.weakNeighbors
-          .contains(ctx.order.targetFactionId)) {
+      ctx.snapshot.opportunities.weakNeighbors.contains(
+        ctx.order.targetFactionId,
+      )) {
     s += getDeclareWarTargetBonusWeakerNeighbor(ctx.agendaId);
     if (ctx.targetIsGreatPower &&
         warDesire >= kDeclareWarGpWeakNeighborMinWarDesire) {
       s += kDeclareWarGpWeakNeighborBonus;
     }
   }
-  if (ctx.snapshot.conquest.preferredConquestTargetFactionIdsSorted
-      .contains(ctx.order.targetFactionId)) {
+  if (ctx.snapshot.conquest.preferredConquestTargetFactionIdsSorted.contains(
+    ctx.order.targetFactionId,
+  )) {
     s += _owConquestDeclareWarBonus(ctx, 15);
   }
   if (_log.debugEnabled) {
@@ -180,10 +186,7 @@ int _declareWarExpansionAndColonialBonuses(
   return s;
 }
 
-int _declareWarAdjacentOwnerBonuses(
-  _DeclareWarTargetContext ctx,
-  int s,
-) {
+int _declareWarAdjacentOwnerBonuses(_DeclareWarTargetContext ctx, int s) {
   if (ctx.isAdjacentOwner) {
     s += _owConquestDeclareWarBonus(ctx, kDeclareWarAdjacentOwnerBonus);
     if (ctx.behindVictoryPace && ctx.isMinorTarget) {
@@ -199,9 +202,7 @@ int _declareWarAdjacentOwnerBonuses(
       );
     }
     if (ctx.isAdjacentInvadableOwMinor &&
-        isBelowObserverConquestQuota(
-          ctx.snapshot.conquest.oldWorldProvincesOwned,
-        )) {
+        isOwnOldWorldBelowConquestQuota(ctx.snapshot)) {
       s += _owConquestDeclareWarBonus(
         ctx,
         kDeclareWarBelowObserverQuotaMinorBonus,
@@ -238,9 +239,7 @@ int _declareWarAdjacentOwnerBonuses(
     }
     if (ctx.isMinorTarget &&
         !ctx.stalledOwExpansion &&
-        !isBelowObserverConquestQuota(
-          ctx.snapshot.conquest.oldWorldProvincesOwned,
-        ) &&
+        !isOwnOldWorldBelowConquestQuota(ctx.snapshot) &&
         ctx.snapshot.conquest.oldWorldProvincesOwned >=
             kDeclareWarSatedExpansionMinorThreshold) {
       final ownedOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
@@ -260,12 +259,11 @@ int _declareWarAdjacentOwnerBonuses(
   return s;
 }
 
-int _declareWarAdjacencyAndStalledBonuses(
-  _DeclareWarTargetContext ctx,
-  int s,
-) {
+int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
   s = _declareWarAdjacentOwnerBonuses(ctx, s);
-  if (!ctx.isAdjacentOwner && ctx.stalledOwExpansion && ctx.ownsInvadableOwMinor) {
+  if (!ctx.isAdjacentOwner &&
+      ctx.stalledOwExpansion &&
+      ctx.ownsInvadableOwMinor) {
     s += _owConquestDeclareWarBonus(
       ctx,
       kDeclareWarAdjacentMinorBonusWhenFarFromVictory,
@@ -274,10 +272,7 @@ int _declareWarAdjacencyAndStalledBonuses(
       ctx,
       kDeclareWarMinorWithInvadableProvinceBonus,
     );
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarStalledExpansionMinorBonus,
-    );
+    s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledExpansionMinorBonus);
     if (ctx.lowWarLikelihood) {
       s += _owConquestDeclareWarBonus(
         ctx,
@@ -286,8 +281,10 @@ int _declareWarAdjacencyAndStalledBonuses(
     }
   }
   if (ctx.stalledOwExpansion && ctx.isMinorTarget && !ctx.isTribeTarget) {
-    final targetMinorProvinces =
-        provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
+    final targetMinorProvinces = provinceCountOwnedBy(
+      ctx.game,
+      ctx.order.targetFactionId,
+    );
     if (targetMinorProvinces > 0 &&
         targetMinorProvinces < ctx.snapshot.conquest.oldWorldProvincesOwned) {
       s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledWeakerMinorBonus);
@@ -417,17 +414,20 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       : conquerScoreBonusForProvincesToVictory(
               ctx.snapshot.conquest.provincesToVictory,
             ) ~/
-          4;
+            4;
   if (ctx.relation?.level == RelationLevel.allied) {
     s += getDeclareWarTargetBonusAlly(ctx.agendaId);
   }
-  final adjacentWeakMinor = ctx.isMinorTarget &&
+  final adjacentWeakMinor =
+      ctx.isMinorTarget &&
       !ctx.isTribeTarget &&
       ctx.isAdjacentOwner &&
-      ctx.snapshot.opportunities.weakNeighbors
-          .contains(ctx.order.targetFactionId);
+      ctx.snapshot.opportunities.weakNeighbors.contains(
+        ctx.order.targetFactionId,
+      );
   if (ctx.stalledOwExpansion && ctx.isAdjacentInvadableOwMinor) {
-    final floor = ctx.snapshot.conquest.oldWorldProvincesOwned <=
+    final floor =
+        ctx.snapshot.conquest.oldWorldProvincesOwned <=
             kFewOldWorldProvincesDefendThreshold
         ? kDeclareWarWeakGpAdjacentInvadableMinorFloor
         : kDeclareWarStalledAdjacentInvadableMinorFloor;
@@ -446,7 +446,9 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       ),
     );
   }
-  if (ctx.stalledOwExpansion && ctx.isTribeTarget && ctx.hasInvadableMinorOwner) {
+  if (ctx.stalledOwExpansion &&
+      ctx.isTribeTarget &&
+      ctx.hasInvadableMinorOwner) {
     s = math.min(s, kDeclareWarStalledTribeWhenOwMinorCap);
   }
   if (ctx.stalledOwExpansion &&
@@ -485,10 +487,7 @@ bool _gpWarBlocksPlateauMinorDeclare(_DeclareWarTargetContext ctx) {
     return false;
   }
   if (gpWars.length == 1 &&
-      isStalledOldWorldGpBlockerFocus(
-        game: ctx.game,
-        snapshot: ctx.snapshot,
-      ) &&
+      isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: ctx.snapshot) &&
       gpWars.single ==
           primaryInvadableOldWorldGpBlocker(
             game: ctx.game,

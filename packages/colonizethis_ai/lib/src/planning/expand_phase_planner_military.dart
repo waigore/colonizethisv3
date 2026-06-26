@@ -159,7 +159,7 @@ ExpandMilitaryPlan planExpandMilitary({
   required AIWorldSnapshot snapshot,
   String? declaredWarTargetFactionId,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
     return ExpandMilitaryPlan.defaultPlan;
   }
   if (game.playerById(snapshot.playerId) == null) {

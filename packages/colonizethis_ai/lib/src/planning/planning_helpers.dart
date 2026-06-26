@@ -10,6 +10,12 @@
 ///     Power?" presence check that replaces the inline
 ///     `snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)`
 ///     short-circuit predicate repeated across the planners / scoring families.
+///   - [isOwnOldWorldExpansionStalled] / [isOwnOldWorldBelowConquestQuota] —
+///     the snapshot-keyed
+///     `isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)`
+///     and `isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)`
+///     own-OW projections repeated across the diplomatic-scoring and
+///     expand-peace planner families.
 ///   - [scaleWeightedBonus] — the `<= 0.0 → 0`, clamp-to-`1.0`, `round()`
 ///     weight-scaling idiom shared by the soft-phase bonus/floor resolvers.
 ///   - [resolvePhaseColonialPressureActive] /
@@ -35,6 +41,8 @@
 /// repo-lint rules and preserves the existing deterministic behaviour exactly.
 library;
 
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show isBelowObserverConquestQuota, isStalledOldWorldExpansion;
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -120,6 +128,40 @@ List<String> gpAtWarPeaceTargetsWhere({
 /// (Refs #2509 Must-have #7).
 bool isAtWarWithAnyGreatPower(Game game, AIWorldSnapshot snapshot) =>
     snapshot.threats.atWarWith.any((id) => game.playerById(id) != null);
+
+/// Whether the active player's own Old World expansion is stalled.
+///
+/// Single source of truth for the repeated
+/// `isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)`
+/// projection that was duplicated inline across the diplomatic-scoring and
+/// expand-peace planner families. The active player's own OW holdings always
+/// come from [ConquestSummary.oldWorldProvincesOwned]; deciders that test a
+/// *different* faction's OW count (via a local `ownOw` / `partnerOw` /
+/// `enemyOw` / `provinceCountOwnedBy(...)` value) must keep calling
+/// [isStalledOldWorldExpansion] directly with that value.
+///
+/// Pure delegation — byte-identical to the inline projection it replaces, and
+/// deterministic for fixed inputs (Refs #3717 diplomatic-scoring/expand-peace
+/// dedup).
+bool isOwnOldWorldExpansionStalled(AIWorldSnapshot snapshot) =>
+    isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned);
+
+/// Whether the active player's own Old World holdings are below the observer
+/// conquest quota.
+///
+/// Single source of truth for the repeated
+/// `isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)`
+/// projection that was duplicated inline across the diplomatic-scoring and
+/// expand-peace planner families. As with [isOwnOldWorldExpansionStalled],
+/// deciders that test a *different* faction's OW count (via a local
+/// `ownOw` / `partnerOw` / `enemyOw` / `provinceCountOwnedBy(...)` value)
+/// must keep calling [isBelowObserverConquestQuota] directly with that value.
+///
+/// Pure delegation — byte-identical to the inline projection it replaces, and
+/// deterministic for fixed inputs (Refs #3717 diplomatic-scoring/expand-peace
+/// dedup).
+bool isOwnOldWorldBelowConquestQuota(AIWorldSnapshot snapshot) =>
+    isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned);
 
 /// Scales [baseConstant] by [weight] clamped to `[0.0, 1.0]`, returning the
 /// rounded integer result.
@@ -278,8 +320,7 @@ int atWarPeaceTargetBonus({
   required bool atWarGreatPowerTarget,
   required bool Function() isPeaceTarget,
   required int bonus,
-}) =>
-    atWarGreatPowerTarget && isPeaceTarget() ? bonus : 0;
+}) => atWarGreatPowerTarget && isPeaceTarget() ? bonus : 0;
 
 /// Single source of truth for the offer-peace family's repeated "the order's
 /// target is a Great Power we are currently at war with" eligibility
@@ -305,8 +346,7 @@ bool atWarGreatPowerOrderTarget({
   required Player? targetGp,
   required AIWorldSnapshot snapshot,
   required String targetFactionId,
-}) =>
-    targetGp != null && snapshot.threats.atWarWith.contains(targetFactionId);
+}) => targetGp != null && snapshot.threats.atWarWith.contains(targetFactionId);
 
 /// Whether any invadable Old-World frontier province is currently owned by a
 /// minor nation.
@@ -337,11 +377,10 @@ bool anyInvadableProvinceOwnedByMinor({
   required Game game,
   required AIWorldSnapshot snapshot,
   required Map<String, String> provinceOwner,
-}) =>
-    snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && isMinorFaction(game, owner);
-    });
+}) => snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+  final owner = provinceOwner[pid];
+  return owner != null && isMinorFaction(game, owner);
+});
 
 /// Whether any invadable Old-World frontier province is currently owned by a
 /// Great Power.
@@ -371,10 +410,9 @@ bool anyInvadableProvinceOwnedByGreatPower({
   required Game game,
   required AIWorldSnapshot snapshot,
   required Map<String, String> provinceOwner,
-}) =>
-    snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => game.playerById(provinceOwner[pid] ?? '') != null,
-    );
+}) => snapshot.conquest.invadableProvinceIdsSorted.any(
+  (pid) => game.playerById(provinceOwner[pid] ?? '') != null,
+);
 
 /// Whether [factionId] owns at least one invadable Old-World frontier province.
 ///
@@ -409,10 +447,9 @@ bool factionOwnsInvadableOldWorldProvince({
   required AIWorldSnapshot snapshot,
   required Map<String, String> provinceOwner,
   required String factionId,
-}) =>
-    snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
-    );
+}) => snapshot.conquest.invadableProvinceIdsSorted.any(
+  (pid) => provinceOwner[pid] == factionId,
+);
 
 /// Adds, into [into], every minor-nation owner of an invadable Old-World
 /// frontier province with whom this Great Power is not already at war.

@@ -18,7 +18,9 @@ import 'planning_helpers.dart'
         factionOwnsInvadableOldWorldProvince,
         gpFactionIdsAtWarWith,
         hasRecentDiplomaticEventWithinCooldown,
-        isAtWarWithAnyGreatPower;
+        isAtWarWithAnyGreatPower,
+        isOwnOldWorldBelowConquestQuota,
+        isOwnOldWorldExpansionStalled;
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';

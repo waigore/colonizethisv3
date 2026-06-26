@@ -135,7 +135,7 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   if (enemy == null) {
     return null;
   }
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
     return null;
   }
   if (!canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot)) {
@@ -279,7 +279,7 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
     return const [];
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
@@ -369,7 +369,7 @@ List<String> quotaMetBelowQuotaAtWarPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (isOwnOldWorldBelowConquestQuota(snapshot)) {
     return const [];
   }
   return gpAtWarPeaceTargetsWhere(
@@ -522,7 +522,7 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (isOwnOldWorldBelowConquestQuota(snapshot)) {
     return const [];
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
@@ -544,7 +544,9 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
     game: game,
     snapshot: snapshot,
     keep: (factionId) {
-      if (!isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId))) {
+      if (!isBelowObserverConquestQuota(
+        provinceCountOwnedBy(game, factionId),
+      )) {
         return false;
       }
       final ownsInvadable = factionOwnsInvadableOldWorldProvince(
