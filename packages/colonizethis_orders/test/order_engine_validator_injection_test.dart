@@ -11,8 +11,7 @@ import 'package:colonizethis_orders/src/orders/validators/recruit_worker_order_v
 import 'package:colonizethis_orders/src/orders/validators/work_order_validator.dart';
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 class _AlwaysRejectMoveValidator extends MoveValidator {
   const _AlwaysRejectMoveValidator();
