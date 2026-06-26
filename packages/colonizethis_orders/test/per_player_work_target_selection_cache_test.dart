@@ -7,8 +7,7 @@ import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_test/test.dart';
-
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
