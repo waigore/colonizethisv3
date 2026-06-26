@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -61,34 +62,30 @@ void main() {
   });
 
   group('filterBattlesByInterception privateering wiring', () {
-    Game gameWithInterceptorTech({required bool hasPrivateering}) => Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        fleets: [
-          Fleet(
-            id: 'mover_p1',
-            ownerId: 'p1',
-            seaZoneId: 'sea1',
-            regionId: 'oldWorld',
-            shipTypeIds: const ['fluyte'],
-          ),
-        ],
-      ),
-      players: [
-        const Player(id: 'p1', displayName: 'Mover', isHuman: true),
-        Player(
-          id: 'p2',
-          displayName: 'Interceptor',
-          isHuman: false,
-          techUnlocked: hasPrivateering
-              ? const {kTechIdPrivateeringCompanies: true}
-              : const {},
-        ),
-      ],
-    );
+    Game gameWithInterceptorTech({required bool hasPrivateering}) =>
+        TestFixtures.minimalGame(
+          id: 'g1',
+          players: [
+            const Player(id: 'p1', displayName: 'Mover', isHuman: true),
+            Player(
+              id: 'p2',
+              displayName: 'Interceptor',
+              isHuman: false,
+              techUnlocked: hasPrivateering
+                  ? const {kTechIdPrivateeringCompanies: true}
+                  : const {},
+            ),
+          ],
+          fleets: [
+            Fleet(
+              id: 'mover_p1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: const ['fluyte'],
+            ),
+          ],
+        );
 
     List<BattleContextSea> battlesFor(Game game) => [
       BattleContextSea(
