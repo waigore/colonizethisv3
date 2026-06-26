@@ -3,7 +3,7 @@ import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_subsidies_relatio
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'support/diplomacy_resolver_phase_test_support.dart';
+import '../support/diplomacy_resolver_phase_test_support.dart';
 
 void main() {
   group(

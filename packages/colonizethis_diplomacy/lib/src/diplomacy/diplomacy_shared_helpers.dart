@@ -184,6 +184,42 @@ T? findHumanDecision<T>(List<T>? decisions, bool Function(T) matches) {
   return null;
 }
 
+/// Routes a single human-gated diplomacy decision through the canonical
+/// pending-human-decision flow documented on [findHumanDecision], removing the
+/// duplicated branch tail from the overture, FTP, intervention, and
+/// call-to-arms resolvers (Refs #3715).
+///
+/// Exactly one callback runs, synchronously, mirroring the prior hand-written
+/// shape per resolver:
+/// * [onAiResolve] when [isHumanControlled] is false — the AI decider resolves
+///   by rule immediately;
+/// * [onPending] when the decider is human but no supplied decision matches —
+///   no human input yet, so the caller enqueues a pending prompt and stops
+///   processing this decider;
+/// * [onHumanDecision], with the first matching decision, when the decider is
+///   human and a decision is present — the caller applies it.
+///
+/// The human-control branch is always evaluated **before** any decision lookup,
+/// so [decisions] is only consulted for human deciders — preserving the
+/// evaluation order each resolver relied on. Callers choose [isHumanControlled]
+/// per their rule: the overture/FTP/intervention resolvers pass the result of
+/// [isTargetHumanGp]; the call-to-arms resolver passes the override-aware
+/// `!isAiControlled` so its AI-vs-human split still honours
+/// `game.aiControlByGpId` exactly as before.
+R resolveHumanGatedDecision<TDecision, R>({
+  required bool isHumanControlled,
+  required List<TDecision>? decisions,
+  required bool Function(TDecision) matches,
+  required R Function() onAiResolve,
+  required R Function() onPending,
+  required R Function(TDecision decision) onHumanDecision,
+}) {
+  if (!isHumanControlled) return onAiResolve();
+  final decision = findHumanDecision<TDecision>(decisions, matches);
+  if (decision == null) return onPending();
+  return onHumanDecision(decision);
+}
+
 /// Returns a new player list with the player at [index] debited [amount] from
 /// its treasury.
 ///

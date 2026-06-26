@@ -8,8 +8,10 @@
 /// trade pacts; SPEC/program/turn-resolution-phases.md § Blocking human input.
 library;
 
+import 'value_equality.dart';
+
 /// One FTP proposal awaiting the target GP's accept/reject decision.
-class FtpOffer {
+class FtpOffer with ValueEquality {
   const FtpOffer({
     required this.proposerGpId,
     required this.targetGpId,
@@ -19,18 +21,11 @@ class FtpOffer {
   final String targetGpId;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is FtpOffer &&
-          proposerGpId == other.proposerGpId &&
-          targetGpId == other.targetGpId;
-
-  @override
-  int get hashCode => Object.hash(proposerGpId, targetGpId);
+  List<Object?> get equalityFields => [proposerGpId, targetGpId];
 }
 
 /// Target GP's decision for one [FtpOffer].
-class FtpDecision {
+class FtpDecision with ValueEquality {
   const FtpDecision({
     required this.proposerGpId,
     required this.targetGpId,
@@ -42,13 +37,5 @@ class FtpDecision {
   final bool accepted;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is FtpDecision &&
-          proposerGpId == other.proposerGpId &&
-          targetGpId == other.targetGpId &&
-          accepted == other.accepted;
-
-  @override
-  int get hashCode => Object.hash(proposerGpId, targetGpId, accepted);
+  List<Object?> get equalityFields => [proposerGpId, targetGpId, accepted];
 }

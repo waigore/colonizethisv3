@@ -233,15 +233,53 @@ Game _processCallToArmsForWarPair(
     // AI rule resolves immediately. Call-to-arms intentionally keys the split on
     // the override-aware isAiControlled (negated) rather than isTargetHumanGp,
     // preserving the existing aiControlByGpId-aware behaviour.
-    if (!isAiControlled(state, allyGpId)) {
-      final decision = findHumanDecision<CallToArmsDecision>(
-        callToArmsDecisions,
-        (d) =>
-            d.allyGpId == allyGpId &&
-            d.defenderGpId == defenderGpId &&
-            d.aggressorGpId == aggressorGpId,
-      );
-      if (decision == null) {
+    state = resolveHumanGatedDecision<CallToArmsDecision, Game>(
+      isHumanControlled: !isAiControlled(state, allyGpId),
+      decisions: callToArmsDecisions,
+      matches: (d) =>
+          d.allyGpId == allyGpId &&
+          d.defenderGpId == defenderGpId &&
+          d.aggressorGpId == aggressorGpId,
+      onAiResolve: () {
+        final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
+        final aiTurn = state.worldState.turnState.turnNumber;
+        if (isBelowObserverConquestQuota(aggressorOw)) {
+          return _applyCallToArmsRefuse(
+            state,
+            allyGpId,
+            defenderGpId,
+            aiTurn,
+            eventTally: eventTally,
+          );
+        }
+        if (atWarGreatPowerCount(state, allyGpId, factionMembership) >= 1) {
+          return _applyCallToArmsRefuse(
+            state,
+            allyGpId,
+            defenderGpId,
+            aiTurn,
+            eventTally: eventTally,
+          );
+        }
+        final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
+        if (accept) {
+          return _applyCallToArmsAccept(
+            state,
+            allyGpId,
+            aggressorGpId,
+            aiTurn,
+            eventTally: eventTally,
+          );
+        }
+        return _applyCallToArmsRefuse(
+          state,
+          allyGpId,
+          defenderGpId,
+          aiTurn,
+          eventTally: eventTally,
+        );
+      },
+      onPending: () {
         pending.add(
           CallToArmsPending(
             allyGpId: allyGpId,
@@ -249,68 +287,27 @@ Game _processCallToArmsForWarPair(
             aggressorGpId: aggressorGpId,
           ),
         );
-        continue;
-      }
-      if (decision.accepted) {
-        state = _applyCallToArmsAccept(
-          state,
-          allyGpId,
-          aggressorGpId,
-          turn,
-          eventTally: eventTally,
-        );
-      } else {
-        state = _applyCallToArmsRefuse(
+        return state;
+      },
+      onHumanDecision: (decision) {
+        if (decision.accepted) {
+          return _applyCallToArmsAccept(
+            state,
+            allyGpId,
+            aggressorGpId,
+            turn,
+            eventTally: eventTally,
+          );
+        }
+        return _applyCallToArmsRefuse(
           state,
           allyGpId,
           defenderGpId,
           turn,
           eventTally: eventTally,
         );
-      }
-      continue;
-    }
-
-    final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
-    final aiTurn = state.worldState.turnState.turnNumber;
-    if (isBelowObserverConquestQuota(aggressorOw)) {
-      state = _applyCallToArmsRefuse(
-        state,
-        allyGpId,
-        defenderGpId,
-        aiTurn,
-        eventTally: eventTally,
-      );
-      continue;
-    }
-    if (atWarGreatPowerCount(state, allyGpId, factionMembership) >= 1) {
-      state = _applyCallToArmsRefuse(
-        state,
-        allyGpId,
-        defenderGpId,
-        aiTurn,
-        eventTally: eventTally,
-      );
-      continue;
-    }
-    final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
-    if (accept) {
-      state = _applyCallToArmsAccept(
-        state,
-        allyGpId,
-        aggressorGpId,
-        aiTurn,
-        eventTally: eventTally,
-      );
-    } else {
-      state = _applyCallToArmsRefuse(
-        state,
-        allyGpId,
-        defenderGpId,
-        aiTurn,
-        eventTally: eventTally,
-      );
-    }
+      },
+    );
   }
   return state;
 }

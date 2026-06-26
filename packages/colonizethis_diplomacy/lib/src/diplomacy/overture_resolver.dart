@@ -162,24 +162,37 @@ int? _overtureCostForStage(OvertureStage stage) {
   // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
   // human target applies a supplied decision or suspends pending; otherwise the
   // AI rule resolves immediately.
-  if (isTargetHumanGp(state, targetId)) {
-    final decision = findHumanDecision<OvertureDecision>(
-      overtureDecisions,
-      (d) =>
-          d.offererGpId == gpId &&
-          d.targetFactionId == targetId &&
-          d.stage == stage,
-    );
-    if (decision != null) {
-      return (accepted: decision.accepted, pending: null);
-    }
-    final pending = [
-      OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
-    ];
-    final wrapped = state.copyWith(players: players, overtureStates: overtures);
-    return (accepted: false, pending: OverturePaymentsResult(wrapped, pending));
-  }
-  return (accepted: _aiGpAccepts(state, gpId, targetId), pending: null);
+  return resolveHumanGatedDecision<
+    OvertureDecision,
+    ({bool accepted, OverturePaymentsResult? pending})
+  >(
+    isHumanControlled: isTargetHumanGp(state, targetId),
+    decisions: overtureDecisions,
+    matches: (d) =>
+        d.offererGpId == gpId &&
+        d.targetFactionId == targetId &&
+        d.stage == stage,
+    onAiResolve: () =>
+        (accepted: _aiGpAccepts(state, gpId, targetId), pending: null),
+    onPending: () {
+      final pending = [
+        OvertureOffer(
+          offererGpId: gpId,
+          targetFactionId: targetId,
+          stage: stage,
+        ),
+      ];
+      final wrapped = state.copyWith(
+        players: players,
+        overtureStates: overtures,
+      );
+      return (
+        accepted: false,
+        pending: OverturePaymentsResult(wrapped, pending),
+      );
+    },
+    onHumanDecision: (decision) => (accepted: decision.accepted, pending: null),
+  );
 }
 
 /// Result of processing one establish-overture order: the (possibly updated)
