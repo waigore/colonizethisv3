@@ -791,6 +791,13 @@ rules:
     runner: dart
     script: tool/check_ai_test_no_duplicate_scaffolding.dart
 
+  - rule_id: repo.orders_test_mirrors_lib
+    group: structure
+    title: colonizethis_orders tests must mirror lib/ (no flat-root test sources) (Refs #3714)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_mirrors_lib.dart
+
   - rule_id: repo.combat_test_no_duplicate_fixtures
     group: architecture
     title: colonizethis_combat tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3716)

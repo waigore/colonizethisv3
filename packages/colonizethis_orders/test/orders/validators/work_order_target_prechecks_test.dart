@@ -4,7 +4,7 @@ import 'package:colonizethis_orders/src/orders/validators/work_order_target_prec
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../../order_engine_purchase_land_test_support.dart';
+import '../order_engine_purchase_land_test_support.dart';
 
 void main() {
   group('workOrderTargetPrechecks', () {
