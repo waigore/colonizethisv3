@@ -257,8 +257,10 @@ List<String> stalledFutileGpPeaceTargets({
   final targets = <String>[];
   for (final factionId in snapshot.threats.atWarWith) {
     if (game.playerById(factionId) == null) continue;
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
+    final ownsInvadable = factionOwnsInvadableOldWorldProvince(
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
+      factionId: factionId,
     );
     if (ownsInvadable) continue;
     targets.add(factionId);

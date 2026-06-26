@@ -79,8 +79,10 @@ String? stalledStrongerGpBlockerPeaceTarget({
   for (final factionId in snapshot.threats.atWarWith) {
     if (game.playerById(factionId) == null) continue;
     if (factionId == primaryBlocker) continue;
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
+    final ownsInvadable = factionOwnsInvadableOldWorldProvince(
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
+      factionId: factionId,
     );
     if (!ownsInvadable) continue;
     final lead =

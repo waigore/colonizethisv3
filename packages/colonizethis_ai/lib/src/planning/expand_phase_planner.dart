@@ -119,6 +119,7 @@ import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'planning_helpers.dart'
     show
         anyInvadableProvinceOwnedByMinor,
+        factionOwnsInvadableOldWorldProvince,
         gpFactionIdsAtWarWith,
         hasRecentDiplomaticEventWithinCooldown,
         isAtWarWithAnyGreatPower;

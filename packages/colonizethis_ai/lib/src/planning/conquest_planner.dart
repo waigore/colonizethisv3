@@ -9,7 +9,8 @@ import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planner_context.dart';
-import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
+import 'planning_helpers.dart'
+    show factionOwnsInvadableOldWorldProvince, isAtWarWithAnyGreatPower;
 import '../util/ai_random_utils.dart';
 import '../util/faction_query.dart';
 
@@ -50,8 +51,10 @@ String? stalledConquestDeclaredWarTarget({
   );
   if (gpBlocker != null &&
       snapshot.threats.atWarWith.contains(gpBlocker) &&
-      snapshot.conquest.invadableProvinceIdsSorted.any(
-        (pid) => provinceOwner[pid] == gpBlocker,
+      factionOwnsInvadableOldWorldProvince(
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        factionId: gpBlocker,
       )) {
     return gpBlocker;
   }

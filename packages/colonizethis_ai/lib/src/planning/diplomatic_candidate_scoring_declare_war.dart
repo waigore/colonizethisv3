@@ -340,8 +340,10 @@ final class _DeclareWarTargetContext {
         isAdjacentOwner && game.playerById(order.targetFactionId) != null;
     final invadableGpBlocker =
         game.playerById(order.targetFactionId) != null &&
-        snapshot.conquest.invadableProvinceIdsSorted.any(
-          (pid) => provinceOwner[pid] == order.targetFactionId,
+        factionOwnsInvadableOldWorldProvince(
+          snapshot: snapshot,
+          provinceOwner: provinceOwner,
+          factionId: order.targetFactionId,
         );
     final invadableGpBlockerWeaker =
         invadableGpBlocker &&
@@ -351,8 +353,10 @@ final class _DeclareWarTargetContext {
         .any((pid) => game.playerById(provinceOwner[pid] ?? '') != null);
     final tribeOwnsOwInvadable =
         isTribeTarget &&
-        snapshot.conquest.invadableProvinceIdsSorted.any(
-          (pid) => provinceOwner[pid] == order.targetFactionId,
+        factionOwnsInvadableOldWorldProvince(
+          snapshot: snapshot,
+          provinceOwner: provinceOwner,
+          factionId: order.targetFactionId,
         );
     return _DeclareWarTargetContext._(
       order: order,

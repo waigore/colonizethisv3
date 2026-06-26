@@ -305,3 +305,41 @@ bool anyInvadableProvinceOwnedByMinor({
       final owner = provinceOwner[pid];
       return owner != null && game.minorNations.any((m) => m.id == owner);
     });
+
+/// Whether [factionId] owns at least one invadable Old-World frontier province.
+///
+/// Single source of truth for the
+/// `snapshot.conquest.invadableProvinceIdsSorted.any((pid) =>
+/// provinceOwner[pid] == <factionId>)` scan duplicated across the conquest /
+/// expand-peace planners ([stalledStrongerGpBlockerPeaceTarget]'s sibling
+/// peer-peace / peace-target / default-start collectors and the conquest
+/// declared-target check) and the declare-war / offer-peace candidate-scoring
+/// families (the declare-war target context's `invadableGpBlocker` /
+/// `tribeOwnsOwInvadable` projections and the offer-peace stalled-GP-war
+/// adjustments) (Refs #3717 diplomatic-scoring / expand-peace scoring-skeleton
+/// dedup). Companion of [anyInvadableProvinceOwnedByMinor], which answers the
+/// minor-owner variant of the same invadable-frontier ownership question.
+///
+/// Takes a non-nullable-value [provinceOwner] (`Map<String, String>`), matching
+/// the `getProvinceOwnerMap(game)` callers; the structurally-identical
+/// move-scoring site that threads a `Map<String, String?>` owner map keeps its
+/// inline scan.
+///
+/// Callers pass the already-resolved [provinceOwner] map
+/// (`getProvinceOwnerMap(game)`) so no extra O(provinces) ownership scan is
+/// introduced — consistent with `colonizethis-turn-resolution-budget.mdc`.
+/// Walks [ConquestSummary.invadableProvinceIdsSorted] with the original
+/// [Iterable.any] short-circuit: returns `true` as soon as an invadable
+/// province's owner equals [factionId]; an unowned (absent / `null`) entry or a
+/// different owner never matches.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7).
+bool factionOwnsInvadableOldWorldProvince({
+  required AIWorldSnapshot snapshot,
+  required Map<String, String> provinceOwner,
+  required String factionId,
+}) =>
+    snapshot.conquest.invadableProvinceIdsSorted.any(
+      (pid) => provinceOwner[pid] == factionId,
+    );

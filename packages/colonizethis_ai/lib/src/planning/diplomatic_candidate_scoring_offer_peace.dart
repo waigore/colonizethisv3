@@ -72,8 +72,10 @@ int _offerPeaceStalledGpWarAdjustments({
       ) &&
       provinceCountOwnedBy(game, order.targetFactionId) >
           snapshot.conquest.oldWorldProvincesOwned &&
-      snapshot.conquest.invadableProvinceIdsSorted.any(
-        (pid) => provinceOwner[pid] == order.targetFactionId,
+      factionOwnsInvadableOldWorldProvince(
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        factionId: order.targetFactionId,
       )) {
     s += kOfferPeaceStalledStrongerGpBlockerBonus;
   }
@@ -85,8 +87,10 @@ int _offerPeaceStalledGpWarAdjustments({
       isStalledOldWorldExpansion(
         snapshot.conquest.oldWorldProvincesOwned,
       ) &&
-      !snapshot.conquest.invadableProvinceIdsSorted.any(
-        (pid) => provinceOwner[pid] == order.targetFactionId,
+      !factionOwnsInvadableOldWorldProvince(
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        factionId: order.targetFactionId,
       ) &&
       snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
         final owner = provinceOwner[pid];

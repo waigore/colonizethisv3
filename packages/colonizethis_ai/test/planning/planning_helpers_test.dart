@@ -12,6 +12,9 @@
 //     history scan, strict `<` cooldown window, predicate filtering (Refs #3717)
 //   - `atWarPeaceTargetBonus` — at-war GP eligibility gate, lazy predicate
 //     short-circuit, flat-bonus emission (Refs #3717)
+//   - `factionOwnsInvadableOldWorldProvince` — single-faction invadable-frontier
+//     ownership scan, `.any` short-circuit, absent/other-owner exclusion
+//     (Refs #3717)
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
@@ -615,6 +618,95 @@ void main() {
         ),
         isTrue,
       );
+    });
+  });
+
+  group('factionOwnsInvadableOldWorldProvince (Refs #3717)', () {
+    const String pA = 'provA';
+    const String pB = 'provB';
+
+    test('true when the faction owns an invadable province', () {
+      final snapshot = _snapshotWithInvadable([pA]);
+      expect(
+        factionOwnsInvadableOldWorldProvince(
+          snapshot: snapshot,
+          provinceOwner: const {pA: _gp2},
+          factionId: _gp2,
+        ),
+        isTrue,
+      );
+    });
+
+    test('false when invadable provinces are owned by other factions', () {
+      final snapshot = _snapshotWithInvadable([pA, pB]);
+      expect(
+        factionOwnsInvadableOldWorldProvince(
+          snapshot: snapshot,
+          provinceOwner: const {pA: _gp3, pB: _minor1},
+          factionId: _gp2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when the owner lookup is absent from the map', () {
+      // Unowned / not-yet-mapped invadable province: lookup is null, no match.
+      final snapshot = _snapshotWithInvadable([pA]);
+      expect(
+        factionOwnsInvadableOldWorldProvince(
+          snapshot: snapshot,
+          provinceOwner: const {},
+          factionId: _gp2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when there are no invadable provinces', () {
+      final snapshot = _snapshotWithInvadable(const []);
+      expect(
+        factionOwnsInvadableOldWorldProvince(
+          snapshot: snapshot,
+          provinceOwner: const {pA: _gp2},
+          factionId: _gp2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('true when only a non-first invadable province is faction-owned', () {
+      // The .any short-circuit must still find the faction owner that is not
+      // the first scanned entry (other GP first, target second) -> true.
+      final snapshot = _snapshotWithInvadable([pA, pB]);
+      expect(
+        factionOwnsInvadableOldWorldProvince(
+          snapshot: snapshot,
+          provinceOwner: const {pA: _gp3, pB: _gp2},
+          factionId: _gp2,
+        ),
+        isTrue,
+      );
+    });
+
+    test('agrees with the inline scan it replaces (equivalence)', () {
+      final snapshot = _snapshotWithInvadable([pA, pB]);
+      for (final owner in <Map<String, String>>[
+        const {},
+        const {pA: _gp2},
+        const {pA: _gp3, pB: _gp2},
+        const {pA: _gp3, pB: _minor1},
+      ]) {
+        expect(
+          factionOwnsInvadableOldWorldProvince(
+            snapshot: snapshot,
+            provinceOwner: owner,
+            factionId: _gp2,
+          ),
+          snapshot.conquest.invadableProvinceIdsSorted
+              .any((pid) => owner[pid] == _gp2),
+          reason: 'mismatch for provinceOwner=$owner',
+        );
+      }
     });
   });
 }

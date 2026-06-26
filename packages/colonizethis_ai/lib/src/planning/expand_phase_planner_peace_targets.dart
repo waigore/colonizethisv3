@@ -528,8 +528,10 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
     if (!isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId))) {
       continue;
     }
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
+    final ownsInvadable = factionOwnsInvadableOldWorldProvince(
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
+      factionId: factionId,
     );
     if (ownsInvadable || factionId == blocker) continue;
     targets.add(factionId);

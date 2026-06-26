@@ -84,8 +84,10 @@ List<String> defaultStartFutileMinorPeaceTargets({
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.minorNations.any((m) => m.id == factionId) &&
-          !snapshot.conquest.invadableProvinceIdsSorted.any(
-            (pid) => provinceOwner[pid] == factionId,
+          !factionOwnsInvadableOldWorldProvince(
+            snapshot: snapshot,
+            provinceOwner: provinceOwner,
+            factionId: factionId,
           ))
         factionId,
   ]..sort();
