@@ -271,3 +271,37 @@ bool atWarGreatPowerOrderTarget({
   required String targetFactionId,
 }) =>
     targetGp != null && snapshot.threats.atWarWith.contains(targetFactionId);
+
+/// Whether any invadable Old-World frontier province is currently owned by a
+/// minor nation.
+///
+/// Single source of truth for the `minorsOwnInvadable` scan —
+/// `snapshot.conquest.invadableProvinceIdsSorted.any((pid) { final owner =
+/// provinceOwner[pid]; return owner != null && game.minorNations.any((m) =>
+/// m.id == owner); })` — duplicated across the EXPAND-peace deciders
+/// ([stalledStrongerGpBlockerPeaceTarget], [stalledGpBlockerFocusPeaceTargets],
+/// [stalledExpansionDistractionPeaceTargets],
+/// [expandIsOldWorldGpOnlyInvadableFrontier], the peer-peace ratchet collector)
+/// and the declare-war family (the `diplomacy_planner` declare-war tribe-drop
+/// filter and the declare-war candidate-scoring near-parity suppression) (Refs
+/// #3717 expand-peace scoring-skeleton dedup).
+///
+/// Callers pass the already-resolved [provinceOwner] map
+/// (`getProvinceOwnerMap(game)`) so no extra O(provinces) ownership scan is
+/// introduced — consistent with `colonizethis-turn-resolution-budget.mdc`.
+/// Walks [ConquestSummary.invadableProvinceIdsSorted] with the original
+/// [Iterable.any] short-circuit: returns `true` as soon as an invadable
+/// province's owner resolves to a [Game.minorNations] member; an unowned
+/// (absent / `null`) entry or a Great-Power / tribe owner never matches.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7).
+bool anyInvadableProvinceOwnedByMinor({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required Map<String, String> provinceOwner,
+}) =>
+    snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    });

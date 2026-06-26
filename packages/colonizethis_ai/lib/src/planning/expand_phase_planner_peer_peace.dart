@@ -246,12 +246,11 @@ List<String> stalledFutileGpPeaceTargets({
     return const [];
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
   if (!minorsOwnInvadable) {
     return const [];
   }

@@ -68,6 +68,19 @@ AIWorldSnapshot _snapshotWithAtWar(List<String> atWarWith) {
   );
 }
 
+AIWorldSnapshot _snapshotWithInvadable(List<String> invadableProvinceIds) {
+  return AIWorldSnapshot(
+    playerId: _gp1,
+    threats: const ThreatSummary(atWarWith: []),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      invadableProvinceIdsSorted: invadableProvinceIds,
+    ),
+    economy: const EconomySummary(),
+    relations: const {},
+  );
+}
+
 Game _gameWithEvents(List<DiplomaticEvent> events) {
   return Game(
     id: 'g-3717-cooldown-scan',
@@ -528,6 +541,79 @@ void main() {
           targetFactionId: _gp2,
         ),
         isFalse,
+      );
+    });
+  });
+
+  group('anyInvadableProvinceOwnedByMinor (Refs #3717)', () {
+    const String pA = 'provA';
+    const String pB = 'provB';
+
+    test('true when an invadable province is owned by a minor nation', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithInvadable([pA]);
+      expect(
+        anyInvadableProvinceOwnedByMinor(
+          game: game,
+          snapshot: snapshot,
+          provinceOwner: const {pA: _minor1},
+        ),
+        isTrue,
+      );
+    });
+
+    test('false when invadable provinces are owned only by GPs / tribes', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithInvadable([pA, pB]);
+      expect(
+        anyInvadableProvinceOwnedByMinor(
+          game: game,
+          snapshot: snapshot,
+          provinceOwner: const {pA: _gp2, pB: _tribe1},
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when an invadable province owner is absent from the map', () {
+      // Unowned / not-yet-mapped invadable province: lookup is null, no match.
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithInvadable([pA]);
+      expect(
+        anyInvadableProvinceOwnedByMinor(
+          game: game,
+          snapshot: snapshot,
+          provinceOwner: const {},
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when there are no invadable provinces', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithInvadable(const []);
+      expect(
+        anyInvadableProvinceOwnedByMinor(
+          game: game,
+          snapshot: snapshot,
+          provinceOwner: const {pA: _minor1},
+        ),
+        isFalse,
+      );
+    });
+
+    test('true when only a non-first invadable province is minor-owned', () {
+      // The .any short-circuit must still find a minor owner that is not the
+      // first scanned entry (GP first, minor second) -> deterministic true.
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithInvadable([pA, pB]);
+      expect(
+        anyInvadableProvinceOwnedByMinor(
+          game: game,
+          snapshot: snapshot,
+          provinceOwner: const {pA: _gp2, pB: _minor1},
+        ),
+        isTrue,
       );
     });
   });

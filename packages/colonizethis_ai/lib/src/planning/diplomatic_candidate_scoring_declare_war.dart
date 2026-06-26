@@ -623,15 +623,11 @@ int? _declareWarSuppressedAdjacentGpScore(
           targetOw <= attackerOw) {
         return 0;
       }
-      final minorsOwnInvadable = ctx
-          .snapshot
-          .conquest
-          .invadableProvinceIdsSorted
-          .any((pid) {
-            final owner = ctx.provinceOwner[pid];
-            return owner != null &&
-                ctx.game.minorNations.any((m) => m.id == owner);
-          });
+      final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+        game: ctx.game,
+        snapshot: ctx.snapshot,
+        provinceOwner: ctx.provinceOwner,
+      );
       if (minorsOwnInvadable &&
           isBelowObserverConquestQuota(attackerOw) &&
           isBelowObserverConquestQuota(targetOw) &&

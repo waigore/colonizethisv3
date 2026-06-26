@@ -4,7 +4,10 @@ import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'planner_context.dart';
 import 'planning_helpers.dart'
-    show gpFactionIdsAtWarWith, isAtWarWithAnyGreatPower;
+    show
+        anyInvadableProvinceOwnedByMinor,
+        gpFactionIdsAtWarWith,
+        isAtWarWithAnyGreatPower;
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_declare_war_targets.dart';
@@ -183,11 +186,10 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     final provinceOwner = getProvinceOwnerMap(ctx.game);
-    final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) {
-        final owner = provinceOwner[pid];
-        return owner != null && ctx.game.minorNations.any((m) => m.id == owner);
-      },
+    final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+      game: ctx.game,
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
     );
     if (minorsOwnInvadable) {
       filtered = filtered

@@ -52,12 +52,11 @@ String? stalledStrongerGpBlockerPeaceTarget({
     return null;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
   final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
     game: game,
     snapshot: snapshot,
@@ -144,12 +143,11 @@ List<String> stalledGpBlockerFocusPeaceTargets({
     return const [];
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
   final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   final blocker = primaryInvadableOldWorldGpBlocker(
     game: game,
@@ -347,12 +345,11 @@ List<String> stalledExpansionDistractionPeaceTargets({
     return const [];
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
   final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
     game: game,
     snapshot: snapshot,

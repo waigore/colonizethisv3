@@ -118,6 +118,7 @@ import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'planning_helpers.dart'
     show
+        anyInvadableProvinceOwnedByMinor,
         gpFactionIdsAtWarWith,
         hasRecentDiplomaticEventWithinCooldown,
         isAtWarWithAnyGreatPower;
@@ -440,12 +441,11 @@ bool expandIsOldWorldGpOnlyInvadableFrontier({
     return false;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
   if (minorsOwnInvadable) {
     return false;
   }
