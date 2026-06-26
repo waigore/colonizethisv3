@@ -413,3 +413,45 @@ bool factionOwnsInvadableOldWorldProvince({
     snapshot.conquest.invadableProvinceIdsSorted.any(
       (pid) => provinceOwner[pid] == factionId,
     );
+
+/// Adds, into [into], every minor-nation owner of an invadable Old-World
+/// frontier province with whom this Great Power is not already at war.
+///
+/// Single source of truth for the `for (final pid in
+/// snapshot.conquest.invadableProvinceIdsSorted) { final owner =
+/// provinceOwner[pid]; if (owner == null || !isMinorFaction(game, owner) ||
+/// snapshot.threats.atWarWith.contains(owner)) continue; candidates.add(owner);
+/// }` collector skeleton duplicated across the legacy colonial-pressure
+/// declare-war target deciders in `diplomacy_planner_declare_war_targets.dart`
+/// ([criticalWeakUninvadedMinorDeclareTarget], [plateauOwMinorDeclareTarget],
+/// [defaultStartOwMinorDeclareTarget]) (Refs #3717 declare-war target collector
+/// dedup).
+///
+/// Callers pass the already-resolved [provinceOwner] map
+/// (`getProvinceOwnerMap(game)`) so no extra O(provinces) ownership scan is
+/// introduced — consistent with `colonizethis-turn-resolution-budget.mdc` — and
+/// supply their own mutable [into] set so a caller may seed it with
+/// adjacent-owner candidates first (set membership de-duplicates; final
+/// ordering is the caller's `..sort()`). Walks
+/// [ConquestSummary.invadableProvinceIdsSorted] in order, skipping unowned
+/// (absent / `null`) entries, non-minor (Great-Power / tribe) owners, and minors
+/// already in [ThreatSummary.atWarWith].
+///
+/// Pure and deterministic — identical inputs always yield identical additions
+/// (Refs #2509 Must-have #7).
+void addInvadableProvinceMinorOwnersNotAtWar({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required Map<String, String> provinceOwner,
+  required Set<String> into,
+}) {
+  for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+    final owner = provinceOwner[pid];
+    if (owner == null ||
+        !isMinorFaction(game, owner) ||
+        snapshot.threats.atWarWith.contains(owner)) {
+      continue;
+    }
+    into.add(owner);
+  }
+}

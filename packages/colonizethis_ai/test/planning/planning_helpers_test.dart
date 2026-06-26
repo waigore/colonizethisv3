@@ -26,6 +26,8 @@ import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart'
 import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart'
     show PhasePriorityWeights;
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
+import 'package:colonizethis_ai/src/util/faction_query.dart'
+    show isMinorFaction;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -863,6 +865,137 @@ void main() {
               .any((pid) => owner[pid] == _gp2),
           reason: 'mismatch for provinceOwner=$owner',
         );
+      }
+    });
+  });
+
+  group('addInvadableProvinceMinorOwnersNotAtWar (Refs #3717)', () {
+    const String pA = 'provA';
+    const String pB = 'provB';
+    const String pC = 'provC';
+    const String _minor2 = 'minor2';
+
+    Game gameWithTwoMinors() => Game(
+      id: 'g-3717-minor-collector',
+      worldState: WorldState(
+        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+        oldWorld: const RegionData(provinces: []),
+        newWorld: const RegionData(provinces: []),
+      ),
+      players: const [Player(id: _gp1, displayName: 'GP1', isHuman: false)],
+      minorNations: const [
+        MinorNation(id: _minor1, displayName: 'Minor1'),
+        MinorNation(id: _minor2, displayName: 'Minor2'),
+      ],
+      tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
+    );
+
+    AIWorldSnapshot snapshot(
+      List<String> invadable,
+      List<String> atWarWith,
+    ) => AIWorldSnapshot(
+      playerId: _gp1,
+      threats: ThreatSummary(atWarWith: atWarWith),
+      opportunities: const OpportunitySummary(),
+      conquest: ConquestSummary(invadableProvinceIdsSorted: invadable),
+      economy: const EconomySummary(),
+      relations: const {},
+    );
+
+    test('collects minor owners of invadable provinces not already at war', () {
+      final into = <String>{};
+      addInvadableProvinceMinorOwnersNotAtWar(
+        game: gameWithTwoMinors(),
+        snapshot: snapshot([pA, pB], const []),
+        provinceOwner: const {pA: _minor1, pB: _minor2},
+        into: into,
+      );
+      expect(into, <String>{_minor1, _minor2});
+    });
+
+    test('skips minors already at war', () {
+      final into = <String>{};
+      addInvadableProvinceMinorOwnersNotAtWar(
+        game: gameWithTwoMinors(),
+        snapshot: snapshot([pA, pB], [_minor1]),
+        provinceOwner: const {pA: _minor1, pB: _minor2},
+        into: into,
+      );
+      expect(into, <String>{_minor2});
+    });
+
+    test('skips Great-Power, tribe, and unowned invadable provinces', () {
+      final into = <String>{};
+      addInvadableProvinceMinorOwnersNotAtWar(
+        game: gameWithTwoMinors(),
+        snapshot: snapshot([pA, pB, pC], const []),
+        // pA: GP, pB: tribe, pC: absent from the owner map (null lookup).
+        provinceOwner: const {pA: _gp1, pB: _tribe1},
+        into: into,
+      );
+      expect(into, isEmpty);
+    });
+
+    test('adds nothing when there are no invadable provinces', () {
+      final into = <String>{};
+      addInvadableProvinceMinorOwnersNotAtWar(
+        game: gameWithTwoMinors(),
+        snapshot: snapshot(const [], const []),
+        provinceOwner: const {pA: _minor1},
+        into: into,
+      );
+      expect(into, isEmpty);
+    });
+
+    test('preserves pre-seeded entries and de-duplicates via set', () {
+      // Mirrors the plateau decider seeding adjacent-owner candidates first.
+      final into = <String>{_minor1};
+      addInvadableProvinceMinorOwnersNotAtWar(
+        game: gameWithTwoMinors(),
+        snapshot: snapshot([pA, pB], const []),
+        provinceOwner: const {pA: _minor1, pB: _minor2},
+        into: into,
+      );
+      expect(into, <String>{_minor1, _minor2});
+    });
+
+    test('agrees with the inline collector loop it replaces (equivalence)', () {
+      final game = gameWithTwoMinors();
+      for (final atWar in <List<String>>[
+        const [],
+        [_minor1],
+        [_minor1, _minor2],
+      ]) {
+        for (final owner in <Map<String, String>>[
+          const {},
+          const {pA: _minor1, pB: _minor2},
+          const {pA: _gp1, pB: _minor2},
+          const {pA: _tribe1, pB: _minor1},
+        ]) {
+          final snap = snapshot([pA, pB], atWar);
+          final viaHelper = <String>{};
+          addInvadableProvinceMinorOwnersNotAtWar(
+            game: game,
+            snapshot: snap,
+            provinceOwner: owner,
+            into: viaHelper,
+          );
+          final viaInline = <String>{};
+          for (final pid in snap.conquest.invadableProvinceIdsSorted) {
+            final o = owner[pid];
+            if (o == null ||
+                !isMinorFaction(game, o) ||
+                snap.threats.atWarWith.contains(o)) {
+              continue;
+            }
+            viaInline.add(o);
+          }
+          expect(
+            viaHelper,
+            viaInline,
+            reason: 'mismatch for atWar=$atWar owner=$owner',
+          );
+        }
       }
     });
   });
