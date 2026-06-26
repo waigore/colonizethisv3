@@ -1,7 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/colonizethis_world.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_resolver.dart';
 import 'diplomacy_shared_helpers.dart';
