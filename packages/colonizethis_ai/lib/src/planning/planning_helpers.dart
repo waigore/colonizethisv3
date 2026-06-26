@@ -27,6 +27,10 @@
 ///     [resolvePhaseNewWorldCivilianWeight] — the soft-phase
 ///     `PhasePlanOutcome` → `priorityWeights.<slot>` projections shared by the
 ///     conquest / naval / diplomacy / economy phase filters.
+///   - [resolveFromPhasePlan] — the "project a non-default resolution from the
+///     active `PhasePlanOutcome`, otherwise fall back to the family's
+///     `defaultResolution`" skeleton shared by the phase-filter Resolution
+///     families (naval directive, conquest invadable).
 ///   - [hasRecentDiplomaticEventWithinCooldown] — the "scan
 ///     `Game.diplomaticHistoryEvents` newest-first, let the first matching
 ///     event decide whether it falls inside a cooldown window" skeleton shared
@@ -363,6 +367,37 @@ double resolvePhaseOldWorldCivilianWeight(PhasePlanOutcome phasePlan) =>
 /// Pure and deterministic (Refs #2509 Must-have #7).
 double resolvePhaseNewWorldCivilianWeight(PhasePlanOutcome phasePlan) =>
     phasePlan.priorityWeights.newWorldCivilian;
+
+/// Resolves a per-family phase-filter resolution from [phasePlan].
+///
+/// Single source of truth for the "project a non-default resolution from the
+/// active [PhasePlanOutcome]; fall back to the family's [defaultResolution]
+/// when no arm fires" skeleton repeated across the phase-filter Resolution
+/// families ([resolvePhaseNavalDirective] in `phase_planner_naval_filter.dart`
+/// and [resolvePhaseConquestInvadable] in `phase_planner_conquest_filter.dart`,
+/// Refs #3717 phase-filter resolution-skeleton dedup). Each family supplies
+/// only its own [project] callback (returning the populated resolution when a
+/// phase / phase-plan arm applies, or `null` to defer) plus its
+/// [defaultResolution]; the `project(...) ?? defaultResolution` fallback lives
+/// once here.
+///
+/// Behaviour-preserving against the inline `if (...) return X; ... return
+/// default;` chains it replaces: [project] is evaluated exactly once and its
+/// non-null result is returned verbatim, otherwise [defaultResolution] is
+/// returned, so results are byte-identical for a pure [project]. The generic
+/// [T] keeps each family's concrete resolution type (no boxing / shared base
+/// type) so callers retain full static typing.
+///
+/// Pure and deterministic — identical inputs (and a pure [project]) always
+/// yield identical resolutions (Refs #2509 Must-have #7). Adds no scan cost
+/// beyond the caller's own [project], consistent with
+/// `colonizethis-turn-resolution-budget.mdc`.
+T resolveFromPhasePlan<T>({
+  required PhasePlanOutcome phasePlan,
+  required T defaultResolution,
+  required T? Function(PhasePlanOutcome phasePlan) project,
+}) =>
+    project(phasePlan) ?? defaultResolution;
 
 /// Whether the most-recent [Game.diplomaticHistoryEvents] entry satisfying
 /// [matches] falls within [cooldownTurns] turns of [currentTurn].

@@ -26,6 +26,7 @@ import 'phase_planner_military_plans.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
     show
+        resolveFromPhasePlan,
         resolvePhaseColonialPressureActive,
         resolvePhaseExpandOrColonialLiteActive,
         resolvePhaseNewWorldAcquisitionWeight,
@@ -85,57 +86,64 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
   AIWorldSnapshot? snapshot,
   Game? game,
 }) {
-  if (phasePlan.phase == ObserverGoalPhase.develop) {
-    return const PhaseConquestInvadableResolution(skipConquestPass: true);
-  }
-
-  final expandPlan = expandMilitaryPlanFromPhasePlan(phasePlan);
-  final colonialPlan = colonialMilitaryPlanFromPhasePlan(phasePlan);
-
-  final nwInvasionArmyMoveFeasible =
-      game != null &&
-      snapshot != null &&
-      playerHasNonHomeFieldArmyInRegion(
-        game: game,
-        playerId: snapshot.playerId,
-        regionId: kNewWorldRegionId,
-      );
-
-  final prioritizeColonialNwUnderLockRecovery = snapshot != null &&
-      isNwLockRecoveryPathEActive(
-        snapshot: snapshot,
-        expandEconomyPlan: phasePlan.expandEconomyPlan,
-      ) &&
-      colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty &&
-      nwInvasionArmyMoveFeasible;
-
-  if (prioritizeColonialNwUnderLockRecovery) {
-    return PhaseConquestInvadableResolution(
-      phasePlanInvadableSorted:
-          colonialPlan.priorityDestinationProvinceIdsSorted,
-    );
-  }
-
-  if (expandPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
-    return PhaseConquestInvadableResolution(
-      phasePlanInvadableSorted: expandPlan.priorityDestinationProvinceIdsSorted,
-    );
-  }
-
-  if (colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
-    return PhaseConquestInvadableResolution(
-      phasePlanInvadableSorted:
-          colonialPlan.priorityDestinationProvinceIdsSorted,
-    );
-  }
-
   final nwInvasionWeight = resolvePhaseConquestNwInvasionWeight(
     phasePlan: phasePlan,
   );
+  return resolveFromPhasePlan(
+    phasePlan: phasePlan,
+    // Legacy-invadable fallback when no phase / phase-plan arm fires below.
+    defaultResolution: PhaseConquestInvadableResolution(
+      useLegacyInvadable: true,
+      structuralNewWorldSuppressed: nwInvasionWeight <= 0.0,
+    ),
+    project: (plan) {
+      if (plan.phase == ObserverGoalPhase.develop) {
+        return const PhaseConquestInvadableResolution(skipConquestPass: true);
+      }
 
-  return PhaseConquestInvadableResolution(
-    useLegacyInvadable: true,
-    structuralNewWorldSuppressed: nwInvasionWeight <= 0.0,
+      final expandPlan = expandMilitaryPlanFromPhasePlan(plan);
+      final colonialPlan = colonialMilitaryPlanFromPhasePlan(plan);
+
+      final nwInvasionArmyMoveFeasible =
+          game != null &&
+          snapshot != null &&
+          playerHasNonHomeFieldArmyInRegion(
+            game: game,
+            playerId: snapshot.playerId,
+            regionId: kNewWorldRegionId,
+          );
+
+      final prioritizeColonialNwUnderLockRecovery = snapshot != null &&
+          isNwLockRecoveryPathEActive(
+            snapshot: snapshot,
+            expandEconomyPlan: plan.expandEconomyPlan,
+          ) &&
+          colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty &&
+          nwInvasionArmyMoveFeasible;
+
+      if (prioritizeColonialNwUnderLockRecovery) {
+        return PhaseConquestInvadableResolution(
+          phasePlanInvadableSorted:
+              colonialPlan.priorityDestinationProvinceIdsSorted,
+        );
+      }
+
+      if (expandPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
+        return PhaseConquestInvadableResolution(
+          phasePlanInvadableSorted:
+              expandPlan.priorityDestinationProvinceIdsSorted,
+        );
+      }
+
+      if (colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
+        return PhaseConquestInvadableResolution(
+          phasePlanInvadableSorted:
+              colonialPlan.priorityDestinationProvinceIdsSorted,
+        );
+      }
+
+      return null;
+    },
   );
 }
 
