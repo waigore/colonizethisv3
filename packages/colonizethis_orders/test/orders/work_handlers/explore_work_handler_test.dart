@@ -3,8 +3,7 @@ import 'package:colonizethis_orders/src/orders/work_handlers/explore_work_handle
 import 'package:colonizethis_orders/src/orders/work_handlers/simple_work_order_handler.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
-import '../../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void main() {
   group('exploreWorkOrderHandler', () {
