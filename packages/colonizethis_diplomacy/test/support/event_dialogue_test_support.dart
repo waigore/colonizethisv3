@@ -1,4 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Shared `Game` fixture for `event_dialogue_test.dart` and its split files.
 ///
@@ -6,7 +7,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// minimal-province game (orders phase) varying only by `turnNumber`,
 /// `players`, optional region provinces, and a handful of optional
 /// diplomacy / overture / minor-nation / tribe fields. This helper
-/// centralizes that boilerplate.
+/// centralizes that boilerplate on the shared [TestFixtures.minimalGame]
+/// factory (Refs #3715) — the previous inline builder was equivalent to
+/// `minimalGame` with the same orders-phase turn and empty-region defaults.
 ///
 /// Refs waigore/colonizethis#2216 (consolidate duplicated test setup).
 Game dialogueGame({
@@ -20,18 +23,14 @@ Game dialogueGame({
   List<Tribe> tribes = const [],
   List<OvertureState> overtureStates = const [],
 }) {
-  return Game(
+  return TestFixtures.minimalGame(
     id: id,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: oldWorldProvinces.isEmpty
-          ? const RegionData()
-          : RegionData(provinces: oldWorldProvinces),
-      newWorld: newWorldProvinces.isEmpty
-          ? const RegionData()
-          : RegionData(provinces: newWorldProvinces),
-    ),
+    turnNumber: turnNumber,
     players: players,
+    oldWorld:
+        oldWorldProvinces.isEmpty ? null : RegionData(provinces: oldWorldProvinces),
+    newWorld:
+        newWorldProvinces.isEmpty ? null : RegionData(provinces: newWorldProvinces),
     diplomacyRelations: diplomacyRelations,
     minorNations: minorNations,
     tribes: tribes,
