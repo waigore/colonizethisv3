@@ -31,7 +31,7 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
       ctx.snapshot.opportunities.weakNeighbors
           .contains(ctx.order.targetFactionId)) {
     s += getDeclareWarTargetBonusWeakerNeighbor(ctx.agendaId);
-    if (ctx.game.playerById(ctx.order.targetFactionId) != null &&
+    if (ctx.targetIsGreatPower &&
         warDesire >= kDeclareWarGpWeakNeighborMinWarDesire) {
       s += kDeclareWarGpWeakNeighborBonus;
     }
