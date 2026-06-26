@@ -1,8 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_data/colonizethis_data.dart'
-    show BuildUnitCategory, buildUnitCategoryForUnitType;
-import 'package:colonizethis_logic/ai_api.dart' show canAffordRecruitWorker;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';

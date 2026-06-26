@@ -1,6 +1,5 @@
 // Growth-stage civilian work candidate ordering. SPEC/ai/growth-stage-planner.md.
 
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'growth_stage.dart';
 import 'planning_imports.dart';

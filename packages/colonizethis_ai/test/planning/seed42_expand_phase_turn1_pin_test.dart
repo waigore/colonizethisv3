@@ -67,7 +67,6 @@ import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
     show expandPhaseGpPeaceTargets, observerGoalPhaseFor;
 import 'package:colonizethis_data/colonizethis_data.dart'
     show GameSetupConfig, kObserverConquestMinOwProvincesPerGp;
-import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
