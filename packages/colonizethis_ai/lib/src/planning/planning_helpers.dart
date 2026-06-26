@@ -11,6 +11,12 @@
 ///   - [resolvePhaseColonialPressureActive] /
 ///     [resolvePhaseExpandOrColonialLiteActive] — the structural phase
 ///     predicates shared by the conquest / economy / diplomacy / goal filters.
+///   - [resolvePhaseNewWorldAcquisitionWeight] /
+///     [resolvePhaseOldWorldConquestWeight] /
+///     [resolvePhaseOldWorldCivilianWeight] /
+///     [resolvePhaseNewWorldCivilianWeight] — the soft-phase
+///     `PhasePlanOutcome` → `priorityWeights.<slot>` projections shared by the
+///     conquest / naval / diplomacy / economy phase filters.
 ///
 /// Keeping these in one place removes the duplication flagged by the
 /// `repo.ai_dedup_gp_wars_filter` and `repo.ai_dedup_weight_scale_clamp`
@@ -22,6 +28,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import 'observer_goal_phase.dart';
+import 'phase_planner_dispatch.dart';
 
 /// Returns every Great Power the active player is currently at war with as a
 /// new ascending-sorted `List<String>` of `factionId`s.
@@ -89,3 +96,50 @@ bool resolvePhaseColonialPressureActive(ObserverGoalPhase phase) =>
 bool resolvePhaseExpandOrColonialLiteActive(ObserverGoalPhase phase) =>
     phase == ObserverGoalPhase.expand ||
     phase == ObserverGoalPhase.colonialLite;
+
+/// Projects the soft-phase New-World-acquisition priority weight from
+/// [phasePlan].
+///
+/// Single source of truth for the
+/// `phasePlan.priorityWeights.newWorldAcquisition` projection shared by the
+/// conquest, naval, diplomacy, and economy phase filters (Refs #3717
+/// phase-filter weight-projection dedup). Each family's public weight resolver
+/// delegates here so the `PhasePlanOutcome` → `priorityWeights` slot mapping
+/// lives once, mirroring the existing [resolvePhaseColonialPressureActive] /
+/// [scaleWeightedBonus] dedup. Reads only `phasePlan.priorityWeights` and never
+/// inspects sibling slots.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7).
+double resolvePhaseNewWorldAcquisitionWeight(PhasePlanOutcome phasePlan) =>
+    phasePlan.priorityWeights.newWorldAcquisition;
+
+/// Projects the soft-phase Old-World-conquest priority weight from [phasePlan].
+///
+/// Companion of [resolvePhaseNewWorldAcquisitionWeight]; single source of truth
+/// for the `phasePlan.priorityWeights.oldWorldConquest` projection shared by the
+/// conquest and diplomacy declare-war filters (Refs #3717).
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+double resolvePhaseOldWorldConquestWeight(PhasePlanOutcome phasePlan) =>
+    phasePlan.priorityWeights.oldWorldConquest;
+
+/// Projects the soft-phase Old-World-civilian priority weight from [phasePlan].
+///
+/// Companion of [resolvePhaseNewWorldAcquisitionWeight]; single source of truth
+/// for the `phasePlan.priorityWeights.oldWorldCivilian` projection used by the
+/// economy filter (Refs #3717).
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+double resolvePhaseOldWorldCivilianWeight(PhasePlanOutcome phasePlan) =>
+    phasePlan.priorityWeights.oldWorldCivilian;
+
+/// Projects the soft-phase New-World-civilian priority weight from [phasePlan].
+///
+/// Companion of [resolvePhaseNewWorldAcquisitionWeight]; single source of truth
+/// for the `phasePlan.priorityWeights.newWorldCivilian` projection used by the
+/// economy filter (Refs #3717).
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+double resolvePhaseNewWorldCivilianWeight(PhasePlanOutcome phasePlan) =>
+    phasePlan.priorityWeights.newWorldCivilian;

@@ -54,7 +54,11 @@ import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
-    show resolvePhaseColonialPressureActive, scaleWeightedBonus;
+    show
+        resolvePhaseColonialPressureActive,
+        resolvePhaseNewWorldAcquisitionWeight,
+        resolvePhaseOldWorldConquestWeight,
+        scaleWeightedBonus;
 
 /// When `true`, `_DeclareWarTargetContext.build` flags the candidate's
 /// `colonialPressure` slot for `_declareWarSuppressedWarConcentrationScore`
@@ -195,7 +199,7 @@ bool resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive({
 /// Must-have #7). Reads only `phasePlan.priorityWeights`.
 double resolvePhaseDiplomacyDeclareWarColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Production `[0.0, 1.0]` multiplier for OW declare-war scoring bias
 /// sourced from [PhasePriorityWeights.oldWorldConquest] (Refs #2847
@@ -212,7 +216,7 @@ double resolvePhaseDiplomacyDeclareWarColonialPressureWeight({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.oldWorldConquest;
+}) => resolvePhaseOldWorldConquestWeight(phasePlan);
 
 /// Returns the NW-tribe declare-war dominance bonus scaled by the soft-phase
 /// NW acquisition weight (Refs #2847 Phase 3 diplomacy declare-war NW-tribe

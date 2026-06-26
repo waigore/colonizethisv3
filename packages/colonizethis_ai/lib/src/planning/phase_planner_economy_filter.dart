@@ -85,7 +85,12 @@ import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
-import 'planning_helpers.dart' show resolvePhaseColonialPressureActive;
+import 'planning_helpers.dart'
+    show
+        resolvePhaseColonialPressureActive,
+        resolvePhaseNewWorldAcquisitionWeight,
+        resolvePhaseNewWorldCivilianWeight,
+        resolvePhaseOldWorldCivilianWeight;
 
 /// When `true`, `_runEconomyDomainPlanners` lowers the civilian work
 /// threshold to `kColonialCivilianWorkThresholdCap`, forces the
@@ -392,7 +397,7 @@ bool resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive({
 /// Must-have #7). Reads only `phasePlan.priorityWeights`.
 double resolvePhaseEconomyColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Returns the economy-pass civilian-work threshold cap scaled by the
 /// soft-phase NW acquisition weight (Refs #2847 Phase 3 economy
@@ -510,7 +515,7 @@ int? economyColonialPressureBuildOrderThresholdCap({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseEconomyOldWorldCivilianWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.oldWorldCivilian;
+}) => resolvePhaseOldWorldCivilianWeight(phasePlan);
 
 /// Advisory `[0.0, 1.0]` multiplier for the NW civilian-work bias
 /// (build / improvement / population orders on NW-owned land)
@@ -526,7 +531,7 @@ double resolvePhaseEconomyOldWorldCivilianWeight({
 /// Pure and deterministic (Refs #2509 Must-have #7).
 double resolvePhaseEconomyNewWorldCivilianWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldCivilian;
+}) => resolvePhaseNewWorldCivilianWeight(phasePlan);
 
 /// Resource-need override predicate (Refs #2847 § Resource-need overrides).
 ///

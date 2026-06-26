@@ -28,6 +28,8 @@ import 'planning_helpers.dart'
     show
         resolvePhaseColonialPressureActive,
         resolvePhaseExpandOrColonialLiteActive,
+        resolvePhaseNewWorldAcquisitionWeight,
+        resolvePhaseOldWorldConquestWeight,
         scaleWeightedBonus;
 
 /// Outcome of [resolvePhaseConquestInvadable] for one player turn.
@@ -237,7 +239,7 @@ bool resolvePhaseConquestExtraPassesActive({
 /// dispatcher computed once via [computePhasePriorityWeights]).
 double resolvePhaseConquestNwInvasionWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Advisory `[0.0, 1.0]` multiplier for OW invasion scoring (declare-war
 /// candidates against OW owners, OW invasion army-move destinations,
@@ -257,7 +259,7 @@ double resolvePhaseConquestNwInvasionWeight({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseConquestOldWorldInvasionWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.oldWorldConquest;
+}) => resolvePhaseOldWorldConquestWeight(phasePlan);
 
 /// Advisory `[0.0, 1.0]` multiplier for the COLONIAL conquest
 /// colonial-pressure minimum weight floor
@@ -277,7 +279,7 @@ double resolvePhaseConquestOldWorldInvasionWeight({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseConquestColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Returns the COLONIAL conquest army-move minimum weight floor scaled by
 /// the soft-phase NW acquisition weight (Refs #2847 Phase 3 conquest

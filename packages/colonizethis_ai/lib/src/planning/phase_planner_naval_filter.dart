@@ -48,7 +48,8 @@ import 'colonial_phase_planner.dart'
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_naval_plans.dart';
-import 'planning_helpers.dart' show scaleWeightedBonus;
+import 'planning_helpers.dart'
+    show resolvePhaseNewWorldAcquisitionWeight, scaleWeightedBonus;
 
 /// Outcome of [resolvePhaseNavalDirective] for one player turn.
 class PhaseNavalDirectiveResolution {
@@ -130,7 +131,7 @@ PhaseNavalDirectiveResolution resolvePhaseNavalDirective({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseNavalColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Returns the naval-planner colonial-pressure weight bonus scaled by
 /// the soft-phase NW acquisition weight (Refs #2847 Phase 3 naval
