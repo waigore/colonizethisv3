@@ -225,6 +225,18 @@ final class _DeclareWarTargetContext {
   bool get isAdjacentInvadableOwMinor =>
       isAdjacentOwner && ownsInvadableOwMinor;
 
+  /// Whether the declare-war target faction currently owns at least one of the
+  /// active player's invadable Old-World provinces.
+  ///
+  /// Single source of truth for the
+  /// `invadableOwners.contains(order.targetFactionId)` projection repeated
+  /// across the declare-war suppression and bonus scoring branches (Refs #3717
+  /// diplomatic-scoring dedup). Pure projection over [invadableOwners] /
+  /// [order]; byte-identical to the inline checks it replaces (Refs #2509
+  /// Must-have #7).
+  bool get targetIsInvadableOwner =>
+      invadableOwners.contains(order.targetFactionId);
+
   factory _DeclareWarTargetContext.build({
     required DiplomaticOrder order,
     required String nationId,
@@ -559,11 +571,8 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
       ctx.order.targetFactionId,
     );
     final adjacentInvadableMinor =
-        ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId);
-    final distantInvadableMinorOwner = ctx.invadableOwners.contains(
-      ctx.order.targetFactionId,
-    );
+        ctx.isAdjacentOwner && ctx.targetIsInvadableOwner;
+    final distantInvadableMinorOwner = ctx.targetIsInvadableOwner;
     if (ctx.activeMinorConflicts.isNotEmpty) {
       if (!continuingMinorConflict) {
         return 0;
@@ -723,7 +732,7 @@ int? _declareWarSuppressedAdjacentGpScore(
           attackerOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
           ctx.isAdjacentGp &&
           !ctx.invadableGpBlocker &&
-          ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+          ctx.targetIsInvadableOwner &&
           targetOw > attackerOw) {
         return 0;
       }

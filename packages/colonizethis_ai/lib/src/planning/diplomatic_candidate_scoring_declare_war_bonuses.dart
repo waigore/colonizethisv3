@@ -189,8 +189,7 @@ int _declareWarAdjacentOwnerBonuses(
         kDeclareWarAdjacentMinorBonusWhenFarFromVictory,
       );
     }
-    if (ctx.isMinorTarget &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
+    if (ctx.isMinorTarget && ctx.targetIsInvadableOwner) {
       s += _owConquestDeclareWarBonus(
         ctx,
         kDeclareWarMinorWithInvadableProvinceBonus,
@@ -306,7 +305,7 @@ int _declareWarAdjacencyAndStalledBonuses(
       ctx.isMinorTarget &&
       !ctx.isTribeTarget &&
       !ctx.isAdjacentOwner &&
-      !ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
+      !ctx.targetIsInvadableOwner) {
     s += _owConquestDeclareWarBonus(
       ctx,
       kDeclareWarStalledGpBlockerDistantMinorBonus,
@@ -391,8 +390,7 @@ int _declareWarAdjacencyAndStalledBonuses(
       ctx,
       kDeclareWarCriticalWeakNoGpWarMinorBonus,
     );
-    if (ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
+    if (ctx.isAdjacentOwner && ctx.targetIsInvadableOwner) {
       s = math.max(
         s,
         _owConquestDeclareWarBonus(
@@ -435,7 +433,7 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
   if (ctx.stalledOwExpansion &&
       ctx.behindVictoryPace &&
       adjacentWeakMinor &&
-      (ctx.invadableOwners.contains(ctx.order.targetFactionId) ||
+      (ctx.targetIsInvadableOwner ||
           ctx.game.minorNations.any((m) => m.id == ctx.order.targetFactionId))) {
     s = math.max(
       s,
