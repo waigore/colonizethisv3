@@ -172,11 +172,11 @@ List<String> defaultStartGpPeaceTargets({
   final invadableBlocker = gpOnlyFrontier
       ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
       : null;
-  final targets = <String>[
-    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
-      if (factionId != invadableBlocker) factionId,
-  ]..sort();
-  return targets;
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) => factionId != invadableBlocker,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war Great

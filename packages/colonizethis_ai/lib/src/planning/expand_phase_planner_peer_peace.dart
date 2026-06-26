@@ -775,11 +775,12 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
       : isBelowObserverConquestQuota(ownOw)
       ? kUnwinnableSoleGpMinProvinceDeficit
       : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
-  final targets = <String>[
-    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
-      if (provinceCountOwnedBy(game, factionId) >= ownOw + minLead) factionId,
-  ]..sort();
-  return targets;
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) =>
+        provinceCountOwnedBy(game, factionId) >= ownOw + minLead,
+  );
 }
 
 /// Returns the deterministic list of non-blocker at-war Great Power

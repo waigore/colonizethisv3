@@ -282,13 +282,13 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
       isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
       ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
       : null;
-  final targets = <String>[
-    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
-      if (factionId != invadableBlocker &&
-          provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit)
-        factionId,
-  ]..sort();
-  return targets;
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) =>
+        factionId != invadableBlocker &&
+        provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit,
+  );
 }
 
 /// Returns the deterministic list of below-quota at-war Great Power
@@ -364,12 +364,12 @@ List<String> quotaMetBelowQuotaAtWarPeaceTargets({
   if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
-      if (isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)))
-        factionId,
-  ]..sort();
-  return targets;
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) =>
+        isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)),
+  );
 }
 
 /// Returns the deterministic list of at-war Great Powers the active

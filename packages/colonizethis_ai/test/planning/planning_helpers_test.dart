@@ -5,6 +5,9 @@
 //   - `isAtWarWithAnyGreatPower` — GP-war presence check, non-GP exclusion,
 //     empty-set false, equivalence with `gpFactionIdsAtWarWith.isNotEmpty`
 //     (Refs #3717)
+//   - `gpAtWarPeaceTargetsWhere` — predicate-filtered GP at-war peace-target
+//     collector: keep-subset filtering, ascending sort/determinism, non-GP
+//     exclusion, keep-all/keep-none edges, one keep call per GP (Refs #3717)
 //   - `scaleWeightedBonus` — `<= 0.0` guard, `> 1.0` clamp, rounding
 //   - `resolvePhaseColonialPressureActive` — COLONIAL-only gate
 //   - `resolvePhaseExpandOrColonialLiteActive` — EXPAND / COLONIAL-lite gate
@@ -192,6 +195,87 @@ void main() {
           reason: 'mismatch for atWarWith=$atWar',
         );
       }
+    });
+  });
+
+  group('gpAtWarPeaceTargetsWhere (Refs #3717)', () {
+    test('keeps only GP at-war factions matching the predicate, sorted', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithAtWar([_gp3, _tribe1, _gp1, _minor1, _gp2]);
+      expect(
+        gpAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (factionId) => factionId != _gp2,
+        ),
+        [_gp1, _gp3],
+      );
+    });
+
+    test('keep-all equals gpFactionIdsAtWarWith (GP filter + sort)', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithAtWar([_gp3, _tribe1, _gp1, _minor1, _gp2]);
+      expect(
+        gpAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => true,
+        ),
+        gpFactionIdsAtWarWith(game, snapshot),
+      );
+    });
+
+    test('keep-none returns empty', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithAtWar([_gp1, _gp2, _gp3]);
+      expect(
+        gpAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => false,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('never offers a non-GP even when the predicate would keep it', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithAtWar([_tribe1, _minor1]);
+      expect(
+        gpAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => true,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('result is sorted ascending regardless of atWarWith order', () {
+      final game = _gameWithGps();
+      expect(
+        gpAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: _snapshotWithAtWar([_gp3, _gp1, _gp2]),
+          keep: (_) => true,
+        ),
+        [_gp1, _gp2, _gp3],
+      );
+    });
+
+    test('invokes keep exactly once per at-war GP in ascending order', () {
+      final game = _gameWithGps();
+      final snapshot = _snapshotWithAtWar([_gp3, _tribe1, _gp1, _gp2]);
+      final seen = <String>[];
+      gpAtWarPeaceTargetsWhere(
+        game: game,
+        snapshot: snapshot,
+        keep: (factionId) {
+          seen.add(factionId);
+          return true;
+        },
+      );
+      expect(seen, [_gp1, _gp2, _gp3]);
     });
   });
 

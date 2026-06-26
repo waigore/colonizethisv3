@@ -121,6 +121,7 @@ import 'planning_helpers.dart'
         anyInvadableProvinceOwnedByGreatPower,
         anyInvadableProvinceOwnedByMinor,
         factionOwnsInvadableOldWorldProvince,
+        gpAtWarPeaceTargetsWhere,
         gpFactionIdsAtWarWith,
         hasRecentDiplomaticEventWithinCooldown,
         isAtWarWithAnyGreatPower;

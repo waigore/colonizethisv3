@@ -62,6 +62,39 @@ List<String> gpFactionIdsAtWarWith(Game game, AIWorldSnapshot snapshot) {
   ]..sort();
 }
 
+/// Returns the deterministic ascending-sorted list of at-war Great Power
+/// `factionId`s that satisfy the caller-supplied [keep] predicate.
+///
+/// Single source of truth for the repeated EXPAND-phase peace-target collector
+/// skeleton
+/// `<String>[for (final id in gpFactionIdsAtWarWith(game, snapshot)) if (<keep>) id]..sort()`
+/// duplicated across the expand-peace deciders (`defaultStartGpPeaceTargets`,
+/// `stalledBelowQuotaGpLeadPeaceTargets`, `quotaMetBelowQuotaAtWarPeaceTargets`,
+/// `criticalWeakGpSurvivalPeaceTargets`). Each caller now supplies only its
+/// per-faction [keep] predicate; the GP at-war filter (via
+/// [gpFactionIdsAtWarWith]) and the ascending `factionId` sort are applied
+/// once here.
+///
+/// Behaviour-preserving against the replaced comprehensions:
+/// [gpFactionIdsAtWarWith] already returns an ascending-sorted GP id list and
+/// the comprehension preserves that order, so the trailing `..sort()` is
+/// retained verbatim (a no-op on already-sorted input) to keep results
+/// byte-identical. [keep] is evaluated once per at-war GP in ascending
+/// `factionId` order.
+///
+/// Pure and deterministic — identical inputs (and a pure [keep]) always yield
+/// identical lists (Refs #2509 Must-have #7).
+List<String> gpAtWarPeaceTargetsWhere({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required bool Function(String factionId) keep,
+}) {
+  return <String>[
+    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
+      if (keep(factionId)) factionId,
+  ]..sort();
+}
+
 /// Whether the active player is currently at war with **any** Great Power.
 ///
 /// Single source of truth for the boolean
