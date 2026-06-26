@@ -59,10 +59,18 @@ bool canPivotFromSoleGpWarAfterPeace({
   if (minorsOnMap) {
     return true;
   }
-  return snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
-    final owner = getProvinceOwnerMap(game)[pid];
-    return owner != null && isMinorFaction(game, owner);
-  });
+  // Route the minor-owned invadable-frontier scan through the shared
+  // [anyInvadableProvinceOwnedByMinor] helper (Refs #3717 expand-peace
+  // scoring-skeleton dedup), matching the sibling EXPAND-peace deciders. The
+  // owner map is resolved once here instead of per invadable province, removing
+  // the prior per-iteration `getProvinceOwnerMap(game)` rebuild while keeping
+  // byte-identical results (`isMinorFaction` over the same owner map and
+  // [ConquestSummary.invadableProvinceIdsSorted] short-circuit).
+  return anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: getProvinceOwnerMap(game),
+  );
 }
 
 /// Returns the lone Great Power foe's `factionId` when an EXPAND-phase

@@ -57,15 +57,23 @@ int _offerPeaceStalledGpWarAdjustments({
   required Player? targetGp,
 }) {
   var s = 0;
+  // Hoist the repeated "order target is an at-war Great Power" eligibility gate
+  // (Refs #3717 offer-peace scoring-skeleton dedup). [atWarGreatPowerOrderTarget]
+  // is a pure projection over the already-resolved [targetGp] and the snapshot
+  // threat set and was previously recomputed identically as the first `&&`
+  // operand of all four stalled-GP-war branches below; evaluating it once is
+  // byte-identical (it was always evaluated as the leading conjunct) and avoids
+  // the redundant repeated `atWarWith.contains` membership tests.
+  final atWarGreatPowerTarget = atWarGreatPowerOrderTarget(
+    targetGp: targetGp,
+    snapshot: snapshot,
+    targetFactionId: order.targetFactionId,
+  );
   final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
     game: game,
     snapshot: snapshot,
   );
-  if (atWarGreatPowerOrderTarget(
-        targetGp: targetGp,
-        snapshot: snapshot,
-        targetFactionId: order.targetFactionId,
-      ) &&
+  if (atWarGreatPowerTarget &&
       !gpBlockerFocus &&
       isStalledOldWorldExpansion(
         snapshot.conquest.oldWorldProvincesOwned,
@@ -79,11 +87,7 @@ int _offerPeaceStalledGpWarAdjustments({
       )) {
     s += kOfferPeaceStalledStrongerGpBlockerBonus;
   }
-  if (atWarGreatPowerOrderTarget(
-        targetGp: targetGp,
-        snapshot: snapshot,
-        targetFactionId: order.targetFactionId,
-      ) &&
+  if (atWarGreatPowerTarget &&
       isStalledOldWorldExpansion(
         snapshot.conquest.oldWorldProvincesOwned,
       ) &&
@@ -104,22 +108,14 @@ int _offerPeaceStalledGpWarAdjustments({
     game: game,
     snapshot: snapshot,
   );
-  if (atWarGreatPowerOrderTarget(
-        targetGp: targetGp,
-        snapshot: snapshot,
-        targetFactionId: order.targetFactionId,
-      ) &&
+  if (atWarGreatPowerTarget &&
       gpBlocker != null &&
       order.targetFactionId != gpBlocker &&
       isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     s += kOfferPeaceStalledFutileGpWarBonus;
   }
   final gpWarCount = gpFactionIdsAtWarWith(game, snapshot).length;
-  if (atWarGreatPowerOrderTarget(
-        targetGp: targetGp,
-        snapshot: snapshot,
-        targetFactionId: order.targetFactionId,
-      ) &&
+  if (atWarGreatPowerTarget &&
       gpBlocker != null &&
       gpWarCount > 1 &&
       order.targetFactionId != gpBlocker &&
