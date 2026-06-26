@@ -434,4 +434,54 @@ void main() {
       expect(calls, equals(1));
     });
   });
+
+  group('atWarGreatPowerOrderTarget (Refs #3717)', () {
+    const Player gp = Player(id: _gp2, displayName: 'GP2', isHuman: false);
+
+    test('true when target is a Great Power we are at war with', () {
+      expect(
+        atWarGreatPowerOrderTarget(
+          targetGp: gp,
+          snapshot: _snapshotWithAtWar([_gp2]),
+          targetFactionId: _gp2,
+        ),
+        isTrue,
+      );
+    });
+
+    test('false when the target is not a Great Power (targetGp null)', () {
+      // A minor/tribe target the player is at war with still fails the gate:
+      // only Player Great Powers are eligible offer-peace candidates here.
+      expect(
+        atWarGreatPowerOrderTarget(
+          targetGp: null,
+          snapshot: _snapshotWithAtWar([_minor1]),
+          targetFactionId: _minor1,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when the Great Power target is not currently at war', () {
+      expect(
+        atWarGreatPowerOrderTarget(
+          targetGp: gp,
+          snapshot: _snapshotWithAtWar([_gp3]),
+          targetFactionId: _gp2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when both eligibility conditions fail', () {
+      expect(
+        atWarGreatPowerOrderTarget(
+          targetGp: null,
+          snapshot: _snapshotWithAtWar(const []),
+          targetFactionId: _gp2,
+        ),
+        isFalse,
+      );
+    });
+  });
 }

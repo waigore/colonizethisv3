@@ -22,6 +22,9 @@
 ///     event decide whether it falls inside a cooldown window" skeleton shared
 ///     by the declare-war / improve-relations scoring cooldowns and the EXPAND
 ///     peer-war peace cooldown.
+///   - [atWarPeaceTargetBonus] / [atWarGreatPowerOrderTarget] — the offer-peace
+///     "at-war Great Power peace candidate" eligibility gate and flat-bonus
+///     emitter shared across the offer-peace scoring adjustments.
 ///
 /// Keeping these in one place removes the duplication flagged by the
 /// `repo.ai_dedup_gp_wars_filter` and `repo.ai_dedup_weight_scale_clamp`
@@ -214,3 +217,30 @@ int atWarPeaceTargetBonus({
   required int bonus,
 }) =>
     atWarGreatPowerTarget && isPeaceTarget() ? bonus : 0;
+
+/// Single source of truth for the offer-peace family's repeated "the order's
+/// target is a Great Power we are currently at war with" eligibility
+/// projection (Refs #3717 offer-peace scoring-skeleton dedup). Returns `true`
+/// only when [targetGp] is non-null (the target faction resolves to a [Player]
+/// Great Power, as opposed to a tribe / minor nation) *and*
+/// [AIWorldSnapshot.threats]'s `atWarWith` set contains [targetFactionId].
+///
+/// Behaviour-preserving against the replaced inline guards in
+/// `diplomatic_candidate_scoring_offer_peace.dart`, which each spelled out
+/// `targetGp != null && snapshot.threats.atWarWith.contains(order
+/// .targetFactionId)` before applying an offer-peace adjustment. Callers pass
+/// the already-resolved [targetGp] (`game.playerById(order.targetFactionId)`)
+/// so no extra player lookup is introduced. Pairs with [atWarPeaceTargetBonus],
+/// which consumes this flag as its `atWarGreatPowerTarget` input.
+///
+/// The original `&&` short-circuited the `atWarWith.contains` membership test
+/// when `targetGp == null`; this helper always evaluates that pure, side-effect
+/// free set membership, yielding an identical boolean result. Pure and
+/// deterministic — identical inputs always yield identical results (Refs #2509
+/// Must-have #7).
+bool atWarGreatPowerOrderTarget({
+  required Player? targetGp,
+  required AIWorldSnapshot snapshot,
+  required String targetFactionId,
+}) =>
+    targetGp != null && snapshot.threats.atWarWith.contains(targetFactionId);

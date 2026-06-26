@@ -61,9 +61,12 @@ int _offerPeaceStalledGpWarAdjustments({
     game: game,
     snapshot: snapshot,
   );
-  if (targetGp != null &&
+  if (atWarGreatPowerOrderTarget(
+        targetGp: targetGp,
+        snapshot: snapshot,
+        targetFactionId: order.targetFactionId,
+      ) &&
       !gpBlockerFocus &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       isStalledOldWorldExpansion(
         snapshot.conquest.oldWorldProvincesOwned,
       ) &&
@@ -74,8 +77,11 @@ int _offerPeaceStalledGpWarAdjustments({
       )) {
     s += kOfferPeaceStalledStrongerGpBlockerBonus;
   }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+  if (atWarGreatPowerOrderTarget(
+        targetGp: targetGp,
+        snapshot: snapshot,
+        targetFactionId: order.targetFactionId,
+      ) &&
       isStalledOldWorldExpansion(
         snapshot.conquest.oldWorldProvincesOwned,
       ) &&
@@ -94,21 +100,27 @@ int _offerPeaceStalledGpWarAdjustments({
     game: game,
     snapshot: snapshot,
   );
-  if (targetGp != null &&
+  if (atWarGreatPowerOrderTarget(
+        targetGp: targetGp,
+        snapshot: snapshot,
+        targetFactionId: order.targetFactionId,
+      ) &&
       gpBlocker != null &&
       order.targetFactionId != gpBlocker &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     s += kOfferPeaceStalledFutileGpWarBonus;
   }
   final gpWarCount = snapshot.threats.atWarWith
       .where((id) => game.playerById(id) != null)
       .length;
-  if (targetGp != null &&
+  if (atWarGreatPowerOrderTarget(
+        targetGp: targetGp,
+        snapshot: snapshot,
+        targetFactionId: order.targetFactionId,
+      ) &&
       gpBlocker != null &&
       gpWarCount > 1 &&
       order.targetFactionId != gpBlocker &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
     s += kOfferPeaceStalledFutileGpWarBonus;
   }
@@ -121,8 +133,11 @@ int _offerPeacePeaceTargetListAdjustments({
   required AIWorldSnapshot snapshot,
   required Player? targetGp,
 }) {
-  final atWarGp = targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId);
+  final atWarGp = atWarGreatPowerOrderTarget(
+    targetGp: targetGp,
+    snapshot: snapshot,
+    targetFactionId: order.targetFactionId,
+  );
   var s = 0;
   s += atWarPeaceTargetBonus(
     atWarGreatPowerTarget: atWarGp,
@@ -245,8 +260,11 @@ int _scoreOfferPeaceDiplomaticOrder({
               kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
     s += kOfferPeaceWeakVsInvadableBlockerBonus;
   }
-  if (targetGp != null &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+  if (atWarGreatPowerOrderTarget(
+        targetGp: targetGp,
+        snapshot: snapshot,
+        targetFactionId: order.targetFactionId,
+      ) &&
       isStalledOldWorldExpansion(
         snapshot.conquest.oldWorldProvincesOwned,
       ) &&
