@@ -6,6 +6,14 @@ import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_pass_context.dart';
 
+/// Dedup/sort key for a [NavalMoveOrder] candidate: dock moves key on the
+/// destination port province, sea moves on the destination sea zone. Shared by
+/// the existing-target index, per-candidate dedup, and the final sort so all
+/// three stay in lockstep (Refs #3714).
+String _navalMoveTargetKey(NavalMoveOrder o) => o.isDock
+    ? 'port:${o.destinationPortProvinceId}'
+    : (o.destinationSeaZoneId ?? '');
+
 void _addAcceptedSeaZoneCandidates({
   required IncrementalCandidateValidator candidateValidator,
   required MapTopology topology,
@@ -14,21 +22,19 @@ void _addAcceptedSeaZoneCandidates({
   required Map<String, Set<String>> existingByFleet,
   required List<NavalMoveOrder> suggestions,
 }) {
-  for (final node in topology.nodes) {
-    if (node.type != TopologyNodeType.seaZone) continue;
-    final destId = node.id;
-    if (cur != destId && !isAdjacentSeaSeaZone(topology, cur, destId)) {
-      continue;
-    }
-    if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
-    final candidate = NavalMoveOrder(
-      fleetId: fleet.id,
-      destinationSeaZoneId: destId,
-    );
-    if (candidateValidator.isNavalMoveAccepted(candidate)) {
-      suggestions.add(candidate);
-    }
-  }
+  emitAcceptedCandidates<NavalMoveOrder>(
+    candidates: [
+      for (final node in topology.nodes)
+        if (node.type == TopologyNodeType.seaZone &&
+            (cur == node.id || isAdjacentSeaSeaZone(topology, cur, node.id)))
+          NavalMoveOrder(fleetId: fleet.id, destinationSeaZoneId: node.id),
+    ],
+    accept: candidateValidator.isNavalMoveAccepted,
+    into: suggestions,
+    existingByEntity: existingByFleet,
+    entityId: (o) => o.fleetId,
+    dedupKey: _navalMoveTargetKey,
+  );
 }
 
 void _addAcceptedDockCandidatesForSeaFleet({
@@ -48,23 +54,28 @@ void _addAcceptedDockCandidatesForSeaFleet({
     cur,
     regionId: zoneRegionId,
   );
+  final candidates = <NavalMoveOrder>[];
   for (final localId in adjacentLocalIds) {
     final fullProvinceId = ProvinceId.isPrefixed(localId)
         ? localId
         : ProvinceId.full(zoneRegionId, localId);
-    if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ?? false) {
-      continue;
-    }
     final province = game.worldState.tryGetProvince(fullProvinceId);
     if (province?.ownerId != playerId) continue;
-    final candidate = NavalMoveOrder(
-      fleetId: fleet.id,
-      destinationPortProvinceId: fullProvinceId,
+    candidates.add(
+      NavalMoveOrder(
+        fleetId: fleet.id,
+        destinationPortProvinceId: fullProvinceId,
+      ),
     );
-    if (candidateValidator.isNavalMoveAccepted(candidate)) {
-      suggestions.add(candidate);
-    }
   }
+  emitAcceptedCandidates<NavalMoveOrder>(
+    candidates: candidates,
+    accept: candidateValidator.isNavalMoveAccepted,
+    into: suggestions,
+    existingByEntity: existingByFleet,
+    entityId: (o) => o.fleetId,
+    dedupKey: _navalMoveTargetKey,
+  );
 }
 
 void _addAcceptedMovesFromPortFleet({
@@ -82,16 +93,17 @@ void _addAcceptedMovesFromPortFleet({
   );
   final pNode = provinceTopologyNodeId(topology, rl.localId, rl.regionId);
   if (pNode == null) return;
-  for (final destId in seaZonesAdjacentToProvince(topology, pNode)) {
-    if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
-    final candidate = NavalMoveOrder(
-      fleetId: fleet.id,
-      destinationSeaZoneId: destId,
-    );
-    if (candidateValidator.isNavalMoveAccepted(candidate)) {
-      suggestions.add(candidate);
-    }
-  }
+  emitAcceptedCandidates<NavalMoveOrder>(
+    candidates: [
+      for (final destId in seaZonesAdjacentToProvince(topology, pNode))
+        NavalMoveOrder(fleetId: fleet.id, destinationSeaZoneId: destId),
+    ],
+    accept: candidateValidator.isNavalMoveAccepted,
+    into: suggestions,
+    existingByEntity: existingByFleet,
+    entityId: (o) => o.fleetId,
+    dedupKey: _navalMoveTargetKey,
+  );
 }
 
 /// Suggests naval move orders for fleets owned by [view.playerId]. SPEC/program/naval-movement-resolution.md.
@@ -126,9 +138,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   final existingByFleet = indexExistingTargetsByEntityId(
     currentOrders.navalMoveOrdersByPlayerId[playerId],
     (o) => o.fleetId,
-    (o) => o.isDock
-        ? 'port:${o.destinationPortProvinceId}'
-        : (o.destinationSeaZoneId ?? ''),
+    _navalMoveTargetKey,
     skipEmptyTargets: true,
   );
 
@@ -170,13 +180,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   suggestions.sort((a, b) {
     final c = a.fleetId.compareTo(b.fleetId);
     if (c != 0) return c;
-    final keyA = a.isDock
-        ? 'port:${a.destinationPortProvinceId}'
-        : (a.destinationSeaZoneId ?? '');
-    final keyB = b.isDock
-        ? 'port:${b.destinationPortProvinceId}'
-        : (b.destinationSeaZoneId ?? '');
-    return keyA.compareTo(keyB);
+    return _navalMoveTargetKey(a).compareTo(_navalMoveTargetKey(b));
   });
   pass.logExit(candidateCount: suggestions.length);
   return suggestions;
@@ -213,19 +217,18 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
       o.fleetId,
   };
 
-  for (final fleet in game.worldState.fleets) {
-    if (fleet.ownerId != playerId) continue;
-    if (existingByFleet.contains(fleet.id)) continue;
-    for (final mission in FleetMission.values) {
-      final candidate = NavalMissionOrder(
-        fleetId: fleet.id,
-        mission: mission.name,
-      );
-      if (candidateValidator.isNavalMissionAccepted(candidate)) {
-        suggestions.add(candidate);
-      }
-    }
-  }
+  // Fleet-level dedup (any existing mission for the fleet) is expressed as a
+  // candidate-enumeration filter; the shared emitter then probes/collects.
+  emitAcceptedCandidates<NavalMissionOrder>(
+    candidates: [
+      for (final fleet in game.worldState.fleets)
+        if (fleet.ownerId == playerId && !existingByFleet.contains(fleet.id))
+          for (final mission in FleetMission.values)
+            NavalMissionOrder(fleetId: fleet.id, mission: mission.name),
+    ],
+    accept: candidateValidator.isNavalMissionAccepted,
+    into: suggestions,
+  );
 
   suggestions.sort((a, b) {
     final c = a.fleetId.compareTo(b.fleetId);

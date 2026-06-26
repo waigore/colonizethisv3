@@ -178,6 +178,40 @@ Map<String, Set<String>> indexExistingTargetsByEntityId<T>(
   return out;
 }
 
+/// Shared probe/emit/dedup tail for suggestion families that enumerate a
+/// finite, uncapped candidate set per owned entity (naval move/mission,
+/// recruit worker, …). Each [candidate] is skipped when its [dedupKey] is
+/// already recorded for its [entityId] in [existingByEntity], then probed via
+/// [accept]; accepted orders are appended to [into] (Refs #3714,
+/// SPEC/program/order-suggestions.md § Throughput bounds).
+///
+/// Determinism: preserves the [candidates] iteration order and performs no
+/// sorting of its own — callers sort [into] with their family comparator after
+/// emission so the observable order matches the prior per-family tail. Dedup is
+/// only applied when all of [existingByEntity], [entityId], and [dedupKey] are
+/// supplied; otherwise every candidate is probed.
+void emitAcceptedCandidates<TOrder>({
+  required Iterable<TOrder> candidates,
+  required bool Function(TOrder candidate) accept,
+  required List<TOrder> into,
+  Map<String, Set<String>>? existingByEntity,
+  String Function(TOrder candidate)? entityId,
+  String Function(TOrder candidate)? dedupKey,
+}) {
+  final dedupEnabled =
+      existingByEntity != null && entityId != null && dedupKey != null;
+  for (final candidate in candidates) {
+    if (dedupEnabled &&
+        (existingByEntity[entityId(candidate)]?.contains(
+              dedupKey(candidate),
+            ) ??
+            false)) {
+      continue;
+    }
+    if (accept(candidate)) into.add(candidate);
+  }
+}
+
 /// Deterministic capped probe loop shared by move and army-move suggestion
 /// (Refs #3500 Phase 2). Skipped candidates do not count toward [maxProbes].
 int runCappedSuggestionProbeLoop<T>({
