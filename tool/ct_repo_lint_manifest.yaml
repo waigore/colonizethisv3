@@ -791,6 +791,13 @@ rules:
     runner: dart
     script: tool/check_combat_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.combat_test_mirrors_lib
+    group: architecture
+    title: colonizethis_combat tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #3716)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_mirrors_lib.dart
+
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture
     title: setup init pipelines must delegate map+setup retry loop to runInitPipelineWithRetries (Refs #3449)
