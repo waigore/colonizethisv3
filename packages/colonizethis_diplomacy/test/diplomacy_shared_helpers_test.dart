@@ -1,8 +1,7 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// Coverage for the shared diplomacy resolution helpers consolidated from the
 /// per-resolver copy-paste duplicates (Refs #3419): [isTargetHumanGp],
