@@ -359,20 +359,23 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
           factionMembership: factionMembership,
         );
 
-  for (final targetId in sortedTargetIds) {
-    if (targetId == playerId) continue;
-    final rel = getRelation(game, playerId, targetId);
-    final atPeace = rel == null || rel.atPeace;
-    if (!atPeace) continue;
-
-    final candidate = DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: targetId,
-    );
-    if (isDiplomaticOrderAcceptedWithValidator(passValidator, candidate)) {
-      suggestions.add(candidate);
-    }
-  }
+  // Candidate enumeration expresses the at-peace + non-self filter; the shared
+  // emitter probes each against the fixed pass validator and collects in target
+  // order before the final sort (Refs #3714).
+  emitAcceptedCandidates<DiplomaticOrder>(
+    candidates: [
+      for (final targetId in sortedTargetIds)
+        if (targetId != playerId &&
+            (getRelation(game, playerId, targetId)?.atPeace ?? true))
+          DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: targetId,
+          ),
+    ],
+    accept: (candidate) =>
+        isDiplomaticOrderAcceptedWithValidator(passValidator, candidate),
+    into: suggestions,
+  );
 
   suggestions.sort((a, b) => a.targetFactionId.compareTo(b.targetFactionId));
   orderSuggestionLog.d(
