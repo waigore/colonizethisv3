@@ -48,6 +48,8 @@
 /// no I/O, no logging, and no order emission.
 library;
 
+import 'dart:math' as math;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'observer_goal_phase.dart';
@@ -323,3 +325,30 @@ int declareWarOldWorldConquestScaledBonus({
   required int baseBonus,
   required double oldWorldConquestWeight,
 }) => scaleWeightedBonus(oldWorldConquestWeight, baseBonus);
+
+/// Raises [currentScore] to the OW-conquest-scaled [floorBonus] floor, never
+/// lowering it (Refs #3717 declare-war OW-conquest scoring-skeleton dedup).
+///
+/// Single source of truth for the repeated declare-war "raise the running
+/// score to at least this OW-expansion floor" skeleton that previously inlined
+/// `math.max(s, declareWarOldWorldConquestScaledBonus(baseBonus: floor,
+/// oldWorldConquestWeight: ...))` across `_declareWarAdjacencyAndStalledBonuses`
+/// and `_declareWarFinalizeBonuses` in
+/// `diplomatic_candidate_scoring_declare_war_bonuses.dart`. The floor bonus is
+/// scaled by [declareWarOldWorldConquestScaledBonus] (so it follows the same
+/// soft-phase OW-conquest weight curve as additive OW bonuses) and the result
+/// is taken as `max(currentScore, scaledFloor)` — byte-identical to the inline
+/// form it replaces.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+int raiseToDeclareWarOldWorldConquestFloor({
+  required int currentScore,
+  required int floorBonus,
+  required double oldWorldConquestWeight,
+}) => math.max(
+  currentScore,
+  declareWarOldWorldConquestScaledBonus(
+    baseBonus: floorBonus,
+    oldWorldConquestWeight: oldWorldConquestWeight,
+  ),
+);

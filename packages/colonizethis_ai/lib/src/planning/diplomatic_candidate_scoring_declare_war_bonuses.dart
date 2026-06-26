@@ -356,12 +356,10 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx,
       kDeclareWarStalledInvadableGpBlockerBonus,
     );
-    s = math.max(
-      s,
-      _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarStalledGpInvadableBlockerFloor,
-      ),
+    s = raiseToDeclareWarOldWorldConquestFloor(
+      currentScore: s,
+      floorBonus: kDeclareWarStalledGpInvadableBlockerFloor,
+      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
   }
   if (ctx.suppressGpDeclareWar &&
@@ -391,12 +389,10 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
       kDeclareWarCriticalWeakNoGpWarMinorBonus,
     );
     if (ctx.isAdjacentOwner && ctx.targetIsInvadableOwner) {
-      s = math.max(
-        s,
-        _owConquestDeclareWarBonus(
-          ctx,
-          kDeclareWarWeakGpAdjacentInvadableMinorFloor,
-        ),
+      s = raiseToDeclareWarOldWorldConquestFloor(
+        currentScore: s,
+        floorBonus: kDeclareWarWeakGpAdjacentInvadableMinorFloor,
+        oldWorldConquestWeight: ctx.oldWorldConquestWeight,
       );
     }
   }
@@ -431,19 +427,21 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
             kFewOldWorldProvincesDefendThreshold
         ? kDeclareWarWeakGpAdjacentInvadableMinorFloor
         : kDeclareWarStalledAdjacentInvadableMinorFloor;
-    s = math.max(s, _owConquestDeclareWarBonus(ctx, floor));
+    s = raiseToDeclareWarOldWorldConquestFloor(
+      currentScore: s,
+      floorBonus: floor,
+      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
+    );
   }
   if (ctx.stalledOwExpansion &&
       ctx.behindVictoryPace &&
       adjacentWeakMinor &&
       (ctx.targetIsInvadableOwner ||
           isMinorFaction(ctx.game, ctx.order.targetFactionId))) {
-    s = math.max(
-      s,
-      _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarStalledAdjacentInvadableMinorFloor,
-      ),
+    s = raiseToDeclareWarOldWorldConquestFloor(
+      currentScore: s,
+      floorBonus: kDeclareWarStalledAdjacentInvadableMinorFloor,
+      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
   }
   if (ctx.stalledOwExpansion &&
@@ -462,12 +460,10 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx.behindVictoryPace &&
       ctx.isAdjacentInvadableOwMinor &&
       ctx.lowWarLikelihood) {
-    s = math.max(
-      s,
-      _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarStalledLowWarLikelihoodMinorFloor,
-      ),
+    s = raiseToDeclareWarOldWorldConquestFloor(
+      currentScore: s,
+      floorBonus: kDeclareWarStalledLowWarLikelihoodMinorFloor,
+      oldWorldConquestWeight: ctx.oldWorldConquestWeight,
     );
   }
   return s;
