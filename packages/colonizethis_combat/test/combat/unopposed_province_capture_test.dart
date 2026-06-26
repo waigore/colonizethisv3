@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_combat/src/combat/unopposed_province_capture.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 Game _gameWithMinorProvince({
@@ -10,33 +11,30 @@ Game _gameWithMinorProvince({
   required List<Unit> units,
   required List<DiplomacyRelation> relations,
 }) {
-  return Game(
+  return TestFixtures.minimalGame(
     id: 'g_unopposed',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: kRegionOldWorld,
-            ownerId: minorOwnerId,
-          ),
-        ],
-        units: units,
-      ),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: 'army_gp1',
-          ownerId: 'gp1',
-          regionId: kRegionOldWorld,
-          stationedProvinceId: provinceId,
-          regimentUnitIds: const ['r1'],
-        ),
-      ],
-    ),
+    turnNumber: 5,
     players: const [
       Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+    ],
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: provinceId,
+          regionId: kRegionOldWorld,
+          ownerId: minorOwnerId,
+        ),
+      ],
+      units: units,
+    ),
+    armies: [
+      Army(
+        id: 'army_gp1',
+        ownerId: 'gp1',
+        regionId: kRegionOldWorld,
+        stationedProvinceId: provinceId,
+        regimentUnitIds: const ['r1'],
+      ),
     ],
     diplomacyRelations: relations,
   );
