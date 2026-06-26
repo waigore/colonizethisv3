@@ -11,6 +11,7 @@ import 'phase_planner_diplomacy_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'planning_helpers.dart'
     show
+        anyInvadableProvinceOwnedByGreatPower,
         anyInvadableProvinceOwnedByMinor,
         atWarGreatPowerOrderTarget,
         atWarPeaceTargetBonus,

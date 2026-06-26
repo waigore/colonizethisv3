@@ -361,8 +361,11 @@ final class _DeclareWarTargetContext {
         invadableGpBlocker &&
         provinceCountOwnedBy(game, order.targetFactionId) <=
             snapshot.conquest.oldWorldProvincesOwned;
-    final invadableOwOwnedByGp = snapshot.conquest.invadableProvinceIdsSorted
-        .any((pid) => game.playerById(provinceOwner[pid] ?? '') != null);
+    final invadableOwOwnedByGp = anyInvadableProvinceOwnedByGreatPower(
+      game: game,
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
+    );
     final tribeOwnsOwInvadable =
         isTribeTarget &&
         factionOwnsInvadableOldWorldProvince(

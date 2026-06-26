@@ -306,6 +306,39 @@ bool anyInvadableProvinceOwnedByMinor({
       return owner != null && game.minorNations.any((m) => m.id == owner);
     });
 
+/// Whether any invadable Old-World frontier province is currently owned by a
+/// Great Power.
+///
+/// Single source of truth for the `gpOwnsInvadable` scan —
+/// `snapshot.conquest.invadableProvinceIdsSorted.any((pid) =>
+/// game.playerById(provinceOwner[pid] ?? '') != null)` — duplicated across the
+/// EXPAND GP-only-frontier gate ([expandIsOldWorldGpOnlyInvadableFrontier]) and
+/// the declare-war candidate-scoring near-parity suppression (the
+/// `invadableOwOwnedByGp` projection in `diplomatic_candidate_scoring_declare_
+/// war.dart`) (Refs #3717 expand-peace / diplomatic-scoring scoring-skeleton
+/// dedup). Companion of [anyInvadableProvinceOwnedByMinor], which answers the
+/// minor-owner variant of the same invadable-frontier ownership question.
+///
+/// Callers pass the already-resolved [provinceOwner] map
+/// (`getProvinceOwnerMap(game)`) so no extra O(provinces) ownership scan is
+/// introduced — consistent with `colonizethis-turn-resolution-budget.mdc`.
+/// Walks [ConquestSummary.invadableProvinceIdsSorted] with the original
+/// [Iterable.any] short-circuit: returns `true` as soon as an invadable
+/// province's owner resolves to a [Game.playerById] Great Power; an unowned
+/// (absent / `null`) entry — normalised to the empty string so `playerById`
+/// returns `null` — or a minor / tribe owner never matches.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7).
+bool anyInvadableProvinceOwnedByGreatPower({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required Map<String, String> provinceOwner,
+}) =>
+    snapshot.conquest.invadableProvinceIdsSorted.any(
+      (pid) => game.playerById(provinceOwner[pid] ?? '') != null,
+    );
+
 /// Whether [factionId] owns at least one invadable Old-World frontier province.
 ///
 /// Single source of truth for the
