@@ -127,7 +127,8 @@ import 'planning_helpers.dart'
         hasRecentDiplomaticEventWithinCooldown,
         isAtWarWithAnyGreatPower,
         isOwnOldWorldBelowConquestQuota,
-        isOwnOldWorldExpansionStalled;
+        isOwnOldWorldExpansionStalled,
+        peaceTargetsExcludingBlocker;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';
@@ -231,10 +232,7 @@ List<String> planExpandPeace({
     }
   }
 
-  return <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// Whether the active player is in a geographic peer-war lock against

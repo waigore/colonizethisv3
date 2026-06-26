@@ -217,17 +217,12 @@ List<String> stalledGpBlockerFocusPeaceTargets({
     return const [];
   }
   if (minorsOwnInvadable) {
-    final targets = <String>[
-      for (final factionId in gpWars)
-        if (factionId != blocker) factionId,
-    ]..sort();
-    return targets;
+    return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (factionId != blocker) factionId,
-  ]..sort();
-  return targets;
+  return peaceTargetsExcludingBlocker(
+    factionIds: snapshot.threats.atWarWith,
+    blocker: blocker,
+  );
 }
 
 /// Returns `[blocker]` (single-element list) when the active player

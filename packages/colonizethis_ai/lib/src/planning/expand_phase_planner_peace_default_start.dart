@@ -285,11 +285,7 @@ List<String> nearQuotaHoldPeaceTargets({
     }
   }
   if (gpWars.length >= 2) {
-    final targets = <String>[
-      for (final factionId in gpWars)
-        if (factionId != blocker) factionId,
-    ]..sort();
-    return targets;
+    return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
   }
   return gpWars;
 }

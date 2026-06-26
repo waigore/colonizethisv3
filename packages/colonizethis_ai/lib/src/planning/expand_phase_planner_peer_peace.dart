@@ -701,11 +701,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   if (gpWars.length <= 1) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
-  return targets;
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// Returns the deterministic list of stronger at-war Great Power

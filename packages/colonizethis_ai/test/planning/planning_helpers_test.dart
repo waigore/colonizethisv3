@@ -11,6 +11,9 @@
 //   - `gpAtWarPeaceTargetsWhere` — predicate-filtered GP at-war peace-target
 //     collector: keep-subset filtering, ascending sort/determinism, non-GP
 //     exclusion, keep-all/keep-none edges, one keep call per GP (Refs #3717)
+//   - `peaceTargetsExcludingBlocker` — drop-blocker-then-sort peace-target
+//     skeleton: blocker exclusion, null/absent blocker keep-all, empty input,
+//     input-order independence, Set (atWarWith) input (Refs #3717)
 //   - `scaleWeightedBonus` — `<= 0.0` guard, `> 1.0` clamp, rounding
 //   - `resolvePhaseColonialPressureActive` — COLONIAL-only gate
 //   - `resolvePhaseExpandOrColonialLiteActive` — EXPAND / COLONIAL-lite gate
@@ -359,6 +362,68 @@ void main() {
         },
       );
       expect(seen, [_gp1, _gp2, _gp3]);
+    });
+  });
+
+  group('peaceTargetsExcludingBlocker (Refs #3717)', () {
+    test('excludes the blocker and sorts ascending', () {
+      expect(
+        peaceTargetsExcludingBlocker(
+          factionIds: [_gp3, _gp1, _gp2],
+          blocker: _gp2,
+        ),
+        [_gp1, _gp3],
+      );
+    });
+
+    test('null blocker keeps every faction, sorted ascending', () {
+      expect(
+        peaceTargetsExcludingBlocker(
+          factionIds: [_gp3, _gp1, _gp2],
+          blocker: null,
+        ),
+        [_gp1, _gp2, _gp3],
+      );
+    });
+
+    test('blocker absent from the list keeps every faction, sorted', () {
+      expect(
+        peaceTargetsExcludingBlocker(
+          factionIds: [_gp3, _gp1],
+          blocker: _gp2,
+        ),
+        [_gp1, _gp3],
+      );
+    });
+
+    test('empty input returns empty', () {
+      expect(
+        peaceTargetsExcludingBlocker(factionIds: const [], blocker: _gp1),
+        isEmpty,
+      );
+    });
+
+    test('result order is independent of input order', () {
+      expect(
+        peaceTargetsExcludingBlocker(
+          factionIds: [_gp1, _gp3, _gp2],
+          blocker: _gp2,
+        ),
+        peaceTargetsExcludingBlocker(
+          factionIds: [_gp3, _gp2, _gp1],
+          blocker: _gp2,
+        ),
+      );
+    });
+
+    test('accepts a Set (threats.atWarWith) input and excludes blocker', () {
+      expect(
+        peaceTargetsExcludingBlocker(
+          factionIds: <String>{_gp2, _minor1, _gp1},
+          blocker: _gp2,
+        ),
+        [_gp1, _minor1],
+      );
     });
   });
 

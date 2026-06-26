@@ -106,6 +106,37 @@ List<String> gpAtWarPeaceTargetsWhere({
   ]..sort();
 }
 
+/// Returns [factionIds] with [blocker] removed, sorted ascending by
+/// `factionId`.
+///
+/// Single source of truth for the repeated "drop the primary OW frontier
+/// blocker from an at-war faction list, then sort ascending" peace-target
+/// skeleton
+/// `<String>[for (final id in factionIds) if (id != blocker) id]..sort()`
+/// duplicated across the EXPAND / observer GP peace collectors
+/// ([planExpandPeace], `stalledGpBlockerFocusPeaceTargets`,
+/// `nearQuotaHoldPeaceTargets`, the peer-peace ratchet collector,
+/// `expandPhaseGpPeaceTargets`, `colonialPhaseGpPeaceTargets`). Each caller
+/// resolves its own [factionIds] (already-GP-filtered `gpWars`, or the raw
+/// [ThreatSummary.atWarWith] set on the GP-only-frontier arm) and its own
+/// [blocker]; the exclude filter and ascending `factionId` sort are applied
+/// once here.
+///
+/// Behaviour-preserving against the replaced comprehensions: the
+/// `id != blocker` exclude filter (a `null` [blocker] keeps every id, matching
+/// the inline always-true `factionId != null` behaviour) and the trailing
+/// ascending `..sort()` are retained verbatim, so results are byte-identical.
+///
+/// Pure and deterministic — identical inputs always yield identical lists
+/// (Refs #3717 expand-peace scoring-skeleton dedup).
+List<String> peaceTargetsExcludingBlocker({
+  required Iterable<String> factionIds,
+  required String? blocker,
+}) => <String>[
+  for (final factionId in factionIds)
+    if (factionId != blocker) factionId,
+]..sort();
+
 /// Whether the active player is currently at war with **any** Great Power.
 ///
 /// Single source of truth for the boolean
