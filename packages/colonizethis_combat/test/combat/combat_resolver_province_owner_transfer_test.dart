@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Regression: battle defender may differ from province owner when the owner has
@@ -31,26 +32,23 @@ void main() {
             medals: 0,
           ),
         ];
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g_owner_transfer',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 24),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'p59',
-                  regionId: kRegionOldWorld,
-                  ownerId: 'minor2',
-                ),
-              ],
-              units: [...attackerUnits, ...defenderUnits],
-            ),
-            newWorld: const RegionData(),
-          ),
+          turnNumber: 24,
           players: const [
             Player(id: 'gp5', displayName: 'GP5', isHuman: false),
             Player(id: 'gp3', displayName: 'GP3', isHuman: false),
           ],
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'p59',
+                regionId: kRegionOldWorld,
+                ownerId: 'minor2',
+              ),
+            ],
+            units: [...attackerUnits, ...defenderUnits],
+          ),
         );
         const ctx = BattleContext(
           provinceId: provinceId,

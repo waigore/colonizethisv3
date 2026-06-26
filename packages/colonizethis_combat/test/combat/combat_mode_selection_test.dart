@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -5,13 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   group('isCapitalSiege', () {
     test('returns false when not a siege (no fort)', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(
             id: 'p1',
@@ -34,13 +30,8 @@ void main() {
     });
 
     test('returns false when siege but province is not a capital', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(
             id: 'p1',
@@ -63,13 +54,8 @@ void main() {
     });
 
     test('returns true when siege of GP capital', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(
             id: 'p1',
@@ -97,13 +83,8 @@ void main() {
     late BattleContext ctxNonCapital;
 
     setUp(() {
-      game = Game(
+      game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(id: 'p1', displayName: 'P1', isHuman: true, capitalProvinceId: 'capital'),
           Player(id: 'p2', displayName: 'P2', isHuman: true),
