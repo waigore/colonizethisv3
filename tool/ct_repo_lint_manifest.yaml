@@ -812,6 +812,13 @@ rules:
     runner: dart
     script: tool/check_ai_test_no_duplicate_scaffolding.dart
 
+  - rule_id: repo.ai_test_mirrors_lib
+    group: structure
+    title: colonizethis_ai tests must mirror lib/ (no flat-root unit test sources outside the documented integration/package-level allowlist) (Refs #3717)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_mirrors_lib.dart
+
   - rule_id: repo.orders_test_mirrors_lib
     group: structure
     title: colonizethis_orders tests must mirror lib/ (no flat-root test sources) (Refs #3714)
