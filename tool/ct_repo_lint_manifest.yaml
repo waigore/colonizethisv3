@@ -111,6 +111,13 @@ rules:
     runner: dart
     script: tool/check_diplomacy_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.diplomacy_test_mirrors_lib
+    group: testing
+    title: colonizethis_diplomacy tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #3715)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_mirrors_lib.dart
+
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
     title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)
