@@ -52,7 +52,6 @@ void main() {
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, nationId);
       const workOrder = WorkOrder(
         unitId: 'e1',
         target: kWorkTargetExplore,

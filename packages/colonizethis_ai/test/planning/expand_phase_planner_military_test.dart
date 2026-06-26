@@ -31,7 +31,6 @@ import 'package:colonizethis_test/test.dart';
 
 import 'test_game_factories.dart';
 
-const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _gp3 = 'gp3';
 const String _minor1 = 'minor1';

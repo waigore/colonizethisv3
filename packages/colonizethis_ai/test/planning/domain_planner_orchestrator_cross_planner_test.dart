@@ -321,10 +321,6 @@ void main() {
           navalMission: [],
           diplomatic: [],
         );
-        const economyPlan = EconomyPlan(
-          productionAssignments: [],
-          cargoPreference: CargoPreference.none,
-        );
         final game = Game(
           id: 'g1',
           worldState: WorldState(
