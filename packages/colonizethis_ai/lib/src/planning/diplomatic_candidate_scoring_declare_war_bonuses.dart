@@ -95,9 +95,11 @@ int _declareWarStalledOldWorldExpansionBonuses(
   _DeclareWarTargetContext ctx,
   int s,
 ) {
-  final observerExpansionPressure = isObserverConquestExpansionPressure(
-    ctx.snapshot.conquest.oldWorldProvincesOwned,
-  );
+  // Reuse the precomputed [_DeclareWarTargetContext.stalledOwExpansion] field
+  // (built once from the same `snapshot.conquest.oldWorldProvincesOwned`)
+  // instead of recomputing the observer expansion-pressure predicate inline
+  // (Refs #3717 diplomatic-scoring dedup).
+  final observerExpansionPressure = ctx.stalledOwExpansion;
   final hasInvadableOldWorld =
       ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
   if (!observerExpansionPressure || !hasInvadableOldWorld) {
@@ -123,9 +125,10 @@ int _declareWarStalledOldWorldExpansionBonuses(
 }
 
 int _declareWarEarlyExpansionBonuses(_DeclareWarTargetContext ctx, int s) {
-  final observerExpansionPressure = isObserverConquestExpansionPressure(
-    ctx.snapshot.conquest.oldWorldProvincesOwned,
-  );
+  // Reuse the precomputed [_DeclareWarTargetContext.stalledOwExpansion] field
+  // rather than recomputing the observer expansion-pressure predicate inline
+  // (Refs #3717 diplomatic-scoring dedup).
+  final observerExpansionPressure = ctx.stalledOwExpansion;
   final hasInvadableOldWorld =
       ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
   if (ctx.currentTurn > kDeclareWarEarlyExpansionMaxTurn ||

@@ -159,6 +159,18 @@ final class _DeclareWarTargetContext {
   final double oldWorldConquestWeight;
 
   final bool isTribeTarget;
+
+  /// Whether the active player's Old-World expansion is under observer
+  /// conquest expansion pressure
+  /// (`isObserverConquestExpansionPressure(snapshot.conquest
+  /// .oldWorldProvincesOwned)`), computed once in [build].
+  ///
+  /// Single source of truth for the observer expansion-pressure projection in
+  /// the declare-war scoring family: the suppression and bonus branches read
+  /// this precomputed field instead of recomputing the predicate inline (Refs
+  /// #3717 diplomatic-scoring dedup), avoiding redundant per-branch
+  /// recomputation on the hot planning path
+  /// (`colonizethis-turn-resolution-budget.mdc`).
   final bool stalledOwExpansion;
   final bool ownsInvadableOwMinor;
   final bool weakerDistantMinor;
@@ -755,9 +767,7 @@ int? _declareWarSuppressedAdjacentGpScore(
   if (ctx.order.type == DiplomaticOrderType.declareWar &&
       ctx.isAdjacentGp &&
       ctx.targetIsGreatPower &&
-      isObserverConquestExpansionPressure(
-        ctx.snapshot.conquest.oldWorldProvincesOwned,
-      )) {
+      ctx.stalledOwExpansion) {
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
     if (!ctx.invadableGpBlocker &&
         targetOw <= kFewOldWorldProvincesDefendThreshold &&
