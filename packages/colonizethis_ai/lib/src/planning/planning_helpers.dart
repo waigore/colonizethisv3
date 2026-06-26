@@ -17,6 +17,11 @@
 ///     [resolvePhaseNewWorldCivilianWeight] — the soft-phase
 ///     `PhasePlanOutcome` → `priorityWeights.<slot>` projections shared by the
 ///     conquest / naval / diplomacy / economy phase filters.
+///   - [hasRecentDiplomaticEventWithinCooldown] — the "scan
+///     `Game.diplomaticHistoryEvents` newest-first, let the first matching
+///     event decide whether it falls inside a cooldown window" skeleton shared
+///     by the declare-war / improve-relations scoring cooldowns and the EXPAND
+///     peer-war peace cooldown.
 ///
 /// Keeping these in one place removes the duplication flagged by the
 /// `repo.ai_dedup_gp_wars_filter` and `repo.ai_dedup_weight_scale_clamp`
@@ -143,3 +148,43 @@ double resolvePhaseOldWorldCivilianWeight(PhasePlanOutcome phasePlan) =>
 /// Pure and deterministic (Refs #2509 Must-have #7).
 double resolvePhaseNewWorldCivilianWeight(PhasePlanOutcome phasePlan) =>
     phasePlan.priorityWeights.newWorldCivilian;
+
+/// Whether the most-recent [Game.diplomaticHistoryEvents] entry satisfying
+/// [matches] falls within [cooldownTurns] turns of [currentTurn].
+///
+/// Single source of truth for the "scan the diplomatic history newest first,
+/// let the first matching event decide, and report whether it is inside the
+/// cooldown window" skeleton shared by the declare-war / improve-relations
+/// scoring cooldowns in `diplomatic_candidate_scoring.dart` and the EXPAND
+/// peer-war peace cooldown ([expandRecentlyPeacedWithGreatPower]) in
+/// `expand_phase_planner.dart` (Refs #3717 diplomatic-scoring/peace dedup).
+/// Each caller supplies only its own [matches] predicate — directional
+/// `fromFactionId`/`toFactionId` plus event-type membership for the scoring
+/// cooldowns; symmetric `participants` plus the `peace` type for the EXPAND
+/// cooldown — while the reversed scan, first-match-wins short-circuit, and the
+/// `(currentTurn - event.turn) < cooldownTurns` window comparison live here.
+///
+/// Behaviour-preserving against the replaced inline loops: history is ordered
+/// ascending by turn / intra-turn index, so `.reversed` visits the newest
+/// event first and that newest matching event decides. The strict `<` keeps an
+/// event exactly [cooldownTurns] turns old *outside* the window, and a missing
+/// match returns `false`. This helper applies no non-positive-[cooldownTurns]
+/// guard; callers that disable the cooldown that way (the EXPAND caller's
+/// `cooldownTurns <= 0` early-out) must guard before calling. For positive
+/// [cooldownTurns] the result is identical to the prior per-call-site loops.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7). Linear in the diplomatic-history length in the
+/// worst case, matching `colonizethis-turn-resolution-budget.mdc`.
+bool hasRecentDiplomaticEventWithinCooldown({
+  required Game game,
+  required int currentTurn,
+  required int cooldownTurns,
+  required bool Function(DiplomaticEvent event) matches,
+}) {
+  for (final event in game.diplomaticHistoryEvents.reversed) {
+    if (!matches(event)) continue;
+    return (currentTurn - event.turn) < cooldownTurns;
+  }
+  return false;
+}

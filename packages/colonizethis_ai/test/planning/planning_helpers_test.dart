@@ -5,6 +5,8 @@
 //   - `scaleWeightedBonus` — `<= 0.0` guard, `> 1.0` clamp, rounding
 //   - `resolvePhaseColonialPressureActive` — COLONIAL-only gate
 //   - `resolvePhaseExpandOrColonialLiteActive` — EXPAND / COLONIAL-lite gate
+//   - `hasRecentDiplomaticEventWithinCooldown` — newest-match-wins reversed
+//     history scan, strict `<` cooldown window, predicate filtering (Refs #3717)
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
@@ -60,6 +62,43 @@ AIWorldSnapshot _snapshotWithAtWar(List<String> atWarWith) {
     relations: const {},
   );
 }
+
+Game _gameWithEvents(List<DiplomaticEvent> events) {
+  return Game(
+    id: 'g-3717-cooldown-scan',
+    worldState: WorldState(
+      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: const RegionData(provinces: []),
+      newWorld: const RegionData(provinces: []),
+    ),
+    players: const [
+      Player(id: _gp1, displayName: 'GP1', isHuman: false),
+      Player(id: _gp2, displayName: 'GP2', isHuman: false),
+    ],
+    diplomaticHistoryEvents: events,
+  );
+}
+
+DiplomaticEvent _ev(
+  int turn, {
+  DiplomaticEventType type = DiplomaticEventType.declareWar,
+  String from = _gp1,
+  String to = _gp2,
+}) {
+  return DiplomaticEvent(
+    turn: turn,
+    intraTurnIndex: 0,
+    type: type,
+    participants: {from, to},
+    fromFactionId: from,
+    toFactionId: to,
+  );
+}
+
+bool _warFromGp1ToGp2(DiplomaticEvent e) =>
+    e.type == DiplomaticEventType.declareWar &&
+    e.fromFactionId == _gp1 &&
+    e.toFactionId == _gp2;
 
 void main() {
   group('gpFactionIdsAtWarWith', () {
@@ -241,6 +280,92 @@ void main() {
       expect(
         resolvePhaseNewWorldCivilianWeight(next),
         equals(resolvePhaseNewWorldCivilianWeight(base)),
+      );
+    });
+  });
+
+  group('hasRecentDiplomaticEventWithinCooldown (Refs #3717)', () {
+    test('true when the newest matching event is inside the window', () {
+      final game = _gameWithEvents([_ev(2)]);
+      expect(
+        hasRecentDiplomaticEventWithinCooldown(
+          game: game,
+          currentTurn: 5,
+          cooldownTurns: 4,
+          matches: _warFromGp1ToGp2,
+        ),
+        isTrue, // 5 - 2 = 3 < 4
+      );
+    });
+
+    test('false when matching event is exactly cooldownTurns old (strict <)', () {
+      final game = _gameWithEvents([_ev(1)]);
+      expect(
+        hasRecentDiplomaticEventWithinCooldown(
+          game: game,
+          currentTurn: 5,
+          cooldownTurns: 4,
+          matches: _warFromGp1ToGp2,
+        ),
+        isFalse, // 5 - 1 = 4, not < 4
+      );
+    });
+
+    test('false when no event satisfies the predicate', () {
+      final game = _gameWithEvents([_ev(4, type: DiplomaticEventType.peace)]);
+      expect(
+        hasRecentDiplomaticEventWithinCooldown(
+          game: game,
+          currentTurn: 5,
+          cooldownTurns: 4,
+          matches: _warFromGp1ToGp2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false on empty diplomatic history', () {
+      final game = _gameWithEvents(const []);
+      expect(
+        hasRecentDiplomaticEventWithinCooldown(
+          game: game,
+          currentTurn: 5,
+          cooldownTurns: 4,
+          matches: _warFromGp1ToGp2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('newest matching event decides; non-matching newer events skipped', () {
+      // History ascending by turn; `.reversed` visits turn 5 (peace, no
+      // match) first and must continue to the older matching declare-war at
+      // turn 4 rather than stopping at the first non-match.
+      final game = _gameWithEvents([
+        _ev(4),
+        _ev(5, type: DiplomaticEventType.peace),
+      ]);
+      expect(
+        hasRecentDiplomaticEventWithinCooldown(
+          game: game,
+          currentTurn: 6,
+          cooldownTurns: 4,
+          matches: _warFromGp1ToGp2,
+        ),
+        isTrue, // newest matching is turn 4: 6 - 4 = 2 < 4
+      );
+    });
+
+    test('directional predicate ignores the reverse-direction event', () {
+      final game = _gameWithEvents([_ev(4, from: _gp2, to: _gp1)]);
+      expect(
+        hasRecentDiplomaticEventWithinCooldown(
+          game: game,
+          currentTurn: 5,
+          cooldownTurns: 4,
+          matches: _warFromGp1ToGp2,
+        ),
+        isFalse,
       );
     });
   });

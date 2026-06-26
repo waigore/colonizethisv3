@@ -116,7 +116,8 @@ import 'cast_iron_labour_gate.dart'
     show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
-import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
+import 'planning_helpers.dart'
+    show gpFactionIdsAtWarWith, hasRecentDiplomaticEventWithinCooldown;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';
@@ -321,13 +322,15 @@ bool expandRecentlyPeacedWithGreatPower({
   int cooldownTurns = kExpandPeerWarPeaceCooldownTurns,
 }) {
   if (cooldownTurns <= 0) return false;
-  for (final event in game.diplomaticHistoryEvents.reversed) {
-    if (event.type != DiplomaticEventType.peace) continue;
-    if (!event.participants.contains(activePlayerId)) continue;
-    if (!event.participants.contains(peerGpId)) continue;
-    return (currentTurn - event.turn) < cooldownTurns;
-  }
-  return false;
+  return hasRecentDiplomaticEventWithinCooldown(
+    game: game,
+    currentTurn: currentTurn,
+    cooldownTurns: cooldownTurns,
+    matches: (event) =>
+        event.type == DiplomaticEventType.peace &&
+        event.participants.contains(activePlayerId) &&
+        event.participants.contains(peerGpId),
+  );
 }
 
 /// Whether [planExpandEconomy] should widen the insufficient-regiment

@@ -9,7 +9,8 @@ import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_diplomacy_filter.dart';
 import 'phase_planner_dispatch.dart';
-import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
+import 'planning_helpers.dart'
+    show gpFactionIdsAtWarWith, hasRecentDiplomaticEventWithinCooldown;
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
@@ -217,12 +218,12 @@ bool _isDecisionOnCooldown({
   required List<DiplomaticEventType> eventTypes,
   required int cooldownTurns,
   required int currentTurn,
-}) {
-  for (final event in game.diplomaticHistoryEvents.reversed) {
-    if (!eventTypes.contains(event.type)) continue;
-    if (event.fromFactionId != actorFactionId) continue;
-    if (event.toFactionId != targetFactionId) continue;
-    return (currentTurn - event.turn) < cooldownTurns;
-  }
-  return false;
-}
+}) => hasRecentDiplomaticEventWithinCooldown(
+  game: game,
+  currentTurn: currentTurn,
+  cooldownTurns: cooldownTurns,
+  matches: (event) =>
+      eventTypes.contains(event.type) &&
+      event.fromFactionId == actorFactionId &&
+      event.toFactionId == targetFactionId,
+);
