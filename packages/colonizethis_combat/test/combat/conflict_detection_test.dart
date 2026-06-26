@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -6,36 +7,32 @@ void main() {
   group('detectConflicts', () {
     test('returns one battle when two factions in same province', () {
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'player2'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'player1',
-                locationProvinceId: '$ow|P1',
-              ),
-              Unit(
-                id: 'u2',
-                type: 'pikemen',
-                ownerId: 'player2',
-                locationProvinceId: '$ow|P1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(id: 'player1', displayName: 'P1', isHuman: true),
           Player(id: 'player2', displayName: 'P2', isHuman: true),
         ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'player2'),
+            Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'musketeers',
+              ownerId: 'player1',
+              locationProvinceId: '$ow|P1',
+            ),
+            Unit(
+              id: 'u2',
+              type: 'pikemen',
+              ownerId: 'player2',
+              locationProvinceId: '$ow|P1',
+            ),
+          ],
+        ),
       );
 
       final orders = Orders(
@@ -59,25 +56,21 @@ void main() {
 
     test('detects conflict in newWorld when two factions and move order', () {
       const nw = 'newWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: '$nw|N1', regionId: nw, ownerId: 'p2'),
-            ],
-            units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$nw|N1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$nw|N1'),
-            ],
-          ),
-        ),
         players: [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
           Player(id: 'p2', displayName: 'P2', isHuman: true),
         ],
+        newWorld: RegionData(
+          provinces: [
+            Province(id: '$nw|N1', regionId: nw, ownerId: 'p2'),
+          ],
+          units: [
+            Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$nw|N1'),
+            Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$nw|N1'),
+          ],
+        ),
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
@@ -92,28 +85,24 @@ void main() {
 
     test('returns no battle when only one faction in province', () {
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'player1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'player1',
-                locationProvinceId: '$ow|P1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(id: 'player1', displayName: 'P1', isHuman: true),
         ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'player1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'musketeers',
+              ownerId: 'player1',
+              locationProvinceId: '$ow|P1',
+            ),
+          ],
+        ),
       );
 
       final orders = Orders();
@@ -125,48 +114,44 @@ void main() {
 
     test('multiple provinces with conflicts return multiple battles', () {
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'player2'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'player1',
-                locationProvinceId: '$ow|P1',
-              ),
-              Unit(
-                id: 'u2',
-                type: 'pikemen',
-                ownerId: 'player2',
-                locationProvinceId: '$ow|P1',
-              ),
-              Unit(
-                id: 'u3',
-                type: 'musketeers',
-                ownerId: 'player2',
-                locationProvinceId: '$ow|P2',
-              ),
-              Unit(
-                id: 'u4',
-                type: 'pikemen',
-                ownerId: 'player1',
-                locationProvinceId: '$ow|P2',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(id: 'player1', displayName: 'P1', isHuman: true),
           Player(id: 'player2', displayName: 'P2', isHuman: true),
         ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'player2'),
+            Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'musketeers',
+              ownerId: 'player1',
+              locationProvinceId: '$ow|P1',
+            ),
+            Unit(
+              id: 'u2',
+              type: 'pikemen',
+              ownerId: 'player2',
+              locationProvinceId: '$ow|P1',
+            ),
+            Unit(
+              id: 'u3',
+              type: 'musketeers',
+              ownerId: 'player2',
+              locationProvinceId: '$ow|P2',
+            ),
+            Unit(
+              id: 'u4',
+              type: 'pikemen',
+              ownerId: 'player1',
+              locationProvinceId: '$ow|P2',
+            ),
+          ],
+        ),
       );
 
       final orders = Orders(
@@ -193,35 +178,31 @@ void main() {
 
     test('civilians alone do not trigger battles', () {
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'player2'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: kUnitTypeExplorer,
-                ownerId: 'player1',
-                locationProvinceId: '$ow|P1',
-              ),
-              Unit(
-                id: 'u2',
-                type: kUnitTypeBuilder,
-                ownerId: 'player2',
-                locationProvinceId: '$ow|P1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(id: 'player1', displayName: 'P1', isHuman: true),
           Player(id: 'player2', displayName: 'P2', isHuman: true),
         ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'player2'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: kUnitTypeExplorer,
+              ownerId: 'player1',
+              locationProvinceId: '$ow|P1',
+            ),
+            Unit(
+              id: 'u2',
+              type: kUnitTypeBuilder,
+              ownerId: 'player2',
+              locationProvinceId: '$ow|P1',
+            ),
+          ],
+        ),
       );
 
       final orders = Orders(
@@ -238,25 +219,21 @@ void main() {
 
     test('unowned province: defender is non-mover when two factions present', () {
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow),
-            ],
-            units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$ow|P1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$ow|P1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
           Player(id: 'p2', displayName: 'P2', isHuman: true),
         ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow),
+          ],
+          units: [
+            Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$ow|P1'),
+            Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$ow|P1'),
+          ],
+        ),
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
@@ -272,25 +249,21 @@ void main() {
 
     test('unowned province: defender is lexicographically first when all moved in', () {
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow),
-            ],
-            units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$ow|P1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$ow|P1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
           Player(id: 'p2', displayName: 'P2', isHuman: true),
         ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow),
+          ],
+          units: [
+            Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$ow|P1'),
+            Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$ow|P1'),
+          ],
+        ),
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
@@ -305,25 +278,21 @@ void main() {
 
     test('returns no battles when oldWorld has no units', () {
       const nw = 'newWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: '$nw|N1', regionId: nw, ownerId: 'p2'),
-            ],
-            units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$nw|N1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$nw|N1'),
-            ],
-          ),
-        ),
         players: [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
           Player(id: 'p2', displayName: 'P2', isHuman: true),
         ],
+        newWorld: RegionData(
+          provinces: [
+            Province(id: '$nw|N1', regionId: nw, ownerId: 'p2'),
+          ],
+          units: [
+            Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$nw|N1'),
+            Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$nw|N1'),
+          ],
+        ),
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
@@ -338,45 +307,41 @@ void main() {
     test('army move order contributes moved-in attacker detection', () {
       const ow = 'oldWorld';
       final p1 = '$ow|P1';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g_army',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: p1, regionId: ow, ownerId: 'player2'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'player1',
-                locationProvinceId: p1,
-              ),
-              Unit(
-                id: 'u2',
-                type: 'pikemen',
-                ownerId: 'player2',
-                locationProvinceId: p1,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'arm_a',
-              ownerId: 'player1',
-              regionId: ow,
-              stationedProvinceId: p1,
-              regimentUnitIds: const ['u1'],
-              isHomeArmy: false,
-            ),
-          ],
-        ),
         players: [
           Player(id: 'player1', displayName: 'P1', isHuman: true),
           Player(id: 'player2', displayName: 'P2', isHuman: true),
+        ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: p1, regionId: ow, ownerId: 'player2'),
+            Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'musketeers',
+              ownerId: 'player1',
+              locationProvinceId: p1,
+            ),
+            Unit(
+              id: 'u2',
+              type: 'pikemen',
+              ownerId: 'player2',
+              locationProvinceId: p1,
+            ),
+          ],
+        ),
+        armies: [
+          Army(
+            id: 'arm_a',
+            ownerId: 'player1',
+            regionId: ow,
+            stationedProvinceId: p1,
+            regimentUnitIds: const ['u1'],
+            isHomeArmy: false,
+          ),
         ],
       );
 
