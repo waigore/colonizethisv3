@@ -9,6 +9,7 @@ import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planner_context.dart';
+import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
 import '../util/ai_random_utils.dart';
 import '../util/faction_query.dart';
 
@@ -261,9 +262,7 @@ Orders runConquestArmyMovePlanner({
   }
   if (snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
-      !snapshot.threats.atWarWith.any(
-        (id) => ctx.game.playerById(id) != null,
-      ) &&
+      !isAtWarWithAnyGreatPower(ctx.game, snapshot) &&
       weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
     weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
   }

@@ -2,6 +2,9 @@
 //
 // Pins the shared dedup helpers:
 //   - `gpFactionIdsAtWarWith` — GP-only filter, sort/determinism, non-GP exclusion
+//   - `isAtWarWithAnyGreatPower` — GP-war presence check, non-GP exclusion,
+//     empty-set false, equivalence with `gpFactionIdsAtWarWith.isNotEmpty`
+//     (Refs #3717)
 //   - `scaleWeightedBonus` — `<= 0.0` guard, `> 1.0` clamp, rounding
 //   - `resolvePhaseColonialPressureActive` — COLONIAL-only gate
 //   - `resolvePhaseExpandOrColonialLiteActive` — EXPAND / COLONIAL-lite gate
@@ -129,6 +132,50 @@ void main() {
       final b = gpFactionIdsAtWarWith(game, snapshot);
       expect(a, [_gp1, _gp2, _gp3]);
       expect(b, a);
+    });
+  });
+
+  group('isAtWarWithAnyGreatPower (Refs #3717)', () {
+    test('true when at least one at-war faction is a Great Power', () {
+      final game = _gameWithGps();
+      expect(
+        isAtWarWithAnyGreatPower(game, _snapshotWithAtWar([_tribe1, _gp2])),
+        isTrue,
+      );
+    });
+
+    test('false when no at-war faction resolves to a Great Power', () {
+      final game = _gameWithGps();
+      expect(
+        isAtWarWithAnyGreatPower(game, _snapshotWithAtWar([_tribe1, _minor1])),
+        isFalse,
+      );
+    });
+
+    test('false on an empty atWarWith set', () {
+      final game = _gameWithGps();
+      expect(
+        isAtWarWithAnyGreatPower(game, _snapshotWithAtWar(const [])),
+        isFalse,
+      );
+    });
+
+    test('agrees with gpFactionIdsAtWarWith.isNotEmpty (equivalence)', () {
+      final game = _gameWithGps();
+      for (final atWar in <List<String>>[
+        const [],
+        [_tribe1],
+        [_minor1, _tribe1],
+        [_gp1],
+        [_gp3, _tribe1, _gp1, _minor1, _gp2],
+      ]) {
+        final snapshot = _snapshotWithAtWar(atWar);
+        expect(
+          isAtWarWithAnyGreatPower(game, snapshot),
+          gpFactionIdsAtWarWith(game, snapshot).isNotEmpty,
+          reason: 'mismatch for atWarWith=$atWar',
+        );
+      }
     });
   });
 

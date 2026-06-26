@@ -6,6 +6,10 @@
 ///   - [gpFactionIdsAtWarWith] — the GP-only at-war filter that replaces the
 ///     `[for (final f in snapshot.threats.atWarWith) if (game.playerById(f)
 ///     != null) f]` comprehension repeated across the planners.
+///   - [isAtWarWithAnyGreatPower] — the boolean "are we at war with any Great
+///     Power?" presence check that replaces the inline
+///     `snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)`
+///     short-circuit predicate repeated across the planners / scoring families.
 ///   - [scaleWeightedBonus] — the `<= 0.0 → 0`, clamp-to-`1.0`, `round()`
 ///     weight-scaling idiom shared by the soft-phase bonus/floor resolvers.
 ///   - [resolvePhaseColonialPressureActive] /
@@ -57,6 +61,29 @@ List<String> gpFactionIdsAtWarWith(Game game, AIWorldSnapshot snapshot) {
       if (game.playerById(factionId) != null) factionId,
   ]..sort();
 }
+
+/// Whether the active player is currently at war with **any** Great Power.
+///
+/// Single source of truth for the boolean
+/// `snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)`
+/// presence check that was duplicated inline across the planner / scoring
+/// families (conquest, economy, diplomacy, expand-peace, declare-war scoring,
+/// orchestrator economy build). Returns `true` as soon as the first
+/// [ThreatSummary.atWarWith] entry resolves to a [Player] Great Power via
+/// [Game.playerById]; tribes and minor nations are not [Player] entries and so
+/// never satisfy the check.
+///
+/// Behaviour-preserving against the replaced inline predicates: this helper
+/// retains the original [Iterable.any] short-circuit (no list is materialised
+/// and no sort is performed), so it is strictly cheaper than
+/// `gpFactionIdsAtWarWith(game, snapshot).isNotEmpty` for the pure presence
+/// case — consistent with `colonizethis-turn-resolution-budget.mdc`. Use
+/// [gpFactionIdsAtWarWith] when the caller needs the GP id list or its length.
+///
+/// Pure and deterministic — identical inputs always yield identical results
+/// (Refs #2509 Must-have #7).
+bool isAtWarWithAnyGreatPower(Game game, AIWorldSnapshot snapshot) =>
+    snapshot.threats.atWarWith.any((id) => game.playerById(id) != null);
 
 /// Scales [baseConstant] by [weight] clamped to `[0.0, 1.0]`, returning the
 /// rounded integer result.

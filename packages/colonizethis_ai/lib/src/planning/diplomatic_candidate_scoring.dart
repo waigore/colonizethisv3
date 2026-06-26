@@ -14,7 +14,8 @@ import 'planning_helpers.dart'
         atWarGreatPowerOrderTarget,
         atWarPeaceTargetBonus,
         gpFactionIdsAtWarWith,
-        hasRecentDiplomaticEventWithinCooldown;
+        hasRecentDiplomaticEventWithinCooldown,
+        isAtWarWithAnyGreatPower;
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';

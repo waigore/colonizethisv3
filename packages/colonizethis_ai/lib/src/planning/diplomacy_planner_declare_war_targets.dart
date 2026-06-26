@@ -25,9 +25,7 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return null;
   }
-  final atWarWithGp = snapshot.threats.atWarWith
-      .where((id) => game.playerById(id) != null)
-      .toList();
+  final atWarWithGp = gpFactionIdsAtWarWith(game, snapshot);
   if (atWarWithGp.length > 2) {
     return null;
   }

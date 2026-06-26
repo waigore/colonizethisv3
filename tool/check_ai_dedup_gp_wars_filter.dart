@@ -6,19 +6,30 @@ import 'package:path/path.dart' as p;
 ///
 /// Enforces the shared GP-wars filter contract for `colonizethis_ai`:
 /// `lib/**` planner/filter code must call the shared
-/// `gpFactionIdsAtWarWith(game, snapshot)` helper instead of re-inlining the
+/// `gpFactionIdsAtWarWith(game, snapshot)` / `isAtWarWithAnyGreatPower(game,
+/// snapshot)` helpers instead of re-inlining the Great-Power at-war filter,
+/// whether spelled as the
 /// `[for (final f in snapshot.threats.atWarWith) if (game.playerById(f) !=
-/// null) f]` Great-Power filter comprehension.
+/// null) f]` comprehension or the functional
+/// `snapshot.threats.atWarWith.any/where((id) => game.playerById(id) != null)`
+/// form.
 ///
 /// The single canonical home (`lib/src/planning/planning_helpers.dart`) is
-/// the only file allowed to contain the comprehension; every other inline
-/// copy is rejected so the deterministic GP filter lives in one place.
+/// the only file allowed to contain the filter; every other inline copy is
+/// rejected so the deterministic GP filter lives in one place.
 ///
-/// Detection is structural: a `for (final … in <expr>.atWarWith)` comprehension
-/// header followed (within a short window) by a `playerById(...) != null`
-/// test. The unrelated `for (final … in candidates) { if (playerById(...) !=
-/// null) continue; … }` skip loop and `.atWarWith.contains(...)` membership
-/// tests are not comprehension headers and therefore do not match.
+/// Detection is structural. Two patterns are rejected:
+///   1. A `for (final … in <expr>.atWarWith)` comprehension header followed
+///      (within a short window) by a `playerById(...) != null` test.
+///   2. An `<expr>.atWarWith.any(` / `<expr>.atWarWith.where(` call whose body
+///      (within the same statement, no intervening `;`) contains a
+///      `playerById(...) != null` test — the functional dedup form (Refs
+///      #3717).
+///
+/// The unrelated `for (final … in candidates) { if (playerById(...) != null)
+/// continue; … }` skip loop, `.atWarWith.contains(...)` membership tests, and
+/// `.atWarWith.any(...)` predicates that do *not* test `playerById(...) !=
+/// null` (for example the minor-owner / invadable predicate) are not matched.
 
 const _aiLibRelative = 'packages/colonizethis_ai/lib';
 
@@ -30,6 +41,14 @@ const _allowedRelative =
 final RegExp _inlineGpWarsFilter = RegExp(
   r'for\s*\(\s*final\s+\w+\s+in\s+[^)]*\.atWarWith\s*\)'
   r'[\s\S]{0,200}?playerById\s*\([^)]*\)\s*!=\s*null',
+);
+
+/// `<expr>.atWarWith.any(`/`.where(` … `playerById(<...>) != null`, bounded to
+/// the same statement (`[^;]`) so unrelated later `playerById` tests and
+/// non-`playerById` `atWarWith.any(...)` predicates do not match (Refs #3717).
+final RegExp _inlineGpWarsFunctionalFilter = RegExp(
+  r'\.atWarWith\s*\.\s*(?:any|where)\s*\('
+  r'[^;]{0,200}?playerById\s*\([^)]*\)\s*!=\s*null',
 );
 
 void main(List<String> args) {
@@ -58,7 +77,8 @@ int runCheckAiDedupGpWarsFilter(
     if (p.normalize(entity.path) == allowedPath) continue;
     final relative = p.relative(entity.path, from: root);
     final content = entity.readAsStringSync();
-    final match = _inlineGpWarsFilter.firstMatch(content);
+    final match = _inlineGpWarsFilter.firstMatch(content) ??
+        _inlineGpWarsFunctionalFilter.firstMatch(content);
     if (match == null) continue;
     final lineNumber =
         '\n'.allMatches(content.substring(0, match.start)).length + 1;
@@ -72,9 +92,10 @@ int runCheckAiDedupGpWarsFilter(
 
   logE(
     'check_ai_dedup_gp_wars_filter: found ${violations.length} inline '
-    'GP-wars filter comprehension(s) in $_aiLibRelative. Use the shared '
-    '`gpFactionIdsAtWarWith(game, snapshot)` helper from '
-    'src/planning/planning_helpers.dart instead.',
+    'GP-wars filter(s) in $_aiLibRelative. Use the shared '
+    '`gpFactionIdsAtWarWith(game, snapshot)` (for the id list/length) or '
+    '`isAtWarWithAnyGreatPower(game, snapshot)` (for the boolean presence '
+    'check) helper from src/planning/planning_helpers.dart instead.',
   );
   for (final v in violations) {
     logE(' - $v');

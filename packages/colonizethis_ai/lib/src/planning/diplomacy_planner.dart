@@ -3,6 +3,8 @@ import 'planning_imports.dart';
 import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'planner_context.dart';
+import 'planning_helpers.dart'
+    show gpFactionIdsAtWarWith, isAtWarWithAnyGreatPower;
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_declare_war_targets.dart';
@@ -167,9 +169,7 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
 }) {
   var filtered = candidates;
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final atWarWithGp = snapshot.threats.atWarWith.any(
-      (id) => ctx.game.playerById(id) != null,
-    );
+    final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, snapshot);
     if (atWarWithGp) {
       filtered = filtered
           .where(
@@ -200,9 +200,7 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final gpWars = snapshot.threats.atWarWith
-        .where((id) => ctx.game.playerById(id) != null)
-        .toList();
+    final gpWars = gpFactionIdsAtWarWith(ctx.game, snapshot);
     final blocker = primaryInvadableOldWorldGpBlocker(
       game: ctx.game,
       snapshot: snapshot,

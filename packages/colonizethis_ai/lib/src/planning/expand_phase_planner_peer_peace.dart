@@ -325,9 +325,7 @@ List<String> atWarGpDistractionTribePeaceTargets({
   if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     return const [];
   }
-  final atWarWithGp = snapshot.threats.atWarWith.any(
-    (id) => game.playerById(id) != null,
-  );
+  final atWarWithGp = isAtWarWithAnyGreatPower(game, snapshot);
   if (!atWarWithGp) {
     return const [];
   }

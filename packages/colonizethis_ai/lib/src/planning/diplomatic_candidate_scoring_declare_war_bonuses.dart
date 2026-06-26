@@ -380,9 +380,7 @@ int _declareWarAdjacencyAndStalledBonuses(
       isStalledOldWorldExpansion(targetOw)) {
     s -= kDeclareWarOnStalledWeakerNeighborPenalty;
   }
-  final atWarWithGp = ctx.snapshot.threats.atWarWith.any(
-    (id) => ctx.game.playerById(id) != null,
-  );
+  final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, ctx.snapshot);
   if (!atWarWithGp &&
       ctx.isMinorTarget &&
       !ctx.isTribeTarget &&
@@ -474,9 +472,7 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
 
 /// Plateau minor declare is blocked only by distracting multi-front GP wars.
 bool _gpWarBlocksPlateauMinorDeclare(_DeclareWarTargetContext ctx) {
-  final gpWars = ctx.snapshot.threats.atWarWith
-      .where((id) => ctx.game.playerById(id) != null)
-      .toList();
+  final gpWars = gpFactionIdsAtWarWith(ctx.game, ctx.snapshot);
   if (gpWars.isEmpty) {
     return false;
   }

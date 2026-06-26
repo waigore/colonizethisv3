@@ -110,9 +110,7 @@ int _offerPeaceStalledGpWarAdjustments({
       isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     s += kOfferPeaceStalledFutileGpWarBonus;
   }
-  final gpWarCount = snapshot.threats.atWarWith
-      .where((id) => game.playerById(id) != null)
-      .length;
+  final gpWarCount = gpFactionIdsAtWarWith(game, snapshot).length;
   if (atWarGreatPowerOrderTarget(
         targetGp: targetGp,
         snapshot: snapshot,

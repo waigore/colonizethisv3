@@ -117,7 +117,10 @@ import 'cast_iron_labour_gate.dart'
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'planning_helpers.dart'
-    show gpFactionIdsAtWarWith, hasRecentDiplomaticEventWithinCooldown;
+    show
+        gpFactionIdsAtWarWith,
+        hasRecentDiplomaticEventWithinCooldown,
+        isAtWarWithAnyGreatPower;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';

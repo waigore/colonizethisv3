@@ -10,6 +10,7 @@ import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
+import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
@@ -777,9 +778,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   );
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
   final observerQuotaPressure = expandQuotaPressure;
-  final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
-    (id) => ctx.game.playerById(id) != null,
-  );
+  final atWarWithAnyGreatPower = isAtWarWithAnyGreatPower(ctx.game, snapshot);
   final needRegimentsToExpand =
       observerQuotaPressure &&
       regimentCount == 0 &&
@@ -823,7 +822,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   final criticallyWeakNoGpWar =
       snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
-      !snapshot.threats.atWarWith.any((id) => ctx.game.playerById(id) != null);
+      !isAtWarWithAnyGreatPower(ctx.game, snapshot);
   final gpBlocker = expandPrimaryInvadableGpBlockerFromPhasePlan(
     phasePlan: phasePlan,
   );

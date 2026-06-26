@@ -761,9 +761,7 @@ int? _declareWarSuppressedWarConcentrationScore(
   _DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
-  final atWarWithGp = ctx.snapshot.threats.atWarWith.any(
-    (id) => ctx.game.playerById(id) != null,
-  );
+  final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, ctx.snapshot);
   if (ctx.stalledOwExpansion &&
       atWarWithGp &&
       ctx.isAdjacentGp &&
@@ -774,9 +772,8 @@ int? _declareWarSuppressedWarConcentrationScore(
   if (ctx.isAdjacentGp &&
       ctx.targetIsGreatPower &&
       ctx.targetNotAlreadyAtWar) {
-    final attackerGpWarCount = ctx.snapshot.threats.atWarWith
-        .where((id) => ctx.game.playerById(id) != null)
-        .length;
+    final attackerGpWarCount =
+        gpFactionIdsAtWarWith(ctx.game, ctx.snapshot).length;
     if (attackerGpWarCount >= 2) {
       return 0;
     }
