@@ -1,5 +1,5 @@
 import 'package:colonizethis_economy/src/economy/commodity_totals.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('addUnits', () {
