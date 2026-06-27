@@ -39,6 +39,7 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'first_right_profit.dart';
+import 'gp_treasury_credit_accumulator.dart';
 import 'purchased_tile_index.dart';
 
 /// Per-deal credit record produced by [computeFirstRightCredits].
@@ -112,7 +113,8 @@ class FirstRightCreditsResult {
   const FirstRightCreditsResult({
     required this.creditedDeals,
     required this.treasuryCreditByGpId,
-  });
+    double? totalProfitTreasury,
+  }) : _totalProfitTreasury = totalProfitTreasury;
 
   /// Empty result. Returned when the input deal list is empty, the
   /// purchased-tile index is empty, or no deal is FRR-eligible.
@@ -120,6 +122,11 @@ class FirstRightCreditsResult {
     creditedDeals: <FirstRightDealCredit>[],
     treasuryCreditByGpId: <String, double>{},
   );
+
+  /// Precomputed grand total from the shared accumulator, when constructed via
+  /// [computeFirstRightCredits]. `null` for hand-built results (for example the
+  /// [empty] sentinel), which fall back to summing [treasuryCreditByGpId].
+  final double? _totalProfitTreasury;
 
   /// Per-deal credit records in matcher emission order (deals without
   /// a non-zero `profitTreasury` are still included so callers can
@@ -133,7 +140,13 @@ class FirstRightCreditsResult {
   /// Convenience: total overseas-profit treasury credited across every
   /// owning GP for this aggregation. Phase handlers and observer
   /// traces use this for top-line economic accounting.
+  ///
+  /// O(1) when produced by [computeFirstRightCredits] (the
+  /// [GpTreasuryCreditAccumulator] maintains the total incrementally); falls
+  /// back to re-summing [treasuryCreditByGpId] for hand-built results.
   double get totalProfitTreasury {
+    final cached = _totalProfitTreasury;
+    if (cached != null) return cached;
     var total = 0.0;
     for (final amount in treasuryCreditByGpId.values) {
       total += amount;
@@ -188,7 +201,7 @@ FirstRightCreditsResult computeFirstRightCredits({
   if (dealsList.isEmpty) return FirstRightCreditsResult.empty;
 
   final creditedDeals = <FirstRightDealCredit>[];
-  final treasuryByGp = <String, double>{};
+  final treasuryByGp = GpTreasuryCreditAccumulator<double>(0.0);
 
   for (final deal in dealsList) {
     final tileKey = deal.sellerOriginTileKey;
@@ -220,16 +233,16 @@ FirstRightCreditsResult computeFirstRightCredits({
       ),
     );
     if (profit.profitTreasury > 0.0) {
-      treasuryByGp[owningGpId] =
-          (treasuryByGp[owningGpId] ?? 0.0) + profit.profitTreasury;
+      treasuryByGp.add(owningGpId, profit.profitTreasury);
     } else {
-      treasuryByGp.putIfAbsent(owningGpId, () => 0.0);
+      treasuryByGp.ensure(owningGpId);
     }
   }
 
   if (creditedDeals.isEmpty) return FirstRightCreditsResult.empty;
   return FirstRightCreditsResult(
     creditedDeals: List.unmodifiable(creditedDeals),
-    treasuryCreditByGpId: Map.unmodifiable(treasuryByGp),
+    treasuryCreditByGpId: treasuryByGp.view,
+    totalProfitTreasury: treasuryByGp.total,
   );
 }

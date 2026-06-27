@@ -16,6 +16,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
     show GamePlayerLookup;
 
+import '../commodity_totals.dart' show addUnits;
 import 'trade_order_admission.dart' show isWorldMarketTradeableCommodity;
 
 /// Per-commodity offer cap for [playerId] in [game].
@@ -95,7 +96,7 @@ Map<CommodityId, int> stagedOfferQuantitiesByCommodityId({
   for (final TradeOrder o in list) {
     if (o.type != TradeOrderType.offer) continue;
     if (o.quantity <= 0) continue;
-    byCommodity[o.commodityId] = (byCommodity[o.commodityId] ?? 0) + o.quantity;
+    addUnits(byCommodity, o.commodityId, o.quantity);
   }
   return byCommodity;
 }
