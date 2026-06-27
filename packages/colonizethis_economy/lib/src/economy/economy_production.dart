@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'commodity_totals.dart';
+
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md
 /// SPEC/game/workers-and-population.md
@@ -62,7 +64,7 @@ Map<CommodityId, int> productionInputConsumptionByCommodityIdForAssignments(
     for (final entry in recipe.inputQuantities.entries) {
       final consumed = entry.value * runs;
       if (consumed <= 0) continue;
-      consumption[entry.key] = (consumption[entry.key] ?? 0) + consumed;
+      addUnits(consumption, entry.key, consumed);
     }
   }
   return consumption;
@@ -151,8 +153,7 @@ ProductionResult resolveProduction({
       remainingEffectiveLabour = 0;
     }
 
-    productionByRecipe[assignment.recipeId] =
-        (productionByRecipe[assignment.recipeId] ?? 0) + runs;
+    addUnits(productionByRecipe, assignment.recipeId, runs);
 
     // Deduct inputs.
     for (final entry in recipe.inputQuantities.entries) {
