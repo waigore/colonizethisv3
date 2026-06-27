@@ -118,11 +118,10 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'test_fixtures.dart';
+import 'ai_planner_fixtures.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
