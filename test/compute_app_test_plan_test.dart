@@ -300,7 +300,7 @@ void main() {
     expect(result.exitCode, 0, reason: '${result.stdout}${result.stderr}');
     final json = (result.stdout as String).trim();
     expect(json, contains('"mode":"selective"'));
-    expect(json, contains('naval_units_panel_test'));
+    expect(json, contains('naval_units_panel_part1_test'));
   });
 }
 
