@@ -3,11 +3,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        applyNavalSplitFleet,
-        applyNavalTransferShipsBetweenFleets,
-        homeFleetIdFor;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -16,48 +12,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'support/naval_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
-
-/// Mirrors shell handling of [NavalSplitFleetRequestedEvent] for widget tests.
-StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
-  required AppEventBus bus,
-  required Game Function() gameSnapshot,
-}) {
-  return bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
-    final next = applyNavalSplitFleet(
-      game: gameSnapshot(),
-      humanPlayerId: e.humanPlayerId,
-      originalFleetId: e.originalFleetId,
-      shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
-    );
-    bus.emit(NavalFleetsUpdatedEvent(game: next));
-  });
-}
-
-/// Mirrors shell handling of [NavalTransferShipsRequestedEvent] for widget tests.
-StreamSubscription<NavalTransferShipsRequestedEvent>
-wireNavalTransferForWidgetTest({
-  required AppEventBus bus,
-  required Game Function() gameSnapshot,
-}) {
-  return bus.on<NavalTransferShipsRequestedEvent>().listen((e) {
-    final next = applyNavalTransferShipsBetweenFleets(
-      game: gameSnapshot(),
-      humanPlayerId: e.humanPlayerId,
-      sourceFleetId: e.sourceFleetId,
-      targetFleetId: e.targetFleetId,
-      shipInstanceIdsToTransfer: e.shipInstanceIdsToTransfer,
-    );
-    bus.emit(NavalFleetsUpdatedEvent(game: next));
-  });
-}
 
 void main() {
   suppressLogsForTests();
@@ -72,29 +32,6 @@ void main() {
     game = buildNavalPanelTestGame();
     humanPlayerIdWithFleets = kPanelTestHumanPlayerId;
   });
-
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    AppEventBus? bus,
-    MapTopology topology = const MapTopology(),
-    Orders draftOrders = const Orders(),
-    String? locationScopeKey,
-  }) {
-    final resolvedBus = bus ?? AppEventBus.create();
-    return MaterialApp(
-      home: Scaffold(
-        body: NavalUnitsPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          bus: resolvedBus,
-          topology: topology,
-          draftOrders: draftOrders,
-          locationScopeKey: locationScopeKey,
-        ),
-      ),
-    );
-  }
 
   group('NavalUnitsPanel', () {
     testWidgets('AC: Beachhead mission appears in status line', (
@@ -130,7 +67,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        buildPanel(game: gameBeach, humanPlayerId: playerId),
+        buildNavalPanel(game: gameBeach, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
 
@@ -159,7 +96,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        buildPanel(game: emptyGame, humanPlayerId: playerId),
+        buildNavalPanel(game: emptyGame, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
 
@@ -223,7 +160,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          buildPanel(
+          buildNavalPanel(
             game: markerScopeGame,
             humanPlayerId: humanId,
             locationScopeKey: markerScope,
@@ -290,7 +227,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          buildPanel(
+          buildNavalPanel(
             game: scopedGame,
             humanPlayerId: humanId,
             topology: topology,
@@ -549,7 +486,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        buildPanel(game: moveHomeGame, humanPlayerId: humanId),
+        buildNavalPanel(game: moveHomeGame, humanPlayerId: humanId),
       );
       await tester.pumpAndSettle();
 
@@ -577,7 +514,7 @@ void main() {
         if (nonHomeFleets.isEmpty) return;
         final targetFleet = nonHomeFleets.first;
 
-        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
         await tester.pumpAndSettle();
 
         final fleetTile = find.widgetWithText(
@@ -619,7 +556,7 @@ void main() {
       if (nonHomeFleets.isEmpty) return;
       final targetFleet = nonHomeFleets.first;
 
-      await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
       await tester.pumpAndSettle();
 
       final fleetTile = find.widgetWithText(
@@ -716,7 +653,7 @@ void main() {
         addTearDown(subTransferNeverDelete.cancel);
 
         await tester.pumpWidget(
-          buildPanel(
+          buildNavalPanel(
             game: homeNeverDeleteGame,
             humanPlayerId: humanId,
             bus: bus,
@@ -843,7 +780,7 @@ void main() {
         addTearDown(subSplit.cancel);
 
         await tester.pumpWidget(
-          buildPanel(game: nonHomeSplitGame, humanPlayerId: humanId, bus: bus),
+          buildNavalPanel(game: nonHomeSplitGame, humanPlayerId: humanId, bus: bus),
         );
         await tester.pumpAndSettle();
 
