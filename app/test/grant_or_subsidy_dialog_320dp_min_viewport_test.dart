@@ -56,7 +56,6 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -65,6 +64,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -108,8 +109,8 @@ Game _buildGame({required int humanTreasury}) {
 
 /// Pumps [dialog] at [size] under the running editorial-monocle theme.
 ///
-/// Mirrors `_pumpDialogAtSize` in
-/// `dialogs_320dp_min_viewport_test.dart` — sets the surface size (so
+/// Delegates to the shared `pumpAtMinViewport` harness
+/// — which sets the surface size (so
 /// the binding's render flex math sees the minimum viewport) and
 /// overrides MediaQuery so dialog code that reads
 /// `MediaQuery.sizeOf(context).width` resolves to the same value.
@@ -119,25 +120,19 @@ Game _buildGame({required int humanTreasury}) {
 /// dialog's own `CtDialogShell` layout at the narrow viewport, not the
 /// barrier / overlay route plumbing (which is already covered by
 /// `diplomacy_dialogs_test.dart`).
-Future<void> _pumpDialogAtSize(
+Future<void> _pumpDialog(
   WidgetTester tester,
   Widget dialog, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: Center(child: dialog)),
-      ),
-    ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(body: Center(child: dialog)),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -164,7 +159,7 @@ void main() {
           final game = _buildGame(humanTreasury: 5 * grantAidAmountStep);
           final bus = AppEventBus.create();
 
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             GrantOrSubsidyDialog(
               game: game,
@@ -236,7 +231,7 @@ void main() {
           final game = _buildGame(humanTreasury: 5 * grantAidAmountStep);
           final bus = AppEventBus.create();
 
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             GrantOrSubsidyDialog(
               game: game,
@@ -276,7 +271,7 @@ void main() {
           final game = _buildGame(humanTreasury: grantAidAmountStep - 1);
           final bus = AppEventBus.create();
 
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             GrantOrSubsidyDialog(
               game: game,
@@ -315,7 +310,7 @@ void main() {
           final game = _buildGame(humanTreasury: 5 * grantAidAmountStep);
           final bus = AppEventBus.create();
 
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             GrantOrSubsidyDialog(
               game: game,

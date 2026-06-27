@@ -45,7 +45,6 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
@@ -58,9 +57,9 @@ import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
@@ -104,42 +103,32 @@ ShellPlayerContext _globalObserveShellContext() {
   );
 }
 
-/// Pumps the [DiplomacyScreen] at [size] under the running editorial-
-/// monocle theme. Sets the surface size (so the binding's render-flex
-/// math sees the minimum viewport) and overrides MediaQuery so widget
-/// code that reads `MediaQuery.sizeOf(context).width` resolves to the
-/// same value — the pattern already used by every other
-/// `*_320dp_min_viewport_test.dart` file. Overrides `currentGameProvider`
-/// (and optionally `shellPlayerContextProvider` for the global-observe
-/// branch) so the shell renders without touching Hive / GameService.
-Future<void> _pumpDiplomacyScreenAtSize(
+/// Pumps the [DiplomacyScreen] at [size] via the shared min-viewport
+/// harness ([pumpAtMinViewport]). Overrides `currentGameProvider` (and
+/// optionally `shellPlayerContextProvider` for the global-observe branch)
+/// so the shell renders without touching Hive / GameService. Settles so
+/// the panel's hover-aware chrome finishes its first-frame layout before
+/// the overflow assertion runs.
+Future<void> _pumpDiplomacyScreen(
   WidgetTester tester, {
   required Size size,
   required Game game,
   required String humanPlayerId,
   bool globalObserve = false,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        if (globalObserve)
-          shellPlayerContextProvider.overrideWithValue(
-            _globalObserveShellContext(),
-          ),
-      ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: size),
-          child: DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    overrides: [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      if (globalObserve)
+        shellPlayerContextProvider.overrideWithValue(
+          _globalObserveShellContext(),
         ),
-      ),
-    ),
+    ],
+    child: DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -172,7 +161,7 @@ void main() {
         'label `Map`) + DiplomacyPanel body (`Great Powers` heading) '
         'both render',
         (WidgetTester tester) async {
-          await _pumpDiplomacyScreenAtSize(
+          await _pumpDiplomacyScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -250,7 +239,7 @@ void main() {
         'pumps without exception (regression sentinel for the overflow '
         'contract — keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpDiplomacyScreenAtSize(
+          await _pumpDiplomacyScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,
@@ -276,7 +265,7 @@ void main() {
         'ObserveModeNotDefinedPanel sentinel renders, DiplomacyPanel '
         'body is absent',
         (WidgetTester tester) async {
-          await _pumpDiplomacyScreenAtSize(
+          await _pumpDiplomacyScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -332,7 +321,7 @@ void main() {
         'also pumps without exception (regression sentinel for the '
         'overflow contract under the observe variant)',
         (WidgetTester tester) async {
-          await _pumpDiplomacyScreenAtSize(
+          await _pumpDiplomacyScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,

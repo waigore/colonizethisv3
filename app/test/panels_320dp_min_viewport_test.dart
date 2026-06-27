@@ -32,7 +32,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
@@ -46,6 +45,7 @@ import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 
 import 'production_panel_test_fixtures.dart';
+import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
@@ -67,33 +67,27 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// `MediaQuery.sizeOf(context).width` resolves to the same value — the
 /// pattern used by `mobile_320dp_min_viewport_test.dart` and
 /// `victory_overlay_narrow_test.dart`.
-Future<void> _pumpAtSize(
+Future<void> _pumpNarrow(
   WidgetTester tester,
   Widget child, {
   required Size size,
   bool settle = true,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: child),
-      ),
-    ),
-  );
   if (settle) {
-    await tester.pumpAndSettle();
-  } else {
-    // DiplomacyPanel's hover-aware row chrome animates the border color via
-    // `AnimatedContainer`; `pumpAndSettle` would block on that animation.
-    // Two short pumps are enough to lay out the body without entering the
-    // animation steady-state loop.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
+    await pumpAtMinViewport(
+      tester,
+      size: size,
+      child: Scaffold(body: child),
+      settle: true,
+    );
+    return;
   }
+  // DiplomacyPanel's hover-aware row chrome animates the border color via
+  // `AnimatedContainer`; `pumpAndSettle` would block on that animation.
+  // The harness pumps one frame; a second short timed pump lays out the
+  // body without entering the animation steady-state loop.
+  await pumpAtMinViewport(tester, size: size, child: Scaffold(body: child));
+  await tester.pump(const Duration(milliseconds: 16));
 }
 
 Widget _buildProductionPanel(Player player) {
@@ -155,7 +149,7 @@ void main() {
         'RenderFlex overflow exception, Available + Allocation labels both '
         'render',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _buildProductionPanel(fullPlayer),
             size: _kMinViewport,
@@ -183,7 +177,7 @@ void main() {
         'exception (regression guard for the partial-stockpile path the '
         'existing production_panel_test exercises at wider widths)',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _buildProductionPanel(partialPlayer),
             size: _kMinViewport,
@@ -200,7 +194,7 @@ void main() {
         'pumps without exception (regression sentinel for the overflow '
         'contract — keeps the 320 dp positive pins meaningful)',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _buildProductionPanel(fullPlayer),
             size: _kWideRegressionViewport,
@@ -254,7 +248,7 @@ void main() {
         'exception, narrow Column body selected for the first discovered '
         'faction row',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _buildDiplomacyPanel(
               game: game,
@@ -300,7 +294,7 @@ void main() {
         'exception (regression sentinel against future narrow-only fixes '
         'breaking the wide layout)',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _buildDiplomacyPanel(
               game: game,
@@ -337,7 +331,7 @@ void main() {
         'RenderFlex overflow exception, four slot cards + researched heading '
         'render',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _buildTechnologyPanelSlotsBody(game: game, player: player),
             size: _kMinViewport,
@@ -365,7 +359,7 @@ void main() {
         'Negative control: TechnologyPanel (Slots body host) @ 1024×768 '
         'pumps without exception',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _buildTechnologyPanelSlotsBody(game: game, player: player),
             size: _kWideRegressionViewport,
@@ -413,7 +407,7 @@ void main() {
         'bottom-anchored ~33 vh slot: no RenderFlex overflow exception, '
         'Province header + Tile tab label render',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             buildOverlay(heightPx: _kMinViewport.height * 0.33),
             size: _kMinViewport,
@@ -446,7 +440,7 @@ void main() {
         (WidgetTester tester) async {
           // Wide layout: side-panel host gives the overlay full available
           // height; no bottom-sheet 33 vh clamp.
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             buildOverlay(),
             size: _kWideRegressionViewport,

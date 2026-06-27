@@ -50,7 +50,6 @@
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
@@ -68,11 +67,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'support/map_view_test_fixtures.dart';
+import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
@@ -151,31 +150,20 @@ void main() {
   /// keeps recurring Flame / animation tickers running indefinitely;
   /// the SPEC § 7 contract under test is the first-frame layout, which
   /// is fully resolved after a single pump.
-  Future<void> pumpGameScreenAtSize(
+  Future<void> pumpGameScreen(
     WidgetTester tester, {
     required Size size,
   }) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(size);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: gameShellOverrides(
-          game: baseGame,
-          mapViewData: lightMapViewData,
-        ),
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            theme: AppThemes.editorialMonocle,
-            home: MediaQuery(
-              data: MediaQueryData(size: size),
-              child: const GameScreen(),
-            ),
-          ),
-        ),
+    await pumpAtMinViewport(
+      tester,
+      size: size,
+      overrides: gameShellOverrides(
+        game: baseGame,
+        mapViewData: lightMapViewData,
       ),
+      navigatorKey: appNavigatorKey,
+      child: AppEventHandlerScope(child: const GameScreen()),
     );
-    await tester.pump();
   }
 
   group(
@@ -187,7 +175,7 @@ void main() {
         'left-rail chrome renders end-to-end without overflow, '
         'players bar is hidden (Req 6)',
         (WidgetTester tester) async {
-          await pumpGameScreenAtSize(tester, size: _kMinViewport);
+          await pumpGameScreen(tester, size: _kMinViewport);
 
           expect(
             tester.takeException(),
@@ -272,7 +260,7 @@ void main() {
         'render at 26 × 26 dp and corner-control buttons at 24 × 24 dp '
         '(Refs #2870 Req 8 / 9, S3)',
         (WidgetTester tester) async {
-          await pumpGameScreenAtSize(tester, size: _kMinViewport);
+          await pumpGameScreen(tester, size: _kMinViewport);
 
           expect(
             tester.takeException(),
@@ -321,7 +309,7 @@ void main() {
         'exception, left-rail chrome still renders, players bar '
         'reappears at wide widths (Req 6 wide-side contrast)',
         (WidgetTester tester) async {
-          await pumpGameScreenAtSize(
+          await pumpGameScreen(
             tester,
             size: _kWideRegressionViewport,
           );

@@ -60,7 +60,6 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
@@ -73,10 +72,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
@@ -106,49 +105,39 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// `game_side_menu_test.dart` so the drawer's `currentGameProvider`
 /// read inside `_openGameParameters` resolves to a real `Game` and
 /// the layout exercises the live row composition.
-Future<void> _pumpGameSideMenuAtSize(
+Future<void> _pumpGameSideMenu(
   WidgetTester tester, {
   required Size size,
   required Box<dynamic> gamesBox,
   required Game game,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        appEventBusProvider.overrideWith((ref) {
-          final bus = AppEventBus.create();
-          ref.onDispose(bus.dispose);
-          return bus;
-        }),
-      ],
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: MediaQuery(
-            data: MediaQueryData(size: size),
-            child: Scaffold(
-              body: Stack(
-                children: [
-                  GameSideMenu(sideMenuOpen: true, onClose: () {}),
-                ],
-              ),
-            ),
-          ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    overrides: [
+      gamesBoxProvider.overrideWith((ref) => gamesBox),
+      gameServiceProvider.overrideWith(
+        (ref) => GameService(gamesBox, GameSaveAdapter()),
+      ),
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+    ],
+    child: AppEventHandlerScope(
+      child: Scaffold(
+        body: Stack(
+          children: [GameSideMenu(sideMenuOpen: true, onClose: () {})],
         ),
       ),
     ),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -176,7 +165,7 @@ void main() {
         'render, close (`×`) glyph renders, and the drawer mounts '
         'exactly one `CtPanel` frame',
         (WidgetTester tester) async {
-          await _pumpGameSideMenuAtSize(
+          await _pumpGameSideMenu(
             tester,
             size: _kMinViewport,
             gamesBox: gamesBox,
@@ -255,7 +244,7 @@ void main() {
         'exception (regression sentinel for the overflow contract — '
         'keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpGameSideMenuAtSize(
+          await _pumpGameSideMenu(
             tester,
             size: _kWideRegressionViewport,
             gamesBox: gamesBox,
