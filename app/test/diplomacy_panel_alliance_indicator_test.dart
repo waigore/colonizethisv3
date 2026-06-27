@@ -17,8 +17,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+
+import 'support/app_shell_harness.dart';
 
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -65,10 +66,8 @@ Game _gpRelationGame({required int score, required bool formalAlliance}) {
 }
 
 Widget _panelHost(Game game) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: SizedBox(
         width: 460,
         height: 1000,

@@ -10,14 +10,18 @@
 // the provider override list, the hosted widget, and the pump strategy —
 // stays local to each test.
 //
+// This file is the always-forced-viewport specialization of the generic
+// `app_shell_harness.dart`: `buildMinViewportApp` / `pumpAtMinViewport`
+// delegate there with a required [size] so there is a single shell definition.
+//
 // Refs #3730 (consolidate app test scaffolding).
 // SPEC: SPEC/program/repo-lint.md (test static-analysis scope).
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+
+import 'app_shell_harness.dart';
 
 /// Builds the canonical minimum-viewport app shell used by the 320 dp pin
 /// suite: a [ProviderScope] (scoped by [overrides]) wrapping an
@@ -45,16 +49,14 @@ Widget buildMinViewportApp({
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
 }) {
-  return ProviderScope(
+  return buildAppShell(
+    child: child,
+    viewport: size,
     overrides: overrides,
-    child: MaterialApp(
-      navigatorKey: navigatorKey,
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: localizationsDelegates,
-      supportedLocales: supportedLocales,
-      locale: locale,
-      home: MediaQuery(data: MediaQueryData(size: size), child: child),
-    ),
+    localizationsDelegates: localizationsDelegates,
+    supportedLocales: supportedLocales,
+    locale: locale,
+    navigatorKey: navigatorKey,
   );
 }
 
@@ -82,22 +84,15 @@ Future<void> pumpAtMinViewport(
   GlobalKey<NavigatorState>? navigatorKey,
   bool settle = false,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    buildMinViewportApp(
-      size: size,
-      overrides: overrides,
-      localizationsDelegates: localizationsDelegates,
-      supportedLocales: supportedLocales,
-      locale: locale,
-      navigatorKey: navigatorKey,
-      child: child,
-    ),
+  await pumpAppShell(
+    tester,
+    child: child,
+    viewport: size,
+    overrides: overrides,
+    localizationsDelegates: localizationsDelegates,
+    supportedLocales: supportedLocales,
+    locale: locale,
+    navigatorKey: navigatorKey,
+    settle: settle,
   );
-  if (settle) {
-    await tester.pumpAndSettle();
-  } else {
-    await tester.pump();
-  }
 }

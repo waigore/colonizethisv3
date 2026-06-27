@@ -18,7 +18,6 @@
 import 'dart:io' show File;
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/utils/commodity_ui_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
@@ -31,14 +30,14 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 Widget _localizedHost(Widget child) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return buildAppShell(
+    child: Scaffold(body: Center(child: child)),
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(body: Center(child: child)),
   );
 }
 
@@ -46,17 +45,14 @@ String _humanPlayerId(Game game) =>
     game.players.firstWhere((p) => p.isHuman).id;
 
 Future<void> _pumpDialog(WidgetTester tester, Widget dialog) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(420, 900));
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: dialog),
-    ),
+  await pumpAppShell(
+    tester,
+    viewport: const Size(420, 900),
+    child: Scaffold(body: dialog),
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 /// Collects every mounted [Tooltip] message string.
