@@ -30,7 +30,6 @@
 //     the Market tab body at all.
 
 import 'package:colonizethis_app/config/app_constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
@@ -38,9 +37,9 @@ import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 /// Builds a synthetic Game with one human player so the Market tab
 /// renders without depending on the in-game shell. Mirrors the
@@ -75,18 +74,13 @@ Future<void> _pumpTradeScreen(
   required Game game,
 }) async {
   final Player player = game.players.first;
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-      ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: TradeScreen(game: game, player: player),
-      ),
-    ),
+  await pumpAppShell(
+    tester,
+    overrides: [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+    ],
+    child: TradeScreen(game: game, player: player),
   );
-  await tester.pump();
 }
 
 void main() {
