@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'commodity_totals.dart';
 import 'trade_interception_constants.dart';
 import 'trade_interception_scan.dart';
 
@@ -34,8 +35,8 @@ void _logExtractionAutoTransportInterception(
   Map<CommodityId, int> after,
 ) {
   if (economyDebugLogSuppressed) return;
-  final beforeUnits = before.values.fold<int>(0, (s, v) => s + v);
-  final afterUnits = after.values.fold<int>(0, (s, v) => s + v);
+  final beforeUnits = sumValues(before.values);
+  final afterUnits = sumValues(after.values);
   final ids = {...before.keys, ...after.keys};
   final deltas = <String>[];
   for (final id in ids) {

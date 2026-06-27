@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'commodity_totals.dart';
+
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 ///
 /// Phase 2: cargo holds derived from home fleet (with stub fallback). Fill by priority until cap; rest left behind.
@@ -47,7 +49,7 @@ Map<CommodityId, int> allocateOverseasToStockpile(
       if (available <= 0) continue;
       final take = available < spaceLeft ? available : spaceLeft;
       if (take <= 0) continue;
-      delivered[id] = (delivered[id] ?? 0) + take;
+      addUnits(delivered, id, take);
       remaining[id] = available - take;
       spaceLeft -= take;
     }
@@ -66,14 +68,8 @@ void logExtractionAutoTransportOverseasAllocation({
 }) {
   if (overseasTotals.isEmpty) return;
   if (economyDebugLogSuppressed) return;
-  final overseasTotalUnits = overseasTotals.values.fold<int>(
-    0,
-    (a, b) => a + b,
-  );
-  final allocatedUnits = allocatedToStockpile.values.fold<int>(
-    0,
-    (a, b) => a + b,
-  );
+  final overseasTotalUnits = sumValues(overseasTotals.values);
+  final allocatedUnits = sumValues(allocatedToStockpile.values);
   final detail = allocatedToStockpile.entries
       .map((e) => '${e.key}=${e.value}')
       .join(',');

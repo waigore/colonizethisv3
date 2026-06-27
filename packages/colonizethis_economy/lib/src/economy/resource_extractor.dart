@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'commodity_totals.dart';
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
 import 'tile_extraction_pipeline.dart';
@@ -95,19 +96,16 @@ Map<String, ExtractionTotals> computeExtraction({
       }
 
       if (contribution.isLandRelativeToCapital) {
-        landTotals[contribution.commodityId] =
-            (landTotals[contribution.commodityId] ?? 0) + contribution.units;
+        addUnits(landTotals, contribution.commodityId, contribution.units);
       } else {
-        overseasTotals[contribution.commodityId] =
-            (overseasTotals[contribution.commodityId] ?? 0) +
-            contribution.units;
+        addUnits(overseasTotals, contribution.commodityId, contribution.units);
       }
     }
 
     final capBonus = game.capitalTileGrainBonusPerTurn;
     if (player.capitalTile != null && capBonus > 0) {
       final grainId = CommodityCatalog.grain.id;
-      landTotals[grainId] = (landTotals[grainId] ?? 0) + capBonus;
+      addUnits(landTotals, grainId, capBonus);
     }
 
     out[player.id] = ExtractionTotals(
@@ -115,14 +113,8 @@ Map<String, ExtractionTotals> computeExtraction({
       overseas: overseasTotals,
     );
   }
-  final landSum = out.values.fold<int>(
-    0,
-    (s, t) => s + t.land.values.fold(0, (a, b) => a + b),
-  );
-  final overseasSum = out.values.fold<int>(
-    0,
-    (s, t) => s + t.overseas.values.fold(0, (a, b) => a + b),
-  );
+  final landSum = sumNestedValues(out.values.map((t) => t.land));
+  final overseasSum = sumNestedValues(out.values.map((t) => t.overseas));
   economyLog.d(
     'extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
   );

@@ -38,6 +38,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../game_lookup_helpers.dart';
 import '../tile_extraction_pipeline.dart';
 import '../tile_extraction_yield.dart';
+import 'gp_treasury_credit_accumulator.dart';
 import 'purchased_tile_index.dart';
 
 /// Sentinel town-development cap passed to [computeEffectiveTileYield] from the
@@ -109,7 +110,8 @@ class PurchasedTileRichesResult {
   const PurchasedTileRichesResult({
     required this.credits,
     required this.treasuryCreditByGpId,
-  });
+    int? totalTreasuryCredit,
+  }) : _totalTreasuryCredit = totalTreasuryCredit;
 
   /// Empty result. Returned when the purchased-tile index is empty,
   /// `tileMapByRegion` is empty, or no purchased tile resolves to a
@@ -118,6 +120,12 @@ class PurchasedTileRichesResult {
     credits: <PurchasedTileRichesCredit>[],
     treasuryCreditByGpId: <String, int>{},
   );
+
+  /// Precomputed grand total from the shared accumulator, when constructed via
+  /// [computePurchasedTileRichesCredits]. `null` for hand-built results (for
+  /// example the [empty] sentinel), which fall back to summing
+  /// [treasuryCreditByGpId].
+  final int? _totalTreasuryCredit;
 
   /// Per-tile credit records (same order as
   /// [PurchasedTileIndex.attributions]).
@@ -130,7 +138,13 @@ class PurchasedTileRichesResult {
 
   /// Convenience: total treasury credited across every owning GP for
   /// this aggregation.
+  ///
+  /// O(1) when produced by [computePurchasedTileRichesCredits] (the
+  /// [GpTreasuryCreditAccumulator] maintains the total incrementally); falls
+  /// back to re-summing [treasuryCreditByGpId] for hand-built results.
   int get totalTreasuryCredit {
+    final cached = _totalTreasuryCredit;
+    if (cached != null) return cached;
     var total = 0;
     for (final amount in treasuryCreditByGpId.values) {
       total += amount;
@@ -182,7 +196,7 @@ PurchasedTileRichesResult computePurchasedTileRichesCredits({
   final tileState = game.worldState.tileState;
 
   final credits = <PurchasedTileRichesCredit>[];
-  final treasuryByGp = <String, int>{};
+  final treasuryByGp = GpTreasuryCreditAccumulator<int>(0);
 
   // Sort attributions by tileKey for deterministic emission order
   // independent of the index's underlying map iteration order.
@@ -236,13 +250,13 @@ PurchasedTileRichesResult computePurchasedTileRichesCredits({
         treasuryDelta: treasuryDelta,
       ),
     );
-    treasuryByGp[attribution.owningGpId] =
-        (treasuryByGp[attribution.owningGpId] ?? 0) + treasuryDelta;
+    treasuryByGp.add(attribution.owningGpId, treasuryDelta);
   }
 
   if (credits.isEmpty) return PurchasedTileRichesResult.empty;
   return PurchasedTileRichesResult(
     credits: List<PurchasedTileRichesCredit>.unmodifiable(credits),
-    treasuryCreditByGpId: Map<String, int>.unmodifiable(treasuryByGp),
+    treasuryCreditByGpId: treasuryByGp.view,
+    totalTreasuryCredit: treasuryByGp.total,
   );
 }
