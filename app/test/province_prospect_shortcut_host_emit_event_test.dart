@@ -18,7 +18,6 @@
 //   - This file pins the positive path and the no-explorer negative.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_narrow_detail_overlay.dart';
@@ -41,6 +40,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/app_shell_harness.dart';
 
 const String _kGameId = 'g_prospect_shortcut_emit';
 const String _kHumanPlayerId = 'gp1';
@@ -276,30 +277,21 @@ void main() {
     final sub = bus.on<OpenCivilianUnitsPanelEvent>().listen(opened.add);
     addTearDown(sub.cancel);
 
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(surfaceSize);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => _GameServiceProspectShortcut(gamesBox, GameSaveAdapter()),
-          ),
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-        ],
-        child: MediaQuery(
-          data: MediaQueryData(size: surfaceSize),
-          child: MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(body: host),
-          ),
+    await pumpAppShell(
+      tester,
+      viewport: surfaceSize,
+      overrides: [
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith(
+          (ref) => _GameServiceProspectShortcut(gamesBox, GameSaveAdapter()),
         ),
-      ),
+        appEventBusProvider.overrideWith((ref) => bus),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+      ],
+      child: Scaffold(body: host),
     );
 
     await _selectTileOnHost(tester, hostType);
