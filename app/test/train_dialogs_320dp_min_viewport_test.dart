@@ -41,7 +41,6 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
@@ -51,6 +50,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
@@ -65,8 +65,8 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 
 /// Pumps [dialog] at [size] under the running editorial-monocle theme.
 ///
-/// Mirrors `_pumpDialogAtSize` in `dialogs_320dp_min_viewport_test.dart`
-/// — sets the surface size (so the binding's render flex math sees the
+/// Delegates to the shared `pumpAtMinViewport` harness
+/// — which sets the surface size (so the binding's render flex math sees the
 /// minimum viewport) and overrides MediaQuery so dialog code that reads
 /// `MediaQuery.sizeOf(context).width` resolves to the same value.
 ///
@@ -74,25 +74,19 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// real `showDialog` flow because the contract under test is the
 /// dialog's own [CtDialogShell] layout at the narrow viewport, not the
 /// barrier / overlay route plumbing.
-Future<void> _pumpDialogAtSize(
+Future<void> _pumpDialog(
   WidgetTester tester,
   Widget dialog, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: Center(child: dialog)),
-      ),
-    ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(body: Center(child: dialog)),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 /// Resolves the human player id from the lightweight train fixture.
@@ -111,7 +105,7 @@ void main() {
       (WidgetTester tester) async {
         final game = buildTrainPanelTestGame();
         final humanPlayerId = _humanPlayerId(game);
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           TrainCiviliansDialog(
             game: game,
@@ -150,7 +144,7 @@ void main() {
     ) async {
       final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         TrainCiviliansDialog(
           game: game,
@@ -175,7 +169,7 @@ void main() {
       (WidgetTester tester) async {
         final game = buildTrainPanelTestGame();
         final humanPlayerId = _humanPlayerId(game);
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           TrainMilitaryDialog(
             game: game,
@@ -215,7 +209,7 @@ void main() {
     ) async {
       final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         TrainMilitaryDialog(
           game: game,
@@ -240,7 +234,7 @@ void main() {
       (WidgetTester tester) async {
         final game = buildTrainPanelTestGame();
         final humanPlayerId = _humanPlayerId(game);
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           TrainNavalDialog(
             game: game,
@@ -277,7 +271,7 @@ void main() {
     ) async {
       final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         TrainNavalDialog(
           game: game,

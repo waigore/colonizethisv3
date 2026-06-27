@@ -43,7 +43,6 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
@@ -52,9 +51,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/min_viewport_harness.dart';
 import 'support/widget_test_assets.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
@@ -143,40 +142,28 @@ Game _minimalDetailGame({
   );
 }
 
-/// Pumps the [DiplomacyDetailScreen] at [size] under the running
-/// editorial-monocle theme. Sets the surface size (so the binding's
-/// render-flex math sees the minimum viewport) and overrides MediaQuery
-/// so widget code that reads `MediaQuery.sizeOf(context).width` resolves
-/// to the same value — the pattern already used by every other
-/// `*_320dp_min_viewport_test.dart` file.
-Future<void> _pumpDetailScreenAtSize(
+/// Pumps the [DiplomacyDetailScreen] at [size] via the shared
+/// min-viewport harness ([pumpAtMinViewport]).
+Future<void> _pumpDetailScreen(
   WidgetTester tester, {
   required Size size,
   required Game game,
   required FactionKind kind,
   required DiplomacyRelation? relation,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: size),
-          child: DiplomacyDetailScreen(
-            game: game,
-            humanPlayerId: _kHumanPlayerId,
-            factionId: _kOtherFactionId,
-            factionDisplayName: _kOtherFactionDisplayName,
-            kind: kind,
-            relation: relation,
-          ),
-        ),
-      ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    child: DiplomacyDetailScreen(
+      game: game,
+      humanPlayerId: _kHumanPlayerId,
+      factionId: _kOtherFactionId,
+      factionDisplayName: _kOtherFactionDisplayName,
+      kind: kind,
+      relation: relation,
     ),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -206,7 +193,7 @@ void main() {
             _kOtherFactionId,
           );
 
-          await _pumpDetailScreenAtSize(
+          await _pumpDetailScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -278,7 +265,7 @@ void main() {
             _kOtherFactionId,
           );
 
-          await _pumpDetailScreenAtSize(
+          await _pumpDetailScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -321,7 +308,7 @@ void main() {
             _kOtherFactionId,
           );
 
-          await _pumpDetailScreenAtSize(
+          await _pumpDetailScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -380,7 +367,7 @@ void main() {
             _kOtherFactionId,
           );
 
-          await _pumpDetailScreenAtSize(
+          await _pumpDetailScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,

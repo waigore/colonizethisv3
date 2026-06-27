@@ -39,7 +39,6 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
@@ -48,6 +47,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -82,25 +83,19 @@ const String _capitalProvince = 'oldWorld|p_320_capital';
 /// dialog's own [CtDialogShell] layout at the narrow viewport, not the
 /// barrier / overlay route plumbing (which is already covered by
 /// `move_dialogs_specs_test.dart`).
-Future<void> _pumpDialogAtSize(
+Future<void> _pumpDialog(
   WidgetTester tester,
   Widget dialog, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: Center(child: dialog)),
-      ),
-    ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(body: Center(child: dialog)),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 MapTopology _buildArmyTopology() {
@@ -315,7 +310,7 @@ void main() {
         'AC (positive) MoveArmyDialog @ 320×640: no RenderFlex overflow '
         'exception, title + YOUR PROVINCES + Cancel + Confirm all render',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             _buildMoveArmyDialog(),
             size: _kMinViewport,
@@ -347,7 +342,7 @@ void main() {
         'exception (regression sentinel for the overflow contract — '
         'keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             _buildMoveArmyDialog(),
             size: _kWideRegressionViewport,
@@ -371,7 +366,7 @@ void main() {
         'AC (positive) MoveFleetDialog @ 320×640: no RenderFlex overflow '
         'exception, title + SEA ZONES + Cancel + Confirm all render',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             _buildMoveFleetDialog(),
             size: _kMinViewport,
@@ -404,7 +399,7 @@ void main() {
         'exception (regression sentinel for the overflow contract — '
         'keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             _buildMoveFleetDialog(),
             size: _kWideRegressionViewport,

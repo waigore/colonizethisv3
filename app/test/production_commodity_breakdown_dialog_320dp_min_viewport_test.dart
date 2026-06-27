@@ -58,7 +58,6 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
@@ -68,9 +67,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
@@ -98,46 +97,37 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// by the spec test). The launcher tap drives the standard `showDialog`
 /// path with the canonical `EditorialMonoclePalette.dialogScrim` barrier
 /// per SPEC § Modal barrier.
-Future<void> _pumpDialogAtSize(
+Future<void> _pumpDialog(
   WidgetTester tester, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-
   final game = buildProductionBreakdownPanelTestGame();
   final player = game.players.firstWhere((p) => p.isHuman);
 
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        home: MediaQuery(
-          data: MediaQueryData(size: size),
-          child: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    barrierColor: EditorialMonoclePalette.dialogScrim,
-                    builder: (_) => ProductionCommodityBreakdownDialog(
-                      game: game,
-                      player: player,
-                      topology: const MapTopology(nodes: [], edges: []),
-                      tileMapByRegion: null,
-                      currentOrders: const Orders(),
-                    ),
-                  );
-                },
-                // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('open'),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en'),
+    child: Scaffold(
+      body: Builder(
+        builder: (context) => TextButton(
+          onPressed: () {
+            showDialog<void>(
+              context: context,
+              barrierColor: EditorialMonoclePalette.dialogScrim,
+              builder: (_) => ProductionCommodityBreakdownDialog(
+                game: game,
+                player: player,
+                topology: const MapTopology(nodes: [], edges: []),
+                tileMapByRegion: null,
+                currentOrders: const Orders(),
               ),
-            ),
-          ),
+            );
+          },
+          // ignore: avoid_hardcoded_strings_in_widgets
+          child: const Text('open'),
         ),
       ),
     ),
@@ -157,7 +147,7 @@ void main() {
         'AC (positive) ProductionCommodityBreakdownDialog @ 320×640: no '
         'RenderFlex overflow exception, title + Close action render',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(tester, size: _kMinViewport);
+          await _pumpDialog(tester, size: _kMinViewport);
 
           expect(
             tester.takeException(),
@@ -201,7 +191,7 @@ void main() {
         'is wrapped in a horizontal Scrollbar + SingleChildScrollView '
         '(the Wide-table state from SPEC § States and variants)',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(tester, size: _kMinViewport);
+          await _pumpDialog(tester, size: _kMinViewport);
 
           expect(tester.takeException(), isNull);
 
@@ -266,7 +256,7 @@ void main() {
         'renders so the body sections from SPEC § Layout / wireframe '
         'still mount at the minimum viewport',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(tester, size: _kMinViewport);
+          await _pumpDialog(tester, size: _kMinViewport);
 
           expect(tester.takeException(), isNull);
 
@@ -310,7 +300,7 @@ void main() {
         'for the overflow contract — keeps the 320 dp positive pins '
         'meaningful)',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             size: _kWideRegressionViewport,
           );
