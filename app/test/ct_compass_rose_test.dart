@@ -1,23 +1,21 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_compass_rose.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   Future<void> pumpInside(WidgetTester tester, Widget child) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(
-          body: Center(child: child),
-        ),
+    await pumpAppShell(
+      tester,
+      child: Scaffold(
+        body: Center(child: child),
       ),
     );
-    await tester.pump();
   }
 
   group('CtCompassRose visual contract (Refs #2860 S1)', () {
