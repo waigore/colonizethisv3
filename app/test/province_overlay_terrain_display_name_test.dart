@@ -13,6 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
+import 'support/app_shell_harness.dart';
+
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pTerrainTest';
 String get _fullProvinceId => '$_regionId|$_localProvinceId';
@@ -89,24 +91,23 @@ Future<void> _pumpOverlay(
   CellViewData cell,
   String tk,
 ) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 800,
-          child: ProvinceSeaZoneDetailOverlay(
-            game: _minimalGame(tk),
-            region: _regionWithCell(cell),
-            displayId: _fullProvinceId,
-            selectedTileKey: tk,
-            humanPlayerId: 'gp1',
-            playerView: _omniscientView(tk),
-          ),
+  await pumpAppShell(
+    tester,
+    settle: true,
+    child: Scaffold(
+      body: SizedBox(
+        width: 800,
+        child: ProvinceSeaZoneDetailOverlay(
+          game: _minimalGame(tk),
+          region: _regionWithCell(cell),
+          displayId: _fullProvinceId,
+          selectedTileKey: tk,
+          humanPlayerId: 'gp1',
+          playerView: _omniscientView(tk),
         ),
       ),
     ),
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
