@@ -1,12 +1,12 @@
 // SPEC/program/game-setup-pipeline.md §7d — province town assignment (importable library).
-import 'dart:collection';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'game_setup_context.dart';
 import 'game_setup_town_tile_ranking.dart';
+import 'grid_bfs.dart';
+import 'setup_topology_adjacency.dart';
 
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
 /// otherwise branch eligibility (seaboard, same-region BFS, overseas port) then centroid tie-break,
@@ -97,7 +97,7 @@ Map<String, Map<String, String>> _buildCoordToTileKeyByRegion(
 void _addCoordMappingIfPresent(Map<String, String> out, String tileKey) {
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords == null) return;
-  out['${coords.x}|${coords.y}'] = tileKey;
+  out[gridCoordKey(coords.x, coords.y)] = tileKey;
 }
 
 String? _townTileKeyForProvince({
@@ -134,9 +134,9 @@ String? _townTileKeyForProvince({
       regionTopology != null &&
       isProvinceSeaBound(regionTopology, ProvinceId.localIdFrom(province.id));
   if (isSeaBoundProvince) {
-    final seaZoneIds = _provinceSeaZones(
-      provinceId: province.id,
-      topologyByRegion: topologyByRegion,
+    final seaZoneIds = seaZonesAdjacentToProvince(
+      regionTopology,
+      ProvinceId.localIdFrom(province.id),
     );
     final coastalCandidates = tiles
         .where(
@@ -215,39 +215,15 @@ Map<String, int> _bfsDistances({
   required String startTileKey,
   required Map<String, Map<String, String>> coordToKeyByRegion,
 }) {
-  final result = <String, int>{};
   final startCoords = parseTileKeyCoordinates(startTileKey);
-  if (startCoords == null) return result;
+  if (startCoords == null) return const <String, int>{};
   final map = coordToKeyByRegion[regionId];
-  if (map == null) {
-    return result;
-  }
-  final queue = Queue<({int x, int y, int distance})>();
-  final key = '${startCoords.x}|${startCoords.y}';
-  final sx = startCoords.x;
-  final sy = startCoords.y;
-  if (map[key] != null) {
-    queue.add((x: sx, y: sy, distance: 0));
-    result[map[key]!] = 0;
-  }
-  while (queue.isNotEmpty) {
-    final item = queue.removeFirst();
-    for (final delta in const [
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1],
-    ]) {
-      final nx = item.x + delta[0];
-      final ny = item.y + delta[1];
-      final tileKey = map['$nx|$ny'];
-      if (tileKey != null && !result.containsKey(tileKey)) {
-        result[tileKey] = item.distance + 1;
-        queue.add((x: nx, y: ny, distance: item.distance + 1));
-      }
-    }
-  }
-  return result;
+  if (map == null) return const <String, int>{};
+  return bfsGridDistances(
+    startX: startCoords.x,
+    startY: startCoords.y,
+    coordToKey: map,
+  );
 }
 
 String? _portTileInProvince({
@@ -260,32 +236,6 @@ String? _portTileInProvince({
     }
   }
   return null;
-}
-
-Set<String> _provinceSeaZones({
-  required String provinceId,
-  required Map<String, MapTopology> topologyByRegion,
-}) {
-  final regionId = ProvinceId.regionIdFrom(provinceId);
-  final topology = topologyByRegion[regionId];
-  if (topology == null) {
-    return const <String>{};
-  }
-  final localProvinceId = ProvinceId.localIdFrom(provinceId);
-  final out = <String>{};
-  for (final edge in topology.edges) {
-    if (edge.id1 != localProvinceId && edge.id2 != localProvinceId) {
-      continue;
-    }
-    final other = edge.id1 == localProvinceId ? edge.id2 : edge.id1;
-    for (final node in topology.nodes) {
-      if (node.id == other && node.type == TopologyNodeType.seaZone) {
-        out.add(other);
-        break;
-      }
-    }
-  }
-  return out;
 }
 
 bool _tileKeyAdjacentToProvinceSeaZone({
@@ -306,25 +256,9 @@ bool _tileKeyAdjacentToProvinceSeaZone({
   }
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords == null) return false;
-  final x = coords.x;
-  final y = coords.y;
-  final provinceIds = topology.nodes
-      .where((node) => node.type == TopologyNodeType.province)
-      .map((node) => node.id)
-      .toSet();
-  for (final delta in kGridNeighborsCardinal4) {
-    final nx = x + delta.$1;
-    final ny = y + delta.$2;
-    if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) {
-      continue;
-    }
-    final cellId = map.cell(nx, ny);
-    if (provinceIds.contains(cellId)) {
-      continue;
-    }
-    if (seaZoneIds.contains(cellId)) {
-      return true;
-    }
-  }
-  return false;
+  final provinceIds = provinceNodeIds(topology);
+  return anyCardinalNeighborCell(coords.x, coords.y, map, (cellId) {
+    if (provinceIds.contains(cellId)) return false;
+    return seaZoneIds.contains(cellId);
+  });
 }

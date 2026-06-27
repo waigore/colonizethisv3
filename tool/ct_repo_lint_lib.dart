@@ -58,7 +58,10 @@ import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_map_clones.dart';
 import 'check_setup_dedup_gp_ids_from_players.dart';
 import 'check_setup_dedup_gp_ow_tile_scans.dart';
+import 'check_setup_dedup_grid_bfs_coord_keys.dart';
+import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
+import 'check_setup_test_no_duplicate_scaffolding.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
 import 'check_logic_work_target_switch.dart';
@@ -785,6 +788,14 @@ int? _tryRunDartRuleInProcess({
     return mapResult;
   }
 
+  final int? setupResult = _tryRunSetupRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (setupResult != null) {
+    return setupResult;
+  }
+
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
@@ -999,6 +1010,27 @@ int? _tryRunLogicRuleInProcess({
 /// `repo.dart_long_string_switches` 49-case ceiling as new map-scoped rules are
 /// added (Refs #3574). Returns `null` for non-map rule ids so the caller falls
 /// back to the generic dispatch.
+/// Dispatch helper for the `repo.setup_*` dedup manifest rules added for #3740.
+/// Keeps the main `_tryRunDartRuleInProcess` switch under the
+/// `repo.dart_long_string_switches` 49-case ceiling (mirrors the map/app/logic
+/// split). Returns `null` for non-matching rule ids so the caller falls back to
+/// the generic dispatch.
+int? _tryRunSetupRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+}) {
+  switch (ruleId) {
+    case 'repo.setup_dedup_grid_bfs_coord_keys':
+      return runCheckSetupDedupGridBfsCoordKeys(repoRoot);
+    case 'repo.setup_dedup_topology_adjacency':
+      return runCheckSetupDedupTopologyAdjacency(repoRoot);
+    case 'repo.setup_test_no_duplicate_scaffolding':
+      return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
+    default:
+      return null;
+  }
+}
+
 int? _tryRunMapRuleInProcess({
   required String ruleId,
   required String repoRoot,

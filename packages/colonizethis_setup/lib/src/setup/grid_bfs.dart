@@ -78,3 +78,41 @@ List<(int, int)>? reconstructGridPath({
   }
   return path;
 }
+
+/// 4-neighbor breadth-first **distances** (in grid steps) from ([startX],
+/// [startY]) over the grid implied by [coordToKey] — a [gridCoordKey] -> canonical
+/// tile-key map. A neighbor cell is entered iff [coordToKey] has an entry for its
+/// [gridCoordKey]; the returned map is keyed by those tile keys (the start tile at
+/// distance 0), so callers that track tile keys (not coordinates) consume it
+/// directly. Returns an empty map when the start coordinate is absent from
+/// [coordToKey].
+///
+/// Distances are 4-neighbor step counts and therefore independent of neighbor
+/// visit order; routing through [kGridNeighborsCardinal4] keeps the single
+/// canonical neighbor set (shared with [bfsGridParents]) without affecting
+/// results. Single source of truth for the standalone distance BFS the town
+/// assignment site previously inlined with raw `'$x|$y'` keys and an ad-hoc
+/// cardinal-delta array.
+Map<String, int> bfsGridDistances({
+  required int startX,
+  required int startY,
+  required Map<String, String> coordToKey,
+}) {
+  final result = <String, int>{};
+  final startTile = coordToKey[gridCoordKey(startX, startY)];
+  if (startTile == null) return result;
+  final queue = Queue<(int, int, int)>()..add((startX, startY, 0));
+  result[startTile] = 0;
+  while (queue.isNotEmpty) {
+    final (cx, cy, dist) = queue.removeFirst();
+    for (final d in kGridNeighborsCardinal4) {
+      final nx = cx + d.$1;
+      final ny = cy + d.$2;
+      final tile = coordToKey[gridCoordKey(nx, ny)];
+      if (tile == null || result.containsKey(tile)) continue;
+      result[tile] = dist + 1;
+      queue.add((nx, ny, dist + 1));
+    }
+  }
+  return result;
+}
