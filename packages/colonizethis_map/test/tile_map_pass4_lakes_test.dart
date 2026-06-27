@@ -2,6 +2,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_map/src/tile_map_directions.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('Pass 4 lake fill (issue 1864)', () {
     test(
@@ -9,7 +11,7 @@ void main() {
       () {
         const sea = 's1';
         const land = '_land';
-        final params = TileMapParams(width: 5, height: 3);
+        final params = genParams(width: 5, height: 3);
         final grid = <List<String>>[
           [land, sea, sea, sea, land],
           [land, sea, sea, sea, land],
@@ -30,7 +32,7 @@ void main() {
     test('fillLakesPass4ForTest preserves two-continent border strait sea', () {
       const sea = 's1';
       const land = '_land';
-      final params = TileMapParams(width: 4, height: 3);
+      final params = genParams(width: 4, height: 3);
       final grid = <List<String>>[
         [land, sea, sea, land],
         [land, sea, sea, land],
@@ -53,7 +55,7 @@ void main() {
       'full generate seed-before-assignment still has edge-reachable sea',
       () {
         final (result, _) = TileMapGenerator(
-          params: TileMapParams(
+          params: genParams(
             width: 28,
             height: 22,
             seed: 901,

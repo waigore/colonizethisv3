@@ -1,6 +1,8 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('TileMapGenerator land seeding', () {
     test(
@@ -8,11 +10,10 @@ void main() {
       () {
         final logLines = <String>[];
         TileMapGenerator(
-          params: TileMapParams(
+          params: genParams(
             width: 24,
             height: 24,
             seed: 5,
-            seaFraction: 0.6,
           ),
         ).generate(
           numProvinces: 2,
@@ -33,11 +34,10 @@ void main() {
         List<(int x, int y)>? capturedPositions;
         List<int>? capturedIndices;
         TileMapGenerator(
-          params: TileMapParams(
+          params: genParams(
             width: 20,
             height: 15,
             seed: 1,
-            seaFraction: 0.6,
           ),
         ).generate(
           numProvinces: 1,
@@ -65,7 +65,7 @@ void main() {
     test('onContinentSeedsPlaced is invoked with one seed per continent', () {
       List<(int x, int y)>? continentSeeds;
       TileMapGenerator(
-        params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
+        params: genParams(width: 24, height: 24, seed: 7),
       ).generate(
         numProvinces: 2,
         numContinents: 1,
@@ -82,7 +82,7 @@ void main() {
         const w = 20;
         const h = 20;
         const seaFraction = 0.6;
-        final params = TileMapParams(
+        final params = genParams(
           width: w,
           height: h,
           seed: 1,
@@ -106,11 +106,10 @@ void main() {
     test(
       'seedBeforeAssignment: false (organic default) produces valid tile map with land',
       () {
-        final params = TileMapParams(
+        final params = genParams(
           width: 30,
           height: 30,
           seed: 42,
-          seaFraction: 0.6,
           seedBeforeAssignment: false,
         );
         final (result, _) = TileMapGenerator(
@@ -130,11 +129,10 @@ void main() {
     test('organic mode logs Pass 2–3 (organic)', () {
       final logLines = <String>[];
       TileMapGenerator(
-        params: TileMapParams(
+        params: genParams(
           width: 10,
           height: 10,
           seed: 1,
-          seaFraction: 0.6,
           seedBeforeAssignment: false,
         ),
       ).generate(

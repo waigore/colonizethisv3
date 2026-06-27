@@ -1,6 +1,8 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('defaultTileMapRegionGenerator', () {
     test('delegates to TileMapGenerator and emits callbacks', () {
@@ -9,11 +11,10 @@ void main() {
       var continentSeedCallbackCalled = false;
 
       final (result, topology) = defaultTileMapRegionGenerator(
-        params: const TileMapParams(
+        params: genParams(
           width: 20,
           height: 14,
           seed: 3,
-          seaFraction: 0.6,
         ),
         numProvinces: 4,
         numContinents: 2,

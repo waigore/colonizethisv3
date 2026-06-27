@@ -1,11 +1,12 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_map/src/gen/tile_map_grid_graph.dart';
+
+import 'support/tile_map_gen_fixtures.dart';
 
 void main() {
   group('TileMapGridGraph', () {
     test('connectedComponentsOfLand splits two 4-connected blobs', () {
-      final params = TileMapParams(width: 4, height: 2);
+      final params = genParams(width: 4, height: 2);
       final g = TileMapGridGraph(params);
       final a = <(int, int)>{(0, 0), (1, 0)};
       final b = <(int, int)>{(3, 0), (3, 1)};
@@ -19,7 +20,7 @@ void main() {
       'oceanCells: all-sea grid is ocean only (no fillable single-continent S)',
       () {
         const sea = 's1';
-        final params = TileMapParams(width: 3, height: 3);
+        final params = genParams(width: 3, height: 3);
         final g = TileMapGridGraph(params);
         final grid = List.generate(3, (_) => List.filled(3, sea));
         final ocean = g.oceanCells(grid, sea, [], []);
@@ -30,7 +31,7 @@ void main() {
     test('oceanCells: map-border bay sea is not ocean when |S| = 1', () {
       const sea = 's1';
       const land = 'p1';
-      final params = TileMapParams(width: 5, height: 3);
+      final params = genParams(width: 5, height: 3);
       final g = TileMapGridGraph(params);
       final grid = <List<String>>[
         [land, sea, sea, sea, land],
@@ -45,7 +46,7 @@ void main() {
 
     test('oceanCells: border strait sea remains ocean when |S| >= 2', () {
       const sea = 's1';
-      final params = TileMapParams(width: 4, height: 3);
+      final params = genParams(width: 4, height: 3);
       final g = TileMapGridGraph(params);
       final grid = <List<String>>[
         ['p1', sea, sea, 'p2'],
@@ -60,7 +61,7 @@ void main() {
     });
 
     test('nearestLandSeedIndexForCell picks closest seed by squared distance', () {
-      final params = TileMapParams(width: 10, height: 10);
+      final params = genParams(width: 10, height: 10);
       final g = TileMapGridGraph(params);
       final seeds = <(int, int)>[(0, 0), (9, 9), (5, 5)];
       expect(g.nearestLandSeedIndexForCell(1, 1, seeds), 0);
@@ -69,12 +70,12 @@ void main() {
     });
 
     test('nearestLandSeedIndexForCell returns 0 when seeds empty', () {
-      final g = TileMapGridGraph(TileMapParams(width: 3, height: 3));
+      final g = TileMapGridGraph(genParams(width: 3, height: 3));
       expect(g.nearestLandSeedIndexForCell(1, 1, []), 0);
     });
 
     test('continentForLandCell maps nearest seed to continent id', () {
-      final g = TileMapGridGraph(TileMapParams(width: 10, height: 10));
+      final g = TileMapGridGraph(genParams(width: 10, height: 10));
       final seeds = <(int, int)>[(0, 0), (9, 9)];
       final continentBySeed = <int>[2, 7];
       expect(g.continentForLandCell(1, 1, seeds, continentBySeed), 2);
@@ -84,7 +85,7 @@ void main() {
 
     test('countSeaCells matches sea id cells', () {
       const sea = 's1';
-      final params = TileMapParams(width: 2, height: 2);
+      final params = genParams(width: 2, height: 2);
       final g = TileMapGridGraph(params);
       final grid = [
         [sea, 'p1'],
