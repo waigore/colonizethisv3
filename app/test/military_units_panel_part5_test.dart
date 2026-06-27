@@ -7,30 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/military_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
-
-Future<void> expandFirstArmyExpansion(WidgetTester tester) async {
-  final tiles = find.byType(ExpansionTile);
-  if (tiles.evaluate().isEmpty) {
-    return;
-  }
-  await tester.tap(tiles.first);
-  await tester.pumpAndSettle();
-}
-
-Future<void> expandAllArmyExpansions(WidgetTester tester) async {
-  final finder = find.byType(ExpansionTile);
-  final n = finder.evaluate().length;
-  for (var i = 0; i < n; i++) {
-    await tester.tap(finder.at(i));
-    await tester.pumpAndSettle();
-  }
-}
 
 void main() {
   suppressLogsForTests();
@@ -43,26 +25,6 @@ void main() {
     game = buildMilitaryPanelTestGame();
     humanPlayerIdWithUnits = game.players.first.id;
   });
-
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    AppEventBus? bus,
-    MapTopology? topology,
-    Orders draftOrders = const Orders(),
-  }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: MilitaryUnitsPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          bus: bus ?? AppEventBus.create(),
-          topology: topology ?? const MapTopology(),
-          draftOrders: draftOrders,
-        ),
-      ),
-    );
-  }
 
   group('Army management (bus events)', () {
     testWidgets('Home Army expansion does not show Move action', (
@@ -119,7 +81,7 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(buildPanel(game: game, humanPlayerId: playerId));
+      await tester.pumpWidget(buildMilitaryPanel(game: game, humanPlayerId: playerId));
       await tester.pumpAndSettle();
 
       final homeTile = find.widgetWithText(ExpansionTile, 'Home Army');
@@ -213,7 +175,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          buildPanel(game: game, humanPlayerId: playerId, bus: bus),
+          buildMilitaryPanel(game: game, humanPlayerId: playerId, bus: bus),
         );
         await tester.pumpAndSettle();
 
@@ -314,7 +276,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        buildPanel(
+        buildMilitaryPanel(
           game: game,
           humanPlayerId: playerId,
           bus: bus,
@@ -433,7 +395,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          buildPanel(
+          buildMilitaryPanel(
             game: game,
             humanPlayerId: playerId,
             bus: bus,
@@ -581,7 +543,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          buildPanel(
+          buildMilitaryPanel(
             game: game,
             humanPlayerId: playerId,
             bus: bus,
@@ -678,7 +640,7 @@ void main() {
         },
       );
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: playerId, draftOrders: draft),
+        buildMilitaryPanel(game: game, humanPlayerId: playerId, draftOrders: draft),
       );
       await tester.pumpAndSettle();
 
@@ -776,7 +738,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        buildPanel(
+        buildMilitaryPanel(
           game: game,
           humanPlayerId: playerId,
           bus: bus,
