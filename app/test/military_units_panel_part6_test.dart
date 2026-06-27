@@ -1,71 +1,14 @@
 // Tests for MilitaryUnitsPanel. SPEC/ui/military-units-panel.md.
 
-import 'dart:async';
-
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
-/// Applies [ArmySplitRequestedEvent] like [AppEventHandlerScope] and rebuilds
-/// the panel with updated [Game] (widget tests do not mount full shell).
-class _ArmySplitTestHarness extends StatefulWidget {
-  const _ArmySplitTestHarness({
-    required this.initialGame,
-    required this.humanPlayerId,
-    required this.bus,
-  });
-
-  final Game initialGame;
-  final String humanPlayerId;
-  final AppEventBus bus;
-
-  @override
-  State<_ArmySplitTestHarness> createState() => _ArmySplitTestHarnessState();
-}
-
-class _ArmySplitTestHarnessState extends State<_ArmySplitTestHarness> {
-  late Game _game;
-  StreamSubscription<ArmySplitRequestedEvent>? _sub;
-
-  @override
-  void initState() {
-    super.initState();
-    _game = widget.initialGame;
-    _sub = widget.bus.on<ArmySplitRequestedEvent>().listen((e) {
-      final next = applyArmySplit(
-        game: _game,
-        playerId: e.humanPlayerId,
-        sourceArmyId: e.sourceArmyId,
-        unitIdsToMove: e.unitIdsToMove,
-      );
-      setState(() => _game = next);
-    });
-  }
-
-  @override
-  void dispose() {
-    unawaited(_sub?.cancel());
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MilitaryUnitsPanel(
-      game: _game,
-      humanPlayerId: widget.humanPlayerId,
-      bus: widget.bus,
-      topology: const MapTopology(),
-      draftOrders: const Orders(),
-    );
-  }
-}
+import 'support/military_units_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -142,7 +85,7 @@ void main() {
               body: SizedBox(
                 height: 900,
                 width: 480,
-                child: _ArmySplitTestHarness(
+                child: ArmySplitTestHarness(
                   initialGame: initial,
                   humanPlayerId: playerId,
                   bus: bus,
@@ -255,7 +198,7 @@ void main() {
               body: SizedBox(
                 height: 900,
                 width: 480,
-                child: _ArmySplitTestHarness(
+                child: ArmySplitTestHarness(
                   initialGame: initial,
                   humanPlayerId: playerId,
                   bus: bus,
