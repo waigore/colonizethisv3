@@ -45,6 +45,7 @@ import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
+import 'check_map_test_no_duplicate_view_fixtures.dart';
 import 'check_map_region_dispatch_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
@@ -1058,6 +1059,8 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapRegionDataAccessCentral(repoRoot);
     case 'repo.map_region_dispatch_central':
       return runCheckMapRegionDispatchCentral(repoRoot);
+    case 'repo.map_test_no_duplicate_view_fixtures':
+      return runCheckMapTestNoDuplicateViewFixtures(repoRoot);
     default:
       return null;
   }
