@@ -35,7 +35,7 @@
 // silhouette. This file mirrors the existing pre-warm pattern from
 // `panels_320dp_min_viewport_test.dart` (DiplomacyPanel group) so the
 // naval pin renders against the same asset surface as
-// `naval_units_panel_test_part1`.
+// `naval_units_panel_part1`.
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // SPEC: `SPEC/ui/civilian-units-panel.md`, `SPEC/ui/military-units-panel.md`,
@@ -76,7 +76,7 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// deterministic (empty) default; the contract under test is the panel
 /// chrome at the narrow viewport, not the panel's full assign-work
 /// behaviour (which is already covered by the dedicated
-/// `*_units_panel_test_part*` files).
+/// `*_units_panel_part*` files).
 Future<void> _pumpNarrow(
   WidgetTester tester,
   Widget child, {
