@@ -882,6 +882,27 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_gp_ids_from_players.dart
 
+  - rule_id: repo.setup_dedup_grid_bfs_coord_keys
+    group: architecture
+    title: setup grid BFS + 2D coord keys must route through grid_bfs.dart (no inline cardinal-delta arrays / raw "$x|$y" interpolation outside grid_bfs.dart) (Refs #3740)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_grid_bfs_coord_keys.dart
+
+  - rule_id: repo.setup_dedup_topology_adjacency
+    group: architecture
+    title: setup topology/tile adjacency must use colonizethis_world provinceNodeIds/seaZonesAdjacentToProvince and the shared setup_topology_adjacency.dart helpers (no private clones) (Refs #3740)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_topology_adjacency.dart
+
+  - rule_id: repo.setup_test_no_duplicate_scaffolding
+    group: architecture
+    title: colonizethis_setup tests must reuse production provinceNeighboursFromTopology / connectedComponentsInSubset instead of reimplementing them (Refs #3740)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_test_no_duplicate_scaffolding.dart
+
   - rule_id: repo.orders_file_size
     group: structure
     title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)

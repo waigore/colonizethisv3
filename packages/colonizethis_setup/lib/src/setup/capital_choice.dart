@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_world/src/world/capital_reassignment.dart';
 import 'grid_bfs.dart';
 import 'setup_exceptions.dart';
+import 'setup_topology_adjacency.dart';
 
 export 'package:colonizethis_world/src/world/capital_reassignment.dart'
     show
@@ -118,8 +119,8 @@ WorldState applyCapitalPortAndRoad(
   var ports = Map<String, String>.from(worldState.portsByProvinceSeaboard);
 
   final capitalKey = tile.toTileKey();
-  final provinceIds = _provinceNodeIds(topology);
-  final seaZoneIds = _seaZonesAdjacentToProvince(
+  final provinceIds = provinceNodeIds(topology);
+  final seaZoneIds = seaZonesAdjacentToProvince(
     topology,
     localProvinceId,
   ).toList()..sort();
@@ -132,7 +133,7 @@ WorldState applyCapitalPortAndRoad(
 
   for (final seaZoneId in seaZoneIds) {
     final portKeyProvSea = '$provinceId|$seaZoneId';
-    final capitalTouchesSeaZone = _isTileAdjacentToSeaZone(
+    final capitalTouchesSeaZone = tileAdjacentToSeaZone(
       tile.x,
       tile.y,
       map,
@@ -330,7 +331,7 @@ CapitalTileClass classifyCapitalTile({
   required String localProvinceId,
   Set<String>? provinceIds,
 }) {
-  final knownProvinceIds = provinceIds ?? _provinceNodeIds(topology);
+  final knownProvinceIds = provinceIds ?? provinceNodeIds(topology);
   final coastal = _isTileAdjacentToSea(
     x,
     y,
