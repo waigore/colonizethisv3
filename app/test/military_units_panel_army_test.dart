@@ -12,19 +12,9 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'support/military_units_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
-
-  late Game game;
-  late String humanPlayerIdWithUnits;
-  const String humanPlayerIdWithNoUnits = 'no-such-player';
-
-  setUpAll(() {
-    game = buildMilitaryPanelTestGame();
-    humanPlayerIdWithUnits = game.players.first.id;
-  });
 
   group('Army management (bus events)', () {
     testWidgets('Home Army expansion does not show Move action', (

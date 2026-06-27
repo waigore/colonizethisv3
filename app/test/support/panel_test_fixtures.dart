@@ -706,11 +706,11 @@ Game buildTradePanelTestGame() {
 }
 
 /// Military regiment type id used by the lightweight military fixture. Matches
-/// the regiment ids the `military_units_panel_part*` mini-games use, so
+/// the regiment ids the `military_units_panel_*` mini-games use, so
 /// `isMilitaryUnit`/`regimentTypeDisplayName` resolve identically.
 const String kPanelTestRegimentType = 'musketeers';
 
-/// Lightweight game shaped for the `military_units_panel_part*` family.
+/// Lightweight game shaped for the `military_units_panel_*` family.
 ///
 /// Covers what those parts read from `game` / `humanPlayerIdWithUnits`:
 /// - one human player ([kPanelTestHumanPlayerId]) owning military regiments in
