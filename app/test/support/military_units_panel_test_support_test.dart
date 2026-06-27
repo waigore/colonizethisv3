@@ -1,10 +1,10 @@
 // Smoke tests for the shared `MilitaryUnitsPanel` widget-test scaffolding.
 //
 // Verifies the consolidated helpers in `military_units_panel_test_support.dart`
-// (extracted from the six `military_units_panel_part*_test.dart` files, Refs
-// #3730) build the canonical panel host, drive the `ExpansionTile` tree
-// helpers, and bridge `ArmySplitRequestedEvent` the same way the running shell
-// does, so the part files keep their behavior.
+// (extracted from the `military_units_panel_*_test.dart` family, Refs #3730)
+// build the canonical panel host, drive the `ExpansionTile` tree helpers, and
+// bridge `ArmySplitRequestedEvent` the same way the running shell does, so the
+// family's test files keep their behavior.
 //
 // SPEC: SPEC/ui/military-units-panel.md, SPEC/program/app-ui-wiring.md.
 

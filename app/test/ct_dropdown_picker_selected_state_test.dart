@@ -10,11 +10,12 @@
 // The selected row is keyed by `CtDropdown.kCtDropdownPickerSelectedRowKey`.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -25,9 +26,8 @@ void main() {
       required ValueChanged<String?> onChanged,
       List<String> items = const ['England', 'France', 'Spain'],
     }) {
-      return MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(
+      return buildAppShell(
+        child: Scaffold(
           body: Center(
             child: SizedBox(
               width: 220,
