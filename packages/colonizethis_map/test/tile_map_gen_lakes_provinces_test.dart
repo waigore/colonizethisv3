@@ -9,6 +9,8 @@ import 'package:colonizethis_map/src/gen/tile_map_generator_lakes_provinces.dart
 import 'package:colonizethis_map/src/gen/tile_map_grid_graph.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 // Direct unit tests for the standalone `TileMapGenLakesProvinces` class
 // (extracted from a `part of 'tile_map_generator.dart'` fragment, Refs #3588).
 // These construct the pass directly — no `TileMapGenerator` orchestration — to
@@ -25,7 +27,7 @@ void main() {
 
   group('TileMapGenLakesProvinces (standalone, direct construction)', () {
     test('run with skipFillLakes leaves the grid unchanged and logs skips', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 4,
         height: 3,
         skipFillLakes: true,
@@ -63,7 +65,7 @@ void main() {
     });
 
     test('fillLakes converts an enclosed single-continent lake to land', () {
-      final params = TileMapParams(width: 5, height: 3);
+      final params = genParams(width: 5, height: 3);
       final pass = buildPass(params);
       final grid = <List<String>>[
         [land, sea, sea, sea, land],
@@ -78,7 +80,7 @@ void main() {
     });
 
     test('fillLakes preserves a two-continent strait as sea', () {
-      final params = TileMapParams(width: 4, height: 3);
+      final params = genParams(width: 4, height: 3);
       final pass = buildPass(params);
       final grid = <List<String>>[
         [land, sea, sea, land],
@@ -101,7 +103,7 @@ void main() {
     });
 
     test('assignProvincesFromSeeds replaces land sentinels with seed ids', () {
-      final params = TileMapParams(width: 3, height: 3);
+      final params = genParams(width: 3, height: 3);
       final pass = buildPass(params);
       final grid = <List<String>>[
         [land, land, sea],
@@ -121,7 +123,7 @@ void main() {
     });
 
     test('assignProvincesFromSeeds returns grid unchanged with no seeds', () {
-      final params = TileMapParams(width: 2, height: 2);
+      final params = genParams(width: 2, height: 2);
       final pass = buildPass(params);
       final grid = <List<String>>[
         [land, land],

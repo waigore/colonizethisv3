@@ -2,16 +2,17 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('TileMapGenerator resource rules', () {
     test(
       'with resourceRules produces terrain and resource grids of same dimensions',
       () {
-        final params = TileMapParams(
+        final params = genParams(
           width: 20,
           height: 15,
           seed: 2,
-          seaFraction: 0.6,
         );
         final (result, _) = TileMapGenerator(params: params).generate(
           numProvinces: 1,
@@ -31,11 +32,10 @@ void main() {
     );
 
     test('terrain and resource respect region and terrain rules', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 25,
         height: 25,
         seed: 3,
-        seaFraction: 0.6,
       );
       final (result, _) = TileMapGenerator(params: params).generate(
         numProvinces: 1,
@@ -57,11 +57,10 @@ void main() {
     });
 
     test('newWorld resources respect region and terrain rules', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 30,
         height: 30,
         seed: 17,
-        seaFraction: 0.6,
       );
       final (result, _) = TileMapGenerator(params: params).generate(
         numProvinces: 2,
@@ -85,7 +84,7 @@ void main() {
     test(
       'multi-region resource cap: newWorld keeps both resources at or below cap',
       () {
-        final params = TileMapParams(
+        final params = genParams(
           width: 24,
           height: 24,
           seed: 42,
@@ -129,7 +128,7 @@ void main() {
     test(
       'multi-region resource cap: oldWorld respects region and terrain rules',
       () {
-        final params = TileMapParams(
+        final params = genParams(
           width: 24,
           height: 24,
           seed: 99,
@@ -178,7 +177,7 @@ void main() {
 
     test('without resourceRules leaves terrain and resource grids null', () {
       final (result, _) = TileMapGenerator(
-        params: TileMapParams(width: 10, height: 10, seed: 1, seaFraction: 0.6),
+        params: genParams(width: 10, height: 10, seed: 1),
       ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
       expect(result.terrainGrid, isNull);
       expect(result.resourceGrid, isNull);
@@ -189,7 +188,7 @@ void main() {
         result,
         _,
       ) = TileMapGenerator(
-        params: TileMapParams(width: 25, height: 25, seed: 4, seaFraction: 0.6),
+        params: genParams(width: 25, height: 25, seed: 4),
       ).generate(
         numProvinces: 1,
         numContinents: 1,
@@ -209,11 +208,10 @@ void main() {
     test('jitter params produce terrain and resource grids', () {
       final (result, _) =
           TileMapGenerator(
-            params: TileMapParams(
+            params: genParams(
               width: 24,
               height: 24,
               seed: 3,
-              seaFraction: 0.6,
               jitterHomogeneityThreshold: 0.5,
               jitterProbability: 0.5,
               jitterMaxFraction: 0.2,

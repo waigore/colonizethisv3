@@ -5,9 +5,11 @@ import 'package:colonizethis_map/src/gen/map_gen_pass_payloads.dart';
 import 'package:colonizethis_map/src/gen/map_gen_stage.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('MapGenPassContext', () {
-    final params = TileMapParams(width: 4, height: 3, seed: 1);
+    final params = genParams(width: 4, height: 3, seed: 1);
 
     test('log forwards the message when onLog is provided', () {
       final lines = <String>[];
@@ -42,11 +44,10 @@ void main() {
     };
 
     test('seed-before-assignment path matches direct method calls', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 20,
         height: 20,
         seed: 11,
-        seaFraction: 0.6,
         seedBeforeAssignment: true,
       );
       final pass = TileMapGenLandSeeds(params);
@@ -85,11 +86,10 @@ void main() {
     });
 
     test('organic path matches direct method call', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 20,
         height: 14,
         seed: 5,
-        seaFraction: 0.6,
       );
       final pass = TileMapGenLandSeeds(params);
 
@@ -123,11 +123,10 @@ void main() {
     });
 
     test('emits the seed-before-assignment pass log line', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 16,
         height: 16,
         seed: 3,
-        seaFraction: 0.6,
         seedBeforeAssignment: true,
       );
       final pass = TileMapGenLandSeeds(params);
