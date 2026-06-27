@@ -847,6 +847,13 @@ rules:
     runner: dart
     script: tool/check_combat_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.map_test_no_duplicate_view_fixtures
+    group: architecture
+    title: colonizethis_map init_game_map_view_builder_* tests must use shared init_game_map_view_fixtures builders, not inline dual-region Game/MapTopology scaffolding (Refs #3746)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_no_duplicate_view_fixtures.dart
+
   - rule_id: repo.combat_test_mirrors_lib
     group: architecture
     title: colonizethis_combat tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #3716)

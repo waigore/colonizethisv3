@@ -3,66 +3,37 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'support/init_game_map_view_fixtures.dart';
+
 void main() {
   group('buildInitGameMapViewData visibility and unit presence', () {
     test('applies visibilityByTile map to CellViewData.visibility', () {
-      final owMap = TileMapResult(
-        width: 2,
-        height: 1,
-        grid: [
-          ['p1', 'p1'],
-        ],
+      final owMap = mapTileGrid([
+        ['p1', 'p1'],
+      ]);
+      final nwMap = mapTileGrid([
+        ['p1'],
+      ]);
+      final owTopology = regionTopology(
+        regionId: 'oldWorld',
+        provinceIds: const ['p1'],
       );
-      final nwMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['p1'],
-        ],
+      final nwTopology = regionTopology(
+        regionId: 'newWorld',
+        provinceIds: const ['p1'],
       );
-      final owTopology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [],
-      );
-      final nwTopology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'newWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [],
-      );
-      final game = Game(
+      final game = minimalGame(
         id: 'visibility',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-            ],
-            units: [],
-          ),
-          newWorld: const RegionData(
-            provinces: [
-              Province(id: 'newWorld|p1', regionId: 'newWorld', ownerId: 'gp2'),
-            ],
-            units: [],
-          ),
-        ),
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+        ],
+        newWorldProvinces: const [
+          Province(id: 'newWorld|p1', regionId: 'newWorld', ownerId: 'gp2'),
+        ],
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: false),
           Player(id: 'gp2', displayName: 'GP2', isHuman: false),
         ],
-        minorNations: const [],
-        tribes: const [],
       );
 
       // Two tiles in OW: (0,0) and (1,0). One tile in NW: (0,0).
@@ -95,96 +66,60 @@ void main() {
     test(
       'province unit presence shows own province counts and hides other province without visible intel',
       () {
-        final owMap = TileMapResult(
-          width: 2,
-          height: 1,
-          grid: [
-            ['pOwn', 'pOther'],
-          ],
-        );
-        final nwMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
-            ['p1'],
-          ],
-        );
-        final owTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'pOwn',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'pOther',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
+        final owMap = mapTileGrid([
+          ['pOwn', 'pOther'],
+        ]);
+        final nwMap = mapTileGrid([
+          ['p1'],
+        ]);
+        final owTopology = regionTopology(
+          regionId: 'oldWorld',
+          provinceIds: const ['pOwn', 'pOther'],
           edges: const [TopologyEdge(id1: 'pOwn', id2: 'pOther')],
         );
-        final nwTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: 'newWorld',
-              type: TopologyNodeType.province,
+        final nwTopology = regionTopology(
+          regionId: 'newWorld',
+          provinceIds: const ['p1'],
+        );
+        final game = minimalGame(
+          id: 'presence_hidden_other',
+          oldWorldProvinces: const [
+            Province(id: 'oldWorld|pOwn', regionId: 'oldWorld', ownerId: 'gp1'),
+            Province(
+              id: 'oldWorld|pOther',
+              regionId: 'oldWorld',
+              ownerId: 'gp2',
             ),
           ],
-          edges: const [],
-        );
-        final game = Game(
-          id: 'presence_hidden_other',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|pOwn',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp1',
-                ),
-                Province(
-                  id: 'oldWorld|pOther',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp2',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'u_builder',
-                  type: kUnitTypeBuilder,
-                  ownerId: 'gp1',
-                  locationProvinceId: 'oldWorld|pOwn',
-                  status: UnitStatus.idle,
-                ),
-                Unit(
-                  id: 'u_pikemen',
-                  type: 'pikemen',
-                  ownerId: 'gp2',
-                  locationProvinceId: 'oldWorld|pOther',
-                  status: UnitStatus.idle,
-                ),
-              ],
+          oldWorldUnits: [
+            Unit(
+              id: 'u_builder',
+              type: kUnitTypeBuilder,
+              ownerId: 'gp1',
+              locationProvinceId: 'oldWorld|pOwn',
+              status: UnitStatus.idle,
             ),
-            newWorld: const RegionData(provinces: [], units: []),
-            fleets: [
-              Fleet(
-                id: 'f_other',
-                ownerId: 'gp2',
-                regionId: 'oldWorld',
-                inPortAtProvinceId: 'oldWorld|pOther',
-                ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
-              ),
-            ],
-          ),
+            Unit(
+              id: 'u_pikemen',
+              type: 'pikemen',
+              ownerId: 'gp2',
+              locationProvinceId: 'oldWorld|pOther',
+              status: UnitStatus.idle,
+            ),
+          ],
+          fleets: [
+            Fleet(
+              id: 'f_other',
+              ownerId: 'gp2',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|pOther',
+              ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
+            ),
+          ],
           players: const [
             Player(id: 'gp1', displayName: 'GP1', isHuman: true),
             Player(id: 'gp2', displayName: 'GP2', isHuman: false),
           ],
-          minorNations: const [],
-          tribes: const [],
         );
 
         final visibilityByTile = <String, TileVisibility>{
@@ -223,86 +158,58 @@ void main() {
     test(
       'province unit presence exposes other province counts when tile is visible',
       () {
-        final owMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
-            ['pOther'],
-          ],
+        final owMap = mapTileGrid([
+          ['pOther'],
+        ]);
+        final nwMap = mapTileGrid([
+          ['p1'],
+        ]);
+        final owTopology = regionTopology(
+          regionId: 'oldWorld',
+          provinceIds: const ['pOther'],
         );
-        final nwMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
-            ['p1'],
-          ],
+        final nwTopology = regionTopology(
+          regionId: 'newWorld',
+          provinceIds: const ['p1'],
         );
-        final owTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'pOther',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
-        );
-        final nwTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: 'newWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
-        );
-        final game = Game(
+        final game = minimalGame(
           id: 'presence_visible_other',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|pOther',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp2',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'u_builder_other',
-                  type: kUnitTypeBuilder,
-                  ownerId: 'gp2',
-                  locationProvinceId: 'oldWorld|pOther',
-                  status: UnitStatus.idle,
-                ),
-                Unit(
-                  id: 'u_pikemen_other',
-                  type: 'pikemen',
-                  ownerId: 'gp2',
-                  locationProvinceId: 'oldWorld|pOther',
-                  status: UnitStatus.idle,
-                ),
-              ],
+          oldWorldProvinces: const [
+            Province(
+              id: 'oldWorld|pOther',
+              regionId: 'oldWorld',
+              ownerId: 'gp2',
             ),
-            newWorld: const RegionData(provinces: [], units: []),
-            fleets: [
-              Fleet(
-                id: 'f_other_visible',
-                ownerId: 'gp2',
-                regionId: 'oldWorld',
-                inPortAtProvinceId: 'oldWorld|pOther',
-                ships: [ShipInstance(id: 'ship_7', typeId: 'frigate')],
-              ),
-            ],
-          ),
+          ],
+          oldWorldUnits: [
+            Unit(
+              id: 'u_builder_other',
+              type: kUnitTypeBuilder,
+              ownerId: 'gp2',
+              locationProvinceId: 'oldWorld|pOther',
+              status: UnitStatus.idle,
+            ),
+            Unit(
+              id: 'u_pikemen_other',
+              type: 'pikemen',
+              ownerId: 'gp2',
+              locationProvinceId: 'oldWorld|pOther',
+              status: UnitStatus.idle,
+            ),
+          ],
+          fleets: [
+            Fleet(
+              id: 'f_other_visible',
+              ownerId: 'gp2',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|pOther',
+              ships: [ShipInstance(id: 'ship_7', typeId: 'frigate')],
+            ),
+          ],
           players: const [
             Player(id: 'gp1', displayName: 'GP1', isHuman: true),
             Player(id: 'gp2', displayName: 'GP2', isHuman: false),
           ],
-          minorNations: const [],
-          tribes: const [],
         );
 
         final visibilityByTile = <String, TileVisibility>{

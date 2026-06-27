@@ -3,73 +3,28 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-Game _minimalGame({
-  required List<Province> oldWorldProvinces,
-  required List<Province> newWorldProvinces,
-  List<Unit> oldWorldUnits = const [],
-  List<Unit> newWorldUnits = const [],
-  List<Fleet> fleets = const [],
-  List<Player> players = const [],
-  Map<String, String> portsByProvinceSeaboard = const {},
-}) {
-  return Game(
-    id: 'slice-test',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(provinces: oldWorldProvinces, units: oldWorldUnits),
-      newWorld: RegionData(provinces: newWorldProvinces, units: newWorldUnits),
-      fleets: fleets,
-      portsByProvinceSeaboard: portsByProvinceSeaboard,
-    ),
-    players: players,
-    minorNations: const [],
-    tribes: const [],
-  );
-}
-
-MapTopology _singleProvinceAndSeaTopology(String regionId) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: 'p1',
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 's1',
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  );
-}
+import 'support/init_game_map_view_fixtures.dart';
 
 void main() {
   group('buildInitGameMapViewData extracted slice coverage', () {
     test(
       'region setup maps owner/display and terrain palette from minimal data',
       () {
-        final tileMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
+        final tileMap = mapTileGrid(
+          [
             ['p1'],
           ],
           terrainGrid: [
             [TerrainType.hardwoodForest],
           ],
         );
-        final seaOnly = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
-            ['s1'],
-          ],
-        );
-        final topology = _singleProvinceAndSeaTopology('oldWorld');
-        final newWorldTopology = _singleProvinceAndSeaTopology('newWorld');
-        final game = _minimalGame(
+        final seaOnly = mapTileGrid([
+          ['s1'],
+        ]);
+        final topology = singleProvinceAndSeaTopology('oldWorld');
+        final newWorldTopology = singleProvinceAndSeaTopology('newWorld');
+        final game = minimalGame(
+          id: 'slice-test',
           oldWorldProvinces: const [
             Province(
               id: 'oldWorld|p1',
@@ -111,23 +66,16 @@ void main() {
     );
 
     test('overlay setup counts regiments, civilians, and in-port ships', () {
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['p1'],
-        ],
-      );
-      final seaOnly = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['s1'],
-        ],
-      );
-      final topology = _singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = _singleProvinceAndSeaTopology('newWorld');
-      final game = _minimalGame(
+      final tileMap = mapTileGrid([
+        ['p1'],
+      ]);
+      final seaOnly = mapTileGrid([
+        ['s1'],
+      ]);
+      final topology = singleProvinceAndSeaTopology('oldWorld');
+      final newWorldTopology = singleProvinceAndSeaTopology('newWorld');
+      final game = minimalGame(
+        id: 'slice-test',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
         ],
@@ -173,32 +121,19 @@ void main() {
     });
 
     test('marker helpers expose capitals ports towns and warps', () {
-      final tileMap = TileMapResult(
-        width: 2,
-        height: 1,
-        grid: [
-          ['p1', 's1'],
-        ],
+      final tileMap = mapTileGrid([
+        ['p1', 's1'],
+      ]);
+      final newWorldSea = mapTileGrid([
+        ['s9'],
+      ]);
+      final topology = singleProvinceAndSeaTopology('oldWorld');
+      final newWorldTopology = regionTopology(
+        regionId: 'newWorld',
+        seaZoneIds: const ['s9'],
       );
-      final newWorldSea = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['s9'],
-        ],
-      );
-      final topology = _singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 's9',
-            regionId: 'newWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
-      );
-      final game = _minimalGame(
+      final game = minimalGame(
+        id: 'slice-test',
         oldWorldProvinces: const [
           Province(
             id: 'oldWorld|p1',
@@ -251,23 +186,16 @@ void main() {
     });
 
     test('cell helper applies visibility and extraction overlays', () {
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['p1'],
-        ],
-      );
-      final seaOnly = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['s1'],
-        ],
-      );
-      final topology = _singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = _singleProvinceAndSeaTopology('newWorld');
-      final game = _minimalGame(
+      final tileMap = mapTileGrid([
+        ['p1'],
+      ]);
+      final seaOnly = mapTileGrid([
+        ['s1'],
+      ]);
+      final topology = singleProvinceAndSeaTopology('oldWorld');
+      final newWorldTopology = singleProvinceAndSeaTopology('newWorld');
+      final game = minimalGame(
+        id: 'slice-test',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
         ],
@@ -295,32 +223,19 @@ void main() {
     test(
       'does not synthesize a Home Fleet marker when fleet entity is missing',
       () {
-        final tileMap = TileMapResult(
-          width: 2,
-          height: 1,
-          grid: [
-            ['p1', 's1'],
-          ],
+        final tileMap = mapTileGrid([
+          ['p1', 's1'],
+        ]);
+        final newWorldSea = mapTileGrid([
+          ['s9'],
+        ]);
+        final topology = singleProvinceAndSeaTopology('oldWorld');
+        final newWorldTopology = regionTopology(
+          regionId: 'newWorld',
+          seaZoneIds: const ['s9'],
         );
-        final newWorldSea = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
-            ['s9'],
-          ],
-        );
-        final topology = _singleProvinceAndSeaTopology('oldWorld');
-        final newWorldTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 's9',
-              regionId: 'newWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [],
-        );
-        final game = _minimalGame(
+        final game = minimalGame(
+          id: 'slice-test',
           oldWorldProvinces: const [
             Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
           ],
@@ -356,32 +271,19 @@ void main() {
     );
 
     test('keeps an empty Home Fleet marker when real fleet entity exists', () {
-      final tileMap = TileMapResult(
-        width: 2,
-        height: 1,
-        grid: [
-          ['p1', 's1'],
-        ],
+      final tileMap = mapTileGrid([
+        ['p1', 's1'],
+      ]);
+      final newWorldSea = mapTileGrid([
+        ['s9'],
+      ]);
+      final topology = singleProvinceAndSeaTopology('oldWorld');
+      final newWorldTopology = regionTopology(
+        regionId: 'newWorld',
+        seaZoneIds: const ['s9'],
       );
-      final newWorldSea = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['s9'],
-        ],
-      );
-      final topology = _singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 's9',
-            regionId: 'newWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
-      );
-      final game = _minimalGame(
+      final game = minimalGame(
+        id: 'slice-test',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
