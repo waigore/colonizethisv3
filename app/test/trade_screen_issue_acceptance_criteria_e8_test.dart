@@ -50,7 +50,6 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
@@ -348,62 +347,57 @@ void main() {
     ];
 
   Widget buildLeftRailHost({bool globalObserve = false}) {
-    return ProviderScope(
+    return buildAppShell(
       overrides: routeHostOverrides(globalObserve: globalObserve),
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          theme: AppThemes.editorialMonocle,
-          onGenerateRoute: Routes.generate,
-          home: Scaffold(
-            body: Stack(
-              children: [
-                Positioned(
-                  left: 20,
-                  top: 0,
-                  child: GameMapEmpireLeftRail(
-                    game: routeHostGame,
-                    humanPlayerId: routeHostPlayer.id,
-                  ),
-                ),
-              ],
+      navigatorKey: appNavigatorKey,
+      onGenerateRoute: Routes.generate,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Positioned(
+              left: 20,
+              top: 0,
+              child: GameMapEmpireLeftRail(
+                game: routeHostGame,
+                humanPlayerId: routeHostPlayer.id,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
   Widget buildTradeRouteHost({bool globalObserve = false}) {
-    return ProviderScope(
+    // Route host: pushes RoutePaths.trade through Routes.generate, so it uses
+    // the shared shell's onGenerateRoute + appNavigatorKey seams and the
+    // shellWrapper seam to keep AppEventHandlerScope above routing (Refs #3730).
+    return buildAppShell(
       overrides: routeHostOverrides(globalObserve: globalObserve),
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          theme: AppThemes.editorialMonocle,
-          onGenerateRoute: Routes.generate,
-          home: Builder(
-            builder: (context) {
-              return Scaffold(
-                body: Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed(
-                        RoutePaths.trade,
-                        arguments: <String, Object?>{
-                          'game': routeHostGame,
-                          'humanPlayerId': routeHostPlayer.id,
-                        },
-                      );
+      navigatorKey: appNavigatorKey,
+      onGenerateRoute: Routes.generate,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed(
+                    RoutePaths.trade,
+                    arguments: <String, Object?>{
+                      'game': routeHostGame,
+                      'humanPlayerId': routeHostPlayer.id,
                     },
-                    // ignore: avoid_hardcoded_strings_in_widgets
-                    child: const Text('open trade'),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('open trade'),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
