@@ -8,15 +8,14 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -37,17 +36,14 @@ void main() {
   });
 
   Widget buildScreen({required Game game, required String humanPlayerId}) {
-    return ProviderScope(
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Navigator(
-          pages: [
-            MaterialPage(
-              child: DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
-            ),
-          ],
-          onDidRemovePage: (_) {},
-        ),
+    return buildAppShell(
+      child: Navigator(
+        pages: [
+          MaterialPage(
+            child: DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
+          ),
+        ],
+        onDidRemovePage: (_) {},
       ),
     );
   }
@@ -104,13 +100,7 @@ void main() {
     testWidgets('back button is tappable', (WidgetTester tester) async {
       final navigatorKey = GlobalKey<NavigatorState>();
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            navigatorKey: navigatorKey,
-            home: const Text('Home'),
-          ),
-        ),
+        buildAppShell(navigatorKey: navigatorKey, child: const Text('Home')),
       );
 
       navigatorKey.currentState!.push<void>(
