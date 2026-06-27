@@ -1,13 +1,7 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
-import 'dart:async';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        applyNavalSplitFleet,
-        applyNavalTransferShipsBetweenFleets,
-        homeFleetIdFor;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -20,42 +14,9 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 
+import 'support/naval_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
-
-/// Mirrors shell handling of [NavalSplitFleetRequestedEvent] for widget tests.
-StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
-  required AppEventBus bus,
-  required Game Function() gameSnapshot,
-}) {
-  return bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
-    final next = applyNavalSplitFleet(
-      game: gameSnapshot(),
-      humanPlayerId: e.humanPlayerId,
-      originalFleetId: e.originalFleetId,
-      shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
-    );
-    bus.emit(NavalFleetsUpdatedEvent(game: next));
-  });
-}
-
-/// Mirrors shell handling of [NavalTransferShipsRequestedEvent] for widget tests.
-StreamSubscription<NavalTransferShipsRequestedEvent>
-wireNavalTransferForWidgetTest({
-  required AppEventBus bus,
-  required Game Function() gameSnapshot,
-}) {
-  return bus.on<NavalTransferShipsRequestedEvent>().listen((e) {
-    final next = applyNavalTransferShipsBetweenFleets(
-      game: gameSnapshot(),
-      humanPlayerId: e.humanPlayerId,
-      sourceFleetId: e.sourceFleetId,
-      targetFleetId: e.targetFleetId,
-      shipInstanceIdsToTransfer: e.shipInstanceIdsToTransfer,
-    );
-    bus.emit(NavalFleetsUpdatedEvent(game: next));
-  });
-}
 
 void main() {
   suppressLogsForTests();
@@ -88,35 +49,12 @@ void main() {
         : 'gp1';
   });
 
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    AppEventBus? bus,
-    MapTopology topology = const MapTopology(),
-    Orders draftOrders = const Orders(),
-    String? locationScopeKey,
-  }) {
-    final resolvedBus = bus ?? AppEventBus.create();
-    return MaterialApp(
-      home: Scaffold(
-        body: NavalUnitsPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          bus: resolvedBus,
-          topology: topology,
-          draftOrders: draftOrders,
-          locationScopeKey: locationScopeKey,
-        ),
-      ),
-    );
-  }
-
   group('NavalUnitsPanel', () {
     testWidgets('AC: Panel shows title Naval Units', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
+        buildNavalPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
       );
       await tester.pumpAndSettle();
 
@@ -131,7 +69,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
+        buildNavalPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
       );
       await tester.pumpAndSettle();
 
@@ -154,7 +92,7 @@ void main() {
       'AC: When human player has no fleets, panel does not crash and shows either empty or Home Fleet only',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildPanel(game: game, humanPlayerId: humanPlayerIdWithNoFleets),
+          buildNavalPanel(game: game, humanPlayerId: humanPlayerIdWithNoFleets),
         );
         await tester.pumpAndSettle();
 
@@ -169,7 +107,7 @@ void main() {
       'AC: When player has fleets, panel shows at least one fleet row',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
+          buildNavalPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
         );
         await tester.pumpAndSettle();
 
@@ -193,7 +131,7 @@ void main() {
 
     testWidgets('AC: Panel is wrapped in CtPanel', (WidgetTester tester) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
+        buildNavalPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
       );
       await tester.pumpAndSettle();
 
@@ -233,7 +171,7 @@ void main() {
       final bus = AppEventBus.create();
       bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
       await tester.pumpWidget(
-        buildPanel(
+        buildNavalPanel(
           game: game,
           humanPlayerId: humanPlayerIdWithFleets,
           bus: bus,
@@ -258,7 +196,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
+        buildNavalPanel(game: game, humanPlayerId: humanPlayerIdWithFleets),
       );
       await tester.pumpAndSettle();
 
@@ -333,7 +271,7 @@ void main() {
         ],
       );
       await tester.pumpWidget(
-        buildPanel(game: namedSeaGame, humanPlayerId: humanId),
+        buildNavalPanel(game: namedSeaGame, humanPlayerId: humanId),
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('Caribbean Sea'), findsWidgets);
@@ -392,7 +330,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          buildPanel(game: shipLabelGame, humanPlayerId: humanId),
+          buildNavalPanel(game: shipLabelGame, humanPlayerId: humanId),
         );
         await tester.pumpAndSettle();
 
@@ -465,7 +403,7 @@ void main() {
         });
 
         await tester.pumpWidget(
-          buildPanel(
+          buildNavalPanel(
             game: gameWithExtraFleets,
             humanPlayerId: humanId,
             bus: bus,
@@ -553,7 +491,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          buildPanel(
+          buildNavalPanel(
             game: gameWithoutHomeFleets,
             humanPlayerId: humanPlayerIdWithFleets,
             bus: bus,
@@ -613,7 +551,7 @@ void main() {
           locatedRegionId = e.regionId;
         });
         await tester.pumpWidget(
-          buildPanel(
+          buildNavalPanel(
             game: gameWithExtraFleets,
             humanPlayerId: humanId,
             bus: bus,
@@ -721,7 +659,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        buildPanel(game: gameWithExtraFleets, humanPlayerId: humanId, bus: bus),
+        buildNavalPanel(game: gameWithExtraFleets, humanPlayerId: humanId, bus: bus),
       );
       await tester.pumpAndSettle();
 
@@ -749,7 +687,7 @@ void main() {
     ) async {
       final humanId = humanPlayerIdWithFleets;
 
-      await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
       await tester.pumpAndSettle();
 
       final homeFleetFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
@@ -776,7 +714,7 @@ void main() {
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
 
-        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
         await tester.pumpAndSettle();
 
         final homeFleetFinder = find.widgetWithText(
@@ -829,7 +767,7 @@ void main() {
 
       final baseFleet = playerFleets.first;
 
-      await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
       await tester.pumpAndSettle();
 
       final fleetFinder = find.widgetWithText(
@@ -849,7 +787,7 @@ void main() {
       'AC: Expanding home/non-home fleet and tapping Split opens Split Fleet dialog',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
         await tester.pumpAndSettle();
 
         final homeFleetFinder = find.widgetWithText(
@@ -910,7 +848,7 @@ void main() {
             .toList();
         if (playerFleets.isEmpty) return;
 
-        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
         await tester.pumpAndSettle();
 
         expect(
@@ -948,7 +886,7 @@ void main() {
             : 'Fleet ${targetFleet.id}';
 
         await tester.pumpWidget(
-          buildPanel(bus: bus, game: game, humanPlayerId: humanId),
+          buildNavalPanel(bus: bus, game: game, humanPlayerId: humanId),
         );
         await tester.pumpAndSettle();
 
