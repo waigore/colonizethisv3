@@ -1,15 +1,16 @@
 // Shared widget-test scaffolding for the `MilitaryUnitsPanel` test family.
 //
-// The six `app/test/military_units_panel_part*_test.dart` files each previously
-// re-declared an identical local `buildPanel(...)` closure (a plain
+// The `MilitaryUnitsPanel` test files (`military_units_panel_test.dart`,
+// `_display_test.dart`, `_army_test.dart`, `_army_split_test.dart`) each
+// previously re-declared an identical local `buildPanel(...)` closure (a plain
 // `MaterialApp` > `Scaffold` host for `MilitaryUnitsPanel`), identical
 // `expandFirstArmyExpansion` / `expandAllArmyExpansions` `ExpansionTile`
 // helpers, and a byte-identical `_ArmySplitTestHarness` widget that mirrors the
 // running shell's `ArmySplitRequestedEvent` handling. Consolidating them here
-// keeps each part file's per-test fixtures and assertions local while removing
+// keeps each test file's per-test fixtures and assertions local while removing
 // the copy-pasted shell, tree helpers, and bus wiring.
 //
-// Refs #3730 (consolidate app test scaffolding; partN shared setup).
+// Refs #3730 (consolidate app test scaffolding; shared family setup).
 // SPEC: SPEC/ui/military-units-panel.md (panel behavior under test),
 // SPEC/program/repo-lint.md (test static-analysis scope).
 
