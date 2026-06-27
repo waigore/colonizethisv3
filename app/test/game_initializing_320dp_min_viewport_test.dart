@@ -37,7 +37,6 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -46,6 +45,8 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
 
 const Size _kMinViewport = Size(kMinViewportWidth, 640);
 
@@ -82,33 +83,24 @@ const List<String> _kProgressPhaseLabels = <String>[
 /// `false` it pumps a single layout frame instead — the progress view
 /// hosts a `CircularProgressIndicator` ticker that never settles, so
 /// `pumpAndSettle` would time out without adding overflow signal.
-Future<void> _pumpSurfaceAtSize(
+Future<void> _pumpSurface(
   WidgetTester tester,
   Widget child, {
   required Size size,
   bool settle = true,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: Center(child: child)),
-      ),
-    ),
+  // `settle: false` keeps the harness on a single layout frame — enough
+  // to surface a `RenderFlex` overflow through
+  // `WidgetTester.takeException()` without waiting on the indeterminate
+  // spinner ticker the progress view hosts.
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(body: Center(child: child)),
+    settle: settle,
   );
-  if (settle) {
-    await tester.pumpAndSettle();
-  } else {
-    // A single frame is enough for the layout pass to surface a
-    // `RenderFlex` overflow through `WidgetTester.takeException()`
-    // without waiting on the indeterminate spinner ticker.
-    await tester.pump();
-  }
 }
 
 /// Renders [NewGameErrorCard] inside the same [CtDialogShell] chrome the
@@ -142,7 +134,7 @@ void main() {
           '+ "$phaseLabel" phase label + 48 dp accent spinner all render '
           'inside the CtDialogShell content column',
           (WidgetTester tester) async {
-            await _pumpSurfaceAtSize(
+            await _pumpSurface(
               tester,
               NewGameSetupProgressView(stepIndex: stepIndex),
               size: _kMinViewport,
@@ -182,7 +174,7 @@ void main() {
         'fallback per `_stepLabel` so the dialog still renders within the '
         '~288 dp CtDialogShell content column',
         (WidgetTester tester) async {
-          await _pumpSurfaceAtSize(
+          await _pumpSurface(
             tester,
             const NewGameSetupProgressView(stepIndex: 7),
             size: _kMinViewport,
@@ -203,7 +195,7 @@ void main() {
         'also pumps without exception (regression sentinel for the overflow '
         'contract — keeps the 320 dp positive pins meaningful)',
         (WidgetTester tester) async {
-          await _pumpSurfaceAtSize(
+          await _pumpSurface(
             tester,
             const NewGameSetupProgressView(stepIndex: 0),
             size: _kWideRegressionViewport,
@@ -229,7 +221,7 @@ void main() {
         'must fit within the ~288 dp CtDialogShell content column at '
         'kMinViewportWidth (320 dp)',
         (WidgetTester tester) async {
-          await _pumpSurfaceAtSize(
+          await _pumpSurface(
             tester,
             _hostedErrorCard(),
             size: _kMinViewport,
@@ -267,7 +259,7 @@ void main() {
         'exception (regression sentinel for the overflow contract — keeps '
         'the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpSurfaceAtSize(
+          await _pumpSurface(
             tester,
             _hostedErrorCard(),
             size: _kWideRegressionViewport,

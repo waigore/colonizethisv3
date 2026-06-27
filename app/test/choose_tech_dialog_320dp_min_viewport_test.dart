@@ -48,7 +48,6 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel_orders.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -56,6 +55,8 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -85,8 +86,8 @@ List<TechDefinition> _longestNamedTechs() {
 
 /// Pumps [dialog] at [size] under the running editorial-monocle theme.
 ///
-/// Mirrors `_pumpDialogAtSize` in
-/// `grant_or_subsidy_dialog_320dp_min_viewport_test.dart` — sets the
+/// Delegates to the shared `pumpAtMinViewport` harness
+/// — which sets the
 /// surface size (so the binding's render flex math sees the minimum
 /// viewport) and overrides MediaQuery so dialog code that reads
 /// `MediaQuery.sizeOf(context).width` resolves to the same value.
@@ -96,25 +97,19 @@ List<TechDefinition> _longestNamedTechs() {
 /// own `CtDialogShell` layout at the narrow viewport, not the barrier /
 /// overlay route plumbing (already covered by
 /// `technology_panel_choose_tech_dialog_test.dart`).
-Future<void> _pumpDialogAtSize(
+Future<void> _pumpDialog(
   WidgetTester tester,
   Widget dialog, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: Center(child: dialog)),
-      ),
-    ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(body: Center(child: dialog)),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -135,7 +130,7 @@ void main() {
         (WidgetTester tester) async {
           final techs = _longestNamedTechs();
 
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             ChooseTechDialog(
               slotIndex: 0,
@@ -179,7 +174,7 @@ void main() {
         'research" line + Close render — pins the empty-state branch '
         'fitting within the ~288 dp content width.',
         (WidgetTester tester) async {
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             ChooseTechDialog(
               slotIndex: 2,
@@ -208,7 +203,7 @@ void main() {
         (WidgetTester tester) async {
           final techs = _longestNamedTechs();
 
-          await _pumpDialogAtSize(
+          await _pumpDialog(
             tester,
             ChooseTechDialog(
               slotIndex: 0,

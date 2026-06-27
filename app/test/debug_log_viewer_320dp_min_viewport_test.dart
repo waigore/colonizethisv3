@@ -64,7 +64,6 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
@@ -73,6 +72,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logger/logger.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -100,25 +101,19 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// pattern already used by every other `*_320dp_min_viewport_test.dart`
 /// file. The viewer is presentational (no Riverpod providers), so no
 /// provider overrides are required.
-Future<void> _pumpDebugLogViewerAtSize(
+Future<void> _pumpDebugLogViewer(
   WidgetTester tester, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: const DebugLogViewerScreen(),
-      ),
-    ),
+  // `settle: true` is safe here: the screen has no indefinite ticker and
+  // the `ListView.builder` resolves synchronously against the singleton
+  // `SessionLogBuffer`.
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    child: const DebugLogViewerScreen(),
+    settle: true,
   );
-  // `pumpAndSettle` is safe here: the screen has no indefinite ticker
-  // and the `ListView.builder` resolves synchronously against the
-  // singleton `SessionLogBuffer`.
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -144,7 +139,7 @@ void main() {
         'default-selected `info`/`warning`/`error` level chips all '
         'render',
         (WidgetTester tester) async {
-          await _pumpDebugLogViewerAtSize(tester, size: _kMinViewport);
+          await _pumpDebugLogViewer(tester, size: _kMinViewport);
 
           expect(
             tester.takeException(),
@@ -222,7 +217,7 @@ void main() {
         'also pumps without exception (regression sentinel for the '
         'overflow contract — keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpDebugLogViewerAtSize(
+          await _pumpDebugLogViewer(
             tester,
             size: _kWideRegressionViewport,
           );
@@ -263,7 +258,7 @@ void main() {
             LogEvent(Level.warning, 'app: narrow-viewport pin second line'),
           );
 
-          await _pumpDebugLogViewerAtSize(tester, size: _kMinViewport);
+          await _pumpDebugLogViewer(tester, size: _kMinViewport);
 
           expect(
             tester.takeException(),
@@ -316,7 +311,7 @@ void main() {
             LogEvent(Level.warning, 'app: wide regression pin line'),
           );
 
-          await _pumpDebugLogViewerAtSize(
+          await _pumpDebugLogViewer(
             tester,
             size: _kWideRegressionViewport,
           );

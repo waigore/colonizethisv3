@@ -48,13 +48,14 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -118,38 +119,31 @@ QuickBattleInput _input() {
 /// under test is the screen's own [CtDialogShell] layout at the narrow
 /// viewport, not the barrier / overlay route plumbing (which is already
 /// covered by other tests).
-Future<void> _pumpQuickBattleScreenAtSize(
+Future<void> _pumpQuickBattleScreen(
   WidgetTester tester, {
   required Size size,
   required bool interactive,
   ValueChanged<QuickBattleResult>? onComplete,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(
-          body: Center(
-            child: QuickBattleScreen(
-              input: _input(),
-              onComplete: onComplete ?? (_) {},
-              interactive: interactive,
-            ),
-          ),
+  // The harness single pump settles the `setState` scheduled from
+  // `initState` on the non-interactive auto-resolve path; the
+  // interactive path also pumps once so the action `Wrap` lays out
+  // against the actual viewport.
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(
+      body: Center(
+        child: QuickBattleScreen(
+          input: _input(),
+          onComplete: onComplete ?? (_) {},
+          interactive: interactive,
         ),
       ),
     ),
   );
-  // A single extra pump settles the `setState` scheduled from
-  // `initState` on the non-interactive auto-resolve path. The
-  // interactive path also pumps once so the action `Wrap` lays out
-  // against the actual viewport.
-  await tester.pump();
 }
 
 void main() {
@@ -164,7 +158,7 @@ void main() {
         'RenderFlex overflow exception, Battle Result winner sentence + '
         'both casualty rows + Continue render',
         (WidgetTester tester) async {
-          await _pumpQuickBattleScreenAtSize(
+          await _pumpQuickBattleScreen(
             tester,
             size: _kMinViewport,
             interactive: false,
@@ -221,7 +215,7 @@ void main() {
         (WidgetTester tester) async {
           int completeCount = 0;
           QuickBattleResult? lastResult;
-          await _pumpQuickBattleScreenAtSize(
+          await _pumpQuickBattleScreen(
             tester,
             size: _kMinViewport,
             interactive: false,
@@ -262,7 +256,7 @@ void main() {
         'QuickBattleActionSelector Command Points header + every action '
         'Wrap child render, and the Resolve (Auto) fallback is absent',
         (WidgetTester tester) async {
-          await _pumpQuickBattleScreenAtSize(
+          await _pumpQuickBattleScreen(
             tester,
             size: _kMinViewport,
             interactive: true,
@@ -329,7 +323,7 @@ void main() {
         'for the overflow contract — keeps the 320 dp positive pins '
         'meaningful)',
         (WidgetTester tester) async {
-          await _pumpQuickBattleScreenAtSize(
+          await _pumpQuickBattleScreen(
             tester,
             size: _kWideRegressionViewport,
             interactive: false,
