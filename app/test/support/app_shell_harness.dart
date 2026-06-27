@@ -35,6 +35,15 @@ import 'package:flutter_test/flutter_test.dart';
 /// the [MaterialApp]; their defaults match `MaterialApp`'s own so non-localized
 /// callers are unaffected. Any extra structural wrappers a screen needs (a
 /// [Scaffold] host, a [Stack], an event-handler scope, …) belong in [child].
+///
+/// [onGenerateRoute] is forwarded to the [MaterialApp] so route-host tests that
+/// drive `Navigator.pushNamed` (for example through `Routes.generate`) can use
+/// the shared shell while keeping [child] as the `'/'` home; pass
+/// [navigatorKey] when the host pushes via an app-owned key. [shellWrapper], if
+/// supplied, wraps the [MaterialApp] before it becomes the [ProviderScope]
+/// child — the composition seam for an app-level wrapper that must sit
+/// **outside** the [MaterialApp] (for example `AppEventHandlerScope`), which a
+/// `home`-hosted [child] cannot express. When null the shell is unwrapped.
 Widget buildAppShell({
   required Widget child,
   Size? viewport,
@@ -43,16 +52,20 @@ Widget buildAppShell({
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
+  RouteFactory? onGenerateRoute,
+  Widget Function(Widget app)? shellWrapper,
 }) {
+  final MaterialApp app = _appShellMaterialApp(
+    home: _wrapViewport(child, viewport),
+    localizationsDelegates: localizationsDelegates,
+    supportedLocales: supportedLocales,
+    locale: locale,
+    navigatorKey: navigatorKey,
+    onGenerateRoute: onGenerateRoute,
+  );
   return ProviderScope(
     overrides: overrides,
-    child: _appShellMaterialApp(
-      home: _wrapViewport(child, viewport),
-      localizationsDelegates: localizationsDelegates,
-      supportedLocales: supportedLocales,
-      locale: locale,
-      navigatorKey: navigatorKey,
-    ),
+    child: shellWrapper == null ? app : shellWrapper(app),
   );
 }
 
@@ -75,16 +88,20 @@ Widget buildAppShellWithContainer({
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
+  RouteFactory? onGenerateRoute,
+  Widget Function(Widget app)? shellWrapper,
 }) {
+  final MaterialApp app = _appShellMaterialApp(
+    home: _wrapViewport(child, viewport),
+    localizationsDelegates: localizationsDelegates,
+    supportedLocales: supportedLocales,
+    locale: locale,
+    navigatorKey: navigatorKey,
+    onGenerateRoute: onGenerateRoute,
+  );
   return UncontrolledProviderScope(
     container: container,
-    child: _appShellMaterialApp(
-      home: _wrapViewport(child, viewport),
-      localizationsDelegates: localizationsDelegates,
-      supportedLocales: supportedLocales,
-      locale: locale,
-      navigatorKey: navigatorKey,
-    ),
+    child: shellWrapper == null ? app : shellWrapper(app),
   );
 }
 
@@ -97,6 +114,7 @@ MaterialApp _appShellMaterialApp({
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
+  RouteFactory? onGenerateRoute,
 }) {
   return MaterialApp(
     navigatorKey: navigatorKey,
@@ -104,6 +122,7 @@ MaterialApp _appShellMaterialApp({
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
+    onGenerateRoute: onGenerateRoute,
     home: home,
   );
 }
@@ -140,6 +159,8 @@ Future<void> pumpAppShell(
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
+  RouteFactory? onGenerateRoute,
+  Widget Function(Widget app)? shellWrapper,
   bool settle = false,
 }) async {
   if (viewport != null) {
@@ -155,6 +176,8 @@ Future<void> pumpAppShell(
       supportedLocales: supportedLocales,
       locale: locale,
       navigatorKey: navigatorKey,
+      onGenerateRoute: onGenerateRoute,
+      shellWrapper: shellWrapper,
     ),
   );
   if (settle) {
@@ -181,6 +204,8 @@ Future<void> pumpAppShellWithContainer(
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
+  RouteFactory? onGenerateRoute,
+  Widget Function(Widget app)? shellWrapper,
   bool settle = false,
 }) async {
   if (viewport != null) {
@@ -196,6 +221,8 @@ Future<void> pumpAppShellWithContainer(
       supportedLocales: supportedLocales,
       locale: locale,
       navigatorKey: navigatorKey,
+      onGenerateRoute: onGenerateRoute,
+      shellWrapper: shellWrapper,
     ),
   );
   if (settle) {

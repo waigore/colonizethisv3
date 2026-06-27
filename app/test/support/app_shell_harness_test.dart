@@ -11,7 +11,12 @@
 //  * `settle: true` drains pending animations;
 //  * `pumpAppShellWithContainer` binds an externally-owned `ProviderContainer`
 //    (via `UncontrolledProviderScope`) so the same container reads back state
-//    the UI mutated, under the same theme + forced-viewport contract.
+//    the UI mutated, under the same theme + forced-viewport contract;
+//  * `onGenerateRoute` is forwarded so route-host tests can `pushNamed` named
+//    routes off the shared shell while `child` stays the `'/'` home;
+//  * `shellWrapper` composes an app-level wrapper outside the `MaterialApp`
+//    (the seam used to keep `AppEventHandlerScope` above routing), and is
+//    absent from the tree when not supplied.
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -181,6 +186,93 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'buildAppShell forwards onGenerateRoute so named routes resolve off the '
+    'shared shell',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildAppShell(
+          onGenerateRoute: (settings) {
+            if (settings.name == '/details') {
+              return MaterialPageRoute<void>(
+                builder: (_) => const Text('details-route'),
+              );
+            }
+            return null;
+          },
+          child: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/details'),
+                    child: const Text('go'),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The `'/'` home (child) renders first; the named route is not yet shown.
+      expect(find.text('go'), findsOneWidget);
+      expect(find.text('details-route'), findsNothing);
+
+      await tester.tap(find.text('go'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('details-route'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'buildAppShell wraps the MaterialApp with shellWrapper when supplied',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildAppShell(
+          shellWrapper: (app) => _ShellMarker(child: app),
+          child: const SizedBox.shrink(),
+        ),
+      );
+
+      // The wrapper sits above the MaterialApp (outside routing), as an
+      // app-level scope such as AppEventHandlerScope would.
+      expect(
+        find.ancestor(
+          of: find.byType(MaterialApp),
+          matching: find.byType(_ShellMarker),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'buildAppShell omits any wrapper when shellWrapper is null',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildAppShell(child: const SizedBox.shrink()),
+      );
+
+      expect(find.byType(_ShellMarker), findsNothing);
+      expect(find.byType(MaterialApp), findsOneWidget);
+    },
+  );
+}
+
+/// Inert wrapper used to assert `shellWrapper` composes above the MaterialApp.
+class _ShellMarker extends StatelessWidget {
+  const _ShellMarker({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => child;
 }
 
 class _BrieflyAnimating extends StatefulWidget {

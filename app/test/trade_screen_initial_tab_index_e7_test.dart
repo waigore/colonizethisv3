@@ -18,7 +18,6 @@
 //    Deal Book stories in the SPEC-pinned order so reviewers can
 //    audit the live ledger chrome.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
@@ -154,32 +153,29 @@ void main() {
       'positive initialTabIndex foregrounds the matching tab body on '
       'first frame',
       (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(
-              body: CtTabStrip(
-                initialTabIndex: 1,
-                tabLabels: const <String>['First', 'Second', 'Third'],
-                tabViews: const <Widget>[
-                  Text(
-                    'first-body',
-                    key: ValueKey<String>('tab-body-first'),
-                  ),
-                  Text(
-                    'second-body',
-                    key: ValueKey<String>('tab-body-second'),
-                  ),
-                  Text(
-                    'third-body',
-                    key: ValueKey<String>('tab-body-third'),
-                  ),
-                ],
-              ),
+        await pumpAppShell(
+          tester,
+          child: Scaffold(
+            body: CtTabStrip(
+              initialTabIndex: 1,
+              tabLabels: const <String>['First', 'Second', 'Third'],
+              tabViews: const <Widget>[
+                Text(
+                  'first-body',
+                  key: ValueKey<String>('tab-body-first'),
+                ),
+                Text(
+                  'second-body',
+                  key: ValueKey<String>('tab-body-second'),
+                ),
+                Text(
+                  'third-body',
+                  key: ValueKey<String>('tab-body-third'),
+                ),
+              ],
             ),
           ),
         );
-        await tester.pump();
 
         expect(
           find.byKey(const ValueKey<String>('tab-body-second')),
