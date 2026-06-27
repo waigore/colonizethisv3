@@ -8,7 +8,10 @@
 //    restores it) and is observable via `MediaQuery.sizeOf`;
 //  * a null `viewport` leaves the ambient surface size untouched (no forced
 //    `MediaQuery`);
-//  * `settle: true` drains pending animations.
+//  * `settle: true` drains pending animations;
+//  * `pumpAppShellWithContainer` binds an externally-owned `ProviderContainer`
+//    (via `UncontrolledProviderScope`) so the same container reads back state
+//    the UI mutated, under the same theme + forced-viewport contract.
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -117,6 +120,67 @@ void main() {
     expect(find.text('done'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'pumpAppShellWithContainer binds the caller-owned container under the '
+    'editorial-monocle theme',
+    (WidgetTester tester) async {
+      final ProviderContainer container = ProviderContainer(
+        overrides: [_labelProvider.overrideWithValue('from-container')],
+      );
+      addTearDown(container.dispose);
+      late ThemeData observedTheme;
+      late String observedLabel;
+
+      await pumpAppShellWithContainer(
+        tester,
+        container: container,
+        child: Consumer(
+          builder: (context, ref, _) {
+            observedTheme = Theme.of(context);
+            observedLabel = ref.watch(_labelProvider);
+            return const SizedBox.shrink();
+          },
+        ),
+      );
+
+      expect(observedLabel, 'from-container');
+      // The same container the caller owns reads back the bound value.
+      expect(container.read(_labelProvider), 'from-container');
+      expect(
+        observedTheme.colorScheme,
+        AppThemes.editorialMonocle.colorScheme,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'pumpAppShellWithContainer forces the surface size when viewport is set',
+    (WidgetTester tester) async {
+      final ProviderContainer container = ProviderContainer();
+      addTearDown(container.dispose);
+      late Size observedSize;
+      late double maxWidth;
+
+      await pumpAppShellWithContainer(
+        tester,
+        container: container,
+        viewport: _kViewport,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            observedSize = MediaQuery.sizeOf(context);
+            maxWidth = constraints.maxWidth;
+            return const SizedBox.shrink();
+          },
+        ),
+      );
+
+      expect(observedSize, _kViewport);
+      expect(maxWidth, _kViewport.width);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 class _BrieflyAnimating extends StatefulWidget {

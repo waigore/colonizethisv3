@@ -79,6 +79,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
@@ -240,18 +241,12 @@ Future<ProviderContainer> _pumpTradeScreenStandalone(
     ],
   );
   addTearDown(container.dispose);
-  await tester.binding.setSurfaceSize(const Size(1024, 4096));
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(
-    UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: TradeScreen(game: game, player: player),
-      ),
-    ),
+  await pumpAppShellWithContainer(
+    tester,
+    container: container,
+    viewport: const Size(1024, 4096),
+    child: TradeScreen(game: game, player: player),
   );
-  await tester.pump();
   return container;
 }
 

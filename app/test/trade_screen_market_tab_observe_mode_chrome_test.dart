@@ -53,7 +53,6 @@
 //     is not in scope for this pin.
 
 import 'package:colonizethis_app/config/app_constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
@@ -67,6 +66,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 const String _humanPlayerId = 'gp_h';
 
@@ -151,18 +152,12 @@ Future<void> _pumpTradeScreenObserveMode(
     ],
   );
   addTearDown(container.dispose);
-  await tester.binding.setSurfaceSize(const Size(1024, 4096));
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(
-    UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: TradeScreen(game: game, player: player),
-      ),
-    ),
+  await pumpAppShellWithContainer(
+    tester,
+    container: container,
+    viewport: const Size(1024, 4096),
+    child: TradeScreen(game: game, player: player),
   );
-  await tester.pump();
 }
 
 void main() {

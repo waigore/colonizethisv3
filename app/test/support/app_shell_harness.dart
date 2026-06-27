@@ -44,20 +44,77 @@ Widget buildAppShell({
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
 }) {
-  final Widget home = viewport == null
-      ? child
-      : MediaQuery(data: MediaQueryData(size: viewport), child: child);
   return ProviderScope(
     overrides: overrides,
-    child: MaterialApp(
-      navigatorKey: navigatorKey,
-      theme: AppThemes.editorialMonocle,
+    child: _appShellMaterialApp(
+      home: _wrapViewport(child, viewport),
       localizationsDelegates: localizationsDelegates,
       supportedLocales: supportedLocales,
       locale: locale,
-      home: home,
+      navigatorKey: navigatorKey,
     ),
   );
+}
+
+/// Builds the canonical app shell bound to an externally-owned [container]
+/// via an [UncontrolledProviderScope] (instead of an [overrides]-scoped
+/// [ProviderScope]). The caller creates and disposes [container]; this is the
+/// specialization used by tests that must read provider state back from the
+/// **same** container after pumping — the [ProviderScope]-owning
+/// [buildAppShell] does not expose its container.
+///
+/// Theme, viewport [MediaQuery] wrapping, localization forwarding, and the
+/// hosted-[child] contract are identical to [buildAppShell]; only the scope
+/// ownership differs, so there remains a single [MaterialApp]
+/// (editorial-monocle) shell definition.
+Widget buildAppShellWithContainer({
+  required ProviderContainer container,
+  required Widget child,
+  Size? viewport,
+  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+  Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
+  Locale? locale,
+  GlobalKey<NavigatorState>? navigatorKey,
+}) {
+  return UncontrolledProviderScope(
+    container: container,
+    child: _appShellMaterialApp(
+      home: _wrapViewport(child, viewport),
+      localizationsDelegates: localizationsDelegates,
+      supportedLocales: supportedLocales,
+      locale: locale,
+      navigatorKey: navigatorKey,
+    ),
+  );
+}
+
+/// The single editorial-monocle [MaterialApp] definition shared by every
+/// shell builder in this harness; only the provider-scope wrapper differs
+/// between the [ProviderScope] and [UncontrolledProviderScope] variants.
+MaterialApp _appShellMaterialApp({
+  required Widget home,
+  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+  Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
+  Locale? locale,
+  GlobalKey<NavigatorState>? navigatorKey,
+}) {
+  return MaterialApp(
+    navigatorKey: navigatorKey,
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: localizationsDelegates,
+    supportedLocales: supportedLocales,
+    locale: locale,
+    home: home,
+  );
+}
+
+/// Wraps [child] in a forced-size [MediaQuery] when [viewport] is non-null so
+/// widget code reading `MediaQuery.sizeOf(context)` resolves to it; otherwise
+/// returns [child] unchanged so the ambient surface size is used.
+Widget _wrapViewport(Widget child, Size? viewport) {
+  return viewport == null
+      ? child
+      : MediaQuery(data: MediaQueryData(size: viewport), child: child);
 }
 
 /// Pumps [child] inside [buildAppShell].
@@ -94,6 +151,47 @@ Future<void> pumpAppShell(
       child: child,
       viewport: viewport,
       overrides: overrides,
+      localizationsDelegates: localizationsDelegates,
+      supportedLocales: supportedLocales,
+      locale: locale,
+      navigatorKey: navigatorKey,
+    ),
+  );
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
+}
+
+/// Pumps [child] inside [buildAppShellWithContainer], bound to the
+/// externally-owned [container] (the caller is responsible for creating and
+/// disposing it — typically via `addTearDown(container.dispose)`).
+///
+/// Use this for tests that read provider state back from the same container
+/// after pumping (for example asserting on a notifier's value once the UI has
+/// mutated it). Viewport forcing, tear-down restore, and the single-pump /
+/// [settle] behaviour match [pumpAppShell].
+Future<void> pumpAppShellWithContainer(
+  WidgetTester tester, {
+  required ProviderContainer container,
+  required Widget child,
+  Size? viewport,
+  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+  Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
+  Locale? locale,
+  GlobalKey<NavigatorState>? navigatorKey,
+  bool settle = false,
+}) async {
+  if (viewport != null) {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(viewport);
+  }
+  await tester.pumpWidget(
+    buildAppShellWithContainer(
+      container: container,
+      child: child,
+      viewport: viewport,
       localizationsDelegates: localizationsDelegates,
       supportedLocales: supportedLocales,
       locale: locale,
