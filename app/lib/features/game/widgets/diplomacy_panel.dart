@@ -485,6 +485,8 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         return 0.6;
       case DiplomaticOrderType.alliance:
         return 0.4;
+      case DiplomaticOrderType.breakAlliance:
+        return -0.4;
       case DiplomaticOrderType.establishOverture:
         return 0.5;
       case DiplomaticOrderType.grantAid:
