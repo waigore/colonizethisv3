@@ -82,13 +82,13 @@ import '../perception/perception_snapshot.dart';
 import 'expand_phase_planner.dart'
     show ExpandEconomyPlan, cheapestRegimentBuildTreasuryCost;
 import 'observer_goal_phase.dart';
+import 'phase_filter_common.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
     show
         clampPhaseWeightUpperUnit,
-        resolvePhaseColonialPressureActive,
         resolvePhaseNewWorldAcquisitionWeight,
         resolvePhaseNewWorldCivilianWeight,
         resolvePhaseOldWorldCivilianWeight;
@@ -128,7 +128,7 @@ import 'planning_helpers.dart'
 /// no order emission.
 bool resolvePhaseEconomyColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => resolvePhaseColonialPressureActive(phasePlan.phase);
+}) => phaseColonialPressureActiveFromPlan(phasePlan: phasePlan);
 
 /// When `true`, `_runEconomyDomainPlanners` treats the active player as
 /// in the DEVELOP phase for the economy-pass civilian-work decisions:
