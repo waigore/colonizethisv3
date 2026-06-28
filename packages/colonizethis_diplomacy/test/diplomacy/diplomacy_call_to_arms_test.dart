@@ -6,30 +6,33 @@ import '../support/call_to_arms_fixtures.dart';
 
 void main() {
   group('call to arms (alliance mutual defence)', () {
-    test('human ally gets pending call to arms when ally GP is declared upon', () {
-      final game = threePowerCallToArmsGame(
-        gp1Human: true,
-        gp2Human: true,
-        gp1gp2Score: 80,
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp3': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp2',
-            ),
-          ],
-        },
-      );
-      final result = resolveDiplomacyPhase(game, orders);
-      expect(result.isPending, isTrue);
-      expect(result.pendingCallToArms, isNotNull);
-      expect(result.pendingCallToArms!.length, 1);
-      expect(result.pendingCallToArms!.first.allyGpId, 'gp1');
-      expect(result.pendingCallToArms!.first.defenderGpId, 'gp2');
-      expect(result.pendingCallToArms!.first.aggressorGpId, 'gp3');
-    });
+    test(
+      'human ally gets pending call to arms when ally GP is declared upon',
+      () {
+        final game = threePowerCallToArmsGame(
+          gp1Human: true,
+          gp2Human: true,
+          gp1gp2Score: 80,
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp3': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp2',
+              ),
+            ],
+          },
+        );
+        final result = resolveDiplomacyPhase(game, orders);
+        expect(result.isPending, isTrue);
+        expect(result.pendingCallToArms, isNotNull);
+        expect(result.pendingCallToArms!.length, 1);
+        expect(result.pendingCallToArms!.first.allyGpId, 'gp1');
+        expect(result.pendingCallToArms!.first.defenderGpId, 'gp2');
+        expect(result.pendingCallToArms!.first.aggressorGpId, 'gp3');
+      },
+    );
 
     test(
       'AI ally refuses call to arms when already at war with another GP',
@@ -116,33 +119,37 @@ void main() {
       expect(factionsAtWar(after, 'gp1', 'gp3'), isTrue);
     });
 
-    test('AI ally refuses when B–A score < 50 (allied level edge): no war with aggressor', () {
-      final game = threePowerCallToArmsGame(
-        gp1Human: false,
-        gp2Human: true,
-        gp1gp2Score: 40,
-        gp1gp2Level: RelationLevel.allied,
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp3': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp2',
-            ),
-          ],
-        },
-      );
-      final result = resolveDiplomacyPhase(game, orders);
-      expect(result.isPending, isFalse);
-      final after = result.game;
-      expect(factionsAtWar(after, 'gp1', 'gp3'), isFalse);
-      final rel = getRelation(after, 'gp1', 'gp2');
-      expect(rel, isNotNull);
-      expect(rel!.level, isNot(RelationLevel.allied));
-      // Refuse applies −20; relation convergence (+1 toward 50) runs later same phase.
-      expect(rel.score, 21);
-    });
+    test(
+      'AI ally refuses when B–A score < 50 (allied level edge): no war with aggressor',
+      () {
+        final game = threePowerCallToArmsGame(
+          gp1Human: false,
+          gp2Human: true,
+          gp1gp2Score: 40,
+          gp1gp2Level: RelationLevel.allied,
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp3': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp2',
+              ),
+            ],
+          },
+        );
+        final result = resolveDiplomacyPhase(game, orders);
+        expect(result.isPending, isFalse);
+        final after = result.game;
+        expect(factionsAtWar(after, 'gp1', 'gp3'), isFalse);
+        final rel = getRelation(after, 'gp1', 'gp2');
+        expect(rel, isNotNull);
+        expect(rel!.level, isNot(RelationLevel.allied));
+        // Refuse applies the unified −50 ally penalty: 40 − 50 → clamp 0; relation
+        // convergence (+1 toward 50) runs later same phase → 1.
+        expect(rel.score, 1);
+      },
+    );
 
     test('human accept on resume: at war with aggressor', () {
       final game = threePowerCallToArmsGame(
@@ -178,7 +185,7 @@ void main() {
       expect(factionsAtWar(resumed.game, 'gp1', 'gp3'), isTrue);
     });
 
-    test('human refuse on resume: score drops by 20 and leaves Allied band', () {
+    test('human refuse on resume: score drops by 50 and leaves Allied band', () {
       final game = threePowerCallToArmsGame(
         gp1Human: true,
         gp2Human: true,
@@ -210,9 +217,10 @@ void main() {
       expect(resumed.isPending, isFalse);
       expect(factionsAtWar(resumed.game, 'gp1', 'gp3'), isFalse);
       final rel = getRelation(resumed.game, 'gp1', 'gp2');
-      // 80 − 20 = 60; convergence pulls down 1 toward 50 same phase.
-      expect(rel!.score, 59);
-      expect(rel.level, RelationLevel.friendly);
+      // Unified −50 ally penalty: 80 − 50 = 30; convergence pulls down 1 toward
+      // 50 is not applied below 50 (30 < 50 → +1 toward 50) → 31.
+      expect(rel!.score, 31);
+      expect(rel.level, RelationLevel.neutral);
     });
 
     // AC3: refusing call to arms clears the formal alliance and records an
@@ -257,6 +265,83 @@ void main() {
               e.participants.contains('gp2'),
         );
         expect(broken.length, 1);
+      },
+    );
+
+    // R11: refusal applies the unified break penalty — −10 to every other GP the
+    // refuser has a relation with, except the defended ally (−50) and the
+    // aggressor (unchanged by the break rule).
+    test(
+      'human refuse applies -10 to other GPs but leaves the aggressor unchanged',
+      () {
+        final game = Game(
+          id: 'g-cascade',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+            Player(id: 'gp2', displayName: 'GP2', isHuman: true),
+            Player(id: 'gp3', displayName: 'GP3', isHuman: false),
+            Player(id: 'gp4', displayName: 'GP4', isHuman: false),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              score: 80,
+              level: RelationLevel.allied,
+              state: RelationState.atPeace,
+              formalAlliance: true,
+            ),
+            // Aggressor: excluded from the -10 cascade (only convergence applies).
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp3',
+              score: 60,
+              level: RelationLevel.friendly,
+              state: RelationState.atPeace,
+            ),
+            // Bystander GP: receives the -10 cascade.
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp4',
+              score: 60,
+              level: RelationLevel.friendly,
+              state: RelationState.atPeace,
+            ),
+          ],
+        );
+        const orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp3': [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp2',
+              ),
+            ],
+          },
+        );
+        final pending = resolveDiplomacyPhase(game, orders);
+        expect(pending.pendingCallToArms, isNotNull);
+        final resumed = resolveDiplomacyPhase(
+          pending.game,
+          orders,
+          callToArmsDecisions: [
+            const CallToArmsDecision(
+              allyGpId: 'gp1',
+              defenderGpId: 'gp2',
+              aggressorGpId: 'gp3',
+              accepted: false,
+            ),
+          ],
+        );
+        // Bystander gp4: 60 − 10 = 50; convergence skips at 50 → 50.
+        expect(getRelation(resumed.game, 'gp1', 'gp4')!.score, 50);
+        // Aggressor gp3: not penalised by the break; only convergence (−1) → 59.
+        expect(getRelation(resumed.game, 'gp1', 'gp3')!.score, 59);
       },
     );
   });

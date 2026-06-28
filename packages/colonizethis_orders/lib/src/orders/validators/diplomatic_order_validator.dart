@@ -4,6 +4,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../order_validation_result.dart';
 
 import 'diplomatic/alliance_validator.dart';
+import 'diplomatic/break_alliance_validator.dart';
 import 'diplomatic/declare_war_validator.dart';
 import 'diplomatic/diplomatic_sub_validator.dart';
 import 'diplomatic/establish_ftp_validator.dart';
@@ -75,6 +76,9 @@ class DiplomaticOrderValidator extends StatefulValidator {
         subValidatorContext,
       ),
       DiplomaticOrderType.alliance: allianceSubValidator(subValidatorContext),
+      DiplomaticOrderType.breakAlliance: breakAllianceSubValidator(
+        subValidatorContext,
+      ),
       DiplomaticOrderType.establishOverture: establishOvertureSubValidator(
         subValidatorContext,
       ),

@@ -160,6 +160,10 @@ enum DiplomaticOrderType {
   declareWar,
   offerPeace,
   alliance,
+
+  /// Voluntarily break an existing formal alliance with a Great Power. Applies
+  /// the unified alliance-break penalty. SPEC/game/diplomacy.md § Alliances.
+  breakAlliance,
   establishOverture,
   establishFtp,
   grantAid,

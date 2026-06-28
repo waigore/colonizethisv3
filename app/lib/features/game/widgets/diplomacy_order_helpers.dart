@@ -11,6 +11,8 @@ String diplomacyActionLabel(DiplomaticOrder order) {
       return 'Offer Peace';
     case DiplomaticOrderType.alliance:
       return 'Alliance';
+    case DiplomaticOrderType.breakAlliance:
+      return 'Break Alliance';
     case DiplomaticOrderType.establishOverture:
       return order.overtureStage != null
           ? diplomacyOvertureStageShortLabel(order.overtureStage!)
@@ -41,8 +43,7 @@ extension DiplomacyOrderMutations on Orders {
   Orders appendDiplomaticOrderForPlayer(
     String playerId,
     DiplomaticOrder order,
-  ) =>
-      ordersWithAppendedDiplomaticOrder(this, playerId, order);
+  ) => ordersWithAppendedDiplomaticOrder(this, playerId, order);
 
   Orders removeDiplomaticOrderForPlayer(
     String playerId, {
