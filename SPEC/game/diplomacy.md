@@ -14,7 +14,7 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 
 The **formal alliance** flag is a **persisted treaty state**, distinct from the informal relation **level** `Allied` (score band 76–100). A formal alliance is created **only** when an `Alliance` diplomatic order resolves (`allianceFormed`) and is cleared on `allianceBroken` (e.g. a Call to Arms refusal). The informal `Allied` level (high relation score) does **not** by itself constitute a formal alliance and must **not** grant mutual-defence obligations. Old saves without the flag default to **formal alliance false**.
 
-While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace.
+While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace — **except** the GP–GP **auto-embassy** seeded at game start (see § GP–GP Rules), which survives war and peace.
 
 ### War required for hostile actions
 
@@ -23,6 +23,7 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 ### GP–GP Rules
 
+- **Auto-embassy at game start (Refs #3753 R1):** Every unordered Great Power pair is seeded at `OvertureStage.embassy` with `sinceTurn = 0` in **both** directions (`gpA → gpB` and `gpB → gpA`). Auto-establishment costs **no** treasury. The auto-embassy is **never revoked**, including when the pair enters `AT_WAR` or returns to peace. **NAP** and **Join Empire** stages between warring GPs are still cleared on war (downgraded to `embassy` when the pair was at NAP or Join Empire) and must be rebuilt after peace if desired. **Diplomatic Expertise** does **not** gate GP→GP Embassy.
 - **Overture chain (GP→GP):** Same four-stage chain as GP→Minor/Tribe: Trade Consulate → Embassy → Non-Aggression Pact → Join Empire. Each stage is a separate **Establish Overture** order; the target GP accepts or rejects at turn resolution. **Diplomatic Expertise** tech gates Embassy (and foreign civilian work) for **Minor/Tribe** targets only — GP→GP Embassy is **not** expertise-gated in current product (`establish_overture_validator.dart`). Grant Aid / Set Subsidy on GP rows require embassy-tier overture (`hasEmbassy`), same as Minors/Tribes.
 - **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
 - **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
