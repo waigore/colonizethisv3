@@ -15,7 +15,7 @@ void main() {
             OvertureState(
               gpId: 'gp1',
               targetId: 'minor1',
-              stage: OvertureStage.tradeConsulate,
+              stage: OvertureStage.embassy,
               sinceTurn: 0,
             ),
           ],

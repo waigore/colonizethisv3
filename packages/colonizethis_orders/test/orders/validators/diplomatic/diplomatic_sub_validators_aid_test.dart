@@ -171,7 +171,7 @@ void main() {
       expect(r.result.reason, contains('multiple of'));
     });
 
-    test('rejects without consulate or embassy', () {
+    test('rejects without any overture', () {
       final v = setSubsidySubValidator(
         diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.none),
@@ -187,13 +187,32 @@ void main() {
         treasury: 5000,
       );
       expect(r.result.status, OrderValidationStatus.rejected);
-      expect(r.result.reason, contains('Consulate or Embassy required'));
+      expect(r.result.reason, contains('Embassy required'));
     });
 
-    test('accepts with consulate and debits treasury', () {
+    test('rejects with a Trade Consulate only (Refs #3753 R2)', () {
       final v = setSubsidySubValidator(
         diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
+          'gp1',
+        ),
+      );
+      final r = v.validate(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: 'minor1',
+          amount: 100,
+        ),
+        treasury: 5000,
+      );
+      expect(r.result.status, OrderValidationStatus.rejected);
+      expect(r.result.reason, contains('Embassy required'));
+    });
+
+    test('accepts with an embassy and debits treasury', () {
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
           'gp1',
         ),
       );

@@ -85,7 +85,9 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
         ),
       );
     }
-    if (overtureRow.hasConsulate && treasury >= setSubsidyDefaultAmount) {
+    // SetSubsidy requires an Embassy (Refs #3753 R2 — Consulate alone is no
+    // longer sufficient for economic actions), matching the order validator.
+    if (overtureRow.hasEmbassy && treasury >= setSubsidyDefaultAmount) {
       out.add(
         DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
