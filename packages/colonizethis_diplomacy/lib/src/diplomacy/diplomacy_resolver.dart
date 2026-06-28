@@ -76,6 +76,10 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   // Single scan at phase start; each append uses O(1) tally (Refs #3419 step 7).
   final eventTally = IntraTurnEventTally.fromGame(game);
 
+  // Snapshot relation scores at phase start so end-of-phase decay can skip pairs
+  // modified by any event this turn (skip-on-event, Refs #3753 R9.4).
+  final phaseStartScores = snapshotRelationScores(game);
+
   // Snapshot of formal-alliance pairs at phase start (i.e. end of the preceding
   // turn, before this turn's Alliance orders resolve in step 4). Call to arms
   // (step 5c) gates on this snapshot so an alliance formed the same turn as a
@@ -211,7 +215,6 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = breakFtpOnEmbassyLoss(state, turn, eventTally: eventTally);
 
   // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
-  // Note: Convergence happens AFTER subsidies
   state = processOngoingSubsidies(
     state,
     turn,
@@ -219,16 +222,17 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     eventTally: eventTally,
   );
 
-  // 8. Apply relation convergence (+/1 toward 50 for all non-war relations)
-  state = applyRelationConvergence(state, turn);
-
-  // 9. Apply relation modifiers (grants, etc.)
+  // 8. Apply relation modifiers (grants, etc.)
   state = applyRelationModifiersAndUpdateScores(
     state,
     diploByPlayer,
     turn,
     eventTally: eventTally,
   );
+
+  // 9. Apply per-turn relation decay (final step): ±4 toward 50 for non-war
+  // pairs not modified by any event this turn (skip-on-event). Refs #3753 R9.
+  state = applyRelationDecay(state, turn, phaseStartScores);
 
   diploLog.d('diplomacy phase end');
   return DiplomacyPhaseResult(state);

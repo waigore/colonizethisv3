@@ -310,30 +310,53 @@ Game processOngoingSubsidies(
   );
 }
 
-/// Apply relation convergence: all non-war relations move +/-1 toward neutral.
-/// Per SPEC/game/diplomacy.md.
-Game applyRelationConvergence(Game game, int turn) {
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+/// Snapshot each relation pair's score at the start of the Diplomacy phase,
+/// keyed by [pairKey]. Used by [applyRelationDecay] to detect which pairs were
+/// modified by an event this turn (skip-on-event). SPEC/game/diplomacy.md.
+Map<String, num> snapshotRelationScores(Game game) => {
+  for (final r in game.diplomacyRelations)
+    pairKey(r.factionId1, r.factionId2): r.score,
+};
+
+/// Apply per-turn relation decay (Refs #3753 R9.3/R9.4): every non-war pair that
+/// received **no** relation-score delta event this turn drifts
+/// [relationDecayPerTurn] toward equilibrium [relationScoreNeutral] (50),
+/// clamped so it never crosses 50 in a single turn. Pairs whose score differs
+/// from [phaseStartScores] (any event delta this turn) and pairs created this
+/// turn (absent from [phaseStartScores]) are **skipped** — event deltas only, no
+/// double-application. `AT_WAR` pairs keep their score frozen at the
+/// war-declaration value. SPEC/game/diplomacy.md § Relation Model.
+Game applyRelationDecay(
+  Game game,
+  int turn,
+  Map<String, num> phaseStartScores,
+) {
+  final relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  var changed = false;
 
   for (var i = 0; i < relations.length; i++) {
     final rel = relations[i];
-    // Skip war relations - they don't converge and scores stay fixed at war declaration
+    // War relations don't decay; scores stay fixed at war declaration.
     if (rel.atWar) continue;
+    if (rel.score == relationScoreNeutral) continue; // already at equilibrium
 
-    // Converge toward neutral
-    int newScore;
-    if (rel.score < relationScoreNeutral) {
-      newScore = (rel.score + 1).clamp(relationScoreMin, relationScoreMax);
-    } else if (rel.score > relationScoreNeutral) {
-      newScore = (rel.score - 1).clamp(relationScoreMin, relationScoreMax);
-    } else {
-      continue; // Already at neutral
-    }
+    // Skip-on-event: a pair modified this turn (or created this turn) does not
+    // also decay the same turn.
+    final startScore = phaseStartScores[pairKey(rel.factionId1, rel.factionId2)];
+    if (startScore == null || startScore != rel.score) continue;
 
-    final newLevel = scoreToLevel(newScore);
-    relations[i] = rel.copyWith(score: newScore, level: newLevel);
+    final num newScore = rel.score < relationScoreNeutral
+        ? (rel.score + relationDecayPerTurn)
+              .clamp(relationScoreMin, relationScoreNeutral)
+        : (rel.score - relationDecayPerTurn)
+              .clamp(relationScoreNeutral, relationScoreMax);
+
+    if (newScore == rel.score) continue;
+    relations[i] = rel.copyWith(score: newScore, level: scoreToLevel(newScore));
+    changed = true;
   }
 
+  if (!changed) return game;
   return game.copyWith(diplomacyRelations: relations);
 }
 

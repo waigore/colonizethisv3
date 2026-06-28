@@ -21,7 +21,13 @@ class DiplomacyRelation {
 
   final String factionId1;
   final String factionId2;
-  final int score;
+
+  /// Decimal relation score in `[0, 100]`. Stored as `num` so the resolver can
+  /// hold fractional values (0.1 precision) introduced by per-turn decay and
+  /// the additive-scaled trade-deal boost; integer values represent whole
+  /// scores. Threshold comparisons operate on the raw decimal.
+  /// SPEC/game/diplomacy.md § Relation Model.
+  final num score;
   final RelationLevel level;
   final RelationState state;
   final int sinceTurn;
@@ -46,7 +52,7 @@ class DiplomacyRelation {
   DiplomacyRelation copyWith({
     String? factionId1,
     String? factionId2,
-    int? score,
+    num? score,
     RelationLevel? level,
     RelationState? state,
     int? sinceTurn,
@@ -66,7 +72,11 @@ class DiplomacyRelation {
   Map<String, dynamic> toJson() => {
     'factionId1': factionId1,
     'factionId2': factionId2,
-    'score': score,
+    // Serialize the decimal form (× 1.0) so save/load round-trips the decimal
+    // symmetrically with `fromJson`: a whole score of 50 persists as `50.0`,
+    // not `50`, keeping load → re-encode byte-stable.
+    // SPEC/game/diplomacy.md § Relation Model.
+    'score': score.toDouble(),
     'level': level.name,
     'state': state.name,
     'sinceTurn': sinceTurn,
@@ -78,7 +88,10 @@ class DiplomacyRelation {
       DiplomacyRelation(
         factionId1: json['factionId1'] as String,
         factionId2: json['factionId2'] as String,
-        score: json['score'] as int? ?? 50,
+        // Decimal migration (SPEC/game/diplomacy.md § Relation Model): legacy
+        // saves stored an integer score; load it as a decimal (× 1.0) so all
+        // downstream threshold comparisons use the raw decimal value.
+        score: (json['score'] as num?)?.toDouble() ?? 50,
         level: RelationLevel.values.firstWhere(
           (e) => e.name == json['level'],
           orElse: () => RelationLevel.neutral,
@@ -308,6 +321,60 @@ class SubsidyState {
 
   @override
   int get hashCode => Object.hash(payerId, targetId, amountPerTurn);
+}
+
+/// Records that a Tribe has become a colony of a Great Power via a Tribe
+/// `Join Empire` overture. Unlike Minor absorption, the colony Tribe remains in
+/// the game (still listed under `Game.tribes`, provinces/fleets not transferred).
+/// SPEC/game/diplomacy.md § GP–Minor/Tribe Rules (Join Empire → colony).
+class ColonyState {
+  const ColonyState({
+    required this.tribeId,
+    required this.colonyOfGpId,
+    required this.sinceTurn,
+  });
+
+  /// Tribe faction id that is now a colony.
+  final String tribeId;
+
+  /// Great Power id that owns the colony (the Tribe's suzerain).
+  final String colonyOfGpId;
+
+  /// Turn the colony relationship was established.
+  final int sinceTurn;
+
+  ColonyState copyWith({
+    String? tribeId,
+    String? colonyOfGpId,
+    int? sinceTurn,
+  }) => ColonyState(
+    tribeId: tribeId ?? this.tribeId,
+    colonyOfGpId: colonyOfGpId ?? this.colonyOfGpId,
+    sinceTurn: sinceTurn ?? this.sinceTurn,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'tribeId': tribeId,
+    'colonyOfGpId': colonyOfGpId,
+    'sinceTurn': sinceTurn,
+  };
+
+  static ColonyState fromJson(Map<String, dynamic> json) => ColonyState(
+    tribeId: json['tribeId'] as String,
+    colonyOfGpId: json['colonyOfGpId'] as String,
+    sinceTurn: json['sinceTurn'] as int? ?? 0,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ColonyState &&
+          tribeId == other.tribeId &&
+          colonyOfGpId == other.colonyOfGpId &&
+          sinceTurn == other.sinceTurn;
+
+  @override
+  int get hashCode => Object.hash(tribeId, colonyOfGpId, sinceTurn);
 }
 
 /// Primary type for a diplomatic history event. SPEC/program/diplomacy-resolution.md.

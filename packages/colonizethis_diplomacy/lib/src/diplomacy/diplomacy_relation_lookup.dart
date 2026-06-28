@@ -93,8 +93,14 @@ int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
 const int relationScoreMin = 0;
 const int relationScoreMax = 100;
 
-/// Neutral relation score; convergence target and default for new relations.
+/// Neutral relation score; per-turn decay equilibrium and default for new relations.
 const int relationScoreNeutral = 50;
+
+/// Per-turn relation decay magnitude (Refs #3753 R9.3): every non-war pair with
+/// no relation-score delta event this turn drifts this much toward
+/// [relationScoreNeutral], clamped so it never crosses 50 in a single turn.
+/// SPEC/game/diplomacy.md § Relation Model — Per-turn relation decay.
+const double relationDecayPerTurn = 4.0;
 
 /// Level thresholds (inclusive max per band): Hostile ]0,25], Neutral ]25,50], Friendly ]50,75], Allied ]75,100].
 const int relationScoreLevelHostileMax = 25;
@@ -179,7 +185,8 @@ const int subsidyBoostRelationPerStep = 2;
 const int subsidyBoostMax = 8;
 
 /// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
-RelationLevel scoreToLevel(int score) {
+/// Operates on the raw decimal [score] (SPEC/game/diplomacy.md § Relation Model).
+RelationLevel scoreToLevel(num score) {
   if (score <= relationScoreLevelHostileMax) return RelationLevel.hostile;
   if (score <= relationScoreLevelNeutralMax) return RelationLevel.neutral;
   if (score <= relationScoreLevelFriendlyMax) return RelationLevel.friendly;
@@ -188,7 +195,8 @@ RelationLevel scoreToLevel(int score) {
 
 /// One-word relation state for UI display. SPEC/game/diplomacy.md § Player-facing relation display.
 /// Score is hidden; UI shows this label: 0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly.
-String relationScoreToDisplayLabel(int score) {
+/// Operates on the raw decimal [score] (SPEC/game/diplomacy.md § Relation Model).
+String relationScoreToDisplayLabel(num score) {
   final clamped = score.clamp(relationScoreMin, relationScoreMax);
   if (clamped <= relationScoreDisplayHostileMax) return 'Hostile';
   if (clamped <= relationScoreDisplayUnfriendlyMax) return 'Unfriendly';

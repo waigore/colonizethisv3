@@ -79,7 +79,7 @@ const int kFirstRightRelationScoreMax = 100;
 /// construction when `relationScore` is in `[0, 100]`; out-of-range
 /// inputs are still clamped defensively because callers may have stale
 /// state during refactors.
-double computeFirstRightProfitRate(int relationScore) {
+double computeFirstRightProfitRate(num relationScore) {
   if (relationScore <= 0) return 0.0;
   if (relationScore >= kFirstRightRelationScoreMax) {
     return kFirstRightMaxProfitRate;
@@ -104,7 +104,7 @@ double computeFirstRightProfitRate(int relationScore) {
 /// Negative inputs are clamped to zero defensively — callers should not
 /// rely on negative-quantity behavior in production paths.
 FirstRightProfit computeFirstRightProfit({
-  required int relationScore,
+  required num relationScore,
   required int filledQuantity,
   required double pricePerUnit,
 }) {

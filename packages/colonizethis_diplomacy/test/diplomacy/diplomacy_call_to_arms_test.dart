@@ -145,9 +145,10 @@ void main() {
         final rel = getRelation(after, 'gp1', 'gp2');
         expect(rel, isNotNull);
         expect(rel!.level, isNot(RelationLevel.allied));
-        // Refuse applies the unified −50 ally penalty: 40 − 50 → clamp 0; relation
-        // convergence (+1 toward 50) runs later same phase → 1.
-        expect(rel.score, 1);
+        // Refuse applies the unified −50 ally penalty: 40 − 50 → clamp 0. The
+        // pair was modified by an event this turn, so per-turn decay is skipped
+        // (Refs #3753 R9.4) and the score stays at 0.
+        expect(rel.score, 0);
       },
     );
 
@@ -217,9 +218,10 @@ void main() {
       expect(resumed.isPending, isFalse);
       expect(factionsAtWar(resumed.game, 'gp1', 'gp3'), isFalse);
       final rel = getRelation(resumed.game, 'gp1', 'gp2');
-      // Unified −50 ally penalty: 80 − 50 = 30; convergence pulls down 1 toward
-      // 50 is not applied below 50 (30 < 50 → +1 toward 50) → 31.
-      expect(rel!.score, 31);
+      // Unified −50 ally penalty: 80 − 50 = 30. The pair was modified by an
+      // event this turn, so per-turn decay is skipped (Refs #3753 R9.4) and the
+      // score stays at 30.
+      expect(rel!.score, 30);
       expect(rel.level, RelationLevel.neutral);
     });
 
@@ -296,7 +298,7 @@ void main() {
               state: RelationState.atPeace,
               formalAlliance: true,
             ),
-            // Aggressor: excluded from the -10 cascade (only convergence applies).
+            // Aggressor: excluded from the -10 cascade (only per-turn decay applies).
             DiplomacyRelation(
               factionId1: 'gp1',
               factionId2: 'gp3',
@@ -338,10 +340,12 @@ void main() {
             ),
           ],
         );
-        // Bystander gp4: 60 − 10 = 50; convergence skips at 50 → 50.
+        // Bystander gp4: −10 cascade event applied (60 − 10 = 50); decay is
+        // skipped for event-modified pairs (Refs #3753 R9.4) → 50.
         expect(getRelation(resumed.game, 'gp1', 'gp4')!.score, 50);
-        // Aggressor gp3: not penalised by the break; only convergence (−1) → 59.
-        expect(getRelation(resumed.game, 'gp1', 'gp3')!.score, 59);
+        // Aggressor gp3: excluded from the −10 cascade, so no event delta this
+        // turn → per-turn decay applies (−4 toward 50): 60 → 56.
+        expect(getRelation(resumed.game, 'gp1', 'gp3')!.score, 56.0);
       },
     );
   });

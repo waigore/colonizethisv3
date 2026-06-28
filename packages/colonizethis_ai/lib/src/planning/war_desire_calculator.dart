@@ -9,7 +9,7 @@ int computeWarDesireScore({
   required Game game,
   required String nationId,
   required String targetFactionId,
-  required int relationScore,
+  required num relationScore,
 }) {
   final attackerPower = greatPowerPowerScore(game, nationId);
   final targetPower = greatPowerPowerScore(game, targetFactionId);

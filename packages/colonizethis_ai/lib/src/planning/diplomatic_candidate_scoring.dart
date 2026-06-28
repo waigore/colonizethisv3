@@ -77,7 +77,7 @@ List<int> computeDiplomaticCandidateScores({
     (m) => _minorOwnsOldWorldProvinces(game, m.id),
   );
   final warDesireByTarget = <String, int>{};
-  int warDesireForTarget(String targetFactionId, int relationScore) {
+  int warDesireForTarget(String targetFactionId, num relationScore) {
     return warDesireByTarget.putIfAbsent(
       targetFactionId,
       () => computeWarDesireScore(
