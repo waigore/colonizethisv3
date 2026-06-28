@@ -33,6 +33,7 @@ import 'research_planner.dart';
 import 'treasury_planner.dart';
 
 part 'domain_planner_orchestrator_economy.dart';
+part 'domain_planner_orchestrator_military.dart';
 
 final _log = packageLogger();
 
@@ -163,63 +164,19 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     phasePlan: resolvedPhasePlan,
   );
   ctx = ctx.withOrders(declareWarResult.orders);
-  final armyMovesBeforeConquest =
-      ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  // Refs #2509 S5: derive the extra-conquest-passes / relocation-skip
-  // gate from the dispatched phase plan instead of recomputing the
-  // legacy compound `isStalledOldWorldExpansion(ow) ||
-  // isBelowObserverConquestQuota(ow)`. The two `colonizethis_data`
-  // predicates are equivalent for integer `ow` (both reduce to
-  // `ow <= 9`) and field-equal to `phase ∈ {EXPAND, COLONIAL-lite}`
-  // because both phases require `oldWorldProvincesOwned <
-  // kObserverConquestMinOwProvincesPerGp` at entry via
-  // `observerGoalPhaseFor`. Routing the gate through the dispatched
-  // `phasePlan` eliminates two per-player-turn predicate recomputes
-  // and preserves the prior extra-passes / relocation-skip behaviour
-  // exactly (see `SPEC/ai/phase-planner-dispatch.md` § Orchestrator
-  // conquest extra-passes slice).
-  final extraPassesActive = resolvePhaseConquestExtraPassesActive(
-    phasePlan: resolvedPhasePlan,
-  );
-  final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
-    game: ctx.game,
-    nationId: nationId,
+
+  final militaryResult = _runMilitaryDomainPlanners(
+    ctx: ctx,
     snapshot: snapshot,
-    declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
+    phasePlan: resolvedPhasePlan,
+    nationId: nationId,
+    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+    emit: emit,
   );
-  final conquestPasses = extraPassesActive ? kStalledConquestArmyMovePasses : 1;
-  var conquestArmyMovePlannerRan = false;
-  for (var pass = 0; pass < conquestPasses; pass++) {
-    conquestArmyMovePlannerRan = true;
-    final movesBeforePass =
-        ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-    ctx = ctx.withOrders(
-      runConquestArmyMovePlanner(
-        ctx: ctx,
-        snapshot: snapshot,
-        declaredWarTargetFactionId: conquestDeclaredWarTarget,
-        phasePlan: resolvedPhasePlan,
-      ),
-    );
-    final movesAfterPass =
-        ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-    if (movesAfterPass == movesBeforePass) {
-      break;
-    }
-  }
-  final conquestArmyMoveCount =
-      (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
-      armyMovesBeforeConquest;
-  // Stalled GPs must not run the relocation pass: it undoes frontier marches.
-  if (!extraPassesActive) {
-    ctx = ctx.withOrders(
-      runArmyMovePlanner(
-        ctx: ctx,
-        provincesToVictory: snapshot.conquest.provincesToVictory,
-      ),
-    );
-  }
-  emit('aiStageD');
+  ctx = militaryResult.ctx;
+  final conquestArmyMovePlannerRan = militaryResult.conquestArmyMovePlannerRan;
+  final conquestPasses = militaryResult.conquestPasses;
+  final conquestArmyMoveCount = militaryResult.conquestArmyMoveCount;
 
   final navalGate = computeNavalRunGate(
     ctx: ctx,
