@@ -833,6 +833,13 @@ rules:
     runner: dart
     script: tool/check_ai_test_mirrors_lib.dart
 
+  - rule_id: repo.ai_test_seed42_campaign_harness
+    group: testing
+    title: colonizethis_ai seed-42 Full-AI observer campaigns must use the shared runSeed42ObserverCampaign harness, not re-inlined init/resolve loops (Refs #3749)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_seed42_campaign_harness.dart
+
   - rule_id: repo.orders_test_mirrors_lib
     group: structure
     title: colonizethis_orders tests must mirror lib/ (no flat-root test sources) (Refs #3714)
