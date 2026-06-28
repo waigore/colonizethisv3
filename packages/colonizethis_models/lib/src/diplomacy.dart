@@ -72,7 +72,11 @@ class DiplomacyRelation {
   Map<String, dynamic> toJson() => {
     'factionId1': factionId1,
     'factionId2': factionId2,
-    'score': score,
+    // Serialize the decimal form (× 1.0) so save/load round-trips the decimal
+    // symmetrically with `fromJson`: a whole score of 50 persists as `50.0`,
+    // not `50`, keeping load → re-encode byte-stable.
+    // SPEC/game/diplomacy.md § Relation Model.
+    'score': score.toDouble(),
     'level': level.name,
     'state': state.name,
     'sinceTurn': sinceTurn,
