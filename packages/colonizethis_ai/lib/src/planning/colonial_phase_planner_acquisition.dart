@@ -239,9 +239,12 @@ class ColonialAcquisitionTarget {
 ///   - [ColonialAcquisitionTarget] with
 ///     [AcquisitionMethod.purchaseLand] when no Join-Empire target is
 ///     reachable but the active player has at least one idle Merchant
-///     and the first NW province in the sorted list whose owner
-///     satisfies the embassy + non-war gates also contains at least
-///     one tile satisfying the per-tile `purchase_land` gates.
+///     and at least one NW province whose owner satisfies the embassy +
+///     non-war gates also contains a tile satisfying the per-tile
+///     `purchase_land` gates. Among all such eligible owners the arm
+///     selects the **highest relation score** (overseas-profit-aware,
+///     Refs #3758 R7 / S6), falling back to the sorted iteration order
+///     on equal relation scores.
 ///   - [ColonialAcquisitionTarget] with [AcquisitionMethod.declareWar]
 ///     when neither Join Empire nor `purchase_land` yields a target,
 ///     the active player holds at least one standing regiment and
@@ -398,10 +401,25 @@ ColonialAcquisitionTarget? _findJoinEmpireTarget({
   return null;
 }
 
-/// Iterates [invadable] in distance order and returns the first
-/// [AcquisitionMethod.purchaseLand] candidate satisfying the Method 2
+/// Iterates [invadable] in distance order and returns the
+/// [AcquisitionMethod.purchaseLand] candidate whose owner has the
+/// **highest relation score** among all owners satisfying the Method 2
 /// gates (idle Merchant, embassy with owner, not at war, per-tile
 /// resource + treasury gates).
+///
+/// Overseas-profit-aware selection (Refs #3758 R7 / S6;
+/// `SPEC/ai/phase-planner-architecture.md` § Overseas-profit-aware
+/// purchase-land target selection): buying land on a tribe/minor tile
+/// earns an ongoing overseas profit share `(relationScore / 100) × 0.40`
+/// (`SPEC/game/world-market.md` § Overseas profit), so a higher-relation
+/// owner yields a strictly larger share for the same future sales. The
+/// arm therefore prefers the highest-relation eligible owner rather than
+/// the first in iteration order. Ties (equal highest relation score) fall
+/// back to the [invadable] iteration order via a **strict** `>`
+/// comparison that keeps the earliest-encountered owner, preserving the
+/// legacy first-match deterministic tiebreak (Refs #2509 Must-have #7).
+/// A missing relation row contributes [relationScoreNeutral] (50),
+/// matching the score-default convention used elsewhere in the planners.
 ColonialAcquisitionTarget? _findPurchaseLandTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -418,6 +436,8 @@ ColonialAcquisitionTarget? _findPurchaseLandTarget({
       const <String>{};
   final purchasedByTile = game.worldState.purchasedTilesByTileKey;
 
+  String? bestOwnerId;
+  num bestScore = 0;
   for (final provinceId in invadable) {
     final ownerId = provinceOwner[provinceId];
     if (ownerId == null) continue;
@@ -440,12 +460,18 @@ ColonialAcquisitionTarget? _findPurchaseLandTarget({
       continue;
     }
 
-    return ColonialAcquisitionTarget(
-      targetFactionId: ownerId,
-      method: AcquisitionMethod.purchaseLand,
-    );
+    final num relationScore = relation?.score ?? relationScoreNeutral;
+    if (bestOwnerId == null || relationScore > bestScore) {
+      bestOwnerId = ownerId;
+      bestScore = relationScore;
+    }
   }
-  return null;
+
+  if (bestOwnerId == null) return null;
+  return ColonialAcquisitionTarget(
+    targetFactionId: bestOwnerId,
+    method: AcquisitionMethod.purchaseLand,
+  );
 }
 
 /// Iterates [invadable] in distance order and returns the first
