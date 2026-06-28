@@ -93,8 +93,14 @@ int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
 const int relationScoreMin = 0;
 const int relationScoreMax = 100;
 
-/// Neutral relation score; convergence target and default for new relations.
+/// Neutral relation score; per-turn decay equilibrium and default for new relations.
 const int relationScoreNeutral = 50;
+
+/// Per-turn relation decay magnitude (Refs #3753 R9.3): every non-war pair with
+/// no relation-score delta event this turn drifts this much toward
+/// [relationScoreNeutral], clamped so it never crosses 50 in a single turn.
+/// SPEC/game/diplomacy.md § Relation Model — Per-turn relation decay.
+const double relationDecayPerTurn = 4.0;
 
 /// Level thresholds (inclusive max per band): Hostile ]0,25], Neutral ]25,50], Friendly ]50,75], Allied ]75,100].
 const int relationScoreLevelHostileMax = 25;
