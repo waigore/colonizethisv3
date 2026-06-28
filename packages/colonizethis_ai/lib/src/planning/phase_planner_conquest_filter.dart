@@ -15,13 +15,23 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../perception/perception_snapshot.dart';
 import 'colonial_phase_planner.dart' show ColonialMilitaryPlan;
 import 'expand_phase_planner.dart' show ExpandMilitaryPlan;
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_military_plans.dart';
 import 'phase_priority_weights.dart';
+import 'planning_helpers.dart'
+    show
+        resolveFromPhasePlan,
+        resolvePhaseColonialPressureActive,
+        resolvePhaseExpandOrColonialLiteActive,
+        resolvePhaseNewWorldAcquisitionWeight,
+        resolvePhaseOldWorldConquestWeight,
+        scaleWeightedBonus;
 
 /// Outcome of [resolvePhaseConquestInvadable] for one player turn.
 class PhaseConquestInvadableResolution {
@@ -50,39 +60,90 @@ class PhaseConquestInvadableResolution {
   final bool skipConquestPass;
 }
 
+/// True when [playerId] has at least one non-Home field army with regiments
+/// stationed in [regionId] (Refs #2924 Path E NW conquest feasibility).
+bool playerHasNonHomeFieldArmyInRegion({
+  required Game game,
+  required String playerId,
+  required String regionId,
+}) {
+  for (final army in game.worldState.armies) {
+    if (army.ownerId != playerId || army.isHomeArmy) continue;
+    if (army.regimentUnitIds.isEmpty) continue;
+    if (ProvinceId.regionIdFrom(army.stationedProvinceId) == regionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Resolves the conquest destination filter for [phasePlan].
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// resolutions (Refs #2509 Must-have #7).
 PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
   required PhasePlanOutcome phasePlan,
+  AIWorldSnapshot? snapshot,
+  Game? game,
 }) {
-  if (phasePlan.phase == ObserverGoalPhase.develop) {
-    return const PhaseConquestInvadableResolution(skipConquestPass: true);
-  }
-
-  final expandPlan = expandMilitaryPlanFromPhasePlan(phasePlan);
-  if (expandPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
-    return PhaseConquestInvadableResolution(
-      phasePlanInvadableSorted: expandPlan.priorityDestinationProvinceIdsSorted,
-    );
-  }
-
-  final colonialPlan = colonialMilitaryPlanFromPhasePlan(phasePlan);
-  if (colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
-    return PhaseConquestInvadableResolution(
-      phasePlanInvadableSorted:
-          colonialPlan.priorityDestinationProvinceIdsSorted,
-    );
-  }
-
   final nwInvasionWeight = resolvePhaseConquestNwInvasionWeight(
     phasePlan: phasePlan,
   );
+  return resolveFromPhasePlan(
+    phasePlan: phasePlan,
+    // Legacy-invadable fallback when no phase / phase-plan arm fires below.
+    defaultResolution: PhaseConquestInvadableResolution(
+      useLegacyInvadable: true,
+      structuralNewWorldSuppressed: nwInvasionWeight <= 0.0,
+    ),
+    project: (plan) {
+      if (plan.phase == ObserverGoalPhase.develop) {
+        return const PhaseConquestInvadableResolution(skipConquestPass: true);
+      }
 
-  return PhaseConquestInvadableResolution(
-    useLegacyInvadable: true,
-    structuralNewWorldSuppressed: nwInvasionWeight <= 0.0,
+      final expandPlan = expandMilitaryPlanFromPhasePlan(plan);
+      final colonialPlan = colonialMilitaryPlanFromPhasePlan(plan);
+
+      final nwInvasionArmyMoveFeasible =
+          game != null &&
+          snapshot != null &&
+          playerHasNonHomeFieldArmyInRegion(
+            game: game,
+            playerId: snapshot.playerId,
+            regionId: kNewWorldRegionId,
+          );
+
+      final prioritizeColonialNwUnderLockRecovery = snapshot != null &&
+          isNwLockRecoveryPathEActive(
+            snapshot: snapshot,
+            expandEconomyPlan: plan.expandEconomyPlan,
+          ) &&
+          colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty &&
+          nwInvasionArmyMoveFeasible;
+
+      if (prioritizeColonialNwUnderLockRecovery) {
+        return PhaseConquestInvadableResolution(
+          phasePlanInvadableSorted:
+              colonialPlan.priorityDestinationProvinceIdsSorted,
+        );
+      }
+
+      if (expandPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
+        return PhaseConquestInvadableResolution(
+          phasePlanInvadableSorted:
+              expandPlan.priorityDestinationProvinceIdsSorted,
+        );
+      }
+
+      if (colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
+        return PhaseConquestInvadableResolution(
+          phasePlanInvadableSorted:
+              colonialPlan.priorityDestinationProvinceIdsSorted,
+        );
+      }
+
+      return null;
+    },
   );
 }
 
@@ -95,7 +156,7 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
 /// scoring (issue #2509 § phase suppressions).
 bool resolvePhaseConquestColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.phase == ObserverGoalPhase.colonial;
+}) => resolvePhaseColonialPressureActive(phasePlan.phase);
 
 /// When `true`, NW invadable army-move destinations score `0` in the
 /// conquest destination scorer (legacy `shouldSuppressNewWorldDeclareWar
@@ -162,9 +223,7 @@ bool resolvePhaseConquestSuppressNwInvasionScoring({
 /// no order emission.
 bool resolvePhaseConquestExtraPassesActive({
   required PhasePlanOutcome phasePlan,
-}) =>
-    phasePlan.phase == ObserverGoalPhase.expand ||
-    phasePlan.phase == ObserverGoalPhase.colonialLite;
+}) => resolvePhaseExpandOrColonialLiteActive(phasePlan.phase);
 
 /// Advisory `[0.0, 1.0]` multiplier for NW invasion scoring (declare-war
 /// candidates against tribe/NW-owner targets, NW invasion army-move
@@ -188,7 +247,7 @@ bool resolvePhaseConquestExtraPassesActive({
 /// dispatcher computed once via [computePhasePriorityWeights]).
 double resolvePhaseConquestNwInvasionWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Advisory `[0.0, 1.0]` multiplier for OW invasion scoring (declare-war
 /// candidates against OW owners, OW invasion army-move destinations,
@@ -197,18 +256,18 @@ double resolvePhaseConquestNwInvasionWeight({
 /// scaffolding).
 ///
 /// Companion to [resolvePhaseConquestNwInvasionWeight]; the two
-/// resolvers form the OW/NW weight pair that future Phase 3
-/// consumer-wiring slices will multiply into the conquest scoring
-/// passes. The booleans
+/// resolvers form the OW/NW weight pair consumed by
+/// `_scoreArmyMoveDestination` via [conquestOldWorldArmyMoveScaledBonus]
+/// and [conquestNwInvadableArmyMoveBonus]. The booleans
 /// [resolvePhaseConquestColonialPressureActive] and
 /// [resolvePhaseConquestExtraPassesActive] remain the production
-/// source of truth for the scoring/extra-pass decisions in this slice.
+/// source of truth for extra-pass decisions until Phase 4 alignment.
 ///
 /// Pure and deterministic (Refs #2509 Must-have #7). Reads only
 /// `phasePlan.priorityWeights`.
 double resolvePhaseConquestOldWorldInvasionWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.oldWorldConquest;
+}) => resolvePhaseOldWorldConquestWeight(phasePlan);
 
 /// Advisory `[0.0, 1.0]` multiplier for the COLONIAL conquest
 /// colonial-pressure minimum weight floor
@@ -228,7 +287,7 @@ double resolvePhaseConquestOldWorldInvasionWeight({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseConquestColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Returns the COLONIAL conquest army-move minimum weight floor scaled by
 /// the soft-phase NW acquisition weight (Refs #2847 Phase 3 conquest
@@ -267,10 +326,7 @@ double resolvePhaseConquestColonialPressureWeight({
 /// `PhasePlanOutcome`, snapshot, or `Game` state.
 int conquestColonialPressureMinWeightFloor({
   required double colonialPressureWeight,
-}) {
-  if (colonialPressureWeight <= 0.0) {
-    return 0;
-  }
-  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
-  return (kConquestArmyMoveMinWeightWhenColonialPressure * clamped).round();
-}
+}) => scaleWeightedBonus(
+  colonialPressureWeight,
+  kConquestArmyMoveMinWeightWhenColonialPressure,
+);

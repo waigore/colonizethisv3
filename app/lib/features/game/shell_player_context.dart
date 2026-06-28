@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
 import '../../providers/observe_session_provider.dart';
+import '../../../core/services/game_service.dart';
 import 'flame/region_map_component.dart' show CtMapVisibilityMode;
 
 /// Resolved play/observe context for the in-game shell. SPEC/ui/observe-mode.md.
@@ -49,26 +50,22 @@ class ShellPlayerContext {
 }
 
 /// Resolves the GP id for player-scoped panels and unit sheets.
-String shellPanelPlayerId(WidgetRef ref, Game game) =>
-    resolveShellPanelPlayerId(ref.read(shellPlayerContextProvider), game);
-
 String resolveShellPanelPlayerId(ShellPlayerContext shell, Game game) =>
     shell.panelPlayerId ??
     shell.debugCommandTargetPlayerId ??
     shell.mapPlayerIdFor(game);
 
-MapTopology _topologyForGame(Ref ref, Game game) {
+/// True when P4–P17 should show the global-observe sentinel instead of GP data.
+bool shellPanelsNotDefined(ShellPlayerContext shell) => !shell.showPlayerChrome;
+
+MapTopology _topologyForGame(GameService service, Game game) {
   try {
-    final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+    final mapData = service.getMapData(game.id);
     return mapData?.combinedTopology ?? const MapTopology();
   } catch (_) {
     return const MapTopology();
   }
 }
-
-/// True when P4–P17 should show the global-observe sentinel instead of GP data.
-bool shellPanelsNotDefined(WidgetRef ref) =>
-    !ref.read(shellPlayerContextProvider).showPlayerChrome;
 
 /// Faction ids whose map civilians and panel rows are visible for the current shell.
 /// SPEC/ui/observe-mode.md, SPEC/ui/map-widget.md.
@@ -95,6 +92,14 @@ Set<String> resolveCivilianMarkerOwnerIds(ShellPlayerContext shell, Game game) {
 }
 
 final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
+  MapTopology topologyFor(Game game) {
+    try {
+      return _topologyForGame(ref.watch(gameServiceProvider), game);
+    } catch (_) {
+      return const MapTopology();
+    }
+  }
+
   final game = ref.watch(currentGameProvider);
   final observe = ref.watch(observeSessionProvider);
 
@@ -120,7 +125,7 @@ final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
 
   if (!observe.isObserving) {
     final id = humanId ?? game.players.first.id;
-    final topology = _topologyForGame(ref, game);
+    final topology = topologyFor(game);
     final view = buildPlayerView(game, topology, id);
     return ShellPlayerContext(
       effectiveHumanPlayerId: humanId,
@@ -138,7 +143,7 @@ final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
     );
   }
 
-  final topology = _topologyForGame(ref, game);
+  final topology = topologyFor(game);
 
   switch (observe.mode) {
     case ObserveMode.global:

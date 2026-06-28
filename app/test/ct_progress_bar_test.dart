@@ -1,26 +1,24 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_progress_bar.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   Future<void> pumpBar(WidgetTester tester, Widget child) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(
-          body: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(width: 200, child: child),
-          ),
+    await pumpAppShell(
+      tester,
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(width: 200, child: child),
         ),
       ),
     );
-    await tester.pump();
   }
 
   group('CtProgressBar value clamping (R12)', () {

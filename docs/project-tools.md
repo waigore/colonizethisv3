@@ -58,8 +58,38 @@ melos run run_observer_game -- [options]
 - `--seed <n>` — optional RNG seed
 - `--max-turns <n>` — optional turn cap (default = calendar-1800 turn for the mapping)
 - `--config <path>` — optional `GameSetupConfig` JSON (`init_game`-compatible)
+- `--profiles <dir>` — optional directory of per-GP `AiProfile` JSON files keyed `<playerId>.json`; overrides AI personality params at decision time (Refs **#3437**). Missing GPs use defaults; unmatched files are ignored (warn); a missing dir or invalid profile aborts with exit **9**.
 
 Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implemented per GitHub **#2498**; use `--max-turns` for short CI-style runs. Each resolved turn’s **Full AI + trusted resolve** segment shares the **15 s** wall-clock budget with the app (`kTurnProcessingWallClockBudgetMs`; enforced by `colonizethis_ai` perf test on turn 1 of `GameSetupConfig.defaultConfig`; Refs **#2507**).
+
+---
+
+## ga_runner
+
+Genetic-algorithm tuning of AI profiles. Ships the **fitness function** (`computeFitness`) and the **GA orchestration CLI** that runs observer games with `--profiles`, scores outcomes, and evolves a population across generations with resumable state. Specs: [SPEC/program/ga-fitness.md](../SPEC/program/ga-fitness.md), [SPEC/program/ga-runner.md](../SPEC/program/ga-runner.md). Tracked by [GitHub #3438](https://github.com/waigore/colonizethisv3/issues/3438), [GitHub #3439](https://github.com/waigore/colonizethisv3/issues/3439).
+
+**Invocation**
+
+```bash
+melos run ga_runner -- --config <ga-config.json>
+melos run ga_runner -- --resume <run-dir>
+melos run ga_runner -- bless --run <run-dir> --name <profile-name> [--profile <slot-id>] [--force]
+melos run ga_runner -- compare --baseline <run-dir> --candidate <run-dir>
+melos run ga_runner -- compare --baseline-name <name> --candidate <run-dir>
+melos run ga_runner -- list --run <run-dir>
+melos run ga_runner -- --help
+```
+
+**Options**
+
+- `--config <path>` — start a new GA run (`ga-config.json`; see SPEC/program/ga-runner.md). The top-level `seed` is optional: omit it to generate a master seed from entropy (the resolved seed is logged at run start as `ga:master_seed seed=<n> source=entropy` and persisted in `run-state.json`). Set `"prune_observer_traces": true` to delete each round's heavy `observer-traces` subtree after scoring (keeps disk usage bounded for long/high-`max_turns` runs; fitness is unchanged)
+- `--resume <dir>` — resume from `run-state.json` under a prior run directory (reuses the persisted master seed; never regenerates)
+- `bless` — copy a completed-run profile into `app/assets/profiles/` and update `manifest.json` (Refs **#3444**)
+- `compare` — side-by-side fitness curves and best-overall parameter diff between runs
+- `list` — list final-generation population members with fitness and survival counts
+- `--help` / `-h` — usage
+
+Exit codes: **0** success or already-complete resume; **1** config/resume/seed error; **2** bless duplicate name (without `--force`); **130** interrupted (last completed generation persisted).
 
 ---
 
@@ -310,7 +340,7 @@ tool/compare_e2e_timing.sh .cursor/e2e-timing/summary_dev.md .cursor/e2e-timing/
 tool/compare_e2e_timing.sh baseline.md after.md --min-reduction-pct 25
 ```
 
-Paste the script output into the PR description for AC8–AC9 evidence.
+Paste the script output into the PR description for AC8–AC9 evidence. Recorded baseline (`b1488584`) vs post-refactor medians for the #2336 campaign: [docs/e2e-timing-2336-ac8.md](e2e-timing-2336-ac8.md) and `test/fixtures/e2e_timing/{baseline,after}_summary.md`.
 
 ---
 
@@ -367,6 +397,35 @@ tool/run_nightly_gate_tests.sh
 ```
 
 Requires `dart` only (Melos activated by the script).
+
+---
+
+## check_economy_test_wall_clock.sh (economy test perf gate)
+
+Measures the wall-clock time of `dart test` in `packages/colonizethis_economy` and compares the median over repeated runs against a ceiling, locking in the dedup/fixture-hoisting wall-clock gains from #3661. **Advisory by default** (always exits `0`; over-ceiling prints `WARN`); set `ECONOMY_TEST_TIMING_ENFORCE=1` to make over-ceiling a hard failure. It runs `dart test` **without** `--coverage`, so no coverage artifacts are produced. Spec: [SPEC/program/economy-test-wall-clock.md](../SPEC/program/economy-test-wall-clock.md).
+
+**Invocation**
+
+```bash
+tool/check_economy_test_wall_clock.sh
+```
+
+**Configuration (env)**
+
+- `ECONOMY_TEST_TIMING_CEILING_SECONDS` — median ceiling in seconds (default `25`).
+- `ECONOMY_TEST_TIMING_RUNS` — odd run count whose median is compared (default `3`).
+- `ECONOMY_TEST_TIMING_ENFORCE=1` — over-ceiling exits `1` instead of warning.
+- `SKIP_ECONOMY_TEST_TIMING=1` — skip measurement entirely.
+- `ECONOMY_TEST_TIMING_MEASURED_SECONDS` — test/CI hook: bypass `dart test` and treat this value as the median.
+
+Runs in advisory mode from the nightly integration gate (`tool/run_nightly_integration_gate.sh`).
+
+**Tests**
+
+```bash
+bash tool/test_check_economy_test_wall_clock.sh
+dart test test/check_economy_test_wall_clock_test.dart --reporter=compact
+```
 
 ---
 

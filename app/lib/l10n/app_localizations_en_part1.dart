@@ -174,10 +174,27 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get shell_leaderDialog_intro =>
-      'Assign each player slot a Great Power and leader. Default map colours appear beside each nation in the nation picker.';
+      'Choose six great powers and a leader variant for each';
 
   @override
   String get shell_leaderDialog_selectLeaderHint => 'Select leader';
+
+  @override
+  String get shell_leaderDialog_aiProfileLabel => 'AI Profile';
+
+  @override
+  String get shell_leaderDialog_aiProfileNormal => 'Normal';
+
+  @override
+  String get shell_leaderDialog_aiProfileInlineLabel => 'AI Profile:';
+
+  @override
+  String shell_leaderDialog_slotLabel(int slotNumber) {
+    return 'Slot $slotNumber';
+  }
+
+  @override
+  String get shell_leaderDialog_slotYouTag => 'You';
 
   @override
   String get common_cancel => 'Cancel';
@@ -192,7 +209,7 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get common_start => 'Start';
 
   @override
-  String get shell_leaderDialog_title => 'New game — Setup';
+  String get shell_leaderDialog_title => 'Choose nations and leaders';
 
   @override
   String get shell_newGame_selectNation => 'Select nation';
@@ -208,27 +225,28 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
-  String get shell_leaderDialog_seedLabel => 'Game / world seed';
+  String get shell_leaderDialog_seedLabel => 'Game seed';
 
   @override
-  String get shell_leaderDialog_seedHelper =>
-      'Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.';
+  String get shell_leaderDialog_seedHelper => 'Enter 0 for a random seed';
 
   @override
   String get shell_leaderDialog_infiniteModeLabel =>
-      'Infinite mode (turns progress past 1800)';
+      'Infinite mode (no victory condition)';
 
   @override
   String get shell_leaderDialog_infiniteModeHelper =>
-      'When enabled, the campaign continues past calendar year 1800 until a military victory.';
+      'The game will continue indefinitely';
 
   @override
-  String shell_leaderDialog_terrainVariationLabel(int percent) =>
-      'Terrain variation ($percent%)';
+  String get shell_leaderDialog_terrainVariationLabel => 'Terrain variation:';
+
+  @override
+  String shell_leaderDialog_terrainVariationValue(int percent) => '$percent%';
 
   @override
   String get shell_leaderDialog_terrainVariationHelper =>
-      'Higher values produce more mixed terrain (0 keeps legacy clumps).';
+      '0% flat — 100% extreme';
 
   @override
   String get gameParameters_title => 'Game Parameters';
@@ -280,7 +298,7 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get game_callToArms_intro =>
-      'An allied power is at war. Join their war or refuse (alliance ends, relations worsen).';
+      'A treaty ally is at war. Join their war or refuse (the formal alliance ends, relations worsen).';
 
   @override
   String game_callToArms_prompt(String defender, String aggressor) {

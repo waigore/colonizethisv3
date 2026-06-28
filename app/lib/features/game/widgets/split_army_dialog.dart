@@ -3,14 +3,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
+import 'split_entity_dialog.dart';
 
 /// Split regiments from one army into a new army (same province).
 /// SPEC/ui/military-units-army-management.md.
-class SplitArmyDialog extends StatelessWidget {
+class SplitArmyDialog extends SplitEntityDialog {
   const SplitArmyDialog({
     super.key,
     required this.army,
@@ -26,15 +24,7 @@ class SplitArmyDialog extends StatelessWidget {
   final AppEventBus bus;
   final bool isHomeArmy;
 
-  Unit? _unit(String id) {
-    for (final u in game.worldState.oldWorld.units) {
-      if (u.id == id) return u;
-    }
-    for (final u in game.worldState.newWorld.units) {
-      if (u.id == id) return u;
-    }
-    return null;
-  }
+  Unit? _unit(String id) => game.worldState.tryGetUnitById(id);
 
   Map<String, int> _initialLeftCounts() {
     final counts = <String, int>{};
@@ -48,7 +38,7 @@ class SplitArmyDialog extends StatelessWidget {
 
   String _locationLabel() {
     final pid = army.stationedProvinceId;
-    final province = tryGetProvince(game.worldState, pid);
+    final province = game.worldState.tryGetProvince(pid);
     final regionId = army.regionId;
     final regionLabel = regionDisplayLabel(regionId);
     final name = province?.displayName ?? pid;
@@ -74,46 +64,20 @@ class SplitArmyDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    return CtDialogShell(
-      maxWidth: 520,
-      maxHeight: 500,
-      child: Padding(
-        padding: const EdgeInsets.all(CtSpacing.l),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.splitArmy_title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            CtTransferList(
-              listHeight: 220,
-              leftTitle: army.isHomeArmy ? 'Home Army' : 'Army ${army.id}',
-              rightTitle: 'New Army',
-              leftSubtitle: _locationLabel(),
-              rightSubtitle: _locationLabel(),
-              initialLeftCounts: _initialLeftCounts(),
-              itemLabelBuilder: (bucketKey) => bucketKey,
-              leftEmptyLabel: 'No regiments',
-              rightEmptyLabel: 'No regiments',
-              confirmLabel: 'Confirm Split',
-              totalLabelBuilder: (total) => 'Total: $total regiments',
-              canConfirm: (left, right) {
-                final leftTotal = left.values.fold(0, (sum, c) => sum + c);
-                final rightTotal = right.values.fold(0, (sum, c) => sum + c);
-                if (isHomeArmy) {
-                  return rightTotal > 0;
-                }
-                return leftTotal >= 1 && rightTotal > 0;
-              },
-              onCancel: () => Navigator.of(context).pop(),
-              onConfirm: (_, right) => _handleConfirm(right, context),
-            ),
-          ],
-        ),
-      ),
+    return buildSplitDialogScaffold(
+      context: context,
+      title: l10n.splitArmy_title,
+      leftTitle: army.isHomeArmy ? 'Home Army' : 'Army ${army.id}',
+      rightTitle: 'New Army',
+      locationLabel: _locationLabel(),
+      initialLeftCounts: _initialLeftCounts(),
+      itemLabelBuilder: (bucketKey) => bucketKey,
+      leftEmptyLabel: 'No regiments',
+      rightEmptyLabel: 'No regiments',
+      confirmLabel: 'Confirm Split',
+      totalLabelBuilder: (total) => 'Total: $total regiments',
+      isHomeEntity: isHomeArmy,
+      onConfirm: (right) => _handleConfirm(right, context),
     );
   }
 }

@@ -10,12 +10,18 @@ import 'check_app_event_handler_scope_logic_boundary.dart';
 import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_no_duplicate_helpers.dart';
 import 'check_app_no_material_alertdialog.dart';
+import 'check_app_no_material_button.dart';
 import 'check_app_no_material_chip.dart';
 import 'check_app_no_material_filterchip.dart';
 import 'check_app_no_material_iconbutton.dart';
+import 'check_app_no_material_listtile.dart';
 import 'check_app_no_material_scaffold.dart';
 import 'check_app_no_material_switchlisttile.dart';
 import 'check_app_no_material_textbutton.dart';
+import 'check_app_shell_panel_dedup.dart';
+import 'check_app_debug_handler_guard_helpers.dart';
+import 'check_app_widgetbook_file_naming.dart';
+import 'check_app_textstyle_fontsize_fallback.dart';
 import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
@@ -25,20 +31,52 @@ import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
 import 'check_dart_file_non_comment_line_size.dart';
+import 'check_diplomacy_no_part_of.dart';
 import 'check_debug_handler_one_per_file.dart';
 import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
+import 'check_map_gen_file_size.dart';
+import 'check_map_gen_no_image_import.dart';
+import 'check_map_gen_stage_protocol.dart';
+import 'check_map_no_partfile_classes.dart';
+import 'check_map_grid_cell_iteration_central.dart';
+import 'check_map_grid_ops_central.dart';
+import 'check_map_public_barrel_surface.dart';
+import 'check_map_region_data_access_central.dart';
+import 'check_map_test_no_duplicate_view_fixtures.dart';
+import 'check_map_region_dispatch_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
+import 'check_economy_cost_check_shared_helper.dart';
+import 'check_economy_dedup_credit_aggregation.dart';
+import 'check_economy_dedup_port_tile_keys.dart';
+import 'check_economy_world_market_admission_shared.dart';
 import 'check_land_province_bucket_keys.dart';
+import 'check_orders_dedup_diplomatic_helpers.dart';
+import 'check_orders_dedup_map_clones.dart';
+import 'check_setup_dedup_gp_ids_from_players.dart';
+import 'check_setup_dedup_gp_ow_tile_scans.dart';
+import 'check_setup_dedup_grid_bfs_coord_keys.dart';
+import 'check_setup_dedup_topology_adjacency.dart';
+import 'check_setup_lib_tile_key_interpolation.dart';
+import 'check_setup_test_no_duplicate_scaffolding.dart';
+import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
 import 'check_logic_work_target_switch.dart';
 import 'check_logic_test_file_size.dart';
+import 'check_logic_domain_import_dag.dart';
+import 'check_logic_source_file_size.dart';
+import 'check_world_no_logic_deps.dart';
+import 'check_logic_no_map_deps.dart';
+import 'check_world_no_circular_imports.dart';
+import 'check_world_no_duplicate_extension_helper.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
+import 'check_domain_package_logger_dedup.dart';
+import 'check_ai_api_narrow_surface.dart';
 import 'check_ai_planner_context.dart';
 import 'check_logic_all_provinces_sanctioned_calls.dart';
 import 'check_logic_dual_region_province_field_access.dart';
@@ -51,6 +89,8 @@ import 'check_repeated_magic_numbers.dart';
 import 'check_screen_registry_active_paths.dart';
 import 'check_subscription_tracker.dart';
 import 'check_tech_id_constants.dart';
+import 'check_turn_no_part_directives.dart';
+import 'check_turn_resume_param_budget.dart';
 import 'check_work_target_constants.dart';
 import 'check_workspace_outdated_latest_direct.dart';
 import 'check_workspace_outdated_resolvable.dart';
@@ -732,6 +772,31 @@ int? _tryRunDartRuleInProcess({
     return appResult;
   }
 
+  final int? logicResult = _tryRunLogicRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+    incrementalPaths: incrementalPaths,
+  );
+  if (logicResult != null) {
+    return logicResult;
+  }
+
+  final int? mapResult = _tryRunMapRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (mapResult != null) {
+    return mapResult;
+  }
+
+  final int? setupResult = _tryRunSetupRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (setupResult != null) {
+    return setupResult;
+  }
+
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
@@ -759,6 +824,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
     case 'repo.app_event_bus_decoupling':
       return runCheckAppEventBusDecoupling(repoRoot);
+    case 'repo.app_no_shell_panel_duplication':
+      return runCheckAppShellPanelDedup(repoRoot);
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':
@@ -771,16 +838,14 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugHandlerOnePerFile(repoRoot);
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
-    case 'repo.logic_diplomatic_sub_validator_size':
-      return runCheckLogicDiplomaticSubValidatorSize(repoRoot);
-    case 'repo.logic_work_target_switch':
-      return runCheckLogicWorkTargetSwitch(repoRoot);
-    case 'repo.logic_test_file_size':
-      // Full-tree enforcement (GitHub #2288): the #2216 file-size debt is now
-      // cleared across `packages/colonizethis_logic/test/**`, so the rule
-      // scans the entire tree when no changed-file baseline is provided and
-      // narrows to changed files when CI supplies an incremental baseline.
-      return runCheckLogicTestFileSize(repoRoot, targetFiles: incrementalPaths);
+    case 'repo.world_no_logic_deps':
+      return runCheckWorldNoLogicDeps(repoRoot);
+    case 'repo.logic_no_map_deps':
+      return runCheckLogicNoMapDeps(repoRoot);
+    case 'repo.world_no_circular_imports':
+      return runCheckWorldNoCircularImports(repoRoot);
+    case 'repo.world_no_duplicate_extension_helper':
+      return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,
@@ -788,6 +853,12 @@ int? _tryRunDartRuleInProcess({
       );
     case 'repo.part_unit_size':
       return runCheckPartUnitSize(repoRoot);
+    case 'repo.turn_no_part_directives':
+      return runCheckTurnNoPartDirectives(repoRoot);
+    case 'repo.turn_resume_param_budget':
+      return runCheckTurnResumeParamBudget(repoRoot);
+    case 'repo.diplomacy_no_part_of':
+      return runCheckDiplomacyNoPartOf(repoRoot);
     case 'repo.no_flame_in_widgets':
       return runCheckNoFlameInWidgets(repoRoot);
     case 'repo.no_screen_in_game_widgets':
@@ -811,24 +882,24 @@ int? _tryRunDartRuleInProcess({
       );
     case 'repo.canonical_province_tile_keys':
       return runCheckCanonicalProvinceTileKeys(repoRoot);
-    case 'repo.colonizethis_map_lib_pipe_split':
-      return runCheckColonizethisMapLibPipeSplit(repoRoot);
-    case 'repo.tile_map_inline_cardinal_directions':
-      return runCheckTileMapInlineCardinalDirections(repoRoot);
     case 'repo.land_province_bucket_keys':
       return runCheckLandProvinceBucketKeys(repoRoot);
-    case 'repo.logic_dual_region_province_field_access':
-      return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
-    case 'repo.logic_all_provinces_sanctioned_calls':
-      return runCheckLogicAllProvincesSanctionedCalls(repoRoot);
-    case 'repo.logic_units_by_id_rebuild':
-      return runCheckLogicUnitsByIdRebuild(repoRoot);
-    case 'repo.logic_validator_units_params':
-      return runCheckLogicValidatorUnitsParams(repoRoot);
-    case 'repo.logic_dead_files':
-      return runCheckLogicDeadFiles(repoRoot);
-    case 'repo.logic_dedup_logger':
-      return runCheckLogicDedupLogger(repoRoot);
+    case 'repo.orders_dedup_map_clones':
+      return runCheckOrdersDedupMapClones(repoRoot);
+    case 'repo.orders_dedup_diplomatic_helpers':
+      return runCheckOrdersDedupDiplomaticHelpers(repoRoot);
+    case 'repo.setup_dedup_init_pipeline_retry':
+      return runCheckSetupDedupInitPipelineRetry(repoRoot);
+    case 'repo.setup_dedup_gp_ow_tile_scans':
+      return runCheckSetupDedupGpOwTileScans(repoRoot);
+    case 'repo.setup_dedup_gp_ids_from_players':
+      return runCheckSetupDedupGpIdsFromPlayers(repoRoot);
+    case 'repo.setup_lib_tile_key_interpolation':
+      return runCheckSetupLibTileKeyInterpolation(repoRoot);
+    case 'repo.domain_package_logger_dedup':
+      return runCheckDomainPackageLoggerDedup(repoRoot);
+    case 'repo.ai_api_narrow_surface':
+      return runCheckAiApiNarrowSurface(repoRoot);
     case 'repo.ai_planner_context':
       return runCheckAiPlannerContext(repoRoot);
     case 'repo.screen_registry_active_paths':
@@ -857,20 +928,139 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppWidgetImports(repoRoot);
     case 'repo.app_editorial_monocle_colors':
       return runCheckAppEditorialMonocleColors(repoRoot);
+    case 'repo.app_textstyle_fontsize_fallback':
+      return runCheckAppTextStyleFontSizeFallback(repoRoot);
     case 'repo.app_no_material_alertdialog':
       return runCheckAppNoMaterialAlertDialog(repoRoot);
+    case 'repo.app_no_material_button':
+      return runCheckAppNoMaterialButton(repoRoot);
     case 'repo.app_no_material_chip':
       return runCheckAppNoMaterialChip(repoRoot);
     case 'repo.app_no_material_filterchip':
       return runCheckAppNoMaterialFilterChip(repoRoot);
     case 'repo.app_no_material_iconbutton':
       return runCheckAppNoMaterialIconButton(repoRoot);
+    case 'repo.app_no_material_listtile':
+      return runCheckAppNoMaterialListTile(repoRoot);
     case 'repo.app_no_material_switchlisttile':
       return runCheckAppNoMaterialSwitchListTile(repoRoot);
     case 'repo.app_no_material_textbutton':
       return runCheckAppNoMaterialTextButton(repoRoot);
     case 'repo.app_no_material_scaffold':
       return runCheckAppNoMaterialScaffold(repoRoot);
+    case 'repo.app_widgetbook_file_naming':
+      return runCheckAppWidgetbookFileNaming(repoRoot);
+    case 'repo.app_debug_handler_guard_helpers':
+      return runCheckAppDebugHandlerGuardHelpers(repoRoot);
+    default:
+      return null;
+  }
+}
+
+/// Dispatch helper for `repo.logic_*` manifest rules. Keeps the main
+/// `_tryRunDartRuleInProcess` switch under the `repo.dart_long_string_switches`
+/// 49-case ceiling as new logic-scoped rules are added. Returns `null` for
+/// non-logic rule ids so the caller falls back to the generic dispatch.
+int? _tryRunLogicRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+  required List<String>? incrementalPaths,
+}) {
+  switch (ruleId) {
+    case 'repo.logic_diplomatic_sub_validator_size':
+      return runCheckLogicDiplomaticSubValidatorSize(repoRoot);
+    case 'repo.logic_work_target_switch':
+      return runCheckLogicWorkTargetSwitch(repoRoot);
+    case 'repo.logic_test_file_size':
+      // Full-tree enforcement (GitHub #2288): the #2216 file-size debt is now
+      // cleared across `packages/colonizethis_logic/test/**`, so the rule
+      // scans the entire tree when no changed-file baseline is provided and
+      // narrows to changed files when CI supplies an incremental baseline.
+      return runCheckLogicTestFileSize(repoRoot, targetFiles: incrementalPaths);
+    case 'repo.logic_domain_import_dag':
+      return runCheckLogicDomainImportDag(repoRoot);
+    case 'repo.logic_source_file_size':
+      return runCheckLogicSourceFileSize(repoRoot);
+    case 'repo.logic_dual_region_province_field_access':
+      return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
+    case 'repo.logic_all_provinces_sanctioned_calls':
+      return runCheckLogicAllProvincesSanctionedCalls(repoRoot);
+    case 'repo.logic_units_by_id_rebuild':
+      return runCheckLogicUnitsByIdRebuild(repoRoot);
+    case 'repo.logic_validator_units_params':
+      return runCheckLogicValidatorUnitsParams(repoRoot);
+    case 'repo.logic_dead_files':
+      return runCheckLogicDeadFiles(repoRoot);
+    case 'repo.logic_dedup_logger':
+      return runCheckLogicDedupLogger(repoRoot);
+    case 'repo.economy_cost_check_shared_helper':
+      return runCheckEconomyCostCheckSharedHelper(repoRoot);
+    case 'repo.economy_world_market_admission_shared':
+      return runCheckEconomyWorldMarketAdmissionShared(repoRoot);
+    case 'repo.economy_dedup_port_tile_keys':
+      return runCheckEconomyDedupPortTileKeys(repoRoot);
+    case 'repo.economy_dedup_credit_aggregation':
+      return runCheckEconomyDedupCreditAggregation(repoRoot);
+    default:
+      return null;
+  }
+}
+
+/// Dispatch helper for `colonizethis_map` package manifest rules. Keeps the
+/// main `_tryRunDartRuleInProcess` switch under the
+/// `repo.dart_long_string_switches` 49-case ceiling as new map-scoped rules are
+/// added (Refs #3574). Returns `null` for non-map rule ids so the caller falls
+/// back to the generic dispatch.
+/// Dispatch helper for the `repo.setup_*` dedup manifest rules added for #3740.
+/// Keeps the main `_tryRunDartRuleInProcess` switch under the
+/// `repo.dart_long_string_switches` 49-case ceiling (mirrors the map/app/logic
+/// split). Returns `null` for non-matching rule ids so the caller falls back to
+/// the generic dispatch.
+int? _tryRunSetupRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+}) {
+  switch (ruleId) {
+    case 'repo.setup_dedup_grid_bfs_coord_keys':
+      return runCheckSetupDedupGridBfsCoordKeys(repoRoot);
+    case 'repo.setup_dedup_topology_adjacency':
+      return runCheckSetupDedupTopologyAdjacency(repoRoot);
+    case 'repo.setup_test_no_duplicate_scaffolding':
+      return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
+    default:
+      return null;
+  }
+}
+
+int? _tryRunMapRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+}) {
+  switch (ruleId) {
+    case 'repo.colonizethis_map_lib_pipe_split':
+      return runCheckColonizethisMapLibPipeSplit(repoRoot);
+    case 'repo.tile_map_inline_cardinal_directions':
+      return runCheckTileMapInlineCardinalDirections(repoRoot);
+    case 'repo.map_gen_no_image_import':
+      return runCheckMapGenNoImageImport(repoRoot);
+    case 'repo.map_grid_ops_central':
+      return runCheckMapGridOpsCentral(repoRoot);
+    case 'repo.map_grid_cell_iteration_central':
+      return runCheckMapGridCellIterationCentral(repoRoot);
+    case 'repo.map_gen_stage_protocol':
+      return runCheckMapGenStageProtocol(repoRoot);
+    case 'repo.map_gen_no_new_partfiles':
+      return runCheckMapGenNoNewPartfiles(repoRoot);
+    case 'repo.map_gen_file_size':
+      return runCheckMapGenFileSize(repoRoot);
+    case 'repo.map_public_barrel_surface':
+      return runCheckMapPublicBarrelSurface(repoRoot);
+    case 'repo.map_region_data_access_central':
+      return runCheckMapRegionDataAccessCentral(repoRoot);
+    case 'repo.map_region_dispatch_central':
+      return runCheckMapRegionDispatchCentral(repoRoot);
+    case 'repo.map_test_no_duplicate_view_fixtures':
+      return runCheckMapTestNoDuplicateViewFixtures(repoRoot);
     default:
       return null;
   }

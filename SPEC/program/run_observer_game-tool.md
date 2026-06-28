@@ -19,11 +19,26 @@ melos run run_observer_game -- [options]
 | `--seed <int>` | Optional; matches `init_game` / `GameSetupConfig` semantics when omitted vs set. |
 | `--max-turns <int>` | Optional; default = campaign calendar cap turn **T** (`yearAtTurn(T)==1800` under game mapping; **201** for `gdd01`). Lower values shorten runs. |
 | `--config <path>` | Optional JSON `GameSetupConfig` consistent with **`init_game`**. |
+| `--profiles <dir>` | Optional directory of per-GP `AiProfile` JSON files keyed `<playerId>.json`; overrides AI personality params at decision time (see § Per-GP AI profiles). |
 | `--verify-conquest` | After success: turn-1 vs turn-100 OW per-GP net +3 provinces (exit **5** on failure; requires `--max-turns >= 100` or no cap). |
 | `--verify-colonial-expansion` | After success: turn-150 snapshot checks NW GP ownership and extractable improvement ratio (exit **6** on failure; requires `--max-turns >= 150` or no cap). |
 | `--verify-workforce` | After success: turn-100 snapshot checks every Great Power `gp1`–`gp6` has `peasants >= 15` AND `apprentices + journeymen + masters >= 8` (exit **8** on failure; requires `--max-turns >= 100` or no cap; Refs #2692 S10). |
 
 **Errors:** Diagnostics via `logger`; user-facing failures → **stderr** and non-zero exit; no raw stack traces by default (match `init_game`).
+
+## Full-AI setup (no post-init override)
+
+The observer always builds a **fully-AI** game **at init** by forcing `GameSetupConfig.humanGreatPowerSlotIndices = {}` (empty) regardless of any `--config` JSON or `--seed` override (see [game-setup-pipeline.md](game-setup-pipeline.md) § Human/AI slot assignment). Consequently every Great Power has `isHuman == false` and `aiControlByGpId[gpId] == true` from creation; the tool does **not** mutate `aiControlByGpId` after init. Snapshot player rollups therefore report `"isHuman": false` for every GP including `gp1`.
+
+## Per-GP AI profiles (`--profiles`, Refs #3437)
+
+`--profiles <dir>` loads `AiProfile` JSON (`SPEC/ai/ai-parameter-registry.md`) per Great Power and overrides hardcoded AI personality parameters at decision time per [ai-profile-overrides.md](../ai/ai-profile-overrides.md):
+
+- Files are keyed by **`playerId`**: `<dir>/<playerId>.json` (the in-game player id, e.g. `gp1.json`). The set of GPs comes from the loaded setup (`game.players`), **not** from scanning the directory.
+- A GP without a matching file uses its default hardcoded personality. Files not matching any GP `playerId` are ignored and logged at **warn** (`session` sub-prefix `observer:profile_unmatched`).
+- Each matched file is parsed via `AiProfile.fromJson`. A missing directory or any unparseable/invalid profile file aborts the run with a clear **stderr** message and exit **9** (`profile_load_failed`) before the turn loop starts; valid profiles log one **info** line `observer:profiles_loaded count=<n>`.
+- The loaded `Map<String, AiProfile>` (keyed by `playerId`) is passed into `generateOrdersForGameFullAI`; each GP's active `profile_id` appears in its turn trace under `state.decisionContext.profileId`.
+- Omitting `--profiles` is byte-for-byte identical to prior behavior.
 
 ## Artifact layout
 
@@ -73,6 +88,13 @@ HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed
 
 ## Turn processing wall-clock budget (Refs #2507)
 
+### Per-turn measurement, logging, and summary (Refs #3393 Phase 6c)
+
+A single `Stopwatch` wraps the budget segment per resolved turn in **both** full-trace and minimal-trace modes; it starts immediately before `generateOrdersForGameFullAI` and stops immediately after `validateOrdersAndResolveTurnFromTrustedOrders` returns, **before** any trace export, snapshot/HTML write, or `run-summary.json` I/O.
+
+- **Logging signal (`session` sub-prefix):** Each resolved turn emits exactly one timing line. At or under budget → **info** `observer:turn_processing turn=<n> ms=<int> budgetMs=15000 overBudget=false`. Over budget (`ms > kTurnProcessingWallClockBudgetMs`) → **warning** `observer:turn_processing_over_budget turn=<n> ms=<int> budgetMs=15000`. These are grep-stable tokens for budget-regression triage and complement the per-phase `logic` logs in [logging/turn-resolution.md](logging/turn-resolution.md).
+- **`run-summary.json` fields (`runSummarySchemaVersion: 2`):** the summary additionally carries `turn_processing_wall_clock_budget_ms` (the `15000` ceiling), `turn_processing_wall_clock_ms_by_turn` (one entry per resolved turn, in resolution order), `max_turn_processing_wall_clock_ms`, `turns_over_wall_clock_budget` (count), and `over_wall_clock_budget_turn_numbers` (post-resolution turn numbers that breached the ceiling). For a zero-turn run (`--max-turns 0`) the list is empty and `max_turn_processing_wall_clock_ms` is `0`.
+
 Each **resolved turn** in the session loop measures the same segment as the app next-turn worker: **`generateOrdersForGameFullAI`** through **`validateOrdersAndResolveTurnFromTrustedOrders`** returning **`TurnResolutionComplete`**. That segment shares the **15 000 ms** ceiling **`kTurnProcessingWallClockBudgetMs`** ([turn-resolution.md](turn-resolution.md) § Turn processing wall-clock budget). **Excluded:** `runInitGame`, trace export, snapshot/HTML writes, and `run-summary.json` I/O. Nightly observer runs are integration targets; the **quality** gate enforces the budget via `colonizethis_ai` perf test on **turn 1** of **`GameSetupConfig.defaultConfig`**.
 
 ## Relationship to app / ctdev
@@ -109,4 +131,10 @@ CI: **≥ 80% line coverage on `tool/run_observer_game/lib/`** (`quality` workfl
 ## Acceptance (tool-specific)
 
 - Given `melos run run_observer_game -- --help`, when the command completes, then exit code is **0** and stdout describes options and artifact layout at a high level.
+- Given `--profiles <dir>` pointing at a directory containing `<playerId>.json` for a Great Power whose personality weights differ from that leader's defaults, when a turn is resolved, then that GP's turn-trace `state.decisionContext.profileId` equals the profile's `profile_id` and its `thresholds.derived.domainWeights` differ from a run without `--profiles`.
+- Given `--profiles <dir>` where `<dir>` does not exist or contains an unparseable `<playerId>.json`, when the tool runs, then it writes a clear stderr message and exits **9** without resolving turns.
+- Given `--profiles <dir>` containing a file that matches no Great Power `playerId`, when the tool runs, then that file is ignored, a `session` warn line `observer:profile_unmatched` is logged, and the run proceeds normally.
 - Given a successful multi-turn run (**S4+**), when outputs are written, then layout matches § Artifact layout and summary matches **#2498** ACs.
+- Given a successful run that resolves **N ≥ 1** turns, when `run-summary.json` is written, then `runSummarySchemaVersion` is `2`, `turn_processing_wall_clock_ms_by_turn` is a list of exactly **N** non-negative integers, `turn_processing_wall_clock_budget_ms` equals `kTurnProcessingWallClockBudgetMs` (`15000`), and `max_turn_processing_wall_clock_ms` equals the maximum of that list.
+- Given a run with `--max-turns 0`, when `run-summary.json` is written, then `turn_processing_wall_clock_ms_by_turn` is an empty list, `max_turn_processing_wall_clock_ms` is `0`, and `turns_over_wall_clock_budget` is `0`.
+- Given a resolved turn whose measured segment is at or under `15000` ms, when the turn completes, then the `session` logger emits exactly one **info** line containing `observer:turn_processing turn=<n>` with `overBudget=false`; given a resolved turn whose segment exceeds `15000` ms, then the `session` logger instead emits a **warning** line containing `observer:turn_processing_over_budget turn=<n>` and the turn number is appended to `over_wall_clock_budget_turn_numbers` in `run-summary.json`.

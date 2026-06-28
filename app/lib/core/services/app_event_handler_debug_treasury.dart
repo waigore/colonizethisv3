@@ -7,51 +7,28 @@ DebugCommandResult applyDebugTreasuryCredit({
   required Game? currentGame,
   required CreditDebugTreasuryEvent event,
 }) {
-  if (currentGame == null) {
-    return (
-      game: null,
-      message: 'Debug treasury credit ignored: no active game.',
-    );
-  }
-  if (currentGame.worldState.turnState.phase != TurnPhase.orders) {
-    return (
-      game: null,
-      message:
-          'Debug add_money rejected: command is allowed only during human Orders phase.',
-    );
-  }
-  if (event.creditedAmount < 1) {
-    return (
-      game: null,
-      message: 'Debug treasury credit ignored: credited amount must be >= 1.',
-    );
-  }
-  final player = findPlayerById(currentGame, event.humanPlayerId);
-  if (player == null) {
-    return (
-      game: null,
-      message:
-          'Debug treasury credit ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
-  final oldTreasury = player.treasury;
-  final newTreasury = oldTreasury + event.creditedAmount;
-  final updatedPlayers = currentGame.players
-      .map(
-        (p) =>
-            p.id == event.humanPlayerId ? p.copyWith(treasury: newTreasury) : p,
-      )
-      .toList(growable: false);
-  final nextGame = currentGame.copyWith(players: updatedPlayers);
+  final guard = resolveDebugCommandGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.treasuryCredit,
+    ordersPhaseLabel: DebugCommandLabel.addMoney,
+    creditedAmount: event.creditedAmount,
+    playerId: event.humanPlayerId,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
 
-  final String message;
-  if (event.requestedAmount != event.creditedAmount) {
-    message =
-        'Treasury +${event.creditedAmount} (requested ${event.requestedAmount}, '
-        'credited ${event.creditedAmount}). New balance: $newTreasury.';
-  } else {
-    message = 'Treasury +${event.creditedAmount}. New balance: $newTreasury.';
-  }
-
+  final newTreasury = guard.player.treasury + event.creditedAmount;
+  final nextGame = updateDebugPlayer(
+    guard.game,
+    event.humanPlayerId,
+    (p) => p.copyWith(treasury: newTreasury),
+  );
+  final message = debugCreditedAmountMessage(
+    subject: 'Treasury',
+    requestedAmount: event.requestedAmount,
+    creditedAmount: event.creditedAmount,
+    balanceLabel: 'New balance',
+    balanceValue: newTreasury,
+  );
   return (game: nextGame, message: message);
 }

@@ -4,14 +4,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
+import 'chrome/ct_action_text_button.dart';
 import 'chrome/ct_danger_text_button.dart';
 import 'production_allocation_row.dart';
 import 'production_allocation_row_chrome.dart';
@@ -76,6 +79,10 @@ class ProductionPanel extends StatelessWidget {
     this.labourCallbacks,
     this.canEditLabour = false,
   });
+
+  /// SPEC/ui/production-panel.md — [UiScreenIds.productionScreen]. Hosted by
+  /// `ProductionScreen`; shares its stable surface ID.
+  static const screenId = UiScreenIds.productionScreen;
 
   final Game game;
   final Player player;
@@ -331,7 +338,7 @@ class _AvailableSubpanel extends StatelessWidget {
       CtSectionLabel(l10n.production_food),
       const SizedBox(height: 6),
       _buildCommodityGrid(availableFood, netChanges, sellableByCommodityId),
-      const SizedBox(height: 12),
+      CtGap.ml,
     ];
   }
 
@@ -348,7 +355,7 @@ class _AvailableSubpanel extends StatelessWidget {
     ];
     if (manufactured.isNotEmpty) {
       children.addAll([
-        const SizedBox(height: 12),
+        CtGap.ml,
         CtSectionLabel(l10n.production_manufactured),
         const SizedBox(height: 6),
         _buildCommodityGrid(manufactured, netChanges, sellableByCommodityId),
@@ -359,7 +366,7 @@ class _AvailableSubpanel extends StatelessWidget {
 
   List<Widget> _buildWorkerSection(ThemeData theme) {
     final children = <Widget>[
-      const SizedBox(height: 12),
+      CtGap.ml,
       CtSectionLabel(l10n.production_workers),
       const SizedBox(height: 6),
       AvailableCellGrid(
@@ -372,7 +379,7 @@ class _AvailableSubpanel extends StatelessWidget {
           _buildWorkerCell('master', player.workerPool.masters),
         ],
       ),
-      const SizedBox(height: 8),
+      CtGap.m,
       EffectiveLabourTotal(
         text: l10n.production_effectiveLabour(effectiveLabour),
         theme: theme,
@@ -380,7 +387,7 @@ class _AvailableSubpanel extends StatelessWidget {
     ];
     if (currentOrders != null && labourCallbacks != null) {
       children.addAll(<Widget>[
-        const SizedBox(height: 12),
+        CtGap.ml,
         CtSectionLabel(l10n.production_labourControlsSectionLabel),
         const SizedBox(height: 6),
         ProductionLabourSection(
@@ -405,9 +412,9 @@ class _AvailableSubpanel extends StatelessWidget {
           ),
         ),
         if (onOpenCommodityBreakdown != null)
-          CtNinePatchButton(
+          CtActionTextButton(
             onPressed: onOpenCommodityBreakdown,
-            child: Text(l10n.production_breakdown),
+            label: l10n.production_breakdown,
           ),
       ],
     );
@@ -435,7 +442,7 @@ class _AvailableSubpanel extends StatelessWidget {
         .toList();
     return <Widget>[
       _buildHeader(theme),
-      const SizedBox(height: 8),
+      CtGap.m,
       ..._buildFoodSection(
         availableFood,
         netChanges,
@@ -482,7 +489,11 @@ class _AllocationSubpanel extends StatelessWidget {
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final AppLocalizations l10n;
 
-  Widget _buildRecipeLabel(ProductionRecipe recipe, ThemeData theme) {
+  Widget _buildRecipeLabel(
+    ProductionRecipe recipe,
+    ThemeData theme,
+    bool locked,
+  ) {
     final outputCommodity = CommodityCatalog.byId[recipe.outputCommodityId];
     final outputName = outputCommodity?.displayName ?? recipe.outputCommodityId;
     final inputParts = recipe.inputQuantities.entries
@@ -511,6 +522,15 @@ class _AllocationSubpanel extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+        if (locked) ...[
+          const SizedBox(width: 4),
+          Text(
+            l10n.production_recipeLocked,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: EditorialMonoclePalette.muted,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -565,6 +585,10 @@ class _AllocationSubpanel extends StatelessWidget {
         );
       }
       final recipe = recipes[i];
+      final locked = !ProductionRecipesCatalog.isRecipeAvailableForPlayer(
+        recipe,
+        player.techUnlocked,
+      );
       widgets.add(
         ProductionAllocationRowChrome(
           key: ValueKey<String>('production_alloc_row_chrome_${recipe.id}'),
@@ -575,9 +599,11 @@ class _AllocationSubpanel extends StatelessWidget {
             effectiveLabour: effectiveLabour,
             desiredOutputByRecipe: desiredOutputByRecipe,
             onDesiredOutputChanged: onDesiredOutputChanged,
-            buildRecipeLabel: (value) => _buildRecipeLabel(value, theme),
+            buildRecipeLabel: (value, isLocked) =>
+                _buildRecipeLabel(value, theme, isLocked),
             l10n: l10n,
             theme: theme,
+            locked: locked,
           ),
         ),
       );
@@ -591,7 +617,7 @@ class _AllocationSubpanel extends StatelessWidget {
     bool labourInsufficient,
   ) {
     return <Widget>[
-      const SizedBox(height: 8),
+      CtGap.m,
       Text(
         l10n.production_totalLabour(totalRequiredLabour, effectiveLabour),
         style: theme.textTheme.bodySmall?.copyWith(
@@ -626,7 +652,7 @@ class _AllocationSubpanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(theme),
-            const SizedBox(height: 8),
+            CtGap.m,
             ..._buildAllocationRows(theme),
             ..._buildLabourSummary(
               theme,

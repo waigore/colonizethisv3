@@ -32,24 +32,21 @@ void main() {
   suppressLogsForTests();
 
   testWidgets(
-    'short-circuits before paying any pump when intro overlay does not block',
+    'short-circuits before paying any pump when intro does not block UI',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: GameStartIntroOverlay(
-            onDismissed: () {},
-            child: const SizedBox(key: Key('map_child')),
-          ),
-        ),
-      );
+      // No GameStartIntroOverlay / GameStartIntroLoadingIndicator mounted —
+      // `e2eGameStartIntroBlocksUi` is false at entry (Branch 2 in
+      // `e2e_game_start_intro_blocks_ui_test.dart`). A mounted overlay on its
+      // first frame now blocks while Yarn loads (#2867 S10 / Branch 4).
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
       final sw = Stopwatch()..start();
       await e2eAdvanceGameStartIntroUntilDismissed(tester);
       expect(
         sw.elapsed < const Duration(milliseconds: 200),
         isTrue,
         reason:
-            'Non-blocking overlay must return before any idle pump (#2336 AC5 '
-            'pre-pump short-circuit).',
+            'Non-blocking intro state must return before any idle pump (#2336 '
+            'AC5 pre-pump short-circuit).',
       );
     },
   );
@@ -92,6 +89,36 @@ void main() {
   // `tool/compare_e2e_timing.sh`) without showing up in the legacy
   // short-circuit / timeout tests at the top of this file (which all pass
   // `perf: null` by default).
+
+  group('e2eAdvanceGameStartIntroUntilDismissed multi-label pass', () {
+    test(
+      'control label order and post-tap settle cap stay pinned for bootstrap '
+      'wall-clock (#2336 AC5)',
+      () {
+        expect(
+          kE2eGameStartIntroControlLabels,
+          ['I shall.', 'Continue'],
+          reason:
+              'The collapsed game_start_intro step (Refs #3628) exposes only '
+              'the Yarn option label "I shall.", so it must be tried first for '
+              'a one-tap dismissal; the generic Continue stays as a defensive '
+              'fallback (e.g. the asset-load error shell).',
+        );
+        expect(
+          kE2eDefaultIntroControlPostTapSettleTimeout,
+          const Duration(milliseconds: 500),
+          reason:
+              'Per-control settle must stay well below the legacy 5 s cap so '
+              'bootstrap does not burn seconds waiting for full dismissal '
+              'after an intermediate control tap.',
+        );
+        expect(
+          kE2eDefaultIntroControlPostTapSettleTimeout.inMilliseconds,
+          lessThan(5000),
+        );
+      },
+    );
+  });
 
   group('e2eAdvanceGameStartIntroUntilDismissed perf attribution', () {
     test('phase constant matches the documented '

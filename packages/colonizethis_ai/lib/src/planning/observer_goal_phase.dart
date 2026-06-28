@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import 'expand_phase_planner.dart';
+import 'planning_helpers.dart';
 
 /// Observer tuning phases for Full AI (Refs #2509 S10).
 enum ObserverGoalPhase {
@@ -22,14 +23,13 @@ enum ObserverGoalPhase {
 
 /// Whether any `newWorld|` province is unowned or owned by a non-GP faction.
 bool globalNewWorldHasNonGpOwnership(Game game) {
-  for (final p in game.worldState.newWorld.provinces) {
-    final owner = p.ownerId;
-    if (owner == null || owner.isEmpty) {
-      return true;
-    }
-    if (game.playerById(owner) == null) {
-      return true;
-    }
+  final cache = ProvinceOwnerCache.of(game.worldState);
+  for (final p in cache.unownedProvinces) {
+    if (p.regionId == kRegionNewWorld) return true;
+  }
+  for (final ownerId in cache.ownerIds) {
+    if (!cache.ownsAnyInRegion(ownerId, kRegionNewWorld)) continue;
+    if (ownerId.isEmpty || game.playerById(ownerId) == null) return true;
   }
   return false;
 }
@@ -106,10 +106,7 @@ List<String> expandPhaseGpPeaceTargets({
       ObserverGoalPhase.expand)) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   // Minor-first: exit every GP front while uninvaded minors remain (Refs #2509).
   if (gpWars.isNotEmpty &&
       hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) &&
@@ -137,10 +134,7 @@ List<String> expandPhaseGpPeaceTargets({
   if (blocker == null || !gpWars.contains(blocker)) {
     return const [];
   }
-  return <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// GP owning the most invadable New World provinces (colonial frontier blocker).
@@ -200,10 +194,7 @@ List<String> colonialPhaseGpPeaceTargets({
       ObserverGoalPhase.colonial)) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length <= 1) {
     return const [];
   }
@@ -211,10 +202,7 @@ List<String> colonialPhaseGpPeaceTargets({
   if (blocker == null || !gpWars.contains(blocker)) {
     return const [];
   }
-  return <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// EXPAND phase: suppress NW colonial diplomacy, military, civilian, and naval work.
@@ -248,10 +236,7 @@ List<String> developPhaseGpPeaceTargets({
   if (!isObserverDevelopPhase(snapshot: snapshot, game: game)) {
     return const [];
   }
-  return [
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
+  return gpFactionIdsAtWarWith(game, snapshot);
 }
 
 /// Critical-collapse / zero-regiment peace aggregator for all observer phases.

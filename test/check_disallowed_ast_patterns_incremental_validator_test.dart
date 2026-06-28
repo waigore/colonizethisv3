@@ -9,7 +9,9 @@ rules:
     message: no per-loop validator
     match:
       kind: incremental_validator_for_player_in_loop
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
+      relative_path_prefixes:
+        - packages/colonizethis_logic/lib/src/
+        - packages/colonizethis_orders/lib/src/
 ''';
 
 void main() {
@@ -34,7 +36,7 @@ void f() {
 }
 ''';
       final violations = findDisallowedAstViolations(
-        'packages/colonizethis_logic/lib/src/orders/x.dart',
+        'packages/colonizethis_orders/lib/src/orders/x.dart',
         src,
         rules,
       );
@@ -56,7 +58,7 @@ void f(List<String> ids) {
 }
 ''';
       final violations = findDisallowedAstViolations(
-        'packages/colonizethis_logic/lib/src/orders/x.dart',
+        'packages/colonizethis_orders/lib/src/orders/x.dart',
         src,
         rules,
       );
@@ -76,7 +78,7 @@ void f() {
 ''';
       expect(
         findDisallowedAstViolations(
-          'packages/colonizethis_logic/lib/src/orders/x.dart',
+          'packages/colonizethis_orders/lib/src/orders/x.dart',
           src,
           rules,
         ),
@@ -94,7 +96,7 @@ void f(IncrementalCandidateValidator v, Orders o) {
 ''';
       expect(
         findDisallowedAstViolations(
-          'packages/colonizethis_logic/lib/src/orders/x.dart',
+          'packages/colonizethis_orders/lib/src/orders/x.dart',
           src,
           rules,
         ),

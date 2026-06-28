@@ -18,7 +18,7 @@ class _TechTreeLegend extends StatelessWidget {
         Text(l10n.techTree_legendTitle, style: theme.textTheme.labelLarge),
         const SizedBox(height: 4),
         _buildCategoryLegendWrap(),
-        const SizedBox(height: 8),
+        CtGap.m,
         _buildStateLegendWrap(),
       ],
     );

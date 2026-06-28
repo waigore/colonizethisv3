@@ -1,6 +1,5 @@
 // Province and sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         fleetsInPortAtProvince,
@@ -9,10 +8,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         isProspectableTerrain,
         isProspectableTerrainId,
         kProspectRequiredResourceIds,
+        kRegionNewWorld,
+        kRegionOldWorld,
         PlayerView,
         provincePanelShowsFullTileDerivedIntel,
         resourceIdVisibleInPlayerView,
-        VisibilityLevel;
+        VisibilityLevel,
+        WorldStateProvinceLookup;
+import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
@@ -40,6 +43,7 @@ import 'province_overlay_unit_partition.dart';
 
 part 'province_sea_zone_detail_overlay_sections.dart';
 part 'province_sea_zone_detail_overlay_economic_military_sections.dart';
+part 'province_sea_zone_detail_overlay_designation.dart';
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].
@@ -204,13 +208,20 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   }
 
   Widget _buildOverlayHeader(BuildContext context) {
+    final l10n = appL10n(context);
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
+      padding: const EdgeInsets.only(
+        left: CtSpacing.ml,
+        right: CtSpacing.m,
+        top: CtSpacing.m,
+      ),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              _isSeaZone(displayId) ? 'Sea zone' : 'Province',
+              _isSeaZone(displayId)
+                  ? l10n.provinceOverlay_titleSeaZone
+                  : l10n.provinceOverlay_titleProvince,
               style: _overlayTitleStyle(context),
             ),
           ),
@@ -289,49 +300,6 @@ TextStyle _overlayTitleStyle(BuildContext context) {
   );
 }
 
-/// Pixel-art close control (non-Material) keyed for tests as
-/// [kOverlayCloseKey]. Border colour resolves to `--accent-dim` and the
-/// `×` glyph paints in `--muted` per
-/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
-class _OverlayCloseButton extends StatelessWidget {
-  const _OverlayCloseButton({this.onClose});
-
-  static const Key kOverlayCloseKey = Key('overlay_close');
-
-  /// Width of the brass-toned border around the glyph (matches catalog 1 px).
-  static const double _borderWidth = 1;
-
-  /// Font size of the `×` glyph (preserved from prior chrome so the close
-  /// control retains its visual weight relative to the header title).
-  static const double _glyphFontSize = 18;
-
-  final VoidCallback? onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      key: kOverlayCloseKey,
-      onTap: onClose,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: EditorialMonoclePalette.accentDim,
-            width: _borderWidth,
-          ),
-        ),
-        child: Text(
-          '×',
-          style: TextStyle(
-            fontSize: _glyphFontSize,
-            color: EditorialMonoclePalette.muted,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 _OverlayContent _provinceContent({
   required BuildContext context,
   required AppLocalizations l10n,
@@ -408,7 +376,7 @@ _OverlayContent _provinceContent({
     );
   }
   final province = _findProvince(game, provinceId);
-  final regionData = provinceId.startsWith('newWorld')
+  final regionData = provinceId.startsWith(kRegionNewWorld)
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
   final partitioned = partitionProvinceOverlayUnits(
@@ -453,12 +421,11 @@ _OverlayContent _provinceContent({
     final visibleRes = omniscientDetail
         ? res
         : resourceIdVisibleInPlayerView(playerView, tk, res);
-
     if (visibleRes == null) continue;
-
     final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
     if (imp > 0) {
       final impBase = _improvementBaseNameForPlayer(
+        l10n: l10n,
         visLevel: visLevel,
         rawResourceId: res,
         visibleResourceId: visibleRes,
@@ -511,7 +478,9 @@ _OverlayContent _provinceContent({
   final political = _buildPoliticalSection(
     l10n: l10n,
     name: province?.displayName ?? provinceId,
-    ownerName: _ownerName(game, province?.ownerId),
+    ownerName: _ownerName(l10n, game, province?.ownerId),
+    regionLabel: provinceOverlayRegionLabel(l10n, regionId),
+    isCapital: provinceOverlayIsCapital(game, provinceId),
   );
   final economic = showsFullIntel
       ? _buildEconomicSection(
@@ -608,7 +577,7 @@ _OverlayContent _seaZoneContent({
   required String humanPlayerId,
   required Orders draftOrders,
 }) {
-  final regionId = prefixedIdRegionSegment(seaZoneId) ?? 'oldWorld';
+  final regionId = prefixedIdRegionSegment(seaZoneId) ?? kRegionOldWorld;
   final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
   final fleets = game.worldState.fleets
       .where((f) => f.regionId == regionId && f.seaZoneId == localSeaZoneId)

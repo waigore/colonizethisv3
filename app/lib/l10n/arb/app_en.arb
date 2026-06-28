@@ -238,13 +238,38 @@
   "@debugLog_filter_level": {
     "description": "Label for the log level filter section in the debug log viewer."
   },
-  "shell_leaderDialog_intro": "Assign each player slot a Great Power and leader. Default map colours appear beside each nation in the nation picker.",
+  "shell_leaderDialog_intro": "Choose six great powers and a leader variant for each",
   "@shell_leaderDialog_intro": {
     "description": "Intro text for the new-game setup dialog (nations + leaders)."
   },
   "shell_leaderDialog_selectLeaderHint": "Select leader",
   "@shell_leaderDialog_selectLeaderHint": {
     "description": "Hint text for the leader dropdown in the leader selection dialog."
+  },
+  "shell_leaderDialog_aiProfileLabel": "AI Profile",
+  "@shell_leaderDialog_aiProfileLabel": {
+    "description": "Label / hint for the per-AI-slot tuned AI profile dropdown in the new-game leader selection dialog."
+  },
+  "shell_leaderDialog_aiProfileInlineLabel": "AI Profile:",
+  "@shell_leaderDialog_aiProfileInlineLabel": {
+    "description": "Inline label rendered beside the per-AI-slot tuned AI profile dropdown (mockup `.profile-line`)."
+  },
+  "shell_leaderDialog_slotLabel": "Slot {slotNumber}",
+  "@shell_leaderDialog_slotLabel": {
+    "description": "Slot heading for each player slot in the new-game setup dialog (mockup `.slot-label`).",
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "shell_leaderDialog_slotYouTag": "You",
+  "@shell_leaderDialog_slotYouTag": {
+    "description": "Tag appended to the human player's slot label. Rendered uppercase via presentation style (mockup `.you-tag` with text-transform:uppercase)."
+  },
+  "shell_leaderDialog_aiProfileNormal": "Normal",
+  "@shell_leaderDialog_aiProfileNormal": {
+    "description": "Dropdown option label for the default (hardcoded personality) AI in the per-AI-slot tuned AI profile dropdown."
   },
   "common_cancel": "Cancel",
   "@common_cancel": {
@@ -262,7 +287,7 @@
   "@common_start": {
     "description": "Generic Start button label used when beginning a flow."
   },
-  "shell_leaderDialog_title": "New game — Setup",
+  "shell_leaderDialog_title": "Choose nations and leaders",
   "@shell_leaderDialog_title": {
     "description": "Title of the new-game setup dialog (nations + leaders)."
   },
@@ -288,28 +313,32 @@
       }
     }
   },
-  "shell_leaderDialog_seedLabel": "Game / world seed",
+  "shell_leaderDialog_seedLabel": "Game seed",
   "@shell_leaderDialog_seedLabel": {
     "description": "Label for the numeric seed field in the new-game leader dialog."
   },
 
-  "shell_leaderDialog_seedHelper": "Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.",
+  "shell_leaderDialog_seedHelper": "Enter 0 for a random seed",
   "@shell_leaderDialog_seedHelper": {
     "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
   },
 
-  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (turns progress past 1800)",
+  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (no victory condition)",
   "@shell_leaderDialog_infiniteModeLabel": {
-    "description": "Checkbox label for infinite campaign mode in the new-game leader dialog."
+    "description": "Toggle label for infinite campaign mode in the new-game leader dialog."
   },
-  "shell_leaderDialog_infiniteModeHelper": "When enabled, the campaign continues past calendar year 1800 until a military victory.",
+  "shell_leaderDialog_infiniteModeHelper": "The game will continue indefinitely",
   "@shell_leaderDialog_infiniteModeHelper": {
     "description": "Helper text for infinite mode in the new-game leader dialog."
   },
 
-  "shell_leaderDialog_terrainVariationLabel": "Terrain variation ({percent}%)",
+  "shell_leaderDialog_terrainVariationLabel": "Terrain variation:",
   "@shell_leaderDialog_terrainVariationLabel": {
-    "description": "Slider label for terrain noise variation in the new-game leader dialog, including the current percent value.",
+    "description": "Static slider label for terrain noise variation in the new-game leader dialog. The live percent value is rendered separately via shell_leaderDialog_terrainVariationValue."
+  },
+  "shell_leaderDialog_terrainVariationValue": "{percent}%",
+  "@shell_leaderDialog_terrainVariationValue": {
+    "description": "Live terrain-variation percent value rendered beside the terrain variation label.",
     "placeholders": {
       "percent": {
         "type": "int",
@@ -317,7 +346,7 @@
       }
     }
   },
-  "shell_leaderDialog_terrainVariationHelper": "Higher values produce more mixed terrain (0 keeps legacy clumps).",
+  "shell_leaderDialog_terrainVariationHelper": "0% flat — 100% extreme",
   "@shell_leaderDialog_terrainVariationHelper": {
     "description": "Helper text under the terrain variation slider."
   },
@@ -388,9 +417,9 @@
   "@game_callToArms_title": {
     "description": "Title when the human must respond to an ally's call to arms."
   },
-  "game_callToArms_intro": "An allied power is at war. Join their war or refuse (alliance ends, relations worsen).",
+  "game_callToArms_intro": "A treaty ally is at war. Join their war or refuse (the formal alliance ends, relations worsen).",
   "@game_callToArms_intro": {
-    "description": "Short explanation above the list of call-to-arms choices."
+    "description": "Short explanation above the list of call-to-arms choices. References the formal alliance/treaty, not the informal Friendly relation band (Refs #3625)."
   },
   "game_callToArms_prompt": "{defender} is attacked by {aggressor}.",
   "@game_callToArms_prompt": {
@@ -1020,6 +1049,19 @@
   "@gameStartIntroOverlay_title": {
     "description": "Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001)."
   },
+  "tribeFirstContactOverlay_title": "First Contact",
+  "@tribeFirstContactOverlay_title": {
+    "description": "Display-font title for the tribe first-contact herald overlay (OVL80001)."
+  },
+  "tribeFirstContactOverlay_loadError": "Could not load first-contact dialogue: {error}",
+  "@tribeFirstContactOverlay_loadError": {
+    "description": "Error shown when the tribe first-contact herald (OVL80001) Yarn dialogue fails to load.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "game_overture_loadError": "Could not load overture dialogue: {error}",
   "@game_overture_loadError": {
     "description": "Error shown when overture dialogue fails to load.",
@@ -1469,6 +1511,10 @@
   "@trainMilitary_title": {
     "description": "Train military dialog title."
   },
+  "trainNaval_title": "Train Naval",
+  "@trainNaval_title": {
+    "description": "Train naval dialog title."
+  },
   "trainUnits_noCapital": "No capital set — cannot train units",
   "@trainUnits_noCapital": {
     "description": "Error text when player has no capital in train dialogs."
@@ -1491,6 +1537,14 @@
       }
     }
   },
+  "trainUnits_treasuryLabel": "Treasury:",
+  "@trainUnits_treasuryLabel": {
+    "description": "Treasury label in the train-dialog boxed resource bar (value rendered separately in monospace)."
+  },
+  "trainUnits_paperLabel": "Paper:",
+  "@trainUnits_paperLabel": {
+    "description": "Paper label in the civilian train-dialog boxed resource bar (value rendered separately in monospace)."
+  },
   "trainUnits_peasants": "Peasants: {value}",
   "@trainUnits_peasants": {
     "description": "Peasants summary line in military train dialog.",
@@ -1499,6 +1553,50 @@
         "type": "int"
       }
     }
+  },
+  "trainDialog_costTreasuryTooltip": "Treasury",
+  "@trainDialog_costTreasuryTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the treasury coin icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costPeasantsTooltip": "Peasants",
+  "@trainDialog_costPeasantsTooltip": {
+    "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the peasant worker icon in a train-dialog unit-row cost summary."
+  },
+  "trainDialog_costCommodityTooltip": "{name} ({category})",
+  "@trainDialog_costCommodityTooltip": {
+    "description": "Tooltip shown for a commodity resource icon in a train-dialog unit-row cost summary, combining the commodity display name and its category (e.g. 'Fabric (manufactured)').",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "commodityCategory_food": "food",
+  "@commodityCategory_food": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.food."
+  },
+  "commodityCategory_rawMaterial": "raw material",
+  "@commodityCategory_rawMaterial": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.rawMaterial."
+  },
+  "commodityCategory_manufactured": "manufactured",
+  "@commodityCategory_manufactured": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.manufactured."
+  },
+  "commodityCategory_luxury": "luxury",
+  "@commodityCategory_luxury": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.luxury."
+  },
+  "commodityCategory_riches": "riches",
+  "@commodityCategory_riches": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.riches."
+  },
+  "commodityCategory_advanced": "advanced",
+  "@commodityCategory_advanced": {
+    "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.advanced."
   },
   "civilian_units_title": "Civilian Units",
   "@civilian_units_title": {
@@ -1816,6 +1914,124 @@
   "@technologyPanel_slotCancelled": {
     "description": "Snackbar shown when a research slot assignment is removed."
   },
+  "technologyPanel_cancelWarningTitle": "Forfeit research progress?",
+  "@technologyPanel_cancelWarningTitle": {
+    "description": "Title of the confirmation dialog shown before cancelling a slot with accrued research progress (Refs #3512)."
+  },
+  "technologyPanel_cancelWarningMessage": "Cancelling this slot forfeits {points} RP of progress on {name}. This cannot be undone.",
+  "@technologyPanel_cancelWarningMessage": {
+    "description": "Body of the confirmation dialog shown before cancelling a slot with accrued research progress (Refs #3512).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_cancelWarningConfirm": "Forfeit",
+  "@technologyPanel_cancelWarningConfirm": {
+    "description": "Confirm-button label on the cancel-research forfeiture warning dialog (Refs #3512)."
+  },
+  "technologyPanel_cancelWarningKeep": "Keep researching",
+  "@technologyPanel_cancelWarningKeep": {
+    "description": "Cancel-button label on the cancel-research forfeiture warning dialog (Refs #3512)."
+  },
+  "technologyPanel_fundingNone": "None",
+  "@technologyPanel_fundingNone": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.none (Refs #3512)."
+  },
+  "technologyPanel_fundingLow": "Low",
+  "@technologyPanel_fundingLow": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.low (Refs #3512)."
+  },
+  "technologyPanel_fundingMedium": "Medium",
+  "@technologyPanel_fundingMedium": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.medium (Refs #3512)."
+  },
+  "technologyPanel_fundingHigh": "High",
+  "@technologyPanel_fundingHigh": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.high (Refs #3512)."
+  },
+  "technologyPanel_fundingMaximum": "Maximum",
+  "@technologyPanel_fundingMaximum": {
+    "description": "Slot funding toggle label for ResearchFundingLevel.maximum (Refs #3512)."
+  },
+  "technologyPanel_rpDeltaPreview": "+{rp} RP",
+  "@technologyPanel_rpDeltaPreview": {
+    "description": "Green anticipated research-point delta shown on a slot card for the RP applied next turn (Refs #3512).",
+    "placeholders": {
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_goldSpendPerTurn": "\u2212{gold}/turn",
+  "@technologyPanel_goldSpendPerTurn": {
+    "description": "Treasury (gold) per-turn cost shown on a slot card when funding will spend gold next turn (Refs #3512).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_goldNoSpendPerTurn": "{gold}/turn",
+  "@technologyPanel_goldNoSpendPerTurn": {
+    "description": "Treasury (gold) per-turn cost shown greyed on a debt-blocked slot card (no spend occurs) (Refs #3512).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownTitle": "Research points this turn",
+  "@technologyPanel_rpBreakdownTitle": {
+    "description": "Title of the research-funding breakdown dialog (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownBaseLabel": "Base \u2014 {funding} funding",
+  "@technologyPanel_rpBreakdownBaseLabel": {
+    "description": "Breakdown dialog row labelling the base RP for the selected funding level (Refs #3512).",
+    "placeholders": {
+      "funding": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownIndustrialLabel": "Industrial Funding +20%",
+  "@technologyPanel_rpBreakdownIndustrialLabel": {
+    "description": "Breakdown dialog row labelling the Industrial Funding of Research +20% military/naval bonus (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownEffectiveLabel": "Effective RP this turn",
+  "@technologyPanel_rpBreakdownEffectiveLabel": {
+    "description": "Breakdown dialog row labelling the effective RP applied this turn (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownTreasuryLabel": "Treasury cost this turn",
+  "@technologyPanel_rpBreakdownTreasuryLabel": {
+    "description": "Breakdown dialog row labelling the per-turn treasury (gold) cost (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownDebtBlocked": "Treasury below the research debt floor \u2014 0 RP applied this turn.",
+  "@technologyPanel_rpBreakdownDebtBlocked": {
+    "description": "Breakdown dialog note shown when the funding spend is debt-blocked so 0 RP is applied (Refs #3512)."
+  },
+  "technologyPanel_rpValue": "{rp} RP",
+  "@technologyPanel_rpValue": {
+    "description": "Monospace research-point value used in the breakdown dialog rows (Refs #3512).",
+    "placeholders": {
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_goldValue": "{gold} gold",
+  "@technologyPanel_goldValue": {
+    "description": "Treasury (gold) value used in the breakdown dialog treasury-cost row (Refs #3512).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "techTree_noTechsInCatalog": "No techs in catalog",
   "@techTree_noTechsInCatalog": {
     "description": "Tech tree empty-state text."
@@ -1979,6 +2195,27 @@
       }
     }
   },
+  "provinceOverlay_tileTownOf": "The town of {provinceName}",
+  "@provinceOverlay_tileTownOf": {
+    "description": "Tile section designation line shown when the selected tile is the province town (and not a capital).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileCapitalOf": "{provinceName}, the capital of {factionName}",
+  "@provinceOverlay_tileCapitalOf": {
+    "description": "Tile section designation line shown when the selected tile is a faction's capital tile.",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      },
+      "factionName": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileResourcePrefix": "Resource: ",
   "@provinceOverlay_tileResourcePrefix": {
     "description": "Tile section resource label prefix before inline icon/name."
@@ -1991,6 +2228,14 @@
         "type": "String"
       }
     }
+  },
+  "provinceOverlay_tileProspectedYes": "yes",
+  "@provinceOverlay_tileProspectedYes": {
+    "description": "Tile section prospecting state value when the tile is prospectable and prospected by the human player."
+  },
+  "provinceOverlay_tileProspectedNo": "no",
+  "@provinceOverlay_tileProspectedNo": {
+    "description": "Tile section prospecting state value when the tile is prospectable but not yet prospected by the human player."
   },
   "provinceOverlay_tileProspectWithExplorerTooltip": "Prospect with explorer",
   "@provinceOverlay_tileProspectWithExplorerTooltip": {
@@ -2016,6 +2261,71 @@
   "provinceOverlay_tileRoadNone": "Road / railroad: -",
   "@provinceOverlay_tileRoadNone": {
     "description": "Tile section road/rail row when not applicable."
+  },
+  "provinceOverlay_tileRoadTransportLevel": "Road / railroad: transport level {level}",
+  "@provinceOverlay_tileRoadTransportLevel": {
+    "description": "Tile section road/rail primary numeric line on land tiles.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileRoadLabelNone": "none",
+  "@provinceOverlay_tileRoadLabelNone": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 0."
+  },
+  "provinceOverlay_tileRoadLabelPrimitiveRoad": "primitive road",
+  "@provinceOverlay_tileRoadLabelPrimitiveRoad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 1."
+  },
+  "provinceOverlay_tileRoadLabelImprovedRoad": "improved road",
+  "@provinceOverlay_tileRoadLabelImprovedRoad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 2."
+  },
+  "provinceOverlay_tileRoadLabelPortOrRailroad": "port or railroad",
+  "@provinceOverlay_tileRoadLabelPortOrRailroad": {
+    "description": "Tile section road/rail supplementary GDD label for transport level 4."
+  },
+  "provinceOverlay_tileRoadLabelNonStandard": "non-standard transport level",
+  "@provinceOverlay_tileRoadLabelNonStandard": {
+    "description": "Tile section road/rail supplementary GDD label for unexpected levels."
+  },
+  "provinceOverlay_tileRoadRailGloss": "Basic land link for connectivity and yield caps. Railroads are transport level 4.",
+  "@provinceOverlay_tileRoadRailGloss": {
+    "description": "Tile section road/rail level-1 gloss clarifying railroads are level 4."
+  },
+  "provinceOverlay_improvementGeneric": "Improvement",
+  "@provinceOverlay_improvementGeneric": {
+    "description": "Tile/Economic improvement type name for tiles with no resource (generic fallback)."
+  },
+  "provinceOverlay_improvementFarm": "Farm",
+  "@provinceOverlay_improvementFarm": {
+    "description": "Tile/Economic improvement type name for grain resource tiles."
+  },
+  "provinceOverlay_improvementRanch": "Ranch",
+  "@provinceOverlay_improvementRanch": {
+    "description": "Tile/Economic improvement type name for meat/horses resource tiles."
+  },
+  "provinceOverlay_improvementPasture": "Pasture",
+  "@provinceOverlay_improvementPasture": {
+    "description": "Tile/Economic improvement type name for wool resource tiles."
+  },
+  "provinceOverlay_improvementLumberCamp": "Lumber camp",
+  "@provinceOverlay_improvementLumberCamp": {
+    "description": "Tile/Economic improvement type name for timber resource tiles."
+  },
+  "provinceOverlay_improvementPlantation": "Plantation",
+  "@provinceOverlay_improvementPlantation": {
+    "description": "Tile/Economic improvement type name for plantation-crop resource tiles (sugar cane/tobacco/cotton/spices)."
+  },
+  "provinceOverlay_improvementFurPost": "Fur post",
+  "@provinceOverlay_improvementFurPost": {
+    "description": "Tile/Economic improvement type name for furs resource tiles."
+  },
+  "provinceOverlay_improvementMine": "Mine",
+  "@provinceOverlay_improvementMine": {
+    "description": "Tile/Economic improvement type name for mineral resource tiles (iron/copper/coal/silver/gold/etc.)."
   },
   "provinceOverlay_tileCivilianUnits": "Civilian units (province): {count}",
   "@provinceOverlay_tileCivilianUnits": {
@@ -2052,6 +2362,27 @@
         "type": "String"
       }
     }
+  },
+  "provinceOverlay_ownerUnclaimed": "Unclaimed",
+  "@provinceOverlay_ownerUnclaimed": {
+    "description": "Political section owner display name when a province/tile is unowned."
+  },
+  "provinceOverlay_region": "Region: {region}",
+  "@provinceOverlay_region": {
+    "description": "Political section region row (Old World / New World label).",
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_capitalYes": "Capital: Yes",
+  "@provinceOverlay_capitalYes": {
+    "description": "Political section capital row when the province is the capital of its owning faction."
+  },
+  "provinceOverlay_capitalNo": "Capital: No",
+  "@provinceOverlay_capitalNo": {
+    "description": "Political section capital row when the province is not a faction capital."
   },
   "provinceOverlay_indentedCount": "  {label}: {count}",
   "@provinceOverlay_indentedCount": {
@@ -2131,62 +2462,13 @@
   "@provinceOverlay_sectionNaval": {
     "description": "Province overlay section heading for naval details."
   },
-  "gameSetup_title": "Game Setup",
-  "@gameSetup_title": {
-    "description": "Game setup screen title."
+  "provinceOverlay_titleProvince": "Province",
+  "@provinceOverlay_titleProvince": {
+    "description": "Province overlay header title shown above the tab strip for a province."
   },
-  "gameSetup_eyebrow": "New Campaign",
-  "@gameSetup_eyebrow": {
-    "description": "Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant."
-  },
-  "gameSetup_intro": "Choose six great powers and a leader variant for each.",
-  "@gameSetup_intro": {
-    "description": "Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant."
-  },
-  "gameSetup_starting": "Starting…",
-  "@gameSetup_starting": {
-    "description": "Loading state label while starting a game from setup (retained for backward compatibility; the in-screen dim overlay now uses gameSetup_loadingGeneratingWorld per #2868 R15)."
-  },
-  "gameSetup_loadingGeneratingWorld": "Generating world…",
-  "@gameSetup_loadingGeneratingWorld": {
-    "description": "Loading overlay label shown beneath the spinner while the Game Setup screen is generating a new world (Refs #2868 R15)."
-  },
-  "gameSetup_startGame": "Start Game",
-  "@gameSetup_startGame": {
-    "description": "Primary button to begin play from game setup."
-  },
-  "gameSetup_back": "Back",
-  "@gameSetup_back": {
-    "description": "Back button on game setup screen."
-  },
-  "gameSetup_cancel": "Cancel",
-  "@gameSetup_cancel": {
-    "description": "Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack."
-  },
-  "gameSetup_backToMainMenu": "Back to Main Menu",
-  "@gameSetup_backToMainMenu": {
-    "description": "Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack."
-  },
-  "gameSetup_player1You": "Player 1 (You)",
-  "@gameSetup_player1You": {
-    "description": "Label for the human player slot on game setup."
-  },
-  "gameSetup_playerAiSlot": "Player {n} (AI)",
-  "@gameSetup_playerAiSlot": {
-    "description": "Label for an AI-controlled player slot (n is 2-based index for display).",
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
-  "gameSetup_selectNation": "Select nation",
-  "@gameSetup_selectNation": {
-    "description": "Dropdown hint when choosing a great power nation."
-  },
-  "gameSetup_selectLeader": "Select leader",
-  "@gameSetup_selectLeader": {
-    "description": "Dropdown hint when choosing a leader variant."
+  "provinceOverlay_titleSeaZone": "Sea zone",
+  "@provinceOverlay_titleSeaZone": {
+    "description": "Province overlay header title shown above the tab strip for a sea zone."
   },
   "mapCorner_tooltipBaseLayer": "Base layer: terrain / +resources / +improvements",
   "@mapCorner_tooltipBaseLayer": {
@@ -2294,12 +2576,64 @@
   "@diplomacy_panel_noFactions": {
     "description": "Empty diplomacy list before any factions are discovered."
   },
+  "diplomacy_panel_noGreatPowers": "No Great Powers discovered yet.",
+  "@diplomacy_panel_noGreatPowers": {
+    "description": "Placeholder copy under the Great Powers section heading when no Great Power has been discovered yet."
+  },
+  "diplomacy_panel_noMinorNations": "No Minor Nations discovered yet.",
+  "@diplomacy_panel_noMinorNations": {
+    "description": "Placeholder copy under the Minor Nations section heading when no Minor Nation has been discovered yet."
+  },
+  "diplomacy_panel_noTribes": "No tribes contacted yet.",
+  "@diplomacy_panel_noTribes": {
+    "description": "Placeholder copy under the Tribes section heading when no tribe has been contacted yet."
+  },
   "diplomacy_panel_powerScore": "Power: {score}",
   "@diplomacy_panel_powerScore": {
     "description": "Great power military/economic score label in diplomacy row.",
     "placeholders": {
       "score": {
         "type": "int"
+      }
+    }
+  },
+  "diplomacy_relativePower_label": "Relative power:",
+  "@diplomacy_relativePower_label": {
+    "description": "Muted prefix for the Great Power relative-power line on the diplomacy panel and detail screen."
+  },
+  "diplomacy_relativePower_tierRoughlyEqual": "Roughly equal",
+  "@diplomacy_relativePower_tierRoughlyEqual": {
+    "description": "Relative-power tier word when the comparison percentage is between -10 and +10 inclusive."
+  },
+  "diplomacy_relativePower_tierSuperior": "Superior",
+  "@diplomacy_relativePower_tierSuperior": {
+    "description": "Relative-power tier word when the comparison percentage is between +11 and +30 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlySuperior": "Vastly superior",
+  "@diplomacy_relativePower_tierVastlySuperior": {
+    "description": "Relative-power tier word when the comparison percentage is +31 or greater."
+  },
+  "diplomacy_relativePower_tierInferior": "Inferior",
+  "@diplomacy_relativePower_tierInferior": {
+    "description": "Relative-power tier word when the comparison percentage is between -30 and -11 inclusive."
+  },
+  "diplomacy_relativePower_tierVastlyInferior": "Vastly inferior",
+  "@diplomacy_relativePower_tierVastlyInferior": {
+    "description": "Relative-power tier word when the comparison percentage is -31 or lower."
+  },
+  "diplomacy_relativePower_tooltip": "Compares this Great Power's military power score (provinces, army strength, ships) to yours.",
+  "@diplomacy_relativePower_tooltip": {
+    "description": "Tooltip / long-press copy explaining what the relative-power comparison measures."
+  },
+  "diplomacy_relativePower_semantics": "Relative power {pct}, {tier}",
+  "@diplomacy_relativePower_semantics": {
+    "description": "Screen-reader label combining the relative-power percentage and tier word.",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "tier": {
+        "type": "String"
       }
     }
   },
@@ -2442,6 +2776,10 @@
   "@production_labourTierLocked": {
     "description": "Parenthetical suffix on a Labour Controls tier label when one or more required techs are missing for the viewed player."
   },
+  "production_recipeLocked": "(locked)",
+  "@production_recipeLocked": {
+    "description": "Parenthetical marker shown after an Allocation recipe name when the recipe's required technology is not unlocked for the viewed player (e.g. fabric_from_cotton before cotton_weaving)."
+  },
   "production_labourTierLabel": "{tier} {state}",
   "@production_labourTierLabel": {
     "description": "Concatenation of the tier name and the unlock-state parenthetical for a Labour Controls row (e.g. 'Peasants (unlocked)').",
@@ -2503,7 +2841,28 @@
       }
     }
   },
-  "trainCivilians_costLine": "{treasury} + {paper} Paper",
+  "trainMilitary_commodityValue": "{name}: {value}",
+  "@trainMilitary_commodityValue": {
+    "description": "Commodity name and a preformatted remaining/total value (e.g. '2 / 5') in the train military dialog resource bar.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "trainUnits_peasantsValue": "Peasants: {value}",
+  "@trainUnits_peasantsValue": {
+    "description": "Peasants label with a preformatted remaining/total value (e.g. '7 / 8') in the train military dialog resource bar.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "trainCivilians_costLine": "{treasury} + {paper} paper",
   "@trainCivilians_costLine": {
     "description": "Treasury cost plus paper requirement for training civilians.",
     "placeholders": {

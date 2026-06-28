@@ -52,7 +52,8 @@ import 'package:path/path.dart' as p;
 /// 5. **`app/lib/widgets/` CustomPainter / canvas compositing files** —
 ///    decorative `CustomPainter` paints (e.g. `ct_main_menu_collage.dart`)
 ///    and `ColorFilter.mode` darken/lighten composites (e.g. the main-menu
-///    button hover filter in `main_menu.dart`) treat the color value as a
+///    button hover filter in `main_menu.dart` and its split-out part file
+///    `main_menu_buttons.dart`) treat the color value as a
 ///    compositing argument (alpha multiplier or blend operand), not a theme
 ///    palette reference. The editorial-monocle palette has no semantic
 ///    token for these compositing-only colors, and replacing them with
@@ -228,6 +229,12 @@ const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
   // compositing-only colors, analogous to the Flame renderer allowlist.
   'app/lib/widgets/ct_main_menu_collage.dart',
   'app/lib/widgets/main_menu.dart',
+  // `part of 'main_menu.dart'` — button widgets split out under the
+  // file-size cap (SPEC/program/dart-file-non-comment-line-size.md). Carries
+  // the same hover `ColorFilter.mode(Colors.black..., BlendMode.darken)`
+  // compositing operand as `main_menu.dart`; allowlisted for the identical
+  // blend-operand rationale (category #5 above).
+  'app/lib/widgets/main_menu_buttons.dart',
 };
 
 const Set<String> _appEditorialMonocleColorsAllowedDirPrefixes = <String>{

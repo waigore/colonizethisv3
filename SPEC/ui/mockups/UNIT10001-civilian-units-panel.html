@@ -35,6 +35,7 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 .unit-row:hover{border-color:var(--accent-dim)}
 .unit-row .u-details{flex:1;min-width:0}
 .unit-row .u-title{font-family:var(--font-display);font-size:clamp(11px,1.5vw,12px);font-weight:600;letter-spacing:.03em;color:var(--fg)}
+.unit-row .u-status{font-family:var(--font-body);font-size:clamp(10px,1.3vw,11px);color:var(--muted);margin-top:1px}
 .unit-row .u-location{font-family:var(--font-body);font-size:clamp(10px,1.3vw,11px);color:var(--muted);margin-top:1px}
 .unit-row .u-assigned{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);color:var(--accent-dim);margin-top:2px}
 .unit-row .u-assigned .turns{font-family:var(--font-mono);font-size:clamp(8px,1.1vw,9px);color:var(--muted)}
@@ -106,6 +107,7 @@ function renderUnits(units,scopeLabel){
       html+=`<div class="unit-row" onclick="locateUnit(${u.id})">
         <div class="u-details">
           <div class="u-title">${u.type}${u.id===1?' — working':''}</div>
+          <div class="u-status">Status: ${u.status}</div>
           <div class="u-location">${u.region} — ${u.province}</div>
           <div class="u-assigned">Assigned to: ${u.work}${u.turns?' <span class="turns">· '+u.turns+'</span>':''}</div>
           ${u.costs.length?`<div class="u-cost">${u.costs.map(c=>`<span class="cost-chip">${c.n}</span>`).join('')}</div>`:''}

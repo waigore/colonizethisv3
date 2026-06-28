@@ -2,8 +2,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:riverpod/riverpod.dart';
 
 import 'package:colonizethis_logic/src/di/logic_providers.dart';
-import 'package:colonizethis_logic/src/event_bus/game_event_bus.dart';
-import 'package:colonizethis_logic/src/orders/order_suggestion_api_impl.dart';
+import 'package:colonizethis_world/src/event_bus/game_event_bus.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_api_impl.dart';
 
 void main() {
   group('logic_providers', () {

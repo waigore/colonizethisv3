@@ -24,10 +24,8 @@ void main() {
           runAppFn: (_) {
             runAppZone = Zone.current;
           },
-          // Skip Cinzel preload under unit tests so the production
-          // `GoogleFonts.cinzel()` path (which the offline test config
-          // disables runtime-fetching for) does not surface as an
-          // asynchronous zoned error after this test completes.
+          // Skip Cinzel preload under unit tests; production awaits bundled
+          // registration before runApp (see `preloadEditorialMonocleFonts`).
           preloadFonts: () async {},
         );
       },

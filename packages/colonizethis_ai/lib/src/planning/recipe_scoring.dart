@@ -3,6 +3,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'growth_stage.dart'
+    show GrowthStage, categoryPriorityForOutput, kStagePriorityBias;
+
 /// Shortage target below which we consider a commodity "needed".
 const int kShortageThreshold = 8;
 
@@ -64,6 +67,27 @@ double scoreRecipe({
   final agenda = _recipeAgendaScore(agendaId, outputId);
 
   return shortage * kShortageWeight + chain * kChainWeight + agenda * kAgendaWeight;
+}
+
+/// Growth-stage dampen-and-bias score. SPEC/ai/growth-stage-planner.md.
+double stageScaledRecipeScore({
+  required ProductionRecipe recipe,
+  required Stockpile stockpile,
+  required WorkerPool workers,
+  required String agendaId,
+  required GrowthStage stage,
+}) {
+  final base = scoreRecipe(
+    recipe: recipe,
+    stockpile: stockpile,
+    workers: workers,
+    agendaId: agendaId,
+  );
+  final categoryPriority = categoryPriorityForOutput(
+    recipe.outputCommodityId,
+    stage,
+  );
+  return categoryPriority * (base + kStagePriorityBias);
 }
 
 /// Chain value: outputs that feed other recipes or are luxuries.

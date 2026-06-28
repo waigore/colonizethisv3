@@ -3,11 +3,12 @@ import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -19,7 +20,7 @@ void main() {
   setUp(() {
     ct_models.AppEventBus.reset();
     victoryTestBus = ct_models.AppEventBus.create();
-    game = getDebugInitGameResult().game;
+    game = buildVictoryPanelTestGame();
     winnerPlayerId = game.players.first.id;
   });
 
@@ -150,20 +151,21 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The overlay's outermost colored Container is the scrim wash; it must
-      // resolve to the canonical --dialog-scrim token, not Colors.black54.
-      final Iterable<Container> scrimContainers = tester
-          .widgetList<Container>(
+      // The overlay's scrim Material must resolve to the canonical
+      // --dialog-scrim token, not Colors.black54.
+      final Iterable<Material> scrimMaterials = tester
+          .widgetList<Material>(
             find.descendant(
               of: find.byType(VictoryOverlay),
-              matching: find.byType(Container),
+              matching: find.byType(Material),
             ),
           )
-          .where((c) => c.color == EditorialMonoclePalette.dialogScrim);
-      expect(scrimContainers, isNotEmpty,
+          .where((m) => m.color == EditorialMonoclePalette.dialogScrim);
+      expect(scrimMaterials, isNotEmpty,
           reason:
               'VictoryOverlay must wash the screen with the canonical '
-              '--dialog-scrim token, not Colors.black54 or a hex literal.');
+              '--dialog-scrim token via CtFullScreenDialogueShell, not '
+              'Colors.black54 or a hex literal.');
     },
   );
 

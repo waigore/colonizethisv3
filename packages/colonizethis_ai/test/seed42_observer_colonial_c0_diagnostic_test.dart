@@ -14,6 +14,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Seed-42 turn-150 COLONIAL-arm C0 diagnostic (Refs #2852).
 ///
 /// Per #2852 § C0, this test mirrors the #2847 § S7-D pattern for the
@@ -82,9 +84,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      var game = init.game.copyWith(
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 

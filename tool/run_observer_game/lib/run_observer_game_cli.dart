@@ -5,6 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'observer_colonial_verify.dart';
 import 'observer_conquest_verify.dart';
+import 'observer_profiles.dart';
 import 'observer_session_runner.dart';
 import 'observer_workforce_verify.dart';
 import 'setup_config_parser.dart';
@@ -84,6 +85,15 @@ Future<int> runObserverGameCli(
       'config',
       help: 'Optional JSON GameSetupConfig path (init_game-compatible).',
     )
+    ..addOption(
+      'profiles',
+      help:
+          'Optional directory of per-GP AiProfile JSON files keyed '
+          '<playerId>.json; overrides AI personality params at decision time. '
+          'Missing GPs use defaults; unmatched files are ignored (warn). '
+          'A missing dir or invalid profile aborts with exit '
+          '$kExitProfileLoadFailed.',
+    )
     ..addFlag(
       'verify-conquest',
       help:
@@ -158,6 +168,11 @@ Future<int> runObserverGameCli(
       ? null
       : configPathRaw;
 
+  final profilesRaw = results['profiles'] as String?;
+  final profilesDir = profilesRaw == null || profilesRaw.trim().isEmpty
+      ? null
+      : profilesRaw.trim();
+
   GameSetupConfig setup;
   try {
     setup = gameSetupFromObserverCli(
@@ -218,6 +233,7 @@ Future<int> runObserverGameCli(
     verifyConquest: verifyConquest,
     verifyColonialExpansion: verifyColonial,
     verifyWorkforce: verifyWorkforce,
+    profilesDir: profilesDir,
   );
   if (sessionCode != 0) {
     return sessionCode;

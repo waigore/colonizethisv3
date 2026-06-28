@@ -3,12 +3,18 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show GamePlayerLookup, homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
+    show
+        GamePlayerLookup,
+        homeFleetIdFor,
+        kRegionNewWorld,
+        kRegionOldWorld,
+        regionIdForSeaZone,
+        WorldStateProvinceLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../l10n/l10n.dart';
-import '../units/shared/units_panel_region_label.dart';
 import '../../utils/map_location_resolver.dart';
+import '../../utils/region_labels.dart';
 import '../../utils/sea_zone_name_resolver.dart';
 import 'fleet_mission_label.dart';
 
@@ -26,7 +32,7 @@ String? navalDraftMoveLineForFleet({
     if (o.fleetId != fleetId) continue;
     if (o.isDock) {
       final pid = o.destinationPortProvinceId!;
-      final p = tryGetProvince(game.worldState, pid);
+      final p = game.worldState.tryGetProvince(pid);
       final name = p?.displayName ?? p?.id ?? pid;
       return 'Moving to: $name (dock)';
     }
@@ -258,7 +264,7 @@ String? _navalProjectedLocationScopeForFleet({
   if (move != null) {
     if (move.isDock) {
       final pid = move.destinationPortProvinceId!;
-      final province = tryGetProvince(game.worldState, pid);
+      final province = game.worldState.tryGetProvince(pid);
       if (province != null) {
         return _navalNormalizedPortScopeForProvince(province);
       }
@@ -274,7 +280,7 @@ String? _navalProjectedLocationScopeForFleet({
     return _navalNormalizedSeaScope(topology, fleet.seaZoneId!, fleet.regionId);
   }
   if (fleet.inPortAtProvinceId != null) {
-    final province = tryGetProvince(game.worldState, fleet.inPortAtProvinceId!);
+    final province = game.worldState.tryGetProvince(fleet.inPortAtProvinceId!);
     if (province != null) {
       return _navalNormalizedPortScopeForProvince(province);
     }
@@ -323,7 +329,7 @@ void _appendNavalAtSeaFleetRow({
     seaZoneId: zoneKey,
   );
   final locationLabel =
-      '${unitsPanelRegionLabel(rowRegionId)} — $zoneLabel ${l10n.naval_units_locAtSea}';
+      '${regionDisplayLabel(rowRegionId)} — $zoneLabel ${l10n.naval_units_locAtSea}';
   final tileKey = tileKeyForNavalFleetAtSea(
     game: game,
     regionId: rowRegionId,
@@ -400,7 +406,7 @@ void _appendNavalInPortFleetRow({
   final locationKey = _navalNormalizedPortScopeForProvince(province);
   final tileKey = tileKeyForProvinceLocation(game, province);
   final locationLabel =
-      '${unitsPanelRegionLabel(rowRegionId)} — ${province.displayName ?? province.id} ${l10n.naval_units_locInPort}';
+      '${regionDisplayLabel(rowRegionId)} — ${province.displayName ?? province.id} ${l10n.naval_units_locInPort}';
   final row = FleetRow(
     fleetId: fleet.id,
     label: isHomeFleet
@@ -626,12 +632,12 @@ buildNavalTree(
       >[];
 
   final provinceByRegionAndId = <String, Map<String, Province>>{
-    'oldWorld': {
+    kRegionOldWorld: {
       for (final p in game.worldState.oldWorld.provinces)
         '${p.regionId}|${p.id}': p,
       for (final p in game.worldState.oldWorld.provinces) p.id: p,
     },
-    'newWorld': {
+    kRegionNewWorld: {
       for (final p in game.worldState.newWorld.provinces)
         '${p.regionId}|${p.id}': p,
       for (final p in game.worldState.newWorld.provinces) p.id: p,
@@ -644,11 +650,7 @@ buildNavalTree(
       order.fleetId: order,
   };
 
-  for (final regionEntry in {
-    'oldWorld': game.worldState.oldWorld,
-    'newWorld': game.worldState.newWorld,
-  }.entries) {
-    final regionId = regionEntry.key;
+  game.worldState.forEachRegion((regionId, _) {
     final group = _navalTreeGroupForRegion(
       game: game,
       humanPlayerId: humanPlayerId,
@@ -667,7 +669,7 @@ buildNavalTree(
     if (group != null) {
       result.add(group);
     }
-  }
+  });
 
   return result;
 }

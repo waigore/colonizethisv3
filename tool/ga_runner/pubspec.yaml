@@ -1,0 +1,27 @@
+name: ga_runner
+description: >
+  Genetic-algorithm tuning of AI profiles: fitness scoring (#3438) and GA
+  orchestration CLI (#3439). SPEC/program/ga-fitness.md, ga-runner.md.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  args: ^2.6.0
+  colonizethis_data:
+  colonizethis_logger:
+  colonizethis_setup:
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../../packages/colonizethis_exception_lint
+  colonizethis_test:
+  custom_lint: 0.8.1
+  path: ^1.9.0
+  test: 1.30.0
+
+executables:
+  ga_runner: bin/ga_runner.dart

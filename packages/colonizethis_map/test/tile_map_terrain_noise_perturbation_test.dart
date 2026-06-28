@@ -3,6 +3,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'tile_map_generation_determinism_test.dart' show tileMapGenerationDigest;
+import 'support/tile_map_gen_fixtures.dart';
 
 /// Tests for Pass 6b.5 noise perturbation
 /// (SPEC/program/tile-map-gen-algorithm.md § Pass 6b.5).
@@ -18,7 +19,7 @@ void main() {
     const baseSize = 64;
 
     TileMapResult generate({required double terrainVariation, int seed = 42}) {
-      final params = TileMapParams(
+      final params = genParams(
         width: baseSize,
         height: baseSize,
         seed: seed,

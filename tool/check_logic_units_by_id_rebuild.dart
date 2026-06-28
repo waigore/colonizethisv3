@@ -8,9 +8,32 @@ import 'package:path/path.dart' as p;
 /// across the order-suggestion / turn-resolution call chain (Refs #2836 AC 2;
 /// SPEC/program/order-suggestions.md § Throughput bounds).
 const _canonicalUnitRelativePath =
-    'packages/colonizethis_logic/lib/src/world/unit_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
-const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
+/// Production source trees scanned for non-canonical `unitsByIdFromWorld(` call
+/// sites.
+///
+/// Post-split (Refs #3290) the world domain code — including the canonical
+/// `unit_lookup.dart` and every consumer that walks units — moved out of the
+/// `colonizethis_logic` monolith into the eight split domain packages. Scanning
+/// only the now-thin `colonizethis_logic/lib/src` core would make this gate a
+/// silent no-op, so it scans all split domain package source trees (plus the
+/// thin core) where a `unitsByIdFromWorld(` rebuild could regress.
+const _scanDirsRelative = <String>[
+  'packages/colonizethis_world/lib/src',
+  'packages/colonizethis_combat/lib/src',
+  'packages/colonizethis_economy/lib/src',
+  'packages/colonizethis_diplomacy/lib/src',
+  'packages/colonizethis_setup/lib/src',
+  'packages/colonizethis_orders/lib/src',
+  'packages/colonizethis_turn/lib/src',
+  'packages/colonizethis_ai_contracts/lib/src',
+  'packages/colonizethis_logic/lib/src',
+];
+
+/// Exposed for tests verifying the post-split scan roots.
+List<String> logicUnitsByIdRebuildScanDirsForTests() =>
+    List<String>.unmodifiable(_scanDirsRelative);
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 final RegExp _callPattern = RegExp(r'unitsByIdFromWorld\(');
@@ -35,28 +58,37 @@ int runCheckLogicUnitsByIdRebuild(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final root = p.normalize(repoRoot);
-  final scanRoot = Directory(p.join(root, _scanDirRelative));
-  if (!scanRoot.existsSync()) {
-    logE('ERROR: Expected logic lib tree missing: $_scanDirRelative');
-    return 1;
+  final scanRoots = <Directory>[];
+  for (final relative in _scanDirsRelative) {
+    final dir = Directory(p.join(root, relative));
+    if (!dir.existsSync()) {
+      logE('ERROR: Expected domain lib tree missing: $relative');
+      return 1;
+    }
+    scanRoots.add(dir);
   }
 
   final hits = <LogicUnitsByIdRebuildHit>[];
-  for (final entity in scanRoot.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) continue;
-    final fullPath = p.normalize(entity.path);
-    if (!fullPath.endsWith('.dart')) continue;
-    if (_generatedSuffix.hasMatch(fullPath)) continue;
-    final relative = p.normalize(p.relative(fullPath, from: root));
-    if (relative == _canonicalUnitRelativePath) {
-      continue;
-    }
+  for (final scanRoot in scanRoots) {
+    for (final entity in scanRoot.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is! File) continue;
+      final fullPath = p.normalize(entity.path);
+      if (!fullPath.endsWith('.dart')) continue;
+      if (_generatedSuffix.hasMatch(fullPath)) continue;
+      final relative = p.normalize(p.relative(fullPath, from: root));
+      if (relative == _canonicalUnitRelativePath) {
+        continue;
+      }
 
-    final lines = entity.readAsLinesSync();
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      if (logicUnitsByIdRebuildLineMatches(line)) {
-        hits.add(LogicUnitsByIdRebuildHit(path: relative, line: i + 1));
+      final lines = entity.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        if (logicUnitsByIdRebuildLineMatches(line)) {
+          hits.add(LogicUnitsByIdRebuildHit(path: relative, line: i + 1));
+        }
       }
     }
   }
@@ -64,8 +96,8 @@ int runCheckLogicUnitsByIdRebuild(
   if (hits.isEmpty) {
     logI(
       'Logic units-by-id rebuild check passed '
-      '(no unitsByIdFromWorld( call sites under $_scanDirRelative outside '
-      '$_canonicalUnitRelativePath).',
+      '(no unitsByIdFromWorld( call sites under '
+      '${_scanDirsRelative.join(', ')} outside $_canonicalUnitRelativePath).',
     );
     return 0;
   }

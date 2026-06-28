@@ -50,7 +50,7 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
   if (regionId != null && provinceId != null) {
     final name =
         provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+    location = ' (${regionDisplayLabel(regionId)} — $name)';
   }
   final base = '$workLabel$location';
   final totalTurns = previewTotalTurnsForPendingWorkOrder(
@@ -174,7 +174,7 @@ class _UnitRow extends ConsumerWidget {
     if (regionId == null || provinceId == null) return '—';
     final prefixed = '$regionId|$provinceId';
     final name = provinceNames[prefixed] ?? prefixed;
-    final regionLabel = unitsPanelRegionLabel(regionId);
+    final regionLabel = regionDisplayLabel(regionId);
     return '$regionLabel — $name';
   }
 
@@ -190,7 +190,7 @@ class _UnitRow extends ConsumerWidget {
     if (regionId != null && provinceId != null) {
       final name =
           provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-      location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+      location = ' (${regionDisplayLabel(regionId)} — $name)';
     }
     final progress = cw.totalTurns > 0
         ? l10n.civilian_units_turnProgress(
@@ -278,33 +278,40 @@ class _UnitRow extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
-            ...allowed.map(
-              (target) => ListTile(
-                title: Text(
-                  _workTargetLabels[target] ?? target,
-                  style: TextStyle(
-                    color: available.contains(target)
-                        ? null
-                        : Theme.of(context).disabledColor,
-                  ),
-                ),
-                enabled: available.contains(target),
-                onTap: available.contains(target)
+            // Tappable work-target menu rows rendered without Material
+            // `ListTile` chrome (Refs #2914 S8): an `InkWell` provides the
+            // tap affordance, and the label muting reuses the theme
+            // `disabledColor` for unavailable targets.
+            ...allowed.map((target) {
+              final isAvailable = available.contains(target);
+              return InkWell(
+                onTap: isAvailable
                     ? () {
                         Navigator.of(ctx).pop();
-                        bus.emit(const ClosePanelEvent());
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          bus.emit(
-                            StartCivilianWorkTargetSelectionEvent(
-                              unitId: unit.id,
-                              workTarget: target,
-                            ),
-                          );
-                        });
+                        bus.closePanelThenEmit(
+                          StartCivilianWorkTargetSelectionEvent(
+                            unitId: unit.id,
+                            workTarget: target,
+                          ),
+                        );
                       }
                     : null,
-              ),
-            ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: CtSpacing.l,
+                    vertical: CtSpacing.ml,
+                  ),
+                  child: Text(
+                    _workTargetLabels[target] ?? target,
+                    style: TextStyle(
+                      color: isAvailable
+                          ? null
+                          : Theme.of(context).disabledColor,
+                    ),
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       ),
@@ -337,19 +344,16 @@ class _UnitRow extends ConsumerWidget {
     if (!_isIdleNoPending || !availableWorkTargetIds.contains(workTarget)) {
       return;
     }
-    bus.emit(const ClosePanelEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      bus.emit(
-        UpsertPendingCivilianWorkOrderRequestedEvent(
-          playerId: humanPlayerId,
-          workOrder: WorkOrder(
-            unitId: unit.id,
-            target: workTarget,
-            targetTileKey: targetTileKey,
-          ),
+    bus.closePanelThenEmit(
+      UpsertPendingCivilianWorkOrderRequestedEvent(
+        playerId: humanPlayerId,
+        workOrder: WorkOrder(
+          unitId: unit.id,
+          target: workTarget,
+          targetTileKey: targetTileKey,
         ),
-      );
-    });
+      ),
+    );
   }
 
   Future<void> _confirmCancel(BuildContext context) async {
@@ -410,6 +414,7 @@ class _UnitRow extends ConsumerWidget {
           tooltip: l10n.common_cancel,
           icon: Icons.cancel_outlined,
           label: l10n.common_cancel,
+          variant: UnitsEntityActionVariant.danger,
           onPressed: () => _confirmCancel(context),
         ),
       // R30: locate is the rightmost action in the action cluster
@@ -444,10 +449,9 @@ class _UnitRow extends ConsumerWidget {
     if (tileKey == null) return;
     final regionId = Unit.regionIdFromTileKey(tileKey);
     if (regionId == null) return;
-    bus.emit(const ClosePanelEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
-    });
+    bus.closePanelThenEmit(
+      LocateMapTileEvent(tileKey: tileKey, regionId: regionId),
+    );
   }
 
   @override
@@ -573,10 +577,7 @@ class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: _cardGradient,
-                border: Border.all(
-                  color: _borderColor(),
-                  width: _borderWidth,
-                ),
+                border: Border.all(color: _borderColor(), width: _borderWidth),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(_innerSpacing),
@@ -587,7 +588,7 @@ class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
                     children: [
                       Expanded(child: widget.details),
                       if (widget.actions.isNotEmpty) ...[
-                        const SizedBox(width: 8),
+                        CtGap.wm,
                         _CivilianUnitCardActions(actions: widget.actions),
                       ],
                     ],
@@ -602,57 +603,64 @@ class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
   }
 }
 
-/// Right-aligned action cluster inside [CivilianUnitRowCard]. Mirrors the
-/// default-mode cluster layout from
-/// [`UnitsEntityActionRow`](units/shared/units_entity_action_row.dart) without
-/// re-applying the outer chrome (the card itself owns the chrome). Each
-/// action renders as a `CtNinePatchButton`; entries with `iconOnly == true`
-/// (e.g. the rightmost Locate action per R30) render icon-only at all
-/// widths.
+/// Right-aligned action cluster inside [CivilianUnitRowCard]. Renders the
+/// mockup compact-pill row actions per `SPEC/ui/civilian-units-panel.md`
+/// § Row actions and the `UNIT10001` mockup `.u-actions` family (issue #3514
+/// owner decisions #6/#7):
+///
+/// - neutral actions (e.g. **Assign**) render as [CtActionTextButton] pills
+///   with an icon + label (mockup `.u-actions button`),
+/// - destructive actions ([UnitsEntityActionVariant.danger], e.g. **Cancel**)
+///   render as [CtDangerTextButton] pills (mockup `.u-actions .cancel-btn`),
+/// - `iconOnly` actions (the rightmost **Locate** control per R30) render as a
+///   circular [CtCircularLocateButton] (mockup `.u-actions .locate-btn`).
+///
+/// The cluster stays a right-aligned [Wrap] so it flows onto a second line at
+/// narrow widths rather than overflowing horizontally.
 class _CivilianUnitCardActions extends StatelessWidget {
   const _CivilianUnitCardActions({required this.actions});
 
   final List<UnitsEntityAction> actions;
 
-  static const double _iconOnlyBreakpoint = 200;
   static const double _spacing = 6;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final iconOnly = constraints.maxWidth < _iconOnlyBreakpoint;
-        return Wrap(
-          spacing: _spacing,
-          runSpacing: _spacing,
-          alignment: WrapAlignment.end,
-          children: [
-            for (final action in actions)
-              Tooltip(
-                message: action.tooltip,
-                child: CtNinePatchButton(
-                  onPressed: action.onPressed,
-                  enabled: action.onPressed != null,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: iconOnly || action.iconOnly ? 8 : 10,
-                    vertical: 6,
-                  ),
-                  minHeight: 32,
-                  child: iconOnly || action.iconOnly
-                      ? Icon(action.icon, size: 16)
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(action.icon, size: 16),
-                            const SizedBox(width: 4),
-                            Text(action.label),
-                          ],
-                        ),
-                ),
-              ),
-          ],
-        );
-      },
+    return Wrap(
+      spacing: _spacing,
+      runSpacing: _spacing,
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [for (final action in actions) _buildAction(action)],
+    );
+  }
+
+  Widget _buildAction(UnitsEntityAction action) {
+    final bool enabled = action.onPressed != null;
+    if (action.iconOnly) {
+      return CtCircularLocateButton(
+        onPressed: action.onPressed,
+        icon: action.icon,
+        tooltip: action.tooltip,
+        semanticLabel: action.label,
+        enabled: enabled,
+      );
+    }
+    if (action.variant == UnitsEntityActionVariant.danger) {
+      return CtDangerTextButton(
+        onPressed: action.onPressed,
+        label: action.label,
+        icon: action.icon,
+        tooltip: action.tooltip,
+        enabled: enabled,
+      );
+    }
+    return CtActionTextButton(
+      onPressed: action.onPressed,
+      label: action.label,
+      icon: action.icon,
+      tooltip: action.tooltip,
+      enabled: enabled,
     );
   }
 }

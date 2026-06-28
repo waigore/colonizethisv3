@@ -58,6 +58,15 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 
 `projectedEffects` accepts an optional `tileMapByRegion`. When omitted or empty, the dry-run uses no tile maps and **expected extraction is zero**; callers (e.g. SimGameController) may pass tile maps when available so projected extraction is non-zero. See [order-projections.md](order-projections.md).
 
+### Injected projector seam (Refs #3290 C2)
+
+The concrete dry-run (`projectOrderEffects`) runs the turn resolver (`resolveTurnForGame`) and therefore lives in the neutral `lib/src/projections/` core module, which sits **above** the `orders` domain in the package-split DAG. To let the `orders` domain (the future `colonizethis_orders` package) compile without importing that core module, `OrderEngine` accepts the projector as an injected dependency `OrderEffectsProjector? projector` (mirroring the existing injected `validatorFactory`). The seam is invoked in exactly two places: `projectedEffects` and trade-order validation (the non-bid treasury projection). The turn orchestrator (`turn/turn_resolver.dart`) and the app / ctdev / sim-scenario consumers construct `OrderEngine(projector: projectOrderEffects)`; the `OrderEffectsProjector` typedef and the `ProjectedEffects` value type live in the `orders` domain so the public `package:colonizethis_logic` barrel surface is unchanged.
+
+- **Given** an `OrderEngine` constructed with `projector: projectOrderEffects`, when `projectedEffects(game, topology, playerId)` is called, then it returns the same `ProjectedEffects` the injected projector produces for those inputs (worker count, treasury delta, unit locations, stockpile deltas).
+- **Given** an `OrderEngine` constructed with no `projector` (default `null`), when `projectedEffects(...)` is called, then the engine throws a `StateError` naming the missing `OrderEffectsProjector` rather than silently returning empty effects.
+- **Given** an `OrderEngine` constructed with no `projector` and a player whose staged orders contain at least one `TradeOrder`, when `validatePlayerOrdersWithContext(...)` runs the trade-order phase, then the engine throws a `StateError` naming the missing `OrderEffectsProjector` (the non-bid treasury projection cannot be computed without it).
+- **Given** an `OrderEngine` constructed with no `projector` and a player whose staged orders contain no `TradeOrder`, when `validatePlayerOrdersWithContext(...)` runs, then it completes without invoking the projector (the trade phase short-circuits on empty trade orders).
+
 ### ProjectedEffects fields
 
 | Field | Required for current product | Implemented |
@@ -158,9 +167,11 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 
 ## Code generation (OrderEngine slots)
 
-**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`_OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
+**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
 
-**Manifest:** `packages/colonizethis_logic/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
+**Extraction shape:** `order_engine.g.dart` is a **standalone library** with explicit `import` declarations, not a `part of 'order_engine.dart'` fragment (Refs #3543; per `SPEC/program/dart-file-non-comment-line-size.md` § Extraction shape and the `repo.orders_no_part_directives` gate). The slot descriptor `OrderSlot<T>` and the `copyMapOfOrderLists` helper shared between the hand-written engine and the generated library live in `order_engine_slot.dart` (a package-internal library not re-exported from the barrel), so generation stays standalone without widening the package's public API.
+
+**Manifest:** `packages/colonizethis_orders/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
 
 **CI / workflow:** `melos run codegen_order_engine` regenerates output; `melos run codegen_verify` (runs `tool/verify_order_engine_codegen.sh`) must pass on PRs — committed `order_engine.g.dart` must match the generator.
 

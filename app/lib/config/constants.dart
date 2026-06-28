@@ -5,8 +5,18 @@ const double kNarrowBreakpoint = 600;
 /// Viewport width threshold in **logical pixels** below which Game Setup uses stacked
 /// slot rows. Intentionally lower than [kNarrowBreakpoint] so setup can stay multi-column
 /// on widths where the in-game shell is already narrow. SPEC/ui/mobile-adaptation.md;
-/// SPEC/ui/game-setup.md.
+/// Narrow-viewport breakpoint for new-game leader selection slot rows.
+/// SPEC/ui/new-game-leader-selection-dialog.md.
 const double kGameSetupNarrowBreakpoint = 500;
+
+/// Viewport width threshold in **logical pixels** below which the DLG10001
+/// new-game leader selection dialog stacks each slot's nation + leader pickers
+/// vertically. Dedicated to DLG10001 (distinct from [kGameSetupNarrowBreakpoint],
+/// which #2868 game-setup consumers and their ACs still pin at 500). Matches the
+/// `@media (min-width: 540px)` side-by-side rule in the authoritative mockup
+/// `SPEC/ui/mockups/DLG10001-leader-selection-dialog.html`.
+/// SPEC/ui/new-game-leader-selection-dialog.md; SPEC/ui/mobile-adaptation.md § 4.
+const double kLeaderSelectionNarrowBreakpoint = 540;
 
 /// Minimum supported viewport width in **logical pixels**. Every screen covered
 /// by `SPEC/ui/mobile-adaptation.md` must render at this width without

@@ -1,0 +1,87 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import '../orders_application_context.dart';
+
+abstract class WorkOrderHandler {
+  const WorkOrderHandler();
+
+  bool supports(String target);
+
+  bool tryApply(
+    WorkOrderExecutionContext context,
+    WorkOrder order,
+    Unit unit,
+    String targetTileKey,
+    bool hasValidTarget,
+  );
+}
+
+class WorkOrderExecutionContext {
+  WorkOrderExecutionContext({required this.state, required this.player})
+    : stockpile = player.stockpile,
+      workers = player.workerPool,
+      treasury = player.treasury,
+      purchasedTilesByTileKey = Map<String, String>.from(
+        state.work.purchasedTilesByTileKey,
+      );
+
+  BuildWorkState state;
+  final Player player;
+  Stockpile stockpile;
+  WorkerPool workers;
+  int treasury;
+  Map<String, String> purchasedTilesByTileKey;
+
+  Unit? lookupUnit(String unitId) => state.work.unitById(unitId);
+
+  void updateUnit(String unitId, Unit updated) {
+    final oldWorld = state.work.unitsById.oldWorld.containsKey(unitId);
+    state = state.copyWith(
+      work: state.work.withUnitsByIdForRegion(
+        oldWorld,
+        copyUnitsById(state.work.unitsByIdForRegion(oldWorld))
+          ..[unitId] = updated,
+      ),
+    );
+  }
+
+  String regionForUnit(String unitId) => state.work.regionIdForUnitId(unitId);
+
+  /// Cached cross-region province map (Refs #2836 item 4).
+  Map<String, Province> get provincesById =>
+      state.game.worldState.allProvincesById;
+
+  /// [provincesById] lookup with [WorldState.tryGetProvince] fallback for
+  /// legacy short ids.
+  Province? provinceById(String id) {
+    final cached = provincesById[id];
+    if (cached != null) return cached;
+    return state.game.worldState.tryGetProvince(id);
+  }
+
+  bool canAffordMaterialCost(WorkOrderCost cost) =>
+      ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, cost);
+
+  void deductMaterialCost(WorkOrderCost cost) {
+    stockpile = ProjectedCostEngine.deductWorkMaterialCost(stockpile, cost);
+  }
+
+  void persistPlayerSnapshot() {
+    state = state.copyWith(
+      work: state.work.copyWith(
+        purchasedTilesByTileKey: purchasedTilesByTileKey,
+        updatedPlayers: [
+          ...state.work.updatedPlayers,
+          player.copyWith(
+            stockpile: stockpile,
+            workerPool: workers,
+            treasury: treasury,
+          ),
+        ],
+      ),
+    );
+  }
+}

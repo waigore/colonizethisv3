@@ -383,20 +383,23 @@ bool _isRedundantWhereToListWhereChainPattern(MethodInvocation node) {
   return true;
 }
 
+bool _pathUnderAnyPrefix(String relativePath, List<String> prefixes) {
+  if (prefixes.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  return prefixes.any((prefix) => slashPath.startsWith(prefix));
+}
+
 bool _isLinearCollectionWhereFirstOrNullPattern(
   PropertyAccess node,
   DisallowedPatternRule rule,
   String relativePath,
 ) {
-  final prefix = rule.linearCollectionPathPrefix;
-  if (prefix == null || prefix.isEmpty) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
     return false;
   }
   if (rule.linearCollectionNames.isEmpty) {
-    return false;
-  }
-  final slashPath = relativePath.replaceAll('\\', '/');
-  if (!slashPath.startsWith(prefix)) {
     return false;
   }
   if (node.propertyName.name != 'firstOrNull') {
@@ -444,12 +447,7 @@ bool _isIncrementalValidatorForPlayerInLoopPattern(
   DisallowedPatternRule rule,
   String relativePath,
 ) {
-  final prefix = rule.linearCollectionPathPrefix;
-  if (prefix == null || prefix.isEmpty) {
-    return false;
-  }
-  final slashPath = relativePath.replaceAll('\\', '/');
-  if (!slashPath.startsWith(prefix)) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
     return false;
   }
   if (node is InstanceCreationExpression) {
@@ -478,7 +476,7 @@ bool _isIncrementalValidatorForPlayerInLoopPattern(
 /// True when [node] is a `copyWith(...)` invocation that anchors a chain
 /// **three or more** `copyWith` levels deep through the configured outer
 /// named argument (default `worldState`). The detection is structural and
-/// path-scoped to [DisallowedPatternRule.linearCollectionPathPrefix]:
+/// path-scoped to [DisallowedPatternRule.linearCollectionPathPrefixes]:
 ///
 /// * Level 1: `<expr>.copyWith(<outerArgName>: <inner>)`.
 /// * Level 2: `<inner>` is a `<expr2>.copyWith(<args2>)` invocation.
@@ -493,12 +491,7 @@ bool _isNestedWorldStateCopyWithChain(
   DisallowedPatternRule rule,
   String relativePath,
 ) {
-  final prefix = rule.linearCollectionPathPrefix;
-  if (prefix == null || prefix.isEmpty) {
-    return false;
-  }
-  final slashPath = relativePath.replaceAll('\\', '/');
-  if (!slashPath.startsWith(prefix)) {
+  if (!_pathUnderAnyPrefix(relativePath, rule.linearCollectionPathPrefixes)) {
     return false;
   }
   if (node.methodName.name != 'copyWith') {
@@ -571,6 +564,24 @@ bool _isSimpleReceiverRemoveAtZeroPattern(
     return false;
   }
   return arg0.value == 0;
+}
+
+bool _isStaticMemberAccessPattern(
+  PrefixedIdentifier node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final typeName = rule.staticMemberTypeName;
+  final memberName = rule.staticMemberName;
+  final prefix = rule.staticMemberPathPrefix;
+  if (typeName == null || memberName == null || prefix == null) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  return node.prefix.name == typeName && node.identifier.name == memberName;
 }
 
 bool _isUnprefixedProvinceIdStringLiteralInvocation(
@@ -716,6 +727,19 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       }
     }
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.staticMemberAccess) {
+        continue;
+      }
+      if (_isStaticMemberAccessPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitPrefixedIdentifier(node);
   }
 
   @override

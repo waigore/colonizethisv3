@@ -45,6 +45,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'ai_planner_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _owProvGp1 = 'oldWorld|gp1_a';
@@ -55,19 +57,6 @@ const ExpandEconomyPlan _boostCargoPlan = ExpandEconomyPlan(
   forceCheapestRegimentBuild: false,
   boostTreasuryRecoveryCargo: true,
 );
-
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: kOldWorldRegionId,
-    stationedProvinceId: _owProvGp1,
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
 
 Game _gameWithRegiments(int regimentCount) {
   return Game(
@@ -81,7 +70,7 @@ Game _gameWithRegiments(int regimentCount) {
       ),
       newWorld: const RegionData(provinces: []),
       armies: regimentCount > 0
-          ? [_homeArmyWithRegiments(_gp1, regimentCount)]
+          ? [homeArmyWithRegiments(_gp1, regimentCount)]
           : const [],
     ),
     players: const [

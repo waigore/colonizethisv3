@@ -28,8 +28,17 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show ExpandMilitaryPlan;
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
+import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_military_plans.dart';
 import 'package:colonizethis_test/test.dart';
+
+/// Legacy hard-suppress contract: explicit zero NW weight (Refs #2847).
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
 
 const ExpandMilitaryPlan _expandSingleOwner = ExpandMilitaryPlan(
   priorityDestinationProvinceIdsSorted: <String>['oldWorld|nation_a|p1'],
@@ -222,22 +231,28 @@ void main() {
   });
 
   group('colonialMilitaryPlanFromPhasePlan — defensive phase suppression', () {
-    test('EXPAND surfaces ColonialMilitaryPlan.defaultPlan even when '
-        'COLONIAL slot non-default', () {
-      // Defensive: the dispatcher never populates colonialMilitaryPlan
-      // in EXPAND, but the adapter must short-circuit on phase to
-      // defend the structural NW suppression matrix.
+    test('EXPAND with newWorldAcquisition=0 surfaces default even when '
+        'COLONIAL slot non-default (legacy hard suppress)', () {
+      const outcome = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        colonialMilitaryPlan: _colonialMultiOwner,
+        priorityWeights: _nwAcquisitionZeroExpand,
+      );
+      expect(
+        colonialMilitaryPlanFromPhasePlan(outcome),
+        ColonialMilitaryPlan.defaultPlan,
+      );
+    });
+
+    test('EXPAND with newWorldAcquisition>0 surfaces colonialMilitaryPlan '
+        '(Refs #2847)', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
         colonialMilitaryPlan: _colonialMultiOwner,
       );
       expect(
         colonialMilitaryPlanFromPhasePlan(outcome),
-        ColonialMilitaryPlan.defaultPlan,
-        reason:
-            'EXPAND must never emit NW conquest destinations; a '
-            'non-default colonialMilitaryPlan slot must not leak the '
-            'NW invasion filter into the EXPAND military pass.',
+        _colonialMultiOwner,
       );
     });
 

@@ -1,79 +1,24 @@
-
 part of 'app_event_handler_scope.dart';
 
 extension _DialogBuilders on _AppEventHandlerScopeState {
   Map<String, DialogBuilder> _dialogBuilders() {
     return {
-      newGameLeaderSelectionDialogId: _buildNewGameLeaderSelectionDialog,
       trainCiviliansDialogId: _buildTrainCiviliansDialog,
       trainMilitaryDialogId: _buildTrainMilitaryDialog,
+      trainNavalDialogId: _buildTrainNavalDialog,
       grantOrSubsidyDialogId: _buildGrantOrSubsidyDialog,
       combatModeChoiceDialogId: _buildCombatModeChoiceDialog,
       quickBattleResultDialogId: _buildQuickBattleResultDialog,
       turnNewsDialogId: _buildTurnNewsDialog,
+      // Feature-layer builders (e.g. the shell new-game leader dialog) are
+      // injected by the composition root and merged last so a feature owns its
+      // dialog construction without `core/services/` importing `features/`.
+      // Each factory is resolved here with [appNavigatorKey] — the documented
+      // choke point — so feature files thread the key explicitly rather than
+      // reading the global (Refs #3546). SPEC/program/app-ui-wiring.md.
+      for (final entry in widget.extraDialogBuilders.entries)
+        entry.key: entry.value(appNavigatorKey),
     };
-  }
-
-  Widget _buildNewGameLeaderSelectionDialog(
-    BuildContext ctx,
-    Map<String, Object?>? _,
-  ) {
-    final baseConfig = kCtE2EEnabled
-        ? _ctE2eNewGameLeaderTemplateConfig()
-        : GameSetupConfig.defaultConfig;
-    final naming = defaultNamingConfig;
-    final initialSelections = <String, String>{};
-    for (final gpId in baseConfig.selectedGreatPowerIds) {
-      final gp = naming.gpById(gpId);
-      if (gp != null && gp.leaderVariants.isNotEmpty) {
-        initialSelections[gpId] = gp.defaultLeaderVariantId;
-      }
-    }
-    return NewGameLeaderSelectionDialog(
-      baseConfig: baseConfig,
-      naming: naming,
-      initialLeaderByGpId: initialSelections,
-      onCancel: () => Navigator.of(ctx).pop(),
-      onConfirmed:
-          (
-            orderedGreatPowerIds,
-            leaderVariantByGpId,
-            seed,
-            infiniteMode,
-            terrainVariation,
-          ) {
-            final navCtx = appNavigatorKey.currentContext;
-            if (navCtx == null) {
-              _logShell.w(
-                'appNavigatorKey has no context; skipping new game setup',
-              );
-              return;
-            }
-            final rootContainer = ProviderScope.containerOf(navCtx);
-            final templateConfig = GameSetupConfig(
-              selectedGreatPowerIds: orderedGreatPowerIds,
-              leaderVariantByGpId: leaderVariantByGpId,
-              continentCount: baseConfig.continentCount,
-              minorNationCount: baseConfig.minorNationCount,
-              tribeCount: baseConfig.tribeCount,
-              numProvincesOldWorld: baseConfig.numProvincesOldWorld,
-              numProvincesNewWorld: baseConfig.numProvincesNewWorld,
-              minProvincesPerMinor: baseConfig.minProvincesPerMinor,
-              seed: seed,
-              infiniteMode: infiniteMode,
-              terrainVariation: terrainVariation,
-              startingResources: baseConfig.startingResources,
-              initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
-            );
-            unawaited(
-              runNewGameSetupAfterLeaderPick(
-                navigatorKey: appNavigatorKey,
-                container: rootContainer,
-                templateConfig: templateConfig,
-              ),
-            );
-          },
-    );
   }
 
   Widget _buildTrainCiviliansDialog(BuildContext ctx, Map<String, Object?>? _) {
@@ -100,6 +45,23 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
       return const SizedBox.shrink();
     }
     return TrainMilitaryDialog(
+      game: game,
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
+      currentOrders: container.read(currentOrdersProvider),
+      bus: container.read(appEventBusProvider),
+    );
+  }
+
+  Widget _buildTrainNavalDialog(BuildContext ctx, Map<String, Object?>? _) {
+    final container = ProviderScope.containerOf(ctx);
+    final game = container.read(currentGameProvider);
+    if (game == null) {
+      return const SizedBox.shrink();
+    }
+    return TrainNavalDialog(
       game: game,
       humanPlayerId: resolveShellPanelPlayerId(
         container.read(shellPlayerContextProvider),

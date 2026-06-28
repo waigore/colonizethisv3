@@ -81,9 +81,10 @@ The scrim color resolves from the canonical `EditorialMonoclePalette.dialogScrim
 | State | Trigger | Render |
 |-------|---------|--------|
 | Loading | `_view == null && _runner == null && _loadError == null` | `Stack` with `widget.child`, scrim, and `GameStartIntroLoadingIndicator` inside `CtDialogShell` below the title + brass divider. |
-| Presenting line | `_view!.currentLine != null` | Title + brass divider, then centered line text + centered Continue button (`l10n.game_intervention_continue`); tap calls `_view!.advanceLine()`. |
-| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` | Title + brass divider, then a vertical stack of one stretched `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. |
-| Transient between Jenny events | Both `currentLine` and `currentChoice` are `null` while `_dialogueFinished == false` | Title + brass divider + loading indicator inside the shell. |
+| Presenting combined line+option | `_view!.currentLine != null && _view!.pendingSingleOptionLabel != null` (the `game_start_intro` case: one line then `-> I shall.`) | Title + brass divider, then centered line text + **one** centered `CtNinePatchButton` labelled `I shall.` (the Yarn option text); tap calls `_view!.confirmCombinedLineOption()`, advancing the line and selecting the sole option in one action. The narrative is shown once and confirmed once — no separate choice step (Refs #3628). |
+| Presenting line | `_view!.currentLine != null && _view!.pendingSingleOptionLabel == null` | Title + brass divider, then centered line text + centered Continue button (`l10n.game_intervention_continue`); tap calls `_view!.advanceLine()`. |
+| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` (only for choices with `n >= 2` options) | Title + brass divider, then the retained `_view!.contextLine.text` (the immediately preceding line, centered) **above** a vertical stack of one stretched `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. The narrative message and the option(s) render together — no option-only step (Refs #3628). |
+| Transient between Jenny events | Both `currentLine` and `currentChoice` are `null` while `_dialogueFinished == false` | Title + brass divider; when `_view!.contextLine != null`, the retained line text stays visible above the loading indicator (no message flash); otherwise just the loading indicator. |
 | Error | `_loadError != null` | Title + brass divider, then localized error text + centered Continue button; tapping Continue clears `_loadError` and invokes `widget.onDismissed` so the host advances even when the Yarn asset is broken. |
 | Dismissed | `_dialogueFinished == true` **or** `_view == null && _runner == null` after error-Continue | Renders `widget.child` only — no scrim, no shell. |
 
@@ -115,7 +116,7 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
 - `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — decorative 8 px ornate divider between the title region and the dialogue / error body (per `SPEC/ui/pixel-art-ui-catalog.md` § *CtBrassDivider*).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Continue and option buttons (no Material buttons in dialogue chrome).
-- `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — wrapped as `GameStartIntroLoadingIndicator` so the catalog can story it without re-importing the shared widget.
+- `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — wrapped as `GameStartIntroLoadingIndicator` so the catalog can story it without re-importing the shared widget. The wrapper pins the SHEL30001 R32 contract: `size: 48`, `strokeWidth: 2`, `color: EditorialMonoclePalette.accent` (Refs #2867 R28).
 - `EditorialMonoclePalette.dialogScrim` (`app/lib/config/editorial_monocle_palette.dart`) — scrim color resolved from the canonical OKLCH token (`SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim). The widget MUST NOT paint a hex-literal scrim (e.g. `Colors.black54`).
 - `CtDialogueView` ([`ct-dialogue-view.md`](ct-dialogue-view.md)) — the Jenny adapter that owns Line / Choice state.
 - `jenny.DialogueRunner` — Jenny's runner; receives the single `CtDialogueView` in `dialogueViews:`.
@@ -143,6 +144,18 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 - Given the overlay is presenting a Yarn choice with `n >= 2` options,
   When the user taps the `i`-th option button,
   Then `CtDialogueView.selectOption(i)` is invoked exactly once with the same index and the dialogue advances to the next Jenny event.
+
+- Given a `GameStartIntroOverlay` is mounted with the `game_start_intro` node (one narrative line followed by `-> I shall.`),
+  When the overlay first renders the dialogue body,
+  Then the imperialism narrative text renders in one `CtDialogShell` body above a single `CtNinePatchButton` labelled `I shall.` (the Yarn option text, not a generic Continue), and there is no separate Continue line step or separate option-only step (Refs #3628 AC-1, AC-3).
+
+- Given a `GameStartIntroOverlay` is presenting the combined `game_start_intro` step,
+  When the user taps the `I shall.` button once,
+  Then `CtDialogueView.confirmCombinedLineOption()` is invoked once, the line is advanced and the sole option selected, the dialogue finishes, and `widget.onDismissed` is called exactly once — the herald is shown once and confirmed with one tap (Refs #3628 AC-2).
+
+- Given a `GameStartIntroOverlay` is mounted with the `game_start_intro` node and rendered under `AppThemes.editorialMonocle`,
+  When the overlay renders the combined line+option step,
+  Then a `matchesGoldenFile` baseline (`app/test/goldens/dialogue_combined_game_start_intro_choice.png`) captures the narrative text and the `I shall.` `CtNinePatchButton` rendered together in one `CtDialogShell` body (Refs #3628 AC-2 golden coverage).
 
 - Given the overlay has just been mounted and the Yarn `AssetBundle` resolves `kDialogueGameIntroAsset` to text that does not declare a `game_start_intro` node,
   When `_loadAndRun` reaches the node existence check,
@@ -175,6 +188,16 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 - Given the overlay is presenting a Yarn line,
   When the user inspects the Continue button container,
   Then the `CtNinePatchButton` is centered (`Align(Alignment.center)`) inside the dialog column rather than right-aligned, matching the editorial-monocle mockup `SPEC/ui/mockups/OVL10001-game-intro-overlay.html`.
+
+- Given the overlay is in the loading or transient-between-events state,
+  When `GameStartIntroLoadingIndicator` is mounted,
+  Then the descendant `CircularProgressIndicator` uses `color: EditorialMonoclePalette.accent`, `strokeWidth: 2`, and is wrapped in a `SizedBox` of `48 × 48` logical px (matching SHEL30001 R32 per #2867 R28).
+
+### 320 dp viewport pin (#2870 S8 / S10)
+
+- Given a `GameStartIntroOverlay` is mounted at `kMinViewportWidth × 640` (320 × 640 dp) with a failing `AssetBundle` (forcing the degraded error panel so the overlay routes deterministically through its `CtFullScreenDialogueShell` chrome without depending on the production Yarn asset),
+  When the widget tree settles after `initState`,
+  Then `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow exception escapes the framework — the same contract pinned by `dialogs_320dp_min_viewport_test.dart`, `overture_dialogue_overlay_320dp_min_viewport_test.dart`, and `intervention_dialogue_overlay_320dp_min_viewport_test.dart`), and the localized `gameStartIntroOverlay_title` (`A New World Awaits`) title text, the `CtBrassDivider` chrome anchor, the localized `game_intro_loadError` load-error body, and the `game_intervention_continue` (`Continue`) action label all render end-to-end inside the centered `CtFullScreenDialogueShell` + `CtDialogShell` content column (`SPEC/ui/mobile-adaptation.md` § 7). Because every non-dismissed state of the overlay (loading, presenting-line, presenting-choice, transient, error) composes its body inside the same `CtFullScreenDialogueShell` scaffold above the same title + brass-divider header, this single positive pin proves the 320 dp chrome contract for every state.
 
 ---
 

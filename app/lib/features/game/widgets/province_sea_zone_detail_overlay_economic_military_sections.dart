@@ -36,8 +36,11 @@ Widget _buildEconomicSection({
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ResourceLabelInline(commodityId: resId),
-              const SizedBox(width: 4),
+              ResourceLabelInline(
+                commodityId: resId,
+                labelStyle: TextStyle(color: EditorialMonoclePalette.fg),
+              ),
+              const SizedBox(width: CtSpacing.m / 2),
               Expanded(
                 child: Text(
                   l10n.province_economic_resourceRow(
@@ -62,8 +65,11 @@ Widget _buildEconomicSection({
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ResourceLabelInline(commodityId: resId),
-              const SizedBox(width: 4),
+              ResourceLabelInline(
+                commodityId: resId,
+                labelStyle: TextStyle(color: EditorialMonoclePalette.muted),
+              ),
+              const SizedBox(width: CtSpacing.m / 2),
               Expanded(
                 child: Text(
                   l10n.province_economic_resourceRow(
@@ -121,7 +127,7 @@ Widget _buildMilitarySectionByOwner({
         children: pending
             .map(
               (line) => Padding(
-                padding: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.only(left: CtSpacing.m / 2),
                 child: Text(
                   line,
                   style: TextStyle(color: EditorialMonoclePalette.muted),
@@ -140,7 +146,7 @@ Widget _buildMilitarySectionByOwner({
     ..sort((a, b) {
       if (a == humanPlayerId) return -1;
       if (b == humanPlayerId) return 1;
-      return _ownerName(game, a).compareTo(_ownerName(game, b));
+      return _ownerName(l10n, game, a).compareTo(_ownerName(l10n, game, b));
     });
   return _buildSection(
     l10n.provinceOverlay_sectionMilitary,
@@ -154,9 +160,9 @@ Widget _buildMilitarySectionByOwner({
           for (final u in list) {
             byType[u.type] = (byType[u.type] ?? 0) + 1;
           }
-          final name = _ownerName(game, oid);
+          final name = _ownerName(l10n, game, oid);
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: CtSpacing.m),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -179,10 +185,10 @@ Widget _buildMilitarySectionByOwner({
           );
         }),
         if (pending.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: CtSpacing.m / 2),
           ...pending.map(
             (line) => Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: CtSpacing.m / 2),
               child: Text(
                 line,
                 style: TextStyle(color: EditorialMonoclePalette.muted),
@@ -248,7 +254,7 @@ Widget _buildCivilianSectionFiltered({
             style: TextStyle(color: EditorialMonoclePalette.fg),
           );
         }
-        final o = _ownerName(game, u.ownerId);
+        final o = _ownerName(l10n, game, u.ownerId);
         return Text(
           l10n.provinceOverlay_foreignUnitStatus(
             o,
@@ -288,7 +294,7 @@ Widget _buildNavalSection({
         if (fleets.isEmpty && pending.isEmpty) _emptyBodyDashText(),
         if (fleets.isNotEmpty)
           ...fleets.map((f) {
-            final ownerName = _ownerName(game, f.ownerId);
+            final ownerName = _ownerName(l10n, game, f.ownerId);
             final byType = <String, int>{};
             for (final s in f.ships) {
               byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
@@ -312,10 +318,10 @@ Widget _buildNavalSection({
             );
           }),
         if (pending.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: CtSpacing.m / 2),
           ...pending.map(
             (line) => Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: CtSpacing.m / 2),
               child: Text(
                 line,
                 style: TextStyle(color: EditorialMonoclePalette.muted),
@@ -326,4 +332,50 @@ Widget _buildNavalSection({
       ],
     ),
   );
+}
+
+/// Pixel-art close control (non-Material) keyed for tests as
+/// [kOverlayCloseKey]. Border colour resolves to `--accent-dim` and the
+/// `×` glyph paints in `--muted` per
+/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
+class _OverlayCloseButton extends StatelessWidget {
+  const _OverlayCloseButton({this.onClose});
+
+  static const Key kOverlayCloseKey = Key('overlay_close');
+
+  /// Width of the brass-toned border around the glyph (matches catalog 1 px).
+  static const double _borderWidth = 1;
+
+  /// Font size of the `×` glyph (preserved from prior chrome so the close
+  /// control retains its visual weight relative to the header title).
+  static const double _glyphFontSize = 18;
+
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: kOverlayCloseKey,
+      onTap: onClose,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: CtSpacing.m,
+          vertical: CtSpacing.m / 2,
+        ),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: EditorialMonoclePalette.accentDim,
+            width: _borderWidth,
+          ),
+        ),
+        child: Text(
+          '×',
+          style: TextStyle(
+            fontSize: _glyphFontSize,
+            color: EditorialMonoclePalette.muted,
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -210,13 +210,15 @@ void main() {
 
         expect(find.byKey(childKey), findsOneWidget);
         expect(find.byType(CtDialogShell), findsOneWidget);
+        // Collapsed single step (Refs #3628): the narrative renders once above
+        // a single button labelled with the Yarn option text "I shall." — no
+        // separate Continue line step.
         expect(find.text('The age of imperialism draweth nigh.'), findsOneWidget);
+        expect(find.text('I shall.'), findsOneWidget);
         expect(find.byType(CtNinePatchButton), findsOneWidget);
 
-        await tester.tap(find.byType(CtNinePatchButton));
-        await _pumpUntilSettled(tester);
-        expect(find.text('I shall.'), findsOneWidget);
-
+        // One tap advances the line and selects the sole option, finishing the
+        // dialogue and dismissing the overlay.
         await tester.tap(find.text('I shall.'));
         await _pumpUntilSettled(tester);
 
@@ -267,12 +269,10 @@ void main() {
         );
         await _pumpUntilSettled(tester);
 
-        expect(find.text('A New World Awaits'), findsOneWidget);
-        expect(find.byType(CtBrassDivider), findsOneWidget);
-
-        await tester.tap(find.byType(CtNinePatchButton));
-        await _pumpUntilSettled(tester);
-
+        // The collapsed line+option step (Refs #3628) is the single
+        // interactive non-dismissed Yarn state: the title + CtBrassDivider
+        // chrome renders above the narrative and the single "I shall." option
+        // button together (no separate line step / choice step).
         expect(find.text('A New World Awaits'), findsOneWidget);
         expect(find.byType(CtBrassDivider), findsOneWidget);
         expect(find.text('I shall.'), findsOneWidget);

@@ -7,7 +7,6 @@ abstract final class UiScreenIds {
   // SHEL — shell, menu, setup, pause menu
   static const String shellScreen = 'SHEL10001';
   static const String mainMenu = 'SHEL10002';
-  static const String gameSetup = 'SHEL20001';
   static const String gameInitializing = 'SHEL30001';
   static const String pauseMenuPanel = 'SHEL40001';
 
@@ -30,6 +29,7 @@ abstract final class UiScreenIds {
   static const String navalUnitsPanel = 'UNIT30001';
   static const String trainCiviliansDialog = 'UNIT40001';
   static const String trainMilitaryDialog = 'UNIT50001';
+  static const String trainNavalDialog = 'UNIT60001';
 
   // DIPL — diplomacy auxiliary dialogs
   static const String grantOrSubsidyDialog = 'DIPL20001';
@@ -50,6 +50,7 @@ abstract final class UiScreenIds {
   static const String pendingInterventionOverlay = 'OVL50001';
   static const String observeModeOverlay = 'OVL60001';
   static const String playerTurnEventFeed = 'OVL70001';
+  static const String tribeFirstContactOverlay = 'OVL80001';
 
   // DLG — modal dialogs (non-route)
   static const String newGameLeaderSelectionDialog = 'DLG10001';

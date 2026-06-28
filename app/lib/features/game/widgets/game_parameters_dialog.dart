@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_gap.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 /// Shows immutable setup flags for the active game session.
@@ -32,12 +33,12 @@ class GameParametersDialog extends StatelessWidget {
             l10n.gameParameters_title,
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 12),
+          CtGap.ml,
           Text(
             l10n.gameParameters_infiniteModeLine(infiniteValue),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          CtGap.l,
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(

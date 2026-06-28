@@ -182,6 +182,26 @@ abstract class AppLocalizations {
   /// Hint text for the leader dropdown in the leader selection dialog.
   String get shell_leaderDialog_selectLeaderHint;
 
+  /// Label / hint for the per-AI-slot tuned AI profile dropdown in the
+  /// new-game leader selection dialog.
+  String get shell_leaderDialog_aiProfileLabel;
+
+  /// Dropdown option label for the default (hardcoded personality) AI in the
+  /// per-AI-slot tuned AI profile dropdown.
+  String get shell_leaderDialog_aiProfileNormal;
+
+  /// Inline label rendered beside the per-AI-slot tuned AI profile dropdown
+  /// (mockup `.profile-line`).
+  String get shell_leaderDialog_aiProfileInlineLabel;
+
+  /// Slot heading for each player slot in the new-game setup dialog
+  /// (mockup `.slot-label`).
+  String shell_leaderDialog_slotLabel(int slotNumber);
+
+  /// Tag appended to the human player's slot label. Rendered uppercase via
+  /// presentation style (mockup `.you-tag` with text-transform:uppercase).
+  String get shell_leaderDialog_slotYouTag;
+
   /// Generic Cancel button label.
   String get common_cancel;
 
@@ -212,15 +232,20 @@ abstract class AppLocalizations {
   /// Helper text explaining 0 vs fixed seed for the new-game leader dialog.
   String get shell_leaderDialog_seedHelper;
 
-  /// Checkbox label for infinite campaign mode in the new-game leader dialog.
+  /// Toggle label for infinite campaign mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeLabel;
 
   /// Helper text for infinite mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeHelper;
 
-  /// Slider label for terrain noise variation in the new-game leader dialog,
-  /// including the current percent value.
-  String shell_leaderDialog_terrainVariationLabel(int percent);
+  /// Static slider label for terrain noise variation in the new-game leader
+  /// dialog. The live percent value is rendered separately via
+  /// [shell_leaderDialog_terrainVariationValue].
+  String get shell_leaderDialog_terrainVariationLabel;
+
+  /// Live terrain-variation percent value rendered beside the terrain
+  /// variation label.
+  String shell_leaderDialog_terrainVariationValue(int percent);
 
   /// Helper text under the terrain variation slider.
   String get shell_leaderDialog_terrainVariationHelper;
@@ -616,6 +641,12 @@ abstract class AppLocalizations {
   /// Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001).
   String get gameStartIntroOverlay_title;
 
+  /// Display-font title for the tribe first-contact herald overlay (OVL80001).
+  String get tribeFirstContactOverlay_title;
+
+  /// Error shown when the tribe first-contact herald (OVL80001) Yarn dialogue fails to load.
+  String tribeFirstContactOverlay_loadError(String error);
+
   /// Error shown when overture dialogue fails to load.
   String game_overture_loadError(String error);
 
@@ -839,6 +870,9 @@ abstract class AppLocalizations {
   /// Train military dialog title.
   String get trainMilitary_title;
 
+  /// Train naval dialog title.
+  String get trainNaval_title;
+
   /// Error text when player has no capital in train dialogs.
   String get trainUnits_noCapital;
 
@@ -848,8 +882,55 @@ abstract class AppLocalizations {
   /// Paper summary line in civilian train dialog.
   String trainUnits_paper(int value);
 
+  /// Treasury label in the train-dialog boxed resource bar (value rendered separately in monospace).
+  String get trainUnits_treasuryLabel;
+
+  /// Paper label in the civilian train-dialog boxed resource bar (value rendered separately in monospace).
+  String get trainUnits_paperLabel;
+
   /// Peasants summary line in military train dialog.
   String trainUnits_peasants(int value);
+
+  /// Peasants label with a preformatted remaining/total value (e.g. '7 / 8')
+  /// in the train military dialog resource bar.
+  String trainUnits_peasantsValue(String value);
+
+  /// Tooltip shown when hovering (desktop) or tapping (mobile) the treasury
+  /// coin icon in a train-dialog unit-row cost summary.
+  String get trainDialog_costTreasuryTooltip;
+
+  /// Tooltip shown when hovering (desktop) or tapping (mobile) the peasant
+  /// worker icon in a train-dialog unit-row cost summary.
+  String get trainDialog_costPeasantsTooltip;
+
+  /// Tooltip shown for a commodity resource icon in a train-dialog unit-row
+  /// cost summary, combining the commodity display name and its category
+  /// (e.g. 'Fabric (manufactured)').
+  String trainDialog_costCommodityTooltip(String name, String category);
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.food.
+  String get commodityCategory_food;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.rawMaterial.
+  String get commodityCategory_rawMaterial;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.manufactured.
+  String get commodityCategory_manufactured;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.luxury.
+  String get commodityCategory_luxury;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.riches.
+  String get commodityCategory_riches;
+
+  /// Lowercase commodity-category name used in resource tooltips for
+  /// CommodityCategory.advanced.
+  String get commodityCategory_advanced;
 
   /// Civilian units panel title.
   String get civilian_units_title;
@@ -1021,6 +1102,72 @@ abstract class AppLocalizations {
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;
 
+  /// Title of the confirmation dialog shown before cancelling a slot with
+  /// accrued research progress (Refs #3512).
+  String get technologyPanel_cancelWarningTitle;
+
+  /// Body of the confirmation dialog shown before cancelling a slot with
+  /// accrued research progress (Refs #3512).
+  String technologyPanel_cancelWarningMessage(String name, int points);
+
+  /// Confirm-button label on the cancel-research forfeiture warning dialog
+  /// (Refs #3512).
+  String get technologyPanel_cancelWarningConfirm;
+
+  /// Cancel-button label on the cancel-research forfeiture warning dialog
+  /// (Refs #3512).
+  String get technologyPanel_cancelWarningKeep;
+
+  /// Slot funding toggle label for ResearchFundingLevel.none (Refs #3512).
+  String get technologyPanel_fundingNone;
+
+  /// Slot funding toggle label for ResearchFundingLevel.low (Refs #3512).
+  String get technologyPanel_fundingLow;
+
+  /// Slot funding toggle label for ResearchFundingLevel.medium (Refs #3512).
+  String get technologyPanel_fundingMedium;
+
+  /// Slot funding toggle label for ResearchFundingLevel.high (Refs #3512).
+  String get technologyPanel_fundingHigh;
+
+  /// Slot funding toggle label for ResearchFundingLevel.maximum (Refs #3512).
+  String get technologyPanel_fundingMaximum;
+
+  /// Green anticipated research-point delta shown on a slot card (Refs #3512).
+  String technologyPanel_rpDeltaPreview(int rp);
+
+  /// Treasury (gold) per-turn cost shown on a slot card that will spend gold
+  /// next turn (Refs #3512).
+  String technologyPanel_goldSpendPerTurn(int gold);
+
+  /// Treasury (gold) per-turn cost shown greyed on a debt-blocked slot card
+  /// (no spend occurs) (Refs #3512).
+  String technologyPanel_goldNoSpendPerTurn(int gold);
+
+  /// Title of the research-funding breakdown dialog (Refs #3512).
+  String get technologyPanel_rpBreakdownTitle;
+
+  /// Breakdown dialog row labelling the base RP for the funding level (Refs #3512).
+  String technologyPanel_rpBreakdownBaseLabel(String funding);
+
+  /// Breakdown dialog row labelling the Industrial Funding +20% bonus (Refs #3512).
+  String get technologyPanel_rpBreakdownIndustrialLabel;
+
+  /// Breakdown dialog row labelling the effective RP applied this turn (Refs #3512).
+  String get technologyPanel_rpBreakdownEffectiveLabel;
+
+  /// Breakdown dialog row labelling the per-turn treasury cost (Refs #3512).
+  String get technologyPanel_rpBreakdownTreasuryLabel;
+
+  /// Breakdown dialog note shown when the spend is debt-blocked (Refs #3512).
+  String get technologyPanel_rpBreakdownDebtBlocked;
+
+  /// Monospace research-point value used in breakdown dialog rows (Refs #3512).
+  String technologyPanel_rpValue(int rp);
+
+  /// Treasury (gold) value used in the breakdown dialog treasury row (Refs #3512).
+  String technologyPanel_goldValue(int gold);
+
   /// Tech tree empty-state text.
   String get techTree_noTechsInCatalog;
 
@@ -1120,11 +1267,25 @@ abstract class AppLocalizations {
   /// Tile section terrain row.
   String provinceOverlay_tileTerrain(String terrain);
 
+  /// Tile section designation line shown when the selected tile is the
+  /// province town (and not a capital).
+  String provinceOverlay_tileTownOf(String provinceName);
+
+  /// Tile section designation line shown when the selected tile is a
+  /// faction's capital tile.
+  String provinceOverlay_tileCapitalOf(String provinceName, String factionName);
+
   /// Tile section resource label prefix before inline icon/name.
   String get provinceOverlay_tileResourcePrefix;
 
   /// Tile section prospecting state row.
   String provinceOverlay_tileProspected(String value);
+
+  /// Tile section prospecting state value when the tile is prospectable and prospected by the human player.
+  String get provinceOverlay_tileProspectedYes;
+
+  /// Tile section prospecting state value when the tile is prospectable but not yet prospected by the human player.
+  String get provinceOverlay_tileProspectedNo;
 
   /// Tooltip and semantics label for province tile prospect shortcut action.
   String get provinceOverlay_tileProspectWithExplorerTooltip;
@@ -1141,6 +1302,51 @@ abstract class AppLocalizations {
   /// Tile section road/rail row when not applicable.
   String get provinceOverlay_tileRoadNone;
 
+  /// Tile section road/rail primary numeric line on land tiles.
+  String provinceOverlay_tileRoadTransportLevel(int level);
+
+  /// Tile section road/rail supplementary GDD label for transport level 0.
+  String get provinceOverlay_tileRoadLabelNone;
+
+  /// Tile section road/rail supplementary GDD label for transport level 1.
+  String get provinceOverlay_tileRoadLabelPrimitiveRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 2.
+  String get provinceOverlay_tileRoadLabelImprovedRoad;
+
+  /// Tile section road/rail supplementary GDD label for transport level 4.
+  String get provinceOverlay_tileRoadLabelPortOrRailroad;
+
+  /// Tile section road/rail supplementary GDD label for unexpected levels.
+  String get provinceOverlay_tileRoadLabelNonStandard;
+
+  /// Tile section road/rail level-1 gloss clarifying railroads are level 4.
+  String get provinceOverlay_tileRoadRailGloss;
+
+  /// Tile/Economic improvement type name for tiles with no resource (generic fallback).
+  String get provinceOverlay_improvementGeneric;
+
+  /// Tile/Economic improvement type name for grain resource tiles.
+  String get provinceOverlay_improvementFarm;
+
+  /// Tile/Economic improvement type name for meat/horses resource tiles.
+  String get provinceOverlay_improvementRanch;
+
+  /// Tile/Economic improvement type name for wool resource tiles.
+  String get provinceOverlay_improvementPasture;
+
+  /// Tile/Economic improvement type name for timber resource tiles.
+  String get provinceOverlay_improvementLumberCamp;
+
+  /// Tile/Economic improvement type name for plantation-crop resource tiles (sugar cane/tobacco/cotton/spices).
+  String get provinceOverlay_improvementPlantation;
+
+  /// Tile/Economic improvement type name for furs resource tiles.
+  String get provinceOverlay_improvementFurPost;
+
+  /// Tile/Economic improvement type name for mineral resource tiles (iron/copper/coal/silver/gold/etc.).
+  String get provinceOverlay_improvementMine;
+
   /// Tile section civilian unit count row.
   String provinceOverlay_tileCivilianUnits(int count);
 
@@ -1152,6 +1358,18 @@ abstract class AppLocalizations {
 
   /// Political section owner row.
   String provinceOverlay_owner(String owner);
+
+  /// Political section owner display name when a province/tile is unowned.
+  String get provinceOverlay_ownerUnclaimed;
+
+  /// Political section region row (Old World / New World label).
+  String provinceOverlay_region(String region);
+
+  /// Political section capital row when the province is the capital of its owning faction.
+  String get provinceOverlay_capitalYes;
+
+  /// Political section capital row when the province is not a faction capital.
+  String get provinceOverlay_capitalNo;
 
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
@@ -1191,44 +1409,11 @@ abstract class AppLocalizations {
   /// Province overlay section heading for naval details.
   String get provinceOverlay_sectionNaval;
 
-  /// Game setup screen title.
-  String get gameSetup_title;
+  /// Province overlay header title shown above the tab strip for a province.
+  String get provinceOverlay_titleProvince;
 
-  /// Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant.
-  String get gameSetup_eyebrow;
-
-  /// Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant.
-  String get gameSetup_intro;
-
-  /// Loading state label while starting a game from setup (retained for backward compatibility; the in-screen dim overlay now uses gameSetup_loadingGeneratingWorld per #2868 R15).
-  String get gameSetup_starting;
-
-  /// Loading overlay label shown beneath the spinner while the Game Setup screen is generating a new world (Refs #2868 R15).
-  String get gameSetup_loadingGeneratingWorld;
-
-  /// Primary button to begin play from game setup.
-  String get gameSetup_startGame;
-
-  /// Back button on game setup screen.
-  String get gameSetup_back;
-
-  /// Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack.
-  String get gameSetup_cancel;
-
-  /// Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack.
-  String get gameSetup_backToMainMenu;
-
-  /// Label for the human player slot on game setup.
-  String get gameSetup_player1You;
-
-  /// Label for an AI-controlled player slot (n is 2-based index for display).
-  String gameSetup_playerAiSlot(int n);
-
-  /// Dropdown hint when choosing a great power nation.
-  String get gameSetup_selectNation;
-
-  /// Dropdown hint when choosing a leader variant.
-  String get gameSetup_selectLeader;
+  /// Province overlay header title shown above the tab strip for a sea zone.
+  String get provinceOverlay_titleSeaZone;
 
   /// Tooltip for cycling map base layer display.
   String get mapCorner_tooltipBaseLayer;
@@ -1282,8 +1467,44 @@ abstract class AppLocalizations {
   /// Empty diplomacy list before any factions are discovered.
   String get diplomacy_panel_noFactions;
 
+  /// Placeholder copy under the Great Powers section heading when no Great
+  /// Power has been discovered yet.
+  String get diplomacy_panel_noGreatPowers;
+
+  /// Placeholder copy under the Minor Nations section heading when no Minor
+  /// Nation has been discovered yet.
+  String get diplomacy_panel_noMinorNations;
+
+  /// Placeholder copy under the Tribes section heading when no tribe has
+  /// been contacted yet.
+  String get diplomacy_panel_noTribes;
+
   /// Great power military/economic score label in diplomacy row.
   String diplomacy_panel_powerScore(int score);
+
+  /// Muted prefix for the Great Power relative-power line.
+  String get diplomacy_relativePower_label;
+
+  /// Relative-power tier word for `−10 … +10` (roughly equal).
+  String get diplomacy_relativePower_tierRoughlyEqual;
+
+  /// Relative-power tier word for `+11 … +30` (superior).
+  String get diplomacy_relativePower_tierSuperior;
+
+  /// Relative-power tier word for `>= +31` (vastly superior).
+  String get diplomacy_relativePower_tierVastlySuperior;
+
+  /// Relative-power tier word for `−30 … −11` (inferior).
+  String get diplomacy_relativePower_tierInferior;
+
+  /// Relative-power tier word for `<= −31` (vastly inferior).
+  String get diplomacy_relativePower_tierVastlyInferior;
+
+  /// Tooltip explaining what the relative-power comparison measures.
+  String get diplomacy_relativePower_tooltip;
+
+  /// Screen-reader label combining the relative-power percentage and tier.
+  String diplomacy_relativePower_semantics(String pct, String tier);
 
   /// Line showing active subsidy to another faction.
   String diplomacy_panel_outgoingSubsidy(int amount, String target);
@@ -1336,6 +1557,11 @@ abstract class AppLocalizations {
   /// more required techs are missing for the viewed player.
   String get production_labourTierLocked;
 
+  /// Parenthetical marker shown after an Allocation recipe name when the
+  /// recipe's required technology is not unlocked for the viewed player
+  /// (e.g. fabric_from_cotton before cotton_weaving).
+  String get production_recipeLocked;
+
   /// Concatenation of the tier name and the unlock-state parenthetical for
   /// a Labour Controls row (e.g. "Peasants (unlocked)").
   String production_labourTierLabel(String tier, String state);
@@ -1355,6 +1581,10 @@ abstract class AppLocalizations {
 
   /// Commodity name and stock quantity in train military dialog.
   String trainMilitary_commodityAmount(String name, int qty);
+
+  /// Commodity name and a preformatted remaining/total value (e.g. '2 / 5')
+  /// in the train military dialog resource bar.
+  String trainMilitary_commodityValue(String name, String value);
 
   /// Treasury cost plus paper requirement for training civilians.
   String trainCivilians_costLine(String treasury, String paper);

@@ -7,7 +7,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel_orders.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -17,8 +18,7 @@ void main() {
     late Player player;
 
     setUpAll(() {
-      final result = getDebugInitGameResult();
-      game = result.game;
+      game = buildTechnologyPanelTestGame();
       player = game.players.first;
     });
 

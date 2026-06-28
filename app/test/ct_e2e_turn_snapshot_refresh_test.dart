@@ -7,15 +7,15 @@ import 'package:colonizethis_app/features/game/flame/turn_resolution_result_appl
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -31,95 +31,57 @@ void main() {
     ctE2eNavalPanelSnapshot = null;
   });
 
-  testWidgets('refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled is no-op when CT_E2E off', (
-    WidgetTester tester,
-  ) async {
+  test('refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled is no-op when CT_E2E off', () {
     expect(kCtE2EEnabled, isFalse);
-    final init = getDebugInitGameResult();
-    late WidgetRef capturedRef;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(init.game)),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-        ],
-        child: Consumer(
-          builder: (context, ref, child) {
-            capturedRef = ref;
-            return const SizedBox();
-          },
-        ),
-      ),
-    );
+    // Lightweight fixture (Refs #3656): the refresh hook only reads the game
+    // for the CT_E2E-off no-op guard; no generated map/topology data is needed.
+    final game = buildPanelTestGame();
+    final service = GameService(gamesBox, GameSaveAdapter());
 
-    refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(capturedRef);
+    refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(
+      game: game,
+      draftOrders: const Orders(),
+      gameService: service,
+    );
     expect(ctE2eNavalPanelSnapshot, isNull);
   });
 
-  testWidgets('refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled no-ops without current game', (
-    WidgetTester tester,
-  ) async {
+  test('refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled no-ops without current game', () {
     expect(kCtE2EEnabled, isFalse);
-    late WidgetRef capturedRef;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-        ],
-        child: Consumer(
-          builder: (context, ref, child) {
-            capturedRef = ref;
-            return const SizedBox();
-          },
-        ),
-      ),
-    );
+    final service = GameService(gamesBox, GameSaveAdapter());
 
-    refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(capturedRef);
+    refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(
+      game: null,
+      draftOrders: const Orders(),
+      gameService: service,
+    );
     expect(ctE2eNavalPanelSnapshot, isNull);
   });
 
-  testWidgets('applyTurnResolutionResult invokes snapshot refresh hook when CT_E2E off', (
-    WidgetTester tester,
-  ) async {
+  test('TurnResolutionResultApplier invokes snapshot refresh hook when CT_E2E off', () {
     expect(kCtE2EEnabled, isFalse);
-    final init = getDebugInitGameResult();
-    late WidgetRef capturedRef;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(init.game)),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-        ],
-        child: Consumer(
-          builder: (context, ref, child) {
-            capturedRef = ref;
-            return const SizedBox();
-          },
+    // Lightweight fixture (Refs #3656): the applier only needs a Game with a
+    // stable id to confirm the snapshot hook stays a no-op and the current game
+    // is preserved; no generated map/topology data is read.
+    final game = buildPanelTestGame();
+    final container = ProviderContainer(
+      overrides: [
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith(
+          (ref) => GameService(gamesBox, GameSaveAdapter()),
         ),
-      ),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+      ],
     );
+    addTearDown(container.dispose);
 
-    applyTurnResolutionResult(
-      capturedRef,
-      TurnResolutionComplete(init.game),
-    );
+    container.read(turnResolutionResultApplierProvider).apply(
+          TurnResolutionComplete(game),
+        );
     expect(ctE2eNavalPanelSnapshot, isNull);
-    expect(capturedRef.read(currentGameProvider)?.id, init.game.id);
+    expect(container.read(currentGameProvider)?.id, game.id);
   });
 }

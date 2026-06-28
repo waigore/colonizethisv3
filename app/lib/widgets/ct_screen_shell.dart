@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'ct_panel.dart';
+import 'ct_panel_with_top_bar.dart';
 import 'ct_spacing.dart';
 import 'ct_top_bar.dart';
 
@@ -22,11 +22,18 @@ class CtScreenShell extends StatelessWidget {
     required this.title,
     required this.child,
     this.showBackButton = false,
+    this.showTitleBar = true,
   });
 
   final String title;
   final Widget child;
   final bool showBackButton;
+
+  /// When `false`, the [CtTopBar] title band is omitted so the shell frames
+  /// the [child] without a secondary title row. Used by the in-game map
+  /// shell, whose own 36 dp top bar is the only chrome the mockup shows
+  /// (issue #2861 M2 / `SPEC/ui/game-screen.md` § In-game shell title band).
+  final bool showTitleBar;
 
   @override
   Widget build(BuildContext context) {
@@ -36,27 +43,25 @@ class CtScreenShell extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(CtSpacing.m),
-          child: CtPanel(
-            padding: EdgeInsets.zero,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                CtTopBar(
-                  title: title,
-                  showBackButton: showBackButton,
-                ),
-                const SizedBox(height: CtSpacing.m),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: CtSpacing.m,
-                    ),
-                    child: child,
+          child: CtPanelWithTopBar(
+            topBar: showTitleBar
+                ? CtTopBar(
+                    title: title,
+                    showBackButton: showBackButton,
+                  )
+                : null,
+            children: <Widget>[
+              if (showTitleBar) const SizedBox(height: CtSpacing.m),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: CtSpacing.m,
                   ),
+                  child: child,
                 ),
-                const SizedBox(height: CtSpacing.m),
-              ],
-            ),
+              ),
+              const SizedBox(height: CtSpacing.m),
+            ],
           ),
         ),
       ),

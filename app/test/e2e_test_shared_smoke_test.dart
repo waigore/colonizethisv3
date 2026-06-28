@@ -224,7 +224,7 @@ void main() {
   );
 
   testWidgets(
-    'e2eGameStartIntroBlocksUi is false when overlay only wraps map child',
+    'e2eGameStartIntroBlocksUi is true on first frame while intro Yarn loads',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -234,7 +234,7 @@ void main() {
           ),
         ),
       );
-      expect(e2eGameStartIntroBlocksUi(tester), isFalse);
+      expect(e2eGameStartIntroBlocksUi(tester), isTrue);
     },
   );
 

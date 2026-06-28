@@ -30,6 +30,8 @@ Present **all** `InterventionPrompt` rows for the current pending batch before t
   4. `SizedBox(height: 12)` gap before the phase-specific body.
   - The header band MUST render on every phase of the overlay, including the degraded error panel, the Yarn-loading state, every Yarn line/choice page, every per-prompt situation page, every choice picker, and every aggressor reaction page. This guarantees the player always sees the dialog identity and a brass-trimmed visual anchor regardless of which sub-state is on screen.
 - **Phases:** (1) Yarn intro node — line(s) + Continue; (2) Per prompt: Yarn situation node (variables: aggressor, defender, intervening names) + Continue; (3) Three `CtNinePatchButton` actions: **Intervene**, **Do naught**, **Diplomatic protest** → map to `InterventionChoice`; (4) Yarn reaction node for that choice + Continue; repeat until all prompts decided; (5) implicit submit — parent receives full `InterventionDecision` list.
+  - Every Yarn line/choice page (phases 1, 2, 4) is rendered by the shared `CtDialogueLineChoiceBody` ([`../ct-dialogue-view.md`](../ct-dialogue-view.md) § Combined line+choice presentation). Each node ends in a single trivial `-> Continue` option, so the narrative line immediately preceding it collapses with the option into **one** step: the narrative renders once above a **single** `Continue` button, and one tap advances the line and selects the option (no separate option-only step). In a multi-line node (`intervention_intro` has two lines), only the **final** line collapses with the option; the earlier line keeps its own advance tap (Refs #3628).
+- **Choice-button styling (#2867 R26b):** Differentiated emphasis so the player reads the affordance at a glance. **Intervene** uses default primary `CtNinePatchButton` chrome. **Diplomatic protest** and **Do naught** use `CtNinePatchButton.mutedVariant: true` (secondary). No choice button uses `dangerVariant` (reserved for declare-war / exit flows). All three keep the canonical 48 dp tap-target and engraved-label drop-shadow contract; the muted token contract lives in [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtNinePatchButton* (Muted variant).
 
 ---
 
@@ -59,6 +61,7 @@ Variables are set on `YarnProject.variables` before `startDialogue`.
 - Given the player has selected a choice for prompt k, when the reaction Yarn node finishes, then the UI layer either advances to prompt k+1 or, if k+1 == N, invokes the callback with N `InterventionDecision` values whose triples match the prompts and whose `InterventionChoice` values match the selections.
 - Given Yarn fails to load, when the overlay is shown, then the UI layer shows an error affordance and still allows submitting decisions (degraded path) so the player is not soft-locked.
 - Given turn resolution returns a different pending type after intervention resume, when the parent applies the result, then `pendingDiplomacyProvider` reflects only the new pending type (never two kinds at once).
+- Given the intervention intro Yarn node ends in `-> Continue`, when the overlay renders the combined line+option step (the final intro line), then that intro line text and a **single** `Continue` option button render together inside one `CtDialogShell` body (no separate option-only step), one tap advances the line and selects the sole option, and the combined layout matches the `matchesGoldenFile` baseline `app/test/goldens/dialogue_combined_intervention_intro_choice.png` (Refs #3628 AC-5 golden coverage).
 
 ### Dark editorial-monocle chrome (#2867 S9)
 
@@ -67,6 +70,10 @@ Variables are set on `YarnProject.variables` before `startDialogue`.
 - Given the intervention overlay shows the per-prompt choice picker (Intervene / Do naught / Diplomatic protest), when the widget tree is inspected, then The UI layer finds exactly one `Text` keyed by `ValueKey<String>('interventionOverlayTitle')` with `style.color == EditorialMonoclePalette.accent` and exactly one `CtBrassDivider` keyed by `ValueKey<String>('interventionOverlayBrassDivider')` above the three `CtNinePatchButton` choice rows.
 - Given the intervention overlay falls back to the degraded error panel because Yarn failed to load, when the widget tree is inspected, then The UI layer still finds the keyed title `Text` and `CtBrassDivider` so the error panel reads as the same dialog identity.
 - Given the title `Text` keyed `ValueKey<String>('interventionOverlayTitle')` is mounted, when its resolved `TextStyle` is read, then `style.letterSpacing == (style.fontSize ?? 16) * 0.05` exactly (no hard-coded literal value separate from `fontSize`) so the canonical 0.05em letter-spacing per #2867 R2 scales with theme `titleMedium` overrides.
+
+### Choice-button styling (#2867 R26b)
+
+- Given the per-prompt choice picker is on screen, when the picker tree is inspected, then exactly one `CtNinePatchButton` (Intervene) has `dangerVariant: false` AND `mutedVariant: false`, exactly two (Do naught, Diplomatic protest) have `mutedVariant: true` AND `dangerVariant: false`, and zero have `dangerVariant: true`.
 
 ### 320 dp viewport pin (#2870 S8 / S10)
 

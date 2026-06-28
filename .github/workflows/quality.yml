@@ -55,6 +55,7 @@ jobs:
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
               - 'tool/run_observer_game/**'
+              - 'tool/ga_runner/**'
               - 'tool/check_long_string_switches.dart'
               - 'tool/generate_tech_effect_yaml.dart'
               - 'tool/generate_tech_effect_l10n.dart'
@@ -95,6 +96,20 @@ jobs:
               - 'packages/colonizethis_save/**'
             pkg_map:
               - 'packages/colonizethis_map/**'
+            pkg_world:
+              - 'packages/colonizethis_world/**'
+            pkg_combat:
+              - 'packages/colonizethis_combat/**'
+            pkg_economy:
+              - 'packages/colonizethis_economy/**'
+            pkg_diplomacy:
+              - 'packages/colonizethis_diplomacy/**'
+            pkg_setup:
+              - 'packages/colonizethis_setup/**'
+            pkg_turn:
+              - 'packages/colonizethis_turn/**'
+            pkg_ai_contracts:
+              - 'packages/colonizethis_ai_contracts/**'
             pkg_logic:
               - 'packages/colonizethis_logic/**'
             pkg_ai:
@@ -109,6 +124,13 @@ jobs:
             --changed-data="${{ steps.filter.outputs.pkg_data }}" \
             --changed-save="${{ steps.filter.outputs.pkg_save }}" \
             --changed-map="${{ steps.filter.outputs.pkg_map }}" \
+            --changed-world="${{ steps.filter.outputs.pkg_world }}" \
+            --changed-combat="${{ steps.filter.outputs.pkg_combat }}" \
+            --changed-economy="${{ steps.filter.outputs.pkg_economy }}" \
+            --changed-diplomacy="${{ steps.filter.outputs.pkg_diplomacy }}" \
+            --changed-setup="${{ steps.filter.outputs.pkg_setup }}" \
+            --changed-turn="${{ steps.filter.outputs.pkg_turn }}" \
+            --changed-ai_contracts="${{ steps.filter.outputs.pkg_ai_contracts }}" \
             --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
             --changed-ai="${{ steps.filter.outputs.pkg_ai }}" \
             | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)))")
@@ -121,6 +143,10 @@ jobs:
           channel: stable
           flutter-version: '3.41.9'
           cache: true
+
+      - name: Resolve workspace for app test selector
+        if: steps.filter.outputs.tests == 'true'
+        run: dart pub get
 
       # Selector contract per SPEC/program/ci-app-selective-tests.md:
       #   - The selector binary is a pure function of `--changed-files` and
@@ -173,7 +199,9 @@ jobs:
           fi
           CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
           echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
-          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | awk 'NR<=20'
+          # head closes the pipe early; GNU sed exits 4 under pipefail — do not fail the job.
+          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20 || true
+          dart pub get >/dev/null
           PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
           echo "Selector plan: $PLAN"
           MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
@@ -353,6 +381,80 @@ jobs:
           done
           git diff --exit-code -- "${rels[@]}"
 
+  # New Game init smoke (e2e): unconditionally-required PR quality gate, parallel
+  # to `app_build_linux` (same `app_tests_cache` artifact). Runs ONLY the
+  # sub-20s New Game -> default leaders -> begin smoke
+  # (`integration_test/new_game_smoke_init_e2e_test.dart`) under Xvfb on the
+  # Linux desktop target, guarding the critical init UX against app/package
+  # regressions per SPEC/program/e2e-integration-tests.md. The smoke file
+  # itself enforces the 20s wall-clock budget (fail fast inside the test).
+  # Add this job to branch protection if merges must wait on it.
+  # When no test-relevant paths change the only step is the skip echo, so the
+  # job reports success and stays a stable required check (parallel to
+  # `app_build_linux`).
+  app_e2e_smoke_init:
+    name: App e2e smoke (New Game init)
+    needs: [changes, app_tests_cache]
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      (
+        needs.changes.outputs.tests != 'true' ||
+        needs.app_tests_cache.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+    steps:
+      - name: Skip when no test-relevant paths changed
+        if: needs.changes.outputs.tests != 'true'
+        run: echo "No test-relevant paths matched; skipping New Game init smoke."
+
+      - name: Checkout
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        if: needs.changes.outputs.tests == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Install Linux desktop + Xvfb dependencies
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev xvfb
+
+      - name: Download app test cache
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: app-test-cache
+          path: _app_test_cache
+
+      - name: Restore pub + Dart tool cache
+        if: needs.changes.outputs.tests == 'true'
+        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
+
+      - name: Run New Game init smoke (Linux desktop, Xvfb, CT_E2E)
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          cd app
+          # Gitignored linux/flutter/generated_plugins.cmake; workspace dart pub get does not emit it.
+          flutter pub get
+          flutter config --enable-linux-desktop
+          xvfb-run -a flutter test \
+            integration_test/new_game_smoke_init_e2e_test.dart \
+            -d linux --dart-define=CT_E2E=true --no-pub
+
   # Always-selective app-test matrix per SPEC/program/ci-app-selective-tests.md.
   #
   # Runs the partitioned subset of `needs.changes.outputs.app_tests` for each
@@ -443,7 +545,11 @@ jobs:
           printf '%s\n' "${partition[@]}" > _partition.txt
           echo "has_tests=true" >> "$GITHUB_OUTPUT"
           echo "Partitioned ${#partition[@]} tests for shard $SHARD_INDEX:"
-          printf '  %s\n' "${partition[@]}" | awk 'NR<=20'
+          # head closes the pipe after 20 lines; printf then races to a
+          # "write error: Broken pipe" and exits non-zero under pipefail when the
+          # partition exceeds 20 entries — this diagnostic print must never fail
+          # the job (mirrors the `|| true` guard on the changed-files preview).
+          printf '  %s\n' "${partition[@]}" | head -20 || true
 
       - name: Run Flutter tests (partition)
         if: |
@@ -629,6 +735,15 @@ jobs:
           (cd tool/run_observer_game && dart test --coverage=coverage -j 2 --reporter=compact)
           (cd tool/run_observer_game && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
 
+      - name: Test ga_runner (Dart, coverage)
+        if: needs.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          set -e
+          (cd tool/ga_runner && dart test --coverage=coverage -j 2 --reporter=compact)
+          (cd tool/ga_runner && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+
       - name: App localization gate (flutter gen-l10n untranslated check)
         if: needs.changes.outputs.tests == 'true'
         run: |
@@ -649,6 +764,10 @@ jobs:
       - name: Coverage gate (run_observer_game lib >= 80%)
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 tool/run_observer_game
+
+      - name: Coverage gate (ga_runner lib >= 80%)
+        if: needs.changes.outputs.tests == 'true'
+        run: tool/check_coverage_threshold.sh 80 tool/ga_runner
 
   # Runs only when the post-processed `app_tests` is the full app-test list
   # (irreducible fallback fired or `ci:full-app` label was applied). For any

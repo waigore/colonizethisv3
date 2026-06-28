@@ -6,4 +6,4 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 dart run tool/generate_order_engine_slots.dart
 git diff --exit-code -- \
-  packages/colonizethis_logic/lib/src/orders/order_engine.g.dart
+  packages/colonizethis_orders/lib/src/orders/order_engine.g.dart

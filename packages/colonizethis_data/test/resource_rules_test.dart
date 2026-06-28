@@ -39,7 +39,7 @@ void main() {
       final rules = ResourceRules.defaultRules;
       expect(rules.isAllowedOnTerrain(Resource.tin, TerrainType.swamp), isTrue);
       expect(
-        rules.isAllowedOnTerrain(Resource.tin, TerrainType.forest),
+        rules.isAllowedOnTerrain(Resource.tin, TerrainType.hardwoodForest),
         isFalse,
       );
       expect(
@@ -48,6 +48,36 @@ void main() {
       );
       expect(
         rules.isAllowedOnTerrain(Resource.gold, TerrainType.hills),
+        isFalse,
+      );
+    });
+
+    test('timber spawns on both hardwood and scrub forest (#3573 R2)', () {
+      final rules = ResourceRules.defaultRules;
+      expect(
+        rules.isAllowedOnTerrain(Resource.timber, TerrainType.hardwoodForest),
+        isTrue,
+      );
+      expect(
+        rules.isAllowedOnTerrain(Resource.timber, TerrainType.scrubForest),
+        isTrue,
+      );
+      // Negative: timber is still forest-only (not on plains).
+      expect(
+        rules.isAllowedOnTerrain(Resource.timber, TerrainType.plains),
+        isFalse,
+      );
+    });
+
+    test('furs spawns on hardwood forest only, never scrub (#3573 R2)', () {
+      final rules = ResourceRules.defaultRules;
+      expect(
+        rules.isAllowedOnTerrain(Resource.furs, TerrainType.hardwoodForest),
+        isTrue,
+      );
+      // Negative: furs never appears on scrub forest.
+      expect(
+        rules.isAllowedOnTerrain(Resource.furs, TerrainType.scrubForest),
         isFalse,
       );
     });
@@ -157,6 +187,36 @@ void main() {
           rules.defaultMarketPriceForCommodityId('bronze'),
           copperPrice! * 1 + tinPrice! * 1,
         );
+      });
+
+      test(
+          'every non-riches catalog commodity resolves to a non-null, '
+          'non-negative default market price (Refs #3661 step 6 — full '
+          'catalog sweep relocated from colonizethis_economy)', () {
+        // SPEC/game/world-market.md § Treasury budget for bids + Tradeable
+        // commodities: the bid validator (rule 5) prices a bid via
+        // worldMarketState.prices ?? catalog default. This is the single
+        // source of truth that no tradeable (non-riches) commodity silently
+        // ships without a catalog default — a null default would let the
+        // validator admit unbounded bids on that commodity (null price ->
+        // 0 spend contribution). Owned here because CommodityCatalog and the
+        // ResourceRules defaults both live in colonizethis_data.
+        for (final commodity in CommodityCatalog.all) {
+          if (richesCommodityIds.contains(commodity.id)) continue;
+          final price = rules.defaultMarketPriceForCommodityId(commodity.id);
+          expect(
+            price,
+            isNotNull,
+            reason:
+                'commodity ${commodity.id} (non-riches) must have a catalog '
+                'default so the bid validator can price it',
+          );
+          expect(
+            price! >= 0,
+            isTrue,
+            reason: 'catalog default for ${commodity.id} must be non-negative',
+          );
+        }
       });
 
       test('returns null for riches and spices (non-tradeable on the market)',

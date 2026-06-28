@@ -3,6 +3,7 @@
 import 'package:colonizethis_app/core/services/app_event_handler.dart';
 import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -10,7 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _ForcedTurnResolutionBlocking extends TurnResolutionBlockingNotifier {
+class _ForcedTurnResolutionBlocking extends StateToggleNotifier {
+  _ForcedTurnResolutionBlocking() : super(false);
+
   @override
   bool build() => true;
 }

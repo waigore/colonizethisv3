@@ -8,8 +8,7 @@
 
 ## Scope
 
-- **In scope:** Shell flow after the user confirms **Start** on the **new game setup dialog** (`new_game_leader_selection`, `NewGameLeaderSelectionDialog`): nation + leader per slot and **game / world seed** (see [game-setup.md](game-setup.md) § Shell new game dialog). Then show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate). Province assignment follows the **locked assigner** pipeline in [game-setup-pipeline.md](../program/game-setup-pipeline.md) and [locked-province-assigner.md](../program/locked-province-assigner.md).
-- **Also applies:** Any future full-screen Game Setup (`CtGameSetup`) path that uses the same app setup API should match the same progress and error behavior unless a separate spec says otherwise.
+- **In scope:** Shell flow after the user confirms **Start** on the **new game setup dialog** (`new_game_leader_selection`, `NewGameLeaderSelectionDialog`): nation + leader per slot and **game / world seed** (see [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md)). Then show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate). Province assignment follows the **locked assigner** pipeline in [game-setup-pipeline.md](../program/game-setup-pipeline.md) and [locked-province-assigner.md](../program/locked-province-assigner.md).
 - **Out of scope:** Cancel mid-setup; fine-grained per-tile progress.
 
 ---
@@ -96,5 +95,5 @@ The implementation may merge adjacent steps for fewer on-screen updates if every
 
 ## Related
 
-- [game-setup.md](game-setup.md) — full Game Setup screen (six slots); § App flow references initializing behavior.
+- [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) — six-slot leader selection dialog; § App flow references initializing behavior.
 - [SPEC/program/game-setup-pipeline.md](../program/game-setup-pipeline.md) — pipeline phases.

@@ -26,9 +26,31 @@ void main() {
       expect(ids, contains('repo.workspace_outdated_latest_direct'));
       expect(ids, contains('repo.function_size'));
       expect(ids, contains('repo.part_unit_size'));
+      expect(ids, contains('repo.turn_no_part_directives'));
+      expect(ids, contains('repo.map_gen_no_new_partfiles'));
+      expect(ids, contains('repo.map_gen_file_size'));
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.map_gen_file_size')
+            .script,
+        'tool/check_map_gen_file_size.dart',
+      );
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.turn_no_part_directives')
+            .spec,
+        'SPEC/program/turn-no-part-directives.md',
+      );
+      expect(ids, contains('repo.diplomacy_no_part_of'));
+      expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.diplomacy_no_part_of').spec,
+        'SPEC/program/diplomacy-no-part-of.md',
+      );
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
       expect(ids, contains('repo.logic_test_file_size'));
+      expect(ids, contains('repo.logic_domain_import_dag'));
+      expect(ids, contains('repo.logic_source_file_size'));
       expect(ids, contains('repo.dart_file_non_comment_line_size'));
       expect(ids, contains('repo.land_province_bucket_keys'));
       expect(ids, contains('repo.logic_dual_region_province_field_access'));

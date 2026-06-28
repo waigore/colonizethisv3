@@ -16,6 +16,7 @@ import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 
 /// Blocking intervention dialogue: Yarn intro, per-prompt situation + reaction, three choices.
@@ -80,7 +81,15 @@ class _InterventionDialogueOverlayState
     try {
       final bundle = widget.assetBundle ?? rootBundle;
       final text = await bundle.loadString(kDialogueInterventionAsset);
-      final project = YarnProject()..parse(text);
+      final project = YarnProject();
+      // Jenny resolves `{$var}` interpolation at PARSE time, so the interpolated
+      // faction variables must exist (with the `$` prefix) before `parse` or it
+      // throws a `NameError` (#3463). Real per-prompt values are bound before
+      // each node runs; StringVariable reads storage at runtime.
+      project.variables.setVariable(r'$aggressorName', '');
+      project.variables.setVariable(r'$defenderName', '');
+      project.variables.setVariable(r'$interveningName', '');
+      project.parse(text);
       for (final node in [
         _kIntro,
         _kSituation,
@@ -150,7 +159,7 @@ class _InterventionDialogueOverlayState
         );
 
         project.variables.setVariable(
-          'aggressorName',
+          r'$aggressorName',
           _factionDisplayName(widget.game, prompt.aggressorGpId),
         );
         setState(() => _yarnUiActive = true);
@@ -168,16 +177,19 @@ class _InterventionDialogueOverlayState
   }
 
   void _setFactionVariables(YarnProject project, InterventionPrompt prompt) {
+    // Jenny stores Yarn variables under their `$`-prefixed name; the asset
+    // interpolates `{$aggressorName}` etc. Binding without the prefix raised a
+    // Jenny `NameError` at runtime (#3463).
     project.variables.setVariable(
-      'aggressorName',
+      r'$aggressorName',
       _factionDisplayName(widget.game, prompt.aggressorGpId),
     );
     project.variables.setVariable(
-      'defenderName',
+      r'$defenderName',
       _factionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
     );
     project.variables.setVariable(
-      'interveningName',
+      r'$interveningName',
       _factionDisplayName(widget.game, prompt.interveningGpId),
     );
   }
@@ -239,12 +251,12 @@ class _InterventionDialogueOverlayState
             l10n.game_intervention_loadError(_loadError.toString()),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           Text(
             l10n.game_intervention_degradedHint,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
@@ -262,7 +274,7 @@ class _InterventionDialogueOverlayState
         context: context,
         bodyChildren: const [
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: CtSpacing.m),
             child: Align(
               alignment: Alignment.center,
               child: CtLoadingIndicator(),
@@ -273,36 +285,18 @@ class _InterventionDialogueOverlayState
     }
 
     if (_yarnUiActive) {
-      final line = _view!.currentLine;
-      final choice = _view!.currentChoice;
       return _buildScrimmedShell(
         context: context,
         bodyChildren: [
-          if (line != null) ...[
-            Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: CtNinePatchButton(
-                onPressed: () => _view!.advanceLine(),
-                child: Text(l10n.game_intervention_continue),
-              ),
-            ),
-          ] else if (choice != null) ...[
-            ...choice.options.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: CtNinePatchButton(
-                  onPressed: () => _view!.selectOption(entry.key),
-                  child: Text(entry.value.text),
-                ),
-              ),
-            ),
-          ] else
-            const Align(
+          CtDialogueLineChoiceBody(
+            view: _view!,
+            continueLabel: l10n.game_intervention_continue,
+            lineTextStyle: Theme.of(context).textTheme.bodyLarge,
+            loading: const Align(
               alignment: Alignment.center,
               child: CtLoadingIndicator(),
             ),
+          ),
         ],
       );
     } else if (_awaitingChoice) {
@@ -317,33 +311,17 @@ class _InterventionDialogueOverlayState
             ),
             style: Theme.of(context).textTheme.titleSmall,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           Text(
             l10n.game_intervention_situation(
               _factionDisplayName(widget.game, prompt.aggressorGpId),
-              _factionDisplayName(
-                widget.game,
-                prompt.defenderMinorOrTribeId,
-              ),
+              _factionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
               _factionDisplayName(widget.game, prompt.interveningGpId),
             ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
-          CtNinePatchButton(
-            onPressed: () => _pick(InterventionChoice.intervene),
-            child: Text(l10n.game_intervention_intervene),
-          ),
-          const SizedBox(height: 8),
-          CtNinePatchButton(
-            onPressed: () => _pick(InterventionChoice.doNothing),
-            child: Text(l10n.game_intervention_doNothing),
-          ),
-          const SizedBox(height: 8),
-          CtNinePatchButton(
-            onPressed: () => _pick(InterventionChoice.protest),
-            child: Text(l10n.game_intervention_protest),
-          ),
+          const SizedBox(height: CtSpacing.l),
+          InterventionChoiceButtons(onPick: _pick),
         ],
       );
     }
@@ -413,6 +391,25 @@ const String kInterventionOverlayTitleKey = 'interventionOverlayTitle';
 const String kInterventionOverlayBrassDividerKey =
     'interventionOverlayBrassDivider';
 
+/// Stable key for the **Intervene** choice button (#2867 R26b). The
+/// intervene button always renders with the default / primary
+/// `CtNinePatchButton` chrome (no `dangerVariant`, no `mutedVariant`); the
+/// stable key lets widget tests pin the styling contract without relying
+/// on localized button labels.
+const String kInterventionInterveneButtonKey =
+    'interventionOverlayInterveneButton';
+
+/// Stable key for the **Do naught** choice button (#2867 R26b). The
+/// do-nothing button renders with `mutedVariant: true` so the affordance
+/// reads as secondary against `kInterventionInterveneButtonKey`.
+const String kInterventionDoNothingButtonKey =
+    'interventionOverlayDoNothingButton';
+
+/// Stable key for the **Diplomatic protest** choice button (#2867 R26b).
+/// The protest button renders with `mutedVariant: true` so the affordance
+/// reads as secondary against `kInterventionInterveneButtonKey`.
+const String kInterventionProtestButtonKey = 'interventionOverlayProtestButton';
+
 /// Maximum content width inside `CtDialogShell` for the intervention overlay.
 /// Shared with the prior layout (520 dp).
 const double _kInterventionShellMaxWidth = 520;
@@ -425,3 +422,61 @@ const double _kDividerToBodyGap = 12;
 
 /// Canonical 0.05em letter-spacing factor for the overlay title (#2867 R2).
 const double _kOverlayTitleLetterSpacingEm = 0.05;
+
+/// The three differentiated choice buttons rendered by the per-prompt
+/// picker phase of [InterventionDialogueOverlay] (#2867 R26b).
+///
+/// Extracted as a public, parameter-only widget so widget tests can pin
+/// the styling contract for each button without first driving the parent
+/// overlay through its async Yarn flow into `_awaitingChoice`. The
+/// styling rules — primary chrome on **Intervene** and `mutedVariant`
+/// chrome on **Do naught** / **Diplomatic protest** — are the contract,
+/// not the concrete colors (which the widget delegates to
+/// [CtNinePatchButton] and the editorial-monocle palette).
+///
+/// SPEC: `SPEC/ui/screens/pending-intervention-overlay.md` § Choice-button
+/// styling; `SPEC/ui/pixel-art-ui-catalog.md` § *CtNinePatchButton*
+/// (Muted variant).
+class InterventionChoiceButtons extends StatelessWidget {
+  const InterventionChoiceButtons({super.key, required this.onPick});
+
+  /// Called with the selected [InterventionChoice] when the player taps
+  /// any of the three buttons. The parent typically completes the
+  /// per-prompt `_choiceCompleter` so the Yarn flow can resume into the
+  /// reaction node for that choice.
+  final void Function(InterventionChoice choice) onPick;
+
+  /// Vertical gap between adjacent choice buttons; matches the prior
+  /// inline layout so this extraction is visually a no-op.
+  static const double _gap = 8;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CtNinePatchButton(
+          key: const ValueKey<String>(kInterventionInterveneButtonKey),
+          onPressed: () => onPick(InterventionChoice.intervene),
+          child: Text(l10n.game_intervention_intervene),
+        ),
+        const SizedBox(height: _gap),
+        CtNinePatchButton(
+          key: const ValueKey<String>(kInterventionDoNothingButtonKey),
+          mutedVariant: true,
+          onPressed: () => onPick(InterventionChoice.doNothing),
+          child: Text(l10n.game_intervention_doNothing),
+        ),
+        const SizedBox(height: _gap),
+        CtNinePatchButton(
+          key: const ValueKey<String>(kInterventionProtestButtonKey),
+          mutedVariant: true,
+          onPressed: () => onPick(InterventionChoice.protest),
+          child: Text(l10n.game_intervention_protest),
+        ),
+      ],
+    );
+  }
+}

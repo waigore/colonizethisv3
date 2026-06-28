@@ -433,7 +433,7 @@ const accentConst = const Color(0xFFCC0000);
 
     test(
       'allowlists app/lib/widgets/ canvas-compositing files '
-      '(ct_main_menu_collage.dart, main_menu.dart)',
+      '(ct_main_menu_collage.dart, main_menu.dart, main_menu_buttons.dart)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_editorial_monocle_colors_widgets_compositing_',
@@ -461,6 +461,19 @@ final layerPaint = Paint()
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
+
+final hoverFilter = ColorFilter.mode(
+  Colors.black.withValues(alpha: 0.15),
+  BlendMode.darken,
+);
+''');
+
+        // main_menu_buttons.dart — `part of 'main_menu.dart'` split-out file
+        // carrying the same hover ColorFilter.mode darken composite.
+        File('${temp.path}/app/lib/widgets/main_menu_buttons.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+part of 'main_menu.dart';
 
 final hoverFilter = ColorFilter.mode(
   Colors.black.withValues(alpha: 0.15),
@@ -670,6 +683,7 @@ class Clean extends StatelessWidget {
         const compositing = <String>[
           'app/lib/widgets/ct_main_menu_collage.dart',
           'app/lib/widgets/main_menu.dart',
+          'app/lib/widgets/main_menu_buttons.dart',
         ];
         for (final path in compositing) {
           expect(

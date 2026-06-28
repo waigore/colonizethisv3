@@ -3,8 +3,10 @@
 /// Full catalog (113 techs) from SPEC/game/tech-tree.md and category sub-docs.
 
 import 'combat_config.dart';
+import 'resource.dart';
 import 'tech_catalog.dart';
 import 'tech_definition.dart';
+import 'terrain_type.dart';
 
 /// Full tech catalog (113 techs). Built from [buildTechCatalog].
 final Map<String, TechDefinition> techCatalog = buildTechCatalog();
@@ -91,6 +93,14 @@ const Map<String, Map<String, int>> _extractionCapByResourceByTechId = {
 /// Keep in sync with SPEC/game/tech-and-extraction-cap.md.
 const Map<String, int> extractionCapDesignExceptions = {'horses': 1, 'wool': 3};
 
+/// All tech ids that raise an extraction cap for at least one resource.
+/// Derived from [_extractionCapByResourceByTechId] so callers (e.g. the catalog
+/// effect-or-prerequisite audit) do not duplicate the extraction-cap data.
+/// SPEC/game/tech-and-extraction-cap.md.
+Set<String> get extractionCapTechIds => {
+  for (final byTech in _extractionCapByResourceByTechId.values) ...byTech.keys,
+};
+
 /// Tech catalog category used for Envy hidden-agenda mirror scoring when a player
 /// completes an extraction [build_improvement] on a tile whose [resourceId] is in
 /// the extraction-cap map. All such improvements map to **gathering** (tech tree).
@@ -175,6 +185,49 @@ int extractionCapForResourceForUnlocked(
   }
   return cap > 0 ? cap : defaultExtractionCap;
 }
+
+/// Hard cap that [terrain] imposes on extraction of [resourceId], independent
+/// of unlocked gathering tech. **Scrub forest** hard-caps `timber` at level 1
+/// regardless of `saw_mill`/`wind_saw_mill`/`circular_saw` (R4, issue #3573;
+/// SPEC/game/extraction-and-improvements.md § Scrub forest timber cap).
+/// Returns `null` when the terrain imposes no special cap, in which case the
+/// normal tech progression ([extractionCapForResourceForUnlocked]) applies.
+int? terrainExtractionHardCap(String resourceId, TerrainType terrain) {
+  if (terrain == TerrainType.scrubForest && resourceId == Resource.timber.name) {
+    return 1;
+  }
+  return null;
+}
+
+/// Clamps an already-computed [techCap] for [resourceId] down to any hard cap
+/// that [terrain] imposes ([terrainExtractionHardCap]). Use this from extraction
+/// paths that already resolved the tech cap (e.g. the per-tile extraction
+/// pipeline) so the terrain cap composes without recomputing tech progression.
+int clampExtractionCapForTerrain(
+  int techCap,
+  String resourceId,
+  TerrainType terrain,
+) {
+  final hardCap = terrainExtractionHardCap(resourceId, terrain);
+  if (hardCap == null || techCap <= hardCap) {
+    return techCap;
+  }
+  return hardCap;
+}
+
+/// Extraction cap for [resourceId] on a tile of [terrain] given [techUnlocked].
+/// Applies the normal tech-progression cap ([extractionCapForResourceForUnlocked]),
+/// then clamps it to any terrain hard cap ([terrainExtractionHardCap]).
+/// SPEC/game/extraction-and-improvements.md.
+int extractionCapForResourceOnTerrain(
+  Map<String, bool>? techUnlocked,
+  String resourceId,
+  TerrainType terrain,
+) => clampExtractionCapForTerrain(
+  extractionCapForResourceForUnlocked(techUnlocked, resourceId),
+  resourceId,
+  terrain,
+);
 
 /// Legacy scalar extraction cap (max across all resources).
 /// Maintained for backward compatibility in callsites/tests that still use a scalar.

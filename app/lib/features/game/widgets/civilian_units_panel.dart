@@ -11,25 +11,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
 import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_spacing.dart';
+import 'chrome/ct_action_text_button.dart';
+import 'chrome/ct_circular_locate_button.dart';
+import 'chrome/ct_danger_text_button.dart';
 import '../../../widgets/resource_icon.dart';
 import 'civilian_units_sort.dart';
+import 'game_panel_contract.dart';
 import 'train_dialog_chrome.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
-import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
+import '../utils/region_labels.dart';
 
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
 
 part 'civilian_units_panel_support.dart';
 
-class CivilianUnitsPanel extends ConsumerStatefulWidget {
+class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
   const CivilianUnitsPanel({
     super.key,
     required this.game,
@@ -50,12 +55,15 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
   /// SPEC/ui/civilian-units-panel.md — [UiScreenIds.civilianUnitsPanel].
   static const screenId = UiScreenIds.civilianUnitsPanel;
 
+  @override
   final Game game;
+  @override
   final String humanPlayerId;
 
   /// When set, lists civilians for every id (global observe). Otherwise [humanPlayerId] only.
   final Set<String>? civilianOwnerIds;
 
+  @override
   final AppEventBus bus;
 
   /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
@@ -83,6 +91,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
   final String? buildImprovementShortcutTargetTileKey;
 
   /// When true, work assign/cancel and train are disabled (observe mode).
+  @override
   final bool readOnly;
 
   @override
@@ -134,7 +143,10 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       return const [];
     }
     final children = <Widget>[
-      RegionSectionHeader(label: unitsPanelRegionLabel(regionId)),
+      RegionSectionHeader(
+        label: regionDisplayLabel(regionId),
+        variant: RegionHeaderVariant.bottomBorderMuted,
+      ),
     ];
     if (!multiOwner) {
       children.addAll(
@@ -294,39 +306,44 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       title: tileScopeActive
           ? l10n.civilian_units_title_tile
           : l10n.civilian_units_title,
+      // Header actions render as compact **primary** pills
+      // (`CtActionTextButton(primary: true)`) — gradient surface, 1 px
+      // accent-dim border, no nine-patch corner brackets — per
+      // SPEC/ui/civilian-units-panel.md § Header actions and issue #3514
+      // owner decision #5.
       actions: [
         if (tileScopeActive)
-          CtNinePatchButton(
+          CtActionTextButton(
+            primary: true,
             enabled: headerTileKey != null && headerTileKey.isNotEmpty,
             onPressed: () {
               final key = headerTileKey;
               if (key == null || key.isEmpty) {
                 return;
               }
-              widget.bus.emit(const ClosePanelEvent());
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
-              });
+              widget.bus.closePanelThenEmit(
+                OpenMapTileDetailEvent(tileKey: key),
+              );
             },
-            child: Text(l10n.civilian_units_tile),
+            label: l10n.civilian_units_tile,
           ),
-        CtNinePatchButton(
+        CtActionTextButton(
+          primary: true,
+          enabled: !widget.readOnly,
           onPressed: widget.readOnly
               ? null
               : () {
-                  widget.bus.emit(const ClosePanelEvent());
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    widget.bus.emit(OpenDialogEvent(trainCiviliansDialogId));
-                  });
+                  widget.bus.closePanelThenEmit(
+                    OpenDialogEvent(trainCiviliansDialogId),
+                  );
                 },
-          enabled: !widget.readOnly,
-          child: Text(l10n.common_train),
+          label: l10n.common_train,
         ),
       ],
       hasContent: hasAny,
       listChildren: [
         ..._civilianListChildrenForRegion(
-          regionId: 'oldWorld',
+          regionId: kRegionOldWorld,
           units: scopedOw,
           multiOwner: multiOwner,
           game: widget.game,
@@ -336,7 +353,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
           onSelectUnit: (id) => setState(() => _selectedUnitId = id),
         ),
         ..._civilianListChildrenForRegion(
-          regionId: 'newWorld',
+          regionId: kRegionNewWorld,
           units: scopedNw,
           multiOwner: multiOwner,
           game: widget.game,

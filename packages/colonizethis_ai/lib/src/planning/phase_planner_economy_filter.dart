@@ -74,15 +74,24 @@
 /// I/O, no logging, and no order emission.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
-import 'expand_phase_planner.dart' show ExpandEconomyPlan;
+import 'expand_phase_planner.dart'
+    show ExpandEconomyPlan, cheapestRegimentBuildTreasuryCost;
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
+import 'planning_helpers.dart'
+    show
+        clampPhaseWeightUpperUnit,
+        resolvePhaseColonialPressureActive,
+        resolvePhaseNewWorldAcquisitionWeight,
+        resolvePhaseNewWorldCivilianWeight,
+        resolvePhaseOldWorldCivilianWeight;
 
 /// When `true`, `_runEconomyDomainPlanners` lowers the civilian work
 /// threshold to `kColonialCivilianWorkThresholdCap`, forces the
@@ -119,7 +128,7 @@ import 'phase_priority_weights.dart';
 /// no order emission.
 bool resolvePhaseEconomyColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.phase == ObserverGoalPhase.colonial;
+}) => resolvePhaseColonialPressureActive(phasePlan.phase);
 
 /// When `true`, `_runEconomyDomainPlanners` treats the active player as
 /// in the DEVELOP phase for the economy-pass civilian-work decisions:
@@ -160,65 +169,14 @@ bool resolvePhaseEconomyColonialPressureActive({
 bool resolvePhaseEconomyDevelopActive({required PhasePlanOutcome phasePlan}) =>
     phasePlan.phase == ObserverGoalPhase.develop;
 
-/// Returns the build-order threshold cap that
-/// `_appendEconomyBuildOrders` should clamp `buildThreshold` to when
-/// the active player is operating under full COLONIAL acquisition
-/// pressure and already owns at least one New World province, or
-/// `null` when no cap applies for the current phase / NW-ownership
-/// combination.
+/// Returns the build-order threshold cap that `_appendEconomyBuildOrders`
+/// should clamp `buildThreshold` to when the active player already owns
+/// at least one New World province and the soft-phase NW acquisition
+/// weight is positive, or `null` when no cap applies.
 ///
-/// Replaces the per-call `colonialBuildOrderThresholdCap` invocation
-/// previously hosted in the now-deleted `colonial_pressure.dart`
-/// helper. The legacy helper had two arms keyed on
-/// `hasColonialAcquisitionTargets(colonial)`:
-///
-/// - `hasColonialAcquisitionTargets && newWorldProvincesOwned > 0`
-///   -> [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure]
-/// - `newWorldProvincesOwned > 0` (no acquisition targets)
-///   -> a fallback constant (since deleted; see below)
-/// - otherwise -> `null`
-///
-/// The orchestrator only invoked the helper inside an outer
-/// `if (colonialPressure)` guard, where `colonialPressure` is the
-/// dispatched [resolvePhaseEconomyColonialPressureActive] (active
-/// only under [ObserverGoalPhase.colonial]). COLONIAL phase entry is
-/// itself gated on `hasColonialAcquisitionTargets` via
-/// [observerGoalPhaseFor], so the first legacy arm was the *only*
-/// reachable arm under the orchestrator call site — the second
-/// (no-acquisition fallback) arm required
-/// `!hasColonialAcquisitionTargets`, which is structurally
-/// unreachable inside the orchestrator's COLONIAL-pressure branch.
-/// The fallback constant has therefore been retired from
-/// `colonizethis_data` (Refs #2509) along with this resolver
-/// collapsing to the single-arm form below.
-///
-/// This resolver collapses the helper's reachable behaviour to a
-/// single phase-derived path: when phase is
-/// [ObserverGoalPhase.colonial] and `newWorldProvincesOwned > 0`,
-/// return [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure];
-/// otherwise return `null`. Phase-derived `int?` is field-equal to
-/// the legacy `colonialBuildOrderThresholdCap` compute at the
-/// orchestrator's only call site across every reachable
-/// `(ObserverGoalPhase, ColonialSummary)` pair, preserving the
-/// prior build-threshold cap behaviour exactly on the landed
-/// post-S5 dispatch path.
-///
-/// Structural suppression matrix (mirrors
-/// [resolvePhaseEconomyColonialPressureActive]):
-///
-/// - [ObserverGoalPhase.expand]: returns `null` (NW economy bias is
-///   structurally suppressed under EXPAND).
-/// - [ObserverGoalPhase.colonialLite]: returns `null` (issue #2509
-///   § COLONIAL-lite "Begin NW penetration without weakening OW
-///   push" forbids biasing economy/build toward NW cargo under the
-///   safeguard).
-/// - [ObserverGoalPhase.colonial]: returns
-///   [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure] when
-///   `colonial.newWorldProvincesOwned > 0`; returns `null` otherwise
-///   (no NW provinces yet -> no cap).
-/// - [ObserverGoalPhase.develop]: returns `null` (DEVELOP drives
-///   improvement work through `civilianWorkOrdersFromPhasePlan`, not
-///   the colonial build cap).
+/// Applies the `newWorldProvincesOwned > 0` tagalong, then delegates
+/// the cap magnitude to [economyColonialPressureBuildOrderThresholdCap]
+/// (Refs #2847 Phase 3 economy build-order threshold cap wiring).
 ///
 /// Pure and deterministic — identical
 /// `(PhasePlanOutcome, ColonialSummary)` inputs always yield
@@ -228,13 +186,18 @@ int? resolvePhaseEconomyColonialBuildOrderThresholdCap({
   required PhasePlanOutcome phasePlan,
   required ColonialSummary colonial,
 }) {
-  if (!resolvePhaseEconomyColonialPressureActive(phasePlan: phasePlan)) {
+  if (phasePlan.phase == ObserverGoalPhase.colonialLite ||
+      phasePlan.phase == ObserverGoalPhase.develop) {
     return null;
   }
   if (colonial.newWorldProvincesOwned <= 0) {
     return null;
   }
-  return kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
+  return economyColonialPressureBuildOrderThresholdCap(
+    colonialPressureWeight: resolvePhaseEconomyColonialPressureWeight(
+      phasePlan: phasePlan,
+    ),
+  );
 }
 
 /// When `true`, `_appendEconomyBuildOrders` applies the below-quota OW
@@ -435,7 +398,107 @@ bool resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive({
 /// Must-have #7). Reads only `phasePlan.priorityWeights`.
 double resolvePhaseEconomyColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
+
+/// Returns the economy-pass civilian-work threshold cap scaled by the
+/// soft-phase NW acquisition weight (Refs #2847 Phase 3 economy
+/// civilian-work threshold cap wiring).
+///
+/// `_runEconomyDomainPlanners` consumes this helper as the production
+/// source of truth for the colonial-pressure civilian-work threshold
+/// cap that previously activated as a hard
+/// `workThreshold = min(workThreshold, kColonialCivilianWorkThresholdCap)`
+/// step under the boolean [resolvePhaseEconomyColonialPressureActive].
+/// The new helper interpolates the cap linearly from the uncapped
+/// threshold (no cap) down to [kColonialCivilianWorkThresholdCap] as
+/// [colonialPressureWeight] rises, so the civilian-work bar tracks the
+/// soft-phase NW acquisition priority instead of stepping on/off at the
+/// EXPAND→COLONIAL boundary:
+///
+/// - `colonialPressureWeight <= 0.0` returns [uncappedThreshold] (no cap
+///   applied — legacy `colonialPressure: false` equivalent; the civilian
+///   work bar keeps whatever value the spy-modifier base produced).
+/// - `colonialPressureWeight == 1.0` returns
+///   [kColonialCivilianWorkThresholdCap] exactly — identity-equal to the
+///   legacy COLONIAL hard-phase cap.
+/// - Intermediate `colonialPressureWeight` values return
+///   `round(uncappedThreshold - (uncappedThreshold -
+///   kColonialCivilianWorkThresholdCap) × colonialPressureWeight)`,
+///   matching the continuous-scale contract used by the conquest
+///   army-move floor, the naval colonial-pressure bonus/floor, the
+///   goal-score floors, and the economy build-pick cargo bonus
+///   (`SPEC/ai/phase-planner-architecture.md` § Phase 3 consumer
+///   wiring).
+///
+/// At the early-sprint default curve (`newWorldAcquisition = 0.05` for
+/// `oldWorldProvincesOwned <= 7`) with the default `uncappedThreshold`
+/// of `40`, the cap collapses to `round(40 - 28 × 0.05) = 39` — a
+/// one-point relaxation that leaves the OW conquest sprint civilian/build
+/// balance essentially unchanged. At the resource-need override floor
+/// (`newWorldAcquisition = 0.60`, the EXPAND geographic peer-war lock
+/// recovery weight per § Resource-need overrides) the cap reaches
+/// `round(40 - 28 × 0.60) = 23`, lowering the civilian-work bar so
+/// colonial Builder / Merchant work can engage while a locked GP is still
+/// in EXPAND.
+///
+/// The orchestrator applies `math.min(workThreshold, <result>)` so a base
+/// threshold already at or below [kColonialCivilianWorkThresholdCap]
+/// (after a large spy modifier) is never raised by this helper.
+///
+/// Pure and deterministic — identical
+/// `(colonialPressureWeight, uncappedThreshold)` inputs always yield
+/// identical `int` results (Refs #2509 Must-have #7). Performs no I/O,
+/// no logging, no order emission. The function is a projection of two
+/// scalar inputs and never reads `PhasePlanOutcome`, snapshot, or `Game`
+/// state.
+int economyColonialPressureCivilianWorkThresholdCap({
+  required double colonialPressureWeight,
+  required int uncappedThreshold,
+}) {
+  if (colonialPressureWeight <= 0.0) {
+    return uncappedThreshold;
+  }
+  final clamped = clampPhaseWeightUpperUnit(colonialPressureWeight);
+  final span = uncappedThreshold - kColonialCivilianWorkThresholdCap;
+  return (uncappedThreshold - span * clamped).round();
+}
+
+/// Returns the economy-pass build-order threshold cap scaled by the
+/// soft-phase NW acquisition weight (Refs #2847 Phase 3 economy
+/// build-order threshold cap wiring).
+///
+/// `_appendEconomyBuildOrders` consumes this helper (via
+/// [resolvePhaseEconomyColonialBuildOrderThresholdCap]) as the
+/// production source of truth for the colonial build-order threshold
+/// cap that previously activated as a hard
+/// `buildThreshold = min(buildThreshold,
+/// kColonialBuildOrderThresholdWhenOwnedNwUnderPressure)` step only
+/// under the boolean [resolvePhaseEconomyColonialPressureActive]:
+///
+/// - `colonialPressureWeight <= 0.0` returns `null` (no cap applied —
+///   legacy hard-suppress / EXPAND equivalent).
+/// - `colonialPressureWeight == 1.0` returns
+///   [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure] exactly —
+///   identity-equal to the legacy COLONIAL hard cap.
+/// - Intermediate weights return
+///   `round(kColonialBuildOrderThresholdWhenOwnedNwUnderPressure ×
+///   colonialPressureWeight)` with the weight clamped to `[0.0, 1.0]`.
+///
+/// The orchestrator applies the result only when
+/// `colonial.newWorldProvincesOwned > 0` (tagalong unchanged).
+///
+/// Pure and deterministic (Refs #2509 Must-have #7). Performs no I/O,
+/// no logging, no order emission.
+int? economyColonialPressureBuildOrderThresholdCap({
+  required double colonialPressureWeight,
+}) {
+  if (colonialPressureWeight <= 0.0) {
+    return null;
+  }
+  final clamped = clampPhaseWeightUpperUnit(colonialPressureWeight);
+  return (kColonialBuildOrderThresholdWhenOwnedNwUnderPressure * clamped)
+      .round();
+}
 
 /// Advisory `[0.0, 1.0]` multiplier for the OW civilian-work bias
 /// (build / improvement / population orders on OW-owned land)
@@ -453,7 +516,7 @@ double resolvePhaseEconomyColonialPressureWeight({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseEconomyOldWorldCivilianWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.oldWorldCivilian;
+}) => resolvePhaseOldWorldCivilianWeight(phasePlan);
 
 /// Advisory `[0.0, 1.0]` multiplier for the NW civilian-work bias
 /// (build / improvement / population orders on NW-owned land)
@@ -469,7 +532,7 @@ double resolvePhaseEconomyOldWorldCivilianWeight({
 /// Pure and deterministic (Refs #2509 Must-have #7).
 double resolvePhaseEconomyNewWorldCivilianWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldCivilian;
+}) => resolvePhaseNewWorldCivilianWeight(phasePlan);
 
 /// Resource-need override predicate (Refs #2847 § Resource-need overrides).
 ///
@@ -498,12 +561,20 @@ bool playerOwnsCargoCapableNavalUnit(Game game, String playerId) {
   return false;
 }
 
-/// First-naval-transport bootstrap (Refs #2847 Phase 3).
+/// First-naval-transport bootstrap (Refs #2847 Phase 3, #2924 Path F).
 ///
 /// When active, `_appendEconomyBuildOrders` keeps cargo-capable ship
 /// candidates in the build pick and suppresses the regiment-only
 /// `militaryRebuildCrisis` short-circuit so the orchestrator can emit a
 /// first NW-acquisition transport under the treasury-recovery override.
+///
+/// Active when treasury-recovery cargo is on, the GP owns no NW provinces
+/// and no cargo-capable hull yet, and either:
+/// - treasury is below `cheapestRegimentBuildTreasuryCost()` (partial Path F
+///   credits must not flip back to regiment-only rebuild), or
+/// - the GP is in the mid-below-quota zero-NW band (seed-42 gp3–gp6) so the
+///   first build prioritises market cargo capacity **before** high starting
+///   treasury is spent on regiments (gp6 Path F regression).
 ///
 /// The build pipeline's own treasury/material affordability check is
 /// unchanged — this relaxes only planner-level regiment bias.
@@ -512,9 +583,13 @@ bool resolvePhaseFirstNavalTransportBootstrapActive({
   required AIWorldSnapshot snapshot,
   required ExpandEconomyPlan expandEconomyPlan,
   required String playerId,
-}) =>
-    resolvePhaseNwTreasuryRecoveryResourceNeedOverrideActive(
-      snapshot: snapshot,
-      expandEconomyPlan: expandEconomyPlan,
-    ) &&
-    !playerOwnsCargoCapableNavalUnit(game, playerId);
+}) {
+  if (snapshot.colonial.newWorldProvincesOwned != 0) return false;
+  if (playerOwnsCargoCapableNavalUnit(game, playerId)) return false;
+  final ow = snapshot.conquest.oldWorldProvincesOwned;
+  if (ow >= 2 && isBelowObserverConquestQuota(ow)) {
+    return true;
+  }
+  return expandEconomyPlan.boostTreasuryRecoveryCargo &&
+      snapshot.economy.treasury < cheapestRegimentBuildTreasuryCost();
+}

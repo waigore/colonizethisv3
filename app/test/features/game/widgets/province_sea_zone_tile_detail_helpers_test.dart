@@ -2,9 +2,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/l10n/app_localizations_en.dart';
 
 void main() {
   suppressLogsForTests();
+  final l10n = AppLocalizationsEn();
   group('tryParseProvinceOverlayTileCoords', () {
     test('returns null when region id does not match', () {
       expect(
@@ -59,6 +61,7 @@ void main() {
     test('not prospectable yields em dash', () {
       expect(
         tileDetailProspectedDisplayLabel(
+          l10n,
           terrainProspectable: false,
           playerHasProspected: true,
         ),
@@ -66,24 +69,28 @@ void main() {
       );
     });
 
-    test('prospectable and prospected yields yes', () {
+    test('prospectable and prospected yields localized yes', () {
       expect(
         tileDetailProspectedDisplayLabel(
+          l10n,
           terrainProspectable: true,
           playerHasProspected: true,
         ),
-        'yes',
+        l10n.provinceOverlay_tileProspectedYes,
       );
+      expect(l10n.provinceOverlay_tileProspectedYes, 'yes');
     });
 
-    test('prospectable and not prospected yields no', () {
+    test('prospectable and not prospected yields localized no', () {
       expect(
         tileDetailProspectedDisplayLabel(
+          l10n,
           terrainProspectable: true,
           playerHasProspected: false,
         ),
-        'no',
+        l10n.provinceOverlay_tileProspectedNo,
       );
+      expect(l10n.provinceOverlay_tileProspectedNo, 'no');
     });
   });
 }

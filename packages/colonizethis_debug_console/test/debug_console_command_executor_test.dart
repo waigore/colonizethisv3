@@ -377,5 +377,44 @@ void main() {
       expect(result.isError, isTrue);
       expect(result.events, isEmpty);
     });
+
+    test('set_diplomacy one-faction form emits event with null factionA', () {
+      final result = executor.executeRaw(
+        rawInput: '/set_diplomacy Ireland war',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, hasLength(1));
+      final event = result.events.single as SetDebugDiplomacyRelationEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.factionA, isNull);
+      expect(event.factionB, 'Ireland');
+      expect(event.action, DebugDiplomacyAction.war);
+      expect(result.message, contains('war'));
+      expect(result.message, contains('Ireland'));
+    });
+
+    test('set_diplomacy two-faction form emits event with both factions', () {
+      final result = executor.executeRaw(
+        rawInput: '/set_diplomacy England France alliance',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as SetDebugDiplomacyRelationEvent;
+      expect(event.factionA, 'England');
+      expect(event.factionB, 'France');
+      expect(event.action, DebugDiplomacyAction.alliance);
+      expect(result.message, contains('England'));
+      expect(result.message, contains('France'));
+    });
+
+    test('set_diplomacy unknown action emits no event', () {
+      final result = executor.executeRaw(
+        rawInput: '/set_diplomacy Ireland befriend',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isTrue);
+      expect(result.events, isEmpty);
+    });
   });
 }

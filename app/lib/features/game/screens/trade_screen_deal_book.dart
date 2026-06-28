@@ -137,11 +137,11 @@ class _DealBookViewData {
     }
     int spent = 0;
     for (final FilledDeal deal in bids) {
-      spent += (deal.quantity * deal.pricePerUnit).round();
+      spent += deal.quantity * deal.pricePerUnit.floor();
     }
     int received = 0;
     for (final FilledDeal deal in offers) {
-      received += (deal.quantity * deal.pricePerUnit).round();
+      received += deal.quantity * deal.pricePerUnit.floor();
     }
     return _DealBookViewData(
       filledBids: List<FilledDeal>.unmodifiable(bids),
@@ -341,8 +341,11 @@ class _DealBookFilledRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int notional = (deal.quantity * deal.pricePerUnit).round();
-    final String priceText = deal.pricePerUnit.toStringAsFixed(1);
+    final int unitPrice = deal.pricePerUnit.floor();
+    final int notional = deal.quantity * unitPrice;
+    final String priceText = TradeScreen.formatFilledDealUnitPrice(
+      deal.pricePerUnit,
+    );
     final List<String> tags = <String>[
       if (deal.isFirstRightOfRefusalMatch) _frrTag,
       if (deal.isFtpMatch) _ftpTag,

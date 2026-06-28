@@ -11,7 +11,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/utils/naval_tree_builder.dart'
     show FleetRow, NavalTreeLocationNode, buildNavalTree, flattenNavalTree;
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 String _roleLabelFor(String typeId, AppLocalizations l10n) {
@@ -32,13 +32,20 @@ void _addFleetRowTexts({
     // Mockup `.home-tag` rendered next to the name (Refs #2866 S8 R26).
     out.add(l10n.naval_units_homeFleetChip);
   }
-  // UnitsEntityActionRow (dense): label (details) then Move (when allowed),
-  // Split, and the icon-only Locate control (no text label). Refs #2866 S8
-  // R25 + R27.
-  if (!row.isHomeFleet) {
-    out.add(l10n.common_move);
-  }
-  out.add(l10n.common_split);
+  // UnitsEntityActionRow (dense): trailing Move / Split / Locate cluster.
+  // Whether Move and Split render as `Icon + Text` or collapse to icon-only
+  // depends on the realized action-cluster width vs `_denseIconOnlyBreakpoint`
+  // (70 dp × actionCount), which is HOST-DEPENDENT: at the narrow macOS test
+  // host the cluster falls below the breakpoint (icon-only, no `Text` labels in
+  // preorder), but on the wider Linux desktop integration host (real
+  // `IntegrationTestWidgetsFlutterBinding`, 1280-wide view at DPR 1.0) the
+  // cluster clears the breakpoint and Move/Split render their text labels.
+  // This mirror is the canonical ICON-ONLY variant and never emits the Move /
+  // Split labels; the integration assertion normalizes those two host-width-
+  // dependent labels out of the collected texts via
+  // `e2eExpectNavalPanelMatchesE2eSnapshot`'s `ignoreActualTexts` so it passes
+  // on both hosts. Locate is always icon-only. Refs #2866 S8 R25 + R27; GitHub
+  // #2336 panel-text mirror drift / AC6.
   out.add(row.locationLabel);
   out.add(l10n.naval_units_mission(row.missionLabel));
   if (row.draftNavalMoveLine != null) {
@@ -117,7 +124,12 @@ List<String> navalUnitsPanelExpectedTexts(
   }
 
   for (final group in tree) {
-    out.add(unitsPanelRegionLabel(group.regionId));
+    // Region section headers render via RegionSectionHeader -> CtSectionLabel
+    // under the dark editorial-monocle theme (Refs #2859 R9 / #2866 S1-S3),
+    // which upper-cases the label (`Text(text.toUpperCase())`). The location
+    // header line below (LocationSectionHeader) renders as-is, so only the
+    // region group header is upper-cased here (Refs #2336).
+    out.add(regionDisplayLabel(group.regionId).toUpperCase());
     if (group.homeFleet != null) {
       _addFleetRowTexts(
         out: out,
@@ -130,7 +142,7 @@ List<String> navalUnitsPanelExpectedTexts(
       out.add(
         l10n.locationSection_headerLine(
           loc.displayLabel,
-          unitsPanelRegionLabel(loc.regionId),
+          regionDisplayLabel(loc.regionId),
         ),
       );
       for (final row in loc.fleets) {

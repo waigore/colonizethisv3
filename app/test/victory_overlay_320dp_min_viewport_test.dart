@@ -62,15 +62,16 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -85,32 +86,24 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 
 /// Pumps [child] at [size] under the running editorial-monocle theme.
 ///
-/// Mirrors `_pumpDialogAtSize` in
-/// `grant_or_subsidy_dialog_320dp_min_viewport_test.dart` and the
-/// `_pumpAtSize` helper in `mobile_320dp_min_viewport_test.dart`:
-/// sets the surface size (so the binding's render-flex math sees the
+/// Delegates to the shared `pumpAtMinViewport` harness:
+/// which sets the surface size (so the binding's render-flex math sees the
 /// minimum viewport) and overrides `MediaQuery` so widget code that
 /// reads `MediaQuery.sizeOf(context).width` resolves to the same
 /// value. `VictoryPanel.build` switches its narrow / wide layouts off
 /// the `MediaQuery.sizeOf(context).width < kNarrowBreakpoint` predicate
 /// so both writes must agree.
-Future<void> _pumpAtSize(
+Future<void> _pumpNarrow(
   WidgetTester tester,
   Widget child, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: child),
-      ),
-    ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    child: Scaffold(body: child),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -123,7 +116,7 @@ void main() {
   setUp(() {
     ct_models.AppEventBus.reset();
     victoryTestBus = ct_models.AppEventBus.create();
-    game = getDebugInitGameResult().game;
+    game = buildVictoryPanelTestGame();
     winnerPlayerId = game.players.first.id;
   });
 
@@ -153,7 +146,7 @@ void main() {
         'panel\'s 24 dp outer padding and 28 dp inner horizontal padding '
         'collapse the 320 dp viewport.',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             Stack(
               children: <Widget>[
@@ -207,7 +200,7 @@ void main() {
         'wireframe (laurel / title / divider / body / actions column) '
         'surfaces without needing the overlay scrim plumbing.',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             Center(
               child: VictoryPanel(
@@ -249,7 +242,7 @@ void main() {
         'row and headlineSmall title slot per '
         'SPEC/ui/victory-overlay.md § Narrow viewport).',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             Stack(
               children: <Widget>[

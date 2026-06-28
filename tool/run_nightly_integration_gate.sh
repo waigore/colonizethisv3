@@ -20,4 +20,10 @@ echo ""
 echo "=== sim_scenarios integration gate ==="
 melos run sim_scenarios
 
+echo ""
+echo "=== economy test wall-clock (advisory; Refs #3661) ==="
+# Advisory by default: reports the economy suite's median wall-clock against the
+# ceiling without failing the gate. See SPEC/program/economy-test-wall-clock.md.
+bash tool/check_economy_test_wall_clock.sh
+
 echo "Nightly integration gate passed."

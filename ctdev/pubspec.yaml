@@ -17,7 +17,9 @@ dependencies:
   path_provider: ^2.1.0
   hive: ^2.2.3
   colonizethis_ai: any
+  colonizethis_ai_contracts: any
   colonizethis_logic: any
+  colonizethis_setup: any
   colonizethis_models: any
   colonizethis_data: any
   colonizethis_map: any

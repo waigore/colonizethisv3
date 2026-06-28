@@ -12,19 +12,23 @@ import 'package:flutter/material.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../core/services/app_event_bus_panel_nav.dart';
+import '../../../core/services/app_event_handler_scope.dart'
+    show trainNavalDialogId;
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
+import 'chrome/ct_action_text_button.dart';
 import 'fleet_expansion_tile.dart';
+import 'game_panel_contract.dart';
 import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
 import 'transfer_to_home_fleet_dialog.dart';
+import 'units/shared/base_units_panel.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
-import 'units/shared/units_panel_region_label.dart';
-import 'units/shared/units_panel_shell.dart';
+import '../utils/region_labels.dart';
 
-class NavalUnitsPanel extends StatefulWidget {
+class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
   const NavalUnitsPanel({
     super.key,
     required this.game,
@@ -43,8 +47,11 @@ class NavalUnitsPanel extends StatefulWidget {
   /// SPEC/ui/naval-units-panel.md — [UiScreenIds.navalUnitsPanel].
   static const screenId = UiScreenIds.navalUnitsPanel;
 
+  @override
   final Game game;
+  @override
   final String humanPlayerId;
+  @override
   final AppEventBus bus;
   final MapTopology topology;
   final Orders draftOrders;
@@ -53,19 +60,15 @@ class NavalUnitsPanel extends StatefulWidget {
   final String? locationScopeKey;
   final String? initialSelectedFleetId;
   final String? tileScopeTileKey;
+  @override
   final bool readOnly;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
 }
 
-class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
-  final Set<String> _selectedFleetIds = {};
+class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
   final Set<String> _visibleScopedFleetIds = <String>{};
-  static const double _desktopViewportThreshold = 1280;
-  static const double _scaledWidthMin = 420;
-  static const double _scaledWidthMax = 640;
-  static const double _scaledViewportFactor = 0.36;
   StreamSubscription<NavalMoveFleetRequestedEvent>? _moveRequestedSub;
   bool _pendingScopedAutoCloseAfterMove = false;
 
@@ -74,7 +77,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     super.initState();
     final id = widget.initialSelectedFleetId;
     if (id != null && id.isNotEmpty) {
-      _selectedFleetIds.add(id);
+      // initState runs before the first build, so mutate the store directly
+      // rather than via the `setState`-wrapped dispatch.
+      selection.toggle(id);
     }
     _moveRequestedSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((
       event,
@@ -102,7 +107,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final rowsById = <String, FleetRow>{
       for (final r in flat) _selectionFleetId(r): r,
     };
-    final activeIds = _selectedFleetIds.where(rowsById.containsKey).toList();
+    final activeIds = selection.selectedIds
+        .where(rowsById.containsKey)
+        .toList();
     if (activeIds.length < 2) return false;
     final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
     if (homeTransferRows != null) {
@@ -150,48 +157,22 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   }
 
   void _toggleFleetSelection(FleetRow row) {
-    setState(() {
-      final id = _selectionFleetId(row);
-      if (_selectedFleetIds.contains(id)) {
-        _selectedFleetIds.remove(id);
-      } else {
-        _selectedFleetIds.add(id);
-      }
-    });
+    toggleSelection(_selectionFleetId(row));
   }
 
-  bool? _headerSelectAllValue(List<FleetRow> flat) {
-    if (flat.isEmpty) return false;
-    final ids = flat.map(_selectionFleetId).toSet();
-    var n = 0;
-    for (final id in ids) {
-      if (_selectedFleetIds.contains(id)) n++;
-    }
-    if (n == 0) return false;
-    if (n == ids.length) return true;
-    return null;
-  }
+  Iterable<String> _fleetSelectionIds(List<FleetRow> flat) =>
+      flat.map(_selectionFleetId);
 
   /// Select-all header: from none or partial → select every row; from all → clear.
   /// Does not rely on [Checkbox] tristate `next` (indeterminate taps may pass false).
   void _onHeaderSelectAllTapped(List<FleetRow> flat) {
-    setState(() {
-      final ids = flat.map(_selectionFleetId).toSet();
-      final allSelected =
-          ids.isNotEmpty && ids.every(_selectedFleetIds.contains);
-      if (allSelected) {
-        _selectedFleetIds.clear();
-      } else {
-        _selectedFleetIds.clear();
-        _selectedFleetIds.addAll(ids);
-      }
-    });
+    selectAllOrClear(_fleetSelectionIds(flat));
   }
 
   void _performCombine(List<FleetRow> flat) {
     if (!_canCombineSelection(flat)) return;
 
-    final selected = Set<String>.from(_selectedFleetIds);
+    final selected = Set<String>.from(selection.selectedIds);
     final homeTransferRows = _homeTransferRows(flat, selected);
     if (homeTransferRows != null &&
         _isEligibleHomeTransferSource(homeTransferRows.source)) {
@@ -246,7 +227,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       worldState: widget.game.worldState.copyWith(fleets: updated),
     );
 
-    setState(_selectedFleetIds.clear);
+    clearSelection();
     widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
   }
 
@@ -389,14 +370,11 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         ),
       );
       final valid = flat.map(_selectionFleetId).toSet();
-      final pruned = _selectedFleetIds.intersection(valid);
-      if (pruned.length != _selectedFleetIds.length) {
+      final prunedAny = !selection.selectedIds.every(valid.contains);
+      if (prunedAny) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          setState(() {
-            _selectedFleetIds.clear();
-            _selectedFleetIds.addAll(pruned);
-          });
+          setState(() => selection.retainOnly(valid));
         });
       }
       if (_pendingScopedAutoCloseAfterMove &&
@@ -412,6 +390,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         _pendingScopedAutoCloseAfterMove = false;
       }
     }
+  }
+
+  void _openTrainDialog() {
+    widget.bus.closePanelThenEmit(OpenDialogEvent(trainNavalDialogId));
   }
 
   void _openSplitDialog(FleetRow row) {
@@ -449,21 +431,6 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
-  BoxConstraints _panelConstraints(BuildContext context) {
-    final viewportWidth = MediaQuery.sizeOf(context).width;
-    if (viewportWidth < _desktopViewportThreshold) {
-      return UnitsPanelShell.defaultPanelConstraints;
-    }
-    final scaledWidth = (viewportWidth * _scaledViewportFactor).clamp(
-      _scaledWidthMin,
-      _scaledWidthMax,
-    );
-    return BoxConstraints(
-      maxWidth: scaledWidth,
-      maxHeight: UnitsPanelShell.defaultPanelConstraints.maxHeight,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
@@ -486,57 +453,56 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
     final canCombine = !widget.readOnly && _canCombineSelection(flat);
-    final headerCheckbox = _headerSelectAllValue(flat);
     final readOnly = widget.readOnly;
 
-    final panel = UnitsPanelShell(
+    // Header actions render as compact **primary** pills
+    // (`CtActionTextButton(primary: true)`) per SPEC/ui/naval-units-panel.md
+    // § Header actions and issue #3514 owner decisions #5 / #15. The optional
+    // tile-scope pill (and its 4px spacer) leads the shared select-all +
+    // Combine cluster assembled by `BaseUnitsPanelState.buildUnitsPanel`.
+    final panel = buildUnitsPanel(
       title: tileScopeActive
           ? l10n.naval_units_title_tile
           : l10n.naval_units_title,
-      actions: [
+      leadingActions: [
         if (tileScopeActive)
-          CtNinePatchButton(
+          CtActionTextButton(
+            primary: true,
             enabled: widget.tileScopeTileKey!.isNotEmpty,
             onPressed: () {
               final key = widget.tileScopeTileKey!;
-              widget.bus.emit(const ClosePanelEvent());
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
-              });
+              widget.bus.closePanelThenEmit(
+                OpenMapTileDetailEvent(tileKey: key),
+              );
             },
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            minHeight: 32,
-            child: Text(l10n.civilian_units_tile),
+            label: l10n.civilian_units_tile,
           ),
         if (tileScopeActive && hasAny && flat.isNotEmpty)
           const SizedBox(width: 4),
-        if (hasAny && flat.isNotEmpty && !readOnly) ...[
-          Tooltip(
-            message: headerCheckbox == true
-                ? l10n.naval_units_deselectAllFleets
-                : l10n.naval_units_selectAllFleets,
-            child: Checkbox(
-              tristate: true,
-              value: headerCheckbox,
-              onChanged: (_) => _onHeaderSelectAllTapped(flat),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ),
-          const SizedBox(width: 4),
-          CtNinePatchButton(
-            onPressed: canCombine ? () => _performCombine(flat) : null,
-            enabled: canCombine,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            minHeight: 32,
-            child: Text(l10n.common_combine),
-          ),
-        ],
       ],
+      trailingActions: [
+        CtActionTextButton(
+          primary: true,
+          onPressed: readOnly ? null : _openTrainDialog,
+          enabled: !readOnly,
+          label: l10n.common_train,
+        ),
+      ],
+      showCombineCluster: hasAny && flat.isNotEmpty && !readOnly,
+      selectableIds: _fleetSelectionIds(flat),
+      selectAllTooltip: l10n.naval_units_selectAllFleets,
+      deselectAllTooltip: l10n.naval_units_deselectAllFleets,
+      combineLabel: l10n.common_combine,
+      canCombine: canCombine,
+      onSelectAll: () => _onHeaderSelectAllTapped(flat),
+      onCombine: () => _performCombine(flat),
       hasContent: hasAny,
       listChildren: [
         for (final group in tree) ...[
-          RegionSectionHeader(label: unitsPanelRegionLabel(group.regionId)),
+          RegionSectionHeader(
+            label: regionDisplayLabel(group.regionId),
+            variant: RegionHeaderVariant.leftBar,
+          ),
           if (group.homeFleet != null)
             FleetExpansionTile(
               row: group.homeFleet!,
@@ -549,7 +515,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                       ),
                     )
                   : null,
-              isSelectedForCombine: _selectedFleetIds.contains(
+              isSelectedForCombine: isSelected(
                 _selectionFleetId(group.homeFleet!),
               ),
               combineSelectionEnabled: !readOnly,
@@ -564,7 +530,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           for (final loc in group.locations) ...[
             LocationSectionHeader(
               label: loc.displayLabel,
-              regionLabel: unitsPanelRegionLabel(loc.regionId),
+              regionLabel: regionDisplayLabel(loc.regionId),
             ),
             for (final row in loc.fleets)
               FleetExpansionTile(
@@ -578,9 +544,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                         ),
                       )
                     : null,
-                isSelectedForCombine: _selectedFleetIds.contains(
-                  _selectionFleetId(row),
-                ),
+                isSelectedForCombine: isSelected(_selectionFleetId(row)),
                 combineSelectionEnabled: !readOnly,
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
                 onSplitFleet: readOnly ? null : () => _openSplitDialog(row),
@@ -591,7 +555,6 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         ],
       ],
       emptyMessage: l10n.naval_units_empty,
-      panelConstraints: _panelConstraints(context),
     );
     if (kCtE2EEnabled) {
       updateCtE2eNavalPanelSnapshotIfEnabled(

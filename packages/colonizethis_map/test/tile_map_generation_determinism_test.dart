@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 /// Stable fingerprint of province, terrain, and resource grids for regression
 /// guards after map-package refactors (Refs #2489).
 String tileMapGenerationDigest(TileMapResult result) {
@@ -25,11 +27,10 @@ void main() {
     test(
       'seed 42 oldWorld 24x20 digest unchanged (Refs #2489)',
       () {
-        const params = TileMapParams(
+        final params = genParams(
           width: 24,
           height: 20,
           seed: 42,
-          seaFraction: 0.6,
         );
         final (result, _) = TileMapGenerator(params: params).generate(
           numProvinces: 8,
@@ -37,16 +38,20 @@ void main() {
           regionId: 'oldWorld',
           resourceRules: ResourceRules.defaultRules,
         );
-        expect(tileMapGenerationDigest(result), '15ab8c90');
+        // Digest updated for the forest terrain split (#3573): R6 weights, the
+        // guaranteed forest resource spawn (R3), and the hardwood clustering
+        // post-pass (R7) all change the seeded terrain/resource layout.
+        // Regenerate this constant whenever terrain distribution weights,
+        // resource placement, or generation order change intentionally.
+        expect(tileMapGenerationDigest(result), '314034fe');
       },
     );
 
     test('same seed and params yield identical digest', () {
-      const params = TileMapParams(
+      final params = genParams(
         width: 24,
         height: 20,
         seed: 42,
-        seaFraction: 0.6,
       );
       final gen = TileMapGenerator(params: params);
       final (a, _) = gen.generate(

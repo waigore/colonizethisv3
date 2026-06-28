@@ -22,7 +22,7 @@ Field reference for the versioned schemas introduced for issue #2218.
 | `thresholds.derived` | object | yes | Derived threshold values. |
 | `thresholds.effective` | object | yes | Runtime effective thresholds. |
 | `thresholds.gates` | array<object> | yes | Gate checks used for filtering/approval. |
-| `thresholds.domainGates` | object | no | Per-planner activation record + resolved thresholds. Required sub-keys when present: `workPlannerRan`, `buildPlannerRan`, `movePlannerRan`, `diplomacyPlannerRan`, `navalPlannerRan`, `researchPlannerRan`, `conquestArmyMovePlannerRan` (booleans); `conquestPasses` (integer). Optional `thresholds.{work,build,research}` integer cutoffs (omitted when the orchestrator did not compute them). Refs #2832. |
+| `thresholds.domainGates` | object | no | Per-planner activation record + resolved thresholds. Required sub-keys when present: `workPlannerRan`, `buildPlannerRan`, `movePlannerRan`, `diplomacyPlannerRan`, `navalPlannerRan`, `researchPlannerRan`, `conquestArmyMovePlannerRan` (booleans); `conquestPasses` (integer). Optional `thresholds.{work,build,research}` integer cutoffs (omitted when the orchestrator did not compute them). Optional `research` object: multi-slot research decision (`emptySlotCount`, `targetSlotCount` integers; `atWarCapApplied`, `stalledExpansionCapApplied` booleans; `fundingTier`, `constraintReason` strings; `slots` array of `{slotIndex,techId,funding}`; `droppedSlotIndices` array<integer>), omitted when the planner emitted no orders. Refs #2832, #3472. |
 | `outcome` | object | yes | Emitted planner outcomes. |
 | `outcome.finalAggregatedOrders` | array<object> | yes | Final orders emitted for the faction. |
 | `outcome.domainOutputs` | object | yes | Domain planner diagnostics. |

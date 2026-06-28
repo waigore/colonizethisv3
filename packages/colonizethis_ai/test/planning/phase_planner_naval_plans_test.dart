@@ -26,8 +26,16 @@ import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart'
     show ColonialLiteNavalPlan, ColonialNavalPlan;
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
+import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_naval_plans.dart';
 import 'package:colonizethis_test/test.dart';
+
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
 
 const ColonialNavalPlan _colonialNavalSingleOwner = ColonialNavalPlan(
   priorityInvasionTransportProvinceIdsSorted: <String>['newWorld|tribe_a|nw1'],
@@ -119,22 +127,28 @@ void main() {
   });
 
   group('colonialNavalPlanFromPhasePlan — defensive phase suppression', () {
-    test('EXPAND surfaces ColonialNavalPlan.defaultPlan even when '
+    test('EXPAND with newWorldAcquisition=0 surfaces default even when '
         'COLONIAL slot non-default', () {
-      // Defensive: the dispatcher never populates colonialNavalPlan in
-      // EXPAND, but the adapter must short-circuit on phase to defend
-      // the structural NW suppression matrix.
+      const outcome = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        colonialNavalPlan: _colonialNavalMultiOwner,
+        priorityWeights: _nwAcquisitionZeroExpand,
+      );
+      expect(
+        colonialNavalPlanFromPhasePlan(outcome),
+        ColonialNavalPlan.defaultPlan,
+      );
+    });
+
+    test('EXPAND with newWorldAcquisition>0 surfaces colonialNavalPlan '
+        '(Refs #2847)', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
         colonialNavalPlan: _colonialNavalMultiOwner,
       );
       expect(
         colonialNavalPlanFromPhasePlan(outcome),
-        ColonialNavalPlan.defaultPlan,
-        reason:
-            'EXPAND must never emit NW invasion-transport directives; '
-            'a non-default colonialNavalPlan slot must not leak into '
-            'the EXPAND naval pass.',
+        _colonialNavalMultiOwner,
       );
     });
 

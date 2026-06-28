@@ -1,21 +1,19 @@
 // Tests for DiplomacyPanel. SPEC/ui/diplomacy-panel.md.
 
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -114,19 +112,6 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
   Widget build(BuildContext context) => widget.child;
 }
 
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (e) {
-    // Silently fail - the test might still work if the image is available later
-  }
-}
-
 Widget buildPanel({
   required Game game,
   required String humanPlayerId,
@@ -178,6 +163,70 @@ Game _gameWithNoDiscoveredFactions() {
   );
 }
 
+/// Fixture for the discovery-via-visibility ACs (Refs #3341): the human GP
+/// `gp1` has fully-visible tile sight into a New-World province owned by Tribe
+/// `t1` but holds **no** `DiplomacyRelation` with the tribe. Per
+/// SPEC/ui/diplomacy-panel.md § Discovered factions, the panel must discover
+/// the tribe via `knownDiplomaticTargetFactionIds` and surface the default
+/// neutral first-contact standing.
+Game _gameWithTribeDiscoveredByVisibility() {
+  const nw = 'newWorld';
+  const ow = 'oldWorld';
+  final tribeProvince = Province(
+    id: '$nw|t1prov',
+    regionId: nw,
+    displayName: 'Tribe Land',
+    ownerId: 't1',
+  );
+  final homeProvince = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'Home',
+    ownerId: 'gp1',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+    oldWorld: RegionData(provinces: [homeProvince], units: const []),
+    newWorld: RegionData(provinces: [tribeProvince], units: const []),
+    playerVisibilityByTile: const {
+      'gp1': {'newWorld|t1prov|0|0': 'fullyVisible'},
+    },
+    playerProspectedTiles: const {},
+  );
+  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+  return Game(
+    id: 'tribe-visibility',
+    worldState: world,
+    players: const [player],
+    tribes: const [Tribe(id: 't1', displayName: 'Tribe One')],
+    diplomacyRelations: const [],
+  );
+}
+
+/// Reads the percentage and tier span colors from the [RelativePowerLine]
+/// rendered inside the diplomacy row keyed by [factionId]. The line is a
+/// `Text.rich` whose root `TextSpan` children are
+/// `[prefix, percentage, separator, tier]`.
+({Color? pctColor, Color? tierColor}) _relativePowerSpanColors(
+  WidgetTester tester,
+  String factionId,
+) {
+  final lineFinder = find.descendant(
+    of: find.byKey(ValueKey('$kDiplomacyRowBodyKeyPrefix$factionId')),
+    matching: find.byType(RelativePowerLine),
+  );
+  final richText = tester.widget<RichText>(
+    find.descendant(of: lineFinder, matching: find.byType(RichText)).first,
+  );
+  // `Text.rich` nests the supplied root span under the effective-style span
+  // that `Text` builds, so the relative-power spans live one level deeper.
+  final root = (richText.text as TextSpan).children!.first as TextSpan;
+  final children = root.children!;
+  final pctSpan = children[1] as TextSpan;
+  final tierSpan = children[3] as TextSpan;
+  return (pctColor: pctSpan.style?.color, tierColor: tierSpan.style?.color);
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -191,10 +240,15 @@ void main() {
   });
 
   setUpAll(() async {
-    await _preWarmFlameImageCache();
-    final result = getDebugInitGameResult();
-    gameWithFactions = result.game;
-    topology = result.combinedTopology;
+    await preloadNinePatchImage();
+    // Refs #3656: lightweight discovered-faction fixture replaces the ~7-11s
+    // getDebugInitGameResult() map generation. It seeds discovered GPs (one at
+    // peace → PEACE badge, one at war → WAR badge), a Minor Nation with the
+    // full overture matrix, and a discovered Tribe, so the section-heading,
+    // badge, relative-power, overture/FTP, and mode-bar filter assertions all
+    // have their non-vacuous rows without generated map/topology data.
+    gameWithFactions = buildDiplomacyRichPanelTestGame();
+    topology = const MapTopology();
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';
@@ -297,6 +351,25 @@ void main() {
       },
     );
 
+    testWidgets('AC-6/AC-10: overture and FTP buttons shown disabled when invalid', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      expect(find.text('Consulate'), findsWidgets);
+      expect(find.text('Embassy'), findsWidgets);
+      expect(find.text('Establish FTP'), findsWidgets);
+      expect(find.text('Offer Peace'), findsWidgets);
+    });
+
     testWidgets('AC: Action buttons present for factions', (
       WidgetTester tester,
     ) async {
@@ -362,21 +435,58 @@ void main() {
     });
 
 
-    testWidgets('AC: Empty state when no factions discovered', (
-      WidgetTester tester,
-    ) async {
-      await _bindTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildPanel(
-          game: gameWithNoDiscovered,
-          humanPlayerId: 'gp1',
-          topology: const MapTopology(nodes: [], edges: []),
-        ),
-      );
-      await _pumpPanelBuilt(tester);
+    testWidgets(
+      'AC-1: Empty state shows all three section headings + tribe placeholder',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithNoDiscovered,
+            humanPlayerId: 'gp1',
+            topology: const MapTopology(nodes: [], edges: []),
+          ),
+        );
+        await _pumpPanelBuilt(tester);
 
-      expect(find.text('No other factions discovered yet.'), findsOneWidget);
-    });
+        // SPEC/ui/diplomacy-panel.md § Section headings (Refs #3341):
+        // headings are always rendered even when their sections are empty.
+        expect(find.text('Great Powers'), findsOneWidget);
+        expect(find.text('Minor Nations'), findsOneWidget);
+        expect(find.text('Tribes'), findsOneWidget);
+        // The Tribes empty placeholder copy (diplomacy_panel_noTribes).
+        expect(find.text('No tribes contacted yet.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC-5 (Refs #3341): tribe discovered by visibility renders under Tribes '
+      'with no prior relation (no empty placeholder)',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: _gameWithTribeDiscoveredByVisibility(),
+            humanPlayerId: 'gp1',
+            topology: const MapTopology(nodes: [], edges: []),
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        expect(find.text('Tribes'), findsOneWidget);
+        expect(
+          find.text('Tribe One'),
+          findsOneWidget,
+          reason: 'Discovered tribe row must render under the Tribes section.',
+        );
+        expect(
+          find.text('No tribes contacted yet.'),
+          findsNothing,
+          reason:
+              'The empty Tribes placeholder must not show once a tribe is '
+              'discovered.',
+        );
+      },
+    );
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
       await _bindTallTestSurface(tester);
@@ -391,226 +501,6 @@ void main() {
 
       expect(find.byType(ListView), findsOneWidget);
     });
-  });
-
-  group('buildDiplomacyRows', () {
-    test(
-      'display mapping aligned with SPEC (relationScoreToDisplayLabel bands)',
-      () {
-        expect(relationScoreToDisplayLabel(0), 'Hostile');
-        expect(relationScoreToDisplayLabel(29), 'Hostile');
-        expect(relationScoreToDisplayLabel(30), 'Unfriendly');
-        expect(relationScoreToDisplayLabel(49), 'Unfriendly');
-        expect(relationScoreToDisplayLabel(50), 'Cordial');
-        expect(relationScoreToDisplayLabel(69), 'Cordial');
-        expect(relationScoreToDisplayLabel(70), 'Friendly');
-        expect(relationScoreToDisplayLabel(100), 'Friendly');
-      },
-    );
-
-    test('returns empty list when player has no relations', () {
-      final rows = buildDiplomacyRows(
-        gameWithNoDiscovered,
-        const MapTopology(nodes: [], edges: []),
-        'gp1',
-        const Orders(),
-      );
-      expect(rows, isEmpty);
-    });
-
-    test('returns GP rows sorted by military power then province count', () {
-      final rows = buildDiplomacyRows(
-        gameWithFactions,
-        topology,
-        humanPlayerId,
-        const Orders(),
-      );
-      final gpRows = rows
-          .where((r) => r.kind == FactionKind.greatPower)
-          .toList();
-      if (gpRows.length < 2) return;
-      for (var i = 0; i < gpRows.length - 1; i++) {
-        final strA = aggregateMilitaryStrengthForPlayer(
-          gameWithFactions,
-          gpRows[i].factionId,
-        );
-        final strB = aggregateMilitaryStrengthForPlayer(
-          gameWithFactions,
-          gpRows[i + 1].factionId,
-        );
-        expect(strA >= strB, isTrue);
-      }
-    });
-
-    test('GP rows have power score and player power score set', () {
-      final rows = buildDiplomacyRows(
-        gameWithFactions,
-        topology,
-        humanPlayerId,
-        const Orders(),
-      );
-      final gpRows = rows
-          .where((r) => r.kind == FactionKind.greatPower)
-          .toList();
-      for (final r in gpRows) {
-        expect(r.powerScore, isNotNull, reason: 'GP row ${r.displayName}');
-        expect(
-          r.playerPowerScore,
-          isNotNull,
-          reason: 'GP row ${r.displayName}',
-        );
-      }
-      final nonGp = rows.where((r) => r.kind != FactionKind.greatPower);
-      for (final r in nonGp) {
-        expect(r.powerScore, isNull);
-        expect(r.playerPowerScore, isNull);
-      }
-    });
-
-    test('pendingOrderTypes reflects submitted diplomatic orders', () {
-      final otherGp = gameWithFactions.players.firstWhere(
-        (p) => p.id != humanPlayerId,
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          humanPlayerId: [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: otherGp.id,
-            ),
-          ],
-        },
-      );
-      final rows = buildDiplomacyRows(
-        gameWithFactions,
-        topology,
-        humanPlayerId,
-        orders,
-      );
-      final targetRow = rows.firstWhere((r) => r.factionId == otherGp.id);
-      expect(
-        targetRow.pendingOrderTypes,
-        contains(DiplomaticOrderType.declareWar),
-      );
-    });
-  });
-
-  group('powerComparisonPercent', () {
-    test('GP stronger than player produces positive percentage', () {
-      expect(powerComparisonPercent(110, 100), 10);
-    });
-
-    test('GP weaker than player produces negative percentage', () {
-      expect(powerComparisonPercent(78, 100), -22);
-    });
-
-    test('equal scores produce zero percentage', () {
-      expect(powerComparisonPercent(100, 100), 0);
-    });
-
-    test('rounding uses banker-agnostic round() (positive)', () {
-      // (105 - 100) / 100 = 0.05 → +5
-      expect(powerComparisonPercent(105, 100), 5);
-      // (114 - 100) / 100 = 0.14 → +14
-      expect(powerComparisonPercent(114, 100), 14);
-    });
-
-    test('zero playerPowerScore uses max(playerScore, 1) guard', () {
-      // With denominator clamped to 1, (50 - 0) / 1 = 50 → +5000%
-      expect(powerComparisonPercent(50, 0), 5000);
-      // (0 - 0) / max(0, 1) = 0 → 0%, finite (no NaN, no division-by-zero)
-      expect(powerComparisonPercent(0, 0), 0);
-    });
-
-    test('negative playerPowerScore is still guarded by max(.., 1)', () {
-      // The SPEC formula uses `max(playerPowerScore, 1)`; a defensive call
-      // with a negative `playerPowerScore` must not produce a sign flip via a
-      // negative denominator. Result must be a finite integer using `1` as
-      // the effective denominator.
-      expect(powerComparisonPercent(50, -10), 6000);
-    });
-  });
-
-  group('formatPowerComparisonPercent', () {
-    test('positive percentage uses ASCII plus and percent suffix', () {
-      expect(formatPowerComparisonPercent(10), '+10%');
-      expect(formatPowerComparisonPercent(1), '+1%');
-    });
-
-    test('negative percentage uses unicode minus sign (U+2212)', () {
-      // U+2212 MINUS SIGN, not U+002D HYPHEN-MINUS.
-      expect(formatPowerComparisonPercent(-22), '\u221222%');
-      expect(formatPowerComparisonPercent(-1), '\u22121%');
-      expect(formatPowerComparisonPercent(-22).startsWith('\u2212'), isTrue);
-      expect(formatPowerComparisonPercent(-22).startsWith('-'), isFalse);
-    });
-
-    test('zero percentage formats as "0%" without sign', () {
-      expect(formatPowerComparisonPercent(0), '0%');
-    });
-  });
-
-  group('diplomacyFilterShowsKind', () {
-    test('mode `all` shows every faction kind', () {
-      for (final kind in FactionKind.values) {
-        expect(
-          diplomacyFilterShowsKind(DiplomacyFilterMode.all, kind),
-          isTrue,
-          reason: 'DiplomacyFilterMode.all must accept $kind',
-        );
-      }
-    });
-
-    test('mode `greatPowersOnly` shows only Great Power rows', () {
-      expect(
-        diplomacyFilterShowsKind(
-          DiplomacyFilterMode.greatPowersOnly,
-          FactionKind.greatPower,
-        ),
-        isTrue,
-      );
-      expect(
-        diplomacyFilterShowsKind(
-          DiplomacyFilterMode.greatPowersOnly,
-          FactionKind.minor,
-        ),
-        isFalse,
-      );
-      expect(
-        diplomacyFilterShowsKind(
-          DiplomacyFilterMode.greatPowersOnly,
-          FactionKind.tribe,
-        ),
-        isFalse,
-      );
-    });
-
-    test(
-      'mode `minorsOnly` shows Minor Nations and Tribes but not Great Powers',
-      () {
-        expect(
-          diplomacyFilterShowsKind(
-            DiplomacyFilterMode.minorsOnly,
-            FactionKind.minor,
-          ),
-          isTrue,
-        );
-        expect(
-          diplomacyFilterShowsKind(
-            DiplomacyFilterMode.minorsOnly,
-            FactionKind.tribe,
-          ),
-          isTrue,
-        );
-        expect(
-          diplomacyFilterShowsKind(
-            DiplomacyFilterMode.minorsOnly,
-            FactionKind.greatPower,
-          ),
-          isFalse,
-        );
-      },
-    );
   });
 
   group('DiplomacyPanel mode bar', () {
@@ -766,8 +656,8 @@ void main() {
     });
   });
 
-  group('DiplomacyPanel GP power-comparison rendering', () {
-    testWidgets('AC: GP +10% renders in --danger color', (
+  group('DiplomacyPanel GP relative-power line rendering', () {
+    testWidgets('AC: stronger GP relative-power line renders in --danger', (
       WidgetTester tester,
     ) async {
       await _bindTallTestSurface(tester);
@@ -792,34 +682,31 @@ void main() {
                 r.kind == FactionKind.greatPower &&
                 r.powerScore != null &&
                 r.playerPowerScore != null &&
-                r.powerScore! > r.playerPowerScore!,
+                powerComparisonPercent(r.powerScore!, r.playerPowerScore!) > 0,
           )
           .toList();
       if (stronger.isEmpty) {
         // No qualifying row in the debug-init game; skip dynamically rather
-        // than failing — the helper-level tests already pin the formula.
+        // than failing — the helper-level + RelativePowerLine widget tests
+        // already pin the formula and colors.
         return;
       }
       for (final r in stronger) {
-        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
-        if (pct <= 0) continue;
-        final expectedText = formatPowerComparisonPercent(pct);
-        final finder = find.text(expectedText);
+        final colors = _relativePowerSpanColors(tester, r.factionId);
         expect(
-          finder,
-          findsAtLeastNWidgets(1),
-          reason: 'Expected "$expectedText" for ${r.displayName}',
-        );
-        final widget = tester.widget<Text>(finder.first);
-        expect(
-          widget.style?.color,
+          colors.pctColor,
           EditorialMonoclePalette.danger,
           reason: 'Stronger GP percentage must use --danger',
+        );
+        expect(
+          colors.tierColor,
+          EditorialMonoclePalette.danger,
+          reason: 'Stronger GP tier word must match the percentage color',
         );
       }
     });
 
-    testWidgets('AC: GP ≤0% renders in --success color', (
+    testWidgets('AC: weaker/equal GP relative-power line renders in --success', (
       WidgetTester tester,
     ) async {
       await _bindTallTestSurface(tester);
@@ -844,30 +731,52 @@ void main() {
                 r.kind == FactionKind.greatPower &&
                 r.powerScore != null &&
                 r.playerPowerScore != null &&
-                r.powerScore! <= r.playerPowerScore!,
+                powerComparisonPercent(r.powerScore!, r.playerPowerScore!) <= 0,
           )
           .toList();
       if (weakerOrEqual.isEmpty) {
         return;
       }
       for (final r in weakerOrEqual) {
-        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
-        if (pct > 0) continue;
-        final expectedText = formatPowerComparisonPercent(pct);
-        final finder = find.text(expectedText);
+        final colors = _relativePowerSpanColors(tester, r.factionId);
         expect(
-          finder,
-          findsAtLeastNWidgets(1),
-          reason: 'Expected "$expectedText" for ${r.displayName}',
-        );
-        final widget = tester.widget<Text>(finder.first);
-        expect(
-          widget.style?.color,
+          colors.pctColor,
           EditorialMonoclePalette.success,
           reason: 'Weaker/equal GP percentage must use --success',
         );
+        expect(
+          colors.tierColor,
+          EditorialMonoclePalette.success,
+          reason: 'Weaker/equal GP tier word must match the percentage color',
+        );
       }
     });
+
+    testWidgets(
+      'AC: Great Power rows render the localized "Relative power:" prefix',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasGp = rows.any((r) => r.kind == FactionKind.greatPower);
+        if (!hasGp) return;
+        expect(find.byType(RelativePowerLine), findsAtLeastNWidgets(1));
+        expect(find.textContaining('Relative power:'), findsAtLeastNWidgets(1));
+      },
+    );
 
     testWidgets(
       'absolute "Power: N" score label is no longer rendered on GP rows',
@@ -882,8 +791,8 @@ void main() {
         );
         await _pumpPanelBuilt(tester);
 
-        // SPEC: percentage replaces the absolute score. No row should render
-        // text starting with "Power: ".
+        // SPEC: relative-power line replaces the absolute score. No row should
+        // render text starting with "Power: ".
         expect(find.textContaining('Power: '), findsNothing);
       },
     );
@@ -1059,12 +968,27 @@ void main() {
           humanPlayerId,
           const Orders(),
         );
-        final hasTribe = rows.any((r) => r.kind == FactionKind.tribe);
-        if (!hasTribe) return;
+        final tribeRows =
+            rows.where((r) => r.kind == FactionKind.tribe).toList();
+        if (tribeRows.isEmpty) return;
+        final tribeRow = tribeRows.first;
 
-        final tribeText = find.text('Tribe').first;
+        final tribeText = find.descendant(
+          of: find.byKey(
+            ValueKey('$kDiplomacyRowBodyKeyPrefix${tribeRow.factionId}'),
+          ),
+          matching: find.text('Tribe'),
+        );
+        await tester.scrollUntilVisible(
+          tribeText,
+          120,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pump();
         final container = tester.widget<Container>(
-          find.ancestor(of: tribeText, matching: find.byType(Container)).first,
+          find
+              .ancestor(of: tribeText, matching: find.byType(Container))
+              .first,
         );
         final decoration = container.decoration as BoxDecoration;
         expect(

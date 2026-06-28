@@ -50,7 +50,6 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/production_screen.dart';
@@ -60,13 +59,14 @@ import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'production_panel_test_fixtures.dart';
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -121,40 +121,32 @@ ShellPlayerContext _globalObserveShellContext() {
 /// for the global-observe branch) so the shell renders without
 /// touching Hive / GameService; passes an empty `panelTopologyOverride`
 /// so the panel does not attempt to look up `GameService.getMapData`.
-Future<void> _pumpProductionScreenAtSize(
+Future<void> _pumpProductionScreen(
   WidgetTester tester, {
   required Size size,
   required Game game,
   required Player player,
   bool globalObserve = false,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        if (globalObserve)
-          shellPlayerContextProvider.overrideWithValue(
-            _globalObserveShellContext(),
-          ),
-      ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: size),
-          child: ProductionScreen(
-            game: game,
-            player: player,
-            attachGameToUiListener: false,
-            panelTopologyOverride: const MapTopology(),
-            panelTileMapByRegionOverride: null,
-          ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    overrides: [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      if (globalObserve)
+        shellPlayerContextProvider.overrideWithValue(
+          _globalObserveShellContext(),
         ),
-      ),
+    ],
+    child: ProductionScreen(
+      game: game,
+      player: player,
+      attachGameToUiListener: false,
+      panelTopologyOverride: const MapTopology(),
+      panelTileMapByRegionOverride: null,
     ),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -164,12 +156,15 @@ void main() {
   late Player humanPlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
-    humanPlayer = game.players.firstWhere(
-      (p) => p.isHuman,
-      orElse: () => game.players.first,
-    );
+    // Refs #3656: ProductionScreen takes its `game`/`player` directly and is
+    // pumped with `panelTopologyOverride: const MapTopology()` +
+    // `panelTileMapByRegionOverride: null`, so it consumes no generated
+    // map/topology data. The hand-built production fixture (a single human with
+    // a full stockpile/worker pool) renders the same default-path
+    // `ProductionPanel` Available/Allocation body the heavier panels pin uses,
+    // replacing the ~11s procedural map generation.
+    humanPlayer = productionPanelTestFullPlayer();
+    game = productionPanelTestGameFor(humanPlayer);
   });
 
   group(
@@ -182,7 +177,7 @@ void main() {
         'label `Map`) + ProductionPanel narrow body (both `Available` '
         'and `Allocation` labels) all render',
         (WidgetTester tester) async {
-          await _pumpProductionScreenAtSize(
+          await _pumpProductionScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -271,7 +266,7 @@ void main() {
         'pumps without exception (regression sentinel for the overflow '
         'contract — keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpProductionScreenAtSize(
+          await _pumpProductionScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,
@@ -298,7 +293,7 @@ void main() {
         'ObserveModeNotDefinedPanel sentinel renders, ProductionPanel '
         'body is absent',
         (WidgetTester tester) async {
-          await _pumpProductionScreenAtSize(
+          await _pumpProductionScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -353,7 +348,7 @@ void main() {
         'also pumps without exception (regression sentinel for the '
         'overflow contract under the observe variant)',
         (WidgetTester tester) async {
-          await _pumpProductionScreenAtSize(
+          await _pumpProductionScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,

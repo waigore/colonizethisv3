@@ -5,9 +5,20 @@ import 'package:yaml/yaml.dart';
 
 /// Canonical dual-region province iteration; definitions live here only.
 const _canonicalProvinceLookupRelativePath =
-    'packages/colonizethis_logic/lib/src/world/province_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/province_lookup.dart';
 
-const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
+/// Production source trees scanned for broad `allProvinces(` call sites.
+///
+/// Includes the `colonizethis_orders` mid-layer package and the
+/// `colonizethis_turn` orchestrator package: the sources that legitimately walk
+/// all provinces (order suggestions, turn news digest) were extracted there from
+/// the `colonizethis_logic` monolith (Refs #3290) and stay sanctioned via the
+/// same allowlist.
+const _scanDirsRelative = <String>[
+  'packages/colonizethis_logic/lib/src',
+  'packages/colonizethis_orders/lib/src',
+  'packages/colonizethis_turn/lib/src',
+];
 const _sanctionsYamlRelative = 'tool/logic_all_provinces_sanctions.yaml';
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -94,11 +105,16 @@ int runCheckLogicAllProvincesSanctionedCalls(
       stderr.writeln(line);
     }
   }
+
   final root = p.normalize(repoRoot);
-  final scanRoot = Directory(p.join(root, _scanDirRelative));
-  if (!scanRoot.existsSync()) {
-    logE('ERROR: Expected logic lib tree missing: $_scanDirRelative');
-    return 1;
+  final scanRoots = <Directory>[];
+  for (final relative in _scanDirsRelative) {
+    final dir = Directory(p.join(root, relative));
+    if (!dir.existsSync()) {
+      logE('ERROR: Expected lib tree missing: $relative');
+      return 1;
+    }
+    scanRoots.add(dir);
   }
 
   final loaded = _loadSanctionKeys(root, logE);
@@ -108,20 +124,25 @@ int runCheckLogicAllProvincesSanctionedCalls(
   final sanctioned = loaded.keys;
 
   final hits = <_SanctionKey>{};
-  for (final entity in scanRoot.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) continue;
-    final fullPath = p.normalize(entity.path);
-    if (!fullPath.endsWith('.dart')) continue;
-    if (_generatedSuffix.hasMatch(fullPath)) continue;
-    final relative = p.normalize(p.relative(fullPath, from: root));
-    if (relative == _canonicalProvinceLookupRelativePath) {
-      continue;
-    }
+  for (final scanRoot in scanRoots) {
+    for (final entity in scanRoot.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is! File) continue;
+      final fullPath = p.normalize(entity.path);
+      if (!fullPath.endsWith('.dart')) continue;
+      if (_generatedSuffix.hasMatch(fullPath)) continue;
+      final relative = p.normalize(p.relative(fullPath, from: root));
+      if (relative == _canonicalProvinceLookupRelativePath) {
+        continue;
+      }
 
-    final lines = entity.readAsLinesSync();
-    for (var i = 0; i < lines.length; i++) {
-      if (logicSourceLineContainsAllProvincesCall(lines[i])) {
-        hits.add((path: relative, line: i + 1));
+      final lines = entity.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        if (logicSourceLineContainsAllProvincesCall(lines[i])) {
+          hits.add((path: relative, line: i + 1));
+        }
       }
     }
   }
@@ -139,7 +160,8 @@ int runCheckLogicAllProvincesSanctionedCalls(
 
   if (missingSanctions.isNotEmpty) {
     logE(
-      'ERROR: Unsanctioned allProvinces( call site(s) under $_scanDirRelative '
+      'ERROR: Unsanctioned allProvinces( call site(s) under '
+      '${_scanDirsRelative.join(', ')} '
       '(exclude $_canonicalProvinceLookupRelativePath). Add an entry to '
       '$_sanctionsYamlRelative in the same PR, per SPEC/program/logic-dual-region-province-access.md.',
     );

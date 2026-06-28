@@ -14,7 +14,6 @@
 // `CtNinePatchButton`, but exercises the wood-panel call site so the AC
 // is anchored at the screen contract level (`CtMainMenu`).
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -22,25 +21,25 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Pumps a `CtMainMenu` configured for the `pixelArt` variant under the
-/// `editorialMonocle` theme so the wood-panel button hover state can be
+import 'support/app_shell_harness.dart';
+
+/// Pumps a `CtMainMenu` configured for the `pixelArt` variant under the shared
+/// editorial-monocle app shell so the wood-panel button hover state can be
 /// inspected through the inner `CtNinePatchButton` widget.
 Future<void> _pumpPixelArtMainMenu(WidgetTester tester) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: CtMainMenu(
-        variant: MainMenuVariant.pixelArt,
-        state: MainMenuState.default_,
-        version: 'v1.0.0',
-        onNewGame: () {},
-        onLoadGame: () {},
-        onSettings: () {},
-        onQuit: () {},
-      ),
+  await pumpAppShell(
+    tester,
+    settle: true,
+    child: CtMainMenu(
+      variant: MainMenuVariant.pixelArt,
+      state: MainMenuState.default_,
+      version: 'v1.0.0',
+      onNewGame: () {},
+      onLoadGame: () {},
+      onSettings: () {},
+      onQuit: () {},
     ),
   );
-  await tester.pumpAndSettle();
 }
 
 /// Returns the `CtNinePatchButton` ancestor of the menu label [label].

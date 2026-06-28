@@ -1,5 +1,6 @@
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,8 +15,8 @@ import 'e2e_test_shared.dart';
 /// without re-decoding which branch fired (replaces ad-hoc `if`
 /// branching on the helper's side effects).
 enum E2eFirstFleetMoveOutcome {
-  /// No `Move` text descendant of [kCtE2ENavalPanelRootKey] was found; no
-  /// dialog was opened.
+  /// No keyed Move button ([kCtE2EFleetMoveActionKey]) descendant of
+  /// [kCtE2ENavalPanelRootKey] was found; no dialog was opened.
   noMoveButton,
 
   /// The move dialog opened but contained no `RadioListTile<dynamic>`
@@ -47,10 +48,18 @@ const Duration kE2eDefaultFirstFleetMoveConfirmReadyTimeout =
 const Duration kE2eDefaultFirstFleetMoveDialogCloseTimeout =
     Duration(seconds: 10);
 
-/// Opportunistically taps the first `Move` text descendant of the open naval
-/// panel, picks the first destination radio in the resulting
-/// [AlertDialog] (or taps Cancel when no destinations are present), and
-/// pumps until the dialog dismisses.
+/// Opportunistically taps the first keyed Move action descendant of the open
+/// naval panel, picks the first destination radio in the resulting
+/// [CtDialogShell] move dialog (or taps Cancel when no destinations are
+/// present), and pumps until the dialog dismisses.
+///
+/// The production `MoveFleetDialog` renders as a [CtDialogShell] (a Material
+/// `Dialog`, **not** an `AlertDialog`) per `SPEC/ui/move-fleet-dialog.md` and
+/// the catalog Material-design ban, so the dialog-open / dialog-closed waits
+/// scope to [CtDialogShell]. The destination-radio finder is unchanged (see
+/// the *Legacy quirk preserved* note below), so against the production dialog
+/// — which builds custom `_MoveFleetDestinationRow` rows, not
+/// `RadioListTile` — this helper always takes the Cancel branch.
 ///
 /// Lifted from the inline "post-split, try first Move or dismiss" block in
 /// `new_game_full_turn_e2e_test.dart` so the full-turn scenario consumes a
@@ -81,12 +90,13 @@ const Duration kE2eDefaultFirstFleetMoveDialogCloseTimeout =
 ///
 /// Contract:
 ///
-/// - Scopes the `Move` finder to descendants of
-///   [kCtE2ENavalPanelRootKey]. Returns
-///   [E2eFirstFleetMoveOutcome.noMoveButton] without opening a dialog when
-///   no `Move` text is present.
-/// - When `Move` is tapped, waits up to [moveDialogOpenTimeout] for an
-///   [AlertDialog] to mount
+/// - Scopes the keyed Move finder ([kCtE2EFleetMoveActionKey]) to descendants
+///   of [kCtE2ENavalPanelRootKey]. Returns
+///   [E2eFirstFleetMoveOutcome.noMoveButton] without opening a dialog when no
+///   keyed Move button is present (the label collapses to icon-only at narrow
+///   viewports, so the key — not the `Move` text — is authoritative).
+/// - When `Move` is tapped, waits up to [moveDialogOpenTimeout] for a
+///   [CtDialogShell] move dialog to mount
 ///   (`wait_until_move_dialog_after_tap`).
 /// - When the mounted dialog has no
 ///   `RadioListTile<dynamic>` descendants, taps the
@@ -108,11 +118,12 @@ const Duration kE2eDefaultFirstFleetMoveDialogCloseTimeout =
 /// **Legacy quirk preserved:** the destination-radio finder is
 /// `find.byType(RadioListTile<dynamic>)` — Flutter `byType` is **exact**
 /// `runtimeType ==` match, so generic-instantiated `RadioListTile<int>`,
-/// `RadioListTile<_MovePick>`, etc. **do not** match. The pre-lift inline
-/// block in `new_game_full_turn_e2e_test.dart` always took the cancel branch
-/// against the production `MoveFleetDialog` (which builds
-/// `RadioListTile<_MovePick>`); the lift preserves that semantic
-/// bit-for-bit so the surrounding snapshot assertions stay deterministic.
+/// `RadioListTile<_MovePick>`, etc. **do not** match. The production
+/// `MoveFleetDialog` builds custom `_MoveFleetDestinationRow` widgets (no
+/// `RadioListTile` at all, per the catalog Material ban), so this finder is
+/// empty against the real dialog and the helper always takes the Cancel
+/// branch — the same observable behaviour the pre-lift inline block had, so
+/// the surrounding snapshot assertions stay deterministic.
 /// Callers that want the production-matching generic-instantiation finder
 /// should compose [e2eRadioListTilesInAlertDialogs] instead — that is
 /// [e2ePickMoveDestinationAndConfirm]'s contract and is unit-pinned in
@@ -127,9 +138,11 @@ Future<E2eFirstFleetMoveOutcome> e2eAttemptFirstFleetMoveOrCancel(
 }) async {
   final phaseSw = Stopwatch()..start();
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
+  // Locate Move by stable key, not the `Move` label: the naval action cluster
+  // collapses to icon-only at narrow test-host viewports (Refs #2336).
   final moveButtons = find.descendant(
     of: navalPanelRoot,
-    matching: find.text('Move'),
+    matching: find.byKey(kCtE2EFleetMoveActionKey),
   );
   if (moveButtons.evaluate().isEmpty) {
     perf?.timing(
@@ -142,12 +155,12 @@ Future<E2eFirstFleetMoveOutcome> e2eAttemptFirstFleetMoveOrCancel(
   await tester.tap(moveButtons.first, warnIfMissed: false);
   await e2eWaitUntilFound(
     tester,
-    find.byType(AlertDialog),
+    find.byType(CtDialogShell),
     timeout: moveDialogOpenTimeout,
     perf: perf,
     phaseName: 'wait_until_move_dialog_after_tap',
   );
-  final moveDialog = find.byType(AlertDialog);
+  final moveDialog = find.byType(CtDialogShell);
   final destinationRadios = find.descendant(
     of: moveDialog,
     matching: find.byType(RadioListTile<dynamic>),
@@ -170,7 +183,7 @@ Future<E2eFirstFleetMoveOutcome> e2eAttemptFirstFleetMoveOrCancel(
     await tester.tap(cancel.first, warnIfMissed: false);
     await e2ePumpUntil(
       tester,
-      () => find.byType(AlertDialog).evaluate().isEmpty,
+      () => find.byType(CtDialogShell).evaluate().isEmpty,
       timeout: dialogCloseTimeout,
       perf: perf,
       phaseName: 'pump_until_move_dialog_closed_after_cancel',
@@ -215,7 +228,7 @@ Future<E2eFirstFleetMoveOutcome> e2eAttemptFirstFleetMoveOrCancel(
   await tester.tap(confirm.first, warnIfMissed: false);
   await e2ePumpUntil(
     tester,
-    () => find.byType(AlertDialog).evaluate().isEmpty,
+    () => find.byType(CtDialogShell).evaluate().isEmpty,
     timeout: dialogCloseTimeout,
     perf: perf,
     phaseName: 'pump_until_move_dialog_closed',

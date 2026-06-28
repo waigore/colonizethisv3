@@ -41,7 +41,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../integration_test/e2e_test_shared.dart';
 
 /// Single source of truth for the warp row text under English locale.
-/// Matches `l10n.moveFleet_warpLinkToRegion(unitsPanelRegionLabel('newWorld'))`
+/// Matches `l10n.moveFleet_warpLinkToRegion(regionDisplayLabel('newWorld'))`
 /// — see `app/lib/l10n/app_localizations_en_part2.dart` and
 /// `app/lib/features/game/utils/region_labels.dart`.
 const String _warpText = 'links to New World';

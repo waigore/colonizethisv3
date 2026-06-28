@@ -11,6 +11,10 @@ library;
 
 import 'observer_goal_phase.dart';
 import 'phase_priority_weights.dart';
+import 'planning_helpers.dart'
+    show
+        resolvePhaseColonialPressureActive,
+        resolvePhaseExpandOrColonialLiteActive;
 
 /// When `true`, `evaluateStrategicGoalScores` must not apply the late-game
 /// colonial-pressure conquer/expand/diplomacy/trade score floors.
@@ -25,8 +29,7 @@ import 'phase_priority_weights.dart';
 /// `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` at phase
 /// entry). COLONIAL and DEVELOP return `false`.
 bool resolvePhaseGoalSuppressColonialPressure(ObserverGoalPhase phase) =>
-    phase == ObserverGoalPhase.expand ||
-    phase == ObserverGoalPhase.colonialLite;
+    resolvePhaseExpandOrColonialLiteActive(phase);
 
 /// When `true`, `evaluateStrategicGoalScores` applies the colonial-pressure
 /// score floors (`kMinimumColonialConquerScoreWhenPressure`, etc.).
@@ -43,7 +46,7 @@ bool resolvePhaseGoalSuppressColonialPressure(ObserverGoalPhase phase) =>
 /// [resolvePhaseEconomyColonialPressureActive] and
 /// [resolvePhaseConquestColonialPressureActive].
 bool resolvePhaseGoalColonialPressureActive(ObserverGoalPhase phase) =>
-    phase == ObserverGoalPhase.colonial;
+    resolvePhaseColonialPressureActive(phase);
 
 /// Advisory `[0.0, 1.0]` multiplier for the goal-score colonial-pressure
 /// floors (`kMinimumColonialConquerScoreWhenPressure`, etc.) sourced

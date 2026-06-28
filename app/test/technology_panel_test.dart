@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -16,12 +17,13 @@ void main() {
   late Player player;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    game = buildTechnologyPanelTestGame();
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
 
-  testWidgets('TechnologyPanel builds and shows player name and research slots', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel builds and omits the dev-only header block (Refs #3510)',
+    (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -36,11 +38,14 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(TechnologyPanel), findsOneWidget);
-    expect(find.textContaining(player.displayName), findsOneWidget);
-    expect(find.textContaining('Research slots:'), findsOneWidget);
-    // Dark theme uses an explicit section heading, not a count line, for
-    // the researched-techs grid (Refs #2864 S2).
-    expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+    // SPEC/ui/technology-panel.md § Slots tab — section ordering: the body
+    // MUST NOT render the legacy dev-only header block (per-player title
+    // `Technology - {name}` or `Research slots: N` count line). Refs #3510.
+    expect(find.textContaining('Technology - '), findsNothing);
+    expect(find.textContaining('Research slots:'), findsNothing);
+    // Body opens directly with the Researched Techs section heading, rendered
+    // via the mockup-faithful TechSectionHeading (normal case). Refs #3510.
+    expect(find.text('Researched Techs'), findsOneWidget);
     expect(find.text('None yet'), findsOneWidget);
   });
 
@@ -116,14 +121,22 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    // Dark theme heading + three custom chip primitives (Refs #2864 S2).
-    expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+    // Dark theme heading (mockup-faithful TechSectionHeading, normal case)
+    // + three custom chip primitives (Refs #2864 S2 / #3510).
+    expect(find.text('Researched Techs'), findsOneWidget);
     expect(find.byType(ResearchedTechChip), findsNWidgets(3));
     // Material `Chip` is banned by the Ct-* catalog.
     expect(find.byType(Chip), findsNothing);
   });
 
-  testWidgets('TechnologyPanel shows in progress section when player has research progress', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel renders no standalone In-Progress block (Refs #3512)',
+    (WidgetTester tester) async {
+    // SPEC/ui/technology-panel.md § Slots tab — section ordering: the
+    // standalone "In progress" auxiliary block was removed; in-progress techs
+    // render exclusively inside their occupied slot cards (via persisted
+    // `researchSlotAssignments`), so a player carrying loose
+    // `researchProgressByTechId` with no slot binding shows no separate list.
     final techId = techCatalog.keys.first;
     final withProgress = player.copyWith(
       researchProgressByTechId: {techId: 50},
@@ -144,12 +157,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    // CtSectionLabel renders the heading in upper case (Refs #2864 S2).
-    expect(find.text('IN PROGRESS:'), findsOneWidget);
-    expect(find.textContaining('RP'), findsOneWidget);
+    expect(find.text('IN PROGRESS:'), findsNothing);
+    expect(find.text('In progress:'), findsNothing);
   });
 
-  testWidgets('TechnologyPanel shows custom research slots when set', (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel omits the research-slot count line even at 4 slots (Refs #3510)',
+    (WidgetTester tester) async {
     const slots = 4;
     final withSlots = player.copyWith(researchSlots: slots);
     final gameWithSlots = game.copyWith(
@@ -168,7 +182,57 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Research slots: $slots'), findsOneWidget);
+    // The dev-only count line is removed regardless of slot count; with
+    // 4 active slots there is also no locked placeholder. Refs #3510.
+    expect(find.textContaining('Research slots:'), findsNothing);
+    expect(find.byType(ResearchSlotCard), findsNWidgets(4));
+    expect(find.byType(LockedResearchSlotCard), findsNothing);
+  });
+
+  testWidgets(
+    'Locked Slot 4 renders the same width as the active slot cards (Refs #3510)',
+    (WidgetTester tester) async {
+    final withLockedSlot = player.copyWith(researchSlots: 3);
+    final gameWithLockedSlot = game.copyWith(
+      players: [withLockedSlot, ...game.players.skip(1)],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 600,
+            child: SingleChildScrollView(
+              child: TechnologyPanel(
+                game: gameWithLockedSlot,
+                player: withLockedSlot,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ResearchSlotCard), findsNWidgets(3));
+    expect(find.byType(LockedResearchSlotCard), findsOneWidget);
+
+    final double lockedWidth =
+        tester.getSize(find.byType(LockedResearchSlotCard)).width;
+    final List<double> activeWidths = <double>[
+      for (final element in find.byType(ResearchSlotCard).evaluate())
+        tester.getSize(find.byWidget(element.widget)).width,
+    ];
+    expect(activeWidths, isNotEmpty);
+    for (final double activeWidth in activeWidths) {
+      expect(
+        (lockedWidth - activeWidth).abs(),
+        lessThanOrEqualTo(1.0),
+        reason:
+            'SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4: '
+            'the locked Slot 4 card must render at the same width as the '
+            'active slot cards (Refs #3510).',
+      );
+    }
   });
 
   testWidgets('TechnologyPanel "Choose tech" shows no-techs modal when none available',
@@ -210,11 +274,14 @@ void main() {
     expect(find.text('No techs available to research'), findsOneWidget);
   });
 
-  testWidgets('TechnologyPanel slot Cancel removes the slot order and shows snackbar',
-      (WidgetTester tester) async {
+  testWidgets(
+    'TechnologyPanel slot Cancel (no progress) emits empty-techId cancel order '
+    'and shows snackbar (Refs #3512)',
+    (WidgetTester tester) async {
     final techId = techCatalog.keys.first;
     final withOrder = player.copyWith(
       techUnlocked: <String, bool>{}, // ensures bottom sheet can be "no techs"
+      researchProgressByTechId: <String, int>{}, // no accrued progress
     );
     final gameWithEmptyUnlocked = game.copyWith(
       players: [withOrder, ...game.players.skip(1)],
@@ -249,17 +316,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Cancel shown for slots that currently have a tech assigned.
+    // Cancel shown for slots that currently have a tech assigned. With no
+    // accrued progress no forfeiture-warning dialog is shown; the slot is
+    // freed immediately via an empty-techId cancel signal so the resolver
+    // releases any persisted assignment (Refs #3512).
     await tester.tap(find.text('Cancel').first);
     await tester.pump(); // allow scaffoldMessenger snack bar to schedule
     await tester.pumpAndSettle(const Duration(milliseconds: 200));
 
+    expect(find.text('Forfeit research progress?'), findsNothing);
     expect(find.text('Research slot cancelled'), findsOneWidget);
     expect(captured, isNotNull);
-    expect(
-      captured!.researchOrdersByPlayerId[withOrder.id],
-      isEmpty,
-    );
+    final capturedOrders =
+        captured!.researchOrdersByPlayerId[withOrder.id] ?? const [];
+    final slot0 = capturedOrders.firstWhere((o) => o.slotIndex == 0);
+    expect(slot0.techId, isEmpty);
   });
 }
 

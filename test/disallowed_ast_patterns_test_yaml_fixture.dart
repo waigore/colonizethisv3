@@ -90,23 +90,29 @@ rules:
   - id: prohibited_linear_province_lookup
     message: >-
       Do not chain .provinces.where(...).firstOrNull under
-      packages/colonizethis_logic/lib/src/.
+      packages/colonizethis_logic/lib/src/ or
+      packages/colonizethis_orders/lib/src/.
     match:
       kind: linear_collection_where_first_or_null
       collection_names:
         - provinces
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
+      relative_path_prefixes:
+        - packages/colonizethis_logic/lib/src/
+        - packages/colonizethis_orders/lib/src/
   - id: prohibited_linear_units_armies_fleets_lookup
     message: >-
       Do not chain .units/.armies/.fleets.where(...).firstOrNull under
-      packages/colonizethis_logic/lib/src/.
+      packages/colonizethis_logic/lib/src/ or
+      packages/colonizethis_orders/lib/src/.
     match:
       kind: linear_collection_where_first_or_null
       collection_names:
         - units
         - armies
         - fleets
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
+      relative_path_prefixes:
+        - packages/colonizethis_logic/lib/src/
+        - packages/colonizethis_orders/lib/src/
   - id: redundant_where_to_list_where_chain
     message: >-
       Do not chain .where(...).toList().where(...).
@@ -121,4 +127,13 @@ rules:
       kind: nested_world_state_copywith
       relative_path_prefix: packages/colonizethis_logic/lib/
       outer_argument_name: worldState
+  - id: ai_full_recipe_catalog_scan
+    message: >-
+      Do not scan ProductionRecipesCatalog.all under
+      packages/colonizethis_ai/lib/. Use producing(commodityId) or byId index.
+    match:
+      kind: static_member_access
+      type_name: ProductionRecipesCatalog
+      member_name: all
+      relative_path_prefix: packages/colonizethis_ai/lib/
 ''';

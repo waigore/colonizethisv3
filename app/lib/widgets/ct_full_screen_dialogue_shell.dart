@@ -39,6 +39,7 @@ class CtFullScreenDialogueShell extends StatelessWidget {
     this.maxWidth = defaultMaxWidth,
     this.maxHeight = defaultMaxHeight,
     this.padding = defaultPadding,
+    this.wrapBodyInDialogShell = true,
   });
 
   /// Widget painted underneath the scrim (typically the underlying game
@@ -56,6 +57,12 @@ class CtFullScreenDialogueShell extends StatelessWidget {
 
   /// Inner padding wrapping [body] inside the dialog frame.
   final EdgeInsetsGeometry padding;
+
+  /// When `true` (default), [body] is hosted inside a centered
+  /// [CtDialogShell]. When `false`, [body] is centered directly under the
+  /// scrim — for overlays such as [VictoryOverlay] whose body widget
+  /// supplies its own ceremonial frame (issue #3279 §3).
+  final bool wrapBodyInDialogShell;
 
   /// Canonical dialog-shell max width for full-screen dialogue overlays
   /// (520 dp — matches the existing overture / call-to-arms / intervention
@@ -76,18 +83,19 @@ class CtFullScreenDialogueShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget centeredBody = wrapBodyInDialogShell
+        ? CtDialogShell(
+            maxWidth: maxWidth,
+            maxHeight: maxHeight,
+            child: Padding(padding: padding, child: body),
+          )
+        : Padding(padding: padding, child: body);
     return Stack(
       children: [
         backdrop,
         Material(
           color: EditorialMonoclePalette.dialogScrim,
-          child: Center(
-            child: CtDialogShell(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-              child: Padding(padding: padding, child: body),
-            ),
-          ),
+          child: Center(child: centeredBody),
         ),
       ],
     );

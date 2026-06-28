@@ -20,7 +20,8 @@ Consolidates the `Stack` → full-screen `Material(dialogScrim)` → `Center` �
 | `body` | `Widget` | yes | — | Dialogue body wrapped in a single inner `Padding` and hosted inside the centered `CtDialogShell`. |
 | `maxWidth` | `double` | no | `defaultMaxWidth = 520` | Forwarded verbatim to the inner `CtDialogShell.maxWidth`. |
 | `maxHeight` | `double` | no | `defaultMaxHeight = 600` | Forwarded verbatim to the inner `CtDialogShell.maxHeight`. |
-| `padding` | `EdgeInsetsGeometry` | no | `defaultPadding = EdgeInsets.all(CtSpacing.xl)` (20 dp) | Inner `Padding` wrapping `body` inside the dialog frame. |
+| `padding` | `EdgeInsetsGeometry` | no | `defaultPadding = EdgeInsets.all(CtSpacing.xl)` (20 dp) | Inner `Padding` wrapping `body` inside the dialog frame (or directly under the scrim when `wrapBodyInDialogShell` is `false`). |
+| `wrapBodyInDialogShell` | `bool` | no | `true` | When `true`, hosts `body` inside a centered `CtDialogShell`. When `false`, centers `body` directly under the scrim for consumers that supply their own frame (e.g. `VictoryOverlay` / `OVL20001`). |
 
 The shell intentionally renders **no** title row, brass divider, or per-screen chrome — consumers compose those above `body` so each overlay can preserve its own title-ordering and divider placement.
 
@@ -67,6 +68,7 @@ The following screen specs use this composite as their scrim + shell scaffold:
 | `OVL10001` | [`game-start-intro-overlay.md`](../game-start-intro-overlay.md) | Game-start intro Yarn overlay. |
 | `OVL30001` | [`overture-dialogue-overlay.md`](../overture-dialogue-overlay.md) | Pending-overture decision overlay. |
 | `OVL40001` | [`call-to-arms-dialogue-overlay.md`](../call-to-arms-dialogue-overlay.md) | Pending call-to-arms decision overlay. |
+| `OVL20001` | [`victory-overlay.md`](../victory-overlay.md) | Military victory overlay; `wrapBodyInDialogShell: false` because `VictoryPanel` carries its own ceremonial frame. |
 | Intervention overlay | [`screens/pending-intervention-overlay.md`](../screens/pending-intervention-overlay.md) | Pending-intervention dialogue overlay. |
 
 Each consumer spec links back here for the scrim / shell / padding contract instead of duplicating the wireframe.

@@ -2,14 +2,26 @@
 /// SPEC/program/dependency-injection.md.
 library;
 
-export 'src/economy/world_market/trade_order_suggester.dart'
+export 'package:colonizethis_economy/colonizethis_economy.dart'
     show TradeOrderSuggester, TradeSuggestionContext, TradeSuggestionResult;
-export 'src/orders/order_suggestion_api.dart';
-export 'src/orders/order_suggestion_api_impl.dart' show DefaultOrderSuggestionAPI;
-export 'src/orders/order_resolution_context.dart'
+export 'package:colonizethis_orders/src/orders/order_suggestion_api.dart';
+export 'package:colonizethis_orders/src/orders/order_suggestion_api_impl.dart'
+    show DefaultOrderSuggestionAPI;
+export 'package:colonizethis_orders/src/orders/order_resolution_context.dart'
     show
         OrderResolutionContext,
         buildOrderResolutionContext,
         orderResolutionContextFromView;
-export 'src/orders/order_suggestion_helpers.dart'
+export 'package:colonizethis_orders/src/orders/diplomatic_panel_actions.dart'
+    show
+        DiplomaticPanelAction,
+        diplomaticPanelActionCandidates,
+        enumerateDiplomaticPanelActionsForTarget,
+        kDiplomaticPanelOvertureStages;
+export 'package:colonizethis_diplomacy/src/diplomacy/known_diplomatic_targets.dart'
     show knownDiplomaticTargetFactionIds;
+export 'package:colonizethis_diplomacy/src/diplomacy/gp_tribe_first_contact.dart'
+    show
+        GpTribeFirstContactResult,
+        applyGpTribeFirstContactRelations,
+        discoveredTribeIdsForFirstContact;

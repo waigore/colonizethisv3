@@ -7,9 +7,9 @@ import 'package:path/path.dart' as p;
 /// taking `Map<String, Unit> unitsById` as a function parameter (Refs #2836
 /// AC 3; SPEC/program/logic-validator-units-params.md).
 const _canonicalOrderResolutionContextRelativePath =
-    'packages/colonizethis_logic/lib/src/orders/order_resolution_context.dart';
+    'packages/colonizethis_orders/lib/src/orders/order_resolution_context.dart';
 
-const _scanDirRelative = 'packages/colonizethis_logic/lib/src/orders';
+const _scanDirRelative = 'packages/colonizethis_orders/lib/src/orders';
 
 /// Smallest value the current audit confirms is achievable — captures the
 /// remaining `Map<String, Unit> unitsById` function-parameter declarations

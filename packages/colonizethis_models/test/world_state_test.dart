@@ -103,6 +103,81 @@ void main() {
       ]);
     });
 
+    group('focused accessors (#3543 §4)', () {
+      final state = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        resourceByTileKey: const {'oldWorld|p1|0|0': 'iron'},
+        tileKeysByRegionAndProvince: const {
+          'oldWorld': {
+            'p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
+          },
+        },
+        portsByProvinceSeaboard: const {'oldWorld|p1|oldWorld|s1': 'oldWorld|p1|2|0'},
+        purchasedTilesByTileKey: const {'oldWorld|p1|0|0': 'player_red'},
+        playerProspectedTiles: const {
+          'player_red': {'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
+        },
+        tileState: const TileMapState(
+          improvementByTile: {'oldWorld|p1|0|0': 3},
+          roadLevelByTile: {'oldWorld|p1|0|0': 2},
+        ),
+      );
+
+      test('resourceAtTile returns mapped resource and null otherwise', () {
+        expect(state.resourceAtTile('oldWorld|p1|0|0'), 'iron');
+        expect(state.resourceAtTile('oldWorld|p1|9|9'), isNull);
+      });
+
+      test('tileKeysForProvince returns bucket and null for missing keys', () {
+        expect(state.tileKeysForProvince('oldWorld', 'p1'), [
+          'oldWorld|p1|0|0',
+          'oldWorld|p1|1|0',
+        ]);
+        expect(state.tileKeysForProvince('oldWorld', 'pX'), isNull);
+        expect(state.tileKeysForProvince('newWorld', 'p1'), isNull);
+      });
+
+      test('portTileForSeaboard returns port tile and null otherwise', () {
+        expect(
+          state.portTileForSeaboard('oldWorld|p1|oldWorld|s1'),
+          'oldWorld|p1|2|0',
+        );
+        expect(state.portTileForSeaboard('oldWorld|p1|oldWorld|s9'), isNull);
+      });
+
+      test('purchaserOfTile returns buyer id and null when unpurchased', () {
+        expect(state.purchaserOfTile('oldWorld|p1|0|0'), 'player_red');
+        expect(state.purchaserOfTile('oldWorld|p1|1|0'), isNull);
+      });
+
+      test('prospectedTilesForPlayer returns set and empty when absent', () {
+        expect(state.prospectedTilesForPlayer('player_red'), {
+          'oldWorld|p1|0|0',
+          'oldWorld|p1|1|0',
+        });
+        expect(state.prospectedTilesForPlayer('player_blue'), isEmpty);
+      });
+
+      test('tileKeysForRegion returns bucket and null for missing region', () {
+        expect(state.tileKeysForRegion('oldWorld'), {
+          'p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
+        });
+        expect(state.tileKeysForRegion('newWorld'), isNull);
+      });
+
+      test('improvementLevelAtTile returns level and 0 when unrecorded', () {
+        expect(state.improvementLevelAtTile('oldWorld|p1|0|0'), 3);
+        expect(state.improvementLevelAtTile('oldWorld|p1|9|9'), 0);
+      });
+
+      test('roadLevelAtTile returns level and 0 when unrecorded', () {
+        expect(state.roadLevelAtTile('oldWorld|p1|0|0'), 2);
+        expect(state.roadLevelAtTile('oldWorld|p1|9|9'), 0);
+      });
+    });
+
     test('fromJson rejects unprefixed province ids in region provinces', () {
       final json = <String, dynamic>{
         'turnState': const TurnState(

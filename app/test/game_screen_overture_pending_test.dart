@@ -6,7 +6,6 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -15,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -28,8 +29,12 @@ void main() {
 
   testWidgets('GameScreen shows OvertureDialogueOverlay for pending overtures',
       (WidgetTester tester) async {
-    final debugResult = getDebugInitGameResult();
-    final game = debugResult.game;
+    // Refs #3656: the pending-overture overlay is GameScreen chrome driven by
+    // `pendingDiplomacyProvider`, not generated map/topology data, so this pin
+    // pumps GameScreen with the shared lightweight fixture and
+    // `mapViewDataProvider` overridden to null (no map canvas mounted) instead
+    // of the ~7-11s `getDebugInitGameResult()` map generator.
+    final game = buildGameScreenSpecsTestGame();
 
     final pending = <OvertureOffer>[
       // Use the first player as offerer (and an invented id for target).
@@ -51,7 +56,7 @@ void main() {
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),
-          mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
+          mapViewDataProvider.overrideWith((ref) => null),
           gameIdsWithIntroShownProvider.overrideWith(
             () => GameIdsWithIntroShownNotifier({game.id}),
           ),

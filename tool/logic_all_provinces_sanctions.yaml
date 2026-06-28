@@ -3,98 +3,32 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_logic/lib/src/world/player_view.dart
-    line: 89
-    rationale: Player view aggregates province-level facts across both regions.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_relation_lookup.dart
-    line: 29
-    rationale: Diplomatic relation scoring inspects province ownership globally.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 68
-    rationale: Work tile prefilter collects owned province ids via all provinces when
-      callers do not supply a shared owned-province set.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2394
-
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 219
-    rationale: Army move destination candidates need global province ownership snapshot when per-pass player-owned province ids are not supplied.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 341
-    rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2394
-  - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall.dart
-    line: 453
-    rationale: Capital fall logic scans province ownership across regions.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/setup/town_capital_occupancy.dart
-    line: 27
-    rationale: Setup occupancy uses WorldState.allProvinces() over both regions.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart
-    line: 78
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
+    line: 88
     rationale: Turn news digest summarizes changes across all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart
-    line: 197
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
+    line: 201
     rationale: Turn news digest second pass over all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    line: 44
-    rationale: merchantPurchaseLandCandidateTileKeys walks all provinces once per suggestWorkOrders pass when merchants are present (foreign-owned resource tiles).
+  - path: packages/colonizethis_turn/lib/src/turn/phases/combat_phase.dart
+    line: 162
+    rationale: Combat phase snapshots pre-combat ownership across all provinces (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2394
+    issue: https://github.com/waigore/colonizethisv3/issues/3416
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_helpers.dart
-    line: 139
-    rationale: getProvinceOwnerMap walks all provinces once per diplomacy filter pass.
+  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
+    line: 140
+    rationale: Province-captured events scan all provinces for owner handovers (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2509
+    issue: https://github.com/waigore/colonizethisv3/issues/3416
 
-  - path: packages/colonizethis_logic/lib/src/setup/initial_visibility.dart
-    line: 96
-    rationale: Initial visibility setup walks all province rows.
+  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
+    line: 299
+    rationale: Per-player province discovery events scan all provinces (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/diplomacy/faction_absorption_engine.dart
-    line: 51
-    rationale: Faction absorption scans province state via WorldState.allProvinces().
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/economy/resource_extractor.dart
-    line: 58
-    rationale: Extraction builds a once-per-call province id index for O(1) tile-to-province lookups across both regions.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2394
-
-  - path: packages/colonizethis_logic/lib/src/economy/non_gp_extraction.dart
-    line: 55
-    rationale: Non-GP extraction builds a once-per-call province id index for O(1) tile-to-province lookups across both regions, mirroring resource_extractor.dart for minor nations and tribes.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2991
-
-  - path: packages/colonizethis_logic/lib/src/economy/non_gp_extraction.dart
-    line: 166
-    rationale: Non-GP auto-offer generation builds the same once-per-call province id index for O(1) tile-to-province lookups across both regions when emitting minor/tribe per-tile auto-offers (Refs #2991 C4).
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2991
+    issue: https://github.com/waigore/colonizethisv3/issues/3416

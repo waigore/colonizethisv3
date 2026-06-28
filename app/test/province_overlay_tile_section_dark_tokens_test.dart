@@ -9,6 +9,7 @@
 // body. All colours resolve from `EditorialMonoclePalette` tokens, so the
 // dark theme owns the road caption and the disabled inline shortcut icons.
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show buildPlayerView;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -25,7 +26,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_app/l10n/app_localizations_en.dart';
 
 Color _expectedDisabledIconColor() {
   return EditorialMonoclePalette.muted.withValues(
@@ -82,10 +83,12 @@ Widget _darkOverlayWithRoadLevelFullPlayerView({required int roadLevel}) {
   final region = demoRegionForOverlay;
   final tileKey = sampleTileKeyForProvinceOverlay;
   final humanPlayerId = base.players.first.id;
-  final init = getDebugInitGameResult();
+  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
+  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
+  // generation with identical PlayerView output for this demo game.
   final playerView = buildPlayerView(
     base,
-    init.combinedTopology,
+    const MapTopology(),
     humanPlayerId,
   );
   final ws = base.worldState;
@@ -157,7 +160,7 @@ void main() {
 
           final glossStyle = _textStyleFor(
             tester,
-            kRoadRailPrimitiveVersusRailGloss,
+            AppLocalizationsEn().provinceOverlay_tileRoadRailGloss,
           );
           expect(
             glossStyle.color,

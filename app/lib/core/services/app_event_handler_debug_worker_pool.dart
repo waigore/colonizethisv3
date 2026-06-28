@@ -27,28 +27,17 @@ DebugCommandResult applyDebugWorkerPoolCredit({
   required Game? currentGame,
   required CreditDebugWorkerPoolEvent event,
 }) {
-  if (currentGame == null) {
-    return (
-      game: null,
-      message: 'Debug add_worker ignored: no active game.',
-    );
-  }
-  if (event.creditedAmount < 1) {
-    return (
-      game: null,
-      message: 'Debug add_worker ignored: credited amount must be >= 1.',
-    );
-  }
-  final player = findPlayerById(currentGame, event.humanPlayerId);
-  if (player == null) {
-    return (
-      game: null,
-      message:
-          'Debug add_worker ignored: unknown player ${event.humanPlayerId}.',
-    );
-  }
+  final guard = resolveDebugCommandGuards(
+    currentGame: currentGame,
+    label: DebugCommandLabel.addWorker,
+    creditedAmount: event.creditedAmount,
+    playerId: event.humanPlayerId,
+  );
+  if (guard is DebugGuardFailure) return guard.result;
+  guard as DebugGuardPass;
+
   final nextPool = _bumpWorkerPoolTier(
-    player.workerPool,
+    guard.player.workerPool,
     event.workerTierId,
     event.creditedAmount,
   );
@@ -60,23 +49,18 @@ DebugCommandResult applyDebugWorkerPoolCredit({
     );
   }
   final newTierCount = _workerTierCount(nextPool, event.workerTierId);
-  final updatedPlayers = currentGame.players
-      .map(
-        (p) =>
-            p.id == event.humanPlayerId ? p.copyWith(workerPool: nextPool) : p,
-      )
-      .toList(growable: false);
-  final nextGame = currentGame.copyWith(players: updatedPlayers);
-
-  final String message;
-  if (event.requestedAmount != event.creditedAmount) {
-    message =
-        'Worker pool ${event.workerTierId} +${event.creditedAmount} (requested ${event.requestedAmount}, '
-        'credited ${event.creditedAmount}). New ${event.workerTierId} count: $newTierCount.';
-  } else {
-    message =
-        'Worker pool ${event.workerTierId} +${event.creditedAmount}. New ${event.workerTierId} count: $newTierCount.';
-  }
+  final nextGame = updateDebugPlayer(
+    guard.game,
+    event.humanPlayerId,
+    (p) => p.copyWith(workerPool: nextPool),
+  );
+  final message = debugCreditedAmountMessage(
+    subject: 'Worker pool ${event.workerTierId}',
+    requestedAmount: event.requestedAmount,
+    creditedAmount: event.creditedAmount,
+    balanceLabel: 'New ${event.workerTierId} count',
+    balanceValue: newTierCount,
+  );
 
   return (game: nextGame, message: message);
 }

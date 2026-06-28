@@ -12,6 +12,7 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 const Key _kSlotPickersStackedColumnKey = ValueKey<String>(
@@ -70,6 +71,7 @@ void main() {
         int seed,
         bool infiniteMode,
         double terrainVariation,
+        Map<String, String?> aiProfileByGpId,
       )
       onConfirmed,
     }) async {
@@ -103,6 +105,7 @@ void main() {
                         baseConfig: base,
                         naming: naming,
                         initialLeaderByGpId: initial,
+                        blessedProfileNames: const [],
                         onCancel: () => Navigator.of(ctx).pop(),
                         onConfirmed: onConfirmed,
                       ),
@@ -123,31 +126,56 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
-      expect(find.text('New game — Setup'), findsOneWidget);
-      expect(find.text('Player 1 (You)'), findsOneWidget);
-      expect(find.text('Player 2 (AI)'), findsOneWidget);
-      expect(find.text('Player 6 (AI)'), findsOneWidget);
-      expect(find.textContaining('Default map colours'), findsOneWidget);
-      expect(find.text('Game / world seed'), findsOneWidget);
-      expect(find.textContaining('Use 0 for a random world'), findsOneWidget);
+      expect(find.text('Choose nations and leaders'), findsOneWidget);
       expect(
-        find.text('Infinite mode (turns progress past 1800)'),
+        find.text('Choose six great powers and a leader variant for each'),
         findsOneWidget,
       );
-      expect(find.byType(CheckboxListTile), findsOneWidget);
+      // Mockup slot labels: "Slot N" with an uppercase "YOU" tag on slot 0.
+      expect(find.text('Slot 1'), findsOneWidget);
+      expect(find.text('YOU'), findsOneWidget);
+      expect(find.text('Slot 2'), findsOneWidget);
+      expect(find.text('Slot 6'), findsOneWidget);
+      expect(find.text('Game seed'), findsOneWidget);
+      expect(find.text('Enter 0 for a random seed'), findsOneWidget);
+      expect(
+        find.text('Infinite mode (no victory condition)'),
+        findsOneWidget,
+      );
+      // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
+      expect(find.byType(CtToggleSwitch), findsOneWidget);
+      expect(find.byType(CheckboxListTile), findsNothing);
     });
+
+    testWidgets(
+      'CtDialogShell frame is pinned to the mockup-authoritative 540 dp width',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+
+        // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
+        // the dialog frame is pinned to the refreshed mockup
+        // `.dialog-shell{max-width:540px}` (Refs #3506/#3507 D1). This guards
+        // against regressing to the stale 480 dp figure in the original
+        // D1 text — the mockup is the visual source of truth.
+        final shell = tester.widget<CtDialogShell>(
+          find.byType(CtDialogShell),
+        );
+        expect(shell.maxWidth, 540);
+        expect(shell.maxHeight, 720);
+      },
+    );
 
     testWidgets(
       'large viewport: six slots visible; single shell vertical scroll only',
       (WidgetTester tester) async {
         await pumpDialog(
           tester,
-          surfaceSize: const Size(900, 1600),
-          onConfirmed: (_, _, _, _, _) {},
+          surfaceSize: const Size(900, 2000),
+          onConfirmed: (_, _, _, _, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -158,7 +186,7 @@ void main() {
         );
 
         final viewHeight = tester.view.physicalSize.height;
-        final player6Top = tester.getRect(find.text('Player 6 (AI)')).top;
+        final player6Top = tester.getRect(find.text('Slot 6')).top;
         final startTop = tester.getRect(find.text('Start')).top;
         expect(player6Top, greaterThan(0));
         expect(player6Top, lessThan(viewHeight));
@@ -173,7 +201,7 @@ void main() {
       await pumpDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _, _) {},
+        onConfirmed: (_, _, _, _, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -201,7 +229,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, seed, infiniteMode, _) {
+        onConfirmed: (ids, leaders, seed, infiniteMode, _, __) {
           gotIds = ids;
           gotLeaders = leaders;
           gotSeed = seed;
@@ -219,13 +247,129 @@ void main() {
       expect(gotInfiniteMode, isFalse);
     });
 
+    testWidgets('AI slots show profile dropdown when blessed names exist', (
+      WidgetTester tester,
+    ) async {
+      Map<String, String?>? gotProfiles;
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(900, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: () {
+                    final base = GameSetupConfig.defaultConfig;
+                    final naming = defaultNamingConfig;
+                    final initial = <String, String>{};
+                    for (final gpId in base.selectedGreatPowerIds) {
+                      final gp = naming.gpById(gpId);
+                      if (gp != null && gp.leaderVariants.isNotEmpty) {
+                        initial[gpId] = gp.defaultLeaderVariantId;
+                      }
+                    }
+                    showDialog<void>(
+                      context: context,
+                      builder: (ctx) => NewGameLeaderSelectionDialog(
+                        baseConfig: base,
+                        naming: naming,
+                        initialLeaderByGpId: initial,
+                        blessedProfileNames: const ['aggressive_v2'],
+                        onCancel: () => Navigator.of(ctx).pop(),
+                        onConfirmed:
+                            (_, _, _, _, _, profiles) => gotProfiles = profiles,
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CtDropdown<String>), findsNWidgets(17));
+      await ensureTapStart(tester);
+      expect(gotProfiles, isEmpty);
+    });
+
+    testWidgets('selecting blessed profile forwards aiProfileByGpId', (
+      WidgetTester tester,
+    ) async {
+      Map<String, String?>? gotProfiles;
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(900, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: () {
+                    final base = GameSetupConfig.defaultConfig;
+                    final naming = defaultNamingConfig;
+                    final initial = <String, String>{};
+                    for (final gpId in base.selectedGreatPowerIds) {
+                      final gp = naming.gpById(gpId);
+                      if (gp != null && gp.leaderVariants.isNotEmpty) {
+                        initial[gpId] = gp.defaultLeaderVariantId;
+                      }
+                    }
+                    showDialog<void>(
+                      context: context,
+                      builder: (ctx) => NewGameLeaderSelectionDialog(
+                        baseConfig: base,
+                        naming: naming,
+                        initialLeaderByGpId: initial,
+                        blessedProfileNames: const ['aggressive_v2'],
+                        onCancel: () => Navigator.of(ctx).pop(),
+                        onConfirmed:
+                            (_, _, _, _, _, profiles) => gotProfiles = profiles,
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      final profileDropdowns = find.widgetWithText(CtDropdown<String>, 'Normal');
+      await tester.tap(profileDropdowns.first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('aggressive_v2').last);
+      await tester.pumpAndSettle();
+      await ensureTapStart(tester);
+      expect(gotProfiles?.values, contains('aggressive_v2'));
+    });
+
     testWidgets('Cancel closes dialog without calling onConfirmed', (
       WidgetTester tester,
     ) async {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, _, _) {
+        onConfirmed: (_, _, _, _, _, _) {
           confirmed = true;
         },
       );
@@ -233,7 +377,7 @@ void main() {
       await ensureTapCancel(tester);
 
       expect(confirmed, isFalse);
-      expect(find.text('New game — Setup'), findsNothing);
+      expect(find.text('Choose nations and leaders'), findsNothing);
     });
 
     testWidgets('changing slot 1 nation to Sweden updates order and leader', (
@@ -244,7 +388,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _, _, _) {
+        onConfirmed: (ids, leaders, _, _, _, __) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -267,7 +411,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -281,7 +425,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -291,19 +435,19 @@ void main() {
       expect(gotSeed, 42);
     });
 
-    testWidgets('Start passes infiniteMode true when checkbox checked', (
+    testWidgets('Start passes infiniteMode true when toggle switched on', (
       WidgetTester tester,
     ) async {
       bool? gotInfiniteMode;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, infiniteMode, _) =>
+        onConfirmed: (_, _, _, infiniteMode, _, __) =>
             gotInfiniteMode = infiniteMode,
       );
-      final checkbox = find.byType(Checkbox);
-      await tester.ensureVisible(checkbox);
+      final toggle = find.byType(CtToggleSwitch);
+      await tester.ensureVisible(toggle);
       await tester.pumpAndSettle();
-      await tester.tap(checkbox);
+      await tester.tap(toggle);
       await tester.pumpAndSettle();
       await ensureTapStart(tester);
       expect(gotInfiniteMode, isTrue);
@@ -312,13 +456,12 @@ void main() {
     testWidgets(
       'shows terrain variation slider with default helper and label',
       (WidgetTester tester) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         expect(find.byType(CtSlider), findsOneWidget);
-        expect(find.textContaining('Terrain variation'), findsOneWidget);
-        expect(
-          find.textContaining('Higher values produce more mixed terrain'),
-          findsOneWidget,
-        );
+        expect(find.text('Terrain variation:'), findsOneWidget);
+        // Live percent value rendered separately from the static label.
+        expect(find.text('50%'), findsOneWidget);
+        expect(find.text('0% flat — 100% extreme'), findsOneWidget);
       },
     );
 
@@ -328,7 +471,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __) =>
               gotTerrainVariation = terrainVariation,
         );
         await ensureTapStart(tester);
@@ -342,7 +485,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __) =>
               gotTerrainVariation = terrainVariation,
         );
 
@@ -364,7 +507,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __) =>
               gotTerrainVariation = terrainVariation,
         );
 
@@ -400,6 +543,7 @@ void main() {
           int seed,
           bool infiniteMode,
           double terrainVariation,
+          Map<String, String?> aiProfileByGpId,
         )?
         onConfirmed,
       }) async {
@@ -432,8 +576,9 @@ void main() {
                           baseConfig: baseConfig,
                           naming: naming,
                           initialLeaderByGpId: initial,
+                          blessedProfileNames: const [],
                           onCancel: () => Navigator.of(ctx).pop(),
-                          onConfirmed: onConfirmed ?? (_, _, _, _, _) {},
+                          onConfirmed: onConfirmed ?? (_, _, _, _, _, _) {},
                         ),
                       );
                     },
@@ -644,7 +789,7 @@ void main() {
       testWidgets(
         'title resolves --accent color and letterSpacing == fontSize * 0.05',
         (WidgetTester tester) async {
-          await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+          await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
           final titleFinder = find.byKey(
             const ValueKey<String>('leaderSelectionDialogTitle'),
           );
@@ -666,7 +811,7 @@ void main() {
       testWidgets('renders exactly one CtBrassDivider keyed below the title', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         final dividerFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogBrassDivider'),
         );
@@ -688,7 +833,7 @@ void main() {
       testWidgets('intro paints --muted italic body color', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         final introFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogIntro'),
         );
@@ -702,7 +847,7 @@ void main() {
           '(regression guard against unstyled headings)', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
         final Text title = tester.widget<Text>(
           find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
         );
@@ -718,9 +863,10 @@ void main() {
     });
   });
 
-  // Refs #2870 R3 — narrow slot-row stacking parity with `CtGameSetup` so the
-  // shell dialog (DLG10001) honours the same `< kGameSetupNarrowBreakpoint`
-  // (500 dp) rule as the full-screen Game Setup surface (SHEL20001).
+  // Refs #2870 R3 / #3507 D2 — narrow slot-row stacking at
+  // `< kLeaderSelectionNarrowBreakpoint` (540 dp), the DLG10001-dedicated
+  // breakpoint matching the mockup `@media (min-width: 540px)` rule, per
+  // SPEC/ui/new-game-leader-selection-dialog.md.
   // SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
   // + § Acceptance Criteria narrow-viewport stacking AC; mirrors
   // `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.
@@ -759,8 +905,9 @@ void main() {
                         baseConfig: base,
                         naming: naming,
                         initialLeaderByGpId: initial,
+                        blessedProfileNames: const [],
                         onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed: (_, _, _, _, _) {},
+                        onConfirmed: (_, _, _, _, _, _) {},
                       ),
                     );
                   },
@@ -776,7 +923,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('wide viewport (>= 500 dp): slot bodies render side-by-side row, '
+    testWidgets('wide viewport (>= 540 dp): slot bodies render side-by-side row, '
         'no stacked column body, no exception', (WidgetTester tester) async {
       await pumpDialogAt(tester, surfaceSize: const Size(800, 1300));
 
@@ -802,7 +949,7 @@ void main() {
       );
     });
 
-    testWidgets('narrow viewport (< 500 dp): slot bodies render stacked column, '
+    testWidgets('narrow viewport (< 540 dp): slot bodies render stacked column, '
         'no side-by-side row body, no exception', (WidgetTester tester) async {
       await pumpDialogAt(tester, surfaceSize: const Size(480, 1300));
 
@@ -830,17 +977,17 @@ void main() {
       );
     });
 
-    testWidgets('boundary: viewport exactly at 500 dp uses wide row body '
+    testWidgets('boundary: viewport exactly at 540 dp uses wide row body '
         '(breakpoint is strict <)', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(500, 1300));
+      await pumpDialogAt(tester, surfaceSize: const Size(540, 1300));
 
       expect(tester.takeException(), isNull);
       expect(
         find.byKey(_kSlotPickersSideBySideRowKey),
         findsNWidgets(6),
         reason:
-            '500 dp is the boundary — kGameSetupNarrowBreakpoint is a '
-            'strict less-than check, so 500 dp keeps the wide row body.',
+            '540 dp is the boundary — kLeaderSelectionNarrowBreakpoint is a '
+            'strict less-than check, so 540 dp keeps the wide row body.',
       );
       expect(find.byKey(_kSlotPickersStackedColumnKey), findsNothing);
     });

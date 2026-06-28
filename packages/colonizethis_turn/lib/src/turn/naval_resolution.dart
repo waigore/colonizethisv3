@@ -1,0 +1,196 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'turn_logging.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_combat/colonizethis_combat.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'turn_event_sink.dart';
+import 'turn_resolution_seeds.dart';
+import 'naval_resolution_helpers.dart';
+import 'naval_resolution_move.dart';
+import 'naval_resolution_battle.dart';
+export 'package:colonizethis_world/src/world/naval_coastal_visibility.dart'
+    show
+        canonicalSeaZoneTileBucketKey,
+        coastalLandTileKeysFromNavalPresenceAtSea,
+        revealProvinceTilesForPlayer,
+        revealTilesAfterMoveToSeaZone;
+export 'package:colonizethis_world/src/world/naval_mission_orders.dart'
+    show applyNavalMissionOrders;
+
+// Naval resolution concern libraries (Refs #3290 Phase-0 file-split, #3416
+// part-of -> explicit library). The former `part of` fragments are now proper
+// libraries imported below; cross-file shared symbols ([NavalMoveOutcome],
+// [buildFleetIndexById], etc.) are package-visible in those libraries and stay
+// unexported from the package barrel, so the move remains behaviour-preserving.
+//
+// This library lives under `turn/` (not `world/`) because it orchestrates
+// naval combat and dossier/dialogue side-effects: it depends on `combat/`
+// (`naval_combat_resolver.dart`) and `dossier/` which sit above the
+// `colonizethis_world` leaf layer. Hosting it here eliminates the
+// `world -> combat` and `world -> dossier` wrong-direction edges enumerated in
+// #3290 Phase-0 ahead of the `colonizethis_world` leaf-package extraction
+// (Phase 1); leaf-layer fog code reaches the re-exported coastal-visibility
+// helpers directly via `world/naval_coastal_visibility.dart`.
+
+Game applyNavalMovesAndShipReveal(
+  Game game,
+  MapTopology topology,
+  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId,
+) {
+  var fleets = List<Fleet>.from(game.worldState.fleets);
+  var visibilityByTile = Map<String, Map<String, String>>.from(
+    game.worldState.playerVisibilityByTile,
+  );
+  final fleetById = {for (final f in fleets) f.id: f};
+  var fleetIndexById = buildFleetIndexById(fleets);
+
+  for (final entry in navalMoveOrdersByPlayerId.entries) {
+    final playerId = entry.key;
+    for (final order in entry.value) {
+      final fleet = fleetById[order.fleetId];
+      if (fleet == null || fleet.ownerId != playerId) continue;
+      final homeFleetId = homeFleetIdFor(playerId);
+
+      if (fleet.id == homeFleetId) continue;
+
+      if (order.isDock) {
+        final docked = applyDockNavalMoveOrder(
+          game: game,
+          topology: topology,
+          fleets: fleets,
+          fleetById: fleetById,
+          fleetIndexById: fleetIndexById,
+          playerId: playerId,
+          homeFleetId: homeFleetId,
+          fleet: fleet,
+          order: order,
+          visibilityByTile: visibilityByTile,
+        );
+        fleets = docked.fleets;
+        fleetIndexById = docked.fleetIndexById;
+        visibilityByTile = docked.visibilityByTile;
+        continue;
+      }
+
+      final moved = applySeaNavalMoveOrder(
+        game: game,
+        topology: topology,
+        fleets: fleets,
+        fleetById: fleetById,
+        fleetIndexById: fleetIndexById,
+        playerId: playerId,
+        fleet: fleet,
+        order: order,
+        visibilityByTile: visibilityByTile,
+      );
+      fleets = moved.fleets;
+      fleetIndexById = moved.fleetIndexById;
+      visibilityByTile = moved.visibilityByTile;
+    }
+  }
+
+  return game.updateWorldState(
+    (ws) =>
+        ws.copyWith(fleets: fleets, playerVisibilityByTile: visibilityByTile),
+  );
+}
+
+Game runNavalInterceptionCombatPhase(
+  Game game,
+  MapTopology topology,
+  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId, {
+  Map<String, double> navalFeedingCoverageByPlayerId = const {},
+  TurnEventSink sink = const TurnEventSink(),
+}) {
+  var battles = detectNavalConflicts(game);
+  turnLog.d('naval phase detected battles=${battles.length}');
+  final movedFleetIds = <String>{
+    for (final list in navalMoveOrdersByPlayerId.values)
+      for (final order in list) order.fleetId,
+  };
+  battles = [
+    for (final b in battles)
+      normalizeNavalBattleSidesForAttacker(b, game, movedFleetIds),
+  ];
+  var seed = mixTurnSeed(game, game.worldState.turnState.turnNumber);
+  battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
+  turnLog.d('naval phase after interception battles=${battles.length}');
+  seed = advanceTurnSeed(seed);
+  var state = game;
+  final turn = game.worldState.turnState.turnNumber;
+  var battleIndex = 0;
+  for (final battle in battles) {
+    final hostileByOwner = hostileFactionsByFaction(state);
+    final fleetsBySeaZoneId = buildFleetsBySeaZoneId(state.worldState.fleets);
+    final retreatZoneSide1 = firstFriendlyOrNeutralRetreatZone(
+      topology,
+      battle.seaZoneId,
+      battle.side1.ownerId,
+      hostileByOwner,
+      fleetsBySeaZoneId,
+    );
+    final retreatZoneSide2 = firstFriendlyOrNeutralRetreatZone(
+      topology,
+      battle.seaZoneId,
+      battle.side2.ownerId,
+      hostileByOwner,
+      fleetsBySeaZoneId,
+    );
+    final result = resolveSeaBattle(
+      battle,
+      seed,
+      side1CanRetreat: retreatZoneSide1 != null,
+      side2CanRetreat: retreatZoneSide2 != null,
+      navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
+    );
+    seed = advanceTurnSeed(seed);
+    // Single-pass first-match (Refs #2394): topology lookup first; otherwise
+    // fall back to the first fleet bucketed under `battle.seaZoneId` via the
+    // pre-built fleets-by-sea-zone index (still single-pass; no `.where` or
+    // `.first` re-iteration on the global fleet list).
+    final regionId =
+        regionIdForSeaZone(topology, battle.seaZoneId) ??
+        fleetsBySeaZoneId[battle.seaZoneId]?.firstOrNull?.regionId ??
+        kRegionOldWorld;
+    state = applyNavalBattleResults(
+      state,
+      battle,
+      result,
+      regionId,
+      retreatDestinationSide1: retreatZoneSide1,
+      retreatDestinationSide2: retreatZoneSide2,
+    );
+    turnLog.d(
+      'naval phase battle zone=${battle.seaZoneId} outcome=${result.outcome.name} '
+      'side1Retreated=${result.side1Retreated} side2Retreated=${result.side2Retreated}',
+    );
+
+    state = applyNavalBattleVictoryDossierAndDialogue(
+      state: state,
+      battle: battle,
+      result: result,
+      turn: turn,
+      battleIndex: battleIndex,
+      seedAfterBattle: seed,
+      onDialogue: sink.onDialogue,
+    );
+
+    final winnerOwnerId = navalBattleWinnerOwnerId(result.outcome, battle);
+    final navalEv = NavalCombatResultEvent(
+      seaZoneId: battle.seaZoneId,
+      side1OwnerId: battle.side1.ownerId,
+      side2OwnerId: battle.side2.ownerId,
+      outcomeName: result.outcome.name,
+      turnNumber: turn,
+      winnerOwnerId: winnerOwnerId,
+      side1Retreated: result.side1Retreated,
+      side2Retreated: result.side2Retreated,
+    );
+    sink.emit(navalEv);
+
+    battleIndex++;
+  }
+  return state;
+}

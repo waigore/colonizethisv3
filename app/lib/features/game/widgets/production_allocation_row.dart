@@ -15,6 +15,11 @@ const _uiIconProductionAllocIncrement =
 const _uiIconProductionAllocMaximize = 'ui_icon_production_alloc_maximize.png';
 const _uiIconProductionAllocClear = 'ui_icon_production_alloc_clear.png';
 
+/// Opacity applied to a tech-locked recipe row's slider sub-row (slider plus
+/// the four step/action controls) so it reads as grayed/disabled per
+/// `SPEC/ui/production-panel.md` § Behaviour — Tech-gated recipe rows.
+const double kProductionRecipeLockedOpacity = 0.4;
+
 /// One row in the Production allocation list: recipe label + affordance,
 /// slider, and the four step/action buttons. Extracted from
 /// `production_panel.dart` so `_AvailableSubpanel` and `_AllocationSubpanel`
@@ -30,6 +35,7 @@ class ProductionAllocationRow extends StatelessWidget {
     required this.buildRecipeLabel,
     required this.l10n,
     required this.theme,
+    this.locked = false,
   });
 
   final ProductionRecipe recipe;
@@ -37,9 +43,14 @@ class ProductionAllocationRow extends StatelessWidget {
   final int effectiveLabour;
   final Map<String, int> desiredOutputByRecipe;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
-  final Widget Function(ProductionRecipe recipe) buildRecipeLabel;
+  final Widget Function(ProductionRecipe recipe, bool locked) buildRecipeLabel;
   final AppLocalizations l10n;
   final ThemeData theme;
+
+  /// When `true`, the recipe's `requiredTechId` is not unlocked for [player]
+  /// so the row renders visible-but-grayed and the slider/steppers are
+  /// non-interactive per `SPEC/ui/production-panel.md` § Tech-gated recipe rows.
+  final bool locked;
 
   int get _desired => desiredOutputByRecipe[recipe.id] ?? 0;
 
@@ -85,8 +96,8 @@ class ProductionAllocationRow extends StatelessWidget {
   }
 
   Widget _buildActionButtons(int maxAchievable) {
-    final canDecrement = _desired > 0;
-    final canIncrement = maxAchievable > 0 && _desired < maxAchievable;
+    final canDecrement = !locked && _desired > 0;
+    final canIncrement = !locked && maxAchievable > 0 && _desired < maxAchievable;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -145,7 +156,7 @@ class ProductionAllocationRow extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         ProductionAllocationActionIconButton(
-          enabled: _desired > 0,
+          enabled: !locked && _desired > 0,
           readDesired: () => desiredOutputByRecipe,
           onPressedFromCurrent: (cur) => applyProductionRecipeClear(
             recipe: recipe,
@@ -160,16 +171,16 @@ class ProductionAllocationRow extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(RecipeAffordance affordance) {
+  Widget _buildHeader(RecipeAffordance affordance, int maxAchievable) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 2, child: buildRecipeLabel(recipe)),
+        Expanded(flex: 2, child: buildRecipeLabel(recipe, locked)),
         Expanded(
           flex: 1,
           child: Text(
             l10n.production_recipeAffordance(
-              affordance.maxDesiredOutput,
+              maxAchievable,
               affordance.limitingLabel,
             ),
             textAlign: TextAlign.right,
@@ -184,19 +195,30 @@ class ProductionAllocationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final affordance = _affordance;
-    final maxAchievable = affordance.maxDesiredOutput;
+    // A locked recipe (its requiredTechId not unlocked for the player) cannot
+    // be allocated, so its affordance reads 0 and the controls are disabled.
+    final maxAchievable = locked ? 0 : affordance.maxDesiredOutput;
+    final sliderRow = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: _buildSlider(maxAchievable)),
+        _buildActionButtons(maxAchievable),
+      ],
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildHeader(affordance),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(child: _buildSlider(maxAchievable)),
-            _buildActionButtons(maxAchievable),
-          ],
-        ),
+        _buildHeader(affordance, maxAchievable),
+        if (locked)
+          IgnorePointer(
+            child: Opacity(
+              opacity: kProductionRecipeLockedOpacity,
+              child: sliderRow,
+            ),
+          )
+        else
+          sliderRow,
       ],
     );
   }

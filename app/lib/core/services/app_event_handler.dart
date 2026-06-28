@@ -30,10 +30,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/editorial_monocle_palette.dart';
 import '../../features/game/shell_player_context.dart';
-import '../../features/game/widgets/observe_mode_not_defined_panel.dart';
+import '../../features/game/widgets/shell_player_guarded_body.dart';
 
 import '../../config/routes.dart';
-import '../../config/constants.dart';
 import '../../config/ct_e2e.dart';
 import '../../config/ct_e2e_last_panel_snapshot.dart';
 import 'subscription_tracker.dart';
@@ -42,14 +41,25 @@ import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
 import '../../features/game/widgets/pause_menu_panel.dart';
+import '../../features/game/widgets/units/shared/units_panel_sheet_surface.dart';
+import '../../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
 import '../../providers/observe_session_provider.dart';
 import '../../providers/turn_resolution_blocking_provider.dart';
+import '../../widgets/ct_confirm_dialog.dart';
 
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
+
+/// Factory for a feature-layer [DialogBuilder] that needs the app navigator
+/// key. The composition root injects the factory (a const top-level tear-off)
+/// without holding the global `appNavigatorKey`; the core scope resolves it
+/// with the navigator key so feature layers thread the key explicitly instead
+/// of reaching for the global (Refs #3546). SPEC/program/app-ui-wiring.md.
+typedef NavigatorKeyDialogBuilder =
+    DialogBuilder Function(GlobalKey<NavigatorState> navigatorKey);
 
 final _log = packageLogger('event');
 
@@ -190,25 +200,13 @@ class AppEventHandler {
       return false;
     }
     try {
-      final result = await showDialog<bool>(
-        context: nav.context,
-        useRootNavigator: true,
-        builder: (ctx) => AlertDialog(
-          title: Text(event.title),
-          content: Text(event.message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(event.cancelLabel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(event.confirmLabel),
-            ),
-          ],
-        ),
+      final confirmed = await showCtConfirmDialog(
+        nav.context,
+        title: event.title,
+        message: event.message,
+        confirmLabel: event.confirmLabel,
+        cancelLabel: event.cancelLabel,
       );
-      final confirmed = result ?? false;
       event.result(confirmed);
       return confirmed;
     } catch (e, st) {
@@ -301,6 +299,12 @@ class AppEventHandler {
     await showModalBottomSheet<void>(
       context: nav.context,
       isScrollControlled: true,
+      // Transparent Material surface so UnitsPanelSheetSurface owns the
+      // mockup `.sheet` chrome (gradient + 2 px accent-dim top edge + 4 dp
+      // top radius). SPEC/ui/components/units-panel-shell.md § Bottom-sheet
+      // host chrome (#3514 owner decision #4).
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       builder: (ctx) => Consumer(
         builder: (context, ref, _) {
           final game = ref.watch(currentGameProvider);
@@ -309,35 +313,47 @@ class AppEventHandler {
           }
           final shell = ref.read(shellPlayerContextProvider);
           final civilianOwnerIds = resolveCivilianMarkerOwnerIds(shell, game);
-          final panelPlayerId = shellPanelPlayerId(ref, game);
+          final panelPlayerId = resolveShellPanelPlayerId(shell, game);
           final readOnly = !shell.canMutateViaUi;
           final currentOrders = ref.watch(currentOrdersProvider);
           final bus = ref.watch(appEventBusProvider);
-          final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
-          final maxHeight =
-              MediaQuery.sizeOf(context).height * (isNarrow ? 0.33 : 0.5);
-          return ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId:
-                  panelPlayerId ??
-                  (civilianOwnerIds.isNotEmpty
-                      ? civilianOwnerIds.first
-                      : game.players.first.id),
-              civilianOwnerIds: civilianOwnerIds,
-              bus: bus,
-              readOnly: readOnly,
-              currentOrders: currentOrders,
-              tileScopeTileKey: event.tileScopeTileKey,
-              initialSelectedUnitId: event.initialSelectedUnitId,
-              explorerOnly: event.explorerOnly,
-              builderOnly: event.builderOnly,
-              prospectShortcutTargetTileKey:
-                  event.prospectShortcutTargetTileKey,
-              exploreShortcutTargetTileKey: event.exploreShortcutTargetTileKey,
-              buildImprovementShortcutTargetTileKey:
-                  event.buildImprovementShortcutTargetTileKey,
+          // Viewport-adaptive bottom-sheet sizing shared by all three unit
+          // panels: 50% height (narrow), 70% width / 55vh (wide). Refs #3627,
+          // SPEC/ui/components/units-panel-shell.md § Bottom-sheet sizing.
+          final viewport = MediaQuery.sizeOf(context);
+          final baseConstraints = unitsPanelSheetConstraints(viewport);
+          // E2E panel-text assertions require every unit row mounted; the
+          // adaptive sheet height virtualizes lower rows on the headless
+          // 1280×720 host, so widen to 92% under E2E only (Refs #2336
+          // AC6 / AC7 / AC10).
+          final sheetConstraints = kCtE2EEnabled
+              ? baseConstraints.copyWith(maxHeight: viewport.height * 0.92)
+              : baseConstraints;
+          return UnitsPanelSheetSurface(
+            child: ConstrainedBox(
+              constraints: sheetConstraints,
+              child: CivilianUnitsPanel(
+                game: game,
+                humanPlayerId:
+                    panelPlayerId ??
+                    (civilianOwnerIds.isNotEmpty
+                        ? civilianOwnerIds.first
+                        : game.players.first.id),
+                civilianOwnerIds: civilianOwnerIds,
+                bus: bus,
+                readOnly: readOnly,
+                currentOrders: currentOrders,
+                tileScopeTileKey: event.tileScopeTileKey,
+                initialSelectedUnitId: event.initialSelectedUnitId,
+                explorerOnly: event.explorerOnly,
+                builderOnly: event.builderOnly,
+                prospectShortcutTargetTileKey:
+                    event.prospectShortcutTargetTileKey,
+                exploreShortcutTargetTileKey:
+                    event.exploreShortcutTargetTileKey,
+                buildImprovementShortcutTargetTileKey:
+                    event.buildImprovementShortcutTargetTileKey,
+              ),
             ),
           );
         },
@@ -357,28 +373,43 @@ class AppEventHandler {
     if (nav == null) return;
     await showModalBottomSheet<void>(
       context: nav.context,
+      // Viewport-adaptive sizing requires the sheet to own its height
+      // (Refs #3627); the host ConstrainedBox below sets the 50% / 55vh cap.
+      isScrollControlled: true,
+      // Transparent Material surface so UnitsPanelSheetSurface owns the
+      // mockup `.sheet` chrome (#3514 owner decision #4).
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       builder: (ctx) => Consumer(
         builder: (context, ref, _) {
           final game = ref.watch(currentGameProvider);
           if (game == null) {
             return const SizedBox.shrink();
           }
-          if (shellPanelsNotDefined(ref)) {
-            return const ObserveModeNotDefinedPanel(title: 'Military Units');
-          }
-          final humanPlayerId = shellPanelPlayerId(ref, game);
-          final readOnly =
-              !ref.read(shellPlayerContextProvider).canMutateViaUi;
+          final shell = ref.read(shellPlayerContextProvider);
+          final sentinel = observeNotDefinedSentinel(shell, 'Military Units');
+          if (sentinel != null) return sentinel;
+          final humanPlayerId = resolveShellPanelPlayerId(shell, game);
+          final readOnly = !shell.canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
-          return MilitaryUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            bus: bus,
-            readOnly: readOnly,
-            topology: mapData?.combinedTopology ?? const MapTopology(),
-            draftOrders: draftOrders,
+          // 50% height (narrow), 70% width / 55vh (wide). Refs #3627.
+          final sheetConstraints = unitsPanelSheetConstraints(
+            MediaQuery.sizeOf(context),
+          );
+          return UnitsPanelSheetSurface(
+            child: ConstrainedBox(
+              constraints: sheetConstraints,
+              child: MilitaryUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                bus: bus,
+                readOnly: readOnly,
+                topology: mapData?.combinedTopology ?? const MapTopology(),
+                draftOrders: draftOrders,
+              ),
+            ),
           );
         },
       ),
@@ -392,33 +423,49 @@ class AppEventHandler {
     if (nav == null) return;
     await showModalBottomSheet<void>(
       context: nav.context,
+      // Viewport-adaptive sizing requires the sheet to own its height
+      // (Refs #3627); the host ConstrainedBox below sets the 50% / 55vh cap.
+      isScrollControlled: true,
+      // Transparent Material surface so UnitsPanelSheetSurface owns the
+      // mockup `.sheet` chrome (#3514 owner decision #4).
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       builder: (ctx) => Consumer(
         builder: (context, ref, _) {
           final game = ref.watch(currentGameProvider);
           if (game == null) {
             return const SizedBox.shrink();
           }
-          if (shellPanelsNotDefined(ref)) {
-            return const ObserveModeNotDefinedPanel(title: 'Naval Units');
-          }
-          final humanPlayerId = shellPanelPlayerId(ref, game);
-          final readOnly =
-              !ref.read(shellPlayerContextProvider).canMutateViaUi;
+          final shell = ref.read(shellPlayerContextProvider);
+          final sentinel = observeNotDefinedSentinel(shell, 'Naval Units');
+          if (sentinel != null) return sentinel;
+          final humanPlayerId = resolveShellPanelPlayerId(shell, game);
+          final readOnly = !shell.canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
-          return NavalUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            bus: bus,
-            readOnly: readOnly,
-            topology: mapData?.combinedTopology ?? const MapTopology(),
-            draftOrders: draftOrders,
-            tileMapByRegion: mapData?.tileMapByRegion,
-            topologyByRegion: mapData?.topologyByRegion,
-            locationScopeKey: event.locationScopeKey,
-            initialSelectedFleetId: event.initialSelectedFleetId,
-            tileScopeTileKey: event.tileScopeTileKey,
+          // 50% height (narrow), 70% width / 55vh (wide). Naval uses the same
+          // shared rule as the other panels (no fixed sidebar). Refs #3627.
+          final sheetConstraints = unitsPanelSheetConstraints(
+            MediaQuery.sizeOf(context),
+          );
+          return UnitsPanelSheetSurface(
+            child: ConstrainedBox(
+              constraints: sheetConstraints,
+              child: NavalUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                bus: bus,
+                readOnly: readOnly,
+                topology: mapData?.combinedTopology ?? const MapTopology(),
+                draftOrders: draftOrders,
+                tileMapByRegion: mapData?.tileMapByRegion,
+                topologyByRegion: mapData?.topologyByRegion,
+                locationScopeKey: event.locationScopeKey,
+                initialSelectedFleetId: event.initialSelectedFleetId,
+                tileScopeTileKey: event.tileScopeTileKey,
+              ),
+            ),
           );
         },
       ),

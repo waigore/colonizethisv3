@@ -48,11 +48,7 @@ class GameSideMenu extends ConsumerWidget {
   /// same single source as the production gesture handler.
   static const double kSwipeToCloseDeltaThreshold = -5.0;
 
-  void _openGameParameters(BuildContext context, WidgetRef ref) {
-    final game = ref.read(currentGameProvider);
-    if (game == null) {
-      return;
-    }
+  void _openGameParameters(BuildContext context, ct_models.Game game) {
     onClose();
     showDialog<void>(
       context: context,
@@ -63,6 +59,7 @@ class GameSideMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = appL10n(context);
+    final ct_models.Game? game = ref.watch(currentGameProvider);
     final ThemeData theme = Theme.of(context);
     // Body label colour for Game Parameters / Debug log rows.
     // SPEC: game-side-menu.md § Dark-theme chrome.
@@ -113,7 +110,9 @@ class GameSideMenu extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               CtNinePatchButton(
-                onPressed: () => _openGameParameters(context, ref),
+                onPressed: game == null
+                    ? null
+                    : () => _openGameParameters(context, game),
                 child: Row(
                   children: [
                     Icon(

@@ -223,6 +223,18 @@ void main() {
 
         expect(decoded['termination_reason'], 'max_turns_override');
         expect(decoded['resolved_full_turns'], 0);
+
+        // Schema v2 turn-processing wall-clock fields are present even for a
+        // zero-turn run (empty list, zero max, zero over-budget).
+        expect(decoded['runSummarySchemaVersion'], 2);
+        expect(
+          decoded['turn_processing_wall_clock_budget_ms'],
+          kTurnProcessingWallClockBudgetMs,
+        );
+        expect(decoded['turn_processing_wall_clock_ms_by_turn'], isEmpty);
+        expect(decoded['max_turn_processing_wall_clock_ms'], 0);
+        expect(decoded['turns_over_wall_clock_budget'], 0);
+        expect(decoded['over_wall_clock_budget_turn_numbers'], isEmpty);
       },
       timeout: const Timeout(Duration(minutes: 15)),
     );
@@ -279,6 +291,20 @@ void main() {
             jsonDecode(summaryFile.readAsStringSync()) as Map<String, Object?>;
         expect(sum['termination_reason'], 'max_turns_override');
         expect(sum['resolved_full_turns'], 1);
+
+        // One resolved turn => exactly one wall-clock sample; the budget field
+        // mirrors the shared ceiling and the max equals the single sample.
+        expect(sum['runSummarySchemaVersion'], 2);
+        expect(
+          sum['turn_processing_wall_clock_budget_ms'],
+          kTurnProcessingWallClockBudgetMs,
+        );
+        final byTurn =
+            (sum['turn_processing_wall_clock_ms_by_turn'] as List<Object?>)
+                .cast<int>();
+        expect(byTurn, hasLength(1));
+        expect(byTurn.single, greaterThanOrEqualTo(0));
+        expect(sum['max_turn_processing_wall_clock_ms'], byTurn.single);
 
         final snapshotPath = names.firstWhere(
           (n) => n.endsWith('.snapshot.json'),
@@ -348,6 +374,13 @@ void main() {
             jsonDecode(File('${gameDir.path}/run-summary.json').readAsStringSync())
                 as Map<String, Object?>;
         expect(summary['minimal_trace_mode'], isTrue);
+
+        // Minimal-trace mode still measures the per-turn budget segment.
+        expect(summary['runSummarySchemaVersion'], 2);
+        expect(
+          summary['turn_processing_wall_clock_ms_by_turn'] as List<Object?>,
+          hasLength(1),
+        );
 
         var totalBytes = 0;
         for (final f in gameDir.listSync().whereType<File>()) {

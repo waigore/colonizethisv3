@@ -23,7 +23,8 @@ Map<String, Set<String>> provincePpNeighbours(MapTopology topology) {
   return neighbours;
 }
 
-void _pushUnvisitedPpNeighbors(
+/// Pushes the not-yet-[visited] P–P neighbours of [u] onto [stack].
+void pushUnvisitedPpNeighbors(
   String u,
   Map<String, Set<String>> neighbours,
   Set<String> visited,
@@ -49,7 +50,7 @@ List<int> ppLandComponentSizesSorted(MapTopology topology) {
       final u = stack.removeLast();
       if (!visited.add(u)) continue;
       size++;
-      _pushUnvisitedPpNeighbors(u, neighbours, visited, stack);
+      pushUnvisitedPpNeighbors(u, neighbours, visited, stack);
     }
     sizes.add(size);
   }
@@ -85,15 +86,17 @@ bool newWorldPartitionMatchesLockedProfile(MapTopology topology) {
   ]);
 }
 
-typedef _LandmassInfo = ({
+/// Connected-component (landmass) summary over P–P province adjacency.
+typedef LandmassInfo = ({
   int size,
   String minProvinceId,
   Set<String> provinces,
 });
 
-List<_LandmassInfo> _landmassesSortedDesc(Map<String, Set<String>> neighbours) {
+/// P–P connected components as [LandmassInfo], sorted by size desc then min id.
+List<LandmassInfo> landmassesSortedDesc(Map<String, Set<String>> neighbours) {
   final visited = <String>{};
-  final out = <_LandmassInfo>[];
+  final out = <LandmassInfo>[];
   for (final start in neighbours.keys.toList()..sort()) {
     if (visited.contains(start)) continue;
     final comp = <String>{};
@@ -102,7 +105,7 @@ List<_LandmassInfo> _landmassesSortedDesc(Map<String, Set<String>> neighbours) {
       final u = stack.removeLast();
       if (!visited.add(u)) continue;
       comp.add(u);
-      _pushUnvisitedPpNeighbors(u, neighbours, visited, stack);
+      pushUnvisitedPpNeighbors(u, neighbours, visited, stack);
     }
     final minId = comp.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
     out.add((size: comp.length, minProvinceId: minId, provinces: comp));
@@ -120,7 +123,7 @@ bool lockedOldWorldRoleFeasibilityHolds({
   required MapTopology topology,
   required Map<String, Set<String>> neighbours,
 }) {
-  final landmasses = _landmassesSortedDesc(neighbours);
+  final landmasses = landmassesSortedDesc(neighbours);
   if (landmasses.length != 4) return false;
   for (final lm in landmasses) {
     var sea = 0;
@@ -141,7 +144,7 @@ bool lockedNewWorldRoleFeasibilityHolds({
   required MapTopology topology,
   required Map<String, Set<String>> neighbours,
 }) {
-  final landmasses = _landmassesSortedDesc(neighbours);
+  final landmasses = landmassesSortedDesc(neighbours);
   if (landmasses.length != 4) return false;
   for (final lm in landmasses) {
     if (lm.size != 9 && lm.size != 6) return false;

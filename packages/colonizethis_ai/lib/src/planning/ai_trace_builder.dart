@@ -27,9 +27,18 @@ TurnTraceAiSection buildAiTraceSection({
   PhasePlanOutcome? phasePlan,
   DomainGateData? domainGateData,
 }) {
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  final goalWeights = getGoalWeightsForLeader(config.personalityId);
-  final thresholds = getThresholdsForLeader(config.personalityId);
+  final domainWeights = resolveDomainWeights(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
+  final goalWeights = resolveGoalWeights(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
+  final thresholds = resolveThresholds(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
   final selectedScore = goalScores[primaryGoal] ?? 0;
   final agendaConquerModifier = getAgendaConquerModifier(config.hiddenAgendaId);
   final agendaDiplomacyModifier = getAgendaDiplomacyModifier(
@@ -95,6 +104,7 @@ TurnTraceAiSection buildAiTraceSection({
         'leaderId': config.leaderId,
         'personalityId': config.personalityId,
         'hiddenAgendaId': config.hiddenAgendaId,
+        'profileId': config.profileId,
       },
     },
     thresholds: <String, Object?>{

@@ -1,19 +1,15 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_game_feature_screen_shell.dart';
 import 'package:colonizethis_app/widgets/game_to_ui_bus_listener.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 void main() {
   suppressLogsForTests();
@@ -23,9 +19,11 @@ void main() {
   late Game differentIdGame;
 
   setUpAll(() async {
-    await _mockNinePatchAssetBundle();
-    await _preWarmPanelNinePatch();
-    final base = getDebugInitGameResult().game;
+    await setUpNinePatchAssets();
+    // Lightweight fixture (Refs #3656): the shell only reads `game.id` (for the
+    // current-vs-route id match) and `players.first.displayName` (rendered by
+    // the test body builder); no generated map/topology data is needed.
+    final base = buildPanelTestGame();
     final first = base.players.first;
     routeGame = base.copyWith(
       players: [
@@ -46,11 +44,6 @@ void main() {
         ...routeGame.players.skip(1),
       ],
     );
-  });
-
-  tearDownAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMessageHandler('flutter/assets', null);
   });
 
   Widget buildShell({
@@ -132,42 +125,4 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(GameToUIBusListener), findsNothing);
   });
-}
-
-Future<void> _preWarmPanelNinePatch() async {
-  try {
-    final bytes = await rootBundle.load('assets/images/ui_button_nine_patch.png');
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-    Flame.images.add('assets/images/ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Keep tests resilient when the asset is unavailable in CI.
-  }
-}
-
-Future<void> _mockNinePatchAssetBundle() async {
-  final fallbackBytes = base64Decode(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=',
-  );
-  var ninePatchBytes = fallbackBytes;
-  final assetCandidates = <String>[
-    'app/assets/images/ui_button_nine_patch.png',
-    'assets/images/ui_button_nine_patch.png',
-  ];
-  for (final candidate in assetCandidates) {
-    final file = File(candidate);
-    if (await file.exists()) {
-      ninePatchBytes = await file.readAsBytes();
-      break;
-    }
-  }
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMessageHandler('flutter/assets', (message) async {
-        final key = const StringCodec().decodeMessage(message);
-        if (key == 'assets/images/ui_button_nine_patch.png') {
-          return ByteData.view(Uint8List.fromList(ninePatchBytes).buffer);
-        }
-        return null;
-      });
 }

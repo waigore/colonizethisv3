@@ -104,6 +104,18 @@ void main() {
       expect(packageLogger('ct').prefix, 'logger.ct');
     });
 
+    test('domainPackageLogger uses the bare prefix when no subPrefix', () {
+      expect(domainPackageLogger('combat').prefix, 'combat');
+    });
+
+    test('domainPackageLogger uses the bare prefix when subPrefix is empty', () {
+      expect(domainPackageLogger('combat', '').prefix, 'combat');
+    });
+
+    test('domainPackageLogger composes prefix.subPrefix when subPrefix set', () {
+      expect(domainPackageLogger('economy', 'trade').prefix, 'economy.trade');
+    });
+
     test(
       'CtLoggerConsolePrinter output contains exactly one canonical timestamp',
       () async {
@@ -127,6 +139,27 @@ void main() {
         expect(text, contains('.000'));
       },
     );
+
+    test('debugEnabled and infoEnabled are false at warning level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.warning;
+      expect(log.debugEnabled, isFalse);
+      expect(log.infoEnabled, isFalse);
+    });
+
+    test('infoEnabled is true and debugEnabled is false at info level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.info;
+      expect(log.infoEnabled, isTrue);
+      expect(log.debugEnabled, isFalse);
+    });
+
+    test('debugEnabled is true at debug level', () {
+      final log = CtLogger('ai');
+      Logger.level = Level.debug;
+      expect(log.debugEnabled, isTrue);
+      expect(log.infoEnabled, isTrue);
+    });
   });
 
   group('prefixes', () {

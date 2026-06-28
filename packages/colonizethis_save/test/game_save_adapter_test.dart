@@ -60,6 +60,64 @@ void main() {
       expect(adapter.load(box, 'missing'), isNull);
     });
 
+    test('load reconciles generals to persisted general cap (spawn-only)', () {
+      // SPEC/game/military-generals.md: persisted cap drives spawn-only
+      // reconciliation; existing generals (and medals) are preserved.
+      final game = Game(
+        id: 'capgame',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Spain', isHuman: true, generalCap: 3),
+        ],
+        generals: const [General(id: 'gp1_gen_0', ownerId: 'gp1', medals: 2)],
+      );
+      adapter.save(box, game);
+      final loaded = adapter.load(box, 'capgame');
+      expect(loaded, isNotNull);
+      final generals = loaded!.generals
+          .where((g) => g.ownerId == 'gp1')
+          .toList();
+      expect(generals.length, 3);
+      expect(generals.where((g) => g.id == 'gp1_gen_0').single.medals, 2);
+      expect(generals.where((g) => g.medals == 0).length, 2);
+      expect(loaded.players.single.generalCap, 3);
+    });
+
+    test('legacy save without generalCap derives cap from tech on load', () {
+      // SPEC/game/military-generals.md: migration default derives cap from
+      // unlocked techs when no persisted cap exists.
+      final game = Game(
+        id: 'legacycap',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 7),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'France',
+            isHuman: false,
+            techUnlocked: {kTechIdNationalism: true},
+          ),
+        ],
+      );
+      // Sanity: no generalCap persisted in JSON for a legacy player.
+      expect(
+        (game.toJson()['players'] as List<Object?>).first,
+        isNot(contains('generalCap')),
+      );
+      adapter.save(box, game);
+      final loaded = adapter.load(box, 'legacycap');
+      expect(loaded, isNotNull);
+      expect(loaded!.players.single.generalCap, 4);
+      expect(loaded.generals.where((g) => g.ownerId == 'gp1').length, 4);
+    });
+
     test('listGameIds returns saved ids and excludes map-data keys', () {
       final game = Game(
         id: 'g1',
@@ -190,7 +248,7 @@ void main() {
           ['s1', 's1'],
         ],
         terrainGrid: [
-          [TerrainType.plains, TerrainType.forest],
+          [TerrainType.plains, TerrainType.hardwoodForest],
           [null, null],
         ],
         resourceGrid: [
@@ -376,7 +434,7 @@ void main() {
                 regionId: 'oldWorld',
                 ownerId: 'pl1',
                 fortLevel: 2,
-                terrain: 'forest',
+                terrain: 'hardwoodForest',
               ),
             ],
             units: [
@@ -406,7 +464,10 @@ void main() {
       final loaded = adapter.load(box, 'phase3');
       expect(loaded, isNotNull);
       expect(loaded!.worldState.oldWorld.provinces.single.fortLevel, 2);
-      expect(loaded.worldState.oldWorld.provinces.single.terrain, 'forest');
+      expect(
+        loaded.worldState.oldWorld.provinces.single.terrain,
+        'hardwoodForest',
+      );
       expect(loaded.worldState.oldWorld.units.single.medals, 3);
       expect(loaded.players.single.militaryLevel, 4);
       expect(loaded.minorNations.single.effectiveMilitaryLevel, 4);

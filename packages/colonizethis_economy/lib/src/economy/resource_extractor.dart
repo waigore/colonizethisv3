@@ -1,0 +1,182 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/src/logging.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'commodity_totals.dart';
+import 'economy_resource_constants.dart';
+import 'game_lookup_helpers.dart';
+import 'tile_extraction_pipeline.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+/// Per-player extraction totals: land (same region as capital) vs overseas.
+class ExtractionTotals {
+  const ExtractionTotals({this.land = const {}, this.overseas = const {}});
+
+  final Map<CommodityId, int> land;
+  final Map<CommodityId, int> overseas;
+}
+
+/// Tile-scoped extraction contribution used by map overlays and previews.
+class TileExtractionContribution {
+  const TileExtractionContribution({
+    required this.tileKey,
+    required this.commodityId,
+    required this.units,
+    required this.isLandRelativeToCapital,
+  });
+
+  final String tileKey;
+  final CommodityId commodityId;
+  final int units;
+
+  /// True when tile region matches player's capital region (land bucket).
+  final bool isLandRelativeToCapital;
+}
+
+/// Computes per-player extraction from connected tiles. SPEC/game/extraction-and-improvements.
+///
+/// For each connected tile: production = min(improvementLevel, techCap);
+/// transport cap for yield = [ConnectivityResult.pathTransportCap]\[tileKey] when present,
+/// else the tile's own transport level (port = 4, else road level or 0).
+/// Effective yield applies GDD branches: min(production, transport cap), then town development
+/// caps where applicable ([Province.townDevelopmentLevel]).
+/// Sums by commodity; splits land (same region as capital) vs overseas.
+/// Adds [Game.capitalTileGrainBonusPerTurn] grain to each player's land totals
+/// when that player has a capital tile (unconditional on connectivity).
+Map<String, ExtractionTotals> computeExtraction({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, ConnectivityResult> connectivityResult,
+  int Function(String playerId) techCapForPlayer = _defaultTechCap,
+  int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
+
+  /// When set, only these tile keys contribute (must still be in [ConnectivityResult.connected]).
+  /// Used by tests (e.g. Great Power bootstrap farms) without duplicating extraction rules.
+  Set<String>? restrictToTileKeys,
+}) {
+  economyLog.d('extraction compute start players=${game.players.length}');
+  final provincesByFullId = buildProvinceIndex(game);
+  final portTileKeys = collectPortTileKeys(game);
+  final out = <String, ExtractionTotals>{};
+  for (final player in game.players) {
+    final cr = connectivityResult[player.id];
+    final connected = cr?.connected ?? const <String>{};
+    final pathTransportCap = cr?.pathTransportCap ?? const <String, int>{};
+    final roadRuleTiles = cr?.connectedByRoadRule ?? const <String>{};
+    final cap = player.capitalTile;
+    final capitalRegionId = cap?.regionId;
+
+    final landTotals = <CommodityId, int>{};
+    final overseasTotals = <CommodityId, int>{};
+
+    final prospected =
+        game.worldState.playerProspectedTiles[player.id] ?? const <String>{};
+
+    for (final tileKey in connected) {
+      if (restrictToTileKeys != null && !restrictToTileKeys.contains(tileKey)) {
+        continue;
+      }
+      final contribution = computeTileExtractionContributionForPlayer(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        player: player,
+        tileKey: tileKey,
+        connectedTileKeys: connected,
+        pathTransportCap: pathTransportCap,
+        connectedByRoadRule: roadRuleTiles,
+        portTileKeys: portTileKeys,
+        prospectedTileKeys: prospected,
+        capitalRegionId: capitalRegionId,
+        techCapForPlayer: techCapForPlayer,
+        techCapForPlayerAndResource: techCapForPlayerAndResource,
+        provincesByFullId: provincesByFullId,
+      );
+      if (contribution == null) {
+        continue;
+      }
+
+      if (contribution.isLandRelativeToCapital) {
+        addUnits(landTotals, contribution.commodityId, contribution.units);
+      } else {
+        addUnits(overseasTotals, contribution.commodityId, contribution.units);
+      }
+    }
+
+    final capBonus = game.capitalTileGrainBonusPerTurn;
+    if (player.capitalTile != null && capBonus > 0) {
+      final grainId = CommodityCatalog.grain.id;
+      addUnits(landTotals, grainId, capBonus);
+    }
+
+    out[player.id] = ExtractionTotals(
+      land: landTotals,
+      overseas: overseasTotals,
+    );
+  }
+  final landSum = sumNestedValues(out.values.map((t) => t.land));
+  final overseasSum = sumNestedValues(out.values.map((t) => t.overseas));
+  economyLog.d(
+    'extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
+  );
+  return out;
+}
+
+/// Computes per-tile extraction contribution for one player's connected tile.
+///
+/// Returns null when the tile contributes no extraction units (not connected,
+/// invalid tile key, missing map/province/resource, mineral not prospected, or
+/// computed effective units <= 0).
+TileExtractionContribution? computeTileExtractionContributionForPlayer({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Player player,
+  required String tileKey,
+  required Set<String> connectedTileKeys,
+  required Map<String, int> pathTransportCap,
+  required Set<String> connectedByRoadRule,
+  required Set<String> portTileKeys,
+  required Set<String> prospectedTileKeys,
+  required String? capitalRegionId,
+  int Function(String playerId) techCapForPlayer = _defaultTechCap,
+  int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
+
+  /// When non-null (typically built once per [computeExtraction] pass), province
+  /// rows are resolved by id in O(1) instead of scanning the region list per tile.
+  Map<String, Province>? provincesByFullId,
+}) {
+  // Thin Great-Power wrapper over the shared [computeTileYieldContribution]
+  // orchestration: per-resource (or per-player) tech cap and the mineral
+  // Prospecting Gate (minerals require the tile to be prospected). Refs #3517
+  // Cluster 1.
+  final contribution = computeTileYieldContribution(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    tileKey: tileKey,
+    connectedTileKeys: connectedTileKeys,
+    pathTransportCap: pathTransportCap,
+    connectedByRoadRule: connectedByRoadRule,
+    portTileKeys: portTileKeys,
+    capitalProvinceId: player.capitalProvinceId,
+    capitalRegionId: capitalRegionId,
+    logContext: 'extraction',
+    provincesByFullId: provincesByFullId,
+    techCapForCommodity: (commodityId) =>
+        techCapForPlayerAndResource?.call(player.id, commodityId) ??
+        techCapForPlayer(player.id),
+    isCommodityExtractable: (tileKey, commodityId) =>
+        !kMineralResourceIds.contains(commodityId) ||
+        prospectedTileKeys.contains(tileKey),
+  );
+  if (contribution == null) {
+    return null;
+  }
+
+  return TileExtractionContribution(
+    tileKey: tileKey,
+    commodityId: contribution.commodityId,
+    units: contribution.units,
+    isLandRelativeToCapital: contribution.isLandRelativeToCapital,
+  );
+}
+
+int _defaultTechCap(String playerId) => defaultExtractionCap;

@@ -8,6 +8,22 @@ void main() {
       expect(s.quantityOf('grain'), 0);
     });
 
+    test('copyQuantities returns an equal snapshot of quantities', () {
+      const s = Stockpile(quantities: {'grain': 5, 'iron': 2});
+      final copy = s.copyQuantities();
+      expect(copy, {'grain': 5, 'iron': 2});
+    });
+
+    test('copyQuantities returns a mutable map detached from the source', () {
+      const s = Stockpile(quantities: {'grain': 5});
+      final copy = s.copyQuantities();
+      copy['grain'] = 1;
+      copy['iron'] = 9;
+      expect(s.quantityOf('grain'), 5, reason: 'source stays unchanged');
+      expect(s.quantities.containsKey('iron'), isFalse);
+      expect(copy, {'grain': 1, 'iron': 9});
+    });
+
     test('applyDelta adds and deducts quantities with clamping', () {
       const s = Stockpile();
       final s2 = s.applyDelta('grain', 5);

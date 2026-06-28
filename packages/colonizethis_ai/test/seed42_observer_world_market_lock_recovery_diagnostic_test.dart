@@ -8,6 +8,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 /// Seed-42 Path F (World Market) lock-recovery diagnostic (Refs #2924).
 ///
 /// Captures per-turn world-market metrics for each Great Power across the
@@ -42,9 +44,7 @@ void main() {
           skipFillLakes: false,
         ),
       );
-      var game = init.game.copyWith(
-        aiControlByGpId: {for (final p in init.game.players) p.id: true},
-      );
+      var game = applyFaithfulFullAiTestHandoff(init.game);
       final topo = init.combinedTopology;
       final tileMap = init.tileMapByRegion;
 
