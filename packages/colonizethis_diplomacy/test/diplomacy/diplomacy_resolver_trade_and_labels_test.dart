@@ -243,4 +243,48 @@ void main() {
       expect(relationScoreToDisplayLabel(101), 'Friendly');
     });
   });
+
+  group('relationScoreToMeterStep', () {
+    test('maps each integer band start to its 1-based step', () {
+      expect(relationScoreToMeterStep(0), 1);
+      expect(relationScoreToMeterStep(10), 2);
+      expect(relationScoreToMeterStep(20), 3);
+      expect(relationScoreToMeterStep(30), 4);
+      expect(relationScoreToMeterStep(40), 5);
+      expect(relationScoreToMeterStep(50), 6);
+      expect(relationScoreToMeterStep(60), 7);
+      expect(relationScoreToMeterStep(70), 8);
+      expect(relationScoreToMeterStep(80), 9);
+      expect(relationScoreToMeterStep(90), 10);
+    });
+
+    test('half-open bands map boundary values to the higher step', () {
+      // [low, high): the boundary value belongs to the higher step.
+      expect(relationScoreToMeterStep(9.9), 1);
+      expect(relationScoreToMeterStep(10), 2);
+      expect(relationScoreToMeterStep(19.9), 2);
+      expect(relationScoreToMeterStep(22.4), 3); // SPEC AC example
+      expect(relationScoreToMeterStep(89.999), 9);
+    });
+
+    test('final band [90, 100] is fully closed and includes the maximum', () {
+      expect(relationScoreToMeterStep(90), 10);
+      expect(relationScoreToMeterStep(99.9), 10);
+      expect(relationScoreToMeterStep(100), 10);
+    });
+
+    test('clamps out-of-range scores to step 1 (below 0) and step 10 (above 100)', () {
+      expect(relationScoreToMeterStep(-5), 1);
+      expect(relationScoreToMeterStep(-0.1), 1);
+      expect(relationScoreToMeterStep(105), 10);
+      expect(relationScoreToMeterStep(100.5), 10);
+    });
+
+    test('every returned step is within [1, relationMeterStepCount]', () {
+      for (var s = -10; s <= 110; s++) {
+        final step = relationScoreToMeterStep(s);
+        expect(step >= 1 && step <= relationMeterStepCount, isTrue);
+      }
+    });
+  });
 }
