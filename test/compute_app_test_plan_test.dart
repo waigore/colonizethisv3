@@ -338,6 +338,33 @@ void main() {
     expect(json, contains('"mode":"selective"'));
     expect(json, contains('naval_units_panel_part1_test'));
   });
+
+  test('CLI reads changed files from path file', () {
+    final listFile = File(
+      p.join(Directory.systemTemp.path, 'ct_changed_files_${DateTime.now().microsecondsSinceEpoch}.txt'),
+    );
+    listFile.writeAsStringSync('app/lib/widgets/ct_panel.dart\n');
+    addTearDown(() {
+      if (listFile.existsSync()) {
+        listFile.deleteSync();
+      }
+    });
+
+    final result = Process.runSync(
+      'dart',
+      <String>[
+        'run',
+        p.join('tool', 'compute_app_test_plan.dart'),
+        '--changed-files-from=${listFile.path}',
+      ],
+      workingDirectory: _workspaceRoot(),
+    );
+
+    expect(result.exitCode, 0, reason: '${result.stdout}${result.stderr}');
+    final json = (result.stdout as String).trim();
+    expect(json, contains('"mode":"selective"'));
+    expect(json, contains('naval_units_panel_part1_test'));
+  });
 }
 
 const _expectedFullAppTestListLiteral = <String>[

@@ -15,7 +15,7 @@ Performance goal: PR app-test stage (`changes` → `app_tests_cache` → `app_te
 ## Selector
 
 - **Path:** `tool/compute_app_test_plan.dart`
-- **Input:** `--changed-files=<paths>` (comma- or newline-separated).
+- **Input:** `--changed-files=<paths>` (comma- or newline-separated) or `--changed-files-from=<path>` (newline-separated file list; used by CI when the diff exceeds shell `ARG_MAX`).
 - **Output:** JSON `{"mode":"selective|skip","tests":["app/test/..."]}`.
 - **Determinism:** Pure function of `--changed-files` plus on-disk workspace state. Reads no env vars, no PR labels, no workflow context. Reruns with identical inputs are byte-identical.
 

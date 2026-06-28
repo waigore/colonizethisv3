@@ -386,17 +386,38 @@ String _findRepoRoot() {
   }
 }
 
+Iterable<String> _loadChangedFiles({
+  String? changedRaw,
+  String? changedFilesFrom,
+}) {
+  if (changedFilesFrom != null) {
+    return File(changedFilesFrom)
+        .readAsLinesSync()
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty);
+  }
+  if (changedRaw == null) {
+    return const <String>[];
+  }
+  return _parseChangedFilesArg(changedRaw);
+}
+
 void main(List<String> args) {
   String? changedRaw;
+  String? changedFilesFrom;
   for (final arg in args) {
-    if (arg.startsWith('--changed-files=')) {
+    if (arg.startsWith('--changed-files-from=')) {
+      changedFilesFrom = arg.substring('--changed-files-from='.length);
+    } else if (arg.startsWith('--changed-files=')) {
       changedRaw = arg.substring('--changed-files='.length);
     }
   }
 
   final repoRoot = _findRepoRoot();
-  final changedFiles =
-      changedRaw == null ? <String>[] : _parseChangedFilesArg(changedRaw);
+  final changedFiles = _loadChangedFiles(
+    changedRaw: changedRaw,
+    changedFilesFrom: changedFilesFrom,
+  );
   final plan = computeAppTestPlan(repoRoot: repoRoot, changedFiles: changedFiles);
   stdout.writeln(jsonEncode(plan.toJson()));
 }

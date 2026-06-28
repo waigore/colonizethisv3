@@ -197,12 +197,15 @@ jobs:
             emit_full_list "BASE_SHA $BASE_SHA not reachable"
             exit 0
           fi
-          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
-          echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
+          CHANGED_LIST=$(mktemp)
+          git diff --name-only "$BASE_SHA"...HEAD > "$CHANGED_LIST"
+          CHANGED_COUNT=$(wc -l < "$CHANGED_LIST" | tr -d ' ')
+          echo "Changed files (count: $CHANGED_COUNT):"
           # head closes the pipe early; GNU sed exits 4 under pipefail — do not fail the job.
-          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20 || true
+          sed 's/^/  /' "$CHANGED_LIST" | head -20 || true
           dart pub get >/dev/null
-          PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
+          PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files-from="$CHANGED_LIST")
+          rm -f "$CHANGED_LIST"
           echo "Selector plan: $PLAN"
           MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
           TESTS=$(echo "$PLAN" | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)['tests']))")
