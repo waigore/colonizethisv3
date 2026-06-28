@@ -95,13 +95,14 @@ void main() {
       expect(s.status, OrderValidationStatus.accepted);
     });
 
-    test('setSubsidy requires consulate or embassy and sufficient treasury', () {
+    test('setSubsidy requires an embassy (Refs #3753 R2)', () {
+      // No overture at all is rejected for the embassy prerequisite.
       final gameNoOverture = gpMinorBaseGame(
         relationState: RelationState.atPeace,
         overtureStage: OvertureStage.none,
-        treasury: 100,
+        treasury: 5000,
       );
-      final noConsulate = OrderEngine().addDiplomaticOrderWithContext(
+      final noOverture = OrderEngine().addDiplomaticOrderWithContext(
         gameNoOverture,
         emptyTopology,
         'gp1',
@@ -111,12 +112,33 @@ void main() {
           amount: 100,
         ),
       );
-      expect(noConsulate.status, OrderValidationStatus.rejected);
-      expect(noConsulate.reason, contains('Consulate or Embassy required'));
+      expect(noOverture.status, OrderValidationStatus.rejected);
+      expect(noOverture.reason, contains('Embassy required'));
 
-      final gameLowTreasury = gpMinorBaseGame(
+      // A Trade Consulate alone is no longer sufficient for SetSubsidy.
+      final gameConsulateOnly = gpMinorBaseGame(
         relationState: RelationState.atPeace,
         overtureStage: OvertureStage.tradeConsulate,
+        treasury: 5000,
+      );
+      final consulateOnly = OrderEngine().addDiplomaticOrderWithContext(
+        gameConsulateOnly,
+        emptyTopology,
+        'gp1',
+        const DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: 'minor1',
+          amount: 100,
+        ),
+      );
+      expect(consulateOnly.status, OrderValidationStatus.rejected);
+      expect(consulateOnly.reason, contains('Embassy required'));
+    });
+
+    test('setSubsidy with an embassy is rejected when treasury is too low', () {
+      final gameLowTreasury = gpMinorBaseGame(
+        relationState: RelationState.atPeace,
+        overtureStage: OvertureStage.embassy,
         treasury: 10,
       );
       final insufficient = OrderEngine().addDiplomaticOrderWithContext(
@@ -131,6 +153,25 @@ void main() {
       );
       expect(insufficient.status, OrderValidationStatus.rejected);
       expect(insufficient.reason, contains('Insufficient treasury'));
+    });
+
+    test('setSubsidy with an embassy and sufficient treasury is accepted', () {
+      final game = gpMinorBaseGame(
+        relationState: RelationState.atPeace,
+        overtureStage: OvertureStage.embassy,
+        treasury: 5000,
+      );
+      final accepted = OrderEngine().addDiplomaticOrderWithContext(
+        game,
+        emptyTopology,
+        'gp1',
+        const DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: 'minor1',
+          amount: 500,
+        ),
+      );
+      expect(accepted.status, OrderValidationStatus.accepted);
     });
 
     test('setSubsidy rejects amount not a multiple of 100', () {
