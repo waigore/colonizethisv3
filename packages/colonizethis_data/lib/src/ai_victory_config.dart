@@ -344,6 +344,15 @@ const int kEstablishOvertureColonialTribeBonus = 60;
 /// Establish-overture bonus toward a tribe owning a sea-reachable NW province.
 const int kEstablishOvertureColonialInvadableOwnerBonus = 120;
 
+/// Maximum reduction applied to `establishOverture` improve-relations desire
+/// when per-turn relation decay (Refs #3753 R9.3/R9.4) will naturally drift a
+/// below-equilibrium relation back toward neutral 50 on its own. Scaled by the
+/// fraction of the gap-to-equilibrium that one turn of decay closes, so a pair
+/// that decay alone restores to neutral next turn is discounted by the full
+/// amount, while a deeply hostile pair (decay barely helps) is barely
+/// discounted. SPEC/ai/phase-planner-architecture.md § Decay-aware overture.
+const int kEstablishOvertureDecayCreditMax = 20;
+
 /// Conquest army-move bonus for New World invadable destinations.
 const int kConquestArmyMoveNwInvadableBonus = 35;
 

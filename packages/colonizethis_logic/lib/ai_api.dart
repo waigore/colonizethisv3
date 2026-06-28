@@ -75,7 +75,9 @@ export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
         knownDiplomaticTargetFactionIds,
         oldWorldProvinceCountOwnedBy,
         provinceCountOwnedBy,
+        relationDecayPerTurn,
         relationScoreMinFriendly,
+        relationScoreNeutral,
         shipCountForFaction;
 
 // colonizethis_turn (barrel-level re-exports).

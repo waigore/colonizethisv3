@@ -175,7 +175,30 @@ List<int> computeDiplomaticCandidateScores({
             o.targetFactionId,
             rel?.score ?? 50,
           );
-          final improveRelationsDesire = 100 - warDesire;
+          var improveRelationsDesire = 100 - warDesire;
+          // Decay-aware skip (Refs #3758 S8; #3753 R9.3/R9.4). A below-neutral
+          // relation at peace drifts +relationDecayPerTurn toward equilibrium
+          // 50 on its own at the end of the Diplomacy phase unless an event
+          // changes the pair this turn (which blocks decay). When natural decay
+          // will do the improving, the AI discounts its improve-relations
+          // urgency by the share of the gap-to-equilibrium that one decay step
+          // closes, so a pair decay restores to neutral next turn is credited
+          // the full reduction while a deeply hostile pair is barely credited.
+          // SPEC/ai/phase-planner-architecture.md § Decay-aware overture.
+          if (rel != null &&
+              rel.atPeace &&
+              rel.score < relationScoreNeutral &&
+              !_pairHasScheduledRelationEventThisTurn(
+                sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+                nationId: nationId,
+                targetFactionId: o.targetFactionId,
+              )) {
+            final num gap = relationScoreNeutral - rel.score;
+            final num decayCovered = math.min(relationDecayPerTurn, gap);
+            final reduction =
+                (decayCovered / gap * kEstablishOvertureDecayCreditMax).round();
+            improveRelationsDesire -= reduction;
+          }
           s += (improveRelationsDesire - 50);
           s += (thresholds.allianceTendency - 50);
           if (snapshot.colonial.preferredColonialTargetFactionIdsSorted
@@ -231,6 +254,33 @@ Set<String> _activeOldWorldMinorConflictIds({
     }
   }
   return conflicts;
+}
+
+/// Predicts whether the (`nationId`, `targetFactionId`) relation pair will
+/// receive a same-turn relation-delta event that blocks per-turn decay (Refs
+/// #3753 R9.4). Uses the only deterministic planning-time signal available:
+/// diplomatic orders earlier Full-AI players already committed this turn
+/// ([sameTurnPriorDiplomaticOrders], keyed by acting player id). A prior order
+/// from the target faction directed back at this AI lands an event on the
+/// shared pair, so decay is skipped and the AI keeps full improve-relations
+/// urgency. The predicate is intentionally conservative — any prior order from
+/// the target toward this AI counts — so a false positive only preserves the
+/// pre-existing (non-decay-aware) urgency. Returns false when no prior orders
+/// are available.
+bool _pairHasScheduledRelationEventThisTurn({
+  required Orders? sameTurnPriorDiplomaticOrders,
+  required String nationId,
+  required String targetFactionId,
+}) {
+  if (sameTurnPriorDiplomaticOrders == null) return false;
+  final targetOrders =
+      sameTurnPriorDiplomaticOrders
+          .diplomaticOrdersByPlayerId[targetFactionId] ??
+      const <DiplomaticOrder>[];
+  for (final order in targetOrders) {
+    if (order.targetFactionId == nationId) return true;
+  }
+  return false;
 }
 
 bool _isDecisionOnCooldown({

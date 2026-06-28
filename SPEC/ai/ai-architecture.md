@@ -54,7 +54,7 @@ AI uses the order suggestion API and applies:
 - **Diplomacy (Full AI):**
   - Compute a per-pair `warDesireScore` (0..100) for GP↔target where target can be GP, Minor, or Tribe.
   - Use the same composite power basis as diplomacy power score (military + province + naval) for strength ratio.
-  - Compute improve-relations desire as `100 - warDesireScore`.
+  - Compute improve-relations desire as `100 - warDesireScore`, then apply the **decay-aware** discount for below-neutral peace pairs per [phase-planner-architecture.md](phase-planner-architecture.md) § Decay-aware overture.
   - Keep relation gate for war declarations.
   - Apply per GP-target pair cooldowns for war-declare and improve-relations retries.
   - While at war, recompute war desire each turn to decide continue-war vs offer-peace bias and adjust desired territory objective.
