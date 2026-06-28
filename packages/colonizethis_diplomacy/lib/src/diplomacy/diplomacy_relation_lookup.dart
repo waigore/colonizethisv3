@@ -130,8 +130,18 @@ int warDeclarationThirdPartyPenaltyDelta(Game game, String aggressorGpId) {
   return relationScoreWarDelta;
 }
 
-/// Score drop on ally refusing a call to arms; alliance ends (no longer Allied). SPEC/game/diplomacy.md.
-const int callToArmsRefusalScorePenalty = 20;
+/// Unified alliance-break penalty (R11): score drop applied to the breaker's
+/// relation with the **broken-with ally** when any formal alliance is broken —
+/// voluntarily (`breakAlliance` order) or via a call-to-arms refusal. The
+/// alliance flag is also cleared for that pair. SPEC/game/diplomacy.md § Alliances.
+const int allianceBreakAllyScorePenalty = 50;
+
+/// Unified alliance-break penalty (R11): score drop applied to the breaker's
+/// relation with **every other Great Power** the breaker has a relation with
+/// when a formal alliance is broken (excludes the broken-with ally, and — for a
+/// call-to-arms refusal — the aggressor whose declaration triggered the call).
+/// SPEC/game/diplomacy.md § Alliances.
+const int allianceBreakOtherGpScorePenalty = 10;
 
 /// AI ally joins the war if B–A relation score is at least this (inclusive). SPEC/game/diplomacy.md.
 const int callToArmsAiAcceptMinRelationScore = 50;

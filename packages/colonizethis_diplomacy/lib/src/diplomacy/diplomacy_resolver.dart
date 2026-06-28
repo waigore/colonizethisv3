@@ -13,6 +13,7 @@ import 'diplomacy_phase_result.dart';
 
 export 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'alliance_resolver.dart';
+import 'break_alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'ftp_resolver.dart';
 import 'diplomacy_subsidies_relations_resolver.dart';
@@ -120,6 +121,16 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
 
   // 4. Process alliance proposals and responses
   state = processAlliances(
+    state,
+    diploByPlayer,
+    turn,
+    factionMembership: factionMembership,
+    eventTally: eventTally,
+  );
+
+  // 4a. Process voluntary alliance breaks (R11 unified penalty).
+  // SPEC/game/diplomacy.md § Alliances.
+  state = processBreakAlliances(
     state,
     diploByPlayer,
     turn,
