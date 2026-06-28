@@ -122,7 +122,8 @@ Game applyRelationModifiersAndUpdateScores(
     }
   }
 
-  // SetSubsidy: Create or update ongoing subsidy. Requires Consulate or Embassy.
+  // SetSubsidy: Create or update ongoing subsidy. Requires an Embassy
+  // (Refs #3753 R2 — Consulate alone is insufficient for economic actions).
   // Deducts initial payment immediately; ongoing payments processed each turn.
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
   var subsidyIndexByPair = indexByKey(
@@ -149,7 +150,7 @@ Game applyRelationModifiersAndUpdateScores(
 
       final targetId = order.targetFactionId;
       final overture = getOverture(game, gpId, targetId);
-      if (overture == null || !overture.hasConsulate) continue;
+      if (overture == null || !overture.hasEmbassy) continue;
 
       // Deduct initial payment
       players = debitPlayerTreasury(

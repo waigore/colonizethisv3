@@ -155,7 +155,7 @@ For **Minor/Tribe targets**, add:
 - **Break Alliance** — target GP; valid only when a **formal alliance** currently exists with that GP. Voluntarily ends the alliance and applies the unified alliance-break penalty (see **Breaking an alliance**). Valid at peace **or** at war; not tech-gated; no treasury cost. At most one Break Alliance per (player, target GP) per turn.
 - **Establish Overture** — target Minor/Tribe **or** Great Power, overture type; valid if previous step achieved and costs met. **At most one Establish Overture per (player, target faction) per turn.** The overture is a **two-way agreement**: at turn resolution the **target** accepts or rejects. For Minor/Tribe targets the decision is applied by rule during the Diplomacy phase. For GP targets: if the target is human-controlled, turn resolution suspends and the app must prompt the human and resume with the decision; if AI-controlled, the decision is made during the phase. Validation rejects any second Establish Overture order for the same target.
 - **Grant Aid** — target faction, **amount**: a **positive integer** in pounds (£). Valid if Embassy exists, treasury ≥ amount, and other diplomacy preconditions hold. Resolves as a **one-time** transfer: treasury deduction and relation update per resolver rules.
-- **Set Subsidy** — target faction, **amount**: a **positive integer** in pounds (£) **per turn** (ongoing subsidy until updated or cancelled). Valid if Consulate **or** Embassy exists and treasury meets validation (see resolver). **current product** is **amount in £/turn only**; there is **no** percentage-based subsidy mode in orders or resolution.
+- **Set Subsidy** — target faction, **amount**: a **positive integer** in pounds (£) **per turn** (ongoing subsidy until updated or cancelled). Valid if an **Embassy** exists and treasury meets validation (see resolver) — a Trade Consulate alone is **not** sufficient (Refs #3753 R2: economic/treaty actions require an Embassy). **current product** is **amount in £/turn only**; there is **no** percentage-based subsidy mode in orders or resolution.
 
 **Amount parameters (current product):** Both orders use the same **order field model**: a single integer `amount` in diplomatic orders. **Grant Aid:** `amount` must be a **positive multiple of £1000** (minimum £1000). **Set Subsidy:** `amount` must be a **positive multiple of £100** (minimum £100). Validation and diplomacy resolution enforce these steps. Defaults in UI steppers and AI suggestions use **£1000** for both unless the ruleset changes; defaults are **not** an exclusive list of legal values.
 
@@ -195,6 +195,14 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the Player controls a Great Power that already has an Embassy with a target Minor Nation or Tribe, is not at relation state `AT_WAR` with that faction, and has a Merchant unit assigned a `purchase_land` work order targeting a tile in that Minor or Tribe province  
   When the system validates the `purchase_land` work order during turn resolution  
   Then the system accepts the work order for execution and does not reject it for missing diplomatic prerequisites.
+
+- Given the Player controls a Great Power that holds only a Trade Consulate (no Embassy) with a target Minor Nation, is at relation state `AT_PEACE` with that Minor, and has treasury greater than or equal to the subsidy amount (Refs #3753 R2)  
+  When the Player issues a `Set Subsidy` order against that Minor  
+  Then the system rejects the order at validation with a reason indicating an Embassy is required, and creates no `SubsidyState` for that pair.
+
+- Given the Player controls a Great Power that holds an Embassy with a target Minor Nation, is at relation state `AT_PEACE` with that Minor, and has treasury greater than or equal to the subsidy amount (a positive multiple of £100) (Refs #3753 R2)  
+  When the Player issues a `Set Subsidy` order against that Minor  
+  Then the system accepts the order at validation (subject to the amount-step and treasury rules).
 
 - Given the Player controls a Great Power with an Embassy with a Minor Nation or Tribe, a different Great Power has a valid `Declare War` order against that Minor or Tribe in the Diplomacy phase of turn index `t`, and war between aggressor and that Minor/Tribe is applied in that phase  
   When the system presents the Player with an Intervention choice and the Player selects **Intervene**  
