@@ -60,6 +60,35 @@ void main() {
       expect(restored.formalAlliance, isFalse);
     });
 
+    test('decimal score round-trips through JSON (0.1 precision)', () {
+      const fractional = DiplomacyRelation(
+        factionId1: 'A',
+        factionId2: 'B',
+        score: 73.5,
+      );
+      final restored = DiplomacyRelation.fromJson(fractional.toJson());
+      expect(restored.score, 73.5);
+      expect(restored.score, isA<double>());
+    });
+
+    test('legacy integer score migrates to decimal (x1.0) on load', () {
+      final restored = DiplomacyRelation.fromJson(const {
+        'factionId1': 'A',
+        'factionId2': 'B',
+        'score': 50,
+        'level': 'neutral',
+        'state': 'atPeace',
+      });
+      expect(restored.score, 50);
+      expect(restored.score, isA<double>());
+      expect(restored.score == 50.0, isTrue);
+    });
+
+    test('copyWith accepts a fractional decimal score', () {
+      final updated = relation.copyWith(score: 50.4);
+      expect(updated.score, 50.4);
+    });
+
     test('formalAlliance round-trips through JSON when true', () {
       const allied = DiplomacyRelation(
         factionId1: 'A',

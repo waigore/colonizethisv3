@@ -160,7 +160,8 @@ const int subsidyBoostRelationPerStep = 2;
 const int subsidyBoostMax = 8;
 
 /// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
-RelationLevel scoreToLevel(int score) {
+/// Operates on the raw decimal [score] (SPEC/game/diplomacy.md § Relation Model).
+RelationLevel scoreToLevel(num score) {
   if (score <= relationScoreLevelHostileMax) return RelationLevel.hostile;
   if (score <= relationScoreLevelNeutralMax) return RelationLevel.neutral;
   if (score <= relationScoreLevelFriendlyMax) return RelationLevel.friendly;
@@ -169,7 +170,8 @@ RelationLevel scoreToLevel(int score) {
 
 /// One-word relation state for UI display. SPEC/game/diplomacy.md § Player-facing relation display.
 /// Score is hidden; UI shows this label: 0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly.
-String relationScoreToDisplayLabel(int score) {
+/// Operates on the raw decimal [score] (SPEC/game/diplomacy.md § Relation Model).
+String relationScoreToDisplayLabel(num score) {
   final clamped = score.clamp(relationScoreMin, relationScoreMax);
   if (clamped <= relationScoreDisplayHostileMax) return 'Hostile';
   if (clamped <= relationScoreDisplayUnfriendlyMax) return 'Unfriendly';

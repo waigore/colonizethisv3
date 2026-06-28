@@ -21,7 +21,13 @@ class DiplomacyRelation {
 
   final String factionId1;
   final String factionId2;
-  final int score;
+
+  /// Decimal relation score in `[0, 100]`. Stored as `num` so the resolver can
+  /// hold fractional values (0.1 precision) introduced by per-turn decay and
+  /// the additive-scaled trade-deal boost; integer values represent whole
+  /// scores. Threshold comparisons operate on the raw decimal.
+  /// SPEC/game/diplomacy.md § Relation Model.
+  final num score;
   final RelationLevel level;
   final RelationState state;
   final int sinceTurn;
@@ -46,7 +52,7 @@ class DiplomacyRelation {
   DiplomacyRelation copyWith({
     String? factionId1,
     String? factionId2,
-    int? score,
+    num? score,
     RelationLevel? level,
     RelationState? state,
     int? sinceTurn,
@@ -78,7 +84,10 @@ class DiplomacyRelation {
       DiplomacyRelation(
         factionId1: json['factionId1'] as String,
         factionId2: json['factionId2'] as String,
-        score: json['score'] as int? ?? 50,
+        // Decimal migration (SPEC/game/diplomacy.md § Relation Model): legacy
+        // saves stored an integer score; load it as a decimal (× 1.0) so all
+        // downstream threshold comparisons use the raw decimal value.
+        score: (json['score'] as num?)?.toDouble() ?? 50,
         level: RelationLevel.values.firstWhere(
           (e) => e.name == json['level'],
           orElse: () => RelationLevel.neutral,

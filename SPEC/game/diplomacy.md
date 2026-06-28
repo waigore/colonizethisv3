@@ -12,6 +12,8 @@ Full diplomacy system: war/peace, alliances, overture chain for Minors/Tribes, r
 
 Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0–100), **relation level** (Hostile 0–25, Neutral 26–50, Friendly 51–75, Allied 76–100), **formal alliance** flag, **sinceTurn**, **lastInteractionTurn**. Initial: all GP–GP at peace, score 50, formal alliance false. Updated by grants, trade, war, broken treaties.
 
+The **relation score** is a **decimal** value (fixed-point, 0.1 precision; represented as a `num`/`double`) in the inclusive range `[0.0, 100.0]`. Whole-number scores represent ordinary integer-valued relations; fractional values arise from decimal deltas (per-turn decay and additive-scaled trade-deal boosts). All **threshold comparisons** (level bands, Join Empire ≥ 51, Alliance ≥ 76, FTP, intervention probability, war-desire) operate on the **raw decimal value** with no intermediate rounding. **Save/load** round-trips the decimal. **Legacy saves** that stored an integer score are migrated on load by multiplying by `1.0` (an old score of `50` loads as `50.0`); no other field changes.
+
 The **formal alliance** flag is a **persisted treaty state**, distinct from the informal relation **level** `Allied` (score band 76–100). A formal alliance is created **only** when an `Alliance` diplomatic order resolves (`allianceFormed`) and is cleared on `allianceBroken` (e.g. a Call to Arms refusal). The informal `Allied` level (high relation score) does **not** by itself constitute a formal alliance and must **not** grant mutual-defence obligations. Old saves without the flag default to **formal alliance false**.
 
 While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace — **except** the GP–GP **auto-embassy** seeded at game start (see § GP–GP Rules), which survives war and peace.
@@ -273,6 +275,18 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
+
+- Given a legacy save file in which a faction-pair relation stored its score as the integer `50`  
+  When the system loads that save  
+  Then the system represents that pair's relation score as the decimal `50.0` (integer × 1.0) and uses that decimal value directly in all subsequent threshold comparisons.
+
+- Given a faction-pair relation whose decimal score is `73.5`  
+  When the system serializes that relation to a save and loads it back  
+  Then the restored relation score equals `73.5` exactly (decimal round-trip, no rounding).
+
+- Given a faction-pair relation whose decimal score is `50.6`  
+  When the system derives the relation level from the score  
+  Then the system derives `Friendly` (because `50.6` is strictly above the Neutral band maximum of `50`), with no rounding of the score to `51`.
 
 - Given the user views the diplomacy panel for a discovered faction with a diplomatic relation  
   When the panel displays the current relation  

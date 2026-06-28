@@ -94,7 +94,7 @@ bool _interventionsOutstanding(
 }
 
 /// Relation score 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80%.
-double _aiInterventionProbability(int relationScore) {
+double _aiInterventionProbability(num relationScore) {
   if (relationScore <= relationScoreLevelHostileMax) return 0;
   if (relationScore <= relationScoreLevelNeutralMax) {
     return kInterventionProbabilityNeutral;

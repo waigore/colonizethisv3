@@ -133,8 +133,8 @@ const OklchToken kDiplomacyRelationCordialToken = OklchToken(0.62, 0.08, 160);
 /// [relationScoreToDisplayLabel]. Hostile reuses the canonical `--danger`
 /// token and Friendly reuses `--success`, matching the warm-red / cool-green
 /// semantic shared with the relation state badge.
-Color diplomacyRelationWordColor(int score) {
-  final int clamped = score.clamp(relationScoreMin, relationScoreMax);
+Color diplomacyRelationWordColor(num score) {
+  final num clamped = score.clamp(relationScoreMin, relationScoreMax);
   if (clamped <= relationScoreDisplayHostileMax) {
     return EditorialMonoclePalette.danger;
   }

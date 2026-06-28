@@ -197,7 +197,7 @@ int _scoreOfferPeaceDiplomaticOrder({
   required PersonalityThresholds thresholds,
   required Map<String, String> provinceOwner,
   required Set<String> invadableOwners,
-  required int Function(String targetFactionId, int relationScore)
+  required int Function(String targetFactionId, num relationScore)
   warDesireForTarget,
 }) {
   var s = 50;

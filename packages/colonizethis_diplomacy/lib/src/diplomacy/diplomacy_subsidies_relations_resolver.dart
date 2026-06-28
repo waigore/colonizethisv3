@@ -321,7 +321,7 @@ Game applyRelationConvergence(Game game, int turn) {
     if (rel.atWar) continue;
 
     // Converge toward neutral
-    int newScore;
+    num newScore;
     if (rel.score < relationScoreNeutral) {
       newScore = (rel.score + 1).clamp(relationScoreMin, relationScoreMax);
     } else if (rel.score > relationScoreNeutral) {

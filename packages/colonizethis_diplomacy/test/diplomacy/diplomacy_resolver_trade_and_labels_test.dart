@@ -225,6 +225,14 @@ void main() {
       expect(scoreToLevel(76), RelationLevel.allied);
       expect(scoreToLevel(100), RelationLevel.allied);
     });
+    test('compares decimal scores on the raw value (no rounding)', () {
+      expect(scoreToLevel(25.0), RelationLevel.hostile);
+      expect(scoreToLevel(25.5), RelationLevel.neutral);
+      expect(scoreToLevel(50.0), RelationLevel.neutral);
+      expect(scoreToLevel(50.5), RelationLevel.friendly);
+      expect(scoreToLevel(75.0), RelationLevel.friendly);
+      expect(scoreToLevel(75.5), RelationLevel.allied);
+    });
   });
 
   group('relationScoreToDisplayLabel', () {
@@ -241,6 +249,14 @@ void main() {
     test('clamps out-of-range score to 0-100', () {
       expect(relationScoreToDisplayLabel(-1), 'Hostile');
       expect(relationScoreToDisplayLabel(101), 'Friendly');
+    });
+    test('maps decimal scores on the raw value', () {
+      expect(relationScoreToDisplayLabel(29.0), 'Hostile');
+      expect(relationScoreToDisplayLabel(29.5), 'Unfriendly');
+      expect(relationScoreToDisplayLabel(49.5), 'Cordial');
+      expect(relationScoreToDisplayLabel(69.0), 'Cordial');
+      expect(relationScoreToDisplayLabel(69.9), 'Friendly');
+      expect(relationScoreToDisplayLabel(70.0), 'Friendly');
     });
   });
 }
