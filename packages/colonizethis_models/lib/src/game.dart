@@ -231,9 +231,7 @@ class Game {
     if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
     if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
     if (aiProfileByGpId.isNotEmpty)
-      'aiProfileByGpId': aiProfileByGpId.map(
-        (k, v) => MapEntry(k, v),
-      ),
+      'aiProfileByGpId': aiProfileByGpId.map((k, v) => MapEntry(k, v)),
     if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
     if (dossierEvidenceEntries.isNotEmpty)
       'dossierEvidenceEntries': dossierEvidenceEntries
@@ -274,10 +272,26 @@ class Game {
       'debugDiplomacyUsedPairKeys': debugDiplomacyUsedPairKeys.toList()..sort(),
   };
 
+  static List<T> _parseModelList<T>(
+    dynamic raw,
+    T Function(Map<String, dynamic>) fromJson,
+  ) {
+    final list = raw as List<dynamic>? ?? const [];
+    return list
+        .map(
+          (e) =>
+              fromJson(Map<String, dynamic>.from(e as Map<dynamic, dynamic>)),
+        )
+        .toList();
+  }
+
   static Game fromJson(Map<String, dynamic> json) {
-    final playersList = json['players'] as List<dynamic>? ?? [];
-    final minorNationsList = json['minorNations'] as List<dynamic>? ?? [];
-    final tribesList = json['tribes'] as List<dynamic>? ?? [];
+    final players = _parseModelList(json['players'], Player.fromJson);
+    final minorNations = _parseModelList(
+      json['minorNations'],
+      MinorNation.fromJson,
+    );
+    final tribes = _parseModelList(json['tribes'], Tribe.fromJson);
     final turnTimeMappingRaw = json['turnTimeMapping'];
     final Map<String, dynamic>? turnTimeMappingJson =
         turnTimeMappingRaw is Map<dynamic, dynamic>
@@ -290,38 +304,22 @@ class Game {
             orElse: () => CombatMode.autoResolve,
           )
         : null;
-    final relationsList = json['diplomacyRelations'] as List<dynamic>? ?? [];
-    final diplomacyRelations = relationsList
-        .map(
-          (e) => DiplomacyRelation.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
-    final overtureList = json['overtureStates'] as List<dynamic>? ?? [];
-    final overtureStates = overtureList
-        .map(
-          (e) => OvertureState.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
-    final subsidyList = json['subsidyStates'] as List<dynamic>? ?? [];
-    final subsidyStates = subsidyList
-        .map(
-          (e) => SubsidyState.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
-    final colonyList = json['colonyStates'] as List<dynamic>? ?? [];
-    final colonyStates = colonyList
-        .map(
-          (e) => ColonyState.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
+    final diplomacyRelations = _parseModelList(
+      json['diplomacyRelations'],
+      DiplomacyRelation.fromJson,
+    );
+    final overtureStates = _parseModelList(
+      json['overtureStates'],
+      OvertureState.fromJson,
+    );
+    final subsidyStates = _parseModelList(
+      json['subsidyStates'],
+      SubsidyState.fromJson,
+    );
+    final colonyStates = _parseModelList(
+      json['colonyStates'],
+      ColonyState.fromJson,
+    );
 
     final aiControlRaw =
         json['aiControlByGpId'] as Map<dynamic, dynamic>? ?? {};
@@ -345,23 +343,14 @@ class Game {
     final hiddenAgendaByGpId = hiddenAgendaRaw.map(
       (k, v) => MapEntry(k.toString(), v.toString()),
     );
-    final evidenceList = json['dossierEvidenceEntries'] as List<dynamic>? ?? [];
-    final dossierEvidenceEntries = evidenceList
-        .map(
-          (e) => DossierEvidenceEntry.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
-    final diploHistoryList =
-        json['diplomaticHistoryEvents'] as List<dynamic>? ?? [];
-    final diplomaticHistoryEvents = diploHistoryList
-        .map(
-          (e) => DiplomaticEvent.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
+    final dossierEvidenceEntries = _parseModelList(
+      json['dossierEvidenceEntries'],
+      DossierEvidenceEntry.fromJson,
+    );
+    final diplomaticHistoryEvents = _parseModelList(
+      json['diplomaticHistoryEvents'],
+      DiplomaticEvent.fromJson,
+    );
     final globalGameSeed = json['globalGameSeed'] as int?;
     final greatPowerColorOverrideRaw =
         json['greatPowerColorOverride'] as Map<dynamic, dynamic>?;
@@ -387,14 +376,7 @@ class Game {
         (json['richesCashMultiplier'] as num?)?.toDouble() ?? 1.0;
     final capitalTileGrainBonusPerTurn =
         (json['capitalTileGrainBonusPerTurn'] as num?)?.toInt() ?? 5;
-    final generalsList = json['generals'] as List<dynamic>? ?? [];
-    final generals = generalsList
-        .map(
-          (e) => General.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
+    final generals = _parseModelList(json['generals'], General.fromJson);
     final politicalGlyphRaw =
         json['politicalGlyphByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final politicalGlyphByPlayerId = politicalGlyphRaw.map(
@@ -414,34 +396,17 @@ class Game {
     final ftpPartnershipKeys = ftpKeysList.map((e) => e.toString()).toSet();
     final debugDiploKeysList =
         json['debugDiplomacyUsedPairKeys'] as List<dynamic>? ?? [];
-    final debugDiplomacyUsedPairKeys =
-        debugDiploKeysList.map((e) => e.toString()).toSet();
+    final debugDiplomacyUsedPairKeys = debugDiploKeysList
+        .map((e) => e.toString())
+        .toSet();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
         Map<String, dynamic>.from(json['worldState'] as Map<dynamic, dynamic>),
       ),
-      players: playersList
-          .map(
-            (e) => Player.fromJson(
-              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-            ),
-          )
-          .toList(),
-      minorNations: minorNationsList
-          .map(
-            (e) => MinorNation.fromJson(
-              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-            ),
-          )
-          .toList(),
-      tribes: tribesList
-          .map(
-            (e) => Tribe.fromJson(
-              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-            ),
-          )
-          .toList(),
+      players: players,
+      minorNations: minorNations,
+      tribes: tribes,
       generals: generals,
       turnTimeMapping: turnTimeMappingJson != null
           ? TurnTimeMapping.fromJson(turnTimeMappingJson)
@@ -477,8 +442,7 @@ class Game {
       lastHumanResearchCategoryCompletionTurn:
           (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
       mapViewState: mapViewState,
-      calendarCampaignHalted:
-          json['calendarCampaignHalted'] as bool? ?? false,
+      calendarCampaignHalted: json['calendarCampaignHalted'] as bool? ?? false,
       infiniteMode: json['infiniteMode'] as bool? ?? false,
       worldMarketState: worldMarketState,
       ftpPartnershipKeys: ftpPartnershipKeys,
@@ -633,10 +597,7 @@ class Game {
     Object.hashAll(combatModeByProvinceId.entries),
     Object.hashAll(diplomacyRelations),
     Object.hashAll(overtureStates),
-    Object.hash(
-      Object.hashAll(subsidyStates),
-      Object.hashAll(colonyStates),
-    ),
+    Object.hash(Object.hashAll(subsidyStates), Object.hashAll(colonyStates)),
     Object.hashAll(aiControlByGpId.entries),
     Object.hashAll(aiSeedByGpId.entries),
     Object.hashAll(aiProfileByGpId.entries),
@@ -700,8 +661,7 @@ class Game {
   static bool _nullableStringMapEquals(
     Map<String, String?> a,
     Map<String, String?> b,
-  ) =>
-      _mapEquals(a, b);
+  ) => _mapEquals(a, b);
 
   static bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;
