@@ -8,7 +8,7 @@
 // "Hidden — not present in widget tree" at < 600 dp).
 //
 // These tests pin the GameScreen-level gating defined in
-// `game_map_area_part2.dart` (`if (!isNarrow && widget.game.victory == null)`):
+// `game_map_area_build.dart` (`if (!isNarrow && widget.game.victory == null)`):
 //
 //   - Positive: when the host viewport is below `kNarrowBreakpoint`, the
 //     players-bar widget is absent from the widget tree.
@@ -36,8 +36,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -46,14 +45,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugResult;
+  // Refs #3656: the players-bar gating assertions only read `game.players` and
+  // `game.victory`; the map canvas just needs *a* mapViewData to mount. The
+  // lightweight game + minimal mapViewData replace the ~7-11s
+  // getDebugInitGameResult() map generation with identical chrome behaviour.
+  final Game baseGame = buildPlayersBarTestGame();
+  final InitGameMapViewData mapViewData = buildLightweightMapViewData();
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    debugResult = getDebugInitGameResult();
     Hive.init('./.dart_tool/test_hive_players_bar_narrow');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
@@ -67,7 +73,7 @@ void main() {
       currentOrdersProvider.overrideWith(
         () => CurrentOrdersNotifier(const Orders()),
       ),
-      mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
+      mapViewDataProvider.overrideWith((ref) => mapViewData),
       gameIdsWithIntroShownProvider.overrideWith(
         () => GameIdsWithIntroShownNotifier({game.id}),
       ),
@@ -119,7 +125,7 @@ void main() {
 
         await tester.pumpWidget(
           buildGameScreen(
-            game: debugResult.game,
+            game: baseGame,
             width: narrowWidth,
             height: 700,
           ),
@@ -152,7 +158,7 @@ void main() {
 
         await tester.pumpWidget(
           buildGameScreen(
-            game: debugResult.game,
+            game: baseGame,
             width: wideWidth,
             height: 700,
           ),
@@ -179,15 +185,15 @@ void main() {
         // chip column is hidden so it does not paint behind the victory
         // overlay scrim)." This regression guard pairs the existing
         // wide-baseline AC with the victory-state suppression so both gating
-        // predicates in `game_map_area_part2.dart` (`!isNarrow &&
+        // predicates in `game_map_area_build.dart` (`!isNarrow &&
         // widget.game.victory == null`) stay covered by tests.
         const double wideWidth = 1500.0;
-        final victoryGame = debugResult.game.copyWith(
+        final victoryGame = baseGame.copyWith(
           victory: VictoryState(
-            winnerPlayerId: debugResult.game.players.first.id,
+            winnerPlayerId: baseGame.players.first.id,
             type: VictoryType.military,
             turnNumber:
-                debugResult.game.worldState.turnState.turnNumber,
+                baseGame.worldState.turnState.turnNumber,
           ),
         );
 

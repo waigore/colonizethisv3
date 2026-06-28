@@ -46,17 +46,20 @@ The map renderer draws terrain in **three passes**:
 ### Layer 2+: Terrain Features (Overlay)
 
 - **Purpose**: Draws feature overlays on top of land base.
-- **Terrain types**: Forest, Hills, Mountain, Swamp.
+- **Terrain types**: Hardwood forest, Scrub forest, Hills, Mountain, Swamp.
 - **Rendering**: Each feature cell draws its land base first (plains or desert, determined by L1), then overlays the feature standalone tile.
 - **Overlay tile IDs**:
-  - `tile_forest` — Default forest overlay
-  - `tile_forest_timber` — Forest overlay variant for timber resource tiles
+  - `tile_hardwoodForest` — Default hardwood forest overlay
+  - `tile_hardwoodForestTimber` — Hardwood forest overlay variant for timber resource tiles
+  - `tile_scrubForest` — Default scrub forest overlay
+  - `tile_scrubForestTimber` — Scrub forest overlay variant for timber resource tiles
   - `tile_hills` — Default hills overlay
   - `tile_hills_mine` — Hills overlay variant for mine-case tiles
   - `tile_hills_wool` — Hills overlay variant for wool resource tiles
   - `tile_mountain` — Default mountain overlay
   - `tile_swamp` — Default swamp overlay
 - **Selection API note**: Terrain variant key selection is shared across L1 and L2+ terrain rendering so plains, forest, and hills variants follow one deterministic selector.
+- **Asset note (issue #3573)**: Hardwood forest loads the renamed dense-canopy art `tile_hardwood_forest.png` / `tile_hardwood_forest_timber.png` (formerly `tile_forest.png` / `tile_forest_timber.png`). Scrub forest loads its own distinct sparse art `tile_scrub_forest.png` / `tile_scrub_forest_timber.png` (sparser, lighter foliage with more bare ground than hardwood). All four standalone keys are registered and selected independently, so any refreshed art (e.g. a future PixelLab pass) can drop in by replacing the PNG with no code change.
 
 ---
 
@@ -134,8 +137,10 @@ for each cell:
 
 | Tile ID | Description |
 |---------|-------------|
-| `tile_forest` | Default dense forest canopy overlay on land base |
-| `tile_forest_timber` | Forest overlay variant for `resourceId = timber` |
+| `tile_hardwoodForest` | Default dense hardwood forest canopy overlay on land base |
+| `tile_hardwoodForestTimber` | Hardwood forest overlay variant for `resourceId = timber` |
+| `tile_scrubForest` | Default sparse scrub forest overlay on land base |
+| `tile_scrubForestTimber` | Scrub forest overlay variant for `resourceId = timber` |
 | `tile_hills` | Default rolling hills overlay on land base |
 | `tile_hills_mine` | Hills overlay variant for mine-case tiles |
 | `tile_hills_wool` | Hills overlay variant for `resourceId = wool` |
@@ -162,7 +167,8 @@ bool isLandBase(TerrainType t) =>
 
 // Layer 2+ (Features)
 bool isFeature(TerrainType t) =>
-    t == TerrainType.forest ||
+    t == TerrainType.hardwoodForest ||
+    t == TerrainType.scrubForest ||
     t == TerrainType.hills ||
     t == TerrainType.mountain ||
     t == TerrainType.swamp;
@@ -174,7 +180,7 @@ The `TerrainTilesetCache` loads:
 - `sea_plains` Wang tileset (L0→L1)
 - `sea_desert` Wang tileset (L0→L1)
 - `plains_desert` Wang tileset (L1 internal)
-- Four feature standalone tiles (L2+)
+- Feature standalone tiles (L2+): hardwood forest (+timber), scrub forest (+timber), hills (+mine/+wool), mountain, swamp, plus plains resource variants
 
 ### Terrain Colors (Fallback)
 
@@ -185,7 +191,8 @@ When tiles are not loaded, use solid colors:
 | Sea | `(30, 58, 95)` dark blue |
 | Plains | `(124, 179, 66)` grass green |
 | Desert | `(215, 204, 200)` beige |
-| Forest | `(46, 125, 50)` dark green |
+| Hardwood forest | `(46, 125, 50)` dark green |
+| Scrub forest | `(124, 179, 66)` light sparse green |
 | Hills | `(109, 76, 65)` brown |
 | Mountain | `(120, 144, 156)` gray |
 | Swamp | `(61, 74, 63)` grey-green |
@@ -215,7 +222,8 @@ The **logic** (which tileset applies per corner pattern) is fixed by terrain typ
 - Given an **interior** plains cell with `resourceId` in `{grain, meat, horses}` and player-constrained **fogged** visibility, when rendering L1 completes, then fog attenuation for that cell matches other interior plains land-base tiles (no unintended double-darkening from separate base vs overlay passes).
 - Given a plains tile with `resourceId` not in `{grain, meat, horses}` (or null), when rendering L1, then the renderer keeps the canonical plains base tile.
 - Given a desert tile with any `resourceId`, when rendering L1, then the renderer does not select any plains resource variant tile key.
-- Given a forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_forest_timber`; otherwise for forest it selects `tile_forest`.
+- Given a hardwood forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_hardwoodForestTimber`; otherwise for hardwood forest it selects `tile_hardwoodForest`.
+- Given a scrub forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_scrubForestTimber`; otherwise for scrub forest it selects `tile_scrubForest`.
 - Given a hills tile where `improvementLevel > 0` and the `resourceId` is a mineral resource, when rendering L2+, then the renderer selects `tile_hills_mine`; otherwise if `resourceId = wool`, then it selects `tile_hills_wool`; otherwise it selects `tile_hills`.
 - Given terrain asset loading and any required plains variant PNG (`tile_plains_grain`, `tile_plains_meat`, `tile_plains_horses`) is missing or fails decode, when map terrain assets initialize, then initialization fails fast with an error instead of silently skipping that variant.
 - Given fog-of-war visibility, when rendering, then appropriate darkening is applied to obscured cells.

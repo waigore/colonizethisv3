@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_map/src/tile_map_province_budget.dart';
+import 'package:colonizethis_map/src/gen/tile_map_province_budget.dart';
 
 void main() {
   group('allocateBudgetByProvinceCount', () {

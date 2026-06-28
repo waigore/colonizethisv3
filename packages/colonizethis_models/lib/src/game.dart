@@ -80,6 +80,7 @@ class Game {
     this.subsidyStates = const [],
     this.aiControlByGpId = const {},
     this.aiSeedByGpId = const {},
+    this.aiProfileByGpId = const {},
     this.hiddenAgendaByGpId = const {},
     this.dossierEvidenceEntries = const [],
     this.diplomaticHistoryEvents = const [],
@@ -96,6 +97,7 @@ class Game {
     this.mapViewState = MapViewState.defaults,
     this.worldMarketState = WorldMarketState.empty,
     this.ftpPartnershipKeys = const {},
+    this.debugDiplomacyUsedPairKeys = const {},
   });
 
   final String id;
@@ -130,6 +132,10 @@ class Game {
 
   /// Per-AI seed for determinism. Phase 4.
   final Map<String, int> aiSeedByGpId;
+
+  /// Blessed tuned-profile name per AI Great Power; `null` value = normal AI.
+  /// Only AI slots are populated. Refs #3444.
+  final Map<String, String?> aiProfileByGpId;
 
   /// Hidden agenda id per AI Great Power. Phase 6. Never exposed to player.
   final Map<String, String> hiddenAgendaByGpId;
@@ -191,6 +197,11 @@ class Game {
   /// SPEC/game/world-market.md § Favored Trading Partner.
   final Set<String> ftpPartnershipKeys;
 
+  /// Faction-pair keys that have already consumed their per-turn `/set_diplomacy`
+  /// debug-mutation quota this turn (sorted `factionA|factionB`). Cleared on
+  /// turn advance. Debug tool only. SPEC/ui/debug-console-panel.md.
+  final Set<String> debugDiplomacyUsedPairKeys;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -211,6 +222,10 @@ class Game {
       'subsidyStates': subsidyStates.map((s) => s.toJson()).toList(),
     if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
     if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
+    if (aiProfileByGpId.isNotEmpty)
+      'aiProfileByGpId': aiProfileByGpId.map(
+        (k, v) => MapEntry(k, v),
+      ),
     if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
     if (dossierEvidenceEntries.isNotEmpty)
       'dossierEvidenceEntries': dossierEvidenceEntries
@@ -247,6 +262,8 @@ class Game {
       'worldMarketState': worldMarketState.toJson(),
     if (ftpPartnershipKeys.isNotEmpty)
       'ftpPartnershipKeys': ftpPartnershipKeys.toList()..sort(),
+    if (debugDiplomacyUsedPairKeys.isNotEmpty)
+      'debugDiplomacyUsedPairKeys': debugDiplomacyUsedPairKeys.toList()..sort(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -298,6 +315,14 @@ class Game {
     final aiSeedRaw = json['aiSeedByGpId'] as Map<dynamic, dynamic>? ?? {};
     final aiSeedByGpId = aiSeedRaw.map(
       (k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0),
+    );
+    final aiProfileRaw =
+        json['aiProfileByGpId'] as Map<dynamic, dynamic>? ?? {};
+    final aiProfileByGpId = aiProfileRaw.map(
+      (k, v) => MapEntry<String, String?>(
+        k.toString(),
+        v == null ? null : v.toString(),
+      ),
     );
     final hiddenAgendaRaw =
         json['hiddenAgendaByGpId'] as Map<dynamic, dynamic>? ?? {};
@@ -371,6 +396,10 @@ class Game {
         : WorldMarketState.empty;
     final ftpKeysList = json['ftpPartnershipKeys'] as List<dynamic>? ?? [];
     final ftpPartnershipKeys = ftpKeysList.map((e) => e.toString()).toSet();
+    final debugDiploKeysList =
+        json['debugDiplomacyUsedPairKeys'] as List<dynamic>? ?? [];
+    final debugDiplomacyUsedPairKeys =
+        debugDiploKeysList.map((e) => e.toString()).toSet();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -408,6 +437,7 @@ class Game {
       subsidyStates: subsidyStates,
       aiControlByGpId: aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId,
+      aiProfileByGpId: aiProfileByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId,
       dossierEvidenceEntries: dossierEvidenceEntries,
       diplomaticHistoryEvents: diplomaticHistoryEvents,
@@ -435,6 +465,7 @@ class Game {
       infiniteMode: json['infiniteMode'] as bool? ?? false,
       worldMarketState: worldMarketState,
       ftpPartnershipKeys: ftpPartnershipKeys,
+      debugDiplomacyUsedPairKeys: debugDiplomacyUsedPairKeys,
     );
   }
 
@@ -453,6 +484,7 @@ class Game {
     List<SubsidyState>? subsidyStates,
     Map<String, bool>? aiControlByGpId,
     Map<String, int>? aiSeedByGpId,
+    Map<String, String?>? aiProfileByGpId,
     Map<String, String>? hiddenAgendaByGpId,
     List<DossierEvidenceEntry>? dossierEvidenceEntries,
     List<DiplomaticEvent>? diplomaticHistoryEvents,
@@ -469,6 +501,7 @@ class Game {
     MapViewState? mapViewState,
     WorldMarketState? worldMarketState,
     Set<String>? ftpPartnershipKeys,
+    Set<String>? debugDiplomacyUsedPairKeys,
   }) {
     return Game(
       id: id ?? this.id,
@@ -486,6 +519,7 @@ class Game {
       subsidyStates: subsidyStates ?? this.subsidyStates,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
+      aiProfileByGpId: aiProfileByGpId ?? this.aiProfileByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
       dossierEvidenceEntries:
           dossierEvidenceEntries ?? this.dossierEvidenceEntries,
@@ -512,6 +546,8 @@ class Game {
       mapViewState: mapViewState ?? this.mapViewState,
       worldMarketState: worldMarketState ?? this.worldMarketState,
       ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
+      debugDiplomacyUsedPairKeys:
+          debugDiplomacyUsedPairKeys ?? this.debugDiplomacyUsedPairKeys,
     );
   }
 
@@ -534,6 +570,7 @@ class Game {
           _listEquals(subsidyStates, other.subsidyStates) &&
           _mapEquals(aiControlByGpId, other.aiControlByGpId) &&
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
+          _nullableStringMapEquals(aiProfileByGpId, other.aiProfileByGpId) &&
           _mapEquals(hiddenAgendaByGpId, other.hiddenAgendaByGpId) &&
           _listEquals(dossierEvidenceEntries, other.dossierEvidenceEntries) &&
           _listEquals(diplomaticHistoryEvents, other.diplomaticHistoryEvents) &&
@@ -557,7 +594,11 @@ class Game {
               other.lastHumanResearchCategoryCompletionTurn &&
           mapViewState == other.mapViewState &&
           worldMarketState == other.worldMarketState &&
-          _setEquals(ftpPartnershipKeys, other.ftpPartnershipKeys);
+          _setEquals(ftpPartnershipKeys, other.ftpPartnershipKeys) &&
+          _setEquals(
+            debugDiplomacyUsedPairKeys,
+            other.debugDiplomacyUsedPairKeys,
+          );
 
   @override
   int get hashCode => Object.hash(
@@ -575,6 +616,7 @@ class Game {
     Object.hashAll(subsidyStates),
     Object.hashAll(aiControlByGpId.entries),
     Object.hashAll(aiSeedByGpId.entries),
+    Object.hashAll(aiProfileByGpId.entries),
     Object.hashAll(hiddenAgendaByGpId.entries),
     Object.hash(
       Object.hashAll(dossierEvidenceEntries),
@@ -596,6 +638,7 @@ class Game {
       mapViewState,
       worldMarketState,
       Object.hashAll(ftpPartnershipKeys),
+      Object.hashAll(debugDiplomacyUsedPairKeys),
     ),
   );
 
@@ -630,6 +673,12 @@ class Game {
     }
     return true;
   }
+
+  static bool _nullableStringMapEquals(
+    Map<String, String?> a,
+    Map<String, String?> b,
+  ) =>
+      _mapEquals(a, b);
 
   static bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;

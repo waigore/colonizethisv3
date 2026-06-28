@@ -209,31 +209,40 @@ Widget fallback() => IconButton(icon: const Icon(Icons.menu), onPressed: () {});
       },
     );
 
-    test('allowlists the Debug Log Viewer dev-tooling screen (SYS10001)', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_iconbutton_devtools_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'no longer allowlists the Debug Log Viewer (SYS10001) after the '
+      'Refs #2914 S8 CtScreenShell migration',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_iconbutton_debug_log_promoted_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      const debugViewer =
-          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+        const debugViewer =
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-      File('${temp.path}/$debugViewer')
-        ..createSync(recursive: true)
-        ..writeAsStringSync('''
+        File('${temp.path}/$debugViewer')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
 ''');
 
-      final code = runCheckAppNoMaterialIconButton(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final logs = <String>[];
+        final code = runCheckAppNoMaterialIconButton(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains('debug_log_viewer_screen.dart:3: IconButton('),
+        );
+      },
+    );
 
     test(
       'no longer allowlists the Debug Console Overlay (SYS20001) after the '
@@ -393,18 +402,18 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
       );
     });
 
-    test('skips canonical dev-tooling screens', () {
-      const skipped = <String>[
-        'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-      ];
-      for (final path in skipped) {
+    test(
+      'does not skip debug_log_viewer_screen.dart (in scope for the '
+      'check after Refs #2914 S8 CtScreenShell migration)',
+      () {
         expect(
-          shouldSkipAppNoMaterialIconButtonFile(path),
-          isTrue,
-          reason: 'expected $path to be allowlisted',
+          shouldSkipAppNoMaterialIconButtonFile(
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+          ),
+          isFalse,
         );
-      }
-    });
+      },
+    );
 
     test(
       'does not skip debug_console_overlay_panel.dart (in scope for the '

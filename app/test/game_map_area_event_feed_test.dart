@@ -10,18 +10,18 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/map_view_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 class _MapAreaHost extends StatefulWidget {
   const _MapAreaHost({required this.game, required this.mapViewData});
@@ -72,9 +72,8 @@ void main() {
   testWidgets('GameMapArea dispose cancels AppEventBus subscriptions', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
+    final game = buildMapAreaEventFeedTestGame();
+    final mapViewData = buildLightweightMapViewData();
     final bus = AppEventBus.create();
     final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
         ? game.worldState.oldWorld.units.first.id
@@ -130,9 +129,8 @@ void main() {
   testWidgets('debug console overlay toggles when feature is enabled', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
+    final game = buildMapAreaEventFeedTestGame();
+    final mapViewData = buildLightweightMapViewData();
     final bus = AppEventBus.create();
     addTearDown(bus.dispose);
 
@@ -175,9 +173,8 @@ void main() {
   testWidgets('Player turn event feed commits batch on turn complete', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
+    final game = buildMapAreaEventFeedTestGame();
+    final mapViewData = buildLightweightMapViewData();
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
     final bus = AppEventBus.create();
     addTearDown(bus.dispose);
@@ -229,9 +226,8 @@ void main() {
   testWidgets(
     'Player turn event feed naval line emits LocateMapTileEvent on tap',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = buildMapAreaEventFeedTestGame();
+      final mapViewData = buildLightweightMapViewData();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final opponentId = game.players.firstWhere((p) => p.id != humanId).id;
       final seaKey = game.worldState.portsByProvinceSeaboard.keys.first;
@@ -299,9 +295,8 @@ void main() {
   testWidgets(
     'Player turn event feed unresolved naval anchor is non-tappable',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = buildMapAreaEventFeedTestGame();
+      final mapViewData = buildLightweightMapViewData();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final opponentId = game.players.firstWhere((p) => p.id != humanId).id;
       final bus = AppEventBus.create();
@@ -364,9 +359,8 @@ void main() {
   testWidgets('Player turn event feed uses specific diplomacy war copy', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
+    final game = buildMapAreaEventFeedTestGame();
+    final mapViewData = buildLightweightMapViewData();
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
     final otherId = game.players.firstWhere((p) => p.id != humanId).id;
     final humanName = game.players
@@ -426,9 +420,8 @@ void main() {
   testWidgets(
     'Player turn event feed renders work completion and taps map tile',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = buildMapAreaEventFeedTestGame();
+      final mapViewData = buildLightweightMapViewData();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
       final locateEvents = <LocateMapTileEvent>[];
@@ -493,9 +486,8 @@ void main() {
   testWidgets('Player turn event feed includes discovery and overture lines', (
     WidgetTester tester,
   ) async {
-    final init = getDebugInitGameResult();
-    final game = init.game;
-    final mapViewData = init.mapViewData;
+    final game = buildMapAreaEventFeedTestGame();
+    final mapViewData = buildLightweightMapViewData();
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
     final otherId = game.players.firstWhere((p) => p.id != humanId).id;
     final bus = AppEventBus.create();
@@ -554,9 +546,8 @@ void main() {
   testWidgets(
     'Player turn event feed is hidden by default and toggles from news button',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = buildMapAreaEventFeedTestGame();
+      final mapViewData = buildLightweightMapViewData();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -626,9 +617,8 @@ void main() {
   testWidgets(
     'Player turn event feed replaces previous turn entries on next commit',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = buildMapAreaEventFeedTestGame();
+      final mapViewData = buildLightweightMapViewData();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
       addTearDown(() async {
@@ -717,9 +707,8 @@ void main() {
   testWidgets(
     'Player turn event feed shows entries in narrow layout when toggled',
     (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
+      final game = buildMapAreaEventFeedTestGame();
+      final mapViewData = buildLightweightMapViewData();
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
       addTearDown(() async {

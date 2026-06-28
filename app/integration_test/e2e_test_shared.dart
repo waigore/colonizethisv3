@@ -1,7 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart'
+    show CivilianUnitRowCard;
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -110,6 +111,27 @@ const String kE2eDefaultAdvanceGameStartIntroPhase =
 const String kE2eAdvanceGameStartIntroIterationsCounter =
     'advance_game_start_intro_until_dismissed_iterations';
 
+/// Yarn intro control labels tried in order each loop iteration (GitHub #2336).
+///
+/// The production `game_start_intro` node (one narrative line then
+/// `-> I shall.`) is collapsed by `CtDialogueView` into a **single** step whose
+/// only control is the Yarn option label `I shall.` (Refs #3628): there is no
+/// intermediate Continue line step, so one tap of `I shall.` dismisses the
+/// intro. The legacy generic `Continue` label is retained as a defensive
+/// fallback (e.g. the asset-load error shell) and tried only after `I shall.`.
+const List<String> kE2eGameStartIntroControlLabels = ['I shall.', 'Continue'];
+
+/// Per-control post-tap settle budget after an intro button tap.
+///
+/// Intermediate controls (for example **Continue** before **I shall.**) do not
+/// dismiss the blocking shell; the legacy 5 s [e2ePumpUntilConditionOrIdle]
+/// cap per tap therefore burned ~5 s on every bootstrap before the next label
+/// could be tried. A shorter cap keeps frame settlement without blocking the
+/// multi-label pass (Refs GitHub #2336 AC5 / bootstrap wall-clock).
+const Duration kE2eDefaultIntroControlPostTapSettleTimeout = Duration(
+  milliseconds: 500,
+);
+
 /// Advances yarn intro lines/choices until the overlay no longer blocks taps.
 ///
 /// The spinner / no-tap-target branches previously each paid a fixed 50 ms
@@ -119,6 +141,14 @@ const String kE2eAdvanceGameStartIntroIterationsCounter =
 /// is reset to 25 ms whenever a tap advances the overlay or the loading
 /// indicator clears, mirroring the prepump-free panel openers landed in this
 /// PR. Refs GitHub #2336 AC5 / pump-reduction.
+///
+/// **Multi-label pass:** each loop iteration tries every label in
+/// [kE2eGameStartIntroControlLabels] without breaking after the first tap.
+/// Intermediate controls (for example **Continue** before **I shall.**) keep
+/// the blocking shell mounted; the per-control post-tap settle uses
+/// [kE2eDefaultIntroControlPostTapSettleTimeout] (500 ms) instead of the
+/// legacy 5 s cap so bootstrap does not burn ~5 s waiting for full dismissal
+/// before the next control is tapped.
 ///
 /// Perf attribution (Refs GitHub #2336 AC8 / baseline measurement):
 ///
@@ -168,7 +198,10 @@ Future<void> e2eAdvanceGameStartIntroUntilDismissed(
     }
     final overlay = find.byType(GameStartIntroOverlay);
     var tapped = false;
-    for (final label in ['Continue', 'I shall.']) {
+    for (final label in kE2eGameStartIntroControlLabels) {
+      if (!e2eGameStartIntroBlocksUi(tester)) {
+        break;
+      }
       final control = find
           .descendant(of: overlay, matching: find.text(label))
           .hitTestable();
@@ -179,13 +212,12 @@ Future<void> e2eAdvanceGameStartIntroUntilDismissed(
       await e2ePumpUntilConditionOrIdle(
         tester,
         () => !e2eGameStartIntroBlocksUi(tester),
-        timeout: const Duration(seconds: 5),
+        timeout: kE2eDefaultIntroControlPostTapSettleTimeout,
         perf: perf,
         phaseName: 'pump_until_intro_advance_after_$label',
       );
       tapped = true;
       idlePollMs = 25;
-      break;
     }
     if (!tapped) {
       await tester.pump(Duration(milliseconds: idlePollMs));
@@ -517,6 +549,236 @@ Future<void> e2eAwaitCivilianWorkMenuMounted(
 /// falls back to the raw finder, which is the canonical AC5 / AC10
 /// adaptive-pre-tap recipe documented in the e2e-ui-stability rule
 /// (Refs GitHub #2336 AC5 / AC10 / Bottleneck 6).
+/// Taps the enclosing [CtNinePatchButton] for a button [label] finder, falling
+/// back to the shared [e2eEnsureVisibleAndTapHitTestable] label recipe when no
+/// `CtNinePatchButton` ancestor resolves (for example a plain `InkWell` work-
+/// menu row from `_showOrderMenu`).
+///
+/// Why this exists (Refs GitHub #2336 AC6 / AC10): `CtNinePatchButton`
+/// (`#2859` R1) renders its label inside a `Stack` whose top child is a
+/// `Positioned.fill(IgnorePointer(_BrassCornerBrackets))` painted over the
+/// engraved-label content, wrapped by a `Material` + `InkWell`. On headless
+/// Linux a `tester.tap` aimed at the inner `Text` center resolves to the label
+/// glyph rather than the `InkWell`'s gesture region, so the `onPressed`
+/// callback (e.g. the civilian-row **Assign** → `_showOrderMenu`) never fires
+/// and the downstream work-menu wait times out. Resolving the tap to the
+/// enclosing button — the canonical interactive control per
+/// `colonizethis-e2e-ui-stability.mdc` (*scope interactions to the actual
+/// control*) — fires `onPressed` deterministically.
+///
+/// Returns `true` when a tap was issued (button ancestor or label fallback),
+/// `false` only when [label] resolves to zero elements.
+Future<bool> e2eTapEnclosingNinePatchButtonOrLabel(
+  WidgetTester tester,
+  Finder label,
+) async {
+  if (label.evaluate().isEmpty) {
+    return false;
+  }
+  final button = find.ancestor(
+    of: label,
+    matching: find.byType(CtNinePatchButton),
+  );
+  if (button.evaluate().isEmpty) {
+    return e2eEnsureVisibleAndTapHitTestable(tester, label);
+  }
+  final target = button.first;
+  await e2eScrollButtonIntoHitTestableView(tester, target);
+  final hit = target.hitTestable();
+  final resolved = hit.evaluate().isNotEmpty ? hit.first : target;
+  await tester.tap(resolved, warnIfMissed: false);
+  return true;
+}
+
+/// Best-effort scrolls [button] until it is genuinely **hit-testable**
+/// (visible inside the render-view bounds), not merely *built*.
+///
+/// Why this exists (Refs GitHub #2336 AC6 / AC7 / AC10): a `ListView` keeps
+/// rows just outside the viewport laid out (within `cacheExtent`), so they are
+/// neither `Offstage` nor removed from the element tree. As a result both
+/// `WidgetController.scrollUntilVisible` (which stops as soon as the finder
+/// `evaluate()` is non-empty) and a single `tester.ensureVisible` can no-op on
+/// a row whose center is still below the render view — e.g. the first civilian
+/// **Assign** button laid out at `y≈819` inside a `1280×720` headless view. A
+/// `tester.tap` then derives an off-screen offset, misses the hit test, never
+/// fires `onPressed`, and the downstream work-menu wait times out. Driving the
+/// enclosing `Scrollable` until the button is hit-testable makes the tap land
+/// deterministically per `colonizethis-e2e-ui-stability.mdc`
+/// (*verify visibility before interaction*).
+Future<void> e2eScrollButtonIntoHitTestableView(
+  WidgetTester tester,
+  Finder button,
+) async {
+  if (button.hitTestable().evaluate().isNotEmpty) {
+    return;
+  }
+  try {
+    await tester.ensureVisible(button);
+    await tester.pump();
+  } catch (_) {}
+  if (button.hitTestable().evaluate().isNotEmpty) {
+    return;
+  }
+  final scrollable = find.ancestor(
+    of: button,
+    matching: find.byType(Scrollable),
+  );
+  if (scrollable.evaluate().isEmpty) {
+    return;
+  }
+  const maxScrollSteps = 20;
+  for (
+    var i = 0;
+    i < maxScrollSteps && button.hitTestable().evaluate().isEmpty;
+    i++
+  ) {
+    final dragged = await e2eDragScrollableFromVisiblePoint(
+      tester,
+      scrollable,
+      const Offset(0, -120),
+    );
+    if (!dragged) {
+      break;
+    }
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
+/// Logical size of the test render view (for example `1280×720` on the headless
+/// Linux desktop host). Used to clamp synthetic gesture start points inside the
+/// visible bounds.
+Size e2eRenderViewSize(WidgetTester tester) {
+  return tester.view.physicalSize / tester.view.devicePixelRatio;
+}
+
+/// Drags [scrollable] by [delta] starting from a point guaranteed to lie inside
+/// both the scrollable's on-screen extent and the render view, returning `true`
+/// when a drag was issued.
+///
+/// Why this exists (Refs GitHub #2336 AC6 / AC7 / AC10): a freshly opened
+/// bottom-sheet panel can still be mid entrance-animation, so the `Scrollable`'s
+/// geometric center may sit below the render view (observed at `y≈918` in a
+/// `1280×720` headless view). A plain `tester.drag(scrollable, ...)` derives its
+/// start offset from that off-screen center, misses the hit test, and scrolls
+/// nothing — so rows below the fold stay unreachable. Grabbing the on-screen
+/// portion of the scrollable instead drives the list deterministically per
+/// `colonizethis-e2e-ui-stability.mdc` (*verify visibility before interaction*).
+/// Returns `false` when no usable on-screen portion of the scrollable exists.
+Future<bool> e2eDragScrollableFromVisiblePoint(
+  WidgetTester tester,
+  Finder scrollable,
+  Offset delta,
+) async {
+  if (scrollable.evaluate().isEmpty) {
+    return false;
+  }
+  final rect = tester.getRect(scrollable.first);
+  final view = e2eRenderViewSize(tester);
+  final top = rect.top < 0 ? 0.0 : rect.top;
+  final bottom = rect.bottom > view.height ? view.height : rect.bottom;
+  if (bottom - top < 8.0) {
+    return false;
+  }
+  final startX = rect.center.dx.clamp(8.0, view.width - 8.0).toDouble();
+  final startY = ((top + bottom) / 2).clamp(8.0, view.height - 8.0).toDouble();
+  await tester.dragFrom(Offset(startX, startY), delta);
+  return true;
+}
+
+/// Pumps until [scrollable] has a meaningful on-screen extent (a freshly opened
+/// panel has finished sliding up) or [timeout] elapses.
+///
+/// Guards interactions that target a bottom-sheet panel immediately after it is
+/// opened: without this settle the panel's `Scrollable` can still be animating
+/// up from the bottom edge, leaving its content below the render view (see
+/// [e2eDragScrollableFromVisiblePoint]). Refs GitHub #2336 AC6 / AC7 / AC10.
+Future<void> e2eWaitScrollableOnScreen(
+  WidgetTester tester,
+  Finder scrollable, {
+  Duration timeout = const Duration(seconds: 5),
+  String phaseName = 'pump_until_panel_scrollable_onscreen',
+}) async {
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      if (scrollable.evaluate().isEmpty) {
+        return false;
+      }
+      final rect = tester.getRect(scrollable.first);
+      final view = e2eRenderViewSize(tester);
+      final top = rect.top < 0 ? 0.0 : rect.top;
+      final bottom = rect.bottom > view.height ? view.height : rect.bottom;
+      return bottom - top > 40.0;
+    },
+    timeout: timeout,
+    phaseName: phaseName,
+  );
+}
+
+double _e2eScrollPositionPixels(WidgetTester tester, Finder scrollable) {
+  final state = tester.state<ScrollableState>(scrollable.first);
+  return state.position.pixels;
+}
+
+/// Scrolls the civilian-panel [ListView] through its full extent (bottom then
+/// top) so every unit row is built before [e2eCollectTextPreorder] walks the
+/// tree.
+///
+/// Why this exists (Refs GitHub #2336 AC6 / AC7 / AC10): the bottom-sheet
+/// panel caps list height (~308 dp visible) while the E2E roster can list more
+/// units than fit on screen. `ListView` virtualization omits off-screen row
+/// `Text` nodes, so a preorder snapshot taken at scroll offset `0` can be
+/// shorter than [civilianUnitsPanelExpectedTexts] (for example the second
+/// idle `Explorer` row at indices 25–29). Driving the list to max extent and
+/// back — together with the E2E `cacheExtent` on [UnitsPanelShell] — keeps
+/// every row mounted for the assertion pass.
+Future<void> e2ePrepareCivilianPanelListForTextCollection(
+  WidgetTester tester,
+) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  if (root.evaluate().isEmpty) {
+    return;
+  }
+  final scrollable = find.descendant(
+    of: root,
+    matching: find.byType(Scrollable),
+  );
+  if (scrollable.evaluate().isEmpty) {
+    return;
+  }
+  await e2eWaitScrollableOnScreen(tester, scrollable);
+  const maxSteps = 25;
+  for (var i = 0; i < maxSteps; i++) {
+    final before = _e2eScrollPositionPixels(tester, scrollable);
+    final dragged = await e2eDragScrollableFromVisiblePoint(
+      tester,
+      scrollable,
+      const Offset(0, -200),
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+    final after = _e2eScrollPositionPixels(tester, scrollable);
+    if (!dragged || (after - before).abs() < 0.5) {
+      break;
+    }
+  }
+  for (var i = 0; i < maxSteps; i++) {
+    final before = _e2eScrollPositionPixels(tester, scrollable);
+    if (before < 0.5) {
+      break;
+    }
+    await e2eDragScrollableFromVisiblePoint(
+      tester,
+      scrollable,
+      const Offset(0, 200),
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+    final after = _e2eScrollPositionPixels(tester, scrollable);
+    if ((after - before).abs() < 0.5) {
+      break;
+    }
+  }
+}
+
 Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
@@ -534,7 +796,10 @@ Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
     120,
     scrollable: panelScrollable,
   );
-  final didTap = await e2eEnsureVisibleAndTapHitTestable(tester, firstAssign);
+  final didTap = await e2eTapEnclosingNinePatchButtonOrLabel(
+    tester,
+    firstAssign,
+  );
   expect(
     didTap,
     isTrue,
@@ -609,7 +874,13 @@ Future<void> e2eTapCivilianWorkOrderLabel(
   );
 }
 
-/// Taps **Assign** on a [ListTile] whose title is exactly [unitTypeTitle] (GitHub #2336 H9).
+/// Taps **Assign** on the [CivilianUnitRowCard] whose title is exactly
+/// [unitTypeTitle] (GitHub #2336 H9).
+///
+/// The civilian panel migrated its unit rows off Material `ListTile` to the
+/// bespoke [CivilianUnitRowCard] (Refs #2914 S8); this helper therefore scopes
+/// the per-row **Assign** lookup to that card so the row's `CtNinePatchButton`
+/// resolves after the migration instead of silently matching nothing.
 Future<void> e2eTapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
   String unitTypeTitle,
@@ -626,10 +897,20 @@ Future<void> e2eTapAssignOnCivilianRowWithTitle(
     of: listView,
     matching: find.text(unitTypeTitle),
   );
+  // The panel may still be mid entrance-animation; settle it on-screen before
+  // dragging so gesture start points land inside the render view (#2336 AC6).
+  await e2eWaitScrollableOnScreen(tester, panelScrollable);
   final sw = Stopwatch()..start();
   while (titlesInList.evaluate().isEmpty &&
       sw.elapsed < const Duration(seconds: 20)) {
-    await tester.drag(panelScrollable, const Offset(0, -120));
+    final dragged = await e2eDragScrollableFromVisiblePoint(
+      tester,
+      panelScrollable,
+      const Offset(0, -120),
+    );
+    if (!dragged) {
+      await e2eWaitScrollableOnScreen(tester, panelScrollable);
+    }
     await e2ePumpUntilConditionOrIdle(
       tester,
       () => titlesInList.evaluate().isNotEmpty,
@@ -646,18 +927,29 @@ Future<void> e2eTapAssignOnCivilianRowWithTitle(
   final n = titlesInList.evaluate().length;
   for (var i = 0; i < n; i++) {
     final titleAt = titlesInList.at(i);
-    await tester.scrollUntilVisible(titleAt, 120, scrollable: panelScrollable);
-    await tester.ensureVisible(titleAt);
-    final listTile = find.ancestor(
+    try {
+      await tester.scrollUntilVisible(
+        titleAt,
+        120,
+        scrollable: panelScrollable,
+      );
+    } catch (_) {}
+    try {
+      await tester.ensureVisible(titleAt);
+    } catch (_) {}
+    final rowCard = find.ancestor(
       of: titleAt,
-      matching: find.byType(ListTile),
+      matching: find.byType(CivilianUnitRowCard),
     );
-    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
+    final assign = find.descendant(of: rowCard, matching: find.text('Assign'));
     if (assign.evaluate().isEmpty) {
       continue;
     }
     final assignHit = assign.first;
-    final didTap = await e2eEnsureVisibleAndTapHitTestable(tester, assignHit);
+    final didTap = await e2eTapEnclosingNinePatchButtonOrLabel(
+      tester,
+      assignHit,
+    );
     expect(
       didTap,
       isTrue,
@@ -791,6 +1083,11 @@ Future<void> e2eDismissTransientUi(
   perf?.timing(phaseName, sw.elapsed, meta: 'result=broad_sweep');
 }
 
+/// Pumps until [finder] matches at least one widget or [timeout] elapses,
+/// evaluating the finder before the first pump and ramping the pump interval
+/// via the shared [e2eNextIdlePollStepMs] doubling backoff (25 → 500 ms cap).
+/// Refs GitHub #2336 AC5 (adaptive polling) / Bottleneck 6 (single-source the
+/// poll-step ramp).
 Future<void> e2eWaitUntilFound(
   WidgetTester tester,
   Finder finder, {
@@ -813,7 +1110,7 @@ Future<void> e2eWaitUntilFound(
       return;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   // Final check after the loop exits on the timeout edge: the most recent
   // pump may have made [finder] non-empty just as `sw.elapsed` crossed
@@ -856,8 +1153,10 @@ Future<void> e2eWaitForNewGameEntry(
 }
 
 /// Pumps until [condition] returns true, evaluating [condition] before the
-/// first pump and using exponential backoff on pump intervals (same cap as
-/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper).
+/// first pump and ramping the pump interval via the shared
+/// [e2eNextIdlePollStepMs] doubling backoff (same 25 → 500 ms cap as
+/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper) / AC5 /
+/// Bottleneck 6 (single-source the poll-step ramp).
 Future<void> e2ePumpUntil(
   WidgetTester tester,
   bool Function() condition, {
@@ -874,7 +1173,7 @@ Future<void> e2ePumpUntil(
       return;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   // Final check after the loop exits on the timeout edge: the most recent
   // pump may have flipped [condition] just as `sw.elapsed` crossed
@@ -965,6 +1264,10 @@ Future<bool> e2ePumpUntilConditionOrIdle(
 // Bottleneck 6.
 
 /// Returns after the first [Finder] has at least one hit-testable match.
+///
+/// Evaluates the finders before the first pump and ramps the pump interval via
+/// the shared [e2eNextIdlePollStepMs] doubling backoff (25 → 500 ms cap). Refs
+/// GitHub #2336 AC5 / Bottleneck 6 (single-source the poll-step ramp).
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
   List<Finder> finders, {
@@ -993,7 +1296,7 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
       }
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   // Final check after the loop exits on the timeout edge: the most recent
   // pump may have made one of [finders] hit-testable just as `sw.elapsed`
@@ -1101,5 +1404,53 @@ Finder e2eRadioListTilesInAlertDialogs() {
     matching: find.byWidgetPredicate(
       (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
     ),
+  );
+}
+
+/// Returns a [Finder] matching the move-fleet dialog container, tolerating
+/// **either** a Material [AlertDialog] **or** the production [CtDialogShell].
+///
+/// The production `MoveFleetDialog` renders as a [CtDialogShell] (a Material
+/// `Dialog`, **not** an `AlertDialog`) per `SPEC/ui/move-fleet-dialog.md` and
+/// the catalog Material-design ban. The fleet-reach move helpers were written
+/// against the legacy `AlertDialog` shape; this finder lets the same helpers
+/// drive the live `CtDialogShell` dialog while the focused widget-test pins —
+/// which still mount `AlertDialog` fixtures — keep validating the helper logic
+/// (Refs #2336; first-fleet-move parity with `e2eAttemptFirstFleetMoveOrCancel`).
+Finder e2eMoveFleetDialogFinder() {
+  return find.byWidgetPredicate((w) => w is AlertDialog || w is CtDialogShell);
+}
+
+/// Returns a [Finder] matching every selectable destination row inside the
+/// active move-fleet dialog ([e2eMoveFleetDialogFinder]).
+///
+/// Tolerates both dialog shapes (Refs #2336):
+///
+///   - **Production** ([CtDialogShell]): custom `_MoveFleetDestinationRow`
+///     widgets, each keyed via [kCtE2EMoveFleetDestinationRowKey] under
+///     `CT_E2E`. No Material `Radio` / `RadioListTile` is used, per
+///     `SPEC/ui/move-fleet-dialog.md` § Layout.
+///   - **Widget-test fixtures** ([AlertDialog]): legacy `RadioListTile<…>`
+///     rows (matched on `runtimeType.toString()` so any generic
+///     instantiation qualifies).
+///
+/// The finder is dialog-scoped so panel-side rows never leak in, and returns a
+/// fresh lazy [Finder] on every call. The fleet-reach picker
+/// ([e2ePickMoveDestinationAndConfirm]) taps `.first` when no warp row is
+/// present.
+Finder e2eMoveFleetDestinationRows() {
+  return find.descendant(
+    of: e2eMoveFleetDialogFinder(),
+    matching: find.byWidgetPredicate((w) {
+      final Key? key = w.key;
+      if (key is ValueKey &&
+          key.value is String &&
+          (key.value as String).startsWith(
+            kCtE2EMoveFleetDestinationRowKeyPrefix,
+          )) {
+        return true;
+      }
+      return w.runtimeType.toString().startsWith('RadioListTile<');
+    }),
   );
 }

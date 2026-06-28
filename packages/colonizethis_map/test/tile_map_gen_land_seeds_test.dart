@@ -3,10 +3,12 @@ import 'dart:math';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('TileMapGenLandSeeds', () {
     test('placeLandSeeds returns continent and land seed metadata', () {
-      final params = TileMapParams(width: 20, height: 12, seed: 7);
+      final params = genParams(width: 20, height: 12, seed: 7);
       final pass = TileMapGenLandSeeds(params);
       final provinceToContinent = <String, int>{
         'p1': 0,
@@ -25,11 +27,10 @@ void main() {
     });
 
     test('assignLandByLandSeeds respects the expected land budget', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 20,
         height: 20,
         seed: 11,
-        seaFraction: 0.6,
       );
       final pass = TileMapGenLandSeeds(params);
       final provinceToContinent = <String, int>{

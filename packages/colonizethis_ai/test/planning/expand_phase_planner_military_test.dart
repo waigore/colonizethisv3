@@ -25,73 +25,17 @@
 // intentionally out of scope for this in-module pin — the unit pins
 // the deterministic destination filter that the orchestrator consumes.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
+import 'test_game_factories.dart';
+
 const String _gp2 = 'gp2';
 const String _gp3 = 'gp3';
 const String _minor1 = 'minor1';
 const String _minor2 = 'minor2';
 const String _tribe1 = 'tribe1';
-
-/// Game scaffold for EXPAND-phase military tests. Old World provinces,
-/// players, minors, and tribes are passed in so each test can shape
-/// ownership independently. The planner does not read armies or
-/// treasury for the destination filter, but defaulting to a populated
-/// player roster keeps the defensive `playerById` guard satisfied.
-Game _expandGame({
-  int turnNumber = 50,
-  List<Province> oldWorldProvinces = const [],
-  List<Player> players = const [
-    Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 9999),
-    Player(id: _gp2, displayName: 'GP2', isHuman: false, treasury: 9999),
-    Player(id: _gp3, displayName: 'GP3', isHuman: false, treasury: 9999),
-  ],
-  List<MinorNation> minorNations = const [],
-  List<Tribe> tribes = const [],
-}) {
-  return Game(
-    id: 'g-2509-expand-phase-planner-military-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-  );
-}
-
-/// Snapshot tuned for EXPAND. Defaults to OW=8 (below quota of 10) with
-/// `playerId = gp1`. Tests shape `atWarWith`, `invadableOw`,
-/// `invadableNw`, and `oldWorldProvincesOwned` to exercise specific
-/// priority arms and the structural NW suppression.
-AIWorldSnapshot _expandSnapshot({
-  required List<String> atWarWith,
-  List<String> invadableOw = const [],
-  List<String> invadableNw = const [],
-  int oldWorldProvincesOwned = 8,
-  String playerId = _gp1,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: invadableOw,
-    ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
 
 void main() {
   group('planExpandMilitary', () {
@@ -101,13 +45,14 @@ void main() {
       // the planner short-circuits before reading invadable or owner
       // state. A regression that dropped the outer gate would surface
       // a non-default plan for an at-quota GP.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_minor1],
         invadableOw: const ['oldWorld|m1_a'],
         oldWorldProvincesOwned: 10,
@@ -127,13 +72,14 @@ void main() {
       // player must not crash; the planner returns the default plan.
       // Matches the equivalent guard in `planExpandDeclareWar` and
       // `planExpandEconomy`.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_minor1],
         invadableOw: const ['oldWorld|m1_a'],
         playerId: 'ghost-player',
@@ -148,8 +94,10 @@ void main() {
       // No OW frontier means there is no province to filter; the
       // function must short-circuit before any priority-arm scan so
       // an empty constraint never leaks to the orchestrator.
-      final game = _expandGame();
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const [],
       );
@@ -166,13 +114,14 @@ void main() {
       // one invadable OW province. The plan restricts conquest to
       // exactly that province and lists only the target as the
       // priority owner.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [],
         invadableOw: const ['oldWorld|m1_a'],
       );
@@ -199,14 +148,15 @@ void main() {
       // the plan keeps all of them, sorted ascending, regardless of
       // the input order in invadableProvinceIdsSorted (defensive
       // determinism against future builder changes).
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
           Province(id: 'oldWorld|m1_b', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [],
         // Provide in reverse-sorted order to verify the sort.
         invadableOw: const ['oldWorld|m1_b', 'oldWorld|m1_a'],
@@ -236,7 +186,8 @@ void main() {
       // invadable. Per the spec the orchestrator should fall back to
       // its existing free-choice behaviour, so the planner returns
       // the default plan rather than an empty constraint.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
@@ -245,7 +196,7 @@ void main() {
           MinorNation(id: _minor2, displayName: 'M2'),
         ],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [],
         invadableOw: const ['oldWorld|m1_a'],
       );
@@ -271,13 +222,14 @@ void main() {
       // least one at-war faction owns an OW invadable province. The
       // plan restricts to the union of those provinces and lists the
       // at-war owners sorted ascending.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_minor1],
         invadableOw: const ['oldWorld|m1_a'],
       );
@@ -299,14 +251,15 @@ void main() {
       // At-war fallback covers any faction class (GP, minor, tribe).
       // Two at-war owners contribute provinces; the plan unions them
       // and lists both owners sorted ascending.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|gp2_0', regionId: 'oldWorld', ownerId: _gp2),
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2, _minor1],
         invadableOw: const ['oldWorld|m1_a', 'oldWorld|gp2_0'],
       );
@@ -333,7 +286,8 @@ void main() {
       // must NOT appear in priorityTargetOwnerFactionIdsSorted. This
       // pins the "owner list mirrors actual destinations" contract so
       // a downstream orchestrator never sees a phantom target.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
@@ -342,7 +296,7 @@ void main() {
           MinorNation(id: _minor2, displayName: 'M2'),
         ],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         // minor2 is at war but owns nothing in OW invadable, so should
         // be dropped from the owner list.
         atWarWith: const [_minor1, _minor2],
@@ -366,7 +320,8 @@ void main() {
       // Priority 2 fails when no at-war faction owns an invadable OW
       // province. Both priority arms exhausted -> defaultPlan; the
       // orchestrator falls back to legacy free-choice conquest.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
@@ -375,7 +330,7 @@ void main() {
           MinorNation(id: _minor2, displayName: 'M2'),
         ],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         // minor2 is at war but does NOT own the invadable province.
         atWarWith: const [_minor2],
         invadableOw: const ['oldWorld|m1_a'],
@@ -397,7 +352,8 @@ void main() {
         // faction owns invadable), but priority 1 (declare-war target)
         // takes precedence and excludes the at-war non-target from the
         // owner list.
-        final game = _expandGame(
+        final game = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-military',
           oldWorldProvinces: const [
             Province(
               id: 'oldWorld|m1_a',
@@ -415,7 +371,7 @@ void main() {
             MinorNation(id: _minor2, displayName: 'M2'),
           ],
         );
-        final snapshot = _expandSnapshot(
+        final snapshot = buildExpandSnapshot(
           atWarWith: const [_minor1, _minor2],
           invadableOw: const ['oldWorld|m1_a', 'oldWorld|m2_a'],
         );
@@ -447,14 +403,15 @@ void main() {
       // must NOT include the NW province. The planner only reads the
       // OW invadable list — NW suppression is structural, not
       // predicate-based.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
         tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_minor1, _tribe1],
         invadableOw: const ['oldWorld|m1_a'],
         // Even though the tribe is at war AND owns a NW invadable
@@ -484,10 +441,11 @@ void main() {
       // target owns nothing in OW invadable. Combined with the
       // previous test this pins the structural NW suppression from
       // both sides.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_tribe1],
         invadableOw: const [],
         invadableNw: const ['newWorld|tribe1_a'],
@@ -512,13 +470,14 @@ void main() {
       // from the world (orphan / mid-transition) is silently skipped
       // rather than crashing. Tests the `if (owner == null) continue`
       // branch in the at-war fallback arm.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_minor1],
         // Include an unknown id that won't be in provinceOwner map.
         invadableOw: const ['oldWorld|m1_a', 'oldWorld|ghost'],
@@ -542,14 +501,15 @@ void main() {
       // fixture exercises both priority arms via a tie between
       // declare-war target and an additional at-war faction; the
       // same plan must come out twice in a row.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
           Province(id: 'oldWorld|m1_b', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_minor1, _gp2],
         invadableOw: const ['oldWorld|m1_b', 'oldWorld|m1_a'],
       );
@@ -573,7 +533,8 @@ void main() {
       // faction). gp1's own province ownership is irrelevant to the
       // filter — what matters is whether the invadable list contains
       // provinces owned by the declared target / at-war factions.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-military',
         oldWorldProvinces: const [
           // gp3 owns this — at war but should be ignored because not
           // the declared target.
@@ -582,7 +543,7 @@ void main() {
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp3, _minor1],
         invadableOw: const ['oldWorld|gp3_0', 'oldWorld|m1_a'],
       );

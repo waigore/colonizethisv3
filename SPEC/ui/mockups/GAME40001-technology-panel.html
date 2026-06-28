@@ -56,7 +56,21 @@ html{overflow-y:auto;scroll-behavior:smooth}
 .slot-progress{display:flex;align-items:center;gap:8px;margin-top:clamp(4px,.7vh,6px)}
 .prog-bar{flex:1;height:clamp(4px,.6vh,5px);background:var(--bg-deep);border:1px solid var(--border);border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent-dim);border-radius:1px;transition:width .3s}
+/* Dual-segment turn preview (Refs #3512): committed (segment A) + anticipated
+   RP this turn (segment B, subtler accent tint, animated on width). */
+.prog-bar{display:flex}
+.prog-fill-committed{height:100%;background:var(--accent);border-radius:1px 0 0 1px}
+.prog-fill-anticipated{height:100%;background:oklch(0.70 0.13 86 / .4);transition:width .12s ease-out}
 .slot-progress span{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--accent-dim);white-space:nowrap}
+.rp-delta{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--success,oklch(0.78 0.15 150));cursor:pointer;white-space:nowrap}
+.slot-gold{display:flex;align-items:center;gap:5px;margin-top:3px;font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px)}
+.slot-gold img{width:14px;height:14px;image-rendering:pixelated}
+.slot-gold.spend{color:var(--danger)}
+.slot-gold.blocked{color:var(--muted)}
+.slot-funding{display:flex;gap:4px;flex-wrap:wrap;margin-top:clamp(4px,.7vh,6px)}
+.fund-btn{padding:2px 8px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font-display);font-size:10px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.fund-btn:hover{color:var(--accent-bright)}
+.fund-btn.active{border-color:var(--accent);background:oklch(0.70 0.13 86 / .18);color:var(--accent-bright)}
 
 .tech-dialog{display:none;position:fixed;inset:0;z-index:100;background:oklch(8% 0.01 30 / .6);align-items:center;justify-content:center;padding:20px}
 .tech-dialog.show{display:flex}
@@ -114,6 +128,21 @@ let unlockedTechs=['agriculture','workshop','militia','galleon','frigate','explo
 let currentResearch={};
 let reserved=[];
 
+// Funding presets (Refs #3512): RP/turn and gold/turn, mirroring
+// research_rules.dart / research_funding.dart. Mock treasury + debt floor
+// demonstrate the treasury-insufficient (debt-blocked) slot state.
+const FUNDING_RP={none:0,low:100,medium:300,high:800,maximum:2500};
+const FUNDING_GOLD={none:0,low:50,medium:150,high:400,maximum:1000};
+const MOCK_TREASURY=120;      // low reserves so Maximum funding is debt-blocked
+const MOCK_RESEARCH_MAX_DEBT=0; // no money_lending unlocked
+function previewForSlot(a){
+  const lv=a.funding||'medium';
+  const base=FUNDING_RP[lv]||0, gold=FUNDING_GOLD[lv]||0;
+  const blocked=gold>0 && (MOCK_TREASURY-gold)<(-MOCK_RESEARCH_MAX_DEBT);
+  const anticipated=(lv==='none'||blocked)?0:base;
+  return {base,gold,blocked,anticipated,spends:!blocked&&gold>0,isNone:lv==='none'};
+}
+
 const techCatalog=[
   {id:'workshop',name:'Workshop',iconFile:'tech_labour.png',cost:'75 RP',desc:'Unlocks Apprentice worker tier'},
   {id:'guild_hall',name:'Guild Hall',iconFile:'tech_labour.png',cost:'150 RP',desc:'Unlocks Journeyman worker tier',prereq:['workshop']},
@@ -148,9 +177,14 @@ function renderAll(){
     return `<div class="tech-chip">${icn(t.iconFile)}<span>${t.name}</span></div>`;
   }).join('');
 
-  const maxSlots=variant==='all'?4:3;
+  // Active slot count: 4 with University (the `all` variant), otherwise 3.
+  // The slots container always renders exactly four cards in slot-index
+  // order — the active slots followed by a locked Slot 4 placeholder when
+  // the player has fewer than four active slots — matching
+  // SPEC/ui/technology-panel.md § Slot behaviour. Refs #3510.
+  const activeSlots=variant==='all'?4:3;
   let slotsHtml='';
-  for(let i=1;i<=maxSlots;i++){
+  for(let i=1;i<=activeSlots;i++){
     const assigned=currentResearch[i];
     const t=assigned?techCatalog.find(x=>x.id===assigned.tech):null;
     const pct=assigned?(assigned.progress/assigned.cost*100):0;
@@ -164,17 +198,46 @@ function renderAll(){
       </div>
       ${assigned?`
         <div class="slot-tech">${icn(t.iconFile)} ${t.name}</div>
-        <div class="slot-progress">
-          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-          <span>${assigned.progress} / ${assigned.cost} RP</span>
+        <div class="slot-funding">
+          ${['None','Low','Medium','High','Maximum'].map(level=>{
+            const lv=level.toLowerCase();
+            const active=(assigned.funding||'medium')===lv?' active':'';
+            return `<button class="fund-btn${active}" onclick="selectFunding(${i},'${lv}')">${level}</button>`;
+          }).join('')}
         </div>
+        ${(()=>{
+          const pv=previewForSlot(assigned);
+          const committedPct=Math.min(100,pct);
+          const headroom=Math.max(0,100-committedPct);
+          const antPct=Math.min(headroom,assigned.cost>0?(pv.anticipated/assigned.cost*100):0);
+          const delta=pv.anticipated>0
+            ? `<span class="rp-delta" title="Show research breakdown">+${pv.anticipated} RP</span>` : '';
+          let gold='';
+          if(!pv.isNone){
+            const cls=pv.blocked?'blocked':(pv.spends?'spend':'');
+            const label=pv.spends?`\u2212${pv.gold}/turn`:`${pv.gold}/turn`;
+            gold=`<div class="slot-gold ${cls}">${icn('treasury_coin.png')}<span>${label}</span></div>`;
+          }
+          return `<div class="slot-progress">
+          <div class="prog-bar">
+            <div class="prog-fill-committed" style="width:${committedPct}%"></div>
+            <div class="prog-fill-anticipated" style="width:${antPct}%"></div>
+          </div>
+          <span>${assigned.progress} / ${assigned.cost} RP</span>${delta}
+        </div>
+        ${gold}`;
+        })()}
       `:`<div class="slot-empty">No tech assigned</div>`}
     </div>`;
-    if(i>=3&&variant==='all')slotsHtml+=`<div class="slot-card" style="opacity:.45">
-      <div class="slot-header"><span class="slot-label">Slot 4 (University)</span></div>
-      <div class="slot-empty">Requires University tech</div>
-    </div>`;
   }
+  // Locked Slot 4 placeholder: rendered exactly once when fewer than four
+  // active slots exist (default / empty variants), at the same card width
+  // as Slots 1–3. The `all` variant already renders a live Slot 4 above and
+  // therefore renders no locked placeholder. Refs #3510.
+  if(activeSlots<4)slotsHtml+=`<div class="slot-card" style="opacity:.45">
+    <div class="slot-header"><span class="slot-label">Slot 4 (University)</span></div>
+    <div class="slot-empty">Requires University tech</div>
+  </div>`;
   document.getElementById('slots-container').innerHTML=slotsHtml;
 }
 
@@ -208,9 +271,17 @@ function openChooseTech(slot){
 
 function assignTech(slot,techId){
   const t=techCatalog.find(x=>x.id===techId);
-  currentResearch[slot]={tech:techId,progress:Math.floor(Math.random()*parseInt(t.cost)*0.6),cost:parseInt(t.cost)};
+  currentResearch[slot]={tech:techId,progress:Math.floor(Math.random()*parseInt(t.cost)*0.6),cost:parseInt(t.cost),funding:'medium'};
   updateReserved();
   document.getElementById('tech-dialog').classList.remove('show');
+  renderAll();
+}
+
+// Per-slot research funding selection (Refs #3512). Default Medium on new
+// assignment; selection persists until changed or the slot is cancelled.
+function selectFunding(slot,level){
+  if(!currentResearch[slot])return;
+  currentResearch[slot].funding=level;
   renderAll();
 }
 
@@ -224,7 +295,7 @@ function setVariant(v){
     currentResearch[1]=null;currentResearch[2]=null;currentResearch[3]=null;currentResearch[4]=null;
     unlockedTechs=['agriculture','workshop','militia','galleon','frigate','exploration','trade_consulate','embassy','line_infantry','dragoons','artillery','ship_of_the_line','steam_engine','guild_hall'];
   }else{
-    currentResearch[1]={tech:'guild_hall',progress:45,cost:150};
+    currentResearch[1]={tech:'guild_hall',progress:45,cost:150,funding:'medium'};
     currentResearch[2]=null;
     currentResearch[3]=null;
     currentResearch[4]=null;

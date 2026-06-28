@@ -9,18 +9,32 @@ import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
+
+import 'support/panel_test_fixtures.dart';
+
+class _StubBox implements Box<dynamic> {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+final _gameScreenStubService =
+    GameService(_StubBox(), GameSaveAdapter());
 
 Widget _wrapShellScreen({
   required AppEventBus bus,
@@ -62,6 +76,7 @@ Widget _wrapGameScreen({
   return ProviderScope(
     overrides: [
       appEventBusProvider.overrideWith((ref) => bus),
+      gameServiceProvider.overrideWith((ref) => _gameScreenStubService),
       currentGameProvider.overrideWith(() => CurrentGameNotifier(activeGame)),
       currentOrdersProvider.overrideWith(
         () => CurrentOrdersNotifier(const Orders()),
@@ -86,8 +101,8 @@ Widget _wrapGameScreen({
   );
 }
 
-class _StaticBlockingNotifier extends TurnResolutionBlockingNotifier {
-  _StaticBlockingNotifier(this._initial);
+class _StaticBlockingNotifier extends StateToggleNotifier {
+  _StaticBlockingNotifier(this._initial) : super(false);
   final bool _initial;
   @override
   bool build() => _initial;
@@ -110,7 +125,9 @@ void main() {
       final ctMainMenuFinder = find.byType(CtMainMenu);
       expect(ctMainMenuFinder, findsOneWidget);
       final ctMainMenu = tester.widget<CtMainMenu>(ctMainMenuFinder);
-      expect(ctMainMenu.variant, MainMenuVariant.plain);
+      // S8 (#2860): the live shell renders the mockup-matching pixelArt
+      // variant; plain remains available only as a fallback variant.
+      expect(ctMainMenu.variant, MainMenuVariant.pixelArt);
       expect(ctMainMenu.state, MainMenuState.default_);
       expect(ctMainMenu.resumeGameVisible, isFalse);
     });
@@ -158,7 +175,12 @@ void main() {
     late Game baseGame;
 
     setUpAll(() {
-      baseGame = getDebugInitGameResult().game;
+      // Refs #3656: lightweight hand-built fixture replaces the ~11s procedural
+      // map generation of getDebugInitGameResult(). These specs pump GameScreen
+      // with mapViewDataProvider overridden to null, so no generated
+      // map/topology data is read — only the human player (for the synthetic
+      // victory winner) and the chrome that derives from it.
+      baseGame = buildGameScreenSpecsTestGame();
     });
 
     testWidgets(

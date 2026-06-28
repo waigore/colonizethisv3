@@ -47,7 +47,7 @@ Dark editorial-monocle chrome aligned to `SPEC/ui/mockups/GAME10001-game-screen.
 - **Tap target (wide / desktop):** Each rail icon button paints a **36 × 36 dp** square surface. Narrow-layout measurement is **26 × 26 dp** per [mobile-adaptation.md](mobile-adaptation.md) and is governed by issue #2870; this spec authorises the wide-layout baseline only.
 - **Rail layout:** Vertical `Column` with a **3 dp** vertical gap between consecutive icon buttons. The rail anchors at `left: kEdgeSwipeStripWidth` of the map `Stack` and starts from the top of the rail container (host owns vertical placement); the rail itself has no inner padding around the button column.
 - **Surface chrome:** Vertical gradient from `--surface-lite` (top, `EditorialMonoclePalette.surfaceLite`) to `--bg-deep` (bottom, `EditorialMonoclePalette.bgDeep`), painted via `CtGradients.railButtonGradient`. A **1 dp** outline in `--border` (`EditorialMonoclePalette.border`) frames every edge of the surface.
-- **Icon glyph:** Centered `StrictAssetIcon` rendered at **24 × 24 dp**, tinted via a colour overlay using the same token cycle as the surface chrome: `--accent-dim` default, `--accent` on hover, `--accent-bright` on pressed. Pointer hover lifts the outline from `--border` to `--accent-dim` to mirror the mockup `.empire-btn:hover` rule.
+- **Icon glyph:** Centered `StrictAssetIcon` rendered at **24 × 24 dp** in native full-colour pixel art (`image-rendering: pixelated` via the asset widget). The glyph must **not** be wrapped in a `ColorFiltered` / `ColorFilter.mode(..., BlendMode.srcIn)` tint that collapses the multi-colour asset to a single accent colour (mockup `.empire-btn img` has no colour filter). Pointer hover and pressed states lift the button outline from `--border` to `--accent-dim` per mockup `.empire-btn:hover`; the icon colours are unchanged across interaction states.
 - **Disabled state:** When a button is disabled (e.g., debug-only icon hidden), the button is **removed from the tree** rather than rendered greyed out. Visible buttons are always interactive.
 - **Tooltip:** Each button hosts a `Tooltip` with the label from the [Definition](#definition) table; the localised string is the source of truth. The mockup's CSS hover tooltip is the inspiration for the side-mounted dark popup; the Flutter `Tooltip` provides the equivalent behaviour with the default platform timing.
 - **Accessibility:** Each button is wrapped in `Semantics(button: true, label: <tooltip>)` so assistive tech still reports the action even when the visual is icon-only.
@@ -58,9 +58,9 @@ Dark editorial-monocle chrome aligned to `SPEC/ui/mockups/GAME10001-game-screen.
 
 - **Given** the in-game map is rendered on the wide layout (`MediaQuery.size.width ≥ kNarrowBreakpoint`), **when** [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart) lays out the six core empire buttons (`production`, `civilian_units`, `military_units`, `naval_units`, `diplomacy`, `technology`), **then** every visible rail icon button paints a **36 × 36 dp** square surface.
 - **Given** the rail is rendered, **when** the chrome painter resolves a single rail button's surface, **then** the surface paints `CtGradients.railButtonGradient` (vertical gradient from `EditorialMonoclePalette.surfaceLite` to `EditorialMonoclePalette.bgDeep`) and a **1 dp** outline in `EditorialMonoclePalette.border`.
-- **Given** the rail is rendered, **when** the chrome painter resolves a rail button's icon glyph, **then** the glyph paints `StrictAssetIcon` at exactly **24 × 24 dp**, tinted via `EditorialMonoclePalette.accentDim` while the button is idle.
-- **Given** the rail is rendered, **when** the user hovers the `production` rail button with a pointer device, **then** the outline updates to `EditorialMonoclePalette.accentDim` and the icon-glyph tint updates to `EditorialMonoclePalette.accent`.
-- **Given** the rail is rendered, **when** the user presses (pointer-down or active highlight) the `production` rail button, **then** the icon-glyph tint updates to `EditorialMonoclePalette.accentBright`.
+- **Given** the rail is rendered, **when** the chrome painter resolves a rail button's icon glyph, **then** the glyph paints `StrictAssetIcon` at exactly **24 × 24 dp** in native full colour and is **not** wrapped in a `ColorFiltered` / `ColorFilter.mode(..., BlendMode.srcIn)` node.
+- **Given** the rail is rendered and idle, **when** the descendant widget tree of any rail button is enumerated, **then** no rail button icon glyph node applies a `BlendMode.srcIn` (or equivalent single-colour) filter over the pixel-art asset.
+- **Given** the rail is rendered, **when** the user hovers the `production` rail button with a pointer device, **then** the outline updates to `EditorialMonoclePalette.accentDim` and the icon glyph colours are unchanged from the idle full-colour render.
 - **Given** the rail is rendered, **when** the layout resolves the rail column, **then** consecutive rail buttons have a **3 dp** vertical gap between them and no other padding inside the rail column.
 - **Given** the rail is rendered, **when** the layout enumerates colour usage anywhere inside the rail buttons, **then** no rail node paints `Colors.white`, `Colors.black`, or other light-theme parchment hex literals; every colour resolves from `EditorialMonoclePalette` tokens.
 
@@ -72,7 +72,7 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 - **Vertical gap:** **2 dp** between consecutive buttons (tightened from the wide `3 dp` value so the six-icon column still fits the shorter narrow chrome stack).
 - **Icon glyph:** Unchanged at **24 × 24 dp** (mockup keeps `.empire-btn img { 24 × 24 }` at narrow); the visible padding around the glyph compresses to 1 dp per side.
 - **Tooltip:** Tooltips are suppressed on narrow buttons (touch-only; mobile devices have no hover cursor). The `Semantics(button: true, label: <tooltip>)` wrapper is preserved so assistive tech still reports each action.
-- **Chrome tokens:** Unchanged — narrow buttons keep the wide gradient/border/icon-tint contracts above.
+- **Chrome tokens:** Unchanged — narrow buttons keep the wide gradient/border/full-colour icon contracts above.
 
 #### Acceptance criteria (narrow rail)
 
@@ -90,7 +90,7 @@ Catalog folder **Game Map Empire Left Rail** — registered from [`gameMapEmpire
 
 | Story | Purpose | Authority |
 |-------|---------|-----------|
-| Wide — six core empire buttons with tooltips | Pins § Styling (left rail): 36 × 36 dp surface, `CtGradients.railButtonGradient`, 24 × 24 dp glyph, `Tooltip` per button. | § Styling (left rail) |
+| Wide — six core empire buttons with tooltips | Pins § Styling (left rail): 36 × 36 dp surface, `CtGradients.railButtonGradient`, 24 × 24 dp full-colour glyph (no `srcIn` tint), `Tooltip` per button. | § Styling (left rail) |
 | Wide — debug console enabled (7 icons) | Exercises the seventh `debug_console` icon gated behind `debugConsoleEnabledProvider` (`CT_DEBUG_CONSOLE=true` in production). | § Definition, § Display |
 | Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed | Pins § Narrow rail measurements: 26 × 26 dp surface, 2 dp gap, suppressed `Tooltip` widgets, preserved `Semantics` label. | § Narrow rail measurements; [mobile-adaptation.md](mobile-adaptation.md) § In-game shell |
 

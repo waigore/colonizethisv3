@@ -52,7 +52,7 @@ class GameMapAreaProvinceActionStates {
     }
     final prefixedProvinceId = parsed.prefixedProvinceId;
     final isProvinceTile =
-        tryGetProvince(game.worldState, prefixedProvinceId) != null;
+        game.worldState.tryGetProvince(prefixedProvinceId) != null;
     if (!isProvinceTile) {
       return (showIcon: false, enabled: false, hasExplorerUnits: false);
     }
@@ -129,7 +129,7 @@ class GameMapAreaProvinceActionStates {
     }
     final tileProvinceId = parsed.provinceLocalId;
     final prefixedProvinceId = parsed.prefixedProvinceId;
-    final province = tryGetProvince(game.worldState, prefixedProvinceId);
+    final province = game.worldState.tryGetProvince(prefixedProvinceId);
     if (province == null) {
       return kHiddenExplorerInlineActionState;
     }
@@ -218,7 +218,7 @@ class GameMapAreaProvinceActionStates {
     }
     final prefixedProvinceId = parsed.prefixedProvinceId;
     final isProvinceTile =
-        tryGetProvince(game.worldState, prefixedProvinceId) != null;
+        game.worldState.tryGetProvince(prefixedProvinceId) != null;
     if (!isProvinceTile) {
       return kHiddenBuilderInlineActionState;
     }
@@ -238,7 +238,11 @@ class GameMapAreaProvinceActionStates {
       player.techUnlocked,
       resourceId,
     );
-    if (currentLevel >= techCap) {
+    final terrain = terrainTypeForTileKey(tileMapByRegion, selectedTileKey);
+    final effectiveCap = terrain == null
+        ? techCap
+        : clampExtractionCapForTerrain(techCap, resourceId, terrain);
+    if (currentLevel >= effectiveCap) {
       return kHiddenBuilderInlineActionState;
     }
 

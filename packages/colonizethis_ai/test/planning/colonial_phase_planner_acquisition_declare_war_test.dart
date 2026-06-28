@@ -117,9 +117,11 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'ai_planner_fixtures.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -131,38 +133,6 @@ const String _nwProv2 = 'newWorld|tribe2_b';
 const String _nwProvGp = 'newWorld|gp2_c';
 
 const String _nwTile1 = 'newWorld|tribe1_a|1|1';
-
-/// Cheapest [RegimentEconomyCatalog] build cost, matching the private
-/// `_cheapestRegimentBuildTreasuryCost` helper in
-/// `colonial_phase_planner.dart`. The catalog's `peasantLevies` row
-/// pins this at 2000 today; recomputing keeps the tests robust against
-/// rebalancing.
-int _cheapestRegimentBuildCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
-
-/// Build a Home Army for [ownerId] containing [regimentCount] dummy
-/// regiment unit ids. Matches the `regimentCountForPlayer` walk in
-/// `army_conquest_prep.dart` that counts
-/// `army.regimentUnitIds.length` summed across owned armies.
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: 'oldWorld',
-    stationedProvinceId: 'oldWorld|capital_$ownerId',
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
 
 /// Builds a `Game` for the `declareWar` arm tests.
 ///
@@ -210,6 +180,7 @@ AIWorldSnapshot _declareWarSnapshot({
   required List<String> invadableNw,
   String playerId = _gp1,
   int treasury = 100000,
+  int newWorldProvincesOwned = 0,
 }) {
   return AIWorldSnapshot(
     playerId: playerId,
@@ -219,11 +190,19 @@ AIWorldSnapshot _declareWarSnapshot({
       oldWorldProvincesOwned: 10,
       provincesToVictory: 31,
     ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
+    colonial: ColonialSummary(
+      invadableNewWorldProvinceIdsSorted: invadableNw,
+      newWorldProvincesOwned: newWorldProvincesOwned,
+    ),
     economy: EconomySummary(treasury: treasury),
     relations: const {},
   );
 }
+
+const ExpandEconomyPlan _nwTreasuryRecoveryOverridePlan = ExpandEconomyPlan(
+  forceCheapestRegimentBuild: true,
+  boostTreasuryRecoveryCargo: true,
+);
 
 OvertureState _embassy(String gpId, String targetId, {int sinceTurn = 100}) =>
     OvertureState(
@@ -300,13 +279,13 @@ void main() {
       // cheapest cost at 2000 today; treasury 1999 trips the gate
       // even with a standing regiment present (so the regiment-count
       // guard succeeds first).
-      final cheapest = _cheapestRegimentBuildCost();
+      final cheapest = cheapestRegimentBuildCost();
       final game = _declareWarGame(
         activePlayerTreasury: cheapest - 1,
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
       );
       final snapshot = _declareWarSnapshot(
@@ -334,7 +313,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProvGp, regionId: 'newWorld', ownerId: _gp2),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _gp2)],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProvGp]);
@@ -360,7 +339,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_atWar(_gp1, _tribe1)],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
@@ -390,7 +369,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
@@ -419,7 +398,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: const <DiplomacyRelation>[],
       );
       final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
@@ -447,7 +426,7 @@ void main() {
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
         diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
       );
@@ -491,7 +470,7 @@ void main() {
               ),
             ],
           ),
-          armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
           resourceByTileKey: const {_nwTile1: 'grain'},
         ),
         players: const [
@@ -535,7 +514,7 @@ void main() {
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[
           _peaceNeutral(_gp1, _tribe1),
           _peaceNeutral(_gp1, _tribe2),
@@ -569,7 +548,7 @@ void main() {
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[
           _peaceNeutral(_gp1, _tribe1),
           _peaceNeutral(_gp1, _tribe2),
@@ -599,5 +578,112 @@ void main() {
             'silently regress to `(null, null)` on both calls.',
       );
     });
+  });
+
+  group('planColonialAcquisition declareWar Path E (Refs #2924)', () {
+    test(
+      'treasury zero with NW recovery override emits declareWar target',
+      () {
+        final cheapest = cheapestRegimentBuildCost();
+        final game = _declareWarGame(
+          activePlayerTreasury: 0,
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
+          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        );
+        final snapshot = _declareWarSnapshot(
+          invadableNw: const [_nwProv1],
+          treasury: 0,
+          newWorldProvincesOwned: 0,
+        );
+        expect(
+          planColonialAcquisition(
+            game: game,
+            snapshot: snapshot,
+            expandEconomyPlan: _nwTreasuryRecoveryOverridePlan,
+          ),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.declareWar,
+          ),
+          reason:
+              'Under the treasury-recovery resource-need override '
+              '(treasury == 0, NW == 0, boostTreasuryRecoveryCargo) '
+              'the declareWar arm must waive the planner-level '
+              'treasury gate so the NW conquest → riches chain can '
+              'begin without bypassing build affordability.',
+        );
+        expect(cheapest, greaterThan(0));
+      },
+    );
+
+    test(
+      'partial treasury with boostTreasuryRecoveryCargo emits declareWar',
+      () {
+        final game = _declareWarGame(
+          activePlayerTreasury: 500,
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
+          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        );
+        final snapshot = _declareWarSnapshot(
+          invadableNw: const [_nwProv1],
+          treasury: 500,
+          newWorldProvincesOwned: 0,
+        );
+        expect(
+          planColonialAcquisition(
+            game: game,
+            snapshot: snapshot,
+            expandEconomyPlan: const ExpandEconomyPlan(
+              forceCheapestRegimentBuild: false,
+              boostTreasuryRecoveryCargo: true,
+            ),
+          ),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.declareWar,
+          ),
+          reason:
+              'Path E declare-war waiver must persist after Path F raises '
+              'treasury above zero but below the regiment threshold.',
+        );
+      },
+    );
+
+    test(
+      'treasury zero without override keeps declareWar suppressed',
+      () {
+        final game = _declareWarGame(
+          activePlayerTreasury: 0,
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
+          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        );
+        final snapshot = _declareWarSnapshot(
+          invadableNw: const [_nwProv1],
+          treasury: 0,
+          newWorldProvincesOwned: 0,
+        );
+        expect(
+          planColonialAcquisition(
+            game: game,
+            snapshot: snapshot,
+            expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+          ),
+          isNull,
+          reason:
+              'Regression guard: without boostTreasuryRecoveryCargo the '
+              'legacy treasury >= cheapestRegimentBuildTreasuryCost gate '
+              'must still suppress declareWar at treasury zero.',
+        );
+      },
+    );
   });
 }

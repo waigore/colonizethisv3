@@ -42,7 +42,6 @@
 // coverage to).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
@@ -50,12 +49,13 @@ import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/observe_mode_not_defined_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -103,41 +103,31 @@ ShellPlayerContext _globalObserveShellContext() {
 /// file. Overrides `currentGameProvider` (and optionally
 /// `shellPlayerContextProvider` for the global-observe branch) so the
 /// shell renders without touching Hive / GameService.
-Future<void> _pumpTradeScreenAtSize(
+Future<void> _pumpTradeScreen(
   WidgetTester tester, {
   required Size size,
   required Game game,
   required Player player,
   bool globalObserve = false,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        if (globalObserve)
-          shellPlayerContextProvider.overrideWithValue(
-            _globalObserveShellContext(),
-          ),
-      ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: size),
-          child: TradeScreen(game: game, player: player),
+  // Single pump (the harness default) is enough: TradeScreen's chrome
+  // paints synchronously and the placeholder body is a single static
+  // `CtPanel`. We avoid `pumpAndSettle` because
+  // `CtGameFeatureScreenShell`'s bus listener attaches per the live
+  // `currentGameProvider` and we want the 320 dp overflow assertion to
+  // evaluate on the first frame.
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    overrides: [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      if (globalObserve)
+        shellPlayerContextProvider.overrideWithValue(
+          _globalObserveShellContext(),
         ),
-      ),
-    ),
+    ],
+    child: TradeScreen(game: game, player: player),
   );
-  // Single pump is enough: TradeScreen's chrome paints synchronously
-  // and the placeholder body is a single static `CtPanel`. Mirrors the
-  // `settle: false` branch used by the dialog 320 dp pin file when a
-  // dialog hosts an indefinite ticker (here we have no ticker; we
-  // still avoid `pumpAndSettle` because `CtGameFeatureScreenShell`'s
-  // bus listener attaches per the live `currentGameProvider` and we
-  // want the 320 dp overflow assertion to evaluate on the first frame).
-  await tester.pump();
 }
 
 void main() {
@@ -147,8 +137,11 @@ void main() {
   late Player humanPlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    // Lightweight fixture (Refs #3656): `TradeScreen` reads only `game.players`
+    // (for the supplied `player`), the static `CommodityCatalog` for the market
+    // table, and a default-empty `WorldMarketState` for the Deal Book — no
+    // generated map/topology data — so the procedural map generator is avoided.
+    game = buildTradePanelTestGame();
     humanPlayer = game.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => game.players.first,
@@ -164,7 +157,7 @@ void main() {
         'overflow exception, dark CtTopBar (title `Trade`, back label '
         '`Map`) + scaffold placeholder body both render',
         (WidgetTester tester) async {
-          await _pumpTradeScreenAtSize(
+          await _pumpTradeScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -214,7 +207,7 @@ void main() {
         'without exception (regression sentinel for the overflow '
         'contract — keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpTradeScreenAtSize(
+          await _pumpTradeScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,
@@ -239,7 +232,7 @@ void main() {
         'ObserveModeNotDefinedPanel sentinel renders, scaffold '
         'placeholder body is absent',
         (WidgetTester tester) async {
-          await _pumpTradeScreenAtSize(
+          await _pumpTradeScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -294,7 +287,7 @@ void main() {
         'pumps without exception (regression sentinel for the overflow '
         'contract under the observe variant)',
         (WidgetTester tester) async {
-          await _pumpTradeScreenAtSize(
+          await _pumpTradeScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,

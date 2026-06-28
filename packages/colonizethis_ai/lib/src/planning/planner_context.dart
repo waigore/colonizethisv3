@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
+import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 
 /// Shared inputs for domain planners (Refs #2521 AC1).
 class PlannerContext {
@@ -18,8 +19,11 @@ class PlannerContext {
     required this.seeds,
     required this.suggestionAPI,
     this.sameTurnPriorDiplomaticOrders,
+    this.growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
     int? currentTurn,
-  }) : currentTurn = currentTurn ?? game.worldState.turnState.turnNumber;
+    Map<String, String?>? provinceOwner,
+  }) : currentTurn = currentTurn ?? game.worldState.turnState.turnNumber,
+       _provinceOwner = provinceOwner;
 
   final String nationId;
   final PlayerView view;
@@ -33,12 +37,27 @@ class PlannerContext {
 
   /// Declare-war orders from earlier Full AI players this turn (Refs #2509).
   final Orders? sameTurnPriorDiplomaticOrders;
+
+  /// When true, growth-stage economy scoring replaces H8 reactive boosts (Refs #3371).
+  final bool growthStagePlannerEnabled;
   final int currentTurn;
 
-  late final Map<String, String?> provinceOwner = getProvinceOwnerMap(game);
+  /// Province-owner map memo. Computed lazily on first read and threaded
+  /// across [withOrders] so the O(provinces) [getProvinceOwnerMap] scan runs
+  /// at most once per AI player turn instead of once per accumulation step
+  /// (conquest army-move passes, relocation, and move planning each rebuilt
+  /// the context previously). Province ownership is read-only during domain
+  /// planning, so the memo stays valid for the lifetime of one player turn.
+  /// Refs #3288 (eliminate redundant world-state recomputation).
+  Map<String, String?>? _provinceOwner;
 
-  PersonalityDomainWeights get domainWeights =>
-      getDomainWeightsForLeader(config.personalityId);
+  Map<String, String?> get provinceOwner =>
+      _provinceOwner ??= getProvinceOwnerMap(game);
+
+  PersonalityDomainWeights get domainWeights => resolveDomainWeights(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
 
   /// Move / army-move / conquest base weight (military vs economy vs fallback).
   int resolveMilitaryEconomyWeight({int fallback = 50}) {
@@ -83,6 +102,8 @@ class PlannerContext {
     seeds: seeds,
     suggestionAPI: suggestionAPI,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+    growthStagePlannerEnabled: growthStagePlannerEnabled,
     currentTurn: currentTurn,
+    provinceOwner: _provinceOwner,
   );
 }

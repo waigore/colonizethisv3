@@ -15,7 +15,7 @@ Performance goal: PR app-test stage (`changes` → `app_tests_cache` → `app_te
 ## Selector
 
 - **Path:** `tool/compute_app_test_plan.dart`
-- **Input:** `--changed-files=<paths>` (comma- or newline-separated).
+- **Input:** `--changed-files=<paths>` (comma- or newline-separated) or `--changed-files-from=<path>` (newline-separated file list; used by CI when the diff exceeds shell `ARG_MAX`).
 - **Output:** JSON `{"mode":"selective|skip","tests":["app/test/..."]}`.
 - **Determinism:** Pure function of `--changed-files` plus on-disk workspace state. Reads no env vars, no PR labels, no workflow context. Reruns with identical inputs are byte-identical.
 
@@ -43,7 +43,7 @@ Changed paths seed closure intersection when they are any of:
 - `app/test/**/*.dart` that is **not** a `*_test.dart` (test helpers),
 - `packages/<workspace_pkg>/lib/**/*.dart`.
 
-A changed `app/test/**/*_test.dart` is added directly to the selected set.
+A changed `app/test/**/*_test.dart` that **still exists on disk** is added directly to the selected set. A changed test path that no longer exists (a deletion in the diff) is **not** scheduled — it cannot be run — but it still counts as a graph-relevant change, so an accompanying empty selection is resolved by the safety net below.
 
 ### Irreducible fallback (selective + full app-test list)
 
@@ -88,6 +88,7 @@ A graph-relevant seed (`app/lib/**`, `app/test/**` helper, or `packages/<pkg>/li
 
 - **Given** a PR changing only `packages/colonizethis_logic/lib/foo.dart` and exactly one `app/test/**/*_test.dart` has a closure containing that file, **when** the selector runs, **then** `mode = selective` and `tests` is that one test path only.
 - **Given** a PR changing only `packages/colonizethis_ai/lib/x.dart` where `x.dart` imports `package:colonizethis_logic/y.dart`, and an app test imports `package:colonizethis_ai/x.dart`, **when** the selector runs, **then** `tests` contains that app test.
+- **Given** a PR that deletes `app/test/foo_test.dart` (the path appears in the diff but no longer exists on disk) and modifies one `app/test/**` helper imported by other tests, **when** the selector runs, **then** `tests` contains the tests whose closure intersects the changed helper and **never** contains the deleted `app/test/foo_test.dart` path.
 - **Given** a PR changing only `app/assets/icons/foo.png`, **when** the selector runs, **then** `mode = selective` and `tests` equals the full sorted app-test list.
 - **Given** a PR changing only root `pubspec.yaml`, **when** the selector runs, **then** `mode = selective` and `tests` equals the full sorted app-test list.
 - **Given** a PR changing only `tool/compute_app_test_plan.dart`, **when** the selector runs, **then** `mode = selective` and `tests` equals the full sorted app-test list.

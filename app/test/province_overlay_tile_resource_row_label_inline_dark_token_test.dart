@@ -14,9 +14,14 @@
 // `TextStyle` through `ResourceLabelInline.labelStyle` so the rendered
 // internal `Text(...)` resolves to `EditorialMonoclePalette.fg` (no
 // `DefaultTextStyle` fall-through). `ResourceLabelInline.labelStyle`
-// remains optional so the Economic section row layout, production-panel
-// chips, and any other call site keep their existing token contract until
-// migrated by separate slices.
+// remains optional so production-panel chips and other consumers keep
+// their existing token contract until migrated by separate slices. The
+// Economic section row layout was migrated to forward `labelStyle` in a
+// follow-up slice (improved -> `EditorialMonoclePalette.fg`, improvable
+// -> `EditorialMonoclePalette.muted`); this test isolates the Tile
+// section's pin by selecting the `ResourceLabelInline` whose
+// `labelStyle.color` matches `EditorialMonoclePalette.fg` and which
+// renders the commodity-id label inside `_buildTileResourceLabelRow`.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, VisibilityLevel;
@@ -139,15 +144,25 @@ Widget _darkOverlayWithGrainTile() {
   );
 }
 
-/// Selects every `ResourceLabelInline` whose `labelStyle` is set (the Tile
-/// section's opt-in pin path). The Economic section row layout mounts
-/// `ResourceLabelInline` without forwarding `labelStyle` so its instances
-/// are filtered out here, isolating the Tile commodity-id label under test.
+/// Selects the Tile section's `ResourceLabelInline` widget by matching on
+/// its `labelStyle.color` token (`EditorialMonoclePalette.fg`). The
+/// Economic section row layout now also forwards `labelStyle` (improved
+/// row: `EditorialMonoclePalette.fg`; improvable row:
+/// `EditorialMonoclePalette.muted`). For this test the grain tile has
+/// `improvementLevel == 0`, so the Economic section emits exactly one
+/// improvable `ResourceLabelInline` whose `labelStyle.color` is
+/// `EditorialMonoclePalette.muted`. Filtering on the `fg` token therefore
+/// isolates the Tile commodity-id label under test deterministically.
+/// Production-panel chips and other consumers still default to
+/// `labelStyle == null` (covered by the bare-mount default-behaviour test
+/// below) and are not affected by this filter.
 List<ResourceLabelInline> _tilePinnedLabels(WidgetTester tester) {
   final all = tester.widgetList<ResourceLabelInline>(
     find.byType(ResourceLabelInline),
   );
-  return all.where((w) => w.labelStyle != null).toList(growable: false);
+  return all
+      .where((w) => w.labelStyle?.color == EditorialMonoclePalette.fg)
+      .toList(growable: false);
 }
 
 void main() {
@@ -172,11 +187,12 @@ void main() {
             tilePinned,
             hasLength(1),
             reason:
-                'Expected exactly one ResourceLabelInline with a non-null '
-                'labelStyle (the Tile section\'s opt-in pin path). '
-                'Economic ResourceLabelInline instances must remain '
-                'unaffected so their existing token contract is '
-                'preserved until separately migrated.',
+                'Expected exactly one fg-coloured ResourceLabelInline.labelStyle '
+                'in the overlay tree — the Tile section\'s commodity-id label. '
+                'The Economic section\'s improvable row mounts a '
+                'ResourceLabelInline with labelStyle.color == '
+                'EditorialMonoclePalette.muted (impLevel == 0 in this setup), so '
+                'filtering on the fg token isolates the Tile pin deterministically.',
           );
           expect(
             tilePinned.single.labelStyle?.color,
@@ -230,10 +246,11 @@ void main() {
             isNotEmpty,
             reason:
                 'Tile commodity-id label must be pinned via '
-                'ResourceLabelInline.labelStyle (SPEC regression guard); '
-                'no ResourceLabelInline carries a non-null labelStyle, '
-                'so the Tile call site is falling through to '
-                'DefaultTextStyle.',
+                'ResourceLabelInline.labelStyle with '
+                'EditorialMonoclePalette.fg (SPEC regression guard); '
+                'no fg-coloured ResourceLabelInline.labelStyle is mounted '
+                'in the overlay tree, so the Tile call site is falling '
+                'through to DefaultTextStyle.',
           );
           final style = tilePinned.single.labelStyle;
           expect(
@@ -274,13 +291,18 @@ void main() {
 
       testWidgets(
         'ResourceLabelInline default labelStyle == null preserves '
-        'existing call-site behaviour for non-Tile consumers (negative '
-        'AC: opt-in pin must not regress Economic / production-panel '
-        'chips)',
+        'existing call-site behaviour for unmigrated consumers (negative '
+        'AC: opt-in pin must not regress production-panel chips and other '
+        'consumers that have not migrated to forward labelStyle)',
         (WidgetTester tester) async {
           // Mount ResourceLabelInline directly without `labelStyle` —
-          // mirrors the default call-site behaviour used by the Economic
-          // section row layout and the production-panel commodity chips.
+          // mirrors the default call-site behaviour used by consumers
+          // that have not yet migrated to forward labelStyle (e.g.
+          // production-panel commodity chips). The Economic section row
+          // layout was migrated by a follow-up slice to forward
+          // labelStyle, but the widget's default behaviour must still
+          // preserve `labelStyle == null` and `Text(...)` `style: null`
+          // for unmigrated consumers.
           await tester.pumpWidget(
             MaterialApp(
               theme: AppThemes.editorialMonocle,
@@ -299,11 +321,11 @@ void main() {
             isNull,
             reason:
                 'Default ResourceLabelInline (without explicit '
-                'labelStyle) must keep `labelStyle == null` so existing '
-                'consumers (Economic improved / improvable rows, '
-                'production-panel chips) preserve their token contract '
-                'and resolve their commodity-id label through '
-                'DefaultTextStyle (matching pre-slice behaviour).',
+                'labelStyle) must keep `labelStyle == null` so unmigrated '
+                'consumers (e.g. production-panel commodity chips) '
+                'preserve their token contract and resolve their '
+                'commodity-id label through DefaultTextStyle (matching '
+                'pre-slice behaviour).',
           );
 
           final text = tester.widget<Text>(
@@ -317,7 +339,7 @@ void main() {
             reason:
                 'Default ResourceLabelInline must render its internal '
                 'Text with `style: null` so the rendered colour resolves '
-                'through DefaultTextStyle for non-Tile call sites '
+                'through DefaultTextStyle for unmigrated call sites '
                 '(opt-in pin path must not change the default).',
           );
         },

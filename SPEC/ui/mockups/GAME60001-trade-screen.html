@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Trade Screen</title>
+<style>
+:root {
+  --bg:        oklch(16% 0.018 50);
+  --bg-deep:   oklch(12% 0.015 45);
+  --surface:   oklch(24% 0.015 45);
+  --surface-lite: oklch(30% 0.016 52);
+  --fg:        oklch(88% 0.015 80);
+  --muted:     oklch(65% 0.025 70);
+  --border:    oklch(40% 0.02 55);
+  --accent:    oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82);
+  --accent-bright: oklch(82% 0.13 90);
+  --danger:    oklch(58% 0.18 20);
+
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'SF Mono', ui-monospace, Menlo, monospace;
+
+  --topbar-h: 36px;
+  --content-max: 900px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  min-height:100vh; min-height:100dvh;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:var(--font-body);
+}
+
+html { overflow-y:auto; scroll-behavior:smooth; }
+
+img.pixel { image-rendering:pixelated; image-rendering:crisp-edges; }
+
+/* Top bar */
+.topbar {
+  display:flex; align-items:center; gap:8px;
+  height:var(--topbar-h);
+  padding:0 12px;
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--surface) 60%, var(--bg-deep) 100%);
+  border-bottom:1px solid var(--accent-dim);
+  position:sticky; top:0; z-index:10;
+}
+.topbar-back {
+  display:flex; align-items:center; gap:4px;
+  padding:4px 8px;
+  border:none; background:none;
+  color:var(--muted);
+  font-family:var(--font-body);
+  font-size:12px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.topbar-back:hover { color:var(--accent-bright); }
+.topbar-back svg { width:14px; height:14px; flex-shrink:0; }
+.topbar-icon { width:18px; height:18px; flex-shrink:0; }
+.topbar-title {
+  font-family:var(--font-display);
+  font-size:14px; font-weight:600;
+  letter-spacing:0.04em;
+  color:var(--accent);
+}
+
+/* Main content */
+.main {
+  max-width:var(--content-max);
+  margin:0 auto;
+  padding:16px;
+  display:flex; flex-direction:column;
+  min-height:calc(100vh - var(--topbar-h));
+}
+
+/* CtPanel wrapper */
+.ct-panel {
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--surface) 60%, var(--bg-deep) 100%);
+  border:1px solid var(--border);
+  padding:16px;
+  flex:1;
+  display:flex; flex-direction:column;
+}
+
+/* Tab strip */
+.tab-strip {
+  display:flex; flex-direction:column;
+  flex:1;
+}
+.tab-labels {
+  display:flex; gap:0;
+  border-bottom:1px solid var(--accent-dim);
+  margin-bottom:12px;
+}
+.tab-label {
+  padding:8px 20px;
+  font-family:var(--font-display);
+  font-size:13px; font-weight:600;
+  letter-spacing:0.04em;
+  color:var(--muted);
+  background:color-mix(in oklch, var(--surface) 50%, transparent);
+  border:1px solid transparent;
+  border-bottom:none;
+  cursor:pointer;
+  transition:color 0.15s, background 0.15s;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.tab-label.active {
+  color:var(--accent-bright);
+  background:color-mix(in oklch, var(--accent-dim) 25%, transparent);
+  border-color:var(--accent);
+}
+.tab-label:hover:not(.active) {
+  color:var(--accent-dim);
+}
+
+.tab-body {
+  display:none; flex:1;
+}
+.tab-body.active { display:flex; flex-direction:column; }
+
+/* Market tab */
+.scrollable { overflow-y:auto; flex:1; }
+
+/* Cargo header */
+.cargo-header {
+  padding-bottom:8px; margin-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+.cargo-indicator {
+  font-family:var(--font-body);
+  font-size:12px;
+  color:var(--accent);
+}
+.cargo-warning {
+  font-family:var(--font-body);
+  font-size:12px;
+  color:var(--danger);
+  margin-top:4px;
+  display:none;
+}
+.cargo-warning.visible { display:block; }
+
+/* Commodity row */
+.commodity-row {
+  display:flex; flex-direction:column;
+  padding:10px 0;
+  border-bottom:1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  gap:4px;
+}
+.commodity-row:first-child { padding-top:0; }
+.commodity-row:last-child { border-bottom:none; }
+
+.commodity-info {
+  display:flex; align-items:center; gap:8px;
+}
+.commodity-icon { width:16px; height:16px; flex-shrink:0; }
+.commodity-name {
+  font-family:var(--font-display);
+  font-size:13px; font-weight:600;
+  color:var(--accent);
+  flex:1; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.commodity-price {
+  font-family:var(--font-display);
+  font-size:13px; font-weight:600;
+  color:var(--accent-bright);
+  margin-left:8px; flex-shrink:0;
+}
+
+.commodity-volume {
+  font-family:var(--font-body);
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+
+.commodity-controls {
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+}
+
+/* Direction chips */
+.chip {
+  padding:4px 10px;
+  font-family:var(--font-body);
+  font-size:11px; font-weight:600;
+  color:var(--muted);
+  background:color-mix(in oklch, var(--surface) 50%, transparent);
+  border:1px solid var(--border);
+  cursor:pointer;
+  user-select:none;
+  transition:color 0.1s, border-color 0.1s, background 0.1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.chip:hover { color:var(--accent-dim); border-color:var(--accent-dim); }
+.chip.selected {
+  color:var(--accent-bright);
+  background:color-mix(in oklch, var(--accent-dim) 25%, transparent);
+  border-color:var(--accent);
+}
+
+/* Stepper */
+.stepper {
+  display:flex; align-items:center; gap:0;
+  border:1px solid var(--accent-dim);
+  height:22px;
+}
+.stepper-btn {
+  width:22px; height:22px;
+  border:none; background:color-mix(in oklch, var(--surface) 50%, transparent);
+  color:var(--accent);
+  font-family:var(--font-mono);
+  font-size:13px; font-weight:700;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:color 0.1s, background 0.1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.stepper-btn:hover { background:var(--surface-lite); }
+.stepper-btn:disabled { color:var(--muted); cursor:not-allowed; }
+.stepper-quantity {
+  width:24px; height:22px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display);
+  font-size:13px; font-weight:600;
+  color:var(--accent-bright);
+  border-left:1px solid var(--accent-dim);
+  border-right:1px solid var(--accent-dim);
+}
+
+/* Deal Book tab */
+.deal-book-content {
+  display:flex; gap:12px;
+  flex:1;
+}
+@media (max-width:599px) {
+  .deal-book-content {
+    flex-direction:column;
+  }
+}
+
+.deal-panel {
+  flex:1; min-width:0;
+  display:flex; flex-direction:column;
+  gap:8px;
+}
+
+.deal-panel-title {
+  font-family:var(--font-display);
+  font-size:15px; font-weight:700;
+  letter-spacing:0.03em;
+  color:var(--accent);
+  padding-bottom:8px;
+  border-bottom:1px solid var(--accent-dim);
+}
+
+.deal-section-label {
+  font-family:var(--font-display);
+  font-size:12px; font-weight:600;
+  color:var(--accent-dim);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+
+.deal-fill-row {
+  display:flex; justify-content:space-between; align-items:baseline;
+  padding:6px 8px;
+  background:color-mix(in oklch, var(--surface) 40%, transparent);
+  border:1px solid var(--border);
+  flex-wrap:wrap; gap:4px;
+}
+.deal-fill-info {
+  font-family:var(--font-body);
+  font-size:12px;
+  color:var(--fg);
+  flex:1; min-width:0;
+}
+.deal-tags {
+  font-family:var(--font-body);
+  font-size:10px;
+  color:var(--muted);
+  flex-shrink:0;
+}
+
+.deal-unfill-row {
+  padding:6px 8px;
+  font-family:var(--font-body);
+  font-size:12px;
+  color:var(--fg);
+  border:1px solid var(--border);
+  border-left:3px solid var(--accent-dim);
+}
+
+.deal-empty {
+  font-family:var(--font-body);
+  font-size:11px; font-style:italic;
+  color:var(--muted);
+}
+
+.deal-totals {
+  font-family:var(--font-display);
+  font-size:13px; font-weight:600;
+  color:var(--accent-bright);
+  padding:6px 0;
+  margin-top:auto;
+  border-top:1px solid var(--accent-dim);
+}
+
+/* Responsive */
+@media (max-width:430px) {
+  .main { padding:12px; }
+  .ct-panel { padding:12px; }
+  .tab-label { padding:6px 14px; font-size:12px; }
+  .commodity-controls { gap:4px; }
+  .chip { padding:3px 8px; font-size:10px; }
+}
+
+@media (min-width:1400px) {
+  :root { --content-max: 960px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <button class="topbar-back" onclick="history.back()">
+    <svg viewBox="0 0 16 16"><path fill="currentColor" d="M10 2 L4 8 l6 6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+    Map
+  </button>
+  <img class="topbar-icon pixel" src="icons/32/ui_icon_trade.png" alt="">
+  <span class="topbar-title">Trade</span>
+</div>
+
+<main class="main">
+  <div class="ct-panel">
+
+    <!-- Tab labels -->
+    <div class="tab-labels" id="tab-labels">
+      <div class="tab-label active" data-tab="0">Market</div>
+      <div class="tab-label" data-tab="1">Deal Book</div>
+    </div>
+
+    <!-- Market tab -->
+    <div class="tab-body active" id="tab-market">
+
+      <!-- Cargo header -->
+      <div class="cargo-header">
+        <div class="cargo-indicator" id="cargo-indicator">Cargo remaining: 24</div>
+        <div class="cargo-warning" id="cargo-warning">Cargo limit reached — increase your fleet capacity or reduce bids.</div>
+      </div>
+
+      <!-- Commodity list -->
+      <div class="scrollable" id="commodity-list"></div>
+    </div>
+
+    <!-- Deal Book tab -->
+    <div class="tab-body" id="tab-deal-book">
+      <div class="deal-book-content">
+        <!-- Your bids -->
+        <div class="deal-panel" id="deal-bids-panel">
+          <div class="deal-panel-title">Your bids</div>
+          <div id="deal-bids-content"></div>
+          <div class="deal-totals" id="deal-bids-totals">Total spent: 180</div>
+        </div>
+        <!-- Your offers -->
+        <div class="deal-panel" id="deal-offers-panel">
+          <div class="deal-panel-title">Your offers</div>
+          <div id="deal-offers-content"></div>
+          <div class="deal-totals" id="deal-offers-totals">Total received: 1,160</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+/* ── Commodity data (22 tradeable — alphabetically by display name) ── */
+const COMMODITIES = [
+  { id:'bronze',      name:'Bronze',        icon:'ui_icon_com_bronze.png',         price: 45.0, bidVol: 3,  offerVol: 5  },
+  { id:'castIron',    name:'Cast Iron',     icon:'ui_icon_com_cast_iron.png',      price: 38.0, bidVol: 8,  offerVol: 12 },
+  { id:'cigars',      name:'Cigars',        icon:'ui_icon_com_cigars.png',         price: 72.0, bidVol: 2,  offerVol: 1  },
+  { id:'coal',        name:'Coal',          icon:'ui_icon_com_coal.png',           price: 22.0, bidVol: 5,  offerVol: 9  },
+  { id:'copper',      name:'Copper',        icon:'ui_icon_com_copper.png',         price: 26.0, bidVol: 4,  offerVol: 4  },
+  { id:'cotton',      name:'Cotton',        icon:'ui_icon_com_cotton.png',         price: 18.0, bidVol: 7,  offerVol: 11 },
+  { id:'fabric',      name:'Fabric',        icon:'ui_icon_com_fabric.png',         price: 52.0, bidVol: 10, offerVol: 6  },
+  { id:'furHats',     name:'Fur Hats',      icon:'ui_icon_com_fur_hats.png',       price: 88.0, bidVol: 1,  offerVol: 2  },
+  { id:'furs',        name:'Furs',          icon:'ui_icon_com_furs.png',           price: 34.0, bidVol: 3,  offerVol: 7  },
+  { id:'grain',       name:'Grain',         icon:'ui_icon_com_grain.png',          price: 12.0, bidVol: 15, offerVol: 22 },
+  { id:'horses',      name:'Horses',        icon:'ui_icon_com_horses.png',         price: 40.0, bidVol: 2,  offerVol: 3  },
+  { id:'iron',        name:'Iron',          icon:'ui_icon_com_iron.png',           price: 30.0, bidVol: 12, offerVol: 8  },
+  { id:'lumber',      name:'Lumber',        icon:'ui_icon_com_lumber.png',         price: 28.0, bidVol: 9,  offerVol: 14 },
+  { id:'meat',        name:'Meat',          icon:'ui_icon_com_meat.png',           price: 16.0, bidVol: 6,  offerVol: 10 },
+  { id:'paper',       name:'Paper',         icon:'ui_icon_com_paper.png',          price: 36.0, bidVol: 4,  offerVol: 3  },
+  { id:'refinedSugar',name:'Refined Sugar', icon:'ui_icon_com_refined_sugar.png',  price: 54.0, bidVol: 3,  offerVol: 2  },
+  { id:'steel',       name:'Steel',         icon:'ui_icon_com_steel.png',          price: 64.0, bidVol: 7,  offerVol: 4  },
+  { id:'sugarCane',   name:'Sugar Cane',    icon:'ui_icon_com_sugar_cane.png',     price: 20.0, bidVol: 4,  offerVol: 8  },
+  { id:'timber',      name:'Timber',        icon:'ui_icon_com_timber.png',         price: 14.0, bidVol: 11, offerVol: 18 },
+  { id:'tin',         name:'Tin',           icon:'ui_icon_com_tin.png',            price: 24.0, bidVol: 2,  offerVol: 5  },
+  { id:'tobacco',     name:'Tobacco',       icon:'ui_icon_com_tobacco.png',        price: 32.0, bidVol: 5,  offerVol: 6  },
+  { id:'wool',        name:'Wool',          icon:'ui_icon_com_wool.png',           price: 18.0, bidVol: 8,  offerVol: 13 }
+];
+
+/* Per-commodity staged trade order state: { type: 'bid'|'offer'|null, quantity: int } */
+let staged = {};
+COMMODITIES.forEach(c => { staged[c.id] = { type: null, quantity: 0 }; });
+
+/* Pre-seed some staged orders for visual interest */
+staged['timber'].type = 'bid';  staged['timber'].quantity = 4;
+staged['fabric'].type = 'offer'; staged['fabric'].quantity = 7;
+
+const CARGO_CAPACITY = 24;
+
+function totalBidQuantity() {
+  let t = 0;
+  for (const [id, s] of Object.entries(staged)) {
+    if (s.type === 'bid') t += s.quantity;
+  }
+  return t;
+}
+
+function remainingCargo() {
+  return Math.max(0, CARGO_CAPACITY - totalBidQuantity());
+}
+
+function updateCargo() {
+  const rem = remainingCargo();
+  const bidTotal = totalBidQuantity();
+  document.getElementById('cargo-indicator').textContent = 'Cargo remaining: ' + rem;
+  const warn = document.getElementById('cargo-warning');
+  if (rem === 0 && bidTotal > 0) {
+    warn.classList.add('visible');
+  } else {
+    warn.classList.remove('visible');
+  }
+}
+
+/* Render a single commodity row */
+function renderRow(c) {
+  const s = staged[c.id] || { type: null, quantity: 0 };
+  const rem = remainingCargo();
+  const bidTotal = totalBidQuantity();
+  const rowBidContrib = s.type === 'bid' ? s.quantity : 0;
+  const maxBidQty = (CARGO_CAPACITY - bidTotal) + rowBidContrib;
+  const canBid = maxBidQty > 0;
+  const canIncrement = s.type === 'bid' ? (bidTotal < CARGO_CAPACITY) : (s.type === 'offer');
+  const canDecrement = s.type !== null && s.quantity > 1;
+
+  return `
+    <div class="commodity-row">
+      <div class="commodity-info">
+        <img class="commodity-icon pixel" src="icons/32/${c.icon}" alt="">
+        <span class="commodity-name">${c.name}</span>
+        <span class="commodity-price">${c.price.toFixed(1)}</span>
+      </div>
+      <div class="commodity-volume">Bids ${c.bidVol} / Offers ${c.offerVol}</div>
+      <div class="commodity-controls">
+        <span class="chip${s.type===null?' selected':''}" onclick="setDirection('${c.id}', null)"
+              style="${s.type===null?'':''}">None</span>
+        <span class="chip${s.type==='bid'?' selected':''}" onclick="setDirection('${c.id}', 'bid')"
+              style="${!canBid && s.type!=='bid'?'opacity:0.4;cursor:not-allowed':''}">Bid</span>
+        <span class="chip${s.type==='offer'?' selected':''}" onclick="setDirection('${c.id}', 'offer')">Offer</span>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="adjustQty('${c.id}', -1)" ${!canDecrement?'disabled':''}>&minus;</button>
+          <span class="stepper-quantity">${s.type !== null ? s.quantity : '&mdash;'}</span>
+          <button class="stepper-btn" onclick="adjustQty('${c.id}', 1)" ${!canIncrement?'disabled':''}>+</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderAllRows() {
+  document.getElementById('commodity-list').innerHTML = COMMODITIES.map(c => renderRow(c)).join('');
+  updateCargo();
+}
+
+function setDirection(id, type) {
+  const s = staged[id];
+  if (type === null) {
+    s.type = null; s.quantity = 0;
+  } else if (type === 'bid') {
+    const rem = remainingCargo();
+    const rowBidContrib = s.type === 'bid' ? s.quantity : 0;
+    const maxBidQty = (CARGO_CAPACITY - totalBidQuantity()) + rowBidContrib;
+    if (maxBidQty <= 0 && s.type !== 'bid') { renderAllRows(); return; } // no-op
+    const qty = s.type !== null ? s.quantity : 1;
+    s.type = 'bid';
+    s.quantity = Math.min(qty, maxBidQty);
+  } else if (type === 'offer') {
+    s.type = 'offer';
+    if (s.quantity === 0) s.quantity = 1;
+  }
+  renderAllRows();
+}
+
+function adjustQty(id, delta) {
+  const s = staged[id];
+  if (s.type === null) return;
+  const next = s.quantity + delta;
+  if (next < 1) return;
+  if (s.type === 'bid' && delta > 0) {
+    if (totalBidQuantity() >= CARGO_CAPACITY) return;
+  }
+  if (s.type === 'bid' && delta < 0) {
+    // Allow decrement even at cargo cap
+  }
+  s.quantity = next;
+  renderAllRows();
+}
+
+/* Tab switching */
+document.querySelectorAll('.tab-label').forEach(label => {
+  label.addEventListener('click', () => {
+    document.querySelectorAll('.tab-label').forEach(l => l.classList.remove('active'));
+    label.classList.add('active');
+    document.querySelectorAll('.tab-body').forEach(b => b.classList.remove('active'));
+    document.getElementById(label.dataset.tab === '0' ? 'tab-market' : 'tab-deal-book').classList.add('active');
+  });
+});
+
+/* Deal Book — sample filled/unfilled data */
+function buildDealBook() {
+  /* Sample filled bids: 2 timber buys @ qty 3 × 30.0 each (one FRR, one FTP) */
+  const filledBids = [
+    { commodity:'Timber', qty:3, price:30.0, tags:'FRR' },
+    { commodity:'Timber', qty:3, price:30.0, tags:'FTP' }
+  ];
+  /* Sample unfilled bids: carry-forward grain qty 8, priority 2 */
+  const unfilledBids = [
+    { commodity:'Grain', qty:8, priority:2 }
+  ];
+
+  /* Sample filled offers: iron 4×80, fabric 7×120 (FTP) */
+  const filledOffers = [
+    { commodity:'Iron', qty:4, price:80.0, tags:'' },
+    { commodity:'Fabric', qty:7, price:120.0, tags:'FTP' }
+  ];
+  /* Sample unfilled offers: carry-forward cast iron qty 4, priority 1 */
+  const unfilledOffers = [
+    { commodity:'Cast Iron', qty:4, priority:1 }
+  ];
+
+  function buildPanel(containerId, filled, unfilled, totalsLabel, totalsAmount, emptyText) {
+    let html = '';
+    const hasAny = filled.length > 0 || unfilled.length > 0;
+
+    if (!hasAny) {
+      html += '<div class="deal-empty">' + emptyText + '</div>';
+    } else {
+      /* Filled section */
+      html += '<div class="deal-section-label">Filled</div>';
+      if (filled.length === 0) {
+        html += '<div class="deal-empty">No deals filled this turn.</div>';
+      } else {
+        filled.forEach((d, i) => {
+          const total = (d.qty * d.price).toFixed(0);
+          html += '<div class="deal-fill-row">'
+            + '<span class="deal-fill-info">' + d.commodity + ' &mdash; qty ' + d.qty + ' &times; ' + d.price.toFixed(1) + ' = ' + total + '</span>'
+            + (d.tags ? '<span class="deal-tags">' + d.tags + '</span>' : '')
+            + '</div>';
+        });
+      }
+
+      /* Unfilled section */
+      html += '<div class="deal-section-label">Unfilled (carry-forward)</div>';
+      if (unfilled.length === 0) {
+        html += '<div class="deal-empty">No orders carrying forward.</div>';
+      } else {
+        unfilled.forEach((u, i) => {
+          html += '<div class="deal-unfill-row">' + u.commodity + ' &mdash; qty ' + u.qty + ' (priority ' + u.priority + ')</div>';
+        });
+      }
+    }
+    document.getElementById(containerId).innerHTML = html;
+  }
+
+  buildPanel('deal-bids-content', filledBids, unfilledBids, 'Total spent', 180, 'No bids placed last turn.');
+  buildPanel('deal-offers-content', filledOffers, unfilledOffers, 'Total received', 1160, 'No offers placed last turn.');
+}
+
+/* Init */
+renderAllRows();
+buildDealBook();
+
+/* Cargo saturation demo toggle */
+window.toggleCargoDemo = function() {
+  const maxBid = CARGO_CAPACITY;
+  let acc = 0;
+  for (const c of COMMODITIES) {
+    if (acc >= maxBid) break;
+    const left = maxBid - acc;
+    const qty = Math.min(left, 5);
+    staged[c.id] = { type: 'bid', quantity: qty };
+    acc += qty;
+  }
+  renderAllRows();
+};
+
+window.resetOrders = function() {
+  COMMODITIES.forEach(c => { staged[c.id] = { type: null, quantity: 0 }; });
+  staged['timber'].type = 'bid';  staged['timber'].quantity = 4;
+  staged['fabric'].type = 'offer'; staged['fabric'].quantity = 7;
+  renderAllRows();
+};
+</script>
+
+</body>
+</html>

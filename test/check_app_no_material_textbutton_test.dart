@@ -264,7 +264,7 @@ Widget fallback() => TextButton(onPressed: () {}, child: const Text('ok'));
       },
     );
 
-    test('allowlists dev-tooling screens (SYS10001, SYS20001)', () {
+    test('allowlists the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_no_material_textbutton_devtools_',
       );
@@ -272,10 +272,8 @@ Widget fallback() => TextButton(onPressed: () {}, child: const Text('ok'));
 
       const debugConsole =
           'app/lib/features/game/flame/debug_console_overlay_panel.dart';
-      const debugViewer =
-          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-      for (final rel in [debugConsole, debugViewer]) {
+      for (final rel in [debugConsole]) {
         File('${temp.path}/$rel')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
@@ -415,9 +413,8 @@ Widget probe() => TextButton(onPressed: () {}, child: const Text('ok'));
       );
     });
 
-    test('skips canonical dev-tooling screens', () {
+    test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       const skipped = <String>[
-        'app/lib/features/debug_log/debug_log_viewer_screen.dart',
         'app/lib/features/game/flame/debug_console_overlay_panel.dart',
       ];
       for (final path in skipped) {

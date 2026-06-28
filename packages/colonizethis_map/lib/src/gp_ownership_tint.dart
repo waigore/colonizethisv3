@@ -2,7 +2,7 @@
 /// SPEC/ui/map-widget.md § Province overlay.
 library;
 
-import 'init_game_map_view_data.dart';
+import 'view/init_game_map_view_data.dart';
 
 /// Returns true when the map should draw the semi-transparent GP tint on [cell].
 ///

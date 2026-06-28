@@ -146,13 +146,15 @@ DossierView getDossierForSubject(
   final bestGuess = _buildBestGuessAgenda(scoreByAgenda);
   final behavioralNotes = _buildBehavioralNotes(cappedEntries);
 
-  _log.d(
-    'getDossierForSubject observerId=$observerId subjectId=$subjectId '
-    'scoreByAgenda=$scoreByAgenda suspicionByAgendaType=${suspicionByAgendaType.map((k, v) => MapEntry(k, v.name))} '
-    'bestGuessAgenda=${bestGuess?.agendaType} confidencePercent=${bestGuess?.confidencePercent} '
-    'evidenceCount=${evidenceList.length} behavioralNotes=$behavioralNotes '
-    'basicIntel.relationLevel=${basicIntel?.relationLevel} personalityArchetype=${basicIntel?.personalityArchetype}',
-  );
+  if (_log.debugEnabled) {
+    _log.d(
+      'getDossierForSubject observerId=$observerId subjectId=$subjectId '
+      'scoreByAgenda=$scoreByAgenda suspicionByAgendaType=${suspicionByAgendaType.map((k, v) => MapEntry(k, v.name))} '
+      'bestGuessAgenda=${bestGuess?.agendaType} confidencePercent=${bestGuess?.confidencePercent} '
+      'evidenceCount=${evidenceList.length} behavioralNotes=$behavioralNotes '
+      'basicIntel.relationLevel=${basicIntel?.relationLevel} personalityArchetype=${basicIntel?.personalityArchetype}',
+    );
+  }
 
   return DossierView(
     subjectId: subjectId,

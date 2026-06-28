@@ -1,10 +1,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ct_e2e.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'utils/naval_tree_builder.dart';
 import 'units/shared/units_entity_action_row.dart';
+import 'units/shared/units_entity_card.dart';
 
 /// Naval-units fleet row.
 ///
@@ -30,6 +33,17 @@ import 'units/shared/units_entity_action_row.dart';
 ///   `Total ships: X · Warships: Y · Merchants: Z` summary plus the
 ///   retained `Strength: V` line, replacing the previous per-stat
 ///   `ListTile` stack.
+///
+/// The collapsed/expanded chrome is the shared [UnitsEntityCard] mockup
+/// `.fleet-row` bordered gradient card (`bg-deep → surface` gradient + 1 px
+/// `--border` collapsed; flat `--surface` + 1 px `--accent-dim` expanded with
+/// a child top divider) rather than the bare Material `ExpansionTile`,
+/// matching the military army-row migration (issue #3514 owner decision #6 /
+/// AC-6; `SPEC/ui/mockups/UNIT30001-naval-units-panel.html` `.fleet-row`).
+/// The dense [UnitsEntityActionRow] is hosted with `chrome: false` so the
+/// card border is not double-painted; the title row stays on a single inline
+/// row (collapsing to icon-only at narrow widths) so Move / Split / Locate
+/// remain overflow-free under the card chrome.
 class FleetExpansionTile extends StatelessWidget {
   const FleetExpansionTile({
     super.key,
@@ -57,18 +71,21 @@ class FleetExpansionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: ExpansionTile(
+      padding: const EdgeInsets.only(left: CtSpacing.m),
+      child: UnitsEntityCard(
         title: _buildTitle(),
         subtitle: _buildSubtitle(),
-        dense: true,
         children: _buildChildren(),
       ),
     );
   }
 
   Widget _buildTitle() {
+    // `chrome: false`: the surrounding bordered gradient card is supplied by
+    // [UnitsEntityCard] so the action row must not paint its own
+    // [UnitsPanelRowChrome] border (issue #3514 AC-6).
     return UnitsEntityActionRow(
+      chrome: false,
       dense: true,
       details: _buildTitleDetails(),
       actions: _buildTitleActions(),
@@ -105,6 +122,7 @@ class FleetExpansionTile extends StatelessWidget {
           icon: Icons.route,
           label: l10n.common_move,
           onPressed: onMoveFleet,
+          buttonKey: kCtE2EFleetMoveActionKey,
         ),
       );
     }
@@ -115,6 +133,7 @@ class FleetExpansionTile extends StatelessWidget {
           icon: Icons.call_split,
           label: l10n.common_split,
           onPressed: onSplitFleet,
+          buttonKey: kCtE2EFleetSplitActionKey,
         ),
       );
     }
@@ -146,7 +165,12 @@ class FleetExpansionTile extends StatelessWidget {
   List<Widget> _buildChildren() {
     return [
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        padding: const EdgeInsets.fromLTRB(
+          CtSpacing.l,
+          4,
+          CtSpacing.l,
+          CtSpacing.m,
+        ),
         child: _FleetExpandedContent(row: row, l10n: l10n),
       ),
     ];
@@ -277,7 +301,10 @@ class _FleetExpandedContent extends StatelessWidget {
 
   Widget _cell(Widget child, {AlignmentGeometry align = Alignment.centerLeft}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 4,
+        vertical: CtSpacing.xs,
+      ),
       child: Align(alignment: align, child: child),
     );
   }

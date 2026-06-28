@@ -38,7 +38,7 @@ int runCheckLogicDiplomaticSubValidatorSize(
     p.join(
       repoRoot,
       'packages',
-      'colonizethis_logic',
+      'colonizethis_orders',
       'lib',
       'src',
       'orders',

@@ -4,6 +4,8 @@
 
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
+import '../perception/perception_snapshot.dart';
+import 'growth_stage.dart';
 import 'observer_goal_phase.dart';
 import 'planning_imports.dart';
 
@@ -49,6 +51,17 @@ const String kRecruitmentRejectInsufficientWorkers = 'Insufficient workers';
 /// above the (deficit-aware) soft luxury cap defined in
 /// `SPEC/game/workers-and-population.md` Requirement #10.
 const String kRecruitmentRejectSoftLuxuryCap = 'Soft luxury cap exceeded';
+
+/// Stable rejection reason: growth-stage military priority is below the build
+/// suppression threshold (Refs #3371).
+const String kRecruitmentRejectMilitaryBuildSuppressed =
+    'Military build suppressed';
+
+/// Stable rejection reason: a fabric-costing peasant-recruit candidate is
+/// dropped so the GP's scarce fabric is reserved to fund a regiment build
+/// (Refs #3371 AC13 — growth-stage military fabric reservation).
+const String kRecruitmentRejectMilitaryFabricReservation =
+    'Military fabric reservation';
 
 /// One dropped candidate from [runRecruitmentPlanner]. Refs #2692 S8.
 class RejectedRecruitmentSuggestion {
@@ -110,9 +123,11 @@ RecruitmentPlan runRecruitmentPlanner({
   required AIConfig config,
   required AISeedBundle seeds,
   required ObserverGoalPhase goalPhase,
-  required OrderSuggestionAPI suggestionApi,
+  required   OrderSuggestionAPI suggestionApi,
   MapTopology? topology,
   EconomyPlan? economyPlanHint,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  AIWorldSnapshot? snapshot,
 }) {
   final playerId = view.playerId;
   final player = game.playerById(playerId);
@@ -122,6 +137,12 @@ RecruitmentPlan runRecruitmentPlanner({
   }
 
   final mapTopology = topology ?? const MapTopology(nodes: [], edges: []);
+
+  final growthStage = growthStagePlannerEnabled
+      ? GrowthStage.compute(game, playerId, snapshot: snapshot)
+      : null;
+  final suppressMilitaryBuilds = growthStage != null &&
+      growthStage.militaryPriority < kMilitaryBuildSuppressionThreshold;
 
   final recruitCandidates = suggestionApi.suggestRecruitWorkerOrders(
     view,
@@ -135,6 +156,20 @@ RecruitmentPlan runRecruitmentPlanner({
     mapTopology,
     currentOrders,
   );
+
+  // Refs #3371 AC13: a military-ready GP reserves its scarce fabric for the
+  // regiment build instead of draining it on the fabric-costing peasant-recruit
+  // action. Only meaningful when a fabric-consuming military/naval build is
+  // actually on offer this turn.
+  final reserveFabricForMilitary = growthStage != null &&
+      !suppressMilitaryBuilds &&
+      buildCandidates.any(_buildConsumesPeasant) &&
+      growthStageReservesFabricForMilitary(
+        stage: growthStage,
+        treasury: player.treasury,
+        fabricHeld: player.stockpile.quantityOf(CommodityCatalog.fabric.id),
+        cheapestRegimentTreasuryCost: cheapestRegimentBuildTreasuryCost(),
+      );
 
   final state = _PlanState(
     workerPool: player.workerPool,
@@ -156,6 +191,15 @@ RecruitmentPlan runRecruitmentPlanner({
 
   void processRecruit() {
     for (final candidate in recruitCandidates) {
+      if (reserveFabricForMilitary && _recruitConsumesFabric(candidate)) {
+        rejected.add(
+          RejectedRecruitmentSuggestion(
+            reason: kRecruitmentRejectMilitaryFabricReservation,
+            targetTier: candidate.targetTier.name,
+          ),
+        );
+        continue;
+      }
       final outcome = _evaluateRecruitCandidate(candidate, state);
       switch (outcome) {
         case _CandidateOutcome.accepted:
@@ -181,6 +225,15 @@ RecruitmentPlan runRecruitmentPlanner({
 
   void processBuilds() {
     for (final candidate in buildCandidates) {
+      if (suppressMilitaryBuilds && _buildConsumesPeasant(candidate)) {
+        rejected.add(
+          RejectedRecruitmentSuggestion(
+            reason: kRecruitmentRejectMilitaryBuildSuppressed,
+            targetTier: candidate.unitType,
+          ),
+        );
+        continue;
+      }
       final outcome = _evaluateBuildCandidate(candidate, state);
       switch (outcome) {
         case _CandidateOutcome.accepted:
@@ -412,6 +465,14 @@ bool _buildConsumesPeasant(BuildUnitOrder order) {
   final category = buildUnitCategoryForUnitType(order.unitType);
   return category == BuildUnitCategory.military ||
       category == BuildUnitCategory.naval;
+}
+
+/// True when the recruit/train action for [order]'s tier costs `fabric`.
+/// Only the peasant-recruit row carries a fabric material cost (Refs #3371
+/// AC13); trained tiers cost `paper`.
+bool _recruitConsumesFabric(RecruitWorkerOrder order) {
+  final row = WorkerActionEconomyCatalog.forTier(order.targetTier);
+  return (row.materialCosts[CommodityCatalog.fabric.id] ?? 0) > 0;
 }
 
 int _currentTierCount(WorkerPool pool, WorkerTier tier) {

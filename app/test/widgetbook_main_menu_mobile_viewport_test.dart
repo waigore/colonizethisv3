@@ -21,34 +21,14 @@
 // per `SPEC/ui/mobile-adaptation.md` § 6 and the Widgetbook AC under
 // the cross-cutting `Refs #2870` mobile-adaptation issue.
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 
-/// Pre-warm the brass nine-patch into Flame's image cache so wood-panel
-/// `CtNinePatchButton` chrome inside the pixelArt main menu lays out at
-/// declared height (mirrors the helper used in
-/// `widgetbook_diplomacy_panel_mobile_viewport_test.dart`).
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Best-effort; the pump assertions below only require the use case
-    // to mount, not pixel-perfect chrome.
-  }
-}
+import 'support/widget_test_assets.dart';
 
 WidgetbookUseCase _useCase(
   List<WidgetbookNode> directories, {
@@ -99,7 +79,7 @@ void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(_preWarmFlameImageCache);
+  setUpAll(preloadNinePatchImage);
 
   group(
     'Main Menu Widgetbook mobile-viewport stories (Refs #2870 R22 / S9)',

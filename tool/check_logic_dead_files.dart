@@ -6,10 +6,7 @@ import 'package:path/path.dart' as p;
 const _logicPackageRelative = 'packages/colonizethis_logic';
 const _logicLibRelative = 'packages/colonizethis_logic/lib';
 const _logicSrcRelative = 'packages/colonizethis_logic/lib/src';
-const _knownDeferredDeadFiles = <String>{
-  'packages/colonizethis_logic/lib/src/ai/ai_planner.dart',
-  'packages/colonizethis_logic/lib/src/ai/sim_game_ai.dart',
-};
+const _knownDeferredDeadFiles = <String>{};
 
 final RegExp _directivePattern = RegExp(
   "^\\s*(import|export|part|part\\s+of)\\s+['\\\"]([^'\\\"]+)['\\\"]",

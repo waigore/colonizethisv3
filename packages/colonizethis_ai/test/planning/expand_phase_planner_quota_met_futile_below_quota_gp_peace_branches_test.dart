@@ -455,6 +455,60 @@ void main() {
     );
   });
 
+  group(
+    'quotaMetFutileBelowQuotaGpPeaceTargets — shared collector migration '
+    '(Refs #3717)',
+    () {
+      test(
+        'filters an interleaved non-GP entry AND sorts the remaining eligible '
+        'GPs (shared gpAtWarPeaceTargetsWhere skeleton)',
+        () {
+          // Regression guard for the migration of this decider onto the shared
+          // `gpAtWarPeaceTargetsWhere` collector: the GP filter (formerly an
+          // inline `game.playerById(..) == null` skip) and the ascending sort
+          // now live inside the shared helper. Interleave a minor before two
+          // eligible below-quota non-blocker GPs (gp4 ahead of gp2) so a
+          // regression that dropped the GP filter would surface `minor1`, and
+          // one that returned `atWarWith` traversal order would surface
+          // `[gp4, gp2]` instead of the sorted `[gp2, gp4]`.
+          final game = _gameWithOwProvinces(
+            provinces: <Province>[
+              ..._ownedProvinces(
+                _gp1,
+                kObserverConquestMinOwProvincesPerGp + 2,
+                0,
+              ),
+              ..._ownedProvinces(_gp2, 8, 0),
+              ..._ownedProvinces(_gp4, 7, 0),
+              const Province(
+                id: 'oldWorld|inv1',
+                regionId: 'oldWorld',
+                ownerId: _minor1,
+              ),
+            ],
+          );
+          final snapshot = _snapshot(
+            ownOw: kObserverConquestMinOwProvincesPerGp + 2,
+            atWarWith: const [_minor1, _gp4, _gp2],
+            invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+          );
+          expect(
+            quotaMetFutileBelowQuotaGpPeaceTargets(
+              game: game,
+              snapshot: snapshot,
+            ),
+            const [_gp2, _gp4],
+            reason:
+                'After routing through gpAtWarPeaceTargetsWhere the helper must '
+                'still drop the interleaved minor and return the eligible GPs '
+                'in ascending factionId order — byte-identical to the inline '
+                'loop it replaced.',
+          );
+        },
+      );
+    },
+  );
+
   group('quotaMetFutileBelowQuotaGpPeaceTargets — quota boundary', () {
     test('enters main pass when own OW equals the observer quota '
         '(strict `<` boundary)', () {

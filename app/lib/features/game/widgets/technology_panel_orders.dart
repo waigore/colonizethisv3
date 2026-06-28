@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_confirm_dialog.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
@@ -128,7 +130,7 @@ class ChooseTechDialog extends StatelessWidget {
               letterSpacing: 0.05,
             ),
           ),
-          const SizedBox(height: 8),
+          CtGap.m,
           if (isEmpty)
             _ChooseTechEmptyMessage()
           else
@@ -161,7 +163,7 @@ class _ChooseTechEmptyMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: CtSpacing.ml),
       child: Text(
         l10n.technologyPanel_noTechsAvailable,
         textAlign: TextAlign.center,
@@ -203,7 +205,7 @@ class _ChooseTechOptionRow extends StatelessWidget {
                   width: kChooseTechDialogIconSize,
                   height: kChooseTechDialogIconSize,
                 ),
-                const SizedBox(width: 8),
+                CtGap.wm,
               ],
               Expanded(child: _ChooseTechOptionLabels(tech: tech)),
             ],
@@ -273,7 +275,11 @@ Orders applyAssignTechToSlot({
   final existingIndex = ordersForPlayer.indexWhere(
     (o) => o.slotIndex == slotIndex,
   );
-  final funding = existingIndex >= 0
+  // Preserve funding only when an existing *assigned* order occupies the slot;
+  // an empty-techId cancel signal at this slot is treated as a fresh
+  // assignment and defaults to Medium. Refs #3512.
+  final funding =
+      existingIndex >= 0 && ordersForPlayer[existingIndex].techId.isNotEmpty
       ? ordersForPlayer[existingIndex].funding
       : ResearchFundingLevel.medium;
   final newOrder = ResearchOrder(
@@ -294,28 +300,147 @@ Orders applyAssignTechToSlot({
   return currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
 }
 
-/// Removes the `ResearchOrder` at [slotIndex] for [humanPlayerId], shows
-/// a transient snackbar confirmation when a `ScaffoldMessenger` is in
-/// scope, and dispatches the updated `Orders` via `onOrdersChanged`.
-void applyCancelSlotOrder({
+/// Returns an `Orders` value with the `ResearchOrder` at [slotIndex] for
+/// [humanPlayerId] updated to use [funding], preserving the slot's `techId`.
+///
+/// When an assigned order already occupies [slotIndex] its funding is updated
+/// in place. When no assigned order exists at [slotIndex] but the slot is
+/// occupied by a persisted `Player.researchSlotAssignments` entry, the caller
+/// passes that tech via [techId] so a fresh order is created carrying the
+/// persisted tech (otherwise the resolver would not apply the funding change to
+/// a slot with no fresh order). When neither an assigned order nor a [techId]
+/// is available (a genuinely empty slot) the orders are returned unchanged so
+/// funding cannot be set on an unassigned slot.
+///
+/// SPEC/ui/technology-panel.md § Slot behaviour > Slot funding controls
+/// (Refs #3512).
+Orders applySetSlotFunding({
+  required Orders currentOrders,
+  required String humanPlayerId,
+  required int slotIndex,
+  required ResearchFundingLevel funding,
+  String? techId,
+}) {
+  final existing =
+      currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
+      const <ResearchOrder>[];
+  final ordersForPlayer = List<ResearchOrder>.from(existing);
+  final existingIndex = ordersForPlayer.indexWhere(
+    (o) => o.slotIndex == slotIndex,
+  );
+  final hasAssignedOrder =
+      existingIndex >= 0 && ordersForPlayer[existingIndex].techId.isNotEmpty;
+  if (hasAssignedOrder) {
+    final previous = ordersForPlayer[existingIndex];
+    ordersForPlayer[existingIndex] = ResearchOrder(
+      slotIndex: previous.slotIndex,
+      techId: previous.techId,
+      funding: funding,
+    );
+  } else if (techId != null && techId.isNotEmpty) {
+    final newOrder = ResearchOrder(
+      slotIndex: slotIndex,
+      techId: techId,
+      funding: funding,
+    );
+    if (existingIndex >= 0) {
+      ordersForPlayer[existingIndex] = newOrder;
+    } else {
+      ordersForPlayer.add(newOrder);
+    }
+  } else {
+    return currentOrders;
+  }
+  final updatedMap = {
+    ...currentOrders.researchOrdersByPlayerId,
+    humanPlayerId: ordersForPlayer,
+  };
+  return currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
+}
+
+/// Frees [slotIndex] for [humanPlayerId] by emitting an **empty-`techId`**
+/// `ResearchOrder` cancel signal (rather than simply dropping the slot's
+/// order). The resolver merges persisted `Player.researchSlotAssignments` with
+/// this turn's orders, so an empty-`techId` order is the only way to free a
+/// slot whose occupancy is persisted from a previous turn; merely removing the
+/// order would leave the persisted assignment researching. Any existing order
+/// at [slotIndex] is replaced by the cancel signal.
+///
+/// SPEC/program/research-resolution.md § Slot occupancy persistence;
+/// SPEC/ui/technology-panel.md § Slot behaviour > Cancel. Refs #3512.
+Orders _applyFreeSlotOrders({
+  required Orders currentOrders,
+  required String humanPlayerId,
+  required int slotIndex,
+}) {
+  final existing =
+      currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
+      const <ResearchOrder>[];
+  final ordersForPlayer = List<ResearchOrder>.from(existing);
+  final cancelOrder = ResearchOrder(
+    slotIndex: slotIndex,
+    techId: '',
+    funding: ResearchFundingLevel.none,
+  );
+  final existingIndex = ordersForPlayer.indexWhere(
+    (o) => o.slotIndex == slotIndex,
+  );
+  if (existingIndex >= 0) {
+    ordersForPlayer[existingIndex] = cancelOrder;
+  } else {
+    ordersForPlayer.add(cancelOrder);
+  }
+  final updatedMap = {
+    ...currentOrders.researchOrdersByPlayerId,
+    humanPlayerId: ordersForPlayer,
+  };
+  return currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
+}
+
+/// Cancels the research slot at [slotIndex] for [humanPlayerId].
+///
+/// When the slot's tech has accrued progress ([accruedProgress] `> 0`), a
+/// forfeiture-warning `CtConfirmDialog` is shown first; the cancel only
+/// proceeds when the player confirms. When there is no accrued progress the
+/// slot is freed immediately with no dialog. Freeing emits an empty-`techId`
+/// cancel signal (see [_applyFreeSlotOrders]) so a persisted slot assignment is
+/// released and its accrued RP forfeited on resolution. A transient snackbar
+/// confirmation is shown when a `ScaffoldMessenger` is in scope.
+///
+/// SPEC/ui/technology-panel.md § Slot behaviour > Cancel. Refs #3512.
+Future<void> applyCancelSlotOrder({
   required BuildContext context,
   required int slotIndex,
   required String humanPlayerId,
   required Orders currentOrders,
   required void Function(Orders orders) onOrdersChanged,
-}) {
+  String? techId,
+  int accruedProgress = 0,
+}) async {
   final l10n = appL10n(context);
-  final existingOrders =
-      currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
-      const <ResearchOrder>[];
-  final remaining = existingOrders
-      .where((o) => o.slotIndex != slotIndex)
-      .toList(growable: false);
-  final updatedMap = {
-    ...currentOrders.researchOrdersByPlayerId,
-    humanPlayerId: remaining,
-  };
-  final updated = currentOrders.copyWith(researchOrdersByPlayerId: updatedMap);
+  if (accruedProgress > 0) {
+    final techName = (techId != null && techId.isNotEmpty)
+        ? techDisplayName(techId)
+        : l10n.technologyPanel_noTechAssigned;
+    final confirmed = await showCtConfirmDialog(
+      context,
+      title: l10n.technologyPanel_cancelWarningTitle,
+      message: l10n.technologyPanel_cancelWarningMessage(
+        techName,
+        accruedProgress,
+      ),
+      confirmLabel: l10n.technologyPanel_cancelWarningConfirm,
+      cancelLabel: l10n.technologyPanel_cancelWarningKeep,
+      useRootNavigator: false,
+    );
+    if (!confirmed) return;
+    if (!context.mounted) return;
+  }
+  final updated = _applyFreeSlotOrders(
+    currentOrders: currentOrders,
+    humanPlayerId: humanPlayerId,
+    slotIndex: slotIndex,
+  );
   final messenger = ScaffoldMessenger.maybeOf(context);
   messenger?.showSnackBar(
     SnackBar(content: Text(l10n.technologyPanel_slotCancelled)),

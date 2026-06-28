@@ -1,8 +1,10 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -211,5 +213,316 @@ void main() {
       expect(name.maxLines, 1);
       expect(tester.takeException(), isNull);
     });
+  });
+
+  group('CtResourceCell compact typography (Refs #2862 S9 / C9–C10)', () {
+    Future<void> pumpFixedWidth(
+      WidgetTester tester,
+      Widget cell, {
+      required double width,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.editorialMonocle,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(width: width, child: cell),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    RenderParagraph paragraphFor(WidgetTester tester, String text) {
+      return tester.renderObject<RenderParagraph>(
+        find.descendant(
+          of: find.byType(CtResourceCell),
+          matching: find.text(text),
+        ),
+      );
+    }
+
+    testWidgets(
+      'name + quantity render at the compact ~10 px mockup size; delta at ~9 px',
+      (tester) async {
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Grain',
+            quantity: 1240,
+            delta: 45,
+          ),
+          width: 240,
+        );
+
+        final Text name = tester.widget<Text>(find.text('Grain'));
+        final Text qty = tester.widget<Text>(find.text('1,240'));
+        final Text delta = tester.widget<Text>(find.text('+45'));
+        expect(name.style?.fontSize, CtResourceCell.nameFontSize);
+        expect(qty.style?.fontSize, CtResourceCell.quantityFontSize);
+        expect(delta.style?.fontSize, CtResourceCell.deltaFontSize);
+        // The delta is one step smaller than the quantity per the mockup.
+        expect(
+          CtResourceCell.deltaFontSize,
+          lessThan(CtResourceCell.quantityFontSize),
+        );
+      },
+    );
+
+    testWidgets(
+      'canonical commodity names render in full (no ellipsis clipping) at a '
+      'representative grid cell width, even with a delta present',
+      (tester) async {
+        for (final name in const <String>[
+          'Cast Iron',
+          'Sugar Cane',
+          'Refined Sugar',
+        ]) {
+          await pumpFixedWidth(
+            tester,
+            CtResourceCell(
+              iconBuilder: tinyIcon,
+              name: name,
+              quantity: 430,
+              delta: -20,
+            ),
+            // Wide enough that the compact name + intrinsic qty/delta cluster
+            // all fit; the legacy flex-share trailing cluster would have
+            // squeezed the name into ellipsis at this width.
+            width: 320,
+          );
+
+          expect(
+            paragraphFor(tester, name).didExceedMaxLines,
+            isFalse,
+            reason: '"$name" must render in full without ellipsis clipping '
+                'per #2862 C9.',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'name keeps the same width and visibility with vs without a delta '
+      '(delta-stable name column, C10)',
+      (tester) async {
+        const name = 'Iron';
+        const width = 220.0;
+
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(iconBuilder: tinyIcon, name: name, quantity: 430),
+          width: width,
+        );
+        final noDeltaParagraph = paragraphFor(tester, name);
+        final noDeltaExceeded = noDeltaParagraph.didExceedMaxLines;
+        final noDeltaGlyphWidth = noDeltaParagraph.getMaxIntrinsicWidth(
+          double.infinity,
+        );
+
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: name,
+            quantity: 430,
+            delta: -20,
+          ),
+          width: width,
+        );
+        final withDeltaParagraph = paragraphFor(tester, name);
+        final withDeltaExceeded = withDeltaParagraph.didExceedMaxLines;
+        final withDeltaGlyphWidth = withDeltaParagraph.getMaxIntrinsicWidth(
+          double.infinity,
+        );
+
+        // The name is fully visible (no ellipsis) whether or not a delta is
+        // present, and the laid-out glyph width is identical — adding a delta
+        // does not push the name into ellipsis (C10).
+        expect(noDeltaExceeded, isFalse);
+        expect(withDeltaExceeded, isFalse);
+        expect(
+          withDeltaGlyphWidth,
+          noDeltaGlyphWidth,
+          reason: 'Adding a +N / -N delta must not shrink the rendered name '
+              'per #2862 C10.',
+        );
+      },
+    );
+  });
+
+  group('CtResourceCell amount right-edge anchoring (#3485)', () {
+    Future<void> pumpFixedWidth(
+      WidgetTester tester,
+      Widget cell, {
+      required double width,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.editorialMonocle,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(width: width, child: cell),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    // The card's inner-right x: the card right edge minus the cell's horizontal
+    // padding (`CtSpacing.s`). The trailing cluster must be flush with this.
+    double innerRightX(WidgetTester tester) {
+      final double cardRight =
+          tester.getTopRight(find.byType(CtResourceCell)).dx;
+      return cardRight - CtSpacing.s;
+    }
+
+    testWidgets(
+      'quantity right edge is pinned to the card inner-right edge (no delta)',
+      (tester) async {
+        const double width = 240;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Iron',
+            quantity: 430,
+          ),
+          width: width,
+        );
+        final double qtyRight = tester.getTopRight(find.text('430')).dx;
+        expect(
+          qtyRight,
+          closeTo(innerRightX(tester), 1.5),
+          reason: 'The stockpile amount must be pinned to the card right edge '
+              '(legacy equal-flex trailing cluster left it near the middle).',
+        );
+      },
+    );
+
+    testWidgets(
+      'delta (not quantity) is flush to the right edge, with the quantity '
+      'immediately to its left',
+      (tester) async {
+        const double width = 240;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Timber',
+            quantity: 920,
+            delta: -40,
+          ),
+          width: width,
+        );
+        final double deltaRight = tester.getTopRight(find.text('-40')).dx;
+        final double qtyRight = tester.getTopRight(find.text('920')).dx;
+        final double deltaLeft = tester.getTopLeft(find.text('-40')).dx;
+        expect(
+          deltaRight,
+          closeTo(innerRightX(tester), 1.5),
+          reason: 'When a delta is present it is the rightmost element and is '
+              'pinned to the card right edge.',
+        );
+        // Quantity sits immediately to the left of the delta (delta adjacency).
+        expect(qtyRight, lessThanOrEqualTo(deltaLeft + 0.5));
+        expect(
+          deltaLeft - qtyRight,
+          closeTo(CtResourceCell.quantityToDeltaGap, 1.0),
+        );
+      },
+    );
+
+    testWidgets(
+      'worker cells follow the same right-edge amount anchoring rule',
+      (tester) async {
+        const double width = 200;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Journeymen',
+            quantity: 6,
+          ),
+          width: width,
+        );
+        final double qtyRight = tester.getTopRight(find.text('6')).dx;
+        expect(qtyRight, closeTo(innerRightX(tester), 1.5));
+      },
+    );
+
+    testWidgets(
+      'amounts of two equal-width cards with different name lengths align to '
+      'the same right edge',
+      (tester) async {
+        const double width = 220;
+        await pumpFixedWidth(
+          tester,
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CtResourceCell(
+                iconBuilder: tinyIcon,
+                name: 'Tin',
+                quantity: 85,
+              ),
+              CtResourceCell(
+                iconBuilder: tinyIcon,
+                name: 'Refined Sugar',
+                quantity: 50,
+              ),
+            ],
+          ),
+          width: width,
+        );
+        final double shortQtyRight = tester.getTopRight(find.text('85')).dx;
+        final double longQtyRight = tester.getTopRight(find.text('50')).dx;
+        expect(
+          shortQtyRight,
+          closeTo(longQtyRight, 1.5),
+          reason: 'Right-pinned amounts must line up vertically regardless of '
+              'commodity name length.',
+        );
+      },
+    );
+
+    testWidgets(
+      'canonical commodity name renders in full at a representative wide grid '
+      'cell width that the legacy equal-flex layout would have truncated',
+      (tester) async {
+        // ~240 logical px approximates a 3-column cell when the Available panel
+        // is ~740 dp wide. The legacy layout gave the name only ~half the
+        // residual width (~99 px here) and clipped "Refined Sugar"; the fix
+        // gives the name all residual width so it renders in full.
+        const double width = 240;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Refined Sugar',
+            quantity: 50,
+            delta: 5,
+          ),
+          width: width,
+        );
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.descendant(
+            of: find.byType(CtResourceCell),
+            matching: find.text('Refined Sugar'),
+          ),
+        );
+        expect(
+          paragraph.didExceedMaxLines,
+          isFalse,
+          reason: 'The name must render in full at a representative wide grid '
+              'cell width per #3485.',
+        );
+      },
+    );
   });
 }

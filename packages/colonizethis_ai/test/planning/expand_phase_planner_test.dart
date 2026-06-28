@@ -56,11 +56,11 @@
 // keep the no-`phasePlan` fallback path through
 // `collectStalledGreatPowerPeaceTargets` covered.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'test_game_factories.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -68,63 +68,6 @@ const String _gp3 = 'gp3';
 const String _gp4 = 'gp4';
 const String _tribe1 = 'tribe1';
 const String _minor1 = 'minor1';
-
-/// Game scaffold with a 4-GP roster + optional tribes / minors. Old World
-/// provinces are passed in directly so each test can shape ownership for
-/// the blocker scan; New World is intentionally left empty (EXPAND
-/// planner does not query NW state).
-Game _expandGame({
-  int turnNumber = 50,
-  List<Province> oldWorldProvinces = const [],
-  List<Player> players = const [
-    Player(id: _gp1, displayName: 'GP1', isHuman: false),
-    Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    Player(id: _gp3, displayName: 'GP3', isHuman: false),
-    Player(id: _gp4, displayName: 'GP4', isHuman: false),
-  ],
-  List<Tribe> tribes = const [],
-  List<MinorNation> minorNations = const [],
-}) {
-  return Game(
-    id: 'g-2509-expand-phase-planner-peace-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    tribes: tribes,
-    minorNations: minorNations,
-  );
-}
-
-/// Snapshot tuned for EXPAND: own OW defaults to 8 (below quota of 10),
-/// stalled band, mirroring `_expandSnapshot` in the legacy branch-pin
-/// fixture. The planner does not re-check the phase so these tests do
-/// not need to satisfy `observerGoalPhaseFor`; the values are still
-/// consistent with EXPAND so debugging traces stay coherent.
-AIWorldSnapshot _expandSnapshot({
-  required List<String> atWarWith,
-  List<String> invadableOw = const [],
-  List<String> adjacentOwners = const [],
-  int oldWorldProvincesOwned = 8,
-  String playerId = _gp1,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: invadableOw,
-      adjacentOwnerFactionIdsSorted: adjacentOwners,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
 
 void main() {
   group('planExpandPeace', () {
@@ -134,8 +77,11 @@ void main() {
       // that always emitted the at-peace GP roster would emit
       // `offerPeace` toward neutral powers and break the "peace ALL
       // at-war GPs" wording (we have nothing to peace).
-      final game = _expandGame();
-      final snapshot = _expandSnapshot(atWarWith: const []);
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+      );
+      final snapshot = buildExpandSnapshot(atWarWith: const []);
       expect(
         planExpandPeace(game: game, snapshot: snapshot),
         isEmpty,
@@ -152,11 +98,13 @@ void main() {
       // `atWarWith` the planner returns empty. A regression that left
       // non-GP ids in the output would emit `offerPeace` toward non-GP
       // factions and fail downstream order validation.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(atWarWith: const [_tribe1, _minor1]);
+      final snapshot = buildExpandSnapshot(atWarWith: const [_tribe1, _minor1]);
       expect(
         planExpandPeace(game: game, snapshot: snapshot),
         isEmpty,
@@ -172,8 +120,11 @@ void main() {
       // (sorted ascending). Input order shuffled to `[gp3, gp2]` so a
       // regression that dropped the trailing `..sort()` would surface
       // here.
-      final game = _expandGame();
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp3, _gp2],
         invadableOw: const [],
       );
@@ -193,13 +144,15 @@ void main() {
       // branch, so all live war fronts (gp2, gp3) must be peaced. A
       // regression that filtered by blocker without the membership guard
       // would silently leave a non-blocker war open.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: const [
           Province(id: 'oldWorld|gp4_a', regionId: 'oldWorld', ownerId: _gp4),
           Province(id: 'oldWorld|gp4_b', regionId: 'oldWorld', ownerId: _gp4),
         ],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2, _gp3],
         invadableOw: const ['oldWorld|gp4_a', 'oldWorld|gp4_b'],
       );
@@ -217,13 +170,15 @@ void main() {
       // Canonical EXPAND happy path: gp2 owns the invadable OW (blocker),
       // gp3 + gp4 are non-blocker fronts -> peace gp3 and gp4 sorted
       // ascending; keep fighting gp2.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: const [
           Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
           Province(id: 'oldWorld|gp2_b', regionId: 'oldWorld', ownerId: _gp2),
         ],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2, _gp3, _gp4],
         invadableOw: const ['oldWorld|gp2_a', 'oldWorld|gp2_b'],
       );
@@ -240,12 +195,14 @@ void main() {
       // Determinism pin (Must-have #7). Three GP fronts (gp4, gp3, gp2)
       // with gp2 as blocker -> peace gp3 + gp4 in ascending order
       // regardless of input order.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: const [
           Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
         ],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp4, _gp3, _gp2],
         invadableOw: const ['oldWorld|gp2_a'],
       );
@@ -277,8 +234,12 @@ void main() {
         for (var i = 0; i < 8; i++)
           Province(id: 'oldWorld|gp2_$i', regionId: 'oldWorld', ownerId: _gp2),
       ];
-      final game = _expandGame(oldWorldProvinces: owProvinces);
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+        oldWorldProvinces: owProvinces,
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0'],
         oldWorldProvincesOwned: 8,
@@ -304,14 +265,16 @@ void main() {
         Province(id: 'oldWorld|gp2_0', regionId: 'oldWorld', ownerId: _gp2),
         Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
       ];
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: owProvinces,
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
       // Invadable list contains only GP-owned tiles (frontier is
       // GP-only), but a minor is still on the OW map and uninvaded
       // -> `_hasUninvadedOldWorldMinor` is true.
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0'],
         oldWorldProvincesOwned: 8,
@@ -340,11 +303,13 @@ void main() {
         Province(id: 'oldWorld|gp2_0', regionId: 'oldWorld', ownerId: _gp2),
         Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
       ];
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: owProvinces,
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0', 'oldWorld|m1_a'],
         oldWorldProvincesOwned: 8,
@@ -371,8 +336,12 @@ void main() {
         for (var i = 0; i < 10; i++)
           Province(id: 'oldWorld|gp2_$i', regionId: 'oldWorld', ownerId: _gp2),
       ];
-      final game = _expandGame(oldWorldProvinces: owProvinces);
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+        oldWorldProvinces: owProvinces,
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0'],
         oldWorldProvincesOwned: 8,
@@ -394,14 +363,16 @@ void main() {
         // Composite filter pin: tribe / minor ids in `atWarWith` must drop
         // before the blocker filter. With gp2 as blocker, gp3 is the only
         // GP that should be peaced; tribe1 and minor1 are filtered out.
-        final game = _expandGame(
+        final game = buildExpandGame(
+          gameIdLabel: 'expand-phase-planner-peace',
+          defaultFourGpPlayers: true,
           oldWorldProvinces: const [
             Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
           ],
           tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
           minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
         );
-        final snapshot = _expandSnapshot(
+        final snapshot = buildExpandSnapshot(
           atWarWith: const [_gp3, _tribe1, _gp2, _minor1],
           invadableOw: const ['oldWorld|gp2_a'],
         );
@@ -419,13 +390,15 @@ void main() {
       // Pins Must-have #7 (determinism). Mixed-input fixture exercises
       // the GP filter, blocker scan, and the trailing sort, so
       // repeating the call must yield the same list.
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: const [
           Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
           Province(id: 'oldWorld|gp2_b', regionId: 'oldWorld', ownerId: _gp2),
         ],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp4, _gp3, _gp2],
         invadableOw: const ['oldWorld|gp2_a', 'oldWorld|gp2_b'],
       );
@@ -462,11 +435,13 @@ void main() {
           ownerId: _minor1,
         ),
       ];
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: owProvinces,
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0'],
         // adjacency collapses to the sole at-war peer GP — minor1's
@@ -499,8 +474,12 @@ void main() {
         for (var i = 0; i < 8; i++)
           Province(id: 'oldWorld|gp2_$i', regionId: 'oldWorld', ownerId: _gp2),
       ];
-      final game = _expandGame(oldWorldProvinces: owProvinces);
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+        oldWorldProvinces: owProvinces,
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0'],
         adjacentOwners: const [_gp2],
@@ -530,11 +509,13 @@ void main() {
         Province(id: 'oldWorld|gp2_0', regionId: 'oldWorld', ownerId: _gp2),
         Province(id: 'oldWorld|m1_adj', regionId: 'oldWorld', ownerId: _minor1),
       ];
-      final game = _expandGame(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
         oldWorldProvinces: owProvinces,
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0', 'oldWorld|m1_adj'],
         adjacentOwners: const [_gp2, _minor1],
@@ -561,8 +542,12 @@ void main() {
         for (var i = 0; i < 10; i++)
           Province(id: 'oldWorld|gp2_$i', regionId: 'oldWorld', ownerId: _gp2),
       ];
-      final game = _expandGame(oldWorldProvinces: owProvinces);
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+        oldWorldProvinces: owProvinces,
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0'],
         adjacentOwners: const [_gp2],
@@ -588,8 +573,12 @@ void main() {
       final owProvinces = <Province>[
         Province(id: 'oldWorld|gp2_0', regionId: 'oldWorld', ownerId: _gp2),
       ];
-      final game = _expandGame(oldWorldProvinces: owProvinces);
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+        oldWorldProvinces: owProvinces,
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2, _gp3],
         invadableOw: const ['oldWorld|gp2_0'],
         adjacentOwners: const [_gp2],
@@ -623,8 +612,12 @@ void main() {
         for (var i = 0; i < 8; i++)
           Province(id: 'oldWorld|gp2_$i', regionId: 'oldWorld', ownerId: _gp2),
       ];
-      final game = _expandGame(oldWorldProvinces: owProvinces);
-      final snapshot = _expandSnapshot(
+      final game = buildExpandGame(
+        gameIdLabel: 'expand-phase-planner-peace',
+        defaultFourGpPlayers: true,
+        oldWorldProvinces: owProvinces,
+      );
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         invadableOw: const ['oldWorld|gp2_0'],
         adjacentOwners: const [],
@@ -649,7 +642,7 @@ void main() {
       // Canonical seed-42 turn-99 shape: adjacency is exactly the sole
       // peer GP. The helper must return true so the H4-a planner arm
       // fires.
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         adjacentOwners: const [_gp2],
       );
@@ -665,7 +658,7 @@ void main() {
     test('adjacency contains the peer plus a second faction -> false', () {
       // A minor or other GP is also an OW neighbor -> the active player
       // has an alternative pivot route. The predicate must reject.
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         adjacentOwners: const [_gp2, _minor1],
       );
@@ -682,7 +675,7 @@ void main() {
     test('adjacency is empty -> false', () {
       // No OW adjacency at all (landlocked or no OW provinces yet) ->
       // there is no lock to break. Predicate rejects.
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         adjacentOwners: const [],
       );
@@ -699,7 +692,7 @@ void main() {
       // Sole adjacency entry is a minor or some other faction, not the
       // queried peer GP. The predicate must reject because the active
       // player can still pivot against that adjacent faction.
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         adjacentOwners: const [_minor1],
       );
@@ -714,7 +707,7 @@ void main() {
     });
 
     test('determinism: identical inputs yield identical results', () {
-      final snapshot = _expandSnapshot(
+      final snapshot = buildExpandSnapshot(
         atWarWith: const [_gp2],
         adjacentOwners: const [_gp2],
       );

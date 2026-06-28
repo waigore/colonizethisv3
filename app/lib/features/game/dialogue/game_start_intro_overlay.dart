@@ -13,17 +13,25 @@ import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 
-/// Spinner while intro dialogue lines are not yet available. Uses [ThemeData.colorScheme]
-/// so the control matches the app shell (GitHub #1710).
+/// Spinner while intro dialogue lines are not yet available.
+///
+/// Matches the game-initializing progress dialog contract
+/// (`NewGameSetupProgressView` / SHEL30001 R32): 48 logical px ring with
+/// `--accent` stroke (`EditorialMonoclePalette.accent`). Refs #2867 R28.
 class GameStartIntroLoadingIndicator extends StatelessWidget {
   const GameStartIntroLoadingIndicator({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return CtLoadingIndicator(strokeWidth: 2, color: theme.colorScheme.primary);
+    return CtLoadingIndicator(
+      size: 48,
+      strokeWidth: 2,
+      color: EditorialMonoclePalette.accent,
+      center: false,
+    );
   }
 }
 
@@ -132,7 +140,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-            const SizedBox(height: 12),
+            const SizedBox(height: CtSpacing.ml),
             const CtBrassDivider(),
             const SizedBox(height: 14),
             Text(
@@ -142,7 +150,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: CtSpacing.l),
             Align(
               alignment: Alignment.center,
               child: CtNinePatchButton(
@@ -158,13 +166,36 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
       );
     }
 
-    if (_dialogueFinished || _view == null || _runner == null) {
+    if (_dialogueFinished) {
       return widget.child;
     }
 
-    final line = _view!.currentLine;
-    final choice = _view!.currentChoice;
+    if (_view == null || _runner == null) {
+      return _introChromeBody(
+        l10n: l10n,
+        body: const GameStartIntroLoadingIndicator(),
+      );
+    }
 
+    return _introChromeBody(
+      l10n: l10n,
+      body: CtDialogueLineChoiceBody(
+        view: _view!,
+        continueLabel: l10n.game_intervention_continue,
+        lineTextStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+        lineTextAlign: TextAlign.center,
+        continueAlignment: Alignment.center,
+        loading: const GameStartIntroLoadingIndicator(),
+      ),
+    );
+  }
+
+  Widget _introChromeBody({
+    required AppLocalizations l10n,
+    required Widget body,
+  }) {
     return CtFullScreenDialogueShell(
       backdrop: widget.child,
       body: Column(
@@ -172,37 +203,10 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           const CtBrassDivider(),
           const SizedBox(height: 14),
-          if (line != null) ...[
-            Text(
-              line.text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.center,
-              child: CtNinePatchButton(
-                onPressed: () => _view!.advanceLine(),
-                child: Text(l10n.game_intervention_continue),
-              ),
-            ),
-          ] else if (choice != null) ...[
-            ...choice.options.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: CtNinePatchButton(
-                  onPressed: () => _view!.selectOption(entry.key),
-                  child: Text(entry.value.text),
-                ),
-              ),
-            ),
-          ] else
-            const GameStartIntroLoadingIndicator(),
+          body,
         ],
       ),
     );

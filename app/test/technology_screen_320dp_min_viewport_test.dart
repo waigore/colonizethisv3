@@ -44,7 +44,6 @@
 // vertically at narrow).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
@@ -54,12 +53,13 @@ import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -103,57 +103,43 @@ ShellPlayerContext _globalObserveShellContext() {
   );
 }
 
-/// Pumps the [TechnologyScreen] at [size] under the running editorial-monocle
-/// theme. Sets the surface size (so the binding's render flex math sees
-/// the minimum viewport) and overrides MediaQuery so widget code that
-/// reads `MediaQuery.sizeOf(context).width` resolves to the same value
-/// — the pattern already used by every other `*_320dp_min_viewport_test.dart`
-/// file. Overrides `currentGameProvider` and `currentOrdersProvider`
-/// (and optionally `shellPlayerContextProvider` for the global-observe
-/// branch) so the shell renders without touching Hive / GameService.
-Future<void> _pumpTechnologyScreenAtSize(
+/// Pumps the [TechnologyScreen] at [size] via the shared min-viewport
+/// harness ([pumpAtMinViewport]). Overrides `currentGameProvider` and
+/// `currentOrdersProvider` (and optionally `shellPlayerContextProvider`
+/// for the global-observe branch) so the shell renders without touching
+/// Hive / GameService.
+///
+/// Single pump is enough: TechnologyScreen's chrome paints synchronously
+/// and the Slots body is a `SingleChildScrollView` around a `Column` with
+/// no indefinite ticker (the harness default), so the 320 dp overflow
+/// assertion evaluates on the first frame.
+Future<void> _pumpTechnologyScreen(
   WidgetTester tester, {
   required Size size,
   required Game game,
   required Player player,
   bool globalObserve = false,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        appEventBusProvider.overrideWith((ref) {
-          final bus = AppEventBus.create();
-          ref.onDispose(bus.dispose);
-          return bus;
-        }),
-        if (globalObserve)
-          shellPlayerContextProvider.overrideWithValue(
-            _globalObserveShellContext(),
-          ),
-      ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: size),
-          child: TechnologyScreen(game: game, player: player),
-        ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    overrides: [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
       ),
-    ),
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+      if (globalObserve)
+        shellPlayerContextProvider.overrideWithValue(
+          _globalObserveShellContext(),
+        ),
+    ],
+    child: TechnologyScreen(game: game, player: player),
   );
-  // Single pump is enough: TechnologyScreen's chrome paints synchronously
-  // and the Slots body is a `SingleChildScrollView` around a `Column`
-  // with no indefinite ticker. Mirrors the `await tester.pump()` branch
-  // used by `trade_screen_320dp_min_viewport_test.dart` for the same
-  // reason (`CtGameFeatureScreenShell` attaches a bus listener tied to
-  // the live `currentGameProvider`; we want the 320 dp overflow
-  // assertion to evaluate on the first frame).
-  await tester.pump();
 }
 
 void main() {
@@ -163,8 +149,11 @@ void main() {
   late Player humanPlayer;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    // Lightweight fixture (Refs #3656): `TechnologyScreen` only reads
+    // `game.players` / the supplied `player` (via `CtGameFeatureScreenShell`
+    // and `TechnologyPanel`); no generated map/topology data is consumed, so
+    // the full procedural map generator is avoided.
+    game = buildTechnologyPanelTestGame();
     humanPlayer = game.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => game.players.first,
@@ -181,7 +170,7 @@ void main() {
         'back label `Map`) + Slots/Tree trailing toggles + Slots body '
         '(TechnologyPanel) all render',
         (WidgetTester tester) async {
-          await _pumpTechnologyScreenAtSize(
+          await _pumpTechnologyScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -265,7 +254,7 @@ void main() {
         'also pumps without exception (regression sentinel for the '
         'overflow contract — keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-          await _pumpTechnologyScreenAtSize(
+          await _pumpTechnologyScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,
@@ -290,7 +279,7 @@ void main() {
         '`ObserveModeNotDefinedPanel(title: "Technology")` sentinel '
         'renders, the live TechnologyPanel body is absent',
         (WidgetTester tester) async {
-          await _pumpTechnologyScreenAtSize(
+          await _pumpTechnologyScreen(
             tester,
             size: _kMinViewport,
             game: game,
@@ -348,7 +337,7 @@ void main() {
         'also pumps without exception (regression sentinel for the '
         'overflow contract under the observe variant)',
         (WidgetTester tester) async {
-          await _pumpTechnologyScreenAtSize(
+          await _pumpTechnologyScreen(
             tester,
             size: _kWideRegressionViewport,
             game: game,

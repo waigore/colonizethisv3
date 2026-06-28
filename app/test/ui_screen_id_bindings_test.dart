@@ -16,6 +16,7 @@ import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_ov
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
@@ -25,19 +26,22 @@ import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
-import 'package:colonizethis_app/widgets/game_setup.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -51,10 +55,6 @@ const Map<String, ({String actual, String expected})> _bindings = {
     expected: UiScreenIds.shellScreen,
   ),
   'CtMainMenu': (actual: CtMainMenu.screenId, expected: UiScreenIds.mainMenu),
-  'CtGameSetup': (
-    actual: CtGameSetup.screenId,
-    expected: UiScreenIds.gameSetup,
-  ),
   'GameScreen': (actual: GameScreen.screenId, expected: UiScreenIds.gameScreen),
   'ProductionScreen': (
     actual: ProductionScreen.screenId,
@@ -88,6 +88,20 @@ const Map<String, ({String actual, String expected})> _bindings = {
     actual: NavalUnitsPanel.screenId,
     expected: UiScreenIds.navalUnitsPanel,
   ),
+  // Bindings added in #3279: game-bearing panels reuse their host screen's
+  // stable surface ID (the panel is the body of the route-host screen).
+  'DiplomacyPanel': (
+    actual: DiplomacyPanel.screenId,
+    expected: UiScreenIds.diplomacyScreen,
+  ),
+  'ProductionPanel': (
+    actual: ProductionPanel.screenId,
+    expected: UiScreenIds.productionScreen,
+  ),
+  'TechnologyPanel': (
+    actual: TechnologyPanel.screenId,
+    expected: UiScreenIds.technologyScreen,
+  ),
   'TrainCiviliansDialog': (
     actual: TrainCiviliansDialog.screenId,
     expected: UiScreenIds.trainCiviliansDialog,
@@ -95,6 +109,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'TrainMilitaryDialog': (
     actual: TrainMilitaryDialog.screenId,
     expected: UiScreenIds.trainMilitaryDialog,
+  ),
+  'TrainNavalDialog': (
+    actual: TrainNavalDialog.screenId,
+    expected: UiScreenIds.trainNavalDialog,
   ),
   'NewGameLeaderSelectionDialog': (
     actual: NewGameLeaderSelectionDialog.screenId,
@@ -115,6 +133,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'GameStartIntroOverlay': (
     actual: GameStartIntroOverlay.screenId,
     expected: UiScreenIds.gameStartIntroOverlay,
+  ),
+  'TribeFirstContactOverlay': (
+    actual: TribeFirstContactOverlay.screenId,
+    expected: UiScreenIds.tribeFirstContactOverlay,
   ),
   'VictoryOverlay': (
     actual: VictoryOverlay.screenId,

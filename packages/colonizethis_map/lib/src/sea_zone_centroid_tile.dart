@@ -4,6 +4,8 @@ library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'tile_map_grid.dart';
+
 /// Returns tile key `regionId|localSeaZoneId|x|y` for the cell whose coordinates
 /// are `round(average x)`, `round(average y)` over all grid cells assigned to
 /// [localSeaZoneId] on [tileMap].
@@ -17,14 +19,12 @@ String? seaZoneCentroidTileKey({
     return null;
   }
   final points = <(int, int)>[];
-  for (var y = 0; y < tileMap.height; y++) {
-    for (var x = 0; x < tileMap.width; x++) {
-      if (tileMap.cell(x, y) != localSeaZoneId) {
-        continue;
-      }
-      points.add((x, y));
+  TileMapGrid.forEachIndex(tileMap.height, tileMap.width, (y, x) {
+    if (tileMap.cell(x, y) != localSeaZoneId) {
+      return;
     }
-  }
+    points.add((x, y));
+  });
   final c = roundedCentroidIntCoords(points);
   if (c == null) {
     return null;

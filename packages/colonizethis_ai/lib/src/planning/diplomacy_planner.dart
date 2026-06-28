@@ -1,8 +1,14 @@
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'planning_imports.dart';
 import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'planner_context.dart';
+import 'planning_helpers.dart'
+    show
+        anyInvadableProvinceOwnedByMinor,
+        gpFactionIdsAtWarWith,
+        isAtWarWithAnyGreatPower;
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_declare_war_targets.dart';
@@ -49,6 +55,7 @@ export 'expand_phase_planner.dart'
         stalledFocusMinorTarget,
         belowQuotaActiveMinorWarTarget,
         atWarGpDistractionTribePeaceTargets,
+        belowQuotaRegimentThinTribeDistractionPeaceTargets,
         stalledExpansionDistractionPeaceTargets,
         criticalWeakGpSurvivalPeaceTargets,
         weakHoldingsInvadableBlockerPeaceTargets,
@@ -166,15 +173,13 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
 }) {
   var filtered = candidates;
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final atWarWithGp = snapshot.threats.atWarWith.any(
-      (id) => ctx.game.playerById(id) != null,
-    );
+    final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, snapshot);
     if (atWarWithGp) {
       filtered = filtered
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
-                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+                !isTribeFaction(ctx.game, o.targetFactionId),
           )
           .toList();
     }
@@ -182,26 +187,23 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     final provinceOwner = getProvinceOwnerMap(ctx.game);
-    final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) {
-        final owner = provinceOwner[pid];
-        return owner != null && ctx.game.minorNations.any((m) => m.id == owner);
-      },
+    final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+      game: ctx.game,
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
     );
     if (minorsOwnInvadable) {
       filtered = filtered
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
-                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+                !isTribeFaction(ctx.game, o.targetFactionId),
           )
           .toList();
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final gpWars = snapshot.threats.atWarWith
-        .where((id) => ctx.game.playerById(id) != null)
-        .toList();
+    final gpWars = gpFactionIdsAtWarWith(ctx.game, snapshot);
     final blocker = primaryInvadableOldWorldGpBlocker(
       game: ctx.game,
       snapshot: snapshot,
@@ -310,10 +312,12 @@ DiplomacyPlannerResult? _forcedInvadableGpDeclarePlannerResultIfNeeded({
   if (target == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    '$logLabel=$target',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      '$logLabel=$target',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -381,10 +385,12 @@ DiplomacyPlannerResult? _defaultStartOwMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    'defaultStartMinor=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      'defaultStartMinor=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -411,10 +417,12 @@ DiplomacyPlannerResult? _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    'belowQuotaMinor=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      'belowQuotaMinor=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -441,10 +449,12 @@ DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    'plateauMinor=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      'plateauMinor=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -471,9 +481,11 @@ DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
   if (minorTarget == null) {
     return null;
   }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} target=$minorTarget',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} target=$minorTarget',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -490,10 +502,12 @@ DiplomacyPlannerResult? _forcedDeclareWarPlannerResult({
   required String target,
   required String logLabel,
 }) {
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    '$logLabel=$target',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced declareWar nationId=${ctx.nationId} '
+      '$logLabel=$target',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
       DiplomaticOrder(
@@ -544,12 +558,23 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
     return null;
   }
+  // When a phase plan is threaded through (the canonical post-S5 production
+  // path) the GP-only `planExpandPeace` adapter drops every survival /
+  // expand-ratchet / peer-stalled peace decider the no-`phasePlan`
+  // `collectStalledGreatPowerPeaceTargets` fallback emits. Union the full
+  // fallback back in via [productionPeaceTargetsFromPhasePlan] (Refs #2509
+  // S5; #2847 § H5 tribe-distraction + § H6 ratchet/survival restoration).
   final peaceTargets = phasePlan != null
-      ? gpPeaceTargetsFromPhasePlan(phasePlan)
+      ? productionPeaceTargetsFromPhasePlan(
+          game: ctx.game,
+          snapshot: snapshot,
+          phasePlan: phasePlan,
+        )
       : collectStalledGreatPowerPeaceTargets(
           game: ctx.game,
           snapshot: snapshot,
-        );
+        ).toList()
+        ..sort();
   if (peaceTargets.isEmpty) {
     return null;
   }
@@ -560,10 +585,12 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
         targetFactionId: peaceTarget,
       ),
   ];
-  _log.i(
-    'diplomacy forced offerPeace nationId=${ctx.nationId} '
-    'targets=${peaceOrders.map((o) => o.targetFactionId).toList()}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy forced offerPeace nationId=${ctx.nationId} '
+      'targets=${peaceOrders.map((o) => o.targetFactionId).toList()}',
+    );
+  }
   return DiplomacyPlannerResult(
     orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, peaceOrders),
   );
@@ -587,7 +614,7 @@ int? _pickMinorDeclareCandidateIndex({
     if (order.type != DiplomaticOrderType.declareWar) {
       continue;
     }
-    if (!ctx.game.minorNations.any((m) => m.id == order.targetFactionId)) {
+    if (!isMinorFaction(ctx.game, order.targetFactionId)) {
       continue;
     }
     final score = scores[i];
@@ -760,7 +787,9 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     pass: pass,
   );
   if (weight < 25) {
-    _log.d('diplomacy skipped nationId=${ctx.nationId} weight=$weight < 25');
+    if (_log.debugEnabled) {
+      _log.d('diplomacy skipped nationId=${ctx.nationId} weight=$weight < 25');
+    }
     return DiplomacyPlannerResult(orders: ctx.orders);
   }
 
@@ -785,16 +814,18 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     phasePlan: phasePlan,
   );
 
-  final candidateDesc = filtered
-      .map(
-        (o) =>
-            '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}',
-      )
-      .toList();
-  _log.d(
-    'diplomacy eval nationId=${ctx.nationId} hiddenAgendaId=${ctx.config.hiddenAgendaId} '
-    'candidates=$candidateDesc scores=$scores',
-  );
+  if (_log.debugEnabled) {
+    final candidateDesc = filtered
+        .map(
+          (o) =>
+              '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}',
+        )
+        .toList();
+    _log.d(
+      'diplomacy eval nationId=${ctx.nationId} hiddenAgendaId=${ctx.config.hiddenAgendaId} '
+      'candidates=$candidateDesc scores=$scores',
+    );
+  }
 
   final chosen = _chooseDiplomaticOrder(
     ctx: ctx,
@@ -804,10 +835,12 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     scores: scores,
   );
   if (chosen == null) return DiplomacyPlannerResult(orders: ctx.orders);
-  _log.i(
-    'diplomacy chosen nationId=${ctx.nationId} '
-    'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'diplomacy chosen nationId=${ctx.nationId} '
+      'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""}',
+    );
+  }
   final nextOrders = ctx.orders.appendDiplomaticOrders(ctx.nationId, [chosen]);
   final declaredTarget = chosen.type == DiplomaticOrderType.declareWar
       ? chosen.targetFactionId

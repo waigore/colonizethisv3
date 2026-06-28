@@ -21,6 +21,13 @@
 //    - the left-rail empire buttons keyed by
 //      `kEmpireProductionButtonKey` / `kEmpireTechnologyButtonKey`
 //      per `SPEC/ui/empire-overview.md` § Left rail.
+//  * The narrow in-game chrome measurements from
+//    `SPEC/ui/mobile-adaptation.md` § In-game shell: at < 600 dp the
+//    left-rail empire buttons render at 26 × 26 dp (Req 8) and the
+//    bottom-left corner-control buttons render at 24 × 24 dp (Req 9),
+//    while the 1024 × 768 wide control renders them at the default
+//    36 × 36 dp / 32 × 32 dp so the breakpoint comparator direction is
+//    pinned from both sides.
 //  * The wide-only floating `GameMapPlayersBar` (keyed by
 //    `kGameMapPlayersBarKey`) is NOT present at narrow widths, pinning
 //    Refs #2870 Requirement 6 ("Players bar hidden" below the shell
@@ -32,17 +39,21 @@
 //    widths `GameMapPlayersBar` reappears so the contrast also pins the
 //    Req 6 narrow-only suppression.
 //
-// SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
+// SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin) and
+// § 4 In-game shell narrow measurement table (left rail 26 × 26 dp,
+// corner controls 24 × 24 dp).
 // SPEC: `SPEC/ui/empire-overview.md` (left-rail empire buttons + top bar).
 // SPEC: `SPEC/ui/in-game-shell-narrow.md` § Top bar.
 // Refs #2870 S10 (no horizontal overflow at 320 dp on every covered
-// screen) + Req 6 (players bar hidden at < 600 dp).
+// screen) + Req 6 (players bar hidden at < 600 dp) + Req 8/9 (narrow
+// left-rail 26 × 26 dp / corner-control 24 × 24 dp measurements, S3).
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -51,16 +62,17 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/map_view_test_fixtures.dart';
+import 'support/min_viewport_harness.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -81,11 +93,15 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 void main() {
   suppressLogsForTests();
 
-  late InitGameResult debugResult;
+  // Refs #3656: this min-viewport pin asserts only narrow/wide shell chrome
+  // (top bar, left rail, players-bar gating, no overflow); the map canvas just
+  // needs *a* mapViewData to mount. The lightweight game + minimal mapViewData
+  // replace the ~7-11s getDebugInitGameResult() map generation.
+  final Game baseGame = buildPlayersBarTestGame();
+  final InitGameMapViewData lightMapViewData = buildLightweightMapViewData();
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    debugResult = getDebugInitGameResult();
     Hive.init('./.dart_tool/test_hive_game_screen_320dp');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
@@ -134,31 +150,20 @@ void main() {
   /// keeps recurring Flame / animation tickers running indefinitely;
   /// the SPEC § 7 contract under test is the first-frame layout, which
   /// is fully resolved after a single pump.
-  Future<void> pumpGameScreenAtSize(
+  Future<void> pumpGameScreen(
     WidgetTester tester, {
     required Size size,
   }) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(size);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: gameShellOverrides(
-          game: debugResult.game,
-          mapViewData: debugResult.mapViewData,
-        ),
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            theme: AppThemes.editorialMonocle,
-            home: MediaQuery(
-              data: MediaQueryData(size: size),
-              child: const GameScreen(),
-            ),
-          ),
-        ),
+    await pumpAtMinViewport(
+      tester,
+      size: size,
+      overrides: gameShellOverrides(
+        game: baseGame,
+        mapViewData: lightMapViewData,
       ),
+      navigatorKey: appNavigatorKey,
+      child: AppEventHandlerScope(child: const GameScreen()),
     );
-    await tester.pump();
   }
 
   group(
@@ -170,7 +175,7 @@ void main() {
         'left-rail chrome renders end-to-end without overflow, '
         'players bar is hidden (Req 6)',
         (WidgetTester tester) async {
-          await pumpGameScreenAtSize(tester, size: _kMinViewport);
+          await pumpGameScreen(tester, size: _kMinViewport);
 
           expect(
             tester.takeException(),
@@ -244,7 +249,56 @@ void main() {
                 'at the minimum supported viewport (320 dp). The '
                 'narrow shell suppresses it via '
                 '`if (!isNarrow && widget.game.victory == null)` in '
-                '`game_map_area_part2.dart`.',
+                '`game_map_area_build.dart`.',
+          );
+        },
+        timeout: const Timeout(Duration(seconds: 20)),
+      );
+
+      testWidgets(
+        'AC (positive) GameScreen @ 320×640: left-rail empire buttons '
+        'render at 26 × 26 dp and corner-control buttons at 24 × 24 dp '
+        '(Refs #2870 Req 8 / 9, S3)',
+        (WidgetTester tester) async {
+          await pumpGameScreen(tester, size: _kMinViewport);
+
+          expect(
+            tester.takeException(),
+            isNull,
+            reason:
+                'SPEC/ui/mobile-adaptation.md § 4 In-game shell: the '
+                'narrow chrome must lay out without exception before its '
+                'measurements are asserted.',
+          );
+
+          expect(
+            tester.getSize(find.byKey(kEmpireProductionButtonKey)),
+            const Size(
+              GameMapEmpireLeftRail.narrowButtonSize,
+              GameMapEmpireLeftRail.narrowButtonSize,
+            ),
+            reason:
+                'Refs #2870 Req 8 / SPEC/ui/mobile-adaptation.md § 4 '
+                'In-game shell: below the 600 dp shell breakpoint each '
+                'left-rail empire button compresses to '
+                '${GameMapEmpireLeftRail.narrowButtonSize} × '
+                '${GameMapEmpireLeftRail.narrowButtonSize} dp '
+                '(mockup `.empire-btn @media (max-width:600px)`).',
+          );
+
+          expect(
+            tester.getSize(find.byKey(kBaseLayerCycleButtonKey)),
+            const Size(
+              GameMapCornerControls.narrowButtonSize,
+              GameMapCornerControls.narrowButtonSize,
+            ),
+            reason:
+                'Refs #2870 Req 9 / SPEC/ui/mobile-adaptation.md § 4 '
+                'In-game shell: below the 600 dp shell breakpoint each '
+                'bottom-left corner-control button compresses to '
+                '${GameMapCornerControls.narrowButtonSize} × '
+                '${GameMapCornerControls.narrowButtonSize} dp '
+                '(mockup `.corner-btn @media (max-width:600px)`).',
           );
         },
         timeout: const Timeout(Duration(seconds: 20)),
@@ -255,7 +309,7 @@ void main() {
         'exception, left-rail chrome still renders, players bar '
         'reappears at wide widths (Req 6 wide-side contrast)',
         (WidgetTester tester) async {
-          await pumpGameScreenAtSize(
+          await pumpGameScreen(
             tester,
             size: _kWideRegressionViewport,
           );
@@ -284,6 +338,37 @@ void main() {
           );
 
           expect(
+            tester.getSize(find.byKey(kEmpireProductionButtonKey)),
+            const Size(
+              GameMapEmpireLeftRail.buttonSize,
+              GameMapEmpireLeftRail.buttonSize,
+            ),
+            reason:
+                'Refs #2870 Req 8 wide-side contrast: at viewport width '
+                '≥ the 600 dp shell breakpoint each left-rail empire '
+                'button renders at the default '
+                '${GameMapEmpireLeftRail.buttonSize} × '
+                '${GameMapEmpireLeftRail.buttonSize} dp, so the narrow '
+                '26 × 26 dp assertion above pins the breakpoint '
+                'comparator direction rather than a static size.',
+          );
+
+          expect(
+            tester.getSize(find.byKey(kBaseLayerCycleButtonKey)),
+            const Size(
+              GameMapCornerControls.buttonSize,
+              GameMapCornerControls.buttonSize,
+            ),
+            reason:
+                'Refs #2870 Req 9 wide-side contrast: at viewport width '
+                '≥ the 600 dp shell breakpoint each corner-control '
+                'button renders at the default '
+                '${GameMapCornerControls.buttonSize} × '
+                '${GameMapCornerControls.buttonSize} dp, keeping the '
+                'narrow 24 × 24 dp assertion meaningful.',
+          );
+
+          expect(
             find.byKey(kGameMapPlayersBarKey),
             findsOneWidget,
             reason:
@@ -291,7 +376,7 @@ void main() {
                 'viewport width ≥ shell breakpoint (600 dp) the '
                 '`GameMapPlayersBar` floating chip column reappears '
                 'in the widget tree (per the `!isNarrow` gate in '
-                '`game_map_area_part2.dart`). The wide control '
+                '`game_map_area_build.dart`). The wide control '
                 'pinning its presence is what keeps the narrow '
                 '`findsNothing` assertion above meaningful.',
           );

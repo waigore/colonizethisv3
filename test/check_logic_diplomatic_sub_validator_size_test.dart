@@ -143,7 +143,7 @@ Directory _diplomaticDirIn(Directory repo) => Directory(
       p.join(
         repo.path,
         'packages',
-        'colonizethis_logic',
+        'colonizethis_orders',
         'lib',
         'src',
         'orders',

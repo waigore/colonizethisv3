@@ -50,7 +50,6 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
@@ -68,7 +67,6 @@ import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show homeFleetIdFor;
@@ -80,12 +78,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
+import 'support/panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
 // Player ids used by the isolated `_pumpTradeScreenStandalone` harness
 // (AC #2, #3, #4, #5, and observe-variant tests). The route-host
-// fixture (AC #1, #6) uses the human player baked into
-// `getDebugInitGameResult()`.
+// fixture (AC #1, #6) uses the human player from the shared lightweight
+// `buildTradePanelTestGame()` fixture (Refs #3656).
 const String _humanPlayerId = 'gp_h';
 const String _capProvinceId = 'oldWorld|cap1';
 
@@ -240,18 +240,12 @@ Future<ProviderContainer> _pumpTradeScreenStandalone(
     ],
   );
   addTearDown(container.dispose);
-  await tester.binding.setSurfaceSize(const Size(1024, 4096));
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(
-    UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: TradeScreen(game: game, player: player),
-      ),
-    ),
+  await pumpAppShellWithContainer(
+    tester,
+    container: container,
+    viewport: const Size(1024, 4096),
+    child: TradeScreen(game: game, player: player),
   );
-  await tester.pump();
   return container;
 }
 
@@ -299,8 +293,11 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    final result = getDebugInitGameResult();
-    routeHostGame = result.game;
+    // Lightweight fixture (Refs #3656): the route-host + left-rail tests
+    // (AC #1, #6) only need a Game with a human player for navigation and the
+    // TradeScreen chrome — no generated map/topology data — so the ~7-11s
+    // procedural map generator is avoided.
+    routeHostGame = buildTradePanelTestGame();
     routeHostPlayer = routeHostGame.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => routeHostGame.players.first,
@@ -350,62 +347,57 @@ void main() {
     ];
 
   Widget buildLeftRailHost({bool globalObserve = false}) {
-    return ProviderScope(
+    return buildAppShell(
       overrides: routeHostOverrides(globalObserve: globalObserve),
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          theme: AppThemes.editorialMonocle,
-          onGenerateRoute: Routes.generate,
-          home: Scaffold(
-            body: Stack(
-              children: [
-                Positioned(
-                  left: 20,
-                  top: 0,
-                  child: GameMapEmpireLeftRail(
-                    game: routeHostGame,
-                    humanPlayerId: routeHostPlayer.id,
-                  ),
-                ),
-              ],
+      navigatorKey: appNavigatorKey,
+      onGenerateRoute: Routes.generate,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Positioned(
+              left: 20,
+              top: 0,
+              child: GameMapEmpireLeftRail(
+                game: routeHostGame,
+                humanPlayerId: routeHostPlayer.id,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
   Widget buildTradeRouteHost({bool globalObserve = false}) {
-    return ProviderScope(
+    // Route host: pushes RoutePaths.trade through Routes.generate, so it uses
+    // the shared shell's onGenerateRoute + appNavigatorKey seams and the
+    // shellWrapper seam to keep AppEventHandlerScope above routing (Refs #3730).
+    return buildAppShell(
       overrides: routeHostOverrides(globalObserve: globalObserve),
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          theme: AppThemes.editorialMonocle,
-          onGenerateRoute: Routes.generate,
-          home: Builder(
-            builder: (context) {
-              return Scaffold(
-                body: Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed(
-                        RoutePaths.trade,
-                        arguments: <String, Object?>{
-                          'game': routeHostGame,
-                          'humanPlayerId': routeHostPlayer.id,
-                        },
-                      );
+      navigatorKey: appNavigatorKey,
+      onGenerateRoute: Routes.generate,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed(
+                    RoutePaths.trade,
+                    arguments: <String, Object?>{
+                      'game': routeHostGame,
+                      'humanPlayerId': routeHostPlayer.id,
                     },
-                    // ignore: avoid_hardcoded_strings_in_widgets
-                    child: const Text('open trade'),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('open trade'),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -666,10 +658,11 @@ void main() {
     'with correct quantities, prices, and treasury totals (#2993 E8 (d))',
     () {
       testWidgets(
-        'Given a partial timber bid (filled 5 of 10 at price 8.4) plus a '
-        'carry-forward fabric offer of qty 3 (no fills), when the player '
-        'opens the Deal Book tab, then the bids panel shows the timber '
-        'filled row + timber carry-forward row + total spent of 42, and '
+        'Given a partial timber bid (filled 5 of 10 at price 8.4, '
+        'displayed as floor=8) plus a carry-forward fabric offer of qty '
+        '3 (no fills), when the player opens the Deal Book tab, then '
+        'the bids panel shows the timber filled row + timber '
+        'carry-forward row + total spent of 40 (= 5 × floor(8.4)), and '
         'the offers panel shows the fabric carry-forward row with total '
         'received of 0',
         (tester) async {
@@ -722,7 +715,8 @@ void main() {
           );
           await _switchToDealBook(tester);
 
-          // Filled timber row in the bids panel: qty 5 × 8.4 = 42.
+          // Filled timber row in the bids panel: qty 5 × floor(8.4) = 5 × 8 = 40
+          // per `SPEC/ui/trade-screen.md` § Deal Book (integer filled-row prices).
           expect(
             find.byKey(
               TradeScreen.dealBookFilledRowKey(
@@ -733,7 +727,7 @@ void main() {
             findsOneWidget,
           );
           // ignore: avoid_hardcoded_strings_in_widgets
-          expect(find.text('timber — qty 5 × 8.4 = 42'), findsOneWidget);
+          expect(find.text('timber — qty 5 × 8 = 40'), findsOneWidget);
 
           // Unfilled timber carry-forward row in the bids panel.
           expect(
@@ -751,14 +745,16 @@ void main() {
             findsOneWidget,
           );
 
-          // Bids panel total spent = filled notional only = 42 (carry-
-          // forwards do not contribute to treasury totals per SPEC).
+          // Bids panel total spent = filled notional only with integer
+          // unit prices: quantity × floor(pricePerUnit) = 5 × 8 = 40
+          // (carry-forwards do not contribute to treasury totals per
+          // `SPEC/ui/trade-screen.md` § Deal Book).
           final Text bidsTotals = tester.widget<Text>(
             find.byKey(TradeScreen.dealBookBidsTotalsKey),
           );
           expect(
             bidsTotals.data,
-            '${TradeScreen.dealBookTotalSpentLabel}: 42',
+            '${TradeScreen.dealBookTotalSpentLabel}: 40',
           );
 
           // Offers panel: no filled deal, one carry-forward fabric offer.

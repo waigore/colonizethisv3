@@ -158,7 +158,7 @@ Directory _workHandlersDirIn(Directory repo) => Directory(
       p.join(
         repo.path,
         'packages',
-        'colonizethis_logic',
+        'colonizethis_orders',
         'lib',
         'src',
         'orders',
@@ -170,7 +170,7 @@ File _orderVisibilityFileIn(Directory repo) => File(
       p.join(
         repo.path,
         'packages',
-        'colonizethis_logic',
+        'colonizethis_orders',
         'lib',
         'src',
         'orders',

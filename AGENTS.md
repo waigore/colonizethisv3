@@ -48,7 +48,7 @@ For complete details, read the relevant rule file(s) in `.cursor/rules/`.
 
 ## Project agent skills
 
-Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the task, read and follow it.
+Skills live under `.cursor/skills/<name>/SKILL.md` (source of truth for all agents). Grok discovers thin shims at `.grok/skills/<name>/SKILL.md` (repo priority) that delegate by reading the Cursor files. When a skill matches the task, read and follow the authoritative `.cursor/skills/` version (and any referenced `reference.md` or sibling skills it names).
 
 | Skill | Use when |
 |-------|----------|
@@ -69,7 +69,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the tas
 | `refine-github-issue` | Refine an open issue from comment feedback (repro, root cause, priorities); update the body or return numbered clarifications when feedback conflicts with SPEC. |
 | `review-pr` | Review an open pull request against issue alignment, acceptance-criteria coverage, architecture conventions, and linting compliance; post all findings as a PR comment with strict YES/CONDITIONAL YES/NO outcomes. |
 | `review-github-issue` | Review an issue for **purpose ↔ proposed method** coherence and internal consistency; repo/SPEC/test evidence only when needed to show the method cannot satisfy the purpose. Consolidated comment with priorities and remedies; use **`verify-github-issue`** for AC↔implementation closure. |
-| `verify-github-issue` | Verify one open issue against ACs/specs/tests; post results as an issue comment; gap analysis when incomplete. |
+| `verify-github-issue` | Verify one open issue against ACs/specs/tests on merged `dev`; UI issues need widget golden PNG proof on the issue comment; post via `gh issue comment` only. OpenCode: `.opencode/skills/verify-github-issue/`. |
 | `document-app-ui` | Document player-app screens/UI changes per `colonizethis-ui-documentation.mdc` (stable 8-char IDs, layout/behavior/variants, Widgetbook, registry, `UiScreenIds`). OpenCode: `.opencode/skills/document-app-ui/`. |
 
 ## Contributing

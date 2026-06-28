@@ -65,6 +65,14 @@ The 1.5 dp `--accent-dim` top border required by the same row is provided by `Pr
 
 ---
 
+## Open / close motion
+
+- **Enter:** When `overlayOpen` becomes `true` and a non-empty `displayId` resolves, the slot mounts `ProvinceSeaZoneDetailOverlay` with a **200 ms** `SlideTransition` from `Offset(0, 1)` → `Offset.zero` (`Curves.easeOut` on enter). The motion slides the bottom sheet **up** from below the viewport; no fade-only transition.
+- **Exit:** When `overlayOpen` becomes `false` (close control) or the slot would return `SizedBox.shrink()` for an empty `displayId`, the outgoing panel uses the reverse slide (`Offset.zero` → `Offset(0, 1)`, `Curves.easeIn`, same **200 ms** duration) before unmounting. `selectedTileKey` retention follows [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md) § Interaction.
+- **Implementation:** Shared helper `ProvinceDetailPanelSlideTransition` in `app/lib/features/game/flame/province_detail_panel_slide_transition.dart` (`AnimatedSwitcher` + `SlideTransition`; axis `bottom` for this host).
+
+---
+
 ## Navigation and side effects
 
 - **Close control** on `ProvinceSeaZoneDetailOverlay` → `mapProvincePanelProvider.notifier.closeOverlay()` (`overlayOpen = false`).
@@ -114,6 +122,14 @@ The 1.5 dp `--accent-dim` top border required by the same row is provided by `Pr
 - Given `canMutateViaUi` is `false`,
   When the slot builds with explore state that would otherwise show an icon,
   Then the nested overlay receives `showExploreActionIcon: false` (no explore shortcut emit on tap).
+
+- Given `overlayOpen` transitions from `false` to `true` with a valid `displayId`,
+  When the slot builds,
+  Then the UI layer mounts `ProvinceDetailPanelSlideTransition` with axis `bottom` and the nested `ProvinceSeaZoneDetailOverlay` enters via a **200 ms** upward slide (`SlideTransition` from `Offset(0, 1)`).
+
+- Given `overlayOpen` transitions from `true` to `false` while the panel was visible,
+  When the close animation completes,
+  Then the slot unmounts the overlay and does not leave a hit target in the map stack.
 
 ---
 

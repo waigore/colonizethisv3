@@ -7,7 +7,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart'
     show UnitRole, unitRoleForType;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show projectedCivilianTileKey;
+    show WorldStateProvinceLookup, projectedCivilianTileKey;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Builds prefixed province id (`regionId|provinceId`) → display name from
@@ -15,10 +15,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// civilian-units-panel rendering and by sort key resolution.
 Map<String, String> provinceNamesByPrefixedId(Game game) {
   final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  for (final p in game.worldState.allProvinces()) {
     out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
   }
   return out;

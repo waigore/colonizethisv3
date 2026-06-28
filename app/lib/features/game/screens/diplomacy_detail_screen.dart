@@ -10,6 +10,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../widgets/diplomacy_panel.dart';
 
@@ -132,6 +133,15 @@ class DiplomacyDetailScreen extends ConsumerWidget {
     final bus = ref.watch(appEventBusProvider);
     final history = diplomaticHistoryForPair(game, humanPlayerId, factionId);
     int year(int turn) => turnToYear(turn, game.turnTimeMapping);
+    // SPEC/ui/diplomacy-detail-screen.md § Current relation: Great Power
+    // targets show the same relative-power line as the panel row above the
+    // relation summary; Minor / Tribe targets omit it.
+    final int? relativePowerPct = kind == FactionKind.greatPower
+        ? powerComparisonPercent(
+            greatPowerPowerScore(game, factionId),
+            greatPowerPowerScore(game, humanPlayerId),
+          )
+        : null;
 
     return CtGameFeatureScreenShell(
       game: game,
@@ -153,7 +163,17 @@ class DiplomacyDetailScreen extends ConsumerWidget {
               children: <Widget>[
                 _DetailCard(
                   title: l10n.diplomacy_detail_currentRelation,
-                  child: _RelationSummary(relation: relation, l10n: l10n),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (relativePowerPct != null) ...<Widget>[
+                        RelativePowerLine(pct: relativePowerPct),
+                        const SizedBox(height: 8),
+                      ],
+                      _RelationSummary(relation: relation, l10n: l10n),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: cardSpacing),
                 _DetailCard(
@@ -281,6 +301,12 @@ class _RelationSummary extends StatelessWidget {
         ? EditorialMonoclePalette.danger
         : EditorialMonoclePalette.success;
     final String relationLabel = relationScoreToDisplayLabel(relation!.score);
+    // SPEC/ui/diplomacy-detail-screen.md § Formal alliance indicator
+    // (Refs #3625, AC4): a persisted formal alliance surfaces the same gold
+    // ALLIANCE treaty badge used by the panel row, distinct from the informal
+    // one-word relation label. A merely-Friendly relation in the informal
+    // RelationLevel.allied band (no treaty) never shows it.
+    final bool showAlliance = relation!.formalAlliance;
 
     return Wrap(
       spacing: 10,
@@ -301,6 +327,7 @@ class _RelationSummary extends StatelessWidget {
               color: EditorialMonoclePalette.fg,
             ),
           ),
+        if (showAlliance) const DiplomacyAllianceBadge(),
       ],
     );
   }
@@ -422,7 +449,10 @@ class _LeftBorderTile extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: CtSpacing.ml,
+          vertical: 10,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

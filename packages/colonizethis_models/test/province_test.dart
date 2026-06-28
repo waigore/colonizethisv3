@@ -35,11 +35,11 @@ void main() {
         id: 'oldWorld|p1',
         regionId: 'oldWorld',
         fortLevel: 2,
-        terrain: 'forest',
+        terrain: 'hardwoodForest',
       );
       final p2 = Province.fromJson(p.toJson());
       expect(p2.fortLevel, 2);
-      expect(p2.terrain, 'forest');
+      expect(p2.terrain, 'hardwoodForest');
     });
     test('fortLevel defaults 0, terrain defaults plains', () {
       final p = Province.fromJson({

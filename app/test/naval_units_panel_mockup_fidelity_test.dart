@@ -13,9 +13,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/fleet_expansion_tile.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 const _humanId = 'gp_naval_fidelity';
 const _capitalLocalId = 'cap1';
@@ -131,9 +133,10 @@ void main() {
 
   late Game game;
   setUpAll(() {
-    // Warm `getDebugInitGameResult` so any internal asset/data lookups are
-    // ready, then build the deterministic fidelity scenario.
-    getDebugInitGameResult();
+    // Build the deterministic fidelity scenario directly. Refs #3656: the panel
+    // renders entirely from this hand-built fixture, so the prior ~11s
+    // `getDebugInitGameResult()` warm call (which generated a full map this
+    // suite never reads) is removed.
     game = _buildFidelityGame();
   });
 
@@ -162,32 +165,36 @@ void main() {
           reason: 'Naval fleet rows must use the dense pill footprint (R25)',
         );
 
-        final buttons = find.descendant(
+        // Move + Split render as mockup compact-pill CtActionTextButtons and
+        // Locate as the circular CtCircularLocateButton (issue #3514 owner
+        // decision #6); the row must mount no CtNinePatchButton action chrome.
+        final pillButtons = find.descendant(
           of: channelTile,
-          matching: find.byType(CtNinePatchButton),
+          matching: find.byType(CtActionTextButton),
         );
-        // Move + Split + Locate.
-        expect(buttons, findsNWidgets(3));
-
-        final actionButtonWidgets = tester
-            .widgetList<CtNinePatchButton>(buttons)
-            .toList(growable: false);
-        for (final btn in actionButtonWidgets) {
-          expect(
-            btn.minHeight,
-            lessThan(32),
-            reason:
-                'Dense pills must shave the inherited 32 dp minHeight (R25)',
-          );
-        }
-
-        // All three buttons render on a single horizontal line (no wrap).
-        final yCenters = actionButtonWidgets.map(
-          (b) => tester.getCenter(find.byWidget(b)).dy,
+        expect(pillButtons, findsNWidgets(2));
+        final locateButton = find.descendant(
+          of: channelTile,
+          matching: find.byType(CtCircularLocateButton),
         );
-        final dy = yCenters.toSet();
+        expect(locateButton, findsOneWidget);
         expect(
-          dy.length,
+          find.descendant(
+            of: channelTile,
+            matching: find.byType(CtNinePatchButton),
+          ),
+          findsNothing,
+          reason: 'Naval fleet row actions must use pills, not nine-patch (R25)',
+        );
+
+        // All three controls render on a single horizontal line (no wrap).
+        final yCenters = <double>{
+          tester.getCenter(pillButtons.first).dy,
+          tester.getCenter(pillButtons.last).dy,
+          tester.getCenter(locateButton).dy,
+        };
+        expect(
+          yCenters.length,
           1,
           reason: 'Move/Split/Locate must share one row (R25)',
         );
@@ -263,13 +270,21 @@ void main() {
             reason: 'Locate must be the rightmost action (R27)',
           );
 
-          // Locate button rendered icon-only: no Text widget child.
-          final locateBtn = find.descendant(
-            of: find.byWidget(tooltips.last),
-            matching: find.byType(CtNinePatchButton),
+          // Locate renders as the circular icon-only CtCircularLocateButton
+          // (R27 mockup `.locate-btn`; issue #3514). Its internal Tooltip
+          // ('Locate fleet') subtree contains no Text label.
+          expect(
+            find.descendant(
+              of: channelTile,
+              matching: find.byType(CtCircularLocateButton),
+            ),
+            findsOneWidget,
           );
           expect(
-            find.descendant(of: locateBtn, matching: find.byType(Text)),
+            find.descendant(
+              of: find.byWidget(tooltips.last),
+              matching: find.byType(Text),
+            ),
             findsNothing,
             reason: 'Locate must be icon-only (R27 mockup `.locate-btn`)',
           );
@@ -447,5 +462,69 @@ void main() {
       // 1 Home Fleet + 2 regular fleets in the deterministic fixture.
       expect(find.byType(FleetExpansionTile), findsNWidgets(3));
     });
+  });
+
+  // Issue #3514 AC-6 (naval card migration): fleet rows render the shared
+  // UnitsEntityCard mockup `.fleet-row` bordered gradient card chrome (the
+  // same migration delivered for military army rows), not the bare Material
+  // ExpansionTile chrome. The deferred-from-#3532 dense-action overflow under
+  // the card chrome is also pinned (no RenderFlex exception at the default
+  // 480-dp host).
+  group('Naval fleet card chrome (issue #3514 AC-6)', () {
+    testWidgets(
+      'Each fleet row is rendered inside a UnitsEntityCard with its dense '
+      'action row hosted chrome-less (no double border) and no overflow',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(_hostPanel(game));
+        await tester.pumpAndSettle();
+
+        // No RenderFlex overflow exception escapes when the dense Move /
+        // Split / Locate cluster lays out under the card chrome (the gap
+        // PR #3532 deferred for naval).
+        expect(tester.takeException(), isNull);
+
+        // One UnitsEntityCard per fleet row (Home + 2 regular fleets).
+        expect(find.byType(UnitsEntityCard), findsNWidgets(3));
+
+        // Each FleetExpansionTile hosts its card chrome.
+        for (final card in <Finder>[
+          find.descendant(
+            of: find.byType(FleetExpansionTile).at(0),
+            matching: find.byType(UnitsEntityCard),
+          ),
+          find.descendant(
+            of: find.byType(FleetExpansionTile).at(1),
+            matching: find.byType(UnitsEntityCard),
+          ),
+          find.descendant(
+            of: find.byType(FleetExpansionTile).at(2),
+            matching: find.byType(UnitsEntityCard),
+          ),
+        ]) {
+          expect(card, findsOneWidget);
+        }
+
+        // The dense title action row is hosted chrome-less so the card border
+        // is not double-painted (issue #3514 AC-6 — `chrome: false`).
+        final actionRows = tester.widgetList<UnitsEntityActionRow>(
+          find.byType(UnitsEntityActionRow),
+        );
+        expect(actionRows, isNotEmpty);
+        for (final row in actionRows) {
+          expect(
+            row.chrome,
+            isFalse,
+            reason:
+                'Naval fleet action rows must be hosted chrome-less inside '
+                'the UnitsEntityCard (issue #3514 AC-6)',
+          );
+          expect(
+            row.dense,
+            isTrue,
+            reason: 'Naval fleet action rows stay dense (R25)',
+          );
+        }
+      },
+    );
   });
 }

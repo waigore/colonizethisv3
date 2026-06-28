@@ -169,7 +169,7 @@ void main() {
         attackerUnits: attackers,
         defenderUnits: defenders,
         fortLevel: 0,
-        terrain: 'forest',
+        terrain: 'hardwoodForest',
       );
 
       // Forest should favor defender more than plains, or at least not

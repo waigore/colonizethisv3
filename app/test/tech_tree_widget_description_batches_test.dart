@@ -1,6 +1,5 @@
 // Tests for TechTreeWidget and TechnologyScreen. SPEC/ui/tech-tree-widget.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -8,7 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -17,8 +17,7 @@ void main() {
   late Player player;
 
   setUpAll(() {
-    final result = getDebugInitGameResult();
-    game = result.game;
+    game = buildTechnologyPanelTestGame();
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
 

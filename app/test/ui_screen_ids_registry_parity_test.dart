@@ -17,7 +17,6 @@ const String _registryPath = '../SPEC/ui/screen-registry.md';
 const Map<String, String> _expectedConstants = {
   'shellScreen': UiScreenIds.shellScreen,
   'mainMenu': UiScreenIds.mainMenu,
-  'gameSetup': UiScreenIds.gameSetup,
   'gameInitializing': UiScreenIds.gameInitializing,
   'pauseMenuPanel': UiScreenIds.pauseMenuPanel,
   'gameScreen': UiScreenIds.gameScreen,
@@ -33,6 +32,7 @@ const Map<String, String> _expectedConstants = {
   'navalUnitsPanel': UiScreenIds.navalUnitsPanel,
   'trainCiviliansDialog': UiScreenIds.trainCiviliansDialog,
   'trainMilitaryDialog': UiScreenIds.trainMilitaryDialog,
+  'trainNavalDialog': UiScreenIds.trainNavalDialog,
   'grantOrSubsidyDialog': UiScreenIds.grantOrSubsidyDialog,
   'productionCommodityBreakdownDialog':
       UiScreenIds.productionCommodityBreakdownDialog,
@@ -40,6 +40,7 @@ const Map<String, String> _expectedConstants = {
   'quickBattleScreen': UiScreenIds.quickBattleScreen,
   'quickBattleResultDialog': UiScreenIds.quickBattleResultDialog,
   'gameStartIntroOverlay': UiScreenIds.gameStartIntroOverlay,
+  'tribeFirstContactOverlay': UiScreenIds.tribeFirstContactOverlay,
   'victoryOverlay': UiScreenIds.victoryOverlay,
   'overtureDialogueOverlay': UiScreenIds.overtureDialogueOverlay,
   'callToArmsDialogueOverlay': UiScreenIds.callToArmsDialogueOverlay,

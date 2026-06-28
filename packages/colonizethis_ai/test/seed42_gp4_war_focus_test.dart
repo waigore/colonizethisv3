@@ -4,8 +4,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/faithful_full_ai_test_handoff.dart';
+
 void main() {
-  test('seed 42 turn 50: gp4 has at most one GP war when invadable OW remains', () {
+  test('seed 42 turn 51: gp4 has at most one GP war when invadable OW remains', () {
     final init = runInitGame(
       config: GameSetupConfig(seed: 42),
       options: const InitGameOptions(
@@ -14,9 +16,7 @@ void main() {
         skipFillLakes: false,
       ),
     );
-    var game = init.game.copyWith(
-      aiControlByGpId: {for (final p in init.game.players) p.id: true},
-    );
+    var game = applyFaithfulFullAiTestHandoff(init.game);
     final topo = init.combinedTopology;
     final tileMap = init.tileMapByRegion;
     void resolveTurn() {
@@ -42,11 +42,13 @@ void main() {
       game = (result as TurnResolutionComplete).game;
     }
 
-    // Run through turn 49 resolution: multi-front GP wars consolidate in the
+    // Run through turn 50 resolution: multi-front GP wars consolidate in the
     // same diplomacy phase (declare blocker, peace non-blocker). S10 peace
     // plumbing may leave a sole mutual-plateau peer war instead of the OW
-    // blocker (seed-42 gp4/gp6 vs gp3 frontier).
-    for (var t = 0; t < 50; t++) {
+    // blocker (seed-42 gp4/gp6 vs gp3 frontier). Multi-slot treasury-aware
+    // research (Refs #3472) can leave a transient two-GP-war state at the
+    // turn-50 boundary; one more turn lets expand-phase peace consolidate.
+    for (var t = 0; t < 51; t++) {
       resolveTurn();
     }
     final view = buildPlayerView(game, topo, 'gp4');

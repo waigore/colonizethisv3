@@ -20,15 +20,15 @@
 //  * FRR / FTP tags render on filled rows that the matcher annotated
 //    so the player can audit why a deal cleared.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 /// Synthetic [Game] with the human player `gp_h` and a foreign GP
 /// `gp_a` used to prove player isolation in the ledger filter. The
@@ -72,18 +72,13 @@ Future<void> _pumpDealBookTab(
   required Game game,
 }) async {
   final Player player = game.players.firstWhere((p) => p.isHuman);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-      ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: TradeScreen(game: game, player: player),
-      ),
-    ),
+  await pumpAppShell(
+    tester,
+    overrides: [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+    ],
+    child: TradeScreen(game: game, player: player),
   );
-  await tester.pump();
   // Tab into the Deal Book tab so the live content is foregrounded.
   final dealBookLabel = find.descendant(
     of: find.byType(CtTabStrip),
@@ -137,6 +132,42 @@ void main() {
         expect(
           offersTotals.data,
           '${TradeScreen.dealBookTotalReceivedLabel}: 0',
+        );
+      },
+    );
+
+    testWidgets(
+      'filled bid row floors legacy fractional pricePerUnit to integer '
+      'display (Refs #3093)',
+      (tester) async {
+        final game = _buildGame(
+          activity: const <CommodityId, MarketActivity>{
+            'timber': MarketActivity(
+              totalBidQuantity: 5,
+              totalOfferQuantity: 5,
+              filledQuantity: 5,
+              deals: <FilledDeal>[
+                FilledDeal(
+                  sellerFactionId: 'gp_a',
+                  buyerFactionId: 'gp_h',
+                  commodityId: 'timber',
+                  quantity: 5,
+                  pricePerUnit: 30.9,
+                ),
+              ],
+            ),
+          },
+        );
+        await _pumpDealBookTab(tester, game: game);
+
+        // ignore: avoid_hardcoded_strings_in_widgets
+        expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
+        final bidsTotals = tester.widget<Text>(
+          find.byKey(TradeScreen.dealBookBidsTotalsKey),
+        );
+        expect(
+          bidsTotals.data,
+          '${TradeScreen.dealBookTotalSpentLabel}: 150',
         );
       },
     );
@@ -211,7 +242,7 @@ void main() {
         // Row text encodes quantity × price = notional and uses the
         // commodity id as the leading label per the SPEC E6 contract.
         // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('timber — qty 5 × 30.0 = 150'), findsOneWidget);
+        expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
 
         // Treasury totals reflect the single filled buy notional only;
         // the unrelated iron deal is excluded by the buyer filter.

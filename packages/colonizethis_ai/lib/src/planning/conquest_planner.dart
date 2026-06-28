@@ -7,7 +7,15 @@ import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
+import 'phase_priority_weights.dart';
 import 'planner_context.dart';
+import 'planning_helpers.dart'
+    show
+        clampPhaseWeightUpperUnit,
+        factionOwnsInvadableOldWorldProvince,
+        isAtWarWithAnyGreatPower,
+        minorAtWarPeaceTargetsWhere,
+        oldWorldProvinceLeadOver;
 import '../util/ai_random_utils.dart';
 import '../util/faction_query.dart';
 
@@ -28,10 +36,10 @@ String? stalledConquestDeclaredWarTarget({
   );
   if (activeMinor == null &&
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    final atWarMinors = <String>[
-      for (final factionId in snapshot.threats.atWarWith)
-        if (game.minorNations.any((m) => m.id == factionId)) factionId,
-    ]..sort();
+    final atWarMinors = minorAtWarPeaceTargetsWhere(
+      game: game,
+      snapshot: snapshot,
+    );
     if (atWarMinors.length == 1 &&
         snapshot.conquest.oldWorldProvincesOwned <=
             kStalledOldWorldProvinceThreshold) {
@@ -48,8 +56,10 @@ String? stalledConquestDeclaredWarTarget({
   );
   if (gpBlocker != null &&
       snapshot.threats.atWarWith.contains(gpBlocker) &&
-      snapshot.conquest.invadableProvinceIdsSorted.any(
-        (pid) => provinceOwner[pid] == gpBlocker,
+      factionOwnsInvadableOldWorldProvince(
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        factionId: gpBlocker,
       )) {
     return gpBlocker;
   }
@@ -109,7 +119,12 @@ Set<String> _invadableProvinceIdsForConquestPass({
     );
   }
   final resolution =
-      conquestResolution ?? resolvePhaseConquestInvadable(phasePlan: phasePlan);
+      conquestResolution ??
+      resolvePhaseConquestInvadable(
+        phasePlan: phasePlan,
+        snapshot: snapshot,
+        game: game,
+      );
   final nwInvasionWeightFromPhasePlan = resolvePhaseConquestNwInvasionWeight(
     phasePlan: phasePlan,
   );
@@ -133,7 +148,11 @@ Orders runConquestArmyMovePlanner({
 }) {
   PhaseConquestInvadableResolution? conquestResolution;
   if (phasePlan != null) {
-    conquestResolution = resolvePhaseConquestInvadable(phasePlan: phasePlan);
+    conquestResolution = resolvePhaseConquestInvadable(
+      phasePlan: phasePlan,
+      snapshot: snapshot,
+      game: ctx.game,
+    );
     if (conquestResolution.skipConquestPass) {
       return ctx.orders;
     }
@@ -158,10 +177,27 @@ Orders runConquestArmyMovePlanner({
           )
           ? 0.0
           : 1.0);
+  final oldWorldInvasionWeight = phasePlan != null
+      ? resolvePhaseConquestOldWorldInvasionWeight(phasePlan: phasePlan)
+      : 1.0;
 
   final stalledExpansion = isObserverConquestExpansionPressure(
     snapshot.conquest.oldWorldProvincesOwned,
   );
+  // Refs #2847 § EXPAND feedstock-tile acquisition conquest army-move target
+  // bias (`SPEC/ai/economy-planner.md`). A flagged below-quota zero-NW
+  // lock-recovery seller is always below quota and therefore always on the
+  // stalled-expansion army-move path, so the conquest-target bias is computed
+  // once here and threaded into the stalled selection helpers only. It returns
+  // `null` for every player whose acquisition residual is inactive (so the +6
+  // Old World conquest baseline GPs gp1/gp2 are never redirected) and for any
+  // non-stalled caller, which never reaches the biased selection path.
+  final feedstockConquestTarget = stalledExpansion
+      ? expandSellerFeedstockTileAcquisitionTarget(
+          game: ctx.game,
+          snapshot: snapshot,
+        )
+      : null;
   final armyMoveCandidates = ctx.suggestionAPI.suggestArmyMoveOrders(
     ctx.view,
     ctx.game,
@@ -169,7 +205,9 @@ Orders runConquestArmyMovePlanner({
     ctx.orders,
   );
   if (armyMoveCandidates.isEmpty) {
-    _log.d('conquest army move nationId=${ctx.nationId} candidatesCount=0');
+    if (_log.debugEnabled) {
+      _log.d('conquest army move nationId=${ctx.nationId} candidatesCount=0');
+    }
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
         ctx: ctx,
@@ -178,6 +216,8 @@ Orders runConquestArmyMovePlanner({
         invadable: invadableForPass,
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
         nwInvasionWeight: nwInvasionWeight,
+        oldWorldInvasionWeight: oldWorldInvasionWeight,
+        feedstockConquestTarget: feedstockConquestTarget,
       );
     }
     return ctx.orders;
@@ -189,7 +229,9 @@ Orders runConquestArmyMovePlanner({
     draftOrders: ctx.orders,
   );
   if (filtered.isEmpty) {
-    _log.d('conquest army move filtered empty nationId=${ctx.nationId}');
+    if (_log.debugEnabled) {
+      _log.d('conquest army move filtered empty nationId=${ctx.nationId}');
+    }
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
         ctx: ctx,
@@ -198,6 +240,8 @@ Orders runConquestArmyMovePlanner({
         invadable: invadableForPass,
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
         nwInvasionWeight: nwInvasionWeight,
+        oldWorldInvasionWeight: oldWorldInvasionWeight,
+        feedstockConquestTarget: feedstockConquestTarget,
       );
     }
     return ctx.orders;
@@ -226,9 +270,7 @@ Orders runConquestArmyMovePlanner({
   }
   if (snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
-      !snapshot.threats.atWarWith.any(
-        (id) => ctx.game.playerById(id) != null,
-      ) &&
+      !isAtWarWithAnyGreatPower(ctx.game, snapshot) &&
       weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
     weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
   }
@@ -252,9 +294,11 @@ Orders runConquestArmyMovePlanner({
     weight = colonialPressureFloor;
   }
   if (weight < 10) {
-    _log.d(
-      'conquest army move skipped nationId=${ctx.nationId} weight=$weight',
-    );
+    if (_log.debugEnabled) {
+      _log.d(
+        'conquest army move skipped nationId=${ctx.nationId} weight=$weight',
+      );
+    }
     return ctx.orders;
   }
   // Under stalled-expansion (Refs #2509 EXPAND / COLONIAL-lite hot path) a
@@ -294,6 +338,8 @@ Orders runConquestArmyMovePlanner({
       declaredWarTargetFactionId: declaredWarTargetFactionId,
       phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
       nwInvasionWeight: nwInvasionWeight,
+      oldWorldInvasionWeight: oldWorldInvasionWeight,
+      feedstockConquestTarget: feedstockConquestTarget,
     );
   }
   final selected = selectWeightedCandidate(
@@ -311,15 +357,61 @@ Orders runConquestArmyMovePlanner({
       declaredWarTargetFactionId: declaredWarTargetFactionId,
       phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
       nwInvasionWeight: nwInvasionWeight,
+      oldWorldInvasionWeight: oldWorldInvasionWeight,
     ),
   );
   if (selected == null) return ctx.orders;
-  _log.i(
-    'conquest army move chosen nationId=${ctx.nationId} '
-    'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId} '
-    'declaredWarTarget=$declaredWarTargetFactionId',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'conquest army move chosen nationId=${ctx.nationId} '
+      'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId} '
+      'declaredWarTarget=$declaredWarTargetFactionId',
+    );
+  }
   return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, selected);
+}
+
+/// Picks the highest-scoring army move from [candidates], applying the EXPAND
+/// feedstock-tile acquisition conquest army-move target **tiebreak** (Refs
+/// #2847 § EXPAND feedstock-tile acquisition conquest army-move target bias;
+/// `SPEC/ai/economy-planner.md`).
+///
+/// Scans [candidates] tracking the highest [score]. On an **exact** score tie
+/// the candidate whose `destinationProvinceId` equals [feedstockConquestTarget]
+/// wins over a non-feedstock incumbent, so a flagged below-quota zero-NW
+/// lock-recovery seller marches the field army onto the Old World feedstock
+/// province it must acquire to source `lumber` / `castIron` domestically. The
+/// tiebreak **never overrides a strictly higher-scored destination** (it only
+/// breaks ties) and **never fires when [feedstockConquestTarget] is `null`** —
+/// `expandSellerFeedstockTileAcquisitionTarget` returns `null` for every player
+/// whose acquisition residual is inactive, so the +6 Old World conquest
+/// baseline GPs gp1/gp2 are never redirected. With [feedstockConquestTarget]
+/// `null` the selection is identical to a strict `score > best` argmax
+/// (first-in-iteration order wins ties), preserving the prior behaviour
+/// exactly. Pure and deterministic over [candidates] and [score].
+ArmyMoveOrder? selectFeedstockBiasedBestArmyMove({
+  required Iterable<ArmyMoveOrder> candidates,
+  required double Function(ArmyMoveOrder move) score,
+  required String? feedstockConquestTarget,
+}) {
+  ArmyMoveOrder? best;
+  var bestScore = -1.0;
+  var bestIsFeedstock = false;
+  for (final move in candidates) {
+    final moveScore = score(move);
+    final isFeedstock =
+        feedstockConquestTarget != null &&
+        move.destinationProvinceId == feedstockConquestTarget;
+    final beatsBest = moveScore > bestScore;
+    final winsTiebreak =
+        moveScore == bestScore && isFeedstock && !bestIsFeedstock;
+    if (beatsBest || winsTiebreak) {
+      best = move;
+      bestScore = moveScore;
+      bestIsFeedstock = isFeedstock;
+    }
+  }
+  return best;
 }
 
 Orders _applyStalledArmyMovesForAllFieldArmies({
@@ -330,6 +422,8 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
   required String? declaredWarTargetFactionId,
   required bool phasePlanInvadableIsAuthoritative,
   required double nwInvasionWeight,
+  required double oldWorldInvasionWeight,
+  required String? feedstockConquestTarget,
 }) {
   final armiesWithOrders = <String>{
     for (final m
@@ -344,10 +438,10 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
   var result = ctx.orders;
   for (final armyId in byArmy.keys.toList()..sort()) {
     final candidates = byArmy[armyId]!;
-    ArmyMoveOrder? best;
-    var bestScore = -1.0;
-    for (final move in candidates) {
-      final score = _scoreArmyMoveDestination(
+    final best = selectFeedstockBiasedBestArmyMove(
+      candidates: candidates,
+      feedstockConquestTarget: feedstockConquestTarget,
+      score: (move) => _scoreArmyMoveDestination(
         move: move,
         nationId: ctx.nationId,
         game: ctx.game,
@@ -359,17 +453,16 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
         declaredWarTargetFactionId: declaredWarTargetFactionId,
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
         nwInvasionWeight: nwInvasionWeight,
-      );
-      if (score > bestScore) {
-        bestScore = score;
-        best = move;
-      }
-    }
-    if (best == null) continue;
-    _log.i(
-      'conquest army move stalled multi nationId=${ctx.nationId} '
-      'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
+        oldWorldInvasionWeight: oldWorldInvasionWeight,
+      ),
     );
+    if (best == null) continue;
+    if (_log.infoEnabled) {
+      _log.i(
+        'conquest army move stalled multi nationId=${ctx.nationId} '
+        'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
+      );
+    }
     result = applyArmyMoveOrderForPlayer(result, ctx.nationId, best);
     armiesWithOrders.add(best.armyId);
   }
@@ -383,6 +476,8 @@ Orders _runStalledFrontierArmyMoveFallback({
   required Set<String> invadable,
   required bool phasePlanInvadableIsAuthoritative,
   required double nwInvasionWeight,
+  required double oldWorldInvasionWeight,
+  required String? feedstockConquestTarget,
 }) {
   final playerOwnedFullProvinceIds = <String>{
     for (final e in ctx.view.provincesById.entries)
@@ -401,8 +496,7 @@ Orders _runStalledFrontierArmyMoveFallback({
         in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
       m.armyId,
   };
-  ArmyMoveOrder? best;
-  var bestScore = -1.0;
+  final acceptedCandidates = <ArmyMoveOrder>[];
   for (final army in ctx.game.worldState.armies) {
     if (army.ownerId != ctx.nationId || army.isHomeArmy) continue;
     if (armiesWithOrders.contains(army.id)) continue;
@@ -419,32 +513,36 @@ Orders _runStalledFrontierArmyMoveFallback({
         destinationProvinceId: destinationProvinceId,
       );
       if (!validator.isArmyMoveAccepted(candidate)) continue;
-      final score = _scoreArmyMoveDestination(
-        move: candidate,
-        nationId: ctx.nationId,
-        game: ctx.game,
-        topology: ctx.topology,
-        snapshot: snapshot,
-        provinceOwner: ctx.provinceOwner,
-        invadable: invadable,
-        stalledExpansion: true,
-        declaredWarTargetFactionId: declaredWarTargetFactionId,
-        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-        nwInvasionWeight: nwInvasionWeight,
-      );
-      if (score > bestScore) {
-        bestScore = score;
-        best = candidate;
-      }
+      acceptedCandidates.add(candidate);
     }
   }
+  final best = selectFeedstockBiasedBestArmyMove(
+    candidates: acceptedCandidates,
+    feedstockConquestTarget: feedstockConquestTarget,
+    score: (candidate) => _scoreArmyMoveDestination(
+      move: candidate,
+      nationId: ctx.nationId,
+      game: ctx.game,
+      topology: ctx.topology,
+      snapshot: snapshot,
+      provinceOwner: ctx.provinceOwner,
+      invadable: invadable,
+      stalledExpansion: true,
+      declaredWarTargetFactionId: declaredWarTargetFactionId,
+      phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+      nwInvasionWeight: nwInvasionWeight,
+      oldWorldInvasionWeight: oldWorldInvasionWeight,
+    ),
+  );
   if (best == null) {
     return ctx.orders;
   }
-  _log.i(
-    'conquest army move stalled fallback nationId=${ctx.nationId} '
-    'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
-  );
+  if (_log.infoEnabled) {
+    _log.i(
+      'conquest army move stalled fallback nationId=${ctx.nationId} '
+      'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
+    );
+  }
   return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, best);
 }
 
@@ -463,10 +561,84 @@ bool _isOnAtWarMinorOrTribeFrontier({
   return false;
 }
 
+/// Sole at-war Great Power peer when [expandIsGeographicPeerWarLock] holds.
+String? _geographicPeerWarLockPeerGpId(AIWorldSnapshot snapshot) {
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  if (adjacentOwners.length != 1) {
+    return null;
+  }
+  return adjacentOwners.single;
+}
+
+bool _provinceNeighborOwnedByAtWarMinorOrTribe({
+  required Game game,
+  required Map<String, String?> provinceOwner,
+  required String regionId,
+  required Iterable<String> neighborLocals,
+  required Iterable<String> atWarWith,
+}) {
+  for (final n in neighborLocals) {
+    final nOwner = provinceOwner[ProvinceId.full(regionId, n)] ?? '';
+    if (!atWarWith.contains(nOwner)) continue;
+    if (isMinorOrTribeFaction(game, nOwner)) return true;
+  }
+  return false;
+}
+
+/// Whether [move]'s destination is a stalled-expansion march step toward an
+/// at-war minor/tribe reachable only through the geographic peer-war lock
+/// (Refs #2847 § H4-b).
+bool _isGeographicPeerLockMinorTransitDestination({
+  required ArmyMoveOrder move,
+  required String nationId,
+  required Game game,
+  required MapTopology topology,
+  required AIWorldSnapshot snapshot,
+  required Map<String, String?> provinceOwner,
+  required String destOwner,
+  required String destRegion,
+  required Iterable<String> destNeighborLocals,
+  required String peerGpId,
+}) {
+  final atWarWith = snapshot.threats.atWarWith;
+  if (destOwner == peerGpId) {
+    return _provinceNeighborOwnedByAtWarMinorOrTribe(
+      game: game,
+      provinceOwner: provinceOwner,
+      regionId: destRegion,
+      neighborLocals: destNeighborLocals,
+      atWarWith: atWarWith,
+    );
+  }
+  if (destOwner != nationId) {
+    return false;
+  }
+  for (final peerLocal in destNeighborLocals) {
+    final peerFull = ProvinceId.full(destRegion, peerLocal);
+    if ((provinceOwner[peerFull] ?? '') != peerGpId) continue;
+    final beyondPeer = neighborProvinceIdsInRegion(
+      topology,
+      destRegion,
+      peerLocal,
+    );
+    if (_provinceNeighborOwnedByAtWarMinorOrTribe(
+      game: game,
+      provinceOwner: provinceOwner,
+      regionId: destRegion,
+      neighborLocals: beyondPeer,
+      atWarWith: atWarWith,
+    )) {
+      return true;
+    }
+  }
+  return false;
+}
+
 double _stalledExpansionArmyMoveScoreDelta({
   required ArmyMoveOrder move,
   required String nationId,
   required Game game,
+  required MapTopology topology,
   required AIWorldSnapshot snapshot,
   required Map<String, String?> provinceOwner,
   required Set<String> invadable,
@@ -475,12 +647,37 @@ double _stalledExpansionArmyMoveScoreDelta({
   required Iterable<String> destNeighborLocals,
   required String? declaredWarTargetFactionId,
 }) {
+  final geoLockPeerGpId = _geographicPeerWarLockPeerGpId(snapshot);
+  final geoLockActive = geoLockPeerGpId != null &&
+      expandIsGeographicPeerWarLock(
+        snapshot: snapshot,
+        peerGpId: geoLockPeerGpId,
+      ) &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          provinceCountOwnedBy(game, geoLockPeerGpId);
+  if (geoLockActive &&
+      _isGeographicPeerLockMinorTransitDestination(
+        move: move,
+        nationId: nationId,
+        game: game,
+        topology: topology,
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        destOwner: destOwner,
+        destRegion: destRegion,
+        destNeighborLocals: destNeighborLocals,
+        peerGpId: geoLockPeerGpId,
+      )) {
+    return kConquestArmyMoveAdjacentAtWarFrontierBonus +
+        kConquestArmyMoveStalledDeclaredTargetBonus;
+  }
   final atWarMinorOrTribe =
       destOwner.isNotEmpty &&
       destOwner != nationId &&
       snapshot.threats.atWarWith.contains(destOwner) &&
       isMinorOrTribeFaction(game, destOwner);
   final atWarGpInvadableBlocker =
+      !geoLockActive &&
       destOwner.isNotEmpty &&
       destOwner != nationId &&
       snapshot.threats.atWarWith.contains(destOwner) &&
@@ -488,9 +685,25 @@ double _stalledExpansionArmyMoveScoreDelta({
       snapshot.conquest.invadableProvinceIdsSorted.any(
         (pid) => provinceOwner[pid] == destOwner,
       );
+  final peerDeclaredWarWithoutMinorTransit = geoLockActive &&
+      declaredWarTargetFactionId == geoLockPeerGpId &&
+      destOwner == geoLockPeerGpId &&
+      !_isGeographicPeerLockMinorTransitDestination(
+        move: move,
+        nationId: nationId,
+        game: game,
+        topology: topology,
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        destOwner: destOwner,
+        destRegion: destRegion,
+        destNeighborLocals: destNeighborLocals,
+        peerGpId: geoLockPeerGpId,
+      );
   final targetsDeclaredOrAtWarEnemy =
       (declaredWarTargetFactionId != null &&
-          destOwner == declaredWarTargetFactionId) ||
+          destOwner == declaredWarTargetFactionId &&
+          !peerDeclaredWarWithoutMinorTransit) ||
       atWarMinorOrTribe ||
       atWarGpInvadableBlocker;
   if (targetsDeclaredOrAtWarEnemy) {
@@ -504,8 +717,11 @@ double _stalledExpansionArmyMoveScoreDelta({
       delta += kConquestArmyMoveStalledDeclaredTargetBonus;
     }
     if (atWarGpInvadableBlocker) {
-      final blockerOw = provinceCountOwnedBy(game, destOwner);
-      final deficit = blockerOw - snapshot.conquest.oldWorldProvincesOwned;
+      final deficit = oldWorldProvinceLeadOver(
+        game: game,
+        snapshot: snapshot,
+        factionId: destOwner,
+      );
       if (deficit > 0) {
         delta +=
             deficit * kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince;
@@ -529,6 +745,64 @@ double _stalledExpansionArmyMoveScoreDelta({
   return -0.95;
 }
 
+/// Scales an OW army-move additive score term by the soft-phase
+/// [oldWorldInvasionWeight] (Refs #2847 Phase 3 conquest OW-invasion wiring).
+///
+/// Returns `0.0` when [oldWorldInvasionWeight] is `<= 0.0` (legacy
+/// hard-suppress equivalent). At `1.0` the result equals [baseBonus]
+/// exactly. Intermediate weights scale linearly with clamping to `[0.0, 1.0]`.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+double conquestOldWorldArmyMoveScaledBonus({
+  required double baseBonus,
+  required double oldWorldInvasionWeight,
+}) {
+  if (oldWorldInvasionWeight <= 0.0) {
+    return 0.0;
+  }
+  final clamped = clampPhaseWeightUpperUnit(oldWorldInvasionWeight);
+  return baseBonus * clamped;
+}
+
+/// NW-invadable army-move bonus contribution for the conquest destination
+/// scorer (Refs #2847 Phase 2 conquest NW-invasion sign migration).
+///
+/// A **below-quota** GP normally pays a **negative** NW-invadable bonus so the
+/// early-game OW conquest sprint stays dominant. But once a § Resource-need
+/// override has lifted the dispatched `newWorldAcquisition` weight to/above
+/// [kPhasePriorityNwInvadablePursuitWeightThreshold], the GP is electing to
+/// pursue NW provinces for treasury income (requirement clarification #3 —
+/// "resource-need overrides bypass phase priority; the AI pursues NW provinces
+/// *because* it needs income to fund OW conquest"). Below quota, only the
+/// treasury-recovery (`0.60`) and zero-regiment (`0.30`) override floors reach
+/// that threshold; the ordinary curve plateau peaks at `0.20` at OW = 9, so it
+/// never trips it. The bonus then flips **positive** so the weight biases the
+/// field army *toward* the NW income foothold instead of repelling it (the
+/// prior unconditional below-quota negation inverted the override, leaving
+/// treasury-locked below-quota GPs unable to reach the NW foothold the
+/// override exists to unlock).
+///
+/// At or above the OW conquest quota ([belowQuota] is `false`) the bonus is
+/// always positive — the early-sprint penalty applies only below quota — so
+/// healthy expanding GPs are unaffected and the magnitude scales continuously
+/// with [nwInvasionWeight].
+///
+/// Pure and deterministic — identical `(belowQuota, nwInvasionWeight)` inputs
+/// always yield the same `double` (Refs #2509 Must-have #7). Callers gate the
+/// `nwInvasionWeight <= 0.0` legacy hard-suppress case (zeroed destination)
+/// before invoking this helper.
+double conquestNwInvadableArmyMoveBonus({
+  required bool belowQuota,
+  required double nwInvasionWeight,
+}) {
+  final pursueNwForResourceNeed =
+      nwInvasionWeight >= kPhasePriorityNwInvadablePursuitWeightThreshold;
+  final signedBonus = (belowQuota && !pursueNwForResourceNeed)
+      ? -kConquestArmyMoveNwInvadableBonus
+      : kConquestArmyMoveNwInvadableBonus;
+  return signedBonus * nwInvasionWeight;
+}
+
 double _scoreArmyMoveDestination({
   required ArmyMoveOrder move,
   required String nationId,
@@ -541,8 +815,13 @@ double _scoreArmyMoveDestination({
   required String? declaredWarTargetFactionId,
   required bool phasePlanInvadableIsAuthoritative,
   required double nwInvasionWeight,
+  required double oldWorldInvasionWeight,
 }) {
   final destOwner = provinceOwner[move.destinationProvinceId] ?? '';
+  final isNwInvadableDestination = snapshot
+      .colonial
+      .invadableNewWorldProvinceIdsSorted
+      .contains(move.destinationProvinceId);
   if (phasePlanInvadableIsAuthoritative &&
       !invadable.contains(move.destinationProvinceId)) {
     // Stalled-expansion allowance (Refs #2509): own-territory marches stay
@@ -569,6 +848,7 @@ double _scoreArmyMoveDestination({
       move: move,
       nationId: nationId,
       game: game,
+      topology: topology,
       snapshot: snapshot,
       provinceOwner: provinceOwner,
       invadable: invadable,
@@ -580,19 +860,32 @@ double _scoreArmyMoveDestination({
     if (delta < 0) {
       score *= 0.05;
     } else {
-      score += delta;
+      score += conquestOldWorldArmyMoveScaledBonus(
+        baseBonus: delta,
+        oldWorldInvasionWeight: oldWorldInvasionWeight,
+      );
     }
   } else if (declaredWarTargetFactionId != null &&
       destOwner == declaredWarTargetFactionId) {
-    score += 50;
+    score += conquestOldWorldArmyMoveScaledBonus(
+      baseBonus: 50,
+      oldWorldInvasionWeight: oldWorldInvasionWeight,
+    );
   } else {
     final rel = getRelation(game, nationId, destOwner);
     if (rel != null && rel.atWar) {
-      score += kMovePreferEnemyTerritoryBonus.toDouble();
+      score += conquestOldWorldArmyMoveScaledBonus(
+        baseBonus: kMovePreferEnemyTerritoryBonus.toDouble(),
+        oldWorldInvasionWeight: oldWorldInvasionWeight,
+      );
     }
   }
-  if (invadable.contains(move.destinationProvinceId)) {
-    score += 10;
+  if (invadable.contains(move.destinationProvinceId) &&
+      !isNwInvadableDestination) {
+    score += conquestOldWorldArmyMoveScaledBonus(
+      baseBonus: 10,
+      oldWorldInvasionWeight: oldWorldInvasionWeight,
+    );
   }
   if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.contains(
     move.destinationProvinceId,
@@ -600,22 +893,28 @@ double _scoreArmyMoveDestination({
     if (nwInvasionWeight <= 0.0) {
       return 0;
     }
-    final nwBonus = isBelowObserverConquestQuota(
-      snapshot.conquest.oldWorldProvincesOwned,
-    )
-        ? -kConquestArmyMoveNwInvadableBonus
-        : kConquestArmyMoveNwInvadableBonus;
-    score += nwBonus * nwInvasionWeight;
+    score += conquestNwInvadableArmyMoveBonus(
+      belowQuota: isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ),
+      nwInvasionWeight: nwInvasionWeight,
+    );
   }
   if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
-    score += 8;
+    score += conquestOldWorldArmyMoveScaledBonus(
+      baseBonus: 8,
+      oldWorldInvasionWeight: oldWorldInvasionWeight,
+    );
   }
   for (final inv in snapshot.conquest.invadableProvinceIdsSorted) {
     if (ProvinceId.regionIdFrom(inv) != destRegion) {
       continue;
     }
     if (destNeighborLocals.contains(ProvinceId.localIdFrom(inv))) {
-      score += kConquestArmyMoveAdjacentInvadableBonus;
+      score += conquestOldWorldArmyMoveScaledBonus(
+        baseBonus: kConquestArmyMoveAdjacentInvadableBonus.toDouble(),
+        oldWorldInvasionWeight: oldWorldInvasionWeight,
+      );
       break;
     }
   }

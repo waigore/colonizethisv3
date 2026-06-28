@@ -5,6 +5,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
+import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_spacing.dart';
 import 'chrome/ct_nine_patch_button.dart';
@@ -84,13 +85,13 @@ class PauseMenuPanel extends StatelessWidget {
             textAlign: TextAlign.center,
             style: _titleStyle(theme),
           ),
-          const SizedBox(height: 12),
+          CtGap.ml,
           const Padding(
             key: brassDividerKey,
             padding: EdgeInsets.symmetric(horizontal: 4),
             child: CtBrassDivider(),
           ),
-          const SizedBox(height: 16),
+          CtGap.l,
           ..._actionRows(l10n),
         ],
       ),
@@ -110,28 +111,28 @@ class PauseMenuPanel extends StatelessWidget {
       onPressed: _onResumeTap,
       child: Text(l10n.game_pauseMenu_resume),
     ),
-    const SizedBox(height: 8),
+    CtGap.m,
     CtNinePatchButton(
       key: saveGameButtonKey,
       onPressed: null,
       enabled: false,
       child: Text(l10n.game_pauseMenu_saveGame),
     ),
-    const SizedBox(height: 8),
+    CtGap.m,
     CtNinePatchButton(
       key: loadGameButtonKey,
       onPressed: null,
       enabled: false,
       child: Text(l10n.game_pauseMenu_loadGame),
     ),
-    const SizedBox(height: 8),
+    CtGap.m,
     CtNinePatchButton(
       key: settingsButtonKey,
       onPressed: null,
       enabled: false,
       child: Text(l10n.game_pauseMenu_settings),
     ),
-    const SizedBox(height: 8),
+    CtGap.m,
     CtNinePatchButton(
       key: exitToMainMenuButtonKey,
       dangerVariant: true,

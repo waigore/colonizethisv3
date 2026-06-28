@@ -2,7 +2,7 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
     show ctE2eCivilianPanelSnapshot, ctE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared.dart';
 
+export 'e2e_test_shared_fleet_nav.dart';
 export 'e2e_test_shared_fleet_reach_loop.dart';
 export 'e2e_test_shared_panel_text_assertions.dart';
 
@@ -305,12 +306,20 @@ Future<void> e2eSplitHomeFleetOnce(
     await e2eExpandEachExpansionTileOnce(tester);
   }
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
-  final split = find.descendant(
+  // Production fleet rows collapse Split to icon-only at E2E viewports; the
+  // widget-test pin keeps a legacy `Text('Split')` harness button as fallback.
+  final splitByKey = find.descendant(
     of: navalPanelRoot,
-    matching: find.text('Split'),
+    matching: find.byKey(kCtE2EFleetSplitActionKey),
   );
-  expect(split, findsWidgets);
-  await tester.tap(split.first, warnIfMissed: false);
+  final splitByLabel = find.descendant(
+    of: navalPanelRoot,
+    matching: find.text(l10n.common_split),
+  );
+  final split = splitByKey.evaluate().isNotEmpty ? splitByKey : splitByLabel;
+  final splitHit = split.hitTestable();
+  expect(splitHit, findsWidgets);
+  await tester.tap(splitHit.first, warnIfMissed: false);
   await e2eWaitUntilFound(
     tester,
     find.descendant(
@@ -416,9 +425,12 @@ Future<void> e2eSplitHomeFleetOnce(
 /// - Iterates non-home fleet tiles in stable tree order; skips tiles that
 ///   are themselves the home fleet, and skips tiles that lack a
 ///   `Text` whose `data` starts with `'Fleet '`.
-/// - When a candidate tile's `Move` text is not visible, taps the tile's
-///   `Icons.expand_more` icon and waits up to 3 s
-///   (`wait_until_found_move_after_expand`) for the `Move` text to appear.
+/// - The Move control is located by its stable [kCtE2EFleetMoveActionKey],
+///   not the `Move` label, because the naval action cluster collapses to
+///   icon-only (no `Text('Move')`) at narrow viewports (Refs #2336).
+/// - When a candidate tile's keyed Move button is not in the tree (collapsed
+///   tile), taps the tile's `Icons.expand_more` icon and waits up to 3 s
+///   (`wait_until_found_move_after_expand`) for the keyed button to appear.
 /// - **Prefers** tiles whose subtitle reads as a New World location row
 ///   (per [e2eTextLooksLikeNewWorldLocationLine]): the first such tile's
 ///   hit-testable `Move` button is tapped immediately, the helper waits up
@@ -480,7 +492,14 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       if (fleetTitle.evaluate().isEmpty) {
         continue;
       }
-      var move = find.descendant(of: sub, matching: find.text('Move'));
+      // Locate the Move control by its stable key, not the `Move` label:
+      // the naval action cluster collapses to icon-only (no `Text('Move')`)
+      // at narrow test-host viewports (Refs #2336; e2e deterministic locators).
+      final moveByKey = find.descendant(
+        of: sub,
+        matching: find.byKey(kCtE2EFleetMoveActionKey),
+      );
+      var move = moveByKey;
       if (move.evaluate().isEmpty) {
         final expandIcon = find.descendant(
           of: sub,
@@ -492,12 +511,12 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
           await tester.tap(iconHit, warnIfMissed: false);
           await e2eWaitUntilFound(
             tester,
-            find.descendant(of: sub, matching: find.text('Move')),
+            moveByKey,
             timeout: const Duration(seconds: 3),
             phaseName: 'wait_until_found_move_after_expand',
           );
         }
-        move = find.descendant(of: sub, matching: find.text('Move'));
+        move = moveByKey;
       }
       if (move.evaluate().isEmpty) {
         continue;
@@ -516,7 +535,7 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
         await tester.tap(hit.first, warnIfMissed: false);
         await e2eWaitUntilFound(
           tester,
-          find.byType(AlertDialog),
+          e2eMoveFleetDialogFinder(),
           timeout: const Duration(seconds: 3),
           phaseName: 'wait_until_found_move_dialog_after_move_tap',
         );
@@ -528,7 +547,7 @@ Future<bool> e2eTapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       await tester.tap(fallbackMove, warnIfMissed: false);
       await e2eWaitUntilFound(
         tester,
-        find.byType(AlertDialog),
+        e2eMoveFleetDialogFinder(),
         timeout: const Duration(seconds: 3),
         phaseName: 'wait_until_found_move_dialog_after_move_tap_fallback',
       );
@@ -757,7 +776,7 @@ const int kE2eDefaultMoveFleetWarpDragProbes = 8;
 ///   (`wait_until_found_move_dialog`) before evaluating any destination
 ///   finders.
 /// - When [allowWarpDestinations] is `true` **and** a row labelled
-///   `l10n.moveFleet_warpLinkToRegion(unitsPanelRegionLabel('newWorld'))`
+///   `l10n.moveFleet_warpLinkToRegion(regionDisplayLabel('newWorld'))`
 ///   exists in the dialog: scrolls to make the warp row hit-testable using
 ///   the [MoveFleetDialog] scroll root keyed by
 ///   [kCtE2EMoveFleetDialogScrollRootKey] (or the dialog's [Scrollable] as
@@ -783,6 +802,110 @@ const int kE2eDefaultMoveFleetWarpDragProbes = 8;
 /// - When the warp row cannot be made hit-testable after
 ///   [maxWarpDragProbes] drag probes, fails via [fail] with a deterministic
 ///   diagnostic message rather than silently falling back to the sea radio.
+/// Returns the [kCtE2EMoveFleetDestinationSeaZoneRowKey] for the adjacent sea
+/// zone that makes the most BFS progress toward the New World, or `null` when
+/// topology-guided selection is unavailable.
+///
+/// Reads the combined topology from the live [ctE2eNavalPanelSnapshot] and the
+/// candidate sea-zone ids from the open move dialog's keyed rows. Returns
+/// `null` (so the caller falls back to `seaRadio.first`) when the snapshot is
+/// missing or no sea-zone-keyed rows are mounted — for example under the
+/// widget-test fixtures that build legacy `RadioListTile` rows without the
+/// `CT_E2E` sea-zone keys (Refs #2336 AC6/AC7).
+Key? _e2eBestSeaZoneRowKeyTowardNewWorld() {
+  final topology = ctE2eNavalPanelSnapshot?.topology;
+  if (topology == null) {
+    return null;
+  }
+  final candidateIds = <String>[];
+  final seaRows = find.byWidgetPredicate((w) {
+    final Key? key = w.key;
+    return key is ValueKey<String> &&
+        key.value.startsWith(kCtE2EMoveFleetDestinationSeaZoneRowKeyPrefix);
+  });
+  for (final element in seaRows.evaluate()) {
+    final Key? key = element.widget.key;
+    if (key is ValueKey<String>) {
+      candidateIds.add(
+        key.value.substring(
+          kCtE2EMoveFleetDestinationSeaZoneRowKeyPrefix.length,
+        ),
+      );
+    }
+  }
+  if (candidateIds.isEmpty) {
+    return null;
+  }
+  final best = e2eBestSeaZoneTowardRegion(
+    topology: topology,
+    candidates: candidateIds,
+  );
+  if (best == null) {
+    return null;
+  }
+  return kCtE2EMoveFleetDestinationSeaZoneRowKey(best);
+}
+
+/// Picks a sea-zone move destination, preferring the adjacent zone that makes
+/// BFS progress toward the New World (Refs #2336 AC6/AC7).
+///
+/// When the live naval snapshot exposes the combined topology and the dialog
+/// tags its sea-zone rows with `kCtE2EMoveFleetDestinationSeaZoneRowKey`, the
+/// topology-best row is tapped (scrolling it into view first when needed).
+/// Falls back to `e2eMoveFleetDestinationRows().first` when the snapshot/keys
+/// are unavailable (e.g. the widget-test fixtures), preserving the legacy
+/// contract pinned by
+/// `app/test/e2e_pick_move_destination_and_confirm_test.dart`.
+///
+/// Extracted from `e2ePickMoveDestinationAndConfirm` to keep control-flow
+/// nesting within the repo-lint depth budget (Refs #2336).
+Future<void> _e2eTapSeaZoneDestinationTowardNewWorld(
+  WidgetTester tester,
+) async {
+  final towardKey = _e2eBestSeaZoneRowKeyTowardNewWorld();
+  if (towardKey == null) {
+    final seaRadio = e2eMoveFleetDestinationRows();
+    expect(seaRadio, findsWidgets);
+    await tester.tap(seaRadio.first, warnIfMissed: false);
+    return;
+  }
+  final towardRow = find.byKey(towardKey);
+  if (towardRow.hitTestable().evaluate().isEmpty) {
+    await _e2eScrollSeaZoneRowIntoView(tester, towardRow);
+  }
+  final towardHit = towardRow.hitTestable();
+  await tester.tap(
+    (towardHit.evaluate().isNotEmpty ? towardHit : towardRow).first,
+    warnIfMissed: false,
+  );
+}
+
+/// Scrolls [towardRow] into view within the move-fleet dialog's scrollable when
+/// one is present; a no-op when the row is already visible or has no scrollable
+/// ancestor (Refs #2336).
+Future<void> _e2eScrollSeaZoneRowIntoView(
+  WidgetTester tester,
+  Finder towardRow,
+) async {
+  final dialogScrollable = find.descendant(
+    of: e2eMoveFleetDialogFinder(),
+    matching: find.byType(Scrollable),
+  );
+  if (dialogScrollable.evaluate().isEmpty) {
+    return;
+  }
+  try {
+    await tester.scrollUntilVisible(
+      towardRow.first,
+      120,
+      scrollable: dialogScrollable.first,
+    );
+  } catch (_) {
+    // Row may already be visible or have no scrollable ancestor; the
+    // hit-testable resolve below still taps from a sane position.
+  }
+}
+
 Future<void> e2ePickMoveDestinationAndConfirm(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -802,25 +925,26 @@ Future<void> e2ePickMoveDestinationAndConfirm(
   ensureBudget('start');
   await e2eWaitUntilFound(
     tester,
-    find.byType(AlertDialog),
+    e2eMoveFleetDialogFinder(),
     timeout: const Duration(seconds: 2),
     phaseName: 'wait_until_found_move_dialog',
   );
   final warpSuffix = l10n.moveFleet_warpLinkToRegion(
-    unitsPanelRegionLabel('newWorld'),
+    regionDisplayLabel('newWorld'),
   );
   final warp = find.textContaining(warpSuffix);
   if (allowWarpDestinations && warp.evaluate().isNotEmpty) {
     final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
-    final Finder scrollable;
-    if (scrollRoot.evaluate().isNotEmpty) {
+    Finder scrollable = find.descendant(
+      of: scrollRoot,
+      matching: find.byType(Scrollable),
+    );
+    // The production [CtDialogShell] hosts its `CustomScrollView` *outside* the
+    // keyed scroll-root subtree, so fall back to the dialog's own scrollable
+    // when the keyed subtree exposes none (Refs #2336).
+    if (scrollable.evaluate().isEmpty) {
       scrollable = find.descendant(
-        of: scrollRoot,
-        matching: find.byType(Scrollable),
-      );
-    } else {
-      scrollable = find.descendant(
-        of: find.byType(AlertDialog),
+        of: e2eMoveFleetDialogFinder(),
         matching: find.byType(Scrollable),
       );
     }
@@ -859,21 +983,32 @@ Future<void> e2ePickMoveDestinationAndConfirm(
     ensureBudget('before warp tap');
     final hit = warp.hitTestable();
     expect(hit, findsWidgets);
-    // Tap the RadioListTile, not only the inner Text, so the tile's selection
-    // updates before Confirm (Linux CI / headless can miss implicit tile taps).
-    final warpTile = find.ancestor(
+    // Tap the enclosing destination row, not only the inner Text, so the row's
+    // selection updates before Confirm (Linux CI / headless can miss implicit
+    // taps). Production rows are keyed `_MoveFleetDestinationRow`
+    // ([kCtE2EMoveFleetDestinationRowKeyPrefix]); legacy widget-test fixtures
+    // use `RadioListTile<…>`. Tolerate both, then fall back to the label text.
+    final warpRow = find.ancestor(
       of: hit.first,
-      matching: find.byWidgetPredicate(
-        (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
-      ),
+      matching: find.byWidgetPredicate((w) {
+        final Key? key = w.key;
+        if (key is ValueKey &&
+            key.value is String &&
+            (key.value as String).startsWith(
+              kCtE2EMoveFleetDestinationRowKeyPrefix,
+            )) {
+          return true;
+        }
+        return w.runtimeType.toString().startsWith('RadioListTile<');
+      }),
     );
-    expect(warpTile, findsWidgets);
-    await tester.tap(warpTile.first, warnIfMissed: false);
+    await tester.tap(
+      warpRow.evaluate().isNotEmpty ? warpRow.first : hit.first,
+      warnIfMissed: false,
+    );
   } else {
     ensureBudget('sea radio');
-    final seaRadio = e2eRadioListTilesInAlertDialogs();
-    expect(seaRadio, findsWidgets);
-    await tester.tap(seaRadio.first, warnIfMissed: false);
+    await _e2eTapSeaZoneDestinationTowardNewWorld(tester);
   }
   await e2eWaitUntilFound(
     tester,
@@ -882,12 +1017,25 @@ Future<void> e2ePickMoveDestinationAndConfirm(
     phaseName: 'wait_until_found_move_confirm',
   );
   ensureBudget('confirm');
-  final confirm = find.text(l10n.common_confirm).hitTestable();
+  // In the production [CtDialogShell] the Confirm/Cancel buttons live inside the
+  // dialog's `CustomScrollView`, so a long destination list can push Confirm
+  // below the fold (unlike pinned `AlertDialog.actions`). Scroll it into view
+  // before the hit-testable assertion so the tap lands (Refs #2336).
+  final confirmText = find.text(l10n.common_confirm);
+  if (confirmText.hitTestable().evaluate().isEmpty) {
+    try {
+      await tester.ensureVisible(confirmText.first);
+      await tester.pump();
+    } catch (_) {
+      // Already visible or no scrollable ancestor; the assertion below reports.
+    }
+  }
+  final confirm = confirmText.hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
   await e2ePumpUntil(
     tester,
-    () => find.byType(AlertDialog).evaluate().isEmpty,
+    () => e2eMoveFleetDialogFinder().evaluate().isEmpty,
     timeout: const Duration(seconds: 2),
     phaseName: 'pump_until_move_dialog_closed',
   );
@@ -968,7 +1116,7 @@ Future<void> e2eTryNavalMoveSegment(
   }
   await e2eWaitUntilFound(
     tester,
-    find.byType(AlertDialog),
+    e2eMoveFleetDialogFinder(),
     timeout: const Duration(seconds: 2),
     phaseName: 'wait_until_found_move_dialog_after_tap',
   );
@@ -980,7 +1128,7 @@ Future<void> e2eTryNavalMoveSegment(
     await tester.tap(cancel, warnIfMissed: false);
     await e2ePumpUntil(
       tester,
-      () => find.byType(AlertDialog).evaluate().isEmpty,
+      () => e2eMoveFleetDialogFinder().evaluate().isEmpty,
       timeout: const Duration(seconds: 2),
       perf: perf,
       phaseName: 'pump_until_cancel_move_dialog_closed',
@@ -992,7 +1140,7 @@ Future<void> e2eTryNavalMoveSegment(
     );
     return;
   }
-  if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+  if (e2eMoveFleetDialogFinder().evaluate().isNotEmpty) {
     await e2ePickMoveDestinationAndConfirm(
       tester,
       l10n,

@@ -23,17 +23,14 @@ import 'package:path/path.dart' as p;
 /// Skipped (whole-file path exclusions per repo-lint scope-only policy in
 /// `SPEC/program/repo-lint.md` § "Policy: no violation allowlists"):
 ///
-/// 1. **Dev-tooling screens** — `SYS10001` Debug Log Viewer
-///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) and
-///    `SYS20001` Debug Console Overlay
-///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`) are
-///    operator-only surfaces; implementing Ct-* catalog widgets there is
-///    low-value (see #2914 Risks / edge cases). The allowlist mirrors the
-///    sibling `repo.app_no_material_iconbutton`,
-///    `repo.app_no_material_alertdialog`,
-///    `repo.app_no_material_textbutton`, and
-///    `repo.app_no_material_scaffold` rules so the Material-widget ban
-///    family stays scope-uniform across rules.
+/// 1. **Dev-tooling screen** — `SYS20001` Debug Console Overlay
+///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`) is an
+///    operator-only surface; implementing Ct-* catalog chip chrome there is
+///    low-value (see #2914 Risks / edge cases). `SYS10001` Debug Log Viewer
+///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) was
+///    promoted **out** of this allowlist by the Refs #2914 S8 CtChoiceChip
+///    adoption slice — its package/level filter rows now compose
+///    `CtChoiceChip`, so the file is back in scope for this check.
 /// 2. **`app/lib/features/game/widgets/chrome/**`** — Ct-* catalog widget
 ///    implementations. These widgets implement the design-system
 ///    primitives consumed by the rest of the feature tree and may
@@ -157,13 +154,13 @@ final RegExp bannedFilterChipConstructionPattern = RegExp(
 );
 
 const Set<String> _appNoMaterialFilterChipAllowedFiles = <String>{
-  // Dev-tooling screens — SYS10001 (Debug Log Viewer) and SYS20001
-  // (Debug Console Overlay). Relaxed per #2914 Risks / edge cases.
-  // Mirrors the sibling repo.app_no_material_iconbutton,
-  // repo.app_no_material_alertdialog, repo.app_no_material_textbutton,
-  // and repo.app_no_material_scaffold allowlists so the Material-widget
-  // ban family stays scope-uniform across rules.
-  'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+  // Dev-tooling screen — SYS20001 (Debug Console Overlay). Relaxed per
+  // #2914 Risks / edge cases. SYS10001 (Debug Log Viewer,
+  // app/lib/features/debug_log/debug_log_viewer_screen.dart) was promoted
+  // out of this allowlist by the Refs #2914 S8 CtChoiceChip adoption slice:
+  // its package/level multi-select filter rows now compose CtChoiceChip
+  // widgets (see SPEC/program/debug-log-viewer.md § 5a Visual chrome and
+  // app/test/debug_log_viewer_test.dart).
   'app/lib/features/game/flame/debug_console_overlay_panel.dart',
 };
 

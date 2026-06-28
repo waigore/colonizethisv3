@@ -7,8 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../domain_planner_test_fake_api.dart';
-import '../planner_test_helpers.dart';
+import '../support/domain_planner_test_fake_api.dart';
+import '../support/planner_test_helpers.dart';
 
 void main() {
   group('runDiplomacyPlannerWithResult phase declare-war wiring', () {

@@ -15,6 +15,8 @@
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -131,62 +133,60 @@ void main() {
       },
     );
 
-    testWidgets(
-      'AC: tile-scope selection shifts the row border to accentDim',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          _wrap(
-            CivilianUnitsPanel(
-              game: _miniGame(civilianCount: 2),
-              humanPlayerId: _human,
-              currentOrders: const Orders(),
-              bus: bus,
-              tileScopeTileKey: _tileKey,
-              initialSelectedUnitId: 'civ_0',
-            ),
+    testWidgets('AC: tile-scope selection shifts the row border to accentDim', (
+      WidgetTester tester,
+    ) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(
+        _wrap(
+          CivilianUnitsPanel(
+            game: _miniGame(civilianCount: 2),
+            humanPlayerId: _human,
+            currentOrders: const Orders(),
+            bus: bus,
+            tileScopeTileKey: _tileKey,
+            initialSelectedUnitId: 'civ_0',
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        final selectedRow = find.byKey(
-          const ValueKey('civilian-unit-card-civ_0'),
-          skipOffstage: false,
-        );
-        final unselectedRow = find.byKey(
-          const ValueKey('civilian-unit-card-civ_1'),
-          skipOffstage: false,
-        );
-        expect(selectedRow, findsOneWidget);
-        expect(unselectedRow, findsOneWidget);
+      final selectedRow = find.byKey(
+        const ValueKey('civilian-unit-card-civ_0'),
+        skipOffstage: false,
+      );
+      final unselectedRow = find.byKey(
+        const ValueKey('civilian-unit-card-civ_1'),
+        skipOffstage: false,
+      );
+      expect(selectedRow, findsOneWidget);
+      expect(unselectedRow, findsOneWidget);
 
-        final selectedDecoration =
-            _cardDecoratedBox(tester, selectedRow).decoration as BoxDecoration;
-        final unselectedDecoration =
-            _cardDecoratedBox(tester, unselectedRow).decoration as BoxDecoration;
+      final selectedDecoration =
+          _cardDecoratedBox(tester, selectedRow).decoration as BoxDecoration;
+      final unselectedDecoration =
+          _cardDecoratedBox(tester, unselectedRow).decoration as BoxDecoration;
 
-        final selectedBorder =
-            (selectedDecoration.border! as Border).top.color;
-        final unselectedBorder =
-            (unselectedDecoration.border! as Border).top.color;
+      final selectedBorder = (selectedDecoration.border! as Border).top.color;
+      final unselectedBorder =
+          (unselectedDecoration.border! as Border).top.color;
 
-        expect(
-          _argb(selectedBorder),
-          _argb(EditorialMonoclePalette.accentDim),
-          reason:
-              'R30: selected tile-scope row paints `accentDim` border so '
-              'selection reads against the default `border` token.',
-        );
-        expect(
-          _argb(unselectedBorder),
-          _argb(EditorialMonoclePalette.border),
-          reason: 'Non-selected tile-scope row keeps default `border` token.',
-        );
-      },
-    );
+      expect(
+        _argb(selectedBorder),
+        _argb(EditorialMonoclePalette.accentDim),
+        reason:
+            'R30: selected tile-scope row paints `accentDim` border so '
+            'selection reads against the default `border` token.',
+      );
+      expect(
+        _argb(unselectedBorder),
+        _argb(EditorialMonoclePalette.border),
+        reason: 'Non-selected tile-scope row keeps default `border` token.',
+      );
+    });
 
     testWidgets(
-      'AC: Locate is the right-most icon-only CtNinePatchButton in the action cluster',
+      'AC: Locate is the right-most icon-only CtCircularLocateButton in the action cluster',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         await tester.pumpWidget(
@@ -204,50 +204,134 @@ void main() {
         final card = find.byType(CivilianUnitRowCard);
         expect(card, findsOneWidget);
 
-        // Locate must be a CtNinePatchButton (not a CtIconAction in the title)
-        // and must render an Icons.my_location icon (icon-only).
-        final locateTooltip = find.descendant(
+        // R30 (#3514): Locate is a circular CtCircularLocateButton (mockup
+        // `.u-actions .locate-btn`) rendering the icon-only Icons.my_location
+        // glyph — not a CtNinePatchButton or a title-row CtIconAction.
+        final locateBtn = find.descendant(
           of: card,
-          matching: find.byTooltip('Locate'),
+          matching: find.byType(CtCircularLocateButton),
         );
-        expect(locateTooltip, findsOneWidget);
-        final locateNinePatch = find.descendant(
-          of: locateTooltip,
-          matching: find.byType(CtNinePatchButton),
-        );
-        expect(locateNinePatch, findsOneWidget);
+        expect(locateBtn, findsOneWidget);
         final locateIcon = find.descendant(
-          of: locateNinePatch,
+          of: locateBtn,
           matching: find.byIcon(Icons.my_location),
         );
         expect(locateIcon, findsOneWidget);
         // Icon-only -> the locate button does NOT contain the localized
         // "Locate" Text label.
         expect(
-          find.descendant(of: locateNinePatch, matching: find.text('Locate')),
+          find.descendant(of: locateBtn, matching: find.text('Locate')),
+          findsNothing,
+        );
+        // No CtNinePatchButton row-action chrome remains on the migrated card.
+        expect(
+          find.descendant(of: card, matching: find.byType(CtNinePatchButton)),
           findsNothing,
         );
 
-        // The Locate button is rightmost: among CtNinePatchButtons inside the
-        // card, the one matched by tooltip 'Locate' is the last one (right-end
-        // of the action cluster, mockup `.u-actions .locate-btn`).
-        final allCardNinePatch = find.descendant(
+        // The Locate button is rightmost: it is the last action pill in the
+        // right-aligned cluster (mockup `.u-actions .locate-btn`). The cluster
+        // renders Assign + the circular Locate in order, so the locate button
+        // centre sits to the right of the Assign pill.
+        final assignPill = find.descendant(
           of: card,
-          matching: find.byType(CtNinePatchButton),
+          matching: find.text('Assign'),
         );
-        final all = tester
-            .widgetList<CtNinePatchButton>(allCardNinePatch)
-            .toList();
-        final locate = tester.widget<CtNinePatchButton>(locateNinePatch);
+        if (assignPill.evaluate().isNotEmpty) {
+          final assignDx = tester.getCenter(assignPill.first).dx;
+          final locateDx = tester.getCenter(locateBtn).dx;
+          expect(
+            locateDx,
+            greaterThan(assignDx),
+            reason: 'R30: Locate must be the right-most action in the cluster.',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'AC (#3514): Assign renders as a neutral CtActionTextButton pill with '
+      'icon + label (mockup `.u-actions button`)',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        await tester.pumpWidget(
+          _wrap(
+            CivilianUnitsPanel(
+              game: _miniGame(),
+              humanPlayerId: _human,
+              currentOrders: const Orders(),
+              bus: bus,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final card = find.byType(CivilianUnitRowCard);
+        expect(card, findsOneWidget);
+
+        final assignLabel = find.descendant(
+          of: card,
+          matching: find.text('Assign'),
+        );
+        expect(assignLabel, findsOneWidget);
+        final assignPill = find.ancestor(
+          of: assignLabel,
+          matching: find.byType(CtActionTextButton),
+        );
+        expect(assignPill, findsOneWidget);
+        final assignButton = tester.widget<CtActionTextButton>(assignPill);
+        // Row-action pills are the neutral (non-primary) variant; primary is
+        // reserved for header actions (Train) per #3514 owner decision #5.
+        expect(assignButton.primary, isFalse);
+        expect(assignButton.label, 'Assign');
+        expect(assignButton.icon, Icons.playlist_add);
+        expect(assignButton.onPressed, isNotNull);
+        // Icon + label per owner decision #7 (Assign keeps its icon).
         expect(
-          identical(all.last, locate),
-          isTrue,
-          reason:
-              'R30: Locate must be the right-most CtNinePatchButton in the '
-              'action cluster.',
+          find.descendant(
+            of: assignPill,
+            matching: find.byIcon(Icons.playlist_add),
+          ),
+          findsOneWidget,
         );
       },
     );
+
+    testWidgets('AC (#3514): read-only panel renders no row-action pills', (
+      WidgetTester tester,
+    ) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(
+        _wrap(
+          CivilianUnitsPanel(
+            game: _miniGame(),
+            humanPlayerId: _human,
+            currentOrders: const Orders(),
+            bus: bus,
+            readOnly: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final card = find.byType(CivilianUnitRowCard);
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.byType(CtActionTextButton)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.byType(CtCircularLocateButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('Assign')),
+        findsNothing,
+      );
+    });
 
     testWidgets(
       'AC: Locate stays visible on non-selected tile-scope rows even when '

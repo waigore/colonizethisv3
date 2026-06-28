@@ -1,3 +1,5 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 /// Parser output for one accepted debug slash command: validated verb + args.
 ///
 /// Mapped to [SessionCommandEvent] by [DebugConsoleCommandExecutor]. Carries
@@ -64,6 +66,12 @@ sealed class DebugConsoleParsedInvocation {
   const factory DebugConsoleParsedInvocation.setObservePlayer({
     required String target,
   }) = DebugConsoleSetObservePlayer;
+
+  const factory DebugConsoleParsedInvocation.setDiplomacy({
+    String? factionA,
+    required String factionB,
+    required DebugDiplomacyAction action,
+  }) = DebugConsoleSetDiplomacy;
 }
 
 final class DebugConsoleSpawnCivilianAtCapital
@@ -195,4 +203,22 @@ final class DebugConsoleSetObservePlayer extends DebugConsoleParsedInvocation {
   const DebugConsoleSetObservePlayer({required this.target});
 
   final String target;
+}
+
+/// `/set_diplomacy` invocation: set a diplomatic relation between two factions.
+///
+/// [factionA] is `null` for the one-faction form (the active human player is
+/// the implicit initiator). [factionB] is always the second faction. Both
+/// faction values are raw identifier inputs (id or display name) resolved in
+/// the app apply layer. SPEC/ui/debug-console-panel.md.
+final class DebugConsoleSetDiplomacy extends DebugConsoleParsedInvocation {
+  const DebugConsoleSetDiplomacy({
+    required this.factionB,
+    required this.action,
+    this.factionA,
+  });
+
+  final String? factionA;
+  final String factionB;
+  final DebugDiplomacyAction action;
 }

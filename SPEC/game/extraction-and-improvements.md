@@ -37,6 +37,38 @@ Let **T** be a connected land tile in province **P** owned by the player. **Path
 
 Tech caps first in production; transport caps use path and tile rules above. Example: level 4 farm, tech cap 3, transport 2 → production 3, then min with path cap → effective ≤ 2. The improvement stays at level 4; tech/transport upgrades or conquest can unlock more later.
 
+### Terrain extraction hard caps (scrub forest timber)
+
+Some terrains impose a **hard cap** on a resource's extraction level that is **independent of tech** and applied **after** the tech-allowed cap (it clamps, never raises). The effective extraction cap for a tile is therefore `min(tech-allowed cap for the resource, terrain hard cap)` where a terrain hard cap exists.
+
+- **scrubForest** hard-caps **`timber`** extraction at **level 1** regardless of unlocked gathering tech (`saw_mill`, `wind_saw_mill`, `circular_saw`). See [resource-terrain-region-rules.md](resource-terrain-region-rules.md) § Forest terrain split.
+- **hardwoodForest** imposes **no** terrain hard cap: `timber` follows the normal gathering-tech progression to level 4.
+- No other terrain currently imposes a hard cap, and the scrub cap applies **only** to `timber` (not to any other resource a scrub tile could host).
+
+This hard cap applies wherever the tech cap is consulted with terrain context: the Extraction phase yield computation, the Builder `build_improvement` work-order precheck, and the map-view builder action state (see § Improvement Build Eligibility (Builder)). Where terrain data is unavailable, the tech-allowed cap applies unchanged.
+
+**Acceptance criteria**
+
+- Given a scrub forest tile with `timber` and a player who has unlocked `circular_saw` (tech cap 4)
+  When the System resolves the effective extraction cap for that tile
+  Then the effective cap is 1 (terrain-limited), not 4
+
+- Given a hardwood forest tile with `timber` and a player who has unlocked `circular_saw` (tech cap 4)
+  When the System resolves the effective extraction cap for that tile
+  Then the effective cap is 4
+
+- Given a hardwood forest tile with `timber` and a player who has unlocked no gathering tech
+  When the System resolves the effective extraction cap for that tile
+  Then the effective cap is 1 (the default extraction cap)
+
+- Given a scrub forest tile with `timber` at improvement level 1 and a player with `saw_mill`, `wind_saw_mill`, and `circular_saw` unlocked
+  When the player submits a `build_improvement` work order to raise that tile to level 2
+  Then the order engine rejects the order with a reason indicating the terrain caps `timber` extraction at level 1 on that terrain
+
+- Given a scrub forest tile with `timber` at improvement level 0 and a player with at least `saw_mill` unlocked
+  When the player submits a `build_improvement` work order on that tile
+  Then the order engine accepts the order (the level-1 improvement is within the terrain cap)
+
 ### Improvement Naming
 
 Improvement **names** are purely descriptive; they do **not** change extraction rules or yields, which continue to follow the formula above. The UI derives the displayed name from the tile's **resource id**, independent of improvement level:
@@ -138,7 +170,7 @@ Non-GP extraction totals are returned per-faction-id (minor or tribe id) and are
 
 ### Improvement Build Eligibility (Builder)
 
-A Builder may build an improvement on a tile only if: (a) the tile has a **resource** (per terrain/ruleset; no improvement on empty tiles), (b) the tile's improvement level is below the **max improvement level** (4), and (c) the **next** improvement level (current + 1) does not exceed the player's **tech-allowed extraction cap** (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)). The order engine rejects build_improvement work orders when the tile has no resource or when the player lacks sufficient tech to build the next level.
+A Builder may build an improvement on a tile only if: (a) the tile has a **resource** (per terrain/ruleset; no improvement on empty tiles), (b) the tile's improvement level is below the **max improvement level** (4), and (c) the **next** improvement level (current + 1) does not exceed the player's **effective extraction cap** for that tile — the tech-allowed cap (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)) further clamped by any **terrain hard cap** (see § Terrain extraction hard caps (scrub forest timber)). The order engine rejects build_improvement work orders when the tile has no resource, when the player lacks sufficient tech to build the next level, or when the terrain hard-caps the resource below the next level (e.g. raising scrub-forest timber above level 1).
 
 ### Improvement Build Costs (Builder)
 
@@ -148,6 +180,18 @@ A Builder may build an improvement on a tile only if: (a) the tile has a **resou
 | 2 | 4 lumber + 4 cast iron | 2 resources/turn |
 | 3 | 8 lumber + 8 cast iron | 3 resources/turn |
 | 4 | 16 lumber + 16 cast iron | 4 resources/turn |
+
+**H8 feedstock bootstrap (level 1 only).** When the feedstock-extraction gate is active for a player (`feedstockExtractionResourceIdsForPlayer` non-empty; see [economy-planner.md](../ai/economy-planner.md) § H8-extraction) and the Builder targets an **unimproved** tile whose resource id is in that gate set, the level-0 `build_improvement` cost may omit material inputs under two waivers:
+
+1. **`castIron` waiver** — while the stockpile holds at least **1 lumber** but **fewer than 1 cast iron**, omit **cast iron** (breaking the circular dependency where extracting `timber` / `iron` to produce cast iron itself requires cast iron).
+2. **`lumber` waiver** — on an unimproved **improvement-input** feedstock tile (`timber` / `iron` under the seller- or supplier-side improvement-input gates; not the regiment-build-input `wool` / `cotton` fabric feedstock), while the stockpile holds **fewer than 1 lumber** and **fewer than 1 cast iron**, omit **lumber** as well (breaking the lumber circular dependency where improving the seller's own `timber` tile to source `lumber` requires `lumber` the seller does not yet hold). When both waivers apply on that tile class, the level-0 cost is **empty**.
+
+Once the player holds enough lumber, only the `castIron` waiver may apply. Once both inputs are affordable, or the gate is inactive, or the tile is not an unimproved feedstock resource, the full **1 lumber + 1 cast iron** cost applies. Authoritative logic: `feedstockBootstrapBuildImprovementLumberWaived`, `feedstockBootstrapBuildImprovementCastIronWaived`, `feedstockBootstrapBuildImprovementEffectiveCost`, and `WorkOrderCostCalculator` in `colonizethis_logic`.
+
+- Given a player whose feedstock-extraction gate is active, an unimproved `timber` resource tile, stockpile `{lumber: 1, castIron: 0}`, and a `build_improvement` work order on that tile at improvement level 0, when the system validates material cost, then the required commodities are `{lumber: 1}` only.
+- Given the same gate active, the same `timber` tile, and stockpile `{lumber: 0, castIron: 0}`, when the system validates material cost, then the required commodities are `{}` (both waivers — first feedstock-tile bootstrap).
+- Given the same player and tile but stockpile `{lumber: 1, castIron: 1}`, when the system validates material cost, then the required commodities are `{lumber: 1, castIron: 1}` (negative control — waivers clear once both inputs are affordable).
+- Given a player whose feedstock-extraction gate is **inactive** and stockpile `{lumber: 1, castIron: 0}`, when the system validates a level-0 `build_improvement` on any tile, then the required commodities remain `{lumber: 1, castIron: 1}`.
 
 ### Road Costs (Engineer)
 

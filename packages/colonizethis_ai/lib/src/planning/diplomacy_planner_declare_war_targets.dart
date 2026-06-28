@@ -9,8 +9,11 @@
 // `phase_planner_declare_war_targets.dart` adapters and is unchanged.
 
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'army_conquest_prep.dart';
 import 'expand_phase_planner.dart';
+import 'planning_helpers.dart'
+    show addInvadableProvinceMinorOwnersNotAtWar, gpFactionIdsAtWarWith;
 import 'planning_imports.dart';
 
 /// First minor nation that owns invadable OW land but is not yet at war, while
@@ -24,9 +27,7 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return null;
   }
-  final atWarWithGp = snapshot.threats.atWarWith
-      .where((id) => game.playerById(id) != null)
-      .toList();
+  final atWarWithGp = gpFactionIdsAtWarWith(game, snapshot);
   if (atWarWithGp.length > 2) {
     return null;
   }
@@ -46,17 +47,13 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return null;
   }
-  final provinceOwner = getProvinceOwnerMap(game);
   final candidates = <String>{};
-  for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
-    final owner = provinceOwner[pid];
-    if (owner == null ||
-        !game.minorNations.any((m) => m.id == owner) ||
-        snapshot.threats.atWarWith.contains(owner)) {
-      continue;
-    }
-    candidates.add(owner);
-  }
+  addInvadableProvinceMinorOwnersNotAtWar(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: getProvinceOwnerMap(game),
+    into: candidates,
+  );
   if (candidates.isEmpty) {
     return null;
   }
@@ -81,10 +78,11 @@ String? belowQuotaUninvadedMinorDeclareTarget({
       !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return null;
   }
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
   final candidates = <String>{
     for (final minor in game.minorNations)
       if (!snapshot.threats.atWarWith.contains(minor.id) &&
-          game.worldState.oldWorld.provinces.any((p) => p.ownerId == minor.id))
+          ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld))
         minor.id,
   };
   if (candidates.isEmpty) {
@@ -112,10 +110,7 @@ String? plateauOwMinorDeclareTarget({
       !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return null;
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length > 1) {
     for (final factionId in gpWars) {
       if (!isMutualBelowQuotaPlateauPeer(
@@ -134,22 +129,18 @@ String? plateauOwMinorDeclareTarget({
   }
   final candidates = <String>{
     for (final factionId in snapshot.conquest.adjacentOwnerFactionIdsSorted)
-      if (game.minorNations.any((m) => m.id == factionId) &&
+      if (isMinorFaction(game, factionId) &&
           !snapshot.threats.atWarWith.contains(factionId))
         factionId,
   };
   if (candidates.isEmpty &&
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
-    final provinceOwner = getProvinceOwnerMap(game);
-    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
-      final owner = provinceOwner[pid];
-      if (owner == null ||
-          !game.minorNations.any((m) => m.id == owner) ||
-          snapshot.threats.atWarWith.contains(owner)) {
-        continue;
-      }
-      candidates.add(owner);
-    }
+    addInvadableProvinceMinorOwnersNotAtWar(
+      game: game,
+      snapshot: snapshot,
+      provinceOwner: getProvinceOwnerMap(game),
+      into: candidates,
+    );
   }
   if (candidates.isEmpty) {
     return null;
@@ -169,10 +160,7 @@ String? defaultStartOwMinorDeclareTarget({
       ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
     return null;
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length > 1) {
     return null;
   }
@@ -189,27 +177,21 @@ String? defaultStartOwMinorDeclareTarget({
     return null;
   }
   final candidates = <String>{};
-  final provinceOwner = getProvinceOwnerMap(game);
   if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
-    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
-      final owner = provinceOwner[pid];
-      if (owner == null ||
-          !game.minorNations.any((m) => m.id == owner) ||
-          snapshot.threats.atWarWith.contains(owner)) {
-        continue;
-      }
-      candidates.add(owner);
-    }
+    addInvadableProvinceMinorOwnersNotAtWar(
+      game: game,
+      snapshot: snapshot,
+      provinceOwner: getProvinceOwnerMap(game),
+      into: candidates,
+    );
   }
   if (candidates.isEmpty) {
+    final ownerCache = ProvinceOwnerCache.of(game.worldState);
     for (final minor in game.minorNations) {
       if (snapshot.threats.atWarWith.contains(minor.id)) {
         continue;
       }
-      final ownsOw = game.worldState.oldWorld.provinces.any(
-        (p) => p.ownerId == minor.id,
-      );
-      if (ownsOw) {
+      if (ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld)) {
         candidates.add(minor.id);
       }
     }

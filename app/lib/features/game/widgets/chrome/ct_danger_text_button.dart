@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/themes.dart';
+import 'ct_hover_button.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Reusable small text button used for destructive **danger** actions that
@@ -42,6 +43,9 @@ class CtDangerTextButton extends StatefulWidget {
     this.enabled = true,
     this.semanticLabel,
     this.tooltip,
+    this.icon,
+    this.iconSize = 14,
+    this.iconOnly = false,
   });
 
   /// Tap callback. Ignored when [enabled] is `false`.
@@ -49,6 +53,24 @@ class CtDangerTextButton extends StatefulWidget {
 
   /// Single-line label text rendered inside the button.
   final String label;
+
+  /// Optional leading icon rendered before [label] (mockup destructive
+  /// row-action pills such as the civilian units panel `.u-actions .cancel-btn`
+  /// keep an icon + label per `SPEC/ui/civilian-units-panel.md` § Row actions,
+  /// issue #3514). When `null` (default) the button keeps the original
+  /// text-only chrome so existing call sites are unchanged.
+  final IconData? icon;
+
+  /// Rendered size of [icon] when present. Defaults to the compact row-action
+  /// footprint (14 logical px) used by the unit-panel mockups.
+  final double iconSize;
+
+  /// When `true` (and [icon] is set), the button suppresses its text [label]
+  /// and renders only the [icon] — used by the shared unit/fleet
+  /// [UnitsEntityActionRow] narrow-width collapse (issue #3514). Accessibility
+  /// still resolves through [semanticLabel] / [label]. When `false` (default)
+  /// the button keeps its `Icon + label` (or text-only) rendering.
+  final bool iconOnly;
 
   /// When `false`, the entire control fades to the shared
   /// [CtNinePatchButton.disabledOpacity] and ignores pointer events.
@@ -81,22 +103,19 @@ class CtDangerTextButton extends StatefulWidget {
   State<CtDangerTextButton> createState() => _CtDangerTextButtonState();
 }
 
-class _CtDangerTextButtonState extends State<CtDangerTextButton> {
-  bool _hovered = false;
+class _CtDangerTextButtonState extends State<CtDangerTextButton>
+    with CtHoverButtonStateMixin<CtDangerTextButton> {
+  @override
+  bool get hoverButtonEnabled => widget.enabled;
 
-  bool get _isInteractive => widget.enabled && widget.onPressed != null;
-
-  void _setHover(bool hovered) {
-    if (!_isInteractive) return;
-    if (_hovered == hovered) return;
-    setState(() => _hovered = hovered);
-  }
+  @override
+  VoidCallback? get hoverButtonOnPressed => widget.onPressed;
 
   double get _resolvedOpacity {
     if (!widget.enabled) {
       return CtNinePatchButton.disabledOpacity;
     }
-    return _hovered
+    return hovered
         ? CtDangerTextButton.hoverOpacity
         : CtDangerTextButton.idleOpacity;
   }
@@ -113,7 +132,7 @@ class _CtDangerTextButtonState extends State<CtDangerTextButton> {
     );
 
     final Widget surface = AnimatedContainer(
-      duration: _isInteractive
+      duration: isInteractive
           ? CtDangerTextButton.animationDuration
           : Duration.zero,
       curve: CtNinePatchButton.animationCurve,
@@ -128,44 +147,28 @@ class _CtDangerTextButtonState extends State<CtDangerTextButton> {
         horizontal: CtDangerTextButton._horizontalPadding,
         vertical: CtDangerTextButton._verticalPadding,
       ),
-      child: Text(widget.label, style: labelStyle),
+      child: widget.icon == null
+          ? Text(widget.label, style: labelStyle)
+          : widget.iconOnly
+          ? Icon(widget.icon, size: widget.iconSize, color: dangerColor)
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(widget.icon, size: widget.iconSize, color: dangerColor),
+                const SizedBox(width: 4),
+                Text(widget.label, style: labelStyle),
+              ],
+            ),
     );
 
+    // The surface already bakes in its idle/hover/disabled opacity via
+    // [_resolvedOpacity], so no extra disabled fade is applied here.
     final Widget faded = Opacity(opacity: _resolvedOpacity, child: surface);
 
-    if (!widget.enabled) {
-      return Semantics(
-        button: true,
-        enabled: false,
-        label: widget.semanticLabel ?? widget.label,
-        child: IgnorePointer(child: faded),
-      );
-    }
-
-    final Widget interactive = MouseRegion(
-      onEnter: (_) => _setHover(true),
-      onExit: (_) => _setHover(false),
-      cursor: SystemMouseCursors.click,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onPressed,
-          child: faded,
-        ),
-      ),
+    return buildHoverButton(
+      surface: faded,
+      semanticLabel: widget.semanticLabel ?? widget.label,
+      tooltip: widget.tooltip,
     );
-
-    Widget wrapped = Semantics(
-      button: true,
-      enabled: true,
-      label: widget.semanticLabel ?? widget.label,
-      child: interactive,
-    );
-
-    final String? tooltip = widget.tooltip;
-    if (tooltip != null) {
-      wrapped = Tooltip(message: tooltip, child: wrapped);
-    }
-    return wrapped;
   }
 }

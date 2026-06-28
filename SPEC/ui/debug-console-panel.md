@@ -34,9 +34,10 @@
 - **`/observe`** — enter **global** in-app observe mode (session-only; see [observe-mode.md](observe-mode.md)). Emits `SetObserveModeGlobalEvent`.
 - **`/observe off`** — exit observe mode. Emits `SetObserveModeOffEvent`.
 - **`/observe <target>`** — enter **player** observe for one Great Power; `<target>` is exact `player_id` or `display_name` (trim, case-insensitive; ambiguous names → candidate list + id retry, same as `/list_players`). Rejects unknown, non-GP, and eliminated GPs (`capitalProvinceId == null`). Emits `SetObserveModePlayerEvent`.
+- **`/set_diplomacy <faction> <action>`** and **`/set_diplomacy <faction_a> <faction_b> <action>`** — directly mutates the diplomatic relation between two factions (debug tool; bypasses normal diplomacy resolution). The one-faction form uses the active human player as the first faction; the two-faction form names both. The **last** token is always the action keyword; faction identifiers may be a faction id or display name, and a multi-word display name must be double-quoted (e.g. `/set_diplomacy "Zulu Kingdom" war`). Supported `<action>` keywords (case-insensitive): `war`, `peace`, `alliance`, `no_alliance`, `consulate`, `embassy`, `nap`, `join_empire`, `clear_overture`, `ftp`, `no_ftp`. A valid command emits one `SetDebugDiplomacyRelationEvent` carrying the raw faction inputs (`factionA` is `null` for the one-faction form) and the `DebugDiplomacyAction`; faction resolution, state validation (hard incompatibilities, self-target), per-pair-per-turn quota (`Game.debugDiplomacyUsedPairKeys`), direct `Game` mutation, war side effects, and `DiplomaticEvent` history are applied by the app listener and are gated to `TurnPhase.orders`.
 - **`/list_players`** — read-only command that enumerates all `Game.players` in ascending `player.id` order. Success output starts with `players_count: <N>` and one blank-line-separated block per player with `player_id`, `display_name` (empty/blank `displayName` falls back to `player_id`), `type` (`human` or `ai`), and `eliminated` (`true` when `capitalProvinceId == null`, else `false`). Extra arguments return `Usage: /list_players`. When the submit-time read-only context does not supply a `players` projection, the executor returns deterministic error `Player list is unavailable.` with no events.
 - **`/help`** — Lists supported commands and bounds. `/spawn_regiment`, `/spawn_ship`, `/add_resource`, and `/add_worker` help text must include every canonical id (regiment, ship, commodity, or worker tier) exactly once in stable sorted order, generated from the same source used for parser validation.
-- **Orders-phase gate policy** — `/add_money`, `/add_resource`, `/flip_province`, and `/reveal_province` apply paths are allowed only during human Orders phase. Outside Orders phase, the app listener rejects those applies with deterministic feedback and leaves game state unchanged. **`/add_worker`** is **not** `TurnPhase`-gated in its apply handler (parity with the “no economy-phase modifiers” credit surface for `/add_money` / `/add_worker` above); a valid `CreditDebugWorkerPoolEvent` still mutates `WorkerPool` outside Orders phase.
+- **Orders-phase gate policy** — `/add_money`, `/add_resource`, `/flip_province`, `/reveal_province`, and `/set_diplomacy` apply paths are allowed only during human Orders phase. Outside Orders phase, the app listener rejects those applies with deterministic feedback and leaves game state unchanged. **`/add_worker`** is **not** `TurnPhase`-gated in its apply handler (parity with the “no economy-phase modifiers” credit surface for `/add_money` / `/add_worker` above); a valid `CreditDebugWorkerPoolEvent` still mutates `WorkerPool` outside Orders phase.
 
 ---
 
@@ -133,6 +134,38 @@ and text colour resolves through an `EditorialMonoclePalette` token.
 - Given panel input `/list_players extra`, when the player submits, then the system shows deterministic usage feedback `Usage: /list_players` and emits no session command events.
 - Given panel input `/help`, when displayed, then the help text includes `/list_players` exactly once.
 - Given the submit-time read-only context omits `players` (null projection), when the player submits `/list_players`, then the system appends deterministic error `Player list is unavailable.` and emits no session command events.
+- Given panel input `/set_diplomacy Ireland war`, when the player submits, then the system emits one `SetDebugDiplomacyRelationEvent` with `factionA=null`, `factionB=Ireland`, and `action=DebugDiplomacyAction.war`.
+- Given panel input `/set_diplomacy England France alliance`, when the player submits, then the system emits one `SetDebugDiplomacyRelationEvent` with `factionA=England`, `factionB=France`, and `action=DebugDiplomacyAction.alliance`.
+- Given panel input `/set_diplomacy "Zulu Kingdom" war`, when the player submits, then the system emits one `SetDebugDiplomacyRelationEvent` with `factionB=Zulu Kingdom` (quotes stripped, spaces preserved) and `action=DebugDiplomacyAction.war`.
+- Given panel input `/set_diplomacy Ireland JOIN_EMPIRE`, when the player submits, then the parser accepts case-insensitive keywords and emits `action=DebugDiplomacyAction.joinEmpire`.
+- Given panel input `/set_diplomacy Ireland befriend`, when the player submits, then the system emits no `SetDebugDiplomacyRelationEvent` and shows a deterministic error containing `Unknown diplomacy action`.
+- Given panel input `/set_diplomacy Ireland` or `/set_diplomacy A B C war`, when the player submits, then the system emits no `SetDebugDiplomacyRelationEvent` and shows deterministic usage feedback containing `Usage: /set_diplomacy`.
+- Given panel input `/help`, when displayed, then the help text includes both `/set_diplomacy` forms and every supported action keyword.
+
+### Acceptance criteria — `/set_diplomacy` apply behavior
+
+- Given a human player `England` and a Minor Nation `Ireland` at peace, when the app listener applies `SetDebugDiplomacyRelationEvent(factionB=Ireland, action=war)` during Orders phase, then the system sets the England–Ireland `DiplomacyRelation.state` to `atWar` and appends one `declareWar` `DiplomaticEvent`.
+- Given two Great Powers `England` and `France` at peace with no formal alliance, when the app listener applies `action=alliance`, then the system sets `formalAlliance=true` on the England–France relation and appends one `allianceFormed` event.
+- Given `England` and `France` with `formalAlliance=true`, when the app listener applies `action=war`, then the system keeps game state unchanged and returns deterministic feedback mentioning the existing formal alliance.
+- Given the first `/set_diplomacy` mutation for a faction pair succeeded this turn, when the app listener applies any second `/set_diplomacy` mutation for that same pair in the same turn, then the system keeps game state unchanged and returns feedback containing `already used debug diplomacy for this pair this turn`.
+- Given a faction pair has consumed its per-turn quota (`Game.debugDiplomacyUsedPairKeys` contains the sorted pair key), when the game is saved and reloaded via `Game.toJson`/`Game.fromJson`, then the reloaded game still rejects a same-pair `/set_diplomacy` mutation this turn.
+- Given the turn advances during end-of-turn resolution, when `runEndOfTurnPhase` increments the turn number, then the system clears `Game.debugDiplomacyUsedPairKeys` to empty.
+- Given the active game's `TurnState.phase` is not `TurnPhase.orders`, when the app listener applies any `SetDebugDiplomacyRelationEvent`, then the system keeps game state unchanged and returns deterministic phase-gate feedback mentioning the Orders phase.
+- Given `England` and `Ireland` at peace with no overture, when the app listener applies `action=consulate` (one-faction form), then the system upserts `OvertureState(gpId=England, targetId=Ireland, stage=tradeConsulate)`.
+- Given `England` and `France` with mutual embassy-tier overtures, when the app listener applies `action=ftp`, then the system adds the sorted England–France pair key to `Game.ftpPartnershipKeys` and appends one `ftpFormed` event.
+- Given `England` and `France` with no embassy-tier overture in either direction, when the app listener applies `action=ftp`, then the system keeps game state unchanged and returns feedback mentioning a missing embassy overture.
+- Given `England` and `Ireland` with a consulate overture and an active FTP and no formal alliance, when the app listener applies `action=war`, then the system removes the overture, removes the FTP pair key, and appends `declareWar`, `agreementsClearedOnWar`, and `ftpBroken` events.
+- Given an input that resolves to no known faction (e.g. `Atlantis`), when the app listener applies the event, then the system keeps game state unchanged and returns feedback `Faction not found: Atlantis`.
+- Given a self-target (`factionA == factionB` after resolution), when the app listener applies the event, then the system keeps game state unchanged and returns feedback that a faction cannot set a relation with itself.
+- Given a Tribe with display name `Zulu Kingdom`, when the app listener applies `SetDebugDiplomacyRelationEvent(factionB="zulu kingdom", action=war)`, then the system resolves the faction by case-insensitive display name and sets the relation to `atWar`.
+- Given `England` and `Ireland` already at war, when the app listener applies `action=war`, then the system keeps game state unchanged, returns feedback mentioning the pair is already at war, and appends no new history events.
+
+---
+
+## Automated verification (`/set_diplomacy`)
+
+- **Apply handler:** `app/test/app_event_handler_debug_set_diplomacy_test.dart` (war/peace/alliance/no_alliance/overture/ftp success + rejection paths, self-target, faction-not-found, display-name resolution, war side effects, per-turn quota, save/load quota persistence, Orders-phase gate).
+- **Turn-advance quota reset:** `packages/colonizethis_turn/test/end_of_turn_debug_diplomacy_quota_reset_test.dart` (`runEndOfTurnPhase` clears `debugDiplomacyUsedPairKeys` on turn advance).
 
 ---
 

@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -16,44 +17,23 @@ import 'games_provider.dart';
 /// Global province/sea boundary strokes on in-game Empire overview maps.
 /// Defaults to true at app start; updated via the Map display options dialog.
 /// SPEC/ui/map-widget.md, SPEC/ui/empire-overview.md.
-class MapProvinceOverlayVisibleNotifier extends Notifier<bool> {
-  @override
-  bool build() => true;
-
-  void set(bool value) => state = value;
-}
-
 final mapProvinceOverlayVisibleProvider =
-    NotifierProvider<MapProvinceOverlayVisibleNotifier, bool>(
-      MapProvinceOverlayVisibleNotifier.new,
+    NotifierProvider<StateToggleNotifier, bool>(
+      () => StateToggleNotifier(true),
     );
 
 /// Great Power land ownership tint on in-game Empire overview maps.
 /// Independent of [mapProvinceOverlayVisibleProvider]. Defaults to false at app start.
-class MapProvinceOwnershipTintVisibleNotifier extends Notifier<bool> {
-  @override
-  bool build() => false;
-
-  void set(bool value) => state = value;
-}
-
 final mapProvinceOwnershipTintVisibleProvider =
-    NotifierProvider<MapProvinceOwnershipTintVisibleNotifier, bool>(
-      MapProvinceOwnershipTintVisibleNotifier.new,
+    NotifierProvider<StateToggleNotifier, bool>(
+      () => StateToggleNotifier(false),
     );
 
 /// Global land province name labels on in-game Empire overview maps.
 /// Independent of boundary and ownership-tint toggles. Defaults to true at app start.
-class MapProvinceNamesVisibleNotifier extends Notifier<bool> {
-  @override
-  bool build() => true;
-
-  void set(bool value) => state = value;
-}
-
 final mapProvinceNamesVisibleProvider =
-    NotifierProvider<MapProvinceNamesVisibleNotifier, bool>(
-      MapProvinceNamesVisibleNotifier.new,
+    NotifierProvider<StateToggleNotifier, bool>(
+      () => StateToggleNotifier(true),
     );
 
 /// Map view data for the current game with player-constrained visibility.
@@ -121,10 +101,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       final prospected =
           game.worldState.playerProspectedTiles[mapPlayer.id] ??
           const <String>{};
-      final provincesByFullId = {
-        for (final p in game.worldState.oldWorld.provinces) p.id: p,
-        for (final p in game.worldState.newWorld.provinces) p.id: p,
-      };
+      final provincesByFullId = game.worldState.allProvincesById;
       for (final tileKey in connectivityForHuman.connected) {
         final parsed = tryParseTileKey(tileKey);
         if (parsed == null) {
@@ -132,15 +109,13 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         }
         final regionId = parsed.regionId;
         final localProvinceId = parsed.provinceLocalId;
-        final ownedByHuman =
-            (regionId == 'oldWorld'
-                    ? game.worldState.oldWorld.provinces
-                    : game.worldState.newWorld.provinces)
-                .any(
-                  (province) =>
-                      province.id == '$regionId|$localProvinceId' &&
-                      province.ownerId == mapPlayer.id,
-                );
+        final ownedByHuman = game.worldState
+            .provincesForRegion(regionId)
+            .any(
+              (province) =>
+                  province.id == '$regionId|$localProvinceId' &&
+                  province.ownerId == mapPlayer.id,
+            );
         if (!ownedByHuman) {
           continue;
         }

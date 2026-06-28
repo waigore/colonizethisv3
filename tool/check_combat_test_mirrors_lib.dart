@@ -1,0 +1,78 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+
+import 'ct_repo_lint_scan_contract.dart';
+
+/// Repo-relative path prefix for the combat package test tree (Refs #3716).
+///
+/// Combat production code lives under `lib/src/combat/`; the testing rule
+/// (`colonizethis-testing.mdc`) mandates that `test/` mirrors `lib/`. This gate
+/// keeps the combat test tree mirrored by forbidding loose Dart sources at the
+/// `test/` root: every combat test (and its co-located support helper) must
+/// live in a subdirectory such as `test/combat/` rather than flat in `test/`.
+const String _combatTestRootPrefix = 'packages/colonizethis_combat/test/';
+
+/// True when the repo-relative [slashPath] is under the combat package `test/`.
+bool combatTestMirrorsLibPathInScope(String slashPath) {
+  final normalized = slashPath.replaceAll('\\', '/');
+  return normalized.startsWith(_combatTestRootPrefix);
+}
+
+/// Returns a violation reason when the combat test source at repo-relative
+/// [slashPath] sits directly in the `test/` root (no mirroring subdirectory),
+/// or `null` when the file is nested in a subdirectory (compliant) or out of
+/// scope.
+///
+/// A loose root file is one whose remainder after the
+/// `packages/colonizethis_combat/test/` prefix contains no further path
+/// separator (for example `test/combat_rng_test.dart`). Nested files such as
+/// `test/combat/combat_rng_test.dart` are compliant.
+String? combatTestMirrorsLibViolationReason(String slashPath) {
+  final normalized = slashPath.replaceAll('\\', '/');
+  if (!normalized.startsWith(_combatTestRootPrefix)) {
+    return null;
+  }
+  final remainder = normalized.substring(_combatTestRootPrefix.length);
+  if (remainder.isEmpty || remainder.contains('/')) {
+    return null;
+  }
+  return 'lives directly in `test/`; move it under a subdirectory that mirrors '
+      '`lib/src/` (for example `test/combat/`) per the testing-rule '
+      '`test/`-mirrors-`lib/` policy (Refs #3716)';
+}
+
+int runCheckCombatTestMirrorsLib(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
+
+  final violations = <String>[];
+  for (final file in collectRepoLintDomainDartFiles(repoRoot)) {
+    final rel = p.relative(file.path, from: repoRoot).replaceAll('\\', '/');
+    if (!combatTestMirrorsLibPathInScope(rel)) {
+      continue;
+    }
+    final reason = combatTestMirrorsLibViolationReason(rel);
+    if (reason != null) {
+      violations.add('$rel: $reason');
+    }
+  }
+
+  if (violations.isEmpty) {
+    logI('check_combat_test_mirrors_lib: no flat-root combat test sources.');
+    return 0;
+  }
+  logE('check_combat_test_mirrors_lib: ${violations.length} violation(s):');
+  for (final violation in violations) {
+    logE(' - $violation');
+  }
+  return 1;
+}
+
+void main() {
+  exit(runCheckCombatTestMirrorsLib(Directory.current.path));
+}

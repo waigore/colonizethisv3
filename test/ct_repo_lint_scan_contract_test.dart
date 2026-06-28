@@ -455,6 +455,46 @@ void main() {
       expect(r.paths, ['second.dart']);
       expect(r.missingValueError, isFalse);
     });
+
+    test('reads --files-from manifest (newline/comma separated)', () {
+      final dir = Directory.systemTemp.createTempSync('ct_repo_lint_ff_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final manifest = File(p.join(dir.path, 'files.txt'))
+        ..writeAsStringSync('lib/a.dart\nlib/b.dart,lib/c.dart\n');
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs([
+        '--files-from',
+        manifest.path,
+      ]);
+      expect(r.paths, ['lib/a.dart', 'lib/b.dart', 'lib/c.dart']);
+      expect(r.missingValueError, isFalse);
+    });
+
+    test('--files-from= form reads manifest', () {
+      final dir = Directory.systemTemp.createTempSync('ct_repo_lint_ff_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final manifest = File(p.join(dir.path, 'files.txt'))
+        ..writeAsStringSync('lib/a.dart');
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs([
+        '--files-from=${manifest.path}',
+      ]);
+      expect(r.paths, ['lib/a.dart']);
+    });
+
+    test('missing --files-from manifest yields empty list', () {
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs(const [
+        '--files-from=/no/such/ct_repo_lint_manifest.txt',
+      ]);
+      expect(r.paths, isEmpty);
+      expect(r.missingValueError, isFalse);
+    });
+
+    test('sets missingValueError when --files-from has no value', () {
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs(const [
+        '--files-from',
+      ]);
+      expect(r.paths, isNull);
+      expect(r.missingValueError, isTrue);
+    });
   });
 
   group('repoLintParseStrictIncrementalFilesArgs', () {
@@ -477,6 +517,41 @@ void main() {
       ]);
       expect(r.paths, ['a.dart']);
       expect(r.unsupportedArgument, '--other');
+    });
+
+    test('accepts --files-from manifest as a supported token', () {
+      final dir = Directory.systemTemp.createTempSync('ct_repo_lint_ff_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final manifest = File(p.join(dir.path, 'files.txt'))
+        ..writeAsStringSync('lib/a.dart\nlib/b.dart');
+      final r = repoLintParseStrictIncrementalFilesArgs([
+        '--files-from',
+        manifest.path,
+      ]);
+      expect(r.paths, ['lib/a.dart', 'lib/b.dart']);
+      expect(r.unsupportedArgument, isNull);
+      expect(r.missingValueError, isFalse);
+    });
+  });
+
+  group('repoLintReadFilesFromManifest', () {
+    test('splits comma/newline manifest content', () {
+      final dir = Directory.systemTemp.createTempSync('ct_repo_lint_ff_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final manifest = File(p.join(dir.path, 'files.txt'))
+        ..writeAsStringSync('lib/a.dart,lib/b.dart\nlib/c.dart');
+      expect(repoLintReadFilesFromManifest(manifest.path), [
+        'lib/a.dart',
+        'lib/b.dart',
+        'lib/c.dart',
+      ]);
+    });
+
+    test('returns empty list for a missing manifest path', () {
+      expect(
+        repoLintReadFilesFromManifest('/no/such/ct_repo_lint_manifest.txt'),
+        isEmpty,
+      );
     });
   });
 }

@@ -3,40 +3,41 @@
 part of 'province_sea_zone_detail_overlay.dart';
 
 @visibleForTesting
-String roadRailSupplementaryLabel(int roadLevel) {
+String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   return switch (roadLevel) {
-    0 => 'none',
-    1 => 'primitive road',
-    2 => 'improved road',
-    4 => 'port or railroad',
-    _ => 'non-standard transport level',
+    0 => l10n.provinceOverlay_tileRoadLabelNone,
+    1 => l10n.provinceOverlay_tileRoadLabelPrimitiveRoad,
+    2 => l10n.provinceOverlay_tileRoadLabelImprovedRoad,
+    4 => l10n.provinceOverlay_tileRoadLabelPortOrRailroad,
+    _ => l10n.provinceOverlay_tileRoadLabelNonStandard,
   };
 }
 
-/// Gloss under level 1 so “primitive road” is not read as railroad.
-@visibleForTesting
-const String kRoadRailPrimitiveVersusRailGloss =
-    'Basic land link for connectivity and yield caps. Railroads are transport level 4.';
-
 /// Primary Tile-section line for land tiles; [transportLevel] is stored road/rail level.
 @visibleForTesting
-String roadRailTransportLevelPrimaryLine(int transportLevel) {
-  return 'Road / railroad: transport level $transportLevel';
+String roadRailTransportLevelPrimaryLine(
+  AppLocalizations l10n,
+  int transportLevel,
+) {
+  return l10n.provinceOverlay_tileRoadTransportLevel(transportLevel);
 }
 
 /// Ordered text lines for Tile “Road / railroad” (null → sea / no land transport row).
 @visibleForTesting
-List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
+List<String> roadRailTileDetailLinesForTests({
+  required AppLocalizations l10n,
+  required int? transportLevel,
+}) {
   if (transportLevel == null) {
-    return const ['Road / railroad: —'];
+    return [l10n.provinceOverlay_tileRoadNone];
   }
   final v = transportLevel;
   final lines = <String>[
-    roadRailTransportLevelPrimaryLine(v),
-    roadRailSupplementaryLabel(v),
+    roadRailTransportLevelPrimaryLine(l10n, v),
+    roadRailSupplementaryLabel(l10n, v),
   ];
   if (v == 1) {
-    lines.add(kRoadRailPrimitiveVersusRailGloss);
+    lines.add(l10n.provinceOverlay_tileRoadRailGloss);
   }
   return lines;
 }
@@ -77,12 +78,15 @@ List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
 }
 
 @visibleForTesting
-String tileDetailProspectedDisplayLabel({
+String tileDetailProspectedDisplayLabel(
+  AppLocalizations l10n, {
   required bool terrainProspectable,
   required bool playerHasProspected,
 }) {
   if (!terrainProspectable) return '—';
-  return playerHasProspected ? 'yes' : 'no';
+  return playerHasProspected
+      ? l10n.provinceOverlay_tileProspectedYes
+      : l10n.provinceOverlay_tileProspectedNo;
 }
 
 Widget _buildTileResourceLabelRow({
@@ -126,6 +130,7 @@ Widget _buildTileImprovementLabel({
   required String? visibleResourceId,
 }) {
   final improvementLine = _improvementLabelForTileDetail(
+    l10n: l10n,
     impLevel: impLevel,
     visLevel: visLevel,
     rawResourceId: rawResourceId,
@@ -153,16 +158,21 @@ List<Widget> _buildTileRoadLabelWidgets({
   if (roadLevel == null) {
     return [Text(l10n.provinceOverlay_tileRoadNone, style: _fgBodyStyle())];
   }
-  final roadCaptionStyle = TextStyle(
-    fontSize: 11,
+  final theme = Theme.of(context);
+  final roadCaptionStyle = (theme.textTheme.labelSmall ??
+          const TextStyle(fontSize: 11))
+      .copyWith(
     height: 1.25,
     color: EditorialMonoclePalette.muted,
   );
   return [
-    Text(roadRailTransportLevelPrimaryLine(roadLevel), style: _fgBodyStyle()),
-    Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
+    Text(
+      roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+      style: _fgBodyStyle(),
+    ),
+    Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
-      Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
+      Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
   ];
 }
 
@@ -186,15 +196,30 @@ String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
     return null;
   }
   final cell = region.cellAt(x, y);
-  final raw = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  // R13.4/R13.5 (#3573): known terrain types resolve through the canonical
+  // title-cased display-name helper (never the raw enum `.name`); only the
+  // unknown-id string fallback uses the underscore transform.
+  final terrainType = cell.terrainType;
+  if (terrainType != null) {
+    return terrainDisplayName(terrainType);
+  }
+  final raw = cell.terrainTypeId ?? '—';
   return _economicTerrainTitle(raw);
 }
 
+/// Title-cases an unknown terrain-id fallback string. Splits on underscores
+/// **and** camelCase boundaries so a multi-word id such as `hardwoodForest`
+/// renders as `Hardwood Forest` — never `HardwoodForest` (#3573 R13.5). Known
+/// terrain enums bypass this and use [terrainDisplayName] directly.
 String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
-  return raw
-      .split('_')
-      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+  final spaced = raw
+      .replaceAll('_', ' ')
+      .replaceAllMapped(RegExp(r'(?<=[a-z0-9])(?=[A-Z])'), (_) => ' ');
+  return spaced
+      .split(' ')
+      .where((w) => w.isNotEmpty)
+      .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 
@@ -208,14 +233,16 @@ Widget _economicHoverRow({
     onEnter: (_) => onHighlightTile?.call(tileKey),
     onExit: (_) => onHighlightTile?.call(null),
     child: Padding(
-      padding: const EdgeInsets.only(left: 4, top: 2),
+      padding: const EdgeInsets.only(left: CtSpacing.m / 2, top: CtSpacing.xs),
       child: child,
     ),
   );
 }
 
-String _ownerName(Game game, String? ownerId) {
-  if (ownerId == null || ownerId.isEmpty) return 'Unclaimed';
+String _ownerName(AppLocalizations l10n, Game game, String? ownerId) {
+  if (ownerId == null || ownerId.isEmpty) {
+    return l10n.provinceOverlay_ownerUnclaimed;
+  }
   for (final p in game.players) {
     if (p.id == ownerId) return p.displayName;
   }
@@ -228,25 +255,25 @@ String _ownerName(Game game, String? ownerId) {
   return ownerId;
 }
 
-String _improvementNameForResource(String? resourceId) {
-  if (resourceId == null) return 'Improvement';
+String _improvementNameForResource(AppLocalizations l10n, String? resourceId) {
+  if (resourceId == null) return l10n.provinceOverlay_improvementGeneric;
   switch (resourceId) {
     case 'grain':
-      return 'Farm';
+      return l10n.provinceOverlay_improvementFarm;
     case 'meat':
     case 'horses':
-      return 'Ranch';
+      return l10n.provinceOverlay_improvementRanch;
     case 'wool':
-      return 'Pasture';
+      return l10n.provinceOverlay_improvementPasture;
     case 'timber':
-      return 'Lumber camp';
+      return l10n.provinceOverlay_improvementLumberCamp;
     case 'sugarCane':
     case 'tobacco':
     case 'cotton':
     case 'spices':
-      return 'Plantation';
+      return l10n.provinceOverlay_improvementPlantation;
     case 'furs':
-      return 'Fur post';
+      return l10n.provinceOverlay_improvementFurPost;
     case 'iron':
     case 'copper':
     case 'tin':
@@ -255,31 +282,53 @@ String _improvementNameForResource(String? resourceId) {
     case 'gold':
     case 'gems':
     case 'diamonds':
-      return 'Mine';
+      return l10n.provinceOverlay_improvementMine;
     default:
-      return 'Improvement';
+      return l10n.provinceOverlay_improvementGeneric;
   }
 }
 
+/// Test-only accessor for the resource → improvement-type name mapping
+/// (Refs #2865; SPEC § Province overlay content `Tile` improvement label).
+@visibleForTesting
+String provinceOverlayImprovementNameForResource(
+  AppLocalizations l10n,
+  String? resourceId,
+) =>
+    _improvementNameForResource(l10n, resourceId);
+
+/// Test-only accessor for the owner display-name resolution (Refs #2865;
+/// SPEC § Province overlay content `Political` Owner row — localized
+/// `provinceOverlay_ownerUnclaimed` fallback for unowned provinces/tiles).
+@visibleForTesting
+String provinceOverlayOwnerName(
+  AppLocalizations l10n,
+  Game game,
+  String? ownerId,
+) =>
+    _ownerName(l10n, game, ownerId);
+
 String _improvementBaseNameForPlayer({
+  required AppLocalizations l10n,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
   required String? visibleResourceId,
 }) {
   if (visibleResourceId != null) {
-    return _improvementNameForResource(visibleResourceId);
+    return _improvementNameForResource(l10n, visibleResourceId);
   }
   if (rawResourceId != null &&
       kProspectRequiredResourceIds.contains(rawResourceId)) {
-    return 'Mine';
+    return l10n.provinceOverlay_improvementMine;
   }
   if (rawResourceId != null) {
-    return _improvementNameForResource(rawResourceId);
+    return _improvementNameForResource(l10n, rawResourceId);
   }
-  return 'Improvement';
+  return l10n.provinceOverlay_improvementGeneric;
 }
 
 String _improvementLabelForTileDetail({
+  required AppLocalizations l10n,
   required int impLevel,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
@@ -289,6 +338,7 @@ String _improvementLabelForTileDetail({
     return '—';
   }
   final base = _improvementBaseNameForPlayer(
+    l10n: l10n,
     visLevel: visLevel,
     rawResourceId: rawResourceId,
     visibleResourceId: visibleResourceId,
@@ -296,19 +346,35 @@ String _improvementLabelForTileDetail({
   return '$base L$impLevel';
 }
 
+/// Human-readable region label for the province's `regionId`. Maps the two
+/// canonical world regions to their localized tab labels and falls back to
+/// the raw id for any other region (Refs #2865, SPEC § Province overlay
+/// content `Political / Economic / Naval`).
+@visibleForTesting
+String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
+  return switch (regionId) {
+    kRegionOldWorld => l10n.region_oldWorld,
+    kRegionNewWorld => l10n.region_newWorld,
+    _ => regionId,
+  };
+}
+
 Widget _buildPoliticalSection({
   required AppLocalizations l10n,
   required String name,
   required String ownerName,
+  required String regionLabel,
+  required bool isCapital,
 }) {
   // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
-  // tokens). Both body rows declare TextStyle.color explicitly via the
+  // tokens). Every body row declares TextStyle.color explicitly via the
   // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme owns
   // this surface and the section stops inheriting DefaultTextStyle /
   // Material bodyMedium colours. The helper is shared with the Tile
   // live-data rows (coordinates / terrain / civilian units) and the
   // sea-zone Political display-name row so every live-data body row stays
-  // in sync with one token source.
+  // in sync with one token source. Region and Capital are always-exact
+  // political intel, shown alongside Name / Owner regardless of fog.
   final bodyStyle = _fgBodyStyle();
   return _buildSection(
     l10n.provinceOverlay_sectionPolitical,
@@ -318,6 +384,13 @@ Widget _buildPoliticalSection({
       children: [
         Text(l10n.provinceOverlay_name(name), style: bodyStyle),
         Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
+        Text(l10n.provinceOverlay_region(regionLabel), style: bodyStyle),
+        Text(
+          isCapital
+              ? l10n.provinceOverlay_capitalYes
+              : l10n.provinceOverlay_capitalNo,
+          style: bodyStyle,
+        ),
       ],
     ),
   );
@@ -344,9 +417,17 @@ Widget _buildTileSection({
   VoidCallback? onBuildImprovementTap,
 }) {
   if (selectedTileKey == null) {
+    // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
+    // § Dark-theme Tile section placeholder body tokens (S5 follow-up).
+    // The no-selection guidance prompt is placeholder copy, not live
+    // world-state data, so it resolves to the muted token rather than
+    // falling through `DefaultTextStyle` to the Material `bodyMedium`.
     return _buildSection(
       l10n.provinceOverlay_sectionTile,
-      Text(l10n.provinceOverlay_clickTileForDetails),
+      Text(
+        l10n.provinceOverlay_clickTileForDetails,
+        style: TextStyle(color: EditorialMonoclePalette.muted),
+      ),
     );
   }
   final coords = tryParseProvinceOverlayTileCoords(
@@ -356,7 +437,14 @@ Widget _buildTileSection({
     selectedTileKey: selectedTileKey,
   );
   if (coords == null) {
-    return _buildSection(l10n.provinceOverlay_sectionTile, const Text('—'));
+    // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
+    // § Dark-theme Tile section placeholder body tokens (S5 follow-up).
+    // Reuse the shared S9 em-dash helper so every `Text('—')` placeholder
+    // surface in the overlay resolves to one muted token source.
+    return _buildSection(
+      l10n.provinceOverlay_sectionTile,
+      _emptyBodyDashText(),
+    );
   }
   final x = coords.x;
   final y = coords.y;
@@ -382,7 +470,12 @@ Widget _buildTileSection({
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
-  final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  // R13 (#3573): the Tile-section terrain row shows the canonical title-cased
+  // display name for known terrain types, never the raw enum `.name`; the
+  // string-id fallback is title-cased (camelCase spaced) via the shared helper.
+  final terrainStr = cell.terrainType != null
+      ? terrainDisplayName(cell.terrainType!)
+      : _economicTerrainTitle(cell.terrainTypeId ?? '—');
   final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
   final visLevel = playerView.visibilityForTile(selectedTileKey);
   final resourceVisible = resourceIdVisibleInPlayerView(
@@ -395,6 +488,7 @@ Widget _buildTileSection({
       ? isProspectableTerrain(cell.terrainType!)
       : isProspectableTerrainId(cell.terrainTypeId);
   final prospectedLabel = tileDetailProspectedDisplayLabel(
+    l10n,
     terrainProspectable: prospectable,
     playerHasProspected: prospected.contains(selectedTileKey),
   );
@@ -470,6 +564,12 @@ Widget _buildTileSection({
   // Tile, Economic improved-row, Military owner sub-header, Civilian
   // own-unit, and Naval fleet-summary live-data rows.
   final bodyStyle = _fgBodyStyle();
+  final designationLine = provinceOverlayTileDesignationLine(
+    l10n: l10n,
+    game: game,
+    provinceId: provinceId,
+    selectedTileKey: selectedTileKey,
+  );
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
     Column(
@@ -478,6 +578,8 @@ Widget _buildTileSection({
       children: [
         Text(l10n.provinceOverlay_tileCoordinates(x, y), style: bodyStyle),
         Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
+        if (designationLine != null)
+          Text(designationLine, style: bodyStyle),
         _buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
@@ -500,15 +602,8 @@ Widget _buildTileSection({
   );
 }
 
-Province? _findProvince(Game game, String provinceId) {
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.id == provinceId) return p;
-  }
-  return null;
-}
+Province? _findProvince(Game game, String provinceId) =>
+    game.worldState.allProvincesById[provinceId];
 
 // Section header band shared by every province / sea-zone tab body and the
 // wide-layout `sections` column. Renders the canonical CtSectionLabel
@@ -522,14 +617,14 @@ Province? _findProvince(Game game, String provinceId) {
 // underline beneath the tab strip.
 Widget _buildSection(String title, Widget child) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.only(bottom: CtSpacing.ml),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (title.isNotEmpty) ...[
           CtSectionLabel(title),
-          const SizedBox(height: 4),
+          SizedBox(height: CtSpacing.m / 2),
         ],
         child,
       ],

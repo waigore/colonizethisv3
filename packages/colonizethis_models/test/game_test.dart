@@ -35,6 +35,41 @@ void main() {
       expect(restored.calendarCampaignHalted, isTrue);
     });
 
+    test('debugDiplomacyUsedPairKeys round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        debugDiplomacyUsedPairKeys: const {'England|France', 'England|Ireland'},
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(
+        restored.debugDiplomacyUsedPairKeys,
+        {'England|France', 'England|Ireland'},
+      );
+      expect(restored, game);
+    });
+
+    test('debugDiplomacyUsedPairKeys defaults empty when missing from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson();
+      expect(json.containsKey('debugDiplomacyUsedPairKeys'), isFalse);
+      final restored = Game.fromJson(json);
+      expect(restored.debugDiplomacyUsedPairKeys, isEmpty);
+    });
+
     test('infiniteMode round-trip JSON', () {
       final game = Game(
         id: 'g1',
@@ -423,6 +458,76 @@ void main() {
       expect(next.worldMarketState.prices['timber'], 25);
       expect(next.worldMarketState.prices['timber'], isA<int>());
       expect(next == game, isFalse);
+    });
+
+    // Refs #3444: per-AI-slot blessed tuned-profile selection persistence.
+    Game gameWithProfiles(Map<String, String?> aiProfileByGpId) => Game(
+      id: 'g1',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      aiProfileByGpId: aiProfileByGpId,
+    );
+
+    test('aiProfileByGpId defaults to empty and is omitted from JSON', () {
+      final game = gameWithProfiles(const {});
+      expect(game.aiProfileByGpId, isEmpty);
+      expect(game.toJson().containsKey('aiProfileByGpId'), isFalse);
+    });
+
+    test('aiProfileByGpId round-trips through JSON when populated', () {
+      final game = gameWithProfiles(const {
+        'france': 'aggressive_v2',
+        'england': null,
+      });
+      final json = game.toJson();
+      expect(json.containsKey('aiProfileByGpId'), isTrue);
+      final restored = Game.fromJson(json);
+      expect(restored.aiProfileByGpId['france'], 'aggressive_v2');
+      // null value (normal AI) is preserved for an AI slot key.
+      expect(restored.aiProfileByGpId.containsKey('england'), isTrue);
+      expect(restored.aiProfileByGpId['england'], isNull);
+      expect(restored, game);
+    });
+
+    test('aiProfileByGpId legacy saves load as empty (normal AI)', () {
+      final json = gameWithProfiles(const {'france': 'aggressive_v2'}).toJson()
+        ..remove('aiProfileByGpId');
+      final restored = Game.fromJson(json);
+      expect(restored.aiProfileByGpId, isEmpty);
+    });
+
+    test('aiProfileByGpId tolerates Map<dynamic,dynamic> (Hive typing)', () {
+      final json = gameWithProfiles(const {}).toJson();
+      json['aiProfileByGpId'] = <dynamic, dynamic>{
+        'france': 'defensive_v1',
+        'spain': null,
+      };
+      final restored = Game.fromJson(json);
+      expect(restored.aiProfileByGpId['france'], 'defensive_v1');
+      expect(restored.aiProfileByGpId['spain'], isNull);
+    });
+
+    test('copyWith replaces aiProfileByGpId', () {
+      final game = gameWithProfiles(const {'france': 'aggressive_v2'});
+      final next = game.copyWith(
+        aiProfileByGpId: const {'france': 'defensive_v1'},
+      );
+      expect(next.aiProfileByGpId['france'], 'defensive_v1');
+      expect(next == game, isFalse);
+    });
+
+    test('aiProfileByGpId participates in equality', () {
+      final a = gameWithProfiles(const {'france': 'aggressive_v2'});
+      final b = gameWithProfiles(const {'france': 'aggressive_v2'});
+      final c = gameWithProfiles(const {'france': 'defensive_v1'});
+      final d = gameWithProfiles(const {'france': null});
+      expect(a, b);
+      expect(a == c, isFalse);
+      expect(a == d, isFalse);
     });
   });
 }

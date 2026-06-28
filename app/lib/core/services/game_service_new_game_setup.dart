@@ -22,7 +22,11 @@ Game _gameServiceCreateNewGame(
       effectiveSeed: effectiveSeed,
     );
   }
-  final result = _gameServiceSetupResultWithFinalizedGame(setupResult, effectiveSeed);
+  final result = _gameServiceSetupResultWithFinalizedGame(
+    setupResult,
+    effectiveSeed,
+    aiProfileByGpId: cfg.aiProfileByGpId,
+  );
   _gameServicePersistNewGame(service, gameId: gameId, result: result);
   return result.game;
 }
@@ -79,7 +83,11 @@ Future<Game> _gameServiceCreateNewGameAsync(
     reportPhase(3);
     await yieldUi();
   }
-  final result = _gameServiceSetupResultWithFinalizedGame(setupResult, effectiveSeed);
+  final result = _gameServiceSetupResultWithFinalizedGame(
+    setupResult,
+    effectiveSeed,
+    aiProfileByGpId: cfg.aiProfileByGpId,
+  );
 
   reportPhase(4);
   await yieldUi();
@@ -91,13 +99,15 @@ Future<Game> _gameServiceCreateNewGameAsync(
 
 GameSetupResult _gameServiceSetupResultWithFinalizedGame(
   GameSetupResult setup,
-  int effectiveSeed,
-) {
+  int effectiveSeed, {
+  Map<String, String?> aiProfileByGpId = const {},
+}) {
   var game = setup.game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {
       for (final p in setup.game.players) p.id: effectiveSeed + p.id.hashCode,
     },
+    aiProfileByGpId: Map<String, String?>.from(aiProfileByGpId),
   );
   game = assignHiddenAgendasForGame(game);
   return GameSetupResult(
@@ -263,7 +273,7 @@ GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
   return TileMapGenerator(params: paramsOW).generate(
     numProvinces: cfg.numProvincesOldWorld,
     numContinents: cfg.continentCount,
-    regionId: 'oldWorld',
+    regionId: kRegionOldWorld,
     resourceRules: ResourceRules.defaultRules,
     onLog: _mapGenPassLog.d,
   );
@@ -292,7 +302,7 @@ GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
   return TileMapGenerator(params: paramsNW).generate(
     numProvinces: cfg.numProvincesNewWorld,
     numContinents: cfg.continentCount.clamp(1, cfg.numProvincesNewWorld),
-    regionId: 'newWorld',
+    regionId: kRegionNewWorld,
     resourceRules: ResourceRules.defaultRules,
     onLog: _mapGenPassLog.d,
   );
@@ -310,8 +320,8 @@ List<WarpLink> _gameServiceGenerateWarpLinks({
     topologyOldWorld: topoOW,
     tileMapNewWorld: tileMapNW,
     topologyNewWorld: topoNW,
-    regionIdOld: 'oldWorld',
-    regionIdNew: 'newWorld',
+    regionIdOld: kRegionOldWorld,
+    regionIdNew: kRegionNewWorld,
     seed: effectiveSeed,
   );
 }

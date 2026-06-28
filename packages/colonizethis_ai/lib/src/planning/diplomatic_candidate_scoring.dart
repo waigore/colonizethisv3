@@ -9,6 +9,20 @@ import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_diplomacy_filter.dart';
 import 'phase_planner_dispatch.dart';
+import 'planning_helpers.dart'
+    show
+        anyInvadableProvinceOwnedByGreatPower,
+        anyInvadableProvinceOwnedByMinor,
+        atWarGreatPowerOrderTarget,
+        atWarPeaceTargetBonus,
+        factionOwnsInvadableOldWorldProvince,
+        gpFactionIdsAtWarWith,
+        hasRecentDiplomaticEventWithinCooldown,
+        isAtWarWithAnyGreatPower,
+        isOwnOldWorldBelowConquestQuota,
+        isOwnOldWorldExpansionStalled,
+        mutualExhaustedGpStalemateSideQualifies,
+        orderTargetIsAtWarInvadableBlocker;
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
@@ -30,7 +44,10 @@ List<int> computeDiplomaticCandidateScores({
   PhasePlanOutcome? phasePlan,
 }) {
   final agendaId = config.hiddenAgendaId;
-  final thresholds = getThresholdsForLeader(config.personalityId);
+  final thresholds = resolveThresholds(
+    config.personalityId,
+    overrides: config.parameterOverrides,
+  );
   var maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
   final behindVictoryPace =
       snapshot.conquest.provincesToVictory >
@@ -49,11 +66,15 @@ List<int> computeDiplomaticCandidateScores({
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;
   final currentTurn = game.worldState.turnState.turnNumber;
-  final anyMinorOwnsOldWorld = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
+  // Phase 6b (SPEC/program/worldstate-projection.md slice 7; Refs #3393):
+  // replace the O(provinces x minors) nested old-world owner scan with the
+  // memoised projection via the existing `_minorOwnsOldWorldProvinces` helper
+  // (`ProvinceOwnerCache.ownsAnyInRegion(minorId, kRegionOldWorld)`).
+  // Behaviour-preserving: the result is true iff some minor owns a non-empty
+  // old-world province — exactly the prior `oldWorld.provinces.any` predicate
+  // (minor ids are non-empty, and an empty/`null` owner never equals a minor id).
+  final anyMinorOwnsOldWorld = game.minorNations.any(
+    (m) => _minorOwnsOldWorldProvinces(game, m.id),
   );
   final warDesireByTarget = <String, int>{};
   int warDesireForTarget(String targetFactionId, int relationScore) {
@@ -168,7 +189,9 @@ List<int> computeDiplomaticCandidateScores({
 }
 
 bool _minorOwnsOldWorldProvinces(Game game, String minorId) =>
-    game.worldState.oldWorld.provinces.any((p) => p.ownerId == minorId);
+    ProvinceOwnerCache.of(
+      game.worldState,
+    ).ownsAnyInRegion(minorId, kRegionOldWorld);
 
 Set<String> _activeOldWorldMinorConflictIds({
   required Game game,
@@ -207,12 +230,12 @@ bool _isDecisionOnCooldown({
   required List<DiplomaticEventType> eventTypes,
   required int cooldownTurns,
   required int currentTurn,
-}) {
-  for (final event in game.diplomaticHistoryEvents.reversed) {
-    if (!eventTypes.contains(event.type)) continue;
-    if (event.fromFactionId != actorFactionId) continue;
-    if (event.toFactionId != targetFactionId) continue;
-    return (currentTurn - event.turn) < cooldownTurns;
-  }
-  return false;
-}
+}) => hasRecentDiplomaticEventWithinCooldown(
+  game: game,
+  currentTurn: currentTurn,
+  cooldownTurns: cooldownTurns,
+  matches: (event) =>
+      eventTypes.contains(event.type) &&
+      event.fromFactionId == actorFactionId &&
+      event.toFactionId == targetFactionId,
+);

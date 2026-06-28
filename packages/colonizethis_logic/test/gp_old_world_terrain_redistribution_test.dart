@@ -22,7 +22,7 @@ void main() {
           TerrainType.plains,
         ],
         [
-          TerrainType.forest,
+          TerrainType.hardwoodForest,
           TerrainType.plains,
           TerrainType.desert,
         ],
@@ -98,7 +98,7 @@ void main() {
 
       final beforePlains = countTerrain(TerrainType.plains);
       final beforeHills = countTerrain(TerrainType.hills);
-      final beforeForest = countTerrain(TerrainType.forest);
+      final beforeForest = countTerrain(TerrainType.hardwoodForest);
       final beforeDesert = countTerrain(TerrainType.desert);
 
       final out = applyGreatPowerOldWorldTerrainRedistribution(
@@ -111,7 +111,7 @@ void main() {
 
       expect(countTerrain(TerrainType.plains), beforePlains);
       expect(countTerrain(TerrainType.hills), beforeHills);
-      expect(countTerrain(TerrainType.forest), beforeForest);
+      expect(countTerrain(TerrainType.hardwoodForest), beforeForest);
       expect(countTerrain(TerrainType.desert), beforeDesert);
 
       expect(map.terrainAt(2, 0), TerrainType.plains);
@@ -134,7 +134,7 @@ void main() {
         ],
         [
           TerrainType.hills,
-          TerrainType.forest,
+          TerrainType.hardwoodForest,
           TerrainType.plains,
         ],
       ];

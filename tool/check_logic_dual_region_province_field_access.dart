@@ -2,14 +2,19 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Canonical dual-region province iteration lives here; all other logic `lib/src`
+/// Canonical dual-region province iteration lives here; all other world `lib/src`
 /// code should prefer `allProvinces` / `WorldState.allProvinces()` (GitHub #2071).
 const _canonicalProvinceRelativePath =
-    'packages/colonizethis_logic/lib/src/world/province_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/province_lookup.dart';
 const _canonicalUnitRelativePath =
-    'packages/colonizethis_logic/lib/src/world/unit_lookup.dart';
+    'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
-const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
+/// Post-split scan root (Refs #3290): world domain code moved out of the monolith.
+const _scanDirRelative = 'packages/colonizethis_world/lib/src';
+
+/// Exposed for tests verifying the post-split scan root.
+String logicDualRegionProvinceFieldAccessScanDirForTests() =>
+    _scanDirRelative;
 
 /// Keep direct dual-region field access rare; budget tracks the smallest value
 /// confirmed achievable by the audit recorded in
@@ -21,6 +26,18 @@ final RegExp _manualRegionBranchPattern = RegExp(
   r'^\s*(if|else if)\s*\(\s*regionId\s*==\s*kRegionOldWorld\s*\)',
 );
 
+/// List-literal region iteration such as
+/// `[game.worldState.oldWorld, game.worldState.newWorld]` bypasses the canonical
+/// dual-region traversal helpers (`WorldState.regionsInOrder` /
+/// `forEachWorldRegion`) and previously escaped this gate because it carries no
+/// `oldWorld.provinces` / `newWorld.provinces` substring (Refs #3710). Matches a
+/// `[` that reaches `.oldWorld` then `.newWorld` before the closing `]` on the
+/// same line; record types `(oldWorld: ..., newWorld: ...)` use `(` and are not
+/// matched.
+final RegExp _regionListLiteralPattern = RegExp(
+  r'\[[^\]]*\.oldWorld\b[^\]]*\.newWorld\b',
+);
+
 bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
   return line.contains('oldWorld.provinces') ||
       line.contains('newWorld.provinces') ||
@@ -28,7 +45,8 @@ bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
       line.contains('newWorld.units') ||
       line.contains('copyWith(oldWorld:') ||
       line.contains('copyWith(newWorld:') ||
-      _manualRegionBranchPattern.hasMatch(line);
+      _manualRegionBranchPattern.hasMatch(line) ||
+      _regionListLiteralPattern.hasMatch(line);
 }
 
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
@@ -42,7 +60,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
   final root = p.normalize(repoRoot);
   final scanRoot = Directory(p.join(root, _scanDirRelative));
   if (!scanRoot.existsSync()) {
-    logE('ERROR: Expected logic lib tree missing: $_scanDirRelative');
+    logE('ERROR: Expected world lib tree missing: $_scanDirRelative');
     return 1;
   }
 
@@ -75,7 +93,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
 
   if (hits.length <= _maxMatchingLinesOutsideCanonical) {
     logI(
-      'Logic dual-region province field access check passed '
+      'World dual-region province field access check passed '
       '(${hits.length}/$_maxMatchingLinesOutsideCanonical lines outside '
       '$_canonicalProvinceRelativePath and $_canonicalUnitRelativePath).',
     );

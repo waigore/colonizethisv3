@@ -74,7 +74,7 @@ Pass 7 may still roll RNG resources on land cells that **later** become town or 
 
 **Roads:** **Initial road networking** (see [capital-and-connectivity.md](capital-and-connectivity.md) § Init town roads) runs **after** this post-pass so **towns** and these **farms** gain **Road rule** connectivity where required. Tiles that are **4-adjacent** to a **connected town** already satisfy **Town rule** and need no extra road solely for connectivity.
 
-**Edge case:** If the capital province has **fewer than four** **eligible** land cells that can legally host `grain` (after excluding town/capital), the post-pass cannot satisfy the guarantee; The System **must** surface a **fatal setup error** with `logic:` diagnostics (exact message implementation-defined). Maps or rulesets used for shipping **must** ensure sufficient candidates (e.g. by province size and terrain mix).
+**Edge case:** If the capital province has **fewer than four** **eligible** land cells that can legally host `grain` (after excluding town/capital), the post-pass cannot satisfy the guarantee and raises its error. The **init orchestrator** treats this like other infeasible-layout failures (e.g. partition-gate exhaustion): it **regenerates with a bumped map seed** for up to the bounded retry budget (`kMaxInitPipelineAttempts`). Only when **every** attempt remains infeasible does The System surface a **fatal setup error** with `logic:` diagnostics (exact message implementation-defined). Maps or rulesets used for shipping **must** ensure sufficient candidates (e.g. by province size and terrain mix) so a feasible seed is found well within the retry budget.
 
 ---
 
@@ -108,6 +108,10 @@ Pass 7 may still roll RNG resources on land cells that **later** become town or 
   When accounting for Pass 7 multi-region cap or any other map resource budget after the post-pass  
   Then the **replaced** RNG resource **does not** count toward those caps and the **new** `grain` bootstrap tiles **also do not** count
 
-- Given a Great Power’s capital province contains **fewer than four** **eligible** land tiles rules-legal for `grain` (town/capital excluded)  
-  When the System runs the bootstrap post-pass  
+- Given a Great Power’s capital province contains **fewer than four** **eligible** land tiles rules-legal for `grain` (town/capital excluded) on the current attempt’s generated map and the init orchestrator has remaining attempts in its retry budget  
+  When the System runs the bootstrap post-pass and the post-pass raises its infeasibility error  
+  Then the System **regenerates** the maps with a bumped map seed and retries setup rather than failing immediately
+
+- Given **every** attempt within the init retry budget produces a Great Power capital province with **fewer than four** **eligible** land tiles rules-legal for `grain`  
+  When the System exhausts the retry budget  
   Then the System **fails setup** with a **fatal error** and `logic:` diagnostics (implementation-defined message)

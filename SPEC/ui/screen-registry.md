@@ -12,10 +12,10 @@ Major flows only; keep this table small.
 
 | Code | Flow | Sub-flow digits (4th char) |
 |------|------|----------------------------|
-| `SHEL` | App shell, main menu, setup, initializing, pause menu | `1` menu/shell route, `2` game setup, `3` game initializing, `4` pause menu panel |
+| `SHEL` | App shell, main menu, initializing, pause menu | `1` menu/shell route, `3` game initializing, `4` pause menu panel |
 | `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route |
 | `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
-| `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military |
+| `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military, `6` train naval |
 | `DIPL` | Diplomacy panels and grant flows | `1` diplomacy panel/screen, `2` grant/subsidy dialog |
 | `PROD` | Production surfaces | `1` production panel/screen, `2` commodity breakdown dialog |
 | `TECH` | Technology surfaces | `1` technology panel/screen |
@@ -34,7 +34,6 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 |----|-------|------|----------------|------------|--------|
 | `SHEL10001` | Shell screen | [shell-screen.md](shell-screen.md) | `app/lib/features/shell/shell_screen.dart` | Shell Screen | active |
 | `SHEL10002` | Main menu (CtMainMenu) | [main-menu.md](main-menu.md) | `app/lib/widgets/main_menu.dart` | Main Menu | active |
-| `SHEL20001` | Game setup (CtGameSetup) | [game-setup.md](game-setup.md) | `app/lib/widgets/game_setup.dart` | Game Setup | active |
 | `SHEL30001` | Game initializing | [game-initializing.md](game-initializing.md) | TBD | — | draft |
 | `SHEL40001` | Pause menu panel | [pause-menu-panel.md](pause-menu-panel.md) | `app/lib/features/game/widgets/pause_menu_panel.dart` | Pause Menu Panel | active |
 | `GAME10001` | Game screen | [game-screen.md](game-screen.md) | `app/lib/features/game/flame/game_screen.dart` | Game Screen | active |
@@ -51,6 +50,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `UNIT30001` | Naval units panel | [naval-units-panel.md](naval-units-panel.md) | `app/lib/features/game/widgets/naval_units_panel.dart` | Naval Units Panel | active |
 | `UNIT40001` | Train civilians dialog | [train-civilians-dialog.md](train-civilians-dialog.md) | `app/lib/features/game/widgets/train_civilians_dialog.dart` | Train Civilians Dialog | active |
 | `UNIT50001` | Train military dialog | [train-military-dialog.md](train-military-dialog.md) | `app/lib/features/game/widgets/train_military_dialog.dart` | Train Military Dialog | active |
+| `UNIT60001` | Train naval dialog | [train-naval-dialog.md](train-naval-dialog.md) | `app/lib/features/game/widgets/train_naval_dialog.dart` | Train Naval Dialog | active |
 | `DIPL20001` | Grant or subsidy dialog | [grant-or-subsidy-dialog.md](grant-or-subsidy-dialog.md) | `app/lib/features/game/widgets/diplomacy_dialogs.dart` | Grant or Subsidy Dialog | active |
 | `PROD20001` | Production commodity breakdown dialog | [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | `app/lib/features/game/widgets/production_commodity_breakdown_dialog.dart` | Production Commodity Breakdown Dialog | active |
 | `CMPT10001` | Combat mode choice dialog | [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md) | `app/lib/features/game/combat/combat_mode_choice_dialog.dart` | Quick Battle | active |
@@ -69,6 +69,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |
 | `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | TBD | — | draft |
 | `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | TBD | — | draft |
+| `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
 | `SYS10001` | Debug log viewer | — | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | — | draft |
 | `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | TBD | — | draft |
 

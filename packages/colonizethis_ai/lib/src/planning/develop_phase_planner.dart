@@ -50,11 +50,9 @@
 ///     tiles on GP-owned land, deterministically priority-ordered.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
+import 'planning_helpers.dart';
 
 /// Returns every Great Power currently at war with the active player as a
 /// deterministic ascending-sorted list of `factionId`s.
@@ -78,10 +76,7 @@ List<String> planDevelopPeace({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  return <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
+  return gpFactionIdsAtWarWith(game, snapshot);
 }
 
 /// Returns deterministic `build_improvement` work orders for the active
@@ -150,14 +145,13 @@ List<WorkOrder> planDevelopCivilian({
 
   final ownedProvinceIds = <String>{};
   final townTileKeys = <String>{};
-  for (final region in <RegionData>[world.oldWorld, world.newWorld]) {
-    for (final province in region.provinces) {
-      if (province.ownerId != playerId) continue;
-      ownedProvinceIds.add(province.id);
-      final townTileKey = province.townTileKey;
-      if (townTileKey != null && townTileKey.isNotEmpty) {
-        townTileKeys.add(townTileKey);
-      }
+  for (final province in ProvinceOwnerCache.of(
+    world,
+  ).provincesOwnedBy(playerId)) {
+    ownedProvinceIds.add(province.id);
+    final townTileKey = province.townTileKey;
+    if (townTileKey != null && townTileKey.isNotEmpty) {
+      townTileKeys.add(townTileKey);
     }
   }
   if (ownedProvinceIds.isEmpty) {

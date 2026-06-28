@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import '../config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
 import '../config/ui_screen_ids.dart';
@@ -9,6 +10,10 @@ import 'ct_fleur_de_lis_ornament.dart';
 import 'ct_gradients.dart';
 import 'ct_main_menu_collage.dart';
 import 'ct_nine_patch_button.dart';
+
+part 'main_menu_buttons.dart';
+part 'main_menu_footer.dart';
+part 'main_menu_scroll_bracket.dart';
 
 /// Narrow-viewport breakpoint for the main menu in logical pixels.
 ///
@@ -32,15 +37,15 @@ const double kMainMenuButtonLetterSpacingNarrow = 0.6;
 /// Menu container padding at viewports `> kMainMenuNarrowBreakpoint`.
 /// Default desktop / wide layout.
 const EdgeInsets kMainMenuBodyPaddingDefault = EdgeInsets.symmetric(
-  horizontal: 24,
+  horizontal: CtSpacing.xxl,
 );
 
 /// Menu container padding at viewports `≤ kMainMenuNarrowBreakpoint`.
 /// Compacts horizontal padding and adds explicit vertical padding to mirror
 /// the mockup `.menu-container { padding: 24px 12px; }` narrow override.
 const EdgeInsets kMainMenuBodyPaddingNarrow = EdgeInsets.symmetric(
-  horizontal: 12,
-  vertical: 24,
+  horizontal: CtSpacing.ml,
+  vertical: CtSpacing.xxl,
 );
 
 /// Stable `Key` value for the menu body `Padding` widget that owns the
@@ -62,6 +67,23 @@ const String kMainMenuFooterQuitKey = 'main_menu_footer_quit';
 /// button just above the 44 dp accessibility threshold; smaller than the
 /// 48 dp primary wood-panel buttons per AC 9.
 const double kMainMenuFooterQuitMinHeight = 44;
+
+/// Maximum rendered width (logical pixels) of the `pixelArt` variant footer
+/// Quit chip. Mirrors the upper bound of the mockup
+/// `.quit-btn { min-width: clamp(100px, 30%, 160px) }` rule so the chip
+/// never stretches to the full primary wood-panel button width and reads as
+/// a visibly smaller, secondary control (issue #2860 S9). Combined with the
+/// existing `minWidth` floor this keeps the chip in the
+/// `[120, kMainMenuFooterQuitMaxWidth]` band, centred in the footer.
+const double kMainMenuFooterQuitMaxWidth = 160;
+
+/// Label font size (logical pixels) of the `pixelArt` variant footer Quit
+/// chip. Mirrors the lower bound of the mockup
+/// `.quit-btn { font-size: clamp(12px, 1.8vw, 14px) }` rule and is smaller
+/// than the primary wood-panel button label size (the dark-theme
+/// `titleSmall` slot, 14 dp) so the chip reads as typographically smaller
+/// and faded relative to the primary buttons (issue #2860 S9).
+const double kMainMenuFooterQuitFontSize = 12;
 
 /// Stable `Key` value for the left ornamental scroll bracket flanking the
 /// `pixelArt` buttons region. Mirrors the mockup
@@ -467,534 +489,5 @@ class _MainMenuBodyContent extends StatelessWidget {
       return _PixelArtButtonsRegion(child: column);
     }
     return column;
-  }
-}
-
-/// Footer region for both variants. Renders the version text above a Quit
-/// control; in the `pixelArt` variant the Quit control is the smaller,
-/// `--muted`, border-only chip per `SPEC/ui/main-menu.md` § Variant
-/// rendering (AC 9), while the `plain` variant continues to use a regular
-/// [CtNinePatchButton] for backward compatibility.
-class _MainMenuFooter extends StatelessWidget {
-  const _MainMenuFooter({
-    required this.variant,
-    required this.version,
-    required this.quitLabel,
-    required this.onQuit,
-  });
-
-  final MainMenuVariant variant;
-  final String version;
-  final String quitLabel;
-  final VoidCallback onQuit;
-
-  @override
-  Widget build(BuildContext context) {
-    if (variant == MainMenuVariant.pixelArt) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _PixelArtFooterVersion(version: version),
-          const SizedBox(height: 12),
-          _FooterQuitButton(label: quitLabel, onPressed: onQuit),
-        ],
-      );
-    }
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(version, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: CtNinePatchButton(
-            onPressed: onQuit,
-            child: Text(quitLabel),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Monospace `--muted` version line for the `pixelArt` variant footer.
-/// Mirrors mockup `.version { font-family: var(--font-mono); color:
-/// var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }` and
-/// realises the `SPEC/ui/main-menu.md` § Variant rendering row "Footer
-/// version text — Monospace (`--font-mono`), `--muted` token from #2858".
-class _PixelArtFooterVersion extends StatelessWidget {
-  const _PixelArtFooterVersion({required this.version});
-
-  final String version;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextStyle? baseStyle = Theme.of(context).textTheme.bodySmall;
-    return Text(
-      version.toUpperCase(),
-      style: (baseStyle ?? const TextStyle()).copyWith(
-        color: EditorialMonoclePalette.muted,
-        fontFamily: 'monospace',
-        fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
-        // Mirrors mockup `.version { letter-spacing: 0.08em }` at the 12 px
-        // text size (~0.96 px). Kept distinct from the wood-panel button
-        // label letter-spacing constants so screen tests can assert button
-        // letter-spacing without picking up the version line.
-        letterSpacing: 0.96,
-      ),
-      textAlign: TextAlign.center,
-    );
-  }
-}
-
-/// Secondary footer Quit chip for the `pixelArt` variant. Implements
-/// `SPEC/ui/main-menu.md` § Variant rendering — Quit button row and AC 9
-/// from issue #2860: smaller than the primary wood-panel buttons, `--muted`
-/// foreground, border-only chrome (`--border` top/bottom and 1px left/right
-/// edges), and no brass corner brackets. Mirrors the mockup `.quit-btn`
-/// element in `SPEC/ui/mockups/SHEL10002-main-menu.html`.
-class _FooterQuitButton extends StatefulWidget {
-  const _FooterQuitButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  State<_FooterQuitButton> createState() => _FooterQuitButtonState();
-}
-
-class _FooterQuitButtonState extends State<_FooterQuitButton> {
-  bool _hovered = false;
-
-  void _setHover(bool entered) {
-    if (_hovered == entered) return;
-    setState(() => _hovered = entered);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle baseStyle =
-        theme.textTheme.labelLarge ??
-        theme.textTheme.bodyMedium ??
-        const TextStyle();
-    final Color foreground = _hovered
-        ? EditorialMonoclePalette.accentBright
-        : EditorialMonoclePalette.muted;
-    final LinearGradient gradient = _hovered
-        ? LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              EditorialMonoclePalette.surfaceLite,
-              EditorialMonoclePalette.surface,
-            ],
-          )
-        : LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              EditorialMonoclePalette.surface,
-              EditorialMonoclePalette.bgDeep,
-            ],
-          );
-
-    return MouseRegion(
-      onEnter: (_) => _setHover(true),
-      onExit: (_) => _setHover(false),
-      cursor: SystemMouseCursors.click,
-      child: Semantics(
-        button: true,
-        label: widget.label,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onPressed,
-          child: ConstrainedBox(
-            key: const Key(kMainMenuFooterQuitKey),
-            constraints: const BoxConstraints(
-              minHeight: kMainMenuFooterQuitMinHeight,
-              minWidth: 120,
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: gradient,
-                border: Border(
-                  top: BorderSide(
-                    color: EditorialMonoclePalette.border,
-                    width: 1,
-                  ),
-                  bottom: BorderSide(
-                    color: EditorialMonoclePalette.border,
-                    width: 1,
-                  ),
-                  left: BorderSide(
-                    color: EditorialMonoclePalette.border,
-                    width: 1,
-                  ),
-                  right: BorderSide(
-                    color: EditorialMonoclePalette.border,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Center(
-                  child: Text(
-                    widget.label,
-                    style: baseStyle.copyWith(
-                      color: foreground,
-                      fontFamily: editorialMonocleDisplayFontFamily,
-                      letterSpacing: 1.4,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuButton extends StatelessWidget {
-  const _MenuButton({
-    required this.label,
-    required this.variant,
-    required this.narrow,
-    required this.onPressed,
-  });
-
-  final String label;
-  final MainMenuVariant variant;
-  final bool narrow;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    if (variant == MainMenuVariant.pixelArt) {
-      return _PixelArtButton(
-        label: label,
-        narrow: narrow,
-        onPressed: onPressed,
-      );
-    }
-    return SizedBox(
-      width: double.infinity,
-      child: CtNinePatchButton(onPressed: onPressed, child: Text(label)),
-    );
-  }
-}
-
-class _PixelArtButton extends StatefulWidget {
-  const _PixelArtButton({
-    required this.label,
-    required this.onPressed,
-    required this.narrow,
-    this.enabled = true,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final bool narrow;
-  final bool enabled;
-
-  @override
-  State<_PixelArtButton> createState() => _PixelArtButtonState();
-}
-
-class _PixelArtButtonState extends State<_PixelArtButton>
-    with SingleTickerProviderStateMixin {
-  bool _hovered = false;
-  static const double _bobAmount = 2.5;
-  static const Duration _bobDuration = Duration(milliseconds: 800);
-
-  late final AnimationController _bobController;
-  late final Animation<double> _bobAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _bobController = AnimationController(vsync: this, duration: _bobDuration);
-    _bobAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _bobController, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _bobController.dispose();
-    super.dispose();
-  }
-
-  void _onHoverEnter(PointerEvent _) {
-    if (!widget.enabled) return;
-    setState(() => _hovered = true);
-    _bobController.repeat(reverse: true);
-  }
-
-  void _onHoverExit(PointerEvent _) {
-    setState(() => _hovered = false);
-    _bobController.stop();
-    _bobController.reset();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: MouseRegion(
-        onEnter: _onHoverEnter,
-        onExit: _onHoverExit,
-        cursor: widget.enabled
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
-        child: AnimatedBuilder(
-          animation: _bobAnimation,
-          builder: (context, child) {
-            final double dy = _hovered
-                ? (_bobAnimation.value * 2 * _bobAmount - _bobAmount)
-                : 0;
-            return Transform.translate(offset: Offset(0, dy), child: child);
-          },
-          child: ColorFiltered(
-            colorFilter: _hovered && widget.enabled
-                ? ColorFilter.mode(
-                    Colors.black.withValues(alpha: 0.15),
-                    BlendMode.darken,
-                  )
-                : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-            child: CtNinePatchButton(
-              onPressed: widget.enabled ? widget.onPressed : null,
-              enabled: widget.enabled,
-              minHeight: 48,
-              gradient: CtGradients.woodPanelButtonGradient,
-              pressedGradient: CtGradients.woodPanelButtonGradientPressed,
-              child: Text(
-                widget.label,
-                style: TextStyle(
-                  letterSpacing: widget.narrow
-                      ? kMainMenuButtonLetterSpacingNarrow
-                      : kMainMenuButtonLetterSpacingDefault,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadGameButton extends StatelessWidget {
-  const _LoadGameButton({
-    required this.enabled,
-    required this.variant,
-    required this.narrow,
-    required this.onPressed,
-  });
-
-  final bool enabled;
-  final MainMenuVariant variant;
-  final bool narrow;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    if (variant == MainMenuVariant.pixelArt) {
-      return Tooltip(
-        message: enabled ? '' : l10n.mainMenu_noSavesTooltip,
-        child: _PixelArtButton(
-          label: l10n.mainMenu_loadGame,
-          enabled: enabled,
-          narrow: narrow,
-          onPressed: onPressed,
-        ),
-      );
-    }
-    return Tooltip(
-      message: enabled ? '' : l10n.mainMenu_noSavesTooltip,
-      child: SizedBox(
-        width: double.infinity,
-        child: CtNinePatchButton(
-          onPressed: enabled ? onPressed : null,
-          enabled: enabled,
-          child: Text(l10n.mainMenu_loadGame),
-        ),
-      ),
-    );
-  }
-}
-
-/// Side enumeration for a [_PixelArtScrollBracket]. Encodes which gutter
-/// (left or right of the buttons region) the bracket flanks; controls the
-/// horizontal offset direction of the ornamental dots and the canonical
-/// stable `Key` value applied to the bracket widget so widget tests can
-/// distinguish the two bracket positions independently.
-enum _ScrollBracketSide { left, right }
-
-/// Buttons-region wrapper for the `pixelArt` main-menu variant.
-///
-/// Stacks the wood-panel button column under two ornamental
-/// [_PixelArtScrollBracket]s positioned [kMainMenuScrollBracketGutter]
-/// logical pixels outside the left and right edges of the column. The
-/// brackets paint across the middle
-/// `1 - 2 * kMainMenuScrollBracketVerticalInset` of the column height per
-/// `SPEC/ui/main-menu.md` § Buttons region and mockup
-/// `.buttons-region::before` / `::after` rules. `Clip.none` lets the
-/// brackets render outside the column bounds without being clipped by the
-/// outer scroll view.
-class _PixelArtButtonsRegion extends StatelessWidget {
-  const _PixelArtButtonsRegion({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: <Widget>[
-        child,
-        Positioned(
-          left: -kMainMenuScrollBracketGutter - kMainMenuScrollBracketWidth / 2,
-          top: 0,
-          bottom: 0,
-          width: kMainMenuScrollBracketWidth,
-          child: const _PixelArtScrollBracket(
-            key: Key(kMainMenuScrollBracketLeftKey),
-            side: _ScrollBracketSide.left,
-          ),
-        ),
-        Positioned(
-          right:
-              -kMainMenuScrollBracketGutter - kMainMenuScrollBracketWidth / 2,
-          top: 0,
-          bottom: 0,
-          width: kMainMenuScrollBracketWidth,
-          child: const _PixelArtScrollBracket(
-            key: Key(kMainMenuScrollBracketRightKey),
-            side: _ScrollBracketSide.right,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Ornamental scroll bracket flanking the `pixelArt` buttons region.
-///
-/// Renders a narrow vertical gradient bar (`--accent-dim` → `--accent` →
-/// `--accent-dim`, transparent at both ends) plus a single ornamental dot
-/// above and below the bar, all painted at [kMainMenuScrollBracketOpacity]
-/// per `SPEC/ui/main-menu.md` § Buttons region and mockup
-/// `.buttons-region::before` / `::after` rules. The bar is vertically
-/// centered within its parent and spans the middle
-/// `1 - 2 * kMainMenuScrollBracketVerticalInset` fraction of the parent
-/// height; the [side] discriminator flips the ornamental-dot horizontal
-/// offset so the dots align with the corresponding mockup `box-shadow`
-/// direction (`-2px` for left, `+2px` for right).
-class _PixelArtScrollBracket extends StatelessWidget {
-  const _PixelArtScrollBracket({super.key, required this.side});
-
-  final _ScrollBracketSide side;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: kMainMenuScrollBracketOpacity,
-      child: CustomPaint(
-        painter: _PixelArtScrollBracketPainter(
-          side: side,
-          accent: EditorialMonoclePalette.accent,
-          accentDim: EditorialMonoclePalette.accentDim,
-        ),
-      ),
-    );
-  }
-}
-
-class _PixelArtScrollBracketPainter extends CustomPainter {
-  _PixelArtScrollBracketPainter({
-    required this.side,
-    required this.accent,
-    required this.accentDim,
-  });
-
-  final _ScrollBracketSide side;
-  final Color accent;
-  final Color accentDim;
-
-  static const double _barCornerRadius = 2;
-  static const double _dotSize = 2;
-  // Mockup `box-shadow: ±2px 6px 0 -1px var(--accent-dim)` — the 6px
-  // vertical offset measures from the bar's top/bottom edge outward.
-  static const double _dotVerticalOffsetFromBarEdge = 6;
-  // Horizontal mockup offset is ±2px from the bar's centerline.
-  static const double _dotHorizontalOffsetFromCenter = 2;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.width <= 0 || size.height <= 0) return;
-    final double inset = size.height * kMainMenuScrollBracketVerticalInset;
-    final double barTop = inset;
-    final double barBottom = size.height - inset;
-    if (barBottom <= barTop) return;
-
-    final Rect barRect = Rect.fromLTRB(0, barTop, size.width, barBottom);
-    final RRect barRRect = RRect.fromRectAndRadius(
-      barRect,
-      const Radius.circular(_barCornerRadius),
-    );
-    final Paint barPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: <Color>[
-          accentDim.withValues(alpha: 0),
-          accentDim,
-          accent,
-          accentDim,
-          accentDim.withValues(alpha: 0),
-        ],
-        stops: const <double>[0.0, 0.08, 0.5, 0.92, 1.0],
-      ).createShader(barRect);
-    canvas.drawRRect(barRRect, barPaint);
-
-    final Paint dotPaint = Paint()..color = accentDim;
-    final double horizontalOffset = side == _ScrollBracketSide.left
-        ? -_dotHorizontalOffsetFromCenter
-        : _dotHorizontalOffsetFromCenter;
-    final double dotX = size.width / 2 + horizontalOffset;
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: Offset(dotX, barTop - _dotVerticalOffsetFromBarEdge),
-        width: _dotSize,
-        height: _dotSize,
-      ),
-      dotPaint,
-    );
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: Offset(dotX, barBottom + _dotVerticalOffsetFromBarEdge),
-        width: _dotSize,
-        height: _dotSize,
-      ),
-      dotPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _PixelArtScrollBracketPainter oldDelegate) {
-    return oldDelegate.side != side ||
-        oldDelegate.accent != accent ||
-        oldDelegate.accentDim != accentDim;
   }
 }

@@ -1,6 +1,7 @@
 // Pins SPEC/ui/production-commodity-breakdown-dialog.md contract for the
 // read-only commodity breakdown modal opened from ProductionScreen.
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -14,8 +15,9 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_dialog_shell.da
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+
+import 'support/panel_test_fixtures.dart';
 
 class _SeededProductionDesiredOutputNotifier
     extends ProductionDesiredOutputNotifier {
@@ -43,8 +45,13 @@ void main() {
         tester.view.physicalSize = surfaceSize;
         tester.view.devicePixelRatio = 1.0;
 
-        final result = getDebugInitGameResult();
-        final game = result.game;
+        // Lightweight fixture (no ~7-11s getDebugInitGameResult() map
+        // generation, Refs #3656). The delta-colour pins below are driven by the
+        // economy-preview pipeline's Consumption/Production phases off the
+        // player's workerPool labour + stockpile commodities, not owned tiles, so
+        // a tile-less hand-built game reproduces them (topology / tileMapByRegion
+        // contribute nothing here).
+        final game = buildProductionBreakdownDeltaTestGame();
         final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
         final player = game.playerById(humanPlayerId) ?? game.players.first;
         await tester.pumpWidget(
@@ -70,8 +77,8 @@ void main() {
                         builder: (_) => ProductionCommodityBreakdownDialog(
                           game: game,
                           player: player,
-                          topology: result.combinedTopology,
-                          tileMapByRegion: result.tileMapByRegion,
+                          topology: const MapTopology(),
+                          tileMapByRegion: null,
                           currentOrders: const Orders(),
                         ),
                       );

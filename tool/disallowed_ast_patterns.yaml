@@ -130,21 +130,27 @@ rules:
     message: >-
       Do not perform linear province lookups via
       `.provinces.where(...).firstOrNull` (or `.firstWhere(...)`) inside
-      packages/colonizethis_logic/lib/src/. Use the O(1) province lookup
+      packages/colonizethis_logic/lib/src/ or
+      packages/colonizethis_orders/lib/src/. Use the O(1) province lookup
       helpers in `world/province_lookup.dart` (e.g. `tryGetProvince`,
       `getProvince`, `tryGetProvinceByRegion`) keyed by full province id.
     match:
       kind: linear_collection_where_first_or_null
       collection_names:
         - provinces
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
+      relative_path_prefixes:
+        - packages/colonizethis_logic/lib/src/
+        - packages/colonizethis_orders/lib/src/
+        - packages/colonizethis_turn/lib/src/
+        - packages/colonizethis_ai_contracts/lib/src/
   - id: prohibited_linear_units_armies_fleets_lookup
     message: >-
       Do not perform linear scans on `.units`, `.armies`, or `.fleets` via
-      `.where(...).firstOrNull` inside packages/colonizethis_logic/lib/src/.
-      Build or reuse a `Map<String, Unit>` / `Map<String, Army>` / keyed fleet
-      lookup (for example `unitsByIdFromWorld`, army maps on validators, or
-      a one-shot index) so hot paths stay O(1) per id. Refs #2394,
+      `.where(...).firstOrNull` inside packages/colonizethis_logic/lib/src/
+      or packages/colonizethis_orders/lib/src/. Build or reuse a
+      `Map<String, Unit>` / `Map<String, Army>` / keyed fleet lookup (for
+      example `unitsByIdFromWorld`, army maps on validators, or a one-shot
+      index) so hot paths stay O(1) per id. Refs #2394,
       SPEC/program/order-suggestions.md.
     match:
       kind: linear_collection_where_first_or_null
@@ -152,17 +158,26 @@ rules:
         - units
         - armies
         - fleets
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
+      relative_path_prefixes:
+        - packages/colonizethis_logic/lib/src/
+        - packages/colonizethis_orders/lib/src/
+        - packages/colonizethis_turn/lib/src/
+        - packages/colonizethis_ai_contracts/lib/src/
   - id: prohibited_incremental_validator_per_item
     message: >-
       Do not call `IncrementalCandidateValidator.forPlayer` or
       `buildIncrementalCandidateValidator` inside a loop body in
-      packages/colonizethis_logic/lib/src/. Build one validator per suggestion
+      packages/colonizethis_logic/lib/src/ or
+      packages/colonizethis_orders/lib/src/. Build one validator per suggestion
       pass (or hoist before the loop) and rebind with `forBasePrefix` when the
       trial `Orders` prefix changes. Refs #2394, SPEC/program/order-suggestions.md.
     match:
       kind: incremental_validator_for_player_in_loop
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
+      relative_path_prefixes:
+        - packages/colonizethis_logic/lib/src/
+        - packages/colonizethis_orders/lib/src/
+        - packages/colonizethis_turn/lib/src/
+        - packages/colonizethis_ai_contracts/lib/src/
   - id: redundant_where_to_list_where_chain
     message: >-
       Do not chain `.where(...).toList().where(...)`; the intermediate
@@ -173,13 +188,28 @@ rules:
       SPEC/program/disallowed-ast-patterns.md.
     match:
       kind: redundant_where_to_list_where_chain
+  - id: ai_full_recipe_catalog_scan
+    message: >-
+      Do not scan the full production recipe catalog via
+      `ProductionRecipesCatalog.all` inside `packages/colonizethis_ai/lib/`.
+      Use the O(1) output index `ProductionRecipesCatalog.producing(commodityId)`
+      or the id index `ProductionRecipesCatalog.byId[recipeId]` so per-turn AI
+      planning stays off the 15s next-turn budget hot path (Refs #3288,
+      SPEC/program/disallowed-ast-patterns.md). A genuine
+      all-recipes-must-be-considered loop may suppress with an inline
+      `// ignore: disallowed_ast_ai_full_recipe_catalog_scan` and a rationale.
+    match:
+      kind: static_member_access
+      type_name: ProductionRecipesCatalog
+      member_name: all
+      relative_path_prefix: packages/colonizethis_ai/lib/
   - id: nested_world_state_copywith
     message: >-
       Do not chain `Game.copyWith(worldState: ...copyWith(...copyWith(...)))`
       across three or more levels in `packages/colonizethis_logic/lib/`.
       Funnel multi-level world-state mutations through
       `Game.updateWorldState(...)` / `WorldState.updateTurnState(...)` (see
-      `packages/colonizethis_logic/lib/src/world/game_world_mutations.dart`)
+      `packages/colonizethis_world/lib/src/world/game_world_mutations.dart`)
       so each call site stays at one mutation level. Refs #2560,
       SPEC/program/disallowed-ast-patterns.md.
     match:

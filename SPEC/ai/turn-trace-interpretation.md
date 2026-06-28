@@ -98,6 +98,32 @@ decision-provenance fields covered here.
 - `thresholds.domainGates.thresholds.{work,build,research}` — the
   computed cutoffs the orchestrator compared domain weights against.
   Entries are omitted when the orchestrator did not compute them.
+- `thresholds.domainGates.research` — multi-slot Full-AI research
+  decision record (Refs #3472, AC10), present when the research planner
+  ran. Sub-keys:
+  - `emptySlotCount` (integer) — empty active slots that had a
+    candidate tech this turn.
+  - `targetSlotCount` (integer) — number of **new** slots targeted
+    after aggression scaling and the at-war cap.
+  - `atWarCapApplied` (boolean) — `true` when the at-war cap
+    (`kResearchSlotFillCapWhenAtWar`) reduced the target below the
+    pre-cap value.
+  - `stalledExpansionCapApplied` (boolean) — `true` when the
+    stalled-expansion cap (`kResearchSlotFillCapWhenStalledExpansion`)
+    reduced the target below its running value (applied after the
+    at-war cap, so it can bind even when both caps fire).
+  - `fundingTier` (string) — the uniform funding tier applied to every
+    emitted slot (`none`/`low`/`medium`/`high`/`maximum`).
+  - `slots` (array) — one object per emitted order with `slotIndex`
+    (integer), `techId` (string), and `funding` (string), sorted by
+    `slotIndex`.
+  - `droppedSlotIndices` (array<integer>) — new slot indices dropped by
+    the treasury downgrade-then-drop packing, highest-index first.
+  - `constraintReason` (string) — the primary binding constraint, by
+    precedence: `treasuryDrop` (a new slot was dropped) >
+    `stalledExpansionCap` (the stalled-expansion cap bound the target) >
+    `atWarCap` (the at-war cap bound the target) > `uniformDowngrade`
+    (the funding tier was stepped below the desired cap tier) > `none`.
 
 ### Hidden agendas
 
@@ -140,3 +166,23 @@ Defaults are `0` per `hidden_agenda_config.dart`.
   `conquer`, `diplomacy`, `spyOrder`, `buildOrder`, and `research`,
   each holding the integer modifier returned by the corresponding
   `getAgenda*Modifier` function.
+- Given a full-AI trace from a turn where the research planner filled
+  at least one slot, when a reader inspects
+  `thresholds.domainGates.research`, then `slots` lists one object per
+  emitted research order (each with `slotIndex`, `techId`, `funding`),
+  `fundingTier` equals every emitted order's `funding`, and
+  `constraintReason` is one of `none`, `uniformDowngrade`, `atWarCap`,
+  `stalledExpansionCap`, or `treasuryDrop`.
+- Given a full-AI trace from a turn where the player's Old World
+  expansion is stalled (`oldWorldProvincesOwned <=
+  kStalledOldWorldProvinceThreshold`) and more empty slots than the
+  stalled cap were available, when a reader inspects
+  `thresholds.domainGates.research`, then `stalledExpansionCapApplied`
+  is `true`, `targetSlotCount` equals
+  `kResearchSlotFillCapWhenStalledExpansion`, and `constraintReason`
+  equals `stalledExpansionCap` (unless a later `treasuryDrop` binds).
+- Given a full-AI trace from a turn where treasury forced a uniform
+  tier below the desired cap with no slot dropped, when a reader
+  inspects `thresholds.domainGates.research`, then
+  `droppedSlotIndices` is empty and `constraintReason` equals
+  `uniformDowngrade`.

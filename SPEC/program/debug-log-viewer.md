@@ -45,7 +45,7 @@
 
 - **Content:** Scrollable list of log lines (newest at bottom or top per platform convention). Each line shows **canonical operator timestamp** (local `.SSS` + offset/`Z`), level, and message; error/stack lines follow their parent log line.
 - **Filters:** UI controls for multiselect package and multiselect level; applied live to the visible list.
-- **Close:** Obvious way to close the viewer and return to the previous screen (menubar closes window/overlay; pause menu returns to pause).
+- **Close:** Obvious way to close the viewer and return to the previous screen (menubar closes window/overlay; pause menu returns to pause). The in-app viewer uses `CtScreenShell` with a leading `CtBackButton` in `CtTopBar` (not a Material `AppBar` / `IconButton`).
 
 ---
 
@@ -69,6 +69,12 @@ The editorial-monocle palette is intentionally warm-monochromatic and does
 not define a "blue/info" token; the four-tier warm gradient above conveys
 severity without re-introducing Material's blue/orange palette.
 
+The package and level multi-select filter rows (§ 3) render each toggle as
+a `CtChoiceChip` (`SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component
+catalog — `CtChoiceChip`), not a Material `FilterChip`/`ChoiceChip`, so the
+chip chrome resolves through editorial-monocle tokens end-to-end and the
+`repo.app_no_material_filterchip` gate covers this file (Refs #2914 S8).
+
 ### Acceptance criteria (Visual chrome)
 
 - Given the debug log viewer is mounted with a buffered `Level.error` entry, when the viewer builds its list, then the UI layer renders the first line of that entry inside a `Container` whose `BoxDecoration.color` equals `EditorialMonoclePalette.danger` with `alpha = 0.08`.
@@ -76,6 +82,10 @@ severity without re-introducing Material's blue/orange palette.
 - Given the debug log viewer is mounted with a buffered `Level.info` entry, when the viewer builds its list, then the UI layer renders the first line of that entry inside a `Container` whose `BoxDecoration.color` equals `EditorialMonoclePalette.accentDim` with `alpha = 0.08`.
 - Given the debug log viewer is mounted with a buffered `Level.debug` entry and the user has toggled the `debug` level filter on, when the viewer builds its list, then the UI layer renders the first line of that entry inside a `Container` whose `BoxDecoration.color` equals `EditorialMonoclePalette.muted` with `alpha = 0.08`.
 - Given the debug log viewer source file `app/lib/features/debug_log/debug_log_viewer_screen.dart`, when `tool/check_app_editorial_monocle_colors.dart` runs against the repository tree, then the checker does not allowlist this file and reports any raw Material `Colors.*` regression introduced after the Refs #2914 S3 token-adoption slice.
+- Given the debug log viewer is mounted, when the package and level filter rows build, then the UI layer renders each filter toggle as a `CtChoiceChip` and constructs no Material `FilterChip` (or `FilterChip.elevated`); the toggle's `selected` flag reflects whether the corresponding package prefix or level is in the active filter set.
+- Given the debug log viewer source file `app/lib/features/debug_log/debug_log_viewer_screen.dart`, when `tool/check_app_no_material_filterchip.dart` runs against the repository tree, then the checker does not allowlist this file and reports any Material `FilterChip` construction as a violation (Refs #2914 S8 CtChoiceChip adoption).
+- Given the debug log viewer is mounted, when the viewer builds its screen chrome, then the UI layer composes `CtScreenShell` + `CtTopBar` + `CtBackButton` and constructs no Material `Scaffold`, `AppBar`, or `IconButton` in `app/lib/features/debug_log/debug_log_viewer_screen.dart` (Refs #2914 S8).
+- Given the debug log viewer source file `app/lib/features/debug_log/debug_log_viewer_screen.dart`, when `tool/check_app_no_material_scaffold.dart` and `tool/check_app_no_material_iconbutton.dart` run against the repository tree, then neither checker allowlists this file.
 
 ---
 

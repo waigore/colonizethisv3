@@ -61,6 +61,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'ai_planner_fixtures.dart';
+
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _tribe1 = 'tribe1';
@@ -127,7 +129,7 @@ Game _expandGame({
           Province(id: _nwProvUnowned, regionId: kNewWorldRegionId),
         ],
       ),
-      armies: [_homeArmyWithRegiments(_gp1, regimentCount)],
+      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
     ),
     players: [
       Player(
@@ -172,19 +174,6 @@ AIWorldSnapshot _expandSnapshot({
     ),
     economy: const EconomySummary(),
     relations: const {},
-  );
-}
-
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: kOldWorldRegionId,
-    stationedProvinceId: 'oldWorld|gp1_a',
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
   );
 }
 

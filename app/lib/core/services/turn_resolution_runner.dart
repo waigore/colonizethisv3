@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_app/config/ct_debug_console.dart';
+import 'package:colonizethis_app/core/services/ai_profile_resolution.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -102,6 +103,7 @@ class TurnResolutionRunner {
     required Map<String, TileMapResult> tileMapByRegion,
     bool turnTraceEnabled = false,
     String turnTraceRootDirectory = kCtTurnTraceDirectory,
+    Map<String, AiProfile>? aiProfiles,
   }) {
     if (_active) {
       throw StateError('Turn resolution already active');
@@ -119,6 +121,7 @@ class TurnResolutionRunner {
     final ordersJson = orders.toJson();
     final topologyJson = topology.toJson();
     final tileMapJson = tileMapByRegion.map((k, v) => MapEntry(k, v.toJson()));
+    final aiProfilesJson = encodeAiProfilesForIsolate(aiProfiles);
     _runnerLog.i(
       'logic: turn_resolution_runner session_start sessionId=$sessionId '
       'gameId=${game.id} turnTraceEnabled=$turnTraceEnabled '
@@ -322,6 +325,7 @@ class TurnResolutionRunner {
             'tileMapByRegion': tileMapJson,
             'turnTraceEnabled': turnTraceEnabled,
             'turnTraceRootDirectory': turnTraceRootDirectory,
+            'aiProfiles': aiProfilesJson,
           })
           .then((spawned) {
             isolate = spawned;
@@ -402,6 +406,7 @@ Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
     final turnTraceEnabled = args['turnTraceEnabled'] == true;
     final turnTraceRootDirectory =
         (args['turnTraceRootDirectory'] as String?) ?? kCtTurnTraceDirectory;
+    final aiProfiles = decodeAiProfilesFromIsolate(args['aiProfiles']);
     _runnerLog.i(
       'logic: turn_resolution_worker start gameId=${game.id} '
       'turnTraceEnabled=$turnTraceEnabled decodeMs=${decodeStopwatch.elapsedMilliseconds}',
@@ -416,6 +421,7 @@ Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
       game,
       topology,
       tileMapByRegion: tileMapByRegion,
+      profiles: aiProfiles,
       onStagedPlannerProgress: (String phase) {
         sendPort.send(<String, Object?>{
           'kind': 'phase',

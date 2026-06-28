@@ -17,6 +17,7 @@ enum DisallowedAstMatchKind {
   incrementalValidatorForPlayerInLoop,
   redundantWhereToListWhereChain,
   nestedWorldStateCopyWith,
+  staticMemberAccess,
 }
 
 class DisallowedPatternRule {
@@ -39,8 +40,11 @@ class DisallowedPatternRule {
     this.removeAtZeroReceiverPathPrefix,
     this.removeAtZeroReceiverIdentifier,
     this.linearCollectionNames = const {},
-    this.linearCollectionPathPrefix,
+    this.linearCollectionPathPrefixes = const [],
     this.nestedCopyWithOuterArgumentName,
+    this.staticMemberTypeName,
+    this.staticMemberName,
+    this.staticMemberPathPrefix,
   });
 
   final String id;
@@ -74,15 +78,29 @@ class DisallowedPatternRule {
 
   /// When [kind] is [DisallowedAstMatchKind.linearCollectionWhereFirstOrNull]
   /// or other path-scoped rules (e.g. [DisallowedAstMatchKind.nestedWorldStateCopyWith]):
-  /// path prefix (POSIX slashes) limiting matches, for example
+  /// path prefixes (POSIX slashes) limiting matches, for example
   /// `packages/colonizethis_logic/lib/src/`.
-  final String? linearCollectionPathPrefix;
+  final List<String> linearCollectionPathPrefixes;
 
   /// When [kind] is [DisallowedAstMatchKind.nestedWorldStateCopyWith]: the
   /// outer `copyWith(<arg>:`) named-argument label that anchors the chain
   /// (defaults to `worldState`). Only chains whose outermost `copyWith` passes
   /// that named argument are scanned for deeper nesting.
   final String? nestedCopyWithOuterArgumentName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: the simple
+  /// type-name prefix of the disallowed static access (for example
+  /// `ProductionRecipesCatalog` in `ProductionRecipesCatalog.all`).
+  final String? staticMemberTypeName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: the accessed
+  /// member name (for example `all`).
+  final String? staticMemberName;
+
+  /// When [kind] is [DisallowedAstMatchKind.staticMemberAccess]: path prefix
+  /// (POSIX slashes) limiting matches, for example
+  /// `packages/colonizethis_ai/lib/`.
+  final String? staticMemberPathPrefix;
 }
 
 class DisallowedAstViolation {
@@ -401,11 +419,8 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
       );
     } else if (kind == 'linear_collection_where_first_or_null') {
       final namesNode = match['collection_names'];
-      final prefix =
-          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
-      if (namesNode is! YamlList ||
-          prefix == null ||
-          prefix.isEmpty) {
+      final prefixes = parseRelativePathPrefixesFromYamlMatch(match);
+      if (namesNode is! YamlList || prefixes.isEmpty) {
         continue;
       }
       final names = <String>{};
@@ -436,7 +451,7 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           packageName: null,
           allowedPackageImports: const {},
           linearCollectionNames: names,
-          linearCollectionPathPrefix: prefix,
+          linearCollectionPathPrefixes: prefixes,
         ),
       );
     } else if (kind == 'redundant_where_to_list_where_chain') {
@@ -460,9 +475,8 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
         ),
       );
     } else if (kind == 'incremental_validator_for_player_in_loop') {
-      final prefix =
-          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
-      if (prefix == null || prefix.isEmpty) {
+      final prefixes = parseRelativePathPrefixesFromYamlMatch(match);
+      if (prefixes.isEmpty) {
         continue;
       }
       out.add(
@@ -482,13 +496,12 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           scopedRelativePathPrefixes: const {},
           packageName: null,
           allowedPackageImports: const {},
-          linearCollectionPathPrefix: prefix,
+          linearCollectionPathPrefixes: prefixes,
         ),
       );
     } else if (kind == 'nested_world_state_copywith') {
-      final prefix =
-          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
-      if (prefix == null || prefix.isEmpty) {
+      final prefixes = parseRelativePathPrefixesFromYamlMatch(match);
+      if (prefixes.isEmpty) {
         continue;
       }
       final outerArgumentName = match['outer_argument_name']?.toString();
@@ -509,11 +522,46 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           scopedRelativePathPrefixes: const {},
           packageName: null,
           allowedPackageImports: const {},
-          linearCollectionPathPrefix: prefix,
+          linearCollectionPathPrefixes: prefixes,
           nestedCopyWithOuterArgumentName:
               outerArgumentName != null && outerArgumentName.isNotEmpty
                   ? outerArgumentName
                   : 'worldState',
+        ),
+      );
+    } else if (kind == 'static_member_access') {
+      final typeName = match['type_name']?.toString();
+      final memberName = match['member_name']?.toString();
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      if (typeName == null ||
+          typeName.isEmpty ||
+          memberName == null ||
+          memberName.isEmpty ||
+          prefix == null ||
+          prefix.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.staticMemberAccess,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          staticMemberTypeName: typeName,
+          staticMemberName: memberName,
+          staticMemberPathPrefix: prefix,
         ),
       );
     } else if (kind == 'scoped_package_import_contract') {
@@ -565,4 +613,27 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
     }
   }
   return out;
+}
+
+/// Resolves [relative_path_prefix] or [relative_path_prefixes] from a YAML match
+/// node into POSIX path prefixes.
+List<String> parseRelativePathPrefixesFromYamlMatch(YamlMap match) {
+  final prefixesNode = match['relative_path_prefixes'];
+  if (prefixesNode is YamlList) {
+    final out = <String>[];
+    for (final n in prefixesNode.nodes) {
+      final s = n.value?.toString().replaceAll('\\', '/');
+      if (s != null && s.isNotEmpty) {
+        out.add(s);
+      }
+    }
+    if (out.isNotEmpty) {
+      return out;
+    }
+  }
+  final single = match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+  if (single != null && single.isNotEmpty) {
+    return [single];
+  }
+  return const [];
 }

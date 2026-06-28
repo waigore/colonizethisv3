@@ -8,7 +8,6 @@
 //   - disabled wraps the button in 0.4 opacity and suppresses taps.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -16,38 +15,40 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/app_shell_harness.dart';
+
 Future<void> _pumpButton(
   WidgetTester tester, {
   required VoidCallback? onPressed,
   bool enabled = true,
   bool dangerVariant = false,
+  bool mutedVariant = false,
   double? disabledOpacityOverride,
   LinearGradient? gradient,
   LinearGradient? pressedGradient,
   Widget child = const Text('Confirm'),
 }) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: 200,
-            child: CtNinePatchButton(
-              onPressed: onPressed,
-              enabled: enabled,
-              dangerVariant: dangerVariant,
-              disabledOpacityOverride: disabledOpacityOverride,
-              gradient: gradient,
-              pressedGradient: pressedGradient,
-              child: child,
-            ),
+  await pumpAppShell(
+    tester,
+    settle: true,
+    child: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 200,
+          child: CtNinePatchButton(
+            onPressed: onPressed,
+            enabled: enabled,
+            dangerVariant: dangerVariant,
+            mutedVariant: mutedVariant,
+            disabledOpacityOverride: disabledOpacityOverride,
+            gradient: gradient,
+            pressedGradient: pressedGradient,
+            child: child,
           ),
         ),
       ),
     ),
   );
-  await tester.pumpAndSettle();
 }
 
 DecoratedBox _findButtonSurfaceDecoratedBox(WidgetTester tester) {
@@ -492,6 +493,240 @@ void main() {
         span.style?.color,
         EditorialMonoclePalette.danger,
         reason: 'Danger variant must paint the engraved label in --danger.',
+      );
+    },
+  );
+
+  testWidgets(
+    'muted variant resolves idle border to --accent-dim and idle label to '
+    '--muted (positive — issue #2867 R26b)',
+    (WidgetTester tester) async {
+      // SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog
+      // (CtNinePatchButton) → Muted variant: idle border swaps from
+      // `--border` to `--accent-dim` and idle label swaps from `--accent`
+      // to `--muted`. Used by Diplomatic protest / Do naught in the
+      // intervention overlay (SPEC/ui/screens/pending-intervention-overlay
+      // .md § Choice-button styling).
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        mutedVariant: true,
+        child: const Text('Do naught'),
+      );
+
+      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration decoration = box.decoration as BoxDecoration;
+
+      final Border border = decoration.border! as Border;
+      expect(
+        border.top.color,
+        EditorialMonoclePalette.accentDim,
+        reason: 'Muted variant idle border must paint --accent-dim.',
+      );
+      expect(
+        border.top.color,
+        isNot(EditorialMonoclePalette.border),
+        reason:
+            'Muted variant must not paint the default --border border at '
+            'rest (otherwise primary and muted siblings render identically).',
+      );
+
+      final RichText rich = tester.widget<RichText>(
+        find.descendant(
+          of: find.text('Do naught'),
+          matching: find.byType(RichText),
+        ),
+      );
+      final TextSpan span = rich.text as TextSpan;
+      expect(
+        span.style?.color,
+        EditorialMonoclePalette.muted,
+        reason: 'Muted variant idle label must paint --muted.',
+      );
+
+      // Surface gradient unchanged so muted buttons stay aligned with
+      // their primary siblings (per catalog Muted variant contract).
+      expect(
+        (decoration.gradient! as LinearGradient).colors,
+        CtGradients.buttonGradient.colors,
+        reason: 'Muted variant must keep the canonical button gradient.',
+      );
+    },
+  );
+
+  testWidgets(
+    'muted variant lifts border + label to --accent on hover '
+    '(positive — issue #2867 R26b)',
+    (WidgetTester tester) async {
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        mutedVariant: true,
+        child: const Text('Diplomatic protest'),
+      );
+
+      final TestGesture gesture = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+      );
+      addTearDown(gesture.removePointer);
+      await gesture.addPointer(location: const Offset(1, 1));
+      await tester.pumpAndSettle();
+
+      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
+      await gesture.moveTo(center);
+      await tester.pump();
+      await tester.pump(CtNinePatchButton.animationDuration);
+      await tester.pumpAndSettle();
+
+      final DecoratedBox hoverBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration hoverDecoration =
+          hoverBox.decoration as BoxDecoration;
+      final Border hoverBorder = hoverDecoration.border! as Border;
+      expect(
+        hoverBorder.top.color,
+        EditorialMonoclePalette.accent,
+        reason:
+            'Muted variant hover state must lift the border to --accent so '
+            'the affordance still reads as interactive.',
+      );
+
+      final RichText hoverRich = tester.widget<RichText>(
+        find.descendant(
+          of: find.text('Diplomatic protest'),
+          matching: find.byType(RichText),
+        ),
+      );
+      expect(
+        (hoverRich.text as TextSpan).style?.color,
+        EditorialMonoclePalette.accent,
+        reason:
+            'Muted variant hover label must lift to --accent (vs primary '
+            'variant which lifts to --accent-bright).',
+      );
+      expect(
+        (hoverRich.text as TextSpan).style?.color,
+        isNot(EditorialMonoclePalette.accentBright),
+        reason:
+            'Muted variant must not lift label to --accent-bright on hover; '
+            'that brighter hover ramp is reserved for the default / primary '
+            'variant so primary remains visually emphasised.',
+      );
+    },
+  );
+
+  testWidgets(
+    'mutedVariant + dangerVariant: dangerVariant wins (negative — issue '
+    '#2867 R26b mutual-exclusivity contract)',
+    (WidgetTester tester) async {
+      // Catalog rule: when both variant flags are passed `true`, the
+      // destructive `dangerVariant` styling wins so destructive intent is
+      // never visually weakened by the muted token. This guards against a
+      // future refactor that accidentally lets muted override danger.
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        dangerVariant: true,
+        mutedVariant: true,
+        child: const Text('Declare War'),
+      );
+
+      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration decoration = box.decoration as BoxDecoration;
+
+      final Border border = decoration.border! as Border;
+      expect(
+        border.top.color,
+        EditorialMonoclePalette.danger,
+        reason:
+            'When dangerVariant and mutedVariant both resolve true, the '
+            'danger token must paint the border (danger wins).',
+      );
+      expect(
+        border.top.color,
+        isNot(EditorialMonoclePalette.accentDim),
+        reason:
+            'Muted token must never paint over a dangerVariant border; the '
+            'destructive intent of the action would be visually weakened.',
+      );
+
+      final RichText rich = tester.widget<RichText>(
+        find.descendant(
+          of: find.text('Declare War'),
+          matching: find.byType(RichText),
+        ),
+      );
+      expect(
+        (rich.text as TextSpan).style?.color,
+        EditorialMonoclePalette.danger,
+        reason:
+            'When both variants are set, the engraved label must paint in '
+            '--danger (not --muted).',
+      );
+    },
+  );
+
+  testWidgets(
+    'default (no muted, no danger) keeps --border idle border and --accent '
+    'idle label (negative regression guard for muted variant introduction)',
+    (WidgetTester tester) async {
+      // Regression guard: introducing `mutedVariant` must not change the
+      // default rendering for any existing CtNinePatchButton call site.
+      // Every CtNinePatchButton in the repo that does not opt in must
+      // continue painting the canonical primary chrome.
+      await _pumpButton(tester, onPressed: () {});
+
+      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration decoration = box.decoration as BoxDecoration;
+
+      final Border border = decoration.border! as Border;
+      expect(border.top.color, EditorialMonoclePalette.border);
+      expect(
+        border.top.color,
+        isNot(EditorialMonoclePalette.accentDim),
+        reason:
+            'Default CtNinePatchButton must not adopt the muted --accent-dim '
+            'idle border just because the variant flag was added to the API.',
+      );
+
+      final RichText rich = tester.widget<RichText>(
+        find.descendant(
+          of: find.text('Confirm'),
+          matching: find.byType(RichText),
+        ),
+      );
+      expect(
+        (rich.text as TextSpan).style?.color,
+        EditorialMonoclePalette.accent,
+      );
+      expect(
+        (rich.text as TextSpan).style?.color,
+        isNot(EditorialMonoclePalette.muted),
+        reason:
+            'Default CtNinePatchButton must not paint a muted label when no '
+            'mutedVariant flag is set.',
+      );
+    },
+  );
+
+  test(
+    'mutedCornerAlphaScale halves the bracket alpha (canonical 0.5 scale; '
+    '#2867 R26b — keeps brackets visible at narrow viewports while reading '
+    'as half-strength against a sibling primary)',
+    () {
+      // The numeric value is part of the catalog contract: with the
+      // canonical 0.75 idle / 1.0 hover alpha cycle, a 0.5 scale resolves
+      // to 0.375 / 0.5. Pin the constant so refactors of the painter do
+      // not silently change the muted-vs-primary visual ratio.
+      expect(CtNinePatchButton.mutedCornerAlphaScale, 0.5);
+      expect(
+        CtNinePatchButton.defaultCornerAlpha *
+            CtNinePatchButton.mutedCornerAlphaScale,
+        closeTo(0.375, 1e-9),
+      );
+      expect(
+        CtNinePatchButton.hoverCornerAlpha *
+            CtNinePatchButton.mutedCornerAlphaScale,
+        closeTo(0.5, 1e-9),
       );
     },
   );

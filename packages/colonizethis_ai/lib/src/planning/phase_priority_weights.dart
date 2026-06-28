@@ -33,7 +33,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
-import 'expand_phase_planner.dart' show ExpandEconomyPlan;
+import 'expand_phase_planner.dart' show ExpandEconomyPlan, planExpandEconomy;
 
 /// Per-domain priority weights for one phase-planner dispatch (Refs
 /// #2847 § Soft-phase priority weights).
@@ -133,6 +133,26 @@ const double kPhasePriorityNwTreasuryRecoveryFloor = 0.60;
 /// && conquest.invadableProvinceIdsSorted.isNotEmpty`.
 const double kPhasePriorityNwZeroRegimentFloor = 0.30;
 
+/// Minimum dispatched `newWorldAcquisition` weight at which a **below-quota**
+/// GP's NW-invasion army-move scoring treats the GP as electing to pursue New
+/// World acquisition for treasury income (Refs #2847 Phase 2 conquest
+/// NW-invasion sign migration; requirement clarification #3 — resource-need
+/// overrides bypass phase priority so the AI pursues NW provinces *because* it
+/// needs income to fund OW conquest).
+///
+/// Only the § Resource-need overrides floors raise `newWorldAcquisition`
+/// to/above this threshold while a GP is below the OW conquest quota: the
+/// treasury-recovery floor ([kPhasePriorityNwTreasuryRecoveryFloor] = `0.60`)
+/// and the zero-regiment floor ([kPhasePriorityNwZeroRegimentFloor] = `0.30`).
+/// The ordinary below-quota curve plateau peaks at `0.20` (OW = 9, see
+/// `SPEC/ai/phase-planner-architecture.md` § Soft-phase priority weights), so
+/// it never reaches this threshold — healthy below-quota GPs keep the
+/// early-sprint OW-push NW penalty and the gp1/gp2 +6 OW baseline is
+/// unaffected. The threshold is the smaller override floor by construction so
+/// either override engages the NW-pursuit sign.
+const double kPhasePriorityNwInvadablePursuitWeightThreshold =
+    kPhasePriorityNwZeroRegimentFloor;
+
 /// Returns the [PhasePriorityWeights] for one phase-planner dispatch
 /// (Refs #2847 Phase 1 scaffolding).
 ///
@@ -181,6 +201,39 @@ PhasePriorityWeights computePhasePriorityWeights({
     newWorldCivilian: curve.newWorldCivilian,
   );
 }
+
+/// Production goal-score colonial-pressure weight for the pre-prep
+/// `strategic_ai.dart` goal-eval site (Refs #2847 Phase 3 goal-score
+/// wiring).
+///
+/// Derives the EXPAND economy plan from `planExpandEconomy(game, snapshot)`
+/// — rather than [ExpandEconomyPlan.defaultPlan] — so the § Resource-need
+/// overrides treasury-recovery floor (`newWorldAcquisition = 0.60` when
+/// `treasury == 0 && newWorldProvincesOwned == 0 &&
+/// boostTreasuryRecoveryCargo == true`) lifts the goal-score colonial
+/// pressure for a below-quota peer-war-locked GP at the goal-scoring layer,
+/// matching the conquest / naval / diplomacy scoring sites that already
+/// consume the dispatched plan's weights. `planExpandEconomy` returns
+/// [ExpandEconomyPlan.defaultPlan] once the GP reaches the OW quota, and the
+/// treasury-recovery override requires `treasury == 0`, so healthy GPs are
+/// unaffected (the gp1/gp2 +6 OW baseline holds by construction).
+///
+/// Goal selection in `strategic_ai.dart` runs *before*
+/// `prepareConquestFieldArmy`, so callers pass the **pre-prep**
+/// `(game, snapshot)`.
+///
+/// Pure and deterministic — identical `(snapshot, game)` inputs always
+/// yield the same `double` in `[0.0, 1.0]` because both
+/// [planExpandEconomy] and [computePhasePriorityWeights] are pure
+/// (Refs #2509 Must-have #7). Performs no I/O and no logging.
+double goalColonialPressureWeightFor({
+  required AIWorldSnapshot snapshot,
+  required Game game,
+}) => computePhasePriorityWeights(
+  snapshot: snapshot,
+  game: game,
+  expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
+).newWorldAcquisition;
 
 PhasePriorityWeights _curveWeightsForOw(int ow) {
   if (ow <= kPhasePriorityCurveEarlySprintCeiling) {
@@ -232,15 +285,52 @@ PhasePriorityWeights _curveWeightsForOw(int ow) {
   }
 }
 
+/// True when the § Resource-need overrides treasury-recovery predicate
+/// is active for this dispatch (Refs #2847).
+///
+/// Predicate: `economy.treasury == 0` **and**
+/// `colonial.newWorldProvincesOwned == 0` **and**
+/// `expandEconomyPlan.boostTreasuryRecoveryCargo == true`.
+///
+/// Used for the `newWorldAcquisition` weight floor only. Path E colonial
+/// dispatch uses [isNwLockRecoveryPathEActive] so the NW chain stays armed
+/// after Path F world-market credits raise treasury above zero.
+bool isNwTreasuryRecoveryOverrideActive({
+  required AIWorldSnapshot snapshot,
+  required ExpandEconomyPlan expandEconomyPlan,
+}) =>
+    snapshot.economy.treasury == 0 &&
+    snapshot.colonial.newWorldProvincesOwned == 0 &&
+    expandEconomyPlan.boostTreasuryRecoveryCargo;
+
+/// True when the EXPAND lock-recovery Path E chain should stay active
+/// (Refs #2924).
+///
+/// Predicate: `colonial.newWorldProvincesOwned == 0` **and** at least one of
+/// `expandEconomyPlan.boostTreasuryRecoveryCargo` (treasury still below the
+/// cheapest regiment build cost) or `expandEconomyPlan.forceCheapestRegimentBuild`
+/// (geographic peer-war lock Arm D). Without this broader gate,
+/// `planColonialMilitary` / `planColonialNaval` revert to `defaultPlan` as
+/// soon as treasury rises above zero even though the GP still owns no NW
+/// provinces and the beachhead / invasion chain is unfinished.
+bool isNwLockRecoveryPathEActive({
+  required AIWorldSnapshot snapshot,
+  required ExpandEconomyPlan expandEconomyPlan,
+}) =>
+    snapshot.colonial.newWorldProvincesOwned == 0 &&
+    (expandEconomyPlan.boostTreasuryRecoveryCargo ||
+        expandEconomyPlan.forceCheapestRegimentBuild);
+
 double _nwAcquisitionFloor({
   required AIWorldSnapshot snapshot,
   required Game game,
   required ExpandEconomyPlan expandEconomyPlan,
 }) {
   var floor = 0.0;
-  if (snapshot.economy.treasury == 0 &&
-      snapshot.colonial.newWorldProvincesOwned == 0 &&
-      expandEconomyPlan.boostTreasuryRecoveryCargo) {
+  if (isNwTreasuryRecoveryOverrideActive(
+    snapshot: snapshot,
+    expandEconomyPlan: expandEconomyPlan,
+  )) {
     if (kPhasePriorityNwTreasuryRecoveryFloor > floor) {
       floor = kPhasePriorityNwTreasuryRecoveryFloor;
     }

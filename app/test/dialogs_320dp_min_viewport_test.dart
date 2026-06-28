@@ -78,7 +78,6 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
@@ -96,6 +95,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -121,34 +122,24 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// dialog's own [CtDialogShell] layout at the narrow viewport, not the
 /// barrier / overlay route plumbing (which is already covered by
 /// `exit_confirm_dialog_test.dart`).
-Future<void> _pumpDialogAtSize(
+Future<void> _pumpDialog(
   WidgetTester tester,
   Widget dialog, {
   required Size size,
   bool settle = true,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: Center(child: dialog)),
-      ),
-    ),
+  // `settle: false` keeps the harness on a single frame for dialogs that
+  // host an indefinite ticker (e.g. CircularProgressIndicator inside
+  // CtLoadingIndicator); the layout has resolved by the first frame,
+  // which is all the 320 dp overflow contract needs.
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(body: Center(child: dialog)),
+    settle: settle,
   );
-  if (settle) {
-    await tester.pumpAndSettle();
-  } else {
-    // Single frame is enough for dialogs that host an indefinite ticker
-    // (e.g. CircularProgressIndicator inside CtLoadingIndicator). The
-    // layout has resolved by the first frame, which is all the 320 dp
-    // overflow contract needs.
-    await tester.pump();
-  }
 }
 
 void main() {
@@ -160,7 +151,7 @@ void main() {
       'AC (positive) GameParametersDialog (infiniteMode off) @ 320×640: '
       'no RenderFlex overflow exception, title + close action render',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           const GameParametersDialog(infiniteMode: false),
           size: _kMinViewport,
@@ -187,7 +178,7 @@ void main() {
       'AC (positive) GameParametersDialog (infiniteMode on) @ 320×640: '
       'no exception, "Infinite mode: On" body line renders',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           const GameParametersDialog(infiniteMode: true),
           size: _kMinViewport,
@@ -204,7 +195,7 @@ void main() {
         'contract — keeps the 320 dp positive pins meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         const GameParametersDialog(infiniteMode: false),
         size: _kWideRegressionViewport,
@@ -222,7 +213,7 @@ void main() {
         'overflow exception, title + body + Cancel + Exit all render', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         const ExitConfirmDialog(),
         size: _kMinViewport,
@@ -250,7 +241,7 @@ void main() {
     testWidgets('Negative control: ExitConfirmDialog @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
         'contract)', (WidgetTester tester) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         const ExitConfirmDialog(),
         size: _kWideRegressionViewport,
@@ -286,7 +277,7 @@ void main() {
     testWidgets('AC (positive) TurnNewsDialog (empty digest) @ 320×640: no '
         'RenderFlex overflow exception, "Turn 2" title + empty-state '
         'copy + Close action render', (WidgetTester tester) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         TurnNewsDialog(
           game: baseGame,
@@ -320,7 +311,7 @@ void main() {
         'wraps each line within the ~288 dp content width)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         TurnNewsDialog(
           game: baseGame,
@@ -370,7 +361,7 @@ void main() {
         '1024×768 also pumps without exception (regression sentinel '
         'for the overflow contract — keeps the 320 dp positive pins '
         'meaningful)', (WidgetTester tester) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         TurnNewsDialog(
           game: baseGame,
@@ -414,7 +405,7 @@ void main() {
       '(all three Expanded labels + 12 dp gap + CtToggleSwitch rows must '
       'fit within the ~288 dp content width)',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           GameMapOptionsDialog(
             initialState: baseState,
@@ -447,7 +438,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         GameMapOptionsDialog(
           initialState: baseState,
@@ -473,7 +464,7 @@ void main() {
       '(the CtLoadingIndicator + 10 dp gap + Expanded phase-text row must '
       'fit within the ~288 dp CtDialogShell content column)',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           const TurnResolutionProcessingDialog(phaseText: phaseText),
           size: _kMinViewport,
@@ -500,7 +491,7 @@ void main() {
         '1024×768 also pumps without exception (regression sentinel for '
         'the overflow contract — keeps the 320 dp positive pin meaningful)',
         (WidgetTester tester) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         const TurnResolutionProcessingDialog(phaseText: phaseText),
         size: _kWideRegressionViewport,
@@ -523,7 +514,7 @@ void main() {
       '(the end-aligned Auto-Resolve + 8 dp gap + Quick Battle row must fit '
       'within the ~288 dp CtDialogShell content column)',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           CombatModeChoiceDialog(
             bus: AppEventBus.create(),
@@ -556,7 +547,7 @@ void main() {
         'the overflow contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         CombatModeChoiceDialog(
           bus: AppEventBus.create(),
@@ -578,7 +569,7 @@ void main() {
       '(Auto-Resolve is hidden; the single end-aligned Quick Battle button '
       'must fit within the ~288 dp CtDialogShell content column)',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           CombatModeChoiceDialog(
             bus: AppEventBus.create(),
@@ -610,7 +601,7 @@ void main() {
         'overflow contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         CombatModeChoiceDialog(
           bus: AppEventBus.create(),
@@ -637,7 +628,7 @@ void main() {
       '(the end-aligned No + 8 dp gap + Yes row must fit within the '
       '~288 dp CtDialogShell content column)',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           const NextTurnConfirmationDialog(currentTurn: currentTurn),
           size: _kMinViewport,
@@ -666,7 +657,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         const NextTurnConfirmationDialog(currentTurn: currentTurn),
         size: _kWideRegressionViewport,
@@ -695,7 +686,7 @@ void main() {
       'casualty bodySmall rows + trailing OK must fit within the ~288 dp '
       'CtDialogShell content column)',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           const QuickBattleResultDialog(
             result: attackerWinsFlips,
@@ -728,7 +719,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         const QuickBattleResultDialog(
           result: attackerWinsFlips,
@@ -791,7 +782,7 @@ void main() {
       'overflow exception, "Split Army" title + "Confirm Split" action + '
       'transfer-list left/right column titles render',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           SplitArmyDialog(
             army: oneLevyArmy,
@@ -833,7 +824,7 @@ void main() {
         'keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         SplitArmyDialog(
           army: oneLevyArmy,
@@ -885,7 +876,7 @@ void main() {
       'overflow exception, "Split Fleet" title + "Confirm Split" action + '
       'New Fleet right-column title render',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           SplitFleetDialog(
             originalFleet: oneCarrackAtSea,
@@ -924,7 +915,7 @@ void main() {
         'keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         SplitFleetDialog(
           originalFleet: oneCarrackAtSea,
@@ -988,7 +979,7 @@ void main() {
       'overflow exception, dialog title + "Home Fleet" right column + '
       '"Transfer" action render',
       (WidgetTester tester) async {
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           TransferToHomeFleetDialog(
             sourceFleet: sourceFleetAtSea,
@@ -1030,7 +1021,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpDialogAtSize(
+      await _pumpDialog(
         tester,
         TransferToHomeFleetDialog(
           sourceFleet: sourceFleetAtSea,
@@ -1077,7 +1068,7 @@ void main() {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           PauseMenuPanel(bus: bus),
           size: _kMinViewport,
@@ -1116,7 +1107,7 @@ void main() {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           PauseMenuPanel(bus: bus),
           size: _kMinViewport,
@@ -1160,7 +1151,7 @@ void main() {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        await _pumpDialogAtSize(
+        await _pumpDialog(
           tester,
           PauseMenuPanel(bus: bus),
           size: _kWideRegressionViewport,

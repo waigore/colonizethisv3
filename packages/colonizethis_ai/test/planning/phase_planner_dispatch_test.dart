@@ -48,11 +48,15 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart'
+    show phasePlanFullColonialOutputsActive;
 import 'package:colonizethis_ai/src/planning/develop_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'ai_planner_fixtures.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -63,33 +67,6 @@ const String _minor1 = 'minor1';
 const String _owProvGp1 = 'oldWorld|gp1_a';
 const String _owProvMinor = 'oldWorld|m1_a';
 const String _nwProvTribe = 'newWorld|tribe1_a';
-
-/// Convenience for tests that need to know which regiment-build catalog
-/// cost gates trip; mirrors the planner's internal helper.
-int _cheapestRegimentBuildCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
-
-/// Home Army with [regimentCount] dummy regiment ids; matches the walk
-/// in `regimentCountForPlayer`.
-Army _homeArmyWithRegiments(String ownerId, int regimentCount) {
-  return Army(
-    id: 'home_army:$ownerId',
-    ownerId: ownerId,
-    regionId: kOldWorldRegionId,
-    stationedProvinceId: _owProvGp1,
-    isHomeArmy: true,
-    regimentUnitIds: <String>[
-      for (var i = 0; i < regimentCount; i++) 'reg_${ownerId}_$i',
-    ],
-  );
-}
 
 /// Game scaffold for the EXPAND-phase route.
 ///
@@ -119,7 +96,7 @@ Game _expandGame({
         ],
       ),
       newWorld: RegionData(provinces: newWorldProvinces),
-      armies: [_homeArmyWithRegiments(_gp1, regimentCount)],
+      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
     ),
     players: [
       Player(
@@ -214,7 +191,7 @@ Game _colonialGame({int regimentCount = 6, int ownTreasury = 9999}) {
           ),
         ],
       ),
-      armies: [_homeArmyWithRegiments(_gp1, regimentCount)],
+      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
     ),
     players: [
       Player(
@@ -315,7 +292,7 @@ void main() {
   // than silently failing later assertions about `planExpandDeclareWar`
   // not returning `null` from the treasury gate.
   setUpAll(() {
-    final cheapest = _cheapestRegimentBuildCost();
+    final cheapest = cheapestRegimentBuildCost();
     expect(cheapest, lessThanOrEqualTo(9999), reason: 'Treasury gate fixture');
   });
 
@@ -354,7 +331,8 @@ void main() {
   });
 
   group('EXPAND outcome composition', () {
-    test('EXPAND populates EXPAND slots only; other slots stay default', () {
+    test('EXPAND populates EXPAND slots and colonial bundle when NW weight > 0 '
+        '(Refs #2847)', () {
       final game = _expandGame();
       final snapshot = _expandSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
@@ -368,6 +346,16 @@ void main() {
         outcome.expandPeaceTargetFactionIdsSorted,
         planExpandPeace(game: game, snapshot: snapshot),
       );
+      // Distraction-peace slot sources the below-quota tribe distraction
+      // decider only (Refs #2847 § H5 — the minor decider stays confined
+      // to the no-phasePlan fallback to protect multi-minor conquest).
+      expect(
+        outcome.expandDistractionPeaceTargetFactionIdsSorted,
+        belowQuotaRegimentThinTribeDistractionPeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        ),
+      );
       expect(
         outcome.expandEconomyPlan,
         planExpandEconomy(game: game, snapshot: snapshot),
@@ -380,15 +368,43 @@ void main() {
           declaredWarTargetFactionId: _minor1,
         ),
       );
+      expect(outcome.priorityWeights.newWorldAcquisition, greaterThan(0.0));
+      expect(phasePlanFullColonialOutputsActive(outcome), isTrue);
 
-      // Non-EXPAND slots structurally default.
+      final colonial = planColonialAcquisition(game: game, snapshot: snapshot);
+      expect(outcome.colonialAcquisitionTarget, colonial);
+      expect(
+        outcome.colonialPeaceTargetFactionIdsSorted,
+        planColonialPeace(game: game, snapshot: snapshot),
+      );
+      final declaredColonialTarget =
+          (colonial != null && colonial.method == AcquisitionMethod.declareWar)
+          ? colonial.targetFactionId
+          : null;
+      expect(
+        outcome.colonialMilitaryPlan,
+        planColonialMilitary(
+          game: game,
+          snapshot: snapshot,
+          colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+        ),
+      );
+      expect(
+        outcome.colonialNavalPlan,
+        planColonialNaval(
+          game: game,
+          snapshot: snapshot,
+          colonialDeclaredWarTargetFactionId: declaredColonialTarget,
+        ),
+      );
+      expect(
+        outcome.colonialCivilianWorkOrders,
+        planColonialCivilian(game: game, snapshot: snapshot),
+      );
+
+      // COLONIAL-lite and DEVELOP slots stay default under EXPAND.
       expect(outcome.colonialLiteOverturesSorted, isEmpty);
       expect(outcome.colonialLiteNavalPlan, ColonialLiteNavalPlan.defaultPlan);
-      expect(outcome.colonialAcquisitionTarget, isNull);
-      expect(outcome.colonialPeaceTargetFactionIdsSorted, isEmpty);
-      expect(outcome.colonialMilitaryPlan, ColonialMilitaryPlan.defaultPlan);
-      expect(outcome.colonialNavalPlan, ColonialNavalPlan.defaultPlan);
-      expect(outcome.colonialCivilianWorkOrders, isEmpty);
       expect(outcome.developPeaceTargetFactionIdsSorted, isEmpty);
       expect(outcome.developCivilianWorkOrders, isEmpty);
     });

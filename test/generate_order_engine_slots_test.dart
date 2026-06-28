@@ -9,7 +9,7 @@ void main() {
     final gPath = p.join(
       root,
       'packages',
-      'colonizethis_logic',
+      'colonizethis_orders',
       'lib',
       'src',
       'orders',

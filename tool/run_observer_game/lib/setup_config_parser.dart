@@ -48,12 +48,34 @@ GameSetupConfig gameSetupFromObserverCli({
           (json['minProvincesPerMinor'] as num?)?.toInt() ??
           config.minProvincesPerMinor,
       seed: (json['seed'] as num?)?.toInt() ?? config.seed,
+      // Force a fully-AI game regardless of any `--config` JSON: the observer
+      // is a Full-AI campaign (SPEC/program/run_observer_game-tool.md
+      // § Full-AI setup). Empty set => every GP isHuman:false at init.
+      humanGreatPowerSlotIndices: const <int>{},
       initTownRoadWiringRegionIds:
           json['initTownRoadWiringRegionIds'] is List<dynamic>
           ? (json['initTownRoadWiringRegionIds'] as List<dynamic>)
                 .map((e) => e.toString())
                 .toSet()
           : config.initTownRoadWiringRegionIds,
+    );
+  } else {
+    // No config file: still force fully-AI for the observer.
+    config = GameSetupConfig(
+      selectedGreatPowerIds: config.selectedGreatPowerIds,
+      leaderVariantByGpId: config.leaderVariantByGpId,
+      continentCount: config.continentCount,
+      minorNationCount: config.minorNationCount,
+      tribeCount: config.tribeCount,
+      numProvincesOldWorld: config.numProvincesOldWorld,
+      numProvincesNewWorld: config.numProvincesNewWorld,
+      minProvincesPerMinor: config.minProvincesPerMinor,
+      seed: config.seed,
+      preferredInitialMapZoomMultiplier:
+          config.preferredInitialMapZoomMultiplier,
+      startingResources: config.startingResources,
+      humanGreatPowerSlotIndices: const <int>{},
+      initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
     );
   }
 
@@ -71,6 +93,8 @@ GameSetupConfig gameSetupFromObserverCli({
       preferredInitialMapZoomMultiplier:
           config.preferredInitialMapZoomMultiplier,
       startingResources: config.startingResources,
+      // Preserve the fully-AI override across the seed reconstruction.
+      humanGreatPowerSlotIndices: config.humanGreatPowerSlotIndices,
       initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
     );
   }

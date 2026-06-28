@@ -25,7 +25,10 @@ class ShellScreen extends ConsumerWidget {
     final bus = ref.watch(appEventBusProvider);
     final resumeAvailable = ref.watch(mainMenuAutoSaveAvailableProvider);
     return CtMainMenu(
-      variant: MainMenuVariant.plain,
+      // S8 (#2860): the live shell renders the mockup-matching pixelArt
+      // chrome (compass rose, fleur-de-lis, wood-panel buttons, quit chip).
+      // MainMenuVariant.plain is retained as a minimal fallback variant.
+      variant: MainMenuVariant.pixelArt,
       state: MainMenuState.default_,
       version: appDisplayVersion(),
       onNewGame: () =>

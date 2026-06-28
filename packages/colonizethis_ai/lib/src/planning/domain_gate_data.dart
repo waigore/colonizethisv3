@@ -15,6 +15,8 @@
 /// #7 determinism alignment).
 library;
 
+import 'research_planner.dart' show ResearchPlannerDecision;
+
 /// Snapshot of domain planner activation gates for one AI player turn.
 class DomainGateData {
   const DomainGateData({
@@ -30,6 +32,7 @@ class DomainGateData {
     this.workThreshold,
     this.buildThreshold,
     this.researchThreshold,
+    this.researchDecision,
   });
 
   /// Whether the civilian work planner executed its full selection pass.
@@ -129,6 +132,11 @@ class DomainGateData {
   /// without forcing a sentinel.
   final int? researchThreshold;
 
+  /// Multi-slot research decision provenance (Refs #3472 AC10), or `null`
+  /// when the research planner emitted no orders this turn. Emitted under
+  /// `thresholds.domainGates.research`.
+  final ResearchPlannerDecision? researchDecision;
+
   /// JSON-serializable map for emission under
   /// `thresholds.domainGates` in the AI trace section. Empty per-planner
   /// thresholds are omitted to keep the payload compact (Refs #2832).
@@ -149,6 +157,7 @@ class DomainGateData {
       'conquestPasses': conquestPasses,
       'tradePlannerRan': tradePlannerRan,
       if (thresholdsJson.isNotEmpty) 'thresholds': thresholdsJson,
+      if (researchDecision != null) 'research': researchDecision!.toJson(),
     };
   }
 }

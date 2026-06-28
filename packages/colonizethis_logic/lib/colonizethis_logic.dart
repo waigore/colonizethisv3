@@ -4,11 +4,9 @@ library colonizethis_logic;
 // Root
 export 'package:colonizethis_models/colonizethis_models.dart'
     show AssignedRecipe;
+export 'package:colonizethis_world/colonizethis_world.dart';
 export 'order_suggestion_api.dart';
 export 'src/constants.dart';
-export 'src/logic_validation_exception.dart';
-export 'src/event_bus/game_event_bus.dart';
-export 'src/game_events.dart';
 export 'src/turn_to_year.dart';
 
 // Setup — GitHub #2201: these setup/dossier/world lines stay public for package
@@ -16,72 +14,28 @@ export 'src/turn_to_year.dart';
 // removing them would force broad `src/` imports in tests without shrinking
 // runtime surface meaningfully.
 
-// Setup
-export 'src/setup/capital_choice.dart';
-export 'src/setup/game_setup.dart';
-export 'src/setup/setup_validation_exception.dart';
-export 'src/setup/gp_old_world_resource_redistribution.dart';
-export 'src/setup/gp_old_world_terrain_redistribution.dart';
-export 'src/setup/gp_starting_grain.dart';
-export 'src/setup/minor_tribe_starting_development.dart';
-export 'src/setup/town_capital_occupancy.dart';
-export 'src/setup/effective_setup_seed.dart';
-export 'src/setup/init_game_orchestrator.dart';
-export 'src/setup/warp_zone_generator.dart';
-export 'src/setup/province_assignment.dart';
-export 'src/setup/gp_land_connectivity_repair.dart';
-export 'src/setup/province_name_fallback.dart';
-export 'src/setup/setup_exceptions.dart';
+// Setup (Refs #3290 — colonizethis_setup package; re-exported for backward compat)
+export 'package:colonizethis_setup/colonizethis_setup.dart';
 
-// Turn
-export 'src/turn/economy_debt_rules.dart';
-export 'src/turn/pending_treasury_costs.dart';
-export 'src/turn/research_resolver.dart';
-export 'src/turn/trace/turn_trace_contracts.dart';
-export 'src/turn/trace/turn_trace_file_exporter.dart';
-export 'src/turn/trace/turn_trace_runtime.dart';
-export 'src/turn/turn_resolution_result.dart';
-export 'src/turn/turn_resolver.dart';
-export 'src/turn/turn_news_digest.dart';
+// Turn (Refs #3290 C3 — colonizethis_turn package; re-exported for backward
+// compat). The turn barrel also re-exports the order-effects dry-run projector
+// (`projectOrderEffects`), which runs the turn resolver and now lives in the
+// turn package.
+export 'package:colonizethis_turn/colonizethis_turn.dart';
 
 // Combat
-export 'src/combat/battle_general_assignment.dart';
-export 'src/combat/combat_mode_selection.dart';
-export 'src/combat/combat_resolver.dart';
-export 'src/combat/combat_resolver_probabilistic.dart';
-export 'src/combat/conflict_detection.dart';
-export 'src/combat/military_strength.dart';
-export 'src/combat/naval_combat_resolver.dart';
-export 'src/combat/quick_battle_input_builder.dart';
-export 'src/combat/quick_battle_resolver.dart';
+export 'package:colonizethis_combat/colonizethis_combat.dart';
 
 // Economy
-export 'src/economy/build_cost.dart';
-export 'src/economy/economy_consumption.dart';
-export 'src/economy/economy_extraction.dart';
-export 'src/economy/economy_production.dart';
-export 'src/economy/economy_preview_stockpile_phase.dart';
-export 'src/economy/economy_riches_to_treasury.dart';
-export 'src/economy/non_gp_extraction.dart';
-export 'src/economy/resource_extractor.dart';
-export 'src/economy/sea_transport.dart';
-export 'src/economy/worker_action_cost.dart';
-export 'src/economy/worker_economy.dart';
-export 'src/economy/world_market/deal_matcher.dart';
-export 'src/economy/world_market/first_right_credits.dart';
-export 'src/economy/world_market/first_right_profit.dart';
-export 'src/economy/world_market/price_discovery.dart';
-export 'src/economy/world_market/purchased_tile_index.dart';
-export 'src/economy/world_market/sellable_quantity.dart';
-export 'src/economy/world_market/trade_order_suggester.dart';
-export 'src/economy/world_market/trade_order_validator.dart';
-export 'src/economy/world_market/treasury_bid_budget.dart';
+export 'package:colonizethis_economy/colonizethis_economy.dart';
 
-// Orders
-export 'src/orders/orders.dart';
-export 'src/orders/civilian_projected_tile.dart';
-export 'src/orders/validators/work_order_cost_calculator.dart';
-export 'src/orders/order_suggestion.dart'
+// Orders (Refs #3290 — colonizethis_orders package; re-exported for backward compat)
+export 'package:colonizethis_orders/colonizethis_orders.dart';
+export 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart';
+// `validators/work_order_cost_calculator.dart` is now published by the
+// `colonizethis_orders` barrel (Refs #3393 Phase 1 `turn → orders` slice), so it
+// is re-exported transitively above; the prior deep re-export here was redundant.
+export 'package:colonizethis_orders/src/orders/order_suggestion.dart'
     show
         AvailableWorkTargetsForUnit,
         getAvailableWorkTargetsForUnit,
@@ -91,37 +45,13 @@ export 'src/orders/order_suggestion.dart'
         orderSuggestionWorkOrderAcceptanceProbeCountForTests,
         resetIncrementalCandidateValidatorBuildCountForTests,
         setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
-export 'src/orders/per_player_work_target_selection_cache.dart';
-export 'src/orders/unit_type_helpers.dart'
+export 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+export 'package:colonizethis_orders/src/orders/unit_type_helpers.dart'
     show devExclusiveReservedTileKeysForPlayer;
 
 // Diplomacy
-export 'src/diplomacy/diplomacy_resolver.dart';
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 
 // Dossier (evidence rules, event dialogue)
-export 'src/dossier/evidence_rules.dart';
-export 'src/dossier/event_dialogue.dart';
-
-// World
-export 'src/world/army_commands.dart';
-export 'src/world/army_ids.dart';
-export 'src/world/army_migration.dart';
-export 'src/world/army_movement.dart';
-export 'src/world/capital_reassignment_fatal.dart';
-export 'src/world/capital_and_gp_fall.dart';
-export 'src/world/connectivity_resolver.dart';
-export 'src/world/unit_lookup.dart';
-export 'src/world/minor_military_parity.dart';
-export 'src/world/movement.dart';
-export 'src/world/naval.dart';
-export 'src/world/naval_fleet_commands.dart';
-export 'src/world/fog_resolution.dart'
-    show
-        applyCoastalSeaZoneFullVisibility,
-        applyCoastalSeaZoneFullVisibilityForProvinceTargets;
-export 'src/world/player_state_pipeline.dart';
-export 'src/world/player_view.dart';
-export 'src/world/province_ownership_transfer.dart';
-export 'src/world/province_lookup.dart';
-export 'src/world/sea_zone_identity.dart';
-export 'src/world/tile_control.dart';
+export 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';
+export 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';

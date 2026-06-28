@@ -4,6 +4,7 @@ import 'dart:io' show Directory;
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
 
@@ -13,7 +14,9 @@ import 'config/ct_e2e.dart';
 import 'config/map_terrain_config.dart';
 import 'config/themes.dart';
 import 'core/services/app_event_handler_scope.dart';
+import 'core/services/blessed_ai_profile_loader.dart';
 import 'core/services/desktop_window_startup_service.dart';
+import 'features/shell/new_game_leader_dialog_builder.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
 Future<void> _openHiveBoxSafely(String name) async {
@@ -46,17 +49,29 @@ Future<void> bootstrapApp({
   await openHiveBoxSafely(HiveBoxNames.games);
   await openHiveBoxSafely(HiveBoxNames.offlineQueue);
   await ensureDesktopWindowStartup();
-  // Fire-and-forget Cinzel registration for the editorial-monocle theme;
-  // failure (offline + no cache) falls back to platform serif per
-  // `preloadEditorialMonocleFonts`. Skipped under e2e to avoid network
-  // dependencies in the integration_test bootstrap. Tests inject a no-op
-  // via [preloadFonts] so the GoogleFonts asset-not-found path does not
-  // surface as a zoned error after the test completes.
+  // Warm blessed AI profile asset bundle for new-game UI and turn resolution.
+  await BlessedAiProfileLoader.loadCatalog();
+  // Await bundled Cinzel registration for the editorial-monocle theme;
+  // `preloadEditorialMonocleFonts` hard-errors when assets are missing.
+  // Skipped under e2e to avoid font bootstrap in integration_test. Tests
+  // inject a no-op via [preloadFonts] so the suite stays hermetic.
   final preload =
       preloadFonts ??
       () => preloadEditorialMonocleFonts(skipInTests: kCtE2EEnabled);
-  unawaited(preload());
-  runAppFn(const ProviderScope(child: AppEventHandlerScope(child: App())));
+  await preload();
+  // Composition root wires the shell feature's new-game leader dialog builder
+  // into the core event-handler scope so `core/services/` stays free of
+  // `features/shell/` imports (Refs #3546). SPEC/program/app-ui-wiring.md.
+  runAppFn(
+    const ProviderScope(
+      child: AppEventHandlerScope(
+        extraDialogBuilders: {
+          newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
+        },
+        child: App(),
+      ),
+    ),
+  );
 }
 
 /// Integration tests (`integration_test/`) call this after
@@ -87,6 +102,8 @@ Future<void> bootstrapForIntegrationTest() async {
 }
 
 void main() {
+  // Bundled Cinzel only — no runtime HTTP fetch to fonts.gstatic.com.
+  GoogleFonts.config.allowRuntimeFetching = false;
   runZonedGuarded(
     () async {
       await bootstrapApp(

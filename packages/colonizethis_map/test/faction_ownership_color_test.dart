@@ -1,4 +1,4 @@
-import 'package:colonizethis_map/src/tile_map_visualization_shared.dart';
+import 'package:colonizethis_map/src/render/tile_map_visualization_shared.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -119,6 +119,55 @@ void main() {
       final map = factionOwnershipColorMapForOldWorld(game);
       expect(map.containsKey('gp1'), isTrue);
       expect(map.containsKey('t1'), isFalse);
+    });
+  });
+
+  group('factionOwnershipColorMapForRegion (Refs #3459 AC3)', () {
+    Game gameWithFactions() => Game(
+      id: 'g',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(provinces: [], units: []),
+        newWorld: const RegionData(provinces: [], units: []),
+      ),
+      players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
+      minorNations: const [MinorNation(id: 'm1', displayName: 'M1')],
+      tribes: const [Tribe(id: 't1', displayName: 'T1')],
+    );
+
+    test('old world delegates to the old-world colour map', () {
+      final game = gameWithFactions();
+      expect(
+        factionOwnershipColorMapForRegion(game, 'oldWorld'),
+        factionOwnershipColorMapForOldWorld(game),
+      );
+    });
+
+    test('new world delegates to the new-world colour map', () {
+      final game = gameWithFactions();
+      expect(
+        factionOwnershipColorMapForRegion(game, 'newWorld'),
+        factionOwnershipColorMapForNewWorld(game),
+      );
+    });
+
+    test('old-world override forwards to the old-world colour map', () {
+      final game = gameWithFactions();
+      expect(
+        factionOwnershipColorMapForRegion(
+          game,
+          'oldWorld',
+          greatPowerColorOverride: {'gp1': (1, 2, 3)},
+        )['gp1'],
+        (1, 2, 3),
+      );
+    });
+
+    test('unknown region id throws ArgumentError', () {
+      expect(
+        () => factionOwnershipColorMapForRegion(gameWithFactions(), 'moon'),
+        throwsA(isA<ArgumentError>()),
+      );
     });
   });
 }

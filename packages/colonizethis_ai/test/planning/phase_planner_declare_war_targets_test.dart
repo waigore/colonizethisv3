@@ -31,7 +31,15 @@ import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_declare_war_targets.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
+import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart';
 import 'package:colonizethis_test/test.dart';
+
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
 
 void main() {
   group('gpExpandDeclareWarTargetFromPhasePlan', () {
@@ -172,10 +180,21 @@ void main() {
       );
     });
 
-    test('EXPAND surfaces null even when acquisition target is non-null', () {
-      // Defensive: the dispatcher never populates colonialAcquisitionTarget
-      // in EXPAND, but the adapter must short-circuit on phase to defend
-      // the suppression matrix.
+    test('EXPAND with newWorldAcquisition=0 surfaces null even when '
+        'acquisition target is non-null', () {
+      const outcome = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        colonialAcquisitionTarget: ColonialAcquisitionTarget(
+          targetFactionId: 'tribe4',
+          method: AcquisitionMethod.declareWar,
+        ),
+        priorityWeights: _nwAcquisitionZeroExpand,
+      );
+      expect(gpColonialDeclareWarTargetFromPhasePlan(outcome), isNull);
+    });
+
+    test('EXPAND with newWorldAcquisition>0 surfaces declareWar target '
+        '(Refs #2847)', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
         colonialAcquisitionTarget: ColonialAcquisitionTarget(
@@ -183,7 +202,10 @@ void main() {
           method: AcquisitionMethod.declareWar,
         ),
       );
-      expect(gpColonialDeclareWarTargetFromPhasePlan(outcome), isNull);
+      expect(
+        gpColonialDeclareWarTargetFromPhasePlan(outcome),
+        'tribe4',
+      );
     });
 
     test(

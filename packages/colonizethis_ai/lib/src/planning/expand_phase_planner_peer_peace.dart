@@ -133,58 +133,57 @@ List<String> belowQuotaPeerGpPeaceTargets({
   if (!isBelowObserverConquestQuota(ownOw)) {
     return const [];
   }
-  final minorsOnMap = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
-  );
+  final minorsOnMap = _anyMinorOwnsOldWorldProvince(game);
   final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
     game: game,
     snapshot: snapshot,
   );
   final soleGpWar = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) {
-      continue;
-    }
-    final partnerOw = provinceCountOwnedBy(game, factionId);
-    if (!isBelowObserverConquestQuota(partnerOw)) {
-      continue;
-    }
-    final mutualPlateau = isMutualBelowQuotaPlateauPeer(
-      ownOw: ownOw,
-      partnerOw: partnerOw,
-    );
-    if (!minorsOnMap && !mutualPlateau) {
-      continue;
-    }
-    if (mutualPlateau &&
-        gpOnlyFrontier &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      targets.add(factionId);
-      continue;
-    }
-    final maxPeerOwGap =
-        hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
-        ? _kMaxPeerOwGapWithMinors
-        : _kMaxPeerOwGapWithoutMinors;
-    if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
-      continue;
-    }
-    if (!mutualPlateau && ownOw > partnerOw) {
-      continue;
-    }
-    if (gpOnlyFrontier &&
-        soleGpWar == factionId &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      continue;
-    }
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
+  // Route the GP at-war filter + ascending-`factionId` sort through the shared
+  // [gpAtWarPeaceTargetsWhere] collector skeleton (Refs #3717 expand-peace
+  // dedup). Byte-identical: the inline loop skipped non-GP `atWarWith` entries
+  // and sorted the result, exactly what the shared helper does; the per-enemy
+  // arms (below-quota partner gate, mutual-plateau carve-out, symmetric OW-gap
+  // cap, stronger-self guard, sole-GP-blocker hold-open) translate one-to-one
+  // into the caller-specific `keep` predicate with no cross-enemy state.
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) {
+      final partnerOw = provinceCountOwnedBy(game, factionId);
+      if (!isBelowObserverConquestQuota(partnerOw)) {
+        return false;
+      }
+      final mutualPlateau = isMutualBelowQuotaPlateauPeer(
+        ownOw: ownOw,
+        partnerOw: partnerOw,
+      );
+      if (!minorsOnMap && !mutualPlateau) {
+        return false;
+      }
+      if (mutualPlateau &&
+          gpOnlyFrontier &&
+          !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+        return true;
+      }
+      final maxPeerOwGap =
+          hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
+          ? _kMaxPeerOwGapWithMinors
+          : _kMaxPeerOwGapWithoutMinors;
+      if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
+        return false;
+      }
+      if (!mutualPlateau && ownOw > partnerOw) {
+        return false;
+      }
+      if (gpOnlyFrontier &&
+          soleGpWar == factionId &&
+          !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+        return false;
+      }
+      return true;
+    },
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war Great Power
@@ -244,33 +243,36 @@ List<String> stalledFutileGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return const [];
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return const [];
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
   if (!minorsOwnInvadable) {
     return const [];
   }
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) continue;
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
-    );
-    if (ownsInvadable) continue;
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
+  // Route the GP at-war filter + ascending-`factionId` sort through the shared
+  // [gpAtWarPeaceTargetsWhere] collector skeleton (Refs #3717 expand-peace
+  // dedup), matching the sibling deciders in this family. Byte-identical: the
+  // inline loop skipped non-GP `atWarWith` entries and sorted the result,
+  // exactly what the shared helper does; only the invadable-owner exclusion
+  // remains caller-specific here.
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) => !factionOwnsInvadableOldWorldProvince(
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
+      factionId: factionId,
+    ),
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war tribe
@@ -327,20 +329,102 @@ List<String> atWarGpDistractionTribePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return const [];
   }
-  final atWarWithGp = snapshot.threats.atWarWith.any(
-    (id) => game.playerById(id) != null,
-  );
+  final atWarWithGp = isAtWarWithAnyGreatPower(game, snapshot);
   if (!atWarWithGp) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.tribes.any((t) => t.id == factionId)) factionId,
-  ]..sort();
-  return targets;
+  // Route the at-war-tribe filter + ascending sort through the shared
+  // [tribeAtWarPeaceTargetsWhere] collector (Refs #3717 expand-peace
+  // scoring-skeleton dedup), matching the sibling GP/minor collectors. This
+  // decider keeps every at-war tribe (no extra predicate), so no `keep` is
+  // supplied; byte-identical to the inline `isTribeFaction` + sort.
+  return tribeAtWarPeaceTargetsWhere(game: game, snapshot: snapshot);
+}
+
+/// Returns the deterministic ascending-sorted list of at-war tribe
+/// `factionId`s the active player should `offerPeace` toward in EXPAND
+/// while below the observer OW quota with a regiment count too small to
+/// split across multiple fronts, or `const []` when the
+/// distraction-peace pivot does not apply.
+///
+/// Tribe analogue of [belowQuotaMultiMinorDistractionPeaceTargets]
+/// (Refs #2847 § H5). The minor decider concentrates a regiment-thin
+/// below-quota GP on its focused OW minor by peacing every *other*
+/// at-war minor; this decider drops the parallel *tribe* distraction
+/// fronts the minor decider deliberately ignores (its guard keeps only
+/// [Game.minorNations] members).
+///
+/// Distinct from [atWarGpDistractionTribePeaceTargets], which fires only
+/// when an at-war Great Power front is present (the COLONIAL-phase
+/// consolidation pivot). The seed-42 gp4 stall is a below-quota EXPAND
+/// GP at peace with every Great Power yet diluted across several
+/// simultaneous tribe wars, so the GP-front guard never admits it; this
+/// decider supplies the missing below-quota tribe-distraction pivot.
+///
+/// **Old-World-conquest-value preservation:** only *pure distraction*
+/// tribes are peaced — a tribe that owns **zero** Old World provinces
+/// (`oldWorldProvinceCountOwnedBy(game, tribeId) == 0`). Such a tribe
+/// offers no OW conquest value, so its war only drains the thin regiment
+/// pool. A tribe that owns **any** OW province is kept at war: it is
+/// either the immediately invadable frontier, a next-hop multi-turn
+/// march target (Refs #2847 § H4-b minor-transit frontier march), or a
+/// distant-but-real slow conquest the EXPAND ratchet would still
+/// complete. Peacing it would forfeit OW gain. This keeps the pivot
+/// surgical: it releases the regiment pool from value-less tribe fronts
+/// (seed-42 gp4) while protecting the productive / en-route tribe wars
+/// the EXPAND ratchet is winning (seed-42 gp3 / gp6 OW-tribe baselines).
+///
+/// Returns `const []` for any of the outer guards (in order), mirroring
+/// [belowQuotaMultiMinorDistractionPeaceTargets]:
+///   1. [isBelowObserverConquestQuota] is `false` for
+///      [ConquestSummary.oldWorldProvincesOwned].
+///   2. `regimentCount <= 0` — the zero-regiment survival deciders own
+///      the peace decision below the affordability gate.
+///   3. `regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`
+///      — a force able to project across multiple fronts can sustain
+///      the tribe wars while it walks the EXPAND ratchet.
+///   4. [ConquestSummary.invadableProvinceIdsSorted] is empty — no OW
+///      frontier means no consolidation push to concentrate on.
+///
+/// When the guards pass it peaces every at-war tribe (membership tested
+/// via [Game.tribes]) that owns zero Old World provinces
+/// (`oldWorldProvinceCountOwnedBy(game, tribeId) == 0`), sorted ascending
+/// for deterministic ordering.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// lists (Refs #2509 Must-have #7). Linear in [ThreatSummary.atWarWith]
+/// with one [oldWorldProvinceCountOwnedBy] lookup per at-war tribe
+/// (itself bounded by the per-faction province index); no new global
+/// province / tile scans introduced, matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc`.
+List<String> belowQuotaRegimentThinTribeDistractionPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isOwnOldWorldBelowConquestQuota(snapshot)) {
+    return const [];
+  }
+  final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
+  if (regimentCount <= 0 ||
+      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
+    return const [];
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  // Route the at-war-tribe filter + ascending sort through the shared
+  // [tribeAtWarPeaceTargetsWhere] collector (Refs #3717 expand-peace
+  // scoring-skeleton dedup); only the zero-OW-province distraction exclusion
+  // remains caller-specific. Byte-identical to the inline `isTribeFaction` +
+  // zero-OW predicate + sort.
+  return tribeAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) => oldWorldProvinceCountOwnedBy(game, factionId) == 0,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war Great Power
@@ -397,16 +481,15 @@ List<String> stalledZeroRegimentGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isZeroRegimentSurvivalOwContext(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return const [];
   }
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
+  final targets = gpFactionIdsAtWarWith(game, snapshot);
   return targets;
 }
 
@@ -468,16 +551,13 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOwnOldWorldExpansionStalled(snapshot)) {
     return const [];
   }
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length != 1) {
     return const [];
   }
@@ -510,10 +590,9 @@ List<String> stalledZeroRegimentAllFactionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isZeroRegimentSurvivalOwContext(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return const [];
   }
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
@@ -536,55 +615,35 @@ List<String> mutualExhaustedBelowQuotaGpStalematePeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (ownOw < kMutualExhaustedGpStalemateMinOw) {
+  // Route the duplicated per-side "mutual-exhausted below-quota GP stalemate"
+  // qualification through the shared [mutualExhaustedGpStalemateSideQualifies]
+  // helper (Refs #3717 offer-peace / expand-peace scoring-skeleton dedup). The
+  // helper bundles the same side-effect-free guards (min-OW + below-quota +
+  // stalled + known player + treasury/regiment exhaustion) the inline checks
+  // applied for both the active player and the enemy GP, so the result is
+  // byte-identical; the inter-side `(enemyOw - ownOw).abs()` proximity gate
+  // stays here.
+  if (!mutualExhaustedGpStalemateSideQualifies(
+    game: game,
+    factionId: snapshot.playerId,
+    ow: ownOw,
+  )) {
     return const [];
   }
-  if (!isBelowObserverConquestQuota(ownOw)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(ownOw)) {
-    return const [];
-  }
-  final ownPlayer = game.playerById(snapshot.playerId);
-  if (ownPlayer == null) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, snapshot.playerId) >
-      kMutualExhaustedGpRegimentMax) {
-    return const [];
-  }
-  if (ownPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
-    return const [];
-  }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length != 1) {
     return const [];
   }
   final enemy = gpWars.single;
-  final enemyPlayer = game.playerById(enemy);
-  if (enemyPlayer == null) {
-    return const [];
-  }
   final enemyOw = provinceCountOwnedBy(game, enemy);
-  if (enemyOw < kMutualExhaustedGpStalemateMinOw) {
-    return const [];
-  }
-  if (!isBelowObserverConquestQuota(enemyOw)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(enemyOw)) {
+  if (!mutualExhaustedGpStalemateSideQualifies(
+    game: game,
+    factionId: enemy,
+    ow: enemyOw,
+  )) {
     return const [];
   }
   if ((enemyOw - ownOw).abs() > 1) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, enemy) > kMutualExhaustedGpRegimentMax) {
-    return const [];
-  }
-  if (enemyPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
     return const [];
   }
   return [enemy];
@@ -598,14 +657,11 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.isEmpty) {
     return const [];
   }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+  if (!isOwnOldWorldExpansionStalled(snapshot) &&
       snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return const [];
   }
@@ -632,11 +688,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   if (gpWars.length <= 1) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
-  return targets;
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// Returns the deterministic list of stronger at-war Great Power
@@ -712,13 +764,12 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
       : isBelowObserverConquestQuota(ownOw)
       ? kUnwinnableSoleGpMinProvinceDeficit
       : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          provinceCountOwnedBy(game, factionId) >= ownOw + minLead)
-        factionId,
-  ]..sort();
-  return targets;
+  return gpAtWarPeaceTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    keep: (factionId) =>
+        provinceCountOwnedBy(game, factionId) >= ownOw + minLead,
+  );
 }
 
 /// Returns the deterministic list of non-blocker at-war Great Power
@@ -781,10 +832,7 @@ List<String> criticalMultiFrontGpPeaceTargets({
       )) {
     return const [];
   }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
   if (gpWars.length < 2) {
     return const [];
   }

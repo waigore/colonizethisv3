@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import 'combat_logging_test_support.dart';
+import 'package:colonizethis_test/combat_logging_test_support.dart';
 
 void main() {
   group('land combat logging (resolveBattleContext)', () {
@@ -81,11 +81,11 @@ void main() {
 
         final combat = capture.combat;
         expect(
-          combat.where((m) => m.contains('logic: combat engagement')).length,
+          combat.where((m) => m.contains('combat: combat engagement')).length,
           1,
         );
         final engagement = combat.firstWhere(
-          (m) => m.contains('logic: combat engagement'),
+          (m) => m.contains('combat: combat engagement'),
         );
         expect(engagement, contains('result='));
         expect(engagement, contains('attackerFactionId=att'));
@@ -93,7 +93,7 @@ void main() {
         expect(engagement, contains('defCasualties='));
 
         final apply = combat.firstWhere(
-          (m) => m.contains('logic: combat battle_apply'),
+          (m) => m.contains('combat: combat battle_apply'),
         );
         expect(apply, contains('mode=autoResolve'));
         expect(apply, contains('provinceFlipped='));
@@ -104,7 +104,7 @@ void main() {
           capture.events.any(
             (e) =>
                 e.level == Level.debug &&
-                e.message.contains('logic: combat engagement'),
+                e.message.contains('combat: combat engagement'),
           ),
           isTrue,
         );
@@ -112,7 +112,7 @@ void main() {
           capture.events.any(
             (e) =>
                 e.level == Level.info &&
-                e.message.contains('logic: combat battle_apply'),
+                e.message.contains('combat: combat battle_apply'),
           ),
           isTrue,
         );
@@ -185,7 +185,7 @@ void main() {
       resolveBattleContext(game, ctx);
 
       final engagementLines = capture.combat
-          .where((m) => m.contains('logic: combat engagement'))
+          .where((m) => m.contains('combat: combat engagement'))
           .toList();
       expect(engagementLines.length, 2);
       expect(

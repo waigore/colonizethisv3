@@ -82,15 +82,25 @@ Future<void> e2eExpectCivilianPanelMatchesE2eSnapshot(
   WidgetTester tester,
   AppLocalizations l10n, {
   E2ePerfLog? perf,
-}) => e2eExpectPanelTextsMatchSnapshot(
-  tester,
-  panelRootKey: kCtE2ECivilianPanelRootKey,
-  snapshotReader: () => ctE2eCivilianPanelSnapshot,
-  buildExpected: () =>
-      civilianUnitsPanelExpectedTexts(ctE2eCivilianPanelSnapshot!, l10n),
-  phaseName: kE2eExpectCivilianPanelTextsPhase,
-  perf: perf,
-);
+}) async {
+  await e2eWaitUntilFound(
+    tester,
+    find.byKey(kCtE2ECivilianPanelRootKey),
+    timeout: kE2eDefaultExpectPanelTextsTimeout,
+    perf: perf,
+    phaseName: kE2eExpectCivilianPanelTextsPhase,
+  );
+  await e2ePrepareCivilianPanelListForTextCollection(tester);
+  await e2eExpectPanelTextsMatchSnapshot(
+    tester,
+    panelRootKey: kCtE2ECivilianPanelRootKey,
+    snapshotReader: () => ctE2eCivilianPanelSnapshot,
+    buildExpected: () =>
+        civilianUnitsPanelExpectedTexts(ctE2eCivilianPanelSnapshot!, l10n),
+    phaseName: kE2eExpectCivilianPanelTextsPhase,
+    perf: perf,
+  );
+}
 
 /// Asserts the [NavalUnitsPanel] rendered tree matches
 /// [navalUnitsPanelExpectedTexts] for the currently primed
@@ -133,6 +143,15 @@ Future<void> e2eExpectNavalPanelMatchesE2eSnapshot(
           fleetTilesExpanded: false,
         )
       : null,
+  // The dense fleet-action cluster (Move / Split / Locate) renders Move and
+  // Split icon-only at the narrow macOS test host but as Icon + Text on the
+  // wider Linux desktop integration host, so the canonical icon-only mirror
+  // (which omits these labels) would spuriously fail on Linux. Normalize the
+  // two host-width-dependent labels out of the collected texts so the
+  // assertion is deterministic across hosts; Locate is always icon-only and
+  // Combine is a non-dense top-level action the mirror keeps (Refs GitHub
+  // #2336 AC6).
+  ignoreActualTexts: [l10n.common_move, l10n.common_split],
 );
 
 /// Asserts the wide [ProductionPanel] rendered tree matches

@@ -16,6 +16,21 @@ export 'src/perception/perception_snapshot.dart';
 export 'src/planning/domain_planner_orchestrator.dart';
 export 'src/planning/diplomacy_planner.dart';
 export 'src/planning/economy_planner.dart';
+export 'src/planning/growth_stage.dart'
+    show
+        GrowthStage,
+        categoryPriorityForOutput,
+        kAtWarMilitaryFloor,
+        growthStageSuppressesMilitaryBuilds,
+        kGrowthStagePlannerEnabled,
+        kMilitaryBuildSuppressionThreshold,
+        kRecruitmentFloor,
+        kReserveTarget,
+        kStagePriorityBias,
+        kTargetLabourForMaturity,
+        peasantRecruitScoreScale,
+        prospectedImprovedFeedstockTileCount;
+export 'src/planning/recipe_scoring.dart' show stageScaledRecipeScore;
 export 'src/planning/full_ai_planner.dart';
 export 'src/planning/goal_manager.dart';
 export 'src/planning/observer_goal_phase.dart' show ObserverGoalPhase;
@@ -25,6 +40,7 @@ export 'src/planning/phase_priority_weights.dart'
     show
         PhasePriorityWeights,
         computePhasePriorityWeights,
+        goalColonialPressureWeightFor,
         kPhasePriorityCurveEarlySprintCeiling,
         kPhasePriorityNwTreasuryRecoveryFloor,
         kPhasePriorityNwZeroRegimentFloor;
@@ -33,6 +49,8 @@ export 'src/planning/recruitment_planner.dart'
         RecruitmentPlan,
         RejectedRecruitmentSuggestion,
         kRecruitmentRejectInsufficientWorkers,
+        kRecruitmentRejectMilitaryBuildSuppressed,
+        kRecruitmentRejectMilitaryFabricReservation,
         kRecruitmentRejectSoftLuxuryCap,
         runRecruitmentPlanner;
 export 'src/social/hidden_agenda.dart';

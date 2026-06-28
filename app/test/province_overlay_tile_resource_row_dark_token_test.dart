@@ -23,6 +23,7 @@
 // Economic section row layout; pinning its label colour is tracked
 // separately).
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show VisibilityLevel, buildPlayerView;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -38,7 +39,6 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 /// Builds the overlay under [AppThemes.editorialMonocle] with the
 /// canonical sample tile so the Resource row prefix `Text` widget
@@ -48,10 +48,12 @@ Widget _darkOverlayWithSampleTile() {
   final region = demoRegionForOverlay;
   final tileKey = sampleTileKeyForProvinceOverlay;
   final humanPlayerId = game.players.first.id;
-  final init = getDebugInitGameResult();
+  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
+  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
+  // generation with identical PlayerView output for this demo game.
   final playerView = buildPlayerView(
     game,
-    init.combinedTopology,
+    const MapTopology(),
     humanPlayerId,
   );
   final provinceId = sampleProvinceIdForOverlay;
@@ -82,10 +84,12 @@ Widget _darkOverlayWithSampleTile() {
   final game = demoGameForOverlay;
   final region = demoRegionForOverlay;
   final humanPlayerId = game.players.first.id;
-  final init = getDebugInitGameResult();
+  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
+  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
+  // generation with identical PlayerView output for this demo game.
   final playerView = buildPlayerView(
     game,
-    init.combinedTopology,
+    const MapTopology(),
     humanPlayerId,
   );
   final resourceByTile = game.worldState.resourceByTileKey;
@@ -112,10 +116,12 @@ Widget? _darkOverlayWithRevealedNoResourceTile() {
   final game = demoGameForOverlay;
   final region = demoRegionForOverlay;
   final humanPlayerId = game.players.first.id;
-  final init = getDebugInitGameResult();
+  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
+  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
+  // generation with identical PlayerView output for this demo game.
   final playerView = buildPlayerView(
     game,
-    init.combinedTopology,
+    const MapTopology(),
     humanPlayerId,
   );
   return MaterialApp(

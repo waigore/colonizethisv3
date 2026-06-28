@@ -3,7 +3,7 @@ import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart'
+import 'package:colonizethis_setup/colonizethis_setup.dart'
     show assignHiddenAgendasForGame;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -249,8 +249,10 @@ class GameService {
         topology: topo,
         orders: resolvedOrders,
         tileMapByRegion: tileMaps,
-        eventBus: logicEventBus,
-        onGameEvent: onGameEvent,
+        eventSink: TurnEventSink(
+          eventBus: logicEventBus,
+          onGameEvent: onGameEvent,
+        ),
       ),
     );
     _emitTurnResolutionEvents(result);
@@ -274,8 +276,10 @@ class GameService {
         topology: topo,
         orders: orders,
         tileMapByRegion: tileMaps,
-        eventBus: logicEventBus,
-        onGameEvent: onGameEvent,
+        eventSink: TurnEventSink(
+          eventBus: logicEventBus,
+          onGameEvent: onGameEvent,
+        ),
         startFromPhase: TurnPhase.diplomacy,
         callToArmsDecisions: decisions,
       ),
@@ -304,8 +308,10 @@ class GameService {
         topology: topo,
         orders: orders,
         tileMapByRegion: tileMaps,
-        eventBus: logicEventBus,
-        onGameEvent: onGameEvent,
+        eventSink: TurnEventSink(
+          eventBus: logicEventBus,
+          onGameEvent: onGameEvent,
+        ),
         startFromPhase: TurnPhase.diplomacy,
         overtureDecisions: decisions,
       ),
@@ -332,8 +338,10 @@ class GameService {
         topology: topo,
         orders: orders,
         tileMapByRegion: tileMaps,
-        eventBus: logicEventBus,
-        onGameEvent: onGameEvent,
+        eventSink: TurnEventSink(
+          eventBus: logicEventBus,
+          onGameEvent: onGameEvent,
+        ),
         startFromPhase: TurnPhase.diplomacy,
         ftpDecisions: decisions,
       ),
@@ -359,8 +367,10 @@ class GameService {
         topology: topo,
         orders: orders,
         tileMapByRegion: tileMaps,
-        eventBus: logicEventBus,
-        onGameEvent: onGameEvent,
+        eventSink: TurnEventSink(
+          eventBus: logicEventBus,
+          onGameEvent: onGameEvent,
+        ),
         startFromPhase: TurnPhase.diplomacy,
         interventionDecisions: decisions,
       ),
