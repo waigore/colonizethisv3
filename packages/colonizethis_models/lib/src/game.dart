@@ -78,6 +78,7 @@ class Game {
     this.diplomacyRelations = const [],
     this.overtureStates = const [],
     this.subsidyStates = const [],
+    this.colonyStates = const [],
     this.aiControlByGpId = const {},
     this.aiSeedByGpId = const {},
     this.aiProfileByGpId = const {},
@@ -126,6 +127,11 @@ class Game {
 
   /// Active ongoing subsidies (payer -> target with amount per turn). Phase 4.
   final List<SubsidyState> subsidyStates;
+
+  /// Tribes that have become colonies of a Great Power via Tribe Join Empire.
+  /// The colony Tribe stays in [tribes]; its provinces/fleets are not transferred.
+  /// SPEC/game/diplomacy.md § GP–Minor/Tribe Rules (Join Empire → colony).
+  final List<ColonyState> colonyStates;
 
   /// AI control: true = AI-controlled. When empty, use !player.isHuman. Phase 4.
   final Map<String, bool> aiControlByGpId;
@@ -220,6 +226,8 @@ class Game {
       'overtureStates': overtureStates.map((o) => o.toJson()).toList(),
     if (subsidyStates.isNotEmpty)
       'subsidyStates': subsidyStates.map((s) => s.toJson()).toList(),
+    if (colonyStates.isNotEmpty)
+      'colonyStates': colonyStates.map((c) => c.toJson()).toList(),
     if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
     if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
     if (aiProfileByGpId.isNotEmpty)
@@ -302,6 +310,14 @@ class Game {
     final subsidyStates = subsidyList
         .map(
           (e) => SubsidyState.fromJson(
+            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+          ),
+        )
+        .toList();
+    final colonyList = json['colonyStates'] as List<dynamic>? ?? [];
+    final colonyStates = colonyList
+        .map(
+          (e) => ColonyState.fromJson(
             Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
           ),
         )
@@ -435,6 +451,7 @@ class Game {
       diplomacyRelations: diplomacyRelations,
       overtureStates: overtureStates,
       subsidyStates: subsidyStates,
+      colonyStates: colonyStates,
       aiControlByGpId: aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId,
       aiProfileByGpId: aiProfileByGpId,
@@ -482,6 +499,7 @@ class Game {
     List<DiplomacyRelation>? diplomacyRelations,
     List<OvertureState>? overtureStates,
     List<SubsidyState>? subsidyStates,
+    List<ColonyState>? colonyStates,
     Map<String, bool>? aiControlByGpId,
     Map<String, int>? aiSeedByGpId,
     Map<String, String?>? aiProfileByGpId,
@@ -517,6 +535,7 @@ class Game {
       diplomacyRelations: diplomacyRelations ?? this.diplomacyRelations,
       overtureStates: overtureStates ?? this.overtureStates,
       subsidyStates: subsidyStates ?? this.subsidyStates,
+      colonyStates: colonyStates ?? this.colonyStates,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
       aiProfileByGpId: aiProfileByGpId ?? this.aiProfileByGpId,
@@ -568,6 +587,7 @@ class Game {
           _listEquals(diplomacyRelations, other.diplomacyRelations) &&
           _listEquals(overtureStates, other.overtureStates) &&
           _listEquals(subsidyStates, other.subsidyStates) &&
+          _listEquals(colonyStates, other.colonyStates) &&
           _mapEquals(aiControlByGpId, other.aiControlByGpId) &&
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
           _nullableStringMapEquals(aiProfileByGpId, other.aiProfileByGpId) &&
@@ -613,7 +633,10 @@ class Game {
     Object.hashAll(combatModeByProvinceId.entries),
     Object.hashAll(diplomacyRelations),
     Object.hashAll(overtureStates),
-    Object.hashAll(subsidyStates),
+    Object.hash(
+      Object.hashAll(subsidyStates),
+      Object.hashAll(colonyStates),
+    ),
     Object.hashAll(aiControlByGpId.entries),
     Object.hashAll(aiSeedByGpId.entries),
     Object.hashAll(aiProfileByGpId.entries),

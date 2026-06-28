@@ -94,6 +94,7 @@ The `knownDiplomaticTargetFactionIds` set (existing relations **and** non-`unkno
 
 - **War before hostile action:** Same as Minors — see **War required for hostile actions** above (military invasion and naval blockade require `AT_WAR` or same-turn `Declare War` on the Tribe as province owner).
 - **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
+- **Join Empire → colony (Refs #3753 R5):** When a GP resolves an `Establish Overture` at stage `Join Empire` against a **Tribe**, the Tribe does **not** leave the game and its provinces/units/fleets are **not** transferred. Instead the Tribe becomes a **colony** of that GP: a `ColonyState { tribeId, colonyOfGpId, sinceTurn }` is recorded on the `Game` (one per Tribe; re-resolution replaces the prior record), the Tribe **remains** in `tribes`, and overtures/relations with the Tribe are preserved. Only the Join Empire **cost** is deducted from the GP treasury. The colonizing GP is the Tribe's favoured trading partner while the colony stands. This differs from **GP–Minor** Join Empire, which keeps full **absorption** (province/unit/fleet transfer and faction removal). The colony relationship ends if the colonizing GP is removed from the game.
 - **Purchase land (Merchant):** Same as GP–Minor: requires **embassy** with that Tribe and **not at war**.
 - Tribes react to nearby conquest (relation/trade effects).
 - **Intervention:** Same **Intervention** rules as for Minors (Embassy or purchased land; Diplomacy phase when a GP declares war on the Tribe).
@@ -242,9 +243,17 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the same AI intervention context and the Bernoulli trial results in **do nothing**  
   When the Diplomacy phase applies that outcome  
   Then the system does not change the relation state or relation score between that AI Great Power and the declaring Great Power, and clears all overture state between that AI Great Power and that Minor/Tribe from the game state.
-- Given the Player controls a Great Power with a Non-Aggression Pact overture with a target Minor Nation or Tribe, relation score between that GP and that faction is at least 51 (Friendly or Allied), the target owns at least one province, and the Player’s treasury is at least the Join Empire cost (base cost + per-province cost × number of provinces owned by the target)  
-  When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting that Minor or Tribe in the Diplomacy phase and the order is valid  
-  Then the system deducts exactly that Join Empire cost from the Player’s treasury, transfers ownership of all provinces owned by the target to the Player’s Great Power, transfers all units and fleets owned by the target to the Player’s Great Power, removes the target Minor Nation or Tribe from the game, removes all overture state and diplomacy relations involving that target, and logs the outcome with the `logic:` prefix.
+- Given the Player controls a Great Power with a Non-Aggression Pact overture with a target **Minor Nation**, relation score between that GP and that faction is at least 51 (Friendly or Allied), the target owns at least one province, and the Player’s treasury is at least the Join Empire cost (base cost + per-province cost × number of provinces owned by the target)  
+  When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting that Minor Nation in the Diplomacy phase and the order is valid  
+  Then the system deducts exactly that Join Empire cost from the Player’s treasury, transfers ownership of all provinces owned by the target to the Player’s Great Power, transfers all units and fleets owned by the target to the Player’s Great Power, removes the target Minor Nation from the game, removes all overture state and diplomacy relations involving that target, and logs the outcome with the `logic:` prefix.
+
+- Given the Player controls Great Power `A` with a Non-Aggression Pact overture with a target **Tribe** `T`, relation score between `A` and `T` is at least 51, `T` owns at least one province, and `A`'s treasury is at least the Join Empire cost  
+  When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting `T` in the Diplomacy phase and the order is valid  
+  Then the system deducts exactly that Join Empire cost from `A`'s treasury, records a `ColonyState { tribeId: T, colonyOfGpId: A, sinceTurn: t }` on `Game.colonyStates`, does **not** transfer ownership of `T`'s provinces, units, or fleets, keeps `T` listed in `tribes`, and preserves all overture state and diplomacy relations involving `T`.
+
+- Given Tribe `T` is already a colony of Great Power `A` (a `ColonyState` for `T` exists)  
+  When a Tribe Join Empire overture for `T` resolves again (for the same or a different Great Power)  
+  Then `Game.colonyStates` contains exactly one `ColonyState` whose `tribeId` is `T` (the prior record is replaced, not duplicated).
 
 - Given the Player controls a Great Power that currently has a Consulate or Embassy overture stage recorded with a target Minor Nation or Tribe and the current relation state between those two factions changes from `AT_PEACE` to `AT_WAR` in turn `t`  
   When the Diplomacy phase for turn `t` completes  

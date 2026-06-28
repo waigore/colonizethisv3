@@ -223,6 +223,42 @@ void main() {
     });
   });
 
+  group('ColonyState', () {
+    const colony = ColonyState(
+      tribeId: 'tribe1',
+      colonyOfGpId: 'gp1',
+      sinceTurn: 4,
+    );
+
+    test('toJson/fromJson round-trips', () {
+      final restored = ColonyState.fromJson(colony.toJson());
+      expect(restored, colony);
+      expect(restored.tribeId, 'tribe1');
+      expect(restored.colonyOfGpId, 'gp1');
+      expect(restored.sinceTurn, 4);
+    });
+
+    test('fromJson defaults sinceTurn to 0 when missing', () {
+      final restored = ColonyState.fromJson(const {
+        'tribeId': 'tribe1',
+        'colonyOfGpId': 'gp1',
+      });
+      expect(restored.sinceTurn, 0);
+    });
+
+    test('copyWith and equality', () {
+      final updated = colony.copyWith(colonyOfGpId: 'gp2');
+      expect(updated.colonyOfGpId, 'gp2');
+      expect(updated.tribeId, 'tribe1');
+      expect(colony == updated, isFalse);
+      expect(
+        colony.hashCode,
+        const ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 4)
+            .hashCode,
+      );
+    });
+  });
+
   group('DiplomaticEvent', () {
     const event = DiplomaticEvent(
       turn: 7,

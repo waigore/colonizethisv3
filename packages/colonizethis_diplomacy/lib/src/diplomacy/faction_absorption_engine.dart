@@ -40,6 +40,39 @@ abstract final class FactionAbsorptionEngine {
       kind: _AbsorptionKind.greatPower,
     );
   }
+
+  /// Marks Tribe [tribeId] as a colony of [gpId] via Tribe Join Empire.
+  ///
+  /// Unlike [absorbMinorOrTribeIntoGp], the Tribe is **not** absorbed: it stays
+  /// in [Game.tribes], its provinces/units/fleets are not transferred, and its
+  /// overtures/relations are preserved. Only the Join Empire cost is deducted
+  /// from the GP treasury and a [ColonyState] is recorded (one per Tribe; an
+  /// existing colony record for the same Tribe is replaced).
+  /// SPEC/game/diplomacy.md § GP–Minor/Tribe Rules (Join Empire → colony).
+  static Game markTribeAsColony(
+    Game game,
+    String gpId,
+    String tribeId,
+    int turn,
+  ) {
+    final cost = joinEmpireCostForMinorOrTribe(game, tribeId);
+    final players = List<Player>.from(game.players);
+    final gpIdx = indexByKey(players, (p) => p.id)[gpId] ?? -1;
+    if (gpIdx >= 0) {
+      players[gpIdx] = players[gpIdx].copyWith(
+        treasury: players[gpIdx].treasury - cost,
+      );
+    }
+
+    final colonies = game.colonyStates
+        .where((c) => c.tribeId != tribeId)
+        .toList()
+      ..add(
+        ColonyState(tribeId: tribeId, colonyOfGpId: gpId, sinceTurn: turn),
+      );
+
+    return game.withPlayers(players).copyWith(colonyStates: colonies);
+  }
 }
 
 enum _AbsorptionKind { minorOrTribe, greatPower }
