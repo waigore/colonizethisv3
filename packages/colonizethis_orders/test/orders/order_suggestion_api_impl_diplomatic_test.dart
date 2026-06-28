@@ -79,6 +79,92 @@ void main() {
     });
 
     test(
+      'returns breakAlliance toward GP when a formal alliance exists at peace',
+      () {
+        const api = DefaultOrderSuggestionAPI();
+        const topology = MapTopology(nodes: [], edges: []);
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              state: RelationState.atPeace,
+              level: RelationLevel.allied,
+              formalAlliance: true,
+            ),
+          ],
+        );
+        final view = buildPlayerView(game, topology, 'gp1');
+        final list = api.suggestDiplomaticOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        final toGp2 = list.where((o) => o.targetFactionId == 'gp2').toList();
+        expect(toGp2, hasLength(1));
+        expect(toGp2.single.type, DiplomaticOrderType.breakAlliance);
+        // Appendability: the emitted break-alliance suggestion validates.
+        final eng = OrderEngine();
+        expect(
+          eng
+              .addDiplomaticOrderWithContext(game, topology, 'gp1', toGp2.single)
+              .isAccepted,
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'does not return breakAlliance when relation level is allied but no formal alliance',
+      () {
+        const api = DefaultOrderSuggestionAPI();
+        const topology = MapTopology(nodes: [], edges: []);
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              state: RelationState.atPeace,
+              level: RelationLevel.allied,
+            ),
+          ],
+        );
+        final view = buildPlayerView(game, topology, 'gp1');
+        final list = api.suggestDiplomaticOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        expect(
+          list.where((o) => o.type == DiplomaticOrderType.breakAlliance),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
       'does not suggest diplomatic orders for completely unknown factions',
       () {
         const api = DefaultOrderSuggestionAPI();

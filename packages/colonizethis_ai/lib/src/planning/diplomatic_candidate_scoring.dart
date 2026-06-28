@@ -109,6 +109,16 @@ List<int> computeDiplomaticCandidateScores({
         s += getAgendaAllianceAcceptanceModifier(agendaId);
         s += (thresholds.allianceTendency - 50);
         break;
+      case DiplomaticOrderType.breakAlliance:
+        // Voluntary alliance break (Refs #3758 R6). Backstabber/warmonger lean
+        // toward breaking (treaty-breaking modifier); the isolationist
+        // "cancels alliances" so its negative alliance-acceptance modifier
+        // inverts to a break boost, while peacemaker and high alliance-tendency
+        // personalities resist. SPEC/ai/hidden-agendas.md § Treaty breaking.
+        s += getAgendaTreatyBreakingModifier(agendaId);
+        s -= getAgendaAllianceAcceptanceModifier(agendaId);
+        s -= (thresholds.allianceTendency - 50);
+        break;
       case DiplomaticOrderType.declareWar:
         s = _scoreDeclareWarDiplomaticOrder(
           order: o,
