@@ -1,13 +1,16 @@
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 
 /// Observer seed-42 per-GP Old World conquest gate (Refs #2509).
+///
+/// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+/// step 2): the init / handoff / 100-turn resolve loop is owned by
+/// `test/support/seed42_observer_campaign.dart`; this test reads only the
+/// campaign start / end game to assert per-GP Old World gains.
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -16,55 +19,21 @@ void main() {
   test(
     'seed 42 turn 100: every GP gains at least 3 Old World provinces',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
-      );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
+      final campaign = runSeed42ObserverCampaign(turns: 100);
+
+      int owProvincesFor(Game game, String gpId) => game
+          .worldState.oldWorld.provinces
+          .where((p) => p.ownerId == gpId)
+          .length;
+
       final owStart = <String, int>{};
-      for (var i = 1; i <= 6; i++) {
-        final gpId = 'gp$i';
-        owStart[gpId] = game.worldState.oldWorld.provinces
-            .where((p) => p.ownerId == gpId)
-            .length;
-      }
-      for (var t = 0; t < 100; t++) {
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-        );
-        final merged = mergeOrderLists(
-          humanOrders: const Orders(),
-          aiOrders: fullAi.orders,
-        );
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        game = (result as TurnResolutionComplete).game;
-      }
       final gains = <String, int>{};
       for (var i = 1; i <= 6; i++) {
         final gpId = 'gp$i';
-        final end = game.worldState.oldWorld.provinces
-            .where((p) => p.ownerId == gpId)
-            .length;
-        gains[gpId] = end - owStart[gpId]!;
+        owStart[gpId] = owProvincesFor(campaign.initialGame, gpId);
+        gains[gpId] = owProvincesFor(campaign.finalGame, gpId) - owStart[gpId]!;
       }
+
       for (var i = 1; i <= 6; i++) {
         final gpId = 'gp$i';
         final gain = gains[gpId]!;
