@@ -324,7 +324,7 @@ void main() {
     });
 
     testWidgets(
-      'AC: One-word relation state shown (Hostile/Unfriendly/Cordial/Friendly), score hidden',
+      'AC: One-word 10-step ladder relation state shown, score hidden (Refs #3753)',
       (WidgetTester tester) async {
         await _bindTallTestSurface(tester);
         await tester.pumpWidget(
@@ -336,18 +336,14 @@ void main() {
         );
         await _pumpPanelBuilt(tester);
 
-        final displayLabels = ['Hostile', 'Unfriendly', 'Cordial', 'Friendly'];
-        final hasDisplayLabel = displayLabels.any(
-          (label) => find.textContaining(label).evaluate().isNotEmpty,
-        );
-        expect(
-          hasDisplayLabel,
-          isTrue,
-          reason: 'Panel must show one of $displayLabels',
-        );
+        // Fixture scores map onto the 10-step ladder: score 50 → Neutral
+        // (step 6), score 20 → Distrustful (step 3).
+        expect(find.textContaining('Neutral'), findsWidgets);
+        expect(find.textContaining('Distrustful'), findsWidgets);
 
+        // The hidden decimal score is never surfaced as text.
         expect(find.textContaining(' (50)'), findsNothing);
-        expect(find.text('Neutral'), findsNothing);
+        expect(find.textContaining(' (20)'), findsNothing);
       },
     );
 
