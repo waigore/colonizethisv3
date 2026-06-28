@@ -302,6 +302,22 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the panel displays the current relation  
   Then the system shows the **one-word relation state** (Hostile, Unfriendly, Cordial, or Friendly) derived from the relation score per the Player-facing relation display table (0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly), and does **not** display the numeric relation score.
 
+- Given a relation score of `22.4`  
+  When the system derives the 10-step relation meter step via `relationScoreToMeterStep`  
+  Then the system returns step `3` (the band `[20, 30)` per the 10-step relation meter table).
+
+- Given a relation score of exactly `10`  
+  When the system derives the 10-step relation meter step  
+  Then the system returns step `2`, because each band is half-open `[low, high)` and the boundary value maps to the higher step (a score of `9.9` returns step `1`).
+
+- Given a relation score of exactly `100`  
+  When the system derives the 10-step relation meter step  
+  Then the system returns step `10`, because the final band `[90, 100]` is fully closed and includes the maximum score (a score of `90` also returns step `10`, and a score of `0` returns step `1`).
+
+- Given a relation score outside the valid range (for example `-5` or `105`)  
+  When the system derives the 10-step relation meter step  
+  Then the system clamps the score to `[0, 100]` first and returns step `1` for values below `0` and step `10` for values above `100`.
+
 - Given the user views the diplomacy panel and the list includes at least one other Great Power  
   When the panel displays each Great Power row  
   Then the system derives that GP’s strength from the Great Power power score formula (province count, regiment strength, ship count with default weights) and presents it as a **relative power line** comparing the GP to the human player. The presentation (signed percentage, tier word, red/green semantic, placement) is defined by [SPEC/ui/diplomacy-panel.md](../ui/diplomacy-panel.md) § Relative power line: a GP stronger than the human player is shown in **red**, a GP at or below the human player in **green**. The underlying power score formula here remains authoritative; the tier buckets are a display-only refinement and do not feed war-desire logic.
@@ -339,6 +355,25 @@ The diplomacy panel shows instead a **one-word relation state** derived from the
 | 70–100 | Friendly |
 
 The Flutter app uses this mapping for the player-facing label. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
+
+#### 10-step relation meter
+
+For the diplomacy panel and detail screen, the hidden relation score additionally maps to a **10-step meter** (Refs #3753 R13). The score range `[0, 100]` is divided into **10 equal half-open bands** `[low, high)`; each boundary value maps to the **higher** step, and the final step is fully closed so the maximum score `100` is included:
+
+| Step | Score band |
+|------|------------|
+| 1 | `[0, 10)` |
+| 2 | `[10, 20)` |
+| 3 | `[20, 30)` |
+| 4 | `[30, 40)` |
+| 5 | `[40, 50)` |
+| 6 | `[50, 60)` |
+| 7 | `[60, 70)` |
+| 8 | `[70, 80)` |
+| 9 | `[80, 90)` |
+| 10 | `[90, 100]` |
+
+The step is derived by `relationScoreToMeterStep(score)` (`colonizethis_diplomacy`), operating on the **raw** score with no intermediate rounding; the score is first clamped to `[0, 100]`, so a value below `0` maps to step 1 and a value above `100` maps to step 10. The numeric step boundaries above are fixed by this rule. The **per-step label ladder** (10 words) and the red→green gradient **colors** are a UI concern delivered through the screen-documentation pass (`document-app-ui`); this section fixes only the numeric step model. The four-band one-word label table above remains the active player-facing label until the UI meter is delivered.
 
 ### Great Power power score
 

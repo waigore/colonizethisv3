@@ -115,6 +115,15 @@ const int relationScoreDisplayHostileMax = 29;
 const int relationScoreDisplayUnfriendlyMax = 49;
 const int relationScoreDisplayCordialMax = 69;
 
+/// Number of discrete steps in the player-facing 10-step relation meter.
+/// SPEC/game/diplomacy.md § Player-facing relation display — 10-step relation meter (Refs #3753 R13).
+const int relationMeterStepCount = 10;
+
+/// Score width of each relation-meter step: the `[relationScoreMin, relationScoreMax]`
+/// range divided into [relationMeterStepCount] equal half-open bands.
+const int relationMeterStepWidth =
+    (relationScoreMax - relationScoreMin) ~/ relationMeterStepCount;
+
 /// Relation score change on war declaration (protest path). Clamped to [relationScoreMin, relationScoreMax].
 const int relationScoreWarDelta = 10;
 
@@ -187,6 +196,22 @@ String relationScoreToDisplayLabel(num score) {
   if (clamped <= relationScoreDisplayUnfriendlyMax) return 'Unfriendly';
   if (clamped <= relationScoreDisplayCordialMax) return 'Cordial';
   return 'Friendly';
+}
+
+/// Maps a relation [score] to a 1-based step in `[1, relationMeterStepCount]`
+/// for the player-facing 10-step relation meter.
+/// SPEC/game/diplomacy.md § Player-facing relation display — 10-step relation meter (Refs #3753 R13).
+///
+/// Bands are half-open `[low, high)`, so each boundary value maps to the higher
+/// step (e.g. `10` → step 2); the final band `[90, 100]` is fully closed so the
+/// maximum score `100` maps to step 10. The score is clamped to
+/// `[relationScoreMin, relationScoreMax]` first, so values below `0` map to
+/// step 1 and values above `100` map to step 10. Operates on the raw decimal
+/// score with no intermediate rounding (SPEC/game/diplomacy.md § Relation Model).
+int relationScoreToMeterStep(num score) {
+  final clamped = score.clamp(relationScoreMin, relationScoreMax);
+  final step = (clamped / relationMeterStepWidth).floor() + 1;
+  return step > relationMeterStepCount ? relationMeterStepCount : step;
 }
 
 /// Directed GP → Minor/Tribe overture rows, keyed by `_overtureLookupKey`.
