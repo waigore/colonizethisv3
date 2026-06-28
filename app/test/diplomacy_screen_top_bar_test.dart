@@ -2,7 +2,6 @@
 // (Refs #2863 R1–R3). SPEC/ui/diplomacy-panel.md § Top bar.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -14,9 +13,9 @@ import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
@@ -42,7 +41,8 @@ void main() {
     double width = 900,
     double height = 700,
   }) {
-    return ProviderScope(
+    return buildAppShell(
+      viewport: Size(width, height),
       overrides: [
         currentGameProvider.overrideWith(() => CurrentGameNotifier(baseGame)),
         currentOrdersProvider.overrideWith(
@@ -54,31 +54,25 @@ void main() {
           return bus;
         }),
       ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: Size(width, height)),
-          child: Builder(
-            builder: (context) {
-              return underlyingRoute ??
-                  Scaffold(
-                    body: Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => diplomacyScreen,
-                            ),
-                          );
-                        },
-                        // ignore: avoid_hardcoded_strings_in_widgets
-                        child: const Text('open diplomacy'),
-                      ),
-                    ),
-                  );
-            },
-          ),
-        ),
+      child: Builder(
+        builder: (context) {
+          return underlyingRoute ??
+              Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => diplomacyScreen,
+                        ),
+                      );
+                    },
+                    // ignore: avoid_hardcoded_strings_in_widgets
+                    child: const Text('open diplomacy'),
+                  ),
+                ),
+              );
+        },
       ),
     );
   }

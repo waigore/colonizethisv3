@@ -157,15 +157,36 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
     // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
     // human intervener applies a supplied decision or suspends pending;
     // otherwise the AI rule resolves immediately.
-    if (isTargetHumanGp(g, interveningId)) {
-      final d = findHumanDecision<InterventionDecision>(
-        interventionDecisions,
-        (d) =>
-            d.aggressorGpId == aggressorGpId &&
-            d.defenderMinorOrTribeId == defenderMinorOrTribeId &&
-            d.interveningGpId == interveningId,
-      );
-      if (d == null) {
+    g = resolveHumanGatedDecision<InterventionDecision, Game>(
+      isHumanControlled: isTargetHumanGp(g, interveningId),
+      decisions: interventionDecisions,
+      matches: (d) =>
+          d.aggressorGpId == aggressorGpId &&
+          d.defenderMinorOrTribeId == defenderMinorOrTribeId &&
+          d.interveningGpId == interveningId,
+      onAiResolve: () {
+        final aiChoice = _chooseAiIntervention(
+          g,
+          interveningId,
+          aggressorGpId,
+          defenderMinorOrTribeId,
+          turn,
+        );
+        final next = applyInterventionAgainstAggressor(
+          g,
+          aggressorGpId: aggressorGpId,
+          defenderMinorOrTribeId: defenderMinorOrTribeId,
+          interveningGpId: interveningId,
+          choice: aiChoice,
+          factionMembership: factionMembership,
+          eventTally: eventTally,
+        );
+        recordedChoiceKeys.add(
+          _interventionChoiceKey(turn, interveningId, aggressorGpId),
+        );
+        return next;
+      },
+      onPending: () {
         pending.add(
           InterventionPrompt(
             aggressorGpId: aggressorGpId,
@@ -173,40 +194,23 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
             interveningGpId: interveningId,
           ),
         );
-        continue;
-      }
-      g = applyInterventionAgainstAggressor(
-        g,
-        aggressorGpId: aggressorGpId,
-        defenderMinorOrTribeId: defenderMinorOrTribeId,
-        interveningGpId: interveningId,
-        choice: d.choice,
-        factionMembership: factionMembership,
-        eventTally: eventTally,
-      );
-      recordedChoiceKeys.add(
-        _interventionChoiceKey(turn, interveningId, aggressorGpId),
-      );
-      continue;
-    }
-    final aiChoice = _chooseAiIntervention(
-      g,
-      interveningId,
-      aggressorGpId,
-      defenderMinorOrTribeId,
-      turn,
-    );
-    g = applyInterventionAgainstAggressor(
-      g,
-      aggressorGpId: aggressorGpId,
-      defenderMinorOrTribeId: defenderMinorOrTribeId,
-      interveningGpId: interveningId,
-      choice: aiChoice,
-      factionMembership: factionMembership,
-      eventTally: eventTally,
-    );
-    recordedChoiceKeys.add(
-      _interventionChoiceKey(turn, interveningId, aggressorGpId),
+        return g;
+      },
+      onHumanDecision: (d) {
+        final next = applyInterventionAgainstAggressor(
+          g,
+          aggressorGpId: aggressorGpId,
+          defenderMinorOrTribeId: defenderMinorOrTribeId,
+          interveningGpId: interveningId,
+          choice: d.choice,
+          factionMembership: factionMembership,
+          eventTally: eventTally,
+        );
+        recordedChoiceKeys.add(
+          _interventionChoiceKey(turn, interveningId, aggressorGpId),
+        );
+        return next;
+      },
     );
   }
   if (pending.isNotEmpty) {

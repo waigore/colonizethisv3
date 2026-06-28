@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'turn_event_sink.dart';
 import 'turn_resolution_seeds.dart';
 
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
@@ -19,8 +20,7 @@ Game runOneLandBattle(
   int battleIndex,
   int seed,
   CombatPhaseGeneralLedger combatGeneralLedger, {
-  void Function(DialogueEvent)? onDialogue,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink sink = const TurnEventSink(),
 }) {
   state = applyLandBattleAttackTreasuryCosts(state, ctx);
 
@@ -100,7 +100,7 @@ Game runOneLandBattle(
         turn,
         battleIndex,
         seed,
-        onDialogue,
+        sink,
       );
     } else {
       final victorId = qbResult.winner == QuickBattleWinner.defender
@@ -121,7 +121,7 @@ Game runOneLandBattle(
           turn,
           battleIndex,
           seed,
-          onDialogue,
+          sink,
         );
       }
     }
@@ -174,12 +174,12 @@ Game runOneLandBattle(
       turn,
       battleIndex,
       seed,
-      onDialogue,
+      sink,
     );
   }
   // Emit combat_result event for this battle
-  if (onGameEvent != null && winnerId != null && ctx.attackers.isNotEmpty) {
-    deliverGameEvent(
+  if (sink.hasGameEvent && winnerId != null && ctx.attackers.isNotEmpty) {
+    sink.emit(
       CombatResultEvent(
         provinceId: ctx.provinceId,
         attackerId: ctx.attackers.first.factionId,
@@ -188,7 +188,6 @@ Game runOneLandBattle(
         turnNumber: turn,
         casualties: casualties,
       ),
-      onGameEvent: onGameEvent,
     );
   }
 
@@ -203,9 +202,9 @@ void _emitLandBattleDialogue(
   int turn,
   int battleIndex,
   int seed,
-  void Function(DialogueEvent)? onDialogue,
+  TurnEventSink sink,
 ) {
-  if (onDialogue == null) return;
+  if (!sink.hasDialogue) return;
   final dialogueSeed =
       (seed ^ (battleIndex * kTurnResolutionSeedMix)) & kTurnResolutionLcgMask;
   final events = dialogueEventsForLandBattleResult(
@@ -218,7 +217,7 @@ void _emitLandBattleDialogue(
   );
   if (events.isNotEmpty) {
     for (final e in events) {
-      onDialogue(e);
+      sink.dialogue(e);
     }
   }
 }

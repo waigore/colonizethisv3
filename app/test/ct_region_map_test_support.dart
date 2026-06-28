@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'support/map_view_fixture.dart';
 
 /// Minimal view for map tests in [CtMapVisibilityMode.playerConstrained].
 const ctRegionMapTestPlayerView = PlayerView(
@@ -20,11 +21,19 @@ const ctRegionMapTestPlayerView = PlayerView(
   diplomacyByOtherId: {},
 );
 
+// Refs #3656: the committed seed-42 map-view fixture replaces the ~7-11s
+// procedural `getDebugInitGameResult()` map generation these helpers previously
+// paid once per consuming test isolate. Decoded once and cached for reuse.
+InitGameMapViewData? _cachedFixtureMapViewData;
+
+InitGameMapViewData _fixtureMapViewData() =>
+    _cachedFixtureMapViewData ??= loadSeed42MapViewData();
+
 RegionMapViewData ctRegionMapTestOldWorldRegion() =>
-    getDebugInitGameResult().mapViewData.oldWorld;
+    _fixtureMapViewData().oldWorld;
 
 RegionMapViewData ctRegionMapTestNewWorldRegion() =>
-    getDebugInitGameResult().mapViewData.newWorld;
+    _fixtureMapViewData().newWorld;
 
 Widget ctRegionMapTestHarness({
   required RegionMapViewData region,

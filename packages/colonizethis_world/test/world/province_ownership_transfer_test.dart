@@ -3,6 +3,8 @@ import 'package:colonizethis_world/src/world/province_ownership_transfer.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   group('applyCanonicalSingleProvinceOwnershipTransfer', () {
     test('transfers province owner and resident military regiments', () {
@@ -10,34 +12,29 @@ void main() {
       const pid = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: pid, regionId: ow, ownerId: 'a'),
-            ],
-            units: [
-              Unit(
-                id: 'r1',
-                type: 'grenadiers',
-                ownerId: 'a',
-                locationProvinceId: pid,
-              ),
-              Unit(
-                id: 'r2',
-                type: 'grenadiers',
-                ownerId: 'b',
-                locationProvinceId: pid,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {pid: [tileKey]},
-          },
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: pid, regionId: ow, ownerId: 'a'),
+          ],
+          units: [
+            Unit(
+              id: 'r1',
+              type: 'grenadiers',
+              ownerId: 'a',
+              locationProvinceId: pid,
+            ),
+            Unit(
+              id: 'r2',
+              type: 'grenadiers',
+              ownerId: 'b',
+              locationProvinceId: pid,
+            ),
+          ],
         ),
+        tileKeysByRegionAndProvince: const {
+          ow: {pid: [tileKey]},
+        },
         players: const [
           Player(id: 'a', displayName: 'A', isHuman: true),
           Player(id: 'b', displayName: 'B', isHuman: true),
@@ -64,33 +61,28 @@ void main() {
       const ow = kRegionOldWorld;
       const pid = '$ow|P1';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(id: pid, regionId: ow, ownerId: 'a'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f_port',
-              ownerId: 'a',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-              inPortAtProvinceId: pid,
-            ),
-            Fleet(
-              id: 'f_sea',
-              ownerId: 'a',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-              seaZoneId: 's1',
-            ),
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: pid, regionId: ow, ownerId: 'a'),
           ],
         ),
+        fleets: [
+          Fleet(
+            id: 'f_port',
+            ownerId: 'a',
+            regionId: ow,
+            shipTypeIds: const ['carrack'],
+            inPortAtProvinceId: pid,
+          ),
+          Fleet(
+            id: 'f_sea',
+            ownerId: 'a',
+            regionId: ow,
+            shipTypeIds: const ['carrack'],
+            seaZoneId: 's1',
+          ),
+        ],
         players: const [
           Player(id: 'a', displayName: 'A', isHuman: true),
           Player(id: 'b', displayName: 'B', isHuman: true),
@@ -115,27 +107,22 @@ void main() {
       const pid = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(id: pid, regionId: ow, ownerId: 'a'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          purchasedTilesByTileKey: const {
-            tileKey: 'buyer',
-            'oldWorld|P2|0|0': 'buyer',
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              pid: [tileKey],
-              '$ow|P2': const ['oldWorld|P2|0|0'],
-            },
-          },
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: pid, regionId: ow, ownerId: 'a'),
+          ],
         ),
+        purchasedTilesByTileKey: const {
+          tileKey: 'buyer',
+          'oldWorld|P2|0|0': 'buyer',
+        },
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            pid: [tileKey],
+            '$ow|P2': ['oldWorld|P2|0|0'],
+          },
+        },
         players: const [
           Player(id: 'a', displayName: 'A', isHuman: true),
           Player(id: 'b', displayName: 'B', isHuman: true),
@@ -158,25 +145,20 @@ void main() {
       const pid = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(id: pid, regionId: ow, ownerId: 'a'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          spyRevealTurnsByPlayer: const {
-            'a': {pid: 3},
-            'b': {pid: 2},
-            'c': {'oldWorld|OTHER': 1},
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {pid: [tileKey]},
-          },
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: pid, regionId: ow, ownerId: 'a'),
+          ],
         ),
+        spyRevealTurnsByPlayer: const {
+          'a': {pid: 3},
+          'b': {pid: 2},
+          'c': {'oldWorld|OTHER': 1},
+        },
+        tileKeysByRegionAndProvince: const {
+          ow: {pid: [tileKey]},
+        },
         players: const [
           Player(id: 'a', displayName: 'A', isHuman: true),
           Player(id: 'b', displayName: 'B', isHuman: true),
@@ -200,16 +182,11 @@ void main() {
       const ow = kRegionOldWorld;
       const pid = '$ow|P1';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(id: pid, regionId: ow, ownerId: 'x'),
-            ],
-          ),
-          newWorld: const RegionData(),
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: pid, regionId: ow, ownerId: 'x'),
+          ],
         ),
         players: const [
           Player(id: 'a', displayName: 'A', isHuman: true),
@@ -233,24 +210,19 @@ void main() {
       const p1 = '$ow|P1';
       const p2 = '$ow|P2';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: p1, regionId: ow, ownerId: 'm'),
-              Province(id: p2, regionId: ow, ownerId: 'm'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              p1: ['$ow|P1|0|0'],
-              p2: ['$ow|P2|0|0'],
-            },
-          },
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: p1, regionId: ow, ownerId: 'm'),
+            Province(id: p2, regionId: ow, ownerId: 'm'),
+          ],
         ),
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            p1: ['$ow|P1|0|0'],
+            p2: ['$ow|P2|0|0'],
+          },
+        },
         players: const [
           Player(id: 'm', displayName: 'M', isHuman: true),
           Player(id: 'gp', displayName: 'GP', isHuman: true),
@@ -273,17 +245,12 @@ void main() {
       const p1 = '$ow|P1';
       const p2 = '$ow|P2';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: p1, regionId: ow, ownerId: 'x'),
-              Province(id: p2, regionId: ow, ownerId: 'm'),
-            ],
-          ),
-          newWorld: const RegionData(),
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: p1, regionId: ow, ownerId: 'x'),
+            Province(id: p2, regionId: ow, ownerId: 'm'),
+          ],
         ),
         players: const [
           Player(id: 'm', displayName: 'M', isHuman: true),
@@ -309,46 +276,41 @@ void main() {
       const pid = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: pid, regionId: ow, ownerId: 'a'),
-            ],
-            units: [
-              Unit(
-                id: 'r1',
-                type: 'grenadiers',
-                ownerId: 'a',
-                locationProvinceId: pid,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: pid, regionId: ow, ownerId: 'a'),
+          ],
+          units: [
+            Unit(
+              id: 'r1',
+              type: 'grenadiers',
               ownerId: 'a',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-              inPortAtProvinceId: pid,
+              locationProvinceId: pid,
             ),
           ],
-          purchasedTilesByTileKey: const {tileKey: 'x'},
-          spyRevealTurnsByPlayer: const {
-            'a': {pid: 1},
-            'b': {pid: 1},
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {pid: [tileKey]},
-          },
-          playerVisibilityByTile: const {
-            'a': {tileKey: 'fullyVisible'},
-            'b': {},
-          },
         ),
+        fleets: [
+          Fleet(
+            id: 'f1',
+            ownerId: 'a',
+            regionId: ow,
+            shipTypeIds: const ['carrack'],
+            inPortAtProvinceId: pid,
+          ),
+        ],
+        purchasedTilesByTileKey: const {tileKey: 'x'},
+        spyRevealTurnsByPlayer: const {
+          'a': {pid: 1},
+          'b': {pid: 1},
+        },
+        tileKeysByRegionAndProvince: const {
+          ow: {pid: [tileKey]},
+        },
+        playerVisibilityByTile: const {
+          'a': {tileKey: 'fullyVisible'},
+          'b': {},
+        },
         players: const [
           Player(id: 'a', displayName: 'A', isHuman: true),
           Player(id: 'b', displayName: 'B', isHuman: true),

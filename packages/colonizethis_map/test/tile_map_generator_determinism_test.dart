@@ -2,11 +2,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('TileMapGenerator determinism (Refs #2489)', () {
     test('fixed seed yields identical grid and topology on repeat', () {
       const seed = 248_901;
-      final params = TileMapParams(
+      final params = genParams(
         width: 48,
         height: 36,
         seed: seed,

@@ -34,7 +34,6 @@
 // `skip`ped until either (a) #2848 (or the follow-up filed alongside)
 // closes the colonial improvement gap on seed 42, or (b) the threshold
 // is lowered intentionally via a SPEC change.
-import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

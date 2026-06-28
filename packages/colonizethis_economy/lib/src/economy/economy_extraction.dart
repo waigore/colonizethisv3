@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'commodity_totals.dart';
+
 /// Extraction and auto-transport helpers.
 /// SPEC/game/extraction-and-improvements.md
 /// SPEC/game/stockpiles-and-production.md
@@ -25,7 +27,7 @@ void logExtractionAutoTransportLand(
   Map<CommodityId, int> land,
 ) {
   if (land.isEmpty) return;
-  final totalUnits = land.values.fold<int>(0, (a, b) => a + b);
+  final totalUnits = sumValues(land.values);
   final detail = land.entries.map((e) => '${e.key}=${e.value}').join(',');
   economyLog.d(
     'extraction auto_transport land playerId=$playerId totalUnits=$totalUnits detail=$detail',

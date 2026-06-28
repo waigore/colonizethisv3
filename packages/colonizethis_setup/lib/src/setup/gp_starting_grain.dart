@@ -5,6 +5,7 @@ import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'province_tile_ranking.dart';
 import 'town_capital_occupancy.dart';
 
 /// Thrown when the capital province cannot host four bootstrap grain farms on land tiles.
@@ -24,28 +25,12 @@ List<String> selectGreatPowerBootstrapGrainTileKeysLandOnly({
   required CapitalTile capital,
   Set<String> forbiddenTileKeys = const {},
 }) {
-  final regionId = capital.regionId;
-  final localId = ProvinceId.isPrefixed(capital.provinceId)
-      ? ProvinceId.localIdFrom(capital.provinceId)
-      : capital.provinceId;
-  final ranked = <(int dist, int y, int x, String key)>[];
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      if (map.cell(x, y) != localId) continue;
-      final dist = (x - capital.x).abs() + (y - capital.y).abs();
-      final key = CapitalTile.tileKey(regionId, capital.provinceId, x, y);
-      if (forbiddenTileKeys.contains(key)) continue;
-      ranked.add((dist, y, x, key));
-    }
-  }
-  ranked.sort((a, b) {
-    final c = a.$1.compareTo(b.$1);
-    if (c != 0) return c;
-    final cy = a.$2.compareTo(b.$2);
-    if (cy != 0) return cy;
-    return a.$3.compareTo(b.$3);
-  });
-  return ranked.take(4).map((e) => e.$4).toList();
+  return rankProvinceTileKeysByDistance(
+    map: map,
+    capital: capital,
+    accept: (x, y, key) => !forbiddenTileKeys.contains(key),
+    maxTiles: 4,
+  );
 }
 
 /// After capitals and §7d town assignment: place four `grain` / improvement 1 for each

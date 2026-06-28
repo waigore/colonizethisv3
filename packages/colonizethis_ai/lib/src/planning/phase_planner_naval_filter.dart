@@ -48,7 +48,11 @@ import 'colonial_phase_planner.dart'
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_naval_plans.dart';
-import 'planning_helpers.dart' show scaleWeightedBonus;
+import 'planning_helpers.dart'
+    show
+        resolveFromPhasePlan,
+        resolvePhaseNewWorldAcquisitionWeight,
+        scaleWeightedBonus;
 
 /// Outcome of [resolvePhaseNavalDirective] for one player turn.
 class PhaseNavalDirectiveResolution {
@@ -89,28 +93,34 @@ class PhaseNavalDirectiveResolution {
 /// no order emission.
 PhaseNavalDirectiveResolution resolvePhaseNavalDirective({
   required PhasePlanOutcome phasePlan,
-}) {
-  switch (phasePlan.phase) {
-    case ObserverGoalPhase.expand:
-    case ObserverGoalPhase.develop:
-      return PhaseNavalDirectiveResolution.defaultResolution;
-    case ObserverGoalPhase.colonial:
-      final ColonialNavalPlan plan = colonialNavalPlanFromPhasePlan(phasePlan);
-      return PhaseNavalDirectiveResolution(
-        colonialPreferenceActive: true,
-        priorityNwProvinceIdsSorted:
-            plan.priorityInvasionTransportProvinceIdsSorted,
-      );
-    case ObserverGoalPhase.colonialLite:
-      final ColonialLiteNavalPlan plan = colonialLiteNavalPlanFromPhasePlan(
-        phasePlan,
-      );
-      return PhaseNavalDirectiveResolution(
-        colonialPreferenceActive: true,
-        priorityNwProvinceIdsSorted: plan.priorityNwProvinceIdsSorted,
-      );
-  }
-}
+}) => resolveFromPhasePlan(
+  phasePlan: phasePlan,
+  defaultResolution: PhaseNavalDirectiveResolution.defaultResolution,
+  project: (plan) {
+    switch (plan.phase) {
+      case ObserverGoalPhase.expand:
+      case ObserverGoalPhase.develop:
+        return null;
+      case ObserverGoalPhase.colonial:
+        final ColonialNavalPlan colonialPlan = colonialNavalPlanFromPhasePlan(
+          plan,
+        );
+        return PhaseNavalDirectiveResolution(
+          colonialPreferenceActive: true,
+          priorityNwProvinceIdsSorted:
+              colonialPlan.priorityInvasionTransportProvinceIdsSorted,
+        );
+      case ObserverGoalPhase.colonialLite:
+        final ColonialLiteNavalPlan colonialLitePlan =
+            colonialLiteNavalPlanFromPhasePlan(plan);
+        return PhaseNavalDirectiveResolution(
+          colonialPreferenceActive: true,
+          priorityNwProvinceIdsSorted:
+              colonialLitePlan.priorityNwProvinceIdsSorted,
+        );
+    }
+  },
+);
 
 /// Returns the soft-phase NW acquisition weight that drives the naval
 /// planner's colonial-pressure bonus and minimum-weight floor (Refs
@@ -130,7 +140,7 @@ PhaseNavalDirectiveResolution resolvePhaseNavalDirective({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseNavalColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Returns the naval-planner colonial-pressure weight bonus scaled by
 /// the soft-phase NW acquisition weight (Refs #2847 Phase 3 naval

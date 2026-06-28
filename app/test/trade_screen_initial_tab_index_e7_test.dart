@@ -18,16 +18,16 @@
 //    Deal Book stories in the SPEC-pinned order so reviewers can
 //    audit the live ledger chrome.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart' show WidgetbookFolder, WidgetbookUseCase;
+
+import 'support/app_shell_harness.dart';
 
 Game _buildGameForTradeScreen() {
   return Game(
@@ -62,15 +62,7 @@ Future<void> _pumpTradeScreen(
           player: player,
           initialTabIndex: initialTabIndex,
         );
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: screen,
-      ),
-    ),
-  );
-  await tester.pump();
+  await pumpAppShell(tester, child: screen);
 }
 
 void main() {
@@ -161,32 +153,29 @@ void main() {
       'positive initialTabIndex foregrounds the matching tab body on '
       'first frame',
       (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(
-              body: CtTabStrip(
-                initialTabIndex: 1,
-                tabLabels: const <String>['First', 'Second', 'Third'],
-                tabViews: const <Widget>[
-                  Text(
-                    'first-body',
-                    key: ValueKey<String>('tab-body-first'),
-                  ),
-                  Text(
-                    'second-body',
-                    key: ValueKey<String>('tab-body-second'),
-                  ),
-                  Text(
-                    'third-body',
-                    key: ValueKey<String>('tab-body-third'),
-                  ),
-                ],
-              ),
+        await pumpAppShell(
+          tester,
+          child: Scaffold(
+            body: CtTabStrip(
+              initialTabIndex: 1,
+              tabLabels: const <String>['First', 'Second', 'Third'],
+              tabViews: const <Widget>[
+                Text(
+                  'first-body',
+                  key: ValueKey<String>('tab-body-first'),
+                ),
+                Text(
+                  'second-body',
+                  key: ValueKey<String>('tab-body-second'),
+                ),
+                Text(
+                  'third-body',
+                  key: ValueKey<String>('tab-body-third'),
+                ),
+              ],
             ),
           ),
         );
-        await tester.pump();
 
         expect(
           find.byKey(const ValueKey<String>('tab-body-second')),

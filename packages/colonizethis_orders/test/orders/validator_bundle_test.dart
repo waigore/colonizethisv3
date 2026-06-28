@@ -7,8 +7,7 @@ import 'package:colonizethis_orders/src/orders/validator_bundle.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void main() {
   test('createOrderValidators returns wired validators (Refs #2391 AC6)', () {

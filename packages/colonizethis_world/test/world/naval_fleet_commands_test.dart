@@ -2,20 +2,15 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-Game _gameWithFleets(List<Fleet> fleets) {
-  return Game(
-    id: 'g_naval_split',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-      fleets: fleets,
-    ),
-    players: const [
-      Player(id: 'gp_human', displayName: 'Human', isHuman: true),
-    ],
-  );
-}
+import '../test_fixtures.dart';
+
+Game _gameWithFleets(List<Fleet> fleets) => TestFixtures.minimalGame(
+  id: 'g_naval_split',
+  players: const [
+    Player(id: 'gp_human', displayName: 'Human', isHuman: true),
+  ],
+  fleets: fleets,
+);
 
 void main() {
   group('applyNavalSplitFleet', () {

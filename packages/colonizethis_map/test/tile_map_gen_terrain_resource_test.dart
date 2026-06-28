@@ -13,6 +13,8 @@ import 'package:colonizethis_map/src/gen/tile_map_grid_graph.dart';
 import 'package:colonizethis_map/src/gen/tile_map_land_sentinel.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 // Direct unit tests for the standalone terrain-resource family extracted from
 // the former `part of 'tile_map_generator.dart'` fragment (Refs #3588). Each
 // class is constructed directly — no `TileMapGenerator` orchestration — to
@@ -149,7 +151,7 @@ void main() {
 
     test('returns empty when there is no land (negative)', () {
       final placer = MountainRidgePlacer(
-        const TileMapParams(width: 4, height: 4),
+        genParams(width: 4, height: 4),
       );
       final terrainGrid = <List<TerrainType?>>[
         for (var y = 0; y < 4; y++) [for (var x = 0; x < 4; x++) null],
@@ -165,7 +167,7 @@ void main() {
     });
 
     test('places mountains and returns mountain-free remaining land (positive)', () {
-      const params = TileMapParams(width: 12, height: 12, seed: 42);
+      final params = genParams(width: 12, height: 12, seed: 42);
       final placer = MountainRidgePlacer(params);
       final grid = allLandGrid(12, 12);
       final terrainGrid = <List<TerrainType?>>[
@@ -203,7 +205,7 @@ void main() {
         TileMapGenTerrainResource(params, TileMapGridGraph(params));
 
     test('run returns (null, null) and logs skip when resourceRules is null', () {
-      const params = TileMapParams(width: 4, height: 4);
+      final params = genParams(width: 4, height: 4);
       final pass = build(params);
       final lines = <String>[];
       final result = pass.run(
@@ -227,7 +229,7 @@ void main() {
     });
 
     test('assignTerrainAndResources assigns terrain to every land cell', () {
-      const params = TileMapParams(width: 10, height: 10, seed: 42);
+      final params = genParams(width: 10, height: 10, seed: 42);
       final pass = build(params);
       final grid = <List<String>>[
         for (var y = 0; y < 10; y++)
@@ -247,7 +249,7 @@ void main() {
     });
 
     test('assignTerrainAndResources is deterministic for a fixed seed', () {
-      const params = TileMapParams(width: 10, height: 10, seed: 42);
+      final params = genParams(width: 10, height: 10, seed: 42);
       List<List<TerrainType?>> run() {
         final grid = <List<String>>[
           for (var y = 0; y < 10; y++)
@@ -272,7 +274,7 @@ void main() {
     });
 
     test('assignTerrainAndResources on a no-land grid yields empty terrain', () {
-      const params = TileMapParams(width: 4, height: 4, seed: 42);
+      final params = genParams(width: 4, height: 4, seed: 42);
       final pass = build(params);
       final grid = <List<String>>[
         for (var y = 0; y < 4; y++) [for (var x = 0; x < 4; x++) 's1'],

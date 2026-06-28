@@ -25,15 +25,12 @@
 // intentionally out of scope for this in-module pin — the unit pins
 // the deterministic destination filter that the orchestrator consumes.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'test_game_factories.dart';
 
-const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _gp3 = 'gp3';
 const String _minor1 = 'minor1';

@@ -16,12 +16,8 @@
 //     beneath the Tribes heading, and renders no faction-row bodies
 //     (the fixture `Game` has no discovered factions). Refs #3341.
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
@@ -30,24 +26,7 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 
-/// Pre-warm the brass nine-patch into Flame's image cache so the mode
-/// bar button at the bottom of the empty-state panel lays out at its
-/// declared height (mirrors the helper used by the mobile-viewport
-/// test).
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Best-effort: the empty-state assertions below do not require
-    // pixel-perfect chrome, only that the empty-state copy is present
-    // and that no row body is rendered.
-  }
-}
+import 'support/widget_test_assets.dart';
 
 /// Locate the single use-case with [useCaseName] inside the
 /// [WidgetbookFolder] whose name matches [folderName], failing with a
@@ -81,7 +60,7 @@ void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(_preWarmFlameImageCache);
+  setUpAll(preloadNinePatchImage);
 
   group('Diplomacy Panel Widgetbook empty-state story (Refs #2863 S7)', () {
     testWidgets(

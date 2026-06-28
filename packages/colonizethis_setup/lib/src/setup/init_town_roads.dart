@@ -1,17 +1,17 @@
 // SPEC/game/capital-and-connectivity.md § Init town roads; SPEC/program/game-setup-pipeline.md.
 
-import 'dart:collection';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'grid_bfs.dart';
 
 const int _initTownRoadLevel = 1;
 
-/// Neighbor iteration uses [kGridNeighborsCardinal4] ordering so shortest-path
-/// scans align with [_shortestPathOnProvinceTiles] in capital_choice.dart (Refs #2391).
+/// Road BFS shares the [bfsGridParents] skeleton (grid_bfs.dart) so its
+/// [kGridNeighborsCardinal4] neighbor ordering stays aligned with the capital
+/// port-road `_shortestPathOnProvinceTiles` site (Refs #2391).
 
 /// After town assignment: for each faction whose capital lies in a region listed in
 /// [GameSetupConfig.initTownRoadWiringRegionIds], raise road level to at least
@@ -139,7 +139,7 @@ Map<String, String> _coordToTileKey(WorldState ws, String regionId) {
     for (final tk in list) {
       final coords = parseTileKeyCoordinates(tk);
       if (coords == null || coords.regionId != regionId) continue;
-      m['${coords.x}|${coords.y}'] = tk;
+      m[gridCoordKey(coords.x, coords.y)] = tk;
     }
   }
   return m;
@@ -164,6 +164,10 @@ Set<String> _allowedTileKeysForFaction(
 
 /// Returns map tileKey -> predecessor tileKey toward [capitalKey]. [capitalKey] maps to
 /// itself (identity). Unreachable tiles are absent except the capital.
+///
+/// Delegates the 4-neighbor breadth-first walk to the shared [bfsGridParents]
+/// skeleton (grid_bfs.dart) over coordinates, then maps the coord-keyed parent
+/// map back onto canonical tile keys via [coordToKey].
 Map<String, String> _bfsParentsFromCapital({
   required String capitalKey,
   required Set<String> allowed,
@@ -171,28 +175,29 @@ Map<String, String> _bfsParentsFromCapital({
   required int mapWidth,
   required int mapHeight,
 }) {
-  final parent = <String, String>{capitalKey: capitalKey};
-  final queue = Queue<String>()..add(capitalKey);
+  final capitalXY = _parseTileKeyXY(capitalKey);
+  if (capitalXY == null) return <String, String>{capitalKey: capitalKey};
+  final (capX, capY) = capitalXY;
 
-  while (queue.isNotEmpty) {
-    final cur = queue.removeFirst();
-    final xy = _parseTileKeyXY(cur);
-    if (xy == null) continue;
-    final (cx, cy) = xy;
-    for (final d in kGridNeighborsCardinal4) {
-      final nx = cx + d.$1;
-      final ny = cy + d.$2;
-      if (nx < 0 || nx >= mapWidth || ny < 0 || ny >= mapHeight) {
-        continue;
-      }
-      final nk = '$nx|$ny';
-      final nTile = coordToKey[nk];
-      if (nTile == null) continue;
-      if (!allowed.contains(nTile)) continue;
-      if (parent.containsKey(nTile)) continue;
-      parent[nTile] = cur;
-      queue.add(nTile);
-    }
+  final coordParents = bfsGridParents(
+    startX: capX,
+    startY: capY,
+    width: mapWidth,
+    height: mapHeight,
+    passable: (x, y) {
+      final tile = coordToKey[gridCoordKey(x, y)];
+      return tile != null && allowed.contains(tile);
+    },
+  );
+
+  final parent = <String, String>{capitalKey: capitalKey};
+  for (final entry in coordParents.entries) {
+    final tile = coordToKey[entry.key];
+    if (tile == null) continue;
+    final pc = entry.value;
+    final parentTile = coordToKey[gridCoordKey(pc.$1, pc.$2)];
+    if (parentTile == null) continue;
+    parent[tile] = parentTile;
   }
   return parent;
 }

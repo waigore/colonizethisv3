@@ -16,7 +16,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 /// Confirms the new dedicated modules expose the same projection / action
 /// state behavior as the legacy `GameMapAreaStateLogic` static entry points
 /// (forwarders). Heavier scenario coverage lives in the existing
-/// `game_map_area_state_logic_test_part1/2/3_test.dart` suites, which still
+/// `game_map_area_state_logic_part1/2/3_test.dart` suites, which still
 /// drive the public `GameMapAreaStateLogic.*` API and exercise the
 /// forwarder path end-to-end.
 void main() {

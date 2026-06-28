@@ -108,8 +108,7 @@ void main() {
         before,
         after,
         after.worldState.turnState.turnNumber,
-        null,
-        events.add,
+        TurnEventSink(onGameEvent: events.add),
         beforeIndex: beforeIndex,
         afterIndex: afterIndex,
       );

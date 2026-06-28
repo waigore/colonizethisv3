@@ -18,7 +18,6 @@
 // .dart` so this file deliberately stays focused on the per-button
 // variant flag wiring (the contract that maps from the overlay spec to
 // the catalog).
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
@@ -27,24 +26,24 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 Future<void> _pumpPicker(
   WidgetTester tester, {
   required void Function(InterventionChoice) onPick,
 }) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: 360,
-            child: InterventionChoiceButtons(onPick: onPick),
-          ),
+  await pumpAppShell(
+    tester,
+    child: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 360,
+          child: InterventionChoiceButtons(onPick: onPick),
         ),
       ),
     ),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 CtNinePatchButton _findButton(WidgetTester tester, String key) {

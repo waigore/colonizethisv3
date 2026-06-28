@@ -1,12 +1,7 @@
-import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/package_logger.dart';
-import 'package:flutter/services.dart';
-
 import '../../../config/app_assets.dart';
-
-final _log = packageLogger();
+import 'asset_image_cache.dart';
 
 const Set<String> kProvinceLabelIconIds = {
   'map_capital_star',
@@ -16,46 +11,20 @@ const Set<String> kProvinceLabelIconIds = {
   'map_presence_ship',
 };
 
-class ProvinceLabelIconCache {
-  final Map<String, ui.Image> _icons = {};
-  bool _isLoading = false;
-  bool _isLoaded = false;
-
-  bool get isLoaded => _isLoaded;
-
+class ProvinceLabelIconCache extends AssetImageCache {
   static const double iconSize = 64.0;
 
-  Future<void> load() async {
-    if (_isLoaded || _isLoading) return;
-    _isLoading = true;
-    try {
-      await Future.wait(kProvinceLabelIconIds.map(_loadIcon));
-      _isLoaded = true;
-      _log.i('Loaded ${_icons.length} province label icons');
-    } catch (e, stackTrace) {
-      _icons.clear();
-      _isLoaded = false;
-      _log.e(
-        'Failed to load province label icons',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    } finally {
-      _isLoading = false;
-    }
-  }
+  @override
+  Iterable<String> get assetIds => kProvinceLabelIconIds;
 
-  Future<void> _loadIcon(String iconId) async {
-    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_$iconId.png';
-    final imageData = await rootBundle.load(pngPath);
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
-    final image = await completer.future;
-    _icons[iconId] = image;
-  }
+  @override
+  String assetPath(String assetId) =>
+      '${kAppIcon64AssetPrefix}ui_icon_$assetId.png';
 
-  ui.Image? getIcon(String iconId) => _icons[iconId];
+  @override
+  String get loadLogLabel => 'province label icons';
+
+  ui.Image? getIcon(String iconId) => imageForId(iconId);
 }
 
 final provinceLabelIconCache = ProvinceLabelIconCache();

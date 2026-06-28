@@ -12,6 +12,8 @@ import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 
+import 'support/app_shell_harness.dart';
+
 CtChoiceChip _chipWithLabel(WidgetTester tester, String label) {
   return tester.widget<CtChoiceChip>(
     find.ancestor(
@@ -304,13 +306,11 @@ void main() {
 const double _expectedRowAlpha = 0.08;
 
 Future<void> _pumpEditorialMonocleViewer(WidgetTester tester) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: const DebugLogViewerScreen(),
-    ),
+  await pumpAppShell(
+    tester,
+    settle: true,
+    child: const DebugLogViewerScreen(),
   );
-  await tester.pumpAndSettle();
 }
 
 void _expectTintMatches(

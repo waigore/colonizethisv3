@@ -10,13 +10,14 @@ import 'package:colonizethis_world/src/world_constants.dart'
     show kRegionOldWorld;
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Exercises the standalone province-lookup helpers and the
 /// [WorldStateProvinceLookup] extension in `lib/src/world/province_lookup.dart`.
 /// SPEC/game/world-model-identity.md.
-WorldState _world() => WorldState(
-  turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+WorldState _world() => TestFixtures.worldStateAtOrdersPhase(
   oldWorld: const RegionData(
     provinces: [
       Province(
@@ -103,12 +104,10 @@ void main() {
     });
 
     test('resolveProvinceRowForOwnershipTransfer matches legacy short id', () {
-      final legacyWorld = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      final legacyWorld = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: const RegionData(
           provinces: [Province(id: 'shortId', regionId: 'oldWorld')],
         ),
-        newWorld: const RegionData(),
       );
       final hit = resolveProvinceRowForOwnershipTransfer(
         legacyWorld,
@@ -143,10 +142,7 @@ void main() {
     test('landTileKeysForProvinceBucket is strict full-id only by default', () {
       // Legacy/fixture bucket keyed by local id only; the default (strict)
       // lookup must not fall back to it (Refs #3403 Phase 1).
-      final legacy = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
+      final legacy = TestFixtures.worldStateAtOrdersPhase(
         tileKeysByRegionAndProvince: const {
           'oldWorld': {
             'p1': ['oldWorld|p1|0|0'],
@@ -160,10 +156,7 @@ void main() {
     });
 
     test('landTileKeysForProvinceBucket opt-in fallback resolves local-id bucket', () {
-      final legacy = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
+      final legacy = TestFixtures.worldStateAtOrdersPhase(
         tileKeysByRegionAndProvince: const {
           'oldWorld': {
             'p1': ['oldWorld|p1|0|0'],
@@ -182,10 +175,7 @@ void main() {
     });
 
     test('landTileKeysForProvinceBucket fallback never shadows a full-id bucket', () {
-      final mixed = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
+      final mixed = TestFixtures.worldStateAtOrdersPhase(
         tileKeysByRegionAndProvince: const {
           'oldWorld': {
             'oldWorld|p1': ['oldWorld|p1|0|0'],
@@ -205,10 +195,7 @@ void main() {
     });
 
     test('landTileKeysForProvinceBucket fallback returns empty when neither bucket exists', () {
-      final empty = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
+      final empty = TestFixtures.worldStateAtOrdersPhase(
         tileKeysByRegionAndProvince: const {'oldWorld': {}},
       );
       expect(
@@ -269,10 +256,10 @@ void main() {
 
   group('oldWorldProvinceCountOwnedBy', () {
     test('counts only old-world provinces of the faction', () {
-      final game = Game(
-        id: 'g',
+      final game = TestFixtures.singlePlayerGame(
+        const Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        gameId: 'g',
         worldState: _world(),
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
       );
       expect(oldWorldProvinceCountOwnedBy(game, 'gp1'), 2);
       expect(oldWorldProvinceCountOwnedBy(game, 'gp2'), 0);
@@ -284,10 +271,10 @@ void main() {
     // cache accessor for the same faction id.
     test('matches the projection accessor and the prior old-world scan', () {
       final world = _world();
-      final game = Game(
-        id: 'g',
+      final game = TestFixtures.singlePlayerGame(
+        const Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        gameId: 'g',
         worldState: world,
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
       );
       final cache = ProvinceOwnerCache.of(world);
 

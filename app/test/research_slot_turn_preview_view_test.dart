@@ -13,6 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/utils/research_slot_preview.dart';
 import 'package:colonizethis_app/features/game/widgets/research_slot_turn_preview_view.dart';
 
+import 'support/app_shell_harness.dart';
+
 Player _player({int treasury = 0, Map<String, bool>? techUnlocked}) {
   return Player(
     id: 'p1',
@@ -47,20 +49,19 @@ Future<void> _pumpView(
   ResearchSlotTurnPreview preview, {
   int slotIndex = 0,
 }) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 360,
-          child: ResearchSlotTurnPreviewView(
-            slotIndex: slotIndex,
-            preview: preview,
-          ),
+  await pumpAppShell(
+    tester,
+    settle: true,
+    child: Scaffold(
+      body: SizedBox(
+        width: 360,
+        child: ResearchSlotTurnPreviewView(
+          slotIndex: slotIndex,
+          preview: preview,
         ),
       ),
     ),
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {

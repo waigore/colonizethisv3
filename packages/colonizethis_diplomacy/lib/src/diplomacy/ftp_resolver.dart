@@ -162,39 +162,44 @@ Game breakFtpOnWar(Game game, int turn, {IntraTurnEventTally? eventTally}) {
   // Canonical pending-human-decision flow (diplomacy_shared_helpers.dart):
   // human target applies a supplied decision or suspends pending; otherwise the
   // AI rule resolves immediately.
-  if (isTargetHumanGp(state, targetId)) {
-    final decision = findHumanDecision<FtpDecision>(
-      ftpDecisions,
-      (d) => d.proposerGpId == proposerId && d.targetGpId == targetId,
-    );
-    if (decision == null) {
-      return (
-        state: state,
-        pendingOffer: FtpOffer(proposerGpId: proposerId, targetGpId: targetId),
-      );
-    }
-    if (decision.accepted) {
-      state = _addFtpPartnership(
-        state,
-        proposerId,
-        targetId,
-        turn,
-        eventTally: eventTally,
-      );
-    }
-    return (state: state, pendingOffer: null);
-  }
-
-  if (aiGpAcceptsFtp(state, proposerId, targetId)) {
-    state = _addFtpPartnership(
-      state,
-      proposerId,
-      targetId,
-      turn,
-      eventTally: eventTally,
-    );
-  }
-  return (state: state, pendingOffer: null);
+  return resolveHumanGatedDecision<
+    FtpDecision,
+    ({Game state, FtpOffer? pendingOffer})
+  >(
+    isHumanControlled: isTargetHumanGp(state, targetId),
+    decisions: ftpDecisions,
+    matches: (d) => d.proposerGpId == proposerId && d.targetGpId == targetId,
+    onAiResolve: () {
+      var next = state;
+      if (aiGpAcceptsFtp(next, proposerId, targetId)) {
+        next = _addFtpPartnership(
+          next,
+          proposerId,
+          targetId,
+          turn,
+          eventTally: eventTally,
+        );
+      }
+      return (state: next, pendingOffer: null);
+    },
+    onPending: () => (
+      state: state,
+      pendingOffer: FtpOffer(proposerGpId: proposerId, targetGpId: targetId),
+    ),
+    onHumanDecision: (decision) {
+      var next = state;
+      if (decision.accepted) {
+        next = _addFtpPartnership(
+          next,
+          proposerId,
+          targetId,
+          turn,
+          eventTally: eventTally,
+        );
+      }
+      return (state: next, pendingOffer: null);
+    },
+  );
 }
 
 /// Processes [DiplomaticOrderType.establishFtp] proposals (GP–GP, two-way).

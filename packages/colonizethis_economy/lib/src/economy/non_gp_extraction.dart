@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'commodity_totals.dart';
 import 'game_lookup_helpers.dart';
 import 'non_gp_extraction_shared.dart';
 import 'package:colonizethis_economy/src/logging.dart';
@@ -76,8 +77,7 @@ Map<String, Map<CommodityId, int>> computeNonGreatPowerExtraction({
             provincesByFullId: provincesByFullId,
             sortTileKeys: false,
             onContribution: (tileKey, contribution) {
-              totals[contribution.commodityId] =
-                  (totals[contribution.commodityId] ?? 0) + contribution.units;
+              addUnits(totals, contribution.commodityId, contribution.units);
             },
           );
           if (totals.isNotEmpty) {
@@ -86,10 +86,7 @@ Map<String, Map<CommodityId, int>> computeNonGreatPowerExtraction({
         },
   );
 
-  final totalUnits = out.values.fold<int>(
-    0,
-    (s, m) => s + m.values.fold(0, (a, b) => a + b),
-  );
+  final totalUnits = sumNestedValues(out.values);
   economyLog.d(
     'non_gp_extraction compute end factions=${out.length} totalUnits=$totalUnits',
   );

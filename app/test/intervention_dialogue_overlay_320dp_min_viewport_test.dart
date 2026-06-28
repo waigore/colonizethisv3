@@ -58,7 +58,6 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
@@ -68,6 +67,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -128,8 +129,8 @@ const List<InterventionPrompt> _kFixturePrompts = [
 
 /// Pumps [overlay] at [size] under the running editorial-monocle theme.
 ///
-/// Mirrors `_pumpDialogAtSize` in
-/// `overture_dialogue_overlay_320dp_min_viewport_test.dart` — sets
+/// Delegates to the shared `pumpAtMinViewport` harness
+/// — which sets
 /// the surface size (so the binding's render flex math sees the
 /// minimum viewport) and overrides MediaQuery so widget code that
 /// reads `MediaQuery.sizeOf(context).width` resolves to the same
@@ -140,29 +141,22 @@ const List<InterventionPrompt> _kFixturePrompts = [
 /// overlay's own `CtFullScreenDialogueShell` + `CtDialogShell` layout
 /// at the narrow viewport, not the barrier / overlay route plumbing
 /// (which is already covered by the overlay's own widget tests).
-Future<void> _pumpOverlayAtSize(
+Future<void> _pumpOverlay(
   WidgetTester tester,
   Widget overlay, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Scaffold(body: Center(child: overlay)),
-      ),
-    ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Scaffold(body: Center(child: overlay)),
   );
-  // Two pumps mirror the existing intervention degraded-path tests:
-  // one for the failed `loadString` future, one for the
-  // post-microtask `setState(_loadError = ...)` rebuild that mounts
-  // the degraded panel.
-  await tester.pump();
+  // The harness pumps the first frame (for the failed `loadString`
+  // future); a second timed pump drives the post-microtask
+  // `setState(_loadError = ...)` rebuild that mounts the degraded panel
+  // (mirrors the existing intervention degraded-path tests).
   await tester.pump(const Duration(milliseconds: 100));
 }
 
@@ -212,7 +206,7 @@ void main() {
         'routes through the same `_buildScrimmedShell` helper), this '
         'positive pin proves the chrome contract for every phase.',
         (WidgetTester tester) async {
-          await _pumpOverlayAtSize(
+          await _pumpOverlay(
             tester,
             buildOverlay(),
             size: _kMinViewport,
@@ -262,7 +256,7 @@ void main() {
         'for the overflow contract — keeps the 320 dp positive pin '
         'meaningful).',
         (WidgetTester tester) async {
-          await _pumpOverlayAtSize(
+          await _pumpOverlay(
             tester,
             buildOverlay(),
             size: _kWideRegressionViewport,

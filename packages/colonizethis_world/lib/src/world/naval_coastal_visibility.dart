@@ -2,17 +2,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world_constants.dart';
+import 'connectivity_tile_helpers.dart' show xyFromTileKey;
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart'
     show landTileKeysForProvinceBucket, toFullProvinceId;
 import 'sea_zone_identity.dart';
-
-({int x, int y})? _xyFromTileKey(String tileKey) {
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) return null;
-  return (x: coords.x, y: coords.y);
-}
+import 'visibility_map_helpers.dart';
 
 /// Canonical key used for sea-zone buckets in
 /// `tileKeysByRegionAndProvince[regionId][bucketKey]`.
@@ -32,14 +28,14 @@ Set<String> _coastalTileKeysAdjacentToSeaZone({
   if (provinceTileKeys.isEmpty || seaWaterTileKeys.isEmpty) return const {};
   final seaCoords = <String>{};
   for (final seaTileKey in seaWaterTileKeys) {
-    final xy = _xyFromTileKey(seaTileKey);
+    final xy = xyFromTileKey(seaTileKey);
     if (xy == null) continue;
     seaCoords.add('${xy.x}|${xy.y}');
   }
   if (seaCoords.isEmpty) return const {};
   final coastal = <String>{};
   for (final provinceTileKey in provinceTileKeys) {
-    final xy = _xyFromTileKey(provinceTileKey);
+    final xy = xyFromTileKey(provinceTileKey);
     if (xy == null) continue;
     final isCoastal = kGridNeighborsCardinal4.any(
       (delta) => seaCoords.contains('${xy.x + delta.$1}|${xy.y + delta.$2}'),
@@ -47,6 +43,54 @@ Set<String> _coastalTileKeysAdjacentToSeaZone({
     if (isCoastal) coastal.add(provinceTileKey);
   }
   return coastal;
+}
+
+/// Coastal-geometry result for one sea zone: the land tile keys orthogonally
+/// adjacent to the zone's water, plus the zone's sea-water tile keys (empty when
+/// the zone has no bucket).
+typedef SeaZoneCoastalTiles = ({
+  Set<String> coastalLandTileKeys,
+  List<String> seaWaterTileKeys,
+});
+
+/// Shared sea-zone coastal pipeline (Refs #3710): resolves the provinces
+/// adjacent to ([regionId], [zoneId]), the zone's water bucket, and the coastal
+/// land tiles of each adjacent province. Backs both naval reveal paths so the
+/// `provinceIdsAdjacentToSeaZone` -> `canonicalSeaZoneTileBucketKey` ->
+/// `landTileKeysForProvinceBucket` -> `_coastalTileKeysAdjacentToSeaZone`
+/// pipeline lives in one place with identical fallback flags.
+SeaZoneCoastalTiles coastalLandTilesForSeaZone({
+  required WorldState worldState,
+  required MapTopology topology,
+  required String regionId,
+  required String zoneId,
+}) {
+  final provinceIds = provinceIdsAdjacentToSeaZone(
+    topology,
+    zoneId,
+    regionId: regionId,
+  );
+  final seaZoneKeyForTiles = canonicalSeaZoneTileBucketKey(regionId, zoneId);
+  final seaWaterKeys =
+      worldState.tileKeysByRegionAndProvince[regionId]?[seaZoneKeyForTiles] ??
+      const <String>[];
+  final coastal = <String>{};
+  for (final provinceNodeId in provinceIds) {
+    final fullProvinceId = toFullProvinceId(regionId, provinceNodeId);
+    final provinceTileKeys = landTileKeysForProvinceBucket(
+      worldState,
+      regionId,
+      fullProvinceId,
+      allowLocalIdFallback: true,
+    );
+    coastal.addAll(
+      _coastalTileKeysAdjacentToSeaZone(
+        provinceTileKeys: provinceTileKeys,
+        seaWaterTileKeys: seaWaterKeys,
+      ),
+    );
+  }
+  return (coastalLandTileKeys: coastal, seaWaterTileKeys: seaWaterKeys);
 }
 
 /// Returns a new visibility map with all land tiles for [fullProvinceId]
@@ -65,13 +109,7 @@ Map<String, Map<String, String>> revealProvinceTilesForPlayer(
     fullProvinceId,
     allowLocalIdFallback: true,
   );
-  if (tileKeys.isEmpty) return visibilityByTile;
-  final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-  for (final tk in tileKeys) {
-    vis[tk] = VisibilityLevel.fullyVisible.name;
-  }
-  return Map<String, Map<String, String>>.from(visibilityByTile)
-    ..[playerId] = vis;
+  return setTilesFullyVisibleForPlayer(visibilityByTile, playerId, tileKeys);
 }
 
 /// Returns a new visibility map with sea water tiles in [destZoneId] and the
@@ -88,40 +126,15 @@ Map<String, Map<String, String>> revealTilesAfterMoveToSeaZone({
   required String destRegionId,
   required String destZoneId,
 }) {
-  final provinceIds = provinceIdsAdjacentToSeaZone(
-    topology,
-    destZoneId,
+  final geometry = coastalLandTilesForSeaZone(
+    worldState: game.worldState,
+    topology: topology,
     regionId: destRegionId,
+    zoneId: destZoneId,
   );
   final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-  final seaZoneKeyForTiles = canonicalSeaZoneTileBucketKey(
-    destRegionId,
-    destZoneId,
-  );
-  final seaWaterKeys = game
-      .worldState
-      .tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles];
-  for (final provinceNodeId in provinceIds) {
-    final fullProvinceId = toFullProvinceId(destRegionId, provinceNodeId);
-    final provinceTileKeys = landTileKeysForProvinceBucket(
-      game.worldState,
-      destRegionId,
-      fullProvinceId,
-      allowLocalIdFallback: true,
-    );
-    final coastalTileKeys = _coastalTileKeysAdjacentToSeaZone(
-      provinceTileKeys: provinceTileKeys,
-      seaWaterTileKeys: seaWaterKeys ?? const [],
-    );
-    for (final tk in coastalTileKeys) {
-      vis[tk] = VisibilityLevel.fullyVisible.name;
-    }
-  }
-  if (seaWaterKeys != null) {
-    for (final tk in seaWaterKeys) {
-      vis[tk] = VisibilityLevel.fullyVisible.name;
-    }
-  }
+  setTilesFullyVisible(vis, geometry.coastalLandTileKeys);
+  setTilesFullyVisible(vis, geometry.seaWaterTileKeys);
   return Map<String, Map<String, String>>.from(visibilityByTile)
     ..[playerId] = vis;
 }
@@ -142,35 +155,13 @@ Set<String> coastalLandTileKeysFromNavalPresenceAtSea(
     if (f.ownerId != playerId) continue;
     if (f.id == homeFleetId) continue;
     if (!f.isAtSea || f.seaZoneId == null) continue;
-    final destRegionId = f.regionId;
-    final destZoneId = f.seaZoneId!;
-    final provinceIds = provinceIdsAdjacentToSeaZone(
-      topology,
-      destZoneId,
-      regionId: destRegionId,
+    final geometry = coastalLandTilesForSeaZone(
+      worldState: ws,
+      topology: topology,
+      regionId: f.regionId,
+      zoneId: f.seaZoneId!,
     );
-    final seaZoneKeyForTiles = canonicalSeaZoneTileBucketKey(
-      destRegionId,
-      destZoneId,
-    );
-    final seaWaterKeys =
-        ws.tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles] ??
-        const <String>[];
-    for (final provinceNodeId in provinceIds) {
-      final fullProvinceId = toFullProvinceId(destRegionId, provinceNodeId);
-      final provinceTileKeys = landTileKeysForProvinceBucket(
-        ws,
-        destRegionId,
-        fullProvinceId,
-        allowLocalIdFallback: true,
-      );
-      out.addAll(
-        _coastalTileKeysAdjacentToSeaZone(
-          provinceTileKeys: provinceTileKeys,
-          seaWaterTileKeys: seaWaterKeys,
-        ),
-      );
-    }
+    out.addAll(geometry.coastalLandTileKeys);
   }
   return out;
 }

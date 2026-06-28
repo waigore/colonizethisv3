@@ -35,31 +35,27 @@
 // silhouette. This file mirrors the existing pre-warm pattern from
 // `panels_320dp_min_viewport_test.dart` (DiplomacyPanel group) so the
 // naval pin renders against the same asset surface as
-// `naval_units_panel_test_part1`.
+// `naval_units_panel_part1`.
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // SPEC: `SPEC/ui/civilian-units-panel.md`, `SPEC/ui/military-units-panel.md`,
 //        `SPEC/ui/naval-units-panel.md`.
 // Refs #2870 S10.
 
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 
+import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -72,37 +68,26 @@ const Size _kMinViewport = Size(kMinViewportWidth, 640);
 /// `dialogs_320dp_min_viewport_test.dart`.
 const Size _kWideRegressionViewport = Size(1024, 768);
 
-/// Pumps [child] at [size] under the running editorial-monocle theme.
+/// Pumps [child] (hosted in a [Scaffold]) at [size] via the shared
+/// min-viewport harness ([pumpAtMinViewport]).
 ///
-/// Sets the surface size (so the binding's render flex math sees the
-/// minimum viewport) and overrides MediaQuery so widget code that reads
-/// `MediaQuery.sizeOf(context).width` resolves to the same value — the
-/// pattern already used by the sibling 320 dp pin files.
-///
-/// Wraps [child] in a [ProviderScope] so Civilian-side `Consumer*`
-/// widgets and provider reads inside the panel resolve to a deterministic
-/// (empty) default; the contract under test is the panel chrome at the
-/// narrow viewport, not the panel's full assign-work behaviour (which is
-/// already covered by the dedicated `*_units_panel_test_part*` files).
-Future<void> _pumpAtSize(
+/// The harness wraps the tree in a [ProviderScope] so Civilian-side
+/// `Consumer*` widgets and provider reads inside the panel resolve to a
+/// deterministic (empty) default; the contract under test is the panel
+/// chrome at the narrow viewport, not the panel's full assign-work
+/// behaviour (which is already covered by the dedicated
+/// `*_units_panel_part*` files).
+Future<void> _pumpNarrow(
   WidgetTester tester,
   Widget child, {
   required Size size,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: size),
-          child: Scaffold(body: child),
-        ),
-      ),
-    ),
+  await pumpAtMinViewport(
+    tester,
+    size: size,
+    child: Scaffold(body: child),
+    settle: true,
   );
-  await tester.pumpAndSettle();
 }
 
 Widget _buildCivilianUnitsPanel({
@@ -142,28 +127,6 @@ Widget _buildNavalUnitsPanel({
   );
 }
 
-/// Pre-warms the Flame image cache for the brass nine-patch button asset so
-/// `NavalUnitsPanel`'s `FleetExpansionTile` action chrome lays out at its
-/// true declared height (32 dp) instead of falling back to a
-/// `SizedBox.shrink()` silhouette. Mirrors the helper used by
-/// `panels_320dp_min_viewport_test.dart` (DiplomacyPanel group) and
-/// `naval_units_panel_test_part1`.
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-    Flame.images.add('assets/images/ui_button_nine_patch.png', frame.image);
-  } catch (_) {
-    // Best-effort: mirrors the resilience of the sibling pin file. The
-    // layout contract under test is overflow-free chrome, not a
-    // pixel-perfect nine-patch render.
-  }
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -172,7 +135,7 @@ void main() {
   late String humanPlayerId;
 
   setUpAll(() async {
-    await _preWarmFlameImageCache();
+    await preloadNinePatchImage();
     // Refs #3656: a shared lightweight fixture (civilians + army/regiments +
     // home/non-home fleets in both regions) replaces the ~11s
     // `getDebugInitGameResult()` map generation. These pins assert chrome only
@@ -197,7 +160,7 @@ void main() {
         'overflow exception, "Civilian Units" title renders', (
       WidgetTester tester,
     ) async {
-      await _pumpAtSize(
+      await _pumpNarrow(
         tester,
         _buildCivilianUnitsPanel(game: game, humanPlayerId: humanPlayerId),
         size: _kMinViewport,
@@ -222,7 +185,7 @@ void main() {
         'contract — keeps the 320 dp positive pin meaningful)', (
       WidgetTester tester,
     ) async {
-      await _pumpAtSize(
+      await _pumpNarrow(
         tester,
         _buildCivilianUnitsPanel(game: game, humanPlayerId: humanPlayerId),
         size: _kWideRegressionViewport,
@@ -239,7 +202,7 @@ void main() {
         'overflow exception, "Military Units" title renders', (
       WidgetTester tester,
     ) async {
-      await _pumpAtSize(
+      await _pumpNarrow(
         tester,
         _buildMilitaryUnitsPanel(game: game, humanPlayerId: humanPlayerId),
         size: _kMinViewport,
@@ -263,7 +226,7 @@ void main() {
     testWidgets('Negative control: MilitaryUnitsPanel @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
         'contract)', (WidgetTester tester) async {
-      await _pumpAtSize(
+      await _pumpNarrow(
         tester,
         _buildMilitaryUnitsPanel(game: game, humanPlayerId: humanPlayerId),
         size: _kWideRegressionViewport,
@@ -280,7 +243,7 @@ void main() {
       'AC (positive) NavalUnitsPanel @ 320×640: no RenderFlex overflow '
       'exception, "Naval Units" title renders',
       (WidgetTester tester) async {
-        await _pumpAtSize(
+        await _pumpNarrow(
           tester,
           _buildNavalUnitsPanel(
             game: game,
@@ -311,7 +274,7 @@ void main() {
       'exception (regression sentinel for the overflow contract — keeps '
       'the 320 dp positive pin meaningful)',
       (WidgetTester tester) async {
-        await _pumpAtSize(
+        await _pumpNarrow(
           tester,
           _buildNavalUnitsPanel(
             game: game,

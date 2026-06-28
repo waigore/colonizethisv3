@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'connectivity_tile_helpers.dart' show fullProvinceIdFromTileKey;
 import 'game_world_mutations.dart';
 import 'naval.dart';
 import 'naval_coastal_visibility.dart'
@@ -14,6 +15,7 @@ import 'province_owner_cache.dart';
 import 'province_traversal.dart';
 import 'topology_helpers.dart';
 import 'unit_lookup.dart';
+import 'visibility_map_helpers.dart';
 
 part 'fog_resolution_explorer_spy_decay.dart';
 part 'fog_resolution_province_ownership.dart';

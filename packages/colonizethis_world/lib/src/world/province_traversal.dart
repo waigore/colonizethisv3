@@ -1,6 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world_constants.dart';
 import 'province_lookup.dart';
 
 /// One province row during a dual-region traversal (Refs #2560).
@@ -23,28 +22,24 @@ final class ProvinceTraversalEntry {
 }
 
 /// Invokes [action] for each known region in fixed order (old world, new world).
+///
+/// Delegates to [WorldStateProvinceLookup.forEachRegion] so region order lives
+/// in one place (Refs #3710); retained as the positional-[WorldState] entry
+/// point used by fog/connectivity resolvers.
 void forEachWorldRegion(
   WorldState world,
   void Function(String regionId, RegionData regionData) action,
-) {
-  for (final regionId in const [kRegionOldWorld, kRegionNewWorld]) {
-    final regionData = regionDataForId(world, regionId);
-    if (regionData != null) {
-      action(regionId, regionData);
-    }
-  }
-}
+) => world.forEachRegion(action);
 
 /// Yields every province in both regions with optional [where] filter.
 Iterable<ProvinceTraversalEntry> traverseProvinces(
   WorldState world, {
   bool Function(String regionId, Province province)? where,
 }) sync* {
-  for (final regionId in const [kRegionOldWorld, kRegionNewWorld]) {
-    final regionData = regionDataForId(world, regionId);
-    if (regionData == null) continue;
+  for (final entry in world.regionsInOrder) {
+    final regionId = entry.regionId;
     final tilesByProvince = world.tileKeysByRegionAndProvince[regionId];
-    for (final province in regionData.provinces) {
+    for (final province in entry.region.provinces) {
       if (where != null && !where(regionId, province)) {
         continue;
       }

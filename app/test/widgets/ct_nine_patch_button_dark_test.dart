@@ -8,13 +8,14 @@
 //   - disabled wraps the button in 0.4 opacity and suppresses taps.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/app_shell_harness.dart';
 
 Future<void> _pumpButton(
   WidgetTester tester, {
@@ -27,29 +28,27 @@ Future<void> _pumpButton(
   LinearGradient? pressedGradient,
   Widget child = const Text('Confirm'),
 }) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: 200,
-            child: CtNinePatchButton(
-              onPressed: onPressed,
-              enabled: enabled,
-              dangerVariant: dangerVariant,
-              mutedVariant: mutedVariant,
-              disabledOpacityOverride: disabledOpacityOverride,
-              gradient: gradient,
-              pressedGradient: pressedGradient,
-              child: child,
-            ),
+  await pumpAppShell(
+    tester,
+    settle: true,
+    child: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 200,
+          child: CtNinePatchButton(
+            onPressed: onPressed,
+            enabled: enabled,
+            dangerVariant: dangerVariant,
+            mutedVariant: mutedVariant,
+            disabledOpacityOverride: disabledOpacityOverride,
+            gradient: gradient,
+            pressedGradient: pressedGradient,
+            child: child,
           ),
         ),
       ),
     ),
   );
-  await tester.pumpAndSettle();
 }
 
 DecoratedBox _findButtonSurfaceDecoratedBox(WidgetTester tester) {

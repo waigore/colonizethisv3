@@ -11,8 +11,7 @@ void main() {
   const fullPid = '$ow|p1';
 
   Game gameWithBuckets({
-    Map<String, Map<String, List<String>>>?
-    tileKeysByRegionAndProvince,
+    Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
     List<Fleet> fleets = const [],
     List<Province> oldWorldProvinces = const [],
   }) {
@@ -23,8 +22,7 @@ void main() {
         oldWorld: RegionData(provinces: oldWorldProvinces),
         newWorld: const RegionData(),
         fleets: fleets,
-        tileKeysByRegionAndProvince:
-            tileKeysByRegionAndProvince ?? const {},
+        tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
       ),
       players: const [Player(id: player, displayName: 'A', isHuman: true)],
     );
@@ -32,17 +30,11 @@ void main() {
 
   group('canonicalSeaZoneTileBucketKey', () {
     test('builds a prefixed bucket key from a local sea-zone id', () {
-      expect(
-        canonicalSeaZoneTileBucketKey(ow, 'sea1'),
-        '$ow|sea1',
-      );
+      expect(canonicalSeaZoneTileBucketKey(ow, 'sea1'), '$ow|sea1');
     });
 
     test('returns the input unchanged when already prefixed for region', () {
-      expect(
-        canonicalSeaZoneTileBucketKey(ow, '$ow|sea1'),
-        '$ow|sea1',
-      );
+      expect(canonicalSeaZoneTileBucketKey(ow, '$ow|sea1'), '$ow|sea1');
     });
   });
 
@@ -124,16 +116,8 @@ void main() {
   group('revealTilesAfterMoveToSeaZone', () {
     final topology = MapTopology(
       nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: ow,
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'sea1',
-          regionId: ow,
-          type: TopologyNodeType.seaZone,
-        ),
+        TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+        TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
       ],
       edges: const [TopologyEdge(id1: 'sea1', id2: 'p1')],
     );
@@ -184,34 +168,17 @@ void main() {
     });
   });
 
-  group('coastalLandTileKeysFromNavalPresenceAtSea', () {
+  group('coastalLandTilesForSeaZone', () {
     final topology = MapTopology(
       nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: ow,
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'sea1',
-          regionId: ow,
-          type: TopologyNodeType.seaZone,
-        ),
+        TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+        TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
       ],
       edges: const [TopologyEdge(id1: 'sea1', id2: 'p1')],
     );
 
-    test('returns coastal tiles for non-home fleets at sea owned by player', () {
+    test('returns coastal land tiles and sea-water tiles for the zone', () {
       final game = gameWithBuckets(
-        fleets: [
-          Fleet(
-            id: 'fleet_${player}_scout',
-            ownerId: player,
-            seaZoneId: 'sea1',
-            regionId: ow,
-            shipTypeIds: const ['carrack'],
-          ),
-        ],
         tileKeysByRegionAndProvince: const {
           ow: {
             fullPid: ['$ow|p1|0|0', '$ow|p1|2|2'],
@@ -220,15 +187,82 @@ void main() {
         },
       );
 
-      final out = coastalLandTileKeysFromNavalPresenceAtSea(
-        game,
-        topology,
-        player,
+      final geometry = coastalLandTilesForSeaZone(
+        worldState: game.worldState,
+        topology: topology,
+        regionId: ow,
+        zoneId: 'sea1',
       );
 
-      expect(out, contains('$ow|p1|0|0'));
-      expect(out.contains('$ow|p1|2|2'), isFalse);
+      expect(geometry.coastalLandTileKeys, contains('$ow|p1|0|0'));
+      expect(geometry.coastalLandTileKeys.contains('$ow|p1|2|2'), isFalse);
+      expect(geometry.seaWaterTileKeys, ['$ow|sea1|1|0']);
     });
+
+    test(
+      'returns empty coastal and sea-water sets when zone has no bucket',
+      () {
+        final game = gameWithBuckets(
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              fullPid: ['$ow|p1|0|0'],
+            },
+          },
+        );
+
+        final geometry = coastalLandTilesForSeaZone(
+          worldState: game.worldState,
+          topology: topology,
+          regionId: ow,
+          zoneId: 'sea1',
+        );
+
+        expect(geometry.coastalLandTileKeys, isEmpty);
+        expect(geometry.seaWaterTileKeys, isEmpty);
+      },
+    );
+  });
+
+  group('coastalLandTileKeysFromNavalPresenceAtSea', () {
+    final topology = MapTopology(
+      nodes: const [
+        TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+        TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+      ],
+      edges: const [TopologyEdge(id1: 'sea1', id2: 'p1')],
+    );
+
+    test(
+      'returns coastal tiles for non-home fleets at sea owned by player',
+      () {
+        final game = gameWithBuckets(
+          fleets: [
+            Fleet(
+              id: 'fleet_${player}_scout',
+              ownerId: player,
+              seaZoneId: 'sea1',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              fullPid: ['$ow|p1|0|0', '$ow|p1|2|2'],
+              '$ow|sea1': ['$ow|sea1|1|0'],
+            },
+          },
+        );
+
+        final out = coastalLandTileKeysFromNavalPresenceAtSea(
+          game,
+          topology,
+          player,
+        );
+
+        expect(out, contains('$ow|p1|0|0'));
+        expect(out.contains('$ow|p1|2|2'), isFalse);
+      },
+    );
 
     test('ignores the home fleet even when it carries ships at sea', () {
       final game = gameWithBuckets(

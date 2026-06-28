@@ -5,11 +5,7 @@ List<String> _lockedGrowthOrder(
   Map<String, int> targetPerFaction,
 ) {
   final list = List<String>.from(factionIds)
-    ..sort((a, b) {
-      final c = targetPerFaction[b]!.compareTo(targetPerFaction[a]!);
-      if (c != 0) return c;
-      return a.compareTo(b);
-    });
+    ..sort((a, b) => compareByTargetDescThenIdAsc(a, b, targetPerFaction));
   return list;
 }
 
@@ -17,13 +13,7 @@ List<MapEntry<int, List<String>>> _landmassEntriesSortedBySize(
   Map<int, List<String>> landmassToProvinces,
 ) {
   final list = landmassToProvinces.entries.toList()
-    ..sort((a, b) {
-      final c = b.value.length.compareTo(a.value.length);
-      if (c != 0) return c;
-      final amin = a.value.reduce((x, y) => x.compareTo(y) < 0 ? x : y);
-      final bmin = b.value.reduce((x, y) => x.compareTo(y) < 0 ? x : y);
-      return amin.compareTo(bmin);
-    });
+    ..sort((a, b) => compareBySizeDescThenMinIdAsc(a.value, b.value));
   return list;
 }
 
@@ -138,21 +128,11 @@ Map<String, String> _assignFactionsMultiComponentLocked({
   if (factionIds.isEmpty || universe.isEmpty) return {};
   final targets = computeFairTargets(factionIds, universe.length);
   var components = connectedComponentsInSubset(universe, neighbours);
-  components.sort((a, b) {
-    final c = b.length.compareTo(a.length);
-    if (c != 0) return c;
-    final amin = a.reduce((x, y) => x.compareTo(y) < 0 ? x : y);
-    final bmin = b.reduce((x, y) => x.compareTo(y) < 0 ? x : y);
-    return amin.compareTo(bmin);
-  });
+  components.sort(compareBySizeDescThenMinIdAsc);
   final allocated = List<int>.filled(components.length, 0);
   final compForFaction = <String, int>{};
   final facsOrdered = factionIds.toList()
-    ..sort((a, b) {
-      final c = targets[b]!.compareTo(targets[a]!);
-      if (c != 0) return c;
-      return a.compareTo(b);
-    });
+    ..sort((a, b) => compareByTargetDescThenIdAsc(a, b, targets));
   var searchNodes = 0;
   int bump() => ++searchNodes;
   if (!_tryPackFactionsOntoPpComponentsDfs(
@@ -180,11 +160,7 @@ Map<String, String> _assignFactionsMultiComponentLocked({
   for (final e in byComp.entries) {
     final land = components[e.key];
     final fs = e.value
-      ..sort((a, b) {
-        final c = targets[b]!.compareTo(targets[a]!);
-        if (c != 0) return c;
-        return a.compareTo(b);
-      });
+      ..sort((a, b) => compareByTargetDescThenIdAsc(a, b, targets));
     final localTargets = {for (final f in fs) f: targets[f]!};
     final order = _lockedGrowthOrder(fs, localTargets);
     out.addAll(

@@ -1,8 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_data/colonizethis_data.dart'
-    show BuildUnitCategory, buildUnitCategoryForUnitType;
-import 'package:colonizethis_logic/ai_api.dart' show canAffordRecruitWorker;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
@@ -13,6 +10,8 @@ import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
+import 'planning_helpers.dart'
+    show isAtWarWithAnyGreatPower, oldWorldProvinceLeadOver;
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
@@ -710,9 +709,11 @@ int _computeMinRegimentFloor({
       ? kStalledMinRegimentCountWhenGpBlockerAtWar
       : kStalledMinRegimentCountWhenAtWar;
   if (atWarWithGpBlocker && gpBlocker != null) {
-    final deficit =
-        provinceCountOwnedBy(ctx.game, gpBlocker) -
-        snapshot.conquest.oldWorldProvincesOwned;
+    final deficit = oldWorldProvinceLeadOver(
+      game: ctx.game,
+      snapshot: snapshot,
+      factionId: gpBlocker,
+    );
     if (deficit > 0) {
       minRegimentFloor +=
           deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
@@ -780,9 +781,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   );
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
   final observerQuotaPressure = expandQuotaPressure;
-  final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
-    (id) => ctx.game.playerById(id) != null,
-  );
+  final atWarWithAnyGreatPower = isAtWarWithAnyGreatPower(ctx.game, snapshot);
   final needRegimentsToExpand =
       observerQuotaPressure &&
       regimentCount == 0 &&
@@ -826,7 +825,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   final criticallyWeakNoGpWar =
       snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
-      !snapshot.threats.atWarWith.any((id) => ctx.game.playerById(id) != null);
+      !isAtWarWithAnyGreatPower(ctx.game, snapshot);
   final gpBlocker = expandPrimaryInvadableGpBlockerFromPhasePlan(
     phasePlan: phasePlan,
   );

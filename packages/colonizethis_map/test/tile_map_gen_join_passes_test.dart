@@ -11,6 +11,8 @@ import 'package:colonizethis_map/src/gen/tile_map_gen_terrain_jitter_pass.dart';
 import 'package:colonizethis_map/src/gen/tile_map_grid_graph.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 /// Per-pass unit tests for the standalone JoinSea passes extracted from the
 /// former `_TileMapGenJoinSea` family (Refs #3588). Each pass is exercised in
 /// isolation, which the prior `part of` coupling prevented.
@@ -22,7 +24,7 @@ void main() {
         ContinentJoinPass(params, packageLogger(), TileMapGridGraph(params));
 
     test('joinContinents bridges two land components of one continent', () {
-      final params = TileMapParams(width: 5, height: 1);
+      final params = genParams(width: 5, height: 1);
       final pass = passFor(params);
       final grid = <List<String>>[
         ['p1', sea, sea, sea, 'p1'],
@@ -59,7 +61,7 @@ void main() {
     });
 
     test('joinContinents leaves a single-component continent unchanged', () {
-      final params = TileMapParams(width: 3, height: 1);
+      final params = genParams(width: 3, height: 1);
       final pass = passFor(params);
       final grid = <List<String>>[
         ['p1', 'p1', sea],
@@ -81,7 +83,7 @@ void main() {
     });
 
     test('run returns inputs unchanged when joinContinents is disabled', () {
-      final params = TileMapParams(width: 5, height: 1, joinContinents: false);
+      final params = genParams(width: 5, height: 1, joinContinents: false);
       final pass = passFor(params);
       final grid = <List<String>>[
         ['p1', sea, sea, sea, 'p1'],
@@ -113,7 +115,7 @@ void main() {
     test(
       'preserveSeaFraction restores coastal land to sea (count-bounded)',
       () {
-        final params = TileMapParams(width: 3, height: 3);
+        final params = genParams(width: 3, height: 3);
         final pass = passFor(params);
         final grid = <List<String>>[
           [sea, 'p1', sea],
@@ -144,7 +146,7 @@ void main() {
         SeaZoneSubdividePass(params, TileMapGridGraph(params));
 
     test('countSeaCells counts only sea-id cells', () {
-      final params = TileMapParams(width: 2, height: 2);
+      final params = genParams(width: 2, height: 2);
       final pass = passFor(params);
       final grid = <List<String>>[
         [sea, 'p1'],
@@ -154,7 +156,7 @@ void main() {
     });
 
     test('subdivideSeaZonesWithCap splits one component into capped zones', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 10,
         height: 1,
         maxSeaZoneFraction: 0.3,
@@ -171,7 +173,7 @@ void main() {
     test(
       'subdivideSeaZonesWithCap keeps a small component as a single zone',
       () {
-        final params = TileMapParams(width: 3, height: 1);
+        final params = genParams(width: 3, height: 1);
         final pass = passFor(params);
         final grid = <List<String>>[
           [sea, sea, sea],
@@ -183,7 +185,7 @@ void main() {
     );
 
     test('run is a no-op (no log) when there is no sea', () {
-      final params = TileMapParams(width: 2, height: 1);
+      final params = genParams(width: 2, height: 1);
       final pass = passFor(params);
       final grid = <List<String>>[
         ['p1', 'p1'],
@@ -215,7 +217,7 @@ void main() {
     test(
       'jitter reassigns dominant edge cells toward supported neighbours',
       () {
-        final params = TileMapParams(
+        final params = genParams(
           width: 5,
           height: 5,
           jitterMinProvinceSize: 4,
@@ -261,7 +263,7 @@ void main() {
     );
 
     test('jitter leaves provinces below the min size untouched', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 5,
         height: 5,
         jitterMinProvinceSize: 1000,

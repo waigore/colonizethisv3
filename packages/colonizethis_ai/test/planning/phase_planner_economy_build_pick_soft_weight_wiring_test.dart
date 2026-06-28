@@ -41,7 +41,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../planner_test_helpers.dart';
+import '../support/planner_test_helpers.dart';
 
 // Candidate fixture: one cargo-capable ship (galleon, cargoHold = 6)
 // and one regiment (grenadiers). Same `spawnProvinceId` so the

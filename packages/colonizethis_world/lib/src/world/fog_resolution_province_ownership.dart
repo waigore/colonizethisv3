@@ -49,23 +49,13 @@ applyProvinceOwnershipChangeVisibility(
     (k, v) => MapEntry(k, Map<String, String>.from(v)),
   );
 
-  var setForNew = 0;
   final newVis = Map<String, String>.from(visMaps[newOwnerId] ?? {});
-  for (final tk in tileKeys) {
-    newVis[tk] = VisibilityLevel.fullyVisible.name;
-    setForNew++;
-  }
+  setTilesFullyVisible(newVis, tileKeys);
+  final setForNew = tileKeys.length;
   visMaps[newOwnerId] = newVis;
 
-  var downgradedForOld = 0;
   final oldVis = Map<String, String>.from(visMaps[oldOwnerId] ?? {});
-  for (final tk in tileKeys) {
-    final cur = oldVis[tk];
-    if (cur == VisibilityLevel.fullyVisible.name) {
-      oldVis[tk] = VisibilityLevel.fogged.name;
-      downgradedForOld++;
-    }
-  }
+  final downgradedForOld = downgradeFullyVisibleToFogged(oldVis, tileKeys);
   visMaps[oldOwnerId] = oldVis;
 
   final nextGame = game.updateWorldState(

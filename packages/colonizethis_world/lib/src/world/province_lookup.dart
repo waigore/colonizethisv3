@@ -126,10 +126,11 @@ RegionData? regionDataForId(WorldState world, String regionId) =>
 
 /// All provinces in both regions (old world first, then new world).
 /// Use when iterating over every province without needing region separation.
-Iterable<Province> allProvinces(WorldState world) sync* {
-  yield* world.oldWorld.provinces;
-  yield* world.newWorld.provinces;
-}
+///
+/// Delegates to [WorldStateProvinceLookup.allProvinces] so there is a single
+/// definition of the cross-region traversal (Refs #3710); this free function is
+/// retained for callers that pass a [WorldState] positionally.
+Iterable<Province> allProvinces(WorldState world) => world.allProvinces();
 
 /// Central province lookup. Lookup is by **full disambiguated id** (`regionId|localId`)
 /// and is **region-scoped**: resolution happens only within the given region.
@@ -282,9 +283,25 @@ extension WorldStateProvinceLookup on WorldState {
   Iterable<Province> provincesForRegion(String regionId) =>
       _regionForId(this, regionId)?.provinces ?? const <Province>[];
 
+  /// Both regions in canonical order (old world first, then new world), each
+  /// paired with its region id.
+  ///
+  /// Single source of truth for dual-region iteration ordering (Refs #3710):
+  /// [allProvinces], [forEachRegion], and the `province_traversal.dart` /
+  /// `province_visibility_index.dart` generators all derive their region order
+  /// from here instead of repeating inline `[oldWorld, newWorld]` /
+  /// `[kRegionOldWorld, kRegionNewWorld]` literals. Lazy so `lib/src/**`
+  /// generators can `yield*` per region without materializing a list
+  /// (SPEC/program/logic-dual-region-province-access.md).
+  Iterable<({String regionId, RegionData region})> get regionsInOrder sync* {
+    yield (regionId: kRegionOldWorld, region: oldWorld);
+    yield (regionId: kRegionNewWorld, region: newWorld);
+  }
+
   Iterable<Province> allProvinces() sync* {
-    yield* oldWorld.provinces;
-    yield* newWorld.provinces;
+    for (final entry in regionsInOrder) {
+      yield* entry.region.provinces;
+    }
   }
 
   /// Returns [kRegionOldWorld] or [kRegionNewWorld] when a province row's `id`
@@ -372,8 +389,9 @@ extension WorldStateProvinceLookup on WorldState {
   /// `lib/src/**` (Refs #2836 item 1,
   /// SPEC/program/logic-dual-region-province-access.md).
   void forEachRegion(void Function(String regionId, RegionData region) action) {
-    action(kRegionOldWorld, oldWorld);
-    action(kRegionNewWorld, newWorld);
+    for (final entry in regionsInOrder) {
+      action(entry.regionId, entry.region);
+    }
   }
 
   /// Updates unit lists in both regions; province rows are unchanged.

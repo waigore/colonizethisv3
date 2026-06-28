@@ -95,10 +95,7 @@ Game runExtractionPhase(
         overseasDelivered,
       );
       if (overseasDelivered.isNotEmpty) {
-        extractionSeed =
-            (extractionSeed * kTurnResolutionLcgMultiplier +
-                kTurnResolutionLcgIncrement) &
-            kTurnResolutionLcgMask;
+        extractionSeed = advanceTurnSeed(extractionSeed);
         final interception = applyTradeInterception(
           currentState,
           player.id,

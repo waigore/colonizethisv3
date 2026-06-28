@@ -11,6 +11,7 @@ import 'growth_stage.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
+import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 import 'treasury_planner.dart';
@@ -764,9 +765,7 @@ bool _resolveBelowQuotaPeaceTreasuryRecovery({
     return false;
   }
   final regimentCount = regimentCountForPlayer(game, view.playerId);
-  final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
-    (id) => game.playerById(id) != null,
-  );
+  final atWarWithAnyGreatPower = isAtWarWithAnyGreatPower(game, snapshot);
   final hasInvadableProvinces =
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
   if (phasePlan == null) {

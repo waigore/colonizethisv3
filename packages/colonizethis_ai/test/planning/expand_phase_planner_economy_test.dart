@@ -31,7 +31,6 @@
 // "all false" instance on every miss path still satisfies value
 // equality (the planner's `==` is hand-rolled to make this safe).
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
     show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
@@ -40,7 +39,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'test_fixtures.dart';
+import 'ai_planner_fixtures.dart';
 import 'test_game_factories.dart';
 
 const String _gp1 = 'gp1';

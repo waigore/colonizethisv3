@@ -64,8 +64,11 @@ const Set<String> _appNavigatorKeyAllowedPathPrefixes = <String>{
 const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Local by design — `SPEC/program/app-ui-wiring.md` line 84.
   'app/lib/features/game/widgets/civilian_units_panel_support.dart',
-  'app/lib/features/game/flame/game_map_area_part1.dart',
-  'app/lib/features/game/flame/game_map_area_part2.dart',
+  // Next-turn processing dialog (`_onNextTurn`) and the map display-options
+  // dialog (`build`) — the two `showDialog` sites kept after the #3699 Theme 3
+  // domain re-split of `game_map_area` (formerly game_map_area_part1/part2).
+  'app/lib/features/game/flame/game_map_area_turn_resolution.dart',
+  'app/lib/features/game/flame/game_map_area_build.dart',
   'app/lib/features/game/flame/next_turn_confirmation_dialog.dart',
   'app/lib/features/game/flame/game_screen.dart',
   // Android back / exit-to-main-menu confirm dialog extracted from

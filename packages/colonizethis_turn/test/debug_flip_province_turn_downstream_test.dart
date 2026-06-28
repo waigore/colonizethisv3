@@ -103,9 +103,7 @@ void main() {
           previous,
           flipped,
           before.worldState.turnState.turnNumber,
-          null,
-          captured.add,
-          null,
+          TurnEventSink(onGameEvent: captured.add),
         );
         expect(captured, hasLength(1));
         final pe = captured.single as ProvinceCapturedEvent;

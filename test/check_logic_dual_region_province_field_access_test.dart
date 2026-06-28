@@ -58,6 +58,34 @@ void main() {
       );
     });
 
+    test('matches list-literal [oldWorld, newWorld] region iteration', () {
+      expect(
+        logicDualRegionProvinceFieldAccessLineMatches(
+          '  for (final region in [game.worldState.oldWorld, '
+          'game.worldState.newWorld]) {',
+        ),
+        isTrue,
+      );
+    });
+
+    test('ignores record-literal (oldWorld: ..., newWorld: ...)', () {
+      expect(
+        logicDualRegionProvinceFieldAccessLineMatches(
+          '(oldWorld: ws.oldWorld, newWorld: ws.newWorld);',
+        ),
+        isFalse,
+      );
+    });
+
+    test('ignores regionsInOrder yield record', () {
+      expect(
+        logicDualRegionProvinceFieldAccessLineMatches(
+          'yield (regionId: kRegionOldWorld, region: oldWorld);',
+        ),
+        isFalse,
+      );
+    });
+
     test('ignores allProvinces', () {
       expect(
         logicDualRegionProvinceFieldAccessLineMatches(
@@ -92,6 +120,26 @@ void main() {
       ..createSync()
       ..writeAsStringSync(
         "void scanMe(dynamic ws) { for (final p in ws.oldWorld.provinces) {} }",
+      );
+
+    expect(
+      runCheckLogicDualRegionProvinceFieldAccess(temp.path, info: (_) {}),
+      1,
+    );
+  });
+
+  test('fails on list-literal [oldWorld, newWorld] region iteration', () {
+    final temp = Directory.systemTemp.createTempSync('world_dual_region_list_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    final srcDir = Directory(
+      p.join(temp.path, 'packages/colonizethis_world/lib/src/world'),
+    )..createSync(recursive: true);
+    File(p.join(srcDir.path, 'offender.dart'))
+      ..createSync()
+      ..writeAsStringSync(
+        'void scanMe(dynamic ws) { '
+        'for (final r in [ws.oldWorld, ws.newWorld]) {} }',
       );
 
     expect(

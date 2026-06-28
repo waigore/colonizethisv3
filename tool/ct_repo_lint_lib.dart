@@ -45,11 +45,13 @@ import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
+import 'check_map_test_no_duplicate_view_fixtures.dart';
 import 'check_map_region_dispatch_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
+import 'check_economy_dedup_credit_aggregation.dart';
 import 'check_economy_dedup_port_tile_keys.dart';
 import 'check_economy_world_market_admission_shared.dart';
 import 'check_land_province_bucket_keys.dart';
@@ -57,6 +59,10 @@ import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_map_clones.dart';
 import 'check_setup_dedup_gp_ids_from_players.dart';
 import 'check_setup_dedup_gp_ow_tile_scans.dart';
+import 'check_setup_dedup_grid_bfs_coord_keys.dart';
+import 'check_setup_dedup_topology_adjacency.dart';
+import 'check_setup_lib_tile_key_interpolation.dart';
+import 'check_setup_test_no_duplicate_scaffolding.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
 import 'check_logic_work_target_switch.dart';
@@ -66,6 +72,7 @@ import 'check_logic_source_file_size.dart';
 import 'check_world_no_logic_deps.dart';
 import 'check_logic_no_map_deps.dart';
 import 'check_world_no_circular_imports.dart';
+import 'check_world_no_duplicate_extension_helper.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
 import 'check_domain_package_logger_dedup.dart';
@@ -782,6 +789,14 @@ int? _tryRunDartRuleInProcess({
     return mapResult;
   }
 
+  final int? setupResult = _tryRunSetupRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (setupResult != null) {
+    return setupResult;
+  }
+
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
@@ -829,6 +844,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicNoMapDeps(repoRoot);
     case 'repo.world_no_circular_imports':
       return runCheckWorldNoCircularImports(repoRoot);
+    case 'repo.world_no_duplicate_extension_helper':
+      return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,
@@ -877,6 +894,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckSetupDedupGpOwTileScans(repoRoot);
     case 'repo.setup_dedup_gp_ids_from_players':
       return runCheckSetupDedupGpIdsFromPlayers(repoRoot);
+    case 'repo.setup_lib_tile_key_interpolation':
+      return runCheckSetupLibTileKeyInterpolation(repoRoot);
     case 'repo.domain_package_logger_dedup':
       return runCheckDomainPackageLoggerDedup(repoRoot);
     case 'repo.ai_api_narrow_surface':
@@ -980,6 +999,8 @@ int? _tryRunLogicRuleInProcess({
       return runCheckEconomyWorldMarketAdmissionShared(repoRoot);
     case 'repo.economy_dedup_port_tile_keys':
       return runCheckEconomyDedupPortTileKeys(repoRoot);
+    case 'repo.economy_dedup_credit_aggregation':
+      return runCheckEconomyDedupCreditAggregation(repoRoot);
     default:
       return null;
   }
@@ -990,6 +1011,27 @@ int? _tryRunLogicRuleInProcess({
 /// `repo.dart_long_string_switches` 49-case ceiling as new map-scoped rules are
 /// added (Refs #3574). Returns `null` for non-map rule ids so the caller falls
 /// back to the generic dispatch.
+/// Dispatch helper for the `repo.setup_*` dedup manifest rules added for #3740.
+/// Keeps the main `_tryRunDartRuleInProcess` switch under the
+/// `repo.dart_long_string_switches` 49-case ceiling (mirrors the map/app/logic
+/// split). Returns `null` for non-matching rule ids so the caller falls back to
+/// the generic dispatch.
+int? _tryRunSetupRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+}) {
+  switch (ruleId) {
+    case 'repo.setup_dedup_grid_bfs_coord_keys':
+      return runCheckSetupDedupGridBfsCoordKeys(repoRoot);
+    case 'repo.setup_dedup_topology_adjacency':
+      return runCheckSetupDedupTopologyAdjacency(repoRoot);
+    case 'repo.setup_test_no_duplicate_scaffolding':
+      return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
+    default:
+      return null;
+  }
+}
+
 int? _tryRunMapRuleInProcess({
   required String ruleId,
   required String repoRoot,
@@ -1017,6 +1059,8 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapRegionDataAccessCentral(repoRoot);
     case 'repo.map_region_dispatch_central':
       return runCheckMapRegionDispatchCentral(repoRoot);
+    case 'repo.map_test_no_duplicate_view_fixtures':
+      return runCheckMapTestNoDuplicateViewFixtures(repoRoot);
     default:
       return null;
   }

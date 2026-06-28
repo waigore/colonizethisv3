@@ -9,6 +9,13 @@ import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planner_context.dart';
+import 'planning_helpers.dart'
+    show
+        clampPhaseWeightUpperUnit,
+        factionOwnsInvadableOldWorldProvince,
+        isAtWarWithAnyGreatPower,
+        minorAtWarPeaceTargetsWhere,
+        oldWorldProvinceLeadOver;
 import '../util/ai_random_utils.dart';
 import '../util/faction_query.dart';
 
@@ -29,10 +36,10 @@ String? stalledConquestDeclaredWarTarget({
   );
   if (activeMinor == null &&
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    final atWarMinors = <String>[
-      for (final factionId in snapshot.threats.atWarWith)
-        if (game.minorNations.any((m) => m.id == factionId)) factionId,
-    ]..sort();
+    final atWarMinors = minorAtWarPeaceTargetsWhere(
+      game: game,
+      snapshot: snapshot,
+    );
     if (atWarMinors.length == 1 &&
         snapshot.conquest.oldWorldProvincesOwned <=
             kStalledOldWorldProvinceThreshold) {
@@ -49,8 +56,10 @@ String? stalledConquestDeclaredWarTarget({
   );
   if (gpBlocker != null &&
       snapshot.threats.atWarWith.contains(gpBlocker) &&
-      snapshot.conquest.invadableProvinceIdsSorted.any(
-        (pid) => provinceOwner[pid] == gpBlocker,
+      factionOwnsInvadableOldWorldProvince(
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        factionId: gpBlocker,
       )) {
     return gpBlocker;
   }
@@ -261,9 +270,7 @@ Orders runConquestArmyMovePlanner({
   }
   if (snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
-      !snapshot.threats.atWarWith.any(
-        (id) => ctx.game.playerById(id) != null,
-      ) &&
+      !isAtWarWithAnyGreatPower(ctx.game, snapshot) &&
       weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
     weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
   }
@@ -710,8 +717,11 @@ double _stalledExpansionArmyMoveScoreDelta({
       delta += kConquestArmyMoveStalledDeclaredTargetBonus;
     }
     if (atWarGpInvadableBlocker) {
-      final blockerOw = provinceCountOwnedBy(game, destOwner);
-      final deficit = blockerOw - snapshot.conquest.oldWorldProvincesOwned;
+      final deficit = oldWorldProvinceLeadOver(
+        game: game,
+        snapshot: snapshot,
+        factionId: destOwner,
+      );
       if (deficit > 0) {
         delta +=
             deficit * kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince;
@@ -750,7 +760,7 @@ double conquestOldWorldArmyMoveScaledBonus({
   if (oldWorldInvasionWeight <= 0.0) {
     return 0.0;
   }
-  final clamped = oldWorldInvasionWeight > 1.0 ? 1.0 : oldWorldInvasionWeight;
+  final clamped = clampPhaseWeightUpperUnit(oldWorldInvasionWeight);
   return baseBonus * clamped;
 }
 
