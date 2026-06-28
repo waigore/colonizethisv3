@@ -26,6 +26,7 @@ import 'planning_helpers.dart'
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
+part 'diplomatic_candidate_scoring_declare_war_context.dart';
 part 'diplomatic_candidate_scoring_declare_war.dart';
 part 'diplomatic_candidate_scoring_declare_war_bonuses.dart';
 
