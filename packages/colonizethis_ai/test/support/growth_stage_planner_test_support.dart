@@ -8,13 +8,14 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart' show kTestAiConfig;
 
 const kTestTopology = MapTopology(nodes: [], edges: []);
-const kTestConfig = AIConfig(
-  leaderId: 'victoria',
-  personalityId: 'victoria',
-  hiddenAgendaId: 'peacemaker',
-);
+
+/// Alias to the single shared default AI config (`kTestAiConfig`,
+/// `planner_test_helpers.dart`) so the growth-stage suites reuse one constant
+/// rather than duplicating the literal `AIConfig` (Refs #3749).
+const kTestConfig = kTestAiConfig;
 final kTestSeeds = AISeedBundle.fromTurnSeed(3371);
 
 Game gameWithPlayer(Player player) => Game(
