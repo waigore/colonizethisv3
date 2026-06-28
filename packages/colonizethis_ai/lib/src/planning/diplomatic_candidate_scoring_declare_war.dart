@@ -16,7 +16,7 @@ int _scoreDeclareWarDiplomaticOrder({
   required int currentTurn,
   required bool anyMinorOwnsOldWorld,
   required StrategicGoal? primaryGoal,
-  required int Function(String targetFactionId, int relationScore)
+  required int Function(String targetFactionId, num relationScore)
   warDesireForTarget,
   Orders? sameTurnPriorDiplomaticOrders,
   PhasePlanOutcome? phasePlan,
@@ -110,10 +110,10 @@ final class _DeclareWarTargetContext {
   final int currentTurn;
   final bool anyMinorOwnsOldWorld;
   final StrategicGoal? primaryGoal;
-  final int Function(String targetFactionId, int relationScore)
+  final int Function(String targetFactionId, num relationScore)
   warDesireForTarget;
   final DiplomacyRelation? relation;
-  final int relationScore;
+  final num relationScore;
   final List<String> adjacentOwners;
   final bool isAdjacentOwner;
   final bool isColonialAdjacentOwner;
@@ -289,7 +289,7 @@ final class _DeclareWarTargetContext {
     required int currentTurn,
     required bool anyMinorOwnsOldWorld,
     required StrategicGoal? primaryGoal,
-    required int Function(String targetFactionId, int relationScore)
+    required int Function(String targetFactionId, num relationScore)
     warDesireForTarget,
     PhasePlanOutcome? phasePlan,
   }) {

@@ -77,7 +77,7 @@ class FirstRightDealCredit {
   /// Relation score sampled at credit-computation time (0–100, already
   /// clamped at the diplomacy source per `SPEC/game/diplomacy.md`
   /// § Relation Model).
-  final int relationScore;
+  final num relationScore;
 
   /// Per-deal profit envelope produced by [computeFirstRightProfit].
   /// `profit.profitTreasury == 0.0` is a valid record — it preserves
@@ -189,7 +189,7 @@ class FirstRightCreditsResult {
 FirstRightCreditsResult computeFirstRightCredits({
   required Iterable<FilledDeal> filledDeals,
   required PurchasedTileIndex? purchasedTileIndex,
-  required int Function(String owningGpId, String sourceFactionId)
+  required num Function(String owningGpId, String sourceFactionId)
   relationScoreFor,
 }) {
   if (purchasedTileIndex == null || purchasedTileIndex.isEmpty) {

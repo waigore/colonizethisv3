@@ -54,6 +54,41 @@ void main() {
       expect(restored, game);
     });
 
+    test('colonyStates round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        colonyStates: const [
+          ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 4),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.colonyStates, hasLength(1));
+      expect(restored.colonyStates.first.tribeId, 'tribe1');
+      expect(restored.colonyStates.first.colonyOfGpId, 'gp1');
+      expect(restored, game);
+    });
+
+    test('colonyStates defaults empty when missing from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson();
+      expect(json.containsKey('colonyStates'), isFalse);
+      expect(Game.fromJson(json).colonyStates, isEmpty);
+    });
+
     test('debugDiplomacyUsedPairKeys defaults empty when missing from JSON', () {
       final game = Game(
         id: 'g1',

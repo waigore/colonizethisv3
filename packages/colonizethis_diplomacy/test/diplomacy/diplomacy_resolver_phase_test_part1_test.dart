@@ -61,8 +61,10 @@ void main() {
       final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'gp2');
       expect(rel, isNotNull);
-      expect(rel!.level, RelationLevel.friendly); // 76 - 1 convergence = 75 (friendly)
-      expect(rel.score, 75); // 76 alliance - 1 convergence
+      // Alliance is an event delta this turn → per-turn decay is skipped
+      // (Refs #3753 R9.4), so the clamped Allied score 76 is preserved.
+      expect(rel!.level, RelationLevel.allied);
+      expect(rel.score, 76);
     });
 
     test('declare war and offer peace update relation state', () {

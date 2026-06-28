@@ -60,6 +60,35 @@ void main() {
       expect(restored.formalAlliance, isFalse);
     });
 
+    test('decimal score round-trips through JSON (0.1 precision)', () {
+      const fractional = DiplomacyRelation(
+        factionId1: 'A',
+        factionId2: 'B',
+        score: 73.5,
+      );
+      final restored = DiplomacyRelation.fromJson(fractional.toJson());
+      expect(restored.score, 73.5);
+      expect(restored.score, isA<double>());
+    });
+
+    test('legacy integer score migrates to decimal (x1.0) on load', () {
+      final restored = DiplomacyRelation.fromJson(const {
+        'factionId1': 'A',
+        'factionId2': 'B',
+        'score': 50,
+        'level': 'neutral',
+        'state': 'atPeace',
+      });
+      expect(restored.score, 50);
+      expect(restored.score, isA<double>());
+      expect(restored.score == 50.0, isTrue);
+    });
+
+    test('copyWith accepts a fractional decimal score', () {
+      final updated = relation.copyWith(score: 50.4);
+      expect(updated.score, 50.4);
+    });
+
     test('formalAlliance round-trips through JSON when true', () {
       const allied = DiplomacyRelation(
         factionId1: 'A',
@@ -191,6 +220,42 @@ void main() {
       expect(subsidy.hashCode,
           const SubsidyState(payerId: 'gp1', targetId: 'mn1', amountPerTurn: 25)
               .hashCode);
+    });
+  });
+
+  group('ColonyState', () {
+    const colony = ColonyState(
+      tribeId: 'tribe1',
+      colonyOfGpId: 'gp1',
+      sinceTurn: 4,
+    );
+
+    test('toJson/fromJson round-trips', () {
+      final restored = ColonyState.fromJson(colony.toJson());
+      expect(restored, colony);
+      expect(restored.tribeId, 'tribe1');
+      expect(restored.colonyOfGpId, 'gp1');
+      expect(restored.sinceTurn, 4);
+    });
+
+    test('fromJson defaults sinceTurn to 0 when missing', () {
+      final restored = ColonyState.fromJson(const {
+        'tribeId': 'tribe1',
+        'colonyOfGpId': 'gp1',
+      });
+      expect(restored.sinceTurn, 0);
+    });
+
+    test('copyWith and equality', () {
+      final updated = colony.copyWith(colonyOfGpId: 'gp2');
+      expect(updated.colonyOfGpId, 'gp2');
+      expect(updated.tribeId, 'tribe1');
+      expect(colony == updated, isFalse);
+      expect(
+        colony.hashCode,
+        const ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 4)
+            .hashCode,
+      );
     });
   });
 

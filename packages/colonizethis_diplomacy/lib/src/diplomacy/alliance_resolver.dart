@@ -92,7 +92,12 @@ Game _resolveJoinEmpireMinorOrTribe(
   final cost = joinEmpireCostForMinorOrTribe(game, targetId);
   if (player.treasury < cost) return game;
 
-  var next = absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
+  // Tribes become colonies (stay in the game); Minors are absorbed.
+  // SPEC/game/diplomacy.md § GP–Minor/Tribe Rules (Join Empire → colony).
+  final isTribe = game.tribes.any((t) => t.id == targetId);
+  var next = isTribe
+      ? markTribeAsColony(game, gpId, targetId, turn)
+      : absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
   next = logDiplomaticEvent(
     next,
     turn,
@@ -104,7 +109,9 @@ Game _resolveJoinEmpireMinorOrTribe(
     amount: cost,
     wasAiInitiator: isAiControlledForEvidence(next, gpId),
     eventTally: eventTally,
-    logMessage: 'diplomacy join empire $gpId $targetId cost=$cost',
+    logMessage: isTribe
+        ? 'diplomacy join empire (colony) $gpId $targetId cost=$cost'
+        : 'diplomacy join empire $gpId $targetId cost=$cost',
   );
   return next;
 }
@@ -164,6 +171,12 @@ Game absorbMinorOrTribeIntoGp(
 
 Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) =>
     FactionAbsorptionEngine.absorbGreatPowerIntoGp(game, gpId, targetGpId);
+
+/// Marks Tribe [tribeId] as a colony of [gpId] (Tribe Join Empire outcome):
+/// deducts the Join Empire cost, records a [ColonyState], and keeps the Tribe
+/// in the game (no province/unit/fleet transfer). SPEC/game/diplomacy.md.
+Game markTribeAsColony(Game game, String gpId, String tribeId, int turn) =>
+    FactionAbsorptionEngine.markTribeAsColony(game, gpId, tribeId, turn);
 
 Game processAlliances(
   Game game,

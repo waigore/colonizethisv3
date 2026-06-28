@@ -7,10 +7,12 @@ import 'package:logger/logger.dart';
 
 import 'package:run_observer_game/observer_snapshot_v1.dart';
 
-/// Refs #2509: Observer snapshots are written **post-resolution**. When a
-/// Join Empire order absorbs a Tribe owning a `newWorld|` province in
-/// [validateOrdersAndResolveTurnFromTrustedOrders], the post-resolution
-/// snapshot must list that province under the absorbing Great Power.
+/// Refs #2509 / #3753 (R5): Observer snapshots are written **post-resolution**.
+/// A Tribe `Join Empire` overture now routes to a **colony** outcome instead of
+/// absorption: the Tribe remains in the game, its `newWorld|` province is **not**
+/// transferred to the Great Power, and a [ColonyState] is recorded. The
+/// post-resolution snapshot must therefore still list that province under the
+/// colony Tribe (not the suzerain Great Power).
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -95,8 +97,8 @@ void main() {
         );
 
     test(
-      'snapshot.provinceOwnershipSorted lists absorbed NW province under '
-      'absorbing GP when treasury covers Join Empire cost',
+      'snapshot.provinceOwnershipSorted keeps NW province under the colony '
+      'Tribe (no transfer) when treasury covers Join Empire cost',
       () {
         final topology = buildTopology();
         // Cost = base 5000 + 1 province * 2000 = 7000; supply 15000 to cover.
@@ -111,8 +113,20 @@ void main() {
 
         expect(
           after.tribes.any((t) => t.id == 'tribe1'),
-          isFalse,
-          reason: 'Tribe must be removed from game after Join Empire absorbs it',
+          isTrue,
+          reason: 'Tribe must remain in the game as a colony (R5, no absorption)',
+        );
+        expect(
+          after.colonyStates.any(
+            (c) => c.tribeId == 'tribe1' && c.colonyOfGpId == 'gp1',
+          ),
+          isTrue,
+          reason: 'A ColonyState must record the Tribe as a colony of the GP',
+        );
+        expect(
+          after.players.firstWhere((p) => p.id == 'gp1').treasury,
+          15000 - 7000,
+          reason: 'Join Empire cost must still be deducted from GP treasury',
         );
 
         final snapshot = buildObserverSnapshotJson(
@@ -124,16 +138,21 @@ void main() {
         final nwRow = rows
             .cast<Map<String, Object?>>()
             .firstWhere((r) => r['id'] == 'newWorld|nw1');
-        expect(nwRow['ownerId'], 'gp1');
+        expect(
+          nwRow['ownerId'],
+          'tribe1',
+          reason: 'Colony Tribe keeps its NW province; ownership is not '
+              'transferred to the suzerain GP (R5)',
+        );
 
-        final tribeOwned = rows
+        final gpOwnedNw = rows
             .cast<Map<String, Object?>>()
-            .where((r) => r['ownerId'] == 'tribe1')
+            .where((r) => r['ownerId'] == 'gp1' && r['id'] == 'newWorld|nw1')
             .toList();
         expect(
-          tribeOwned,
+          gpOwnedNw,
           isEmpty,
-          reason: 'No province should still be owned by the absorbed tribe',
+          reason: 'GP must not own the colony Tribe NW province after Join Empire',
         );
       },
     );
@@ -156,7 +175,17 @@ void main() {
         expect(
           after.tribes.any((t) => t.id == 'tribe1'),
           isTrue,
-          reason: 'Tribe must remain when absorption rejected',
+          reason: 'Tribe must remain when Join Empire is rejected',
+        );
+        expect(
+          after.colonyStates.any((c) => c.tribeId == 'tribe1'),
+          isFalse,
+          reason: 'No ColonyState is recorded when Join Empire is rejected',
+        );
+        expect(
+          after.players.firstWhere((p) => p.id == 'gp1').treasury,
+          100,
+          reason: 'Treasury is unchanged when Join Empire is rejected',
         );
 
         final snapshot = buildObserverSnapshotJson(
