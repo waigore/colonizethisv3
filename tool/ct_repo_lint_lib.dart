@@ -679,6 +679,13 @@ Map<String, Object?> buildCtRepoLintSarifObject({
   };
 }
 
+/// Maximum byte length of an incremental `--files` argv value before the
+/// orchestrator hands the changed-file list to a `dart run` checker via a
+/// `--files-from` manifest file instead. Linux caps a single argv token at
+/// `MAX_ARG_STRLEN` (128 KiB); staying well under that avoids "argument list
+/// too long" crashes on release merge PRs that diff thousands of files.
+const int _maxIncrementalFilesArgvBytes = 96 * 1024;
+
 int _runOneRule({
   required String repoRoot,
   required RepoLintRule rule,
@@ -725,8 +732,21 @@ int _runOneRule({
 
   final script = rule.script!;
   final args = <String>['run', script];
+  Directory? filesManifestDir;
   if (rule.prIncremental && incrementalCsv != null) {
-    args.addAll(['--files', incrementalCsv]);
+    if (incrementalCsv.length > _maxIncrementalFilesArgvBytes) {
+      // Release merge PRs (e.g. dev -> main) diff thousands of `.dart` files,
+      // producing a CSV that exceeds the OS single-argv limit
+      // (`MAX_ARG_STRLEN`). Hand the list off via a manifest file instead so
+      // `Process.runSync` never throws an "argument list too long" error.
+      filesManifestDir =
+          Directory.systemTemp.createTempSync('ct_repo_lint_files_');
+      final manifest = File(p.join(filesManifestDir.path, 'files.txt'))
+        ..writeAsStringSync(incrementalCsv.replaceAll(',', '\n'));
+      args.addAll(['--files-from', manifest.path]);
+    } else {
+      args.addAll(['--files', incrementalCsv]);
+    }
   }
 
   final result = Process.runSync(
@@ -736,6 +756,9 @@ int _runOneRule({
     environment: Platform.environment,
     runInShell: false,
   );
+  if (filesManifestDir != null && filesManifestDir.existsSync()) {
+    filesManifestDir.deleteSync(recursive: true);
+  }
   _forwardProcessOutput(result, relayStdoutToStderr: relayChildStdoutToStderr);
   if (result.exitCode != 0) {
     stderr.writeln(

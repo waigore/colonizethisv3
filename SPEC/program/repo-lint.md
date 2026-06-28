@@ -264,6 +264,8 @@ Rules marked `pr_incremental: true` in the manifest receive `--files <csv>` when
 
 Checker CLIs that accept `--files` / `--files=` should use `repoLintSplitRelativeDartPathsArg` in `tool/ct_repo_lint_scan_contract.dart` for splitting. Checkers that **ignore** unknown argv tokens use `repoLintParseIncrementalRelativeDartPathsFromArgs`; checkers that accept **only** `--files` / `--files=` use `repoLintParseStrictIncrementalFilesArgs`, or `repoLintStrictIncrementalFilesArgListOrExit` when they print the shared `ERROR:` stderr lines and exit 2 on parse failure (see `test/ct_repo_lint_scan_contract_test.dart`).
 
+**Oversized changed-file lists (`--files-from`):** When the incremental changed-`.dart` list is too large to pass safely as a single argv token (Linux caps one argument at `MAX_ARG_STRLEN`, 128 KiB) — for example on release merge PRs (`dev` -> `main`) whose base diff spans thousands of files — `ct_repo_lint` writes the list to a temporary manifest file and hands `dart run` checkers `--files-from <path>` instead of `--files <csv>`. Both shared parsers (`repoLintParseIncrementalRelativeDartPathsFromArgs`, `repoLintParseStrictIncrementalFilesArgs`) accept `--files-from` / `--files-from=` and read the manifest via `repoLintReadFilesFromManifest` (same comma/newline splitting as `--files`; a missing manifest yields zero files). The selection is transport-only and does not change which files a rule scans. In-process rule dispatch is unaffected because it passes the path list directly without argv marshalling.
+
 ## Adding or changing rules
 
 Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without updating this SPEC and the manifest. Prefer:

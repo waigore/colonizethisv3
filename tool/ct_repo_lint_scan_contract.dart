@@ -285,9 +285,34 @@ repoLintParseIncrementalRelativeDartPathsFromArgs(List<String> args) {
         i++;
         out = repoLintSplitRelativeDartPathsArg(args[i]);
       }
+    } else if (arg.startsWith('--files-from=')) {
+      out = repoLintReadFilesFromManifest(arg.substring('--files-from='.length));
+    } else if (arg == '--files-from') {
+      if (i + 1 >= args.length) {
+        missingValue = true;
+      } else {
+        i++;
+        out = repoLintReadFilesFromManifest(args[i]);
+      }
     }
   }
   return (paths: out, missingValueError: missingValue);
+}
+
+/// Reads a `--files-from` manifest file (comma/newline-separated repo-relative
+/// paths) and splits it like `--files`.
+///
+/// The orchestrator (`ct_repo_lint_lib.dart`) writes such a manifest when the
+/// incremental changed-file list is too large to pass safely as a single argv
+/// token — for example on release merge PRs whose base diff spans thousands of
+/// `.dart` files and would otherwise exceed the OS `MAX_ARG_STRLEN` limit.
+/// A missing manifest path yields an empty list (no files scanned).
+List<String> repoLintReadFilesFromManifest(String path) {
+  final file = File(path);
+  if (!file.existsSync()) {
+    return const [];
+  }
+  return repoLintSplitRelativeDartPathsArg(file.readAsStringSync());
 }
 
 /// Like [repoLintParseIncrementalRelativeDartPathsFromArgs], but rejects any
@@ -311,6 +336,19 @@ repoLintParseStrictIncrementalFilesArgs(List<String> args) {
       } else {
         i++;
         out = repoLintSplitRelativeDartPathsArg(args[i]);
+      }
+      continue;
+    }
+    if (arg.startsWith('--files-from=')) {
+      out = repoLintReadFilesFromManifest(arg.substring('--files-from='.length));
+      continue;
+    }
+    if (arg == '--files-from') {
+      if (i + 1 >= args.length) {
+        missingValue = true;
+      } else {
+        i++;
+        out = repoLintReadFilesFromManifest(args[i]);
       }
       continue;
     }
@@ -339,7 +377,8 @@ List<String> repoLintStrictIncrementalFilesArgListOrExit(List<String> args) {
   if (r.unsupportedArgument != null) {
     stderr.writeln(
       'ERROR: Unsupported argument "${r.unsupportedArgument}". Supported: --files '
-      '(comma-separated or newline-separated relative paths).',
+      '(comma-separated or newline-separated relative paths) or --files-from '
+      '(path to a file of comma/newline-separated relative paths).',
     );
     exit(2);
   }
