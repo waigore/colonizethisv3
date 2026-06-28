@@ -6,23 +6,20 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'tile_cell_scan.dart';
+
 void _indexTileMapIntoProvinceBuckets({
   required TileMapResult map,
   required String regionId,
   required Map<String, List<String>> bucket,
   required Map<String, String> resourceByTileKey,
 }) {
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final localId = map.cell(x, y);
-      final fullId = ProvinceId.full(regionId, localId);
-      final provinceKey = fullId;
-      final tileKey = '$regionId|$localId|$x|$y';
-      bucket.putIfAbsent(provinceKey, () => <String>[]).add(tileKey);
-      final res = map.resourceAt(x, y);
-      if (res != null) resourceByTileKey[tileKey] = res.name;
-    }
-  }
+  forEachTileCell(map, regionId, (x, y, localId, tileKey) {
+    final provinceKey = ProvinceId.full(regionId, localId);
+    bucket.putIfAbsent(provinceKey, () => <String>[]).add(tileKey);
+    final res = map.resourceAt(x, y);
+    if (res != null) resourceByTileKey[tileKey] = res.name;
+  });
 }
 
 Map<String, String> _buildOldWorldVisibilityForPlayer({
@@ -32,24 +29,20 @@ Map<String, String> _buildOldWorldVisibilityForPlayer({
   required String playerId,
 }) {
   final visibility = <String, String>{};
-  for (var y = 0; y < owMap.height; y++) {
-    for (var x = 0; x < owMap.width; x++) {
-      final localId = owMap.cell(x, y);
-      final fullId = ProvinceId.full(kRegionOldWorld, localId);
-      final isSea = owSeaZoneIds.contains(localId);
-      final ownerId = ownerById[fullId];
-      final tileKey = '$kRegionOldWorld|$localId|$x|$y';
-      if (isSea) {
-        visibility[tileKey] = VisibilityLevel.fogged.name;
-        continue;
-      }
-      if (ownerId != null) {
-        visibility[tileKey] = ownerId == playerId
-            ? VisibilityLevel.fullyVisible.name
-            : VisibilityLevel.fogged.name;
-      }
+  forEachTileCell(owMap, kRegionOldWorld, (x, y, localId, tileKey) {
+    final isSea = owSeaZoneIds.contains(localId);
+    if (isSea) {
+      visibility[tileKey] = VisibilityLevel.fogged.name;
+      return;
     }
-  }
+    final fullId = ProvinceId.full(kRegionOldWorld, localId);
+    final ownerId = ownerById[fullId];
+    if (ownerId != null) {
+      visibility[tileKey] = ownerId == playerId
+          ? VisibilityLevel.fullyVisible.name
+          : VisibilityLevel.fogged.name;
+    }
+  });
   return visibility;
 }
 
@@ -57,13 +50,9 @@ void _fillNewWorldUnknownVisibility({
   required TileMapResult nwMap,
   required Map<String, String> visibility,
 }) {
-  for (var y = 0; y < nwMap.height; y++) {
-    for (var x = 0; x < nwMap.width; x++) {
-      final localId = nwMap.cell(x, y);
-      final tileKey = '$kRegionNewWorld|$localId|$x|$y';
-      visibility[tileKey] = VisibilityLevel.unknown.name;
-    }
-  }
+  forEachTileCell(nwMap, kRegionNewWorld, (x, y, localId, tileKey) {
+    visibility[tileKey] = VisibilityLevel.unknown.name;
+  });
 }
 
 /// Applies initial visibility and tile metadata to [game] using [tileMapByRegion].

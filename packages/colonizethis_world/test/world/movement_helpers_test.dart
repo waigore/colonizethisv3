@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/movement.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Exercises land-move adjacency validation and civilian tile-move application
@@ -28,14 +30,10 @@ Unit _civilian(
 Game _gameWithUnits({
   List<Unit> oldWorldUnits = const [],
   List<Unit> newWorldUnits = const [],
-}) => Game(
-  id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(units: oldWorldUnits),
-    newWorld: RegionData(units: newWorldUnits),
-  ),
+}) => TestFixtures.minimalGame(
   players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+  oldWorld: RegionData(units: oldWorldUnits),
+  newWorld: RegionData(units: newWorldUnits),
 );
 
 /// Local-id topology (`p1`–`p2`) for [isValidLandMove], which keys on node ids.

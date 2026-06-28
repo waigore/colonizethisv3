@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'turn_event_sink.dart';
 
 /// Filters [orders] by validation [results] (consuming via [idxBox]).
 void filterOrderList<T>(
@@ -12,8 +13,7 @@ void filterOrderList<T>(
   List<int> idxBox,
   void Function(String playerId, T order) addAccepted,
   String Function(T order) orderSummary,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink sink,
 ) {
   for (final order in orders) {
     final r = idxBox[0] >= results.length
@@ -27,7 +27,7 @@ void filterOrderList<T>(
         orderSummary: orderSummary(order),
         reasonCode: r.reason!,
       );
-      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+      sink.emit(event);
     }
   }
 }
@@ -36,8 +36,7 @@ Orders filterAcceptedOrdersForAllPlayers({
   required OrderEngine engine,
   required Game game,
   required MapTopology topology,
-  GameEventBus? eventBus,
-  void Function(GameEvent)? onGameEvent,
+  TurnEventSink sink = const TurnEventSink(),
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final original = engine.orders;
@@ -87,8 +86,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       idxBox,
       (pid, m) => moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
       (m) => 'Move order: ${m.unitId} -> ${m.destinationTileKey}',
-      eventBus,
-      onGameEvent,
+      sink,
     );
     filterOrderList<ArmyMoveOrder>(
       playerId,
@@ -98,8 +96,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       (pid, m) =>
           armyMoveByPlayer.putIfAbsent(pid, () => <ArmyMoveOrder>[]).add(m),
       (m) => 'Army move: ${m.armyId} -> ${m.destinationProvinceId}',
-      eventBus,
-      onGameEvent,
+      sink,
     );
     filterOrderList<BuildUnitOrder>(
       playerId,
@@ -109,8 +106,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       (pid, b) =>
           buildByPlayer.putIfAbsent(pid, () => <BuildUnitOrder>[]).add(b),
       (b) => 'Build unit: ${b.unitType}',
-      eventBus,
-      onGameEvent,
+      sink,
     );
     filterOrderList<WorkOrder>(
       playerId,
@@ -119,8 +115,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       idxBox,
       (pid, w) => workByPlayer.putIfAbsent(pid, () => <WorkOrder>[]).add(w),
       (w) => 'Work order: ${w.target}',
-      eventBus,
-      onGameEvent,
+      sink,
     );
 
     if (diplo.isNotEmpty) {

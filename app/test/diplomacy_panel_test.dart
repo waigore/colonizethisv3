@@ -1,14 +1,11 @@
 // Tests for DiplomacyPanel. SPEC/ui/diplomacy-panel.md.
 
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
@@ -16,6 +13,7 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/widget_test_assets.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -112,19 +110,6 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
 
   @override
   Widget build(BuildContext context) => widget.child;
-}
-
-Future<void> _preWarmFlameImageCache() async {
-  try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (e) {
-    // Silently fail - the test might still work if the image is available later
-  }
 }
 
 Widget buildPanel({
@@ -255,7 +240,7 @@ void main() {
   });
 
   setUpAll(() async {
-    await _preWarmFlameImageCache();
+    await preloadNinePatchImage();
     // Refs #3656: lightweight discovered-faction fixture replaces the ~7-11s
     // getDebugInitGameResult() map generation. It seeds discovered GPs (one at
     // peace → PEACE badge, one at war → WAR badge), a Minor Nation with the

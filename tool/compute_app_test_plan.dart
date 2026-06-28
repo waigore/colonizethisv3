@@ -70,8 +70,15 @@ AppTestPlan computeAppTestPlan({
 
   for (final path in normalized) {
     if (_isAppTestFile(path)) {
-      changedTests.add(path);
       hasGraphRelevantChange = true;
+      // Only schedule a changed test file that still exists on disk (is a
+      // graph node). A deleted `*_test.dart` path appears in the diff but
+      // must never be handed to `flutter test`, which would fail to load it
+      // with "Does not exist". A pure deletion leaves `selected` empty and is
+      // handled by the safety net below (or yields an empty selective run).
+      if (testClosures.containsKey(path)) {
+        changedTests.add(path);
+      }
       continue;
     }
     if (_isAppLibFile(path)) {

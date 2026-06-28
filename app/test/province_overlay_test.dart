@@ -1,11 +1,8 @@
 // Tests for ProvinceSeaZoneDetailOverlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 
-import 'dart:convert';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
@@ -18,6 +15,8 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleSeaZoneIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
+
+import 'support/widget_test_assets.dart';
 
 void main() {
   suppressLogsForTests();
@@ -142,21 +141,7 @@ void main() {
     testWidgets('sea zone overlay uses sea-zone display name field', (
       WidgetTester tester,
     ) async {
-      const tinyPngBase64 =
-          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=';
-      final tinyPng = Uint8List.fromList(base64Decode(tinyPngBase64));
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMessageHandler('flutter/assets', (message) async {
-            final key = const StringCodec().decodeMessage(message);
-            if (key == 'assets/images/ui_button_nine_patch.png') {
-              return ByteData.view(tinyPng.buffer);
-            }
-            return null;
-          });
-      addTearDown(() {
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMessageHandler('flutter/assets', null);
-      });
+      await installNinePatchAssetMock();
 
       final game = demoGameForOverlay;
       final named = game.copyWith(
@@ -186,21 +171,7 @@ void main() {
     testWidgets(
       'AC: sea zone hides canonical name when all sea tiles in zone are unrevealed',
       (WidgetTester tester) async {
-        const tinyPngBase64 =
-            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=';
-        final tinyPng = Uint8List.fromList(base64Decode(tinyPngBase64));
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMessageHandler('flutter/assets', (message) async {
-              final key = const StringCodec().decodeMessage(message);
-              if (key == 'assets/images/ui_button_nine_patch.png') {
-                return ByteData.view(tinyPng.buffer);
-              }
-              return null;
-            });
-        addTearDown(() {
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-              .setMockMessageHandler('flutter/assets', null);
-        });
+        await installNinePatchAssetMock();
 
         final baseRegion = demoRegionForOverlay;
         final cells = baseRegion.cells
@@ -268,21 +239,7 @@ void main() {
     testWidgets(
       'AC: sea zone shows display name when at least one sea tile in zone is fogged',
       (WidgetTester tester) async {
-        const tinyPngBase64 =
-            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=';
-        final tinyPng = Uint8List.fromList(base64Decode(tinyPngBase64));
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMessageHandler('flutter/assets', (message) async {
-              final key = const StringCodec().decodeMessage(message);
-              if (key == 'assets/images/ui_button_nine_patch.png') {
-                return ByteData.view(tinyPng.buffer);
-              }
-              return null;
-            });
-        addTearDown(() {
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-              .setMockMessageHandler('flutter/assets', null);
-        });
+        await installNinePatchAssetMock();
 
         final baseRegion = demoRegionForOverlay;
         final seaPrefixed = sampleSeaZoneIdForOverlay;

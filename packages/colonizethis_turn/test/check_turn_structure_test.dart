@@ -12,6 +12,13 @@ import 'package:colonizethis_test/test.dart';
 /// * the turn-seed root (`(game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix)`)
 ///   must live only in `mixTurnSeed` (`turn_resolution_seeds.dart`); see issue
 ///   #3565 item #4.
+///
+/// Refs #3701 extends the same single-source pattern to the LCG seed-advance
+/// step: the `* kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement`
+/// advance arithmetic must live only in `advanceTurnSeed`
+/// (`turn_resolution_seeds.dart`). The `kTurnResolutionLcgMultiplier` token is
+/// the distinctive marker of the advance step (mask-only callers reference only
+/// `kTurnResolutionLcgMask`), so guarding it keeps inlined advance copies out.
 void main() {
   group('colonizethis_turn structure guards (Refs #3565)', () {
     final libDir = _turnLibDir();
@@ -49,6 +56,44 @@ void main() {
       );
     });
 
+    test('LCG seed-advance literal lives only in advanceTurnSeed', () {
+      final pattern = RegExp('kTurnResolutionLcgMultiplier');
+      final offenders = _filesMatching(
+        libDir,
+        pattern,
+        allowed: 'turn_resolution_seeds.dart',
+      );
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'LCG seed-advance steps must reuse advanceTurnSeed '
+            '(turn_resolution_seeds.dart). Inlined copies found in:\n'
+            '${offenders.join('\n')}',
+      );
+    });
+
+    test('deliverGameEvent dispatch lives only in TurnEventSink', () {
+      // Theme B (Refs #3701): the game-event transport is centralized in
+      // TurnEventSink.emit, so emitters and phase handlers depend on the sink
+      // instead of calling deliverGameEvent directly. Any new direct call is a
+      // regression that re-couples a call site to the raw transport.
+      final pattern = RegExp(r'deliverGameEvent\s*\(');
+      final offenders = _filesMatching(
+        libDir,
+        pattern,
+        allowed: 'turn_event_sink.dart',
+      );
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'deliverGameEvent dispatch must go through TurnEventSink.emit '
+            '(turn_event_sink.dart). Direct calls found in:\n'
+            '${offenders.join('\n')}',
+      );
+    });
+
     test('guard patterns still match their canonical helpers', () {
       // Sanity: the guards are meaningful only if the canonical sources still
       // contain the patterns. This fails loudly if a helper is renamed/moved.
@@ -65,6 +110,27 @@ void main() {
       expect(
         RegExp(r'globalGameSeed\s*\?\?\s*0\)\s*\^').hasMatch(seeds),
         isTrue,
+      );
+      expect(
+        seeds.contains('int advanceTurnSeed('),
+        isTrue,
+        reason: 'advanceTurnSeed must remain defined in turn_resolution_seeds.dart',
+      );
+      expect(
+        RegExp(
+          r'kTurnResolutionLcgMultiplier\s*\+\s*kTurnResolutionLcgIncrement',
+        ).hasMatch(seeds),
+        isTrue,
+      );
+      final sink = File(
+        '${libDir.path}/src/turn/turn_event_sink.dart',
+      ).readAsStringSync();
+      expect(
+        RegExp(r'deliverGameEvent\s*\(').hasMatch(sink),
+        isTrue,
+        reason:
+            'TurnEventSink.emit must remain the single deliverGameEvent caller '
+            'in turn_event_sink.dart',
       );
     });
   });

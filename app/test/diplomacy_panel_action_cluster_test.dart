@@ -17,6 +17,8 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/app_shell_harness.dart';
+
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 
 /// Human GP `gp1` holds an at-peace relation with GP `gp2`, so the GP row
@@ -56,19 +58,15 @@ Game _greatPowerRowGame() {
 }
 
 Widget _panelHost({required Size viewportSize}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: MediaQuery(
-      data: MediaQueryData(size: viewportSize),
-      child: Scaffold(
-        body: DiplomacyPanel(
-          game: _greatPowerRowGame(),
-          humanPlayerId: 'gp1',
-          topology: _emptyTopology,
-          currentOrders: const Orders(),
-          bus: AppEventBus.create(),
-        ),
+  return buildAppShell(
+    viewport: viewportSize,
+    child: Scaffold(
+      body: DiplomacyPanel(
+        game: _greatPowerRowGame(),
+        humanPlayerId: 'gp1',
+        topology: _emptyTopology,
+        currentOrders: const Orders(),
+        bus: AppEventBus.create(),
       ),
     ),
   );

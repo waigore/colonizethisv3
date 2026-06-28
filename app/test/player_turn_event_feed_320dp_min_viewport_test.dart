@@ -30,6 +30,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/min_viewport_harness.dart';
+
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
 /// sibling screen-level pin files.
@@ -53,41 +55,31 @@ const List<PlayerTurnEventFeedEntry> _kPopulatedEntries = <PlayerTurnEventFeedEn
 ];
 
 Widget _hostNarrowCard({
-  required Size viewportSize,
   required List<PlayerTurnEventFeedEntry> entries,
   required String emptyLabel,
 }) {
-  return MediaQuery(
-    data: MediaQueryData(size: viewportSize),
-    child: MaterialApp(
-      home: Scaffold(
-        body: Align(
-          alignment: Alignment.topRight,
-          child: PlayerTurnEventFeedCard(
-            entries: entries,
-            emptyLabel: emptyLabel,
-            narrow: true,
-          ),
-        ),
+  return Scaffold(
+    body: Align(
+      alignment: Alignment.topRight,
+      child: PlayerTurnEventFeedCard(
+        entries: entries,
+        emptyLabel: emptyLabel,
+        narrow: true,
       ),
     ),
   );
 }
 
-Future<void> _pumpAtSize(
+Future<void> _pumpNarrow(
   WidgetTester tester, {
   required Size size,
   required Widget child,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MediaQuery(
-      data: MediaQueryData(size: size),
-      child: child,
-    ),
-  );
-  await tester.pump();
+  await pumpAtMinViewport(tester, size: size, child: child);
+  // The card's hover-aware row chrome animates the border color via an
+  // `AnimatedContainer`; a second short framed pump lays out the body
+  // without entering the animation steady-state loop (so we avoid
+  // `pumpAndSettle`).
   await tester.pump(const Duration(milliseconds: 16));
 }
 
@@ -102,11 +94,10 @@ void main() {
         'AC (positive) narrow populated @ 320×640: no RenderFlex overflow '
         'and entry lines render',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             size: _kMinViewport,
             child: _hostNarrowCard(
-              viewportSize: _kMinViewport,
               entries: _kPopulatedEntries,
               emptyLabel: 'No events this turn.',
             ),
@@ -136,11 +127,10 @@ void main() {
         'AC (positive) narrow empty @ 320×640: no RenderFlex overflow and '
         'empty copy renders',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             size: _kMinViewport,
             child: _hostNarrowCard(
-              viewportSize: _kMinViewport,
               entries: const <PlayerTurnEventFeedEntry>[],
               emptyLabel: 'No events this turn.',
             ),
@@ -161,11 +151,10 @@ void main() {
         'Negative control: narrow populated @ 1024×768 also pumps without '
         'exception',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             size: _kWideRegressionViewport,
             child: _hostNarrowCard(
-              viewportSize: _kWideRegressionViewport,
               entries: _kPopulatedEntries,
               emptyLabel: 'No events this turn.',
             ),

@@ -2,7 +2,6 @@
 // Column(stretch) + optional top-bar skeleton extracted from CtScreenShell
 // and UnitsPanelShell. SPEC/ui/components/ct-panel-with-top-bar.md.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_panel_with_top_bar.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
@@ -10,17 +9,17 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   Future<void> pump(WidgetTester tester, Widget child) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(body: child),
-      ),
+    await pumpAppShell(
+      tester,
+      child: Scaffold(body: child),
+      settle: true,
     );
-    await tester.pumpAndSettle();
   }
 
   group('CtPanelWithTopBar', () {

@@ -1,5 +1,6 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart' show NavalCombatResultEvent;
 import 'package:colonizethis_turn/src/turn/naval_resolution.dart';
+import 'package:colonizethis_turn/src/turn/turn_event_sink.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -76,9 +77,11 @@ void main() {
             NavalMoveOrder(fleetId: 'f_mover', destinationSeaZoneId: 'sea1'),
           ],
         },
-        onGameEvent: (e) {
-          if (e is NavalCombatResultEvent) navalEvent = e;
-        },
+        sink: TurnEventSink(
+          onGameEvent: (e) {
+            if (e is NavalCombatResultEvent) navalEvent = e;
+          },
+        ),
       );
 
       expect(navalEvent, isNotNull);

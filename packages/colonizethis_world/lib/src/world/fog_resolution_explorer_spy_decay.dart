@@ -84,12 +84,8 @@ Map<String, Map<String, String>> applyFogDecay(
     final navalCoastalIntel = navalCoastalIntelByPlayer[playerId] ?? const {};
 
     for (final tileKey in visibility.keys.toList()) {
-      final parsedTile = parseTileKeyCoordinates(tileKey);
-      if (parsedTile == null) continue;
-      final fullProvinceId = ProvinceId.full(
-        parsedTile.regionId,
-        parsedTile.provinceLocalId,
-      );
+      final fullProvinceId = fullProvinceIdFromTileKey(tileKey);
+      if (fullProvinceId == null) continue;
       final ownerId = ownerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
       if (hasExplorerIn.contains(fullProvinceId)) continue;

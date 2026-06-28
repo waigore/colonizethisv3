@@ -10,17 +10,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
+
+import 'support/app_shell_harness.dart';
 
 Widget _hostedPanel({
   Widget child = const SizedBox.shrink(),
   EdgeInsetsGeometry padding = const EdgeInsets.all(12),
 }) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: SizedBox(
         width: 200,
         height: 80,

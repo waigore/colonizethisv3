@@ -1,8 +1,14 @@
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'planning_imports.dart';
 import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'planner_context.dart';
+import 'planning_helpers.dart'
+    show
+        anyInvadableProvinceOwnedByMinor,
+        gpFactionIdsAtWarWith,
+        isAtWarWithAnyGreatPower;
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_declare_war_targets.dart';
@@ -167,15 +173,13 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
 }) {
   var filtered = candidates;
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final atWarWithGp = snapshot.threats.atWarWith.any(
-      (id) => ctx.game.playerById(id) != null,
-    );
+    final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, snapshot);
     if (atWarWithGp) {
       filtered = filtered
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
-                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+                !isTribeFaction(ctx.game, o.targetFactionId),
           )
           .toList();
     }
@@ -183,26 +187,23 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     final provinceOwner = getProvinceOwnerMap(ctx.game);
-    final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) {
-        final owner = provinceOwner[pid];
-        return owner != null && ctx.game.minorNations.any((m) => m.id == owner);
-      },
+    final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+      game: ctx.game,
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
     );
     if (minorsOwnInvadable) {
       filtered = filtered
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
-                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+                !isTribeFaction(ctx.game, o.targetFactionId),
           )
           .toList();
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final gpWars = snapshot.threats.atWarWith
-        .where((id) => ctx.game.playerById(id) != null)
-        .toList();
+    final gpWars = gpFactionIdsAtWarWith(ctx.game, snapshot);
     final blocker = primaryInvadableOldWorldGpBlocker(
       game: ctx.game,
       snapshot: snapshot,
@@ -613,7 +614,7 @@ int? _pickMinorDeclareCandidateIndex({
     if (order.type != DiplomaticOrderType.declareWar) {
       continue;
     }
-    if (!ctx.game.minorNations.any((m) => m.id == order.targetFactionId)) {
+    if (!isMinorFaction(ctx.game, order.targetFactionId)) {
       continue;
     }
     final score = scores[i];

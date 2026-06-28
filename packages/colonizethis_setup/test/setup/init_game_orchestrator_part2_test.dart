@@ -11,24 +11,11 @@ void main() {
     test(
       'locked full-init profile: 60 OW / 30 NW, 6 GPs, 6 minors; init succeeds and GPs are P–P connected',
       () {
-        final base = GameSetupConfig.defaultConfig;
-        final config = GameSetupConfig(
-          selectedGreatPowerIds: base.selectedGreatPowerIds,
-          leaderVariantByGpId: base.leaderVariantByGpId,
-          continentCount: 4,
-          minorNationCount: 6,
-          tribeCount: 10,
-          numProvincesOldWorld: 60,
-          numProvincesNewWorld: 30,
-          minProvincesPerMinor: 3,
-          seed: base.seed,
-          startingResources: base.startingResources,
+        final config = lockedFullInitConfig(
+          seed: GameSetupConfig.defaultConfig.seed,
         );
 
-        final result = runInitGame(
-          config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
-        );
+        final result = runInitGame(config: config, options: defaultInitOptions);
         final game = result.game;
         expect(game.worldState.oldWorld.provinces.length, 60);
         expect(game.players.length, 6);
@@ -42,23 +29,8 @@ void main() {
       'seed 42 full init: land province display names unique per region; '
       'Poland minor4 has at most one Greater Poland when locked partitions match',
       () {
-        final base = GameSetupConfig.defaultConfig;
-        final config = GameSetupConfig(
-          selectedGreatPowerIds: base.selectedGreatPowerIds,
-          leaderVariantByGpId: base.leaderVariantByGpId,
-          continentCount: 4,
-          minorNationCount: 6,
-          tribeCount: 10,
-          numProvincesOldWorld: 60,
-          numProvincesNewWorld: 30,
-          minProvincesPerMinor: 3,
-          seed: 42,
-          startingResources: base.startingResources,
-        );
-        final result = runInitGame(
-          config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
-        );
+        final config = lockedFullInitConfig(seed: 42);
+        final result = runInitGame(config: config, options: defaultInitOptions);
         final game = result.game;
         void assertDistinct(Iterable<String?> names, String label) {
           final strings = names
@@ -132,22 +104,6 @@ void main() {
       },
     );
 
-    GameSetupConfig lockedFullInitConfig({required int seed}) {
-      final base = GameSetupConfig.defaultConfig;
-      return GameSetupConfig(
-        selectedGreatPowerIds: base.selectedGreatPowerIds,
-        leaderVariantByGpId: base.leaderVariantByGpId,
-        continentCount: 4,
-        minorNationCount: 6,
-        tribeCount: 10,
-        numProvincesOldWorld: 60,
-        numProvincesNewWorld: 30,
-        minProvincesPerMinor: 3,
-        seed: seed,
-        startingResources: base.startingResources,
-      );
-    }
-
     test(
       'AC-11 locked full-init profile: twenty fixed seeds complete setup',
       () {
@@ -178,10 +134,7 @@ void main() {
 
         for (final s in seeds) {
           final config = lockedFullInitConfig(seed: s);
-          final result = runInitGame(
-            config: config,
-            options: const InitGameOptions(cellSize: 8, renderPng: false),
-          );
+          final result = runInitGame(config: config, options: defaultInitOptions);
           final game = result.game;
           expect(
             game.worldState.oldWorld.provinces.length,
@@ -224,9 +177,8 @@ void main() {
         // Must match one of the AC-11 regression seeds (#1861 / #1822).
         const s = 17011;
         final config = lockedFullInitConfig(seed: s);
-        const options = InitGameOptions(cellSize: 8, renderPng: false);
-        final a = runInitGame(config: config, options: options);
-        final b = runInitGame(config: config, options: options);
+        final a = runInitGame(config: config, options: defaultInitOptions);
+        final b = runInitGame(config: config, options: defaultInitOptions);
 
         String ownerKey(Game g) {
           final parts = <String>[];

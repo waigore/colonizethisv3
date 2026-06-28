@@ -10,12 +10,24 @@ final class _CapitalTileCandidateScan {
   int? classCCoastalX;
   int? classCCoastalY;
 
-  void mergeClassC(int x, int y, TileMapResult tileMap, MapTopology topology) {
+  void mergeClassC(
+    int x,
+    int y,
+    TileMapResult tileMap,
+    MapTopology topology,
+    Set<String> provinceIds,
+  ) {
     if (classCx == null) {
       classCx = x;
       classCy = y;
     }
-    if (_isTileAdjacentToSea(x, y, tileMap, topology) &&
+    if (_isTileAdjacentToSea(
+          x,
+          y,
+          tileMap,
+          topology,
+          provinceIds: provinceIds,
+        ) &&
         classCCoastalX == null) {
       classCCoastalX = x;
       classCCoastalY = y;
@@ -28,6 +40,7 @@ final class _CapitalTileCandidateScan {
     int y,
     TileMapResult tileMap,
     MapTopology topology,
+    Set<String> provinceIds,
   ) {
     if (tileClass == CapitalTileClass.a) {
       if (classAx == null) {
@@ -43,7 +56,7 @@ final class _CapitalTileCandidateScan {
       }
       return;
     }
-    mergeClassC(x, y, tileMap, topology);
+    mergeClassC(x, y, tileMap, topology, provinceIds);
   }
 }
 
@@ -75,7 +88,7 @@ _scanCapitalTileCandidates({
         localProvinceId: localProvinceId,
         provinceIds: provinceIds,
       );
-      acc.accept(tileClass, x, y, tileMap, topology);
+      acc.accept(tileClass, x, y, tileMap, topology, provinceIds);
     }
   }
   return (

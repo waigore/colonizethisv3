@@ -60,9 +60,19 @@ import '../widgets/game_map_options_dialog.dart';
 import '../widgets/game_map_players_bar.dart';
 import '../widgets/player_turn_event_feed.dart';
 
-part 'game_map_area_part1.dart';
-part 'game_map_area_part1b.dart';
-part 'game_map_area_part2.dart';
+// Domain-split state mixins/extensions (Refs #3699 Theme 3): the `_GameMapArea*`
+// units are organized by concern, not by file size. Application order satisfies
+// each mixin's `on` constraint (base fields first, then leaf concerns, then the
+// lifecycle and build mixins that orchestrate them).
+part 'game_map_area_state_base.dart';
+part 'game_map_area_selection.dart';
+part 'game_map_area_view.dart';
+part 'game_map_area_turn_resolution.dart';
+part 'game_map_area_turn_feed.dart';
+part 'game_map_area_events.dart';
+part 'game_map_area_e2e.dart';
+part 'game_map_area_lifecycle.dart';
+part 'game_map_area_build.dart';
 
 final _gameMapNextTurnUiLog = packageLogger('logic');
 
@@ -81,4 +91,13 @@ class GameMapArea extends ConsumerStatefulWidget {
 }
 
 class _GameMapAreaState extends ConsumerState<GameMapArea>
-    with _GameMapAreaStatePart1, _GameMapAreaStatePart2 {}
+    with
+        _GameMapAreaStateBase,
+        _GameMapAreaSelection,
+        _GameMapAreaView,
+        _GameMapAreaTurnResolution,
+        _GameMapAreaTurnFeed,
+        _GameMapAreaEvents,
+        _GameMapAreaE2e,
+        _GameMapAreaLifecycle,
+        _GameMapAreaBuild {}

@@ -10,6 +10,7 @@ import '../turn_pipeline_state.dart';
 import '../turn_resolution_events.dart';
 import '../turn_resolver_config.dart';
 import '../turn_resolution_seeds.dart';
+import '../turn_phase_snapshot.dart';
 
 void _emitPreBattleDialogueForConflicts(
   Game state,
@@ -58,15 +59,21 @@ Game runCombatPhase(
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
-  final previousCapitalByPlayer = {
-    for (final p in game.players) p.id: p.capitalProvinceId,
-  };
-  final previousCapitalByMinor = {
-    for (final m in game.minorNations) m.id: m.capitalProvinceId,
-  };
-  final previousCapitalByTribe = {
-    for (final t in game.tribes) t.id: t.capitalProvinceId,
-  };
+  final previousCapitalByPlayer = snapshotBy(
+    game.players,
+    (p) => p.id,
+    (p) => p.capitalProvinceId,
+  );
+  final previousCapitalByMinor = snapshotBy(
+    game.minorNations,
+    (m) => m.id,
+    (m) => m.capitalProvinceId,
+  );
+  final previousCapitalByTribe = snapshotBy(
+    game.tribes,
+    (t) => t.id,
+    (t) => t.capitalProvinceId,
+  );
   Game state = game;
   final turn = state.worldState.turnState.turnNumber;
   final preBattleDialogueSeed = mixTurnSeed(game, turn);
@@ -92,6 +99,13 @@ Game runCombatPhase(
     ledger: combatGeneralLedger,
   );
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
+  // Combat-result/dialogue delivery historically bypasses the configured event
+  // bus (only the onGameEvent callback + default logger), so the battle sink is
+  // built without an eventBus to preserve that exact behaviour. Refs #3701.
+  final battleSink = TurnEventSink(
+    onGameEvent: onGameEvent,
+    onDialogue: onDialogue,
+  );
   var seed = mixTurnSeed(game, turn);
   var battleIndex = 0;
   for (final ctx in boundBattles) {
@@ -112,12 +126,9 @@ Game runCombatPhase(
       battleIndex,
       seed,
       combatGeneralLedger,
-      onDialogue: onDialogue,
-      onGameEvent: onGameEvent,
+      sink: battleSink,
     );
-    seed =
-        (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
-        kTurnResolutionLcgMask;
+    seed = advanceTurnSeed(seed);
     battleIndex++;
   }
   state = applyCapitalReassignmentAfterCombat(
@@ -147,10 +158,11 @@ TurnPhaseStepOutcome combatTurnPhaseHandler(
   TurnResolverConfig config,
   int turn,
 ) {
-  final previousOwnership = <String, String?>{};
-  for (final prov in acc.game.worldState.allProvinces()) {
-    previousOwnership[prov.id] = prov.ownerId;
-  }
+  final previousOwnership = snapshotBy(
+    acc.game.worldState.allProvinces(),
+    (prov) => prov.id,
+    (prov) => prov.ownerId,
+  );
   final afterCombat = runCombatPhase(
     acc.game,
     config.orders,
@@ -158,16 +170,14 @@ TurnPhaseStepOutcome combatTurnPhaseHandler(
     config.topology,
     config.tileMapByRegion,
     topologyByRegion: config.topologyByRegion,
-    onDialogue: config.onDialogue,
-    onGameEvent: config.onGameEvent,
+    onDialogue: config.eventSink.onDialogue,
+    onGameEvent: config.eventSink.onGameEvent,
   );
   emitProvinceCapturedEvents(
     previousOwnership,
     afterCombat,
     turn,
-    config.eventBus,
-    config.onGameEvent,
-    config.onDialogue,
+    config.eventSink,
   );
   return TurnPhaseStepContinue(acc.copyWith(game: afterCombat));
 }

@@ -134,10 +134,7 @@ List<String> expandPhaseGpPeaceTargets({
   if (blocker == null || !gpWars.contains(blocker)) {
     return const [];
   }
-  return <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// GP owning the most invadable New World provinces (colonial frontier blocker).
@@ -205,10 +202,7 @@ List<String> colonialPhaseGpPeaceTargets({
   if (blocker == null || !gpWars.contains(blocker)) {
     return const [];
   }
-  return <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// EXPAND phase: suppress NW colonial diplomacy, military, civilian, and naval work.

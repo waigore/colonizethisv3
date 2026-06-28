@@ -19,3 +19,13 @@ const int kTurnResolutionLcgMask = kDeterministicLcg31Mask;
 /// and full resolution stay aligned for identical inputs.
 int mixTurnSeed(Game game, int turn) =>
     (game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix);
+
+/// Advances [seed] by one glibc-style linear congruential step (mod 2^31).
+///
+/// Canonical home for the LCG-advance arithmetic shared by extraction,
+/// combat, and naval resolution so the inline literal lives in exactly one
+/// file. Must stay bit-identical to the previous inline expression to keep
+/// turn-resolution determinism (see SPEC/program/turn-resolution.md).
+int advanceTurnSeed(int seed) =>
+    (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
+    kTurnResolutionLcgMask;

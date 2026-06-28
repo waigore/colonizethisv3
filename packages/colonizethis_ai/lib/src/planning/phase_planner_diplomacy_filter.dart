@@ -48,13 +48,19 @@
 /// no I/O, no logging, and no order emission.
 library;
 
+import 'dart:math' as math;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
-    show resolvePhaseColonialPressureActive, scaleWeightedBonus;
+    show
+        resolvePhaseColonialPressureActive,
+        resolvePhaseNewWorldAcquisitionWeight,
+        resolvePhaseOldWorldConquestWeight,
+        scaleWeightedBonus;
 
 /// When `true`, `_DeclareWarTargetContext.build` flags the candidate's
 /// `colonialPressure` slot for `_declareWarSuppressedWarConcentrationScore`
@@ -195,7 +201,7 @@ bool resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive({
 /// Must-have #7). Reads only `phasePlan.priorityWeights`.
 double resolvePhaseDiplomacyDeclareWarColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.newWorldAcquisition;
+}) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
 
 /// Production `[0.0, 1.0]` multiplier for OW declare-war scoring bias
 /// sourced from [PhasePriorityWeights.oldWorldConquest] (Refs #2847
@@ -212,7 +218,7 @@ double resolvePhaseDiplomacyDeclareWarColonialPressureWeight({
 /// `phasePlan.priorityWeights`.
 double resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight({
   required PhasePlanOutcome phasePlan,
-}) => phasePlan.priorityWeights.oldWorldConquest;
+}) => resolvePhaseOldWorldConquestWeight(phasePlan);
 
 /// Returns the NW-tribe declare-war dominance bonus scaled by the soft-phase
 /// NW acquisition weight (Refs #2847 Phase 3 diplomacy declare-war NW-tribe
@@ -319,3 +325,30 @@ int declareWarOldWorldConquestScaledBonus({
   required int baseBonus,
   required double oldWorldConquestWeight,
 }) => scaleWeightedBonus(oldWorldConquestWeight, baseBonus);
+
+/// Raises [currentScore] to the OW-conquest-scaled [floorBonus] floor, never
+/// lowering it (Refs #3717 declare-war OW-conquest scoring-skeleton dedup).
+///
+/// Single source of truth for the repeated declare-war "raise the running
+/// score to at least this OW-expansion floor" skeleton that previously inlined
+/// `math.max(s, declareWarOldWorldConquestScaledBonus(baseBonus: floor,
+/// oldWorldConquestWeight: ...))` across `_declareWarAdjacencyAndStalledBonuses`
+/// and `_declareWarFinalizeBonuses` in
+/// `diplomatic_candidate_scoring_declare_war_bonuses.dart`. The floor bonus is
+/// scaled by [declareWarOldWorldConquestScaledBonus] (so it follows the same
+/// soft-phase OW-conquest weight curve as additive OW bonuses) and the result
+/// is taken as `max(currentScore, scaledFloor)` — byte-identical to the inline
+/// form it replaces.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+int raiseToDeclareWarOldWorldConquestFloor({
+  required int currentScore,
+  required int floorBonus,
+  required double oldWorldConquestWeight,
+}) => math.max(
+  currentScore,
+  declareWarOldWorldConquestScaledBonus(
+    baseBonus: floorBonus,
+    oldWorldConquestWeight: oldWorldConquestWeight,
+  ),
+);

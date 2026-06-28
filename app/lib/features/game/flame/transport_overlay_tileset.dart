@@ -1,10 +1,11 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/config/map_terrain_config.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
+
+import 'asset_image_cache.dart';
 
 final _log = packageLogger();
 
@@ -72,8 +73,7 @@ class TransportOverlayTilesetCache {
 
     final jsonRaw = await rootBundle.loadString(cfg.specJsonPath);
     final json = jsonDecode(jsonRaw) as Map<String, dynamic>;
-    final imageData = await rootBundle.load(cfg.atlasPngPath);
-    final image = await _decodeImage(imageData.buffer.asUint8List());
+    final image = await decodeImageAsset(cfg.atlasPngPath);
 
     final tileSizeJson = json['tile_size'] as Map<String, dynamic>?;
     if (tileSizeJson == null) {
@@ -118,12 +118,6 @@ class TransportOverlayTilesetCache {
       'map: loaded transport overlay tileset=$key with ${maskRects.length} masks',
     );
     return TransportOverlayTileset(image: image, maskRects: maskRects);
-  }
-
-  Future<ui.Image> _decodeImage(Uint8List data) async {
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromList(data, completer.complete);
-    return completer.future;
   }
 }
 

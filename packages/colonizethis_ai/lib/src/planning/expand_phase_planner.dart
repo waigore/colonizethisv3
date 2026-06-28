@@ -112,11 +112,27 @@ import 'package:colonizethis_data/colonizethis_data.dart'
     show cheapestRegimentBuildTreasuryCost;
 
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'cast_iron_labour_gate.dart'
     show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
-import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
+import 'planning_helpers.dart'
+    show
+        anyInvadableProvinceOwnedByGreatPower,
+        anyInvadableProvinceOwnedByMinor,
+        factionOwnsInvadableOldWorldProvince,
+        gpAtWarPeaceTargetsWhere,
+        gpFactionIdsAtWarWith,
+        hasRecentDiplomaticEventWithinCooldown,
+        isAtWarWithAnyGreatPower,
+        isOwnOldWorldBelowConquestQuota,
+        isOwnOldWorldExpansionStalled,
+        minorAtWarPeaceTargetsWhere,
+        mutualExhaustedGpStalemateSideQualifies,
+        oldWorldProvinceLeadOver,
+        peaceTargetsExcludingBlocker,
+        tribeAtWarPeaceTargetsWhere;
 
 part 'expand_phase_planner_peer_peace.dart';
 part 'expand_phase_planner_gp_blocker_peace.dart';
@@ -220,10 +236,7 @@ List<String> planExpandPeace({
     }
   }
 
-  return <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
+  return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
 /// Whether the active player is in a geographic peer-war lock against
@@ -321,13 +334,15 @@ bool expandRecentlyPeacedWithGreatPower({
   int cooldownTurns = kExpandPeerWarPeaceCooldownTurns,
 }) {
   if (cooldownTurns <= 0) return false;
-  for (final event in game.diplomaticHistoryEvents.reversed) {
-    if (event.type != DiplomaticEventType.peace) continue;
-    if (!event.participants.contains(activePlayerId)) continue;
-    if (!event.participants.contains(peerGpId)) continue;
-    return (currentTurn - event.turn) < cooldownTurns;
-  }
-  return false;
+  return hasRecentDiplomaticEventWithinCooldown(
+    game: game,
+    currentTurn: currentTurn,
+    cooldownTurns: cooldownTurns,
+    matches: (event) =>
+        event.type == DiplomaticEventType.peace &&
+        event.participants.contains(activePlayerId) &&
+        event.participants.contains(peerGpId),
+  );
 }
 
 /// Whether [planExpandEconomy] should widen the insufficient-regiment
@@ -434,17 +449,18 @@ bool expandIsOldWorldGpOnlyInvadableFrontier({
     return false;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
+  final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+  );
   if (minorsOwnInvadable) {
     return false;
   }
-  return snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) => game.playerById(provinceOwner[pid] ?? '') != null,
+  return anyInvadableProvinceOwnedByGreatPower(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
   );
 }
 
@@ -577,7 +593,7 @@ bool isStalledOldWorldGpBlockerFocus({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) =>
-    isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+    isOwnOldWorldBelowConquestQuota(snapshot) &&
     isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
 
 /// Returns the deterministic factionId of the next declare-war target for

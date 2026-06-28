@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetBuildRoad;
+
+import '../test_fixtures.dart';
 void main() {
   group('relocateIllegalCiviliansInChangedProvinces', () {
     const ow = 'oldWorld';
@@ -18,21 +20,17 @@ void main() {
       Player? owner,
       List<Province>? oldWorldProvinces,
     }) {
-      return Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-          oldWorld: RegionData(
-            provinces:
-                oldWorldProvinces ??
-                const [
-                  Province(id: changedProvinceId, regionId: ow, ownerId: 'new_owner'),
-                  Province(id: unchangedProvinceId, regionId: ow, ownerId: 'new_owner'),
-                  Province(id: capitalProvinceId, regionId: ow, ownerId: 'gp2'),
-                ],
-            units: units,
-          ),
-          newWorld: const RegionData(),
+      return TestFixtures.minimalGame(
+        turnNumber: 3,
+        oldWorld: RegionData(
+          provinces:
+              oldWorldProvinces ??
+              const [
+                Province(id: changedProvinceId, regionId: ow, ownerId: 'new_owner'),
+                Province(id: unchangedProvinceId, regionId: ow, ownerId: 'new_owner'),
+                Province(id: capitalProvinceId, regionId: ow, ownerId: 'gp2'),
+              ],
+          units: units,
         ),
         players: [
           owner ??

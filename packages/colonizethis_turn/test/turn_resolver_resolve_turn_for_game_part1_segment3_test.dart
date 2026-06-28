@@ -296,7 +296,7 @@ void main() {
             game: game,
             topology: topology,
             orders: orders,
-            onDialogue: dialogueEvents.add,
+            eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
           ),
         );
 

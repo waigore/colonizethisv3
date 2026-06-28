@@ -5,6 +5,7 @@ export 'src/setup/capital_choice.dart';
 export 'src/setup/effective_setup_seed.dart';
 export 'src/setup/full_assignment_verification.dart';
 export 'src/setup/game_setup.dart';
+export 'src/setup/game_setup_topology.dart';
 export 'src/setup/game_setup_town_tile_ranking.dart';
 export 'src/setup/gp_land_connectivity_repair.dart';
 export 'src/setup/gp_old_world_resource_redistribution.dart';

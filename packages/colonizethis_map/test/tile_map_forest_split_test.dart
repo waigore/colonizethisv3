@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 /// Map-generation integration tests for the forest split (issue #3573):
 /// guaranteed forest resource spawn (R3 / AC3) and hardwood clustering
 /// (R7 / AC7). SPEC/program/tile-map-gen-resources.md,
@@ -10,7 +12,7 @@ void main() {
   suppressLogsForTests();
 
   TileMapResult generate(String regionId, {int seed = 42}) {
-    final params = TileMapParams(
+    final params = genParams(
       width: 80,
       height: 80,
       seed: seed,

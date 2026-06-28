@@ -40,34 +40,38 @@ List<BuildUnitOrder> suggestBuildOrders(
     return suggestions;
   }
 
-  // Military (regiment) builds.
-  for (final entry in RegimentEconomyCatalog.byId.entries) {
-    final unitType = entry.key;
-    final candidate = BuildUnitOrder(
-      unitType: unitType,
-      isMilitary:
-          buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
-      spawnProvinceId: capitalId,
-    );
+  bool accept(BuildUnitOrder candidate) =>
+      isBuildOrderAcceptedWithValidator(candidateValidator, candidate);
 
-    if (isBuildOrderAcceptedWithValidator(candidateValidator, candidate)) {
-      suggestions.add(candidate);
-    }
-  }
-
-  // Naval (ship) builds. SPEC/program/order-suggestions.md.
-  for (final entry in ShipEconomyCatalog.byId.entries) {
-    final unitType = entry.key;
-    final candidate = BuildUnitOrder(
-      unitType: unitType,
-      isMilitary: false,
-      spawnProvinceId: capitalId,
-    );
-
-    if (isBuildOrderAcceptedWithValidator(candidateValidator, candidate)) {
-      suggestions.add(candidate);
-    }
-  }
+  // Military (regiment) builds, then naval (ship) builds. The shared emitter
+  // preserves catalog iteration order; the final sort yields the observable
+  // order. SPEC/program/order-suggestions.md.
+  emitAcceptedCandidates<BuildUnitOrder>(
+    candidates: [
+      for (final entry in RegimentEconomyCatalog.byId.entries)
+        BuildUnitOrder(
+          unitType: entry.key,
+          isMilitary:
+              buildUnitCategoryForUnitType(entry.key) ==
+              BuildUnitCategory.military,
+          spawnProvinceId: capitalId,
+        ),
+    ],
+    accept: accept,
+    into: suggestions,
+  );
+  emitAcceptedCandidates<BuildUnitOrder>(
+    candidates: [
+      for (final entry in ShipEconomyCatalog.byId.entries)
+        BuildUnitOrder(
+          unitType: entry.key,
+          isMilitary: false,
+          spawnProvinceId: capitalId,
+        ),
+    ],
+    accept: accept,
+    into: suggestions,
+  );
 
   suggestions.sort((a, b) => a.unitType.compareTo(b.unitType));
 

@@ -2,6 +2,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('TileMapGenerator terrain distribution', () {
     test(
@@ -9,11 +11,10 @@ void main() {
       () {
         const w = 40;
         const h = 30;
-        final params = TileMapParams(
+        final params = genParams(
           width: w,
           height: h,
           seed: 10,
-          seaFraction: 0.6,
         );
         final (result, _) = TileMapGenerator(params: params).generate(
           numProvinces: 4,
@@ -104,11 +105,10 @@ void main() {
     test('non-mountain terrain quotas roughly follow distribution', () {
       const w = 40;
       const h = 30;
-      final params = TileMapParams(
+      final params = genParams(
         width: w,
         height: h,
         seed: 20,
-        seaFraction: 0.6,
       );
       final (result, _) = TileMapGenerator(params: params).generate(
         numProvinces: 4,

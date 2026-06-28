@@ -10,9 +10,11 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'value_equality.dart';
+
 /// Human intervention prompt after a GP declares war on a Minor or Tribe.
 /// SPEC/game/diplomacy.md § Intervention.
-class InterventionPrompt {
+class InterventionPrompt with ValueEquality {
   const InterventionPrompt({
     required this.aggressorGpId,
     required this.defenderMinorOrTribeId,
@@ -24,23 +26,12 @@ class InterventionPrompt {
   final String interveningGpId;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is InterventionPrompt &&
-          aggressorGpId == other.aggressorGpId &&
-          defenderMinorOrTribeId == other.defenderMinorOrTribeId &&
-          interveningGpId == other.interveningGpId;
-
-  @override
-  int get hashCode => Object.hash(
-        aggressorGpId,
-        defenderMinorOrTribeId,
-        interveningGpId,
-      );
+  List<Object?> get equalityFields =>
+      [aggressorGpId, defenderMinorOrTribeId, interveningGpId];
 }
 
 /// Human ally's decision for one intervention prompt.
-class InterventionDecision {
+class InterventionDecision with ValueEquality {
   const InterventionDecision({
     required this.aggressorGpId,
     required this.defenderMinorOrTribeId,
@@ -54,19 +45,6 @@ class InterventionDecision {
   final InterventionChoice choice;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is InterventionDecision &&
-          aggressorGpId == other.aggressorGpId &&
-          defenderMinorOrTribeId == other.defenderMinorOrTribeId &&
-          interveningGpId == other.interveningGpId &&
-          choice == other.choice;
-
-  @override
-  int get hashCode => Object.hash(
-        aggressorGpId,
-        defenderMinorOrTribeId,
-        interveningGpId,
-        choice,
-      );
+  List<Object?> get equalityFields =>
+      [aggressorGpId, defenderMinorOrTribeId, interveningGpId, choice];
 }

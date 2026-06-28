@@ -69,6 +69,13 @@ rules:
     runner: dart
     script: tool/check_ai_dedup_gp_wars_filter.dart
 
+  - rule_id: repo.ai_dedup_minor_tribe_membership
+    group: architecture
+    title: colonizethis_ai must use shared isMinorFaction/isTribeFaction/isMinorOrTribeFaction helpers (Refs #3717)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dedup_minor_tribe_membership.dart
+
   - rule_id: repo.ai_dedup_weight_scale_clamp
     group: architecture
     title: colonizethis_ai must use shared scaleWeightedBonus helper (Refs #3278)
@@ -97,12 +104,40 @@ rules:
     runner: dart
     script: tool/check_economy_dedup_port_tile_keys.dart
 
+  - rule_id: repo.economy_dedup_credit_aggregation
+    group: architecture
+    title: economy world-market FRR/riches credits must use the shared GpTreasuryCreditAccumulator, not inline per-GP accumulation (Refs #3731)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_dedup_credit_aggregation.dart
+
   - rule_id: repo.economy_test_duplicate_descriptions
     group: testing
     title: economy test files must not share identical test()/testWidgets() descriptions across files (Refs #3661)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_duplicate_descriptions.dart
+
+  - rule_id: repo.diplomacy_test_no_duplicate_fixtures
+    group: testing
+    title: colonizethis_diplomacy test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3715)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_no_duplicate_fixtures.dart
+
+  - rule_id: repo.diplomacy_test_mirrors_lib
+    group: testing
+    title: colonizethis_diplomacy tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #3715)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_mirrors_lib.dart
+
+  - rule_id: repo.diplomacy_phase_types_value_equality
+    group: architecture
+    title: colonizethis_diplomacy phase_types value types must derive equality from the shared ValueEquality mixin, not hand-written operator == (Refs #3715)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_phase_types_value_equality.dart
 
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
@@ -312,6 +347,13 @@ rules:
     runner: dart
     script: tool/check_app_debug_handler_guard_helpers.dart
 
+  - rule_id: repo.app_asset_image_decode_dedup
+    group: structure
+    title: app Flame caches/tilesets must decode via the shared decodeImageAsset helper and icon caches must extend AssetImageCache (Refs #3699)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_asset_image_decode_dedup.dart
+
   - rule_id: repo.part_unit_size
     group: structure
     title: Dart part fragment physical line limit (repo-lint domain)
@@ -486,6 +528,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_no_circular_imports.dart
+
+  - rule_id: repo.world_no_duplicate_extension_helper
+    group: architecture
+    title: colonizethis_world top-level helpers must delegate to, not duplicate, same-named WorldState extension methods (Refs #3710)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_no_duplicate_extension_helper.dart
 
   - rule_id: repo.combat_no_logic_deps
     group: architecture
@@ -763,6 +812,55 @@ rules:
     runner: dart
     script: tool/check_orders_dedup_diplomatic_helpers.dart
 
+  - rule_id: repo.orders_test_no_duplicate_fixtures
+    group: architecture
+    title: colonizethis_orders tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3714)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_no_duplicate_fixtures.dart
+
+  - rule_id: repo.ai_test_no_duplicate_scaffolding
+    group: architecture
+    title: colonizethis_ai tests must keep coherent scaffolding (no _test.dart in test/support/, no confusing test_fixtures.dart, no local TestFixtures) (Refs #3717)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_no_duplicate_scaffolding.dart
+
+  - rule_id: repo.ai_test_mirrors_lib
+    group: structure
+    title: colonizethis_ai tests must mirror lib/ (no flat-root unit test sources outside the documented integration/package-level allowlist) (Refs #3717)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_mirrors_lib.dart
+
+  - rule_id: repo.orders_test_mirrors_lib
+    group: structure
+    title: colonizethis_orders tests must mirror lib/ (no flat-root test sources) (Refs #3714)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_mirrors_lib.dart
+
+  - rule_id: repo.combat_test_no_duplicate_fixtures
+    group: architecture
+    title: colonizethis_combat tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3716)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_no_duplicate_fixtures.dart
+
+  - rule_id: repo.map_test_no_duplicate_view_fixtures
+    group: architecture
+    title: colonizethis_map init_game_map_view_builder_* tests must use shared init_game_map_view_fixtures builders, not inline dual-region Game/MapTopology scaffolding (Refs #3746)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_no_duplicate_view_fixtures.dart
+
+  - rule_id: repo.combat_test_mirrors_lib
+    group: architecture
+    title: colonizethis_combat tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #3716)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_mirrors_lib.dart
+
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture
     title: setup init pipelines must delegate map+setup retry loop to runInitPipelineWithRetries (Refs #3449)
@@ -777,12 +875,40 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_gp_ow_tile_scans.dart
 
+  - rule_id: repo.setup_lib_tile_key_interpolation
+    group: structure
+    title: colonizethis_setup lib builds tile keys via CapitalTile.tileKey / gpOwTileKey (no raw pipe interpolation) (Refs #3712)
+    spec: SPEC/game/world-model-identity.md
+    runner: dart
+    script: tool/check_setup_lib_tile_key_interpolation.dart
+
   - rule_id: repo.setup_dedup_gp_ids_from_players
     group: architecture
     title: setup GP id list/set must use gpIdsSortedFromPlayers instead of re-inlining game.players.map((p) => p.id) (Refs #3449)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_setup_dedup_gp_ids_from_players.dart
+
+  - rule_id: repo.setup_dedup_grid_bfs_coord_keys
+    group: architecture
+    title: setup grid BFS + 2D coord keys must route through grid_bfs.dart (no inline cardinal-delta arrays / raw "$x|$y" interpolation outside grid_bfs.dart) (Refs #3740)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_grid_bfs_coord_keys.dart
+
+  - rule_id: repo.setup_dedup_topology_adjacency
+    group: architecture
+    title: setup topology/tile adjacency must use colonizethis_world provinceNodeIds/seaZonesAdjacentToProvince and the shared setup_topology_adjacency.dart helpers (no private clones) (Refs #3740)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_topology_adjacency.dart
+
+  - rule_id: repo.setup_test_no_duplicate_scaffolding
+    group: architecture
+    title: colonizethis_setup tests must reuse production provinceNeighboursFromTopology / connectedComponentsInSubset instead of reimplementing them (Refs #3740)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_test_no_duplicate_scaffolding.dart
 
   - rule_id: repo.orders_file_size
     group: structure

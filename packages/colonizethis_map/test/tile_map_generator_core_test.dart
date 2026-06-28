@@ -3,14 +3,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:logger/logger.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('TileMapGenerator core', () {
     test('generates grid with correct dimensions', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 20,
         height: 15,
         seed: 1,
-        seaFraction: 0.6,
       );
       final (result, topology) = TileMapGenerator(
         params: params,
@@ -37,11 +38,10 @@ void main() {
         Logger.level = Level.info;
 
         try {
-          final params = TileMapParams(
+          final params = genParams(
             width: 20,
             height: 15,
             seed: 1,
-            seaFraction: 0.6,
           );
           final gen = TileMapGenerator(params: params);
 
@@ -75,12 +75,11 @@ void main() {
     );
 
     test('two adjacent regions touch in grid', () {
-      final params = TileMapParams(
+      final params = genParams(
         width: 30,
         height: 30,
         seed: 42,
         maxEnforceIterations: 5,
-        seaFraction: 0.6,
       );
       final (result, _) = TileMapGenerator(
         params: params,
@@ -91,7 +90,7 @@ void main() {
 
     test('numProvinces 0 throws', () {
       final gen = TileMapGenerator(
-        params: TileMapParams(width: 10, height: 10),
+        params: genParams(width: 10, height: 10),
       );
       expect(
         () => gen.generate(numProvinces: 0, numContinents: 1, regionId: 'r1'),
@@ -101,7 +100,7 @@ void main() {
 
     test('numContinents 0 throws', () {
       final gen = TileMapGenerator(
-        params: TileMapParams(width: 10, height: 10),
+        params: genParams(width: 10, height: 10),
       );
       expect(
         () => gen.generate(numProvinces: 1, numContinents: 0, regionId: 'r1'),
@@ -115,7 +114,7 @@ void main() {
         const w = 20;
         const h = 20;
         const seaFraction = 0.6;
-        final params = TileMapParams(
+        final params = genParams(
           width: w,
           height: h,
           seed: 12345,
@@ -138,7 +137,7 @@ void main() {
     test('onLog receives a line per pass', () {
       final logLines = <String>[];
       TileMapGenerator(
-        params: TileMapParams(width: 10, height: 10, seed: 1, seaFraction: 0.6),
+        params: genParams(width: 10, height: 10, seed: 1),
       ).generate(
         numProvinces: 1,
         numContinents: 1,
@@ -164,7 +163,7 @@ void main() {
         Logger.addLogListener(listener);
         addTearDown(() => Logger.removeLogListener(listener));
 
-        final params = TileMapParams(
+        final params = genParams(
           width: 12,
           height: 9,
           seed: 77,
@@ -197,11 +196,10 @@ void main() {
       'final grid has only province and sea zone ids (no land sentinel)',
       () {
         final (result, topology) = TileMapGenerator(
-          params: TileMapParams(
+          params: genParams(
             width: 24,
             height: 24,
             seed: 7,
-            seaFraction: 0.6,
           ),
         ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
         final validIds = topology.nodes.map((n) => n.id).toSet();
@@ -219,11 +217,10 @@ void main() {
 
     test('inferred topology matches grid adjacencies', () {
       final (result, topology) = TileMapGenerator(
-        params: TileMapParams(
+        params: genParams(
           width: 30,
           height: 30,
           seed: 42,
-          seaFraction: 0.6,
         ),
       ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
       final validation = validateTileMapTopology(topology, result);
@@ -242,7 +239,7 @@ void main() {
           skipFillLakes: false,
         );
         final size = computeGridSizeFromParams(60, mapGenParams);
-        final params = TileMapParams(
+        final params = genParams(
           width: size.width,
           height: size.height,
           seed: mapGenParams.seed,
@@ -268,11 +265,10 @@ void main() {
       'joinContinents completes for small multi-continent grids (regression: no hang)',
       () {
         for (final seed in [0, 7, 42, 99, 777]) {
-          final params = TileMapParams(
+          final params = genParams(
             width: 20,
             height: 18,
             seed: seed,
-            seaFraction: 0.6,
           );
           TileMapGenerator(
             params: params,

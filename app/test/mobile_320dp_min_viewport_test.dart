@@ -32,11 +32,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/app_display_strings.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
+
+import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) is the lower end
@@ -54,17 +55,14 @@ Widget _wrapMainMenu({
   MainMenuVariant variant = MainMenuVariant.plain,
   MainMenuState state = MainMenuState.default_,
 }) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: CtMainMenu(
-      variant: variant,
-      state: state,
-      version: formatDebugAwareVersion('v1.0.0'),
-      onNewGame: () {},
-      onLoadGame: () {},
-      onSettings: () {},
-      onQuit: () {},
-    ),
+  return CtMainMenu(
+    variant: variant,
+    state: state,
+    version: formatDebugAwareVersion('v1.0.0'),
+    onNewGame: () {},
+    onLoadGame: () {},
+    onSettings: () {},
+    onQuit: () {},
   );
 }
 
@@ -81,26 +79,22 @@ Widget _wrapMainMenu({
 /// number of frames instead so screens with **continuous** animations can
 /// still be exercised against the layout overflow contract without the
 /// framework's settle-loop timing out.
-Future<void> _pumpAtSize(
+Future<void> _pumpNarrow(
   WidgetTester tester,
   Widget screen, {
   required Size size,
   bool settleAnimations = true,
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-  await tester.pumpWidget(
-    MediaQuery(data: MediaQueryData(size: size), child: screen),
-  );
   if (settleAnimations) {
-    await tester.pumpAndSettle();
-  } else {
-    // Two extra frames are enough for the layout pass and any one-frame
-    // post-build microtasks to surface a `RenderFlex` overflow exception
-    // through `WidgetTester.takeException()`.
-    await tester.pump();
-    await tester.pump();
+    await pumpAtMinViewport(tester, size: size, child: screen, settle: true);
+    return;
   }
+  // Two frames are enough for the layout pass and any one-frame
+  // post-build microtasks to surface a `RenderFlex` overflow exception
+  // through `WidgetTester.takeException()`: the harness pumps the first,
+  // and a second framed pump follows.
+  await pumpAtMinViewport(tester, size: size, child: screen);
+  await tester.pump();
 }
 
 /// Returns the rendered height (logical pixels) of every visible
@@ -128,7 +122,7 @@ void main() {
         'AC1 (positive) CtMainMenu plain @ 320×640: no exception, '
         'CtNinePatchButton heights ≥ kMinTouchTargetSize',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _wrapMainMenu(),
             size: _kMinViewport,
@@ -159,7 +153,7 @@ void main() {
         'AC1 (positive) CtMainMenu pixelArt @ 320×640: no exception, '
         'CtNinePatchButton heights ≥ kMinTouchTargetSize',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _wrapMainMenu(variant: MainMenuVariant.pixelArt),
             size: _kMinViewport,
@@ -177,7 +171,7 @@ void main() {
       testWidgets(
         'AC1 (positive) CtMainMenu noSaves @ 320×640: no exception',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _wrapMainMenu(state: MainMenuState.noSaves),
             size: _kMinViewport,
@@ -200,7 +194,7 @@ void main() {
         'AC1 (positive) CtMainMenu plain @ 320×640: menu body padding is the '
         'compact kMainMenuBodyPaddingNarrow (≤ 430 dp narrow contract)',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _wrapMainMenu(),
             size: _kMinViewport,
@@ -232,7 +226,7 @@ void main() {
         'AC1 (positive) CtMainMenu pixelArt @ 320×640: compact padding plus '
         'narrow button letter-spacing (≤ 430 dp narrow contract)',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _wrapMainMenu(variant: MainMenuVariant.pixelArt),
             size: _kMinViewport,
@@ -275,7 +269,7 @@ void main() {
         'Negative control: CtMainMenu plain @ 1024×768 also pumps without '
         'exception (regression sentinel for the overflow contract)',
         (WidgetTester tester) async {
-          await _pumpAtSize(
+          await _pumpNarrow(
             tester,
             _wrapMainMenu(),
             size: _kWideRegressionViewport,
@@ -329,37 +323,30 @@ void main() {
       // contract under test is the dialog's own [CtDialogShell] layout
       // at the narrow viewport, not the showDialog route plumbing
       // (already covered by `new_game_leader_selection_dialog_test.dart`).
-      Future<void> pumpDialogAtSize(
+      Future<void> pumpDialog(
         WidgetTester tester, {
         required Size size,
       }) async {
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-        await tester.binding.setSurfaceSize(size);
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: MediaQuery(
-              data: MediaQueryData(size: size),
-              child: Scaffold(
-                body: Center(
-                  child: NewGameLeaderSelectionDialog(
-                    baseConfig: GameSetupConfig.defaultConfig,
-                    naming: defaultNamingConfig,
-                    initialLeaderByGpId: defaultInitialLeaderByGpId(),
-                    blessedProfileNames: const [],
-                    onCancel: () {},
-                    onConfirmed: (_, _, _, _, _, __) {},
-                  ),
-                ),
+        await pumpAtMinViewport(
+          tester,
+          size: size,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          child: Scaffold(
+            body: Center(
+              child: NewGameLeaderSelectionDialog(
+                baseConfig: GameSetupConfig.defaultConfig,
+                naming: defaultNamingConfig,
+                initialLeaderByGpId: defaultInitialLeaderByGpId(),
+                blessedProfileNames: const [],
+                onCancel: () {},
+                onConfirmed: (_, _, _, _, _, _) {},
               ),
             ),
           ),
+          settle: true,
         );
-        await tester.pumpAndSettle();
       }
 
       testWidgets(
@@ -367,7 +354,7 @@ void main() {
         'RenderFlex overflow exception, six stacked slot bodies render, '
         'side-by-side row body is not mounted',
         (WidgetTester tester) async {
-          await pumpDialogAtSize(tester, size: _kMinViewport);
+          await pumpDialog(tester, size: _kMinViewport);
 
           expect(
             tester.takeException(),
@@ -407,7 +394,7 @@ void main() {
         'six slot labels + Cancel + Start labels render within the '
         '~288 dp content column',
         (WidgetTester tester) async {
-          await pumpDialogAtSize(tester, size: _kMinViewport);
+          await pumpDialog(tester, size: _kMinViewport);
 
           expect(tester.takeException(), isNull);
           expect(find.text('Choose nations and leaders'), findsOneWidget);
@@ -445,7 +432,7 @@ void main() {
         'rendered Cancel/Start `CtNinePatchButton` height ≥ '
         'kMinTouchTargetSize (SPEC/ui/mobile-adaptation.md § 1)',
         (WidgetTester tester) async {
-          await pumpDialogAtSize(tester, size: _kMinViewport);
+          await pumpDialog(tester, size: _kMinViewport);
 
           expect(tester.takeException(), isNull);
           final List<double> heights = _renderedNinePatchButtonHeights(
@@ -482,7 +469,7 @@ void main() {
         '(regression sentinel for the narrow-stacking branch — keeps '
         'the 320 dp positive pins meaningful)',
         (WidgetTester tester) async {
-          await pumpDialogAtSize(
+          await pumpDialog(
             tester,
             size: _kWideRegressionViewport,
           );

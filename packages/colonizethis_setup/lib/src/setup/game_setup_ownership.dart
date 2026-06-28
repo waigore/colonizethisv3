@@ -11,6 +11,7 @@ import 'locked_province_assigner.dart';
 import 'province_assignment.dart';
 import 'setup_exceptions.dart';
 
+part 'game_setup_ownership_comparators.dart';
 part 'game_setup_ownership_gp_packing.dart';
 part 'game_setup_ownership_remainder_factions.dart';
 

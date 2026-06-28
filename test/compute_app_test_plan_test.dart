@@ -56,6 +56,42 @@ void main() {
       expect(plan.tests, const ['app/test/features/unrelated_test.dart']);
     });
 
+    test(
+        'deleted test path in diff is never scheduled (would fail to load), '
+        'while a co-changed helper still selects existing importers', () {
+      // Simulate the consolidation case: a `*_test.dart` was deleted (its path
+      // shows up in `git diff --name-only` but no longer exists on disk) and a
+      // shared test helper was modified in the same diff. The deleted path must
+      // not appear in `tests` (flutter test would fail with "Does not exist"),
+      // and the helper change must still select its importing tests.
+      final plan = computeAppTestPlan(
+        repoRoot: repoRoot.path,
+        changedFiles: const [
+          'app/test/features/removed_part2_test.dart',
+          'app/test/support/fixtures.dart',
+        ],
+      );
+
+      expect(plan.mode, 'selective');
+      expect(
+        plan.tests,
+        isNot(contains('app/test/features/removed_part2_test.dart')),
+      );
+      expect(plan.tests, contains('app/test/features/unrelated_test.dart'));
+    });
+
+    test('a lone deleted test path (no other change) is not scheduled', () {
+      final plan = computeAppTestPlan(
+        repoRoot: repoRoot.path,
+        changedFiles: const ['app/test/features/removed_part4_test.dart'],
+      );
+
+      expect(
+        plan.tests,
+        isNot(contains('app/test/features/removed_part4_test.dart')),
+      );
+    });
+
     test('selective: changed test helper selects tests that import it', () {
       final plan = computeAppTestPlan(
         repoRoot: repoRoot.path,
@@ -300,7 +336,7 @@ void main() {
     expect(result.exitCode, 0, reason: '${result.stdout}${result.stderr}');
     final json = (result.stdout as String).trim();
     expect(json, contains('"mode":"selective"'));
-    expect(json, contains('naval_units_panel_test'));
+    expect(json, contains('naval_units_panel_part1_test'));
   });
 }
 

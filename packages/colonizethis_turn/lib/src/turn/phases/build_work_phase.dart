@@ -38,15 +38,14 @@ TurnPhaseStepOutcome buildWorkTurnPhaseHandler(
     config.orders,
     config.topology,
     config.tileMapByRegion,
-    onDialogue: config.onDialogue,
+    onDialogue: config.eventSink.onDialogue,
     onWorkOrderTrace: config.turnTraceRuntime?.handleWorkOrderTrace,
   );
   emitWorkOrderCompletedEvents(
     stateBeforeBuildWork,
     afterBuildWork,
     turn,
-    config.eventBus,
-    config.onGameEvent,
+    config.eventSink,
   );
   return TurnPhaseStepContinue(acc.copyWith(game: afterBuildWork));
 }

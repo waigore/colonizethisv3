@@ -9,10 +9,12 @@
 /// SPEC/program/turn-resolution-phases.md § Blocking human input.
 library;
 
+import 'value_equality.dart';
+
 /// One call-to-arms prompt: ally [allyGpId] must choose to join defender
 /// [defenderGpId] against aggressor [aggressorGpId].
 /// SPEC/game/diplomacy.md mutual defence.
-class CallToArmsPending {
+class CallToArmsPending with ValueEquality {
   const CallToArmsPending({
     required this.allyGpId,
     required this.defenderGpId,
@@ -24,19 +26,11 @@ class CallToArmsPending {
   final String aggressorGpId;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CallToArmsPending &&
-          allyGpId == other.allyGpId &&
-          defenderGpId == other.defenderGpId &&
-          aggressorGpId == other.aggressorGpId;
-
-  @override
-  int get hashCode => Object.hash(allyGpId, defenderGpId, aggressorGpId);
+  List<Object?> get equalityFields => [allyGpId, defenderGpId, aggressorGpId];
 }
 
 /// Human ally's decision for one call to arms.
-class CallToArmsDecision {
+class CallToArmsDecision with ValueEquality {
   const CallToArmsDecision({
     required this.allyGpId,
     required this.defenderGpId,
@@ -50,15 +44,6 @@ class CallToArmsDecision {
   final bool accepted;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CallToArmsDecision &&
-          allyGpId == other.allyGpId &&
-          defenderGpId == other.defenderGpId &&
-          aggressorGpId == other.aggressorGpId &&
-          accepted == other.accepted;
-
-  @override
-  int get hashCode =>
-      Object.hash(allyGpId, defenderGpId, aggressorGpId, accepted);
+  List<Object?> get equalityFields =>
+      [allyGpId, defenderGpId, aggressorGpId, accepted];
 }

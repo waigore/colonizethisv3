@@ -16,9 +16,7 @@ TurnPhaseStepOutcome researchTurnPhaseHandler(
     stateBeforeResearch,
     afterResearch,
     turn,
-    config.eventBus,
-    config.onGameEvent,
-    config.onDialogue,
+    config.eventSink,
   );
   return TurnPhaseStepContinue(acc.copyWith(game: afterResearch));
 }

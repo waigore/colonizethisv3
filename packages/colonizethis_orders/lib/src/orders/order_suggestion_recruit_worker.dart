@@ -44,15 +44,14 @@ List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
   final suggestions = <RecruitWorkerOrder>[];
   final candidateValidator = pass.candidateValidator;
 
-  for (final tier in WorkerTier.values) {
-    final candidate = RecruitWorkerOrder(targetTier: tier);
-    if (isRecruitWorkerOrderAcceptedWithValidator(
-      candidateValidator,
-      candidate,
-    )) {
-      suggestions.add(candidate);
-    }
-  }
+  emitAcceptedCandidates<RecruitWorkerOrder>(
+    candidates: [
+      for (final tier in WorkerTier.values) RecruitWorkerOrder(targetTier: tier),
+    ],
+    accept: (candidate) =>
+        isRecruitWorkerOrderAcceptedWithValidator(candidateValidator, candidate),
+    into: suggestions,
+  );
 
   suggestions.sort((a, b) => a.targetTier.index.compareTo(b.targetTier.index));
 

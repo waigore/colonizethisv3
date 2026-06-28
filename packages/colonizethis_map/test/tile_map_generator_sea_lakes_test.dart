@@ -4,17 +4,18 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_map/src/tile_map_directions.dart';
 import 'package:colonizethis_map/src/tile_map_topology_helpers.dart';
 
+import 'support/tile_map_gen_fixtures.dart';
+
 void main() {
   group('TileMapGenerator sea and lakes', () {
     test(
       'no enclosed sea after fill-lakes: all sea connected to grid edge',
       () {
         final (result, _) = TileMapGenerator(
-          params: TileMapParams(
+          params: genParams(
             width: 30,
             height: 30,
             seed: 11,
-            seaFraction: 0.6,
           ),
         ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
         final seaCells = <(int, int)>{};
@@ -64,11 +65,10 @@ void main() {
       () {
         // SPEC/game/map-topology.md § Warp zones: placement uses sea zones on the map edge.
         final (result, topology) = TileMapGenerator(
-          params: TileMapParams(
+          params: genParams(
             width: 24,
             height: 24,
             seed: 7,
-            seaFraction: 0.6,
           ),
         ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
         final seaZoneIds = seaZoneIdsFromTopology(topology);
@@ -96,7 +96,7 @@ void main() {
 
     test('Pass 11 subdivides sea: result has sea zone ids s1, s2, ...', () {
       final (result, topology) = TileMapGenerator(
-        params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
+        params: genParams(width: 24, height: 24, seed: 7),
       ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
       final seaNodes = seaZoneIdsFromTopology(topology);
       expect(seaNodes, isNotEmpty);
@@ -117,7 +117,7 @@ void main() {
       'Pass 11 sea zone size cap: subdivision produces many zones when sea is large',
       () {
         final (result, topology) = TileMapGenerator(
-          params: TileMapParams(
+          params: genParams(
             width: 40,
             height: 40,
             seed: 99,
@@ -146,7 +146,7 @@ void main() {
     test('Pass 11 log mentions sea zones and cap', () {
       final logLines = <String>[];
       TileMapGenerator(
-        params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
+        params: genParams(width: 24, height: 24, seed: 7),
       ).generate(
         numProvinces: 2,
         numContinents: 1,
@@ -162,7 +162,7 @@ void main() {
     test('Pass 4 log mentions lakes and moats', () {
       final logLines = <String>[];
       TileMapGenerator(
-        params: TileMapParams(width: 10, height: 10, seed: 1, seaFraction: 0.6),
+        params: genParams(width: 10, height: 10, seed: 1),
       ).generate(
         numProvinces: 1,
         numContinents: 1,
@@ -184,11 +184,10 @@ void main() {
     test('skipFillLakes true logs Fill lakes skipped', () {
       final logLines = <String>[];
       TileMapGenerator(
-        params: TileMapParams(
+        params: genParams(
           width: 10,
           height: 10,
           seed: 1,
-          seaFraction: 0.6,
           skipFillLakes: true,
         ),
       ).generate(
@@ -207,11 +206,10 @@ void main() {
       final logLines = <String>[];
       final (result, _) =
           TileMapGenerator(
-            params: TileMapParams(
+            params: genParams(
               width: 20,
               height: 20,
               seed: 2,
-              seaFraction: 0.6,
               borderNoise: 0.5,
             ),
           ).generate(
