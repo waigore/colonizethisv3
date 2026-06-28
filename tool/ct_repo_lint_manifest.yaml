@@ -1115,3 +1115,10 @@ rules:
     spec: SPEC/ui/tribe-first-contact-overlay.md
     runner: dart
     script: tool/check_dialogue_yarn_variable_bindings.dart
+
+  - rule_id: repo.dialogue_blocking_combined_step
+    group: ui_structure
+    title: "blocking Jenny dialogue overlays must use CtDialogueLineChoiceBody and register combined-step goldens (Refs #3628)"
+    spec: SPEC/ui/ct-dialogue-view.md
+    runner: dart
+    script: tool/check_dialogue_blocking_combined_step.dart
