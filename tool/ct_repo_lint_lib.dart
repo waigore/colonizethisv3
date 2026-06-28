@@ -20,6 +20,7 @@ import 'check_app_no_material_switchlisttile.dart';
 import 'check_app_no_material_textbutton.dart';
 import 'check_app_shell_panel_dedup.dart';
 import 'check_app_debug_handler_guard_helpers.dart';
+import 'check_app_panel_screen_id.dart';
 import 'check_app_widgetbook_file_naming.dart';
 import 'check_app_textstyle_fontsize_fallback.dart';
 import 'check_app_widget_imports.dart';
@@ -952,6 +953,12 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppWidgetbookFileNaming(repoRoot);
     case 'repo.app_debug_handler_guard_helpers':
       return runCheckAppDebugHandlerGuardHelpers(repoRoot);
+    case 'repo.app_panel_screen_id':
+      // Full app-tree scan that ignores the incremental `--files` list; running
+      // in-process avoids the subprocess `dart run ... --files <csv>` argv that
+      // overflows the OS arg limit on large diffs (e.g. release dev->main
+      // merges). Refs #3279.
+      return runCheckAppPanelScreenId(repoRoot);
     default:
       return null;
   }
