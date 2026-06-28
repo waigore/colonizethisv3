@@ -27,14 +27,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// True iff [playerId] owns at least one province tile that hosts a fabric
-/// feedstock resource (a member of [feedstockIds]) and is still unimproved
-/// (improvement level < 1) — i.e. a Builder target a lock-recovery seller could
-/// extract to feed the `fabricFrom*` recipes. Read-only scan over owned
-/// provinces; Refs #2847 H8-supply feedstock-stage diagnostic.
-bool ownsUnimprovedFeedstockResourceTile(
+/// feedstock resource (a member of [feedstockIds]) whose improvement level
+/// satisfies [improvementMatches]. Shared owned-province tile scan backing the
+/// three `ownsFeedstock*` probes so the loop lives in one place; an empty
+/// [feedstockIds] never matches. Read-only over `(game, playerId)`; no
+/// game-state mutation.
+bool scanOwnedFeedstockTiles(
   Game game,
   String playerId,
   Set<String> feedstockIds,
+  bool Function(int improvementLevel) improvementMatches,
 ) {
   if (feedstockIds.isEmpty) return false;
   final ws = game.worldState;
@@ -47,12 +49,30 @@ bool ownsUnimprovedFeedstockResourceTile(
         if (resourceId == null || !feedstockIds.contains(resourceId)) {
           continue;
         }
-        if (ws.tileState.improvementLevel(tileKey) < 1) return true;
+        if (improvementMatches(ws.tileState.improvementLevel(tileKey))) {
+          return true;
+        }
       }
     }
   }
   return false;
 }
+
+/// True iff [playerId] owns at least one province tile that hosts a fabric
+/// feedstock resource (a member of [feedstockIds]) and is still unimproved
+/// (improvement level < 1) — i.e. a Builder target a lock-recovery seller could
+/// extract to feed the `fabricFrom*` recipes. Read-only scan over owned
+/// provinces; Refs #2847 H8-supply feedstock-stage diagnostic.
+bool ownsUnimprovedFeedstockResourceTile(
+  Game game,
+  String playerId,
+  Set<String> feedstockIds,
+) => scanOwnedFeedstockTiles(
+  game,
+  playerId,
+  feedstockIds,
+  (improvementLevel) => improvementLevel < 1,
+);
 
 /// True iff [playerId] owns at least one province tile that hosts a fabric
 /// feedstock resource (a member of [feedstockIds]) that is already improved
@@ -71,24 +91,12 @@ bool ownsImprovedFeedstockResourceTile(
   Game game,
   String playerId,
   Set<String> feedstockIds,
-) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
-    for (final entry in byProvince.entries) {
-      final province = ws.tryGetProvince(entry.key);
-      if (province == null || province.ownerId != playerId) continue;
-      for (final tileKey in entry.value) {
-        final resourceId = ws.resourceByTileKey[tileKey];
-        if (resourceId == null || !feedstockIds.contains(resourceId)) {
-          continue;
-        }
-        if (ws.tileState.improvementLevel(tileKey) >= 1) return true;
-      }
-    }
-  }
-  return false;
-}
+) => scanOwnedFeedstockTiles(
+  game,
+  playerId,
+  feedstockIds,
+  (improvementLevel) => improvementLevel >= 1,
+);
 
 /// True iff [playerId] owns at least one Builder unit that currently has no
 /// work assigned (`currentWork == null`) — i.e. a Builder the Full-AI civilian
@@ -606,23 +614,12 @@ bool ownsFeedstockResourceTileAnyLevel(
   Game game,
   String playerId,
   Set<String> feedstockIds,
-) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
-    for (final entry in byProvince.entries) {
-      final province = ws.tryGetProvince(entry.key);
-      if (province == null || province.ownerId != playerId) continue;
-      for (final tileKey in entry.value) {
-        final resourceId = ws.resourceByTileKey[tileKey];
-        if (resourceId != null && feedstockIds.contains(resourceId)) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
+) => scanOwnedFeedstockTiles(
+  game,
+  playerId,
+  feedstockIds,
+  (_) => true,
+);
 
 /// Structural-invariant assertions over the S7-D diagnostic per-GP counter
 /// maps (Refs #2847). Extracted from
@@ -1063,17 +1060,39 @@ void recordSeed42S7dCastIronMarketOfferCounters({
   required String castIronCommodityId,
   required Map<String, int> presentTurns,
   required Map<String, int> absentTurns,
+}) => recordSeed42S7dOtherFactionOfferCounters(
+  activeThisTurn: feedstockGateActiveThisTurn,
+  tradeOrdersByPlayerId: tradeOrdersByPlayerId,
+  commodityId: castIronCommodityId,
+  presentTurns: presentTurns,
+  absentTurns: absentTurns,
+);
+
+/// Shared other-faction sell-offer present/absent tally backing the castIron
+/// and `fabric` market-offer recorders (Refs #2847). For each gp in
+/// [activeThisTurn], scans [tradeOrdersByPlayerId] for any *other* faction
+/// emitting a [commodityId] sell offer this turn and bumps [presentTurns] when
+/// one exists, else [absentTurns]. The gp's own offer never counts as supply,
+/// and bids (demand) are ignored. Read-only over the supplied maps except the
+/// counter bumps; extracted so the two single-commodity recorders share one
+/// scan loop.
+void recordSeed42S7dOtherFactionOfferCounters({
+  required Set<String> activeThisTurn,
+  required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
+  required String commodityId,
+  required Map<String, int> presentTurns,
+  required Map<String, int> absentTurns,
 }) {
-  for (final gpId in feedstockGateActiveThisTurn) {
+  for (final gpId in activeThisTurn) {
     var offeredByOther = false;
     for (final entry in tradeOrdersByPlayerId.entries) {
       if (entry.key == gpId) continue;
-      final offeredCastIron = entry.value.any(
+      final offered = entry.value.any(
         (order) =>
             order.type == TradeOrderType.offer &&
-            order.commodityId == castIronCommodityId,
+            order.commodityId == commodityId,
       );
-      if (offeredCastIron) {
+      if (offered) {
         offeredByOther = true;
         break;
       }
@@ -1107,29 +1126,13 @@ void recordSeed42S7dFabricMarketOfferCounters({
   required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
   required Map<String, int> presentTurns,
   required Map<String, int> absentTurns,
-}) {
-  const fabricCommodityId = 'fabric';
-  for (final gpId in fabricMarketPathActiveThisTurn) {
-    var offeredByOther = false;
-    for (final entry in tradeOrdersByPlayerId.entries) {
-      if (entry.key == gpId) continue;
-      final offeredFabric = entry.value.any(
-        (order) =>
-            order.type == TradeOrderType.offer &&
-            order.commodityId == fabricCommodityId,
-      );
-      if (offeredFabric) {
-        offeredByOther = true;
-        break;
-      }
-    }
-    if (offeredByOther) {
-      bumpCounter(presentTurns, gpId);
-    } else {
-      bumpCounter(absentTurns, gpId);
-    }
-  }
-}
+}) => recordSeed42S7dOtherFactionOfferCounters(
+  activeThisTurn: fabricMarketPathActiveThisTurn,
+  tradeOrdersByPlayerId: tradeOrdersByPlayerId,
+  commodityId: 'fabric',
+  presentTurns: presentTurns,
+  absentTurns: absentTurns,
+);
 
 /// True iff [playerId] owns at least one idle Builder for which the work-order
 /// engine **accepts** a `build_improvement` on an owned unimproved feedstock

@@ -31,6 +31,7 @@ Game _game({
       const {},
   Map<String, String> resourceByTileKey = const {},
   List<Province> oldWorldProvinces = const [],
+  Map<String, int> improvementByTile = const {},
 }) {
   return Game(
     id: 'g',
@@ -40,7 +41,7 @@ Game _game({
       newWorld: const RegionData(),
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
       resourceByTileKey: resourceByTileKey,
-      tileState: TileMapState(),
+      tileState: TileMapState(improvementByTile: improvementByTile),
     ),
     players: [
       Player(
@@ -332,6 +333,94 @@ void main() {
       );
       expect(
         ownsFeedstockResourceTileAnyLevel(game, _playerId, const {}),
+        isFalse,
+      );
+    });
+  });
+
+  group('owns(Un)improvedFeedstockResourceTile improvement-level split', () {
+    final castIronFeedstock = {timberId, ironId};
+    const provinceId = 'oldWorld|p0';
+    const tileKey = 'oldWorld|p0|2|0';
+
+    Game gameWithImprovement(int level) => _game(
+      oldWorldProvinces: const [
+        Province(id: provinceId, regionId: 'oldWorld', ownerId: _playerId),
+      ],
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          provinceId: [tileKey],
+        },
+      },
+      resourceByTileKey: const {tileKey: 'timber'},
+      improvementByTile: {tileKey: level},
+    );
+
+    test('unimproved (level 0): unimproved probe true, improved probe false', () {
+      final game = gameWithImprovement(0);
+      expect(
+        ownsUnimprovedFeedstockResourceTile(game, _playerId, castIronFeedstock),
+        isTrue,
+      );
+      expect(
+        ownsImprovedFeedstockResourceTile(game, _playerId, castIronFeedstock),
+        isFalse,
+      );
+      // Any-level probe ignores the improvement split entirely.
+      expect(
+        ownsFeedstockResourceTileAnyLevel(game, _playerId, castIronFeedstock),
+        isTrue,
+      );
+    });
+
+    test('improved (level 1): improved probe true, unimproved probe false', () {
+      final game = gameWithImprovement(1);
+      expect(
+        ownsImprovedFeedstockResourceTile(game, _playerId, castIronFeedstock),
+        isTrue,
+      );
+      expect(
+        ownsUnimprovedFeedstockResourceTile(game, _playerId, castIronFeedstock),
+        isFalse,
+      );
+      expect(
+        ownsFeedstockResourceTileAnyLevel(game, _playerId, castIronFeedstock),
+        isTrue,
+      );
+    });
+
+    test('empty feedstock set: every probe is false', () {
+      final game = gameWithImprovement(0);
+      expect(
+        ownsUnimprovedFeedstockResourceTile(game, _playerId, const {}),
+        isFalse,
+      );
+      expect(
+        ownsImprovedFeedstockResourceTile(game, _playerId, const {}),
+        isFalse,
+      );
+    });
+
+    test('scanOwnedFeedstockTiles: custom predicate drives the match', () {
+      final game = gameWithImprovement(2);
+      // Predicate matching exactly level 2 succeeds; a never-true predicate
+      // short-circuits to false even though the owned feedstock tile exists.
+      expect(
+        scanOwnedFeedstockTiles(
+          game,
+          _playerId,
+          castIronFeedstock,
+          (level) => level == 2,
+        ),
+        isTrue,
+      );
+      expect(
+        scanOwnedFeedstockTiles(
+          game,
+          _playerId,
+          castIronFeedstock,
+          (_) => false,
+        ),
         isFalse,
       );
     });
@@ -737,5 +826,63 @@ void main() {
       expect(present['gp5'], 0);
       expect(absent['gp5'], 0);
     });
+  });
+
+  group('recordSeed42S7dOtherFactionOfferCounters (shared, Refs #3749)', () {
+    final timberCommodityId = CommodityCatalog.timber.id;
+
+    TradeOrder offer(String id) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.offer,
+      quantity: 1,
+      priority: 1,
+    );
+    TradeOrder bid(String id) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.bid,
+      quantity: 1,
+      priority: 1,
+    );
+
+    test(
+      'positive: another faction offers the commodity => present bumped',
+      () {
+        final present = <String, int>{'gp3': 0};
+        final absent = <String, int>{'gp3': 0};
+        recordSeed42S7dOtherFactionOfferCounters(
+          activeThisTurn: {'gp3'},
+          tradeOrdersByPlayerId: {
+            'gp1': [offer(timberCommodityId)],
+            'gp3': [bid(timberCommodityId)],
+          },
+          commodityId: timberCommodityId,
+          presentTurns: present,
+          absentTurns: absent,
+        );
+        expect(present['gp3'], 1);
+        expect(absent['gp3'], 0);
+      },
+    );
+
+    test(
+      'negative: own offer + others\' bids/unrelated offers => absent bumped',
+      () {
+        final present = <String, int>{'gp3': 0};
+        final absent = <String, int>{'gp3': 0};
+        recordSeed42S7dOtherFactionOfferCounters(
+          activeThisTurn: {'gp3'},
+          tradeOrdersByPlayerId: {
+            'gp3': [offer(timberCommodityId)],
+            'gp1': [bid(timberCommodityId)],
+            'gp2': [offer(ironId)],
+          },
+          commodityId: timberCommodityId,
+          presentTurns: present,
+          absentTurns: absent,
+        );
+        expect(present['gp3'], 0);
+        expect(absent['gp3'], 1);
+      },
+    );
   });
 }
