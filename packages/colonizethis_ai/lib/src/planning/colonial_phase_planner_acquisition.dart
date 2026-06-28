@@ -292,6 +292,12 @@ ColonialAcquisitionTarget? planColonialAcquisition({
 
   final provinceOwner = getProvinceOwnerMap(game);
   final treasury = snapshot.economy.treasury;
+  // Own-colony exclusion (Refs #3758 R4 / S3; SPEC/ai/phase-planner-architecture.md
+  // § Own-colony exclusion): tribes that are already this player's colony stay
+  // in the game and keep owning NW provinces, so they remain in the invadable
+  // list. Skip them across every acquisition arm so the planner never
+  // re-targets, re-buys land in, or declares war on its own colony.
+  final ownColonyTribeIds = _ownColonyTribeIds(game, snapshot.playerId);
   final preferDeclareWarOverJoinEmpire = _personalityPrefersWarOverAlliance(
     personalityId,
   );
@@ -302,6 +308,7 @@ ColonialAcquisitionTarget? planColonialAcquisition({
     invadable: invadable,
     provinceOwner: provinceOwner,
     treasury: treasury,
+    ownColonyTribeIds: ownColonyTribeIds,
   );
   ColonialAcquisitionTarget? tryPurchaseLand() => _findPurchaseLandTarget(
     game: game,
@@ -309,6 +316,7 @@ ColonialAcquisitionTarget? planColonialAcquisition({
     invadable: invadable,
     provinceOwner: provinceOwner,
     treasury: treasury,
+    ownColonyTribeIds: ownColonyTribeIds,
   );
   final waiveDeclareWarTreasuryGate = isNwLockRecoveryPathEActive(
     snapshot: snapshot,
@@ -321,6 +329,7 @@ ColonialAcquisitionTarget? planColonialAcquisition({
     provinceOwner: provinceOwner,
     treasury: treasury,
     waiveTreasuryGate: waiveDeclareWarTreasuryGate,
+    ownColonyTribeIds: ownColonyTribeIds,
   );
 
   if (preferDeclareWarOverJoinEmpire) {
@@ -361,11 +370,13 @@ ColonialAcquisitionTarget? _findJoinEmpireTarget({
   required List<String> invadable,
   required Map<String, String> provinceOwner,
   required int treasury,
+  required Set<String> ownColonyTribeIds,
 }) {
   for (final provinceId in invadable) {
     final ownerId = provinceOwner[provinceId];
     if (ownerId == null) continue;
     if (game.playerById(ownerId) != null) continue;
+    if (ownColonyTribeIds.contains(ownerId)) continue;
 
     final overture = getOverture(game, snapshot.playerId, ownerId);
     if (overture == null) continue;
@@ -397,6 +408,7 @@ ColonialAcquisitionTarget? _findPurchaseLandTarget({
   required List<String> invadable,
   required Map<String, String> provinceOwner,
   required int treasury,
+  required Set<String> ownColonyTribeIds,
 }) {
   if (!_hasIdleMerchant(game.worldState, snapshot.playerId)) {
     return null;
@@ -410,6 +422,7 @@ ColonialAcquisitionTarget? _findPurchaseLandTarget({
     final ownerId = provinceOwner[provinceId];
     if (ownerId == null) continue;
     if (game.playerById(ownerId) != null) continue;
+    if (ownColonyTribeIds.contains(ownerId)) continue;
 
     final relation = getRelation(game, snapshot.playerId, ownerId);
     if (relation != null && relation.atWar) continue;
@@ -446,6 +459,7 @@ ColonialAcquisitionTarget? _findDeclareWarTarget({
   required Map<String, String> provinceOwner,
   required int treasury,
   required bool waiveTreasuryGate,
+  required Set<String> ownColonyTribeIds,
 }) {
   if (regimentCountForPlayer(game, snapshot.playerId) <= 0) {
     return null;
@@ -458,6 +472,7 @@ ColonialAcquisitionTarget? _findDeclareWarTarget({
     final ownerId = provinceOwner[provinceId];
     if (ownerId == null) continue;
     if (game.playerById(ownerId) != null) continue;
+    if (ownColonyTribeIds.contains(ownerId)) continue;
 
     final relation = getRelation(game, snapshot.playerId, ownerId);
     if (relation != null && relation.atWar) continue;
@@ -469,6 +484,20 @@ ColonialAcquisitionTarget? _findDeclareWarTarget({
   }
   return null;
 }
+
+/// Tribe ids that are already [playerId]'s own colony
+/// (`ColonyState.colonyOfGpId == playerId`).
+///
+/// Colony tribes stay in the game and keep owning NW provinces after Tribe
+/// Join Empire resolves, so they remain in the invadable list. The acquisition
+/// arms exclude these owners so the planner never re-targets its own colony
+/// (Refs #3758 R4 / S3; SPEC/ai/phase-planner-architecture.md § Own-colony
+/// exclusion; SPEC/game/diplomacy.md § GP–Tribe Join Empire → colony). Colonies
+/// of a different GP are intentionally not excluded.
+Set<String> _ownColonyTribeIds(Game game, String playerId) => <String>{
+  for (final colony in game.colonyStates)
+    if (colony.colonyOfGpId == playerId) colony.tribeId,
+};
 
 /// Iteration order over NW invadable provinces for
 /// [planColonialAcquisition], honoring the spec's adjacency-distance

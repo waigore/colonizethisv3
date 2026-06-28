@@ -41,6 +41,18 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
+  // Break Alliance precedes Alliance/Declare War so a pair already in a formal
+  // alliance at peace is offered the voluntary break as its single non-economic
+  // candidate; the AI scoring layer decides whether to act (Refs #3758 R8).
+  // SPEC/program/order-suggestions.md § Diplomatic orders.
+  if (isGpTarget && rel != null && rel.formalAlliance && rel.atPeace) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.breakAlliance,
+        targetFactionId: targetId,
+      ),
+    );
+  }
   if (isGpTarget &&
       rel != null &&
       rel.atPeace &&

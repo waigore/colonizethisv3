@@ -634,6 +634,11 @@ final List<AiParameter> _victoryConfigParams = <AiParameter>[
     'Establish-overture bonus toward a sea-reachable NW province owner.',
   ),
   _vcInt(
+    'kEstablishOvertureDecayCreditMax',
+    kEstablishOvertureDecayCreditMax,
+    'Max improve-relations reduction credited to natural relation decay.',
+  ),
+  _vcInt(
     'kConquestArmyMoveNwInvadableBonus',
     kConquestArmyMoveNwInvadableBonus,
     'Conquest army-move bonus for New World invadable destinations.',

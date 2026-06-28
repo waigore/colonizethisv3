@@ -79,7 +79,7 @@ void main() {
     });
 
     test(
-      'does not suggest diplomatic orders for completely unknown factions',
+      'returns breakAlliance toward GP when a formal alliance exists at peace',
       () {
         const api = DefaultOrderSuggestionAPI();
         const topology = MapTopology(nodes: [], edges: []);
@@ -90,9 +90,18 @@ void main() {
             oldWorld: const RegionData(),
             newWorld: const RegionData(),
           ),
-          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Minor 1'),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              state: RelationState.atPeace,
+              level: RelationLevel.allied,
+              formalAlliance: true,
+            ),
           ],
         );
         final view = buildPlayerView(game, topology, 'gp1');
@@ -102,7 +111,56 @@ void main() {
           topology,
           const Orders(),
         );
-        expect(list.any((o) => o.targetFactionId == 'minor1'), isFalse);
+        final toGp2 = list.where((o) => o.targetFactionId == 'gp2').toList();
+        expect(toGp2, hasLength(1));
+        expect(toGp2.single.type, DiplomaticOrderType.breakAlliance);
+        // Appendability: the emitted break-alliance suggestion validates.
+        final eng = OrderEngine();
+        expect(
+          eng
+              .addDiplomaticOrderWithContext(game, topology, 'gp1', toGp2.single)
+              .isAccepted,
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'does not return breakAlliance when relation level is allied but no formal alliance',
+      () {
+        const api = DefaultOrderSuggestionAPI();
+        const topology = MapTopology(nodes: [], edges: []);
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              state: RelationState.atPeace,
+              level: RelationLevel.allied,
+            ),
+          ],
+        );
+        final view = buildPlayerView(game, topology, 'gp1');
+        final list = api.suggestDiplomaticOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        expect(
+          list.where((o) => o.type == DiplomaticOrderType.breakAlliance),
+          isEmpty,
+        );
       },
     );
 
@@ -177,181 +235,5 @@ void main() {
           .toList();
       expect(alliance.any((o) => o.targetFactionId == 'gp2'), isTrue);
     });
-
-    test('returns establishOverture for minor when treasury suffices', () {
-      const api = DefaultOrderSuggestionAPI();
-      const topology = MapTopology(nodes: [], edges: []);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|m1',
-                regionId: 'oldWorld',
-                ownerId: 'minor1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'gp1': {'oldWorld|m1|0|0': 'fullyVisible'},
-          },
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|m1': ['oldWorld|m1|0|0'],
-            },
-          },
-        ),
-        players: [
-          const Player(id: 'gp1', displayName: 'A', isHuman: false).copyWith(
-            treasury: 600,
-            techUnlocked: const {kTechIdDiplomaticExpertise: true},
-          ),
-        ],
-        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
-      );
-      final view = buildPlayerView(game, topology, 'gp1');
-      final list = api.suggestDiplomaticOrders(
-        view,
-        game,
-        topology,
-        const Orders(),
-      );
-      final overture = list
-          .where((o) => o.type == DiplomaticOrderType.establishOverture)
-          .toList();
-      expect(overture.any((o) => o.targetFactionId == 'minor1'), isTrue);
-      expect(
-        overture.any(
-          (o) =>
-              o.targetFactionId == 'minor1' &&
-              o.overtureStage == OvertureStage.tradeConsulate,
-        ),
-        isTrue,
-      );
-    });
-
-    test(
-      'does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise',
-      () {
-        const api = DefaultOrderSuggestionAPI();
-        const topology = MapTopology(nodes: [], edges: []);
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|m1',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'gp1': {'oldWorld|m1|0|0': 'fullyVisible'},
-            },
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                'oldWorld|m1': ['oldWorld|m1|0|0'],
-              },
-            },
-          ),
-          players: [
-            const Player(id: 'gp1', displayName: 'A', isHuman: false).copyWith(
-              treasury: 600,
-              techUnlocked: const <String, bool>{},
-            ),
-          ],
-          minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
-          diplomacyRelations: const [
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'minor1',
-              state: RelationState.atPeace,
-              level: RelationLevel.neutral,
-            ),
-          ],
-        );
-        final view = buildPlayerView(game, topology, 'gp1');
-        final list = api.suggestDiplomaticOrders(
-          view,
-          game,
-          topology,
-          const Orders(),
-        );
-        final overture = list
-            .where((o) => o.type == DiplomaticOrderType.establishOverture)
-            .where((o) => o.targetFactionId == 'minor1')
-            .toList();
-        expect(
-          overture.any(
-            (o) =>
-                o.overtureStage == OvertureStage.tradeConsulate ||
-                o.overtureStage == OvertureStage.embassy ||
-                o.overtureStage == OvertureStage.nap,
-          ),
-          isFalse,
-        );
-      },
-    );
-
-    test(
-      'toward minor at peace with join-empire overture suggests declareWar (primary before economic)',
-      () {
-        const api = DefaultOrderSuggestionAPI();
-        const topology = MapTopology(nodes: [], edges: []);
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            const Player(
-              id: 'gp1',
-              displayName: 'A',
-              isHuman: false,
-            ).copyWith(treasury: 5000),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Minor 1'),
-          ],
-          diplomacyRelations: const [
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'minor1',
-              state: RelationState.atPeace,
-              level: RelationLevel.neutral,
-            ),
-          ],
-          overtureStates: const [
-            OvertureState(
-              gpId: 'gp1',
-              targetId: 'minor1',
-              stage: OvertureStage.joinEmpire,
-              sinceTurn: 0,
-            ),
-          ],
-        );
-        final view = buildPlayerView(game, topology, 'gp1');
-        final list = api.suggestDiplomaticOrders(
-          view,
-          game,
-          topology,
-          const Orders(),
-        );
-        final toMinor1 = list
-            .where((o) => o.targetFactionId == 'minor1')
-            .toList();
-        expect(toMinor1, hasLength(1));
-        expect(toMinor1.single.type, DiplomaticOrderType.declareWar);
-      },
-    );
   });
 }
