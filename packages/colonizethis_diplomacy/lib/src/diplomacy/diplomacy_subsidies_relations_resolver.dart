@@ -12,29 +12,33 @@ String _subsidyPairKey(String payerId, String targetId) =>
 
 Game terminateAgreementsOnWar(Game game, {IntraTurnEventTally? eventTally}) {
   final turn = game.worldState.turnState.turnNumber;
-  final before = game.overtureStates;
-  // Clear each at-war pair bidirectionally via the canonical helper (Refs
-  // #3562). The per-removed event order is re-derived below in the original
-  // `overtureStates` order so the appended history is identical to the prior
-  // single-pass filter regardless of war-relation iteration order.
+  final membership = DiplomacyFactionMembership.from(game);
+  final clearedForEvents = <OvertureState>[];
+
   for (final rel in game.diplomacyRelations) {
     if (!rel.atWar) continue;
-    game = clearOverturesBetweenGpAndFaction(
-      game,
-      rel.factionId1,
-      rel.factionId2,
-      bidirectional: true,
-    ).game;
+    final f1 = rel.factionId1;
+    final f2 = rel.factionId2;
+    final bothGp =
+        membership.isGreatPower(f1) && membership.isGreatPower(f2);
+    if (bothGp) {
+      final result = applyGpGpWarOvertureRules(game, f1, f2);
+      game = result.game;
+      clearedForEvents.addAll(result.changed);
+    } else {
+      final result = clearOverturesBetweenGpAndFaction(
+        game,
+        f1,
+        f2,
+        bidirectional: true,
+      );
+      game = result.game;
+      clearedForEvents.addAll(result.removed);
+    }
   }
-  final overtures = game.overtureStates;
-  if (overtures.length != before.length) {
-    final keptKeys = {
-      for (final n in overtures) _subsidyPairKey(n.gpId, n.targetId),
-    };
-    final removed = before
-        .where((o) => !keptKeys.contains(_subsidyPairKey(o.gpId, o.targetId)))
-        .toList();
-    for (final o in removed) {
+
+  if (clearedForEvents.isNotEmpty) {
+    for (final o in clearedForEvents) {
       game = appendDiplomaticEvent(
         game,
         turn,
