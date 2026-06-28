@@ -7,6 +7,7 @@ abstract final class UiScreenIds {
   // SHEL — shell, menu, setup, pause menu
   static const String shellScreen = 'SHEL10001';
   static const String mainMenu = 'SHEL10002';
+  static const String gameSetup = 'SHEL20001';
   static const String gameInitializing = 'SHEL30001';
   static const String pauseMenuPanel = 'SHEL40001';
 

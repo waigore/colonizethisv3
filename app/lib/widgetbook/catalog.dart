@@ -113,6 +113,7 @@ import '../widgets/ct_toggle_switch.dart';
 import '../widgets/ct_top_bar.dart';
 import '../widgets/resource_icon.dart';
 import 'debug_map_visibility_story.dart';
+import '../widgets/game_setup.dart';
 import '../widgets/main_menu.dart';
 import '../widgets/ct_nine_patch_button.dart';
 import '../widgets/ct_region_map.dart';
@@ -219,6 +220,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...buttonDirectories,
   ...transferListDirectories,
   ...mainMenuDirectories,
+  ...gameSetupDirectories,
   ...mapWidgetDirectories,
   ...provinceOverlayDirectories,
   ...productionPanelDirectories,
@@ -564,6 +566,144 @@ List<WidgetbookNode> get mainMenuDirectories => [
             onSettings: () {},
             onQuit: () {},
           ),
+        ),
+      ),
+    ],
+  ),
+];
+
+/// All choices unselected on load. SPEC/ui/game-setup.md.
+List<String> _unselectedInitialOrderedGpIds() => List.filled(6, '');
+
+/// Six distinct GP ids drawn from [defaultNamingConfig] — the same default
+/// six powers used by `GameSetupConfig.defaultConfig`. Powers the
+/// "All slots selected (pixel)" Widgetbook story below so reviewers can
+/// see the happy-path swatch row + Start Game enabled state without
+/// having to manually fill every slot (SPEC/ui/game-setup.md § Slot-row
+/// chrome and swatch dots; R9).
+List<String> _allSelectedInitialOrderedGpIds() =>
+    defaultNamingConfig.greatPowers.map((g) => g.id).take(6).toList();
+
+/// Default leader variant per gp id for [_allSelectedInitialOrderedGpIds].
+Map<String, String> _allSelectedInitialLeaderVariantByGpId() {
+  final Map<String, String> map = <String, String>{};
+  for (final String id in _allSelectedInitialOrderedGpIds()) {
+    final gp = defaultNamingConfig.gpById(id);
+    if (gp != null && gp.leaderVariants.isNotEmpty) {
+      map[id] = gp.defaultLeaderVariantId;
+    }
+  }
+  return map;
+}
+
+/// Game Setup stories. SPEC/ui/game-setup.md; UXD 03b.
+List<WidgetbookNode> get gameSetupDirectories => [
+  WidgetbookFolder(
+    name: 'Game Setup',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.plain,
+          state: GameSetupState.default_,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, _) {},
+          onBack: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Loading',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.plain,
+          state: GameSetupState.loading,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, _) {},
+          onBack: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (pixel)',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.pixelArt,
+          state: GameSetupState.default_,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, _) {},
+          onBack: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Loading (pixel)',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.pixelArt,
+          state: GameSetupState.loading,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, _) {},
+          onBack: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.plain,
+            state: GameSetupState.default_,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: {},
+            onStartGame: (_, _) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (mobile, pixel)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            state: GameSetupState.default_,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: const {},
+            onStartGame: (_, _) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Loading (mobile, pixel)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            state: GameSetupState.loading,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: const {},
+            onStartGame: (_, _) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'All slots selected (pixel)',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.pixelArt,
+          state: GameSetupState.default_,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _allSelectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: _allSelectedInitialLeaderVariantByGpId(),
+          onStartGame: (_, _) {},
+          onBack: () {},
         ),
       ),
     ],

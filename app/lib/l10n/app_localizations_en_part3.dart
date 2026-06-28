@@ -540,6 +540,48 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_titleSeaZone => 'Sea zone';
 
   @override
+  String get gameSetup_title => 'Game Setup';
+
+  @override
+  String get gameSetup_eyebrow => 'New Campaign';
+
+  @override
+  String get gameSetup_intro =>
+      'Choose six great powers and a leader variant for each.';
+
+  @override
+  String get gameSetup_starting => 'Starting…';
+
+  @override
+  String get gameSetup_loadingGeneratingWorld => 'Generating world…';
+
+  @override
+  String get gameSetup_startGame => 'Start Game';
+
+  @override
+  String get gameSetup_back => 'Back';
+
+  @override
+  String get gameSetup_cancel => 'Cancel';
+
+  @override
+  String get gameSetup_backToMainMenu => 'Back to Main Menu';
+
+  @override
+  String get gameSetup_player1You => 'Player 1 (You)';
+
+  @override
+  String gameSetup_playerAiSlot(int n) {
+    return 'Player $n (AI)';
+  }
+
+  @override
+  String get gameSetup_selectNation => 'Select nation';
+
+  @override
+  String get gameSetup_selectLeader => 'Select leader';
+
+  @override
   String get mapCorner_tooltipBaseLayer =>
       'Base layer: terrain / +resources / +improvements';
 

@@ -1415,6 +1415,45 @@ abstract class AppLocalizations {
   /// Province overlay header title shown above the tab strip for a sea zone.
   String get provinceOverlay_titleSeaZone;
 
+  /// Game setup screen title.
+  String get gameSetup_title;
+
+  /// Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_eyebrow;
+
+  /// Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_intro;
+
+  /// Loading state label while starting a game from setup (retained for backward compatibility; the in-screen dim overlay now uses gameSetup_loadingGeneratingWorld per #2868 R15).
+  String get gameSetup_starting;
+
+  /// Loading overlay label shown beneath the spinner while the Game Setup screen is generating a new world (Refs #2868 R15).
+  String get gameSetup_loadingGeneratingWorld;
+
+  /// Primary button to begin play from game setup.
+  String get gameSetup_startGame;
+
+  /// Back button on game setup screen.
+  String get gameSetup_back;
+
+  /// Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack.
+  String get gameSetup_cancel;
+
+  /// Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack.
+  String get gameSetup_backToMainMenu;
+
+  /// Label for the human player slot on game setup.
+  String get gameSetup_player1You;
+
+  /// Label for an AI-controlled player slot (n is 2-based index for display).
+  String gameSetup_playerAiSlot(int n);
+
+  /// Dropdown hint when choosing a great power nation.
+  String get gameSetup_selectNation;
+
+  /// Dropdown hint when choosing a leader variant.
+  String get gameSetup_selectLeader;
+
   /// Tooltip for cycling map base layer display.
   String get mapCorner_tooltipBaseLayer;
 

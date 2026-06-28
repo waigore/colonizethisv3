@@ -2470,6 +2470,63 @@
   "@provinceOverlay_titleSeaZone": {
     "description": "Province overlay header title shown above the tab strip for a sea zone."
   },
+  "gameSetup_title": "Game Setup",
+  "@gameSetup_title": {
+    "description": "Game setup screen title."
+  },
+  "gameSetup_eyebrow": "New Campaign",
+  "@gameSetup_eyebrow": {
+    "description": "Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant."
+  },
+  "gameSetup_intro": "Choose six great powers and a leader variant for each.",
+  "@gameSetup_intro": {
+    "description": "Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant."
+  },
+  "gameSetup_starting": "Starting…",
+  "@gameSetup_starting": {
+    "description": "Loading state label while starting a game from setup (retained for backward compatibility; the in-screen dim overlay now uses gameSetup_loadingGeneratingWorld per #2868 R15)."
+  },
+  "gameSetup_loadingGeneratingWorld": "Generating world…",
+  "@gameSetup_loadingGeneratingWorld": {
+    "description": "Loading overlay label shown beneath the spinner while the Game Setup screen is generating a new world (Refs #2868 R15)."
+  },
+  "gameSetup_startGame": "Start Game",
+  "@gameSetup_startGame": {
+    "description": "Primary button to begin play from game setup."
+  },
+  "gameSetup_back": "Back",
+  "@gameSetup_back": {
+    "description": "Back button on game setup screen."
+  },
+  "gameSetup_cancel": "Cancel",
+  "@gameSetup_cancel": {
+    "description": "Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack."
+  },
+  "gameSetup_backToMainMenu": "Back to Main Menu",
+  "@gameSetup_backToMainMenu": {
+    "description": "Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack."
+  },
+  "gameSetup_player1You": "Player 1 (You)",
+  "@gameSetup_player1You": {
+    "description": "Label for the human player slot on game setup."
+  },
+  "gameSetup_playerAiSlot": "Player {n} (AI)",
+  "@gameSetup_playerAiSlot": {
+    "description": "Label for an AI-controlled player slot (n is 2-based index for display).",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "gameSetup_selectNation": "Select nation",
+  "@gameSetup_selectNation": {
+    "description": "Dropdown hint when choosing a great power nation."
+  },
+  "gameSetup_selectLeader": "Select leader",
+  "@gameSetup_selectLeader": {
+    "description": "Dropdown hint when choosing a leader variant."
+  },
   "mapCorner_tooltipBaseLayer": "Base layer: terrain / +resources / +improvements",
   "@mapCorner_tooltipBaseLayer": {
     "description": "Tooltip for cycling map base layer display."
