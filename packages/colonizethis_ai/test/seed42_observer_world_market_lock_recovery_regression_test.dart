@@ -1,14 +1,12 @@
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 
 /// Seed-42 Path F lock-recovery acceptance regression (Refs #2924).
 ///
@@ -25,6 +23,13 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// AI interventions instead of pausing with
 /// `TurnResolutionPendingIntervention` (which only arises for human players).
 ///
+/// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+/// step 2): the init / handoff / 100-turn resolve loop is owned by
+/// `test/support/seed42_observer_campaign.dart`; this test contributes only its
+/// per-turn `onBeforeResolve` (affordable-turn regiment-build tally) and
+/// `onAfterResolve` (world-market seller credit + treasury recovery tracking)
+/// observations.
+///
 /// Skipped by default (~4 min). Re-run with `dart test --run-skipped` when
 /// the lock-recovery surface changes.
 void main() {
@@ -38,18 +43,6 @@ void main() {
     'seed 42: gp3–gp6 each cross regiment treasury threshold within 100 turns '
     '(Refs #2924 Path F)',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
-      );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
-
       final threshold = cheapestRegimentBuildTreasuryCost();
       final wasBrokeAfterStart = <String, bool>{
         for (final gpId in failingGpIds) gpId: false,
@@ -67,68 +60,48 @@ void main() {
         for (final gpId in failingGpIds) gpId: 0,
       };
 
-      for (var t = 0; t < 100; t++) {
-        final treasuryBeforeOrders = <String, int>{
-          for (final gpId in failingGpIds)
-            gpId: game.playerById(gpId)?.treasury ?? 0,
-        };
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-        );
-        for (final gpId in failingGpIds) {
-          if (treasuryBeforeOrders[gpId]! < threshold) continue;
-          final orders =
-              fullAi.orders.buildUnitOrdersByPlayerId[gpId] ?? const [];
-          regimentBuildsWhileAffordable[gpId] =
-              regimentBuildsWhileAffordable[gpId]! +
-              orders
-                  .where(
-                    (o) => RegimentEconomyCatalog.byId.containsKey(o.unitType),
-                  )
-                  .length;
-        }
-        final merged = mergeOrderLists(
-          humanOrders: const Orders(),
-          aiOrders: fullAi.orders,
-        );
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        game = (result as TurnResolutionComplete).game;
+      runSeed42ObserverCampaign(
+        turns: 100,
+        onBeforeResolve: (turn, fullAi, game) {
+          for (final gpId in failingGpIds) {
+            final treasuryBeforeOrders = game.playerById(gpId)?.treasury ?? 0;
+            if (treasuryBeforeOrders < threshold) continue;
+            final orders =
+                fullAi.orders.buildUnitOrdersByPlayerId[gpId] ?? const [];
+            regimentBuildsWhileAffordable[gpId] =
+                regimentBuildsWhileAffordable[gpId]! +
+                orders
+                    .where(
+                      (o) => RegimentEconomyCatalog.byId.containsKey(o.unitType),
+                    )
+                    .length;
+          }
+        },
+        onAfterResolve: (turn, game) {
+          final activity = game.worldMarketState.lastTurnActivity;
+          for (final entry in activity.entries) {
+            for (final deal in entry.value.deals) {
+              final seller = deal.sellerFactionId;
+              if (!lifetimeSellerCredit.containsKey(seller)) continue;
+              lifetimeSellerCredit[seller] = lifetimeSellerCredit[seller]! +
+                  (deal.quantity * deal.pricePerUnit).round();
+            }
+          }
 
-        final activity = game.worldMarketState.lastTurnActivity;
-        for (final entry in activity.entries) {
-          for (final deal in entry.value.deals) {
-            final seller = deal.sellerFactionId;
-            if (!lifetimeSellerCredit.containsKey(seller)) continue;
-            lifetimeSellerCredit[seller] = lifetimeSellerCredit[seller]! +
-                (deal.quantity * deal.pricePerUnit).round();
+          for (final gpId in failingGpIds) {
+            final treasury = game.playerById(gpId)?.treasury ?? 0;
+            if (treasury > maxTreasury[gpId]!) {
+              maxTreasury[gpId] = treasury;
+            }
+            if (turn > 0 && treasury < threshold) {
+              wasBrokeAfterStart[gpId] = true;
+            }
+            if (wasBrokeAfterStart[gpId]! && treasury >= threshold) {
+              recoveredAfterBroke[gpId] = true;
+            }
           }
-        }
-
-        for (final gpId in failingGpIds) {
-          final treasury = game.playerById(gpId)?.treasury ?? 0;
-          if (treasury > maxTreasury[gpId]!) {
-            maxTreasury[gpId] = treasury;
-          }
-          if (t > 0 && treasury < threshold) {
-            wasBrokeAfterStart[gpId] = true;
-          }
-          if (wasBrokeAfterStart[gpId]! && treasury >= threshold) {
-            recoveredAfterBroke[gpId] = true;
-          }
-        }
-      }
+        },
+      );
 
       for (final gpId in failingGpIds) {
         expect(
