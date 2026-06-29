@@ -660,6 +660,101 @@ void main() {
     });
   });
 
+  group('nonGreatPowerAtWarPeaceTargetsWhere (Refs #3749)', () {
+    Game gameWithMixedFactions() => Game(
+      id: 'g-3749-non-gp-peace',
+      worldState: WorldState(
+        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+        oldWorld: const RegionData(provinces: []),
+        newWorld: const RegionData(provinces: []),
+      ),
+      players: const [
+        Player(id: _gp1, displayName: 'GP1', isHuman: false),
+        Player(id: _gp2, displayName: 'GP2', isHuman: false),
+      ],
+      minorNations: const [
+        MinorNation(id: 'minorA', displayName: 'MinorA'),
+        MinorNation(id: 'minorB', displayName: 'MinorB'),
+      ],
+      tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
+    );
+
+    test('keep == null keeps every at-war non-GP faction, sorted ascending', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar([
+        _tribe1,
+        _gp2,
+        'minorB',
+        _gp1,
+        'minorA',
+      ]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
+        ['minorA', 'minorB', _tribe1],
+      );
+    });
+
+    test('keeps an at-war id that is no longer a registered minor or tribe', () {
+      // Pins the `playerById == null` semantics (non-GP), distinct from the
+      // minor/tribe membership collectors: an absorbed faction id still in
+      // `atWarWith` is non-GP and must be retained.
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar(['absorbedX', _gp1, 'minorA']);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
+        ['absorbedX', 'minorA'],
+      );
+    });
+
+    test('never offers a Great Power even with a keep-all predicate', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar([_gp1, _gp2, 'minorA', _tribe1]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => true,
+        ),
+        ['minorA', _tribe1],
+      );
+    });
+
+    test('keeps only non-GP factions matching the predicate, sorted', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar(['minorB', _tribe1, 'minorA']);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (factionId) => factionId != 'minorB',
+        ),
+        ['minorA', _tribe1],
+      );
+    });
+
+    test('keep-none returns empty', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar(['minorA', _tribe1]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => false,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('returns empty when only Great Powers are at war', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar([_gp1, _gp2]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+    });
+  });
+
   group('peaceTargetsExcludingBlocker (Refs #3717)', () {
     test('excludes the blocker and sorts ascending', () {
       expect(
