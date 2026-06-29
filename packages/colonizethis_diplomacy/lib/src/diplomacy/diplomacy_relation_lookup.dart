@@ -116,10 +116,9 @@ const int relationScoreMinFtp = 65;
 /// Alliance score band: when forming alliance, score is set/clamped to this range.
 const int relationScoreMinAllied = 76;
 
-/// Display label thresholds (inclusive max): Hostile ]0,29], Unfriendly ]29,49], Cordial ]49,69], Friendly ]69,100].
-const int relationScoreDisplayHostileMax = 29;
-const int relationScoreDisplayUnfriendlyMax = 49;
-const int relationScoreDisplayCordialMax = 69;
+// The legacy 4-band display thresholds (Hostile/Unfriendly/Cordial/Friendly)
+// were retired by the 10-step relation meter (Refs #3753 R13): the player-facing
+// label now derives from [relationScoreToMeterStep] + [relationMeterStepLabels].
 
 /// Number of discrete steps in the player-facing 10-step relation meter.
 /// SPEC/game/diplomacy.md § Player-facing relation display — 10-step relation meter (Refs #3753 R13).
@@ -193,16 +192,43 @@ RelationLevel scoreToLevel(num score) {
   return RelationLevel.allied;
 }
 
-/// One-word relation state for UI display. SPEC/game/diplomacy.md § Player-facing relation display.
-/// Score is hidden; UI shows this label: 0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly.
-/// Operates on the raw decimal [score] (SPEC/game/diplomacy.md § Relation Model).
-String relationScoreToDisplayLabel(num score) {
-  final clamped = score.clamp(relationScoreMin, relationScoreMax);
-  if (clamped <= relationScoreDisplayHostileMax) return 'Hostile';
-  if (clamped <= relationScoreDisplayUnfriendlyMax) return 'Unfriendly';
-  if (clamped <= relationScoreDisplayCordialMax) return 'Cordial';
-  return 'Friendly';
+/// 10-word player-facing relation label ladder, indexed by 1-based meter step
+/// (`relationScoreToMeterStep`). Step 1 is the most hostile band `[0, 10)` and
+/// step 10 is the most friendly band `[90, 100]`. The words are distinct and
+/// ordered red → green, replacing the legacy 4-word band set so the hidden
+/// decimal score reads as a 10-step gradient.
+/// SPEC/game/diplomacy.md § Player-facing relation display — 10-step relation
+/// meter (Refs #3753 R13).
+const List<String> relationMeterStepLabels = <String>[
+  'Hostile', // step 1  [0, 10)
+  'Antagonistic', // step 2  [10, 20)
+  'Distrustful', // step 3  [20, 30)
+  'Unfriendly', // step 4  [30, 40)
+  'Wary', // step 5  [40, 50)
+  'Neutral', // step 6  [50, 60)
+  'Cordial', // step 7  [60, 70)
+  'Amicable', // step 8  [70, 80)
+  'Friendly', // step 9  [80, 90)
+  'Devoted', // step 10 [90, 100]
+];
+
+/// One of [relationMeterStepLabels] for the given 1-based [step]. The step is
+/// clamped to `[1, relationMeterStepCount]` so out-of-range callers degrade to
+/// the nearest end word.
+/// SPEC/game/diplomacy.md § Player-facing relation display (Refs #3753 R13.4).
+String relationMeterStepLabel(int step) {
+  final int clamped = step.clamp(1, relationMeterStepCount);
+  return relationMeterStepLabels[clamped - 1];
 }
+
+/// One-word relation state for UI display. SPEC/game/diplomacy.md § Player-facing
+/// relation display. The score is hidden; the UI shows this label, now drawn
+/// from the decimal-aware 10-step ladder ([relationMeterStepLabels]) keyed by
+/// [relationScoreToMeterStep] (Refs #3753 R13.6), superseding the legacy 4-word
+/// band set. Operates on the raw decimal [score] with no intermediate rounding
+/// (SPEC/game/diplomacy.md § Relation Model).
+String relationScoreToDisplayLabel(num score) =>
+    relationMeterStepLabel(relationScoreToMeterStep(score));
 
 /// Maps a relation [score] to a 1-based step in `[1, relationMeterStepCount]`
 /// for the player-facing 10-step relation meter.

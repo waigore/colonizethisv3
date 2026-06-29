@@ -178,7 +178,6 @@ class _DiplomacyRow extends StatelessWidget {
     // `·` separator. The leading single space here reproduces the badge gap.
     final List<InlineSpan> spans = <InlineSpan>[];
     if (relationStateLabel.isNotEmpty) {
-      spans.add(const TextSpan(text: ' '));
       spans.add(TextSpan(text: relationStateLabel, style: wordStyle));
     }
     if (overtureLabel.isNotEmpty) {
@@ -190,19 +189,27 @@ class _DiplomacyRow extends StatelessWidget {
     // distinct from a merely-Friendly informal relation. The informal
     // `RelationLevel.allied` score band never shows this badge on its own.
     final bool showAlliance = rel.formalAlliance;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
+    // SPEC/ui/diplomacy-panel.md § Relation meter (Refs #3753 R13): the WAR/PEACE
+    // badge, the optional ALLIANCE treaty badge, the 10-step gradient meter, and
+    // the one-word ladder label render in that order. A `Wrap` lets the cluster
+    // flow onto a second run on narrow info columns (e.g. a formal-alliance row
+    // at the 320 dp minimum viewport) instead of overflowing the Row. Each
+    // `Wrap` child is constrained to the column width, so the label still
+    // ellipsizes rather than clipping. The word keeps its level color (now
+    // meter-step aligned) and italic treatment.
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: CtSpacing.s,
+      runSpacing: CtSpacing.xs,
       children: [
         _RelationStateBadge(atWar: rel.atWar),
-        if (showAlliance) ...[CtGap.wm, const DiplomacyAllianceBadge()],
+        if (showAlliance) const DiplomacyAllianceBadge(),
+        RelationMeter(score: rel.score),
         if (spans.isNotEmpty)
-          Flexible(
-            child: Text.rich(
-              TextSpan(style: mutedStyle, children: spans),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
+          Text.rich(
+            TextSpan(style: mutedStyle, children: spans),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
       ],
     );

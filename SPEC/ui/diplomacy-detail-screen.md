@@ -80,8 +80,8 @@ Outgoing subsidy/grant pending copy from the diplomacy **list** row is **not** d
 
 | State | Condition | Render |
 |-------|-----------|--------|
-| Peace + score | `relation != null`, `!relation.atWar` | Summary shows localized peace + `relationScoreToDisplayLabel(score)`. |
-| War | `relation != null`, `relation.atWar` | Summary shows localized war + score label when applicable. |
+| Peace + score | `relation != null`, `!relation.atWar` | Summary shows localized peace + the 10-step [`RelationMeter`](components/relation-meter.md) (indicator on `relationScoreToMeterStep(score)`) + the one-word ladder label `relationScoreToDisplayLabel(score)` in the matching meter-step color. |
+| War | `relation != null`, `relation.atWar` | Summary shows localized war + the `RelationMeter` + ladder label when applicable. |
 | Unknown relation | `relation == null` | Summary shows `—` only (no score words). |
 | Empty history | `diplomaticHistoryForPair` returns `[]` | `diplomacy_detail_noEvents` body text. |
 | Non-empty history | One or more events for the pair | Newest-first `Card` list with year/turn header per event. |

@@ -15,6 +15,8 @@
 // § Section headings, and § Acceptance criteria (Refs #3621).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show relationScoreToMeterStep;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -25,6 +27,7 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/relation_meter.dart';
 
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -255,58 +258,53 @@ void main() {
       await _pumpBuilt(tester);
     }
 
-    testWidgets('relation word renders italic in its level color', (
+    testWidgets('relation word renders italic in its meter-step color', (
       WidgetTester tester,
     ) async {
-      await pumpRelation(tester, 60); // Cordial band (50 … 69)
+      await pumpRelation(tester, 60); // step 7 → Cordial
       final TextSpan word = relationWordSpan(tester, 'Cordial');
       expect(word.style?.fontStyle, FontStyle.italic);
-      expect(word.style?.color, oklchToColor(kDiplomacyRelationCordialToken));
+      expect(word.style?.color, relationMeterStepColor(7));
     });
 
-    testWidgets('Hostile word resolves to --danger', (
+    testWidgets('Hostile word (step 1) resolves to --danger', (
       WidgetTester tester,
     ) async {
-      await pumpRelation(tester, 20); // Hostile band (0 … 29)
+      await pumpRelation(tester, 5); // step 1 → Hostile
       final TextSpan word = relationWordSpan(tester, 'Hostile');
       expect(word.style?.color, EditorialMonoclePalette.danger);
       expect(word.style?.fontStyle, FontStyle.italic);
     });
 
-    testWidgets('Unfriendly word resolves to the warm-amber token', (
+    testWidgets('interior word (step 5) resolves to its gradient color', (
       WidgetTester tester,
     ) async {
-      await pumpRelation(tester, 40); // Unfriendly band (30 … 49)
-      final TextSpan word = relationWordSpan(tester, 'Unfriendly');
-      expect(
-        word.style?.color,
-        oklchToColor(kDiplomacyRelationUnfriendlyToken),
-      );
+      await pumpRelation(tester, 40); // step 5 → Wary
+      final TextSpan word = relationWordSpan(tester, 'Wary');
+      expect(word.style?.color, relationMeterStepColor(5));
     });
 
-    testWidgets('Friendly word resolves to --success', (
+    testWidgets('Devoted word (step 10) resolves to --success', (
       WidgetTester tester,
     ) async {
-      await pumpRelation(tester, 80); // Friendly band (70 … 100)
-      final TextSpan word = relationWordSpan(tester, 'Friendly');
+      await pumpRelation(tester, 95); // step 10 → Devoted
+      final TextSpan word = relationWordSpan(tester, 'Devoted');
       expect(word.style?.color, EditorialMonoclePalette.success);
     });
 
-    test('diplomacyRelationWordColor maps display bands and boundaries', () {
-      final Color unfriendly = oklchToColor(kDiplomacyRelationUnfriendlyToken);
-      final Color cordial = oklchToColor(kDiplomacyRelationCordialToken);
-      // Hostile 0 … 29.
+    test('diplomacyRelationWordColor follows the meter-step gradient', () {
+      // Endpoints reuse the canonical danger/success tokens.
       expect(diplomacyRelationWordColor(0), EditorialMonoclePalette.danger);
-      expect(diplomacyRelationWordColor(29), EditorialMonoclePalette.danger);
-      // Unfriendly 30 … 49.
-      expect(diplomacyRelationWordColor(30), unfriendly);
-      expect(diplomacyRelationWordColor(49), unfriendly);
-      // Cordial 50 … 69.
-      expect(diplomacyRelationWordColor(50), cordial);
-      expect(diplomacyRelationWordColor(69), cordial);
-      // Friendly 70 … 100.
-      expect(diplomacyRelationWordColor(70), EditorialMonoclePalette.success);
+      expect(diplomacyRelationWordColor(9.9), EditorialMonoclePalette.danger);
       expect(diplomacyRelationWordColor(100), EditorialMonoclePalette.success);
+      expect(diplomacyRelationWordColor(90), EditorialMonoclePalette.success);
+      // Interior scores resolve to the gradient color for their step.
+      for (final num score in <num>[15, 25, 35, 45, 55, 65, 75, 85]) {
+        expect(
+          diplomacyRelationWordColor(score),
+          relationMeterStepColor(relationScoreToMeterStep(score)),
+        );
+      }
     });
   });
 

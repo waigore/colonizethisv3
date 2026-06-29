@@ -1688,6 +1688,9 @@ abstract class AppLocalizations {
   /// One-word peace state in diplomacy UI.
   String get diplomacy_relationState_peace;
 
+  /// Accessibility label for the relation meter; embeds the ladder relation word.
+  String diplomacy_relationMeter_semanticsLabel(String relation);
+
   /// Tech tree dialog effect line (techEffectSummary_advanced_hull_design_0).
   String get techEffectSummary_advanced_hull_design_0;
 

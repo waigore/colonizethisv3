@@ -12,6 +12,7 @@ import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_top_bar.dart';
+import '../../../widgets/relation_meter.dart';
 import '../widgets/diplomacy_panel.dart';
 
 /// Human-readable sentence for a diplomatic event. Unknown factions shown as "Unknown faction".
@@ -320,11 +321,18 @@ class _RelationSummary extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+        // SPEC/ui/diplomacy-detail-screen.md § Current relation (Refs #3753
+        // R13.5): the same 10-step gradient meter used on the panel row sits
+        // beside the one-word ladder label; the hidden decimal score positions
+        // the indicator.
+        RelationMeter(score: relation!.score),
         if (relationLabel.isNotEmpty)
           Text(
             relationLabel,
             style: _displayStyle(context).copyWith(
-              color: EditorialMonoclePalette.fg,
+              color: relationMeterStepColor(
+                relationScoreToMeterStep(relation!.score),
+              ),
             ),
           ),
         if (showAlliance) const DiplomacyAllianceBadge(),

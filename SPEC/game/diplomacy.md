@@ -327,7 +327,7 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 - Given the user views the diplomacy panel for a discovered faction with a diplomatic relation  
   When the panel displays the current relation  
-  Then the system shows the **one-word relation state** (Hostile, Unfriendly, Cordial, or Friendly) derived from the relation score per the Player-facing relation display table (0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly), and does **not** display the numeric relation score.
+  Then the system shows the **one-word relation state** drawn from the 10-word ladder keyed by the relation-meter step (see § Player-facing relation display — for example a score of `22.4` is step 3 → `Distrustful`), renders the 10-step gradient meter with its indicator on that step, and does **not** display the numeric relation score.
 
 - Given a relation score of `22.4`  
   When the system derives the 10-step relation meter step via `relationScoreToMeterStep`  
@@ -372,35 +372,26 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI. Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
 
-The diplomacy panel shows instead a **one-word relation state** derived from the score:
-
-| Score range | Display label |
-|-------------|---------------|
-| 0–29 | Hostile |
-| 30–49 | Unfriendly |
-| 50–69 | Cordial |
-| 70–100 | Friendly |
-
-The Flutter app uses this mapping for the player-facing label. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
+The diplomacy panel shows instead a **one-word relation state** drawn from the 10-word ladder keyed by the relation-meter step (§ 10-step relation meter). `relationScoreToDisplayLabel(score)` returns `relationMeterStepLabel(relationScoreToMeterStep(score))` — i.e. the word for the step the hidden score falls in (Refs #3753 R13.6). The legacy 4-band table is superseded by this decimal-aware 10-band ladder. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label and meter use these bands.
 
 #### 10-step relation meter
 
 For the diplomacy panel and detail screen, the hidden relation score additionally maps to a **10-step meter** (Refs #3753 R13). The score range `[0, 100]` is divided into **10 equal half-open bands** `[low, high)`; each boundary value maps to the **higher** step, and the final step is fully closed so the maximum score `100` is included:
 
-| Step | Score band |
-|------|------------|
-| 1 | `[0, 10)` |
-| 2 | `[10, 20)` |
-| 3 | `[20, 30)` |
-| 4 | `[30, 40)` |
-| 5 | `[40, 50)` |
-| 6 | `[50, 60)` |
-| 7 | `[60, 70)` |
-| 8 | `[70, 80)` |
-| 9 | `[80, 90)` |
-| 10 | `[90, 100]` |
+| Step | Score band | Ladder label |
+|------|------------|--------------|
+| 1 | `[0, 10)` | Hostile |
+| 2 | `[10, 20)` | Antagonistic |
+| 3 | `[20, 30)` | Distrustful |
+| 4 | `[30, 40)` | Unfriendly |
+| 5 | `[40, 50)` | Wary |
+| 6 | `[50, 60)` | Neutral |
+| 7 | `[60, 70)` | Cordial |
+| 8 | `[70, 80)` | Amicable |
+| 9 | `[80, 90)` | Friendly |
+| 10 | `[90, 100]` | Devoted |
 
-The step is derived by `relationScoreToMeterStep(score)` (`colonizethis_diplomacy`), operating on the **raw** score with no intermediate rounding; the score is first clamped to `[0, 100]`, so a value below `0` maps to step 1 and a value above `100` maps to step 10. The numeric step boundaries above are fixed by this rule. The **per-step label ladder** (10 words) and the red→green gradient **colors** are a UI concern delivered through the screen-documentation pass (`document-app-ui`); this section fixes only the numeric step model. The four-band one-word label table above remains the active player-facing label until the UI meter is delivered.
+The step is derived by `relationScoreToMeterStep(score)` (`colonizethis_diplomacy`), operating on the **raw** score with no intermediate rounding; the score is first clamped to `[0, 100]`, so a value below `0` maps to step 1 and a value above `100` maps to step 10. The numeric step boundaries above are fixed by this rule. The **per-step label ladder** (10 distinct words, ordered hostile → friendly) is returned by `relationMeterStepLabel(step)` and drives `relationScoreToDisplayLabel`. The red→green gradient **colors** for the meter (and the matching word color) are a UI concern documented in [SPEC/ui/components/relation-meter.md](../ui/components/relation-meter.md); the meter and ladder are delivered on the diplomacy panel row and detail screen (Refs #3753 R13).
 
 ### Great Power power score
 

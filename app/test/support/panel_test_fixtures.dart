@@ -562,10 +562,10 @@ Game buildDiplomacyPanelTestGame() {
 /// - the human ([kPanelTestHumanPlayerId] = `gp1`, `players.first`) with a
 ///   non-zero `treasury` (so the economic/overture actions render) and one
 ///   regiment, so its power score is non-vacuous;
-/// - `gp2` **at peace** (score 50 → "Cordial" one-word label + `PEACE` badge)
+/// - `gp2` **at peace** (score 50 → "Neutral" one-word label + `PEACE` badge)
 ///   with **two** regiments, so it sorts ahead of `gp3` by military strength
 ///   and reads as the stronger GP (relative-power line → `--danger`);
-/// - `gp3` **at war** (score 20 → "Hostile" one-word label + `WAR` badge) with
+/// - `gp3` **at war** (score 20 → "Distrustful" one-word label + `WAR` badge) with
 ///   **one** regiment, so it is roughly equal to the human (relative-power line
 ///   → `--success`) and the GP rows are a non-vacuous two-element sort;
 /// - one Minor Nation `m1` at peace, so the minor row enumerates all four

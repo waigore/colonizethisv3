@@ -771,8 +771,9 @@ void main() {
 
       expect(find.text('CURRENT RELATION'), findsOneWidget);
       expect(find.text(kDiplomacyAllianceBadgeLabel), findsNothing);
-      // The informal high-relation row still shows the one-word label.
-      expect(find.textContaining('Friendly'), findsOneWidget);
+      // The informal high-relation row still shows the one-word label
+      // (score 90 → step 10 → "Devoted" on the 10-step ladder, Refs #3753).
+      expect(find.textContaining('Devoted'), findsOneWidget);
     },
   );
 }
