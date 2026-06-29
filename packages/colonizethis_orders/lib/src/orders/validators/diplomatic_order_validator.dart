@@ -4,6 +4,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../order_validation_result.dart';
 
 import 'diplomatic/alliance_validator.dart';
+import 'diplomatic/boycott_validator.dart';
 import 'diplomatic/break_alliance_validator.dart';
 import 'diplomatic/declare_war_validator.dart';
 import 'diplomatic/diplomatic_sub_validator.dart';
@@ -11,6 +12,7 @@ import 'diplomatic/establish_ftp_validator.dart';
 import 'diplomatic/establish_overture_validator.dart';
 import 'diplomatic/grant_aid_validator.dart';
 import 'diplomatic/offer_peace_validator.dart';
+import 'diplomatic/revoke_boycott_validator.dart';
 import 'diplomatic/set_subsidy_validator.dart';
 import 'stateful_validator.dart';
 
@@ -87,6 +89,10 @@ class DiplomaticOrderValidator extends StatefulValidator {
       ),
       DiplomaticOrderType.grantAid: grantAidSubValidator(subValidatorContext),
       DiplomaticOrderType.setSubsidy: setSubsidySubValidator(
+        subValidatorContext,
+      ),
+      DiplomaticOrderType.boycott: boycottSubValidator(subValidatorContext),
+      DiplomaticOrderType.revokeBoycott: revokeBoycottSubValidator(
         subValidatorContext,
       ),
     };

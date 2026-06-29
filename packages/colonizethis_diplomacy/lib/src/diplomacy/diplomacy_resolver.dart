@@ -13,6 +13,7 @@ import 'diplomacy_phase_result.dart';
 
 export 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'alliance_resolver.dart';
+import 'boycott_resolver.dart';
 import 'break_alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'ftp_resolver.dart';
@@ -123,6 +124,16 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   );
   factionMembership = DiplomacyFactionMembership.from(state);
 
+  // 3b. Process boycotts / revocations (Refs #3753 R6). Runs after Join
+  // Empire/Colony so colonies resolved this turn are visible to the colony gate.
+  state = processBoycotts(
+    state,
+    diploByPlayer,
+    turn,
+    factionMembership: factionMembership,
+    eventTally: eventTally,
+  );
+
   // 4. Process alliance proposals and responses
   state = processAlliances(
     state,
@@ -213,6 +224,8 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = terminateAgreementsOnWar(state, eventTally: eventTally);
   state = breakFtpOnWar(state, turn, eventTally: eventTally);
   state = breakFtpOnEmbassyLoss(state, turn, eventTally: eventTally);
+  // 6b. Auto-cancel boycotts whose pair is now at war (Refs #3753 R6.4).
+  state = autoCancelBoycottsOnWar(state, turn, eventTally: eventTally);
 
   // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
   state = processOngoingSubsidies(

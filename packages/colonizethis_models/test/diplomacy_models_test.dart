@@ -277,6 +277,42 @@ void main() {
     });
   });
 
+  group('BoycottState (Refs #3753 R6)', () {
+    const boycott = BoycottState(
+      gpId: 'gp1',
+      targetGpId: 'gp2',
+      sinceTurn: 5,
+    );
+
+    test('toJson/fromJson round-trips', () {
+      final restored = BoycottState.fromJson(boycott.toJson());
+      expect(restored, boycott);
+      expect(restored.gpId, 'gp1');
+      expect(restored.targetGpId, 'gp2');
+      expect(restored.sinceTurn, 5);
+    });
+
+    test('fromJson defaults sinceTurn to 0 when missing', () {
+      final restored = BoycottState.fromJson(const {
+        'gpId': 'gp1',
+        'targetGpId': 'gp2',
+      });
+      expect(restored.sinceTurn, 0);
+    });
+
+    test('copyWith and equality', () {
+      final updated = boycott.copyWith(targetGpId: 'gp3');
+      expect(updated.targetGpId, 'gp3');
+      expect(updated.gpId, 'gp1');
+      expect(boycott == updated, isFalse);
+      expect(
+        boycott.hashCode,
+        const BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 5)
+            .hashCode,
+      );
+    });
+  });
+
   group('DiplomaticEvent', () {
     const event = DiplomaticEvent(
       turn: 7,

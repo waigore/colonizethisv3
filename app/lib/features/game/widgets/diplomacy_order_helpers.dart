@@ -25,6 +25,10 @@ String diplomacyActionLabel(DiplomaticOrder order) {
           : 'Set Subsidy';
     case DiplomaticOrderType.establishFtp:
       return 'Establish FTP';
+    case DiplomaticOrderType.boycott:
+      return 'Boycott';
+    case DiplomaticOrderType.revokeBoycott:
+      return 'Revoke Boycott';
   }
 }
 
