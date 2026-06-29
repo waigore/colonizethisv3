@@ -29,15 +29,14 @@
 //   - `scaleWeightedBonus` — `<= 0.0` guard, `> 1.0` clamp, rounding
 //   - `resolvePhaseColonialPressureActive` — COLONIAL-only gate
 //   - `resolvePhaseExpandOrColonialLiteActive` — EXPAND / COLONIAL-lite gate
-//   - `hasRecentDiplomaticEventWithinCooldown` — newest-match-wins reversed
-//     history scan, strict `<` cooldown window, predicate filtering (Refs #3717)
-//   - `atWarPeaceTargetBonus` — at-war GP eligibility gate, lazy predicate
-//     short-circuit, flat-bonus emission (Refs #3717)
 //
 // Invadable-province ownership helpers (`anyInvadableProvinceOwnedByMinor`,
 // `anyInvadableProvinceOwnedByGreatPower`, `factionOwnsInvadableOldWorldProvince`,
 // `addInvadableProvinceMinorOwnersNotAtWar`) are pinned in the sibling
-// `planning_helpers_part2_test.dart` to keep each file within the repo
+// `planning_helpers_part2_test.dart`; the diplomatic-cooldown and at-war
+// peace/order scoring helpers (`hasRecentDiplomaticEventWithinCooldown`,
+// `atWarPeaceTargetBonus`, `atWarGreatPowerOrderTarget`) are pinned in
+// `planning_helpers_part3_test.dart`, to keep each file within the repo
 // non-comment line limit.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
@@ -139,43 +138,6 @@ Game _gameOwning(Map<String, int> ownerCounts) {
     ],
   );
 }
-
-Game _gameWithEvents(List<DiplomaticEvent> events) {
-  return Game(
-    id: 'g-3717-cooldown-scan',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(provinces: []),
-      newWorld: const RegionData(provinces: []),
-    ),
-    players: const [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false),
-      Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    diplomaticHistoryEvents: events,
-  );
-}
-
-DiplomaticEvent _ev(
-  int turn, {
-  DiplomaticEventType type = DiplomaticEventType.declareWar,
-  String from = _gp1,
-  String to = _gp2,
-}) {
-  return DiplomaticEvent(
-    turn: turn,
-    intraTurnIndex: 0,
-    type: type,
-    participants: {from, to},
-    fromFactionId: from,
-    toFactionId: to,
-  );
-}
-
-bool _warFromGp1ToGp2(DiplomaticEvent e) =>
-    e.type == DiplomaticEventType.declareWar &&
-    e.fromFactionId == _gp1 &&
-    e.toFactionId == _gp2;
 
 void main() {
   group('gpFactionIdsAtWarWith', () {
@@ -660,6 +622,101 @@ void main() {
     });
   });
 
+  group('nonGreatPowerAtWarPeaceTargetsWhere (Refs #3749)', () {
+    Game gameWithMixedFactions() => Game(
+      id: 'g-3749-non-gp-peace',
+      worldState: WorldState(
+        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+        oldWorld: const RegionData(provinces: []),
+        newWorld: const RegionData(provinces: []),
+      ),
+      players: const [
+        Player(id: _gp1, displayName: 'GP1', isHuman: false),
+        Player(id: _gp2, displayName: 'GP2', isHuman: false),
+      ],
+      minorNations: const [
+        MinorNation(id: 'minorA', displayName: 'MinorA'),
+        MinorNation(id: 'minorB', displayName: 'MinorB'),
+      ],
+      tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
+    );
+
+    test('keep == null keeps every at-war non-GP faction, sorted ascending', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar([
+        _tribe1,
+        _gp2,
+        'minorB',
+        _gp1,
+        'minorA',
+      ]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
+        ['minorA', 'minorB', _tribe1],
+      );
+    });
+
+    test('keeps an at-war id that is no longer a registered minor or tribe', () {
+      // Pins the `playerById == null` semantics (non-GP), distinct from the
+      // minor/tribe membership collectors: an absorbed faction id still in
+      // `atWarWith` is non-GP and must be retained.
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar(['absorbedX', _gp1, 'minorA']);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
+        ['absorbedX', 'minorA'],
+      );
+    });
+
+    test('never offers a Great Power even with a keep-all predicate', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar([_gp1, _gp2, 'minorA', _tribe1]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => true,
+        ),
+        ['minorA', _tribe1],
+      );
+    });
+
+    test('keeps only non-GP factions matching the predicate, sorted', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar(['minorB', _tribe1, 'minorA']);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (factionId) => factionId != 'minorB',
+        ),
+        ['minorA', _tribe1],
+      );
+    });
+
+    test('keep-none returns empty', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar(['minorA', _tribe1]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(
+          game: game,
+          snapshot: snapshot,
+          keep: (_) => false,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('returns empty when only Great Powers are at war', () {
+      final game = gameWithMixedFactions();
+      final snapshot = _snapshotWithAtWar([_gp1, _gp2]);
+      expect(
+        nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+    });
+  });
+
   group('peaceTargetsExcludingBlocker (Refs #3717)', () {
     test('excludes the blocker and sorts ascending', () {
       expect(
@@ -872,211 +929,6 @@ void main() {
       expect(
         resolvePhaseNewWorldCivilianWeight(next),
         equals(resolvePhaseNewWorldCivilianWeight(base)),
-      );
-    });
-  });
-
-  group('hasRecentDiplomaticEventWithinCooldown (Refs #3717)', () {
-    test('true when the newest matching event is inside the window', () {
-      final game = _gameWithEvents([_ev(2)]);
-      expect(
-        hasRecentDiplomaticEventWithinCooldown(
-          game: game,
-          currentTurn: 5,
-          cooldownTurns: 4,
-          matches: _warFromGp1ToGp2,
-        ),
-        isTrue, // 5 - 2 = 3 < 4
-      );
-    });
-
-    test(
-      'false when matching event is exactly cooldownTurns old (strict <)',
-      () {
-        final game = _gameWithEvents([_ev(1)]);
-        expect(
-          hasRecentDiplomaticEventWithinCooldown(
-            game: game,
-            currentTurn: 5,
-            cooldownTurns: 4,
-            matches: _warFromGp1ToGp2,
-          ),
-          isFalse, // 5 - 1 = 4, not < 4
-        );
-      },
-    );
-
-    test('false when no event satisfies the predicate', () {
-      final game = _gameWithEvents([_ev(4, type: DiplomaticEventType.peace)]);
-      expect(
-        hasRecentDiplomaticEventWithinCooldown(
-          game: game,
-          currentTurn: 5,
-          cooldownTurns: 4,
-          matches: _warFromGp1ToGp2,
-        ),
-        isFalse,
-      );
-    });
-
-    test('false on empty diplomatic history', () {
-      final game = _gameWithEvents(const []);
-      expect(
-        hasRecentDiplomaticEventWithinCooldown(
-          game: game,
-          currentTurn: 5,
-          cooldownTurns: 4,
-          matches: _warFromGp1ToGp2,
-        ),
-        isFalse,
-      );
-    });
-
-    test(
-      'newest matching event decides; non-matching newer events skipped',
-      () {
-        // History ascending by turn; `.reversed` visits turn 5 (peace, no
-        // match) first and must continue to the older matching declare-war at
-        // turn 4 rather than stopping at the first non-match.
-        final game = _gameWithEvents([
-          _ev(4),
-          _ev(5, type: DiplomaticEventType.peace),
-        ]);
-        expect(
-          hasRecentDiplomaticEventWithinCooldown(
-            game: game,
-            currentTurn: 6,
-            cooldownTurns: 4,
-            matches: _warFromGp1ToGp2,
-          ),
-          isTrue, // newest matching is turn 4: 6 - 4 = 2 < 4
-        );
-      },
-    );
-
-    test('directional predicate ignores the reverse-direction event', () {
-      final game = _gameWithEvents([_ev(4, from: _gp2, to: _gp1)]);
-      expect(
-        hasRecentDiplomaticEventWithinCooldown(
-          game: game,
-          currentTurn: 5,
-          cooldownTurns: 4,
-          matches: _warFromGp1ToGp2,
-        ),
-        isFalse,
-      );
-    });
-  });
-
-  group('atWarPeaceTargetBonus (Refs #3717)', () {
-    test('returns the bonus when eligible and the predicate matches', () {
-      expect(
-        atWarPeaceTargetBonus(
-          atWarGreatPowerTarget: true,
-          isPeaceTarget: () => true,
-          bonus: 7,
-        ),
-        equals(7),
-      );
-    });
-
-    test('returns 0 when eligible but the predicate does not match', () {
-      expect(
-        atWarPeaceTargetBonus(
-          atWarGreatPowerTarget: true,
-          isPeaceTarget: () => false,
-          bonus: 7,
-        ),
-        equals(0),
-      );
-    });
-
-    test('returns 0 when not an at-war Great Power target', () {
-      expect(
-        atWarPeaceTargetBonus(
-          atWarGreatPowerTarget: false,
-          isPeaceTarget: () => true,
-          bonus: 7,
-        ),
-        equals(0),
-      );
-    });
-
-    test('skips the predicate (short-circuit) when ineligible', () {
-      var calls = 0;
-      final result = atWarPeaceTargetBonus(
-        atWarGreatPowerTarget: false,
-        isPeaceTarget: () {
-          calls++;
-          return true;
-        },
-        bonus: 7,
-      );
-      expect(result, equals(0));
-      expect(calls, equals(0));
-    });
-
-    test('evaluates the predicate exactly once when eligible', () {
-      var calls = 0;
-      final result = atWarPeaceTargetBonus(
-        atWarGreatPowerTarget: true,
-        isPeaceTarget: () {
-          calls++;
-          return true;
-        },
-        bonus: 7,
-      );
-      expect(result, equals(7));
-      expect(calls, equals(1));
-    });
-  });
-
-  group('atWarGreatPowerOrderTarget (Refs #3717)', () {
-    const Player gp = Player(id: _gp2, displayName: 'GP2', isHuman: false);
-
-    test('true when target is a Great Power we are at war with', () {
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: gp,
-          snapshot: _snapshotWithAtWar([_gp2]),
-          targetFactionId: _gp2,
-        ),
-        isTrue,
-      );
-    });
-
-    test('false when the target is not a Great Power (targetGp null)', () {
-      // A minor/tribe target the player is at war with still fails the gate:
-      // only Player Great Powers are eligible offer-peace candidates here.
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: null,
-          snapshot: _snapshotWithAtWar([_minor1]),
-          targetFactionId: _minor1,
-        ),
-        isFalse,
-      );
-    });
-
-    test('false when the Great Power target is not currently at war', () {
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: gp,
-          snapshot: _snapshotWithAtWar([_gp3]),
-          targetFactionId: _gp2,
-        ),
-        isFalse,
-      );
-    });
-
-    test('false when both eligibility conditions fail', () {
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: null,
-          snapshot: _snapshotWithAtWar(const []),
-          targetFactionId: _gp2,
-        ),
-        isFalse,
       );
     });
   });
