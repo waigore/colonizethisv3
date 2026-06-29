@@ -2245,6 +2245,10 @@
   "@provinceOverlay_tileExploreWithExplorerTooltip": {
     "description": "Tooltip and semantics label for province tile explore shortcut action."
   },
+  "provinceOverlay_tileConsulateRequiredForExploreTooltip": "Establish a consulate before exploring or prospecting",
+  "@provinceOverlay_tileConsulateRequiredForExploreTooltip": {
+    "description": "Tooltip shown on the disabled province tile Explore/Prospect inline actions when the issuing Great Power holds no Consulate (or higher) with the owning Minor/Tribe (Refs #3753 R4b)."
+  },
   "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
