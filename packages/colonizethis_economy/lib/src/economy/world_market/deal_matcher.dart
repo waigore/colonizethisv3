@@ -75,6 +75,16 @@ typedef DealMatchInputs = ({
   /// order. An empty map (or a seller absent from it — e.g. all GP sellers)
   /// preserves the legacy ordering.
   Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller,
+
+  /// #3753 R6 boycott colony trade embargo. Canonical [DealMatcher.pairKey]
+  /// keys for every `(colonyTribeId, boycottedTargetGpId)` pair derived from
+  /// `Game.boycottStates` × `Game.colonyStates`. A match attempt whose
+  /// `pairKey(sellerFactionId, buyerFactionId)` is present is skipped (no
+  /// `FilledDeal`; both orders carry forward), blocking all trade between a
+  /// boycotted Great Power and the issuer's colony Tribes in both directions.
+  /// An empty set disables the exclusion (legacy behavior — identical
+  /// matching). SPEC/program/world-market-resolution.md § Deal matching engine.
+  Set<String> boycottBlockedPairKeys,
 });
 
 /// Internal mutable bookkeeping for a single order participating in matching.
@@ -197,6 +207,7 @@ class DealMatcher {
             remainingCargo: remainingCargo,
             remainingTreasury: remainingTreasury,
             filledOut: filled,
+            boycottBlockedPairKeys: inputs.boycottBlockedPairKeys,
           );
         }
 
@@ -226,6 +237,7 @@ class DealMatcher {
             remainingCargo: remainingCargo,
             remainingTreasury: remainingTreasury,
             filledOut: filled,
+            boycottBlockedPairKeys: inputs.boycottBlockedPairKeys,
           );
         }
       }

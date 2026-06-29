@@ -347,6 +347,22 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the Diplomacy phase of turn `t` completes  
   Then the system removes the `(A, B)` `BoycottState` (auto-cancelled by war) and appends a `boycottRevoked` event for that pair.
 
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists, Tribe `T` is a colony of A (`ColonyState { tribeId: T, colonyOfGpId: A }`), `T` submits a world-market offer for commodity `C`, and B submits a world-market bid for `C` at the same integer priority tier  
+  When the World Market phase (phase 13) matches deals  
+  Then the system emits no `FilledDeal` between seller `T` and buyer `B` for `C` (the boycott blocks all trade between B and A's colony Tribes) and both the `T` offer and the `B` bid carry forward at their unfilled quantity.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists, Tribe `T` is a colony of A, B submits a world-market offer for commodity `C`, and `T` submits a world-market bid for `C` at the same integer priority tier  
+  When the World Market phase matches deals  
+  Then the system emits no `FilledDeal` between seller `B` and buyer `T` for `C` (the block is bidirectional between B and A's colony Tribes).
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists, Tribe `T` is a colony of A, and a third Great Power `D` that holds no boycott against B submits a world-market bid for commodity `C` that `T` offers  
+  When the World Market phase matches deals  
+  Then the system still emits a `FilledDeal` between seller `T` and buyer `D` for `C` (the boycott blocks only trade involving the boycotted Great Power B, not trade between A's colony Tribes and other GPs).
+
+- Given the `Game` holds no `BoycottState`  
+  When the World Market phase matches deals  
+  Then the system applies no boycott exclusion and deal matching is identical to the pre-boycott behavior for the same offers and bids.
+
 - Given Great Powers A and B have **no** formal alliance at the start of turn `t` and A issues an `Alliance` order targeting B in turn `t`  
   When another Great Power declares war on B in the same Diplomacy phase of turn `t`  
   Then the system forms the A–B formal alliance but does **not** add a Call to Arms for A for that same-turn war.

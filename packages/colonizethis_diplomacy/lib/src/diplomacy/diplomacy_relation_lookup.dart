@@ -403,6 +403,40 @@ bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
 Set<String> ftpPairKeysFromGame(Game game) =>
     Set<String>.from(game.ftpPartnershipKeys);
 
+/// Canonical `pairKey` set of `(colonyTribeId, boycottedTargetGpId)` pairs the
+/// World Market deal matcher must refuse to fill (Refs #3753 R6 boycott colony
+/// trade embargo).
+///
+/// For every active `BoycottState { gpId: A, targetGpId: B }`, every Tribe `T`
+/// that is a colony of A (`ColonyState.colonyOfGpId == A`) contributes
+/// `pairKey(T, B)`. The key is symmetric, so the matcher's
+/// `pairKey(sellerFactionId, buyerFactionId)` lookup blocks trade in **both**
+/// directions between B and A's colony Tribes — B buying goods a colony Tribe
+/// sells, and a colony Tribe buying goods B sells. The result is empty when no
+/// boycott is active or no boycotting GP holds a colony, which the matcher
+/// treats as a no-op (legacy matching). SPEC/game/diplomacy.md § GP–Tribe Rules
+/// (Boycott); SPEC/program/world-market-resolution.md § Deal matching engine.
+Set<String> boycottBlockedTradePairKeys(Game game) {
+  if (game.boycottStates.isEmpty || game.colonyStates.isEmpty) {
+    return const <String>{};
+  }
+  final colonyTribesByGp = <String, List<String>>{};
+  for (final colony in game.colonyStates) {
+    colonyTribesByGp
+        .putIfAbsent(colony.colonyOfGpId, () => <String>[])
+        .add(colony.tribeId);
+  }
+  final keys = <String>{};
+  for (final boycott in game.boycottStates) {
+    final colonyTribes = colonyTribesByGp[boycott.gpId];
+    if (colonyTribes == null) continue;
+    for (final tribeId in colonyTribes) {
+      keys.add(pairKey(tribeId, boycott.targetGpId));
+    }
+  }
+  return keys;
+}
+
 /// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.
 /// Used by move validator for GP and Minor/Tribe attack checks. SPEC/program/orders.md.
 bool canAttackWithWarOrDeclaring(
