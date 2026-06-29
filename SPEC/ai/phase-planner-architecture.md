@@ -8,6 +8,8 @@ Each Great Power computes a deterministic `ObserverGoalPhase` from its `PlayerVi
 
 Phase definitions and COLONIAL-lite stay normative in [ai-architecture.md](ai-architecture.md); the **soft-phase priority weights** that superseded the former hard per-phase suppressions are normative in § Soft-phase priority weights below (Refs #2847). This file specifies module contracts, orchestrator dispatch, data flow, and acceptance criteria.
 
+The end-to-end model for how the AI scores and emits diplomatic orders (per-order scoring table, decimal relations, candidate generation) is normative in [diplomacy-planner.md](diplomacy-planner.md); the colony-exclusion, overseas-profit purchase-land, decay-aware overture, and FTP-competition sections below remain the detailed source of truth for their respective behaviors.
+
 ## Rules
 
 ### Planner module contracts
