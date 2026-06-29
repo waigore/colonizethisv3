@@ -18,6 +18,7 @@ class WorldMarketState {
         const <String, List<TradeOrder>>{},
     this.carryForwardBidsByFactionId =
         const <String, List<TradeOrder>>{},
+    this.completedTradePairKeys = const <String>{},
   });
 
   final Map<CommodityId, int> prices;
@@ -35,6 +36,15 @@ class WorldMarketState {
   /// § Order persistence.
   final Map<String, List<TradeOrder>> carryForwardBidsByFactionId;
 
+  /// Canonical `min|max` faction pair keys for every pair that completed at
+  /// least one world-market trade deal involving at least one Great Power on
+  /// the turn this state was persisted. Consumed by the next turn's Diplomacy
+  /// phase to apply the additive trade-deal relation boost (Refs #3753 R10)
+  /// before per-turn decay, so trading pairs skip decay (skip-on-event).
+  /// SPEC/game/diplomacy.md § Relation Model — Trade-deal relation boost;
+  /// SPEC/program/world-market-resolution.md § Step F.
+  final Set<String> completedTradePairKeys;
+
   static const empty = WorldMarketState();
 
   /// Builds an initial state seeded from `defaultMarketPrice` integers
@@ -51,6 +61,7 @@ class WorldMarketState {
     Map<CommodityId, MarketActivity>? lastTurnActivity,
     Map<String, List<TradeOrder>>? carryForwardOffersByFactionId,
     Map<String, List<TradeOrder>>? carryForwardBidsByFactionId,
+    Set<String>? completedTradePairKeys,
   }) {
     return WorldMarketState(
       prices: prices ?? this.prices,
@@ -59,6 +70,8 @@ class WorldMarketState {
           carryForwardOffersByFactionId ?? this.carryForwardOffersByFactionId,
       carryForwardBidsByFactionId:
           carryForwardBidsByFactionId ?? this.carryForwardBidsByFactionId,
+      completedTradePairKeys:
+          completedTradePairKeys ?? this.completedTradePairKeys,
     );
   }
 
@@ -76,6 +89,8 @@ class WorldMarketState {
       'carryForwardBidsByFactionId': _serializeCarryForward(
         carryForwardBidsByFactionId,
       ),
+    if (completedTradePairKeys.isNotEmpty)
+      'completedTradePairKeys': completedTradePairKeys.toList(),
   };
 
   static WorldMarketState fromJson(Map<String, dynamic> json) {
@@ -108,6 +123,9 @@ class WorldMarketState {
       ),
       carryForwardBidsByFactionId: _deserializeCarryForward(
         json['carryForwardBidsByFactionId'],
+      ),
+      completedTradePairKeys: _deserializeCompletedTradePairKeys(
+        json['completedTradePairKeys'],
       ),
     );
   }
@@ -145,7 +163,8 @@ class WorldMarketState {
           _carryMapEquals(
             carryForwardBidsByFactionId,
             other.carryForwardBidsByFactionId,
-          );
+          ) &&
+          _setEquals(completedTradePairKeys, other.completedTradePairKeys);
 
   @override
   int get hashCode {
@@ -160,8 +179,28 @@ class WorldMarketState {
       Object.hashAll(activityEntries),
       Object.hashAll(carryForwardOffersByFactionId.keys),
       Object.hashAll(carryForwardBidsByFactionId.keys),
+      Object.hashAll(completedTradePairKeys),
     );
   }
+}
+
+bool _setEquals(Set<String> a, Set<String> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (final e in a) {
+    if (!b.contains(e)) return false;
+  }
+  return true;
+}
+
+Set<String> _deserializeCompletedTradePairKeys(Object? raw) {
+  if (raw is! List<dynamic>) return const <String>{};
+  final result = <String>{};
+  for (final entry in raw) {
+    final key = entry?.toString();
+    if (key != null && key.isNotEmpty) result.add(key);
+  }
+  return Set<String>.unmodifiable(result);
 }
 
 Map<String, List<Map<String, dynamic>>> _serializeCarryForward(
