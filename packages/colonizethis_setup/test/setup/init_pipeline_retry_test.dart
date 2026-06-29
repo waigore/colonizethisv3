@@ -10,7 +10,7 @@ import 'package:colonizethis_test/test.dart';
 /// is exercised end-to-end by the `runInitGame` orchestrator tests.
 void main() {
   group('isRetriableInitTopologyCode', () {
-    test('positive: true for the three retriable topology codes', () {
+    test('positive: true for the retriable topology codes', () {
       expect(isRetriableInitTopologyCode('assigner_exhausted'), isTrue);
       expect(
         isRetriableInitTopologyCode('faction_component_bin_pack_failed'),
@@ -18,6 +18,11 @@ void main() {
       );
       expect(
         isRetriableInitTopologyCode('assignment_remainder_not_connected'),
+        isTrue,
+      );
+      // Tribe sea-bound ownership gate triggers map regeneration (S4b / #3753).
+      expect(
+        isRetriableInitTopologyCode('tribe_missing_sea_bound_province'),
         isTrue,
       );
     });

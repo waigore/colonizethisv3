@@ -29,9 +29,21 @@ int _attemptMatch({
   required Map<String, int> remainingTreasury,
   required List<FilledDeal> filledOut,
   required bool isFirstRight,
+  Set<String> boycottBlockedPairKeys = const <String>{},
   bool ftp = false,
 }) {
   if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
+  // #3753 R6 boycott colony trade embargo: refuse to fill any offer↔bid pair
+  // the boycott blocks. The skip leaves both orders' remaining quantity intact
+  // so they carry forward and can still match unblocked counterparties. Empty
+  // set is the legacy no-op path. SPEC/program/world-market-resolution.md
+  // § Deal matching engine (boycott exclusion).
+  if (boycottBlockedPairKeys.isNotEmpty &&
+      boycottBlockedPairKeys.contains(
+        DealMatcher.pairKey(offer.factionId, bid.factionId),
+      )) {
+    return 0;
+  }
   final cargoLeft = remainingCargo[bid.factionId] ?? 0;
   if (cargoLeft <= 0) return 0;
   final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
@@ -99,6 +111,7 @@ int _runFirstRightMatching({
   required Map<String, int> remainingCargo,
   required Map<String, int> remainingTreasury,
   required List<FilledDeal> filledOut,
+  Set<String> boycottBlockedPairKeys = const <String>{},
 }) {
   if (commodityOffers.isEmpty || commodityBids.isEmpty) return 0;
   var filledQuantity = 0;
@@ -128,6 +141,7 @@ int _runFirstRightMatching({
         remainingTreasury: remainingTreasury,
         filledOut: filledOut,
         isFirstRight: true,
+        boycottBlockedPairKeys: boycottBlockedPairKeys,
       );
     }
   }
@@ -169,6 +183,7 @@ int _runTierMatching({
   required Map<String, int> remainingCargo,
   required Map<String, int> remainingTreasury,
   required List<FilledDeal> filledOut,
+  Set<String> boycottBlockedPairKeys = const <String>{},
 }) {
   if (tierOffers.isEmpty || tierBids.isEmpty) return 0;
   var filledQuantity = 0;
@@ -194,6 +209,7 @@ int _runTierMatching({
         remainingTreasury: remainingTreasury,
         filledOut: filledOut,
         isFirstRight: false,
+        boycottBlockedPairKeys: boycottBlockedPairKeys,
         ftp: true,
       );
     }
@@ -224,6 +240,7 @@ int _runTierMatching({
         remainingTreasury: remainingTreasury,
         filledOut: filledOut,
         isFirstRight: false,
+        boycottBlockedPairKeys: boycottBlockedPairKeys,
         ftp: ftpEligible(offer, bid),
       );
     }

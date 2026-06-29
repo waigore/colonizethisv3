@@ -8,7 +8,7 @@ import '../support/diplomacy_resolver_phase_test_support.dart';
 void main() {
   group('applyRelationModifiersAndUpdateScores (Refs #2394 index maps)', () {
     test(
-      'setSubsidy updates existing row by payer+target without duplicate',
+      'setSubsidy updates existing percent row without duplicate or cost',
       () {
         var game = diplomacyResolverPhaseTestBaseGame().copyWith(
           overtureStates: const [
@@ -23,7 +23,7 @@ void main() {
             SubsidyState(
               payerId: 'gp1',
               targetId: 'minor1',
-              amountPerTurn: 100,
+              percent: 5,
             ),
           ],
           diplomacyRelations: [
@@ -35,20 +35,22 @@ void main() {
             ),
           ],
         );
+        final startTreasury = game.playerById('gp1')!.treasury;
 
         final out = applyRelationModifiersAndUpdateScores(game, {
           'gp1': const [
             DiplomaticOrder(
               type: DiplomaticOrderType.setSubsidy,
               targetFactionId: 'minor1',
-              amount: 200,
+              amount: 15,
             ),
           ],
         }, 1);
 
         expect(out.subsidyStates, hasLength(1));
-        expect(out.subsidyStates.single.amountPerTurn, 200);
-        expect(out.playerById('gp1')!.treasury, 2000 - 200);
+        expect(out.subsidyStates.single.percent, 15);
+        // Percent subsidies charge no treasury (Refs #3753 R3).
+        expect(out.playerById('gp1')!.treasury, startTreasury);
       },
     );
 
@@ -91,8 +93,8 @@ void main() {
     });
   });
 
-  group('processOngoingSubsidies (Refs #2394 player index map)', () {
-    test('GP-to-GP subsidy credits target via O(1) player id index', () {
+  group('processOngoingSubsidies (percent model, Refs #3753 R3)', () {
+    test('valid Minor subsidy with Embassy is retained and charges nothing', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -102,18 +104,26 @@ void main() {
         ),
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 5000),
-          Player(id: 'gp2', displayName: 'GP2', isHuman: true, treasury: 1000),
         ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
-            factionId2: 'gp2',
+            factionId2: 'minor1',
             score: 50,
             level: RelationLevel.neutral,
           ),
         ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
         subsidyStates: const [
-          SubsidyState(payerId: 'gp1', targetId: 'gp2', amountPerTurn: 200),
+          SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 10),
         ],
       );
 
@@ -124,8 +134,8 @@ void main() {
         factionMembership: membership,
       );
 
-      expect(out.playerById('gp1')!.treasury, 4800);
-      expect(out.playerById('gp2')!.treasury, 1200);
+      expect(out.subsidyStates.single.percent, 10);
+      expect(out.playerById('gp1')!.treasury, 5000);
     });
   });
 }

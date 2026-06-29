@@ -26,7 +26,7 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Minor Nation Assignment:** Minor nations are painted on Old World landmasses by the same locked assigner as Great Powers (growth order and targets per program TDD). Per-minor count from even split of remaining OW total (within ±1); every minor receives at least one province. Capital assigned at setup (any owned province; sea-bound not required).
 
-**Tribe Assignment:** Assign New World provinces to Tribes using the locked assigner on NW landmasses. Per-tribe count from even split of NW total (within ±1). Capital assigned at setup (any owned province; sea-bound not required).
+**Tribe Assignment:** Assign New World provinces to Tribes using the locked assigner on NW landmasses. Per-tribe count from even split of NW total (within ±1). Capital assigned at setup (any owned province; sea-bound not required). **Sea-bound ownership (locked full-init profile):** every Tribe must **own at least one sea-bound (P–S) province** so that every Tribe is discoverable by fleet entry (parallel to the GP seed rule above). When the produced ownership leaves any Tribe with zero sea-bound provinces under the locked full-init profile, setup treats the tile-map pair as infeasible and regenerates it (retry per [game-setup-pipeline.md](../program/game-setup-pipeline.md) regen-until-pass) rather than producing a Tribe with no sea-bound province. The Tribe **capital** stays "sea-bound not required" — only **ownership** of ≥1 sea-bound province is required.
 
 **Faction & Initial State:** Create faction records (GPs, Minor Nations, Tribes). Set province ownership. Run capital auto-choice for each faction (see [capital-choice-phase.md](capital-choice-phase.md)). Apply province and capital naming from ruleset (see [naming.md](naming.md)). Create initial WorldState and Game. Province and capital ids use the prefixed format and lookup rules in [world-model-identity.md](world-model-identity.md).
 
@@ -85,4 +85,12 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - Given fair targets, minor reservation, and sea-bound seeds cannot all be satisfied per the one-continent-per-GP rule  
   When the System runs GP Assignment  
   Then setup **fails** with an explicit error (no silent cross-continent assignment).
+
+- Given a new game is generated under the **locked full-init profile** and Tribe Assignment completes  
+  When the System checks New World ownership  
+  Then **every** Tribe owns at least one sea-bound (P–S) province (a province with at least one province→sea-zone edge in the New World topology).
+
+- Given Tribe Assignment under the locked full-init profile produces a tile-map pair in which at least one Tribe owns zero sea-bound provinces  
+  When the System validates New World ownership  
+  Then the System raises a retriable topology error with stable code `tribe_missing_sea_bound_province` and the `runInitGame` regen-until-pass path regenerates the tile-map pair with a bumped seed and retries, rather than producing a Tribe with no sea-bound province.
 

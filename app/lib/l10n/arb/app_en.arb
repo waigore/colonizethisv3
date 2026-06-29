@@ -2637,7 +2637,7 @@
       }
     }
   },
-  "diplomacy_panel_outgoingSubsidy": "Outgoing subsidy: £{amount}/turn to {target}",
+  "diplomacy_panel_outgoingSubsidy": "Outgoing subsidy: {amount}% to {target}",
   "@diplomacy_panel_outgoingSubsidy": {
     "description": "Line showing active subsidy to another faction.",
     "placeholders": {
@@ -2658,7 +2658,7 @@
       }
     }
   },
-  "diplomacy_panel_pendingSubsidy": "Pending subsidy: £{amount}/turn (resolves end of turn)",
+  "diplomacy_panel_pendingSubsidy": "Pending subsidy: {amount}% (resolves end of turn)",
   "@diplomacy_panel_pendingSubsidy": {
     "description": "Pending subsidy line in diplomacy row.",
     "placeholders": {

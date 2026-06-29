@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
-    show ftpPairKeysFromGame;
+    show boycottBlockedTradePairKeys, ftpPairKeysFromGame;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
@@ -236,6 +236,11 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final ftpPairKeys = ftpPairKeysFromGame(game);
   final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
 
+  // #3753 R6 boycott colony trade embargo: pair keys the matcher must refuse to
+  // fill so a boycotted GP cannot trade with the issuer's colony Tribes. Empty
+  // when no boycott is active. SPEC/game/diplomacy.md § GP–Tribe Rules (Boycott).
+  final boycottBlockedPairKeys = boycottBlockedTradePairKeys(game);
+
   // #3753 R7.3 sell-priority relation tiebreaker input: consulate-holding
   // buyer relations per Minor/Tribe seller that has an offer this turn.
   final sellPriorityRelationByMinorTribeSeller = computeSellPriorityRelations(
@@ -258,6 +263,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     treasuryByFactionId: treasuryByFactionId,
     sellPriorityRelationByMinorTribeSeller:
         sellPriorityRelationByMinorTribeSeller,
+    boycottBlockedPairKeys: boycottBlockedPairKeys,
   );
   final matchResult = DealMatcher.matchDeals(matchInputs);
 

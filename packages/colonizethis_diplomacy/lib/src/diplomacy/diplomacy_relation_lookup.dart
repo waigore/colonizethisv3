@@ -181,19 +181,14 @@ const double kInterventionProbabilityAllied = 0.8;
 /// Default Grant Aid amount (UI + suggestions). Positive multiples of [grantAidAmountStep].
 const int grantAidDefaultAmount = 1000;
 
-/// Default Set Subsidy amount (UI + suggestions). Positive multiples of [setSubsidyAmountStep].
-const int setSubsidyDefaultAmount = 1000;
-
 /// Grant Aid step and multiple (pounds). Validation and UI stepper.
 const int grantAidAmountStep = 1000;
 
-/// Set Subsidy step and multiple (pounds). Validation and UI stepper.
-const int setSubsidyAmountStep = 100;
-
-/// Subsidy relation boost: +[subsidyBoostRelationPerStep] per [subsidyBoostDucatsPerStep] ducats, cap [subsidyBoostMax].
-const int subsidyBoostDucatsPerStep = 500;
-const int subsidyBoostRelationPerStep = 2;
-const int subsidyBoostMax = 8;
+/// Additional trade-deal relation boost **per subsidy percentage point** in
+/// effect between the trading parties (Refs #3753 R10 — `+0.2` per point, so a
+/// 10% subsidy adds `+2.0`). Added on top of [tradeDealRelationBoostBase] (and
+/// the embassy bonus). SPEC/game/diplomacy.md § Relation Model.
+const double tradeDealRelationBoostPerSubsidyPercent = 0.2;
 
 /// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
 /// Operates on the raw decimal [score] (SPEC/game/diplomacy.md § Relation Model).
@@ -402,6 +397,40 @@ bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
 /// Active FTP pair keys for world-market matching. SPEC/program/world-market-resolution.md.
 Set<String> ftpPairKeysFromGame(Game game) =>
     Set<String>.from(game.ftpPartnershipKeys);
+
+/// Canonical `pairKey` set of `(colonyTribeId, boycottedTargetGpId)` pairs the
+/// World Market deal matcher must refuse to fill (Refs #3753 R6 boycott colony
+/// trade embargo).
+///
+/// For every active `BoycottState { gpId: A, targetGpId: B }`, every Tribe `T`
+/// that is a colony of A (`ColonyState.colonyOfGpId == A`) contributes
+/// `pairKey(T, B)`. The key is symmetric, so the matcher's
+/// `pairKey(sellerFactionId, buyerFactionId)` lookup blocks trade in **both**
+/// directions between B and A's colony Tribes — B buying goods a colony Tribe
+/// sells, and a colony Tribe buying goods B sells. The result is empty when no
+/// boycott is active or no boycotting GP holds a colony, which the matcher
+/// treats as a no-op (legacy matching). SPEC/game/diplomacy.md § GP–Tribe Rules
+/// (Boycott); SPEC/program/world-market-resolution.md § Deal matching engine.
+Set<String> boycottBlockedTradePairKeys(Game game) {
+  if (game.boycottStates.isEmpty || game.colonyStates.isEmpty) {
+    return const <String>{};
+  }
+  final colonyTribesByGp = <String, List<String>>{};
+  for (final colony in game.colonyStates) {
+    colonyTribesByGp
+        .putIfAbsent(colony.colonyOfGpId, () => <String>[])
+        .add(colony.tribeId);
+  }
+  final keys = <String>{};
+  for (final boycott in game.boycottStates) {
+    final colonyTribes = colonyTribesByGp[boycott.gpId];
+    if (colonyTribes == null) continue;
+    for (final tribeId in colonyTribes) {
+      keys.add(pairKey(tribeId, boycott.targetGpId));
+    }
+  }
+  return keys;
+}
 
 /// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.
 /// Used by move validator for GP and Minor/Tribe attack checks. SPEC/program/orders.md.

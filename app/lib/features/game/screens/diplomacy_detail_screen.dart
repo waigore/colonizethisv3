@@ -62,9 +62,9 @@ String formatDiplomaticEvent(
       final amt = e.amount ?? 0;
       return '${from ?? 'Unknown'} granted £$amt aid to ${to ?? 'Unknown'}.';
     case DiplomaticEventType.subsidySet:
-      return '${from ?? 'Unknown'} set subsidy of £${e.amount ?? 0}/turn to ${to ?? 'Unknown'}.';
+      return '${from ?? 'Unknown'} set subsidy of ${e.amount ?? 0}% to ${to ?? 'Unknown'}.';
     case DiplomaticEventType.subsidyUpdated:
-      return '${from ?? 'Unknown'} updated subsidy to £${e.amount ?? 0}/turn to ${to ?? 'Unknown'}.';
+      return '${from ?? 'Unknown'} updated subsidy to ${e.amount ?? 0}% to ${to ?? 'Unknown'}.';
     case DiplomaticEventType.subsidyCancelled:
       return 'Subsidy ${from ?? 'Unknown'} → ${to ?? 'Unknown'} ended (${e.reason ?? 'cancelled'}).';
     case DiplomaticEventType.boycottSet:
