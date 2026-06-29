@@ -92,6 +92,7 @@ class _DiplomacyRow extends StatelessWidget {
         ..._buildRelativePowerLine(context),
         const SizedBox(height: 4),
         _buildRelationRow(context),
+        ..._buildStandingChips(context),
         ..._buildOptionalStatusLines(context),
       ],
     );
@@ -160,12 +161,10 @@ class _DiplomacyRow extends StatelessWidget {
     // SPEC/game/diplomacy.md § Player-facing relation display: show
     // one-word state, hide score.
     final String relationStateLabel = relationScoreToDisplayLabel(rel.score);
-    final String overtureLabel = data.overture == null
-        ? ''
-        : _overtureStageLabel(data.overture!.stage);
-    // SPEC/ui/diplomacy-panel.md § Relation word styling (Refs #3621): the
-    // `·` separators and overture text stay `--muted`; only the relation
-    // word carries the level color + italic treatment.
+    // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster
+    // (Refs #3753 R12): the prior single inline overture-stage clause
+    // (`· {stage}`) is replaced by the standing chip cluster rendered under
+    // the relation line; only the relation word remains on this line.
     final TextStyle mutedStyle = bodySmall.copyWith(
       color: EditorialMonoclePalette.muted,
     );
@@ -173,15 +172,9 @@ class _DiplomacyRow extends StatelessWidget {
       color: diplomacyRelationWordColor(rel.score),
       fontStyle: FontStyle.italic,
     );
-    // Mockup `.f-relation`: the WAR/PEACE badge carries a 4 px right margin
-    // before the relation word (no leading `·`); the overture clause keeps a
-    // `·` separator. The leading single space here reproduces the badge gap.
     final List<InlineSpan> spans = <InlineSpan>[];
     if (relationStateLabel.isNotEmpty) {
       spans.add(TextSpan(text: relationStateLabel, style: wordStyle));
-    }
-    if (overtureLabel.isNotEmpty) {
-      spans.add(TextSpan(text: ' · $overtureLabel'));
     }
     // SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625): a
     // persisted formal alliance (treaty) surfaces an explicit `ALLIANCE` badge
@@ -213,6 +206,21 @@ class _DiplomacyRow extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  /// Renders the diplomatic standing chip cluster under the relation line
+  /// per SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster
+  /// (Refs #3753 R12). Returns no widgets when the faction has no active
+  /// overture/treaty/economic state, so a fresh discovered faction row is
+  /// unchanged.
+  List<Widget> _buildStandingChips(BuildContext context) {
+    if (data.standingChips.isEmpty) {
+      return const <Widget>[];
+    }
+    return <Widget>[
+      const SizedBox(height: 4),
+      DiplomacyStandingChipCluster(chips: data.standingChips),
+    ];
   }
 
   /// Shared style for the outgoing economic-diplomacy lines (active subsidy,
@@ -313,16 +321,6 @@ class _DiplomacyRow extends StatelessWidget {
 
   Widget _kindChip(BuildContext context, FactionKind kind) {
     return _FactionKindBadge(kind: kind);
-  }
-
-  String _overtureStageLabel(OvertureStage stage) {
-    return switch (stage) {
-      OvertureStage.none => 'None',
-      OvertureStage.tradeConsulate => 'Consulate',
-      OvertureStage.embassy => 'Embassy',
-      OvertureStage.nap => 'NAP',
-      OvertureStage.joinEmpire => 'Join Empire',
-    };
   }
 }
 

@@ -39,6 +39,36 @@ void _appendDiscoveredFactionId(
   }
 }
 
+/// Display names of Great Powers the human GP boycotts through a colony Tribe
+/// it holds (Refs #3753 R12). Extracted so the standing-chip builder stays
+/// under the repo control-flow nesting-depth gate.
+List<String> _boycottVsNames(Game game, String humanPlayerId) {
+  final names = <String>[];
+  for (final b in game.boycottStates) {
+    if (b.gpId == humanPlayerId) {
+      names.add(game.playerById(b.targetGpId)?.displayName ?? b.targetGpId);
+    }
+  }
+  return names;
+}
+
+/// Display names of Great Powers boycotting the human GP from trading with a
+/// colony Tribe held by [colonyOfGpId] (Refs #3753 R12). Extracted so the
+/// standing-chip builder stays under the repo control-flow nesting-depth gate.
+List<String> _boycottedByNames(
+  Game game,
+  String humanPlayerId,
+  String colonyOfGpId,
+) {
+  final names = <String>[];
+  for (final b in game.boycottStates) {
+    if (b.gpId == colonyOfGpId && b.targetGpId == humanPlayerId) {
+      names.add(game.playerById(colonyOfGpId)?.displayName ?? colonyOfGpId);
+    }
+  }
+  return names;
+}
+
 ({int? grant, int? subsidy}) _pendingEconomicAmounts(
   List<DiplomaticOrder> list,
   String targetId,
@@ -59,6 +89,138 @@ void _appendDiscoveredFactionId(
 
 /// Faction type for display. SPEC/game/factions.md.
 enum FactionKind { greatPower, minor, tribe }
+
+/// Overture/treaty milestone chip labels for the diplomatic standing chip
+/// cluster (SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster,
+/// Refs #3753 R12). Library-scope constants mirroring the non-localized
+/// `WAR` / `PEACE` / `ALLIANCE` badge-label convention.
+const String kDiplomacyChipConsulate = 'Consulate';
+const String kDiplomacyChipEmbassy = 'Embassy';
+const String kDiplomacyChipNap = 'NAP';
+const String kDiplomacyChipJoinEmpire = 'Join Empire';
+const String kDiplomacyChipColony = 'Colony';
+
+/// Prefix for a boycott the human Great Power has imposed through a colony,
+/// followed by the boycotted target GP's display name (Refs #3753 R12).
+const String kDiplomacyChipBoycottVsPrefix = 'Boycott vs ';
+
+/// Prefix for a boycott imposed on the human Great Power by another colony
+/// holder, followed by that GP's display name (Refs #3753 R12).
+const String kDiplomacyChipBoycottedByPrefix = 'Boycotted by ';
+
+/// Prefix for the overseas-holdings chip (Refs #3753 R12 / R8). Rendered as
+/// `Overseas: {tileCount} · {sharePercent}%`.
+const String kDiplomacyChipOverseasPrefix = 'Overseas: ';
+
+/// Active diplomatic overture/treaty/economic state for one faction row,
+/// surfaced by the [DiplomacyStandingChipCluster]. SPEC/ui/diplomacy-panel.md
+/// § Diplomatic standing chip cluster (Refs #3753 R12 / S13).
+class DiplomaticStandingChips {
+  const DiplomaticStandingChips({
+    this.treatyLabels = const <String>[],
+    this.boycottVsNames = const <String>[],
+    this.boycottedByNames = const <String>[],
+    this.overseasTileCount = 0,
+    this.overseasSharePercent = 0,
+  });
+
+  /// Cumulative overture/treaty milestone labels (Consulate / Embassy / NAP)
+  /// plus the terminal `Join Empire` (Minor) or `Colony` (Tribe) chip.
+  final List<String> treatyLabels;
+
+  /// Display names of Great Powers the human GP boycotts through this colony
+  /// Tribe (only populated for a Tribe that is a colony of the human GP).
+  final List<String> boycottVsNames;
+
+  /// Display names of Great Powers boycotting the human GP from trading with
+  /// this colony Tribe (only populated for a Tribe colony of another GP).
+  final List<String> boycottedByNames;
+
+  /// Count of human-owned purchased tiles sourced from this faction (R8).
+  final int overseasTileCount;
+
+  /// Overseas tile-owner share rate as a whole-number percent (the rounded
+  /// decimal relation score, per R8.2 `relationScore / 100`).
+  final int overseasSharePercent;
+
+  /// True when no standing chip applies, so the cluster renders nothing.
+  bool get isEmpty =>
+      treatyLabels.isEmpty &&
+      boycottVsNames.isEmpty &&
+      boycottedByNames.isEmpty &&
+      overseasTileCount <= 0;
+
+  bool get isNotEmpty => !isEmpty;
+}
+
+/// Derives the [DiplomaticStandingChips] for a faction row from current
+/// [game] state. SPEC/ui/diplomacy-panel.md § Diplomatic standing chip
+/// cluster (Refs #3753 R12). [purchasedTiles] is built once per render pass
+/// by the caller (e.g. [buildDiplomacyRows]) so the per-tile attribution scan
+/// is not repeated per row.
+DiplomaticStandingChips diplomaticStandingChips({
+  required Game game,
+  required String humanPlayerId,
+  required String factionId,
+  required FactionKind kind,
+  required DiplomacyRelation? relation,
+  required OvertureState? overture,
+  required PurchasedTileIndex purchasedTiles,
+}) {
+  final OvertureStage stage = overture?.stage ?? OvertureStage.none;
+  final treaty = <String>[];
+  if (stage.index >= OvertureStage.tradeConsulate.index) {
+    treaty.add(kDiplomacyChipConsulate);
+  }
+  if (stage.index >= OvertureStage.embassy.index) {
+    treaty.add(kDiplomacyChipEmbassy);
+  }
+  if (stage.index >= OvertureStage.nap.index) {
+    treaty.add(kDiplomacyChipNap);
+  }
+
+  String? colonyOfGpId;
+  if (kind == FactionKind.tribe) {
+    for (final c in game.colonyStates) {
+      if (c.tribeId == factionId) {
+        colonyOfGpId = c.colonyOfGpId;
+        break;
+      }
+    }
+  }
+  final bool isColonyOfHuman = colonyOfGpId == humanPlayerId;
+  if (isColonyOfHuman) {
+    treaty.add(kDiplomacyChipColony);
+  } else if (kind == FactionKind.minor && stage == OvertureStage.joinEmpire) {
+    treaty.add(kDiplomacyChipJoinEmpire);
+  }
+
+  List<String> boycottVs = const <String>[];
+  List<String> boycottedBy = const <String>[];
+  if (colonyOfGpId != null && isColonyOfHuman) {
+    boycottVs = _boycottVsNames(game, humanPlayerId);
+  } else if (colonyOfGpId != null) {
+    boycottedBy = _boycottedByNames(game, humanPlayerId, colonyOfGpId);
+  }
+
+  int overseasCount = 0;
+  if (kind != FactionKind.greatPower) {
+    for (final a in purchasedTiles.attributions) {
+      if (a.owningGpId == humanPlayerId && a.sourceFactionId == factionId) {
+        overseasCount++;
+      }
+    }
+  }
+  final int overseasShare = relation == null ? 0 : relation.score.round();
+
+  return DiplomaticStandingChips(
+    treatyLabels: treaty,
+    boycottVsNames: boycottVs,
+    boycottedByNames: boycottedBy,
+    overseasTileCount: overseasCount,
+    overseasSharePercent: overseasShare,
+  );
+}
 
 /// Diplomacy panel bottom mode-bar filter selection, per
 /// `SPEC/ui/diplomacy-panel.md` § Mode bar (filter).
@@ -98,6 +260,7 @@ class DiplomacyRowData {
     this.activeSubsidyPercent,
     this.pendingGrantAmount,
     this.pendingSubsidyPercent,
+    this.standingChips = const DiplomaticStandingChips(),
   });
 
   final String factionId;
@@ -128,6 +291,11 @@ class DiplomacyRowData {
 
   /// Pending set-subsidy **percentage** in current-turn orders (Refs #3753 R3).
   final int? pendingSubsidyPercent;
+
+  /// Active diplomatic overture/treaty/economic state chips for this row's
+  /// faction. SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster
+  /// (Refs #3753 R12).
+  final DiplomaticStandingChips standingChips;
 }
 
 /// Default neutral first-contact standing surfaced for a discovered faction
@@ -170,6 +338,10 @@ List<DiplomacyRowData> buildDiplomacyRows(
   Orders currentOrders,
 ) {
   final view = buildPlayerView(game, topology, humanPlayerId);
+  // Built once per render pass so the per-tile attribution scan that backs the
+  // overseas-holdings standing chip (Refs #3753 R12 / R8) is not repeated per
+  // row. SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster.
+  final purchasedTiles = PurchasedTileIndex.fromGame(game);
   final discoveredIds = <String>{
     ...view.diplomacyByOtherId.keys,
     ...knownDiplomaticTargetFactionIds(
@@ -278,6 +450,17 @@ List<DiplomacyRowData> buildDiplomacyRows(
         activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyPercent: econ.subsidy,
+        standingChips: diplomaticStandingChips(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: id,
+          kind: FactionKind.greatPower,
+          relation:
+              view.diplomacyByOtherId[id] ??
+              _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
+          overture: getOverture(game, humanPlayerId, id),
+          purchasedTiles: purchasedTiles,
+        ),
       ),
     );
   }
@@ -301,6 +484,17 @@ List<DiplomacyRowData> buildDiplomacyRows(
         activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyPercent: econ.subsidy,
+        standingChips: diplomaticStandingChips(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: id,
+          kind: FactionKind.minor,
+          relation:
+              view.diplomacyByOtherId[id] ??
+              _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
+          overture: getOverture(game, humanPlayerId, id),
+          purchasedTiles: purchasedTiles,
+        ),
       ),
     );
   }
@@ -324,6 +518,17 @@ List<DiplomacyRowData> buildDiplomacyRows(
         activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyPercent: econ.subsidy,
+        standingChips: diplomaticStandingChips(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: id,
+          kind: FactionKind.tribe,
+          relation:
+              view.diplomacyByOtherId[id] ??
+              _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
+          overture: getOverture(game, humanPlayerId, id),
+          purchasedTiles: purchasedTiles,
+        ),
       ),
     );
   }
