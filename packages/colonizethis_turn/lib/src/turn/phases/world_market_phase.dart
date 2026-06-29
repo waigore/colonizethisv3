@@ -160,50 +160,25 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
           ],
         );
 
-  // Compute start-of-phase trade cargo capacity and stockpile per GP. These
-  // values gate (a) carry-forward re-validation per
+  // Compute start-of-phase trade cargo capacity, stockpile, raw treasury, and
+  // per-buyer treasury budget per GP in a single player pass (Refs #3565).
+  // These values gate (a) carry-forward re-validation per
   // `SPEC/program/world-market-resolution.md` § Step A.3 and (b) the
   // matcher's downstream cargo cap. Minor/tribe sellers are not GPs and
   // are absent from these maps, which is intentional — carry-forwards are
   // only re-validated for known GP factions; unknown faction ids fall
   // through unchanged for now (no upstream owner to re-check), matching
   // the matcher's GP-only validation surface.
-  final fleetsByIdStartOfPhase = fleetsByIdForWorld(game.worldState);
-  final tradeCapacityByFactionId = <String, int>{};
-  final stockpileByFactionId = <String, Stockpile>{};
-  // Raw per-GP treasury (unclamped) fed to the deal matcher's settlement.
-  // Built in the same player pass as the maps above to avoid a second full
-  // iteration (Refs #3565). Minor/tribe sellers are intentionally absent —
-  // only GP factions carry a settlement treasury here.
-  final treasuryByFactionId = <String, int>{};
-  // Per-buyer treasury budget passed to the deal matcher (Refs #3115).
-  // Uses `Player.treasury` at phase 13 start clamped at `0` for negative
-  // balances. Phase 13 runs after phase 12 Build/Work so this value
-  // already reflects earlier-phase debits per
-  // `SPEC/program/world-market-resolution.md` § Step C.
-  final treasuryBudgetByBuyerFactionId = <String, int>{};
-  final extractionTonnageByPlayerId =
-      acc.overseasExtractionShippedTonnageByPlayerId;
-  for (final player in gameForMarket.players) {
-    stockpileByFactionId[player.id] = player.stockpile;
-    final homeFleetHolds = cargoHoldsForHomeFleet(
-      gameForMarket,
-      player.id,
-      fleetsById: fleetsByIdStartOfPhase,
-    );
-    final shippedByExtraction = extractionTonnageByPlayerId[player.id] ?? 0;
-    final tradeCapacity = homeFleetHolds - shippedByExtraction;
-    tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
-    treasuryBudgetByBuyerFactionId[player.id] = player.treasury > 0
-        ? player.treasury
-        : 0;
-    treasuryByFactionId[player.id] = player.treasury;
-  }
-  for (final minorId in lockRecoveryMinorBidsByFactionId.keys) {
-    tradeCapacityByFactionId[minorId] = kLockRecoveryMinorBidCargoCapacity;
-    treasuryBudgetByBuyerFactionId[minorId] =
-        kLockRecoveryMinorSyntheticTreasuryBudget;
-  }
+  final capacities = computeStartOfPhaseCapacities(
+    gameForMarket: gameForMarket,
+    extractionTonnageByPlayerId: acc.overseasExtractionShippedTonnageByPlayerId,
+    lockRecoveryMinorBidsByFactionId: lockRecoveryMinorBidsByFactionId,
+  );
+  final tradeCapacityByFactionId = capacities.tradeCapacityByFactionId;
+  final stockpileByFactionId = capacities.stockpileByFactionId;
+  final treasuryByFactionId = capacities.treasuryByFactionId;
+  final treasuryBudgetByBuyerFactionId =
+      capacities.treasuryBudgetByBuyerFactionId;
 
   final carryForwardValidation = validateCarryForwards(
     carryForwardOffersByFactionId: priorMarket.carryForwardOffersByFactionId,
