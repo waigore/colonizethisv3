@@ -353,6 +353,15 @@ const int kEstablishOvertureColonialInvadableOwnerBonus = 120;
 /// discounted. SPEC/ai/phase-planner-architecture.md § Decay-aware overture.
 const int kEstablishOvertureDecayCreditMax = 20;
 
+/// Establish-overture incentive added when the active AI is **not** the
+/// current favoured trading partner (highest GP→seller relation) for a
+/// Minor/Tribe target. The favoured partner wins the world-market
+/// sell-priority tiebreaker among consulate-holding buyers, so a trailing GP
+/// is nudged to invest in the relationship (Refs #3758 S10/R11; #3753 R7).
+/// SPEC/ai/phase-planner-architecture.md § Favoured-trading-partner
+/// competition overture; SPEC/game/world-market.md § Favored Trading Partner.
+const int kEstablishOvertureFtpCompetitionBonus = 30;
+
 /// Conquest army-move bonus for New World invadable destinations.
 const int kConquestArmyMoveNwInvadableBonus = 35;
 
