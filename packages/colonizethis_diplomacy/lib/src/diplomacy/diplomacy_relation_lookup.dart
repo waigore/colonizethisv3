@@ -378,6 +378,17 @@ bool hasEmbassyOverture(Game game, String gpId, String targetId) {
   return o != null && o.hasEmbassy;
 }
 
+/// Consulate-tier (or higher) overture from [gpId] toward [targetId].
+///
+/// Gate for the #3753 R7.3 world-market sell-priority relation tiebreaker
+/// (`SPEC/game/world-market.md` § Sell-priority relation tiebreaker): only
+/// buyers holding at least a `tradeConsulate` overture with a Minor/Tribe
+/// seller participate in the relation-score ordering.
+bool hasConsulateOverture(Game game, String gpId, String targetId) {
+  final o = getOverture(game, gpId, targetId);
+  return o != null && o.hasConsulate;
+}
+
 /// Bilateral FTP active between [factionId1] and [factionId2].
 bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
   return game.ftpPartnershipKeys.contains(pairKey(factionId1, factionId2));

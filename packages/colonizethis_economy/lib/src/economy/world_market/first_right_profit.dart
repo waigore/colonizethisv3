@@ -14,6 +14,13 @@
 /// sale proceeds based on its hidden relation score with the minor/tribe
 /// that owns the underlying province.
 ///
+/// **#3753 R8 two-tier overseas profit-share.** The former
+/// `profitRate = (relationScore / 100) × 0.40` single-tier cap is **retired**.
+/// The tile-owning GP now receives the **full** relation-linear share
+/// ([computeFirstRightProfit], rate `relationScore / 100`, no 40% cap, R8.2),
+/// and every **other** embassy-holding GP receives a **10% kickback** of the
+/// relation portion ([computeEmbassyKickback], R8.3).
+///
 /// The formula is intentionally a pure function so it can be invoked from
 /// hot turn-resolution paths (deal matcher / phase handler) without
 /// triggering logger calls or other side effects, keeping the function
@@ -62,16 +69,24 @@ class FirstRightProfit {
       'FirstRightProfit(rate: $profitRate, treasury: $profitTreasury)';
 }
 
-/// Maximum profit rate at the highest possible relation score (100).
-/// Defined by `SPEC/game/world-market.md` § First right of refusal.
-const double kFirstRightMaxProfitRate = 0.40;
+/// Maximum tile-owner profit rate at the highest possible relation score
+/// (100). Per `SPEC/game/world-market-first-right-of-refusal.md` § Profit
+/// formula (D3) the tile owner now receives the **full** relation-linear
+/// share (no 40% cap, #3753 R8.2), so the rate at relation 100 is `1.0`.
+const double kFirstRightMaxProfitRate = 1.0;
 
 /// Maximum relation score the formula expects (already clamped at the
 /// diplomacy source per `SPEC/game/diplomacy.md` § Relation Model).
 const int kFirstRightRelationScoreMax = 100;
 
-/// Computes the overseas-profit rate `(relationScore / 100) * 0.40` and
-/// clamps the result to `[0.0, kFirstRightMaxProfitRate]`.
+/// Embassy overseas-profit kickback multiplier (#3753 R8.3/R8.8): every
+/// embassy-holding GP that does **not** own the sourcing tile receives 10%
+/// of its relation portion of the gross sale.
+const double kEmbassyOverseasProfitKickbackMultiplier = 0.10;
+
+/// Computes the tile-owner overseas-profit rate `relationScore / 100`,
+/// clamped to `[0.0, 1.0]` (#3753 R8.2 — full relation-linear share, no
+/// 40% cap).
 ///
 /// `relationScore` is the 0–100 hidden relation score between the owning
 /// GP and the minor/tribe that owns the underlying purchased province
@@ -84,8 +99,32 @@ double computeFirstRightProfitRate(num relationScore) {
   if (relationScore >= kFirstRightRelationScoreMax) {
     return kFirstRightMaxProfitRate;
   }
-  return (relationScore / kFirstRightRelationScoreMax) *
-      kFirstRightMaxProfitRate;
+  return relationScore / kFirstRightRelationScoreMax;
+}
+
+/// Computes the embassy-kickback treasury credit for a single filled deal
+/// from a minor/tribe seller, for an embassy-holding GP that does **not**
+/// own the sourcing tile (#3753 R8.3).
+///
+/// Returns `filledQuantity * pricePerUnit * (relationScore / 100) *
+/// kEmbassyOverseasProfitKickbackMultiplier`. Negative / zero quantity or
+/// price, and `relationScore <= 0`, all yield `0.0` (defensive — callers
+/// should not rely on negative inputs).
+double computeEmbassyKickback({
+  required num relationScore,
+  required int filledQuantity,
+  required double pricePerUnit,
+}) {
+  if (filledQuantity <= 0 || pricePerUnit <= 0.0 || relationScore <= 0) {
+    return 0.0;
+  }
+  final clampedScore = relationScore >= kFirstRightRelationScoreMax
+      ? kFirstRightRelationScoreMax
+      : relationScore;
+  return filledQuantity *
+      pricePerUnit *
+      (clampedScore / kFirstRightRelationScoreMax) *
+      kEmbassyOverseasProfitKickbackMultiplier;
 }
 
 /// Computes the owning-GP overseas-profit credit for a single filled deal

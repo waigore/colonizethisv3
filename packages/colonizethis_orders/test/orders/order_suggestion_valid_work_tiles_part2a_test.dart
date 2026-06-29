@@ -32,6 +32,16 @@ void main() {
             Player(id: playerId, displayName: 'GP', isHuman: false),
           ],
           tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe')],
+          // Refs #3753 R4: explore/prospect in a Tribe province require a
+          // Consulate (or higher); the suggestion path shares the work-order
+          // validator, so a consulate is needed for these tiles to be valid.
+          overtureStates: const [
+            OvertureState(
+              gpId: playerId,
+              targetId: 'tribe1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
           oldWorld: RegionData(
             provinces: [
               Province(id: partialProvince, regionId: ow, ownerId: 'tribe1'),
@@ -125,6 +135,14 @@ void main() {
             Player(id: playerId, displayName: 'GP', isHuman: false),
           ],
           tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe')],
+          // Refs #3753 R4: a Consulate is required to explore Tribe provinces.
+          overtureStates: const [
+            OvertureState(
+              gpId: playerId,
+              targetId: 'tribe1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
         );
         final topology = const MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, playerId);

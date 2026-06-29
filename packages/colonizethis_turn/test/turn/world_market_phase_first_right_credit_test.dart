@@ -16,7 +16,7 @@ void main() {
   group('worldMarketTurnPhaseHandler applies First Right of Refusal '
       'overseas-profit credit to owning GP (Refs #2992 D4 integration)', () {
     test('GP B buys minor M1\'s timber from gpA\'s purchased tile: gpA '
-        'receives `quantity * price * 0.30` credit at relation score 75', () {
+        'receives `quantity * price * 0.75` full share at relation 75', () {
       final next = runWorldMarketFrrCreditPhase(
         game: frrIntegrationGame(
           initialOwningGpTreasury: 100,
@@ -35,7 +35,7 @@ void main() {
 
       final gpA = next.players.firstWhere((p) => p.id == 'gpA');
       final gpB = next.players.firstWhere((p) => p.id == 'gpB');
-      expect(gpA.treasury, 160, reason: '10 * 20 * 0.30 FRR credit');
+      expect(gpA.treasury, 250, reason: '10 * 20 * 0.75 full-share credit');
       expect(gpB.treasury, 800);
       expect(gpB.stockpile.quantityOf('timber'), 10);
     });
@@ -65,7 +65,7 @@ void main() {
     });
 
     test(
-      'GP B buys at relation 100: owning gpA receives maximum 40% credit',
+      'GP B buys at relation 100: owning gpA receives full 100% share',
       () {
         final next = runWorldMarketFrrCreditPhase(
           game: frrIntegrationGame(
@@ -83,7 +83,8 @@ void main() {
           },
         );
 
-        expect(next.players.firstWhere((p) => p.id == 'gpA').treasury, 140);
+        // 10 * 10 * 1.0 = 100 full-share credit (no 40% cap, #3753 R8.2).
+        expect(next.players.firstWhere((p) => p.id == 'gpA').treasury, 200);
       },
     );
 
@@ -177,8 +178,10 @@ void main() {
         },
       );
 
-      expect(next.players.firstWhere((p) => p.id == 'gpA').treasury, 124);
-      expect(next.players.firstWhere((p) => p.id == 'gpB').treasury, 58);
+      // Full relation-linear shares (#3753 R8.2): gpA 6*10*1.0 = 60 → 160;
+      // gpB 4*10*0.5 = 20 → 70; gpC buyer pays 10*10 = 100 → 900.
+      expect(next.players.firstWhere((p) => p.id == 'gpA').treasury, 160);
+      expect(next.players.firstWhere((p) => p.id == 'gpB').treasury, 70);
       expect(next.players.firstWhere((p) => p.id == 'gpC').treasury, 900);
       expect(
         next.players
@@ -208,6 +211,88 @@ void main() {
         100,
         reason: 'no attribution → no FRR credit',
       );
+    });
+
+    test('embassy-holding non-owner GP receives 10% kickback while tile '
+        'owner gets full share (#3753 R8.3)', () {
+      final game =
+          TestFixtures.minimalGame(
+            players: const [
+              Player(
+                id: 'gpA',
+                displayName: 'GP A',
+                isHuman: true,
+                treasury: 100,
+              ),
+              Player(
+                id: 'gpB',
+                displayName: 'GP B',
+                isHuman: false,
+                treasury: 1000,
+                stockpile: Stockpile.empty,
+              ),
+              Player(
+                id: 'gpC',
+                displayName: 'GP C',
+                isHuman: false,
+                treasury: 100,
+              ),
+            ],
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: frrCreditTestMinorProvinceId,
+                  regionId: frrCreditTestOw,
+                  ownerId: 'M1',
+                ),
+              ],
+            ),
+            tileKeysByRegionAndProvince: const {
+              frrCreditTestOw: {
+                frrCreditTestMinorProvinceId: [frrCreditTestTileKey],
+              },
+            },
+            minorNations: const [MinorNation(id: 'M1', displayName: 'M1')],
+            purchasedTilesByTileKey: const {frrCreditTestTileKey: 'gpA'},
+            diplomacyRelations: const [
+              DiplomacyRelation(factionId1: 'gpA', factionId2: 'M1', score: 100),
+              DiplomacyRelation(factionId1: 'gpC', factionId2: 'M1', score: 50),
+            ],
+            overtureStates: const [
+              OvertureState(
+                gpId: 'gpA',
+                targetId: 'M1',
+                stage: OvertureStage.embassy,
+              ),
+              OvertureState(
+                gpId: 'gpC',
+                targetId: 'M1',
+                stage: OvertureStage.embassy,
+              ),
+            ],
+          ).copyWith(
+            worldMarketState: WorldMarketState.empty.copyWith(
+              prices: const {'timber': 20},
+            ),
+          );
+
+      final next = runWorldMarketFrrCreditPhase(
+        game: game,
+        tradeOrdersByPlayerId: {
+          'M1': minorTimberOffer(
+            quantity: 10,
+            originTileKey: frrCreditTestTileKey,
+          ),
+          'gpB': gpTimberBid(quantity: 10),
+        },
+      );
+
+      // Tile owner gpA: full share 10*20*1.0 = 200 → 300 (no kickback, R8.5).
+      expect(next.players.firstWhere((p) => p.id == 'gpA').treasury, 300);
+      // Non-owner embassy gpC: kickback 10*20*0.5*0.10 = 10 → 110.
+      expect(next.players.firstWhere((p) => p.id == 'gpC').treasury, 110);
+      // Buyer gpB pays the clear price only.
+      expect(next.players.firstWhere((p) => p.id == 'gpB').treasury, 800);
     });
   });
 }
