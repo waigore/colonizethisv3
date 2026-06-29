@@ -44,6 +44,8 @@ CtGameFeatureScreenShell (backgroundColor: --bg, attachGameToUiListener: false)
               RelativePowerLine ("Relative power: +N% · Tier"; shared with diplomacy-panel.md § Relative power line)
             RelationSummary (state word in --danger / --success + one-word score label, or "—";
               + DiplomacyAllianceBadge "ALLIANCE" chip when relation.formalAlliance is true)
+            DiplomacyStandingChipCluster (Refs #3753 R12 — same overture/treaty/colony/boycott/overseas
+              chips as the diplomacy-panel.md row, rendered below the relation summary when non-empty)
           DetailCard — title "DIPLOMATIC HISTORY"
             [empty] diplomacy_detail_noEvents (italic --muted)
             OR LeftBorderTile per event (mono --accent-dim year/turn label + sentence)
@@ -92,6 +94,7 @@ Outgoing subsidy/grant pending copy from the diplomacy **list** row is **not** d
 | Non-GP relative power | `kind != greatPower` | No relative-power line in the `CURRENT RELATION` card. |
 | Formal alliance | `relation != null`, `relation.formalAlliance == true` | The `CURRENT RELATION` summary appends a `DiplomacyAllianceBadge` (`ALLIANCE` chip, `--accent` text on a translucent accent overlay) after the relation-state/score words — the same treaty marker as [diplomacy-panel.md](diplomacy-panel.md) § Formal alliance indicator. |
 | Informal Allied (no treaty) | `relation != null`, `relation.formalAlliance == false` | No `DiplomacyAllianceBadge` is rendered, even when the relation score is in the informal `RelationLevel.allied` band (76–100); only the one-word `Friendly` label appears. |
+| Diplomatic standing chips | Any active overture/treaty/colony/boycott/overseas state for the faction | The `CURRENT RELATION` card renders a `DiplomacyStandingChipCluster` below the relation summary with the same chips as [diplomacy-panel.md](diplomacy-panel.md) § Diplomatic standing chip cluster (Refs #3753 R12). When no standing chip applies, the cluster renders nothing. |
 
 History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPair`.
 
