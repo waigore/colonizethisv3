@@ -127,7 +127,7 @@ Game _subsidyGame() {
       DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
     ],
     subsidyStates: const [
-      SubsidyState(payerId: 'gp1', targetId: 'gp2', amountPerTurn: 1500),
+      SubsidyState(payerId: 'gp1', targetId: 'gp2', percent: 15),
     ],
   );
 }

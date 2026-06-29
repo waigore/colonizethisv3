@@ -6,10 +6,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-int? _outgoingSubsidyPerTurn(Game game, String payerId, String targetId) {
+int? _outgoingSubsidyPercent(Game game, String payerId, String targetId) {
   for (final s in game.subsidyStates) {
     if (s.payerId == payerId && s.targetId == targetId) {
-      return s.amountPerTurn;
+      return s.percent;
     }
   }
   return null;
@@ -95,9 +95,9 @@ class DiplomacyRowData {
     this.playerPowerScore,
     required this.pendingOrderTypes,
     this.pendingOvertureStage,
-    this.activeSubsidyPerTurn,
+    this.activeSubsidyPercent,
     this.pendingGrantAmount,
-    this.pendingSubsidyAmount,
+    this.pendingSubsidyPercent,
   });
 
   final String factionId;
@@ -119,14 +119,15 @@ class DiplomacyRowData {
   /// When an [establishOverture] order is pending, the queued overture stage.
   final OvertureStage? pendingOvertureStage;
 
-  /// Active £/turn subsidy from the human GP to this row's faction (`Game.subsidyStates`).
-  final int? activeSubsidyPerTurn;
+  /// Active subsidy **percentage** (5–20) from the human GP to this row's
+  /// faction (`Game.subsidyStates`; Refs #3753 R3).
+  final int? activeSubsidyPercent;
 
   /// Pending grant aid amount in current-turn orders (not yet resolved).
   final int? pendingGrantAmount;
 
-  /// Pending set-subsidy amount per turn in current-turn orders.
-  final int? pendingSubsidyAmount;
+  /// Pending set-subsidy **percentage** in current-turn orders (Refs #3753 R3).
+  final int? pendingSubsidyPercent;
 }
 
 /// Default neutral first-contact standing surfaced for a discovered faction
@@ -274,9 +275,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         playerPowerScore: playerPower,
         pendingOrderTypes: pendingByTarget[id] ?? {},
         pendingOvertureStage: pendingOvertureStageByTarget[id],
-        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
+        activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
-        pendingSubsidyAmount: econ.subsidy,
+        pendingSubsidyPercent: econ.subsidy,
       ),
     );
   }
@@ -297,9 +298,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
         pendingOvertureStage: pendingOvertureStageByTarget[id],
-        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
+        activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
-        pendingSubsidyAmount: econ.subsidy,
+        pendingSubsidyPercent: econ.subsidy,
       ),
     );
   }
@@ -320,9 +321,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
         pendingOvertureStage: pendingOvertureStageByTarget[id],
-        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
+        activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
-        pendingSubsidyAmount: econ.subsidy,
+        pendingSubsidyPercent: econ.subsidy,
       ),
     );
   }

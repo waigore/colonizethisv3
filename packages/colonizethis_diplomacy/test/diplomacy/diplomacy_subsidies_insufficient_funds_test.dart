@@ -4,9 +4,9 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/src/game_player_lookup.dart';
 
 void main() {
-  group('processOngoingSubsidies insufficient funds', () {
+  group('processOngoingSubsidies treasury independence (Refs #3753 R3)', () {
     test(
-      'removes subsidy state and leaves treasuries unchanged (Refs #2394)',
+      'a low-treasury payer keeps a valid Minor subsidy (no per-turn payment)',
       () {
         final game = Game(
           id: 'g1',
@@ -19,19 +19,24 @@ void main() {
             newWorld: const RegionData(),
           ),
           players: const [
-            Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 100),
-            Player(
-              id: 'gp2',
-              displayName: 'GP2',
-              isHuman: false,
-              treasury: 1000,
-            ),
+            Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 0),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Minor 1'),
           ],
           diplomacyRelations: const [
-            DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
+            DiplomacyRelation(factionId1: 'gp1', factionId2: 'minor1'),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
           ],
           subsidyStates: const [
-            SubsidyState(payerId: 'gp1', targetId: 'gp2', amountPerTurn: 500),
+            SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 20),
           ],
         );
 
@@ -42,9 +47,11 @@ void main() {
           factionMembership: membership,
         );
 
-        expect(out.subsidyStates, isEmpty);
-        expect(out.playerById('gp1')!.treasury, 100);
-        expect(out.playerById('gp2')!.treasury, 1000);
+        // Percent subsidies charge no per-turn payment, so a broke payer keeps
+        // the subsidy and the treasury is untouched.
+        expect(out.subsidyStates.length, 1);
+        expect(out.subsidyStates.single.percent, 20);
+        expect(out.playerById('gp1')!.treasury, 0);
       },
     );
   });

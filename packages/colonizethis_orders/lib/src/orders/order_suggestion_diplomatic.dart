@@ -86,14 +86,15 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
         ),
       );
     }
-    // SetSubsidy requires an Embassy (Refs #3753 R2 — Consulate alone is no
-    // longer sufficient for economic actions), matching the order validator.
-    if (overtureRow.hasEmbassy && treasury >= setSubsidyDefaultAmount) {
+    // SetSubsidy: percentage model (Refs #3753 R3), GP→Minor/Tribe only and
+    // Embassy-gated (R2). The percent is carried in `amount`; the percent model
+    // charges no upfront treasury cost. Matches the order validator.
+    if (targetIsMinorOrTribe && overtureRow.hasEmbassy) {
       out.add(
         DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: targetId,
-          amount: setSubsidyDefaultAmount,
+          amount: kSubsidyPercentDefault,
         ),
       );
     }

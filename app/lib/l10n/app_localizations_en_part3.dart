@@ -649,7 +649,7 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String diplomacy_panel_outgoingSubsidy(int amount, String target) {
-    return 'Outgoing subsidy: £$amount/turn to $target';
+    return 'Outgoing subsidy: $amount% to $target';
   }
 
   @override
@@ -659,7 +659,7 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String diplomacy_panel_pendingSubsidy(int amount) {
-    return 'Pending subsidy: £$amount/turn (resolves end of turn)';
+    return 'Pending subsidy: $amount% (resolves end of turn)';
   }
 
   @override

@@ -74,7 +74,7 @@ void main() {
     test('cancels the target GP subsidy to the issuer colony on apply', () {
       final game = _game(
         subsidies: const [
-          SubsidyState(payerId: 'gp2', targetId: 'tribe1', amountPerTurn: 100),
+          SubsidyState(payerId: 'gp2', targetId: 'tribe1', percent: 20),
         ],
       );
       final result = processBoycotts(

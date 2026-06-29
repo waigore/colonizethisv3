@@ -237,12 +237,12 @@ class _DiplomacyRow extends StatelessWidget {
     final l10n = appL10n(context);
     final TextStyle style = _economicLineStyle(context);
     final lines = <Widget>[];
-    if (data.activeSubsidyPerTurn != null) {
+    if (data.activeSubsidyPercent != null) {
       lines.addAll([
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_outgoingSubsidy(
-            data.activeSubsidyPerTurn!,
+            data.activeSubsidyPercent!,
             data.displayName,
           ),
           style: style,
@@ -258,11 +258,11 @@ class _DiplomacyRow extends StatelessWidget {
         ),
       ]);
     }
-    if (data.pendingSubsidyAmount != null) {
+    if (data.pendingSubsidyPercent != null) {
       lines.addAll([
         const SizedBox(height: 4),
         Text(
-          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
+          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyPercent!),
           style: style,
         ),
       ]);

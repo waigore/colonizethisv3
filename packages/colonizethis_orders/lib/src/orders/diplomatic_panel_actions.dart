@@ -102,7 +102,7 @@ List<DiplomaticOrder> diplomaticPanelActionCandidates({
     DiplomaticOrder(
       type: DiplomaticOrderType.setSubsidy,
       targetFactionId: targetId,
-      amount: setSubsidyDefaultAmount,
+      amount: kSubsidyPercentDefault,
     ),
   ]);
 

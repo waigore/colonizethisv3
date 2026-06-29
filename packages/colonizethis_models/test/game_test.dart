@@ -54,6 +54,53 @@ void main() {
       expect(restored, game);
     });
 
+    test('valid percent subsidy to a Minor round-trips JSON', () {
+      final game = Game(
+        id: 'g1',
+        subsidyStates: const [
+          SubsidyState(payerId: 'gp1', targetId: 'mn1', percent: 10),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.subsidyStates.length, 1);
+      expect(restored.subsidyStates.first.percent, 10);
+      expect(restored.subsidyStates.first.targetId, 'mn1');
+    });
+
+    test('subsidy migration drops GP→GP and legacy £ subsidies on load '
+        '(Refs #3753 R3)', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Spain', isHuman: true),
+          Player(id: 'gp2', displayName: 'France', isHuman: false),
+        ],
+      );
+      final json = game.toJson();
+      // Inject a mix: valid GP→Minor percent, GP→GP percent (illegal), and a
+      // legacy £/turn GP→Minor subsidy with no percent.
+      json['subsidyStates'] = <Map<String, dynamic>>[
+        {'payerId': 'gp1', 'targetId': 'mn1', 'percent': 15},
+        {'payerId': 'gp1', 'targetId': 'gp2', 'percent': 10},
+        {'payerId': 'gp1', 'targetId': 'mn2', 'amountPerTurn': 500},
+      ];
+      final restored = Game.fromJson(json);
+      expect(restored.subsidyStates.length, 1);
+      expect(restored.subsidyStates.single.targetId, 'mn1');
+      expect(restored.subsidyStates.single.percent, 15);
+    });
+
     test('colonyStates round-trip JSON', () {
       final game = Game(
         id: 'g1',

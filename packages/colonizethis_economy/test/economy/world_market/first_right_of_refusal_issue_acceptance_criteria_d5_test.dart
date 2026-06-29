@@ -104,6 +104,7 @@ DealMatchInputs _matcherInputs({
   lockRecoverySellerPriorityIds: const {},
   treasuryByFactionId: const {},
   sellPriorityRelationByMinorTribeSeller: const {},
+  boycottBlockedPairKeys: const {},
 );
 
 FilledDeal _otherBuyDeal({

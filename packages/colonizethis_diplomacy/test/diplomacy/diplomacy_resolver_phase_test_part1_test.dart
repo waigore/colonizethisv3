@@ -200,44 +200,6 @@ void main() {
       );
     });
 
-    test('setSubsidy at resolution with wrong multiple throws StateError', () {
-      var game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.tradeConsulate,
-            sinceTurn: 0,
-          ),
-        ],
-      );
-      game = game.copyWith(
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 50,
-            level: RelationLevel.neutral,
-          ),
-        ],
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.setSubsidy,
-              targetFactionId: 'minor1',
-              amount: 150,
-            ),
-          ],
-        },
-      );
-      expect(
-        () => resolveDiplomacyPhase(game, orders),
-        throwsStateError,
-      );
-    });
-
     test('join empire absorbs minor: provinces transfer, minor removed, cost deducted', () {
       const ow = 'oldWorld';
       var game = diplomacyResolverPhaseTestBaseGame().copyWith(

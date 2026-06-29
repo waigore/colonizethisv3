@@ -63,10 +63,10 @@ void main() {
           const DiplomaticOrder(
             type: DiplomaticOrderType.setSubsidy,
             targetFactionId: 'mn1',
-            amount: 500,
+            amount: 10,
           ),
         ),
-        'Set Subsidy (£500)',
+        'Set Subsidy (10%)',
       );
       expect(
         diplomacyActionLabel(
