@@ -208,6 +208,11 @@ Remaining unfilled offers and bids that originated from a Great-Power submitter 
 
 Replace `WorldMarketState.activity` with a fresh `Map<CommodityId, MarketActivity>` that includes the current-turn `totalBidQuantityNew`, `totalOfferQuantityNew`, `filledQuantity` (sum of `FilledDeal.quantity` across this turn), `priceChangePercent`, the full `deals` list, and any `notes` (drops, validation rejections, treasury-sink entries). The phase emits the activity payload to the End-of-turn pipeline for victory checks and Deal-Book UI consumption.
 
+**Trade-deal pair keys (Refs #3753 R10).** The phase also records `WorldMarketState.completedTradePairKeys`: the set of canonical `min|max` faction pair keys for every `FilledDeal` whose seller and buyer differ and at least one side is a Great Power (`completedTradePairKeysFromDeals`). This set is consumed by the **next** turn's Diplomacy phase to apply the additive trade-deal relation boost ([diplomacy-resolution.md](diplomacy-resolution.md) Step 7b) and is reset to empty on any turn with no qualifying deals (including the empty-turn no-op). Pairs of two non-GP factions are excluded.
+
+- Given a `FilledDeal` between Great Power `gp1` (seller) and Minor `m1` (buyer), when phase 13 completes, then `WorldMarketState.completedTradePairKeys` contains `m1|gp1` (canonical order).
+- Given a turn with no qualifying `FilledDeal`, when phase 13 completes, then `WorldMarketState.completedTradePairKeys` is empty.
+
 ---
 
 ## Price discovery

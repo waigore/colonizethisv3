@@ -251,6 +251,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
       carryForwardOffersByFactionId: const <String, List<TradeOrder>>{},
       carryForwardBidsByFactionId: const <String, List<TradeOrder>>{},
+      completedTradePairKeys: const <String>{},
     );
     return TurnPhaseStepContinue(
       acc.copyWith(game: game.copyWith(worldMarketState: updatedMarket)),
@@ -351,6 +352,12 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // Great-Power faction ids; unknown ids (auto-offer minors/tribes and any
   // other non-GP submitter) are dropped from the persisted map.
   final gpFactionIds = <String>{for (final p in game.players) p.id};
+  // #3753 R10: record this turn's completed-trade pair keys (GP-involved) so the
+  // next turn's Diplomacy phase applies the additive trade-deal relation boost.
+  final completedTradePairKeys = completedTradePairKeysFromDeals(
+    filledDeals: matchResult.filledDeals,
+    gpFactionIds: gpFactionIds,
+  );
   final updatedMarket = priorMarket.copyWith(
     prices: Map<CommodityId, int>.unmodifiable(newPrices),
     lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
@@ -359,6 +366,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       gpFactionIds,
     ),
     carryForwardBidsByFactionId: matchResult.unfilledBidsByFactionId,
+    completedTradePairKeys: completedTradePairKeys,
   );
 
   final nextGame = game

@@ -230,6 +230,11 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     eventTally: eventTally,
   );
 
+  // 8b. Apply the additive trade-deal relation boost (Refs #3753 R10) from the
+  // previous turn's completed world-market deals, before decay so trading pairs
+  // skip decay this turn (skip-on-event). SPEC/game/diplomacy.md § Relation Model.
+  state = applyTradeDealRelationBoosts(state, turn);
+
   // 9. Apply per-turn relation decay (final step): ±4 toward 50 for non-war
   // pairs not modified by any event this turn (skip-on-event). Refs #3753 R9.
   state = applyRelationDecay(state, turn, phaseStartScores);
