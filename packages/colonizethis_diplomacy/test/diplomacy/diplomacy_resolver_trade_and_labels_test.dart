@@ -235,28 +235,55 @@ void main() {
     });
   });
 
+  group('relationMeterStepLabel', () {
+    test('returns the 10-word ladder in hostile → friendly order', () {
+      expect(relationMeterStepLabels.length, relationMeterStepCount);
+      expect(relationMeterStepLabel(1), 'Hostile');
+      expect(relationMeterStepLabel(2), 'Antagonistic');
+      expect(relationMeterStepLabel(3), 'Distrustful');
+      expect(relationMeterStepLabel(4), 'Unfriendly');
+      expect(relationMeterStepLabel(5), 'Wary');
+      expect(relationMeterStepLabel(6), 'Neutral');
+      expect(relationMeterStepLabel(7), 'Cordial');
+      expect(relationMeterStepLabel(8), 'Amicable');
+      expect(relationMeterStepLabel(9), 'Friendly');
+      expect(relationMeterStepLabel(10), 'Devoted');
+    });
+    test('ladder words are all distinct', () {
+      expect(relationMeterStepLabels.toSet().length, relationMeterStepCount);
+    });
+    test('clamps out-of-range steps to the nearest end word', () {
+      expect(relationMeterStepLabel(0), 'Hostile');
+      expect(relationMeterStepLabel(-3), 'Hostile');
+      expect(relationMeterStepLabel(11), 'Devoted');
+    });
+  });
+
   group('relationScoreToDisplayLabel', () {
-    test('maps score to display label per SPEC/game/diplomacy.md § Player-facing relation display', () {
-      expect(relationScoreToDisplayLabel(0), 'Hostile');
-      expect(relationScoreToDisplayLabel(29), 'Hostile');
-      expect(relationScoreToDisplayLabel(30), 'Unfriendly');
-      expect(relationScoreToDisplayLabel(49), 'Unfriendly');
-      expect(relationScoreToDisplayLabel(50), 'Cordial');
-      expect(relationScoreToDisplayLabel(69), 'Cordial');
-      expect(relationScoreToDisplayLabel(70), 'Friendly');
-      expect(relationScoreToDisplayLabel(100), 'Friendly');
+    test('maps score to the 10-band ladder word (Refs #3753 R13.6)', () {
+      // Each band start lands on its step's ladder word.
+      expect(relationScoreToDisplayLabel(0), 'Hostile'); // step 1
+      expect(relationScoreToDisplayLabel(10), 'Antagonistic'); // step 2
+      expect(relationScoreToDisplayLabel(20), 'Distrustful'); // step 3
+      expect(relationScoreToDisplayLabel(30), 'Unfriendly'); // step 4
+      expect(relationScoreToDisplayLabel(40), 'Wary'); // step 5
+      expect(relationScoreToDisplayLabel(50), 'Neutral'); // step 6
+      expect(relationScoreToDisplayLabel(60), 'Cordial'); // step 7
+      expect(relationScoreToDisplayLabel(70), 'Amicable'); // step 8
+      expect(relationScoreToDisplayLabel(80), 'Friendly'); // step 9
+      expect(relationScoreToDisplayLabel(90), 'Devoted'); // step 10
+      expect(relationScoreToDisplayLabel(100), 'Devoted'); // closed top band
     });
     test('clamps out-of-range score to 0-100', () {
       expect(relationScoreToDisplayLabel(-1), 'Hostile');
-      expect(relationScoreToDisplayLabel(101), 'Friendly');
+      expect(relationScoreToDisplayLabel(101), 'Devoted');
     });
-    test('maps decimal scores on the raw value', () {
-      expect(relationScoreToDisplayLabel(29.0), 'Hostile');
-      expect(relationScoreToDisplayLabel(29.5), 'Unfriendly');
-      expect(relationScoreToDisplayLabel(49.5), 'Cordial');
-      expect(relationScoreToDisplayLabel(69.0), 'Cordial');
-      expect(relationScoreToDisplayLabel(69.9), 'Friendly');
-      expect(relationScoreToDisplayLabel(70.0), 'Friendly');
+    test('maps decimal scores on the raw value (half-open bands)', () {
+      expect(relationScoreToDisplayLabel(9.9), 'Hostile'); // step 1
+      expect(relationScoreToDisplayLabel(10.0), 'Antagonistic'); // step 2
+      expect(relationScoreToDisplayLabel(22.4), 'Distrustful'); // step 3
+      expect(relationScoreToDisplayLabel(49.9), 'Wary'); // step 5
+      expect(relationScoreToDisplayLabel(50.0), 'Neutral'); // step 6
     });
   });
 

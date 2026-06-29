@@ -214,16 +214,19 @@ void main() {
 
   group('buildDiplomacyRows', () {
     test(
-      'display mapping aligned with SPEC (relationScoreToDisplayLabel bands)',
+      'display mapping aligned with SPEC (10-step ladder bands, Refs #3753)',
       () {
         expect(relationScoreToDisplayLabel(0), 'Hostile');
-        expect(relationScoreToDisplayLabel(29), 'Hostile');
+        expect(relationScoreToDisplayLabel(10), 'Antagonistic');
+        expect(relationScoreToDisplayLabel(20), 'Distrustful');
         expect(relationScoreToDisplayLabel(30), 'Unfriendly');
-        expect(relationScoreToDisplayLabel(49), 'Unfriendly');
-        expect(relationScoreToDisplayLabel(50), 'Cordial');
-        expect(relationScoreToDisplayLabel(69), 'Cordial');
-        expect(relationScoreToDisplayLabel(70), 'Friendly');
-        expect(relationScoreToDisplayLabel(100), 'Friendly');
+        expect(relationScoreToDisplayLabel(40), 'Wary');
+        expect(relationScoreToDisplayLabel(50), 'Neutral');
+        expect(relationScoreToDisplayLabel(60), 'Cordial');
+        expect(relationScoreToDisplayLabel(70), 'Amicable');
+        expect(relationScoreToDisplayLabel(80), 'Friendly');
+        expect(relationScoreToDisplayLabel(90), 'Devoted');
+        expect(relationScoreToDisplayLabel(100), 'Devoted');
       },
     );
 

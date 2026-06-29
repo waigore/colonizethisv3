@@ -3035,6 +3035,15 @@
   "@diplomacy_relationState_peace": {
     "description": "One-word peace state in diplomacy UI."
   },
+  "diplomacy_relationMeter_semanticsLabel": "Relation: {relation}",
+  "@diplomacy_relationMeter_semanticsLabel": {
+    "description": "Accessibility label for the relation meter widget; embeds the ladder relation word.",
+    "placeholders": {
+      "relation": {
+        "type": "String"
+      }
+    }
+  },
   "techEffectSummary_advanced_hull_design_0": "Improves: Frigate — high intercept, moderate flee (patrol/blockade)",
   "@techEffectSummary_advanced_hull_design_0": {
     "description": "Tech tree dialog effect line (techEffectSummary_advanced_hull_design_0)."

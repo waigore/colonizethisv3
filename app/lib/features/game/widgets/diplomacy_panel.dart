@@ -18,6 +18,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_radius.dart';
 import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_spacing.dart';
+import '../../../widgets/relation_meter.dart';
 import 'diplomacy_order_helpers.dart';
 import 'game_panel_contract.dart';
 import 'diplomacy_panel_rows.dart';
@@ -102,50 +103,18 @@ const OklchToken kDiplomacyAllianceBadgeBgToken = OklchToken(0.40, 0.06, 85);
 /// SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625).
 const double kDiplomacyAllianceBadgeAlpha = 0.30;
 
-/// OKLCH token for the **Unfriendly** relation word (display band `30 … 49`),
-/// mirroring the mockup `.f-relation .word` color `oklch(62% 0.10 55)`
-/// (warm amber). SPEC/ui/diplomacy-panel.md § Relation word styling
-/// (Refs #3621). The lightness matches the AA-tuned `--danger` / `--success`
-/// L = 0.62 in [EditorialMonoclePalette] so the four relation words read at a
-/// consistent brightness against `--bg`.
-const OklchToken kDiplomacyRelationUnfriendlyToken = OklchToken(0.62, 0.10, 55);
-
-/// OKLCH token for the **Cordial** relation word (display band `50 … 69`),
-/// mirroring the mockup `.f-relation .word` color `oklch(58% 0.08 160)`
-/// (cool teal), lightness lifted to 0.62 for parity with the other relation
-/// words. SPEC/ui/diplomacy-panel.md § Relation word styling (Refs #3621).
-const OklchToken kDiplomacyRelationCordialToken = OklchToken(0.62, 0.08, 160);
-
 /// Resolves the editorial-monocle color for the one-word relation label
 /// derived from the hidden relation [score], per SPEC/ui/diplomacy-panel.md
-/// § Relation word styling (Refs #3621) and the mockup `.f-relation .word`
-/// `wordColors` map:
+/// § Relation word styling and SPEC/ui/components/relation-meter.md § Gradient.
 ///
-/// | Display band | Word | Color |
-/// |--------------|------|-------|
-/// | `0 … 29` | Hostile | `--danger` |
-/// | `30 … 49` | Unfriendly | [kDiplomacyRelationUnfriendlyToken] |
-/// | `50 … 69` | Cordial | [kDiplomacyRelationCordialToken] |
-/// | `70 … 100` | Friendly | `--success` |
-///
-/// The band thresholds reuse the canonical `relationScoreDisplay*` constants
-/// from `colonizethis_logic`, so the color bands stay aligned with
-/// [relationScoreToDisplayLabel]. Hostile reuses the canonical `--danger`
-/// token and Friendly reuses `--success`, matching the warm-red / cool-green
-/// semantic shared with the relation state badge.
-Color diplomacyRelationWordColor(num score) {
-  final num clamped = score.clamp(relationScoreMin, relationScoreMax);
-  if (clamped <= relationScoreDisplayHostileMax) {
-    return EditorialMonoclePalette.danger;
-  }
-  if (clamped <= relationScoreDisplayUnfriendlyMax) {
-    return oklchToColor(kDiplomacyRelationUnfriendlyToken);
-  }
-  if (clamped <= relationScoreDisplayCordialMax) {
-    return oklchToColor(kDiplomacyRelationCordialToken);
-  }
-  return EditorialMonoclePalette.success;
-}
+/// The word color now matches its position on the 10-step relation meter: the
+/// score maps to a 1-based meter step via [relationScoreToMeterStep] and that
+/// step resolves through [relationMeterStepColor], the red → green OKLCH ladder
+/// anchored on the canonical `--danger` (step 1) and `--success` (step 10)
+/// tokens (Refs #3753 R13.3). This supersedes the legacy 4-band word-color map
+/// so the inline word and the meter indicator always read in the same hue.
+Color diplomacyRelationWordColor(num score) =>
+    relationMeterStepColor(relationScoreToMeterStep(score));
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget with GamePanelMixin {

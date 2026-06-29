@@ -114,7 +114,71 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
       ),
     ],
   ),
+  // SPEC/ui/components/relation-meter.md — isolated stories for the shared
+  // 10-step gradient `RelationMeter`: the full ladder (one meter per step) and
+  // the half-open band boundary scores. Refs #3753 R13.
+  WidgetbookFolder(
+    name: 'Relation Meter',
+    children: [
+      WidgetbookUseCase(
+        name: 'Ladder (all 10 steps)',
+        builder: (context) => _relationMeterStory(
+          const <num>[5, 15, 25, 35, 45, 55, 65, 75, 85, 95],
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Band boundaries (0, 50, 90, 100)',
+        builder: (context) => _relationMeterStory(const <num>[0, 50, 90, 100]),
+      ),
+    ],
+  ),
 ];
+
+/// Renders a vertical stack of [RelationMeter] widgets at the given [scores]
+/// inside the editorial-monocle dark theme, each beside its hidden-score
+/// ladder label so reviewers can confirm the gradient + indicator alignment.
+/// SPEC/ui/components/relation-meter.md § Widgetbook.
+Widget _relationMeterStory(List<num> scores) {
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      backgroundColor: EditorialMonoclePalette.bg,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final score in scores)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RelationMeter(score: score),
+                      const SizedBox(width: 12),
+                      Text(
+                        relationScoreToDisplayLabel(score),
+                        style: TextStyle(
+                          color: relationMeterStepColor(
+                            relationScoreToMeterStep(score),
+                          ),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 /// Renders a vertical stack of [RelativePowerLine] widgets at the given
 /// [percents] inside the editorial-monocle dark theme with full localization

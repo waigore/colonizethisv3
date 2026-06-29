@@ -113,10 +113,11 @@ Game _greatPowerRowGame() {
   );
 }
 
-/// AC-4 (#3625) fixture: the human GP `gp1` holds a Friendly-band relation
-/// (score 90) with GP `gp2` **and** a persisted formal alliance, so the GP row
-/// renders the `ALLIANCE` treaty badge on its relation line distinct from the
-/// one-word `Friendly` relation label.
+/// AC-4 (#3625) fixture: the human GP `gp1` holds a high-relation band
+/// (score 90 → step 10 → "Devoted" on the 10-step ladder, Refs #3753) with GP
+/// `gp2` **and** a persisted formal alliance, so the GP row renders the
+/// `ALLIANCE` treaty badge on its relation line distinct from the one-word
+/// relation label.
 Game _alliedGreatPowerRowGame() {
   const ow = 'oldWorld';
   final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
@@ -294,7 +295,7 @@ void main() {
 
     expect(find.text('Castile'), findsOneWidget);
     expect(find.text(kDiplomacyAllianceBadgeLabel), findsOneWidget);
-    expect(find.textContaining('Friendly'), findsWidgets);
+    expect(find.textContaining('Devoted'), findsWidgets);
 
     await expectLater(
       find.byKey(boundaryKey),
