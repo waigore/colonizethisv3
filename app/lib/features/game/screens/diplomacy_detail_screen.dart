@@ -67,6 +67,10 @@ String formatDiplomaticEvent(
       return '${from ?? 'Unknown'} updated subsidy to £${e.amount ?? 0}/turn to ${to ?? 'Unknown'}.';
     case DiplomaticEventType.subsidyCancelled:
       return 'Subsidy ${from ?? 'Unknown'} → ${to ?? 'Unknown'} ended (${e.reason ?? 'cancelled'}).';
+    case DiplomaticEventType.boycottSet:
+      return '${from ?? 'Unknown'} began a boycott against ${to ?? 'Unknown'}.';
+    case DiplomaticEventType.boycottRevoked:
+      return 'Boycott by ${from ?? 'Unknown'} against ${to ?? 'Unknown'} ended (${e.reason ?? 'revoked'}).';
     case DiplomaticEventType.interventionIntervene:
       return '${from ?? 'Unknown'} intervened in war (against ${to ?? 'Unknown'}).';
     case DiplomaticEventType.interventionDoNothing:

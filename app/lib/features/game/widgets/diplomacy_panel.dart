@@ -464,6 +464,10 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         return 0.5;
       case DiplomaticOrderType.establishFtp:
         return 0.5;
+      case DiplomaticOrderType.boycott:
+        return -0.6;
+      case DiplomaticOrderType.revokeBoycott:
+        return 0.3;
     }
   }
 

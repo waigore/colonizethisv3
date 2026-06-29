@@ -2,6 +2,7 @@
 library colonizethis_diplomacy;
 
 export 'src/diplomacy/alliance_resolver.dart';
+export 'src/diplomacy/boycott_resolver.dart';
 export 'src/diplomacy/break_alliance_resolver.dart';
 export 'src/diplomacy/diplomacy_logging.dart';
 export 'src/diplomacy/diplomacy_phase_result.dart';
