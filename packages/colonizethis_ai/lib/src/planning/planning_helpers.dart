@@ -202,6 +202,51 @@ List<String> tribeAtWarPeaceTargetsWhere({
   ]..sort();
 }
 
+/// Returns the deterministic ascending-sorted list of at-war
+/// **non-Great-Power** `factionId`s (minors *and* tribes) that satisfy the
+/// optional caller-supplied [keep] predicate.
+///
+/// Non-GP analogue of [gpAtWarPeaceTargetsWhere] and the combined-faction
+/// companion of [minorAtWarPeaceTargetsWhere] / [tribeAtWarPeaceTargetsWhere];
+/// single source of truth for the repeated non-GP at-war peace-target
+/// collector skeleton
+/// `<String>[for (final id in snapshot.threats.atWarWith) if (game.playerById(id) == null && <keep>) id]..sort()`
+/// hosted by the EXPAND zero-regiment survival decider
+/// (`stalledZeroRegimentAllFactionPeaceTargets`). The caller supplies only its
+/// own per-faction [keep] predicate; the non-GP at-war filter (over
+/// [ThreatSummary.atWarWith]) and the ascending `factionId` sort are applied
+/// once here.
+///
+/// The non-GP membership test is [Game.playerById] `== null` — **not** the
+/// [isMinorFaction] / [isTribeFaction] membership predicates used by the
+/// minor- and tribe-only collectors. This is deliberate and
+/// behaviour-preserving: the replaced inline comprehension peaced every at-war
+/// faction that is not a current Great Power, including an at-war id that is no
+/// longer a registered minor or tribe (for example an absorbed faction still
+/// present in [ThreatSummary.atWarWith]). Routing through [isMinorFaction] /
+/// [isTribeFaction] instead would silently drop such ids and change the
+/// emitted peace set, so the bare `playerById == null` filter is retained
+/// verbatim. Great Powers in [ThreatSummary.atWarWith] are never returned.
+///
+/// When [keep] is `null` every at-war non-GP faction is kept, matching the
+/// inline comprehension that applied no extra per-faction filter beyond the
+/// non-GP membership test.
+///
+/// Pure and deterministic — identical inputs (and a pure [keep]) always yield
+/// identical lists (Refs #3749 step 5 expand-peace collector dedup).
+List<String> nonGreatPowerAtWarPeaceTargetsWhere({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  bool Function(String factionId)? keep,
+}) {
+  return <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) == null &&
+          (keep == null || keep(factionId)))
+        factionId,
+  ]..sort();
+}
+
 /// Returns [factionIds] with [blocker] removed, sorted ascending by
 /// `factionId`.
 ///
