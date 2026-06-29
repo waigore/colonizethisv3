@@ -104,6 +104,9 @@ The `knownDiplomaticTargetFactionIds` set (existing relations **and** non-`unkno
 - **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
 - **Join Empire → colony (Refs #3753 R5):** When a GP resolves an `Establish Overture` at stage `Join Empire` against a **Tribe**, the Tribe does **not** leave the game and its provinces/units/fleets are **not** transferred. Instead the Tribe becomes a **colony** of that GP: a `ColonyState { tribeId, colonyOfGpId, sinceTurn }` is recorded on the `Game` (one per Tribe; re-resolution replaces the prior record), the Tribe **remains** in `tribes`, and overtures/relations with the Tribe are preserved. Only the Join Empire **cost** is deducted from the GP treasury. The colonizing GP is the Tribe's favoured trading partner while the colony stands. This differs from **GP–Minor** Join Empire, which keeps full **absorption** (province/unit/fleet transfer and faction removal). The colony relationship ends if the colonizing GP is removed from the game.
 - **Purchase land (Merchant):** Same as GP–Minor: requires **embassy** with that Tribe and **not at war**.
+- **Boycott (colony trade embargo) (Refs #3753 R6):** A GP that holds at least one colony (R5) may issue a **Boycott** diplomatic order against **another** Great Power. While the boycott is active, **all trade is blocked between the boycotted target GP and every Tribe that is a colony of the issuing GP** (world-market sales where the target GP buys goods a colony Tribe is selling; Merchant `purchase_land`, Grant Aid, and Set Subsidy from the target GP toward a colony Tribe). The boycott is keyed by the `(issuerGpId, targetGpId)` pair and recorded as a `BoycottState { gpId, targetGpId, sinceTurn }` on the `Game` (one active record per pair). Because a GP may hold multiple colonies, a single boycott against a target GP applies to all of the issuer's colonies; the affected Tribe set is derived from `ColonyState` at enforcement time (rather than pinned to one Tribe at order time).
+  - **Subsidy cancellation on apply (R6.2):** When a Boycott is applied, any active `SubsidyState` from the **target GP** to a Tribe that is a colony of the **issuing GP** is immediately cancelled (a `subsidyCancelled` event is appended).
+  - **Lifecycle (R6.4):** A boycott persists until (a) the issuer issues a **Revoke Boycott** for that pair (a `boycottRevoked` event is appended), or (b) the issuer and the target GP enter `AT_WAR` with each other — at which point the boycott is **auto-cancelled** during the same Diplomacy phase (a `boycottRevoked` event is appended) because the war rules already block trade. A boycott is one-sided (opt-in from the issuer); the target GP and colony Tribes have no accept/reject step.
 - Tribes react to nearby conquest (relation/trade effects).
 - **Intervention:** Same **Intervention** rules as for Minors (Embassy or purchased land; Diplomacy phase when a GP declares war on the Tribe).
 - **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
@@ -164,6 +167,8 @@ For **Minor/Tribe targets**, add:
 - **Establish Overture** — target Minor/Tribe **or** Great Power, overture type; valid if previous step achieved and costs met. **At most one Establish Overture per (player, target faction) per turn.** The overture is a **two-way agreement**: at turn resolution the **target** accepts or rejects. For Minor/Tribe targets the decision is applied by rule during the Diplomacy phase. For GP targets: if the target is human-controlled, turn resolution suspends and the app must prompt the human and resume with the decision; if AI-controlled, the decision is made during the phase. Validation rejects any second Establish Overture order for the same target.
 - **Grant Aid** — target faction, **amount**: a **positive integer** in pounds (£). Valid if Embassy exists, treasury ≥ amount, and other diplomacy preconditions hold. Resolves as a **one-time** transfer: treasury deduction and relation update per resolver rules.
 - **Set Subsidy** — target faction, **amount**: a **positive integer** in pounds (£) **per turn** (ongoing subsidy until updated or cancelled). Valid if an **Embassy** exists and treasury meets validation (see resolver) — a Trade Consulate alone is **not** sufficient (Refs #3753 R2: economic/treaty actions require an Embassy). **current product** is **amount in £/turn only**; there is **no** percentage-based subsidy mode in orders or resolution.
+- **Boycott** — target **Great Power** only; valid only when the **issuing GP holds at least one colony** (a `ColonyState` with `colonyOfGpId == issuer` exists), the target is **another** Great Power **at peace** with the issuer, and **no** active boycott already exists for the `(issuer, target)` pair. Not tech-gated; no treasury cost. At most one Boycott per (issuer, target GP) per turn. See **Boycott (colony trade embargo)** below.
+- **Revoke Boycott** — target **Great Power**; valid only when an **active boycott** for the `(issuer, target)` pair exists. Removes the boycott. Not tech-gated; no treasury cost. At most one Revoke Boycott per (issuer, target GP) per turn.
 
 **Amount parameters (current product):** Both orders use the same **order field model**: a single integer `amount` in diplomatic orders. **Grant Aid:** `amount` must be a **positive multiple of £1000** (minimum £1000). **Set Subsidy:** `amount` must be a **positive multiple of £100** (minimum £100). Validation and diplomacy resolution enforce these steps. Defaults in UI steppers and AI suggestions use **£1000** for both unless the ruleset changes; defaults are **not** an exclusive list of legal values.
 
@@ -313,6 +318,34 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given Great Powers A and B do **not** hold a formal alliance (`formalAlliance = false`) and A issues a `Break Alliance` diplomatic order targeting B  
   When the order is validated  
   Then the system rejects the order with a reason indicating there is no formal alliance to break, does not change any relation score, and does not record an `allianceBroken` event.
+
+- Given Great Power A holds a colony (a `ColonyState` with `colonyOfGpId == A` exists), Great Power B is another GP at peace with A, and no boycott for the `(A, B)` pair exists  
+  When A issues a `Boycott` diplomatic order targeting B and the Diplomacy phase resolves it  
+  Then the system records exactly one `BoycottState { gpId: A, targetGpId: B, sinceTurn: t }` on `Game.boycottStates` and appends a `boycottSet` event for the `(A, B)` pair.
+
+- Given Great Power A holds **no** colony (no `ColonyState` with `colonyOfGpId == A`)  
+  When A issues a `Boycott` diplomatic order targeting Great Power B  
+  Then the system rejects the order at validation with a reason indicating a colony is required, and records no `BoycottState`.
+
+- Given Great Power A holds a colony and is **at war** with Great Power B (relation state `AT_WAR`)  
+  When A issues a `Boycott` diplomatic order targeting B  
+  Then the system rejects the order at validation with a reason indicating the pair must be at peace, and records no `BoycottState`.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists and Great Power B has an active `SubsidyState { payerId: B, targetId: T }` where Tribe `T` is a colony of A  
+  When A issues a `Boycott` order targeting B and the Diplomacy phase resolves it (or the boycott is already applied this same phase)  
+  Then the system removes that `SubsidyState` and appends a `subsidyCancelled` event for the `(B, T)` pair.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists  
+  When A issues a `Revoke Boycott` diplomatic order targeting B and the Diplomacy phase resolves it  
+  Then the system removes the `(A, B)` `BoycottState` and appends a `boycottRevoked` event for that pair.
+
+- Given there is **no** active boycott for the `(A, B)` pair  
+  When A issues a `Revoke Boycott` diplomatic order targeting B  
+  Then the system rejects the order at validation with a reason indicating there is no active boycott to revoke, and changes no `BoycottState`.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists at the start of turn `t` and A and B enter `AT_WAR` during turn `t`  
+  When the Diplomacy phase of turn `t` completes  
+  Then the system removes the `(A, B)` `BoycottState` (auto-cancelled by war) and appends a `boycottRevoked` event for that pair.
 
 - Given Great Powers A and B have **no** formal alliance at the start of turn `t` and A issues an `Alliance` order targeting B in turn `t`  
   When another Great Power declares war on B in the same Diplomacy phase of turn `t`  

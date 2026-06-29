@@ -74,6 +74,42 @@ void main() {
       expect(restored, game);
     });
 
+    test('boycottStates round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        boycottStates: const [
+          BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 6),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.boycottStates, hasLength(1));
+      expect(restored.boycottStates.first.gpId, 'gp1');
+      expect(restored.boycottStates.first.targetGpId, 'gp2');
+      expect(restored.boycottStates.first.sinceTurn, 6);
+      expect(restored, game);
+    });
+
+    test('boycottStates defaults empty when missing from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson();
+      expect(json.containsKey('boycottStates'), isFalse);
+      expect(Game.fromJson(json).boycottStates, isEmpty);
+    });
+
     test('colonyStates defaults empty when missing from JSON', () {
       final game = Game(
         id: 'g1',
