@@ -233,6 +233,15 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+        // Refs #3753 R4: hold a Consulate so this test exercises the
+        // visibility gate rather than the new consulate gate.
+        overtureStates: const [
+          OvertureState(
+            gpId: 'p1',
+            targetId: 'tribe1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
       );
 
       final engine = OrderEngine();
@@ -293,6 +302,15 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+        // Refs #3753 R4: hold a Consulate so this test exercises the
+        // mineral-eligibility gate rather than the new consulate gate.
+        overtureStates: const [
+          OvertureState(
+            gpId: 'p1',
+            targetId: 'tribe1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
       );
 
       final engine = OrderEngine();
@@ -356,6 +374,15 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+        // Refs #3753 R4: hold a Consulate so this test exercises the
+        // already-prospected gate rather than the new consulate gate.
+        overtureStates: const [
+          OvertureState(
+            gpId: 'p1',
+            targetId: 'tribe1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
       );
 
       final engine = OrderEngine();

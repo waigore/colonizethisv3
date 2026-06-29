@@ -14,7 +14,7 @@
 
 | Unit | Role | Training cost | Unlock | Special |
 |------|------|---------------|--------|---------|
-| **Explorer** | Explore fog of war; prospect for minerals | 1000 cash, 2 paper | Starting | Minerals must be prospected before extraction; free exploration and prospecting |
+| **Explorer** | Explore fog of war; prospect for minerals | 1000 cash, 2 paper | Starting | Minerals must be prospected before extraction; exploration/prospecting carries **no material cost** ("free"), but `explore`/`prospect` inside a Minor/Tribe province require a **Consulate** (or higher) with that faction (Refs #3753 R4) |
 | **Engineer** | Build roads, ports, fortifications | 1000 cash, 2 paper | Starting | Roads gather resources; ports and forts in cities/rivers |
 | **Builder** | Improve terrain production (mines, farms, ranches, plantations, fur posts, towns) | 1000 cash, 2 paper | Starting | Increases output 1→2→3→4; tech caps max level |
 | **Spy** | Presence reveal; steal technology; counter-spy | 2000 cash, 4 paper | Starting | Presence reveal in non-owner province; steal_tech/counter_spy work orders; invisible to other players |
@@ -31,8 +31,8 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 
 | Target | Unit | Cost / gates | Duration | Notes |
 |--------|------|--------------|----------|-------|
-| explore | Explorer | Free | Multi-turn (province size) | Province-level; reveals tiles |
-| prospect | Explorer | Free | 1 turn (`currentWork`) | Tile-level; mineral-eligible; prospected set updated when work **completes** |
+| explore | Explorer | Free (no material cost) | Multi-turn (province size) | Province-level; reveals tiles; in a Minor/Tribe province requires a **Consulate** (or higher) with the owner (Refs #3753 R4) |
+| prospect | Explorer | Free (no material cost) | 1 turn (`currentWork`) | Tile-level; mineral-eligible; prospected set updated when work **completes**; in a Minor/Tribe province requires a **Consulate** (or higher) with the owner (Refs #3753 R4) |
 | build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4; prospect-required minerals → tile must be prospected (same gate as extraction / `purchase_land`) |
 | upgrade_town | Builder | Per ruleset | Config | Town tile; town development level |
 | build_road | Engineer | 1 lumber + 1 cast iron (level 1); Road Construction for level 2 | Config | 0→1→2; tech for 2 |
@@ -90,6 +90,18 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
 - Given an Explorer civilian unit with `status = idle` is located in a province that still has fogged tiles  
   When the player assigns an `explore` `WorkOrder` to that Explorer  
   Then the system starts a multi-turn exploration process for that province and, on completion, reveals all tiles in that province to the Explorer's owner according to [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
+
+- Given a Great Power `A` controls an Explorer and the target province is owned by a Minor Nation or Tribe `F` with which `A` holds **no** Consulate (overture stage `none`) (Refs #3753 R4)  
+  When `A` submits an `explore` or `prospect` `WorkOrder` targeting a tile in `F`'s province  
+  Then the system rejects the work order at validation with reason `Establish a consulate before exploring or prospecting`, assigns no work, and deducts no cost.
+
+- Given a Great Power `A` controls an Explorer, the target province is owned by a Minor Nation or Tribe `F`, and `A` holds at least a Consulate (overture stage `tradeConsulate`, `embassy`, `nap`, or `joinEmpire`) with `F` (Refs #3753 R4)  
+  When `A` submits an `explore` or `prospect` `WorkOrder` targeting a tile in `F`'s province  
+  Then the system does not reject the order for the Consulate gate (acceptance remains subject to existing fog/visibility, unit-availability, and mineral-eligibility rules).
+
+- Given a Spy `WorkOrder` is issued (target `steal_tech` against a GP capital, or `counter_spy` against an own province) (Refs #3753 R4.4)  
+  When the system validates the order  
+  Then the Consulate gate does not reject the order, because no Spy work target is a Minor/Tribe province in current product (the gate is inert for Spy).
 
 - Given a Spy civilian unit controlled by the player is present in a province that is not owned by that player  
   When the system evaluates visibility for that player's map each turn  
