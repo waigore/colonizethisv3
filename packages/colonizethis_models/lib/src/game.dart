@@ -312,10 +312,22 @@ class Game {
       json['overtureStates'],
       OvertureState.fromJson,
     );
+    // Subsidy save-load migration (Refs #3753 R3): the £/turn model is dropped
+    // in favour of percentages, and subsidies only exist GP→Minor/Tribe. On
+    // load, drop (a) legacy £-based subsidies (no valid `percent`) and (b) any
+    // GP→GP subsidy (target is a Great Power player). The player re-establishes
+    // valid subsidies under the percent model.
+    final greatPowerIds = players.map((p) => p.id).toSet();
     final subsidyStates = _parseModelList(
       json['subsidyStates'],
       SubsidyState.fromJson,
-    );
+    )
+        .where(
+          (s) =>
+              isValidSubsidyPercent(s.percent) &&
+              !greatPowerIds.contains(s.targetId),
+        )
+        .toList();
     final colonyStates = _parseModelList(
       json['colonyStates'],
       ColonyState.fromJson,

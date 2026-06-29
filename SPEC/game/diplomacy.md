@@ -24,7 +24,7 @@ The **relation score** is a **decimal** value (fixed-point, 0.1 precision; repre
 - Given a faction-pair that received a relation-score delta event this turn (for example a Grant Aid applied to that pair), when the Diplomacy phase ends, then the system does **not** apply decay to that pair (skip-on-event; only the event delta is reflected).
 - Given an `AT_WAR` faction-pair relation with score `30.0`, when the Diplomacy phase ends, then the system leaves the pair's score at `30.0` (war scores are frozen and never decay).
 
-**Trade-deal relation boost (Refs #3753 R10):** A faction pair that completed **at least one** world-market trade deal involving **at least one Great Power** is boosted in the **next** turn's Diplomacy phase, **before** decay (so the boosted pair is event-modified and skips that turn's decay). The boost is **volume-independent** and applied **once per pair per turn**: **`+2.0`** base, plus **`+0.4`** when an **Embassy** is in effect between the parties (code constants `tradeDealRelationBoostBase`, `tradeDealRelationBoostEmbassyBonus`). The score clamps to `[0.0, 100.0]`. `AT_WAR` pairs are skipped (war scores frozen). The deals are recorded by the World Market phase (`SPEC/program/world-market-resolution.md` § Step F) and consumed by the following Diplomacy phase, so the boost applies one turn after settlement. The subsidy-percentage modifier (R10 `+0.2` per subsidy point) is added when percentage subsidies (R3) land; current behaviour applies the base and Embassy terms only.
+**Trade-deal relation boost (Refs #3753 R10):** A faction pair that completed **at least one** world-market trade deal involving **at least one Great Power** is boosted in the **next** turn's Diplomacy phase, **before** decay (so the boosted pair is event-modified and skips that turn's decay). The boost is **volume-independent** and applied **once per pair per turn**: **`+2.0`** base, plus **`+0.4`** when an **Embassy** is in effect between the parties (code constants `tradeDealRelationBoostBase`, `tradeDealRelationBoostEmbassyBonus`). The score clamps to `[0.0, 100.0]`. `AT_WAR` pairs are skipped (war scores frozen). The deals are recorded by the World Market phase (`SPEC/program/world-market-resolution.md` § Step F) and consumed by the following Diplomacy phase, so the boost applies one turn after settlement. **Subsidy modifier (Refs #3753 R10):** when a percentage subsidy (R3) is in effect between the parties, **`+0.2` per subsidy percentage point** is added (code constant `tradeDealRelationBoostPerSubsidyPercent`), so a 10% subsidy adds `+2.0` (a 20% subsidy adds `+4.0`); counted once per pair.
 
 - Given a non-`AT_WAR` pair at score `50.0` with no Embassy that completed a Great-Power trade deal the previous turn, when the Diplomacy phase resolves, then the system sets the pair's score to `52.0` and does not also apply decay to that pair this turn.
 - Given a non-`AT_WAR` pair at score `50.0` with an Embassy in effect that completed a Great-Power trade deal the previous turn, when the Diplomacy phase resolves, then the system sets the pair's score to `52.4` (`+2.0` base `+0.4` Embassy).
@@ -163,9 +163,9 @@ For **Minor/Tribe targets**, add:
 - **Break Alliance** — target GP; valid only when a **formal alliance** currently exists with that GP. Voluntarily ends the alliance and applies the unified alliance-break penalty (see **Breaking an alliance**). Valid at peace **or** at war; not tech-gated; no treasury cost. At most one Break Alliance per (player, target GP) per turn.
 - **Establish Overture** — target Minor/Tribe **or** Great Power, overture type; valid if previous step achieved and costs met. **At most one Establish Overture per (player, target faction) per turn.** The overture is a **two-way agreement**: at turn resolution the **target** accepts or rejects. For Minor/Tribe targets the decision is applied by rule during the Diplomacy phase. For GP targets: if the target is human-controlled, turn resolution suspends and the app must prompt the human and resume with the decision; if AI-controlled, the decision is made during the phase. Validation rejects any second Establish Overture order for the same target.
 - **Grant Aid** — target faction, **amount**: a **positive integer** in pounds (£). Valid if Embassy exists, treasury ≥ amount, and other diplomacy preconditions hold. Resolves as a **one-time** transfer: treasury deduction and relation update per resolver rules.
-- **Set Subsidy** — target faction, **amount**: a **positive integer** in pounds (£) **per turn** (ongoing subsidy until updated or cancelled). Valid if an **Embassy** exists and treasury meets validation (see resolver) — a Trade Consulate alone is **not** sufficient (Refs #3753 R2: economic/treaty actions require an Embassy). **current product** is **amount in £/turn only**; there is **no** percentage-based subsidy mode in orders or resolution.
+- **Set Subsidy** — target **Minor Nation or Tribe** only (no GP→GP subsidies), **percentage** (Refs #3753 R3): a whole percent in **5-point increments from 5% to 20%** (min `kSubsidyPercentMin = 5`, max `kSubsidyPercentMax = 20`, step `kSubsidyPercentStep = 5`). Carried in the order `amount` field. Valid only if an **Embassy** exists with the target — a Trade Consulate alone is **not** sufficient (Refs #3753 R2). The percent model charges **no upfront and no per-turn treasury payment**; its effect is the world-market price discount/surcharge plus the scaled trade-deal relation boost (R10). An ongoing `SubsidyState { payerId, targetId, percent }` persists until updated, cancelled, the pair goes `AT_WAR`, or the payer loses the Embassy with that Minor/Tribe (R3.5). One active subsidy per (GP, Minor/Tribe) pair.
 
-**Amount parameters (current product):** Both orders use the same **order field model**: a single integer `amount` in diplomatic orders. **Grant Aid:** `amount` must be a **positive multiple of £1000** (minimum £1000). **Set Subsidy:** `amount` must be a **positive multiple of £100** (minimum £100). Validation and diplomacy resolution enforce these steps. Defaults in UI steppers and AI suggestions use **£1000** for both unless the ruleset changes; defaults are **not** an exclusive list of legal values.
+**Amount parameters:** **Grant Aid** uses a single integer `amount` in pounds: a **positive multiple of £1000** (minimum £1000). **Set Subsidy** uses `amount` as a **percentage** that must satisfy `isValidSubsidyPercent` (5–20, step 5). Validation and diplomacy resolution enforce these. Defaults in UI steppers and AI suggestions use **£1000** for Grant Aid and **5%** for Set Subsidy (`kSubsidyPercentDefault`).
 
 ### Turn Sequence
 
@@ -204,13 +204,29 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the system validates the `purchase_land` work order during turn resolution  
   Then the system accepts the work order for execution and does not reject it for missing diplomatic prerequisites.
 
-- Given the Player controls a Great Power that holds only a Trade Consulate (no Embassy) with a target Minor Nation, is at relation state `AT_PEACE` with that Minor, and has treasury greater than or equal to the subsidy amount (Refs #3753 R2)  
-  When the Player issues a `Set Subsidy` order against that Minor  
+- Given the Player controls a Great Power that holds only a Trade Consulate (no Embassy) with a target Minor Nation, is at relation state `AT_PEACE` with that Minor (Refs #3753 R2/R3)  
+  When the Player issues a `Set Subsidy` order against that Minor with a percentage of `10`  
   Then the system rejects the order at validation with a reason indicating an Embassy is required, and creates no `SubsidyState` for that pair.
 
-- Given the Player controls a Great Power that holds an Embassy with a target Minor Nation, is at relation state `AT_PEACE` with that Minor, and has treasury greater than or equal to the subsidy amount (a positive multiple of £100) (Refs #3753 R2)  
-  When the Player issues a `Set Subsidy` order against that Minor  
-  Then the system accepts the order at validation (subject to the amount-step and treasury rules).
+- Given the Player controls a Great Power that holds an Embassy with a target Minor Nation and is at relation state `AT_PEACE` with that Minor (Refs #3753 R2/R3)  
+  When the Player issues a `Set Subsidy` order against that Minor with a percentage of `10` (a multiple of 5 within 5–20)  
+  Then the system accepts the order at validation and records a `SubsidyState { payerId, targetId, percent: 10 }` with a `subsidySet` event; no treasury is deducted.
+
+- Given the Player controls a Great Power and the target is **another Great Power** (Refs #3753 R3)  
+  When the Player issues a `Set Subsidy` order against that Great Power  
+  Then the system rejects the order at validation with a reason indicating subsidies are only available for Minor Nations and Tribes, and creates no `SubsidyState`.
+
+- Given the Player controls a Great Power that holds an Embassy with a target Minor Nation (Refs #3753 R3)  
+  When the Player issues a `Set Subsidy` order against that Minor with a percentage of `7` (not a multiple of 5) or `25` (above the maximum)  
+  Then the system rejects the order at validation with a reason indicating the percentage must be 5–20 in steps of 5, and creates no `SubsidyState`.
+
+- Given an active `SubsidyState { payerId: A, targetId: M, percent: 10 }` exists and `A` loses the Embassy with `M` (Refs #3753 R3.5)  
+  When the Diplomacy phase processes ongoing subsidies  
+  Then the system removes the `SubsidyState` and appends a `subsidyCancelled` event for that pair.
+
+- Given any save containing a GP-to-GP subsidy or a legacy `amountPerTurn` (£/turn) subsidy (Refs #3753 R3)  
+  When the save is loaded  
+  Then the loaded game contains no GP→GP subsidy rows and no subsidy whose `percent` is invalid (the legacy £ subsidies are dropped; the player re-establishes them under the percent model).
 
 - Given the Player controls a Great Power with an Embassy with a Minor Nation or Tribe, a different Great Power has a valid `Declare War` order against that Minor or Tribe in the Diplomacy phase of turn index `t`, and war between aggressor and that Minor/Tribe is applied in that phase  
   When the system presents the Player with an Intervention choice and the Player selects **Intervene**  

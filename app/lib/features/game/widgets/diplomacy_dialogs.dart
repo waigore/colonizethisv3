@@ -91,9 +91,17 @@ class _GrantSubsidyAmountBody extends StatefulWidget {
 class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   late int _amount;
 
-  int get _step => widget.isSubsidy ? setSubsidyAmountStep : grantAidAmountStep;
+  int get _step =>
+      widget.isSubsidy ? kSubsidyPercentStep : grantAidAmountStep;
 
-  int _maxAffordable() {
+  /// Lowest selectable value. Subsidy is a fixed 5% floor (Refs #3753 R3);
+  /// Grant Aid uses the £ step as its floor.
+  int get _min => widget.isSubsidy ? kSubsidyPercentMin : _step;
+
+  /// Highest selectable value. Subsidy caps at 20% independent of treasury;
+  /// Grant Aid caps at the largest affordable £ multiple.
+  int _max() {
+    if (widget.isSubsidy) return kSubsidyPercentMax;
     final t = widget.treasury;
     final s = _step;
     if (t < s) return 0;
@@ -101,19 +109,21 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   }
 
   int _initialAmount() {
-    final maxA = _maxAffordable();
+    if (widget.isSubsidy) return kSubsidyPercentDefault;
+    final maxA = _max();
     if (maxA < _step) return 0;
-    final d = widget.isSubsidy
-        ? setSubsidyDefaultAmount
-        : grantAidDefaultAmount;
-    final capped = d > maxA ? maxA : d;
+    final capped = grantAidDefaultAmount > maxA ? maxA : grantAidDefaultAmount;
     final snapped = (capped ~/ _step) * _step;
     if (snapped >= _step) return snapped;
     return (maxA ~/ _step) * _step;
   }
 
-  bool get _canSubmit =>
-      _amount >= _step && _amount <= widget.treasury && _amount % _step == 0;
+  bool get _canSubmit {
+    if (widget.isSubsidy) return isValidSubsidyPercent(_amount);
+    return _amount >= _step &&
+        _amount <= widget.treasury &&
+        _amount % _step == 0;
+  }
 
   @override
   void initState() {
@@ -122,18 +132,18 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   }
 
   void _decrement() {
-    final maxA = _maxAffordable();
-    if (maxA < _step) return;
+    final maxA = _max();
+    if (maxA < _min) return;
     setState(() {
       final next = _amount - _step;
-      _amount = next < _step ? _step : next;
+      _amount = next < _min ? _min : next;
       if (_amount > maxA) _amount = maxA;
     });
   }
 
   void _increment() {
-    final maxA = _maxAffordable();
-    if (maxA < _step) return;
+    final maxA = _max();
+    if (maxA < _min) return;
     setState(() {
       final next = _amount + _step;
       _amount = next > maxA ? maxA : next;
@@ -143,8 +153,8 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final maxA = _maxAffordable();
-    final canAdjust = maxA >= _step;
+    final maxA = _max();
+    final canAdjust = maxA >= _min;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -160,7 +170,9 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
         CtGap.ml,
         _AmountStepper(
           amount: _amount,
-          amountText: l10n.diplomacy_currencyAmount(_amount),
+          amountText: widget.isSubsidy
+              ? '$_amount%'
+              : l10n.diplomacy_currencyAmount(_amount),
           canAdjust: canAdjust,
           onDecrement: _decrement,
           onIncrement: _increment,

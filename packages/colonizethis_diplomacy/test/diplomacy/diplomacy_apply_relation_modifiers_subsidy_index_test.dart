@@ -10,7 +10,7 @@ void main() {
     'applyRelationModifiersAndUpdateScores subsidy pair index (Refs #2394)',
     () {
       test(
-        'two SetSubsidy toward same target in one pass keeps one state with final amount',
+        'two SetSubsidy toward same target in one pass keeps one state with final percent',
         () {
           var game = diplomacyResolverPhaseTestBaseGame().copyWith(
             players: [
@@ -46,12 +46,12 @@ void main() {
               const DiplomaticOrder(
                 type: DiplomaticOrderType.setSubsidy,
                 targetFactionId: 'minor1',
-                amount: 500,
+                amount: 5,
               ),
               const DiplomaticOrder(
                 type: DiplomaticOrderType.setSubsidy,
                 targetFactionId: 'minor1',
-                amount: 800,
+                amount: 15,
               ),
             ],
           }, 1);
@@ -60,9 +60,10 @@ void main() {
           final s = after.subsidyStates.single;
           expect(s.payerId, 'gp1');
           expect(s.targetId, 'minor1');
-          expect(s.amountPerTurn, 800);
+          expect(s.percent, 15);
+          // Percent subsidies charge no treasury (Refs #3753 R3).
           final gp1 = after.players.where((p) => p.id == 'gp1').single;
-          expect(gp1.treasury, 10000 - 500 - 800);
+          expect(gp1.treasury, 10000);
         },
       );
 
@@ -119,22 +120,22 @@ void main() {
               const DiplomaticOrder(
                 type: DiplomaticOrderType.setSubsidy,
                 targetFactionId: 'minor1',
-                amount: 300,
+                amount: 10,
               ),
               const DiplomaticOrder(
                 type: DiplomaticOrderType.setSubsidy,
                 targetFactionId: 'minor2',
-                amount: 400,
+                amount: 20,
               ),
             ],
           }, 1);
 
           expect(after.subsidyStates, hasLength(2));
           final byTarget = {
-            for (final x in after.subsidyStates) x.targetId: x.amountPerTurn,
+            for (final x in after.subsidyStates) x.targetId: x.percent,
           };
-          expect(byTarget['minor1'], 300);
-          expect(byTarget['minor2'], 400);
+          expect(byTarget['minor1'], 10);
+          expect(byTarget['minor2'], 20);
         },
       );
 
@@ -172,7 +173,7 @@ void main() {
               SubsidyState(
                 payerId: 'gp1',
                 targetId: 'minor1',
-                amountPerTurn: 200,
+                percent: 5,
               ),
             ],
           );
@@ -182,13 +183,13 @@ void main() {
               const DiplomaticOrder(
                 type: DiplomaticOrderType.setSubsidy,
                 targetFactionId: 'minor1',
-                amount: 600,
+                amount: 20,
               ),
             ],
           }, 1);
 
           expect(after.subsidyStates, hasLength(1));
-          expect(after.subsidyStates.single.amountPerTurn, 600);
+          expect(after.subsidyStates.single.percent, 20);
         },
       );
     },

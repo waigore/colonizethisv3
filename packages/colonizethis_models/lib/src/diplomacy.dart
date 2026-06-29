@@ -276,39 +276,74 @@ extension DebugDiplomacyActionTokens on DebugDiplomacyAction {
       DebugDiplomacyAction.values.map((a) => a.keyword).toList()..sort();
 }
 
-/// Ongoing subsidy from a GP to a Minor/Tribe. SPEC/game/diplomacy.md.
-/// Each turn: payer loses amount, relation improves.
+/// Subsidy percentage model (Refs #3753 R3). A subsidy is expressed as a whole
+/// percentage in 5-point increments, from [kSubsidyPercentMin] (5%) to
+/// [kSubsidyPercentMax] (20%). The legacy £/turn (`amountPerTurn`) model is
+/// dropped: subsidies no longer charge a per-turn treasury payment; their
+/// effect is a world-market price discount/surcharge plus a scaled trade-deal
+/// relation boost. SPEC/game/diplomacy.md § Diplomatic Order Types.
+const int kSubsidyPercentMin = 5;
+
+/// Maximum subsidy percentage (Refs #3753 R3).
+const int kSubsidyPercentMax = 20;
+
+/// Subsidy percentage step / increment (Refs #3753 R3).
+const int kSubsidyPercentStep = 5;
+
+/// Default subsidy percentage used by the UI stepper and AI suggestion
+/// (Refs #3753 R3) — the minimum, 5%.
+const int kSubsidyPercentDefault = kSubsidyPercentMin;
+
+/// True when [percent] is a valid subsidy percentage: within
+/// `[kSubsidyPercentMin, kSubsidyPercentMax]` and a multiple of
+/// [kSubsidyPercentStep]. SPEC/game/diplomacy.md § Diplomatic Order Types.
+bool isValidSubsidyPercent(int percent) =>
+    percent >= kSubsidyPercentMin &&
+    percent <= kSubsidyPercentMax &&
+    percent % kSubsidyPercentStep == 0;
+
+/// Ongoing percentage subsidy from a Great Power to a Minor/Tribe.
+/// SPEC/game/diplomacy.md § Diplomatic Order Types (Refs #3753 R3). Subsidies
+/// only exist from a GP to a Minor or Tribe (no GP→GP subsidies); see the
+/// save-load migration in `Game.fromJson`.
 class SubsidyState {
   const SubsidyState({
     required this.payerId,
     required this.targetId,
-    required this.amountPerTurn,
+    required this.percent,
   });
 
   final String payerId;
   final String targetId;
-  final int amountPerTurn;
+
+  /// Subsidy percentage (5–20, step 5). SPEC/game/diplomacy.md § Diplomatic
+  /// Order Types (Refs #3753 R3).
+  final int percent;
 
   SubsidyState copyWith({
     String? payerId,
     String? targetId,
-    int? amountPerTurn,
+    int? percent,
   }) => SubsidyState(
     payerId: payerId ?? this.payerId,
     targetId: targetId ?? this.targetId,
-    amountPerTurn: amountPerTurn ?? this.amountPerTurn,
+    percent: percent ?? this.percent,
   );
 
   Map<String, dynamic> toJson() => {
     'payerId': payerId,
     'targetId': targetId,
-    'amountPerTurn': amountPerTurn,
+    'percent': percent,
   };
 
+  /// Parses a [SubsidyState]. Legacy saves storing only the £/turn
+  /// `amountPerTurn` field (no `percent`) decode to `percent = 0`, which the
+  /// `Game.fromJson` migration drops (Refs #3753 R3 — old subsidies are cleared
+  /// on load; the player re-establishes them under the percent model).
   static SubsidyState fromJson(Map<String, dynamic> json) => SubsidyState(
     payerId: json['payerId'] as String,
     targetId: json['targetId'] as String,
-    amountPerTurn: json['amountPerTurn'] as int,
+    percent: (json['percent'] as num?)?.toInt() ?? 0,
   );
 
   @override
@@ -317,10 +352,10 @@ class SubsidyState {
       other is SubsidyState &&
           payerId == other.payerId &&
           targetId == other.targetId &&
-          amountPerTurn == other.amountPerTurn;
+          percent == other.percent;
 
   @override
-  int get hashCode => Object.hash(payerId, targetId, amountPerTurn);
+  int get hashCode => Object.hash(payerId, targetId, percent);
 }
 
 /// Records that a Tribe has become a colony of a Great Power via a Tribe

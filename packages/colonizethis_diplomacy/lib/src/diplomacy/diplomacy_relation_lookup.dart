@@ -181,19 +181,14 @@ const double kInterventionProbabilityAllied = 0.8;
 /// Default Grant Aid amount (UI + suggestions). Positive multiples of [grantAidAmountStep].
 const int grantAidDefaultAmount = 1000;
 
-/// Default Set Subsidy amount (UI + suggestions). Positive multiples of [setSubsidyAmountStep].
-const int setSubsidyDefaultAmount = 1000;
-
 /// Grant Aid step and multiple (pounds). Validation and UI stepper.
 const int grantAidAmountStep = 1000;
 
-/// Set Subsidy step and multiple (pounds). Validation and UI stepper.
-const int setSubsidyAmountStep = 100;
-
-/// Subsidy relation boost: +[subsidyBoostRelationPerStep] per [subsidyBoostDucatsPerStep] ducats, cap [subsidyBoostMax].
-const int subsidyBoostDucatsPerStep = 500;
-const int subsidyBoostRelationPerStep = 2;
-const int subsidyBoostMax = 8;
+/// Additional trade-deal relation boost **per subsidy percentage point** in
+/// effect between the trading parties (Refs #3753 R10 — `+0.2` per point, so a
+/// 10% subsidy adds `+2.0`). Added on top of [tradeDealRelationBoostBase] (and
+/// the embassy bonus). SPEC/game/diplomacy.md § Relation Model.
+const double tradeDealRelationBoostPerSubsidyPercent = 0.2;
 
 /// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
 /// Operates on the raw decimal [score] (SPEC/game/diplomacy.md § Relation Model).

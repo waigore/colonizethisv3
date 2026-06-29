@@ -203,23 +203,41 @@ void main() {
     });
   });
 
-  group('SubsidyState', () {
-    const subsidy = SubsidyState(payerId: 'gp1', targetId: 'mn1', amountPerTurn: 25);
+  group('SubsidyState (percent model, Refs #3753 R3)', () {
+    const subsidy = SubsidyState(payerId: 'gp1', targetId: 'mn1', percent: 10);
 
     test('toJson/fromJson round-trips', () {
       final restored = SubsidyState.fromJson(subsidy.toJson());
       expect(restored, subsidy);
-      expect(restored.amountPerTurn, 25);
+      expect(restored.percent, 10);
+      expect(subsidy.toJson()['percent'], 10);
     });
 
     test('copyWith and equality', () {
-      final updated = subsidy.copyWith(amountPerTurn: 30);
-      expect(updated.amountPerTurn, 30);
+      final updated = subsidy.copyWith(percent: 15);
+      expect(updated.percent, 15);
       expect(updated.payerId, 'gp1');
       expect(subsidy == updated, isFalse);
       expect(subsidy.hashCode,
-          const SubsidyState(payerId: 'gp1', targetId: 'mn1', amountPerTurn: 25)
+          const SubsidyState(payerId: 'gp1', targetId: 'mn1', percent: 10)
               .hashCode);
+    });
+
+    test('legacy £/turn save decodes to percent 0 (dropped by migration)', () {
+      final legacy = SubsidyState.fromJson(
+        const {'payerId': 'gp1', 'targetId': 'mn1', 'amountPerTurn': 500},
+      );
+      expect(legacy.percent, 0);
+      expect(isValidSubsidyPercent(legacy.percent), isFalse);
+    });
+
+    test('isValidSubsidyPercent enforces 5-20 step 5', () {
+      expect(isValidSubsidyPercent(5), isTrue);
+      expect(isValidSubsidyPercent(20), isTrue);
+      expect(isValidSubsidyPercent(10), isTrue);
+      expect(isValidSubsidyPercent(0), isFalse);
+      expect(isValidSubsidyPercent(7), isFalse);
+      expect(isValidSubsidyPercent(25), isFalse);
     });
   });
 
