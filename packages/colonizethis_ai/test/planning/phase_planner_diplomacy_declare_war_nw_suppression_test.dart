@@ -1,5 +1,8 @@
-// Unit tests for the Phase 3 soft-weight wiring of the diplomacy
-// declare-war scoring path (Refs #2847).
+// Behavioural integration pins for the Phase 3 soft-weight wiring of the
+// diplomacy declare-war scoring path (Refs #2847; renamed off the
+// `*soft_weight_wiring_test.dart` family in Refs #3749 § Test streamlining
+// because this observes scoring through `computeDiplomaticCandidateScores`,
+// not the parameterized `scaleWeightedBonus` contract).
 //
 // Mirrors `phase_planner_conquest_wiring_test.dart` for the
 // declare-war NW colonial-pressure scoring sites. Pins the contract

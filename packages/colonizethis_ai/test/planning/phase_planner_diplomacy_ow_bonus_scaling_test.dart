@@ -1,4 +1,8 @@
-// Integration pins for Phase 3 diplomacy declare-war OW scoring (Refs #2847).
+// Behavioural integration pins for Phase 3 diplomacy declare-war OW scoring
+// (Refs #2847; renamed off the `*soft_weight_wiring_test.dart` family in
+// Refs #3749 § Test streamlining because this observes scoring through
+// `computeDiplomaticCandidateScores`, not the parameterized
+// `scaleWeightedBonus` contract).
 //
 // Verifies `oldWorldConquestWeight` on `_DeclareWarTargetContext` scales
 // OW-expansion declare-war addends via `declareWarOldWorldConquestScaledBonus`.
