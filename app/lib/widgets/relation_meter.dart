@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter/material.dart';
 
 import '../config/editorial_monocle_palette.dart';
+import '../l10n/l10n.dart';
 
 /// Resolves the editorial-monocle gradient color for a 1-based relation-meter
 /// [step] in `[1, relationMeterStepCount]`.
@@ -95,7 +96,7 @@ class RelationMeter extends StatelessWidget {
     }
 
     return Semantics(
-      label: 'Relation: $label',
+      label: appL10n(context).diplomacy_relationMeter_semanticsLabel(label),
       container: true,
       child: ExcludeSemantics(
         child: SizedBox(
