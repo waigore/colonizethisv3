@@ -63,7 +63,7 @@ const String _tribeNwProvince = 'newWorld|tribe1_nw0';
 // (early-sprint plateau), which the scoring-side migration in
 // `_declareWarSuppressedExpandColonialScore` treats as
 // "reachable at low priority" — see the PR's
-// `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.
+// `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
 // The strict hard-suppress regression assertion threads this
 // explicit override through the orchestrator so
 // `nwAcquisitionWeight == 0.0` collapses NW colonial declare-war
@@ -314,7 +314,7 @@ void main() {
         // `newWorldAcquisition = 0.0` override (Refs #2847 Phase 3).
         // Under the soft-weight production curve
         // `_curveWeightsForOw(7)` returns 0.05 — see
-        // `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`
+        // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`
         // for the new soft-weight contract.
         phasePlan: _expandPhasePlanHardSuppressNw,
       );

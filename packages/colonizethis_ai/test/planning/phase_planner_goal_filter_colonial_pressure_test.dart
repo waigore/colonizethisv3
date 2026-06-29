@@ -1,7 +1,10 @@
-// Unit tests for the Phase 3 soft-weight wiring of the goal-score
-// colonial-pressure penalty/floor pass (Refs #2847).
+// Behavioural integration pins for the Phase 3 soft-weight wiring of the
+// goal-score colonial-pressure penalty/floor pass (Refs #2847; renamed off the
+// `*soft_weight_wiring_test.dart` family in Refs #3749 § Test streamlining
+// because this is an `evaluateStrategicGoalScores` behavioural pin, not the
+// parameterized `scaleWeightedBonus` contract).
 //
-// Mirrors `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`
+// Mirrors `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`
 // for the goal-score colonial-pressure migration. Pins the contract of the
 // `colonialPressureWeight` parameter on `evaluateStrategicGoalScores`:
 //

@@ -840,6 +840,13 @@ rules:
     runner: dart
     script: tool/check_ai_test_seed42_campaign_harness.dart
 
+  - rule_id: repo.ai_test_soft_weight_contract
+    group: testing
+    title: colonizethis_ai soft-weight wiring stays consolidated - only the parameterized contract files may use the *soft_weight_wiring_test.dart suffix (no new per-helper clones) (Refs #3749)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_soft_weight_contract.dart
+
   - rule_id: repo.orders_test_mirrors_lib
     group: structure
     title: colonizethis_orders tests must mirror lib/ (no flat-root test sources) (Refs #3714)

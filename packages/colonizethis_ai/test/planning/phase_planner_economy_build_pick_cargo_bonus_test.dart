@@ -1,8 +1,11 @@
-// Unit tests for the Phase 3 soft-weight wiring of the economy
-// build-pipeline cargo bonus (Refs #2847).
+// Behavioural integration pins for the Phase 3 soft-weight wiring of the
+// economy build-pipeline cargo bonus (Refs #2847; renamed off the
+// `*soft_weight_wiring_test.dart` family in Refs #3749 § Test streamlining
+// because this is a `pickBuildOrder` behavioural pin, not the parameterized
+// `scaleWeightedBonus` contract).
 //
-// Mirrors `phase_planner_goal_filter_soft_weight_wiring_test.dart` and
-// `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart` for
+// Mirrors `phase_planner_goal_filter_colonial_pressure_test.dart` and
+// `phase_planner_diplomacy_declare_war_nw_suppression_test.dart` for
 // the build-pipeline cargo-bonus migration. Pins the contract of the
 // new optional `BuildPickInput.colonialPressureWeight` slot:
 //

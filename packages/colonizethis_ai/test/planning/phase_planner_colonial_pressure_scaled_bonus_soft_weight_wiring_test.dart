@@ -30,10 +30,16 @@
 // (`resolvePhase*ColonialPressureActive`, `resolvePhase*ColonialPressureWeight`,
 // etc.) remain pinned by their own resolver suites; this file targets only the
 // scaled-magnitude helpers the Phase 3 slice migrated. The structurally
-// different soft-weight consumers (economy threshold caps with null /
-// span-interpolation contracts and the behavioural `pickBuildOrder` /
-// `evaluateStrategicGoalScores` / `computeDiplomaticCandidateScores` integration
-// pins) keep their dedicated suites.
+// different soft-weight consumers keep their dedicated suites: the economy
+// threshold caps (null / span-interpolation contracts) are consolidated in
+// `phase_planner_threshold_cap_soft_weight_wiring_test.dart`, and the
+// behavioural `pickBuildOrder` / `evaluateStrategicGoalScores` /
+// `computeDiplomaticCandidateScores` integration pins live in their own
+// `*_cargo_bonus_test.dart` / `*_colonial_pressure_test.dart` /
+// `*_nw_suppression_test.dart` / `*_ow_bonus_scaling_test.dart` files (these
+// are behavioural integration pins, not the `scaleWeightedBonus` contract, so
+// they are intentionally excluded from the two `*soft_weight_wiring_test.dart`
+// parameterized contract files).
 
 import 'package:colonizethis_ai/src/planning/naval_planner.dart'
     show kNavalRunMinWeight;
