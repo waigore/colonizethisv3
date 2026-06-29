@@ -225,6 +225,22 @@ List<int> computeDiplomaticCandidateScores({
           if (ownsInvadableNw && isTribeFaction(game, o.targetFactionId)) {
             s += kEstablishOvertureColonialInvadableOwnerBonus;
           }
+          // FTP-competition incentive (Refs #3758 S10/R11; #3753 R7): when the
+          // active AI is not the current favoured trading partner (highest
+          // GP→seller relation) for a Minor/Tribe target, investing in the
+          // relationship can win the world-market sell-priority tiebreaker, so
+          // the overture is nudged upward. Gated to peace (or no-contact) so it
+          // never overrides a war state. SPEC/ai/phase-planner-architecture.md
+          // § Favoured-trading-partner competition overture.
+          if (isMinorOrTribeFaction(game, o.targetFactionId) &&
+              (rel == null || rel.atPeace) &&
+              _aiTrailsFavouredTradingPartner(
+                game: game,
+                nationId: nationId,
+                targetFactionId: o.targetFactionId,
+              )) {
+            s += kEstablishOvertureFtpCompetitionBonus;
+          }
           break;
         }
       default:
@@ -292,6 +308,36 @@ bool _pairHasScheduledRelationEventThisTurn({
       const <DiplomaticOrder>[];
   for (final order in targetOrders) {
     if (order.targetFactionId == nationId) return true;
+  }
+  return false;
+}
+
+/// Whether some other Great Power currently outranks [nationId] in hidden
+/// relation score with the Minor/Tribe [targetFactionId] — i.e. [nationId] is
+/// not (yet) the favoured trading partner for that seller (Refs #3758 S10/R11;
+/// #3753 R7). The favoured trading partner (highest GP→seller relation) wins
+/// the world-market sell-priority tiebreaker among consulate-holding buyers
+/// (`SPEC/game/world-market.md` § Favored Trading Partner), so a trailing AI
+/// has an incentive to invest in the relationship.
+///
+/// The active AI's own score defaults to [relationScoreNeutral] (50) when no
+/// relation row exists. Each other Great Power contributes a competing score
+/// **only** when it holds an existing relation row with the target (a GP with
+/// no contact contributes none). Returns `false` when [nationId]'s score is
+/// greater than or equal to every other Great Power's score (the AI is already
+/// the favoured partner, ties included). Pure and deterministic over [Game].
+bool _aiTrailsFavouredTradingPartner({
+  required Game game,
+  required String nationId,
+  required String targetFactionId,
+}) {
+  final num ownScore =
+      getRelation(game, nationId, targetFactionId)?.score ??
+      relationScoreNeutral;
+  for (final player in game.players) {
+    if (player.id == nationId) continue;
+    final otherScore = getRelation(game, player.id, targetFactionId)?.score;
+    if (otherScore != null && otherScore > ownScore) return true;
   }
   return false;
 }
