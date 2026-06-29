@@ -11,6 +11,7 @@ import 'world_market_phase_orders.dart';
 import 'world_market_phase_price_discovery.dart';
 import 'world_market_phase_deals.dart';
 import 'world_market_phase_credits.dart';
+import 'world_market_phase_sell_priority.dart';
 import 'world_market_phase_carry_forward.dart';
 import 'world_market_phase_activity.dart';
 
@@ -259,6 +260,13 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final ftpPairKeys = ftpPairKeysFromGame(game);
   final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
 
+  // #3753 R7.3 sell-priority relation tiebreaker input: consulate-holding
+  // buyer relations per Minor/Tribe seller that has an offer this turn.
+  final sellPriorityRelationByMinorTribeSeller = computeSellPriorityRelations(
+    game: game,
+    offersByFactionId: mergedOffersByFactionId,
+  );
+
   final matchInputs = (
     offersByFactionId: mergedOffersByFactionId,
     bidsByFactionId: mergedBidsByFactionId,
@@ -272,6 +280,8 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     purchasedTileIndex: purchasedTileIndex,
     lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
     treasuryByFactionId: treasuryByFactionId,
+    sellPriorityRelationByMinorTribeSeller:
+        sellPriorityRelationByMinorTribeSeller,
   );
   final matchResult = DealMatcher.matchDeals(matchInputs);
 

@@ -103,6 +103,7 @@ DealMatchInputs _matcherInputs({
   purchasedTileIndex: purchasedTileIndex,
   lockRecoverySellerPriorityIds: const {},
   treasuryByFactionId: const {},
+  sellPriorityRelationByMinorTribeSeller: const {},
 );
 
 FilledDeal _otherBuyDeal({
