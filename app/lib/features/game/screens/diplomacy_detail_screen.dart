@@ -147,6 +147,18 @@ class DiplomacyDetailScreen extends ConsumerWidget {
             greatPowerPowerScore(game, humanPlayerId),
           )
         : null;
+    // SPEC/ui/diplomacy-detail-screen.md § Current relation (Refs #3753 R12):
+    // the CURRENT RELATION card shows the same overture/treaty/colony/boycott/
+    // overseas chip cluster as the diplomacy-panel.md row.
+    final DiplomaticStandingChips standingChips = diplomaticStandingChips(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      factionId: factionId,
+      kind: kind,
+      relation: relation,
+      overture: getOverture(game, humanPlayerId, factionId),
+      purchasedTiles: PurchasedTileIndex.fromGame(game),
+    );
 
     return CtGameFeatureScreenShell(
       game: game,
@@ -176,7 +188,11 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                         RelativePowerLine(pct: relativePowerPct),
                         const SizedBox(height: 8),
                       ],
-                      _RelationSummary(relation: relation, l10n: l10n),
+                      _RelationSummary(
+                        relation: relation,
+                        l10n: l10n,
+                        standingChips: standingChips,
+                      ),
                     ],
                   ),
                 ),
@@ -283,10 +299,18 @@ class _DetailCard extends StatelessWidget {
 /// Body of the "Current relation" card. Renders a one-line summary with a
 /// War/Peace state (colored badge label) and the one-word relation label.
 class _RelationSummary extends StatelessWidget {
-  const _RelationSummary({required this.relation, required this.l10n});
+  const _RelationSummary({
+    required this.relation,
+    required this.l10n,
+    this.standingChips = const DiplomaticStandingChips(),
+  });
 
   final DiplomacyRelation? relation;
   final AppLocalizations l10n;
+
+  /// Active overture/treaty/colony/boycott/overseas chips for this faction
+  /// (Refs #3753 R12). Rendered below the relation summary when non-empty.
+  final DiplomaticStandingChips standingChips;
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +337,7 @@ class _RelationSummary extends StatelessWidget {
     // RelationLevel.allied band (no treaty) never shows it.
     final bool showAlliance = relation!.formalAlliance;
 
-    return Wrap(
+    final Widget summaryRow = Wrap(
       spacing: 10,
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -340,6 +364,18 @@ class _RelationSummary extends StatelessWidget {
             ),
           ),
         if (showAlliance) const DiplomacyAllianceBadge(),
+      ],
+    );
+    if (standingChips.isEmpty) {
+      return summaryRow;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        summaryRow,
+        const SizedBox(height: 8),
+        DiplomacyStandingChipCluster(chips: standingChips),
       ],
     );
   }
