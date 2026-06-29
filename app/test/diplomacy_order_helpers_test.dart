@@ -78,6 +78,40 @@ void main() {
         'Establish FTP',
       );
     });
+
+    // Refs #3753 R11 (Break Alliance) / R14 + S14 (Boycott / Revoke Boycott):
+    // the expanded-diplomacy action buttons must surface the labels pinned by
+    // SPEC/ui/diplomacy-panel.md § Per-faction row (Great Power row controls:
+    // ..., Boycott, Revoke Boycott) and the unified break-alliance order.
+    test('formats expanded-diplomacy actions (boycott, break alliance)', () {
+      expect(
+        diplomacyActionLabel(
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.breakAlliance,
+            targetFactionId: 'gp2',
+          ),
+        ),
+        'Break Alliance',
+      );
+      expect(
+        diplomacyActionLabel(
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.boycott,
+            targetFactionId: 'gp2',
+          ),
+        ),
+        'Boycott',
+      );
+      expect(
+        diplomacyActionLabel(
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.revokeBoycott,
+            targetFactionId: 'gp2',
+          ),
+        ),
+        'Revoke Boycott',
+      );
+    });
   });
 
   group('DiplomacyOrderMutations', () {
