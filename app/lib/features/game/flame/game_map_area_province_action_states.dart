@@ -90,6 +90,21 @@ class GameMapAreaProvinceActionStates {
     if (explorerUnits.isEmpty) {
       return (showIcon: true, enabled: false, hasExplorerUnits: false);
     }
+    // Refs #3753 R4/R4b: prospect inside a Minor/Tribe province requires a
+    // Consulate (or higher). The prospect enablement does not flow through the
+    // work-order validator, so apply the shared Consulate gate here to keep the
+    // inline action disabled (rather than enabled-then-rejected) — the overlay
+    // surfaces the rejection tooltip.
+    final prospectOwnerId = game.worldState
+        .tryGetProvince(prefixedProvinceId)
+        ?.ownerId;
+    if (explorerConsulateGateBlocksMinorTribeProvince(
+      game: game,
+      playerId: humanPlayerId,
+      provinceOwnerId: prospectOwnerId,
+    )) {
+      return (showIcon: true, enabled: false, hasExplorerUnits: true);
+    }
     return (showIcon: true, enabled: true, hasExplorerUnits: true);
   }
 
@@ -163,20 +178,6 @@ class GameMapAreaProvinceActionStates {
       return kHiddenExplorerInlineActionState;
     }
 
-    final eligibleTileKeys =
-        cachedExploreEligibleTileKeys ??
-        workTargetSelectionCache?.get(humanPlayerId, kWorkTargetExplore) ??
-        const <String>{};
-    final hasEligibleExploreTarget = eligibleTileKeys.any((tileKey) {
-      final p = tryParseTileKey(tileKey);
-      return p != null &&
-          p.regionId == selectedRegion.regionId &&
-          p.provinceLocalId == tileProvinceId;
-    });
-    if (!hasEligibleExploreTarget) {
-      return kHiddenExplorerInlineActionState;
-    }
-
     final allUnits = <ct_models.Unit>[
       ...game.worldState.oldWorld.units,
       ...game.worldState.newWorld.units,
@@ -190,6 +191,38 @@ class GameMapAreaProvinceActionStates {
               ) ??
               false,
         );
+
+    final eligibleTileKeys =
+        cachedExploreEligibleTileKeys ??
+        workTargetSelectionCache?.get(humanPlayerId, kWorkTargetExplore) ??
+        const <String>{};
+    final hasEligibleExploreTarget = eligibleTileKeys.any((tileKey) {
+      final p = tryParseTileKey(tileKey);
+      return p != null &&
+          p.regionId == selectedRegion.regionId &&
+          p.provinceLocalId == tileProvinceId;
+    });
+    if (!hasEligibleExploreTarget) {
+      // Refs #3753 R4/R4b: when the only blocker is the Consulate gate (a known
+      // Minor/Tribe province with no Consulate filters out every eligible
+      // explore tile), show the inline action disabled (not hidden) so the
+      // overlay can surface the rejection tooltip. Other ineligibility reasons
+      // keep the icon hidden as before.
+      final ownerId = game.worldState.tryGetProvince(prefixedProvinceId)?.ownerId;
+      if (explorerConsulateGateBlocksMinorTribeProvince(
+        game: game,
+        playerId: humanPlayerId,
+        provinceOwnerId: ownerId,
+      )) {
+        return (
+          showIcon: true,
+          enabled: false,
+          hasExplorerUnits: hasExplorerUnits,
+        );
+      }
+      return kHiddenExplorerInlineActionState;
+    }
+
     return (
       showIcon: true,
       enabled: hasExplorerUnits,

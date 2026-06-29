@@ -1293,6 +1293,11 @@ abstract class AppLocalizations {
   /// Tooltip and semantics label for province tile explore shortcut action.
   String get provinceOverlay_tileExploreWithExplorerTooltip;
 
+  /// Tooltip shown on the disabled province tile Explore/Prospect inline actions
+  /// when the issuing Great Power holds no Consulate (or higher) with the owning
+  /// Minor/Tribe (Refs #3753 R4b).
+  String get provinceOverlay_tileConsulateRequiredForExploreTooltip;
+
   /// Tooltip and semantics label for province tile build-improvement shortcut action.
   String get provinceOverlay_tileBuildImprovementTooltip;
 

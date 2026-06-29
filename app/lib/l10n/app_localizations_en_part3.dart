@@ -393,6 +393,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Explore with explorer';
 
   @override
+  String get provinceOverlay_tileConsulateRequiredForExploreTooltip =>
+      'Establish a consulate before exploring or prospecting';
+
+  @override
   String get provinceOverlay_tileBuildImprovementTooltip => 'Build improvement';
 
   @override

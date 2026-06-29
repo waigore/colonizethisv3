@@ -3,6 +3,13 @@ library;
 
 export 'build_rail_work_rules.dart';
 export 'bundled_civilian_work_order.dart';
+// Refs #3753 R4b: the province-overlay UI reuses the Explorer Consulate-gate
+// predicate + rejection reason so the disabled Explore/Prospect tooltip matches
+// the order-engine submission gate (single source of truth).
+export 'diplomatic_access_helpers.dart'
+    show
+        explorerConsulateGateBlocksMinorTribeProvince,
+        kReasonConsulateRequiredForExplore;
 export 'draft_orders_mutations.dart';
 export 'incremental_candidate_validator.dart';
 export 'order_effects_projector.dart';
