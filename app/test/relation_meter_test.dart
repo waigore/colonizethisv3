@@ -4,6 +4,7 @@
 
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show relationMeterStepCount, relationScoreToMeterStep;
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -21,6 +22,8 @@ Finder _activeStep(int step) => find.byKey(
 );
 
 void main() {
+  suppressLogsForTests();
+
   group('relationMeterStepColor', () {
     test('endpoints reuse the canonical danger/success tokens', () {
       expect(relationMeterStepColor(1), EditorialMonoclePalette.danger);
