@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
-    show ftpPairKeysFromGame, getRelation, hasEmbassyOverture;
+    show ftpPairKeysFromGame;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
@@ -10,6 +10,7 @@ import '../turn_resolver_config.dart';
 import 'world_market_phase_orders.dart';
 import 'world_market_phase_price_discovery.dart';
 import 'world_market_phase_deals.dart';
+import 'world_market_phase_credits.dart';
 import 'world_market_phase_carry_forward.dart';
 import 'world_market_phase_activity.dart';
 
@@ -276,37 +277,14 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
 
   // #3753 R8.3 embassy kickbacks apply only to Minor/Tribe sellers (overseas
   // profit-share is a Minor/Tribe-sale concept; GP–GP sales are excluded even
-  // though GPs hold auto-embassies). Build the eligible-source set once and a
-  // per-source cache of embassy-holding GPs and their decimal relation scores
-  // so the credits aggregator stays a deterministic pure function.
-  final minorTribeSellerIds = <String>{
-    for (final m in game.minorNations) m.id,
-    for (final t in game.tribes) t.id,
-  };
-  final embassyRelationsCache = <String, Map<String, num>>{};
-  Map<String, num> embassyGpRelationsFor(String sourceFactionId) {
-    if (!minorTribeSellerIds.contains(sourceFactionId)) {
-      return const <String, num>{};
-    }
-    final cached = embassyRelationsCache[sourceFactionId];
-    if (cached != null) return cached;
-    final relations = <String, num>{};
-    for (final player in game.players) {
-      if (player.id == sourceFactionId) continue;
-      if (!hasEmbassyOverture(game, player.id, sourceFactionId)) continue;
-      relations[player.id] =
-          getRelation(game, player.id, sourceFactionId)?.score ?? 0;
-    }
-    embassyRelationsCache[sourceFactionId] = relations;
-    return relations;
-  }
-
-  final firstRightCredits = computeFirstRightCredits(
+  // though GPs hold auto-embassies). The two-tier credit computation (tile
+  // owner full share + per-embassy kickback) is delegated to
+  // [computeWorldMarketFirstRightCredits] to keep this handler within the
+  // function-size budget.
+  final firstRightCredits = computeWorldMarketFirstRightCredits(
+    game: game,
     filledDeals: matchResult.filledDeals,
     purchasedTileIndex: purchasedTileIndex,
-    relationScoreFor: (owningGpId, sourceFactionId) =>
-        getRelation(game, owningGpId, sourceFactionId)?.score ?? 0,
-    embassyGpRelationsFor: embassyGpRelationsFor,
   );
 
   final lockRecoveryLiquidityCommodityId =
