@@ -273,6 +273,16 @@ typedef DealMatchInputs = ({
   // (legacy ordering). Absent sellers (e.g. all GP sellers) keep default
   // ordering.
   Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller,
+
+  // #3753 R6 boycott colony trade embargo. Canonical `pairKey` keys
+  // (`DealMatcher.pairKey`, "min|max") for every `(colonyTribeId,
+  // boycottedTargetGpId)` pair derived from `Game.boycottStates` ×
+  // `Game.colonyStates` at phase start. A match attempt whose
+  // `pairKey(sellerFactionId, buyerFactionId)` is present is skipped (no
+  // `FilledDeal`; both orders carry forward), blocking all trade between a
+  // boycotted GP and the issuer's colony Tribes in both directions. An empty
+  // set disables the exclusion (legacy behavior — identical matching).
+  Set<String> boycottBlockedPairKeys,
 });
 
 class DealMatcher {
@@ -286,6 +296,7 @@ class DealMatcher {
 For each commodity that appears in any offer or bid (commodities iterated in alphabetical id order for determinism):
 
 1. Collect all offers as `(sellerFactionId, TradeOrder)` entries; collect all bids as `(buyerFactionId, TradeOrder)` entries.
+1a. **Boycott exclusion (#3753 R6).** Every match attempt in the FRR pre-pass and both tier passes first checks `boycottBlockedPairKeys`: when it contains `pairKey(sellerFactionId, buyerFactionId)`, the match is skipped and no `FilledDeal` is emitted for that offer↔bid pair (both orders retain their remaining quantity and carry forward). This blocks all trade between a boycotted Great Power and the issuing GP's colony Tribes in both directions and is independent of FTP, FRR, and the sell-priority tiebreaker. An empty set is a no-op (legacy matching).
 2. **First Right of Refusal pre-pass (issue #2992 D2).** When `purchasedTileIndex` is non-`null` and non-empty, iterate offers in `(sellerFactionId, faction-local index)` order. For each offer whose `TradeOrder.originTileKey` resolves through `purchasedTileIndex.attributionForTileKey`, look up the `owningGpId`. Iterate that owning GP's bids for the same commodity in `factionLocalIndex` order and attempt fills **before** any priority-tier loop. Each emitted `FilledDeal` carries `isFirstRightOfRefusalMatch: true` and ignores FTP membership for this match. Buyer cargo (`remainingCargoByBuyerFactionId`) is decremented per match. The pre-pass is a no-op when `purchasedTileIndex` is `null` (preserves the legacy contract for callers that have not yet wired FRR).
 3. Group remaining entries by integer `priority`. Process priority tiers in **ascending integer order** (tier `1` first — lower integer is higher precedence).
 4. Inside each tier, run two passes:
@@ -475,6 +486,8 @@ The pure helpers (`computeNextPrice`, `computeMarketActivity`, `DealMatcher.matc
 - **Sell-priority relation tiebreaker — higher relation wins (#3753 R7.3).** Given Minor `M` auto-offers `5` units of commodity `c` (priority 1), Great Powers `gpHigh` and `gpLow` each submit a priority-1 bid for `5` units of `c` with sufficient cargo and treasury, both hold a Consulate (or higher) with `M`, and `gpHigh`'s relation with `M` (`80.0`) exceeds `gpLow`'s (`40.0`), when phase 13 runs, then the single emitted `FilledDeal` of `5` units has `buyerFactionId == 'gpHigh'` (highest-relation consulate-holding buyer wins the limited supply) and `gpLow`'s bid carries forward in full.
 - **Sell-priority tiebreaker — consulate-less buyer falls back (#3753 R7.3).** Given the prior scenario except `gpHigh` holds **no** Consulate with `M` (and `gpLow` does), when phase 13 runs, then `gpLow` (the only consulate-holding buyer) wins the `5` units regardless of `gpHigh`'s higher relation, because the relation tiebreaker orders consulate-holding buyers ahead of consulate-less buyers.
 - **Sell-priority tiebreaker — GP seller unaffected (#3753 R7.4).** Given a Great-Power seller `gpSell` and two GP buyers at the same priority tier, when phase 13 runs, then buyer ordering follows the existing FTP-then-submitter-id ordering and the relation tiebreaker is not applied (it is restricted to Minor/Tribe sellers).
+
+- **Boycott blocks colony↔target trade (#3753 R6).** Given `boycottBlockedPairKeys` contains `pairKey(T, B)` (Tribe `T` is a colony of the issuer, `B` is the boycotted Great Power), an offer from `T` and a bid from `B` for the same commodity at the same priority tier, when phase 13 runs, then the matcher emits no `FilledDeal` between `T` and `B` and both orders carry forward unfilled; a bid from a third GP `D` (whose pair `pairKey(T, D)` is absent from the set) still fills against `T`'s offer.
 - **First-right-of-refusal overseas profit (tile-owner full share, #3753 R8.2).** Given Great Power A owns a tile purchased from Minor M (hidden relation score `R = 75`), GP A submits no bid, and GP B buys 10 units of M's commodity at `P_old = 20`, when phase 13 runs, then `WorldMarketState.activity[c].deals` contains the GP B fill, the system credits GP A treasury by exactly `10 × 20 × (75 / 100) = 150` (full relation-linear share, no 40% cap), and the remaining `10 × 20 − 150 = 50` is removed via the treasury sink.
 - **Overseas profit embassy kickback (#3753 R8.3).** Given the prior scenario plus a third Great Power C that holds an Embassy with M (relation `R = 50`) and owns no tile of M, when phase 13 runs, then the system additionally credits GP C treasury by exactly `10 × 20 × (50 / 100) × 0.10 = 10`, funded from the treasury-sink remainder and not deducted from the seller's proceeds.
 - **Deterministic matching.** Given two phase-13 runs with identical merged-order input, identical `WorldMarketState`, and identical seeds, when both runs execute Step C, then both emit byte-identical sequences of `FilledDeal` entries (same order, same quantities, same buyers/sellers) and produce byte-identical `MarketActivity` payloads.
