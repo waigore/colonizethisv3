@@ -35,39 +35,73 @@ turn-resolution document is `SPEC/program/world-market-resolution.md`
 
 ### Profit formula (D3)
 
-Let `relationScore ∈ [0, 100]` be the owning GP's hidden relation score
-with the source faction (`SPEC/game/diplomacy.md` § Relation Model).
+> **Superseded by #3753 R8 (two-tier overseas profit-share).** The former
+> `profitRate = (relationScore / 100) × 0.40` single-tier cap is **retired**.
+> The tile-owning GP now receives the **full** relation-linear share (no 40%
+> cap), and every **other** embassy-holding GP receives a **10% kickback** of
+> the relation portion. The favoured trading partner (R7.1), first right of
+> refusal bid priority (R7.2), and overseas profit-share (R8) are three
+> independent concepts.
+
+Let `relationScore ∈ [0, 100]` be a GP's hidden relation score with the
+selling Minor/Tribe source faction (`SPEC/game/diplomacy.md` § Relation Model).
+
+**Tile-owner full share (R8.2).** The GP in
+`purchasedTilesByTileKey[originTileKey]` receives:
 
 ```
-profitRate     = clamp((relationScore / 100) * 0.40, 0.0, 0.40)
+profitRate     = clamp(relationScore / 100, 0.0, 1.0)
 profitTreasury = filledQuantity * pricePerUnit * profitRate
 ```
+
+**Embassy kickback (R8.3).** Every GP that holds an Embassy with the selling
+Minor/Tribe and does **not** own the sourcing tile receives:
+
+```
+kickback = filledQuantity * pricePerUnit * (relationScore / 100)
+                          * kEmbassyOverseasProfitKickbackMultiplier
+```
+
+i.e. 10% of that GP's relation portion of the gross sale.
 
 - `pricePerUnit` is the matched **clear price** for this deal in treasury
   units (deterministic per #2989's price-discovery output).
 - `filledQuantity` is the units transferred for this match.
+- The tile-owning GP's Embassy requirement (R8.2) is enforced upstream at
+  `purchase_land` (a land purchase already requires an Embassy per #3753 R2),
+  so the credit path keys on tile ownership.
+- A GP that owns the sourcing tile receives only the tile-owner full share for
+  that deal, **never** an additional embassy kickback (R8.5).
 - Out-of-range inputs (negative quantity, negative price, score < 0 or
   > 100) are clamped to zero defensively; production callers should not
   rely on negative inputs.
 
 ### Treasury transfer (D4)
 
-For each filled deal that is FRR-eligible:
+For each filled deal whose seller is a Minor/Tribe:
 
 1. The **buyer GP** pays the full `filledQuantity * pricePerUnit` per the
    standard market clear (no double charge).
-2. The **owning GP** is credited `profitTreasury` from that payment.
-3. The **remainder** (`filledQuantity * pricePerUnit - profitTreasury`)
-   is the minor/tribe treasury sink (no faction credited), matching the
-   GDD's auto-sell sink rule for minor/tribe sellers.
+2. When the deal is attributed to a purchased tile and the buyer is **not**
+   the tile owner, the **tile-owning GP** is credited `profitTreasury`
+   (R8.2). Only this tile-owner share is **deducted from the seller's
+   proceeds** before the treasury sink (R8.4).
+3. Every embassy-holding GP that does **not** own the sourcing tile is
+   credited its `kickback` (R8.3). Kickbacks are **not** deducted from the
+   seller's proceeds; they are funded from the treasury-sink remainder
+   (same side-flow family as existing minor/tribe auto-sell economics).
+4. The **remainder** is the minor/tribe treasury sink (no faction credited),
+   matching the GDD's auto-sell sink rule for minor/tribe sellers.
 
-### Relation 0 / equal to owner
+### Relation 0 / equal to owner / no purchased tile
 
-- `relationScore == 0` ⇒ `profitRate == 0` ⇒ no FRR credit; the deal
-  resolves as a plain minor/tribe auto-sell.
-- Buyer == owning GP ⇒ FRR is not invoked (no overseas profit on
-  domestic purchases, even if the owning GP itself uses the purchased
-  tile).
+- `relationScore == 0` ⇒ that GP's share/kickback is `0`; the relevant
+  portion resolves as a plain minor/tribe auto-sell.
+- Buyer == owning GP ⇒ no tile-owner overseas profit on that deal (no
+  overseas profit on domestic purchases). Embassy kickbacks to **other**
+  embassy-holding GPs still apply (R8.7).
+- No purchased-tile attribution (R8.6) ⇒ no tile-owner share, but every
+  embassy-holding GP still receives its kickback on the minor/tribe sale.
 
 ### Determinism
 
@@ -87,8 +121,9 @@ For each filled deal that is FRR-eligible:
   exported as `computeFirstRightProfit({relationScore, filledQuantity,
   pricePerUnit}) → FirstRightProfit(profitRate, profitTreasury)`.
 - **Constants:**
-  `kFirstRightMaxProfitRate = 0.40` and
-  `kFirstRightRelationScoreMax = 100`.
+  `kFirstRightMaxProfitRate = 1.0` (tile-owner full relation-linear share, no
+  40% cap per #3753 R8.2), `kFirstRightRelationScoreMax = 100`, and
+  `kEmbassyOverseasProfitKickbackMultiplier = 0.10` (#3753 R8.3/R8.8).
 - **Purchased-tile index (D1):**
   `packages/colonizethis_logic/lib/src/economy/world_market/purchased_tile_index.dart`,
   exported as `PurchasedTileIndex.fromGame(game) →
@@ -128,39 +163,45 @@ For each filled deal that is FRR-eligible:
   (the D2 path is never double-credited), and calls
   [computeFirstRightProfit]. Deterministic, no logger / RNG / `Game`
   access (15-second budget safe).
-- **D4 caller (phase handler)** lands with #2990 B3. The expected call
-  site builds `PurchasedTileIndex.fromGame(game)`, runs
-  `DealMatcher.matchDeals` with that index, then
-  `computeFirstRightCredits` on the matcher output, and credits each
-  owning GP's treasury by the aggregated amount; the remainder of the
-  buyer's payment is the minor/tribe sink per
+- **D4 caller (phase handler)** lands with #2990 B3. The call site builds
+  `PurchasedTileIndex.fromGame(game)`, runs `DealMatcher.matchDeals` with that
+  index, then `computeFirstRightCredits` on the matcher output. Per #3753 R8 it
+  supplies an embassy-relations callback that enumerates, for each selling
+  Minor/Tribe source faction, the GPs holding an Embassy with it and their
+  relation scores. It credits each owning GP's treasury by the aggregated
+  tile-owner full share **and** each embassy-holding non-owner GP its kickback;
+  the remainder of the buyer's payment is the minor/tribe sink per
   `SPEC/game/world-market.md` Requirement 9.
 
 ---
 
 ## Acceptance criteria
 
-### Profit helper (D3)
+### Profit helper (D3) — #3753 R8 two-tier
 
 - **AC-1 — Lower bound:** Given `relationScore == 0` and any `filledQuantity > 0`,
-  `pricePerUnit > 0`, when the helper is called, then it returns
+  `pricePerUnit > 0`, when the tile-owner helper is called, then it returns
   `FirstRightProfit.zero` (`profitRate == 0.0`, `profitTreasury == 0.0`).
-- **AC-2 — Upper bound:** Given `relationScore == 100`, `filledQuantity == 4`,
-  `pricePerUnit == 2.5`, when the helper is called, then `profitRate == 0.40`
-  and `profitTreasury == 4.0` (i.e. `4 * 2.5 * 0.40`).
+- **AC-2 — Upper bound (full share):** Given `relationScore == 100`,
+  `filledQuantity == 4`, `pricePerUnit == 2.5`, when the tile-owner helper is
+  called, then `profitRate == 1.0` and `profitTreasury == 10.0` (i.e.
+  `4 * 2.5 * 1.0`, the full sale value at max relation — no 40% cap).
 - **AC-3 — Mid sample:** Given `relationScore == 75`, `filledQuantity == 10`,
-  `pricePerUnit == 5.0`, when the helper is called, then `profitRate == 0.30`
-  and `profitTreasury == 15.0`.
+  `pricePerUnit == 5.0`, when the tile-owner helper is called, then
+  `profitRate == 0.75` and `profitTreasury == 37.5`.
 - **AC-4 — Defensive clamping:** Given any negative `filledQuantity` or
   negative `pricePerUnit`, when the helper is called, then it returns
   `FirstRightProfit.zero` regardless of relation score.
 - **AC-5 — Range invariant:** For every integer relation score in
-  `[0, 100]`, the resulting `profitRate` is in `[0.0, 0.40]` and
+  `[0, 100]`, the resulting tile-owner `profitRate` is in `[0.0, 1.0]` and
   monotonically non-decreasing in relation score.
-- **AC-6 — No-bid path only:** D2/D4 callers must invoke the helper
-  only when the buyer is **not** the owning GP for the purchased tile;
-  unit tests for D2/D4 (in #2989's deal-matcher / #2991's transfers)
-  must cover this gate.
+- **AC-6 — No-bid path only:** the tile-owner share is credited only when the
+  buyer is **not** the owning GP for the purchased tile; unit tests for
+  D2/D4 must cover this gate.
+- **AC-7 — Embassy kickback:** Given `relationScore == 100`,
+  `filledQuantity == 10`, `pricePerUnit == 20.0`, when the embassy-kickback
+  helper is called, then it returns `10 * 20 * 1.0 * 0.10 == 20.0`; given
+  `relationScore == 50` the kickback is `10 * 20 * 0.5 * 0.10 == 10.0`.
 
 ### Purchased-tile index (D1)
 
@@ -261,14 +302,23 @@ Tested in
 Tested in
 `packages/colonizethis_logic/test/economy/world_market/first_right_credits_test.dart`.
 
-- **AC-D4-1 — Positive credit.** Given attribution `{tileKey: 'k1',
+- **AC-D4-1 — Positive credit (full share).** Given attribution `{tileKey: 'k1',
   owningGpId: 'gpA', sourceFactionId: 'M1'}`, relation `gpA↔M1 = 75`,
   and a `FilledDeal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0,
   sellerOriginTileKey: 'k1')`, when `computeFirstRightCredits` runs,
   then one `FirstRightDealCredit(owningGpId: 'gpA', relationScore: 75,
-  profit.profitRate: 0.30, profit.profitTreasury: 60.0)` is produced,
-  `treasuryCreditByGpId == {'gpA': 60.0}`, and
-  `totalProfitTreasury == 60.0`.
+  profit.profitRate: 0.75, profit.profitTreasury: 150.0)` is produced,
+  `treasuryCreditByGpId == {'gpA': 150.0}`, and
+  `totalProfitTreasury == 150.0`.
+- **AC-D4-7 — Embassy kickback to non-owner.** Given the AC-D4-1 inputs plus
+  an embassy-holding GP `gpC` (relation `gpC↔M1 = 50`) that owns no tile, when
+  `computeFirstRightCredits` runs with the embassy-relations callback, then
+  `gpC` is credited `10 * 20 * 0.5 * 0.10 == 10.0` as an embassy kickback,
+  while the tile owner `gpA` receives only its full share (no kickback).
+- **AC-D4-8 — Kickback without purchased tile (R8.6).** Given a Minor/Tribe
+  sale with **no** purchased-tile attribution and an embassy-holding GP `gpC`
+  (relation 50), when the helper runs, then no tile-owner share is paid and
+  `gpC` is credited the `10%` relation-portion kickback.
 - **AC-D4-2 — Buyer == owning GP excluded.** Given a matcher-emitted
   D2 FRR-match deal (`buyerFactionId == owningGpId`,
   `isFirstRightOfRefusalMatch == true`), when the helper runs, then no
@@ -281,12 +331,13 @@ Tested in
 - **AC-D4-4 — Out-of-scope skipped.** Given any of
   `sellerOriginTileKey == null`, unmapped tile key, `quantity <= 0`,
   or `pricePerUnit <= 0`, then the deal yields no credit.
-- **AC-D4-5 — Multi-GP aggregation.** Given attributions
+- **AC-D4-5 — Multi-GP aggregation (full share).** Given attributions
   `{k1: gpA/M1, k2: gpB/M1, k3: gpA/M2}`, relations
   `(gpA↔M1=100, gpB↔M1=50, gpA↔M2=25)`, and three deals to buyer
-  `gpC`: `(k1:10@10.0, k2:4@5.0, k3:2@3.0)`, then
-  `treasuryCreditByGpId == {'gpA': 40.6, 'gpB': 4.0}` and
-  `totalProfitTreasury == 44.6`.
+  `gpC`: `(k1:10@10.0, k2:4@5.0, k3:2@3.0)`, then (full relation-linear
+  tile-owner shares) `treasuryCreditByGpId == {'gpA': 101.5, 'gpB': 10.0}`
+  and `totalProfitTreasury == 111.5` (`gpA = 10*10*1.0 + 2*3*0.25 = 101.5`,
+  `gpB = 4*5*0.5 = 10.0`).
 - **AC-D4-6 — Null or empty index returns empty result.** Given any
   non-empty `filledDeals` plus a `null` or empty `purchasedTileIndex`,
   then the helper returns `FirstRightCreditsResult.empty`.
@@ -296,9 +347,11 @@ Tested in
 The five numbered issue-body ACs of
 [#2992](https://github.com/waigore/colonizethisv3/issues/2992) (#1
 priority override above tiers AND FTP, #2 relation 75 mid-sample
-credit, #3 relation 100 upper-bound 40% credit, #4 relation 0
+credit, #3 relation 100 upper-bound credit, #4 relation 0
 zero-credit + buyer == owning GP exclusion, #5 multi-GP attribution
 without cross-credit) are mapped 1:1 to `group(...)`s in
-`packages/colonizethis_logic/test/economy/world_market/first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`.
+`packages/colonizethis_economy/test/economy/world_market/first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`.
 The per-component AC tests above remain authoritative; D5 is the
-`verify-github-issue` traceability layer.
+`verify-github-issue` traceability layer. **#3753 R8 supersedes the #2992
+overseas-profit amounts** (tile-owner full relation-linear share, no 40%
+cap, plus embassy kickback); the D5 credit groups reflect the R8 figures.

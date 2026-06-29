@@ -16,13 +16,14 @@
 //  `turn/world_market_phase_first_right_credit_test.dart`)
 // continue to exercise the broader SPEC AC table.
 //
-// Issue AC → group mapping
+// Issue AC → group mapping (#3753 R8 supersedes the #2992 40%-cap amounts:
+// tile owner now receives the full relation-linear share, no 40% cap):
 //  AC #1 — Owning GP's bid wins purchased-tile offer above every
 //          priority tier AND above FTP (DealMatcher).
 //  AC #2 — Other-GP buy at relation 75 credits owning GP exactly
-//          `10 * 20 * 0.75 * 0.40 = 60` treasury (credits helper).
-//  AC #3 — Other-GP buy at relation 100 credits exactly 40% of sale
-//          value (upper-bound profit rate).
+//          `10 * 20 * 0.75 = 150` treasury (full share, credits helper).
+//  AC #3 — Other-GP buy at relation 100 credits exactly 100% of sale
+//          value (upper-bound full share, no 40% cap).
 //  AC #4 — Other-GP buy at relation 0 credits 0 treasury (lower bound;
 //          also: D2 FRR-match path excluded from D4 aggregation).
 //  AC #5 — Multi-GP attribution: each owning GP credited only for own
@@ -102,6 +103,7 @@ DealMatchInputs _matcherInputs({
   purchasedTileIndex: purchasedTileIndex,
   lockRecoverySellerPriorityIds: const {},
   treasuryByFactionId: const {},
+  sellPriorityRelationByMinorTribeSeller: const {},
 );
 
 FilledDeal _otherBuyDeal({
@@ -194,8 +196,8 @@ void main() {
     });
   });
 
-  group('AC #2 — relation 75 credits 10*20*0.30 = 60 treasury', () {
-    test('credits helper produces rate 0.30 + treasury 60.0 for gpA', () {
+  group('AC #2 — relation 75 credits 10*20*0.75 = 150 treasury (full)', () {
+    test('credits helper produces rate 0.75 + treasury 150.0 for gpA', () {
       final result = computeFirstRightCredits(
         filledDeals: [_otherBuyDeal()],
         purchasedTileIndex: _index([_attr(_tileK1, _gpA, _minorM1)]),
@@ -206,16 +208,16 @@ void main() {
       expect(credit.owningGpId, _gpA);
       expect(credit.sourceFactionId, _minorM1);
       expect(credit.relationScore, 75);
-      expect(credit.profit.profitRate, closeTo(0.30, 1e-12));
-      expect(credit.profit.profitTreasury, closeTo(60.0, 1e-12));
-      expect(result.treasuryCreditByGpId[_gpA], closeTo(60.0, 1e-12));
-      expect(result.totalProfitTreasury, closeTo(60.0, 1e-12));
+      expect(credit.profit.profitRate, closeTo(0.75, 1e-12));
+      expect(credit.profit.profitTreasury, closeTo(150.0, 1e-12));
+      expect(result.treasuryCreditByGpId[_gpA], closeTo(150.0, 1e-12));
+      expect(result.totalProfitTreasury, closeTo(150.0, 1e-12));
     });
   });
 
-  group('AC #3 — relation 100 credits exactly 40% of sale value', () {
-    test('credits helper produces rate kFirstRightMaxProfitRate (0.40) and '
-        'treasury == 0.40 * quantity * pricePerUnit', () {
+  group('AC #3 — relation 100 credits exactly 100% of sale value', () {
+    test('credits helper produces rate kFirstRightMaxProfitRate (1.0) and '
+        'treasury == quantity * pricePerUnit (full share)', () {
       final result = computeFirstRightCredits(
         filledDeals: [_otherBuyDeal(quantity: 5, pricePerUnit: 8.0)],
         purchasedTileIndex: _index([_attr(_tileK1, _gpA, _minorM1)]),
@@ -226,9 +228,9 @@ void main() {
         result.creditedDeals.single.profit.profitRate,
         kFirstRightMaxProfitRate,
       );
-      // 5 * 8 * 0.40 = 16.0 (exactly 40% of the 40.0 sale value).
-      expect(result.totalProfitTreasury, closeTo(16.0, 1e-12));
-      expect(result.treasuryCreditByGpId[_gpA], closeTo(16.0, 1e-12));
+      // 5 * 8 * 1.0 = 40.0 (full relation-linear share, no 40% cap).
+      expect(result.totalProfitTreasury, closeTo(40.0, 1e-12));
+      expect(result.treasuryCreditByGpId[_gpA], closeTo(40.0, 1e-12));
     });
   });
 
@@ -270,8 +272,8 @@ void main() {
   });
 
   group('AC #5 — multi-GP attribution, no cross-credit', () {
-    test('k1 (gpA, relation 100) + k2 (gpB, relation 50) → gpA 24.0, gpB '
-        '8.0; neither GP is credited for the other GP\'s purchased tile', () {
+    test('k1 (gpA, relation 100) + k2 (gpB, relation 50) → gpA 60.0, gpB '
+        '20.0; neither GP is credited for the other GP\'s purchased tile', () {
       final result = computeFirstRightCredits(
         filledDeals: [
           _otherBuyDeal(
@@ -301,16 +303,16 @@ void main() {
         result.treasuryCreditByGpId.keys,
         containsAll(<String>[_gpA, _gpB]),
       );
-      // gpA: 6*10*0.40 = 24.0 (k1 only, never credited for k2)
-      expect(result.treasuryCreditByGpId[_gpA], closeTo(24.0, 1e-12));
-      // gpB: 4*10*0.20 = 8.0 (k2 only, never credited for k1)
-      expect(result.treasuryCreditByGpId[_gpB], closeTo(8.0, 1e-12));
-      expect(result.totalProfitTreasury, closeTo(32.0, 1e-12));
+      // gpA: 6*10*1.0 = 60.0 (k1 only, never credited for k2)
+      expect(result.treasuryCreditByGpId[_gpA], closeTo(60.0, 1e-12));
+      // gpB: 4*10*0.50 = 20.0 (k2 only, never credited for k1)
+      expect(result.treasuryCreditByGpId[_gpB], closeTo(20.0, 1e-12));
+      expect(result.totalProfitTreasury, closeTo(80.0, 1e-12));
     });
 
     test(
       'same owning GP across two minors aggregates per source relation '
-      'independently (k1@M1 relation 100 + k3@M2 relation 25 → gpA 18.0)',
+      'independently (k1@M1 relation 100 + k3@M2 relation 25 → gpA 45.0)',
       () {
         final result = computeFirstRightCredits(
           filledDeals: [
@@ -339,11 +341,11 @@ void main() {
             return 0;
           },
         );
-        // k1: 5*8*0.40 = 16.0 + k3: 2*10*0.10 = 2.0 = 18.0
+        // k1: 5*8*1.0 = 40.0 + k3: 2*10*0.25 = 5.0 = 45.0
         expect(result.creditedDeals, hasLength(2));
         expect(result.treasuryCreditByGpId.keys, [_gpA]);
-        expect(result.treasuryCreditByGpId[_gpA], closeTo(18.0, 1e-12));
-        expect(result.totalProfitTreasury, closeTo(18.0, 1e-12));
+        expect(result.treasuryCreditByGpId[_gpA], closeTo(45.0, 1e-12));
+        expect(result.totalProfitTreasury, closeTo(45.0, 1e-12));
       },
     );
   });

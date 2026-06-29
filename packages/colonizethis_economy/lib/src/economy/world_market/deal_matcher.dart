@@ -64,6 +64,17 @@ typedef DealMatchInputs = ({
 
   /// Treasury at phase start for lock-recovery sub-ordering (poorest first).
   Map<String, int> treasuryByFactionId,
+
+  /// #3753 R7.3 sell-priority relation tiebreaker. Maps a Minor/Tribe seller
+  /// faction id to the consulate-holding (or higher) buyer GPs and their
+  /// relation score with that seller (`SPEC/game/world-market.md` §
+  /// Sell-priority relation tiebreaker). When an offer's `sellerFactionId`
+  /// is present, its tier-bids are reordered so consulate-holding buyers are
+  /// served first by descending relation (ties by ascending buyer faction id,
+  /// then faction-local index), followed by consulate-less buyers in default
+  /// order. An empty map (or a seller absent from it — e.g. all GP sellers)
+  /// preserves the legacy ordering.
+  Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller,
 });
 
 /// Internal mutable bookkeeping for a single order participating in matching.
@@ -210,6 +221,8 @@ class DealMatcher {
             commodityId: commodityId,
             pricePerUnit: price,
             ftpPairKeys: inputs.ftpPairKeys,
+            sellPriorityRelationByMinorTribeSeller:
+                inputs.sellPriorityRelationByMinorTribeSeller,
             remainingCargo: remainingCargo,
             remainingTreasury: remainingTreasury,
             filledOut: filled,

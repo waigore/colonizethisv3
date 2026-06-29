@@ -102,6 +102,18 @@ const int relationScoreNeutral = 50;
 /// SPEC/game/diplomacy.md § Relation Model — Per-turn relation decay.
 const double relationDecayPerTurn = 4.0;
 
+/// Base additive trade-deal relation boost (Refs #3753 R10): a faction pair
+/// that completed at least one world-market trade deal (involving at least one
+/// Great Power) the previous turn gains this much, applied in the Diplomacy
+/// phase before per-turn decay. Volume-independent and applied once per pair
+/// per turn. SPEC/game/diplomacy.md § Relation Model — Trade-deal relation boost.
+const double tradeDealRelationBoostBase = 2.0;
+
+/// Additional trade-deal relation boost when an Embassy is in effect between the
+/// trading parties (Refs #3753 R10 — `+0.4`, i.e. 20% of the base). Added on top
+/// of [tradeDealRelationBoostBase]. SPEC/game/diplomacy.md § Relation Model.
+const double tradeDealRelationBoostEmbassyBonus = 0.4;
+
 /// Level thresholds (inclusive max per band): Hostile ]0,25], Neutral ]25,50], Friendly ]50,75], Allied ]75,100].
 const int relationScoreLevelHostileMax = 25;
 const int relationScoreLevelNeutralMax = 50;
@@ -369,6 +381,17 @@ OvertureState? getOverture(Game game, String gpId, String targetId) {
 bool hasEmbassyOverture(Game game, String gpId, String targetId) {
   final o = getOverture(game, gpId, targetId);
   return o != null && o.hasEmbassy;
+}
+
+/// Consulate-tier (or higher) overture from [gpId] toward [targetId].
+///
+/// Gate for the #3753 R7.3 world-market sell-priority relation tiebreaker
+/// (`SPEC/game/world-market.md` § Sell-priority relation tiebreaker): only
+/// buyers holding at least a `tradeConsulate` overture with a Minor/Tribe
+/// seller participate in the relation-score ordering.
+bool hasConsulateOverture(Game game, String gpId, String targetId) {
+  final o = getOverture(game, gpId, targetId);
+  return o != null && o.hasConsulate;
 }
 
 /// Bilateral FTP active between [factionId1] and [factionId2].

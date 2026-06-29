@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
-    show ftpPairKeysFromGame, getRelation;
+    show ftpPairKeysFromGame;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
@@ -10,6 +10,8 @@ import '../turn_resolver_config.dart';
 import 'world_market_phase_orders.dart';
 import 'world_market_phase_price_discovery.dart';
 import 'world_market_phase_deals.dart';
+import 'world_market_phase_credits.dart';
+import 'world_market_phase_sell_priority.dart';
 import 'world_market_phase_carry_forward.dart';
 import 'world_market_phase_activity.dart';
 
@@ -60,11 +62,12 @@ import 'world_market_phase_activity.dart';
 /// 5. Applies transfers: buyer treasury debit + seller treasury credit (GP
 ///    sellers only) and stockpile delta on both sides. Minor/tribe sellers
 ///    remain a treasury sink (no faction credited) per
-///    `SPEC/game/world-market.md` Requirement 9; the **owning GP
-///    overseas-profit credit** (Refs #2992 D4) is applied additively
-///    afterward via [computeFirstRightCredits], using the per-GP relation
-///    score with the source minor/tribe (clamped 0–100) and the
-///    `(relationScore / 100) * 0.40` rate per
+///    `SPEC/game/world-market.md` Requirement 9; the **two-tier overseas
+///    profit-share** (Refs #2992 D4 + #3753 R8) is applied additively
+///    afterward via [computeFirstRightCredits]: the tile-owning GP receives
+///    the **full** relation-linear share (`relationScore / 100`, no 40% cap,
+///    R8.2) and every other embassy-holding GP receives a 10% kickback of its
+///    relation portion (R8.3) per
 ///    `SPEC/game/world-market-first-right-of-refusal.md` § Treasury
 ///    transfer (D4).
 /// 6. Recomputes per-commodity prices via [PriceDiscovery.computeNextPrice]
@@ -157,50 +160,25 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
           ],
         );
 
-  // Compute start-of-phase trade cargo capacity and stockpile per GP. These
-  // values gate (a) carry-forward re-validation per
+  // Compute start-of-phase trade cargo capacity, stockpile, raw treasury, and
+  // per-buyer treasury budget per GP in a single player pass (Refs #3565).
+  // These values gate (a) carry-forward re-validation per
   // `SPEC/program/world-market-resolution.md` § Step A.3 and (b) the
   // matcher's downstream cargo cap. Minor/tribe sellers are not GPs and
   // are absent from these maps, which is intentional — carry-forwards are
   // only re-validated for known GP factions; unknown faction ids fall
   // through unchanged for now (no upstream owner to re-check), matching
   // the matcher's GP-only validation surface.
-  final fleetsByIdStartOfPhase = fleetsByIdForWorld(game.worldState);
-  final tradeCapacityByFactionId = <String, int>{};
-  final stockpileByFactionId = <String, Stockpile>{};
-  // Raw per-GP treasury (unclamped) fed to the deal matcher's settlement.
-  // Built in the same player pass as the maps above to avoid a second full
-  // iteration (Refs #3565). Minor/tribe sellers are intentionally absent —
-  // only GP factions carry a settlement treasury here.
-  final treasuryByFactionId = <String, int>{};
-  // Per-buyer treasury budget passed to the deal matcher (Refs #3115).
-  // Uses `Player.treasury` at phase 13 start clamped at `0` for negative
-  // balances. Phase 13 runs after phase 12 Build/Work so this value
-  // already reflects earlier-phase debits per
-  // `SPEC/program/world-market-resolution.md` § Step C.
-  final treasuryBudgetByBuyerFactionId = <String, int>{};
-  final extractionTonnageByPlayerId =
-      acc.overseasExtractionShippedTonnageByPlayerId;
-  for (final player in gameForMarket.players) {
-    stockpileByFactionId[player.id] = player.stockpile;
-    final homeFleetHolds = cargoHoldsForHomeFleet(
-      gameForMarket,
-      player.id,
-      fleetsById: fleetsByIdStartOfPhase,
-    );
-    final shippedByExtraction = extractionTonnageByPlayerId[player.id] ?? 0;
-    final tradeCapacity = homeFleetHolds - shippedByExtraction;
-    tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
-    treasuryBudgetByBuyerFactionId[player.id] = player.treasury > 0
-        ? player.treasury
-        : 0;
-    treasuryByFactionId[player.id] = player.treasury;
-  }
-  for (final minorId in lockRecoveryMinorBidsByFactionId.keys) {
-    tradeCapacityByFactionId[minorId] = kLockRecoveryMinorBidCargoCapacity;
-    treasuryBudgetByBuyerFactionId[minorId] =
-        kLockRecoveryMinorSyntheticTreasuryBudget;
-  }
+  final capacities = computeStartOfPhaseCapacities(
+    gameForMarket: gameForMarket,
+    extractionTonnageByPlayerId: acc.overseasExtractionShippedTonnageByPlayerId,
+    lockRecoveryMinorBidsByFactionId: lockRecoveryMinorBidsByFactionId,
+  );
+  final tradeCapacityByFactionId = capacities.tradeCapacityByFactionId;
+  final stockpileByFactionId = capacities.stockpileByFactionId;
+  final treasuryByFactionId = capacities.treasuryByFactionId;
+  final treasuryBudgetByBuyerFactionId =
+      capacities.treasuryBudgetByBuyerFactionId;
 
   final carryForwardValidation = validateCarryForwards(
     carryForwardOffersByFactionId: priorMarket.carryForwardOffersByFactionId,
@@ -248,6 +226,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
       carryForwardOffersByFactionId: const <String, List<TradeOrder>>{},
       carryForwardBidsByFactionId: const <String, List<TradeOrder>>{},
+      completedTradePairKeys: const <String>{},
     );
     return TurnPhaseStepContinue(
       acc.copyWith(game: game.copyWith(worldMarketState: updatedMarket)),
@@ -256,6 +235,13 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
 
   final ftpPairKeys = ftpPairKeysFromGame(game);
   final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
+
+  // #3753 R7.3 sell-priority relation tiebreaker input: consulate-holding
+  // buyer relations per Minor/Tribe seller that has an offer this turn.
+  final sellPriorityRelationByMinorTribeSeller = computeSellPriorityRelations(
+    game: game,
+    offersByFactionId: mergedOffersByFactionId,
+  );
 
   final matchInputs = (
     offersByFactionId: mergedOffersByFactionId,
@@ -270,14 +256,21 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     purchasedTileIndex: purchasedTileIndex,
     lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
     treasuryByFactionId: treasuryByFactionId,
+    sellPriorityRelationByMinorTribeSeller:
+        sellPriorityRelationByMinorTribeSeller,
   );
   final matchResult = DealMatcher.matchDeals(matchInputs);
 
-  final firstRightCredits = computeFirstRightCredits(
+  // #3753 R8.3 embassy kickbacks apply only to Minor/Tribe sellers (overseas
+  // profit-share is a Minor/Tribe-sale concept; GP–GP sales are excluded even
+  // though GPs hold auto-embassies). The two-tier credit computation (tile
+  // owner full share + per-embassy kickback) is delegated to
+  // [computeWorldMarketFirstRightCredits] to keep this handler within the
+  // function-size budget.
+  final firstRightCredits = computeWorldMarketFirstRightCredits(
+    game: game,
     filledDeals: matchResult.filledDeals,
     purchasedTileIndex: purchasedTileIndex,
-    relationScoreFor: (owningGpId, sourceFactionId) =>
-        getRelation(game, owningGpId, sourceFactionId)?.score ?? 0,
   );
 
   final lockRecoveryLiquidityCommodityId =
@@ -289,6 +282,8 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     players: game.players,
     filledDeals: matchResult.filledDeals,
     firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
+    embassyKickbackTreasuryCreditByGpId:
+        firstRightCredits.embassyKickbackByGpId,
     lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
     lockRecoveryLiquidityCommodityId: lockRecoveryLiquidityCommodityId,
   );
@@ -332,6 +327,12 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // Great-Power faction ids; unknown ids (auto-offer minors/tribes and any
   // other non-GP submitter) are dropped from the persisted map.
   final gpFactionIds = <String>{for (final p in game.players) p.id};
+  // #3753 R10: record this turn's completed-trade pair keys (GP-involved) so the
+  // next turn's Diplomacy phase applies the additive trade-deal relation boost.
+  final completedTradePairKeys = completedTradePairKeysFromDeals(
+    filledDeals: matchResult.filledDeals,
+    gpFactionIds: gpFactionIds,
+  );
   final updatedMarket = priorMarket.copyWith(
     prices: Map<CommodityId, int>.unmodifiable(newPrices),
     lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
@@ -340,6 +341,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       gpFactionIds,
     ),
     carryForwardBidsByFactionId: matchResult.unfilledBidsByFactionId,
+    completedTradePairKeys: completedTradePairKeys,
   );
 
   final nextGame = game

@@ -38,6 +38,8 @@ DealMatchInputs matcherInputs({
   PurchasedTileIndex? purchasedTileIndex,
   Set<String> lockRecoverySellerPriorityIds = const {},
   Map<String, int> treasuryByFactionId = const {},
+  Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller =
+      const {},
 }) {
   final budget =
       treasuryBudgetByBuyerFactionId ??
@@ -55,6 +57,8 @@ DealMatchInputs matcherInputs({
     purchasedTileIndex: purchasedTileIndex,
     lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
     treasuryByFactionId: treasuryByFactionId,
+    sellPriorityRelationByMinorTribeSeller:
+        sellPriorityRelationByMinorTribeSeller,
   );
 }
 
