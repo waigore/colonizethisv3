@@ -533,6 +533,23 @@ void main() {
       expect(restored.prices['timber'], 30);
     });
 
+    test('round-trips completedTradePairKeys through JSON (Refs #3753 R10)', () {
+      final state = WorldMarketState.withDefaultPrices({'timber': 30}).copyWith(
+        completedTradePairKeys: const {'gp1|gp2', 'm1|gp1'},
+      );
+      final restored = WorldMarketState.fromJson(state.toJson());
+      expect(restored.completedTradePairKeys, const {'gp1|gp2', 'm1|gp1'});
+      expect(restored, equals(state));
+    });
+
+    test('fromJson treats missing completedTradePairKeys as empty', () {
+      final restored = WorldMarketState.fromJson(<String, dynamic>{
+        'prices': <String, dynamic>{'timber': 30},
+        'lastTurnActivity': <String, dynamic>{},
+      });
+      expect(restored.completedTradePairKeys, isEmpty);
+    });
+
     test('fromJson floors legacy double prices to int (backward compat)', () {
       // Pre-#3093 saves wrote `prices` as `Map<CommodityId, double>`.
       // The new `fromJson` floors any non-integer numeric value so the

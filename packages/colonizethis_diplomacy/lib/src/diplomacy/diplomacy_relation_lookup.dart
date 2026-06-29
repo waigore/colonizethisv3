@@ -102,6 +102,18 @@ const int relationScoreNeutral = 50;
 /// SPEC/game/diplomacy.md § Relation Model — Per-turn relation decay.
 const double relationDecayPerTurn = 4.0;
 
+/// Base additive trade-deal relation boost (Refs #3753 R10): a faction pair
+/// that completed at least one world-market trade deal (involving at least one
+/// Great Power) the previous turn gains this much, applied in the Diplomacy
+/// phase before per-turn decay. Volume-independent and applied once per pair
+/// per turn. SPEC/game/diplomacy.md § Relation Model — Trade-deal relation boost.
+const double tradeDealRelationBoostBase = 2.0;
+
+/// Additional trade-deal relation boost when an Embassy is in effect between the
+/// trading parties (Refs #3753 R10 — `+0.4`, i.e. 20% of the base). Added on top
+/// of [tradeDealRelationBoostBase]. SPEC/game/diplomacy.md § Relation Model.
+const double tradeDealRelationBoostEmbassyBonus = 0.4;
+
 /// Level thresholds (inclusive max per band): Hostile ]0,25], Neutral ]25,50], Friendly ]50,75], Allied ]75,100].
 const int relationScoreLevelHostileMax = 25;
 const int relationScoreLevelNeutralMax = 50;

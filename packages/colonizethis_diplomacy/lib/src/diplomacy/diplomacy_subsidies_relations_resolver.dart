@@ -361,6 +361,78 @@ Game applyRelationDecay(
   return game.copyWith(diplomacyRelations: relations);
 }
 
+/// Apply the additive trade-deal relation boost (Refs #3753 R10). For every
+/// canonical pair key recorded on [Game.worldMarketState.completedTradePairKeys]
+/// (set by the previous turn's World Market phase for pairs that completed at
+/// least one trade deal involving a Great Power), the pair relation gains
+/// [tradeDealRelationBoostBase] plus [tradeDealRelationBoostEmbassyBonus] when an
+/// Embassy is in effect between the parties. The boost is **volume-independent**
+/// and applied **once per pair per turn**, clamped to
+/// `[relationScoreMin, relationScoreMax]`. `AT_WAR` pairs are skipped (war scores
+/// are frozen). Applied in the Diplomacy phase **after** the relation snapshot
+/// and **before** per-turn decay so boosted pairs are treated as event-modified
+/// and skip decay this turn (skip-on-event). The subsidy-percentage modifier
+/// (R10) is added when percentage subsidies (R3) land; current behaviour applies
+/// the base and embassy terms only. SPEC/game/diplomacy.md § Relation Model.
+Game applyTradeDealRelationBoosts(Game game, int turn) {
+  final pairKeys = game.worldMarketState.completedTradePairKeys;
+  if (pairKeys.isEmpty) return game;
+
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
+  var changed = false;
+
+  for (final key in pairKeys) {
+    final parts = key.split('|');
+    if (parts.length != 2) continue;
+    final id1 = parts[0];
+    final id2 = parts[1];
+    if (id1.isEmpty || id2.isEmpty || id1 == id2) continue;
+
+    // War scores are frozen and never receive the trade boost.
+    if (getRelation(game, id1, id2)?.atWar == true) continue;
+
+    final hasEmbassy =
+        hasEmbassyOverture(game, id1, id2) ||
+        hasEmbassyOverture(game, id2, id1);
+    final boost = tradeDealRelationBoostBase +
+        (hasEmbassy ? tradeDealRelationBoostEmbassyBonus : 0.0);
+
+    relationsIndex.upsert(id1, id2, _tradeDealBoostUpdater(id1, id2, boost, turn));
+    changed = true;
+  }
+
+  if (!changed) return game;
+  return game.copyWith(diplomacyRelations: relationsIndex.toList());
+}
+
+DiplomacyRelation Function(DiplomacyRelation?) _tradeDealBoostUpdater(
+  String id1,
+  String id2,
+  double boost,
+  int turn,
+) => (existing) {
+  final num base = existing?.score ?? relationScoreNeutral;
+  final num newScore = (base + boost).clamp(
+    relationScoreMin,
+    relationScoreMax,
+  );
+  final newLevel = scoreToLevel(newScore);
+  if (existing == null) {
+    return DiplomacyRelation(
+      factionId1: id1,
+      factionId2: id2,
+      score: newScore,
+      level: newLevel,
+      lastInteractionTurn: turn,
+    );
+  }
+  return existing.copyWith(
+    score: newScore,
+    level: newLevel,
+    lastInteractionTurn: turn,
+  );
+};
+
 /// Commodity slots for trade agreements: 0 without embassy; baseline **3** with
 /// embassy; **6** when [kTechIdTradeFairs] is unlocked. SPEC/program/diplomacy-resolution.md.
 int tradeSlotsForGp(Game game, String gpId, String targetFactionId) {
