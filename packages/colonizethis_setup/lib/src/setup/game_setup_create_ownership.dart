@@ -136,8 +136,9 @@ Map<String, String> _assignNewWorldOwners({
   required List<String> provinceIds,
   required List<String> tribeIds,
 }) {
+  final Map<String, String> owners;
   try {
-    return assignNewWorldOwnershipContiguous(
+    owners = assignNewWorldOwnershipContiguous(
       topologyNewWorld: topologyNewWorld,
       provinceIds: provinceIds,
       tribeIds: tribeIds,
@@ -163,4 +164,50 @@ Map<String, String> _assignNewWorldOwners({
       details: 'New World locked assigner exhausted: $e',
     );
   }
+  _assertEveryTribeOwnsSeaBoundProvince(
+    config: config,
+    topologyNewWorld: topologyNewWorld,
+    tribeIds: tribeIds,
+    owners: owners,
+  );
+  return owners;
+}
+
+/// Enforces the locked full-init guarantee that every Tribe owns at least one
+/// sea-bound (P–S) New World province so every Tribe is discoverable by fleet
+/// entry (parallel to the GP sea-bound seed rule). On violation throws a
+/// retriable [SetupTopologyDataException] (`tribe_missing_sea_bound_province`)
+/// so the bounded regen loop regenerates the tile-map pair with a bumped seed.
+/// SPEC: game-setup.md § Tribe Assignment, game-setup-pipeline.md step 6.
+void _assertEveryTribeOwnsSeaBoundProvince({
+  required GameSetupConfig config,
+  required MapTopology topologyNewWorld,
+  required List<String> tribeIds,
+  required Map<String, String> owners,
+}) {
+  if (!config.isLockedFullInitProfile) return;
+  if (tribeIds.isEmpty) return;
+  final tribeIdSet = tribeIds.toSet();
+  final ownsSeaBound = <String, bool>{for (final t in tribeIds) t: false};
+  for (final entry in owners.entries) {
+    final ownerId = entry.value;
+    if (!tribeIdSet.contains(ownerId)) continue;
+    if (ownsSeaBound[ownerId] == true) continue;
+    if (isProvinceSeaBound(topologyNewWorld, entry.key)) {
+      ownsSeaBound[ownerId] = true;
+    }
+  }
+  final without = ownsSeaBound.entries
+      .where((e) => !e.value)
+      .map((e) => e.key)
+      .toList()
+    ..sort();
+  if (without.isEmpty) return;
+  throw SetupTopologyDataException(
+    code: 'tribe_missing_sea_bound_province',
+    details:
+        'New World tribe assignment left tribe(s) ${without.join(",")} with no '
+        'sea-bound (P–S) province under the locked full-init profile; '
+        'regenerate the tile-map pair and retry.',
+  );
 }
