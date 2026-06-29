@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
-    show ftpPairKeysFromGame, getRelation;
+    show ftpPairKeysFromGame, getRelation, hasEmbassyOverture;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
@@ -60,11 +60,12 @@ import 'world_market_phase_activity.dart';
 /// 5. Applies transfers: buyer treasury debit + seller treasury credit (GP
 ///    sellers only) and stockpile delta on both sides. Minor/tribe sellers
 ///    remain a treasury sink (no faction credited) per
-///    `SPEC/game/world-market.md` Requirement 9; the **owning GP
-///    overseas-profit credit** (Refs #2992 D4) is applied additively
-///    afterward via [computeFirstRightCredits], using the per-GP relation
-///    score with the source minor/tribe (clamped 0–100) and the
-///    `(relationScore / 100) * 0.40` rate per
+///    `SPEC/game/world-market.md` Requirement 9; the **two-tier overseas
+///    profit-share** (Refs #2992 D4 + #3753 R8) is applied additively
+///    afterward via [computeFirstRightCredits]: the tile-owning GP receives
+///    the **full** relation-linear share (`relationScore / 100`, no 40% cap,
+///    R8.2) and every other embassy-holding GP receives a 10% kickback of its
+///    relation portion (R8.3) per
 ///    `SPEC/game/world-market-first-right-of-refusal.md` § Treasury
 ///    transfer (D4).
 /// 6. Recomputes per-commodity prices via [PriceDiscovery.computeNextPrice]
@@ -273,11 +274,39 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   );
   final matchResult = DealMatcher.matchDeals(matchInputs);
 
+  // #3753 R8.3 embassy kickbacks apply only to Minor/Tribe sellers (overseas
+  // profit-share is a Minor/Tribe-sale concept; GP–GP sales are excluded even
+  // though GPs hold auto-embassies). Build the eligible-source set once and a
+  // per-source cache of embassy-holding GPs and their decimal relation scores
+  // so the credits aggregator stays a deterministic pure function.
+  final minorTribeSellerIds = <String>{
+    for (final m in game.minorNations) m.id,
+    for (final t in game.tribes) t.id,
+  };
+  final embassyRelationsCache = <String, Map<String, num>>{};
+  Map<String, num> embassyGpRelationsFor(String sourceFactionId) {
+    if (!minorTribeSellerIds.contains(sourceFactionId)) {
+      return const <String, num>{};
+    }
+    final cached = embassyRelationsCache[sourceFactionId];
+    if (cached != null) return cached;
+    final relations = <String, num>{};
+    for (final player in game.players) {
+      if (player.id == sourceFactionId) continue;
+      if (!hasEmbassyOverture(game, player.id, sourceFactionId)) continue;
+      relations[player.id] =
+          getRelation(game, player.id, sourceFactionId)?.score ?? 0;
+    }
+    embassyRelationsCache[sourceFactionId] = relations;
+    return relations;
+  }
+
   final firstRightCredits = computeFirstRightCredits(
     filledDeals: matchResult.filledDeals,
     purchasedTileIndex: purchasedTileIndex,
     relationScoreFor: (owningGpId, sourceFactionId) =>
         getRelation(game, owningGpId, sourceFactionId)?.score ?? 0,
+    embassyGpRelationsFor: embassyGpRelationsFor,
   );
 
   final lockRecoveryLiquidityCommodityId =
@@ -289,6 +318,8 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     players: game.players,
     filledDeals: matchResult.filledDeals,
     firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
+    embassyKickbackTreasuryCreditByGpId:
+        firstRightCredits.embassyKickbackByGpId,
     lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
     lockRecoveryLiquidityCommodityId: lockRecoveryLiquidityCommodityId,
   );
