@@ -34,6 +34,7 @@ import 'treasury_planner.dart';
 
 part 'domain_planner_orchestrator_economy.dart';
 part 'domain_planner_orchestrator_military.dart';
+part 'domain_planner_orchestrator_diplomacy.dart';
 
 final _log = packageLogger();
 
@@ -149,28 +150,21 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
 
-  final peaceBeforeConquestResult = runDiplomacyPlannerWithResult(
+  final preConquestDiplomacy = _runPreConquestDiplomacyPlanners(
     ctx: ctx,
     snapshot: snapshot,
-    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
     phasePlan: resolvedPhasePlan,
   );
-  ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
-
-  final declareWarResult = runDiplomacyPlannerWithResult(
-    ctx: ctx,
-    snapshot: snapshot,
-    pass: DiplomacyPlannerPass.declareWarOnly,
-    phasePlan: resolvedPhasePlan,
-  );
-  ctx = ctx.withOrders(declareWarResult.orders);
+  ctx = preConquestDiplomacy.ctx;
+  final declaredWarTargetFactionId =
+      preConquestDiplomacy.declaredWarTargetFactionId;
 
   final militaryResult = _runMilitaryDomainPlanners(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
     nationId: nationId,
-    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+    declaredWarTargetFactionId: declaredWarTargetFactionId,
     emit: emit,
   );
   ctx = militaryResult.ctx;
@@ -190,13 +184,10 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 
   // Late peace pass undoes same-turn declare-war on the OW frontier blocker
   // (observer seed-42 gp5/gp6; Refs #2509).
-  ctx = ctx.withOrders(
-    runDiplomacyPlannerWithResult(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-      phasePlan: resolvedPhasePlan,
-    ).orders,
+  ctx = _runLatePeaceDiplomacyPlanner(
+    ctx: ctx,
+    snapshot: snapshot,
+    phasePlan: resolvedPhasePlan,
   );
   emit('aiStageF');
 
@@ -265,7 +256,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 
   return DomainPlannerOutcome(
     orders: ctx.orders,
-    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+    declaredWarTargetFactionId: declaredWarTargetFactionId,
     conquestArmyMoveCount: conquestArmyMoveCount,
     phasePlan: resolvedPhasePlan,
     domainGateData: domainGateData,
