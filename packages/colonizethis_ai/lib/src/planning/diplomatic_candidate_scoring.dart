@@ -120,6 +120,18 @@ List<int> computeDiplomaticCandidateScores({
         s -= getAgendaAllianceAcceptanceModifier(agendaId);
         s -= (thresholds.allianceTendency - 50);
         break;
+      case DiplomaticOrderType.boycott:
+        // Boycott colony trade embargo against another GP (Refs #3758 R5). A
+        // hostile economic action: backstabber/warmonger agendas lean toward it
+        // (treaty-breaking modifier), the peacemaker resists (peace-acceptance
+        // +30 inverts to −30 while the warmonger −25 inverts to +25), and high
+        // warLikelihood personalities lean toward it. Deeper trade-volume /
+        // economic-damage weighting is a deferred follow-up (Refs #3758 R12).
+        // SPEC/ai/hidden-agendas.md § Treaty breaking (Boycott scoring).
+        s += getAgendaTreatyBreakingModifier(agendaId);
+        s -= getAgendaPeaceAcceptanceModifier(agendaId);
+        s += (thresholds.warLikelihood - 50);
+        break;
       case DiplomaticOrderType.declareWar:
         s = _scoreDeclareWarDiplomaticOrder(
           order: o,

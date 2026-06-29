@@ -148,14 +148,29 @@ class DiplomaticOrderValidator extends StatefulValidator {
   bool _canAddDiplomaticOrder(String targetId, DiplomaticOrderType type) {
     final existing = _typesByTarget[targetId] ?? const <DiplomaticOrderType>{};
     if (existing.contains(type)) return false;
+    // Boycott / revoke-boycott are standalone colony-trade-embargo actions,
+    // orthogonal to peace/war/alliance state (SPEC/game/diplomacy.md
+    // § Boycott): they neither block nor are blocked by other diplomatic
+    // orders toward the same target — only one of each per target per turn.
+    // SPEC/program/orders.md § Diplomatic orders.
+    const standalone = {
+      DiplomaticOrderType.boycott,
+      DiplomaticOrderType.revokeBoycott,
+    };
+    if (standalone.contains(type)) return true;
     const economic = {
       DiplomaticOrderType.grantAid,
       DiplomaticOrderType.setSubsidy,
     };
     final isEconomic = economic.contains(type);
-    final hasNonEconomic = existing.any((t) => !economic.contains(t));
+    final nonStandaloneExisting = existing.where(
+      (t) => !standalone.contains(t),
+    );
+    final hasNonEconomic = nonStandaloneExisting.any(
+      (t) => !economic.contains(t),
+    );
     if (hasNonEconomic && isEconomic) return false;
-    if (!isEconomic && existing.isNotEmpty) return false;
+    if (!isEconomic && nonStandaloneExisting.isNotEmpty) return false;
     return true;
   }
 
