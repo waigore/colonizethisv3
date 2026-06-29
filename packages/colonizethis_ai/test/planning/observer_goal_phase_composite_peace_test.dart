@@ -332,6 +332,87 @@ void main() {
     });
   });
 
+  // Refs #3749 step 5 — expand-peace decider registry. The two aggregators are
+  // now driven by the ordered `kSurvivalGreatPowerPeaceDeciders` /
+  // `kExpandRatchetGreatPowerPeaceDeciders` registries; these tests pin the
+  // registry-as-single-source-of-truth contract (aggregator output is exactly
+  // the in-order concatenation of every registered decider) and the documented
+  // decider counts so an accidental add/remove/reorder cannot pass silently.
+  group('expand-peace decider registries (Refs #3749)', () {
+    test('survival aggregator equals in-order registry concatenation', () {
+      final game = _zeroRegimentAtWarGame();
+      final snapshot = _snapshotFor(
+        playerId: _gpOwn,
+        oldWorldProvincesOwned: 6,
+        atWarWith: [_gpOther, _minorZeta],
+      );
+      final viaAggregator = survivalGreatPowerPeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      ).toList();
+      final viaRegistry = [
+        for (final decider in kSurvivalGreatPowerPeaceDeciders)
+          ...decider(game: game, snapshot: snapshot),
+      ];
+      expect(viaAggregator, viaRegistry);
+      expect(viaAggregator, isNotEmpty);
+    });
+
+    test('ratchet aggregator equals in-order registry concatenation', () {
+      final game = _zeroRegimentAtWarGame();
+      final snapshot = _snapshotFor(
+        playerId: _gpOwn,
+        oldWorldProvincesOwned: 6,
+        atWarWith: [_gpOther, _minorZeta],
+      );
+      final viaAggregator = expandRatchetGreatPowerPeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      ).toList();
+      final viaRegistry = [
+        for (final decider in kExpandRatchetGreatPowerPeaceDeciders)
+          ...decider(game: game, snapshot: snapshot),
+      ];
+      expect(viaAggregator, viaRegistry);
+      expect(viaAggregator, isNotEmpty);
+    });
+
+    test('registry concatenation matches aggregator on pristine state', () {
+      final game = _pristineOwProvinces(8);
+      final snapshot = _snapshotFor(
+        playerId: _gpOwn,
+        oldWorldProvincesOwned: 8,
+        atWarWith: [],
+      );
+      final survivalRegistry = [
+        for (final decider in kSurvivalGreatPowerPeaceDeciders)
+          ...decider(game: game, snapshot: snapshot),
+      ];
+      final ratchetRegistry = [
+        for (final decider in kExpandRatchetGreatPowerPeaceDeciders)
+          ...decider(game: game, snapshot: snapshot),
+      ];
+      expect(survivalRegistry, isEmpty);
+      expect(ratchetRegistry, isEmpty);
+      expect(
+        survivalGreatPowerPeaceTargets(game: game, snapshot: snapshot).toList(),
+        survivalRegistry,
+      );
+      expect(
+        expandRatchetGreatPowerPeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        ).toList(),
+        ratchetRegistry,
+      );
+    });
+
+    test('documented decider counts are pinned', () {
+      expect(kSurvivalGreatPowerPeaceDeciders, hasLength(5));
+      expect(kExpandRatchetGreatPowerPeaceDeciders, hasLength(17));
+    });
+  });
+
   group('supplementMutualStalledGreatPowerPeaceOrders', () {
     test('no-op when no mutual peace offers exist', () {
       final game = _pristineOwProvinces(8);
