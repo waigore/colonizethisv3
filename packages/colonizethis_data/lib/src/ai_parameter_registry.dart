@@ -639,6 +639,12 @@ final List<AiParameter> _victoryConfigParams = <AiParameter>[
     'Max improve-relations reduction credited to natural relation decay.',
   ),
   _vcInt(
+    'kEstablishOvertureFtpCompetitionBonus',
+    kEstablishOvertureFtpCompetitionBonus,
+    'Overture incentive when not the favoured trading partner for a '
+        'Minor/Tribe target.',
+  ),
+  _vcInt(
     'kConquestArmyMoveNwInvadableBonus',
     kConquestArmyMoveNwInvadableBonus,
     'Conquest army-move bonus for New World invadable destinations.',
