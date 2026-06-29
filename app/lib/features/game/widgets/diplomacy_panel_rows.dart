@@ -39,6 +39,36 @@ void _appendDiscoveredFactionId(
   }
 }
 
+/// Display names of Great Powers the human GP boycotts through a colony Tribe
+/// it holds (Refs #3753 R12). Extracted so the standing-chip builder stays
+/// under the repo control-flow nesting-depth gate.
+List<String> _boycottVsNames(Game game, String humanPlayerId) {
+  final names = <String>[];
+  for (final b in game.boycottStates) {
+    if (b.gpId == humanPlayerId) {
+      names.add(game.playerById(b.targetGpId)?.displayName ?? b.targetGpId);
+    }
+  }
+  return names;
+}
+
+/// Display names of Great Powers boycotting the human GP from trading with a
+/// colony Tribe held by [colonyOfGpId] (Refs #3753 R12). Extracted so the
+/// standing-chip builder stays under the repo control-flow nesting-depth gate.
+List<String> _boycottedByNames(
+  Game game,
+  String humanPlayerId,
+  String colonyOfGpId,
+) {
+  final names = <String>[];
+  for (final b in game.boycottStates) {
+    if (b.gpId == colonyOfGpId && b.targetGpId == humanPlayerId) {
+      names.add(game.playerById(colonyOfGpId)?.displayName ?? colonyOfGpId);
+    }
+  }
+  return names;
+}
+
 ({int? grant, int? subsidy}) _pendingEconomicAmounts(
   List<DiplomaticOrder> list,
   String targetId,
@@ -165,24 +195,12 @@ DiplomaticStandingChips diplomaticStandingChips({
     treaty.add(kDiplomacyChipJoinEmpire);
   }
 
-  String nameOf(String id) => game.playerById(id)?.displayName ?? id;
-
-  final boycottVs = <String>[];
-  final boycottedBy = <String>[];
-  if (colonyOfGpId != null) {
-    if (isColonyOfHuman) {
-      for (final b in game.boycottStates) {
-        if (b.gpId == humanPlayerId) {
-          boycottVs.add(nameOf(b.targetGpId));
-        }
-      }
-    } else {
-      for (final b in game.boycottStates) {
-        if (b.gpId == colonyOfGpId && b.targetGpId == humanPlayerId) {
-          boycottedBy.add(nameOf(colonyOfGpId));
-        }
-      }
-    }
+  List<String> boycottVs = const <String>[];
+  List<String> boycottedBy = const <String>[];
+  if (colonyOfGpId != null && isColonyOfHuman) {
+    boycottVs = _boycottVsNames(game, humanPlayerId);
+  } else if (colonyOfGpId != null) {
+    boycottedBy = _boycottedByNames(game, humanPlayerId, colonyOfGpId);
   }
 
   int overseasCount = 0;
