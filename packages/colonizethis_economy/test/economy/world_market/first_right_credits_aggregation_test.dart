@@ -4,25 +4,25 @@ import 'package:colonizethis_test/test.dart';
 import 'first_right_credits_test_support.dart';
 
 void main() {
-  group('computeFirstRightCredits aggregation (#2992 D4)', () {
+  group('computeFirstRightCredits aggregation (#3753 R8.2 full share)', () {
     test('multi-tile — two owning GPs aggregate credits independently', () {
       final result = computeFirstRightCredits(
         filledDeals: [
-          // gpA owns k1 from M1 — gpC buys 10 @ 10, relation 100 → 40
+          // gpA owns k1 from M1 — gpC buys 10 @ 10, relation 100 → 100.0
           deal(
             buyer: 'gpC',
             quantity: 10,
             pricePerUnit: 10.0,
             sellerOriginTileKey: 'k1',
           ),
-          // gpB owns k2 from M1 — gpC buys 4 @ 5, relation 50 → 4
+          // gpB owns k2 from M1 — gpC buys 4 @ 5, relation 50 → 10.0
           deal(
             buyer: 'gpC',
             quantity: 4,
             pricePerUnit: 5.0,
             sellerOriginTileKey: 'k2',
           ),
-          // gpA owns k3 from M2 — gpC buys 2 @ 3, relation 25 → 0.6
+          // gpA owns k3 from M2 — gpC buys 2 @ 3, relation 25 → 1.5
           deal(
             buyer: 'gpC',
             quantity: 2,
@@ -36,18 +36,18 @@ void main() {
           attr(tileKey: 'k3', owningGpId: 'gpA', sourceFactionId: 'M2'),
         ]),
         relationScoreFor: (gp, src) {
-          if (gp == 'gpA' && src == 'M1') return 100; // 40%
-          if (gp == 'gpB' && src == 'M1') return 50; // 20%
-          if (gp == 'gpA' && src == 'M2') return 25; // 10%
+          if (gp == 'gpA' && src == 'M1') return 100; // 100%
+          if (gp == 'gpB' && src == 'M1') return 50; // 50%
+          if (gp == 'gpA' && src == 'M2') return 25; // 25%
           return 0;
         },
       );
-      // 10*10*0.40 = 40.0, 2*3*0.10 = 0.6 → gpA gets 40.6
-      // 4*5*0.20 = 4.0 → gpB gets 4.0
+      // 10*10*1.0 = 100.0, 2*3*0.25 = 1.5 → gpA gets 101.5
+      // 4*5*0.50 = 10.0 → gpB gets 10.0
       expect(result.treasuryCreditByGpId.keys, containsAll(['gpA', 'gpB']));
-      expect(result.treasuryCreditByGpId['gpA']!, closeTo(40.6, 1e-12));
-      expect(result.treasuryCreditByGpId['gpB']!, closeTo(4.0, 1e-12));
-      expect(result.totalProfitTreasury, closeTo(44.6, 1e-12));
+      expect(result.treasuryCreditByGpId['gpA']!, closeTo(101.5, 1e-12));
+      expect(result.treasuryCreditByGpId['gpB']!, closeTo(10.0, 1e-12));
+      expect(result.totalProfitTreasury, closeTo(111.5, 1e-12));
       expect(result.creditedDeals, hasLength(3));
     });
 
@@ -77,13 +77,13 @@ void main() {
           purchasedTileIndex: idx([
             attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
           ]),
-          relationScoreFor: (_, __) => 100,
+          relationScoreFor: (_, _) => 100,
         );
-        // Only gpB's purchase is in D4 scope; 6 * 10 * 0.40 = 24.0
+        // Only gpB's purchase is in D4 scope; 6 * 10 * 1.0 = 60.0 (full share)
         expect(result.creditedDeals, hasLength(1));
         expect(result.creditedDeals.single.deal.buyerFactionId, 'gpB');
-        expect(result.treasuryCreditByGpId, {'gpA': closeTo(24.0, 1e-12)});
-        expect(result.totalProfitTreasury, closeTo(24.0, 1e-12));
+        expect(result.treasuryCreditByGpId, {'gpA': closeTo(60.0, 1e-12)});
+        expect(result.totalProfitTreasury, closeTo(60.0, 1e-12));
       },
     );
 
@@ -115,7 +115,7 @@ void main() {
             attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
             attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
           ]),
-          relationScoreFor: (_, __) => 100,
+          relationScoreFor: (_, _) => 100,
         );
         final first = run();
         final second = run();

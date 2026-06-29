@@ -34,10 +34,14 @@ List<Player> applyDealsToPlayers({
   required List<Player> players,
   required List<FilledDeal> filledDeals,
   Map<String, double> firstRightTreasuryCreditByGpId = const <String, double>{},
+  Map<String, double> embassyKickbackTreasuryCreditByGpId =
+      const <String, double>{},
   Set<String> lockRecoverySellerPriorityIds = const <String>{},
   CommodityId? lockRecoveryLiquidityCommodityId,
 }) {
-  if (filledDeals.isEmpty && firstRightTreasuryCreditByGpId.isEmpty) {
+  if (filledDeals.isEmpty &&
+      firstRightTreasuryCreditByGpId.isEmpty &&
+      embassyKickbackTreasuryCreditByGpId.isEmpty) {
     return players;
   }
   final treasuryById = <String, int>{};
@@ -98,6 +102,18 @@ List<Player> applyDealsToPlayers({
   // double-credits the matcher's D2 path).
   if (firstRightTreasuryCreditByGpId.isNotEmpty) {
     for (final entry in firstRightTreasuryCreditByGpId.entries) {
+      if (!knownPlayerIds.contains(entry.key)) continue;
+      final credit = entry.value;
+      if (credit <= 0.0) continue;
+      treasuryById[entry.key] = (treasuryById[entry.key] ?? 0) + credit.round();
+    }
+  }
+  // #3753 R8.3 embassy kickbacks: credit every embassy-holding non-owner GP
+  // 10% of its relation portion. Funded from the treasury-sink remainder
+  // (the minor/tribe seller is a sink), additive on top of any tile-owner
+  // full share already applied above.
+  if (embassyKickbackTreasuryCreditByGpId.isNotEmpty) {
+    for (final entry in embassyKickbackTreasuryCreditByGpId.entries) {
       if (!knownPlayerIds.contains(entry.key)) continue;
       final credit = entry.value;
       if (credit <= 0.0) continue;
