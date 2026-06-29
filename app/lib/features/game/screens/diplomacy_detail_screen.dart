@@ -314,58 +314,16 @@ class _RelationSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (relation == null) {
+    final DiplomacyRelation? rel = relation;
+    if (rel == null) {
       return Text(
         '—',
-        style: _displayStyle(context).copyWith(
+        style: _relationSummaryDisplayStyle(context).copyWith(
           color: EditorialMonoclePalette.muted,
         ),
       );
     }
-    final bool atWar = relation!.atWar;
-    final String stateLabel = atWar
-        ? l10n.diplomacy_relationState_war
-        : l10n.diplomacy_relationState_peace;
-    final Color stateColor = atWar
-        ? EditorialMonoclePalette.danger
-        : EditorialMonoclePalette.success;
-    final String relationLabel = relationScoreToDisplayLabel(relation!.score);
-    // SPEC/ui/diplomacy-detail-screen.md § Formal alliance indicator
-    // (Refs #3625, AC4): a persisted formal alliance surfaces the same gold
-    // ALLIANCE treaty badge used by the panel row, distinct from the informal
-    // one-word relation label. A merely-Friendly relation in the informal
-    // RelationLevel.allied band (no treaty) never shows it.
-    final bool showAlliance = relation!.formalAlliance;
-
-    final Widget summaryRow = Wrap(
-      spacing: 10,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: <Widget>[
-        Text(
-          stateLabel,
-          style: _displayStyle(context).copyWith(
-            color: stateColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        // SPEC/ui/diplomacy-detail-screen.md § Current relation (Refs #3753
-        // R13.5): the same 10-step gradient meter used on the panel row sits
-        // beside the one-word ladder label; the hidden decimal score positions
-        // the indicator.
-        RelationMeter(score: relation!.score),
-        if (relationLabel.isNotEmpty)
-          Text(
-            relationLabel,
-            style: _displayStyle(context).copyWith(
-              color: relationMeterStepColor(
-                relationScoreToMeterStep(relation!.score),
-              ),
-            ),
-          ),
-        if (showAlliance) const DiplomacyAllianceBadge(),
-      ],
-    );
+    final Widget summaryRow = _RelationSummaryRow(relation: rel, l10n: l10n);
     if (standingChips.isEmpty) {
       return summaryRow;
     }
@@ -379,12 +337,70 @@ class _RelationSummary extends StatelessWidget {
       ],
     );
   }
+}
 
-  TextStyle _displayStyle(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
-        .copyWith(letterSpacing: 0.02);
+/// One-line War/Peace state, relation meter, one-word ladder label, and the
+/// optional formal-alliance badge. Extracted from [_RelationSummary] to keep
+/// each `build` body within the widget-size lint budget.
+class _RelationSummaryRow extends StatelessWidget {
+  const _RelationSummaryRow({required this.relation, required this.l10n});
+
+  final DiplomacyRelation relation;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool atWar = relation.atWar;
+    final String stateLabel = atWar
+        ? l10n.diplomacy_relationState_war
+        : l10n.diplomacy_relationState_peace;
+    final Color stateColor = atWar
+        ? EditorialMonoclePalette.danger
+        : EditorialMonoclePalette.success;
+    final String relationLabel = relationScoreToDisplayLabel(relation.score);
+    // SPEC/ui/diplomacy-detail-screen.md § Formal alliance indicator
+    // (Refs #3625, AC4): a persisted formal alliance surfaces the same gold
+    // ALLIANCE treaty badge used by the panel row, distinct from the informal
+    // one-word relation label. A merely-Friendly relation in the informal
+    // RelationLevel.allied band (no treaty) never shows it.
+    final bool showAlliance = relation.formalAlliance;
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        Text(
+          stateLabel,
+          style: _relationSummaryDisplayStyle(context).copyWith(
+            color: stateColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        // SPEC/ui/diplomacy-detail-screen.md § Current relation (Refs #3753
+        // R13.5): the same 10-step gradient meter used on the panel row sits
+        // beside the one-word ladder label; the hidden decimal score positions
+        // the indicator.
+        RelationMeter(score: relation.score),
+        if (relationLabel.isNotEmpty)
+          Text(
+            relationLabel,
+            style: _relationSummaryDisplayStyle(context).copyWith(
+              color: relationMeterStepColor(
+                relationScoreToMeterStep(relation.score),
+              ),
+            ),
+          ),
+        if (showAlliance) const DiplomacyAllianceBadge(),
+      ],
+    );
   }
+}
+
+TextStyle _relationSummaryDisplayStyle(BuildContext context) {
+  final ThemeData theme = Theme.of(context);
+  return (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+      .copyWith(letterSpacing: 0.02);
 }
 
 /// Body of the "History" card — vertical list of [_LeftBorderTile]s, newest
