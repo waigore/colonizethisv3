@@ -87,6 +87,9 @@ void main() {
         bool includeProspectedTile = false,
         bool includeMineralResource = true,
         String? resourceOverride,
+        String? provinceOwnerId,
+        List<ct_models.Tribe> tribes = const [],
+        List<ct_models.OvertureState> overtureStates = const [],
       }) {
         final Map<String, String> resourceByTileKey;
         if (resourceOverride != null) {
@@ -104,10 +107,11 @@ void main() {
               turnNumber: 1,
             ),
             oldWorld: ct_models.RegionData(
-              provinces: const [
+              provinces: [
                 ct_models.Province(
                   id: selectedProvinceId,
                   regionId: 'oldWorld',
+                  ownerId: provinceOwnerId,
                 ),
               ],
               units: includeExplorer
@@ -139,7 +143,8 @@ void main() {
             ),
           ],
           minorNations: const [],
-          tribes: const [],
+          tribes: tribes,
+          overtureStates: overtureStates,
         );
       }
 
@@ -206,6 +211,51 @@ void main() {
         expect(state.showIcon, isTrue);
         expect(state.enabled, isFalse);
         expect(state.hasExplorerUnits, isFalse);
+      });
+
+      // Refs #3753 R4/R4b: prospect inside a Minor/Tribe province requires a
+      // Consulate (or higher). Without it the inline action must be shown
+      // disabled (so the overlay can surface the rejection tooltip) rather than
+      // enabled-then-rejected at submission.
+      test('shows disabled icon for Minor/Tribe province without a Consulate', () {
+        final state = GameMapAreaStateLogic.provinceProspectActionState(
+          game: makeGame(
+            provinceOwnerId: 'tribe1',
+            tribes: const [ct_models.Tribe(id: 'tribe1', displayName: 'Tribe')],
+          ),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(tileVisibility: VisibilityLevel.fogged),
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: null,
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isFalse);
+      });
+
+      test('shows enabled icon for Minor/Tribe province with a Consulate', () {
+        final state = GameMapAreaStateLogic.provinceProspectActionState(
+          game: makeGame(
+            provinceOwnerId: 'tribe1',
+            tribes: const [ct_models.Tribe(id: 'tribe1', displayName: 'Tribe')],
+            overtureStates: const [
+              ct_models.OvertureState(
+                gpId: humanPlayerId,
+                targetId: 'tribe1',
+                stage: ct_models.OvertureStage.tradeConsulate,
+              ),
+            ],
+          ),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(tileVisibility: VisibilityLevel.fogged),
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: null,
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isTrue);
       });
 
       test('hides icon for unknown-visibility tiles', () {
