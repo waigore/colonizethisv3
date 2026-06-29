@@ -8,6 +8,8 @@
 
 The treasury planner is the AI's interface to the World Market. It decides what commodities to bid for, what surplus to sell, and how aggressively to use the market based on the GP's treasury health. It is a sub-planner of the economy planner and runs once per AI-controlled Great Power per turn.
 
+Diplomacy-driven trade adjustments — boycott-aware bid/offer suppression (Refs #3758 S7/R12) and trade-deal-relation-boost-aware partner preference (Refs #3758 S9/R10) — are **deferred follow-up slices** not yet implemented in this planner; the central diplomatic AI model is normative in [diplomacy-planner.md](diplomacy-planner.md). Market-side boycott enforcement already happens in deal matching ([world-market-resolution.md](../program/world-market-resolution.md)).
+
 The planner has two distinct surfaces:
 
 1. **Goal-score treasury-acquisition bias** (this issue, slice **F6** of [#2994](https://github.com/waigore/colonizethisv3/issues/2994)). A purely additive modification to `evaluateStrategicGoalScores` in `goal_manager.dart` that boosts the `StrategicGoal.trade` score inversely with the GP's treasury, so that a broke AI prioritises the market.

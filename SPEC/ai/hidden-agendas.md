@@ -38,6 +38,8 @@ At game start, for each AI Great Power `P`:
 
 ## Behavior modifiers
 
+The full per-order diplomatic scoring model these modifiers feed into is normative in [diplomacy-planner.md](diplomacy-planner.md); the agenda/personality modifier definitions and ACs below remain the source of truth for the modifier values themselves.
+
 Agenda applies **additive or multiplicative modifiers** to the same quantities that personality uses:
 
 - **War declaration** — Warmonger: lower relation threshold to declare war; Peacemaker: strong negative modifier; Backstabber: bonus if target is ally.
