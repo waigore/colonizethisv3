@@ -19,7 +19,7 @@ part of 'full_ai_civilian_work_selection.dart';
 /// (`Unit.provinceIdFromTileKey`) so the scan works from
 /// `WorldState.resourceByTileKey` alone. Read-only and deterministic; Refs #2847
 /// § H8-extraction seller feedstock-tile acquisition residual.
-bool _ownsFeedstockResourceTile(
+bool ownsFeedstockResourceTile(
   Game game,
   String playerId,
   Set<String> feedstockIds,
@@ -60,7 +60,7 @@ bool _ownsFeedstockResourceTile(
 ///     improvement-cost gate is active and the seller is short of a producible
 ///     input; **and**
 ///   * the seller owns **no** tile hosting any feedstock resource in that demand
-///     set ([_ownsFeedstockResourceTile] is `false`).
+///     set ([ownsFeedstockResourceTile] is `false`).
 ///
 /// Returns `false` for every player whose improvement-input gate is inactive
 /// (at or above the conquest quota, owns a regiment, owns a New World province,
@@ -77,5 +77,5 @@ bool sellerNeedsImprovementInputFeedstockTileAcquisition(
 ) {
   final feedstock = sellerImprovementInputFeedstockResourceIds(game, playerId);
   if (feedstock.isEmpty) return false;
-  return !_ownsFeedstockResourceTile(game, playerId, feedstock);
+  return !ownsFeedstockResourceTile(game, playerId, feedstock);
 }
