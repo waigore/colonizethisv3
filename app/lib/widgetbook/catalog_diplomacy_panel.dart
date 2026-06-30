@@ -132,7 +132,68 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
       ),
     ],
   ),
+  // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster (Refs #3753
+  // R12) — isolated stories for `DiplomacyStandingChipCluster` covering the
+  // colony-Tribe standing (treaty + colony + boycott chips), an independent
+  // Minor with overseas holdings, and the empty (no-footprint) negative case.
+  WidgetbookFolder(
+    name: 'Diplomatic Standing Chips',
+    children: [
+      WidgetbookUseCase(
+        name: 'Colony Tribe (treaty + Colony + Boycott vs)',
+        builder: (context) => _standingChipsStory(
+          const DiplomaticStandingChips(
+            treatyLabels: [
+              kDiplomacyChipConsulate,
+              kDiplomacyChipEmbassy,
+              kDiplomacyChipNap,
+              kDiplomacyChipColony,
+            ],
+            boycottVsNames: ['Castile'],
+            overseasTileCount: 3,
+            overseasSharePercent: 60,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Minor overseas holdings (Overseas chip)',
+        builder: (context) => _standingChipsStory(
+          const DiplomaticStandingChips(
+            treatyLabels: [kDiplomacyChipConsulate, kDiplomacyChipEmbassy],
+            overseasTileCount: 2,
+            overseasSharePercent: 80,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Empty standing (no chips, zero footprint)',
+        builder: (context) =>
+            _standingChipsStory(const DiplomaticStandingChips()),
+      ),
+    ],
+  ),
 ];
+
+/// Renders a [DiplomacyStandingChipCluster] inside the editorial-monocle dark
+/// theme so reviewers can confirm the treaty / colony / boycott / overseas chip
+/// chrome and run-wrapping. SPEC/ui/diplomacy-panel.md § Diplomatic standing
+/// chip cluster (Refs #3753 R12).
+Widget _standingChipsStory(DiplomaticStandingChips chips) {
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      backgroundColor: EditorialMonoclePalette.bg,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: DiplomacyStandingChipCluster(chips: chips),
+        ),
+      ),
+    ),
+  );
+}
 
 /// Renders a vertical stack of [RelationMeter] widgets at the given [scores]
 /// inside the editorial-monocle dark theme, each beside its hidden-score
