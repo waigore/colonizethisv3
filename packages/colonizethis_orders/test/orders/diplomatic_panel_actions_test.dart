@@ -79,7 +79,10 @@ void main() {
       );
     });
 
-    test('formal alliance swaps alliance for breakAlliance only (Refs #3811)', () {
+    test(
+      'AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps '
+      'alliance for breakAlliance only',
+      () {
       final alliedGame = _gpMinorGame().copyWith(
         diplomacyRelations: const [
           DiplomacyRelation(
@@ -108,7 +111,8 @@ void main() {
         candidates.map((o) => o.type),
         isNot(contains(DiplomaticOrderType.alliance)),
       );
-    });
+    },
+    );
 
     test('Minor row omits alliance and FTP', () {
       final candidates = diplomaticPanelActionCandidates(

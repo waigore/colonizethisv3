@@ -170,5 +170,35 @@ void main() {
       );
       expect(broken, isEmpty);
     });
+
+    test(
+      'AC14: phase-4a break is idempotent after human immediate break same turn',
+      () {
+        final game = _fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: true);
+        final membership = DiplomacyFactionMembership.from(game);
+        final afterImmediate = applyVoluntaryAllianceBreak(
+          game,
+          breakerId: 'gp1',
+          brokenWithAllyId: 'gp2',
+          turn: 10,
+          factionMembership: membership,
+        );
+        expect(getRelation(afterImmediate, 'gp1', 'gp2')!.formalAlliance, isFalse);
+        expect(getRelation(afterImmediate, 'gp1', 'gp2')!.score, 30);
+
+        final afterPhase = processBreakAlliances(
+          afterImmediate,
+          _breakOrder('gp1', 'gp2'),
+          10,
+          factionMembership: membership,
+        );
+        expect(getRelation(afterPhase, 'gp1', 'gp2')!.score, 30);
+        expect(getRelation(afterPhase, 'gp1', 'gp3')!.score, 50);
+        final broken = afterPhase.diplomaticHistoryEvents.where(
+          (e) => e.type == DiplomaticEventType.allianceBroken,
+        );
+        expect(broken.length, 1);
+      },
+    );
   });
 }

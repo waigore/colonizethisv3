@@ -134,6 +134,18 @@ void main() {
     });
   });
 
+  group('AllianceBreakCooldownState', () {
+    test('toJson/fromJson round-trips', () {
+      const cooldown = AllianceBreakCooldownState(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        sinceTurn: 4,
+      );
+      final restored = AllianceBreakCooldownState.fromJson(cooldown.toJson());
+      expect(restored, cooldown);
+    });
+  });
+
   group('OvertureState', () {
     const overture = OvertureState(
       gpId: 'gp1',
