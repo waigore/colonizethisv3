@@ -959,6 +959,34 @@ const double kCivilianBuildSpyDemandBoost = 2.0;
 /// the standard min-cap hard floor; the demand boost applies independently.
 const int kCivilianBuildMinSpies = 0;
 
+/// GA-tunable minimum unlocked-tech lead a rival Great Power must hold over the
+/// active Great Power for the active GP to be considered "pursuing a tech-steal
+/// posture" (decision #10, SPEC/ai/civilian-build-planner.md § Live economy
+/// wiring). When the most-advanced rival GP's unlocked-tech count exceeds the
+/// active GP's by at least this many techs, a `steal_tech` target exists, so the
+/// Spy demand boost ([kCivilianBuildSpyDemandBoost]) applies even at peace.
+/// Default `1` (any tech deficit qualifies); a higher value restricts the
+/// posture to GPs that are further behind.
+const int kCivilianBuildSpyTechStealDeficit = 1;
+
+/// Whether the active Great Power is "pursuing a tech-steal posture"
+/// (decision #10) given its own unlocked-tech count [ownUnlockedTechCount] and
+/// the maximum unlocked-tech count among rival Great Powers
+/// [maxRivalUnlockedTechCount].
+///
+/// Returns `true` when
+/// `maxRivalUnlockedTechCount - ownUnlockedTechCount >= deficit` (default
+/// [kCivilianBuildSpyTechStealDeficit]). Pure and deterministic: a fixed pair of
+/// counts always yields the same result. The caller computes the counts from
+/// `Player.techUnlocked` (the AI planner derives them via
+/// `isPursuingTechStealPosture`).
+bool isCivilianBuildSpyTechStealPosture({
+  required int ownUnlockedTechCount,
+  required int maxRivalUnlockedTechCount,
+  int deficit = kCivilianBuildSpyTechStealDeficit,
+}) =>
+    maxRivalUnlockedTechCount - ownUnlockedTechCount >= deficit;
+
 /// Per-phase, per-type civilian build priority multiplier for [unitType] in the
 /// phase identified by [phaseName] (an `ObserverGoalPhase.name`). Spy is always
 /// phase-flat ([kCivilianBuildSpyPhaseFlatMultiplier]); for other types a null

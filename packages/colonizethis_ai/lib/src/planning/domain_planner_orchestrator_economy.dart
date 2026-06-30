@@ -68,10 +68,19 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   // the build pass can apply the min-cap floor, replacement urgency, phase
   // multiplier, and Spy demand boost. `null` when the planner is disabled,
   // leaving `pickBuildOrder` inert (SPEC § Live economy wiring).
+  // Refs #3793 decision #10: the Spy demand boost fires when the GP is at war
+  // OR pursuing a tech-steal posture (behind the most-advanced rival GP's
+  // unlocked-tech count by `kCivilianBuildSpyTechStealDeficit`). This replaces
+  // the prior war-posture-only approximation so `steal_tech` value is reflected
+  // even at peace (SPEC § Live economy wiring; AC4c). Inert unless
+  // `civilianBuildPlannerEnabled` (buildCivilianBuildScoringInput returns null).
+  final spyDemand =
+      isAtWarWithAnyGreatPower(ctx.game, snapshot) ||
+      isPursuingTechStealPosture(ctx.game, ctx.nationId);
   final civilianScoring = buildCivilianBuildScoringInput(
     ctx: ctx,
     phaseName: phasePlan.phase.name,
-    spyDemand: isAtWarWithAnyGreatPower(ctx.game, snapshot),
+    spyDemand: spyDemand,
   );
   final hasSpyWork = workCandidates.any(
     (o) =>

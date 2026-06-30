@@ -279,6 +279,71 @@ void main() {
     });
   });
 
+  group('civilian build Spy tech-steal posture (Refs #3793, AC4c)', () {
+    test('AC8: default tech-steal deficit is the GA-tunable config value', () {
+      expect(kCivilianBuildSpyTechStealDeficit, 1);
+    });
+
+    test('AC4c: a rival lead at or beyond the deficit is a tech-steal posture',
+        () {
+      // Own 2, rival 4 → lead 2 >= deficit 1 → posture.
+      expect(
+        isCivilianBuildSpyTechStealPosture(
+          ownUnlockedTechCount: 2,
+          maxRivalUnlockedTechCount: 4,
+        ),
+        isTrue,
+      );
+      // Exactly the default deficit (1) still qualifies.
+      expect(
+        isCivilianBuildSpyTechStealPosture(
+          ownUnlockedTechCount: 3,
+          maxRivalUnlockedTechCount: 4,
+        ),
+        isTrue,
+      );
+    });
+
+    test('AC4c: parity or a lead is not a tech-steal posture', () {
+      // Equal counts → lead 0 < deficit 1 → no posture.
+      expect(
+        isCivilianBuildSpyTechStealPosture(
+          ownUnlockedTechCount: 4,
+          maxRivalUnlockedTechCount: 4,
+        ),
+        isFalse,
+      );
+      // Own ahead → negative lead → no posture.
+      expect(
+        isCivilianBuildSpyTechStealPosture(
+          ownUnlockedTechCount: 5,
+          maxRivalUnlockedTechCount: 2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('AC4c: a higher deficit restricts the posture to bigger gaps', () {
+      // Lead 1 no longer qualifies at deficit 2.
+      expect(
+        isCivilianBuildSpyTechStealPosture(
+          ownUnlockedTechCount: 3,
+          maxRivalUnlockedTechCount: 4,
+          deficit: 2,
+        ),
+        isFalse,
+      );
+      expect(
+        isCivilianBuildSpyTechStealPosture(
+          ownUnlockedTechCount: 2,
+          maxRivalUnlockedTechCount: 4,
+          deficit: 2,
+        ),
+        isTrue,
+      );
+    });
+  });
+
   group('civilian build pool weight (Refs #3793, ACPool)', () {
     test('ACPool/AC8: default pool weight is declared in [0.0, 1.0] and 1.0', () {
       expect(kCivilianBuildPoolWeight, 1.0);

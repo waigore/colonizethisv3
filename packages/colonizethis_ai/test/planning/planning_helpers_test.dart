@@ -139,7 +139,105 @@ Game _gameOwning(Map<String, int> ownerCounts) {
   );
 }
 
+// Game whose Great Powers each have [techCountByPlayer] unlocked techs (the
+// `techUnlocked` map carries that many `true` flags), so `unlockedTechCount`
+// and the `isPursuingTechStealPosture` deficit comparison under test resolve
+// deterministically. Minor nations and tribes carry no tech state.
+Game _gameWithTechs(Map<String, int> techCountByPlayer) {
+  Map<String, bool> techs(int count) => {
+    for (var i = 0; i < count; i++) 'tech_$i': true,
+  };
+  return Game(
+    id: 'g-3793-tech-steal',
+    worldState: WorldState(
+      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: const RegionData(provinces: []),
+      newWorld: const RegionData(provinces: []),
+    ),
+    players: [
+      for (final entry in techCountByPlayer.entries)
+        Player(
+          id: entry.key,
+          displayName: entry.key.toUpperCase(),
+          isHuman: false,
+          techUnlocked: techs(entry.value),
+        ),
+    ],
+    minorNations: const [MinorNation(id: _minor1, displayName: 'Minor1')],
+    tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
+  );
+}
+
 void main() {
+  group('unlockedTechCount (Refs #3793)', () {
+    test('counts only true-flagged techs; null/empty map is 0', () {
+      expect(
+        unlockedTechCount(
+          const Player(id: _gp1, displayName: 'GP1', isHuman: false),
+        ),
+        0,
+      );
+      expect(
+        unlockedTechCount(
+          const Player(
+            id: _gp1,
+            displayName: 'GP1',
+            isHuman: false,
+            techUnlocked: {'a': true, 'b': true, 'c': false},
+          ),
+        ),
+        2,
+      );
+    });
+  });
+
+  group('isPursuingTechStealPosture (Refs #3793, AC4c)', () {
+    test('true when a rival GP leads by at least the deficit', () {
+      // gp1 owns 2 techs; gp2 owns 4 → lead 2 >= deficit 1 → posture.
+      final game = _gameWithTechs({_gp1: 2, _gp2: 4, _gp3: 1});
+      expect(isPursuingTechStealPosture(game, _gp1), isTrue);
+    });
+
+    test('true at exactly the default deficit (lead of 1)', () {
+      final game = _gameWithTechs({_gp1: 3, _gp2: 4});
+      expect(isPursuingTechStealPosture(game, _gp1), isTrue);
+    });
+
+    test('false when the active GP leads or is tied with every rival', () {
+      // gp1 is the most advanced; no rival leads it.
+      final leadGame = _gameWithTechs({_gp1: 5, _gp2: 4, _gp3: 2});
+      expect(isPursuingTechStealPosture(leadGame, _gp1), isFalse);
+      // Parity with the top rival → lead 0 < deficit 1 → no posture.
+      final tiedGame = _gameWithTechs({_gp1: 4, _gp2: 4});
+      expect(isPursuingTechStealPosture(tiedGame, _gp1), isFalse);
+    });
+
+    test('false when there are no rival Great Powers', () {
+      final game = _gameWithTechs({_gp1: 0});
+      expect(isPursuingTechStealPosture(game, _gp1), isFalse);
+    });
+
+    test('false for an unknown active player id', () {
+      final game = _gameWithTechs({_gp1: 1, _gp2: 9});
+      expect(isPursuingTechStealPosture(game, 'nobody'), isFalse);
+    });
+
+    test('ignores minor nations and tribes (not Player rivals)', () {
+      // Only gp1 is a Player; minors/tribes carry no tech state and are not
+      // rivals, so a lone GP is never behind.
+      final game = _gameWithTechs({_gp1: 0});
+      expect(isPursuingTechStealPosture(game, _gp1), isFalse);
+    });
+
+    test('deterministic for fixed inputs', () {
+      final game = _gameWithTechs({_gp1: 1, _gp2: 5});
+      final a = isPursuingTechStealPosture(game, _gp1);
+      final b = isPursuingTechStealPosture(game, _gp1);
+      expect(a, isTrue);
+      expect(b, a);
+    });
+  });
+
   group('gpFactionIdsAtWarWith', () {
     test('filters to Great Powers only and sorts ascending', () {
       final game = _gameWithGps();
