@@ -25,7 +25,7 @@ void main() {
 
       final campaign = runSeed42ObserverCampaign(
         turns: 2,
-        onBeforeResolve: (turn, fullAi, game) {
+        onBeforeResolve: (turn, fullAi, game, topology, tileMap) {
           beforeTurns.add(turn);
           // Orders are generated before resolution; the start-of-turn game is
           // the same instance the harness will resolve.

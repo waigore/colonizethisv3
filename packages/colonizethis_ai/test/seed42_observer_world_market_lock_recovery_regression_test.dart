@@ -62,7 +62,7 @@ void main() {
 
       runSeed42ObserverCampaign(
         turns: 100,
-        onBeforeResolve: (turn, fullAi, game) {
+        onBeforeResolve: (turn, fullAi, game, topology, tileMap) {
           for (final gpId in failingGpIds) {
             final treasuryBeforeOrders = game.playerById(gpId)?.treasury ?? 0;
             if (treasuryBeforeOrders < threshold) continue;

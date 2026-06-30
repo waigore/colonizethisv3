@@ -1,15 +1,13 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 
 /// Growth-stage planner seed-42 conquest gate (Refs #3371 AC7).
 ///
-/// Runs with `growthStagePlannerEnabled: true` (H8 reactive boosts off).
+/// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+/// step 2) with `growthStagePlannerEnabled: true` (H8 reactive boosts off).
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -18,55 +16,23 @@ void main() {
   test(
     'seed 42 turn 100 with growth-stage planner: per-GP OW conquest baselines',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
+      final campaign = runSeed42ObserverCampaign(
+        turns: 100,
+        growthStagePlannerEnabled: true,
       );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
-      final owStart = <String, int>{};
-      for (var i = 1; i <= 6; i++) {
-        final gpId = 'gp$i';
-        owStart[gpId] = game.worldState.oldWorld.provinces
-            .where((p) => p.ownerId == gpId)
-            .length;
-      }
-      for (var t = 0; t < 100; t++) {
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-          growthStagePlannerEnabled: true,
-        );
-        final merged = mergeOrderLists(
-          humanOrders: const Orders(),
-          aiOrders: fullAi.orders,
-        );
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        game = (result as TurnResolutionComplete).game;
-      }
+
+      int owProvincesFor(String gpId) => campaign.finalGame.worldState
+          .oldWorld.provinces
+          .where((p) => p.ownerId == gpId)
+          .length;
+
       final gains = <String, int>{};
       for (var i = 1; i <= 6; i++) {
         final gpId = 'gp$i';
-        final end = game.worldState.oldWorld.provinces
+        final start = campaign.initialGame.worldState.oldWorld.provinces
             .where((p) => p.ownerId == gpId)
             .length;
-        gains[gpId] = end - owStart[gpId]!;
+        gains[gpId] = owProvincesFor(gpId) - start;
       }
 
       const baselines = <String, int>{

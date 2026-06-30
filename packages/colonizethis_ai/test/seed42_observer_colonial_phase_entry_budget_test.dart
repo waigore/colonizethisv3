@@ -1,11 +1,10 @@
 // Observer seed-42 turn-150 colonial phase-entry budget gate
 // (Refs #2848 § Subtasks/ACs — "Phase-entry budget (≤ 90)").
 //
-// This focused regression-guard pins the **≤ 90 turn COLONIAL phase-entry
-// budget** documented under #2848 § "COLONIAL phase timeline budget"
-// ("Each GP has ≤ 90 turns to reach COLONIAL, leaving ≥ 60 turns for NW
-// acquisition + improvements") and surfaced as an AC item alongside the
-// existing turn-150 colonial verification gates.
+// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+// step 2): the init / handoff / per-turn resolve loop is owned by
+// `test/support/seed42_observer_campaign.dart`; this test contributes only
+// its per-turn `onBeforeResolve` phase-classification observation.
 //
 // Gate semantics pinned by this test:
 //   1. For each Great Power `gp1..gp6`, the GP's deterministic
@@ -18,15 +17,6 @@
 //      seed-42 campaign fails the gate with a deterministic failure
 //      message listing the GP id and its terminal phase distribution.
 //
-// The test deliberately mirrors the structural pattern of
-// `seed42_observer_colonial_regression_test.dart` (init game, full-AI
-// per-turn loop, 15-minute timeout) and the per-turn phase-classification
-// pattern of `seed42_observer_colonial_c0_diagnostic_test.dart` (call
-// `runPhasePlanners` per GP per turn using `AIWorldSnapshot.fromPlayerView`
-// and read the resulting `PhasePlanOutcome.phase`). Keeping the surfaces
-// aligned makes the budget gate easy to reason about alongside the
-// existing colonial-acquisition diagnostic surface captured by #2852.
-//
 // Skip-status precedent: see the existing S10 skip on
 // `seed42_observer_conquest_regression_test.dart` and the #2848 S0 skip
 // on `seed42_observer_colonial_regression_test.dart`. This test stays
@@ -37,13 +27,11 @@
 // transition gap.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 
 /// Per-GP COLONIAL phase-entry budget for the seed-42 turn-150 observer
 /// campaign per #2848 § "COLONIAL phase timeline budget". A first-COLONIAL
@@ -88,18 +76,6 @@ void main() {
     'seed 42: every Great Power enters COLONIAL by turn '
     '$kColonialPhaseEntryBudgetTurns (#2848 phase-entry budget)',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
-      );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
-
       // Stable ordering matches the existing colonial diagnostic test
       // (`seed42_observer_colonial_c0_diagnostic_test.dart`) so the two
       // surfaces report the same GP cohort.
@@ -124,44 +100,25 @@ void main() {
           },
       };
 
-      for (var t = 0; t < kColonialPhaseEntryHorizonTurns; t++) {
-        for (final gpId in gpIds) {
-          final view = buildPlayerView(game, topo, gpId);
-          final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);
-          // Mirror `seed42_observer_colonial_c0_diagnostic_test.dart`:
-          // `runPhasePlanners` returns the canonical `PhasePlanOutcome`
-          // whose `.phase` field is the deterministic per-GP per-turn
-          // classification used by every downstream planner module.
-          final outcome = runPhasePlanners(game: game, snapshot: snap);
-          phaseTurnCount[gpId]![outcome.phase] =
-              (phaseTurnCount[gpId]![outcome.phase] ?? 0) + 1;
-          if (outcome.phase == ObserverGoalPhase.colonial) {
-            firstColonialTurn[gpId] ??= t;
+      runSeed42ObserverCampaign(
+        turns: kColonialPhaseEntryHorizonTurns,
+        onBeforeResolve: (turn, fullAi, game, topology, tileMap) {
+          for (final gpId in gpIds) {
+            final view = buildPlayerView(game, topology, gpId);
+            final snap = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+            // Mirror `seed42_observer_colonial_c0_diagnostic_test.dart`:
+            // `runPhasePlanners` returns the canonical `PhasePlanOutcome`
+            // whose `.phase` field is the deterministic per-GP per-turn
+            // classification used by every downstream planner module.
+            final outcome = runPhasePlanners(game: game, snapshot: snap);
+            phaseTurnCount[gpId]![outcome.phase] =
+                (phaseTurnCount[gpId]![outcome.phase] ?? 0) + 1;
+            if (outcome.phase == ObserverGoalPhase.colonial) {
+              firstColonialTurn[gpId] ??= turn;
+            }
           }
-        }
-
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-        );
-        final merged = mergeOrderLists(
-          humanOrders: const Orders(),
-          aiOrders: fullAi.orders,
-        );
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        game = (result as TurnResolutionComplete).game;
-      }
+        },
+      );
 
       // Positive AC: every GP entered COLONIAL by the budget cutoff.
       // Zero-based first-COLONIAL turn index <= kColonialPhaseEntryBudgetTurns - 1
