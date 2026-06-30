@@ -58,6 +58,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart'
     show
         isBelowObserverConquestQuota,
+        isCivilianBuildSpyTechStealPosture,
         isStalledOldWorldExpansion,
         kMutualExhaustedGpRegimentMax,
         kMutualExhaustedGpStalemateMinOw,
@@ -300,6 +301,52 @@ List<String> peaceTargetsExcludingBlocker({
 /// (Refs #2509 Must-have #7).
 bool isAtWarWithAnyGreatPower(Game game, AIWorldSnapshot snapshot) =>
     snapshot.threats.atWarWith.any((id) => game.playerById(id) != null);
+
+/// Number of techs [player] has unlocked — the count of `true` flags in
+/// [Player.techUnlocked]. A `null` or empty map yields `0`.
+///
+/// Pure and deterministic for fixed inputs.
+int unlockedTechCount(Player player) {
+  final techs = player.techUnlocked;
+  if (techs == null) return 0;
+  var count = 0;
+  for (final unlocked in techs.values) {
+    if (unlocked) count++;
+  }
+  return count;
+}
+
+/// Whether the Great Power [activePlayerId] is **pursuing a tech-steal posture**
+/// (decision #10, SPEC/ai/civilian-build-planner.md § Live economy wiring): it
+/// has unlocked fewer techs than the most-advanced rival Great Power by at
+/// least [kCivilianBuildSpyTechStealDeficit], so a `steal_tech` target exists
+/// and the civilian Spy build receives the demand boost even at peace.
+///
+/// Iterates [Game.players] (Great Powers only — minor nations and tribes are not
+/// [Player] entries; the list is small and bounded) to find the maximum rival
+/// unlocked-tech count, then delegates the threshold comparison to the pure
+/// data helper [isCivilianBuildSpyTechStealPosture]. Returns `false` when
+/// [activePlayerId] is unknown or there are no rival Great Powers.
+///
+/// Pure and deterministic: identical [game] state and [activePlayerId] always
+/// yield the same result (no randomness, no ordering dependence).
+bool isPursuingTechStealPosture(Game game, String activePlayerId) {
+  final active = game.playerById(activePlayerId);
+  if (active == null) return false;
+  var maxRivalCount = 0;
+  var hasRival = false;
+  for (final player in game.players) {
+    if (player.id == activePlayerId) continue;
+    hasRival = true;
+    final count = unlockedTechCount(player);
+    if (count > maxRivalCount) maxRivalCount = count;
+  }
+  if (!hasRival) return false;
+  return isCivilianBuildSpyTechStealPosture(
+    ownUnlockedTechCount: unlockedTechCount(active),
+    maxRivalUnlockedTechCount: maxRivalCount,
+  );
+}
 
 /// Whether the active player's own Old World expansion is stalled.
 ///

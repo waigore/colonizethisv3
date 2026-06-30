@@ -124,6 +124,30 @@ void main() {
       expect(input.currentCountByType.containsKey('inf'), isFalse);
       expect(input.phaseName, 'colonial');
       expect(input.spyDemand, isFalse);
+      // phaseProgress omitted → null (discrete multiplier; no hysteresis).
+      expect(input.phaseProgress, isNull);
+    });
+
+    test('slice 9: carries the supplied phaseProgress (hysteresis signal)', () {
+      final game = _gameWithLeader();
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = _viewWithCivilians(game, const {});
+      final ctx = buildTestPlannerContext(
+        game: game,
+        topology: topology,
+        view: view,
+        civilianBuildPlannerEnabled: true,
+      );
+
+      final input = buildCivilianBuildScoringInput(
+        ctx: ctx,
+        phaseName: 'expand',
+        spyDemand: false,
+        phaseProgress: 0.25,
+      );
+
+      expect(input, isNotNull);
+      expect(input!.phaseProgress, 0.25);
     });
   });
 

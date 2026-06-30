@@ -13,7 +13,10 @@ import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
 import 'planning_helpers.dart'
-    show isAtWarWithAnyGreatPower, oldWorldProvinceLeadOver;
+    show
+        isAtWarWithAnyGreatPower,
+        isPursuingTechStealPosture,
+        oldWorldProvinceLeadOver;
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
