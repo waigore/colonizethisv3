@@ -24,7 +24,7 @@ governs **selection scoring** only.
 | Unit type | Scored path | Targets scored |
 |-----------|-------------|----------------|
 | Explorer | `_appendExplorerPathResult` | `explore`, `prospect` |
-| Builder | `_appendBuilderPathResult` | `build_improvement` |
+| Builder | `_appendBuilderPathResult` | `build_improvement`, `upgrade_town` |
 | Merchant | `_appendMerchantPathResult` | `purchase_land` |
 | Rail Builder | `_appendRailBuilderPathResult` | `build_rail` |
 | Engineer | `_appendEngineerPathResult` | `build_road`, `build_port`, `build_fort` |
@@ -92,6 +92,41 @@ Any non-Engineer target scores `0`; an empty Engineer pool falls back to
 stable secondary ordering where the selected candidate is driven by score, not
 by the target string's alphabetical position.
 
+## Builder scoring model
+
+`_appendBuilderPathResult` selects via `_bestBuilderRow`, which scores every
+`build_improvement` **and** `upgrade_town` candidate in a **single unified pool**
+and selects the highest. This replaces the prior behaviour, where `upgrade_town`
+was reachable only through the lexicographic fallback (picked only when no
+`build_improvement` candidate existed, regardless of context).
+
+`build_improvement` scoring is unchanged (normative in
+[economy-planner.md](economy-planner.md) and
+[growth-stage-planner.md](growth-stage-planner.md)). `upgrade_town` scoring
+(`_upgradeTownWorkScore`) is a GA-tunable baseline plus context bonuses using the
+same cheap per-tile proxies as the Rail Builder / Engineer scorers:
+
+```
+upgrade_town score = kUpgradeTownBaseWorkScore
+      + (tile carries a resource              ? kUpgradeTownResourceValueBonus : 0)
+      + (tile in New World region             ? kUpgradeTownFrontlineBonus     : 0)
+      + (tile improvement level == 0          ? kUpgradeTownLowDevBonus        : 0)
+```
+
+The baseline `kUpgradeTownBaseWorkScore` (300) sits below the
+`build_improvement` extractable-resource score (580) so a genuine unimproved
+resource extraction still outranks a bare town upgrade, yet above the degenerate
+`build_improvement` sentinel scores (`1` already improved, `2` no resource) so a
+town upgrade competes when no high-value extraction exists. The unified pool
+selects the highest-scoring candidate across **both** target types.
+
+When no `upgrade_town` candidate exists, `_bestBuilderRow` returns the
+`build_improvement`-only selection unchanged (no regression). An empty Builder
+pool falls back to `_pickLexicographic`; an idle Builder with no candidates
+records a single `FullAiCivilianWorkIdle(reason: 'no_suggestions')`. An exact
+cross-type score tie breaks via `_compareBuilderCrossType` — province id, then
+full tile key, then target — a stable, non-alphabetical-driven ordering.
+
 ## GA-tunable scoring parameters
 
 All civilian-work score boosts are **GA-tunable** constants declared in
@@ -119,6 +154,10 @@ unchanged at default values.
 | `kEngineerPortNewWorldCoastalBonus` | 120 | `build_port` on a tile in the New World region |
 | `kEngineerFortCapitalDefenseBonus` | 160 | `build_fort` on a tile in the player's capital province |
 | `kEngineerFortNewWorldBorderBonus` | 100 | `build_fort` on a tile in the New World region |
+| `kUpgradeTownBaseWorkScore` | 300 | baseline score for any valid `upgrade_town` candidate |
+| `kUpgradeTownResourceValueBonus` | 200 | `upgrade_town` on a town tile carrying a resource |
+| `kUpgradeTownFrontlineBonus` | 150 | `upgrade_town` on a town tile in the New World region |
+| `kUpgradeTownLowDevBonus` | 120 | `upgrade_town` on an undeveloped town tile (improvement level 0) |
 
 The feedstock-extraction and growth-stage gates that decide when each boost
 applies are unchanged; they remain self-clearing pure functions of
@@ -249,13 +288,49 @@ infrastructure feedstock routing).
   then the system returns a non-null `AiParameter` whose `category` equals
   `victory_config`.
 
+- **AC18 (Builder unified scored selection over mixed targets):**
+  Given an idle Builder whose candidate set contains an `upgrade_town` candidate
+  on a tile carrying a resource and a `build_improvement` candidate on an
+  already-improved tile (improvement level `>= 1`, score `1`),
+  when `selectFullAiCivilianWorkOrders` runs,
+  then the system emits exactly one `WorkOrder` whose `target` is `upgrade_town`
+  (the higher-scoring candidate), not the alphabetically-first
+  `build_improvement`.
+
+- **AC19 (Builder build_improvement still outranks bare town upgrade):**
+  Given an idle Builder with a `build_improvement` candidate on an unimproved
+  resource tile (score `>= kBuildImprovementExtractableResourceScore`) and a
+  plain `upgrade_town` candidate (baseline only),
+  when selection runs,
+  then the system emits the `build_improvement` `WorkOrder`.
+
+- **AC20 (upgrade_town context bonus):**
+  Given a Builder with two `upgrade_town` candidates that differ only in that one
+  town tile carries a resource and the other does not,
+  when selection runs,
+  then the system selects the resource-carrying `upgrade_town` candidate.
+
+- **AC21 (upgrade_town deterministic non-alphabetical tie-break):**
+  Given two equally-scored `upgrade_town` candidates in provinces `p1` and `p2`
+  of the same region presented in either input order,
+  when selection runs,
+  then the system emits the `p1` candidate in both orders (province-id ordering,
+  independent of input order).
+
+- **AC22 (upgrade_town parameters registered):**
+  Given the AI parameter registry,
+  when `AiParameterRegistry.byName(name)` is called for each of
+  `kUpgradeTownBaseWorkScore`, `kUpgradeTownResourceValueBonus`,
+  `kUpgradeTownFrontlineBonus`, and `kUpgradeTownLowDevBonus`,
+  then the system returns a non-null `AiParameter` whose `category` equals
+  `victory_config`.
+
 ## Deferred (follow-up work for #3794)
 
-The following remain on the lexicographic fallback and are **not** yet scored;
-they are tracked by #3794 and will be specified here when implemented:
+The following remains on the lexicographic fallback and is **not** yet scored;
+it is tracked by #3794 and will be specified here when implemented:
 
-- Builder `upgrade_town` unified scoring.
 - Spy `steal_tech` / `counter_spy` phase-dependent scoring.
 
-When those scorers land, their weights are added to `ai_victory_config.dart` /
+When that scorer lands, its weights are added to `ai_victory_config.dart` /
 `ai_parameter_registry.dart` following the GA-tunable pattern above.

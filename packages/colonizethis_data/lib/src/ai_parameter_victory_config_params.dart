@@ -645,6 +645,26 @@ final List<AiParameter> victoryConfigParams = <AiParameter>[
     'Extra Engineer build_fort score when the tile is in the New World.',
   ),
   _vcInt(
+    'kUpgradeTownBaseWorkScore',
+    kUpgradeTownBaseWorkScore,
+    'Baseline Builder upgrade_town work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kUpgradeTownResourceValueBonus',
+    kUpgradeTownResourceValueBonus,
+    'Extra Builder upgrade_town score when the town tile carries a resource.',
+  ),
+  _vcInt(
+    'kUpgradeTownFrontlineBonus',
+    kUpgradeTownFrontlineBonus,
+    'Extra Builder upgrade_town score when the town tile is in the New World.',
+  ),
+  _vcInt(
+    'kUpgradeTownLowDevBonus',
+    kUpgradeTownLowDevBonus,
+    'Extra Builder upgrade_town score when the town tile is undeveloped (level 0).',
+  ),
+  _vcInt(
     'kColonialCivilianWorkThresholdCap',
     kColonialCivilianWorkThresholdCap,
     'Civilian work economy threshold cap when colonial targets are visible.',

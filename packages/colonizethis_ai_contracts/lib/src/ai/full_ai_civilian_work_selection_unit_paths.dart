@@ -18,7 +18,7 @@ void _appendBuilderPathResult({
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
 }) {
   final chosen =
-      _bestBuildImprovementRow(
+      _bestBuilderRow(
         w,
         game,
         playerId: playerId,

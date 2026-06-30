@@ -562,6 +562,30 @@ const int kEngineerFortCapitalDefenseBonus = 160;
 /// region (colonial-frontier border proxy; Refs #3794 § Engineer).
 const int kEngineerFortNewWorldBorderBonus = 100;
 
+/// Per-target-type baseline score for a Builder `upgrade_town` candidate in the
+/// unified Builder scored pool (`build_improvement` + `upgrade_town`; Refs #3794
+/// § Builder). Sized below [kBuildImprovementExtractableResourceScore] so a
+/// genuine unimproved resource extraction still outranks a bare town upgrade,
+/// yet above the degenerate `build_improvement` sentinel scores (1 = already
+/// improved, 2 = no resource) so a town upgrade competes when no high-value
+/// extraction exists. Contextual bonuses then differentiate town upgrades.
+const int kUpgradeTownBaseWorkScore = 300;
+
+/// Extra Builder `upgrade_town` score when the target town tile carries a
+/// resource (town resource-value proxy — the cheap per-tile signal the scorer
+/// uses instead of per-province aggregation; Refs #3794 § Builder).
+const int kUpgradeTownResourceValueBonus = 200;
+
+/// Extra Builder `upgrade_town` score when the target town tile is in the New
+/// World region (front-line / colonial-frontier proximity proxy; Refs #3794
+/// § Builder).
+const int kUpgradeTownFrontlineBonus = 150;
+
+/// Extra Builder `upgrade_town` score when the target town tile has the lowest
+/// current development level (improvement level `0`), so the AI develops the
+/// least-developed towns first (Refs #3794 § Builder).
+const int kUpgradeTownLowDevBonus = 120;
+
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 12;
 
