@@ -10,12 +10,17 @@ import 'package:colonizethis_logic/ai_api.dart'
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
+        hasEmbassyOverture,
         kRegionNewWorld,
         oldWorldProvinceCountOwnedBy,
         peerLockRecoverySellerNeededProducibleImprovementInputs,
         pendingTreasuryCostsForTurn,
         regimentBuildInputFeedstockImprovementInputCost,
+        relationScoreNeutral,
         tradeCargoCapacityForGreatPower,
+        tradeDealRelationBoostBase,
+        tradeDealRelationBoostEmbassyBonus,
+        tradeDealRelationBoostPerSubsidyPercent,
         worldMarketBidTypeCap;
 import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
@@ -38,6 +43,7 @@ part 'treasury_market_pricing.dart';
 part 'treasury_lock_recovery.dart';
 part 'treasury_regiment_bootstrap.dart';
 part 'treasury_bid_emission.dart';
+part 'treasury_relation_boost_preference.dart';
 
 /// Bid priority tiers (1 = highest). Refs #2994 F4.
 const int kTreasuryBidPriorityEssentialInput = 1;
@@ -328,66 +334,46 @@ List<TradeOrder> runTreasuryPlanner({
     return const <TradeOrder>[];
   }
 
-  // Refs #3122 + #3127: pass the treasury-budget-aware bid cap (computed above
-  // — `rawTreasury - pendingCosts - carryForwardBidNotional`, floored at 0)
-  // into the suggester so it never emits bids the validator rule 5 would
-  // reject. Subsumes #3127's bare `max(0, treasury)` formulation.
-  final suggestion = TradeOrderSuggester.suggest(
-    TradeSuggestionContext(
-      playerId: playerId,
-      bidTypeCap: bidTypeCap,
-      tradeCargoCapacity: tradeCargoCapacity,
-      availableStockpileByCommodityId: available,
-      commodityNeedByCommodityId: need,
-      treasuryBudgetForBids: treasuryBudgetForBids,
-      worldMarketState: game.worldMarketState,
-      offerPriority: offerPriority,
-      bidPriority: kTreasuryBidPriorityRawMaterial,
-    ),
-  );
+  // Refs #3758 S9/R10: trade-deal relation-boost-aware bid preference. Resolve
+  // the single bid commodity whose completed deal would earn the largest
+  // trade-deal relation boost from a peace-time below-neutral partner, and pass
+  // it as the `preferCommodityId` ordering hint so it is admitted first under
+  // the caps. Skipped in every lock-recovery special state (those own the hint)
+  // and a no-op when no qualifying partner holds a standing matching offer, so
+  // common-path emission (and seed-42 tuning) is byte-identical. Deterministic.
+  // SPEC/ai/treasury-planner.md § Trade-deal relation-boost-aware bid preference.
+  final tradeDealPreferredBidCommodityId = (snapshot != null &&
+          !isLiquidityBuyer &&
+          !isAffluentDesignatedBuyer &&
+          !isLockRecoverySeller &&
+          !lockRecoveryUrgent)
+      ? _tradeDealRelationBoostPreferredBidCommodityId(
+          game: game,
+          playerId: playerId,
+          snapshot: snapshot,
+          need: need,
+        )
+      : null;
 
-  // Refs #2847 H8-supply market order matching: a lock-recovery supplier
-  // releases its surplus at the GP's general `offerPriority` (the urgent tier
-  // when broke, the moderate tier otherwise), but the locked buyer bids the
-  // build inputs at `_bidPriorityForCommodity` (essential = 1 for the
-  // manufactured `lumber` / `castIron` / `fabric` inputs) once it has recovered
-  // above the regiment threshold. The DealMatcher crosses offers and bids only
-  // **within** the same integer priority tier
-  // (SPEC/program/world-market-resolution.md § Step C), so a standing
-  // build-input offer and the buyer's standing build-input bid never pair --
-  // confirmed on seed 42: a priority-2 `lumber` offer and a priority-1 `lumber`
-  // bid coexist every turn yet `filledQuantity == 0`. Re-tag the supplier's
-  // build-input supply offers to the same per-commodity tier the buyer bids at
-  // so the two cross. Mirrors the bid-side `alignBidPriorityWithUrgentOffers`
-  // tier-alignment machinery (Refs #2924 F12/F16).
-  // SPEC/ai/treasury-planner.md § Supplier offer-tier alignment.
-  final offers = isRegimentBuildInputMarketSupplier
-      ? _alignBuildInputSupplyOfferTiers(suggestion.offers)
-      : suggestion.offers;
-  // Refs #2924 F11/F12: when the designated buyer is affluent its own forecast
-  // is above the regiment threshold (offerPriority == moderate); the lock-
-  // recovery bid still needs to clear at the urgent integer priority tier so
-  // it matches broke GPs' urgent grain offers. forceBidPriority overrides the
-  // tier-alignment computation so the synthetic grain bid always goes out at
-  // kTreasuryOfferPriorityUrgent regardless of the buyer's own offerPriority.
-  final bids = _prioritizedBids(
-    rawBids: suggestion.bids,
-    need: need,
+  // Refs #3758 file-split: offer/bid suggestion, supplier offer-tier alignment,
+  // and treasury/cargo-clamped bid prioritization are assembled in
+  // [_emitTradeOrders] so this planner body stays within the function-size
+  // budget. Behaviour-preserving (same library scope, identical emission path).
+  return _emitTradeOrders(
+    game: game,
+    playerId: playerId,
     bidTypeCap: bidTypeCap,
     tradeCargoCapacity: tradeCargoCapacity,
-    offerPriority: offerPriority,
-    alignBidPriorityWithUrgentOffers: isLiquidityBuyer || lockRecoveryUrgent,
-    forceBidPriority:
-        isLiquidityBuyer ? kTreasuryOfferPriorityUrgent : null,
-    preferCommodityId: isLiquidityBuyer
-        ? _lockRecoveryLiquidityCommodity(game.worldMarketState)
-        : null,
+    available: available,
+    need: need,
     treasuryBudgetForBids: treasuryBudgetForBids,
-    worldMarketState: game.worldMarketState,
-    resourceRules: rules,
+    offerPriority: offerPriority,
+    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+    isLiquidityBuyer: isLiquidityBuyer,
+    lockRecoveryUrgent: lockRecoveryUrgent,
+    rules: rules,
+    tradeDealPreferredBidCommodityId: tradeDealPreferredBidCommodityId,
   );
-
-  return [...offers, ...bids];
 }
 
 /// Resolves this GP's per-turn trade cargo capacity. Uses the tile-map-aware

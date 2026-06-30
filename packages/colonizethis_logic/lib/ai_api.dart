@@ -72,6 +72,7 @@ export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
         getOverture,
         getRelation,
         greatPowerPowerScore,
+        hasEmbassyOverture,
         joinEmpireCostForMinorOrTribe,
         knownDiplomaticTargetFactionIds,
         oldWorldProvinceCountOwnedBy,
@@ -79,7 +80,10 @@ export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
         relationDecayPerTurn,
         relationScoreMinFriendly,
         relationScoreNeutral,
-        shipCountForFaction;
+        shipCountForFaction,
+        tradeDealRelationBoostBase,
+        tradeDealRelationBoostEmbassyBonus,
+        tradeDealRelationBoostPerSubsidyPercent;
 
 // colonizethis_turn (barrel-level re-exports).
 export 'package:colonizethis_turn/colonizethis_turn.dart'
