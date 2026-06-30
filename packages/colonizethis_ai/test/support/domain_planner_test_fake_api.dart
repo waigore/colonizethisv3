@@ -57,8 +57,9 @@ class FakeOrderSuggestionAPIForDomainPlannerTests
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) => build;
+    Orders currentOrders, {
+    bool includeCivilianBuilds = false,
+  }) => build;
 
   @override
   List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
