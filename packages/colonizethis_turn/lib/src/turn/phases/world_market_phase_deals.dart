@@ -38,6 +38,13 @@ List<Player> applyDealsToPlayers({
       const <String, double>{},
   Set<String> lockRecoverySellerPriorityIds = const <String>{},
   CommodityId? lockRecoveryLiquidityCommodityId,
+  // #3753 R3.4 subsidy price adjustment. Directed key `'<payerId>><targetId>'`
+  // (payer is always a GP, target a Minor/Tribe) → subsidy percent (5–20). The
+  // GP buyer of a deal with its subsidised Minor/Tribe seller pays a surcharge
+  // (R3.4b); the GP seller of a deal with its subsidised Minor/Tribe buyer
+  // grants a discount (R3.4a). Empty map = legacy behaviour (no adjustment).
+  // SPEC/program/world-market-resolution.md § Step D — Subsidy price adjustment.
+  Map<String, int> subsidyPercentByPayerTargetKey = const <String, int>{},
 }) {
   if (filledDeals.isEmpty &&
       firstRightTreasuryCreditByGpId.isEmpty &&
@@ -65,8 +72,19 @@ List<Player> applyDealsToPlayers({
       notional *= 2;
     }
     if (isGpBuyer) {
+      var buyerDebit = notional;
+      // #3753 R3.4b: a GP buying from the Minor/Tribe it subsidises pays a
+      // surcharge of `percent%` on the settled per-unit price. The seller is a
+      // Minor/Tribe (sink), so the surcharge leaves the GP pool via the sink.
+      final surchargePercent = !isGpSeller
+          ? subsidyPercentByPayerTargetKey['${deal.buyerFactionId}>'
+                '${deal.sellerFactionId}']
+          : null;
+      if (surchargePercent != null && surchargePercent > 0) {
+        buyerDebit = (notional * (1 + surchargePercent / 100)).round();
+      }
       treasuryById[deal.buyerFactionId] =
-          (treasuryById[deal.buyerFactionId] ?? 0) - notional;
+          (treasuryById[deal.buyerFactionId] ?? 0) - buyerDebit;
       stockpileById[deal.buyerFactionId] =
           (stockpileById[deal.buyerFactionId] ?? Stockpile.empty).applyDelta(
             deal.commodityId,
@@ -77,6 +95,16 @@ List<Player> applyDealsToPlayers({
       var sellerCredit = notional;
       if (isLockRecoveryLiquiditySale) {
         sellerCredit += kLockRecoverySellerBonusPerLiquidityDeal;
+      }
+      // #3753 R3.4a: a GP selling to the Minor/Tribe it subsidises grants a
+      // discount of `percent%`, reducing its proceeds. `notional` is integral
+      // (integer prices × quantity) so the multiplier is exact at the AC values.
+      final discountPercent = !isGpBuyer
+          ? subsidyPercentByPayerTargetKey['${deal.sellerFactionId}>'
+                '${deal.buyerFactionId}']
+          : null;
+      if (discountPercent != null && discountPercent > 0) {
+        sellerCredit = (sellerCredit * (1 - discountPercent / 100)).round();
       }
       // F15 floor (Refs #2924 § Step A 3.1): seller credits from lock-recovery
       // deals are not absorbed servicing phase-1–12 debt. Clamp the running
