@@ -1019,6 +1019,75 @@ double civilianBuildPhaseMultiplier(String unitType, String? phaseName) {
   return byType[unitType] ?? kCivilianBuildPhaseMultiplierBase;
 }
 
+// ---------------------------------------------------------------------------
+// Civilian build planner — smooth phase weighting / hysteresis (Refs #3793
+// slice 8, design decision #13). SPEC/ai/civilian-build-planner.md § Scoring
+// model — phase multiplier. The discrete per-phase multipliers above hard-
+// switch a type from favored (2.0) to base (1.0) at a phase boundary, which can
+// oscillate when the dispatched phase flips back and forth across a boundary.
+// The smooth variant instead ramps continuously between the active phase's
+// discrete multiplier and the next phase's discrete multiplier using a runtime
+// `phaseProgress` signal in `[0,1]` (the dispatch's
+// `PhasePriorityWeights.newWorldCivilian`, itself a continuous ramp across the
+// Old World province count). The ramp is opt-in: callers that pass a `null`
+// `phaseProgress` keep the discrete multiplier exactly (byte-identical), so the
+// live wiring stays inert by default (`kCivilianBuildPlannerEnabled` is off).
+// ---------------------------------------------------------------------------
+
+/// Canonical "next" civilian-build phase for the smooth phase-multiplier ramp
+/// (Refs #3793 slice 8). The civilian phase progression toward which each phase
+/// ramps is: EXPAND → COLONIAL, COLONIAL-lite → COLONIAL, COLONIAL → DEVELOP,
+/// DEVELOP → DEVELOP (terminal). EXPAND and COLONIAL-lite share the same
+/// Builder-favored discrete profile, so both ramp toward COLONIAL (the next
+/// distinct-favored phase). An unknown phase name is treated as terminal
+/// (returns itself), so its ramp is a no-op and the discrete base applies.
+String nextCivilianBuildPhaseName(String phaseName) {
+  switch (phaseName) {
+    case kCivilianBuildPhaseExpand:
+    case kCivilianBuildPhaseColonialLite:
+      return kCivilianBuildPhaseColonial;
+    case kCivilianBuildPhaseColonial:
+      return kCivilianBuildPhaseDevelop;
+    case kCivilianBuildPhaseDevelop:
+      return kCivilianBuildPhaseDevelop;
+    default:
+      return phaseName;
+  }
+}
+
+/// Smooth (hysteresis) per-phase, per-type civilian build multiplier for
+/// [unitType] in [phaseName], linearly interpolated toward the
+/// [nextCivilianBuildPhaseName] profile by [phaseProgress] (clamped to
+/// `[0,1]`; Refs #3793 slice 8, SPEC § Scoring model — phase multiplier).
+///
+/// Returns `current + (next − current) × clamp(phaseProgress, 0, 1)` where
+/// `current = civilianBuildPhaseMultiplier(unitType, phaseName)` and
+/// `next = civilianBuildPhaseMultiplier(unitType, nextCivilianBuildPhaseName(
+/// phaseName))`. At `phaseProgress == 0.0` the result equals the discrete
+/// current-phase multiplier (no ramp); as `phaseProgress` rises toward `1.0`
+/// the multiplier blends toward the next phase's favored/base profile, so a
+/// type favored only in the next phase grows in and a type favored only in the
+/// current phase fades out continuously across the boundary.
+///
+/// Spy is always phase-flat ([kCivilianBuildSpyPhaseFlatMultiplier]) — the ramp
+/// never moves it (current == next == flat). A `null` [phaseName] yields the
+/// neutral base for every non-Spy type (no phase context to ramp from).
+double civilianBuildPhaseMultiplierSmooth(
+  String unitType,
+  String? phaseName,
+  double phaseProgress,
+) {
+  if (unitType == kUnitTypeSpy) return kCivilianBuildSpyPhaseFlatMultiplier;
+  if (phaseName == null) return kCivilianBuildPhaseMultiplierBase;
+  final p = phaseProgress.clamp(0.0, 1.0).toDouble();
+  final current = civilianBuildPhaseMultiplier(unitType, phaseName);
+  final next = civilianBuildPhaseMultiplier(
+    unitType,
+    nextCivilianBuildPhaseName(phaseName),
+  );
+  return current + (next - current) * p;
+}
+
 /// Additive civilian build candidate score for [unitType] given [currentCount]
 /// owned (SPEC/ai/civilian-build-planner.md § Scoring model). Returns
 /// `effectiveBase × minCapBoost × replacementUrgency`, where
@@ -1026,7 +1095,12 @@ double civilianBuildPhaseMultiplier(String unitType, String? phaseName) {
 ///
 /// - **Phase multiplier:** [civilianBuildPhaseMultiplier] for [phaseName]
 ///   (Spy is phase-flat). When [phaseName] is `null` the multiplier is the
-///   neutral base, so legacy callers are unaffected.
+///   neutral base, so legacy callers are unaffected. When [phaseProgress] is
+///   non-null the smooth (hysteresis) ramp
+///   [civilianBuildPhaseMultiplierSmooth] is used instead (Refs #3793 slice 8):
+///   the multiplier blends continuously toward the next phase's profile by
+///   `phaseProgress ∈ [0,1]`. A `null` [phaseProgress] keeps the discrete
+///   multiplier exactly (byte-identical to the pre-slice-8 path).
 /// - **Spy demand boost:** when [unitType] is Spy and [spyDemand] is `true`
 ///   (GP at war or pursuing a tech-steal posture), multiply by
 ///   [kCivilianBuildSpyDemandBoost]; otherwise `1.0`.
@@ -1044,8 +1118,11 @@ double civilianBuildCandidateScore(
   int currentCount, {
   String? phaseName,
   bool spyDemand = false,
+  double? phaseProgress,
 }) {
-  final phaseMultiplier = civilianBuildPhaseMultiplier(unitType, phaseName);
+  final phaseMultiplier = phaseProgress == null
+      ? civilianBuildPhaseMultiplier(unitType, phaseName)
+      : civilianBuildPhaseMultiplierSmooth(unitType, phaseName, phaseProgress);
   final demandBoost = (unitType == kUnitTypeSpy && spyDemand)
       ? kCivilianBuildSpyDemandBoost
       : 1.0;
@@ -1092,12 +1169,14 @@ double civilianBuildPooledScore(
   String? phaseName,
   bool spyDemand = false,
   double poolWeight = kCivilianBuildPoolWeight,
+  double? phaseProgress,
 }) =>
     civilianBuildCandidateScore(
       unitType,
       currentCount,
       phaseName: phaseName,
       spyDemand: spyDemand,
+      phaseProgress: phaseProgress,
     ) *
     poolWeight;
 

@@ -81,6 +81,11 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ctx: ctx,
     phaseName: phasePlan.phase.name,
     spyDemand: spyDemand,
+    // Refs #3793 slice 8 (decision #13): the dispatch's continuous
+    // `newWorldCivilian` weight drives smooth phase-multiplier ramping
+    // (hysteresis) so per-phase civilian priorities transition continuously
+    // across the EXPAND→COLONIAL→DEVELOP boundary instead of hard-switching.
+    phaseProgress: phasePlan.priorityWeights.newWorldCivilian,
   );
   final hasSpyWork = workCandidates.any(
     (o) =>

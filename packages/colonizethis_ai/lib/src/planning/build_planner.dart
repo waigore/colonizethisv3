@@ -29,10 +29,16 @@ const bool kCivilianBuildPlannerEnabled = false;
 /// active [phaseName] and the Spy [spyDemand] signal so the additive civilian
 /// scoring branch can apply the min-cap floor, replacement urgency, phase
 /// multiplier, and Spy demand boost.
+/// The optional [phaseProgress] is the dispatch's continuous
+/// `PhasePriorityWeights.newWorldCivilian` weight in `[0,1]` (Refs #3793 slice
+/// 8): when supplied it enables the smooth (hysteresis) phase-multiplier ramp
+/// in [civilianBuildCandidateScore]; when `null` the discrete per-phase
+/// multiplier is used (byte-identical to the pre-slice-8 path).
 CivilianBuildScoringInput? buildCivilianBuildScoringInput({
   required PlannerContext ctx,
   required String phaseName,
   required bool spyDemand,
+  double? phaseProgress,
 }) {
   if (!ctx.civilianBuildPlannerEnabled) return null;
   final counts = <String, int>{};
@@ -45,6 +51,7 @@ CivilianBuildScoringInput? buildCivilianBuildScoringInput({
     currentCountByType: counts,
     phaseName: phaseName,
     spyDemand: spyDemand,
+    phaseProgress: phaseProgress,
   );
 }
 
@@ -83,6 +90,7 @@ class CivilianBuildScoringInput {
     required this.currentCountByType,
     this.phaseName,
     this.spyDemand = false,
+    this.phaseProgress,
   });
 
   /// Current owned count per civilian unit type id (e.g. `'Builder' → 2`).
@@ -101,6 +109,15 @@ class CivilianBuildScoringInput {
   /// GA-tunable `kCivilianBuildSpyDemandBoost` on top of its phase-flat
   /// baseline. Has no effect on non-Spy civilians.
   final bool spyDemand;
+
+  /// Optional continuous phase-progress signal in `[0,1]` (Refs #3793 slice 8,
+  /// decision #13 — smooth phase weighting / hysteresis). When supplied (the
+  /// dispatch's `PhasePriorityWeights.newWorldCivilian`), the phase multiplier
+  /// ramps smoothly toward the next phase's profile via
+  /// [civilianBuildPhaseMultiplierSmooth] instead of hard-switching at the phase
+  /// boundary. When `null` the discrete per-phase multiplier is used
+  /// (byte-identical to the pre-slice-8 path).
+  final double? phaseProgress;
 
   /// Current owned count for [unitType] (absent → `0`).
   int countFor(String unitType) => currentCountByType[unitType] ?? 0;
@@ -242,6 +259,7 @@ BuildUnitOrder? pickBuildOrder({
         civilianScoring.countFor(unitType),
         phaseName: civilianScoring.phaseName,
         spyDemand: civilianScoring.spyDemand,
+        phaseProgress: civilianScoring.phaseProgress,
       );
     }
     final isShip = ShipEconomyCatalog.byId.containsKey(unitType);
