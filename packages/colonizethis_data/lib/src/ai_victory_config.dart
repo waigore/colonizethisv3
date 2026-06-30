@@ -502,6 +502,26 @@ const int kGrowthStageInfraFeedstockScoreBoost = 520;
 /// SPEC/ai/civilian-work-planner.md.
 const int kFeedstockMineralProspectScoreBoost = 600;
 
+/// Baseline Full AI work score for any valid Rail Builder `build_rail`
+/// candidate, ensuring every rail candidate is scored non-zero rather than
+/// falling through to the lexicographic default (Refs #3794 § Rail Builder
+/// civilian-work scoring, AC6). Sized below the contextual bonuses so context
+/// differentiates otherwise-equal candidates.
+const int kBuildRailBaseWorkScore = 100;
+
+/// Extra Rail Builder `build_rail` score when the target road tile carries a
+/// resource (proxy for province resource output, the cheap per-tile signal the
+/// scorer uses instead of per-tile path-finding; Refs #3794 AC6).
+const int kBuildRailResourceOutputBonus = 200;
+
+/// Extra Rail Builder `build_rail` score when the target road tile lies in the
+/// player's capital province (capital-connector proxy; Refs #3794 AC6).
+const int kBuildRailCapitalConnectorBonus = 150;
+
+/// Extra Rail Builder `build_rail` score when the target road tile is in the
+/// New World region (colonial rail bias; Refs #3794 AC6).
+const int kBuildRailNewWorldBonus = 80;
+
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 12;
 

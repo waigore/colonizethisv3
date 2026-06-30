@@ -14,6 +14,7 @@ part 'full_ai_civilian_work_selection_feedstock.dart';
 part 'full_ai_civilian_work_selection_feedstock_acquisition.dart';
 part 'full_ai_civilian_work_selection_explore_prospect.dart';
 part 'full_ai_civilian_work_selection_build_purchase.dart';
+part 'full_ai_civilian_work_selection_rail.dart';
 part 'full_ai_civilian_work_selection_unit_paths.dart';
 
 /// Idle civilian (no new work) for Full AI observability.

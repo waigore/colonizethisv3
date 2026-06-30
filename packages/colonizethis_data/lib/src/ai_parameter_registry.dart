@@ -780,6 +780,26 @@ final List<AiParameter> _victoryConfigParams = <AiParameter>[
     'Merchant purchase_land score for other NW tiles.',
   ),
   _vcInt(
+    'kBuildRailBaseWorkScore',
+    kBuildRailBaseWorkScore,
+    'Baseline Rail Builder build_rail work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kBuildRailResourceOutputBonus',
+    kBuildRailResourceOutputBonus,
+    'Extra Rail Builder build_rail score when the road tile carries a resource.',
+  ),
+  _vcInt(
+    'kBuildRailCapitalConnectorBonus',
+    kBuildRailCapitalConnectorBonus,
+    'Extra Rail Builder build_rail score when the road tile is in the capital province.',
+  ),
+  _vcInt(
+    'kBuildRailNewWorldBonus',
+    kBuildRailNewWorldBonus,
+    'Extra Rail Builder build_rail score when the road tile is in the New World.',
+  ),
+  _vcInt(
     'kColonialCivilianWorkThresholdCap',
     kColonialCivilianWorkThresholdCap,
     'Civilian work economy threshold cap when colonial targets are visible.',
