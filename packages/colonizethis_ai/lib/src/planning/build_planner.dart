@@ -38,11 +38,28 @@ final _log = packageLogger();
 /// military/naval scores are identical to the pre-#3793 implementation
 /// (SPEC AC10 — no regression).
 class CivilianBuildScoringInput {
-  const CivilianBuildScoringInput({required this.currentCountByType});
+  const CivilianBuildScoringInput({
+    required this.currentCountByType,
+    this.phaseName,
+    this.spyDemand = false,
+  });
 
   /// Current owned count per civilian unit type id (e.g. `'Builder' → 2`).
   /// Types absent from the map are treated as count `0`.
   final Map<String, int> currentCountByType;
+
+  /// Active observer goal phase as an `ObserverGoalPhase.name` (Refs #3793
+  /// slice 3, SPEC § Scoring model — phase multiplier). When `null` the phase
+  /// multiplier is neutral (base) for every type, so the scoring branch is
+  /// phase-agnostic. EXPAND favors Builder; COLONIAL favors Explorer +
+  /// Merchant; DEVELOP favors Engineer + Rail Builder; Spy is phase-flat.
+  final String? phaseName;
+
+  /// Spy intelligence/war-demand flag (decision #10): when `true` (the GP is at
+  /// war or pursuing a tech-steal posture) the Spy candidate receives the
+  /// GA-tunable `kCivilianBuildSpyDemandBoost` on top of its phase-flat
+  /// baseline. Has no effect on non-Spy civilians.
+  final bool spyDemand;
 
   /// Current owned count for [unitType] (absent → `0`).
   int countFor(String unitType) => currentCountByType[unitType] ?? 0;
@@ -177,6 +194,8 @@ BuildUnitOrder? pickBuildOrder({
       return civilianBuildCandidateScore(
         unitType,
         civilianScoring.countFor(unitType),
+        phaseName: civilianScoring.phaseName,
+        spyDemand: civilianScoring.spyDemand,
       );
     }
     final isShip = ShipEconomyCatalog.byId.containsKey(unitType);

@@ -31,9 +31,10 @@ base × phaseMultiplier[type] × minCapBoost × replacementUrgency × demandBoos
 - **Min cap (hard floor):** when `currentCount[type] < minCount[type]`, multiply by `kCivilianBuildMinCapScoreBoost` (a large elevation that dominates the military/naval bonus envelope).
 - **Replacement urgency (soft pull):** while `minCount ≤ currentCount < targetCount`, multiply by `1 + replacementUrgencyFactor × (targetCount − currentCount)`; `1.0` when `currentCount ≥ targetCount`.
 - **Max cap (ceiling):** a candidate at or above `maxCount[type]` is excluded from the pool before scoring (prevents over-building starving military/naval).
-- **Phase multiplier / Spy demand — deferred:** smooth per-phase `[0,1]` ramps (EXPAND → Builder; COLONIAL → Explorer + Merchant; DEVELOP → Engineer + Rail Builder) and the Spy phase-flat baseline + `spyDemandBoost` (war / tech-steal, gated by `minSpies`) are treated as `1.0` until later slices.
+- **Phase multiplier:** `phaseMultiplier[type]` is read from `kCivilianBuildPhaseMultiplierByPhaseType` keyed by the active phase (`ObserverGoalPhase.name`, passed via `CivilianBuildScoringInput.phaseName`). EXPAND (and COLONIAL-lite) favor Builder; COLONIAL favors Explorer + Merchant; DEVELOP favors Engineer + Rail Builder (favored = `kCivilianBuildPhaseMultiplierFavored = 2.0`; all other type/phase pairs = base `1.0`). When `phaseName` is `null` every multiplier is the base, so the branch is phase-agnostic. Multipliers are **discrete per-phase** values; smooth `[0,1]` ramping (hysteresis via `phase_priority_weights.dart`) is deferred.
+- **Spy (phase-flat + demand):** Spy uses `kCivilianBuildSpyPhaseFlatMultiplier` (identical across every phase — Spy never follows the economic phase model), plus `kCivilianBuildSpyDemandBoost` when `CivilianBuildScoringInput.spyDemand` is `true` (GP at war or pursuing a tech-steal posture). The Spy min floor is `kCivilianBuildMinSpies` (= `minCount[Spy]`, default `0`).
 
-The scoring math lives in `ai_victory_config.dart` (`civilianBuildCandidateScore`, `isCivilianBuildAtOrAboveMaxCount`).
+The scoring math lives in `ai_victory_config.dart` (`civilianBuildCandidateScore`, `civilianBuildPhaseMultiplier`, `isCivilianBuildAtOrAboveMaxCount`). `ObserverGoalPhase.name` ↔ `kCivilianBuildPhase*` key equality is locked by an `colonizethis_ai` contract test (`colonizethis_data` cannot import `colonizethis_ai`).
 
 ## Tech prioritization & paper budget (deferred)
 
@@ -41,15 +42,16 @@ The research planner boosts civilian-gating techs (`merchant_companies`, `early_
 
 ## GA-tunable parameters
 
-Declared in `ai_victory_config.dart` (no planner magic numbers): per-type `minCount`/`maxCount`/`targetCount` maps, `kCivilianBuildBaseScore`, `kCivilianBuildMinCapScoreBoost`, `kCivilianBuildReplacementUrgencyFactor`, plus the deferred per-phase multiplier, `spyDemandBoost`, `minSpies`, pool weight, and `researchPaperReserveShare`. Defaults: `minCount` Builder 2 / Explorer 1 / Engineer 1 / others 0; `targetCount` Explorer 2 / Builder 2 / Engineer 1 / others = `minCount`; `maxCount` Builder 6 / Explorer 4 / Engineer 4 / Spy 3 / Merchant 4 / Rail Builder 4.
+Declared in `ai_victory_config.dart` (no planner magic numbers): per-type `minCount`/`maxCount`/`targetCount` maps, `kCivilianBuildBaseScore`, `kCivilianBuildMinCapScoreBoost`, `kCivilianBuildReplacementUrgencyFactor`, the per-phase multiplier map `kCivilianBuildPhaseMultiplierByPhaseType` (with `kCivilianBuildPhaseMultiplierBase` / `kCivilianBuildPhaseMultiplierFavored`), `kCivilianBuildSpyPhaseFlatMultiplier`, `kCivilianBuildSpyDemandBoost`, `kCivilianBuildMinSpies`, plus the deferred pool weight and `researchPaperReserveShare`. Defaults: `minCount` Builder 2 / Explorer 1 / Engineer 1 / others 0; `targetCount` Explorer 2 / Builder 2 / Engineer 1 / others = `minCount`; `maxCount` Builder 6 / Explorer 4 / Engineer 4 / Spy 3 / Merchant 4 / Rail Builder 4; phase favored multiplier 2.0 / base 1.0; Spy phase-flat 1.0; Spy demand boost 2.0.
 
 ---
 
 ## Implemented vs deferred
 
 - **Slice 1 (enumeration):** `includeCivilianBuilds` on `suggestBuildOrders`; AC1, AC1b, AC5, AC9, AC12.
-- **Slice 2 (scoring caps — this slice):** additive civilian scoring branch in `pickBuildOrder` (min-cap floor, replacement urgency, max-cap exclusion) via optional `CivilianBuildScoringInput` + GA caps/constants; AC2, AC3, AC10, AC13, ACMax, AC8.
-- **Deferred:** phase dispatch + Spy demand (AC4, AC4b), paper ledger (AC7), research bias (AC6), live economy wiring (count plumbing + flag flip).
+- **Slice 2 (scoring caps):** additive civilian scoring branch in `pickBuildOrder` (min-cap floor, replacement urgency, max-cap exclusion) via optional `CivilianBuildScoringInput` + GA caps/constants; AC2, AC3, AC10, AC13, ACMax, AC8.
+- **Slice 3 (phase multiplier + Spy demand — this slice):** discrete per-phase, per-type multipliers and the Spy phase-flat baseline + demand boost folded into `civilianBuildCandidateScore`, plumbed via `CivilianBuildScoringInput.phaseName` / `.spyDemand`; GA params added; `ObserverGoalPhase.name` key contract test; AC4, AC4b.
+- **Deferred:** smooth `[0,1]` phase ramping (hysteresis), paper ledger (AC7), research bias (AC6), live economy wiring (count/phase/demand plumbing + flag flip).
 
 ---
 
@@ -65,4 +67,6 @@ Declared in `ai_victory_config.dart` (no planner magic numbers): per-type `minCo
 - **AC13 (replacement urgency, distinct from min cap):** Given `minCount = 0`, `targetCount = 2`, when `civilianBuildCandidateScore` is evaluated at count `1`, then the result is `1 + kCivilianBuildReplacementUrgencyFactor × 1 = 1.5`; at count `≥ targetCount` the result is `1.0`.
 - **ACMax (max-cap exclusion):** Given a `Builder` count at `maxCount` (6) and a candidate list of that `Builder` plus one regiment, when `pickBuildOrder` runs, then `Builder` is excluded and the regiment is selected.
 - **AC10 (no regression — military/naval):** Given a military+naval-only candidate list, when `pickBuildOrder` runs with `CivilianBuildScoringInput` supplied versus omitted, then the selected order is identical.
-- **AC8 (GA tunability):** When civilians are scored, the caps and scoring constants are read from `ai_victory_config.dart` (no civilian magic numbers in `build_planner.dart`).
+- **AC8 (GA tunability):** When civilians are scored, the caps and scoring constants (including phase multipliers and the Spy demand boost) are read from `ai_victory_config.dart` (no civilian magic numbers in `build_planner.dart`).
+- **AC4 (phase-dependent priority):** Given a non-Spy civilian type and `currentCount = targetCount` (replacement urgency neutral), when `civilianBuildCandidateScore` is evaluated with `phaseName`, then the score equals `kCivilianBuildBaseScore × phaseMultiplier`: in `expand` Builder = `2.0` while Explorer/Engineer/Rail Builder = `1.0`; in `colonial` Explorer = Merchant = `2.0` while Builder/Engineer = `1.0`; in `develop` Engineer = Rail Builder = `2.0` while Builder/Explorer = `1.0`. With `phaseName = null` every non-Spy type scores `1.0`.
+- **AC4b (Spy phase-flat + demand):** Given a Spy with `currentCount ≥ targetCount` and `spyDemand = false`, when `civilianBuildCandidateScore` is evaluated for `phaseName` ∈ {`expand`, `colonial`, `develop`}, then the score is identical across all three phases (phase-flat, `kCivilianBuildSpyPhaseFlatMultiplier`). Given `spyDemand = true`, then the Spy score is multiplied by `kCivilianBuildSpyDemandBoost` on top of that phase-flat baseline, and this boost applies to no non-Spy type.

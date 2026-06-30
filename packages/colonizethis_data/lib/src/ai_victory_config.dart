@@ -756,30 +756,127 @@ bool isCivilianBuildAtOrAboveMaxCount(String unitType, int currentCount) {
   return currentCount >= max;
 }
 
+// ---------------------------------------------------------------------------
+// Civilian build planner — phase priority + Spy demand (Refs #3793 slice 3).
+// GA-tunable per-phase, per-type build priority multipliers and the Spy
+// intelligence/war-demand boost (SPEC/ai/civilian-build-planner.md § Scoring
+// model — phase multiplier / Spy demand). The build planner reads only the
+// constants/helpers declared here (no planner magic numbers).
+// ---------------------------------------------------------------------------
+
+/// Phase keys for [kCivilianBuildPhaseMultiplierByPhaseType]. These MUST match
+/// `ObserverGoalPhase.<value>.name` in `colonizethis_ai`; the AI build planner
+/// passes `phase.name`. The contract is locked by an `colonizethis_ai` test
+/// (`ObserverGoalPhase.expand.name == kCivilianBuildPhaseExpand`, etc.) so a
+/// rename in either package is caught. `colonizethis_data` cannot depend on
+/// `colonizethis_ai`, so the key is the stable enum name string.
+const String kCivilianBuildPhaseExpand = 'expand';
+const String kCivilianBuildPhaseColonialLite = 'colonialLite';
+const String kCivilianBuildPhaseColonial = 'colonial';
+const String kCivilianBuildPhaseDevelop = 'develop';
+
+/// Neutral per-phase multiplier (no phase preference for the type).
+const double kCivilianBuildPhaseMultiplierBase = 1.0;
+
+/// Multiplier for a civilian type favored by the active phase
+/// (SPEC § Scoring model — phase multiplier). Sized above
+/// [kCivilianBuildPhaseMultiplierBase] so a phase-favored civilian outscores
+/// a same-count, non-favored civilian, while remaining well below the min-cap
+/// hard floor so phase preference never overrides a below-min replacement.
+const double kCivilianBuildPhaseMultiplierFavored = 2.0;
+
+/// Per-phase, per-type civilian build priority multiplier
+/// (SPEC § Scoring model — phase multiplier): EXPAND favors Builder; COLONIAL
+/// favors Explorer + Merchant; DEVELOP favors Engineer + Rail Builder.
+/// COLONIAL-lite mirrors EXPAND (still OW-expansion biased). Spy is intentionally
+/// absent — it is phase-flat ([kCivilianBuildSpyPhaseFlatMultiplier], decision
+/// #10). Phases/types absent from the map default to
+/// [kCivilianBuildPhaseMultiplierBase].
+const Map<String, Map<String, double>>
+kCivilianBuildPhaseMultiplierByPhaseType = {
+  kCivilianBuildPhaseExpand: {
+    kUnitTypeBuilder: kCivilianBuildPhaseMultiplierFavored,
+  },
+  kCivilianBuildPhaseColonialLite: {
+    kUnitTypeBuilder: kCivilianBuildPhaseMultiplierFavored,
+  },
+  kCivilianBuildPhaseColonial: {
+    kUnitTypeExplorer: kCivilianBuildPhaseMultiplierFavored,
+    kUnitTypeMerchant: kCivilianBuildPhaseMultiplierFavored,
+  },
+  kCivilianBuildPhaseDevelop: {
+    kUnitTypeEngineer: kCivilianBuildPhaseMultiplierFavored,
+    kUnitTypeRailBuilder: kCivilianBuildPhaseMultiplierFavored,
+  },
+};
+
+/// Phase-flat Spy build multiplier (decision #10): identical across every
+/// phase. Spy build priority does not follow the economic phase model; it is
+/// driven by [kCivilianBuildSpyDemandBoost] instead.
+const double kCivilianBuildSpyPhaseFlatMultiplier = 1.0;
+
+/// Spy intelligence/war-demand boost (decision #10): applied on top of the
+/// phase-flat baseline when the GP is at war or pursuing a tech-steal posture.
+const double kCivilianBuildSpyDemandBoost = 2.0;
+
+/// GA-tunable Spy floor (decision #10, default `0`): mirrors
+/// `kCivilianBuildMinCountByType[kUnitTypeSpy]`. Below this count the Spy gets
+/// the standard min-cap hard floor; the demand boost applies independently.
+const int kCivilianBuildMinSpies = 0;
+
+/// Per-phase, per-type civilian build priority multiplier for [unitType] in the
+/// phase identified by [phaseName] (an `ObserverGoalPhase.name`). Spy is always
+/// phase-flat ([kCivilianBuildSpyPhaseFlatMultiplier]); for other types a null
+/// or unknown [phaseName], or a type the phase does not favor, yields
+/// [kCivilianBuildPhaseMultiplierBase].
+double civilianBuildPhaseMultiplier(String unitType, String? phaseName) {
+  if (unitType == kUnitTypeSpy) return kCivilianBuildSpyPhaseFlatMultiplier;
+  if (phaseName == null) return kCivilianBuildPhaseMultiplierBase;
+  final byType = kCivilianBuildPhaseMultiplierByPhaseType[phaseName];
+  if (byType == null) return kCivilianBuildPhaseMultiplierBase;
+  return byType[unitType] ?? kCivilianBuildPhaseMultiplierBase;
+}
+
 /// Additive civilian build candidate score for [unitType] given [currentCount]
 /// owned (SPEC/ai/civilian-build-planner.md § Scoring model). Returns
-/// `base × minCapBoost × replacementUrgency`:
+/// `effectiveBase × minCapBoost × replacementUrgency`, where
+/// `effectiveBase = base × phaseMultiplier[type] × demandBoost`:
 ///
+/// - **Phase multiplier:** [civilianBuildPhaseMultiplier] for [phaseName]
+///   (Spy is phase-flat). When [phaseName] is `null` the multiplier is the
+///   neutral base, so legacy callers are unaffected.
+/// - **Spy demand boost:** when [unitType] is Spy and [spyDemand] is `true`
+///   (GP at war or pursuing a tech-steal posture), multiply by
+///   [kCivilianBuildSpyDemandBoost]; otherwise `1.0`.
 /// - **Min cap (hard floor):** when `currentCount < minCount`, multiply by
 ///   [kCivilianBuildMinCapScoreBoost].
 /// - **Replacement urgency (soft pull):** while
 ///   `minCount <= currentCount < targetCount`, multiply by
 ///   `1 + kCivilianBuildReplacementUrgencyFactor × (targetCount − currentCount)`.
-/// - At or above `targetCount`, the multiplier is `1.0` (base only).
+/// - At or above `targetCount`, the multiplier is `1.0` (effective base only).
 ///
-/// Phase multiplier and Spy intelligence/war-demand boost are deferred (treated
-/// as `1.0`) in this slice. The caller is responsible for excluding candidates
-/// at or above `maxCount` via [isCivilianBuildAtOrAboveMaxCount].
-double civilianBuildCandidateScore(String unitType, int currentCount) {
+/// The caller is responsible for excluding candidates at or above `maxCount`
+/// via [isCivilianBuildAtOrAboveMaxCount].
+double civilianBuildCandidateScore(
+  String unitType,
+  int currentCount, {
+  String? phaseName,
+  bool spyDemand = false,
+}) {
+  final phaseMultiplier = civilianBuildPhaseMultiplier(unitType, phaseName);
+  final demandBoost = (unitType == kUnitTypeSpy && spyDemand)
+      ? kCivilianBuildSpyDemandBoost
+      : 1.0;
+  final effectiveBase = kCivilianBuildBaseScore * phaseMultiplier * demandBoost;
   final minCount = civilianBuildMinCount(unitType);
   if (currentCount < minCount) {
-    return kCivilianBuildBaseScore * kCivilianBuildMinCapScoreBoost;
+    return effectiveBase * kCivilianBuildMinCapScoreBoost;
   }
   final targetCount = civilianBuildTargetCount(unitType);
   if (currentCount < targetCount) {
     final deficit = targetCount - currentCount;
-    return kCivilianBuildBaseScore *
+    return effectiveBase *
         (1.0 + kCivilianBuildReplacementUrgencyFactor * deficit);
   }
-  return kCivilianBuildBaseScore;
+  return effectiveBase;
 }
