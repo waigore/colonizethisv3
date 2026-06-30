@@ -98,7 +98,7 @@ void main() {
     });
 
     test('AC24: DEVELOP prefers counter_spy over alphabetically-later '
-        'steal_tech', () {
+        'steal-tech', () {
       const stealTile = 'oldWorld|r1cap|0|0';
       const counterTile = 'oldWorld|p1|0|0';
       final game = gameWith(
