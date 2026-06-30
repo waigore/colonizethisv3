@@ -23,6 +23,7 @@ import 'overture_resolver.dart';
 import 'war_resolver.dart';
 
 export 'diplomacy_relation_lookup.dart';
+export 'diplomacy_power_score.dart';
 export 'package:colonizethis_economy/colonizethis_economy.dart'
     show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
 export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
