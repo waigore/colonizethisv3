@@ -458,6 +458,24 @@ infrastructure feedstock routing).
   then the system returns a non-null `AiParameter` whose `category` equals
   `victory_config`.
 
+- **AC32 (Spy phase wiring — live DEVELOP prefers counter_spy):**
+  Given the economy build pass (`domain_planner_orchestrator_economy.dart`)
+  runs for an idle Spy whose suggested candidate set contains one `steal_tech`
+  candidate (in a rival GP capital) and one `counter_spy` candidate (in the
+  player's own province), and the dispatched `PhasePlanOutcome` resolves
+  `resolvePhaseEconomyDevelopActive` to `true`,
+  when the orchestrator calls `selectFullAiCivilianWorkOrders`,
+  then the orchestrator passes `spyDevelopPhase: true` and the emitted Spy
+  `WorkOrder` has `target == counter_spy`.
+
+- **AC33 (Spy phase wiring — live non-DEVELOP prefers steal_tech):**
+  Given the same orchestrator pass and Spy candidate set as AC32 but the
+  dispatched `PhasePlanOutcome` resolves `resolvePhaseEconomyDevelopActive` to
+  `false` (e.g. EXPAND),
+  when the orchestrator calls `selectFullAiCivilianWorkOrders`,
+  then the orchestrator passes `spyDevelopPhase: false` and the emitted Spy
+  `WorkOrder` has `target == steal_tech`.
+
 ## Deferred (follow-up work for #3794)
 
 All civilian unit types (Explorer, Builder, Merchant, Rail Builder, Engineer,
