@@ -1,10 +1,62 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'alliance_break_cooldown.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_shared_helpers.dart';
 import 'overture_resolver.dart';
+
+/// Applies a voluntary alliance break: unified penalties, `allianceBroken`
+/// history, and a one-turn bilateral overture cooldown. Idempotent when no
+/// formal alliance exists. Shared by diplomacy-phase resolution and the human
+/// panel immediate-break path (Refs #3811).
+Game applyVoluntaryAllianceBreak(
+  Game game, {
+  required String breakerId,
+  required String brokenWithAllyId,
+  required int turn,
+  required DiplomacyFactionMembership factionMembership,
+  IntraTurnEventTally? eventTally,
+}) {
+  if (!factionMembership.isGreatPower(brokenWithAllyId)) return game;
+
+  final rel = getRelation(game, breakerId, brokenWithAllyId);
+  if (rel == null || !rel.formalAlliance) return game;
+
+  final otherGpIds = otherRelatedGreatPowerIds(
+    game,
+    breakerId,
+    {brokenWithAllyId},
+  );
+  final relations = applyAllianceBreakPenalties(
+    relations: game.diplomacyRelations,
+    breakerId: breakerId,
+    brokenWithAllyId: brokenWithAllyId,
+    otherGpIds: otherGpIds,
+    turn: turn,
+  );
+  var next = game.copyWith(diplomacyRelations: relations);
+  next = logDiplomaticEvent(
+    next,
+    turn,
+    DiplomaticEventType.allianceBroken,
+    {breakerId, brokenWithAllyId},
+    fromFactionId: breakerId,
+    toFactionId: brokenWithAllyId,
+    wasAiInitiator: isAiControlledForEvidence(next, breakerId),
+    eventTally: eventTally,
+    logMessage: 'diplomacy break alliance $breakerId-$brokenWithAllyId (voluntary)',
+  );
+  return next.copyWith(
+    allianceBreakCooldowns: upsertAllianceBreakCooldown(
+      next.allianceBreakCooldowns,
+      breakerId,
+      brokenWithAllyId,
+      turn,
+    ),
+  );
+}
 
 /// Resolves voluntary `breakAlliance` diplomatic orders (R11).
 ///
@@ -35,28 +87,13 @@ Game processBreakAlliances(
       final targetId = order.targetFactionId;
       if (!factionMembership.isGreatPower(targetId)) continue;
 
-      final rel = getRelation(game, gpId, targetId);
-      if (rel == null || !rel.formalAlliance) continue;
-
-      final otherGpIds = otherRelatedGreatPowerIds(game, gpId, {targetId});
-      final relations = applyAllianceBreakPenalties(
-        relations: game.diplomacyRelations,
+      game = applyVoluntaryAllianceBreak(
+        game,
         breakerId: gpId,
         brokenWithAllyId: targetId,
-        otherGpIds: otherGpIds,
         turn: turn,
-      );
-      game = game.copyWith(diplomacyRelations: relations);
-      game = logDiplomaticEvent(
-        game,
-        turn,
-        DiplomaticEventType.allianceBroken,
-        {gpId, targetId},
-        fromFactionId: gpId,
-        toFactionId: targetId,
-        wasAiInitiator: isAiControlledForEvidence(game, gpId),
+        factionMembership: factionMembership,
         eventTally: eventTally,
-        logMessage: 'diplomacy break alliance $gpId-$targetId (voluntary)',
       );
     }
   }

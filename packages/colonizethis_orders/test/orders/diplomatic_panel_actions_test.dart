@@ -79,6 +79,37 @@ void main() {
       );
     });
 
+    test('formal alliance swaps alliance for breakAlliance only (Refs #3811)', () {
+      final alliedGame = _gpMinorGame().copyWith(
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 90,
+            formalAlliance: true,
+          ),
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+          ),
+        ],
+      );
+      final candidates = diplomaticPanelActionCandidates(
+        game: alliedGame,
+        playerId: 'gp1',
+        targetId: 'gp2',
+      );
+      expect(
+        candidates.map((o) => o.type),
+        contains(DiplomaticOrderType.breakAlliance),
+      );
+      expect(
+        candidates.map((o) => o.type),
+        isNot(contains(DiplomaticOrderType.alliance)),
+      );
+    });
+
     test('Minor row omits alliance and FTP', () {
       final candidates = diplomaticPanelActionCandidates(
         game: _gpMinorGame(),
@@ -211,6 +242,21 @@ void main() {
       );
       expect(revoke.enabled, isFalse);
       expect(revoke.rejectionReason, isNotEmpty);
+    });
+
+    test('post-break cooldown disables alliance with deterministic reason (#3811)', () {
+      final game = _gpMinorGame().copyWith(
+        allianceBreakCooldowns: const [
+          AllianceBreakCooldownState(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            sinceTurn: 1,
+          ),
+        ],
+      );
+      final alliance = _actionOfType(game, 'gp2', DiplomaticOrderType.alliance);
+      expect(alliance.enabled, isFalse);
+      expect(alliance.rejectionReason, kAllianceBreakCooldownRejectionReason);
     });
 
     test('AC-10: invalid declare war / offer peace still enumerated', () {

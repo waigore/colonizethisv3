@@ -24,6 +24,12 @@ DiplomaticSubValidator establishFtpSubValidator(
     treasury: treasury,
   );
   if (atWarRejection != null) return atWarRejection;
+  final cooldownRejection = rejectIfAllianceBreakCooldownActive(
+    ctx: ctx,
+    targetId: targetId,
+    treasury: treasury,
+  );
+  if (cooldownRejection != null) return cooldownRejection;
   if (hasFtpPartnership(ctx.game, ctx.playerId, targetId)) {
     return rejectDiplomaticSub(
       'FTP already established with that faction',

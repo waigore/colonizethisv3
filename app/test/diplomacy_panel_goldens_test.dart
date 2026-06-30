@@ -387,6 +387,8 @@ void main() {
     expect(find.text('Castile'), findsOneWidget);
     expect(find.text(kDiplomacyAllianceBadgeLabel), findsOneWidget);
     expect(find.textContaining('Devoted'), findsWidgets);
+    expect(find.text('Break Alliance'), findsOneWidget);
+    expect(find.text('Alliance'), findsNothing);
 
     await expectLater(
       find.byKey(boundaryKey),

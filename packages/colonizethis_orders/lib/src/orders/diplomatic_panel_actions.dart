@@ -64,12 +64,22 @@ List<DiplomaticOrder> diplomaticPanelActionCandidates({
   ];
 
   if (isGpTarget) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.alliance,
-        targetFactionId: targetId,
-      ),
-    );
+    final rel = getRelation(game, playerId, targetId);
+    if (rel?.formalAlliance ?? false) {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.breakAlliance,
+          targetFactionId: targetId,
+        ),
+      );
+    } else {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: targetId,
+        ),
+      );
+    }
   }
 
   if (isGpTarget || isMinorTribeTarget) {
