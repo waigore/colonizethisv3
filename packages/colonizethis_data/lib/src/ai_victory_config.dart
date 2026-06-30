@@ -1,6 +1,8 @@
 /// Victory-pace bonuses for Full AI goal selection. SPEC/game/victory.md, SPEC/ai/ai-architecture.md.
 library;
 
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 /// Old World province count required for military victory.
 const int kMilitaryVictoryOldWorldProvinceThreshold = 31;
 
@@ -628,3 +630,121 @@ const int kDeclareWarDefaultStartOwMinorBonus = 240;
 /// Declare-war bonus toward any minor that still holds OW provinces when this
 /// GP is stalled, far from victory, and frontier invadable land is GP-owned.
 const int kDeclareWarStalledAnyOwMinorBonus = 140;
+
+// ---------------------------------------------------------------------------
+// Civilian build planner — scoring model (Refs #3793).
+// GA-tunable parameters for the additive civilian build scoring branch in
+// `pickBuildOrder` (SPEC/ai/civilian-build-planner.md § Scoring model). No
+// planner magic numbers: the build planner reads only the constants/helpers
+// declared here. Phase multipliers, Spy intelligence/war-demand boost, and the
+// shared paper ledger are deferred to a later #3793 slice.
+// ---------------------------------------------------------------------------
+
+/// Base score for a civilian build candidate before any multiplier
+/// (`base × minCapBoost × replacementUrgency`). Sized at `1.0` so a civilian at
+/// or above its `targetCount` competes on the same `1.0` footing as the
+/// military/naval baseline (`1.0 + bonuses`).
+const double kCivilianBuildBaseScore = 1.0;
+
+/// Hard-floor multiplier applied to a civilian build candidate whose current
+/// count is strictly below its per-type `minCount` (SPEC § Scoring model — min
+/// cap). Sized far above the military/naval bonus envelope (cargo/military
+/// bonuses sum to well under `20`) so a below-min civilian dominates the
+/// weighted build pool.
+const double kCivilianBuildMinCapScoreBoost = 50.0;
+
+/// Replacement-urgency factor: while `minCount <= currentCount < targetCount`,
+/// a civilian candidate score is multiplied by
+/// `1 + kCivilianBuildReplacementUrgencyFactor × (targetCount − currentCount)`
+/// (SPEC § Scoring model — replacement urgency). `0.5` lifts a single-unit
+/// deficit by `+50%` without reaching the hard-floor boost.
+const double kCivilianBuildReplacementUrgencyFactor = 0.5;
+
+/// Per-type hard minimum count (GA-tunable floor). Below this count the
+/// candidate receives [kCivilianBuildMinCapScoreBoost]. Types absent from the
+/// map default to `0` (no floor).
+const Map<String, int> kCivilianBuildMinCountByType = {
+  kUnitTypeBuilder: 2,
+  kUnitTypeExplorer: 1,
+  kUnitTypeEngineer: 1,
+  kUnitTypeSpy: 0,
+  kUnitTypeMerchant: 0,
+  kUnitTypeRailBuilder: 0,
+};
+
+/// Per-type soft target count (GA-tunable). While at or above `minCount` but
+/// below `targetCount`, replacement urgency applies. Starting types seed their
+/// starting allotment (Explorer 2, Builder 2, Engineer 1); other types default
+/// to their `minCount`.
+const Map<String, int> kCivilianBuildTargetCountByType = {
+  kUnitTypeBuilder: 2,
+  kUnitTypeExplorer: 2,
+  kUnitTypeEngineer: 1,
+  kUnitTypeSpy: 0,
+  kUnitTypeMerchant: 0,
+  kUnitTypeRailBuilder: 0,
+};
+
+/// Per-type hard maximum count (GA-tunable ceiling). A candidate at or above
+/// this count is excluded from the build pool (SPEC § Scoring model — max cap)
+/// so civilian over-building cannot starve military/naval production. Types
+/// absent from the map have no ceiling.
+const Map<String, int> kCivilianBuildMaxCountByType = {
+  kUnitTypeBuilder: 6,
+  kUnitTypeExplorer: 4,
+  kUnitTypeEngineer: 4,
+  kUnitTypeSpy: 3,
+  kUnitTypeMerchant: 4,
+  kUnitTypeRailBuilder: 4,
+};
+
+/// Per-type hard minimum count for [unitType] (defaults to `0`).
+int civilianBuildMinCount(String unitType) =>
+    kCivilianBuildMinCountByType[unitType] ?? 0;
+
+/// Per-type soft target count for [unitType] (defaults to its `minCount`).
+int civilianBuildTargetCount(String unitType) =>
+    kCivilianBuildTargetCountByType[unitType] ??
+    civilianBuildMinCount(unitType);
+
+/// Per-type hard maximum count for [unitType]; `null` means no ceiling.
+int? civilianBuildMaxCount(String unitType) =>
+    kCivilianBuildMaxCountByType[unitType];
+
+/// True when [currentCount] of [unitType] is at or above its GA-tunable
+/// `maxCount` ceiling, so the candidate is excluded from the build pool
+/// (SPEC/ai/civilian-build-planner.md § Scoring model — max cap). Types with no
+/// ceiling are never excluded.
+bool isCivilianBuildAtOrAboveMaxCount(String unitType, int currentCount) {
+  final max = civilianBuildMaxCount(unitType);
+  if (max == null) return false;
+  return currentCount >= max;
+}
+
+/// Additive civilian build candidate score for [unitType] given [currentCount]
+/// owned (SPEC/ai/civilian-build-planner.md § Scoring model). Returns
+/// `base × minCapBoost × replacementUrgency`:
+///
+/// - **Min cap (hard floor):** when `currentCount < minCount`, multiply by
+///   [kCivilianBuildMinCapScoreBoost].
+/// - **Replacement urgency (soft pull):** while
+///   `minCount <= currentCount < targetCount`, multiply by
+///   `1 + kCivilianBuildReplacementUrgencyFactor × (targetCount − currentCount)`.
+/// - At or above `targetCount`, the multiplier is `1.0` (base only).
+///
+/// Phase multiplier and Spy intelligence/war-demand boost are deferred (treated
+/// as `1.0`) in this slice. The caller is responsible for excluding candidates
+/// at or above `maxCount` via [isCivilianBuildAtOrAboveMaxCount].
+double civilianBuildCandidateScore(String unitType, int currentCount) {
+  final minCount = civilianBuildMinCount(unitType);
+  if (currentCount < minCount) {
+    return kCivilianBuildBaseScore * kCivilianBuildMinCapScoreBoost;
+  }
+  final targetCount = civilianBuildTargetCount(unitType);
+  if (currentCount < targetCount) {
+    final deficit = targetCount - currentCount;
+    return kCivilianBuildBaseScore *
+        (1.0 + kCivilianBuildReplacementUrgencyFactor * deficit);
+  }
+  return kCivilianBuildBaseScore;
+}
