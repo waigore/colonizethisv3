@@ -16,8 +16,13 @@
 //  - AC-6  discovered Tribe row: overture stages.
 //  - AC-10 disabled-not-hidden: at least one disabled `CtNinePatchButton`.
 //  - AC-4  first-contact herald `OVL80001` (`TribeFirstContactOverlay`).
+//  - R12/R13 colony Tribe row: Colony + Embassy standing chips, a
+//          `Boycott vs Castile` chip, and the 10-step relation meter.
+//  - R3/R8/R12 subsidized Minor row: `Outgoing subsidy: 10%` economic line and
+//          the `Overseas: 2 · 80%` standing chip.
 //
-// SPEC: SPEC/ui/diplomacy-panel.md § Acceptance criteria (AC-14) and
+// SPEC: SPEC/ui/diplomacy-panel.md § Acceptance criteria (AC-14), § Diplomatic
+// standing chip cluster acceptance criteria (Refs #3753 R12), and
 // SPEC/ui/tribe-first-contact-overlay.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -31,6 +36,7 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/relation_meter.dart';
 
 /// `pumpAndSettle` can hang on this surface (animated chrome keeps the ticker
 /// busy); bounded pumps flush layout and the deferred build instead.
@@ -172,6 +178,91 @@ Game _tribeRowGame() {
     players: const [player],
     tribes: const [Tribe(id: 't1', displayName: 'Powhatan')],
     diplomacyRelations: const [],
+  );
+}
+
+/// Refs #3753 R12/R13 fixture: the human GP `gp1` holds an Embassy-stage
+/// overture with Tribe `t1`, `t1` is a colony of `gp1`, and `gp1` boycotts GP
+/// `gp2` (Castile) through that colony. Exercises the diplomatic standing chip
+/// cluster (`Consulate` / `Embassy` treaty chips + terminal `Colony` chip,
+/// `Boycott vs Castile`) and the 10-step relation meter at a mid band
+/// (score 60 → step 7) under the editorial-monocle chrome.
+Game _colonyTribeRowGame() {
+  const ow = 'oldWorld';
+  const nw = 'newWorld';
+  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
+  final tribeProvince = Province(id: '$nw|t1prov', regionId: nw, displayName: 'Tribe Land', ownerId: 't1');
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 6),
+    oldWorld: RegionData(provinces: [home], units: const []),
+    newWorld: RegionData(provinces: [tribeProvince], units: const []),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  return Game(
+    id: 'diplo-golden-colony-tribe',
+    worldState: world,
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+    ],
+    tribes: const [Tribe(id: 't1', displayName: 'Powhatan')],
+    diplomacyRelations: const [
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 't1', score: 60),
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 40),
+    ],
+    overtureStates: const [
+      OvertureState(gpId: 'gp1', targetId: 't1', stage: OvertureStage.embassy),
+    ],
+    colonyStates: const [
+      ColonyState(tribeId: 't1', colonyOfGpId: 'gp1', sinceTurn: 5),
+    ],
+    boycottStates: const [
+      BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 6),
+    ],
+  );
+}
+
+/// Refs #3753 R3/R8/R12 fixture: the human GP `gp1` holds an Embassy with Minor
+/// `m1` (Bavaria), an active 10% outgoing subsidy, and owns two purchased tiles
+/// sourced from `m1` at relation `80.0`. Exercises the `Outgoing subsidy: 10%`
+/// economic line and the `Overseas: 2 · 80%` standing chip (tile-owner share
+/// `relationScore / 100`).
+Game _subsidizedMinorRowGame() {
+  const ow = 'oldWorld';
+  const nw = 'newWorld';
+  const minorProvinceId = '$nw|m1prov';
+  const tileA = '$minorProvinceId|0|0';
+  const tileB = '$minorProvinceId|1|0';
+  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
+  final minorProvince = Province(id: minorProvinceId, regionId: nw, displayName: 'Bavaria Coast', ownerId: 'm1');
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 8),
+    oldWorld: RegionData(provinces: [home], units: const []),
+    newWorld: RegionData(provinces: [minorProvince], units: const []),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+    purchasedTilesByTileKey: const {tileA: 'gp1', tileB: 'gp1'},
+    tileKeysByRegionAndProvince: const {
+      nw: {
+        minorProvinceId: [tileA, tileB],
+      },
+    },
+  );
+  return Game(
+    id: 'diplo-golden-subsidized-minor',
+    worldState: world,
+    players: const [Player(id: 'gp1', displayName: 'Albion', isHuman: true)],
+    minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
+    diplomacyRelations: const [
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 'm1', score: 80),
+    ],
+    overtureStates: const [
+      OvertureState(gpId: 'gp1', targetId: 'm1', stage: OvertureStage.embassy),
+    ],
+    subsidyStates: const [
+      SubsidyState(payerId: 'gp1', targetId: 'm1', percent: 10),
+    ],
   );
 }
 
@@ -438,4 +529,77 @@ void main() {
       matchesGoldenFile('goldens/diplomacy_tribe_first_contact_herald.png'),
     );
   });
+
+  testWidgets(
+    'R12/R13 golden: colony Tribe row shows standing chips + relation meter',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(600, 1100));
+      const boundaryKey = ValueKey<String>('diplomacy_colony_tribe_row_golden');
+
+      await tester.pumpWidget(
+        _panelHost(
+          game: _colonyTribeRowGame(),
+          humanPlayerId: 'gp1',
+          boundaryKey: boundaryKey,
+        ),
+      );
+      await _pumpBuilt(tester);
+
+      // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster ACs
+      // (Refs #3753 R12): colony Tribe surfaces Colony + Embassy chips and an
+      // imposed-boycott `Boycott vs {GP}` chip; the relation line carries the
+      // 10-step meter (Refs #3753 R13).
+      expect(find.text('Powhatan'), findsOneWidget);
+      expect(find.text(kDiplomacyChipColony), findsOneWidget);
+      expect(find.text(kDiplomacyChipEmbassy), findsWidgets);
+      expect(
+        find.text('${kDiplomacyChipBoycottVsPrefix}Castile'),
+        findsOneWidget,
+      );
+      expect(find.byType(RelationMeter), findsWidgets);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_panel_colony_tribe_row.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'R3/R8/R12 golden: subsidized Minor row shows subsidy line + overseas chip',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(600, 1100));
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_subsidized_minor_row_golden',
+      );
+
+      await tester.pumpWidget(
+        _panelHost(
+          game: _subsidizedMinorRowGame(),
+          humanPlayerId: 'gp1',
+          boundaryKey: boundaryKey,
+        ),
+      );
+      await _pumpBuilt(tester);
+
+      // SPEC/ui/diplomacy-panel.md § Per-faction row → Outgoing economic
+      // diplomacy + § Diplomatic standing chip cluster (Refs #3753 R3/R8/R12):
+      // the active subsidy renders on its dedicated line and the overseas
+      // holdings surface as an `Overseas: N · S%` chip (S = rounded relation).
+      expect(find.text('Bavaria'), findsOneWidget);
+      expect(find.text(kDiplomacyChipEmbassy), findsWidgets);
+      expect(
+        find.text('${kDiplomacyChipOverseasPrefix}2 \u00b7 80%'),
+        findsOneWidget,
+      );
+      expect(find.text('Outgoing subsidy: 10% to Bavaria'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_panel_subsidized_minor_row.png'),
+      );
+    },
+  );
 }
