@@ -228,6 +228,18 @@ void _appendSelectionForUnitId({
     return;
   }
 
+  if (unit != null && unit.type == kUnitTypeEngineer) {
+    _appendEngineerPathResult(
+      unit: unit,
+      w: W,
+      game: game,
+      playerId: view.playerId,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
+    return;
+  }
+
   if (unit != null && isMerchantUnit(unit.type)) {
     _appendMerchantPathResult(
       unit: unit,

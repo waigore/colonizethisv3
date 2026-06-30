@@ -27,7 +27,8 @@ governs **selection scoring** only.
 | Builder | `_appendBuilderPathResult` | `build_improvement` |
 | Merchant | `_appendMerchantPathResult` | `purchase_land` |
 | Rail Builder | `_appendRailBuilderPathResult` | `build_rail` |
-| Engineer / Spy | lexicographic fallback | none (see Deferred) |
+| Engineer | `_appendEngineerPathResult` | `build_road`, `build_port`, `build_fort` |
+| Spy | lexicographic fallback | none (see Deferred) |
 
 A unit type with no dedicated scorer falls through to a deterministic
 lexicographic fallback (`_pickLexicographic`), and an unrecognized unit type uses
@@ -55,6 +56,42 @@ records a single `FullAiCivilianWorkIdle(reason: 'no_suggestions')`.
 Equal scores break via `_compareRailCandidate` — province id first, then full
 tile key — a stable, **non-alphabetical** secondary ordering.
 
+## Engineer scoring model
+
+`_appendEngineerPathResult` scores every Engineer candidate
+(`build_road`, `build_port`, `build_fort`) in a **single unified pool**
+(`_engineerWorkScore`) and selects the highest. This replaces the lexicographic
+fallback, which always picked `build_fort` first because it sorts alphabetically
+before `build_port` / `build_road` regardless of context.
+
+Each target type has its own GA-tunable **baseline** (relative-priority weight);
+contextual bonuses (all GA-tunable) then differentiate candidates of the same
+target using the same cheap per-tile proxies as the Rail Builder model
+(`worldState.resourceByTileKey` non-empty for resource output, tile in the
+player's `capitalProvinceId`, tile in the New World region) rather than
+path-finding:
+
+```
+build_road score = kEngineerBuildRoadBaseWorkScore
+      + (tile carries a resource         ? kEngineerRoadResourceConnectivityBonus : 0)
+      + (tile in player capital province ? kEngineerRoadCapitalLogisticsBonus     : 0)
+
+build_port score = kEngineerBuildPortBaseWorkScore
+      + (tile carries a resource         ? kEngineerPortResourceExtractionBonus   : 0)
+      + (tile in New World region        ? kEngineerPortNewWorldCoastalBonus      : 0)
+
+build_fort score = kEngineerBuildFortBaseWorkScore
+      + (tile in player capital province ? kEngineerFortCapitalDefenseBonus       : 0)
+      + (tile in New World region        ? kEngineerFortNewWorldBorderBonus       : 0)
+```
+
+Any non-Engineer target scores `0`; an empty Engineer pool falls back to
+`_pickLexicographic`; an idle Engineer with no candidates records a single
+`FullAiCivilianWorkIdle(reason: 'no_suggestions')`. Equal scores break via
+`_compareEngineerCandidate` — province id, then full tile key, then target — a
+stable secondary ordering where the selected candidate is driven by score, not
+by the target string's alphabetical position.
+
 ## GA-tunable scoring parameters
 
 All civilian-work score boosts are **GA-tunable** constants declared in
@@ -73,6 +110,15 @@ unchanged at default values.
 | `kBuildRailResourceOutputBonus` | 200 | `build_rail` on a road tile carrying a resource |
 | `kBuildRailCapitalConnectorBonus` | 150 | `build_rail` on a road tile in the player's capital province |
 | `kBuildRailNewWorldBonus` | 80 | `build_rail` on a road tile in the New World region |
+| `kEngineerBuildRoadBaseWorkScore` | 120 | baseline score for any valid `build_road` candidate |
+| `kEngineerBuildPortBaseWorkScore` | 110 | baseline score for any valid `build_port` candidate |
+| `kEngineerBuildFortBaseWorkScore` | 100 | baseline score for any valid `build_fort` candidate |
+| `kEngineerRoadResourceConnectivityBonus` | 200 | `build_road` on a tile carrying a resource |
+| `kEngineerRoadCapitalLogisticsBonus` | 150 | `build_road` on a tile in the player's capital province |
+| `kEngineerPortResourceExtractionBonus` | 180 | `build_port` on a tile carrying a resource |
+| `kEngineerPortNewWorldCoastalBonus` | 120 | `build_port` on a tile in the New World region |
+| `kEngineerFortCapitalDefenseBonus` | 160 | `build_fort` on a tile in the player's capital province |
+| `kEngineerFortNewWorldBorderBonus` | 100 | `build_fort` on a tile in the New World region |
 
 The feedstock-extraction and growth-stage gates that decide when each boost
 applies are unchanged; they remain self-clearing pure functions of
@@ -153,13 +199,62 @@ infrastructure feedstock routing).
   then the system returns a non-null `AiParameter` whose `category` equals
   `victory_config`.
 
+- **AC11 (Engineer unified scored selection over mixed targets):**
+  Given an idle Engineer whose candidate set contains a `build_road` candidate on
+  a tile carrying a resource and a `build_fort` candidate on a plain tile,
+  when `selectFullAiCivilianWorkOrders` runs,
+  then the system emits exactly one `WorkOrder` whose `target` is `build_road`
+  (the higher-scoring candidate), not the alphabetically-first `build_fort`.
+
+- **AC12 (Engineer per-target context bonus):**
+  Given an Engineer with two `build_port` candidates that differ only in that one
+  tile carries a resource and the other does not,
+  when selection runs,
+  then the system selects the resource-carrying `build_port` candidate.
+
+- **AC13 (Engineer fort capital-defense bonus):**
+  Given an Engineer with two `build_fort` candidates that differ only in that one
+  tile lies in the player's capital province and the other does not,
+  when selection runs,
+  then the system selects the capital-province `build_fort` candidate.
+
+- **AC14 (Engineer non-zero baseline):**
+  Given an idle Engineer with a single `build_fort` candidate on a plain Old
+  World tile outside the capital,
+  when selection runs,
+  then the system emits exactly one `WorkOrder` and records no
+  `FullAiCivilianWorkIdle` event for that unit.
+
+- **AC15 (Engineer idle when no candidates):**
+  Given an idle Engineer with an empty candidate set,
+  when selection runs,
+  then the system emits no `WorkOrder` and records a single
+  `FullAiCivilianWorkIdle` with `reason == 'no_suggestions'` for that unit.
+
+- **AC16 (Engineer deterministic tie-break by province id):**
+  Given two equally-scored Engineer candidates of the same target in provinces
+  `p1` and `p2` of the same region presented in either input order,
+  when selection runs,
+  then the system emits the `p1` candidate in both orders (province-id ordering,
+  independent of input order).
+
+- **AC17 (Engineer parameters registered):**
+  Given the AI parameter registry,
+  when `AiParameterRegistry.byName(name)` is called for each of
+  `kEngineerBuildRoadBaseWorkScore`, `kEngineerBuildPortBaseWorkScore`,
+  `kEngineerBuildFortBaseWorkScore`, `kEngineerRoadResourceConnectivityBonus`,
+  `kEngineerRoadCapitalLogisticsBonus`, `kEngineerPortResourceExtractionBonus`,
+  `kEngineerPortNewWorldCoastalBonus`, `kEngineerFortCapitalDefenseBonus`, and
+  `kEngineerFortNewWorldBorderBonus`,
+  then the system returns a non-null `AiParameter` whose `category` equals
+  `victory_config`.
+
 ## Deferred (follow-up work for #3794)
 
 The following remain on the lexicographic fallback and are **not** yet scored;
 they are tracked by #3794 and will be specified here when implemented:
 
 - Builder `upgrade_town` unified scoring.
-- Engineer `build_road` / `build_port` / `build_fort` unified scoring.
 - Spy `steal_tech` / `counter_spy` phase-dependent scoring.
 
 When those scorers land, their weights are added to `ai_victory_config.dart` /

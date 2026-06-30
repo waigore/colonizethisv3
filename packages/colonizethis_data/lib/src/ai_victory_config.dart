@@ -522,6 +522,46 @@ const int kBuildRailCapitalConnectorBonus = 150;
 /// New World region (colonial rail bias; Refs #3794 AC6).
 const int kBuildRailNewWorldBonus = 80;
 
+/// Per-target-type baseline score for an Engineer `build_road` candidate in the
+/// unified Engineer scored pool (replaces the lexicographic fallback; Refs #3794
+/// § Engineer). Per-target base weights express the relative priority of the
+/// three Engineer targets; contextual bonuses then differentiate candidates of
+/// the same target. Roads default highest (logistics backbone).
+const int kEngineerBuildRoadBaseWorkScore = 120;
+
+/// Per-target-type baseline score for an Engineer `build_port` candidate in the
+/// unified Engineer scored pool (Refs #3794 § Engineer).
+const int kEngineerBuildPortBaseWorkScore = 110;
+
+/// Per-target-type baseline score for an Engineer `build_fort` candidate in the
+/// unified Engineer scored pool (Refs #3794 § Engineer).
+const int kEngineerBuildFortBaseWorkScore = 100;
+
+/// Extra Engineer `build_road` score when the target tile carries a resource
+/// (resource-connectivity proxy — the cheap per-tile signal the scorer uses
+/// instead of per-tile path-finding; Refs #3794 § Engineer).
+const int kEngineerRoadResourceConnectivityBonus = 200;
+
+/// Extra Engineer `build_road` score when the target tile lies in the player's
+/// capital province (capital-logistics proxy; Refs #3794 § Engineer).
+const int kEngineerRoadCapitalLogisticsBonus = 150;
+
+/// Extra Engineer `build_port` score when the target tile carries a resource
+/// (high-value extraction proxy; Refs #3794 § Engineer).
+const int kEngineerPortResourceExtractionBonus = 180;
+
+/// Extra Engineer `build_port` score when the target tile is in the New World
+/// region (colonial coastal bias proxy; Refs #3794 § Engineer).
+const int kEngineerPortNewWorldCoastalBonus = 120;
+
+/// Extra Engineer `build_fort` score when the target tile lies in the player's
+/// capital province (capital-defense proxy; Refs #3794 § Engineer).
+const int kEngineerFortCapitalDefenseBonus = 160;
+
+/// Extra Engineer `build_fort` score when the target tile is in the New World
+/// region (colonial-frontier border proxy; Refs #3794 § Engineer).
+const int kEngineerFortNewWorldBorderBonus = 100;
+
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 12;
 

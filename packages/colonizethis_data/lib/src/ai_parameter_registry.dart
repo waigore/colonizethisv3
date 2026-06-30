@@ -800,6 +800,51 @@ final List<AiParameter> _victoryConfigParams = <AiParameter>[
     'Extra Rail Builder build_rail score when the road tile is in the New World.',
   ),
   _vcInt(
+    'kEngineerBuildRoadBaseWorkScore',
+    kEngineerBuildRoadBaseWorkScore,
+    'Baseline Engineer build_road work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kEngineerBuildPortBaseWorkScore',
+    kEngineerBuildPortBaseWorkScore,
+    'Baseline Engineer build_port work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kEngineerBuildFortBaseWorkScore',
+    kEngineerBuildFortBaseWorkScore,
+    'Baseline Engineer build_fort work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kEngineerRoadResourceConnectivityBonus',
+    kEngineerRoadResourceConnectivityBonus,
+    'Extra Engineer build_road score when the tile carries a resource.',
+  ),
+  _vcInt(
+    'kEngineerRoadCapitalLogisticsBonus',
+    kEngineerRoadCapitalLogisticsBonus,
+    'Extra Engineer build_road score when the tile is in the capital province.',
+  ),
+  _vcInt(
+    'kEngineerPortResourceExtractionBonus',
+    kEngineerPortResourceExtractionBonus,
+    'Extra Engineer build_port score when the tile carries a resource.',
+  ),
+  _vcInt(
+    'kEngineerPortNewWorldCoastalBonus',
+    kEngineerPortNewWorldCoastalBonus,
+    'Extra Engineer build_port score when the tile is in the New World.',
+  ),
+  _vcInt(
+    'kEngineerFortCapitalDefenseBonus',
+    kEngineerFortCapitalDefenseBonus,
+    'Extra Engineer build_fort score when the tile is in the capital province.',
+  ),
+  _vcInt(
+    'kEngineerFortNewWorldBorderBonus',
+    kEngineerFortNewWorldBorderBonus,
+    'Extra Engineer build_fort score when the tile is in the New World.',
+  ),
+  _vcInt(
     'kColonialCivilianWorkThresholdCap',
     kColonialCivilianWorkThresholdCap,
     'Civilian work economy threshold cap when colonial targets are visible.',
