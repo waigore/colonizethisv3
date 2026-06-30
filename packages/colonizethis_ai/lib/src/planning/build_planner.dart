@@ -27,6 +27,27 @@ final _log = packageLogger();
 /// When [colonialPressureWeight] is null the legacy boolean resolution
 /// runs unchanged: [colonialPressure] alone drives the cargo bonus gate
 /// and scale (`true -> 1.0`, `false -> 0.0`).
+/// Civilian build scoring input for [pickBuildOrder] (Refs #3793,
+/// SPEC/ai/civilian-build-planner.md § Scoring model).
+///
+/// Carries the active player's current count per civilian unit type so the
+/// additive civilian scoring branch can apply the GA-tunable min-cap hard
+/// floor, replacement-urgency soft pull, and max-cap exclusion. When this
+/// input is absent from [BuildPickInput] the civilian branch is inert: civilian
+/// candidates (if any are present) keep the neutral base score and
+/// military/naval scores are identical to the pre-#3793 implementation
+/// (SPEC AC10 — no regression).
+class CivilianBuildScoringInput {
+  const CivilianBuildScoringInput({required this.currentCountByType});
+
+  /// Current owned count per civilian unit type id (e.g. `'Builder' → 2`).
+  /// Types absent from the map are treated as count `0`.
+  final Map<String, int> currentCountByType;
+
+  /// Current owned count for [unitType] (absent → `0`).
+  int countFor(String unitType) => currentCountByType[unitType] ?? 0;
+}
+
 class BuildPickInput {
   const BuildPickInput({
     required this.buildCandidates,
@@ -36,6 +57,7 @@ class BuildPickInput {
     this.colonialPressure = false,
     this.colonialPressureWeight,
     this.militaryRebuildCrisis = false,
+    this.civilianScoring,
   });
 
   final List<BuildUnitOrder> buildCandidates;
@@ -53,6 +75,13 @@ class BuildPickInput {
   /// runs unchanged.
   final double? colonialPressureWeight;
   final bool militaryRebuildCrisis;
+
+  /// Optional civilian build scoring input (Refs #3793). When `null` the
+  /// civilian scoring branch is inert and behaviour is identical to the
+  /// pre-#3793 implementation. When supplied, civilian candidates are scored
+  /// via [civilianBuildCandidateScore] and candidates at or above their
+  /// `maxCount` are excluded from the pool.
+  final CivilianBuildScoringInput? civilianScoring;
 }
 
 /// Scores build candidates (ships vs regiments) by cargo preference, goal, and personality.
@@ -112,12 +141,44 @@ BuildUnitOrder? pickBuildOrder({
       candidates = regimentsOnly;
     }
   }
+  // Refs #3793: when civilian scoring is supplied, exclude civilian candidates
+  // at or above their GA-tunable per-type `maxCount` ceiling from the build
+  // pool so over-building cannot starve military/naval production
+  // (SPEC/ai/civilian-build-planner.md § Scoring model — max cap). Military and
+  // naval candidates are never filtered here.
+  final civilianScoring = input.civilianScoring;
+  if (civilianScoring != null) {
+    candidates = candidates
+        .where(
+          (o) =>
+              !CivilianEconomyCatalog.byId.containsKey(o.unitType) ||
+              !isCivilianBuildAtOrAboveMaxCount(
+                o.unitType,
+                civilianScoring.countFor(o.unitType),
+              ),
+        )
+        .toList();
+    if (candidates.isEmpty) return null;
+  }
   final thresholds = resolveThresholds(
     config.personalityId,
     overrides: config.parameterOverrides,
   );
   final scores = candidates.map((o) {
     final unitType = o.unitType;
+    // Refs #3793: civilian candidates are scored by the additive civilian
+    // branch (min-cap hard floor, replacement-urgency soft pull) and never
+    // touch the military/naval scoring below, so military/naval scores are
+    // unchanged for identical inputs (SPEC AC10). When no civilian scoring
+    // input is supplied, civilian candidates fall through to the neutral base
+    // score of `1.0`.
+    if (CivilianEconomyCatalog.byId.containsKey(unitType)) {
+      if (civilianScoring == null) return 1.0;
+      return civilianBuildCandidateScore(
+        unitType,
+        civilianScoring.countFor(unitType),
+      );
+    }
     final isShip = ShipEconomyCatalog.byId.containsKey(unitType);
     final cargoHold = isShip ? NavalStatsCatalog.get(unitType).cargoHold : 0;
     final isRegiment = RegimentEconomyCatalog.byId.containsKey(unitType);
