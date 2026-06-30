@@ -1,0 +1,937 @@
+/// Victory-config tunable AI parameters (genetic-algorithm tuning surface).
+///
+/// One [AiParameter] per behavior-affecting numeric constant in
+/// `ai_victory_config.dart`. Extracted from `ai_parameter_registry.dart` so the
+/// continually-growing victory-config tuning surface stays under the repo
+/// non-comment line-size gate (SPEC/program/dart-file-non-comment-line-size.md).
+/// SPEC/ai/ai-parameter-registry.md. Refs #3436, #3794.
+library;
+
+import 'dart:math' as math;
+
+import 'ai_parameter.dart';
+import 'ai_victory_config.dart';
+
+/// Victory-config `int` parameter: bounds [0, max(2000, 4 × default)].
+AiParameter _vcInt(String name, int defaultValue, String description) =>
+    AiParameter(
+      name: name,
+      category: AiParameterCategory.victoryConfig,
+      isInteger: true,
+      minValue: 0,
+      maxValue: math.max(2000, 4 * defaultValue),
+      defaultValue: defaultValue,
+      description: description,
+    );
+
+/// Victory-config `double` parameter: bounds [0.0, 4 × default].
+AiParameter _vcDouble(String name, double defaultValue, String description) =>
+    AiParameter(
+      name: name,
+      category: AiParameterCategory.victoryConfig,
+      isInteger: false,
+      minValue: 0.0,
+      maxValue: 4 * defaultValue,
+      defaultValue: defaultValue,
+      description: description,
+    );
+
+/// All victory-config tunable parameters in canonical declaration order.
+final List<AiParameter> victoryConfigParams = <AiParameter>[
+  _vcInt(
+    'kMilitaryVictoryOldWorldProvinceThreshold',
+    kMilitaryVictoryOldWorldProvinceThreshold,
+    'Old World province count required for military victory.',
+  ),
+  _vcInt(
+    'kExpandBonusWhenInvadableProvinces',
+    kExpandBonusWhenInvadableProvinces,
+    'Expand-goal bonus when invadable Old World targets exist.',
+  ),
+  _vcInt(
+    'kConquerScoreFloorProvincesToVictoryThreshold',
+    kConquerScoreFloorProvincesToVictoryThreshold,
+    'Provinces-to-victory threshold above which conquer score is floored.',
+  ),
+  _vcInt(
+    'kMinimumConquerScoreWhenFarFromVictory',
+    kMinimumConquerScoreWhenFarFromVictory,
+    'Minimum conquer goal score when far from victory.',
+  ),
+  _vcInt(
+    'kDeclareWarMinorMaxRelationWhenFarFromVictory',
+    kDeclareWarMinorMaxRelationWhenFarFromVictory,
+    'Declare-war relation cap for minor/tribe targets when far from victory.',
+  ),
+  _vcInt(
+    'kDeclareWarGpWeakNeighborBonus',
+    kDeclareWarGpWeakNeighborBonus,
+    'Declare-war bonus toward a weak-neighbor Great Power.',
+  ),
+  _vcInt(
+    'kDeclareWarGpWeakNeighborMinWarDesire',
+    kDeclareWarGpWeakNeighborMinWarDesire,
+    'Minimum war-desire for the weak-neighbor GP declare-war bonus.',
+  ),
+  _vcDouble(
+    'kBuildRegimentBonusWhenBehindVictoryPace',
+    kBuildRegimentBonusWhenBehindVictoryPace,
+    'Extra build weight for regiments when behind military victory pace.',
+  ),
+  _vcInt(
+    'kBuildRegimentVictoryPaceThreshold',
+    kBuildRegimentVictoryPaceThreshold,
+    'Provinces-to-victory threshold for the behind-pace regiment bonus.',
+  ),
+  _vcInt(
+    'kDeclareWarGpMaxRelationWhenFarFromVictory',
+    kDeclareWarGpMaxRelationWhenFarFromVictory,
+    'Declare-war relation cap for adjacent GP targets when far from victory.',
+  ),
+  _vcInt(
+    'kDeclareWarAdjacentOwnerBonus',
+    kDeclareWarAdjacentOwnerBonus,
+    'Declare-war bonus toward an adjacent Old World province owner.',
+  ),
+  _vcInt(
+    'kDeclareWarLowWarLikelihoodAdjacentBonus',
+    kDeclareWarLowWarLikelihoodAdjacentBonus,
+    'Extra declare-war bonus for low-warLikelihood personalities.',
+  ),
+  _vcInt(
+    'kDeclareWarLowWarLikelihoodThreshold',
+    kDeclareWarLowWarLikelihoodThreshold,
+    'warLikelihood at or below which the low-warLikelihood bonus applies.',
+  ),
+  _vcInt(
+    'kTradeGoalPenaltyCapWhenFarFromVictory',
+    kTradeGoalPenaltyCapWhenFarFromVictory,
+    'Cap on trade goal penalty when far from victory.',
+  ),
+  _vcInt(
+    'kDeclareWarNonAdjacentSuppressedScore',
+    kDeclareWarNonAdjacentSuppressedScore,
+    'Declare-war score for suppressed non-adjacent targets.',
+  ),
+  _vcInt(
+    'kDeclareWarAdjacentGpBonusWhenFarFromVictory',
+    kDeclareWarAdjacentGpBonusWhenFarFromVictory,
+    'Declare-war bonus toward an adjacent GP when far from victory.',
+  ),
+  _vcInt(
+    'kDeclareWarAdjacentMinorBonusWhenFarFromVictory',
+    kDeclareWarAdjacentMinorBonusWhenFarFromVictory,
+    'Declare-war bonus toward an adjacent minor/tribe when far from victory.',
+  ),
+  _vcInt(
+    'kSuppressGpDeclareWarMinProvincesToVictory',
+    kSuppressGpDeclareWarMinProvincesToVictory,
+    'Provinces-to-victory above which GP declare-war is suppressed.',
+  ),
+  _vcInt(
+    'kObserverDefaultStartOldWorldProvincesPerGp',
+    kObserverDefaultStartOldWorldProvincesPerGp,
+    'Observer default start Old World provinces per GP.',
+  ),
+  _vcInt(
+    'kStalledOldWorldProvinceThreshold',
+    kStalledOldWorldProvinceThreshold,
+    'OW holdings at or below this count are treated as stalled expansion.',
+  ),
+  _vcInt(
+    'kStalledDiplomacyGoalPenalty',
+    kStalledDiplomacyGoalPenalty,
+    'Diplomacy goal penalty while OW expansion is stalled.',
+  ),
+  _vcInt(
+    'kStalledTradeGoalPenalty',
+    kStalledTradeGoalPenalty,
+    'Trade goal penalty while OW expansion is stalled.',
+  ),
+  _vcInt(
+    'kStalledConquerGoalBonus',
+    kStalledConquerGoalBonus,
+    'Extra conquer goal weight while OW expansion is stalled.',
+  ),
+  _vcInt(
+    'kWeakGpRecoveryConquerBonus',
+    kWeakGpRecoveryConquerBonus,
+    'Extra conquer weight while critically weak with invadable OW minors.',
+  ),
+  _vcInt(
+    'kWeakGpRecoveryDefendPenalty',
+    kWeakGpRecoveryDefendPenalty,
+    'Reduced defend weight while critically weak with invadable OW minors.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledExpansionMinorBonus',
+    kDeclareWarStalledExpansionMinorBonus,
+    'Extra declare-war weight toward adjacent minors when stalled.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledOwMinorPriorityBonus',
+    kDeclareWarStalledOwMinorPriorityBonus,
+    'Priority declare-war weight toward OW minors over distant tribes.',
+  ),
+  _vcInt(
+    'kDeclareWarWeakGpOwMinorRecoveryBonus',
+    kDeclareWarWeakGpOwMinorRecoveryBonus,
+    'Extra declare-war weight toward OW minors while critically low.',
+  ),
+  _vcInt(
+    'kDeclareWarBelowQuotaOwMinorRecoveryBonus',
+    kDeclareWarBelowQuotaOwMinorRecoveryBonus,
+    'Extra declare-war weight toward OW minors while below observer quota.',
+  ),
+  _vcInt(
+    'kDeclareWarPlateauOwMinorBonus',
+    kDeclareWarPlateauOwMinorBonus,
+    'Extra declare-war toward invadable OW minors at the 8-9 OW plateau.',
+  ),
+  _vcInt(
+    'kDeclareWarNearObserverQuotaMinorBonus',
+    kDeclareWarNearObserverQuotaMinorBonus,
+    'Extra declare-war toward invadable minors near the observer quota.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledExpansionTribePenalty',
+    kDeclareWarStalledExpansionTribePenalty,
+    'Penalize tribe declare-war while stalled and OW minors remain.',
+  ),
+  _vcInt(
+    'kDeclareWarEarlyExpansionMinorBonus',
+    kDeclareWarEarlyExpansionMinorBonus,
+    'Extra declare-war weight on adjacent OW minors in the early window.',
+  ),
+  _vcInt(
+    'kDeclareWarEarlyExpansionTribePenalty',
+    kDeclareWarEarlyExpansionTribePenalty,
+    'Penalize tribe declare-war in the early window while OW minors remain.',
+  ),
+  _vcInt(
+    'kDeclareWarEarlyExpansionMaxTurn',
+    kDeclareWarEarlyExpansionMaxTurn,
+    'Last turn for the early-expansion minor bonus.',
+  ),
+  _vcInt(
+    'kDeclareWarEarlyAntiDogpileMaxTurn',
+    kDeclareWarEarlyAntiDogpileMaxTurn,
+    'Last turn quota-meeting GPs avoid opening wars on weaker neighbors.',
+  ),
+  _vcInt(
+    'kDeclareWarSatedExpansionMinorPenalty',
+    kDeclareWarSatedExpansionMinorPenalty,
+    'Penalty on adjacent minor declare-war when holding many OW provinces.',
+  ),
+  _vcInt(
+    'kDeclareWarSatedExpansionMinorThreshold',
+    kDeclareWarSatedExpansionMinorThreshold,
+    'OW holdings at or above which the sated-expansion penalty triggers.',
+  ),
+  _vcInt(
+    'kDiplomacyDeclareWarMinWeightWhenStalled',
+    kDiplomacyDeclareWarMinWeightWhenStalled,
+    'Minimum diplomacy declare-war pass weight when stalled.',
+  ),
+  _vcDouble(
+    'kBuildRegimentBonusWhenStalledExpansion',
+    kBuildRegimentBonusWhenStalledExpansion,
+    'Extra regiment build weight when OW holdings are stalled.',
+  ),
+  _vcDouble(
+    'kBuildRegimentBonusWhenZeroRegimentsAtWar',
+    kBuildRegimentBonusWhenZeroRegimentsAtWar,
+    'Extra regiment build weight when at war with zero regiments.',
+  ),
+  _vcInt(
+    'kDeclareWarMinorWithInvadableProvinceBonus',
+    kDeclareWarMinorWithInvadableProvinceBonus,
+    'Declare-war bonus when target owns an adjacent invadable province.',
+  ),
+  _vcInt(
+    'kStalledConquestArmyMovePasses',
+    kStalledConquestArmyMovePasses,
+    'Conquest army-move passes per turn while OW holdings are stalled.',
+  ),
+  _vcInt(
+    'kStalledConquestFieldArmySplitCap',
+    kStalledConquestFieldArmySplitCap,
+    'Max field armies from Home Army splits while OW expansion is stalled.',
+  ),
+  _vcInt(
+    'kStalledMinRegimentCountWhenAtWar',
+    kStalledMinRegimentCountWhenAtWar,
+    'Regiment floor while stalled and at war.',
+  ),
+  _vcInt(
+    'kStalledMinRegimentCountWhenGpBlockerAtWar',
+    kStalledMinRegimentCountWhenGpBlockerAtWar,
+    'Higher regiment floor when fighting the sole frontier-blocker GP.',
+  ),
+  _vcInt(
+    'kStalledMinRegimentCountWhenCriticallyWeakNoGpWar',
+    kStalledMinRegimentCountWhenCriticallyWeakNoGpWar,
+    'Regiment floor when critically weak with minor wars only.',
+  ),
+  _vcInt(
+    'kStalledMilitaryRebuildCrisisRegimentCap',
+    kStalledMilitaryRebuildCrisisRegimentCap,
+    'Regiment count cap below which stalled rebuilds are prioritized.',
+  ),
+  _vcInt(
+    'kStalledMinRegimentCountPerProvinceDeficitVsBlocker',
+    kStalledMinRegimentCountPerProvinceDeficitVsBlocker,
+    'Extra regiment floor per OW province the frontier blocker leads by.',
+  ),
+  _vcInt(
+    'kBelowQuotaPeaceMinRegimentsBeforeDeclareWar',
+    kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
+    'Regiment floor below which a below-quota peaceful GP rebuilds first.',
+  ),
+  _vcInt(
+    'kBelowQuotaPeaceTreasuryRecoveryCargoBoost',
+    kBelowQuotaPeaceTreasuryRecoveryCargoBoost,
+    'Cargo economy boost when a below-quota GP cannot afford a regiment.',
+  ),
+  _vcInt(
+    'kOfferPeaceFutileMinorWarBonus',
+    kOfferPeaceFutileMinorWarBonus,
+    'Offer-peace bonus toward a minor/tribe with no invadable land left.',
+  ),
+  _vcInt(
+    'kOfferPeaceBelowQuotaActiveMinorWarPenalty',
+    kOfferPeaceBelowQuotaActiveMinorWarPenalty,
+    'Penalty for offering peace to a minor still holding invadable OW land.',
+  ),
+  _vcInt(
+    'kOfferPeaceStalledStrongerGpBlockerBonus',
+    kOfferPeaceStalledStrongerGpBlockerBonus,
+    'Offer-peace bonus toward a stronger adjacent GP blocking the frontier.',
+  ),
+  _vcInt(
+    'kOfferPeaceStalledFutileGpWarBonus',
+    kOfferPeaceStalledFutileGpWarBonus,
+    'Offer-peace bonus toward a GP owning none of this GP\'s invadable land.',
+  ),
+  _vcInt(
+    'kObserverConquestMinOwProvincesPerGp',
+    kObserverConquestMinOwProvincesPerGp,
+    'Observer per-GP turn-100 conquest quota in OW provinces.',
+  ),
+  _vcInt(
+    'kObserverColonialLiteMinTurn',
+    kObserverColonialLiteMinTurn,
+    'Turn when near-quota EXPAND GPs may enter COLONIAL-lite.',
+  ),
+  _vcInt(
+    'kObserverColonialLiteNearQuotaOw',
+    kObserverColonialLiteNearQuotaOw,
+    'OW holdings at or above which COLONIAL-lite is enabled while below quota.',
+  ),
+  _vcInt(
+    'kDevelopCivilianWorkThresholdCap',
+    kDevelopCivilianWorkThresholdCap,
+    'Civilian work threshold cap in the DEVELOP phase.',
+  ),
+  _vcInt(
+    'kConsolidateGainsSoleGpProvinceLead',
+    kConsolidateGainsSoleGpProvinceLead,
+    'OW province lead over sole GP enemy to consolidate gains via peace.',
+  ),
+  _vcInt(
+    'kObserverConquestConsolidateMinOwProvinces',
+    kObserverConquestConsolidateMinOwProvinces,
+    'Minimum OW holdings before consolidate-gains sole-GP peace may fire.',
+  ),
+  _vcInt(
+    'kUnwinnableSoleGpMinProvinceDeficit',
+    kUnwinnableSoleGpMinProvinceDeficit,
+    'OW province deficit for the unwinnable sole-GP frontier peace.',
+  ),
+  _vcInt(
+    'kDeclareWarBelowObserverQuotaMinorBonus',
+    kDeclareWarBelowObserverQuotaMinorBonus,
+    'Declare-war bonus on adjacent invadable OW minors while below quota.',
+  ),
+  _vcInt(
+    'kOfferPeaceStalledZeroRegimentGpWarBonus',
+    kOfferPeaceStalledZeroRegimentGpWarBonus,
+    'Offer-peace bonus toward any at-war GP when stalled with zero regiments.',
+  ),
+  _vcInt(
+    'kMutualExhaustedGpStalemateMinOw',
+    kMutualExhaustedGpStalemateMinOw,
+    'OW floor for the mutual-exhausted GP stalemate peace check.',
+  ),
+  _vcInt(
+    'kMutualExhaustedGpRegimentMax',
+    kMutualExhaustedGpRegimentMax,
+    'Regiment ceiling under which a GP is treated as militarily exhausted.',
+  ),
+  _vcInt(
+    'kMutualExhaustedGpTreasuryMax',
+    kMutualExhaustedGpTreasuryMax,
+    'Treasury ceiling under which a GP is treated as economically exhausted.',
+  ),
+  _vcInt(
+    'kOfferPeaceMutualExhaustedGpStalemateBonus',
+    kOfferPeaceMutualExhaustedGpStalemateBonus,
+    'Offer-peace bonus for a mutually-exhausted sole-GP stalemate.',
+  ),
+  _vcInt(
+    'kStalledMinRegimentCountWhenCriticallyWeakBelowQuota',
+    kStalledMinRegimentCountWhenCriticallyWeakBelowQuota,
+    'Regiment floor when critically weak, below quota, and at war.',
+  ),
+  _vcInt(
+    'kOfferPeaceUnwinnableSoleGpWarBonus',
+    kOfferPeaceUnwinnableSoleGpWarBonus,
+    'Offer-peace bonus for the unwinnable sole-GP frontier peace target.',
+  ),
+  _vcInt(
+    'kOfferPeaceConsolidateGainsSoleGpWarBonus',
+    kOfferPeaceConsolidateGainsSoleGpWarBonus,
+    'Offer-peace bonus for the consolidate-gains sole-GP peace target.',
+  ),
+  _vcInt(
+    'kDefendBonusWhenFewOldWorldProvinces',
+    kDefendBonusWhenFewOldWorldProvinces,
+    'Defend goal bonus while OW holdings are small and far from victory.',
+  ),
+  _vcInt(
+    'kDefendBonusWhenAtWarAndFewHoldings',
+    kDefendBonusWhenAtWarAndFewHoldings,
+    'Extra defend weight when at war and OW holdings are few.',
+  ),
+  _vcInt(
+    'kFewOldWorldProvincesDefendThreshold',
+    kFewOldWorldProvincesDefendThreshold,
+    'OW province count at or below which the few-holdings defend bonus applies.',
+  ),
+  _vcInt(
+    'kColonialExpandBonusWhenInvadableNw',
+    kColonialExpandBonusWhenInvadableNw,
+    'Expand-goal bonus when invadable New World provinces exist.',
+  ),
+  _vcInt(
+    'kColonialConquerBonusWhenInvadableNw',
+    kColonialConquerBonusWhenInvadableNw,
+    'Conquer-goal bonus for colonial pressure below OW victory floors.',
+  ),
+  _vcInt(
+    'kDeclareWarColonialAdjacentTribeBonus',
+    kDeclareWarColonialAdjacentTribeBonus,
+    'Declare-war bonus toward a tribe/minor owning adjacent NW provinces.',
+  ),
+  _vcInt(
+    'kEstablishOvertureColonialTribeBonus',
+    kEstablishOvertureColonialTribeBonus,
+    'Establish-overture bonus toward a preferred colonial tribe target.',
+  ),
+  _vcInt(
+    'kEstablishOvertureColonialInvadableOwnerBonus',
+    kEstablishOvertureColonialInvadableOwnerBonus,
+    'Establish-overture bonus toward a sea-reachable NW province owner.',
+  ),
+  _vcInt(
+    'kEstablishOvertureDecayCreditMax',
+    kEstablishOvertureDecayCreditMax,
+    'Max improve-relations reduction credited to natural relation decay.',
+  ),
+  _vcInt(
+    'kEstablishOvertureFtpCompetitionBonus',
+    kEstablishOvertureFtpCompetitionBonus,
+    'Overture incentive when not the favoured trading partner for a '
+        'Minor/Tribe target.',
+  ),
+  _vcInt(
+    'kConquestArmyMoveNwInvadableBonus',
+    kConquestArmyMoveNwInvadableBonus,
+    'Conquest army-move bonus for New World invadable destinations.',
+  ),
+  _vcInt(
+    'kColonialCargoPreferenceEconomyBoost',
+    kColonialCargoPreferenceEconomyBoost,
+    'Economy-domain cargo-preference boost when colonial targets exist.',
+  ),
+  _vcInt(
+    'kColonialCargoPreferenceNoNwColoniesBoost',
+    kColonialCargoPreferenceNoNwColoniesBoost,
+    'Extra cargo boost when the GP owns no New World provinces yet.',
+  ),
+  _vcInt(
+    'kColonialNavalWeightBonus',
+    kColonialNavalWeightBonus,
+    'Naval planner weight boost when NW invasion/colonization is viable.',
+  ),
+  _vcInt(
+    'kColonialNavalMinWeightWhenPressure',
+    kColonialNavalMinWeightWhenPressure,
+    'Minimum naval planner weight under active colonial pressure.',
+  ),
+  _vcInt(
+    'kColonialNavalMoveDockNewWorldPortScore',
+    kColonialNavalMoveDockNewWorldPortScore,
+    'Naval move score when docking at a New World port under pressure.',
+  ),
+  _vcInt(
+    'kColonialNavalMovePriorityNwSeaZoneScore',
+    kColonialNavalMovePriorityNwSeaZoneScore,
+    'Naval move score for an NW sea zone bordering an invadable province.',
+  ),
+  _vcInt(
+    'kColonialNavalMovePhasePriorityNwSeaZoneScore',
+    kColonialNavalMovePhasePriorityNwSeaZoneScore,
+    'Naval move score for an NW sea zone bordering a phase-priority province.',
+  ),
+  _vcInt(
+    'kColonialNavalMoveNwSeaZoneScore',
+    kColonialNavalMoveNwSeaZoneScore,
+    'Naval move score for any other New World sea zone destination.',
+  ),
+  _vcInt(
+    'kColonialNavalMoveGatewaySeaZoneScore',
+    kColonialNavalMoveGatewaySeaZoneScore,
+    'Naval move score for an OW sea zone linked to NW seas.',
+  ),
+  _vcInt(
+    'kDeclareWarColonialInvadableOwnerBonus',
+    kDeclareWarColonialInvadableOwnerBonus,
+    'Declare-war bonus when target owns a sea-reachable invadable NW province.',
+  ),
+  _vcInt(
+    'kColonialFewNwProvincesThreshold',
+    kColonialFewNwProvincesThreshold,
+    'NW holdings below which colonial goal bonuses apply.',
+  ),
+  _vcInt(
+    'kColonialConquerBonusWhenFewNwProvinces',
+    kColonialConquerBonusWhenFewNwProvinces,
+    'Extra conquer weight while below the few-NW-provinces threshold.',
+  ),
+  _vcInt(
+    'kColonialDiplomacyGoalPenaltyWhenPressure',
+    kColonialDiplomacyGoalPenaltyWhenPressure,
+    'Diplomacy goal penalty while sea-reachable NW targets exist.',
+  ),
+  _vcInt(
+    'kColonialTradeGoalPenaltyWhenPressure',
+    kColonialTradeGoalPenaltyWhenPressure,
+    'Trade goal penalty under colonial pressure.',
+  ),
+  _vcInt(
+    'kEmergencyTradeGoalDominantFloor',
+    kEmergencyTradeGoalDominantFloor,
+    'Trade goal floor when the GP treasury is broke.',
+  ),
+  _vcInt(
+    'kTreasuryAcquisitionTradeBoostMax',
+    kTreasuryAcquisitionTradeBoostMax,
+    'Peak trade goal boost when treasury is below a regiment build cost.',
+  ),
+  _vcInt(
+    'kMinimumColonialExpandScoreWhenPressure',
+    kMinimumColonialExpandScoreWhenPressure,
+    'Expand floor under colonial pressure.',
+  ),
+  _vcInt(
+    'kMinimumColonialConquerScoreWhenPressure',
+    kMinimumColonialConquerScoreWhenPressure,
+    'Conquer floor under colonial pressure.',
+  ),
+  _vcInt(
+    'kDiplomacyDeclareWarMinWeightWhenColonialPressure',
+    kDiplomacyDeclareWarMinWeightWhenColonialPressure,
+    'Minimum declare-war diplomacy pass weight under colonial pressure.',
+  ),
+  _vcInt(
+    'kConquestArmyMoveMinWeightWhenColonialPressure',
+    kConquestArmyMoveMinWeightWhenColonialPressure,
+    'Minimum conquest army-move pass weight under colonial pressure.',
+  ),
+  _vcInt(
+    'kExploreWorkScoreBonusNewWorld',
+    kExploreWorkScoreBonusNewWorld,
+    'Explore-work score bonus when the target tile is in the New World.',
+  ),
+  _vcInt(
+    'kBuildImprovementExtractableResourceScore',
+    kBuildImprovementExtractableResourceScore,
+    'Build-improvement score for an unimproved extractable resource tile.',
+  ),
+  _vcInt(
+    'kBuildImprovementNewWorldResourceBonus',
+    kBuildImprovementNewWorldResourceBonus,
+    'Extra build-improvement score on unimproved NW extractable tiles.',
+  ),
+  _vcInt(
+    'kBuildImprovementOwnedNewWorldResourceBonus',
+    kBuildImprovementOwnedNewWorldResourceBonus,
+    'Extra build-improvement score on owned NW extractable tiles.',
+  ),
+  _vcInt(
+    'kPurchaseLandNewWorldTribeWorkScore',
+    kPurchaseLandNewWorldTribeWorkScore,
+    'Merchant purchase_land score for NW tribe/minor tiles.',
+  ),
+  _vcInt(
+    'kPurchaseLandNewWorldOtherWorkScore',
+    kPurchaseLandNewWorldOtherWorkScore,
+    'Merchant purchase_land score for other NW tiles.',
+  ),
+  _vcInt(
+    'kBuildRailBaseWorkScore',
+    kBuildRailBaseWorkScore,
+    'Baseline Rail Builder build_rail work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kBuildRailResourceOutputBonus',
+    kBuildRailResourceOutputBonus,
+    'Extra Rail Builder build_rail score when the road tile carries a resource.',
+  ),
+  _vcInt(
+    'kBuildRailCapitalConnectorBonus',
+    kBuildRailCapitalConnectorBonus,
+    'Extra Rail Builder build_rail score when the road tile is in the capital province.',
+  ),
+  _vcInt(
+    'kBuildRailNewWorldBonus',
+    kBuildRailNewWorldBonus,
+    'Extra Rail Builder build_rail score when the road tile is in the New World.',
+  ),
+  _vcInt(
+    'kEngineerBuildRoadBaseWorkScore',
+    kEngineerBuildRoadBaseWorkScore,
+    'Baseline Engineer build_road work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kEngineerBuildPortBaseWorkScore',
+    kEngineerBuildPortBaseWorkScore,
+    'Baseline Engineer build_port work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kEngineerBuildFortBaseWorkScore',
+    kEngineerBuildFortBaseWorkScore,
+    'Baseline Engineer build_fort work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kEngineerRoadResourceConnectivityBonus',
+    kEngineerRoadResourceConnectivityBonus,
+    'Extra Engineer build_road score when the tile carries a resource.',
+  ),
+  _vcInt(
+    'kEngineerRoadCapitalLogisticsBonus',
+    kEngineerRoadCapitalLogisticsBonus,
+    'Extra Engineer build_road score when the tile is in the capital province.',
+  ),
+  _vcInt(
+    'kEngineerPortResourceExtractionBonus',
+    kEngineerPortResourceExtractionBonus,
+    'Extra Engineer build_port score when the tile carries a resource.',
+  ),
+  _vcInt(
+    'kEngineerPortNewWorldCoastalBonus',
+    kEngineerPortNewWorldCoastalBonus,
+    'Extra Engineer build_port score when the tile is in the New World.',
+  ),
+  _vcInt(
+    'kEngineerFortCapitalDefenseBonus',
+    kEngineerFortCapitalDefenseBonus,
+    'Extra Engineer build_fort score when the tile is in the capital province.',
+  ),
+  _vcInt(
+    'kEngineerFortNewWorldBorderBonus',
+    kEngineerFortNewWorldBorderBonus,
+    'Extra Engineer build_fort score when the tile is in the New World.',
+  ),
+  _vcInt(
+    'kUpgradeTownBaseWorkScore',
+    kUpgradeTownBaseWorkScore,
+    'Baseline Builder upgrade_town work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kUpgradeTownResourceValueBonus',
+    kUpgradeTownResourceValueBonus,
+    'Extra Builder upgrade_town score when the town tile carries a resource.',
+  ),
+  _vcInt(
+    'kUpgradeTownFrontlineBonus',
+    kUpgradeTownFrontlineBonus,
+    'Extra Builder upgrade_town score when the town tile is in the New World.',
+  ),
+  _vcInt(
+    'kUpgradeTownLowDevBonus',
+    kUpgradeTownLowDevBonus,
+    'Extra Builder upgrade_town score when the town tile is undeveloped (level 0).',
+  ),
+  _vcInt(
+    'kColonialCivilianWorkThresholdCap',
+    kColonialCivilianWorkThresholdCap,
+    'Civilian work economy threshold cap when colonial targets are visible.',
+  ),
+  _vcInt(
+    'kColonialBuildOrderThresholdWhenOwnedNwUnderPressure',
+    kColonialBuildOrderThresholdWhenOwnedNwUnderPressure,
+    'Build-order economy threshold cap under COLONIAL acquisition pressure.',
+  ),
+  _vcInt(
+    'kColonialNavalMissionNwPortScore',
+    kColonialNavalMissionNwPortScore,
+    'Naval mission score when the target port is a New World port.',
+  ),
+  _vcInt(
+    'kColonialNavalMissionPhasePriorityNwPortScore',
+    kColonialNavalMissionPhasePriorityNwPortScore,
+    'Naval mission score for a phase-priority New World port.',
+  ),
+  _vcInt(
+    'kColonialNavalMissionNwProvinceScore',
+    kColonialNavalMissionNwProvinceScore,
+    'Naval mission score when the target province is in the New World.',
+  ),
+  _vcInt(
+    'kColonialNavalMissionPhasePriorityNwProvinceScore',
+    kColonialNavalMissionPhasePriorityNwProvinceScore,
+    'Naval mission score for a phase-priority New World province.',
+  ),
+  _vcInt(
+    'kColonialNavalMissionBeachheadScore',
+    kColonialNavalMissionBeachheadScore,
+    'Naval mission score for beachhead missions under colonial pressure.',
+  ),
+  _vcInt(
+    'kDeclareWarColonialNwTribeDominanceBonus',
+    kDeclareWarColonialNwTribeDominanceBonus,
+    'Extra declare-war weight for tribes owning sea-reachable NW provinces.',
+  ),
+  _vcInt(
+    'kDeclareWarColonialNwTribePriorityOverOwMinorBonus',
+    kDeclareWarColonialNwTribePriorityOverOwMinorBonus,
+    'Tribe declare-war weight to beat OW minor bonuses under colonial pressure.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledLowWarLikelihoodMinorBonus',
+    kDeclareWarStalledLowWarLikelihoodMinorBonus,
+    'Declare-war bonus for low-warLikelihood leaders toward stalled minors.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledLowWarLikelihoodMinorFloor',
+    kDeclareWarStalledLowWarLikelihoodMinorFloor,
+    'Declare-war floor for low-warLikelihood leaders toward stalled minors.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledLowWarLikelihoodTribeCap',
+    kDeclareWarStalledLowWarLikelihoodTribeCap,
+    'Cap NW tribe declare-war for low-warLikelihood leaders while OW minors remain.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledAdjacentInvadableMinorFloor',
+    kDeclareWarStalledAdjacentInvadableMinorFloor,
+    'Declare-war floor toward adjacent invadable minors while stalled.',
+  ),
+  _vcInt(
+    'kDeclareWarWeakGpAdjacentInvadableMinorFloor',
+    kDeclareWarWeakGpAdjacentInvadableMinorFloor,
+    'Higher declare-war floor for critically weak GPs toward OW minors.',
+  ),
+  _vcInt(
+    'kDeclareWarCriticalWeakNoGpWarMinorBonus',
+    kDeclareWarCriticalWeakNoGpWarMinorBonus,
+    'Declare-war bonus toward OW minors when critically weak with no GP war.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledGpWhenMinorsRemainPenalty',
+    kDeclareWarStalledGpWhenMinorsRemainPenalty,
+    'Declare-war penalty toward adjacent GPs while invadable minors remain.',
+  ),
+  _vcInt(
+    'kDeclareWarOnStalledWeakerNeighborPenalty',
+    kDeclareWarOnStalledWeakerNeighborPenalty,
+    'Declare-war penalty toward a stalled weaker neighbor GP.',
+  ),
+  _vcInt(
+    'kDeclareWarAggressorSuppressWeakGpLeadThreshold',
+    kDeclareWarAggressorSuppressWeakGpLeadThreshold,
+    'OW lead over a weak GP above which declare-war is suppressed.',
+  ),
+  _vcInt(
+    'kOfferPeaceWeakVsInvadableBlockerBonus',
+    kOfferPeaceWeakVsInvadableBlockerBonus,
+    'Offer-peace bonus toward an invadable frontier GP while critically low.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledTribeWhenOwMinorCap',
+    kDeclareWarStalledTribeWhenOwMinorCap,
+    'Cap NW tribe declare-war scores while invadable OW minors remain.',
+  ),
+  _vcInt(
+    'kDeclareWarColonialPressureOwMinorPenalty',
+    kDeclareWarColonialPressureOwMinorPenalty,
+    'Declare-war penalty toward OW minors with no NW provinces under pressure.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledWeakerMinorBonus',
+    kDeclareWarStalledWeakerMinorBonus,
+    'Declare-war bonus for non-adjacent minors weaker than a stalled GP.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledActiveOwMinorBonus',
+    kDeclareWarStalledActiveOwMinorBonus,
+    'Declare-war weight toward any OW-holding minor while at start size.',
+  ),
+  _vcInt(
+    'kConquestArmyMoveMinWeightWhenStalled',
+    kConquestArmyMoveMinWeightWhenStalled,
+    'Minimum conquest army-move pass weight when OW expansion is stalled.',
+  ),
+  _vcInt(
+    'kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar',
+    kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar,
+    'Army-move weight floor when critically weak with no GP war.',
+  ),
+  _vcDouble(
+    'kConquestArmyMoveStalledDeclaredTargetInvadableBonus',
+    kConquestArmyMoveStalledDeclaredTargetInvadableBonus,
+    'Army-move bonus for invadable provinces of the declared target when stalled.',
+  ),
+  _vcDouble(
+    'kConquestArmyMoveStalledDeclaredTargetBonus',
+    kConquestArmyMoveStalledDeclaredTargetBonus,
+    'Army-move bonus for any province of the declared target when stalled.',
+  ),
+  _vcDouble(
+    'kConquestArmyMoveAdjacentInvadableBonus',
+    kConquestArmyMoveAdjacentInvadableBonus,
+    'Army-move bonus when destination is adjacent to an invadable OW province.',
+  ),
+  _vcDouble(
+    'kConquestArmyMoveStalledGpInvadableBlockerBonus',
+    kConquestArmyMoveStalledGpInvadableBlockerBonus,
+    'Army-move bonus for invadable provinces of an at-war blocker GP.',
+  ),
+  _vcDouble(
+    'kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince',
+    kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince,
+    'Extra army-move bonus per OW province the invadable blocker GP leads by.',
+  ),
+  _vcInt(
+    'kOfferPeaceBelowQuotaInvadableBlockerPenalty',
+    kOfferPeaceBelowQuotaInvadableBlockerPenalty,
+    'Offer-peace penalty toward the frontier blocker GP while below quota.',
+  ),
+  _vcInt(
+    'kOfferPeaceBelowQuotaStartSizeGpWarPenalty',
+    kOfferPeaceBelowQuotaStartSizeGpWarPenalty,
+    'Offer-peace penalty toward any GP while at start size and below quota.',
+  ),
+  _vcDouble(
+    'kConquestArmyMoveAdjacentAtWarFrontierBonus',
+    kConquestArmyMoveAdjacentAtWarFrontierBonus,
+    'Army-move bonus for own provinces bordering an at-war faction.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledWeakestInvadableGpBonus',
+    kDeclareWarStalledWeakestInvadableGpBonus,
+    'Declare-war bonus when the weakest invadable-border GP blocks expansion.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledInvadableGpBlockerBonus',
+    kDeclareWarStalledInvadableGpBlockerBonus,
+    'Declare-war bonus toward a weaker adjacent GP owning invadable OW land.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledGpInvadableBlockerFloor',
+    kDeclareWarStalledGpInvadableBlockerFloor,
+    'Declare-war floor toward the GP owning invadable OW frontier.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledGpBlockerDistantMinorBonus',
+    kDeclareWarStalledGpBlockerDistantMinorBonus,
+    'Declare-war bonus toward a distant minor while OW land is GP-blocked.',
+  ),
+  _vcInt(
+    'kDeclareWarDefaultStartOwMinorBonus',
+    kDeclareWarDefaultStartOwMinorBonus,
+    'Declare-war bonus on any OW minor while at default observer start size.',
+  ),
+  _vcInt(
+    'kDeclareWarStalledAnyOwMinorBonus',
+    kDeclareWarStalledAnyOwMinorBonus,
+    'Declare-war bonus toward any OW-holding minor while stalled.',
+  ),
+  _vcInt(
+    'kRegimentBuildInputFeedstockExtractionScoreBoost',
+    kRegimentBuildInputFeedstockExtractionScoreBoost,
+    'Civilian-work score boost on an unimproved feedstock tile under the '
+        'feedstock-extraction gate.',
+  ),
+  _vcInt(
+    'kGrowthStageFabricFeedstockScoreBoost',
+    kGrowthStageFabricFeedstockScoreBoost,
+    'Civilian-work score boost on an unimproved fabric feedstock tile under '
+        'the growth-stage planner.',
+  ),
+  _vcInt(
+    'kGrowthStageInfraFeedstockScoreBoost',
+    kGrowthStageInfraFeedstockScoreBoost,
+    'Civilian-work score boost on an unimproved infrastructure feedstock tile '
+        'under the growth-stage planner.',
+  ),
+  _vcInt(
+    'kFeedstockMineralProspectScoreBoost',
+    kFeedstockMineralProspectScoreBoost,
+    'Civilian-work prospect score boost on an unprospected mineral feedstock '
+        'tile under the feedstock-extraction gate.',
+  ),
+  _vcInt(
+    'kSpyStealTechBaseWorkScore',
+    kSpyStealTechBaseWorkScore,
+    'Baseline Spy steal_tech work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kSpyStealTechTechDeficitWeight',
+    kSpyStealTechTechDeficitWeight,
+    'Per-tech Spy steal_tech bonus for each tech the rival has that the player '
+        'lacks (deficit capped at 60).',
+  ),
+  _vcInt(
+    'kSpyStealTechHostileRelationsBonus',
+    kSpyStealTechHostileRelationsBonus,
+    'Extra Spy steal_tech score toward an at-war or negative-relation rival.',
+  ),
+  _vcInt(
+    'kSpyStealTechProximityBonus',
+    kSpyStealTechProximityBonus,
+    'Extra Spy steal_tech score when the rival capital is in the Spy\'s region.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyBaseWorkScore',
+    kSpyCounterSpyBaseWorkScore,
+    'Baseline Spy counter_spy work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyEnemySpyPresenceBonus',
+    kSpyCounterSpyEnemySpyPresenceBonus,
+    'Extra Spy counter_spy score when a foreign-owned Spy occupies the province.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyCapitalBonus',
+    kSpyCounterSpyCapitalBonus,
+    'Extra Spy counter_spy score in the player\'s capital province.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyBorderBonus',
+    kSpyCounterSpyBorderBonus,
+    'Extra Spy counter_spy score in a New World region province.',
+  ),
+  _vcInt(
+    'kSpyPhaseStealTechBonus',
+    kSpyPhaseStealTechBonus,
+    'Phase bonus added to Spy steal_tech scores outside the DEVELOP phase.',
+  ),
+  _vcInt(
+    'kSpyPhaseCounterSpyBonus',
+    kSpyPhaseCounterSpyBonus,
+    'Phase bonus added to Spy counter_spy scores in the DEVELOP phase.',
+  ),
+];
