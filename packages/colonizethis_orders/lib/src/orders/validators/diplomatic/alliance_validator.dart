@@ -23,5 +23,15 @@ DiplomaticSubValidator allianceSubValidator(
     treasury: treasury,
   );
   if (atWarRejection != null) return atWarRejection;
+  // Reject a duplicate treaty: a formal alliance already exists with the target
+  // GP, so a second Alliance order is invalid (the human panel offers Break
+  // Alliance instead, and AI suggestions skip the alliance candidate).
+  // SPEC/program/orders.md § Diplomatic orders / alliance.
+  if (relation?.formalAlliance ?? false) {
+    return rejectDiplomaticSub(
+      'Already in a formal alliance with that faction',
+      treasury,
+    );
+  }
   return acceptDiplomaticSub(treasury);
 });

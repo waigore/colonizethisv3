@@ -143,5 +143,25 @@ void main() {
       expect(r.result.status, OrderValidationStatus.accepted);
       expect(r.treasury, 5000);
     });
+
+    test('rejects a duplicate alliance when a formal alliance already exists',
+        () {
+      final v = allianceSubValidator(
+        diplomaticSubValidatorContext(
+          twoGpGame(state: RelationState.atPeace, formalAlliance: true),
+          'gp1',
+        ),
+      );
+      final r = v.validate(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: 'gp2',
+        ),
+        treasury: 5000,
+      );
+      expect(r.result.status, OrderValidationStatus.rejected);
+      expect(r.result.reason, contains('Already in a formal alliance'));
+      expect(r.treasury, 5000);
+    });
   });
 }

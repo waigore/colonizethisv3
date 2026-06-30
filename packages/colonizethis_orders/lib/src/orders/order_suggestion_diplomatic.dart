@@ -54,9 +54,13 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
+  // Skip the alliance candidate when a formal alliance already exists for the
+  // pair: forming a duplicate treaty is invalid (the break candidate above is
+  // offered instead). SPEC/program/order-suggestions.md § Diplomatic orders.
   if (isGpTarget &&
       rel != null &&
       rel.atPeace &&
+      !rel.formalAlliance &&
       rel.level != RelationLevel.allied) {
     out.add(
       DiplomaticOrder(

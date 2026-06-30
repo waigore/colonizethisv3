@@ -58,7 +58,10 @@ Game gpMinorGame({
   );
 }
 
-Game twoGpGame({RelationState state = RelationState.atPeace}) {
+Game twoGpGame({
+  RelationState state = RelationState.atPeace,
+  bool formalAlliance = false,
+}) {
   return Game(
     id: 'g1',
     worldState: WorldState(
@@ -71,7 +74,12 @@ Game twoGpGame({RelationState state = RelationState.atPeace}) {
       Player(id: 'gp2', displayName: 'GP2', isHuman: false),
     ],
     diplomacyRelations: [
-      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', state: state),
+      DiplomacyRelation(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        state: state,
+        formalAlliance: formalAlliance,
+      ),
     ],
   );
 }
