@@ -111,8 +111,9 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
+    Orders currentOrders, {
+    bool includeCivilianBuilds = false,
+  }) {
     final ctx = _ctx(view, game, topology, currentOrders);
     return ctx.loggedSuggest(
       'suggestBuildOrders',
@@ -121,6 +122,7 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
         ctx.game,
         ctx.topology,
         ctx.currentOrders,
+        includeCivilianBuilds: includeCivilianBuilds,
       ),
     );
   }
