@@ -39,8 +39,6 @@ const String _trustedOrderResolveCall =
 /// `SPEC/program/repo-lint.md`.
 const Set<String> seed42CampaignHarnessAllowlist = <String>{
   'packages/colonizethis_ai/test/perf/seed42_first_turn_trade_enabled_wall_clock_budget_test.dart',
-  'packages/colonizethis_ai/test/planning/seed42_expand_phase_first10turns_trace_test.dart',
-  'packages/colonizethis_ai/test/planning/seed42_expand_phase_first25turns_field_army_trace_test.dart',
   'packages/colonizethis_ai/test/seed42_invadable_probe_test.dart',
 };
 
