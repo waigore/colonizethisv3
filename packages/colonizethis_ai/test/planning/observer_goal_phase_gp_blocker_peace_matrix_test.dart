@@ -14,17 +14,32 @@
 //     (`primaryInvadableOldWorldGpBlocker` + `expandPhaseGpPeaceTargets`,
 //     EXPAND phase, OLD-WORLD invadable frontier; Refs #2509 S10).
 //
-// All four functions share the exact signature
+// It also folds in two further peace-target guard suites that share the
+// same `({required Game game, required AIWorldSnapshot snapshot}) ->
+// List<String>` signature, so they reuse the same peace-target case
+// runner:
+//
+//   - `observer_goal_phase_develop_peace_target_branches_test.dart`
+//     (`developPhaseGpPeaceTargets`, DEVELOP phase, GP-vs-GP peace-all
+//     rule with no blocker preservation / minor-first short-circuit;
+//     Refs #2509 S10).
+//   - `expand_phase_planner_stalled_below_quota_gp_lead_branches_test.dart`
+//     (`stalledBelowQuotaGpLeadPeaceTargets`, below-quota lead-peace
+//     shortcut keyed on `minLeadDeficit` / quota guard / GP-only blocker;
+//     Refs #2509).
+//
+// All six functions share the exact signature
 // `({required Game game, required AIWorldSnapshot snapshot})` returning
 // `String?` (blocker) or `List<String>` (peace targets), so the two
 // blocker contracts collapse into one shared truth-table runner and the
-// two peace-target guard ladders collapse into one shared case runner.
+// four peace-target guard ladders collapse into one shared case runner.
 // Coverage is preserved 1:1 — every former `test(...)` becomes one matrix
 // row with the same fixture and the verbatim regression `reason` — while
-// the duplicated per-file fixtures and scaffolding collapse into two
-// shared fixture families (COLONIAL/NW and EXPAND/OW). The EXPAND family
-// keeps its unique minor-first and mutual-plateau arms as explicit rows;
-// the COLONIAL family has no minor-first branch.
+// the duplicated per-file fixtures and scaffolding collapse into four
+// shared fixture families (COLONIAL/NW, EXPAND/OW, DEVELOP, and the
+// own-vs-partner stalled-lead family). The EXPAND family keeps its unique
+// minor-first and mutual-plateau arms as explicit rows; the COLONIAL
+// family has no minor-first branch.
 //
 //   SPEC/ai/ai-architecture.md § Observer goal phases (Full AI):
 //     COLONIAL — "offerPeace toward at-war Great Powers that do not own
@@ -168,6 +183,183 @@ AIWorldSnapshot _expandSnapshot({
       oldWorldProvincesOwned: oldWorldProvincesOwned,
       provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
       invadableProvinceIdsSorted: invadableOw,
+    ),
+    colonial: const ColonialSummary(),
+    economy: const EconomySummary(),
+    relations: const {},
+  );
+}
+
+// --- DEVELOP fixture family ---------------------------------------------
+
+/// Game scaffold with a configurable turn number and roster.
+///
+/// Defaults to a 4-GP roster (no minors / tribes mounted) so tests can
+/// freely add `atWarWith` entries that resolve to GP players for the
+/// inline `game.playerById(factionId) != null` filter. Tests that need
+/// minor / tribe filtering supply their own minor / tribe lists.
+Game _developGame({
+  required int turnNumber,
+  List<Player> players = const [
+    Player(id: _gp1, displayName: 'GP1', isHuman: false),
+    Player(id: _gp2, displayName: 'GP2', isHuman: false),
+    Player(id: _gp3, displayName: 'GP3', isHuman: false),
+    Player(id: _gp4, displayName: 'GP4', isHuman: false),
+  ],
+  List<Tribe> tribes = const [],
+  List<MinorNation> minorNations = const [],
+}) {
+  return Game(
+    id: 'g-2509-develop-peace-target-branches-t$turnNumber',
+    worldState: WorldState(
+      turnState: TurnState(
+        turnNumber: turnNumber,
+        phase: TurnPhase.orders,
+      ),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    players: players,
+    tribes: tribes,
+    minorNations: minorNations,
+  );
+}
+
+/// Snapshot fixing the GP **at** the OW quota (10) with an empty
+/// colonial summary -- no invadable NW, no adjacent NW owners -- so
+/// `observerGoalPhaseFor` returns DEVELOP and
+/// `developPhaseGpPeaceTargets` is the helper under test.
+AIWorldSnapshot _developSnapshot({
+  required List<String> atWarWith,
+  int oldWorldProvincesOwned = kObserverConquestMinOwProvincesPerGp,
+  String playerId = _gp1,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: ThreatSummary(atWarWith: atWarWith),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+    ),
+    colonial: const ColonialSummary(),
+    economy: const EconomySummary(),
+    relations: const {},
+  );
+}
+
+// --- Stalled below-quota lead fixture family ----------------------------
+
+/// Own-vs-partner OW roster fixture for `stalledBelowQuotaGpLeadPeaceTargets`.
+///
+/// `gp_own` holds [ownProvinces]; [partnerId] holds [partnerProvinces].
+/// Optional [extraGpId] / [invadableOwnerId] / [minorId] layer in the
+/// multi-GP, GP-only-blocker, and collection-guard branches.
+Game _ownVsPartnerGame({
+  required int ownProvinces,
+  required int partnerProvinces,
+  required String partnerId,
+  String? extraGpId,
+  int extraGpProvinces = 0,
+  String? invadableOwnerId,
+  String? minorId,
+  bool atWarWithPartner = true,
+  bool atWarWithExtraGp = true,
+  bool atWarWithMinor = false,
+}) {
+  final provinces = <Province>[
+    for (var i = 1; i <= ownProvinces; i++)
+      Province(
+        id: 'oldWorld|gp_own_$i',
+        regionId: 'oldWorld',
+        ownerId: 'gp_own',
+      ),
+    for (var i = 1; i <= partnerProvinces; i++)
+      Province(
+        id: 'oldWorld|${partnerId}_$i',
+        regionId: 'oldWorld',
+        ownerId: partnerId,
+      ),
+    if (extraGpId != null)
+      for (var i = 1; i <= extraGpProvinces; i++)
+        Province(
+          id: 'oldWorld|${extraGpId}_$i',
+          regionId: 'oldWorld',
+          ownerId: extraGpId,
+        ),
+    if (invadableOwnerId != null)
+      Province(
+        id: 'oldWorld|frontier',
+        regionId: 'oldWorld',
+        ownerId: invadableOwnerId,
+      ),
+    if (minorId != null)
+      const Province(
+        id: 'oldWorld|minor_hold',
+        regionId: 'oldWorld',
+        ownerId: 'minor1',
+      ),
+  ];
+
+  final players = <Player>[
+    const Player(id: 'gp_own', displayName: 'GP_OWN', isHuman: false),
+    Player(id: partnerId, displayName: partnerId, isHuman: false),
+    if (extraGpId != null)
+      Player(id: extraGpId, displayName: extraGpId, isHuman: false),
+  ];
+
+  final minorNations = <MinorNation>[
+    if (minorId != null) MinorNation(id: minorId, displayName: minorId),
+  ];
+
+  final relations = <DiplomacyRelation>[
+    if (atWarWithPartner)
+      DiplomacyRelation(
+        factionId1: 'gp_own',
+        factionId2: partnerId,
+        state: RelationState.atWar,
+        score: 30,
+      ),
+    if (extraGpId != null && atWarWithExtraGp)
+      DiplomacyRelation(
+        factionId1: 'gp_own',
+        factionId2: extraGpId,
+        state: RelationState.atWar,
+        score: 30,
+      ),
+    if (minorId != null && atWarWithMinor)
+      DiplomacyRelation(
+        factionId1: 'gp_own',
+        factionId2: minorId,
+        state: RelationState.atWar,
+        score: 30,
+      ),
+  ];
+
+  return Game(
+    id: 'g-stalled-below-quota-${ownProvinces}_vs_$partnerProvinces',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+      oldWorld: RegionData(provinces: provinces),
+      newWorld: const RegionData(),
+    ),
+    players: players,
+    minorNations: minorNations,
+    diplomacyRelations: relations,
+  );
+}
+
+AIWorldSnapshot _ownSnapshot({
+  required int oldWorldProvincesOwned,
+  required List<String> atWarWith,
+  List<String> invadableProvinceIdsSorted = const [],
+}) {
+  return AIWorldSnapshot(
+    playerId: 'gp_own',
+    threats: ThreatSummary(atWarWith: atWarWith),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
     ),
     colonial: const ColonialSummary(),
     economy: const EconomySummary(),
@@ -1240,4 +1432,395 @@ void main() {
       expect(second, first);
     });
   });
+
+  // ---------------------------------------------------------------------
+  // developPhaseGpPeaceTargets guard branches (DEVELOP phase, GP-vs-GP
+  // peace-all rule). No blocker preservation and no minor-first
+  // short-circuit (unlike EXPAND / COLONIAL).
+  // ---------------------------------------------------------------------
+  _runPeace(
+    'developPhaseGpPeaceTargets guard branches',
+    developPhaseGpPeaceTargets,
+    <_PeaceCase>[
+      _PeaceCase(
+        label: 'not in DEVELOP phase (EXPAND fixture) -> empty',
+        // Below OW quota -> EXPAND. EXPAND has its own peace-target
+        // helper (`expandPhaseGpPeaceTargets`) with a different rule
+        // (minor-first + blocker preservation), so the DEVELOP helper
+        // must abstain here. A regression that dropped the phase guard
+        // would silently flatten "peace all GPs" onto EXPAND fronts and
+        // collapse the SPEC EXPAND minor-first / blocker preservation
+        // contract.
+        gameBuilder: () => _developGame(turnNumber: 50),
+        snapshot: const AIWorldSnapshot(
+          playerId: _gp1,
+          threats: ThreatSummary(atWarWith: [_gp2, _gp3]),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(oldWorldProvincesOwned: 8),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        ),
+        expectedPhase: ObserverGoalPhase.expand,
+        phaseReason:
+            'Fixture must place GP in EXPAND so the DEVELOP helper\'s '
+            'early return is the only branch under test.',
+        expectedPeace: isEmpty,
+        peaceReason:
+            'Outside DEVELOP the helper must return the empty list '
+            'immediately -- EXPAND has its own peace-target helper '
+            'with a minor-first / blocker preservation rule that '
+            '`developPhaseGpPeaceTargets` must not pre-empt.',
+      ),
+      _PeaceCase(
+        label: 'not in DEVELOP phase (COLONIAL fixture) -> empty',
+        // OW at quota plus visible invadable NW -> COLONIAL. COLONIAL
+        // preserves the colonial-blocker GP front via
+        // `colonialPhaseGpPeaceTargets`. A regression that dropped the
+        // phase guard would peace every at-war GP in COLONIAL and
+        // collapse the blocker preservation rule.
+        gameBuilder: () => _developGame(turnNumber: 110),
+        snapshot: const AIWorldSnapshot(
+          playerId: _gp1,
+          threats: ThreatSummary(atWarWith: [_gp2, _gp3]),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
+          ),
+          colonial: ColonialSummary(
+            invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        ),
+        expectedPhase: ObserverGoalPhase.colonial,
+        phaseReason:
+            'Fixture must place GP in COLONIAL so the DEVELOP helper\'s '
+            'early return is the only branch under test.',
+        expectedPeace: isEmpty,
+        peaceReason:
+            'Outside DEVELOP the helper must return the empty list '
+            'immediately -- COLONIAL has its own peace-target helper '
+            'with a blocker preservation rule that '
+            '`developPhaseGpPeaceTargets` must not pre-empt.',
+      ),
+      _PeaceCase(
+        label: 'DEVELOP with empty atWarWith -> empty',
+        // DEVELOP phase entry confirmed below; the loop body never runs
+        // and the sort on an empty list is a no-op. A regression that
+        // returned the at-peace GP roster would generate spurious
+        // `offerPeace` orders toward neutral powers.
+        gameBuilder: () => _developGame(turnNumber: 140),
+        snapshot: _developSnapshot(atWarWith: const []),
+        expectedPhase: ObserverGoalPhase.develop,
+        phaseReason: 'Fixture must place GP in DEVELOP.',
+        expectedPeace: isEmpty,
+        peaceReason:
+            'Empty `atWarWith` means there are no live war fronts; '
+            'the helper must return empty without iterating the GP '
+            'roster.',
+      ),
+      _PeaceCase(
+        label: 'DEVELOP with only minors/tribes in atWarWith -> empty',
+        // The inline `game.playerById(factionId) != null` filter must
+        // drop every non-GP faction. DEVELOP is GP-vs-GP peace only --
+        // minor / tribe wars are pursued through other diplomacy paths
+        // (war pursuit, embassy chain, purchase_land). A regression
+        // that returned tribe / minor ids here would emit `offerPeace`
+        // toward non-GP factions and break downstream order
+        // validation.
+        gameBuilder: () => _developGame(
+          turnNumber: 140,
+          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        ),
+        snapshot: _developSnapshot(atWarWith: const [_tribe1, _minor1]),
+        expectedPhase: ObserverGoalPhase.develop,
+        phaseReason: 'Fixture must place GP in DEVELOP.',
+        expectedPeace: isEmpty,
+        peaceReason:
+            'Non-GP factions (tribes / minors) are filtered out of '
+            'the peace-target list by `game.playerById` returning '
+            'null for non-player ids. With only non-GP wars present, '
+            'the helper must return empty.',
+      ),
+      _PeaceCase(
+        label: 'DEVELOP with single GP at war -> [that GP]',
+        // Unlike EXPAND / COLONIAL, DEVELOP has **no** `gpWars.length
+        // <= 1` guard -- a single GP front must be peaced too. A
+        // regression that copied the EXPAND / COLONIAL length guard
+        // would leave a lone GP war open and starve the
+        // improvement-first DEVELOP civilian work (turn-150
+        // `--verify-colonial-expansion` 70% extractable-tile
+        // improvement gate).
+        gameBuilder: () => _developGame(turnNumber: 140),
+        snapshot: _developSnapshot(atWarWith: const [_gp2]),
+        expectedPhase: ObserverGoalPhase.develop,
+        phaseReason: 'Fixture must place GP in DEVELOP.',
+        expectedPeace: const [_gp2],
+        peaceReason:
+            'DEVELOP peace rule covers every at-war GP, including a '
+            'single GP front. The helper must return a one-element '
+            'list, not empty.',
+      ),
+      _PeaceCase(
+        label: 'DEVELOP with three GPs at war (unsorted input) -> '
+            'ascending sorted',
+        // Pins the `..sort()` contract: the helper must return GP
+        // fronts in stable ascending `factionId` order so downstream
+        // order generation is deterministic for a fixed seed
+        // (Must-have #7). Input order shuffled to gp3 / gp4 / gp2 so
+        // a regression that dropped the sort (or replaced it with
+        // input-order preservation) would surface here.
+        gameBuilder: () => _developGame(turnNumber: 140),
+        snapshot: _developSnapshot(atWarWith: const [_gp3, _gp4, _gp2]),
+        expectedPhase: ObserverGoalPhase.develop,
+        phaseReason: 'Fixture must place GP in DEVELOP.',
+        expectedPeace: const [_gp2, _gp3, _gp4],
+        peaceReason:
+            'All at-war GPs returned in ascending `factionId` order '
+            'regardless of `snapshot.threats.atWarWith` order '
+            '(Refs #2509 must-have #7 determinism).',
+      ),
+      _PeaceCase(
+        label: 'DEVELOP with mixed GP + non-GP atWarWith -> only GPs, sorted',
+        // Defensive pin: the filter and the sort must compose so that
+        // tribe / minor ids in `atWarWith` are dropped **before** the
+        // sort runs. The shuffled input order (gp3, tribe1, gp2,
+        // minor1) exercises both the filter (drops tribe1, minor1)
+        // and the sort (gp3, gp2 -> gp2, gp3) in one fixture. A
+        // regression that sorted first and filtered after would
+        // still pass; a regression that left non-GP ids in the
+        // output list would break downstream `offerPeace` validation.
+        gameBuilder: () => _developGame(
+          turnNumber: 140,
+          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        ),
+        snapshot: _developSnapshot(
+          atWarWith: const [_gp3, _tribe1, _gp2, _minor1],
+        ),
+        expectedPhase: ObserverGoalPhase.develop,
+        phaseReason: 'Fixture must place GP in DEVELOP.',
+        expectedPeace: const [_gp2, _gp3],
+        peaceReason:
+            'Non-GP factions in `atWarWith` are filtered out before '
+            'the sort, leaving the GP fronts in ascending '
+            '`factionId` order.',
+      ),
+    ],
+  );
+
+  group('developPhaseGpPeaceTargets determinism', () {
+    test('identical inputs produce identical peace target list', () {
+      // Must-have #7 (determinism) at the function-unit level,
+      // mirroring the determinism pins in the COLONIAL and EXPAND
+      // peace-blocker families above. The mixed-input fixture
+      // exercises both the filter and the sort, so repeating the call
+      // must yield the same list.
+      final game = _developGame(
+        turnNumber: 140,
+        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+      );
+      final snapshot = _developSnapshot(
+        atWarWith: const [_gp3, _tribe1, _gp2, _minor1],
+      );
+      final first = developPhaseGpPeaceTargets(game: game, snapshot: snapshot);
+      final second = developPhaseGpPeaceTargets(game: game, snapshot: snapshot);
+      expect(second, first);
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // stalledBelowQuotaGpLeadPeaceTargets branches (below-quota lead-peace
+  // shortcut). Quota guard, `minLeadDeficit` table, GP-only invadable
+  // blocker exclusion, and collection guards.
+  // ---------------------------------------------------------------------
+  _runPeace(
+    'stalledBelowQuotaGpLeadPeaceTargets branches',
+    stalledBelowQuotaGpLeadPeaceTargets,
+    <_PeaceCase>[
+      _PeaceCase(
+        label: 'quota guard: empty at the observer OW quota even when '
+            'enemy leads by 3+',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: kObserverConquestMinOwProvincesPerGp,
+          partnerProvinces: kObserverConquestMinOwProvincesPerGp + 3,
+          partnerId: 'gp_enemy',
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
+          atWarWith: const ['gp_enemy'],
+        ),
+        expectedPeace: isEmpty,
+        peaceReason:
+            'At kObserverConquestMinOwProvincesPerGp the below-quota lead-peace '
+            'shortcut must not run (COLONIAL/DEVELOP paths own mop-up).',
+      ),
+      _PeaceCase(
+        label: 'minLeadDeficit: default-start empty when enemy leads by '
+            'only 1 (needs 2)',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
+          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+          partnerId: 'gp_enemy',
+          invadableOwnerId: 'minor1',
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
+          atWarWith: const ['gp_enemy'],
+          invadableProvinceIdsSorted: const ['oldWorld|frontier'],
+        ),
+        expectedPeace: isEmpty,
+        peaceReason:
+            'own <= kObserverDefaultStartOldWorldProvincesPerGp uses '
+            'minLeadDeficit=kUnwinnableSoleGpMinProvinceDeficit (2). '
+            'Lead 1 must not peace.',
+      ),
+      _PeaceCase(
+        label: 'minLeadDeficit: default-start returns enemy when lead is '
+            'exactly 2',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
+          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp +
+              kUnwinnableSoleGpMinProvinceDeficit,
+          partnerId: 'gp_enemy',
+          invadableOwnerId: 'minor1',
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
+          atWarWith: const ['gp_enemy'],
+          invadableProvinceIdsSorted: const ['oldWorld|frontier'],
+        ),
+        expectedPeace: const ['gp_enemy'],
+      ),
+      _PeaceCase(
+        label: 'minLeadDeficit: post-default empty when enemy ties OW '
+            'count (needs 1)',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+          partnerId: 'gp_enemy',
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned:
+              kObserverDefaultStartOldWorldProvincesPerGp + 1,
+          atWarWith: const ['gp_enemy'],
+          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+        ),
+        expectedPeace: isEmpty,
+        peaceReason:
+            'When own > kObserverDefaultStartOldWorldProvincesPerGp the '
+            'minLeadDeficit row is 1; enemyOw == own must not peace.',
+      ),
+      _PeaceCase(
+        label: 'minLeadDeficit: post-default returns enemy when lead is '
+            'exactly 1',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 2,
+          partnerId: 'gp_enemy',
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned:
+              kObserverDefaultStartOldWorldProvincesPerGp + 1,
+          atWarWith: const ['gp_enemy'],
+          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+        ),
+        expectedPeace: const ['gp_enemy'],
+      ),
+      _PeaceCase(
+        label: 'GP-only blocker: skips invadable blocker but keeps '
+            'non-blocker GP with sufficient lead',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: 8,
+          partnerProvinces: 9,
+          partnerId: 'gp_blocker',
+          extraGpId: 'gp_enemy',
+          extraGpProvinces: 11,
+          invadableOwnerId: 'gp_blocker',
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: 8,
+          atWarWith: const ['gp_blocker', 'gp_enemy'],
+          invadableProvinceIdsSorted: const ['oldWorld|frontier'],
+        ),
+        expectedPeace: const ['gp_enemy'],
+        peaceReason:
+            'On a GP-only frontier the invadable blocker is excluded even '
+            'when it leads; a second GP that meets minLeadDeficit=1 must still '
+            'be peaced.',
+      ),
+      _PeaceCase(
+        label: 'GP-only blocker: empty when sole at-war GP is the '
+            'invadable blocker with lead 1',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: 8,
+          partnerProvinces: 9,
+          partnerId: 'gp_blocker',
+          invadableOwnerId: 'gp_blocker',
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: 8,
+          atWarWith: const ['gp_blocker'],
+          invadableProvinceIdsSorted: const ['oldWorld|frontier'],
+        ),
+        expectedPeace: isEmpty,
+      ),
+      _PeaceCase(
+        label: 'collection guard: skips minors in atWarWith',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: 8,
+          partnerProvinces: 12,
+          partnerId: 'gp_enemy',
+          minorId: 'minor1',
+          atWarWithMinor: true,
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: 8,
+          atWarWith: const ['gp_enemy', 'minor1'],
+          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+        ),
+        expectedPeace: const ['gp_enemy'],
+      ),
+      _PeaceCase(
+        label: 'collection guard: returns sorted GP targets that each '
+            'meet the deficit',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: 6,
+          partnerProvinces: 8,
+          partnerId: 'gp_b',
+          extraGpId: 'gp_a',
+          extraGpProvinces: 9,
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: 6,
+          atWarWith: const ['gp_a', 'gp_b'],
+          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+        ),
+        expectedPeace: const ['gp_a', 'gp_b'],
+        peaceReason:
+            'Default-start minLeadDeficit=2: gp_b at +2 qualifies; gp_a at +3 '
+            'qualifies; result must be sorted.',
+      ),
+      _PeaceCase(
+        label: 'collection guard: omits GP that leads by less than '
+            'minLeadDeficit',
+        gameBuilder: () => _ownVsPartnerGame(
+          ownProvinces: 8,
+          partnerProvinces: 8,
+          partnerId: 'gp_weak',
+          extraGpId: 'gp_strong',
+          extraGpProvinces: 10,
+        ),
+        snapshot: _ownSnapshot(
+          oldWorldProvincesOwned: 8,
+          atWarWith: const ['gp_weak', 'gp_strong'],
+          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+        ),
+        expectedPeace: const ['gp_strong'],
+      ),
+    ],
+  );
 }
