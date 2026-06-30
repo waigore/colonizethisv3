@@ -1003,8 +1003,7 @@ bool isCivilianBuildSpyTechStealPosture({
   required int ownUnlockedTechCount,
   required int maxRivalUnlockedTechCount,
   int deficit = kCivilianBuildSpyTechStealDeficit,
-}) =>
-    maxRivalUnlockedTechCount - ownUnlockedTechCount >= deficit;
+}) => maxRivalUnlockedTechCount - ownUnlockedTechCount >= deficit;
 
 /// Per-phase, per-type civilian build priority multiplier for [unitType] in the
 /// phase identified by [phaseName] (an `ObserverGoalPhase.name`). Spy is always
@@ -1030,8 +1029,9 @@ double civilianBuildPhaseMultiplier(String unitType, String? phaseName) {
 // `phaseProgress` signal in `[0,1]` (the dispatch's
 // `PhasePriorityWeights.newWorldCivilian`, itself a continuous ramp across the
 // Old World province count). The ramp is opt-in: callers that pass a `null`
-// `phaseProgress` keep the discrete multiplier exactly (byte-identical), so the
-// live wiring stays inert by default (`kCivilianBuildPlannerEnabled` is off).
+// `phaseProgress` keep the discrete multiplier exactly (byte-identical), so a
+// caller can pin the discrete-multiplier path even though the live wiring
+// (`kCivilianBuildPlannerEnabled`) is enabled by default.
 // ---------------------------------------------------------------------------
 
 /// Canonical "next" civilian-build phase for the smooth phase-multiplier ramp

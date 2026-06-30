@@ -10,12 +10,15 @@ final _log = packageLogger();
 /// Live-economy enablement flag for the civilian build planner (Refs #3793
 /// live-wiring slice, SPEC/ai/civilian-build-planner.md § Live economy wiring).
 ///
-/// Mirrors [kGrowthStagePlannerEnabled]: defaults `false` so the production
-/// economy build pass and the observer-determinism baselines stay byte-identical
-/// to the pre-#3793 military+naval path. Tests opt in by threading
-/// `civilianBuildPlannerEnabled: true` through [runDomainPlannersWithOutcome] /
+/// Now defaults `true`: the production economy build pass emits and scores
+/// civilian `BuildUnitOrder` candidates so the AI replaces and expands its
+/// civilian workforce (the original #3793 requirement). The civilian branch is
+/// bounded by per-candidate affordability, per-type `maxCount` exclusion, and
+/// the `kCivilianBuildPoolWeight` market-share ceiling, and stays deterministic.
+/// Tests can still pin the pre-#3793 military+naval path by threading
+/// `civilianBuildPlannerEnabled: false` through [runDomainPlannersWithOutcome] /
 /// [PlannerContext].
-const bool kCivilianBuildPlannerEnabled = false;
+const bool kCivilianBuildPlannerEnabled = true;
 
 /// Builds the per-turn [CivilianBuildScoringInput] for the live economy build
 /// pass (Refs #3793 live-wiring slice).

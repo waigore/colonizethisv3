@@ -43,7 +43,7 @@ PlayerView _viewWithCivilians(Game game, Map<String, Unit> ownUnitsById) =>
 
 void main() {
   group('buildCivilianBuildScoringInput (Refs #3793 ACWire1/ACWire2)', () {
-    test('ACWire1: returns null when the planner is disabled (default)', () {
+    test('ACWire1: returns null when the planner is explicitly disabled', () {
       final game = _gameWithLeader();
       const topology = MapTopology(nodes: [], edges: []);
       final view = _viewWithCivilians(game, {
@@ -58,8 +58,7 @@ void main() {
         game: game,
         topology: topology,
         view: view,
-        // civilianBuildPlannerEnabled defaults to kCivilianBuildPlannerEnabled
-        // (false).
+        civilianBuildPlannerEnabled: false,
       );
 
       final input = buildCivilianBuildScoringInput(
@@ -69,6 +68,43 @@ void main() {
       );
 
       expect(input, isNull);
+    });
+
+    test('production default enables the civilian build planner (Refs #3793 '
+        'enablement)', () {
+      // The const default is now `true` (the live wiring slices are GA-bounded
+      // by per-candidate affordability, per-type max caps, and the pool-weight
+      // ceiling), so the production economy build pass emits civilian builds.
+      expect(kCivilianBuildPlannerEnabled, isTrue);
+
+      final game = _gameWithLeader();
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = _viewWithCivilians(game, {
+        'b1': Unit(
+          id: 'b1',
+          type: kUnitTypeBuilder,
+          ownerId: 'gp1',
+          locationProvinceId: 'oldWorld|p1',
+        ),
+      });
+      // No civilianBuildPlannerEnabled override → inherits the production
+      // default (kCivilianBuildPlannerEnabled).
+      final ctx = buildTestPlannerContext(
+        game: game,
+        topology: topology,
+        view: view,
+      );
+
+      final input = buildCivilianBuildScoringInput(
+        ctx: ctx,
+        phaseName: 'expand',
+        spyDemand: true,
+      );
+
+      expect(input, isNotNull);
+      expect(input!.countFor(kUnitTypeBuilder), 1);
+      expect(input.phaseName, 'expand');
+      expect(input.spyDemand, isTrue);
     });
 
     test('ACWire2: tallies owned civilian counts, phase, and spy demand', () {
