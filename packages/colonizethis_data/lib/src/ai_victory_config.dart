@@ -366,6 +366,25 @@ const int kEstablishOvertureDecayCreditMax = 20;
 /// competition overture; SPEC/game/world-market.md § Favored Trading Partner.
 const int kEstablishOvertureFtpCompetitionBonus = 30;
 
+/// Maximum establish-overture incentive for the overseas-profit **embassy
+/// kickback** (Refs #3758 R7/R8 / S6; #3753 R8.3). Every embassy-holding Great
+/// Power earns `filledQuantity × pricePerUnit × (relationScore / 100) × 0.10`
+/// on each world-market sale from a Minor/Tribe seller — income that requires
+/// only an embassy (no purchased tile, no Merchant). When the AI does **not**
+/// yet hold an embassy with a Minor/Tribe at peace, this bonus values advancing
+/// the overture toward the embassy stage purely for the kickback income, scaled
+/// by the relation fraction and the seller's sales-volume proxy, so a
+/// high-volume seller is worth an embassy even without a purchase-land intent.
+/// SPEC/ai/phase-planner-architecture.md § Embassy-kickback overture.
+const int kEstablishOvertureEmbassyKickbackBonusMax = 24;
+
+/// Seller sales-volume proxy — the count of non-empty resource tiles a
+/// Minor/Tribe owns — at or above which [kEstablishOvertureEmbassyKickbackBonusMax]
+/// saturates to its maximum. Below this the bonus scales linearly with the
+/// seller's resource-tile count; at zero tiles no kickback bonus applies.
+/// SPEC/ai/phase-planner-architecture.md § Embassy-kickback overture.
+const int kEstablishOvertureEmbassyKickbackVolumeFull = 4;
+
 /// Conquest army-move bonus for New World invadable destinations.
 const int kConquestArmyMoveNwInvadableBonus = 35;
 

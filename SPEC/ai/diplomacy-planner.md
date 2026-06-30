@@ -35,6 +35,10 @@ After Tribe Join Empire, the Tribe becomes a colony (`Game.colonyStates`) and ke
 
 The `purchase_land` arm selects the eligible owner with the **highest relation score** (larger overseas profit share), ties broken by adjacency-distance order. Detail and ACs: [phase-planner-architecture.md](phase-planner-architecture.md) § Overseas-profit-aware purchase-land target selection.
 
+## Embassy-kickback overture valuation (Refs #3758 R7/R8 / S6)
+
+`establishOverture` toward a Minor/Tribe with which the AI does **not yet hold an embassy** gains a kickback incentive proportional to the seller's sales-volume proxy and relation fraction, valuing the `Q × P × relation% × 10%` overseas-profit kickback every embassy holder earns on that seller's sales — even without any purchase-land intent (no tile, no Merchant required). Detail and ACs: [phase-planner-architecture.md](phase-planner-architecture.md) § Embassy-kickback overture.
+
 ## Decay-aware overture (Refs #3758 S8)
 
 `establishOverture` improve-relations urgency is discounted when per-turn relation decay (±`relationDecayPerTurn` toward 50) will improve a below-neutral at-peace pair on its own; the discount is suppressed when a same-turn relation event is predicted (decay is skipped on event turns). Detail and ACs: [phase-planner-architecture.md](phase-planner-architecture.md) § Decay-aware overture.
