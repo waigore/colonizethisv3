@@ -241,6 +241,40 @@ List<int> computeDiplomaticCandidateScores({
               )) {
             s += kEstablishOvertureFtpCompetitionBonus;
           }
+          // Embassy-kickback valuation (Refs #3758 R7/R8 / S6; #3753 R8.3):
+          // every embassy-holding GP earns `Q × P × relation% × 10%` on each
+          // world-market sale from a Minor/Tribe seller, with no purchased tile
+          // and no Merchant required (unlike the tile-owner full share valued by
+          // the overseas-profit-aware `purchase_land` arm). When the AI does not
+          // yet hold an embassy with a Minor/Tribe at peace, advancing the
+          // overture toward the embassy stage is valued by the seller's
+          // sales-volume proxy and the relation fraction, so a high-volume seller
+          // is worth an embassy even without a purchase-land intent.
+          // SPEC/ai/phase-planner-architecture.md § Embassy-kickback overture.
+          if (isMinorOrTribeFaction(game, o.targetFactionId) &&
+              (rel == null || rel.atPeace)) {
+            final overture = getOverture(game, nationId, o.targetFactionId);
+            if (overture == null || !overture.hasEmbassy) {
+              final volume = _sellerSellableResourceTileCount(
+                game: game,
+                sellerId: o.targetFactionId,
+                provinceOwner: provinceOwner,
+              );
+              if (volume > 0) {
+                final num relationFraction =
+                    (rel?.score ?? relationScoreNeutral) / 100;
+                final num volumeFraction = math.min(
+                  1.0,
+                  volume / kEstablishOvertureEmbassyKickbackVolumeFull,
+                );
+                s +=
+                    (kEstablishOvertureEmbassyKickbackBonusMax *
+                            relationFraction *
+                            volumeFraction)
+                        .round();
+              }
+            }
+          }
           break;
         }
       default:
@@ -340,6 +374,30 @@ bool _aiTrailsFavouredTradingPartner({
     if (otherScore != null && otherScore > ownScore) return true;
   }
   return false;
+}
+
+/// Count of **non-empty resource tiles owned by [sellerId]** — a deterministic
+/// proxy for the Minor/Tribe seller's world-market sales volume (`Q × P`) used
+/// by the embassy-kickback overture valuation (Refs #3758 R7/R8 / S6; #3753
+/// R8.3). Iterates [WorldState.resourceByTileKey] (bounded by the count of
+/// resource-bearing tiles, far smaller than the global tile count), maps each
+/// tile to its province via [Unit.provinceIdFromTileKey], and counts tiles whose
+/// province is owned by [sellerId] per [provinceOwner]. Purchased tiles are
+/// **included** because their goods still sell on the world market and still
+/// pay the kickback to every embassy holder. Pure and deterministic over
+/// [Game]. SPEC/ai/phase-planner-architecture.md § Embassy-kickback overture.
+int _sellerSellableResourceTileCount({
+  required Game game,
+  required String sellerId,
+  required Map<String, String> provinceOwner,
+}) {
+  var count = 0;
+  for (final entry in game.worldState.resourceByTileKey.entries) {
+    if (entry.value.isEmpty) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceOwner[provinceId] == sellerId) count++;
+  }
+  return count;
 }
 
 bool _isDecisionOnCooldown({
