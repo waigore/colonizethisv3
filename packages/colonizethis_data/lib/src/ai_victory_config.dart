@@ -3,6 +3,8 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'civilian_economy.dart' show unlockingTechByCivilianId;
+
 /// Old World province count required for military victory.
 const int kMilitaryVictoryOldWorldProvinceThreshold = 31;
 
@@ -889,30 +891,190 @@ bool isCivilianBuildAtOrAboveMaxCount(String unitType, int currentCount) {
   return currentCount >= max;
 }
 
+// ---------------------------------------------------------------------------
+// Civilian build planner — phase priority + Spy demand (Refs #3793 slice 3).
+// GA-tunable per-phase, per-type build priority multipliers and the Spy
+// intelligence/war-demand boost (SPEC/ai/civilian-build-planner.md § Scoring
+// model — phase multiplier / Spy demand). The build planner reads only the
+// constants/helpers declared here (no planner magic numbers).
+// ---------------------------------------------------------------------------
+
+/// Phase keys for [kCivilianBuildPhaseMultiplierByPhaseType]. These MUST match
+/// `ObserverGoalPhase.<value>.name` in `colonizethis_ai`; the AI build planner
+/// passes `phase.name`. The contract is locked by an `colonizethis_ai` test
+/// (`ObserverGoalPhase.expand.name == kCivilianBuildPhaseExpand`, etc.) so a
+/// rename in either package is caught. `colonizethis_data` cannot depend on
+/// `colonizethis_ai`, so the key is the stable enum name string.
+const String kCivilianBuildPhaseExpand = 'expand';
+const String kCivilianBuildPhaseColonialLite = 'colonialLite';
+const String kCivilianBuildPhaseColonial = 'colonial';
+const String kCivilianBuildPhaseDevelop = 'develop';
+
+/// Neutral per-phase multiplier (no phase preference for the type).
+const double kCivilianBuildPhaseMultiplierBase = 1.0;
+
+/// Multiplier for a civilian type favored by the active phase
+/// (SPEC § Scoring model — phase multiplier). Sized above
+/// [kCivilianBuildPhaseMultiplierBase] so a phase-favored civilian outscores
+/// a same-count, non-favored civilian, while remaining well below the min-cap
+/// hard floor so phase preference never overrides a below-min replacement.
+const double kCivilianBuildPhaseMultiplierFavored = 2.0;
+
+/// Per-phase, per-type civilian build priority multiplier
+/// (SPEC § Scoring model — phase multiplier): EXPAND favors Builder; COLONIAL
+/// favors Explorer + Merchant; DEVELOP favors Engineer + Rail Builder.
+/// COLONIAL-lite mirrors EXPAND (still OW-expansion biased). Spy is intentionally
+/// absent — it is phase-flat ([kCivilianBuildSpyPhaseFlatMultiplier], decision
+/// #10). Phases/types absent from the map default to
+/// [kCivilianBuildPhaseMultiplierBase].
+const Map<String, Map<String, double>>
+kCivilianBuildPhaseMultiplierByPhaseType = {
+  kCivilianBuildPhaseExpand: {
+    kUnitTypeBuilder: kCivilianBuildPhaseMultiplierFavored,
+  },
+  kCivilianBuildPhaseColonialLite: {
+    kUnitTypeBuilder: kCivilianBuildPhaseMultiplierFavored,
+  },
+  kCivilianBuildPhaseColonial: {
+    kUnitTypeExplorer: kCivilianBuildPhaseMultiplierFavored,
+    kUnitTypeMerchant: kCivilianBuildPhaseMultiplierFavored,
+  },
+  kCivilianBuildPhaseDevelop: {
+    kUnitTypeEngineer: kCivilianBuildPhaseMultiplierFavored,
+    kUnitTypeRailBuilder: kCivilianBuildPhaseMultiplierFavored,
+  },
+};
+
+/// Phase-flat Spy build multiplier (decision #10): identical across every
+/// phase. Spy build priority does not follow the economic phase model; it is
+/// driven by [kCivilianBuildSpyDemandBoost] instead.
+const double kCivilianBuildSpyPhaseFlatMultiplier = 1.0;
+
+/// Spy intelligence/war-demand boost (decision #10): applied on top of the
+/// phase-flat baseline when the GP is at war or pursuing a tech-steal posture.
+const double kCivilianBuildSpyDemandBoost = 2.0;
+
+/// GA-tunable Spy floor (decision #10, default `0`): mirrors
+/// `kCivilianBuildMinCountByType[kUnitTypeSpy]`. Below this count the Spy gets
+/// the standard min-cap hard floor; the demand boost applies independently.
+const int kCivilianBuildMinSpies = 0;
+
+/// Per-phase, per-type civilian build priority multiplier for [unitType] in the
+/// phase identified by [phaseName] (an `ObserverGoalPhase.name`). Spy is always
+/// phase-flat ([kCivilianBuildSpyPhaseFlatMultiplier]); for other types a null
+/// or unknown [phaseName], or a type the phase does not favor, yields
+/// [kCivilianBuildPhaseMultiplierBase].
+double civilianBuildPhaseMultiplier(String unitType, String? phaseName) {
+  if (unitType == kUnitTypeSpy) return kCivilianBuildSpyPhaseFlatMultiplier;
+  if (phaseName == null) return kCivilianBuildPhaseMultiplierBase;
+  final byType = kCivilianBuildPhaseMultiplierByPhaseType[phaseName];
+  if (byType == null) return kCivilianBuildPhaseMultiplierBase;
+  return byType[unitType] ?? kCivilianBuildPhaseMultiplierBase;
+}
+
 /// Additive civilian build candidate score for [unitType] given [currentCount]
 /// owned (SPEC/ai/civilian-build-planner.md § Scoring model). Returns
-/// `base × minCapBoost × replacementUrgency`:
+/// `effectiveBase × minCapBoost × replacementUrgency`, where
+/// `effectiveBase = base × phaseMultiplier[type] × demandBoost`:
 ///
+/// - **Phase multiplier:** [civilianBuildPhaseMultiplier] for [phaseName]
+///   (Spy is phase-flat). When [phaseName] is `null` the multiplier is the
+///   neutral base, so legacy callers are unaffected.
+/// - **Spy demand boost:** when [unitType] is Spy and [spyDemand] is `true`
+///   (GP at war or pursuing a tech-steal posture), multiply by
+///   [kCivilianBuildSpyDemandBoost]; otherwise `1.0`.
 /// - **Min cap (hard floor):** when `currentCount < minCount`, multiply by
 ///   [kCivilianBuildMinCapScoreBoost].
 /// - **Replacement urgency (soft pull):** while
 ///   `minCount <= currentCount < targetCount`, multiply by
 ///   `1 + kCivilianBuildReplacementUrgencyFactor × (targetCount − currentCount)`.
-/// - At or above `targetCount`, the multiplier is `1.0` (base only).
+/// - At or above `targetCount`, the multiplier is `1.0` (effective base only).
 ///
-/// Phase multiplier and Spy intelligence/war-demand boost are deferred (treated
-/// as `1.0`) in this slice. The caller is responsible for excluding candidates
-/// at or above `maxCount` via [isCivilianBuildAtOrAboveMaxCount].
-double civilianBuildCandidateScore(String unitType, int currentCount) {
+/// The caller is responsible for excluding candidates at or above `maxCount`
+/// via [isCivilianBuildAtOrAboveMaxCount].
+double civilianBuildCandidateScore(
+  String unitType,
+  int currentCount, {
+  String? phaseName,
+  bool spyDemand = false,
+}) {
+  final phaseMultiplier = civilianBuildPhaseMultiplier(unitType, phaseName);
+  final demandBoost = (unitType == kUnitTypeSpy && spyDemand)
+      ? kCivilianBuildSpyDemandBoost
+      : 1.0;
+  final effectiveBase = kCivilianBuildBaseScore * phaseMultiplier * demandBoost;
   final minCount = civilianBuildMinCount(unitType);
   if (currentCount < minCount) {
-    return kCivilianBuildBaseScore * kCivilianBuildMinCapScoreBoost;
+    return effectiveBase * kCivilianBuildMinCapScoreBoost;
   }
   final targetCount = civilianBuildTargetCount(unitType);
   if (currentCount < targetCount) {
     final deficit = targetCount - currentCount;
-    return kCivilianBuildBaseScore *
+    return effectiveBase *
         (1.0 + kCivilianBuildReplacementUrgencyFactor * deficit);
   }
-  return kCivilianBuildBaseScore;
+  return effectiveBase;
 }
+
+// ---------------------------------------------------------------------------
+// Civilian build planner — shared paper budget ledger (Refs #3793 AC7,
+// design decision #11). SPEC/ai/civilian-build-planner.md § Paper budget.
+// Paper is shared across research, worker training, and civilian builds. The
+// recruitment planner reserves research paper up to
+// [kCivilianBuildResearchPaperReserveShare] of the GP's current paper, then
+// allocates the remainder via its phase emit order against a running ledger,
+// dropping paper-costing candidates that would push the remaining budget below
+// 0. No planner magic numbers (the share + reserve math live here).
+// ---------------------------------------------------------------------------
+
+/// Fraction of the Great Power's current paper held back for research before
+/// the recruitment planner allocates paper to worker-training and civilian
+/// build candidates (Refs #3793 AC7, design decision #11). GA-tunable in the
+/// inclusive range `[0.0, 1.0]`. Default `0.5` keeps half of the paper
+/// available for the tech tree so a full build/training pass cannot starve
+/// civilian-gating research (and conversely cannot be fully consumed by it).
+const double kCivilianBuildResearchPaperReserveShare = 0.5;
+
+/// Paper reserved for research given [currentPaper], computed as the
+/// deterministic integer floor `currentPaper ×
+/// kCivilianBuildResearchPaperReserveShare`, clamped to `[0, currentPaper]`.
+///
+/// Returns `0` when [currentPaper] is `0` or negative. The reserved amount is
+/// subtracted from the paper budget the recruitment planner's ledger allocates
+/// to worker-training and civilian-build candidates (Refs #3793 AC7).
+int researchReservedPaper(int currentPaper) {
+  if (currentPaper <= 0) return 0;
+  final reserved = (currentPaper * kCivilianBuildResearchPaperReserveShare)
+      .floor();
+  if (reserved < 0) return 0;
+  if (reserved > currentPaper) return currentPaper;
+  return reserved;
+}
+
+// ---------------------------------------------------------------------------
+// Civilian build planner — research prioritization of civilian-gating techs
+// (Refs #3793 AC6). SPEC/ai/civilian-build-planner.md § Tech prioritization.
+// The research planner front-loads slot selection toward the techs that unlock
+// civilian unit types (Merchant ⇐ `merchant_companies`,
+// Rail Builder ⇐ `early_steam_engine`) when the owning GP has not unlocked them,
+// so the AI researches toward the gates that expand the civilian build pool.
+// The bias only reorders selection within the existing per-turn research slot
+// target — it never adds a slot or spends extra funding — so it can never
+// exceed the `researchPaperReserveShare` paper reservation. No planner magic
+// numbers: the gating-tech set is derived from the canonical
+// [unlockingTechByCivilianId] map (single source of truth).
+// ---------------------------------------------------------------------------
+
+/// Civilian-gating tech ids the research bias prioritizes: the distinct
+/// unlocking-tech values of [unlockingTechByCivilianId], in stable insertion
+/// order (deterministic). Currently `merchant_companies` (Merchant) and
+/// `early_steam_engine` (Rail Builder).
+final List<String> kCivilianGatingTechIds = List<String>.unmodifiable(<String>{
+  ...unlockingTechByCivilianId.values,
+});
+
+/// True when [techId] gates a civilian unit type (i.e. it is in
+/// [kCivilianGatingTechIds]). Used by the research planner to prioritize
+/// researching toward civilian-build gates (Refs #3793 AC6).
+bool isCivilianGatingTech(String techId) =>
+    kCivilianGatingTechIds.contains(techId);

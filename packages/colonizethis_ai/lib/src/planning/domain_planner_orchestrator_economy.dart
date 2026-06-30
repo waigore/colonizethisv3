@@ -59,6 +59,19 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ctx.game,
     ctx.topology,
     ordersBuilder.build(),
+    // Refs #3793 live wiring: enumerate civilian build candidates only when the
+    // civilian build planner is enabled. Default-off keeps the candidate pool
+    // byte-identical to the military+naval path (SPEC ACWire1).
+    includeCivilianBuilds: ctx.civilianBuildPlannerEnabled,
+  );
+  // Refs #3793 live wiring: build the civilian scoring input once per turn so
+  // the build pass can apply the min-cap floor, replacement urgency, phase
+  // multiplier, and Spy demand boost. `null` when the planner is disabled,
+  // leaving `pickBuildOrder` inert (SPEC § Live economy wiring).
+  final civilianScoring = buildCivilianBuildScoringInput(
+    ctx: ctx,
+    phaseName: phasePlan.phase.name,
+    spyDemand: isAtWarWithAnyGreatPower(ctx.game, snapshot),
   );
   final hasSpyWork = workCandidates.any(
     (o) =>
@@ -247,6 +260,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ordersBuilder: ordersBuilder,
     colonialPressure: colonialPressure,
     buildCandidates: buildCandidates,
+    civilianScoring: civilianScoring,
     domainEconomyWeight: domainWeights.economy,
   );
   emit('aiStageB');
@@ -433,6 +447,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   required OrdersBuilder ordersBuilder,
   required bool colonialPressure,
   required List<BuildUnitOrder> buildCandidates,
+  required CivilianBuildScoringInput? civilianScoring,
   required int domainEconomyWeight,
 }) {
   final growthStagePlannerEnabled = ctx.growthStagePlannerEnabled;
@@ -628,6 +643,7 @@ _BuildPassResult _appendEconomyBuildOrders({
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
       colonialPressure: colonialPressure,
       colonialPressureWeight: colonialPressureWeight,
+      civilianScoring: civilianScoring,
       militaryRebuildCrisis:
           !firstNavalTransportBootstrap &&
           (forceRegimentRebuild || expandEconomy.forceCheapestRegimentBuild) &&

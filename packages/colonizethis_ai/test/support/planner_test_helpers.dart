@@ -27,6 +27,7 @@ PlannerContext buildTestPlannerContext({
   StrategicGoal primaryGoal = StrategicGoal.expand,
   int turnSeed = 1,
   OrderSuggestionAPI suggestionAPI = const DefaultOrderSuggestionAPI(),
+  bool civilianBuildPlannerEnabled = kCivilianBuildPlannerEnabled,
 }) {
   final resolvedView = view ?? buildPlayerView(game, topology, nationId);
   return PlannerContext(
@@ -39,6 +40,7 @@ PlannerContext buildTestPlannerContext({
     primaryGoal: primaryGoal,
     seeds: AISeedBundle.fromTurnSeed(turnSeed),
     suggestionAPI: suggestionAPI,
+    civilianBuildPlannerEnabled: civilianBuildPlannerEnabled,
   );
 }
 
