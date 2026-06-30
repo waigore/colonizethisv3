@@ -7,7 +7,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'package:colonizethis_combat/src/combat/military_strength.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 
@@ -34,52 +33,6 @@ const int joinEmpirePerProvinceCost = 2000;
 /// the prior full-world `allProvinces` scan.
 int provinceCountOwnedBy(Game game, String factionId) =>
     ProvinceOwnerCache.of(game.worldState).countOwnedBy(factionId);
-
-/// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
-const int powerScoreProvinceWeight = 10;
-const int powerScoreRegimentWeight = 1;
-const int powerScoreShipWeight = 5;
-
-/// Total number of ships (sum of shipTypeIds.length) over all fleets owned by [factionId].
-int shipCountForFaction(Game game, String factionId) {
-  var count = 0;
-  for (final f in game.worldState.fleets) {
-    if (f.ownerId == factionId) count += f.shipTypeIds.length;
-  }
-  return count;
-}
-
-/// Absolute power score for a Great Power. SPEC/game/diplomacy.md § Great Power power score.
-/// Formula: provinceCount×W_province + round(regimentStrength)×W_regiment + shipCount×W_ship.
-int greatPowerPowerScore(Game game, String factionId) {
-  final provinces = provinceCountOwnedBy(game, factionId);
-  final regimentStrength = aggregateMilitaryStrengthForPlayer(game, factionId);
-  final ships = shipCountForFaction(game, factionId);
-  return provinces * powerScoreProvinceWeight +
-      regimentStrength.round() * powerScoreRegimentWeight +
-      ships * powerScoreShipWeight;
-}
-
-/// Great Power with strictly highest [greatPowerPowerScore], or `null` when tied
-/// or there are no players. SPEC/game/victory.md § Calendar campaign end.
-String? pickUniqueGreatPowerLeaderByPowerScore(Game game) {
-  if (game.players.isEmpty) return null;
-  final scores = <String, int>{
-    for (final p in game.players) p.id: greatPowerPowerScore(game, p.id),
-  };
-  var bestScore = -1;
-  for (final s in scores.values) {
-    if (s > bestScore) bestScore = s;
-  }
-  final leaders =
-      scores.entries
-          .where((e) => e.value == bestScore)
-          .map((e) => e.key)
-          .toList()
-        ..sort();
-  if (leaders.length != 1) return null;
-  return leaders.single;
-}
 
 /// Join Empire cost in pounds for absorbing [targetId] (Minor or Tribe).
 int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
@@ -430,6 +383,49 @@ Set<String> boycottBlockedTradePairKeys(Game game) {
     }
   }
   return keys;
+}
+
+/// Resolves the **favoured trading partner** of a Minor Nation or Tribe
+/// [minorOrTribeId] (Refs #3753 R7.1), or `null` when it is undefined.
+///
+/// This is a deterministic read-only lookup, distinct from the bilateral GP–GP
+/// Favored Trading Partner agreement ([hasFtpPartnership] / `ftpPartnershipKeys`):
+///
+/// - If [minorOrTribeId] is a **colony** Tribe (a [ColonyState] with
+///   `tribeId == minorOrTribeId` exists), its **suzerain** (`colonyOfGpId`) is
+///   the favoured partner regardless of any other Great Power's relation score.
+/// - Otherwise (independent Tribe or Minor Nation), the Great Power with the
+///   **highest decimal relation score** ([DiplomacyRelation.score]) toward
+///   [minorOrTribeId] among all Great Powers ([Game.players]) that hold a
+///   relation with it. Ties at the score break deterministically by **ascending
+///   faction id**.
+/// - When no Great Power holds a [DiplomacyRelation] with [minorOrTribeId] (and
+///   it is not a colony), the result is `null` (undefined).
+///
+/// The favoured trading partner, the world-market sell-priority relation
+/// tiebreaker (R7.3), first right of refusal (R7.2), and overseas profit-share
+/// (R8) are independent concepts. SPEC/game/diplomacy.md § Favoured trading
+/// partner (Refs #3753 R7.1).
+String? favouredTradingPartner(Game game, String minorOrTribeId) {
+  for (final colony in game.colonyStates) {
+    if (colony.tribeId == minorOrTribeId) return colony.colonyOfGpId;
+  }
+  String? best;
+  num? bestScore;
+  for (final player in game.players) {
+    final rel = getRelation(game, player.id, minorOrTribeId);
+    if (rel == null) continue;
+    final score = rel.score;
+    final isBetter =
+        bestScore == null ||
+        score > bestScore ||
+        (score == bestScore && player.id.compareTo(best!) < 0);
+    if (isBetter) {
+      bestScore = score;
+      best = player.id;
+    }
+  }
+  return best;
 }
 
 /// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.

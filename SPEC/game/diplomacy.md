@@ -111,6 +111,16 @@ The `knownDiplomaticTargetFactionIds` set (existing relations **and** non-`unkno
 - **Intervention:** Same **Intervention** rules as for Minors (Embassy or purchased land; Diplomacy phase when a GP declares war on the Tribe).
 - **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
 
+### Favoured trading partner (Refs #3753 R7.1)
+
+The **favoured trading partner** of a Minor Nation or Tribe is a deterministic **lookup**, distinct from the bilateral GP–GP **Favored Trading Partner (FTP)** agreement (`establishFtp`, GP–GP only — see [world-market.md](world-market.md) § FTP). It identifies the single Great Power that the Minor/Tribe trades with preferentially:
+
+- **Colony Tribe:** the GP recorded as `ColonyState.colonyOfGpId` (the suzerain) is the favoured partner **regardless** of any other GP's relation score, for as long as the colony stands (R5).
+- **Independent Tribe or Minor Nation:** the GP with the **highest decimal relation score** with that Minor/Tribe among all Great Powers that hold a `DiplomacyRelation` with it. Ties at the relation score break deterministically by **ascending faction id**.
+- **No qualifying GP:** when no Great Power holds a `DiplomacyRelation` with the Minor/Tribe (and it is not a colony), the favoured trading partner is **undefined** (`null`).
+
+This lookup is a read-only query over `Game.colonyStates` and `Game.diplomacyRelations`; it does not itself transfer goods or treasury. The favoured trading partner (R7.1), the world-market sell-priority relation tiebreaker (R7.3, [world-market.md](world-market.md)), first right of refusal (R7.2, [world-market-first-right-of-refusal.md](world-market-first-right-of-refusal.md)), and overseas profit-share (R8) are **independent** concepts.
+
 ### GP AI policy for war vs. relations (Full AI only)
 
 This policy applies only to **Phase 6 Full AI**. It does not apply to Phase 4 simple AI.
@@ -295,6 +305,18 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given Great Power `A` is the suzerain of colony Tribe `T` (a `ColonyState { tribeId: T, colonyOfGpId: A }` exists) and `A` is removed from the game when Great Power `B` absorbs `A` via GP Join Empire  
   When the absorption resolves  
   Then the system removes every `ColonyState` whose `colonyOfGpId` is `A` from `Game.colonyStates` (so `T` is independent again and `Game.colonyStates` contains no record for `T`), while `T` remains listed in `tribes`.
+
+- Given Tribe `T` is a colony of Great Power `A` (a `ColonyState { tribeId: T, colonyOfGpId: A }` exists) and another Great Power `B` holds a higher decimal relation score with `T` than `A` does  
+  When the favoured trading partner of `T` is resolved (R7.1)  
+  Then the system returns `A` (the suzerain), regardless of `B`'s higher relation score.
+
+- Given an independent Tribe `T` (no `ColonyState` for `T`) and Great Powers `A` and `B` hold decimal relation scores `72.0` and `68.0` respectively with `T`, and no other Great Power holds a relation with `T`  
+  When the favoured trading partner of `T` is resolved (R7.1)  
+  Then the system returns `A`; and given instead that `A` and `B` hold an **equal** decimal relation score with `T`, the system returns the Great Power with the smaller faction id.
+
+- Given a Minor Nation `M` for which **no** Great Power holds a `DiplomacyRelation` (and `M` is not a colony)  
+  When the favoured trading partner of `M` is resolved (R7.1)  
+  Then the system returns `null` (the favoured trading partner is undefined).
 
 - Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists and Great Power `A` is removed from the game by GP Join-Empire absorption  
   When the absorption resolves  
