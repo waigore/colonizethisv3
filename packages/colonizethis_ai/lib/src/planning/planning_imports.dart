@@ -11,7 +11,6 @@ export 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart'
         FullAiCivilianWorkIdle,
         FullAiCivilianWorkSelectionResult,
         hasIdleExplorerUnit,
-        kRegimentBuildInputFeedstockExtractionScoreBoost,
         ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
         ownsProspectedOldWorldMineralFeedstockTile,

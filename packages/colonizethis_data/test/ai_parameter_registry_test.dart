@@ -68,6 +68,36 @@ void main() {
       expect(AiParameterRegistry.byName('kOldWorldRegionId'), isNull);
       expect(AiParameterRegistry.byName('kNewWorldRegionId'), isNull);
     });
+
+    // Refs #3794: civilian-work feedstock score boosts migrated from
+    // planner-internal contract constants to GA-tunable victory config.
+    // SPEC/ai/civilian-work-planner.md § Acceptance criteria.
+    test('registers the four civilian-work feedstock score boosts', () {
+      const expected = <String, int>{
+        'kRegimentBuildInputFeedstockExtractionScoreBoost': 600,
+        'kGrowthStageFabricFeedstockScoreBoost': 700,
+        'kGrowthStageInfraFeedstockScoreBoost': 520,
+        'kFeedstockMineralProspectScoreBoost': 600,
+      };
+      for (final entry in expected.entries) {
+        final p = AiParameterRegistry.byName(entry.key);
+        expect(p, isNotNull, reason: entry.key);
+        expect(p!.category, AiParameterCategory.victoryConfig, reason: entry.key);
+        expect(p.isInteger, isTrue, reason: entry.key);
+        expect(p.defaultValue, entry.value, reason: entry.key);
+        expect(
+          AiParameterRegistry.defaults[entry.key],
+          entry.value,
+          reason: entry.key,
+        );
+        expect(p.minValue, 0, reason: entry.key);
+        expect(
+          p.maxValue,
+          math.max(2000, 4 * entry.value),
+          reason: entry.key,
+        );
+      }
+    });
   });
 
   group('AiParameter metadata', () {
