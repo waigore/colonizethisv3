@@ -300,10 +300,29 @@ Game _absorbIntoGp(
       )
       .toList();
 
+  // When the removed GP held colonies, those Tribes lose their suzerain and
+  // become independent again (their favoured trading partner reverts to the
+  // relation-based lookup). Every boycott the removed GP issued, and every
+  // boycott directed at it, is meaningless once it leaves the game and is
+  // cleared. SPEC/game/diplomacy.md § GP–Tribe Rules (Join Empire → colony,
+  // Boycott) — colony relationship ends when the colonizing GP is removed
+  // (Refs #3753 R5.5 / R6.4).
+  final colonies = next.colonyStates
+      .where((c) => c.colonyOfGpId != absorbedFactionId)
+      .toList();
+  final boycotts = next.boycottStates
+      .where(
+        (b) =>
+            b.gpId != absorbedFactionId && b.targetGpId != absorbedFactionId,
+      )
+      .toList();
+
   return next.copyWith(
     overtureStates: overtures,
     diplomacyRelations: relations,
     subsidyStates: subsidies,
+    colonyStates: colonies,
+    boycottStates: boycotts,
     aiControlByGpId: aiControl,
     aiSeedByGpId: aiSeed,
     hiddenAgendaByGpId: hidden,
