@@ -6,6 +6,7 @@ export 'src/diplomacy/boycott_resolver.dart';
 export 'src/diplomacy/break_alliance_resolver.dart';
 export 'src/diplomacy/diplomacy_logging.dart';
 export 'src/diplomacy/diplomacy_phase_result.dart';
+export 'src/diplomacy/diplomacy_power_score.dart';
 export 'src/diplomacy/diplomacy_relation_lookup.dart';
 export 'src/diplomacy/diplomacy_relation_updates.dart';
 export 'src/diplomacy/diplomacy_resolver.dart';
