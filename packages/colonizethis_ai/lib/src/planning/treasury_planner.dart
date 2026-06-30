@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/ai_api.dart'
         ExtractionTotals,
         GamePlayerLookup,
         ProvinceOwnerCache,
+        boycottedColonySellableCommodityIds,
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
@@ -303,6 +304,25 @@ List<TradeOrder> runTreasuryPlanner({
     need: need,
     available: available,
   );
+
+  // Refs #3758 S7/R12: drop bids for commodities only sourceable from a colony
+  // Tribe this GP is boycotted from. The deal matcher already refuses those
+  // trades; suppressing the bid here keeps the capped bid slots
+  // (`bidTypeCap`) for fillable commodities. Gated behind the existence of a
+  // boycott targeting this GP and present tile maps (zero common-path cost),
+  // deterministic for fixed inputs. SPEC/ai/treasury-planner.md
+  // § Boycott-aware bid suppression.
+  if (tileMapByRegion != null && need.isNotEmpty) {
+    final blockedCommodityIds = boycottedColonySellableCommodityIds(
+      game: game,
+      buyerPlayerId: playerId,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+    );
+    if (blockedCommodityIds.isNotEmpty) {
+      need.removeWhere((id, _) => blockedCommodityIds.contains(id));
+    }
+  }
 
   if (available.isEmpty && need.isEmpty) {
     return const <TradeOrder>[];

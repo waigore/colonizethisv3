@@ -47,9 +47,9 @@ When the AI is not the highest-relation GP for a Minor/Tribe at peace, its `esta
 
 Boycott and break-alliance candidates are enumerated by the order-suggestion layer (`order_suggestion_diplomatic.dart`): a `boycott` candidate per other known GP for a colony-holding AI not already boycotting that GP and at peace; a `breakAlliance` candidate per GP with which a formal alliance exists at peace. Dispatch: [phase-planner-dispatch.md](phase-planner-dispatch.md).
 
-## Treasury-side economics (deferred)
+## Treasury-side economics
 
-Boycott trade blocking and trade-deal-relation-boost-aware partner preference in `runTreasuryPlanner` are **not yet implemented**; tracked as follow-up slices (Refs #3758 S7/S9/R12). Market-side boycott enforcement already happens in deal matching (`SPEC/program/world-market-resolution.md`).
+Boycott-aware **bid suppression** in `runTreasuryPlanner` is **implemented** (Refs #3758 S7/R12): when planning for a boycotted buyer, the planner drops bids for commodities only sourceable from a colony Tribe it is boycotted from. Normative detail and ACs: [treasury-planner.md](treasury-planner.md) § Boycott-aware bid suppression. Trade-deal-relation-boost-aware partner preference (Refs #3758 S9/R10) is still a deferred follow-up slice. Market-side boycott enforcement (the authoritative trade block) already happens in deal matching (`SPEC/program/world-market-resolution.md`).
 
 ---
 

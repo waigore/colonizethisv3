@@ -53,6 +53,7 @@ export 'package:colonizethis_orders/colonizethis_orders.dart'
 export 'package:colonizethis_economy/colonizethis_economy.dart'
     show
         ExtractionTotals,
+        boycottedColonySellableCommodityIds,
         canAffordRecruitWorker,
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
