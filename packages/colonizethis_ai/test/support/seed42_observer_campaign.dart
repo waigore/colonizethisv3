@@ -19,7 +19,8 @@
 library;
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_data/colonizethis_data.dart' show GameSetupConfig;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show GameSetupConfig, MapTopology, TileMapResult;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -33,11 +34,16 @@ import 'faithful_full_ai_test_handoff.dart';
 /// [game] is the start-of-turn game state (before resolution advances it), so
 /// callbacks can read pre-resolution treasury / ownership and the emitted
 /// orders together — matching the inline tests that captured both before
-/// resolving.
+/// resolving. [topology] and [tileMapByRegion] are the same init artifacts the
+/// harness uses for order generation and resolution so per-turn phase
+/// classification (`buildPlayerView` / `runPhasePlanners`) can run inside the
+/// callback without re-inlining the campaign init.
 typedef Seed42ObserverBeforeResolve = void Function(
   int turn,
   FullAIResult fullAi,
   Game game,
+  MapTopology topology,
+  Map<String, TileMapResult> tileMapByRegion,
 );
 
 /// Per-turn observation hook invoked immediately **after** turn [turn] is
@@ -75,6 +81,7 @@ class Seed42ObserverCampaignResult {
 Seed42ObserverCampaignResult runSeed42ObserverCampaign({
   int turns = 100,
   int seed = 42,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
   Seed42ObserverBeforeResolve? onBeforeResolve,
   Seed42ObserverAfterResolve? onAfterResolve,
 }) {
@@ -96,8 +103,9 @@ Seed42ObserverCampaignResult runSeed42ObserverCampaign({
       game,
       topo,
       tileMapByRegion: tileMap,
+      growthStagePlannerEnabled: growthStagePlannerEnabled,
     );
-    onBeforeResolve?.call(t, fullAi, game);
+    onBeforeResolve?.call(t, fullAi, game, topo, tileMap);
     final merged = mergeOrderLists(
       humanOrders: const Orders(),
       aiOrders: fullAi.orders,

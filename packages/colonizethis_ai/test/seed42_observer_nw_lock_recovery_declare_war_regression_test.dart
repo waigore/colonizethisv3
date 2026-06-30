@@ -42,7 +42,7 @@ void main() {
 
       runSeed42ObserverCampaign(
         turns: 100,
-        onBeforeResolve: (turn, fullAi, game) {
+        onBeforeResolve: (turn, fullAi, game, topology, tileMap) {
           for (final gpId in failingGpIds) {
             for (final order
                 in fullAi.orders.diplomaticOrdersByPlayerId[gpId] ?? const []) {

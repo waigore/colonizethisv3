@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/growth_stage_planner_test_support.dart';
+import '../support/planner_test_helpers.dart';
 
 void main() {
   group('GrowthStage.compute — AC10 determinism', () {
@@ -31,7 +32,7 @@ void main() {
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         growthStagePlannerEnabled: true,
       );
@@ -63,7 +64,7 @@ void main() {
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         growthStagePlannerEnabled: true,
       );
@@ -148,7 +149,7 @@ void main() {
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         snapshot: atWarSnapshot('gp1'),
         growthStagePlannerEnabled: true,
@@ -242,7 +243,7 @@ void main() {
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api,
@@ -436,7 +437,7 @@ void main() {
       final plan = runEconomyPlanner(
         game: game,
         view: view,
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         snapshot: snapshot,
         growthStagePlannerEnabled: true,
@@ -455,7 +456,7 @@ void main() {
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: buildFakeApi(
@@ -538,7 +539,7 @@ void main() {
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api(),
@@ -563,7 +564,7 @@ void main() {
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api(),
@@ -587,7 +588,7 @@ void main() {
         game: game,
         view: view,
         currentOrders: const Orders(),
-        config: kTestConfig,
+        config: kTestAiConfig,
         seeds: kTestSeeds,
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api(),
