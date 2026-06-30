@@ -18,6 +18,8 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_ai/src/planning/recipe_scoring.dart'
     show feasibleRuns;
+import 'package:colonizethis_ai/src/planning/planning_imports.dart'
+    show ownsFeedstockResourceTile;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
     show kTreasuryOfferPriorityUrgent, otherGreatPowerOfferableFabricHeld;
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -595,12 +597,12 @@ Map<String, Object?> seed42S7dTurn99SnapshotFields({
 /// This is the tile-ownership precondition the lock-recovery-seller castIron
 /// staging gate (`full_ai_civilian_work_selection_feedstock.dart` §
 /// `selfLockRecoverySellerStageableImprovementInputs` →
-/// `_ownsFeedstockResourceTile`) applies before it stages a domestic `castIron`
+/// [ownsFeedstockResourceTile]) applies before it stages a domestic `castIron`
 /// run: a below-quota zero-NW zero-regiment seller only stages `castIron` when
 /// it still owns a `timber` / `iron` feedstock tile to extract from. The
 /// existing [ownsUnimprovedFeedstockResourceTile] /
 /// [ownsImprovedFeedstockResourceTile] probes split by improvement level; this
-/// any-level probe mirrors the staging gate's own predicate exactly.
+/// any-level probe delegates to the production symbol via [planning_imports].
 ///
 /// Used by the H8 castIron production-allocation localization (Refs #2847): on
 /// the castIron material-feasible turns, a flat-zero count here while the seller
@@ -614,12 +616,7 @@ bool ownsFeedstockResourceTileAnyLevel(
   Game game,
   String playerId,
   Set<String> feedstockIds,
-) => scanOwnedFeedstockTiles(
-  game,
-  playerId,
-  feedstockIds,
-  (_) => true,
-);
+) => ownsFeedstockResourceTile(game, playerId, feedstockIds);
 
 /// Structural-invariant assertions over the S7-D diagnostic per-GP counter
 /// maps (Refs #2847). Extracted from
