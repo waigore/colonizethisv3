@@ -10,12 +10,17 @@ import 'package:colonizethis_logic/ai_api.dart'
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
         effectiveMarketPriceForCommodityId,
+        hasEmbassyOverture,
         kRegionNewWorld,
         oldWorldProvinceCountOwnedBy,
         peerLockRecoverySellerNeededProducibleImprovementInputs,
         pendingTreasuryCostsForTurn,
         regimentBuildInputFeedstockImprovementInputCost,
+        relationScoreNeutral,
         tradeCargoCapacityForGreatPower,
+        tradeDealRelationBoostBase,
+        tradeDealRelationBoostEmbassyBonus,
+        tradeDealRelationBoostPerSubsidyPercent,
         worldMarketBidTypeCap;
 import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
@@ -38,6 +43,7 @@ part 'treasury_market_pricing.dart';
 part 'treasury_lock_recovery.dart';
 part 'treasury_regiment_bootstrap.dart';
 part 'treasury_bid_emission.dart';
+part 'treasury_relation_boost_preference.dart';
 
 /// Bid priority tiers (1 = highest). Refs #2994 F4.
 const int kTreasuryBidPriorityEssentialInput = 1;
@@ -328,6 +334,27 @@ List<TradeOrder> runTreasuryPlanner({
     return const <TradeOrder>[];
   }
 
+  // Refs #3758 S9/R10: trade-deal relation-boost-aware bid preference. Resolve
+  // the single bid commodity whose completed deal would earn the largest
+  // trade-deal relation boost from a peace-time below-neutral partner, and pass
+  // it as the `preferCommodityId` ordering hint so it is admitted first under
+  // the caps. Skipped in every lock-recovery special state (those own the hint)
+  // and a no-op when no qualifying partner holds a standing matching offer, so
+  // common-path emission (and seed-42 tuning) is byte-identical. Deterministic.
+  // SPEC/ai/treasury-planner.md § Trade-deal relation-boost-aware bid preference.
+  final tradeDealPreferredBidCommodityId = (snapshot != null &&
+          !isLiquidityBuyer &&
+          !isAffluentDesignatedBuyer &&
+          !isLockRecoverySeller &&
+          !lockRecoveryUrgent)
+      ? _tradeDealRelationBoostPreferredBidCommodityId(
+          game: game,
+          playerId: playerId,
+          snapshot: snapshot,
+          need: need,
+        )
+      : null;
+
   // Refs #3122 + #3127: pass the treasury-budget-aware bid cap (computed above
   // — `rawTreasury - pendingCosts - carryForwardBidNotional`, floored at 0)
   // into the suggester so it never emits bids the validator rule 5 would
@@ -343,6 +370,11 @@ List<TradeOrder> runTreasuryPlanner({
       worldMarketState: game.worldMarketState,
       offerPriority: offerPriority,
       bidPriority: kTreasuryBidPriorityRawMaterial,
+      // Refs #3758 S9/R10: admit the trade-deal-relation-boost preferred bid
+      // commodity ahead of other deficits when the bid-type cap binds. Always
+      // `null` in lock-recovery states (gated above), so the liquidity-buyer
+      // single-commodity `need` and the legacy alphabetical order are unchanged.
+      preferredBidCommodityId: tradeDealPreferredBidCommodityId,
     ),
   );
 
@@ -381,7 +413,7 @@ List<TradeOrder> runTreasuryPlanner({
         isLiquidityBuyer ? kTreasuryOfferPriorityUrgent : null,
     preferCommodityId: isLiquidityBuyer
         ? _lockRecoveryLiquidityCommodity(game.worldMarketState)
-        : null,
+        : tradeDealPreferredBidCommodityId,
     treasuryBudgetForBids: treasuryBudgetForBids,
     worldMarketState: game.worldMarketState,
     resourceRules: rules,

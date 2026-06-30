@@ -49,7 +49,7 @@ Boycott and break-alliance candidates are enumerated by the order-suggestion lay
 
 ## Treasury-side economics
 
-Boycott-aware **bid suppression** in `runTreasuryPlanner` is **implemented** (Refs #3758 S7/R12): when planning for a boycotted buyer, the planner drops bids for commodities only sourceable from a colony Tribe it is boycotted from. Normative detail and ACs: [treasury-planner.md](treasury-planner.md) § Boycott-aware bid suppression. Trade-deal-relation-boost-aware partner preference (Refs #3758 S9/R10) is still a deferred follow-up slice. Market-side boycott enforcement (the authoritative trade block) already happens in deal matching (`SPEC/program/world-market-resolution.md`).
+Boycott-aware **bid suppression** in `runTreasuryPlanner` is **implemented** (Refs #3758 S7/R12): when planning for a boycotted buyer, the planner drops bids for commodities only sourceable from a colony Tribe it is boycotted from. Normative detail and ACs: [treasury-planner.md](treasury-planner.md) § Boycott-aware bid suppression. Trade-deal-relation-boost-aware **bid preference** (Refs #3758 S9/R10) is **implemented**: the planner prefers the bid commodity offered by the peace-time below-neutral partner whose completed deal earns the largest `+2.0 + 0.2S + 0.4E` boost, threading it through the `preferCommodityId` ordering hint. Normative detail and ACs: [treasury-planner.md](treasury-planner.md) § Trade-deal relation-boost-aware bid preference. Market-side boycott enforcement (the authoritative trade block) already happens in deal matching (`SPEC/program/world-market-resolution.md`).
 
 ---
 
