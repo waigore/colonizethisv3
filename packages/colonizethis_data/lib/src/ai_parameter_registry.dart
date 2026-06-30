@@ -974,4 +974,28 @@ final List<AiParameter> _victoryConfigParams = <AiParameter>[
     kDeclareWarStalledAnyOwMinorBonus,
     'Declare-war bonus toward any OW-holding minor while stalled.',
   ),
+  _vcInt(
+    'kRegimentBuildInputFeedstockExtractionScoreBoost',
+    kRegimentBuildInputFeedstockExtractionScoreBoost,
+    'Civilian-work score boost on an unimproved feedstock tile under the '
+        'feedstock-extraction gate.',
+  ),
+  _vcInt(
+    'kGrowthStageFabricFeedstockScoreBoost',
+    kGrowthStageFabricFeedstockScoreBoost,
+    'Civilian-work score boost on an unimproved fabric feedstock tile under '
+        'the growth-stage planner.',
+  ),
+  _vcInt(
+    'kGrowthStageInfraFeedstockScoreBoost',
+    kGrowthStageInfraFeedstockScoreBoost,
+    'Civilian-work score boost on an unimproved infrastructure feedstock tile '
+        'under the growth-stage planner.',
+  ),
+  _vcInt(
+    'kFeedstockMineralProspectScoreBoost',
+    kFeedstockMineralProspectScoreBoost,
+    'Civilian-work prospect score boost on an unprospected mineral feedstock '
+        'tile under the feedstock-extraction gate.',
+  ),
 ];

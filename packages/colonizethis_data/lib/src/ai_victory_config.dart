@@ -467,6 +467,41 @@ const int kPurchaseLandNewWorldTribeWorkScore = 320;
 /// Merchant purchase_land score for other NW tiles.
 const int kPurchaseLandNewWorldOtherWorkScore = 160;
 
+/// Full AI civilian-work score boost applied to an unimproved feedstock resource
+/// tile when the regiment/supplier/seller feedstock-extraction gate is active
+/// (`selectFullAiCivilianWorkOrders`). Sized above
+/// [kBuildImprovementExtractableResourceScore] plus the New World resource
+/// bonuses so a lock-recovery seller routes its Builder onto the feedstock tile
+/// ahead of any other extractable improvement. GA-tunable (Refs #3794);
+/// behaviour is normative in SPEC/ai/civilian-work-planner.md.
+const int kRegimentBuildInputFeedstockExtractionScoreBoost = 600;
+
+/// Full AI civilian-work score boost applied to an unimproved **fabric**
+/// feedstock resource tile (`wool` / `cotton`) under the growth-stage planner
+/// (Refs #3371 AC1). Sized above
+/// [kRegimentBuildInputFeedstockExtractionScoreBoost] and the New World resource
+/// bonuses so a low-labour GP improves a wool/cotton tile ahead of grain, New
+/// World, or H8 extraction work. GA-tunable (Refs #3794); behaviour is normative
+/// in SPEC/ai/civilian-work-planner.md.
+const int kGrowthStageFabricFeedstockScoreBoost = 700;
+
+/// Full AI civilian-work score boost applied to an unimproved
+/// **infrastructure** feedstock resource tile (`timber` / `iron` / `coal`) under
+/// the growth-stage planner (Refs #3371 AC2). Sized above the New World resource
+/// bonuses but below [kGrowthStageFabricFeedstockScoreBoost] so a maturing GP
+/// improves castIron/lumber feedstock only after fabric is secured. GA-tunable
+/// (Refs #3794); behaviour is normative in SPEC/ai/civilian-work-planner.md.
+const int kGrowthStageInfraFeedstockScoreBoost = 520;
+
+/// Full AI civilian-work `prospect` score boost applied to an unprospected
+/// mineral feedstock tile under the feedstock-extraction gate, so an Explorer
+/// prospects the feedstock mineral ahead of ordinary explore/prospect work and
+/// the Builder feedstock-extraction boost then has a valid (prospected) tile to
+/// improve. Sized to match [kRegimentBuildInputFeedstockExtractionScoreBoost].
+/// GA-tunable (Refs #3794); behaviour is normative in
+/// SPEC/ai/civilian-work-planner.md.
+const int kFeedstockMineralProspectScoreBoost = 600;
+
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 12;
 
