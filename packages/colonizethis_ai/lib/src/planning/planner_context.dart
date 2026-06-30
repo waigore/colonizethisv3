@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'build_planner.dart' show kCivilianBuildPlannerEnabled;
 import 'goal_manager.dart';
 import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 
@@ -20,6 +21,7 @@ class PlannerContext {
     required this.suggestionAPI,
     this.sameTurnPriorDiplomaticOrders,
     this.growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+    this.civilianBuildPlannerEnabled = kCivilianBuildPlannerEnabled,
     int? currentTurn,
     Map<String, String?>? provinceOwner,
   }) : currentTurn = currentTurn ?? game.worldState.turnState.turnNumber,
@@ -40,6 +42,13 @@ class PlannerContext {
 
   /// When true, growth-stage economy scoring replaces H8 reactive boosts (Refs #3371).
   final bool growthStagePlannerEnabled;
+
+  /// When true, the economy build pass enumerates and scores civilian
+  /// `BuildUnitOrder` candidates in the weighted build pool (Refs #3793 live
+  /// wiring). Defaults to [kCivilianBuildPlannerEnabled] (`false`) so AI build
+  /// behaviour and observer-determinism baselines are unchanged until the flag
+  /// is flipped. See SPEC/ai/civilian-build-planner.md § Live economy wiring.
+  final bool civilianBuildPlannerEnabled;
   final int currentTurn;
 
   /// Province-owner map memo. Computed lazily on first read and threaded
@@ -103,6 +112,7 @@ class PlannerContext {
     suggestionAPI: suggestionAPI,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     growthStagePlannerEnabled: growthStagePlannerEnabled,
+    civilianBuildPlannerEnabled: civilianBuildPlannerEnabled,
     currentTurn: currentTurn,
     provinceOwner: _provinceOwner,
   );

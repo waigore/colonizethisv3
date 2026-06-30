@@ -110,6 +110,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   PhasePlanOutcome? phasePlan,
   bool recomputeTradeOrdersWithPendingCosts = false,
   bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  bool civilianBuildPlannerEnabled = kCivilianBuildPlannerEnabled,
   Map<String, ExtractionTotals>? extractionById,
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
@@ -134,6 +135,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     suggestionAPI: suggestionAPI,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     growthStagePlannerEnabled: growthStagePlannerEnabled,
+    civilianBuildPlannerEnabled: civilianBuildPlannerEnabled,
   );
 
   final economyResult = _runEconomyDomainPlanners(

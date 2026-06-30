@@ -13,6 +13,13 @@ export 'package:colonizethis_models/colonizethis_models.dart'
 export 'src/perception/dossier_builder.dart';
 export 'src/perception/dossier_models.dart';
 export 'src/perception/perception_snapshot.dart';
+export 'src/planning/build_planner.dart'
+    show
+        BuildPickInput,
+        CivilianBuildScoringInput,
+        buildCivilianBuildScoringInput,
+        kCivilianBuildPlannerEnabled,
+        pickBuildOrder;
 export 'src/planning/domain_planner_orchestrator.dart';
 export 'src/planning/diplomacy_planner.dart';
 export 'src/planning/economy_planner.dart';
@@ -51,6 +58,7 @@ export 'src/planning/recruitment_planner.dart'
         kRecruitmentRejectInsufficientWorkers,
         kRecruitmentRejectMilitaryBuildSuppressed,
         kRecruitmentRejectMilitaryFabricReservation,
+        kRecruitmentRejectPaperBudget,
         kRecruitmentRejectSoftLuxuryCap,
         runRecruitmentPlanner;
 export 'src/social/hidden_agenda.dart';
