@@ -161,6 +161,7 @@ void _appendSelectionForUnitId({
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
   _OwFeedstockReservation reservation = _OwFeedstockReservation.none,
+  bool spyDevelopPhase = false,
 }) {
   final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
   _sortWorkOrdersLex(W);
@@ -234,6 +235,19 @@ void _appendSelectionForUnitId({
       w: W,
       game: game,
       playerId: view.playerId,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
+    return;
+  }
+
+  if (unit != null && isSpyUnit(unit.type)) {
+    _appendSpyPathResult(
+      unit: unit,
+      w: W,
+      game: game,
+      playerId: view.playerId,
+      spyDevelopPhase: spyDevelopPhase,
       workOrders: workOrders,
       idleEvents: idleEvents,
     );

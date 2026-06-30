@@ -6,9 +6,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import 'package:colonizethis_orders/src/orders/build_rail_work_rules.dart';
 import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
+import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 import 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
 part 'full_ai_civilian_work_selection_feedstock.dart';
 part 'full_ai_civilian_work_selection_feedstock_acquisition.dart';
@@ -17,6 +19,7 @@ part 'full_ai_civilian_work_selection_build_purchase.dart';
 part 'full_ai_civilian_work_selection_upgrade_town.dart';
 part 'full_ai_civilian_work_selection_rail.dart';
 part 'full_ai_civilian_work_selection_engineer.dart';
+part 'full_ai_civilian_work_selection_spy.dart';
 part 'full_ai_civilian_work_selection_unit_paths.dart';
 
 /// Idle civilian (no new work) for Full AI observability.
@@ -75,6 +78,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   Map<String, TileMapResult>? tileMapByRegion,
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
+  bool spyDevelopPhase = false,
 }) {
   final byUnit = <String, List<WorkOrder>>{};
   for (final w in workSuggestions) {
@@ -119,6 +123,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
       growthStageInfraFeedstockResourceIds:
           growthStageInfraFeedstockResourceIds,
       reservation: reservation,
+      spyDevelopPhase: spyDevelopPhase,
     );
   }
 

@@ -883,4 +883,55 @@ final List<AiParameter> victoryConfigParams = <AiParameter>[
     'Civilian-work prospect score boost on an unprospected mineral feedstock '
         'tile under the feedstock-extraction gate.',
   ),
+  _vcInt(
+    'kSpyStealTechBaseWorkScore',
+    kSpyStealTechBaseWorkScore,
+    'Baseline Spy steal_tech work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kSpyStealTechTechDeficitWeight',
+    kSpyStealTechTechDeficitWeight,
+    'Per-tech Spy steal_tech bonus for each tech the rival has that the player '
+        'lacks (deficit capped at 60).',
+  ),
+  _vcInt(
+    'kSpyStealTechHostileRelationsBonus',
+    kSpyStealTechHostileRelationsBonus,
+    'Extra Spy steal_tech score toward an at-war or negative-relation rival.',
+  ),
+  _vcInt(
+    'kSpyStealTechProximityBonus',
+    kSpyStealTechProximityBonus,
+    'Extra Spy steal_tech score when the rival capital is in the Spy\'s region.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyBaseWorkScore',
+    kSpyCounterSpyBaseWorkScore,
+    'Baseline Spy counter_spy work score for any valid candidate.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyEnemySpyPresenceBonus',
+    kSpyCounterSpyEnemySpyPresenceBonus,
+    'Extra Spy counter_spy score when a foreign-owned Spy occupies the province.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyCapitalBonus',
+    kSpyCounterSpyCapitalBonus,
+    'Extra Spy counter_spy score in the player\'s capital province.',
+  ),
+  _vcInt(
+    'kSpyCounterSpyBorderBonus',
+    kSpyCounterSpyBorderBonus,
+    'Extra Spy counter_spy score in a New World region province.',
+  ),
+  _vcInt(
+    'kSpyPhaseStealTechBonus',
+    kSpyPhaseStealTechBonus,
+    'Phase bonus added to Spy steal_tech scores outside the DEVELOP phase.',
+  ),
+  _vcInt(
+    'kSpyPhaseCounterSpyBonus',
+    kSpyPhaseCounterSpyBonus,
+    'Phase bonus added to Spy counter_spy scores in the DEVELOP phase.',
+  ),
 ];

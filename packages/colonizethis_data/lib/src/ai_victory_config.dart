@@ -586,6 +586,55 @@ const int kUpgradeTownFrontlineBonus = 150;
 /// least-developed towns first (Refs #3794 § Builder).
 const int kUpgradeTownLowDevBonus = 120;
 
+/// Baseline Full AI work score for any valid Spy `steal_tech` candidate in the
+/// unified Spy scored pool (`steal_tech` + `counter_spy`; Refs #3794 § Spy).
+/// Sized so a `steal_tech` candidate is non-zero and the phase bonus, not the
+/// alphabetical target order, decides cross-type preference.
+const int kSpyStealTechBaseWorkScore = 200;
+
+/// Per-tech Spy `steal_tech` bonus for each tech the rival GP has unlocked that
+/// the player lacks (tech-deficit proxy; deficit count capped at 60 for
+/// determinism/budget; Refs #3794 § Spy).
+const int kSpyStealTechTechDeficitWeight = 10;
+
+/// Extra Spy `steal_tech` score when the player is at war with the rival GP, or
+/// the decimal relation score is in the 0-25 Hostile band (worse relations →
+/// higher score; scores are `[0, 100]` with 50 neutral; Refs #3794 § Spy).
+const int kSpyStealTechHostileRelationsBonus = 150;
+
+/// Extra Spy `steal_tech` score when the rival GP's capital province is in the
+/// same region as the Spy (cheap proximity proxy instead of path-finding;
+/// Refs #3794 § Spy).
+const int kSpyStealTechProximityBonus = 90;
+
+/// Baseline Full AI work score for any valid Spy `counter_spy` candidate in the
+/// unified Spy scored pool (Refs #3794 § Spy).
+const int kSpyCounterSpyBaseWorkScore = 200;
+
+/// Extra Spy `counter_spy` score when a foreign-owned Spy occupies the candidate
+/// province (known enemy-spy-presence proxy; Refs #3794 § Spy).
+const int kSpyCounterSpyEnemySpyPresenceBonus = 200;
+
+/// Extra Spy `counter_spy` score when the candidate province is the player's
+/// capital province (capital-protection proxy; Refs #3794 § Spy).
+const int kSpyCounterSpyCapitalBonus = 120;
+
+/// Extra Spy `counter_spy` score when the candidate province is in the New World
+/// region (frontier/border proxy; Refs #3794 § Spy).
+const int kSpyCounterSpyBorderBonus = 90;
+
+/// Phase bonus added to Spy `steal_tech` scores outside the DEVELOP phase
+/// (EXPAND / COLONIAL / COLONIAL-lite), sized to dominate the contextual bonuses
+/// of `counter_spy` so the phase preference is decisive while context still
+/// differentiates same-target candidates (Refs #3794 § Spy, AC23).
+const int kSpyPhaseStealTechBonus = 2000;
+
+/// Phase bonus added to Spy `counter_spy` scores in the DEVELOP phase, sized to
+/// dominate the contextual bonuses of `steal_tech` so the phase preference is
+/// decisive while context still differentiates same-target candidates
+/// (Refs #3794 § Spy, AC24).
+const int kSpyPhaseCounterSpyBonus = 2000;
+
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 12;
 
