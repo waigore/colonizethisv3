@@ -174,6 +174,14 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
   When the golden test in `app/test/diplomacy_relative_power_goldens_test.dart` captures the screen's keyed `RepaintBoundary`,
   Then the captured boundary matches its committed baseline `app/test/goldens/diplomacy_detail_relative_power.png` via `matchesGoldenFile`, the `CURRENT RELATION` card title renders, and exactly one `RelativePowerLine` is present (visual-regression baseline for the relative-power line on GAME30002 per [diplomacy-panel.md](diplomacy-panel.md) § Relative power line).
 
+- Given the screen is mounted under `AppThemes.editorialMonocle` for a colony Tribe with embassy, boycott, and relation score 60,
+  When the golden test in `app/test/diplomacy_detail_screen_goldens_test.dart` captures the screen's keyed `RepaintBoundary`,
+  Then the captured boundary matches its committed baseline `app/test/goldens/diplomacy_detail_colony_tribe.png` via `matchesGoldenFile`, the `CURRENT RELATION` card renders a `DiplomacyStandingChipCluster` with colony and boycott chips, exactly one `RelationMeter` is present, and outgoing subsidy copy is absent (Refs #3753 S17 / R12).
+
+- Given the screen is mounted under `AppThemes.editorialMonocle` for a subsidized Minor with overseas tile holdings and relation score 80,
+  When the golden test in `app/test/diplomacy_detail_screen_goldens_test.dart` captures the screen's keyed `RepaintBoundary`,
+  Then the captured boundary matches its committed baseline `app/test/goldens/diplomacy_detail_subsidized_minor.png` via `matchesGoldenFile`, the overseas holdings chip renders, exactly one `RelationMeter` is present, and the dossier section is absent (Refs #3753 S17 / R3 / R8 / R12).
+
 ---
 
 ## Widgetbook
@@ -181,3 +189,5 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
 - **Folder:** `Diplomacy Detail Screen`
 - **Default use case:** `ProviderScope` with `appEventBusProvider` → `AppEventBus.create()`; renders `DiplomacyDetailScreen` with a minimal inline `Game` fixture (human GP + rival GP, one peace relation, one history event, one dossier entry) inside `MaterialApp`.
 - **Formal alliance use case:** `Formal alliance — GP with treaty badge` renders a GP target whose relation carries `formalAlliance: true`, proving the `ALLIANCE` treaty badge appears in the `CURRENT RELATION` card (Refs #3625, AC4).
+- **Colony Tribe use case:** `Colony Tribe — standing chips + relation meter` renders a Tribe target with colony, embassy, and boycott standing chips plus the 10-step `RelationMeter` in the `CURRENT RELATION` card (Refs #3753 S17 / R12).
+- **Subsidized Minor use case:** `Subsidized Minor — overseas chip + relation meter` renders a Minor target with embassy and overseas-holdings chips plus the relation meter; no dossier section (Refs #3753 S17 / R3 / R8 / R12).
