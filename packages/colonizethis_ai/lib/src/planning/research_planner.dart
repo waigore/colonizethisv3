@@ -394,8 +394,9 @@ ResearchPlannerResult runResearchPlannerWithDecision({
   // unlocked (Merchant ⇐ merchant_companies, Rail Builder ⇐ early_steam_engine)
   // so the AI researches toward the gates that expand the civilian build pool.
   // Reorders within the existing slot pool only (count unchanged) → no extra
-  // funding, so the paper-reserve bound holds. Inert by default (the flag
-  // mirrors kCivilianBuildPlannerEnabled), keeping observer baselines unchanged.
+  // funding, so the paper-reserve bound holds. Active when the flag mirrors
+  // kCivilianBuildPlannerEnabled (now `true` by default); tests can opt out via
+  // civilianBuildPlannerEnabled: false.
   // SPEC/ai/civilian-build-planner.md § Tech prioritization.
   final orderedNewCandidates = ctx.civilianBuildPlannerEnabled
       ? _prioritizeCivilianGatingTechs(
