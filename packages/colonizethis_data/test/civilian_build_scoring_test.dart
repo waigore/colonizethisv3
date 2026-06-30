@@ -278,4 +278,76 @@ void main() {
       expect(withDemand, withoutDemand);
     });
   });
+
+  group('civilian build pool weight (Refs #3793, ACPool)', () {
+    test('ACPool/AC8: default pool weight is declared in [0.0, 1.0] and 1.0', () {
+      expect(kCivilianBuildPoolWeight, 1.0);
+      expect(kCivilianBuildPoolWeight, greaterThanOrEqualTo(0.0));
+      expect(kCivilianBuildPoolWeight, lessThanOrEqualTo(1.0));
+    });
+
+    test('ACPool: at the default weight the pooled score equals the per-type '
+        'score for every civilian type and count (no regression)', () {
+      const cases = <(String, int)>[
+        (kUnitTypeBuilder, 0), // below min cap (hard floor)
+        (kUnitTypeExplorer, 1), // replacement urgency band
+        (kUnitTypeEngineer, 1), // at target
+        (kUnitTypeSpy, 0), // phase-flat
+        (kUnitTypeMerchant, 0),
+        (kUnitTypeRailBuilder, 0),
+      ];
+      for (final (type, count) in cases) {
+        expect(
+          civilianBuildPooledScore(
+            type,
+            count,
+            phaseName: kCivilianBuildPhaseColonial,
+          ),
+          civilianBuildCandidateScore(
+            type,
+            count,
+            phaseName: kCivilianBuildPhaseColonial,
+          ),
+          reason: 'pooled == per-type at default weight for $type/$count',
+        );
+      }
+    });
+
+    test('ACPool: an explicit weight scales the per-type score linearly', () {
+      // Builder below min cap → per-type score 50.0; pooled at 0.5 → 25.0.
+      final base = civilianBuildCandidateScore(kUnitTypeBuilder, 0);
+      expect(
+        civilianBuildPooledScore(kUnitTypeBuilder, 0, poolWeight: 0.5),
+        base * 0.5,
+      );
+      // A zero weight collapses the civilian score to 0 (fully ceded share).
+      expect(
+        civilianBuildPooledScore(kUnitTypeBuilder, 0, poolWeight: 0.0),
+        0.0,
+      );
+    });
+
+    test('ACPool: pool weight preserves relative ordering among civilians', () {
+      // Below-min Builder (50.0) must still outrank an at-target Explorer (1.0)
+      // after the same shared pool weight is applied to both.
+      const weight = 0.3;
+      final builder = civilianBuildPooledScore(
+        kUnitTypeBuilder,
+        0,
+        poolWeight: weight,
+      );
+      final explorer = civilianBuildPooledScore(
+        kUnitTypeExplorer,
+        2,
+        poolWeight: weight,
+      );
+      expect(builder, greaterThan(explorer));
+      // The ratio is unchanged from the unweighted per-type ratio.
+      expect(
+        builder / explorer,
+        civilianBuildCandidateScore(kUnitTypeBuilder, 0) /
+            civilianBuildCandidateScore(kUnitTypeExplorer, 2),
+      );
+    });
+  });
 }
