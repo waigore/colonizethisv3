@@ -117,6 +117,58 @@ void main() {
   );
 
   testWidgets(
+    'DiplomacyPanel Break Alliance confirm emits BreakAllianceImmediatelyEvent',
+    (WidgetTester tester) async {
+      final game = buildDiplomacyPanelTestGame().copyWith(
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 90,
+            formalAlliance: true,
+          ),
+        ],
+      );
+      final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final bus = AppEventBus.create();
+      final breakFuture = bus
+          .on<BreakAllianceImmediatelyEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
+        event.result(true);
+      });
+      addTearDown(confirmSub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: const MapTopology(),
+              currentOrders: const Orders(),
+              bus: bus,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final breakButton = find.text('Break Alliance');
+      expect(breakButton, findsOneWidget);
+      await tester.ensureVisible(breakButton);
+      await tester.tap(breakButton);
+      await tester.pump();
+
+      final event = await breakFuture;
+      expect(event.playerId, humanId);
+      expect(event.targetFactionId, 'gp2');
+    },
+  );
+
+  testWidgets(
     'DiplomacyPanel pending cancel emits RemoveDiplomaticOrderRequestedEvent',
     (WidgetTester tester) async {
       final game = buildDiplomacyPanelTestGame();

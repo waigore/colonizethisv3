@@ -56,8 +56,14 @@ void main() {
       expect(r.treasury, 0); // no treasury cost
     });
 
-    test('accepts while at war when a formal alliance still exists', () {
-      final game = _twoGpAllianceGame(state: RelationState.atWar);
+    test('rejects while at war (war invariant cleared the alliance)', () {
+      // Under the war invariant (SPEC/game/diplomacy.md § Alliances), an at-war
+      // pair never holds a formal alliance, so Break Alliance is rejected:
+      // there is no treaty to break.
+      final game = _twoGpAllianceGame(
+        formalAlliance: false,
+        state: RelationState.atWar,
+      );
       final r =
           breakAllianceSubValidator(
             diplomaticSubValidatorContext(game, 'gp1'),
@@ -68,7 +74,8 @@ void main() {
             ),
             treasury: 0,
           );
-      expect(r.result.status, OrderValidationStatus.accepted);
+      expect(r.result.status, OrderValidationStatus.rejected);
+      expect(r.result.reason, contains('formal alliance'));
     });
 
     test('rejects when no formal alliance exists with the target', () {

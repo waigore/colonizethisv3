@@ -54,6 +54,30 @@ void main() {
       expect(restored, game);
     });
 
+    test('allianceBreakCooldowns round-trip JSON (Refs #3811)', () {
+      final game = Game(
+        id: 'g1',
+        allianceBreakCooldowns: const [
+          AllianceBreakCooldownState(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            sinceTurn: 7,
+          ),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 7),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.allianceBreakCooldowns, hasLength(1));
+      expect(restored.allianceBreakCooldowns.single.sinceTurn, 7);
+      expect(restored.allianceBreakCooldowns.single.factionId1, 'gp1');
+      expect(restored.allianceBreakCooldowns.single.factionId2, 'gp2');
+    });
+
     test('valid percent subsidy to a Minor round-trips JSON', () {
       final game = Game(
         id: 'g1',

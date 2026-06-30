@@ -1,6 +1,7 @@
 /// Diplomacy, overture, intervention, war, and dossier resolution (Refs #3290).
 library colonizethis_diplomacy;
 
+export 'src/diplomacy/alliance_break_cooldown.dart';
 export 'src/diplomacy/alliance_resolver.dart';
 export 'src/diplomacy/boycott_resolver.dart';
 export 'src/diplomacy/break_alliance_resolver.dart';

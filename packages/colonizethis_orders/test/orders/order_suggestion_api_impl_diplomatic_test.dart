@@ -126,6 +126,50 @@ void main() {
     );
 
     test(
+      'does not return alliance toward a GP when a formal alliance exists',
+      () {
+        const api = DefaultOrderSuggestionAPI();
+        const topology = MapTopology(nodes: [], edges: []);
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              state: RelationState.atPeace,
+              level: RelationLevel.allied,
+              formalAlliance: true,
+            ),
+          ],
+        );
+        final view = buildPlayerView(game, topology, 'gp1');
+        final list = api.suggestDiplomaticOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        expect(
+          list.where(
+            (o) =>
+                o.type == DiplomaticOrderType.alliance &&
+                o.targetFactionId == 'gp2',
+          ),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
       'does not return breakAlliance when relation level is allied but no formal alliance',
       () {
         const api = DefaultOrderSuggestionAPI();

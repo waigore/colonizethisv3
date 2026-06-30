@@ -89,6 +89,34 @@ void main() {
       expect(updated.score, 50.4);
     });
 
+    test('fromJson drops formalAlliance for an at-war pair (war invariant)', () {
+      // SPEC/game/diplomacy.md § Alliances: formalAlliance can never coexist
+      // with atWar; an invalid legacy save is normalized on load.
+      final restored = DiplomacyRelation.fromJson(const {
+        'factionId1': 'A',
+        'factionId2': 'B',
+        'score': 80,
+        'level': 'allied',
+        'state': 'atWar',
+        'formalAlliance': true,
+      });
+      expect(restored.state, RelationState.atWar);
+      expect(restored.formalAlliance, isFalse);
+    });
+
+    test('fromJson keeps formalAlliance for an at-peace pair', () {
+      final restored = DiplomacyRelation.fromJson(const {
+        'factionId1': 'A',
+        'factionId2': 'B',
+        'score': 80,
+        'level': 'allied',
+        'state': 'atPeace',
+        'formalAlliance': true,
+      });
+      expect(restored.state, RelationState.atPeace);
+      expect(restored.formalAlliance, isTrue);
+    });
+
     test('formalAlliance round-trips through JSON when true', () {
       const allied = DiplomacyRelation(
         factionId1: 'A',
@@ -103,6 +131,18 @@ void main() {
       expect(restored.formalAlliance, isTrue);
       expect(allied.copyWith().formalAlliance, isTrue);
       expect(allied.copyWith(formalAlliance: false).formalAlliance, isFalse);
+    });
+  });
+
+  group('AllianceBreakCooldownState', () {
+    test('toJson/fromJson round-trips', () {
+      const cooldown = AllianceBreakCooldownState(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        sinceTurn: 4,
+      );
+      final restored = AllianceBreakCooldownState.fromJson(cooldown.toJson());
+      expect(restored, cooldown);
     });
   });
 

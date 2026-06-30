@@ -28,12 +28,15 @@ List<DiplomacyRelation> setWarStateForPair({
         lastInteractionTurn: turn,
       );
     }
+    // War invariant (SPEC/game/diplomacy.md § Alliances): entering war clears
+    // any formal alliance for the pair — a treaty can never coexist with war.
     return existing.copyWith(
       state: RelationState.atWar,
       sinceTurn: turn,
       lastInteractionTurn: turn,
       score: 20,
       level: RelationLevel.hostile,
+      formalAlliance: false,
     );
   });
 }

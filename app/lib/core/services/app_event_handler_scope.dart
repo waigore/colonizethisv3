@@ -30,6 +30,8 @@ import 'app_event_handler_debug_reveal_province.dart'
     show applyDebugRevealProvince;
 import 'app_event_handler_debug_set_diplomacy.dart'
     show applyDebugSetDiplomacyRelation;
+import 'app_event_handler_break_alliance_immediately.dart'
+    show applyBreakAllianceImmediately;
 import 'app_event_handler_debug_spawn_civilian.dart'
     show applyDebugCivilianSpawnAtCapital;
 import 'app_event_handler_debug_spawn_regiment.dart'

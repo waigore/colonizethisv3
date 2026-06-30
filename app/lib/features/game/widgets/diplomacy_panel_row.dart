@@ -342,12 +342,14 @@ class _ActionButton extends StatelessWidget {
   final String? rejectionReason;
 
   /// SPEC/ui/diplomacy-panel.md § Action button styling — destructive
-  /// `Declare War` action resolves both the button outline and the
-  /// engraved label to the canonical `--danger` token. Pending state
+  /// `Declare War` and `Break Alliance` actions resolve both the button outline
+  /// and the engraved label to the canonical `--danger` token. Pending state
   /// keeps the default brass chrome so the "Cancel" affordance still
   /// reads as a recoverable toggle.
-  bool get _isWarVariant =>
-      !isPending && order.type == DiplomaticOrderType.declareWar;
+  bool get _isDangerVariant =>
+      !isPending &&
+      (order.type == DiplomaticOrderType.declareWar ||
+          order.type == DiplomaticOrderType.breakAlliance);
 
   @override
   Widget build(BuildContext context) {
@@ -381,7 +383,7 @@ class _ActionButton extends StatelessWidget {
       // cluster flows left-to-right within the available row width instead of
       // each button expanding to the full run width as a vertical column.
       shrinkWrap: true,
-      dangerVariant: _isWarVariant,
+      dangerVariant: _isDangerVariant,
       child: Text(label, style: labelStyle),
     );
     final String? reason = rejectionReason;

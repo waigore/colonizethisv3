@@ -17,6 +17,12 @@ DiplomaticSubValidator setSubsidySubValidator(
   DiplomaticSubValidatorContext ctx,
 ) => delegatedDiplomaticSubValidator(({required order, required treasury}) {
   final targetId = order.targetFactionId;
+  final cooldownRejection = rejectIfAllianceBreakCooldownActive(
+    ctx: ctx,
+    targetId: targetId,
+    treasury: treasury,
+  );
+  if (cooldownRejection != null) return cooldownRejection;
   if (!isMinorOrTribe(
     ctx.game,
     targetId,
