@@ -92,12 +92,15 @@ Game applyInterventionAgainstAggressor(
         relationScoreMin,
         relationScoreMax,
       );
+      // War invariant (SPEC/game/diplomacy.md § Alliances): entering war clears
+      // any formal alliance for the pair.
       return existing.copyWith(
         state: RelationState.atWar,
         sinceTurn: turn,
         lastInteractionTurn: turn,
         score: newScore,
         level: scoreToLevel(newScore),
+        formalAlliance: false,
       );
     });
   } else if (choice == InterventionChoice.protest) {

@@ -14,11 +14,12 @@ import 'overture_resolver.dart';
 /// ally and −[allianceBreakOtherGpScorePenalty] to every other Great Power the
 /// breaker has a relation with), then appends an `allianceBroken` event.
 ///
-/// A voluntary break is valid whether the pair is at peace or at war (the
-/// `formalAlliance` flag is independent of `relationState`); only the presence
-/// of the flag matters. Orders against non-GP targets or pairs without a formal
-/// alliance are ignored (validation already rejects them; resolution re-checks
-/// for safety). SPEC/game/diplomacy.md § Alliances; SPEC/program/diplomacy-resolution.md.
+/// Only the presence of the `formalAlliance` flag matters. Because entering war
+/// clears the pair's `formalAlliance` (war invariant — a treaty cannot coexist
+/// with war), an at-war pair holds no treaty and a break order against it is a
+/// no-op here. Orders against non-GP targets or pairs without a formal alliance
+/// are ignored (validation already rejects them; resolution re-checks for
+/// safety). SPEC/game/diplomacy.md § Alliances; SPEC/program/diplomacy-resolution.md.
 Game processBreakAlliances(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,

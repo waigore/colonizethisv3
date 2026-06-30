@@ -127,22 +127,33 @@ void main() {
       expect(getRelation(result, 'gp1', 'gp3')!.score, relationScoreMin); // 0
     });
 
-    test('is valid while at war: clears flag and applies penalty', () {
-      final game = _fourGpGame(
-        gp1gp2Score: 30,
-        gp1gp2FormalAlliance: true,
-        gp1gp2State: RelationState.atWar,
-      );
-      final result = processBreakAlliances(
-        game,
-        _breakOrder('gp1', 'gp2'),
-        10,
-        factionMembership: DiplomacyFactionMembership.from(game),
-      );
-      final ally = getRelation(result, 'gp1', 'gp2')!;
-      expect(ally.formalAlliance, isFalse);
-      expect(ally.score, relationScoreMin); // 30 - 50 -> clamp 0
-    });
+    test(
+      'war invariant: at-war pair holds no treaty, so break is a no-op',
+      () {
+        // Under the war invariant (SPEC/game/diplomacy.md § Alliances) an at-war
+        // pair can never hold a formal alliance, so a break order against it
+        // finds nothing to break and applies no penalty / no event.
+        final game = _fourGpGame(
+          gp1gp2Score: 30,
+          gp1gp2FormalAlliance: false,
+          gp1gp2State: RelationState.atWar,
+        );
+        final result = processBreakAlliances(
+          game,
+          _breakOrder('gp1', 'gp2'),
+          10,
+          factionMembership: DiplomacyFactionMembership.from(game),
+        );
+        final ally = getRelation(result, 'gp1', 'gp2')!;
+        expect(ally.formalAlliance, isFalse);
+        expect(ally.score, 30); // unchanged: no break occurred
+        expect(getRelation(result, 'gp1', 'gp3')!.score, 60); // no cascade
+        final broken = result.diplomaticHistoryEvents.where(
+          (e) => e.type == DiplomaticEventType.allianceBroken,
+        );
+        expect(broken, isEmpty);
+      },
+    );
 
     test('no-op when no formal alliance exists (no penalty, no event)', () {
       final game = _fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: false);
