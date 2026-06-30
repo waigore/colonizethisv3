@@ -3,6 +3,8 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'civilian_economy.dart' show unlockingTechByCivilianId;
+
 /// Old World province count required for military victory.
 const int kMilitaryVictoryOldWorldProvinceThreshold = 31;
 
@@ -880,3 +882,31 @@ double civilianBuildCandidateScore(
   }
   return effectiveBase;
 }
+
+// ---------------------------------------------------------------------------
+// Civilian build planner — research prioritization of civilian-gating techs
+// (Refs #3793 AC6). SPEC/ai/civilian-build-planner.md § Tech prioritization.
+// The research planner front-loads slot selection toward the techs that unlock
+// civilian unit types (Merchant ⇐ `merchant_companies`,
+// Rail Builder ⇐ `early_steam_engine`) when the owning GP has not unlocked them,
+// so the AI researches toward the gates that expand the civilian build pool.
+// The bias only reorders selection within the existing per-turn research slot
+// target — it never adds a slot or spends extra funding — so it can never
+// exceed the `researchPaperReserveShare` paper reservation. No planner magic
+// numbers: the gating-tech set is derived from the canonical
+// [unlockingTechByCivilianId] map (single source of truth).
+// ---------------------------------------------------------------------------
+
+/// Civilian-gating tech ids the research bias prioritizes: the distinct
+/// unlocking-tech values of [unlockingTechByCivilianId], in stable insertion
+/// order (deterministic). Currently `merchant_companies` (Merchant) and
+/// `early_steam_engine` (Rail Builder).
+final List<String> kCivilianGatingTechIds = List<String>.unmodifiable(<String>{
+  ...unlockingTechByCivilianId.values,
+});
+
+/// True when [techId] gates a civilian unit type (i.e. it is in
+/// [kCivilianGatingTechIds]). Used by the research planner to prioritize
+/// researching toward civilian-build gates (Refs #3793 AC6).
+bool isCivilianGatingTech(String techId) =>
+    kCivilianGatingTechIds.contains(techId);

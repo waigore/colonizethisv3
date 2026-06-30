@@ -315,6 +315,36 @@ class ResearchPlannerResult {
   final ResearchPlannerDecision? decision;
 }
 
+/// Reorders [candidates] so research slots targeting a civilian-gating tech
+/// (`isCivilianGatingTech`) the player has not yet unlocked come first, then the
+/// remaining candidates — each group keeps its original (slot-index-sorted)
+/// relative order, so the result is fully deterministic (Refs #3793 AC6;
+/// SPEC/ai/civilian-build-planner.md § Tech prioritization).
+///
+/// The total candidate count is unchanged: the bias only changes *which* techs
+/// are selected within the unchanged per-turn slot target, so it funds no extra
+/// research slot and cannot exceed the `researchPaperReserveShare` reservation.
+/// Returns the input unchanged when no candidate is a not-yet-unlocked
+/// civilian-gating tech. [techUnlocked] maps tech id → unlocked flag; a tech is
+/// treated as unlocked only when its entry is exactly `true`.
+List<ResearchOrder> _prioritizeCivilianGatingTechs(
+  List<ResearchOrder> candidates,
+  Map<String, bool>? techUnlocked,
+) {
+  final prioritized = <ResearchOrder>[];
+  final rest = <ResearchOrder>[];
+  for (final o in candidates) {
+    final unlocked = techUnlocked?[o.techId] == true;
+    if (!unlocked && isCivilianGatingTech(o.techId)) {
+      prioritized.add(o);
+    } else {
+      rest.add(o);
+    }
+  }
+  if (prioritized.isEmpty) return candidates;
+  return <ResearchOrder>[...prioritized, ...rest];
+}
+
 /// Full-AI research planner: every turn, fills empty research slots with
 /// distinct techs and assigns a uniform treasury-aware balanced funding tier.
 ///
@@ -359,12 +389,27 @@ ResearchPlannerResult runResearchPlannerWithDecision({
   final newCandidates = suggestions.where((o) => !isInProgress(o)).toList()
     ..sort((a, b) => a.slotIndex.compareTo(b.slotIndex));
 
+  // Refs #3793 AC6: when the civilian build planner is enabled, front-load
+  // research slots that target a civilian-gating tech the player has not yet
+  // unlocked (Merchant ⇐ merchant_companies, Rail Builder ⇐ early_steam_engine)
+  // so the AI researches toward the gates that expand the civilian build pool.
+  // Reorders within the existing slot pool only (count unchanged) → no extra
+  // funding, so the paper-reserve bound holds. Inert by default (the flag
+  // mirrors kCivilianBuildPlannerEnabled), keeping observer baselines unchanged.
+  // SPEC/ai/civilian-build-planner.md § Tech prioritization.
+  final orderedNewCandidates = ctx.civilianBuildPlannerEnabled
+      ? _prioritizeCivilianGatingTechs(
+          newCandidates,
+          ctx.view.player.techUnlocked,
+        )
+      : newCandidates;
+
   final slotTarget = _targetNewSlotCount(
     ctx: ctx,
     thresholds: thresholds,
-    emptyCount: newCandidates.length,
+    emptyCount: orderedNewCandidates.length,
   );
-  final selectedNew = newCandidates.take(slotTarget.target).toList();
+  final selectedNew = orderedNewCandidates.take(slotTarget.target).toList();
 
   if (mustKeep.isEmpty && selectedNew.isEmpty) {
     return ResearchPlannerResult(orders: ctx.orders);
