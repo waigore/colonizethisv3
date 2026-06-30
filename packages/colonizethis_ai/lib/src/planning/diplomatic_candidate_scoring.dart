@@ -29,6 +29,7 @@ part 'diplomatic_candidate_scoring_offer_peace.dart';
 part 'diplomatic_candidate_scoring_declare_war_context.dart';
 part 'diplomatic_candidate_scoring_declare_war.dart';
 part 'diplomatic_candidate_scoring_declare_war_bonuses.dart';
+part 'diplomatic_candidate_scoring_establish_overture.dart';
 
 final _log = packageLogger();
 
@@ -155,128 +156,19 @@ List<int> computeDiplomaticCandidateScores({
         );
         break;
       case DiplomaticOrderType.establishOverture:
-        {
-          if (shouldSuppressNewWorldColonialOrders(
-                snapshot: snapshot,
-                game: game,
-              ) &&
-              (isTribeFaction(game, o.targetFactionId) ||
-                  snapshot.colonial.preferredColonialTargetFactionIdsSorted
-                      .contains(o.targetFactionId) ||
-                  snapshot.colonial.invadableNewWorldProvinceIdsSorted.any(
-                    (pid) => provinceOwner[pid] == o.targetFactionId,
-                  ))) {
-            s = 0;
-            break;
-          }
-          if (_isDecisionOnCooldown(
-            game: game,
-            actorFactionId: nationId,
-            targetFactionId: o.targetFactionId,
-            eventTypes: const [
-              DiplomaticEventType.overtureAccepted,
-              DiplomaticEventType.overtureRejected,
-            ],
-            cooldownTurns: improveRelationsCooldownTurns,
-            currentTurn: currentTurn,
-          )) {
-            s = 0;
-            break;
-          }
-          final rel = snapshot.relations[o.targetFactionId];
-          final warDesire = warDesireForTarget(
-            o.targetFactionId,
-            rel?.score ?? 50,
-          );
-          var improveRelationsDesire = 100 - warDesire;
-          // Decay-aware skip (Refs #3758 S8; #3753 R9.3/R9.4). A below-neutral
-          // relation at peace drifts +relationDecayPerTurn toward equilibrium
-          // 50 on its own at the end of the Diplomacy phase unless an event
-          // changes the pair this turn (which blocks decay). When natural decay
-          // will do the improving, the AI discounts its improve-relations
-          // urgency by the share of the gap-to-equilibrium that one decay step
-          // closes, so a pair decay restores to neutral next turn is credited
-          // the full reduction while a deeply hostile pair is barely credited.
-          // SPEC/ai/phase-planner-architecture.md § Decay-aware overture.
-          if (rel != null &&
-              rel.atPeace &&
-              rel.score < relationScoreNeutral &&
-              !_pairHasScheduledRelationEventThisTurn(
-                sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-                nationId: nationId,
-                targetFactionId: o.targetFactionId,
-              )) {
-            final num gap = relationScoreNeutral - rel.score;
-            final num decayCovered = math.min(relationDecayPerTurn, gap);
-            final reduction =
-                (decayCovered / gap * kEstablishOvertureDecayCreditMax).round();
-            improveRelationsDesire -= reduction;
-          }
-          s += (improveRelationsDesire - 50);
-          s += (thresholds.allianceTendency - 50);
-          if (snapshot.colonial.preferredColonialTargetFactionIdsSorted
-              .contains(o.targetFactionId)) {
-            s += kEstablishOvertureColonialTribeBonus;
-          }
-          final ownsInvadableNw = snapshot
-              .colonial
-              .invadableNewWorldProvinceIdsSorted
-              .any((pid) => provinceOwner[pid] == o.targetFactionId);
-          if (ownsInvadableNw && isTribeFaction(game, o.targetFactionId)) {
-            s += kEstablishOvertureColonialInvadableOwnerBonus;
-          }
-          // FTP-competition incentive (Refs #3758 S10/R11; #3753 R7): when the
-          // active AI is not the current favoured trading partner (highest
-          // GP→seller relation) for a Minor/Tribe target, investing in the
-          // relationship can win the world-market sell-priority tiebreaker, so
-          // the overture is nudged upward. Gated to peace (or no-contact) so it
-          // never overrides a war state. SPEC/ai/phase-planner-architecture.md
-          // § Favoured-trading-partner competition overture.
-          if (isMinorOrTribeFaction(game, o.targetFactionId) &&
-              (rel == null || rel.atPeace) &&
-              _aiTrailsFavouredTradingPartner(
-                game: game,
-                nationId: nationId,
-                targetFactionId: o.targetFactionId,
-              )) {
-            s += kEstablishOvertureFtpCompetitionBonus;
-          }
-          // Embassy-kickback valuation (Refs #3758 R7/R8 / S6; #3753 R8.3):
-          // every embassy-holding GP earns `Q × P × relation% × 10%` on each
-          // world-market sale from a Minor/Tribe seller, with no purchased tile
-          // and no Merchant required (unlike the tile-owner full share valued by
-          // the overseas-profit-aware `purchase_land` arm). When the AI does not
-          // yet hold an embassy with a Minor/Tribe at peace, advancing the
-          // overture toward the embassy stage is valued by the seller's
-          // sales-volume proxy and the relation fraction, so a high-volume seller
-          // is worth an embassy even without a purchase-land intent.
-          // SPEC/ai/phase-planner-architecture.md § Embassy-kickback overture.
-          if (isMinorOrTribeFaction(game, o.targetFactionId) &&
-              (rel == null || rel.atPeace)) {
-            final overture = getOverture(game, nationId, o.targetFactionId);
-            if (overture == null || !overture.hasEmbassy) {
-              final volume = _sellerSellableResourceTileCount(
-                game: game,
-                sellerId: o.targetFactionId,
-                provinceOwner: provinceOwner,
-              );
-              if (volume > 0) {
-                final num relationFraction =
-                    (rel?.score ?? relationScoreNeutral) / 100;
-                final num volumeFraction = math.min(
-                  1.0,
-                  volume / kEstablishOvertureEmbassyKickbackVolumeFull,
-                );
-                s +=
-                    (kEstablishOvertureEmbassyKickbackBonusMax *
-                            relationFraction *
-                            volumeFraction)
-                        .round();
-              }
-            }
-          }
-          break;
-        }
+        s = _scoreEstablishOvertureDiplomaticOrder(
+          order: o,
+          nationId: nationId,
+          game: game,
+          snapshot: snapshot,
+          thresholds: thresholds,
+          provinceOwner: provinceOwner,
+          improveRelationsCooldownTurns: improveRelationsCooldownTurns,
+          currentTurn: currentTurn,
+          sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+          warDesireForTarget: warDesireForTarget,
+        );
+        break;
       default:
         break;
     }
