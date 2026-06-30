@@ -8,7 +8,7 @@
 
 The treasury planner is the AI's interface to the World Market. It decides what commodities to bid for, what surplus to sell, and how aggressively to use the market based on the GP's treasury health. It is a sub-planner of the economy planner and runs once per AI-controlled Great Power per turn.
 
-Diplomacy-driven trade adjustments: boycott-aware bid suppression (Refs #3758 S7/R12) **is implemented** and is normative in § Boycott-aware bid suppression below. Trade-deal-relation-boost-aware partner preference (Refs #3758 S9/R10) remains a **deferred follow-up slice** not yet implemented in this planner. The central diplomatic AI model is normative in [diplomacy-planner.md](diplomacy-planner.md). Market-side boycott enforcement (the authoritative trade block) already happens in deal matching ([world-market-resolution.md](../program/world-market-resolution.md)); the planner-side suppression below is a strategic efficiency layer that avoids spending the capped bid slots on commodities the planner can only source from a colony Tribe it is boycotted from.
+Diplomacy-driven trade adjustments: boycott-aware bid suppression (Refs #3758 S7/R12) **is implemented** and is normative in § Boycott-aware bid suppression below. Trade-deal-relation-boost-aware bid preference (Refs #3758 S9/R10) **is implemented** and is normative in § Trade-deal relation-boost-aware bid preference below. The central diplomatic AI model is normative in [diplomacy-planner.md](diplomacy-planner.md). Market-side boycott enforcement (the authoritative trade block) already happens in deal matching ([world-market-resolution.md](../program/world-market-resolution.md)); the planner-side suppression below is a strategic efficiency layer that avoids spending the capped bid slots on commodities the planner can only source from a colony Tribe it is boycotted from.
 
 The planner has two distinct surfaces:
 
@@ -1464,6 +1464,39 @@ When a colony-holding Great Power `A` has an active `BoycottState { gpId: A, tar
 - Given the same fixture but no `BoycottState` targeting `C`, when `runTreasuryPlanner` runs for `C` with a deficit for `X`, then a `bid` for `X` is emitted (suppression does not apply without an active boycott against `C`).
 - Given a `BoycottState { gpId: A, targetGpId: C }` and a `ColonyState` of `A`, when `tileMapByRegion` is omitted, then `boycottedColonySellableCommodityIds` returns the empty set and no bid is suppressed (unit-test path unaffected).
 - Given two `runTreasuryPlanner` invocations with identical inputs including identical boycott/colony state, when both runs complete, then they return identical `List<TradeOrder>` outputs (determinism preserved).
+
+## Trade-deal relation-boost-aware bid preference (Refs #3758 S9/R10)
+
+After #3753 R10, each faction pair that completes at least one World-Market trade deal involving a Great Power gains a relation boost of `tradeDealRelationBoostBase + tradeDealRelationBoostPerSubsidyPercent × S + (E ? tradeDealRelationBoostEmbassyBonus : 0)` (`+2.0 + 0.2×S + 0.4×E`, `SPEC/game/diplomacy.md` § Relation Model — Trade-deal relation boost). A strategic AI prefers, among otherwise-admissible buy candidates, the commodity sold by the peace-time faction it most wants to improve relations with, so a completed deal earns that boost. `runTreasuryPlanner` resolves a single **preferred bid commodity** and passes it as the existing `preferCommodityId` ordering hint to the bid-prioritisation pass, so that commodity is admitted first under the bid-type / cargo / treasury caps.
+
+This changes only the **order** in which already-computed bids are admitted under the caps. It never adds a bid, changes a bid quantity, changes a bid priority tier, or emits an order the planner would not otherwise emit. The lock-recovery `preferCommodityId` hint (liquidity-buyer grain) takes precedence and is unchanged.
+
+### Inputs and computation
+
+The preferred bid commodity is `null` (no-op) unless **all** hold:
+
+1. A perception `snapshot` is present; the relation source is the PlayerView-derived `snapshot.relations`, keeping the preference PlayerView-safe.
+2. The planner is **not** in any lock-recovery special state (not a liquidity buyer, affluent designated buyer, lock-recovery seller, or lock-recovery-urgent buyer) — those tuned paths own the `preferCommodityId` hint and are unchanged.
+3. At least one **candidate partner** qualifies. A faction `f` qualifies when `snapshot.relations[f]` exists, is `atPeace`, and has `score < relationScoreNeutral` (50 — the AI wants to improve a below-neutral relation); **and** `f` holds at least one standing carry-forward **offer** (`WorldMarketState.carryForwardOffersByFactionId[f]`) whose `commodityId` is in the planner's bid `need` map (a deal with `f` for that commodity is plausible from data available at planning time).
+
+For each qualifying partner `f`, the planner computes the trade-deal boost a completed deal with `f` would earn:
+
+`boost(f) = tradeDealRelationBoostBase + tradeDealRelationBoostPerSubsidyPercent × S(f) + (E(f) ? tradeDealRelationBoostEmbassyBonus : 0)`
+
+where `S(f)` is the subsidy percentage the planning GP grants `f` (`Game.subsidyStates` with `payerId == planner` and `targetId == f`; `0` when none — subsidies are GP→Minor/Tribe only), and `E(f)` is true when an Embassy is in effect with `f` (a GP partner always carries the auto-embassy per `SPEC/game/diplomacy.md` § GP–GP automatic embassies; a Minor/Tribe partner when `hasEmbassyOverture`).
+
+Selection is deterministic: pick the qualifying partner with the highest `boost(f)`, breaking ties by ascending faction id; among that partner's qualifying commodities (offered and needed), pick the lowest commodity id. That commodity id is the preferred bid commodity.
+
+### Determinism and budget
+
+Gated behind the existence of a below-neutral at-peace partner that holds a standing matching offer; on the common path (no such partner — every standing offer is from a war or neutral/friendly faction, or turn 1 before any carry-forward offers exist) the computation returns `null` and the emitted orders are byte-identical to the prior behaviour. The scan is linear in `snapshot.relations × that partner's standing offers`, runs once per planner invocation, and is deterministic for fixed inputs.
+
+### Acceptance criteria
+
+- Given a binding bid-type cap (more deficits than slots) and a perception snapshot in which the planning GP is at peace with faction `B` at relation score `40.0` and faction `C` at relation score `50.0` (neutral), `B` holds a standing carry-forward offer for needed commodity `X` that the default order would drop at the cap and `C` holds one for needed commodity `Y` the default order admits, when `runTreasuryPlanner` runs, then a bid for `X` is emitted (the below-neutral partner `B` is preferred and admitted ahead of other deficits), whereas without the snapshot `X` is dropped at the cap.
+- Given a binding bid-type cap and a perception snapshot in which the planning GP is at peace with Minor/Tribe `D` at relation score `40.0` (granted a 20% subsidy and holding an Embassy, so `boost(D) = 6.4`) and Minor/Tribe `B` at relation score `40.0` (no subsidy, no Embassy, so `boost(B) = 2.0`), `D` holds a standing offer for needed commodity `X` and `B` holds one for needed commodity `Z` (both dropped by the default order at the cap), when `runTreasuryPlanner` runs, then a bid for `X` is emitted while `Z` is not (the higher-boost partner `D` is preferred over `B`).
+- Given a perception snapshot with no at-peace below-neutral partner holding a standing offer for a needed commodity, when `runTreasuryPlanner` runs, then the emitted orders are identical to the prior (no-preference) behaviour (no-op on the common path).
+- Given two `runTreasuryPlanner` invocations with identical inputs including identical relation / subsidy / overture / carry-forward-offer state, when both complete, then they return identical `List<TradeOrder>` outputs (determinism preserved).
 
 ## Out of scope for this SPEC slice
 

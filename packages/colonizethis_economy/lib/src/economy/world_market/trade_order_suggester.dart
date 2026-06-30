@@ -39,6 +39,7 @@ class TradeSuggestionContext extends WorldMarketContextBase {
     this.resourceRules,
     this.offerPriority = defaultOfferPriority,
     this.bidPriority = defaultBidPriority,
+    this.preferredBidCommodityId,
   });
 
   /// Default offer priority used when the caller does not specify one.
@@ -71,6 +72,16 @@ class TradeSuggestionContext extends WorldMarketContextBase {
 
   /// Catalog fallback prices when [worldMarketState] lacks an entry.
   final data.ResourceRules? resourceRules;
+
+  /// Optional ordering hint: when set and present among the candidate
+  /// commodities, this commodity is considered **first** (ahead of the default
+  /// alphabetical order) so a capped bid set ([bidTypeCap]) admits it before
+  /// other deficits. Used by the AI treasury planner to steer a bid toward a
+  /// faction whose completed deal earns a trade-deal relation boost
+  /// (Refs #3758 S9/R10; SPEC/ai/treasury-planner.md
+  /// § Trade-deal relation-boost-aware bid preference). `null` (the default)
+  /// preserves the legacy alphabetical ordering exactly.
+  final CommodityId? preferredBidCommodityId;
 
   data.ResourceRules get _resourceRules =>
       resourceRules ?? data.ResourceRules.defaultRules;
@@ -117,8 +128,14 @@ class TradeOrderSuggester {
     if (candidateCommodityIds.isEmpty) {
       return TradeSuggestionResult.empty;
     }
-    final orderedCommodityIds = candidateCommodityIds.toList(growable: false)
-      ..sort();
+    final sortedCommodityIds = candidateCommodityIds.toList()..sort();
+    // Refs #3758 S9/R10: when a preferred bid commodity is supplied and present,
+    // move it to the front so a capped bid set admits it ahead of other
+    // deficits. `null`/absent leaves the legacy alphabetical order untouched.
+    final orderedCommodityIds = _withPreferredCommodityFirst(
+      sortedCommodityIds,
+      context.preferredBidCommodityId,
+    );
 
     final offers = <TradeOrder>[];
     final bids = <TradeOrder>[];
@@ -187,5 +204,21 @@ class TradeOrderSuggester {
     }
 
     return TradeSuggestionResult(offers: offers, bids: bids);
+  }
+
+  /// Returns [sortedCommodityIds] with [preferred] moved to the front when it is
+  /// non-null and present; otherwise returns the list unchanged. Deterministic.
+  static List<CommodityId> _withPreferredCommodityFirst(
+    List<CommodityId> sortedCommodityIds,
+    CommodityId? preferred,
+  ) {
+    if (preferred == null || !sortedCommodityIds.contains(preferred)) {
+      return sortedCommodityIds;
+    }
+    return <CommodityId>[
+      preferred,
+      for (final id in sortedCommodityIds)
+        if (id != preferred) id,
+    ];
   }
 }
