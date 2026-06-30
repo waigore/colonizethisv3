@@ -45,9 +45,10 @@ class PlannerContext {
 
   /// When true, the economy build pass enumerates and scores civilian
   /// `BuildUnitOrder` candidates in the weighted build pool (Refs #3793 live
-  /// wiring). Defaults to [kCivilianBuildPlannerEnabled] (`false`) so AI build
-  /// behaviour and observer-determinism baselines are unchanged until the flag
-  /// is flipped. See SPEC/ai/civilian-build-planner.md § Live economy wiring.
+  /// wiring). Defaults to [kCivilianBuildPlannerEnabled] (`true`) so the AI
+  /// replaces and expands its civilian workforce; set `false` to pin the
+  /// pre-#3793 military+naval path. See SPEC/ai/civilian-build-planner.md
+  /// § Live economy wiring.
   final bool civilianBuildPlannerEnabled;
   final int currentTurn;
 
