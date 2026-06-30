@@ -432,6 +432,49 @@ Set<String> boycottBlockedTradePairKeys(Game game) {
   return keys;
 }
 
+/// Resolves the **favoured trading partner** of a Minor Nation or Tribe
+/// [minorOrTribeId] (Refs #3753 R7.1), or `null` when it is undefined.
+///
+/// This is a deterministic read-only lookup, distinct from the bilateral GP–GP
+/// Favored Trading Partner agreement ([hasFtpPartnership] / `ftpPartnershipKeys`):
+///
+/// - If [minorOrTribeId] is a **colony** Tribe (a [ColonyState] with
+///   `tribeId == minorOrTribeId` exists), its **suzerain** (`colonyOfGpId`) is
+///   the favoured partner regardless of any other Great Power's relation score.
+/// - Otherwise (independent Tribe or Minor Nation), the Great Power with the
+///   **highest decimal relation score** ([DiplomacyRelation.score]) toward
+///   [minorOrTribeId] among all Great Powers ([Game.players]) that hold a
+///   relation with it. Ties at the score break deterministically by **ascending
+///   faction id**.
+/// - When no Great Power holds a [DiplomacyRelation] with [minorOrTribeId] (and
+///   it is not a colony), the result is `null` (undefined).
+///
+/// The favoured trading partner, the world-market sell-priority relation
+/// tiebreaker (R7.3), first right of refusal (R7.2), and overseas profit-share
+/// (R8) are independent concepts. SPEC/game/diplomacy.md § Favoured trading
+/// partner (Refs #3753 R7.1).
+String? favouredTradingPartner(Game game, String minorOrTribeId) {
+  for (final colony in game.colonyStates) {
+    if (colony.tribeId == minorOrTribeId) return colony.colonyOfGpId;
+  }
+  String? best;
+  num? bestScore;
+  for (final player in game.players) {
+    final rel = getRelation(game, player.id, minorOrTribeId);
+    if (rel == null) continue;
+    final score = rel.score;
+    final isBetter =
+        bestScore == null ||
+        score > bestScore ||
+        (score == bestScore && player.id.compareTo(best!) < 0);
+    if (isBetter) {
+      bestScore = score;
+      best = player.id;
+    }
+  }
+  return best;
+}
+
 /// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.
 /// Used by move validator for GP and Minor/Tribe attack checks. SPEC/program/orders.md.
 bool canAttackWithWarOrDeclaring(
