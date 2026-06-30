@@ -7,6 +7,47 @@ import '../util/ai_random_utils.dart';
 
 final _log = packageLogger();
 
+/// Live-economy enablement flag for the civilian build planner (Refs #3793
+/// live-wiring slice, SPEC/ai/civilian-build-planner.md § Live economy wiring).
+///
+/// Mirrors [kGrowthStagePlannerEnabled]: defaults `false` so the production
+/// economy build pass and the observer-determinism baselines stay byte-identical
+/// to the pre-#3793 military+naval path. Tests opt in by threading
+/// `civilianBuildPlannerEnabled: true` through [runDomainPlannersWithOutcome] /
+/// [PlannerContext].
+const bool kCivilianBuildPlannerEnabled = false;
+
+/// Builds the per-turn [CivilianBuildScoringInput] for the live economy build
+/// pass (Refs #3793 live-wiring slice).
+///
+/// Returns `null` when [PlannerContext.civilianBuildPlannerEnabled] is `false`,
+/// keeping `pickBuildOrder` inert (the civilian branch is skipped and
+/// military/naval scoring is byte-identical to the pre-wiring path). When
+/// enabled it tallies the active player's owned civilian units per type from
+/// [PlannerContext.view] (`ownUnitsById`, filtered to [CivilianEconomyCatalog]
+/// types; types with zero owned units are absent from the map) and carries the
+/// active [phaseName] and the Spy [spyDemand] signal so the additive civilian
+/// scoring branch can apply the min-cap floor, replacement urgency, phase
+/// multiplier, and Spy demand boost.
+CivilianBuildScoringInput? buildCivilianBuildScoringInput({
+  required PlannerContext ctx,
+  required String phaseName,
+  required bool spyDemand,
+}) {
+  if (!ctx.civilianBuildPlannerEnabled) return null;
+  final counts = <String, int>{};
+  for (final unit in ctx.view.ownUnitsById.values) {
+    if (CivilianEconomyCatalog.byId.containsKey(unit.type)) {
+      counts[unit.type] = (counts[unit.type] ?? 0) + 1;
+    }
+  }
+  return CivilianBuildScoringInput(
+    currentCountByType: counts,
+    phaseName: phaseName,
+    spyDemand: spyDemand,
+  );
+}
+
 /// Per-invocation inputs for [pickBuildOrder] (Refs #2521 planner parameter cap).
 ///
 /// Soft-phase NW acquisition wiring (Refs #2847 Phase 3): when

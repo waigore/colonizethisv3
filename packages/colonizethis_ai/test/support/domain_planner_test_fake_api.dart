@@ -15,10 +15,18 @@ class FakeOrderSuggestionAPIForDomainPlannerTests
     this.diplomatic = const [],
     this.armyMove = const [],
     this.recruitWorker = const [],
+    this.civilianBuild = const [],
   });
 
   final List<WorkOrder> work;
   final List<BuildUnitOrder> build;
+
+  /// Extra civilian build candidates appended only when `suggestBuildOrders` is
+  /// called with `includeCivilianBuilds: true` (Refs #3793 live-wiring tests).
+  /// Mirrors the real suggestion layer's opt-in civilian enumeration so the
+  /// orchestrator's `includeCivilianBuilds: ctx.civilianBuildPlannerEnabled`
+  /// plumbing can be exercised end to end.
+  final List<BuildUnitOrder> civilianBuild;
   final List<MoveOrder> move;
   final List<ResearchOrder> research;
   final List<NavalMoveOrder> navalMove;
@@ -59,7 +67,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests
     MapTopology topology,
     Orders currentOrders, {
     bool includeCivilianBuilds = false,
-  }) => build;
+  }) => includeCivilianBuilds ? [...build, ...civilianBuild] : build;
 
   @override
   List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
