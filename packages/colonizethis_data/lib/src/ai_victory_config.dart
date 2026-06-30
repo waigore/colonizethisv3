@@ -504,6 +504,139 @@ const int kGrowthStageInfraFeedstockScoreBoost = 520;
 /// SPEC/ai/civilian-work-planner.md.
 const int kFeedstockMineralProspectScoreBoost = 600;
 
+/// Baseline Full AI work score for any valid Rail Builder `build_rail`
+/// candidate, ensuring every rail candidate is scored non-zero rather than
+/// falling through to the lexicographic default (Refs #3794 § Rail Builder
+/// civilian-work scoring, AC6). Sized below the contextual bonuses so context
+/// differentiates otherwise-equal candidates.
+const int kBuildRailBaseWorkScore = 100;
+
+/// Extra Rail Builder `build_rail` score when the target road tile carries a
+/// resource (proxy for province resource output, the cheap per-tile signal the
+/// scorer uses instead of per-tile path-finding; Refs #3794 AC6).
+const int kBuildRailResourceOutputBonus = 200;
+
+/// Extra Rail Builder `build_rail` score when the target road tile lies in the
+/// player's capital province (capital-connector proxy; Refs #3794 AC6).
+const int kBuildRailCapitalConnectorBonus = 150;
+
+/// Extra Rail Builder `build_rail` score when the target road tile is in the
+/// New World region (colonial rail bias; Refs #3794 AC6).
+const int kBuildRailNewWorldBonus = 80;
+
+/// Per-target-type baseline score for an Engineer `build_road` candidate in the
+/// unified Engineer scored pool (replaces the lexicographic fallback; Refs #3794
+/// § Engineer). Per-target base weights express the relative priority of the
+/// three Engineer targets; contextual bonuses then differentiate candidates of
+/// the same target. Roads default highest (logistics backbone).
+const int kEngineerBuildRoadBaseWorkScore = 120;
+
+/// Per-target-type baseline score for an Engineer `build_port` candidate in the
+/// unified Engineer scored pool (Refs #3794 § Engineer).
+const int kEngineerBuildPortBaseWorkScore = 110;
+
+/// Per-target-type baseline score for an Engineer `build_fort` candidate in the
+/// unified Engineer scored pool (Refs #3794 § Engineer).
+const int kEngineerBuildFortBaseWorkScore = 100;
+
+/// Extra Engineer `build_road` score when the target tile carries a resource
+/// (resource-connectivity proxy — the cheap per-tile signal the scorer uses
+/// instead of per-tile path-finding; Refs #3794 § Engineer).
+const int kEngineerRoadResourceConnectivityBonus = 200;
+
+/// Extra Engineer `build_road` score when the target tile lies in the player's
+/// capital province (capital-logistics proxy; Refs #3794 § Engineer).
+const int kEngineerRoadCapitalLogisticsBonus = 150;
+
+/// Extra Engineer `build_port` score when the target tile carries a resource
+/// (high-value extraction proxy; Refs #3794 § Engineer).
+const int kEngineerPortResourceExtractionBonus = 180;
+
+/// Extra Engineer `build_port` score when the target tile is in the New World
+/// region (colonial coastal bias proxy; Refs #3794 § Engineer).
+const int kEngineerPortNewWorldCoastalBonus = 120;
+
+/// Extra Engineer `build_fort` score when the target tile lies in the player's
+/// capital province (capital-defense proxy; Refs #3794 § Engineer).
+const int kEngineerFortCapitalDefenseBonus = 160;
+
+/// Extra Engineer `build_fort` score when the target tile is in the New World
+/// region (colonial-frontier border proxy; Refs #3794 § Engineer).
+const int kEngineerFortNewWorldBorderBonus = 100;
+
+/// Per-target-type baseline score for a Builder `upgrade_town` candidate in the
+/// unified Builder scored pool (`build_improvement` + `upgrade_town`; Refs #3794
+/// § Builder). Sized below [kBuildImprovementExtractableResourceScore] so a
+/// genuine unimproved resource extraction still outranks a bare town upgrade,
+/// yet above the degenerate `build_improvement` sentinel scores (1 = already
+/// improved, 2 = no resource) so a town upgrade competes when no high-value
+/// extraction exists. Contextual bonuses then differentiate town upgrades.
+const int kUpgradeTownBaseWorkScore = 300;
+
+/// Extra Builder `upgrade_town` score when the target town tile carries a
+/// resource (town resource-value proxy — the cheap per-tile signal the scorer
+/// uses instead of per-province aggregation; Refs #3794 § Builder).
+const int kUpgradeTownResourceValueBonus = 200;
+
+/// Extra Builder `upgrade_town` score when the target town tile is in the New
+/// World region (front-line / colonial-frontier proximity proxy; Refs #3794
+/// § Builder).
+const int kUpgradeTownFrontlineBonus = 150;
+
+/// Extra Builder `upgrade_town` score when the target town tile has the lowest
+/// current development level (improvement level `0`), so the AI develops the
+/// least-developed towns first (Refs #3794 § Builder).
+const int kUpgradeTownLowDevBonus = 120;
+
+/// Baseline Full AI work score for any valid Spy `steal_tech` candidate in the
+/// unified Spy scored pool (`steal_tech` + `counter_spy`; Refs #3794 § Spy).
+/// Sized so a `steal_tech` candidate is non-zero and the phase bonus, not the
+/// alphabetical target order, decides cross-type preference.
+const int kSpyStealTechBaseWorkScore = 200;
+
+/// Per-tech Spy `steal_tech` bonus for each tech the rival GP has unlocked that
+/// the player lacks (tech-deficit proxy; deficit count capped at 60 for
+/// determinism/budget; Refs #3794 § Spy).
+const int kSpyStealTechTechDeficitWeight = 10;
+
+/// Extra Spy `steal_tech` score when the player is at war with the rival GP, or
+/// the decimal relation score is in the 0-25 Hostile band (worse relations →
+/// higher score; scores are `[0, 100]` with 50 neutral; Refs #3794 § Spy).
+const int kSpyStealTechHostileRelationsBonus = 150;
+
+/// Extra Spy `steal_tech` score when the rival GP's capital province is in the
+/// same region as the Spy (cheap proximity proxy instead of path-finding;
+/// Refs #3794 § Spy).
+const int kSpyStealTechProximityBonus = 90;
+
+/// Baseline Full AI work score for any valid Spy `counter_spy` candidate in the
+/// unified Spy scored pool (Refs #3794 § Spy).
+const int kSpyCounterSpyBaseWorkScore = 200;
+
+/// Extra Spy `counter_spy` score when a foreign-owned Spy occupies the candidate
+/// province (known enemy-spy-presence proxy; Refs #3794 § Spy).
+const int kSpyCounterSpyEnemySpyPresenceBonus = 200;
+
+/// Extra Spy `counter_spy` score when the candidate province is the player's
+/// capital province (capital-protection proxy; Refs #3794 § Spy).
+const int kSpyCounterSpyCapitalBonus = 120;
+
+/// Extra Spy `counter_spy` score when the candidate province is in the New World
+/// region (frontier/border proxy; Refs #3794 § Spy).
+const int kSpyCounterSpyBorderBonus = 90;
+
+/// Phase bonus added to Spy `steal_tech` scores outside the DEVELOP phase
+/// (EXPAND / COLONIAL / COLONIAL-lite), sized to dominate the contextual bonuses
+/// of `counter_spy` so the phase preference is decisive while context still
+/// differentiates same-target candidates (Refs #3794 § Spy, AC23).
+const int kSpyPhaseStealTechBonus = 2000;
+
+/// Phase bonus added to Spy `counter_spy` scores in the DEVELOP phase, sized to
+/// dominate the contextual bonuses of `steal_tech` so the phase preference is
+/// decisive while context still differentiates same-target candidates
+/// (Refs #3794 § Spy, AC24).
+const int kSpyPhaseCounterSpyBonus = 2000;
+
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 12;
 

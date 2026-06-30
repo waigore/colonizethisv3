@@ -208,6 +208,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
           feedstockPreference.fabricFeedstockResourceIds,
       growthStageInfraFeedstockResourceIds:
           feedstockPreference.infraFeedstockResourceIds,
+      spyDevelopPhase: developPhase,
     );
     for (final w in selection.workOrders) {
       final unitType = ctx.view.ownUnitsById[w.unitId]?.type ?? 'unknown';
