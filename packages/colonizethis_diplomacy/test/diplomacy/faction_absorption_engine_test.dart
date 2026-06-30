@@ -169,6 +169,104 @@ void main() {
     );
 
     test(
+      'great power absorption clears colonies and boycotts of the removed GP',
+      () {
+        // gp1 absorbs gp2 (gp2 is removed). gp2 is the suzerain of colony
+        // tribe `tA` and issuer/target of boycotts; a colony of gp1 and a
+        // boycott between unrelated GPs must survive. Refs #3753 R5.5 / R6.4.
+        final game =
+            TestFixtures.twoPlayerGame(
+              player1: const Player(
+                id: 'gp1',
+                displayName: 'A',
+                isHuman: true,
+                treasury: 100000,
+              ),
+              player2: const Player(
+                id: 'gp2',
+                displayName: 'B',
+                isHuman: false,
+                treasury: 0,
+              ),
+            ).copyWith(
+              tribes: const [
+                Tribe(id: 'tA', displayName: 'Colony of gp2'),
+                Tribe(id: 'tB', displayName: 'Colony of gp1'),
+              ],
+              colonyStates: const [
+                ColonyState(tribeId: 'tA', colonyOfGpId: 'gp2', sinceTurn: 2),
+                ColonyState(tribeId: 'tB', colonyOfGpId: 'gp1', sinceTurn: 3),
+              ],
+              boycottStates: const [
+                // Issued by the removed GP.
+                BoycottState(gpId: 'gp2', targetGpId: 'gp1', sinceTurn: 4),
+                // Directed at the removed GP.
+                BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 5),
+                // Unrelated to gp2; must survive.
+                BoycottState(gpId: 'gp1', targetGpId: 'gp3', sinceTurn: 6),
+              ],
+            );
+
+        final next = FactionAbsorptionEngine.absorbGreatPowerIntoGp(
+          game,
+          'gp1',
+          'gp2',
+        );
+
+        expect(next.players.map((p) => p.id), ['gp1']);
+        // Colony of the removed GP is dropped; colony of the absorber survives.
+        expect(next.colonyStates.map((c) => c.tribeId), ['tB']);
+        expect(next.colonyStates.single.colonyOfGpId, 'gp1');
+        expect(next.tribes.map((t) => t.id), containsAll(['tA', 'tB']));
+        // Boycotts touching the removed GP (either side) are cleared; the
+        // unrelated boycott survives.
+        expect(next.boycottStates, hasLength(1));
+        expect(next.boycottStates.single.gpId, 'gp1');
+        expect(next.boycottStates.single.targetGpId, 'gp3');
+      },
+    );
+
+    test(
+      'great power absorption leaves colony/boycott state untouched when removed GP holds none',
+      () {
+        final game =
+            TestFixtures.twoPlayerGame(
+              player1: const Player(
+                id: 'gp1',
+                displayName: 'A',
+                isHuman: true,
+                treasury: 100000,
+              ),
+              player2: const Player(
+                id: 'gp2',
+                displayName: 'B',
+                isHuman: false,
+                treasury: 0,
+              ),
+            ).copyWith(
+              tribes: const [Tribe(id: 'tB', displayName: 'Colony of gp1')],
+              colonyStates: const [
+                ColonyState(tribeId: 'tB', colonyOfGpId: 'gp1', sinceTurn: 3),
+              ],
+              boycottStates: const [
+                BoycottState(gpId: 'gp1', targetGpId: 'gp3', sinceTurn: 6),
+              ],
+            );
+
+        final next = FactionAbsorptionEngine.absorbGreatPowerIntoGp(
+          game,
+          'gp1',
+          'gp2',
+        );
+
+        expect(next.colonyStates, hasLength(1));
+        expect(next.colonyStates.single.colonyOfGpId, 'gp1');
+        expect(next.boycottStates, hasLength(1));
+        expect(next.boycottStates.single.targetGpId, 'gp3');
+      },
+    );
+
+    test(
       'markTribeAsColony deducts cost, records ColonyState, keeps tribe + provinces',
       () {
         const ow = 'oldWorld';

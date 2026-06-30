@@ -63,6 +63,14 @@ const String kRecruitmentRejectMilitaryBuildSuppressed =
 const String kRecruitmentRejectMilitaryFabricReservation =
     'Military fabric reservation';
 
+/// Stable rejection reason: a paper-costing candidate (trained-worker recruit
+/// or civilian build) is dropped because emitting it would push the shared
+/// paper budget — current paper minus the research reservation
+/// (`researchReservedPaper`) minus paper already committed by pending orders
+/// and accepted emissions earlier in this plan — below `0`
+/// (Refs #3793 AC7 — shared paper budget ledger).
+const String kRecruitmentRejectPaperBudget = 'Paper budget exceeded';
+
 /// One dropped candidate from [runRecruitmentPlanner]. Refs #2692 S8.
 class RejectedRecruitmentSuggestion {
   const RejectedRecruitmentSuggestion({
@@ -116,6 +124,15 @@ class RejectedRecruitmentSuggestion {
 ///   first; EXPAND / COLONIAL-lite / COLONIAL process build candidates first.
 ///   Within each step, candidates are iterated in suggestion-API order
 ///   (deterministic per SPEC/program/order-suggestions.md).
+/// - Shared paper budget (Refs #3793 AC7, design decision #11): when
+///   [paperBudgetLedgerEnabled] is `true`, the planner reserves research paper
+///   up to `researchReservedPaper(currentPaper)` then allocates the remainder
+///   via the same phase emit order against a running ledger. A paper-costing
+///   candidate (trained-worker recruit or — when [includeCivilianBuilds] is
+///   `true` — civilian build) is dropped with reason
+///   [kRecruitmentRejectPaperBudget] when its paper cost would push the
+///   remaining budget below `0`. When `false` (the default) the planner emits
+///   no paper checks and behaves byte-identically to the pre-#3793 path.
 RecruitmentPlan runRecruitmentPlanner({
   required Game game,
   required PlayerView view,
@@ -123,10 +140,12 @@ RecruitmentPlan runRecruitmentPlanner({
   required AIConfig config,
   required AISeedBundle seeds,
   required ObserverGoalPhase goalPhase,
-  required   OrderSuggestionAPI suggestionApi,
+  required OrderSuggestionAPI suggestionApi,
   MapTopology? topology,
   EconomyPlan? economyPlanHint,
   bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+  bool paperBudgetLedgerEnabled = false,
+  bool includeCivilianBuilds = false,
   AIWorldSnapshot? snapshot,
 }) {
   final playerId = view.playerId;
@@ -141,7 +160,8 @@ RecruitmentPlan runRecruitmentPlanner({
   final growthStage = growthStagePlannerEnabled
       ? GrowthStage.compute(game, playerId, snapshot: snapshot)
       : null;
-  final suppressMilitaryBuilds = growthStage != null &&
+  final suppressMilitaryBuilds =
+      growthStage != null &&
       growthStage.militaryPriority < kMilitaryBuildSuppressionThreshold;
 
   final recruitCandidates = suggestionApi.suggestRecruitWorkerOrders(
@@ -155,13 +175,18 @@ RecruitmentPlan runRecruitmentPlanner({
     game,
     mapTopology,
     currentOrders,
+    // Refs #3793 AC7: civilian build candidates join the shared paper ledger
+    // only when explicitly opted in; default `false` keeps the candidate pool
+    // byte-identical to the military+naval path.
+    includeCivilianBuilds: includeCivilianBuilds,
   );
 
   // Refs #3371 AC13: a military-ready GP reserves its scarce fabric for the
   // regiment build instead of draining it on the fabric-costing peasant-recruit
   // action. Only meaningful when a fabric-consuming military/naval build is
   // actually on offer this turn.
-  final reserveFabricForMilitary = growthStage != null &&
+  final reserveFabricForMilitary =
+      growthStage != null &&
       !suppressMilitaryBuilds &&
       buildCandidates.any(_buildConsumesPeasant) &&
       growthStageReservesFabricForMilitary(
@@ -170,6 +195,19 @@ RecruitmentPlan runRecruitmentPlanner({
         fabricHeld: player.stockpile.quantityOf(CommodityCatalog.fabric.id),
         cheapestRegimentTreasuryCost: cheapestRegimentBuildTreasuryCost(),
       );
+
+  // Refs #3793 AC7: the shared paper budget the ledger allocates to
+  // paper-costing candidates is the GP's current paper minus the research
+  // reservation minus paper already committed by pending orders. Floored at 0
+  // and only consulted when the ledger is enabled.
+  final currentPaper = player.stockpile.quantityOf(CommodityCatalog.paper.id);
+  final paperBudgetRaw =
+      currentPaper -
+      researchReservedPaper(currentPaper) -
+      _pendingPaperConsumes(currentOrders, playerId);
+  final paperBudget = !paperBudgetLedgerEnabled || paperBudgetRaw < 0
+      ? 0
+      : paperBudgetRaw;
 
   final state = _PlanState(
     workerPool: player.workerPool,
@@ -183,6 +221,8 @@ RecruitmentPlan runRecruitmentPlanner({
       player: player,
       economyPlanHint: economyPlanHint,
     ),
+    paperBudgetLedgerEnabled: paperBudgetLedgerEnabled,
+    paperBudget: paperBudget,
   );
 
   final recruitOrders = <RecruitWorkerOrder>[];
@@ -216,6 +256,13 @@ RecruitmentPlan runRecruitmentPlanner({
           rejected.add(
             RejectedRecruitmentSuggestion(
               reason: kRecruitmentRejectSoftLuxuryCap,
+              targetTier: candidate.targetTier.name,
+            ),
+          );
+        case _CandidateOutcome.rejectedPaperBudget:
+          rejected.add(
+            RejectedRecruitmentSuggestion(
+              reason: kRecruitmentRejectPaperBudget,
               targetTier: candidate.targetTier.name,
             ),
           );
@@ -254,6 +301,13 @@ RecruitmentPlan runRecruitmentPlanner({
               targetTier: candidate.unitType,
             ),
           );
+        case _CandidateOutcome.rejectedPaperBudget:
+          rejected.add(
+            RejectedRecruitmentSuggestion(
+              reason: kRecruitmentRejectPaperBudget,
+              targetTier: candidate.unitType,
+            ),
+          );
       }
     }
   }
@@ -284,10 +338,12 @@ enum _CandidateOutcome {
   accepted,
   rejectedInsufficientWorkers,
   rejectedSoftCap,
+  rejectedPaperBudget,
 }
 
 /// Mutable per-plan state: tracks peasant ledger plus projected per-tier
-/// emissions for the soft luxury cap rule.
+/// emissions for the soft luxury cap rule, plus the shared paper budget ledger
+/// (Refs #3793 AC7).
 class _PlanState {
   _PlanState({
     required this.workerPool,
@@ -295,6 +351,8 @@ class _PlanState {
     required this.pendingPeasantConsumes,
     required this.sustainable,
     required this.inDeficit,
+    required this.paperBudgetLedgerEnabled,
+    required this.paperBudget,
   });
 
   final WorkerPool workerPool;
@@ -303,17 +361,31 @@ class _PlanState {
   final Map<WorkerTier, int> sustainable;
   final bool inDeficit;
 
+  /// Refs #3793 AC7: when `false`, no paper checks apply (legacy behaviour).
+  final bool paperBudgetLedgerEnabled;
+
+  /// Refs #3793 AC7: paper available to worker-training and civilian-build
+  /// candidates after the research reservation and pending commitments.
+  final int paperBudget;
+
   int _emittedPeasantConsumes = 0;
+  int _emittedPaperSpend = 0;
   final Map<WorkerTier, int> _emittedTrainedCount = <WorkerTier, int>{};
 
   int availablePeasants() =>
-      workerPool.peasants -
-      pendingPeasantConsumes -
-      _emittedPeasantConsumes;
+      workerPool.peasants - pendingPeasantConsumes - _emittedPeasantConsumes;
 
   int projectedTrainedCount(WorkerTier tier) =>
-      _currentTierCount(workerPool, tier) +
-      (_emittedTrainedCount[tier] ?? 0);
+      _currentTierCount(workerPool, tier) + (_emittedTrainedCount[tier] ?? 0);
+
+  /// Paper still available to allocate after emissions accepted earlier in
+  /// this plan (Refs #3793 AC7).
+  int remainingPaper() => paperBudget - _emittedPaperSpend;
+
+  /// True when [paperCost] units of paper would overrun the remaining budget
+  /// while the ledger is active (Refs #3793 AC7).
+  bool paperOverBudget(int paperCost) =>
+      paperBudgetLedgerEnabled && paperCost > 0 && paperCost > remainingPaper();
 
   void applyRecruit(RecruitWorkerOrder order) {
     final row = WorkerActionEconomyCatalog.forTier(order.targetTier);
@@ -324,11 +396,17 @@ class _PlanState {
       _emittedTrainedCount[order.targetTier] =
           (_emittedTrainedCount[order.targetTier] ?? 0) + 1;
     }
+    if (paperBudgetLedgerEnabled) {
+      _emittedPaperSpend += _recruitPaperCost(order);
+    }
   }
 
   void applyBuild(BuildUnitOrder order) {
     if (_buildConsumesPeasant(order)) {
       _emittedPeasantConsumes += 1;
+    }
+    if (paperBudgetLedgerEnabled) {
+      _emittedPaperSpend += _buildPaperCost(order);
     }
   }
 }
@@ -337,6 +415,12 @@ _CandidateOutcome _evaluateRecruitCandidate(
   RecruitWorkerOrder candidate,
   _PlanState state,
 ) {
+  // Refs #3793 AC7: the shared paper budget is the dominant gate — a
+  // paper-costing trained-worker recruit that would overrun the remaining
+  // budget is dropped before the peasant / soft-cap checks.
+  if (state.paperOverBudget(_recruitPaperCost(candidate))) {
+    return _CandidateOutcome.rejectedPaperBudget;
+  }
   final row = WorkerActionEconomyCatalog.forTier(candidate.targetTier);
   if (row.consumesPeasant && state.availablePeasants() < 1) {
     return _CandidateOutcome.rejectedInsufficientWorkers;
@@ -358,10 +442,32 @@ _CandidateOutcome _evaluateBuildCandidate(
   BuildUnitOrder candidate,
   _PlanState state,
 ) {
+  // Refs #3793 AC7: civilian builds consume paper; drop one whose paper cost
+  // would overrun the remaining shared budget before the peasant check.
+  if (state.paperOverBudget(_buildPaperCost(candidate))) {
+    return _CandidateOutcome.rejectedPaperBudget;
+  }
   if (_buildConsumesPeasant(candidate) && state.availablePeasants() < 1) {
     return _CandidateOutcome.rejectedInsufficientWorkers;
   }
   return _CandidateOutcome.accepted;
+}
+
+/// Paper units a trained-worker recruit consumes from the stockpile
+/// (`WorkerActionEconomy.materialCosts[paper]`); `0` for the peasant row,
+/// which costs fabric (Refs #3793 AC7).
+int _recruitPaperCost(RecruitWorkerOrder order) {
+  final row = WorkerActionEconomyCatalog.forTier(order.targetTier);
+  return row.materialCosts[CommodityCatalog.paper.id] ?? 0;
+}
+
+/// Paper units a civilian build consumes (`CivilianEconomy.buildInputs[paper]`).
+/// Military/naval builds carry no paper input, so the lookup returns `0` for
+/// them (Refs #3793 AC7).
+int _buildPaperCost(BuildUnitOrder order) {
+  final civilian = CivilianEconomyCatalog.byId[order.unitType];
+  if (civilian == null) return 0;
+  return civilian.buildInputs[CommodityCatalog.paper.id] ?? 0;
 }
 
 /// Integer-floor `1.2 × sustainable` per SPEC/ai/economy-planner.md
@@ -455,6 +561,27 @@ int _pendingPeasantConsumes(Orders currentOrders, String playerId) {
     if (_buildConsumesPeasant(b)) count += 1;
   }
   return count;
+}
+
+/// Paper already committed this turn by pending orders in [currentOrders]:
+/// trained-worker recruits plus civilian builds (Refs #3793 AC7). Subtracted
+/// from the paper budget so the ledger never double-spends paper the engine
+/// will already consume when resolving the pending orders.
+int _pendingPaperConsumes(Orders currentOrders, String playerId) {
+  var paper = 0;
+  final recruits =
+      currentOrders.recruitWorkerOrdersByPlayerId[playerId] ??
+      const <RecruitWorkerOrder>[];
+  for (final r in recruits) {
+    paper += _recruitPaperCost(r);
+  }
+  final builds =
+      currentOrders.buildUnitOrdersByPlayerId[playerId] ??
+      const <BuildUnitOrder>[];
+  for (final b in builds) {
+    paper += _buildPaperCost(b);
+  }
+  return paper;
 }
 
 /// Military regiments and naval ships consume one peasant per build.
