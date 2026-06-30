@@ -232,7 +232,12 @@ BuildUnitOrder? pickBuildOrder({
     // score of `1.0`.
     if (CivilianEconomyCatalog.byId.containsKey(unitType)) {
       if (civilianScoring == null) return 1.0;
-      return civilianBuildCandidateScore(
+      // Refs #3793 pool-weight slice: the GA-tunable market-share ceiling
+      // (kCivilianBuildPoolWeight, default 1.0) dampens the civilian share of
+      // the weighted pool so over-building cannot starve military/naval. The
+      // default 1.0 keeps scores byte-identical to the pre-pool-weight path
+      // (SPEC/ai/civilian-build-planner.md § Scoring model — pool weight).
+      return civilianBuildPooledScore(
         unitType,
         civilianScoring.countFor(unitType),
         phaseName: civilianScoring.phaseName,
