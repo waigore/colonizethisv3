@@ -58,4 +58,85 @@ void main() {
     expect(append.order.targetFactionId, targetFactionId);
     expect(append.order.amount, 1000);
   });
+
+  // Refs #3753 R3: subsidies are a percentage (5–20, step 5), not a £ amount.
+  // The confirmation prompt must reflect the mode's unit.
+  testWidgets(
+    'GrantOrSubsidyListener confirmation shows % for subsidy, not £',
+    (WidgetTester tester) async {
+      final game = buildGrantOrSubsidyListenerTestGame();
+      final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+      final targetFactionId = game.players.firstWhere((p) => !p.isHuman).id;
+      final bus = AppEventBus.create();
+
+      final confirmFuture = bus
+          .on<ConfirmDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GrantOrSubsidyListener(
+            bus: bus,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            child: const SizedBox.shrink(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      bus.emit(
+        GrantOrSubsidySubmittedEvent(
+          targetFactionId: targetFactionId,
+          amount: 10,
+          isSubsidy: true,
+        ),
+      );
+      await tester.pump();
+
+      final confirm = await confirmFuture;
+      expect(confirm.message, contains('10%'));
+      expect(confirm.message, isNot(contains('£')));
+    },
+  );
+
+  testWidgets(
+    'GrantOrSubsidyListener confirmation shows £ for grant aid',
+    (WidgetTester tester) async {
+      final game = buildGrantOrSubsidyListenerTestGame();
+      final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+      final targetFactionId = game.players.firstWhere((p) => !p.isHuman).id;
+      final bus = AppEventBus.create();
+
+      final confirmFuture = bus
+          .on<ConfirmDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GrantOrSubsidyListener(
+            bus: bus,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            child: const SizedBox.shrink(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      bus.emit(
+        GrantOrSubsidySubmittedEvent(
+          targetFactionId: targetFactionId,
+          amount: 1000,
+          isSubsidy: false,
+        ),
+      );
+      await tester.pump();
+
+      final confirm = await confirmFuture;
+      expect(confirm.message, contains('£1000'));
+    },
+  );
 }

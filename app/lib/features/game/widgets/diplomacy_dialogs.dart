@@ -163,7 +163,11 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
         _DialogTitle(title: widget.title),
         const SizedBox(height: 10),
         _TreasuryRow(
-          label: l10n.diplomacy_treasuryStep(widget.treasury, _step),
+          // Subsidy is a treasury-independent percentage (Refs #3753 R3); show a
+          // percent step line instead of the £ treasury/step copy used by grants.
+          label: widget.isSubsidy
+              ? l10n.diplomacy_subsidyStep(_step)
+              : l10n.diplomacy_treasuryStep(widget.treasury, _step),
         ),
         const SizedBox(height: 10),
         const _ThinDivider(),
