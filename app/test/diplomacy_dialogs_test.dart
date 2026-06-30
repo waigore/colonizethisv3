@@ -344,4 +344,121 @@ void main() {
       expect(find.byType(Card), findsNothing);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Subsidy percent mode (Refs #3753 R3 / S15)
+  // SPEC: SPEC/ui/grant-or-subsidy-dialog.md § Subsidy mode.
+  // Subsidy is a treasury-independent percentage (5–20, step 5); the dialog
+  // must render `%` (never `£`) and keep Submit enabled regardless of treasury.
+  // ---------------------------------------------------------------------------
+  group('Subsidy percent mode (Refs #3753 R3)', () {
+    testWidgets(
+        'renders percent amount and a percent step line with no £ currency copy',
+        (tester) async {
+      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
+
+      expect(find.text('Set subsidy'), findsOneWidget);
+
+      final amount = tester.widget<Text>(
+        find.byKey(const Key('grantOrSubsidyDialogAmount')),
+      );
+      expect(amount.data, '$kSubsidyPercentDefault%');
+
+      final treasury = tester.widget<Text>(
+        find.byKey(const Key('grantOrSubsidyDialogTreasury')),
+      );
+      expect(treasury.data, contains('%'));
+      expect(treasury.data, isNot(contains('£')));
+
+      // No £ currency glyph anywhere in subsidy mode.
+      expect(find.textContaining('£'), findsNothing);
+    });
+
+    testWidgets('Submit is enabled even when treasury is zero', (tester) async {
+      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
+
+      final submit = find.widgetWithText(CtNinePatchButton, 'Submit');
+      expect(tester.widget<CtNinePatchButton>(submit).enabled, isTrue);
+      // Treasury-independent: the below-minimum warning must not render.
+      expect(find.byKey(const Key('grantOrSubsidyDialogWarning')), findsNothing);
+    });
+
+    testWidgets('plus steps by 5% and clamps at the 20% maximum',
+        (tester) async {
+      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
+
+      await tester.tap(find.byKey(const Key('diplo_amount_plus')));
+      await tester.pump();
+      expect(find.text('10%'), findsOneWidget);
+
+      // Tap well past the ceiling; amount must clamp at kSubsidyPercentMax.
+      for (var i = 0; i < 6; i++) {
+        await tester.tap(find.byKey(const Key('diplo_amount_plus')));
+        await tester.pump();
+      }
+      expect(find.text('$kSubsidyPercentMax%'), findsOneWidget);
+    });
+
+    testWidgets('minus clamps at the 5% minimum', (tester) async {
+      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
+
+      for (var i = 0; i < 4; i++) {
+        await tester.tap(find.byKey(const Key('diplo_amount_minus')));
+        await tester.pump();
+      }
+      expect(find.text('$kSubsidyPercentMin%'), findsOneWidget);
+    });
+
+    testWidgets('Submit emits a valid subsidy percent', (tester) async {
+      final base = buildDiplomacyScreenTestGame();
+      final humanPlayerId = base.players.first.id;
+      final targetFactionId = base.players.length >= 2
+          ? base.players[1].id
+          : (base.minorNations.isNotEmpty ? base.minorNations.first.id : 'm1');
+
+      final bus = AppEventBus.create();
+      GrantOrSubsidySubmittedEvent? submitted;
+      final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((e) {
+        submitted = e;
+      });
+      addTearDown(sub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                child: const Text('Open'),
+                onPressed: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (ctx) => GrantOrSubsidyDialog(
+                      game: base,
+                      humanPlayerId: humanPlayerId,
+                      targetFactionId: targetFactionId,
+                      isSubsidy: true,
+                      bus: bus,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('diplo_amount_plus')));
+      await tester.pump();
+
+      await tester.tap(find.widgetWithText(CtNinePatchButton, 'Submit'));
+      await tester.pumpAndSettle();
+
+      expect(submitted, isNotNull);
+      expect(submitted!.isSubsidy, isTrue);
+      expect(submitted!.amount, 10);
+      expect(isValidSubsidyPercent(submitted!.amount), isTrue);
+    });
+  });
 }

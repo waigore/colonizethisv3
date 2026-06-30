@@ -453,6 +453,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String diplomacy_subsidyStep(int step) {
+    return 'Subsidy step: $step% (5–20%).';
+  }
+
+  @override
   String diplomacy_currencyAmount(int amount) {
     return '£$amount';
   }

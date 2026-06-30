@@ -761,7 +761,7 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
         },
       ),
       WidgetbookUseCase(
-        name: 'Subsidy mode — below minimum',
+        name: 'Subsidy mode — percent stepper',
         builder: (context) {
           final base = getDebugInitGameResult().game;
           final humanPlayerId = base.players.first.id;
@@ -770,6 +770,8 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
               : (base.minorNations.isNotEmpty
                     ? base.minorNations.first.id
                     : 'm1');
+          // Subsidy is a treasury-independent percentage (Refs #3753 R3); even
+          // with treasury 0 the percent stepper (5–20%) stays enabled.
           final game = base.copyWith(
             players: [
               base.players.first.copyWith(treasury: 0),

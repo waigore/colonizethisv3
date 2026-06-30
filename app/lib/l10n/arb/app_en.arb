@@ -1485,6 +1485,15 @@
       }
     }
   },
+  "diplomacy_subsidyStep": "Subsidy step: {step}% (5–20%).",
+  "@diplomacy_subsidyStep": {
+    "description": "Subsidy percentage step line in the diplomacy amount dialog (subsidy mode is treasury-independent).",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacy_currencyAmount": "£{amount}",
   "@diplomacy_currencyAmount": {
     "description": "Currency amount display in diplomacy amount dialog.",
