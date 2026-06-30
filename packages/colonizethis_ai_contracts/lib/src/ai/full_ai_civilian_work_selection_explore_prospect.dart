@@ -171,22 +171,13 @@ bool _tileCanHostAnyMineralInSet(
   return false;
 }
 
-/// Planner-internal prospect score boost applied to an **unprospected** mineral
-/// feedstock resource tile when the player's feedstock-extraction gate is active
-/// (Refs #2847 § H8-extraction mineral feedstock prospecting). A mineral
-/// feedstock tile (e.g. `iron`) must be prospected before a Builder can
-/// `build_improvement` it (`work_order_target_prechecks.dart`
-/// § "Mineral tile must be prospected first"), so without an Explorer
-/// prospecting it the Builder feedstock-extraction boost
-/// ([kRegimentBuildInputFeedstockExtractionScoreBoost]) has no valid tile to
-/// improve and the multi-input `castIron` recipe stays infeasible (`iron`
-/// remains `0` on seed 42 while the surface `timber` tile is improved freely).
-/// Sized to mirror the Builder feedstock boost so an Explorer prospects the
-/// feedstock mineral tile ahead of ordinary explore / prospect work.
-/// Planner-internal — not an `ai_victory_config.dart` constant — and gated by
-/// the same self-clearing feedstock set, so healthy / above-quota Great Powers
-/// are never routed.
-const int kFeedstockMineralProspectScoreBoost = 600;
+// The Explorer mineral-feedstock prospect score boost
+// ([kFeedstockMineralProspectScoreBoost]) is a GA-tunable constant in
+// `ai_victory_config.dart` / `ai_parameter_registry.dart` (Refs #3794). A
+// mineral feedstock tile (e.g. `iron`) must be prospected before a Builder can
+// `build_improvement` it, so an Explorer prospects the feedstock mineral tile
+// ahead of ordinary explore / prospect work; behaviour is normative in
+// SPEC/ai/civilian-work-planner.md.
 
 /// True when [tileKey] hosts a **mineral** resource in [feedstockIds] that
 /// [playerId] has **not** prospected — the Explorer prospect target the H8
