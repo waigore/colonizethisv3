@@ -13,6 +13,7 @@ export 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart'
         hasIdleExplorerUnit,
         ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
+        ownsFeedstockResourceTile,
         ownsProspectedOldWorldMineralFeedstockTile,
         selectFullAiCivilianWorkOrders,
         selfLockRecoverySellerStageableImprovementInputs,
