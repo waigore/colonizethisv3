@@ -1016,6 +1016,44 @@ double civilianBuildCandidateScore(
   return effectiveBase;
 }
 
+/// Civilian-build pool weight (market-share ceiling), GA-tunable in the
+/// inclusive range `[0.0, 1.0]` (SPEC/ai/civilian-build-planner.md § Scoring
+/// model — pool weight, design decision #8).
+///
+/// A single shared scalar applied to every civilian candidate's pooled build
+/// score. Because the same scalar dampens all civilian types equally it lowers
+/// the civilian share of the weighted `pickBuildOrder` pool relative to the
+/// untouched military/naval scores — so civilian over-building cannot starve
+/// military/naval production — without changing the relative ordering among
+/// civilian candidates. Default `1.0` keeps civilian scores byte-identical to
+/// the pre-pool-weight path (no live change; the live civilian build pass is
+/// itself gated by `kCivilianBuildPlannerEnabled`).
+const double kCivilianBuildPoolWeight = 1.0;
+
+/// Civilian build candidate score after the GA-tunable pool-weight market-share
+/// ceiling [poolWeight] (defaults to [kCivilianBuildPoolWeight]).
+///
+/// Returns `civilianBuildCandidateScore(...) × poolWeight`. The pool weight is
+/// a single shared scalar across all civilian types, so it dampens the civilian
+/// share of the weighted build pool without reordering civilian candidates
+/// relative to one another. `pickBuildOrder` applies this only on the civilian
+/// branch, so military/naval scores are never multiplied by the pool weight
+/// (SPEC § Scoring model — pool weight; AC10 no-regression at `poolWeight = 1.0`).
+double civilianBuildPooledScore(
+  String unitType,
+  int currentCount, {
+  String? phaseName,
+  bool spyDemand = false,
+  double poolWeight = kCivilianBuildPoolWeight,
+}) =>
+    civilianBuildCandidateScore(
+      unitType,
+      currentCount,
+      phaseName: phaseName,
+      spyDemand: spyDemand,
+    ) *
+    poolWeight;
+
 // ---------------------------------------------------------------------------
 // Civilian build planner — shared paper budget ledger (Refs #3793 AC7,
 // design decision #11). SPEC/ai/civilian-build-planner.md § Paper budget.
