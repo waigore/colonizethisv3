@@ -284,6 +284,16 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       ? null
       : lockRecoveryMinorBidsByFactionId.values.first.first.commodityId;
 
+  // #3753 R3.4 subsidy price adjustment: directed `'<payerId>><targetId>'` keys
+  // built from active GP→Minor/Tribe subsidies. War / embassy-loss cancellation
+  // already cleared invalid subsidies in the earlier Diplomacy phase, so every
+  // surviving entry is enforceable at settlement.
+  // SPEC/game/world-market.md § Subsidy price adjustment.
+  final subsidyPercentByPayerTargetKey = <String, int>{
+    for (final s in game.subsidyStates)
+      if (s.percent > 0) '${s.payerId}>${s.targetId}': s.percent,
+  };
+
   final updatedPlayers = applyDealsToPlayers(
     players: game.players,
     filledDeals: matchResult.filledDeals,
@@ -292,6 +302,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
         firstRightCredits.embassyKickbackByGpId,
     lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
     lockRecoveryLiquidityCommodityId: lockRecoveryLiquidityCommodityId,
+    subsidyPercentByPayerTargetKey: subsidyPercentByPayerTargetKey,
   );
 
   // Price-discovery bid-side cap (Refs #3115): aggregate `totalBid_new[c]`
