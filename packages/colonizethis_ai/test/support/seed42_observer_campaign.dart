@@ -81,6 +81,7 @@ class Seed42ObserverCampaignResult {
 Seed42ObserverCampaignResult runSeed42ObserverCampaign({
   int turns = 100,
   int seed = 42,
+  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
   Seed42ObserverBeforeResolve? onBeforeResolve,
   Seed42ObserverAfterResolve? onAfterResolve,
 }) {
@@ -102,6 +103,7 @@ Seed42ObserverCampaignResult runSeed42ObserverCampaign({
       game,
       topo,
       tileMapByRegion: tileMap,
+      growthStagePlannerEnabled: growthStagePlannerEnabled,
     );
     onBeforeResolve?.call(t, fullAi, game, topo, tileMap);
     final merged = mergeOrderLists(
