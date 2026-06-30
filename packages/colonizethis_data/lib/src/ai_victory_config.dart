@@ -884,6 +884,41 @@ double civilianBuildCandidateScore(
 }
 
 // ---------------------------------------------------------------------------
+// Civilian build planner — shared paper budget ledger (Refs #3793 AC7,
+// design decision #11). SPEC/ai/civilian-build-planner.md § Paper budget.
+// Paper is shared across research, worker training, and civilian builds. The
+// recruitment planner reserves research paper up to
+// [kCivilianBuildResearchPaperReserveShare] of the GP's current paper, then
+// allocates the remainder via its phase emit order against a running ledger,
+// dropping paper-costing candidates that would push the remaining budget below
+// 0. No planner magic numbers (the share + reserve math live here).
+// ---------------------------------------------------------------------------
+
+/// Fraction of the Great Power's current paper held back for research before
+/// the recruitment planner allocates paper to worker-training and civilian
+/// build candidates (Refs #3793 AC7, design decision #11). GA-tunable in the
+/// inclusive range `[0.0, 1.0]`. Default `0.5` keeps half of the paper
+/// available for the tech tree so a full build/training pass cannot starve
+/// civilian-gating research (and conversely cannot be fully consumed by it).
+const double kCivilianBuildResearchPaperReserveShare = 0.5;
+
+/// Paper reserved for research given [currentPaper], computed as the
+/// deterministic integer floor `currentPaper ×
+/// kCivilianBuildResearchPaperReserveShare`, clamped to `[0, currentPaper]`.
+///
+/// Returns `0` when [currentPaper] is `0` or negative. The reserved amount is
+/// subtracted from the paper budget the recruitment planner's ledger allocates
+/// to worker-training and civilian-build candidates (Refs #3793 AC7).
+int researchReservedPaper(int currentPaper) {
+  if (currentPaper <= 0) return 0;
+  final reserved = (currentPaper * kCivilianBuildResearchPaperReserveShare)
+      .floor();
+  if (reserved < 0) return 0;
+  if (reserved > currentPaper) return currentPaper;
+  return reserved;
+}
+
+// ---------------------------------------------------------------------------
 // Civilian build planner — research prioritization of civilian-gating techs
 // (Refs #3793 AC6). SPEC/ai/civilian-build-planner.md § Tech prioritization.
 // The research planner front-loads slot selection toward the techs that unlock
