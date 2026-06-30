@@ -367,7 +367,11 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             'Confirm $actionLabel against ${_targetName(order.targetFactionId)}?',
         onResult: (confirmed) {
           if (confirmed) {
-            _appendOrder(order);
+            if (order.type == DiplomaticOrderType.breakAlliance) {
+              _breakAllianceImmediately(order.targetFactionId);
+            } else {
+              _appendOrder(order);
+            }
             _emitNegotiationMood(
               leaderId: order.targetFactionId,
               offerQualityDelta: _offerQualityDeltaFor(order.type),
@@ -376,6 +380,15 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             );
           }
         },
+      ),
+    );
+  }
+
+  void _breakAllianceImmediately(String targetFactionId) {
+    widget.bus.emit(
+      BreakAllianceImmediatelyEvent(
+        playerId: widget.humanPlayerId,
+        targetFactionId: targetFactionId,
       ),
     );
   }

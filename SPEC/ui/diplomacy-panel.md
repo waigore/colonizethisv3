@@ -102,7 +102,7 @@ In practice the Great Powers and Minor Nations sections are populated from game 
 - **Outgoing economic diplomacy (list row only):** On the **same row**, below the relation line, when the human Great Power has **active or pending** economic diplomacy toward this faction (receiver-centric copy): **Active subsidy:** `Outgoing subsidy: £N/turn to {displayName}` when `Game.subsidyStates` has `payerId` = human GP and `targetId` = this row’s faction. **Pending grant:** `Pending grant aid: £N (resolves end of turn)` when current-turn orders include `grantAid` toward this faction. **Pending subsidy:** `Pending subsidy: £N/turn (resolves end of turn)` when current-turn orders include `setSubsidy` toward this faction. Omit each line when not applicable. Do **not** duplicate this block on the Diplomacy Detail screen for current product (list row is the source of truth).
   - **Styling (Refs #3621):** all three economic lines (active subsidy, pending grant, pending subsidy) render with the **mono** font stack (`monospace` family, `Courier` fallback), the `--accent-dim` foreground token, and **non-italic** weight, matching the mockup `.f-subsidy` treatment (`font-family: var(--font-mono); color: var(--accent-dim)`). The earlier italic `bodySmall` / `colorScheme.tertiary` styling for the pending lines is superseded — pending and active lines share one compact mono `--accent-dim` style so the block reads uniformly.
 - **Right:** **Diplomatic action buttons** for the player toward that faction. The panel enumerates the full action matrix per faction type via `enumerateDiplomaticPanelActionsForTarget` (`packages/colonizethis_logic/lib/order_suggestion_api.dart`), probing each candidate with the same incremental diplomatic validator used for order submission. **Every applicable action is always rendered**; actions that fail validation appear as **disabled** `CtNinePatchButton` controls with validator rejection text in a `Tooltip` (not hidden). Matrix per faction type:
-  - **Great Power row:** Declare War, Offer Peace, Alliance, Establish Overture stages (Consulate, Embassy, NAP, Join Empire as separate buttons), Establish FTP, Grant Aid, Set Subsidy, Boycott, Revoke Boycott.
+  - **Great Power row:** Declare War, Offer Peace, Alliance **or** Break Alliance (mutually exclusive treaty slot — see § Alliance slot), Establish Overture stages (Consulate, Embassy, NAP, Join Empire as separate buttons), Establish FTP, Grant Aid, Set Subsidy, Boycott, Revoke Boycott.
   - **Minor Nation / Tribe row:** Declare War, Offer Peace, Establish Overture stages (Consulate, Embassy, NAP, Join Empire), Grant Aid, Set Subsidy.
   - **Enabled** when the probe accepts; **disabled** with rejection reason when it rejects. Pending orders still replace the matching button with a **Cancel** affordance per § Submitting an action.
   - **Boycott / Revoke Boycott (Great Power rows only; Refs #3753 R6 / R14 / S14):** the colony-trade embargo controls are enumerated only on **Great Power** rows (the boycott target is always another Great Power), never on Minor/Tribe rows. Their enabled state is validator-driven (`boycottSubValidator` / `revokeBoycottSubValidator`), so the buttons render disabled with rejection text when the precondition fails: **Boycott** is enabled only when the human Great Power **holds at least one colony** (`Game.colonyStates` with `colonyOfGpId == human`), the pair is at peace, and no boycott for the `(human, target)` pair already exists; **Revoke Boycott** is enabled only when an active boycott for the `(human, target)` pair exists. At most one of the two is ever enabled for the same target. A queued (pending) `boycott` or `revokeBoycott` order replaces its button with the shared **Cancel** affordance per § Submitting an action.
@@ -248,11 +248,18 @@ Events are read from the flat diplomatic history list on `Game`, filtered to tho
 
 ## Actions
 
-All diplomatic actions are **submitted for end-of-turn resolution** — the panel does not resolve orders itself. Orders accumulate in the current turn's order set until Next Turn.
+All diplomatic actions are **submitted for end-of-turn resolution** — the panel does not resolve orders itself. Orders accumulate in the current turn's order set until Next Turn. **Exception (Refs #3811):** **Break Alliance** on a Great Power row applies **immediately** on confirm via `BreakAllianceImmediatelyEvent` (no pending order, no Cancel toggle).
+
+### Alliance slot (Great Power rows only; Refs #3811)
+
+- When `DiplomacyRelation.formalAlliance == true` at peace, the panel enumerates **Break Alliance** only (destructive styling) — never **Alliance**.
+- When `formalAlliance == false` and no post-break bilateral cooldown is active, the panel enumerates **Alliance** only — never **Break Alliance**.
+- When `formalAlliance == false` and a post-break bilateral cooldown is active for the pair on the current turn, the panel enumerates a single **Alliance** button in the **disabled** state with rejection text `On cooldown after breaking alliance — available next turn`.
+- Informal high relation score / Friendly band alone does **not** swap the slot; only `formalAlliance` drives the treaty action.
 
 ### Submitting an action
 
-- **Confirm dialog:** Before any action is submitted, the UI shows a **confirmation dialog** with the action name and target faction. The dialog has "Confirm" and "Cancel" buttons. Tapping "Confirm" submits the order; tapping "Cancel" dismisses without submitting.
+- **Confirm dialog:** Before any action is submitted, the UI shows a **confirmation dialog** with the action name and target faction. The dialog has "Confirm" and "Cancel" buttons. Tapping "Confirm" submits the order — **except** Break Alliance, which applies immediately (see exception above). Tapping "Cancel" dismisses without submitting.
 - **Parameter dialogs:** Actions that require parameters (Grant Aid amount, Set Subsidy amount, Establish Overture stage) open the parameter dialog first; after parameters are set, the confirmation dialog appears before the order is submitted. **Grant Aid / Set Subsidy:** single dialog (`GrantOrSubsidyDialog`, see [grant-or-subsidy-dialog.md](grant-or-subsidy-dialog.md)) with **stepper-only** entry (no free numeric typing). Dialog titles use **sentence case** (`Grant aid`, `Set subsidy`). **Grant Aid:** step **£1000**, default **£1000**, positive multiples of **£1000** up to treasury; **Submit** only when valid. **Set Subsidy:** step **£100**, default **£1000**, positive multiples of **£100** up to treasury; **Submit** only when valid.
 - **Pending state:** After an order is submitted, the corresponding action button for that (player, target, type) is shown with a **"Cancel" label** to indicate the action is pending. The button text changes from the action name to "Cancel" and tapping it **removes the pending order** (toggle off), returning the UI to the pre-submitted state.
 - **Toggle logic:** Clicking an action button while the same order is already pending cancels it. The pending state is per `(humanPlayerId, targetFactionId, DiplomaticOrderType)`. If the pending order has parameters (amount, overtureStage), canceling removes the entire order; the user must re-enter parameters to submit again.
@@ -264,17 +271,18 @@ All diplomatic actions are **submitted for end-of-turn resolution** — the pane
 | Declare War | "Declare War" | "Cancel" |
 | Offer Peace | "Offer Peace" | "Cancel" |
 | Alliance | "Alliance" | "Cancel" |
+| Break Alliance | "Break Alliance" | *(immediate — no pending state)* |
 | Establish Overture | "Consulate/Embassy/NAP/Join Empire" | "Cancel" |
 | Grant Aid | "Grant Aid (£N)" | "Cancel" |
 | Set Subsidy | "Set Subsidy (£N)" | "Cancel" |
 
 ### Action button styling (editorial-monocle dark theme)
 
-Per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-actions button`, all diplomatic action buttons render against a small (compact) variant of the canonical `CtNinePatchButton` brass surface. The **Declare War** button is the only action button with a destructive variant per `.f-actions button.war-btn`:
+Per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-actions button`, all diplomatic action buttons render against a small (compact) variant of the canonical `CtNinePatchButton` brass surface. **Declare War** and **Break Alliance** use the destructive variant per `.f-actions button.war-btn`:
 
 - **Border and text color:** `--danger` (warm-red brass).
 - **Background:** unchanged from the standard action button gradient (`--surface-lite` → `--bg-deep`); only the outline and label color shift.
-- **Applies to:** `DiplomaticOrderType.declareWar` only. The pending (Cancel) variant retains its own pending styling and is not the war variant.
+- **Applies to:** `DiplomaticOrderType.declareWar` and `DiplomaticOrderType.breakAlliance`. The pending (Cancel) variant retains its own pending styling and is not the destructive variant.
 
 #### Compact variant metrics (normative)
 

@@ -36,6 +36,12 @@ DiplomaticSubValidator establishOvertureSubValidator(
     treasury: treasury,
   );
   if (atWarRejection != null) return atWarRejection;
+  final cooldownRejection = rejectIfAllianceBreakCooldownActive(
+    ctx: ctx,
+    targetId: targetId,
+    treasury: treasury,
+  );
+  if (cooldownRejection != null) return cooldownRejection;
 
   final currentStage =
       getOverture(ctx.game, ctx.playerId, targetId)?.stage ??

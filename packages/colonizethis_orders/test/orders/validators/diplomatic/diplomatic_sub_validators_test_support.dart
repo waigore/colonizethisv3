@@ -58,20 +58,38 @@ Game gpMinorGame({
   );
 }
 
-Game twoGpGame({RelationState state = RelationState.atPeace}) {
+Game twoGpGame({
+  RelationState state = RelationState.atPeace,
+  bool formalAlliance = false,
+  int turnNumber = 0,
+  List<AllianceBreakCooldownState> allianceBreakCooldowns = const [],
+  Map<String, bool>? gp1TechUnlocked,
+}) {
   return Game(
     id: 'g1',
     worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
       oldWorld: const RegionData(),
       newWorld: const RegionData(),
     ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+    players: [
+      Player(
+        id: 'gp1',
+        displayName: 'GP1',
+        isHuman: true,
+        techUnlocked:
+            gp1TechUnlocked ?? const {kTechIdDiplomaticExpertise: true},
+      ),
+      const Player(id: 'gp2', displayName: 'GP2', isHuman: false),
     ],
     diplomacyRelations: [
-      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', state: state),
+      DiplomacyRelation(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        state: state,
+        formalAlliance: formalAlliance,
+      ),
     ],
+    allianceBreakCooldowns: allianceBreakCooldowns,
   );
 }

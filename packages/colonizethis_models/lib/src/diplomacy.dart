@@ -39,6 +39,10 @@ class DiplomacyRelation {
   /// and cleared on `allianceBroken` (e.g. a Call to Arms refusal). This is the
   /// authoritative mutual-defence gate: the informal [level] `allied` band
   /// (relation score 76–100) must NOT trigger Call to Arms by itself.
+  ///
+  /// **War invariant:** `formalAlliance == true` must never coexist with
+  /// [RelationState.atWar]. Every transition to war clears this flag, and
+  /// [fromJson] normalizes it away for any at-war pair on load.
   /// SPEC/game/diplomacy.md § Alliances.
   final bool formalAlliance;
 
@@ -84,26 +88,32 @@ class DiplomacyRelation {
     if (formalAlliance) 'formalAlliance': formalAlliance,
   };
 
-  static DiplomacyRelation fromJson(Map<String, dynamic> json) =>
-      DiplomacyRelation(
-        factionId1: json['factionId1'] as String,
-        factionId2: json['factionId2'] as String,
-        // Decimal migration (SPEC/game/diplomacy.md § Relation Model): legacy
-        // saves stored an integer score; load it as a decimal (× 1.0) so all
-        // downstream threshold comparisons use the raw decimal value.
-        score: (json['score'] as num?)?.toDouble() ?? 50,
-        level: RelationLevel.values.firstWhere(
-          (e) => e.name == json['level'],
-          orElse: () => RelationLevel.neutral,
-        ),
-        state: RelationState.values.firstWhere(
-          (e) => e.name == json['state'],
-          orElse: () => RelationState.atPeace,
-        ),
-        sinceTurn: json['sinceTurn'] as int? ?? 0,
-        lastInteractionTurn: json['lastInteractionTurn'] as int? ?? 0,
-        formalAlliance: json['formalAlliance'] == true,
-      );
+  static DiplomacyRelation fromJson(Map<String, dynamic> json) {
+    final state = RelationState.values.firstWhere(
+      (e) => e.name == json['state'],
+      orElse: () => RelationState.atPeace,
+    );
+    return DiplomacyRelation(
+      factionId1: json['factionId1'] as String,
+      factionId2: json['factionId2'] as String,
+      // Decimal migration (SPEC/game/diplomacy.md § Relation Model): legacy
+      // saves stored an integer score; load it as a decimal (× 1.0) so all
+      // downstream threshold comparisons use the raw decimal value.
+      score: (json['score'] as num?)?.toDouble() ?? 50,
+      level: RelationLevel.values.firstWhere(
+        (e) => e.name == json['level'],
+        orElse: () => RelationLevel.neutral,
+      ),
+      state: state,
+      sinceTurn: json['sinceTurn'] as int? ?? 0,
+      lastInteractionTurn: json['lastInteractionTurn'] as int? ?? 0,
+      // War invariant (SPEC/game/diplomacy.md § Alliances): a formal alliance
+      // can never coexist with war. Drop the flag on load for any at-war pair so
+      // an invalid legacy save normalizes to the consistent state.
+      formalAlliance:
+          json['formalAlliance'] == true && state != RelationState.atWar,
+    );
+  }
 }
 
 /// Overture stage per Minor/Tribe per GP.
@@ -419,6 +429,61 @@ class ColonyState {
 
   @override
   int get hashCode => Object.hash(tribeId, colonyOfGpId, sinceTurn);
+}
+
+/// Bilateral post-break overture cooldown for a Great Power pair (Refs #3811).
+///
+/// Recorded when a voluntary alliance break resolves; active only while
+/// `sinceTurn == currentTurn`. Clears from turn `T+1` onward. Both directions
+/// of the pair are blocked from initiating overture-class diplomatic orders.
+/// SPEC/game/diplomacy.md § Alliances; SPEC/program/orders.md.
+class AllianceBreakCooldownState {
+  const AllianceBreakCooldownState({
+    required this.factionId1,
+    required this.factionId2,
+    required this.sinceTurn,
+  });
+
+  /// Canonical sorted faction ids for the pair (`factionId1` ≤ `factionId2`).
+  final String factionId1;
+  final String factionId2;
+
+  /// Turn the voluntary break occurred (cooldown active for this turn only).
+  final int sinceTurn;
+
+  AllianceBreakCooldownState copyWith({
+    String? factionId1,
+    String? factionId2,
+    int? sinceTurn,
+  }) => AllianceBreakCooldownState(
+    factionId1: factionId1 ?? this.factionId1,
+    factionId2: factionId2 ?? this.factionId2,
+    sinceTurn: sinceTurn ?? this.sinceTurn,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'factionId1': factionId1,
+    'factionId2': factionId2,
+    'sinceTurn': sinceTurn,
+  };
+
+  static AllianceBreakCooldownState fromJson(Map<String, dynamic> json) =>
+      AllianceBreakCooldownState(
+        factionId1: json['factionId1'] as String,
+        factionId2: json['factionId2'] as String,
+        sinceTurn: json['sinceTurn'] as int? ?? 0,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AllianceBreakCooldownState &&
+          factionId1 == other.factionId1 &&
+          factionId2 == other.factionId2 &&
+          sinceTurn == other.sinceTurn;
+
+  @override
+  int get hashCode => Object.hash(factionId1, factionId2, sinceTurn);
 }
 
 /// Active boycott of a Great Power by a colony-holding Great Power

@@ -80,6 +80,7 @@ class Game {
     this.subsidyStates = const [],
     this.colonyStates = const [],
     this.boycottStates = const [],
+    this.allianceBreakCooldowns = const [],
     this.aiControlByGpId = const {},
     this.aiSeedByGpId = const {},
     this.aiProfileByGpId = const {},
@@ -138,6 +139,10 @@ class Game {
   /// target Great Power and the issuer's colonies (Refs #3753 R6).
   /// SPEC/game/diplomacy.md § GP–Tribe Rules (Boycott).
   final List<BoycottState> boycottStates;
+
+  /// Bilateral post-break overture cooldowns keyed by canonical GP pair
+  /// (Refs #3811). Active only while `sinceTurn == currentTurn`.
+  final List<AllianceBreakCooldownState> allianceBreakCooldowns;
 
   /// AI control: true = AI-controlled. When empty, use !player.isHuman. Phase 4.
   final Map<String, bool> aiControlByGpId;
@@ -236,6 +241,10 @@ class Game {
       'colonyStates': colonyStates.map((c) => c.toJson()).toList(),
     if (boycottStates.isNotEmpty)
       'boycottStates': boycottStates.map((b) => b.toJson()).toList(),
+    if (allianceBreakCooldowns.isNotEmpty)
+      'allianceBreakCooldowns': allianceBreakCooldowns
+          .map((c) => c.toJson())
+          .toList(),
     if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
     if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
     if (aiProfileByGpId.isNotEmpty)
@@ -344,6 +353,10 @@ class Game {
       json['boycottStates'],
       BoycottState.fromJson,
     );
+    final allianceBreakCooldowns = _parseModelList(
+      json['allianceBreakCooldowns'],
+      AllianceBreakCooldownState.fromJson,
+    );
 
     final aiControlRaw =
         json['aiControlByGpId'] as Map<dynamic, dynamic>? ?? {};
@@ -442,6 +455,7 @@ class Game {
       subsidyStates: subsidyStates,
       colonyStates: colonyStates,
       boycottStates: boycottStates,
+      allianceBreakCooldowns: allianceBreakCooldowns,
       aiControlByGpId: aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId,
       aiProfileByGpId: aiProfileByGpId,
@@ -490,6 +504,7 @@ class Game {
     List<SubsidyState>? subsidyStates,
     List<ColonyState>? colonyStates,
     List<BoycottState>? boycottStates,
+    List<AllianceBreakCooldownState>? allianceBreakCooldowns,
     Map<String, bool>? aiControlByGpId,
     Map<String, int>? aiSeedByGpId,
     Map<String, String?>? aiProfileByGpId,
@@ -527,6 +542,8 @@ class Game {
       subsidyStates: subsidyStates ?? this.subsidyStates,
       colonyStates: colonyStates ?? this.colonyStates,
       boycottStates: boycottStates ?? this.boycottStates,
+      allianceBreakCooldowns:
+          allianceBreakCooldowns ?? this.allianceBreakCooldowns,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
       aiProfileByGpId: aiProfileByGpId ?? this.aiProfileByGpId,
@@ -580,6 +597,7 @@ class Game {
           _listEquals(subsidyStates, other.subsidyStates) &&
           _listEquals(colonyStates, other.colonyStates) &&
           _listEquals(boycottStates, other.boycottStates) &&
+          _listEquals(allianceBreakCooldowns, other.allianceBreakCooldowns) &&
           _mapEquals(aiControlByGpId, other.aiControlByGpId) &&
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
           _nullableStringMapEquals(aiProfileByGpId, other.aiProfileByGpId) &&
@@ -629,6 +647,7 @@ class Game {
       Object.hashAll(subsidyStates),
       Object.hashAll(colonyStates),
       Object.hashAll(boycottStates),
+      Object.hashAll(allianceBreakCooldowns),
     ),
     Object.hashAll(aiControlByGpId.entries),
     Object.hashAll(aiSeedByGpId.entries),
