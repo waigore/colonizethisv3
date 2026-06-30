@@ -42,7 +42,6 @@ const Set<String> seed42CampaignHarnessAllowlist = <String>{
   'packages/colonizethis_ai/test/planning/seed42_expand_phase_declare_war_arm2_pin_test.dart',
   'packages/colonizethis_ai/test/planning/seed42_expand_phase_first10turns_trace_test.dart',
   'packages/colonizethis_ai/test/planning/seed42_expand_phase_first25turns_field_army_trace_test.dart',
-  'packages/colonizethis_ai/test/seed42_gp3_gp4_war_activity_test.dart',
   'packages/colonizethis_ai/test/seed42_growth_stage_conquest_regression_test.dart',
   'packages/colonizethis_ai/test/seed42_invadable_probe_test.dart',
   'packages/colonizethis_ai/test/seed42_observer_colonial_c0_diagnostic_test.dart',
