@@ -858,6 +858,10 @@ abstract class AppLocalizations {
   /// Treasury and step line in diplomacy amount dialog.
   String diplomacy_treasuryStep(int treasury, int step);
 
+  /// Subsidy percentage step line in the diplomacy amount dialog (subsidy mode
+  /// is treasury-independent).
+  String diplomacy_subsidyStep(int step);
+
   /// Currency amount display in diplomacy amount dialog.
   String diplomacy_currencyAmount(int amount);
 
