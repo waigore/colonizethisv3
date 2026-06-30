@@ -8,7 +8,7 @@
 
 The treasury planner is the AI's interface to the World Market. It decides what commodities to bid for, what surplus to sell, and how aggressively to use the market based on the GP's treasury health. It is a sub-planner of the economy planner and runs once per AI-controlled Great Power per turn.
 
-Diplomacy-driven trade adjustments — boycott-aware bid/offer suppression (Refs #3758 S7/R12) and trade-deal-relation-boost-aware partner preference (Refs #3758 S9/R10) — are **deferred follow-up slices** not yet implemented in this planner; the central diplomatic AI model is normative in [diplomacy-planner.md](diplomacy-planner.md). Market-side boycott enforcement already happens in deal matching ([world-market-resolution.md](../program/world-market-resolution.md)).
+Diplomacy-driven trade adjustments: boycott-aware bid suppression (Refs #3758 S7/R12) **is implemented** and is normative in § Boycott-aware bid suppression below. Trade-deal-relation-boost-aware partner preference (Refs #3758 S9/R10) remains a **deferred follow-up slice** not yet implemented in this planner. The central diplomatic AI model is normative in [diplomacy-planner.md](diplomacy-planner.md). Market-side boycott enforcement (the authoritative trade block) already happens in deal matching ([world-market-resolution.md](../program/world-market-resolution.md)); the planner-side suppression below is a strategic efficiency layer that avoids spending the capped bid slots on commodities the planner can only source from a colony Tribe it is boycotted from.
 
 The planner has two distinct surfaces:
 
@@ -1439,6 +1439,31 @@ turn-resolution budget.
   treasury, tileMapByRegion, topology, currentOrders)`, when
   `runTreasuryPlanner` runs twice after the index change, then both runs return
   identical `List<TradeOrder>` outputs (determinism preserved).
+
+## Boycott-aware bid suppression (Refs #3758 S7/R12)
+
+When a colony-holding Great Power `A` has an active `BoycottState { gpId: A, targetGpId: C }` (`SPEC/game/diplomacy.md` § GP–Tribe Rules (Boycott)), all World-Market trade between `C` and every Tribe that is a colony of `A` (`Game.colonyStates` with `colonyOfGpId == A`) is blocked by the deal matcher. `runTreasuryPlanner`, when planning for the boycotted buyer `C`, removes from its bid `need` map every commodity id that a boycotted colony Tribe currently auto-offers, so the capped bid slots (`bidTypeCap`) are not spent on commodities `C` can only source from a Tribe it is boycotted from.
+
+### Inputs and computation
+
+- The blocked-commodity set is `boycottedColonySellableCommodityIds(game, buyerPlayerId, tileMapByRegion, topology)` (logic contract in `colonizethis_economy`, surfaced to AI via `ai_api.dart`). It:
+  1. Returns the empty set immediately when `Game.boycottStates` is empty, `Game.colonyStates` is empty, `tileMapByRegion` is empty/absent, or `topology` is absent (zero common-path cost; the planner's existing unit-test paths that omit tile maps are unaffected).
+  2. Collects the colony Tribe ids blocked for `buyerPlayerId`: for every `BoycottState` whose `targetGpId == buyerPlayerId`, every `ColonyState` whose `colonyOfGpId` equals that boycott's `gpId`.
+  3. Returns the empty set when no colony Tribe is blocked for the buyer.
+  4. Otherwise computes non-Great-Power connectivity (`resolveNonGreatPowerConnectivity`) and auto-offers (`computeNonGreatPowerAutoOffers`) and returns the union of `commodityId` over the auto-offers of the blocked colony Tribes.
+- This is **gated entirely behind the existence of a boycott targeting the planning GP**, which is a rare diplomatic state; the connectivity/auto-offer computation never runs on the common path, preserving the 15-second turn-resolution budget (`colonizethis-turn-resolution-budget.mdc`). The computation is deterministic for fixed inputs.
+
+### Suppression rule
+
+- Suppression applies to the **bid** side only (commodities `C` would buy). Offers are not suppressed, because `C`'s offers are matched against the whole market and a boycott only blocks the `C`↔colony pair — suppressing offers would wrongly withhold sales to non-boycotted buyers.
+- After the surplus/need maps are populated and before `TradeOrderSuggester.suggest`, the planner removes each blocked commodity id from `need`. If `need` becomes empty and `available` is empty, the planner returns no orders as today.
+
+### Acceptance criteria
+
+- Given a `BoycottState { gpId: A, targetGpId: C }`, a `ColonyState { tribeId: T, colonyOfGpId: A }`, tile maps and topology present, and Tribe `T` auto-offering commodity `X`, when `runTreasuryPlanner` runs for `C` with a computed deficit (bid `need`) for `X`, then the returned orders contain no `bid` for `X`.
+- Given the same fixture but no `BoycottState` targeting `C`, when `runTreasuryPlanner` runs for `C` with a deficit for `X`, then a `bid` for `X` is emitted (suppression does not apply without an active boycott against `C`).
+- Given a `BoycottState { gpId: A, targetGpId: C }` and a `ColonyState` of `A`, when `tileMapByRegion` is omitted, then `boycottedColonySellableCommodityIds` returns the empty set and no bid is suppressed (unit-test path unaffected).
+- Given two `runTreasuryPlanner` invocations with identical inputs including identical boycott/colony state, when both runs complete, then they return identical `List<TradeOrder>` outputs (determinism preserved).
 
 ## Out of scope for this SPEC slice
 

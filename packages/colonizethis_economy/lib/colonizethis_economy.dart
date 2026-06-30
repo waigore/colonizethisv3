@@ -17,6 +17,7 @@ export 'src/economy/trade_interception.dart';
 export 'src/economy/worker_action_cost.dart';
 export 'src/economy/worker_economy.dart';
 export 'src/economy/world_market/bid_type_cap.dart';
+export 'src/economy/world_market/boycott_blocked_commodities.dart';
 export 'src/economy/world_market/deal_matcher.dart';
 export 'src/economy/world_market/first_right_credits.dart';
 export 'src/economy/world_market/first_right_profit.dart';
