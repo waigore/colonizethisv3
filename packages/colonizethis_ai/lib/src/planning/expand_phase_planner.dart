@@ -133,6 +133,7 @@ import 'planning_helpers.dart'
         nonGreatPowerAtWarPeaceTargetsWhere,
         oldWorldProvinceLeadOver,
         peaceTargetsExcludingBlocker,
+        planningListEquals,
         tribeAtWarPeaceTargetsWhere;
 
 part 'expand_phase_planner_peer_peace.dart';

@@ -41,7 +41,7 @@ int _scoreEstablishOvertureDiplomaticOrder({
   )) {
     return 0;
   }
-  var s = 50;
+  var s = kDiplomaticDefaultBaseScore;
   final rel = snapshot.relations[order.targetFactionId];
   final warDesire = warDesireForTarget(order.targetFactionId, rel?.score ?? 50);
   var improveRelationsDesire = 100 - warDesire;

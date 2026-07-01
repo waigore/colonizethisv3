@@ -1,6 +1,7 @@
 // Growth-stage priority vector for economy planning. SPEC/ai/growth-stage-planner.md.
 
 import '../perception/perception_snapshot.dart';
+import 'ai_commodity_ids.dart';
 import 'planning_imports.dart';
 
 /// When true, growth-stage scoring replaces H8 reactive boosts in the economy
@@ -91,7 +92,7 @@ class GrowthStage {
     var workerGrowth = _clamp01(
       1.0 - effectiveLabour / kTargetLabourForMaturity,
     );
-    if (stockpile.quantityOf(CommodityCatalog.fabric.id) >= kReserveTarget) {
+    if (stockpile.quantityOf(kAiCommodityIds.fabric) >= kReserveTarget) {
       workerGrowth *= 0.5;
     }
 
@@ -100,8 +101,8 @@ class GrowthStage {
           prospectedImprovedFeedstockTileCount(game, playerId) /
               kTargetFeedstockTileCount,
     );
-    if (stockpile.quantityOf(CommodityCatalog.castIron.id) >= kReserveTarget &&
-        stockpile.quantityOf(CommodityCatalog.lumber.id) >= kReserveTarget) {
+    if (stockpile.quantityOf(kAiCommodityIds.castIron) >= kReserveTarget &&
+        stockpile.quantityOf(kAiCommodityIds.lumber) >= kReserveTarget) {
       infrastructure *= 0.5;
     }
 
@@ -175,9 +176,9 @@ bool growthStageReservesFabricForMilitary({
 
 /// Category priority for a recipe output under [stage].
 double categoryPriorityForOutput(String outputId, GrowthStage stage) {
-  final fabricId = CommodityCatalog.fabric.id;
-  final castIronId = CommodityCatalog.castIron.id;
-  final lumberId = CommodityCatalog.lumber.id;
+  final fabricId = kAiCommodityIds.fabric;
+  final castIronId = kAiCommodityIds.castIron;
+  final lumberId = kAiCommodityIds.lumber;
 
   double priority;
   if (outputId == fabricId) {
@@ -239,9 +240,9 @@ bool _isAtWar(
 }
 
 double _maxReserveShortfall(Stockpile stockpile) {
-  final fabricId = CommodityCatalog.fabric.id;
-  final lumberId = CommodityCatalog.lumber.id;
-  final castIronId = CommodityCatalog.castIron.id;
+  final fabricId = kAiCommodityIds.fabric;
+  final lumberId = kAiCommodityIds.lumber;
+  final castIronId = kAiCommodityIds.castIron;
   final fabric = _reserveShortfall(
     stockpile.quantityOf(fabricId),
   );

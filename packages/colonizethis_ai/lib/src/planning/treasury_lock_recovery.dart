@@ -273,7 +273,7 @@ int otherGreatPowerOfferableFabricHeld(Game game, String playerId) {
   for (final player in game.players) {
     if (player.id == playerId) continue;
     if (isFabricOfferRetainingLockRecoverySeller(game, player.id)) continue;
-    total += player.stockpile.quantityOf(CommodityCatalog.fabric.id);
+    total += player.stockpile.quantityOf(kAiCommodityIds.fabric);
   }
   return total;
 }

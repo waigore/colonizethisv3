@@ -200,7 +200,7 @@ int _scoreOfferPeaceDiplomaticOrder({
   required int Function(String targetFactionId, num relationScore)
   warDesireForTarget,
 }) {
-  var s = 50;
+  var s = kDiplomaticDefaultBaseScore;
   final rel = snapshot.relations[order.targetFactionId];
   final warDesire = warDesireForTarget(order.targetFactionId, rel?.score ?? 50);
   // Lower peace desire when current war desire remains high.
