@@ -121,10 +121,12 @@ List<String> gpAtWarPeaceTargetsWhere({
   required AIWorldSnapshot snapshot,
   required bool Function(String factionId) keep,
 }) {
-  return <String>[
-    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
-      if (keep(factionId)) factionId,
-  ]..sort();
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.greatPower,
+    keep: keep,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war minor-nation
@@ -158,11 +160,12 @@ List<String> minorAtWarPeaceTargetsWhere({
   required AIWorldSnapshot snapshot,
   bool Function(String factionId)? keep,
 }) {
-  return <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isMinorFaction(game, factionId) && (keep == null || keep(factionId)))
-        factionId,
-  ]..sort();
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.minorNation,
+    keep: keep,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war tribe
@@ -196,11 +199,12 @@ List<String> tribeAtWarPeaceTargetsWhere({
   required AIWorldSnapshot snapshot,
   bool Function(String factionId)? keep,
 }) {
-  return <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isTribeFaction(game, factionId) && (keep == null || keep(factionId)))
-        factionId,
-  ]..sort();
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.tribe,
+    keep: keep,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war
@@ -240,12 +244,63 @@ List<String> nonGreatPowerAtWarPeaceTargetsWhere({
   required AIWorldSnapshot snapshot,
   bool Function(String factionId)? keep,
 }) {
-  return <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) == null &&
-          (keep == null || keep(factionId)))
-        factionId,
-  ]..sort();
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.nonGreatPower,
+    keep: keep,
+  );
+}
+
+enum _AtWarPeaceTargetKind {
+  greatPower,
+  minorNation,
+  tribe,
+  nonGreatPower,
+}
+
+List<String> _filterAtWarTargetsWhere({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required _AtWarPeaceTargetKind kind,
+  bool Function(String factionId)? keep,
+}) {
+  switch (kind) {
+    case _AtWarPeaceTargetKind.greatPower:
+      final requiredKeep = keep;
+      if (requiredKeep == null) {
+        throw ArgumentError.value(
+          keep,
+          'keep',
+          'Great-power at-war peace targets require a keep predicate.',
+        );
+      }
+      return <String>[
+        for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
+          if (requiredKeep(factionId)) factionId,
+      ]..sort();
+    case _AtWarPeaceTargetKind.minorNation:
+      return <String>[
+        for (final factionId in snapshot.threats.atWarWith)
+          if (isMinorFaction(game, factionId) &&
+              (keep == null || keep(factionId)))
+            factionId,
+      ]..sort();
+    case _AtWarPeaceTargetKind.tribe:
+      return <String>[
+        for (final factionId in snapshot.threats.atWarWith)
+          if (isTribeFaction(game, factionId) &&
+              (keep == null || keep(factionId)))
+            factionId,
+      ]..sort();
+    case _AtWarPeaceTargetKind.nonGreatPower:
+      return <String>[
+        for (final factionId in snapshot.threats.atWarWith)
+          if (game.playerById(factionId) == null &&
+              (keep == null || keep(factionId)))
+            factionId,
+      ]..sort();
+  }
 }
 
 /// Returns [factionIds] with [blocker] removed, sorted ascending by
