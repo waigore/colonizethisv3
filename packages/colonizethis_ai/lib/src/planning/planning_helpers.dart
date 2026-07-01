@@ -67,6 +67,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import '../util/ai_validation_exception.dart';
 import '../util/faction_query.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'observer_goal_phase.dart';
@@ -269,7 +270,7 @@ List<String> _filterAtWarTargetsWhere({
     case _AtWarPeaceTargetKind.greatPower:
       final requiredKeep = keep;
       if (requiredKeep == null) {
-        throw ArgumentError.value(
+        throw AiValidationException.value(
           keep,
           'keep',
           'Great-power at-war peace targets require a keep predicate.',
