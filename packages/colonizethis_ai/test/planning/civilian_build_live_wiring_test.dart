@@ -5,6 +5,7 @@
 // flipped; these tests opt in via `civilianBuildPlannerEnabled: true`.
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -223,7 +224,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(7),
         suggestionAPI: fakeApi(),
         economyPlan: kTestEconomyPlan,
-        civilianBuildPlannerEnabled: civilianBuildPlannerEnabled,
+        options: OrchestratorOptions(civilianBuildPlannerEnabled: civilianBuildPlannerEnabled),
       ).orders;
     }
 

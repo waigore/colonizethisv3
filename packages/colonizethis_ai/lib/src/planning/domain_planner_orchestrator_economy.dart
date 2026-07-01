@@ -30,6 +30,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
+  required EconomyPhaseGates economyPhaseGates,
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
@@ -107,7 +108,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   // field-equal to the legacy compute across every
   // [ObserverGoalPhase] value, preserving the prior workThreshold cap
   // / `runFullAiCivilianWork` behaviour exactly under DEVELOP.
-  final developPhase = resolvePhaseEconomyDevelopActive(phasePlan: phasePlan);
+  final developPhase = economyPhaseGates.developActive;
   // Refs #2509 S5: derive colonial economy pressure from the dispatched
   // phase plan instead of the legacy three-predicate compute. The phase
   // dispatcher already resolved `observerGoalPhaseFor` once per player turn;
@@ -119,9 +120,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   // independently trigger the colonial workThreshold cap and
   // `runFullAiCivilianWork` so GPs that already own NW provinces keep
   // running civilian planning under EXPAND / COLONIAL-lite.
-  final colonialPressure = resolvePhaseEconomyColonialPressureActive(
-    phasePlan: phasePlan,
-  );
+  final colonialPressure = economyPhaseGates.colonialPressureActive;
   // Refs #2847 Phase 3 economy civilian-work threshold cap wiring: the
   // colonial-pressure civilian-work cap now scales continuously with the
   // soft-phase NW acquisition weight instead of stepping to the hard
@@ -132,9 +131,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   // § Phase 3 consumer wiring — economy civilian-work threshold cap). The
   // `newWorldProvincesOwned > 0` tagalong remains a hard cap so a GP that
   // already holds NW land keeps the full colonial civilian-work bar.
-  final colonialPressureWeight = resolvePhaseEconomyColonialPressureWeight(
-    phasePlan: phasePlan,
-  );
+  final colonialPressureWeight = economyPhaseGates.colonialPressureWeight;
   if (developPhase) {
     workThreshold = math.min(workThreshold, kDevelopCivilianWorkThresholdCap);
   } else {
@@ -260,7 +257,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
 
   _appendEconomyPeasantRecruit(
     ctx: ctx,
-    phasePlan: phasePlan,
+    expandEconomy: economyPhaseGates.expandEconomy,
     growthStage: growthStage,
     growthStagePlannerEnabled: growthStagePlannerEnabled,
     ordersBuilder: ordersBuilder,
@@ -270,6 +267,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: phasePlan,
+    economyPhaseGates: economyPhaseGates,
     economyPlan: economyPlan,
     ordersBuilder: ordersBuilder,
     colonialPressure: colonialPressure,
@@ -298,12 +296,11 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
 /// unchanged.
 void _appendEconomyPeasantRecruit({
   required PlannerContext ctx,
-  required PhasePlanOutcome phasePlan,
+  required ExpandEconomyPlan expandEconomy,
   required GrowthStage? growthStage,
   required bool growthStagePlannerEnabled,
   required OrdersBuilder ordersBuilder,
 }) {
-  final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
   final growthStagePeasantRecruit =
       growthStage != null && growthStage.workerGrowthPriority > 0.1;
   if (growthStagePeasantRecruit ||
@@ -384,8 +381,7 @@ class _BuildPassResult {
 /// § Orchestrator economy build colonial-cap slice).
 int _computeBaseBuildThreshold({
   required PlannerContext ctx,
-  required PhasePlanOutcome phasePlan,
-  required AIWorldSnapshot snapshot,
+  required EconomyPhaseGates economyPhaseGates,
   required bool expandQuotaPressure,
 }) {
   var buildThreshold =
@@ -393,19 +389,24 @@ int _computeBaseBuildThreshold({
   if (expandQuotaPressure) {
     buildThreshold = math.min(buildThreshold, 15);
   }
-  if (expandQuotaPressure &&
-      resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: phasePlan)) {
+  if (expandQuotaPressure && economyPhaseGates.expandGpBlockerFocusActive) {
     buildThreshold = math.min(buildThreshold, 8);
   }
-  final colonialBuildCap = resolvePhaseEconomyColonialBuildOrderThresholdCap(
-    phasePlan: phasePlan,
-    colonial: snapshot.colonial,
-  );
+  final colonialBuildCap = economyPhaseGates.colonialBuildOrderThresholdCap;
   if (colonialBuildCap != null) {
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   return buildThreshold;
 }
+
+typedef _RegimentFloorContext = ({
+  bool atWarWithGpBlocker,
+  String? gpBlocker,
+  bool criticallyWeakNoGpWar,
+  bool criticallyWeakBelowQuota,
+  bool needRegimentsToExpand,
+  bool belowQuotaZeroRegimentsRebuild,
+});
 
 /// Computes the stalled-expansion minimum regiment floor for the build pass.
 ///
@@ -416,38 +417,34 @@ int _computeBaseBuildThreshold({
 int _computeMinRegimentFloor({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
-  required bool atWarWithGpBlocker,
-  required String? gpBlocker,
-  required bool criticallyWeakNoGpWar,
-  required bool criticallyWeakBelowQuota,
-  required bool needRegimentsToExpand,
-  required bool belowQuotaZeroRegimentsRebuild,
+  required _RegimentFloorContext floorContext,
 }) {
-  var minRegimentFloor = atWarWithGpBlocker
+  var minRegimentFloor = floorContext.atWarWithGpBlocker
       ? kStalledMinRegimentCountWhenGpBlockerAtWar
       : kStalledMinRegimentCountWhenAtWar;
-  if (atWarWithGpBlocker && gpBlocker != null) {
+  if (floorContext.atWarWithGpBlocker && floorContext.gpBlocker != null) {
     final deficit = oldWorldProvinceLeadOver(
       game: ctx.game,
       snapshot: snapshot,
-      factionId: gpBlocker,
+      factionId: floorContext.gpBlocker!,
     );
     if (deficit > 0) {
       minRegimentFloor +=
           deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
     }
   }
-  if (criticallyWeakNoGpWar &&
+  if (floorContext.criticallyWeakNoGpWar &&
       snapshot.threats.atWarWith.isNotEmpty &&
       minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakNoGpWar) {
     minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakNoGpWar;
   }
-  if (criticallyWeakBelowQuota &&
-      (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
+  if (floorContext.criticallyWeakBelowQuota &&
+      (snapshot.threats.atWarWith.isNotEmpty ||
+          floorContext.needRegimentsToExpand) &&
       minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakBelowQuota) {
     minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakBelowQuota;
   }
-  if (belowQuotaZeroRegimentsRebuild) {
+  if (floorContext.belowQuotaZeroRegimentsRebuild) {
     minRegimentFloor = 1;
   }
   return minRegimentFloor;
@@ -457,6 +454,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
+  required EconomyPhaseGates economyPhaseGates,
   required EconomyPlan economyPlan,
   required OrdersBuilder ordersBuilder,
   required bool colonialPressure,
@@ -465,25 +463,14 @@ _BuildPassResult _appendEconomyBuildOrders({
   required int domainEconomyWeight,
 }) {
   final growthStagePlannerEnabled = ctx.growthStagePlannerEnabled;
-  // Refs #2509 S5: derive below-quota OW build-pass routing from the
-  // dispatched phase plan instead of recomputing
-  // `isStalledOldWorldExpansion(ow)` / `isBelowObserverConquestQuota(ow)`
-  // per build pass. Field-equal to `phase ∈ {EXPAND, COLONIAL-lite}` via
-  // `resolvePhaseEconomyExpandQuotaPressureActive` (see
-  // `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build
-  // slice). The EXPAND regiment-rebuild directive comes from
-  // `expandEconomyPlanFromPhasePlan` (already computed once in
-  // `runPhasePlanners`).
   final growthStage = growthStagePlannerEnabled
       ? GrowthStage.compute(ctx.game, ctx.nationId, snapshot: snapshot)
       : null;
   final suppressMilitaryBuilds =
       growthStage != null && growthStageSuppressesMilitaryBuilds(growthStage);
 
-  final expandQuotaPressure = resolvePhaseEconomyExpandQuotaPressureActive(
-    phasePlan: phasePlan,
-  );
-  final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
+  final expandQuotaPressure = economyPhaseGates.expandQuotaPressure;
+  final expandEconomy = economyPhaseGates.expandEconomy;
   final firstNavalTransportBootstrap =
       resolvePhaseFirstNavalTransportBootstrapActive(
         game: ctx.game,
@@ -494,8 +481,7 @@ _BuildPassResult _appendEconomyBuildOrders({
 
   var buildThreshold = _computeBaseBuildThreshold(
     ctx: ctx,
-    phasePlan: phasePlan,
-    snapshot: snapshot,
+    economyPhaseGates: economyPhaseGates,
     expandQuotaPressure: expandQuotaPressure,
   );
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
@@ -519,16 +505,14 @@ _BuildPassResult _appendEconomyBuildOrders({
   // removed too — see `SPEC/ai/phase-planner-dispatch.md` §
   // Orchestrator economy build rebuild-trap slice).
   final belowQuotaPeaceInsufficientRegiments =
-      resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive(
-        phasePlan: phasePlan,
+      economyPhaseGates.belowQuotaPeaceInsufficientRegiments(
         regimentCount: regimentCount,
         atWarWithAnyGreatPower: atWarWithAnyGreatPower,
         hasInvadableProvinces:
             snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
       );
   final belowQuotaZeroRegimentsRebuild =
-      resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive(
-        phasePlan: phasePlan,
+      economyPhaseGates.belowQuotaPeaceZeroRegimentsRebuild(
         regimentCount: regimentCount,
         hasInvadableProvinces:
             snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
@@ -553,12 +537,14 @@ _BuildPassResult _appendEconomyBuildOrders({
   final minRegimentFloor = _computeMinRegimentFloor(
     ctx: ctx,
     snapshot: snapshot,
-    atWarWithGpBlocker: atWarWithGpBlocker,
-    gpBlocker: gpBlocker,
-    criticallyWeakNoGpWar: criticallyWeakNoGpWar,
-    criticallyWeakBelowQuota: criticallyWeakBelowQuota,
-    needRegimentsToExpand: needRegimentsToExpand,
-    belowQuotaZeroRegimentsRebuild: belowQuotaZeroRegimentsRebuild,
+    floorContext: (
+      atWarWithGpBlocker: atWarWithGpBlocker,
+      gpBlocker: gpBlocker,
+      criticallyWeakNoGpWar: criticallyWeakNoGpWar,
+      criticallyWeakBelowQuota: criticallyWeakBelowQuota,
+      needRegimentsToExpand: needRegimentsToExpand,
+      belowQuotaZeroRegimentsRebuild: belowQuotaZeroRegimentsRebuild,
+    ),
   );
   var forceRegimentRebuild =
       !suppressMilitaryBuilds &&
@@ -641,9 +627,7 @@ _BuildPassResult _appendEconomyBuildOrders({
   // conquest sprint is not dominated by colonial pressure, while at
   // the COLONIAL plateau the bonus reaches `+2.5` identity-equal to
   // the legacy hard-phase path.
-  var colonialPressureWeight = resolvePhaseEconomyColonialPressureWeight(
-    phasePlan: phasePlan,
-  );
+  var colonialPressureWeight = economyPhaseGates.colonialPressureWeight;
   if (firstNavalTransportBootstrap &&
       colonialPressureWeight < kPhasePriorityNwTreasuryRecoveryFloor) {
     colonialPressureWeight = kPhasePriorityNwTreasuryRecoveryFloor;

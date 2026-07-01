@@ -1,4 +1,5 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/planner_context.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -73,7 +74,9 @@ Orders runDomainPlannersInTest({
     seeds: AISeedBundle.fromTurnSeed(turnSeed),
     suggestionAPI: suggestionAPI,
     economyPlan: economyPlan,
-    tileMapByRegion: tileMapByRegion,
-    onStagedPlannerProgress: onStagedPlannerProgress,
+    options: OrchestratorOptions(
+      tileMapByRegion: tileMapByRegion,
+      onStagedPlannerProgress: onStagedPlannerProgress,
+    ),
   );
 }

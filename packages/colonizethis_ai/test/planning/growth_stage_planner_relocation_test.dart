@@ -3,6 +3,7 @@
 // to respect the per-file non-comment line budget.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_builder_relocation.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_work_priorities.dart';
 import 'package:colonizethis_ai/src/planning/move_planner.dart';
@@ -184,7 +185,7 @@ void main() {
           productionAssignments: [],
           cargoPreference: CargoPreference.none,
         ),
-        growthStagePlannerEnabled: true,
+        options: OrchestratorOptions(growthStagePlannerEnabled: true),
       );
       final moves = outcome.orders.moveOrdersByPlayerId['gp1'] ?? const [];
       expect(

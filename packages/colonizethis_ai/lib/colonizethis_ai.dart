@@ -21,6 +21,7 @@ export 'src/planning/build_planner.dart'
         kCivilianBuildPlannerEnabled,
         pickBuildOrder;
 export 'src/planning/domain_planner_orchestrator.dart';
+export 'src/planning/orchestrator_options.dart';
 export 'src/planning/diplomacy_planner.dart';
 export 'src/planning/economy_planner.dart';
 export 'src/planning/growth_stage.dart'

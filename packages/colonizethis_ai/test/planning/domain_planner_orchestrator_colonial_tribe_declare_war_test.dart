@@ -45,6 +45,7 @@
 
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -316,7 +317,7 @@ void main() {
         // `_curveWeightsForOw(7)` returns 0.05 — see
         // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`
         // for the new soft-weight contract.
-        phasePlan: _expandPhasePlanHardSuppressNw,
+        options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
       );
 
       expect(

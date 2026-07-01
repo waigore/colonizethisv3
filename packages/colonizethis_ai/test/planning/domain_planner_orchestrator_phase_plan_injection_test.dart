@@ -41,6 +41,7 @@
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/domain_planner_outcome.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -255,7 +256,7 @@ void main() {
           seeds: AISeedBundle.fromTurnSeed(2509300),
           suggestionAPI: _conquestCandidateApi,
           economyPlan: _economyPlan,
-          phasePlan: PhasePlanOutcome.defaultDevelop,
+          options: OrchestratorOptions(phasePlan: PhasePlanOutcome.defaultDevelop),
         );
 
         expect(
@@ -324,7 +325,7 @@ void main() {
           seeds: AISeedBundle.fromTurnSeed(2509301),
           suggestionAPI: _conquestCandidateApi,
           economyPlan: _economyPlan,
-          phasePlan: naturalPlan,
+          options: OrchestratorOptions(phasePlan: naturalPlan),
         ).orders;
 
         expect(
@@ -403,7 +404,7 @@ void main() {
               seeds: AISeedBundle.fromTurnSeed(2509302),
               suggestionAPI: _conquestCandidateApi,
               economyPlan: _economyPlan,
-              phasePlan: naturalPlan,
+              options: OrchestratorOptions(phasePlan: naturalPlan),
             );
 
         final first = runOnce();

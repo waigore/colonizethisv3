@@ -9,7 +9,6 @@ import 'domain_gate_data.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
-import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
 import 'planning_helpers.dart'
@@ -25,11 +24,14 @@ import '../util/orders_extensions.dart';
 import 'build_planner.dart';
 import 'growth_stage.dart';
 import 'conquest_planner.dart';
+import 'expand_phase_planner.dart' show ExpandEconomyPlan;
 import 'growth_stage_builder_relocation.dart';
 import 'growth_stage_work_priorities.dart';
 import 'diplomacy_planner.dart';
 import 'domain_planner_outcome.dart';
+import 'economy_phase_gates.dart';
 import 'move_planner.dart';
+import 'orchestrator_options.dart';
 import 'naval_planner.dart';
 import 'planner_context.dart';
 import 'research_planner.dart';
@@ -60,11 +62,7 @@ Orders runDomainPlanners({
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
   required EconomyPlan economyPlan,
-  Map<String, TileMapResult>? tileMapByRegion,
-  void Function(String phaseId)? onStagedPlannerProgress,
-  PhasePlanOutcome? phasePlan,
-  bool recomputeTradeOrdersWithPendingCosts = false,
-  Map<String, ExtractionTotals>? extractionById,
+  OrchestratorOptions options = OrchestratorOptions.defaults,
 }) {
   return runDomainPlannersWithOutcome(
     game: game,
@@ -77,11 +75,7 @@ Orders runDomainPlanners({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
     economyPlan: economyPlan,
-    tileMapByRegion: tileMapByRegion,
-    onStagedPlannerProgress: onStagedPlannerProgress,
-    phasePlan: phasePlan,
-    recomputeTradeOrdersWithPendingCosts: recomputeTradeOrdersWithPendingCosts,
-    extractionById: extractionById,
+    options: options,
   ).orders;
 }
 
@@ -107,24 +101,21 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
   required EconomyPlan economyPlan,
-  Map<String, TileMapResult>? tileMapByRegion,
-  void Function(String phaseId)? onStagedPlannerProgress,
-  Orders? sameTurnPriorDiplomaticOrders,
-  PhasePlanOutcome? phasePlan,
-  bool recomputeTradeOrdersWithPendingCosts = false,
-  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
-  bool civilianBuildPlannerEnabled = kCivilianBuildPlannerEnabled,
-  Map<String, ExtractionTotals>? extractionById,
+  OrchestratorOptions options = OrchestratorOptions.defaults,
 }) {
-  void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
+  void emit(String phaseId) => options.onStagedPlannerProgress?.call(phaseId);
 
   final resolvedPhasePlan =
-      phasePlan ??
+      options.phasePlan ??
       runPhasePlanners(
         game: game,
         snapshot: snapshot,
         personalityId: config.personalityId,
       );
+  final economyPhaseGates = EconomyPhaseGates.fromPhasePlan(
+    phasePlan: resolvedPhasePlan,
+    snapshot: snapshot,
+  );
 
   var ctx = PlannerContext(
     nationId: nationId,
@@ -136,17 +127,18 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
-    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-    growthStagePlannerEnabled: growthStagePlannerEnabled,
-    civilianBuildPlannerEnabled: civilianBuildPlannerEnabled,
+    sameTurnPriorDiplomaticOrders: options.sameTurnPriorDiplomaticOrders,
+    growthStagePlannerEnabled: options.growthStagePlannerEnabled,
+    civilianBuildPlannerEnabled: options.civilianBuildPlannerEnabled,
   );
 
   final economyResult = _runEconomyDomainPlanners(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
+    economyPhaseGates: economyPhaseGates,
     economyPlan: economyPlan,
-    tileMapByRegion: tileMapByRegion,
+    tileMapByRegion: options.tileMapByRegion,
     emit: emit,
   );
   ctx = economyResult.ctx;
@@ -217,7 +209,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   // `tradeOrdersByPlayerId` stays absent for that player and existing
   // `MapEquality` assertions remain stable.
   final List<TradeOrder> resolvedTradeOrders;
-  if (recomputeTradeOrdersWithPendingCosts) {
+  if (options.recomputeTradeOrdersWithPendingCosts) {
     final player = game.playerById(nationId);
     resolvedTradeOrders = player == null
         ? const <TradeOrder>[]
@@ -228,10 +220,10 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
             productionAssignments: economyPlan.productionAssignments,
             treasury: player.treasury,
             snapshot: snapshot,
-            tileMapByRegion: tileMapByRegion,
+            tileMapByRegion: options.tileMapByRegion,
             topology: topology,
             currentOrders: ctx.orders,
-            extractionById: extractionById,
+            extractionById: options.extractionById,
           );
   } else {
     resolvedTradeOrders = economyPlan.tradeOrders;

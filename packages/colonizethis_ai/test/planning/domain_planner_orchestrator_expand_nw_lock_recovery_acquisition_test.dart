@@ -36,6 +36,7 @@
 
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -244,7 +245,7 @@ Orders _runOrchestrator({
     seeds: AISeedBundle.fromTurnSeed(turnSeed),
     suggestionAPI: _nwTribeDeclareWarApi,
     economyPlan: _economyPlan,
-    phasePlan: phasePlan,
+    options: OrchestratorOptions(phasePlan: phasePlan),
   );
 }
 

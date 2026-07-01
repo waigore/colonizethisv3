@@ -1,4 +1,8 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
+import 'package:colonizethis_ai/src/planning/economy_phase_gates.dart';
 import 'package:colonizethis_ai/src/planning/effective_labour_state.dart';
+import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_ai/src/planning/scored_candidate.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
@@ -79,6 +83,35 @@ void main() {
     test('fromGame returns zero labour for missing player', () {
       final game = TestFixtures.minimalGame();
       expect(EffectiveLabourState.fromGame(game, 'missing').compute(), 0);
+    });
+  });
+
+  group('EconomyPhaseGates', () {
+    test('fromPhasePlan mirrors develop and expand quota resolvers', () {
+      const develop = PhasePlanOutcome.defaultDevelop;
+      const expand = PhasePlanOutcome.defaultExpand;
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        EconomyPhaseGates.fromPhasePlan(
+          phasePlan: develop,
+          snapshot: snapshot,
+        ).developActive,
+        isTrue,
+      );
+      expect(
+        EconomyPhaseGates.fromPhasePlan(
+          phasePlan: expand,
+          snapshot: snapshot,
+        ).expandQuotaPressure,
+        isTrue,
+      );
     });
   });
 }
