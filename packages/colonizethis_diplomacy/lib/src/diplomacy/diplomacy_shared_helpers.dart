@@ -110,6 +110,29 @@ bool isAiControlledForEvidence(Game game, String playerId) {
 /// Overture pair key for GP→target lookups (directional).
 String overturePairKey(String gpId, String targetId) => '$gpId\x1F$targetId';
 
+/// Directional GP→target overture lookup in a working [overtures] list.
+///
+/// Mirrors [getOverture] for resolver rolling state that has not yet been
+/// written back to [Game.overtureStates] (Refs #3825).
+OvertureState? findOvertureForGpTarget(
+  List<OvertureState> overtures,
+  String gpId,
+  String targetId,
+) {
+  for (final o in overtures) {
+    if (o.gpId == gpId && o.targetId == targetId) return o;
+  }
+  return null;
+}
+
+/// Index of the directional GP→target overture in [overtures], or -1.
+int indexOfOvertureForGpTarget(
+  List<OvertureState> overtures,
+  String gpId,
+  String targetId,
+) =>
+    overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
+
 /// Applies GP–GP war overture rules (Refs #3753 R1): preserve `embassy`,
 /// downgrade `nap`/`joinEmpire` to `embassy`, remove stages below embassy.
 ///

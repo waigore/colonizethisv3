@@ -27,6 +27,10 @@ const _mandatedFixtureTestPaths = <String>{
   'packages/colonizethis_diplomacy/test/diplomacy/alliance_break_cooldown_test.dart',
   'packages/colonizethis_diplomacy/test/diplomacy/boycott_resolver_test.dart',
   'packages/colonizethis_diplomacy/test/diplomacy/boycott_blocked_trade_pair_keys_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/favoured_trading_partner_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_trade_deal_relation_boost_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_relation_lookup_scores_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/alliance_resolver_process_alliances_test.dart',
 };
 
 /// Matches an inline `Game(` constructor call (standalone identifier, not
