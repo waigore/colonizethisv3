@@ -257,15 +257,9 @@ bool _aiTrailsFavouredTradingPartner({
   required String nationId,
   required String targetFactionId,
 }) {
-  final num ownScore =
-      getRelation(game, nationId, targetFactionId)?.score ??
-      relationScoreNeutral;
-  for (final player in game.players) {
-    if (player.id == nationId) continue;
-    final otherScore = getRelation(game, player.id, targetFactionId)?.score;
-    if (otherScore != null && otherScore > ownScore) return true;
-  }
-  return false;
+  final favoured = favouredTradingPartner(game, targetFactionId);
+  if (favoured == null) return false;
+  return favoured != nationId;
 }
 
 /// Count of **non-empty resource tiles owned by [sellerId]** — a deterministic

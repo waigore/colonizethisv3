@@ -9,6 +9,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/planner_test_helpers.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 const _topology = MapTopology(nodes: [], edges: []);
 
@@ -17,6 +19,32 @@ const _backstabberConfig = AIConfig(
   personalityId: 'napoleon',
   hiddenAgendaId: 'backstabber',
 );
+
+/// Emits only a percent-subsidy candidate so the composed planner wiring test
+/// can pin [runDiplomacyPlannerWithResult] without overture/declare-war noise.
+final class _SetSubsidyOnlySuggestionAPI extends DefaultOrderSuggestionAPI {
+  const _SetSubsidyOnlySuggestionAPI(this.targetId);
+
+  final String targetId;
+
+  @override
+  List<DiplomaticOrder> suggestDiplomaticOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+    IncrementalCandidateValidator? sharedCandidateValidator,
+  }) {
+    return [
+      DiplomaticOrder(
+        type: DiplomaticOrderType.setSubsidy,
+        targetFactionId: targetId,
+        amount: kSubsidyPercentDefault,
+      ),
+    ];
+  }
+}
 
 Game _twoGpAtPeaceGame({
   bool formalAlliance = false,
@@ -70,6 +98,7 @@ DiplomaticOrder? _chosenOrder({
   required Game game,
   required int turnSeed,
   AIConfig config = _backstabberConfig,
+  OrderSuggestionAPI? suggestionAPI,
 }) {
   final ctx = buildTestPlannerContext(
     game: game,
@@ -78,6 +107,7 @@ DiplomaticOrder? _chosenOrder({
     primaryGoal: StrategicGoal.diplomacy,
     turnSeed: turnSeed,
     config: config,
+    suggestionAPI: suggestionAPI ?? const DefaultOrderSuggestionAPI(),
   );
   final snapshot = _neutralSnapshot();
   final result = runDiplomacyPlannerWithResult(
@@ -132,5 +162,56 @@ void main() {
         expect(chosen?.type, isNot(DiplomaticOrderType.boycott));
       }
     });
+
+    test(
+      'emits setSubsidy when it is the sole diplomatic candidate '
+      '(Refs #3753 S16)',
+      () {
+        final game = Game(
+          id: 'g-diplomacy-planner-subsidy',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'A',
+              isHuman: false,
+              treasury: 10000,
+              techUnlocked: const {kTechIdDiplomaticExpertise: true},
+            ),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M')],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              score: 50,
+              level: RelationLevel.neutral,
+              state: RelationState.atPeace,
+            ),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+            ),
+          ],
+          aiControlByGpId: const {'gp1': true},
+        );
+        final chosen = _chosenOrder(
+          game: game,
+          turnSeed: 1,
+          suggestionAPI: const _SetSubsidyOnlySuggestionAPI('minor1'),
+        );
+        expect(chosen, isNotNull);
+        expect(chosen!.type, DiplomaticOrderType.setSubsidy);
+        expect(chosen.targetFactionId, 'minor1');
+        expect(chosen.amount, kSubsidyPercentDefault);
+      },
+    );
   });
 }

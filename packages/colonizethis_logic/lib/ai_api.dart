@@ -69,6 +69,7 @@ export 'package:colonizethis_economy/colonizethis_economy.dart'
 export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
     show
         DiplomacyFactionMembership,
+        favouredTradingPartner,
         getOverture,
         getRelation,
         greatPowerPowerScore,

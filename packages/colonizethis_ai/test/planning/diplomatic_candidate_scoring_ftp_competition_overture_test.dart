@@ -22,18 +22,34 @@ void main() {
   int scoreCandidate({
     required Game game,
     required List<DiplomaticOrder> candidates,
+    AIWorldSnapshot? snapshot,
   }) {
-    final snapshot = AIWorldSnapshot.fromPlayerView(
-      buildPlayerView(game, topology, 'gp1'),
-    );
+    final resolvedSnapshot =
+        snapshot ??
+        AIWorldSnapshot.fromPlayerView(
+          buildPlayerView(game, topology, 'gp1'),
+        );
     return computeDiplomaticCandidateScores(
       candidates: candidates,
       nationId: 'gp1',
       game: game,
-      snapshot: snapshot,
+      snapshot: resolvedSnapshot,
       config: config,
     ).single;
   }
+
+  AIWorldSnapshot _tribeOvertureSnapshot() => const AIWorldSnapshot(
+    playerId: 'gp1',
+    threats: ThreatSummary(),
+    opportunities: OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: 20,
+      provincesToVictory: 31,
+    ),
+    colonial: ColonialSummary(),
+    economy: EconomySummary(),
+    relations: {},
+  );
 
   group('computeDiplomaticCandidateScores establishOverture FTP competition', () {
     // Minimal symmetric two-GP world plus one Minor seller. gp1 (AI) and gp2
@@ -124,6 +140,85 @@ void main() {
         greaterThan(overtureScore(ownScore: 60, competitorScore: 60)),
       );
     });
+
+    test(
+      'colony suzerain is already favoured despite a higher competitor relation '
+      '(Refs #3753 R7.1)',
+      () {
+        Game tribeGame({required bool colonyOfGp1}) => Game(
+          id: 'g-ftp-colony',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 5,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|t1',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'tribe1',
+              score: 40,
+              level: scoreToLevel(40),
+              state: RelationState.atPeace,
+            ),
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'tribe1',
+              score: 90,
+              level: scoreToLevel(90),
+              state: RelationState.atPeace,
+            ),
+          ],
+          colonyStates: colonyOfGp1
+              ? const [
+                  ColonyState(
+                    tribeId: 'tribe1',
+                    colonyOfGpId: 'gp1',
+                    sinceTurn: 1,
+                  ),
+                ]
+              : const [],
+        );
+
+        const overtureToTribe = [
+          DiplomaticOrder(
+            type: DiplomaticOrderType.establishOverture,
+            targetFactionId: 'tribe1',
+            overtureStage: OvertureStage.tradeConsulate,
+          ),
+        ];
+
+        final independentTrailing = scoreCandidate(
+          game: tribeGame(colonyOfGp1: false),
+          candidates: overtureToTribe,
+          snapshot: _tribeOvertureSnapshot(),
+        );
+        final colonySuzerain = scoreCandidate(
+          game: tribeGame(colonyOfGp1: true),
+          candidates: overtureToTribe,
+          snapshot: _tribeOvertureSnapshot(),
+        );
+        expect(
+          independentTrailing - colonySuzerain,
+          kEstablishOvertureFtpCompetitionBonus,
+        );
+      },
+    );
   });
 
   group('computeDiplomaticCandidateScores establishOverture FTP non-minor', () {
