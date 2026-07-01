@@ -171,7 +171,7 @@ void main() {
     );
 
     test(
-      'endOfTurn preserves visibility when Spy timer is active (no units present)',
+      'endOfTurn fogs province immediately when no Explorer/Spy remains',
       () {
         const ow = 'oldWorld';
         const tileKeyP2 = 'oldWorld|P2|0|0';
@@ -197,9 +197,6 @@ void main() {
               ow: {
                 'P2': [tileKeyP2],
               },
-            },
-            spyRevealTurnsByPlayer: const {
-              'p1': {'$ow|P2': 5},
             },
           ),
           players: const [
@@ -230,18 +227,15 @@ void main() {
           ),
         );
 
-        // Timer decremented but still present.
-        expect(next.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P2'], 4);
-        // Province remains fully visible while timer > 0.
         expect(
           next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
-          VisibilityLevel.fullyVisible.name,
+          VisibilityLevel.fogged.name,
         );
       },
     );
 
     test(
-      'endOfTurn fogs province when Spy timer reaches zero and no Explorer/Spy remains',
+      'endOfTurn retains visibility while a Spy remains in the province',
       () {
         const ow = 'oldWorld';
         const tileKeyP2 = 'oldWorld|P2|0|0';
@@ -257,7 +251,15 @@ void main() {
                 Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
                 Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
               ],
-              units: [],
+              units: [
+                Unit(
+                  id: 'spy1',
+                  type: kUnitTypeSpy,
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P2',
+                  tileKey: tileKeyP2,
+                ),
+              ],
             ),
             newWorld: const RegionData(),
             playerVisibilityByTile: const {
@@ -267,9 +269,6 @@ void main() {
               ow: {
                 'P2': [tileKeyP2],
               },
-            },
-            spyRevealTurnsByPlayer: const {
-              'p1': {'$ow|P2': 1},
             },
           ),
           players: const [
@@ -300,12 +299,9 @@ void main() {
           ),
         );
 
-        // Timer cleared once it reaches 0.
-        expect(next.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P2'], isNull);
-        // Province tiles decay to fogged.
         expect(
           next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
-          VisibilityLevel.fogged.name,
+          VisibilityLevel.fullyVisible.name,
         );
       },
     );

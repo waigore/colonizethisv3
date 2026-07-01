@@ -21,11 +21,6 @@ Game runMovementPhase(
 
   final moveOrders = orders.moveOrdersByPlayerId;
   if (moveOrders.isNotEmpty) {
-    final ownerByProvinceId = ownerByProvinceIdMap(state.worldState);
-
-    final originalOldWorld = state.worldState.oldWorld;
-    final originalNewWorld = state.worldState.newWorld;
-
     final tiled = applyCivilianTileMoveOrdersToWorldRegions(
       state,
       moveOrders,
@@ -33,50 +28,10 @@ Game runMovementPhase(
     );
     final oldWorld = tiled.oldWorld;
     final newWorld = tiled.newWorld;
-    // Defer the deep copy of spyRevealTurnsByPlayer until a spy actually
-    // leaves an enemy province; most turns have zero such events, so the
-    // eager copy was wasted O(players * provinces) work per move phase.
-    // Refs #2394 Category D.
-    final originalSpyTimers = state.worldState.spyRevealTurnsByPlayer;
-    Map<String, Map<String, int>>? mutableSpyTimers;
-    Map<String, int> spyTimersForOwner(String ownerId) {
-      mutableSpyTimers ??= {
-        for (final entry in originalSpyTimers.entries)
-          entry.key: Map<String, int>.from(entry.value),
-      };
-      return mutableSpyTimers!.putIfAbsent(ownerId, () => <String, int>{});
-    }
-
-    void recordSpyLeft(String ownerId, String provinceId) {
-      final provinceOwner = ownerByProvinceId[provinceId];
-      if (provinceOwner == null || provinceOwner == ownerId) {
-        return;
-      }
-      spyTimersForOwner(ownerId)[provinceId] = 5;
-    }
-
-    void recordSpyProvinceChanges(RegionData before, RegionData after) {
-      final afterById = <String, Unit>{};
-      for (final x in after.units) {
-        afterById.putIfAbsent(x.id, () => x);
-      }
-      for (final u in before.units) {
-        if (!isSpyUnit(u.type)) continue;
-        final afterUnit = afterById[u.id];
-        if (afterUnit == null) continue;
-        if (afterUnit.locationProvinceId != u.locationProvinceId) {
-          recordSpyLeft(u.ownerId, u.locationProvinceId);
-        }
-      }
-    }
-
-    recordSpyProvinceChanges(originalOldWorld, oldWorld);
-    recordSpyProvinceChanges(originalNewWorld, newWorld);
     state = state.updateWorldState(
       (ws) => ws.copyWith(
         oldWorld: oldWorld,
         newWorld: newWorld,
-        spyRevealTurnsByPlayer: mutableSpyTimers ?? originalSpyTimers,
       ),
     );
   }

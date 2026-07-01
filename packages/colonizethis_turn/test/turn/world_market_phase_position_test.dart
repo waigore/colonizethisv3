@@ -27,15 +27,15 @@ void main() {
         worldMarketIndex,
         buildWorkIndex + 1,
         reason:
-            'World Market (phase 13) must run immediately after Build/Work '
-            '(phase 12) per SPEC/program/turn-resolution-phases.md.',
+            'World Market (phase 14) must run immediately after Build/Work '
+            '(phase 13) per SPEC/program/turn-resolution-phases.md.',
       );
       expect(
         endOfTurnIndex,
         worldMarketIndex + 1,
         reason:
-            'End-of-turn (phase 14) must run immediately after World Market '
-            '(phase 13) per SPEC/program/turn-resolution-phases.md.',
+            'End-of-turn (phase 15) must run immediately after World Market '
+            '(phase 14) per SPEC/program/turn-resolution-phases.md.',
       );
     });
 
@@ -49,13 +49,14 @@ void main() {
       );
     });
 
-    test('canonical sequence length is 14 phases', () {
+    test('canonical sequence length is 15 phases', () {
       expect(
         turnResolutionSequence.length,
-        14,
+        15,
         reason:
-            'Inserting World Market renumbers End-of-turn 13 → 14; the '
-            'canonical sequence should have 14 entries.',
+            'Pre-Research spy-resolution (phase 7) plus World Market '
+            '(phase 14) and End-of-turn (phase 15) per '
+            'SPEC/program/turn-resolution-phases.md.',
       );
     });
   });

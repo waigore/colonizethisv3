@@ -6,8 +6,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         PlayerView,
         VisibilityLevel,
         kWorkTargetCounterSpy,
-        kWorkTargetPurchaseLand,
-        kWorkTargetStealTech;
+        kWorkTargetPurchaseLand;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -50,15 +49,13 @@ void main() {
       tileMapByRegion: null,
     );
 
-    test('resolveValidTileKeys returns post-filter cache for steal_tech, '
-        'counter_spy, and purchase_land', () {
-      const stealTile = 'oldWorld|gp2_cap|0|0';
+    test('resolveValidTileKeys returns post-filter cache for counter-espionage '
+        'and purchase-land work targets', () {
       const counterTile = 'oldWorld|owned|1|1';
       const purchaseTile = 'oldWorld|minor|2|2';
 
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
-          kWorkTargetStealTech: (_) => {stealTile},
           kWorkTargetCounterSpy: (_) => {counterTile},
           kWorkTargetPurchaseLand: (_) => {purchaseTile},
         },
@@ -70,7 +67,6 @@ void main() {
       const orders = ct_models.Orders();
 
       for (final entry in <MapEntry<String, String>>[
-        MapEntry(kWorkTargetStealTech, stealTile),
         MapEntry(kWorkTargetCounterSpy, counterTile),
         MapEntry(kWorkTargetPurchaseLand, purchaseTile),
       ]) {
@@ -97,7 +93,6 @@ void main() {
 
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
-          kWorkTargetStealTech: (_) => {tileKept, tileStale},
           kWorkTargetCounterSpy: (_) => {tileKept, tileStale},
           kWorkTargetPurchaseLand: (_) => {tileKept, tileStale},
         },
@@ -119,7 +114,6 @@ void main() {
       );
 
       for (final workTarget in <String>[
-        kWorkTargetStealTech,
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand,
       ]) {

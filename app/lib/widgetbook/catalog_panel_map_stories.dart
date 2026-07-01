@@ -332,9 +332,7 @@ class CivilianPanelWithMapStoryState
     }
     final target = sel.workTarget;
     String targetTileKey = tileKey;
-    if (target == kWorkTargetExplore ||
-        target == kWorkTargetStealTech ||
-        target == kWorkTargetCounterSpy) {
+    if (target == kWorkTargetExplore || target == kWorkTargetCounterSpy) {
       final region = prefixedIdRegionSegment(tileKey);
       if (region != null) {
         final local = prefixedIdLocalSegment(tileKey);

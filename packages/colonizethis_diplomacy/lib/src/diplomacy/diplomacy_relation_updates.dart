@@ -222,3 +222,25 @@ DiplomacyRelation Function(DiplomacyRelation?) _allianceBreakAllyUpdater(
     );
   };
 }
+
+/// Applies the spy-caught diplomacy penalty between [spyOwnerId] and
+/// [territoryOwnerId]. SPEC/game/diplomacy.md; Refs #3834 R8.
+({List<DiplomacyRelation> relations, int penaltiesApplied})
+applySpyDeathDiplomacyPenalty({
+  required List<DiplomacyRelation> relations,
+  required String spyOwnerId,
+  required String territoryOwnerId,
+  required int turn,
+  int penalty = -8,
+}) {
+  if (spyOwnerId == territoryOwnerId) {
+    return (relations: relations, penaltiesApplied: 0);
+  }
+  final next = upsertRelation(
+    relations,
+    spyOwnerId,
+    territoryOwnerId,
+    _scoreDeltaUpdater(spyOwnerId, territoryOwnerId, penalty, turn),
+  );
+  return (relations: next, penaltiesApplied: 1);
+}

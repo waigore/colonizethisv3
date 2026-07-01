@@ -209,7 +209,7 @@ void main() {
     );
 
     test(
-      'preserves visibility when Spy timer is active in other-faction province',
+      'fogs other-faction province when no Explorer/Spy remains',
       () {
         const ow = 'oldWorld';
         const tileKeyP2 = 'oldWorld|P2|0|0';
@@ -230,9 +230,6 @@ void main() {
             playerVisibilityByTile: const {
               'p1': {tileKeyP2: 'fullyVisible'},
             },
-            spyRevealTurnsByPlayer: const {
-              'p1': {'$ow|P2': 3},
-            },
           ),
           players: const [
             Player(id: 'p1', displayName: 'P1', isHuman: true),
@@ -244,7 +241,7 @@ void main() {
 
         expect(
           nextVisibility['p1']?[tileKeyP2],
-          VisibilityLevel.fullyVisible.name,
+          VisibilityLevel.fogged.name,
         );
       },
     );

@@ -82,7 +82,6 @@ WorkTargetSelectionSnapshot _snapshot(Game game) {
 /// Mirrors default-strategy keys in [PerPlayerWorkTargetSelectionCache].
 const _defaultWorkTargets = <String>[
   kWorkTargetExplore,
-  kWorkTargetStealTech,
   kWorkTargetCounterSpy,
   kWorkTargetPurchaseLand,
   kWorkTargetProspect,

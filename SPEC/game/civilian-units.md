@@ -17,7 +17,7 @@
 | **Explorer** | Explore fog of war; prospect for minerals | 1000 cash, 2 paper | Starting | Minerals must be prospected before extraction; exploration/prospecting carries **no material cost** ("free"), but `explore`/`prospect` inside a Minor/Tribe province require a **Consulate** (or higher) with that faction (Refs #3753 R4) |
 | **Engineer** | Build roads, ports, fortifications | 1000 cash, 2 paper | Starting | Roads gather resources; ports and forts in cities/rivers |
 | **Builder** | Improve terrain production (mines, farms, ranches, plantations, fur posts, towns) | 1000 cash, 2 paper | Starting | Increases output 1→2→3→4; tech caps max level |
-| **Spy** | Presence reveal; steal technology; counter-spy | 2000 cash, 4 paper | Starting | Presence reveal in non-owner province; steal_tech/counter_spy work orders; invisible to other players |
+| **Spy** | Presence reveal; passive RP boost in rival GP territory; counter-spy (empire-wide) | 2000 cash, 4 paper | Starting | Presence reveal in non-owner province; passive research boost when spies are in rival GP provinces; `counter_spy` is the only active work order; invisible to other players |
 | **Merchant** | Purchase land in Minor Nations/Tribes and New World | 2000 cash, 4 paper | Merchant Companies tech; embassy for purchase_land | purchase_land WorkOrder: tile with resource; embassy required; not at war; cost 15× resource base price. See [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md). |
 | **Rail Builder** | Upgrade roads to railroads | 2000 cash, 4 paper | Early Steam Engine tech | Rail transports up to 4 resources per tile |
 
@@ -39,8 +39,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | build_port | Engineer | Lumber + metal | Config | Coastal/river; transport 4 |
 | build_fort | Engineer | Per siege-mechanics | Config (1+ turn per level) | Town tile; fort level 1–3 |
 | build_rail | Rail Builder | 2 lumber + 2 steel | Config | Road 1–2→4; rail tech vs terrain |
-| steal_tech | Spy | — | Up to 5 turns | Target = **GP capital province**; 8%/turn success; random tech player lacks |
-| counter_spy | Spy | — | Ongoing | Target = **owned province**; +5% per friendly spy/turn (cap 30%) to kill enemy spies |
+| counter_spy | Spy | — | Ongoing | Target = **owned province**; one spy on `counter_spy` anywhere grants empire-wide +5% kill bonus and 10%/turn defection chance against enemy spies in all owned provinces (Refs #3834) |
 | purchase_land | Merchant | 15 × resource base price (treasury); validate ≥ cost at assign; **debit at completion**; embassy in Minor/Tribe | 1 turn (`currentWork`) | Tile in Minor/Tribe with resource; not at war; mineral → must be prospected; `purchasedTilesByTileKey` updated at completion |
 
 Spy does not have explore/prospect; Spy's garrison reveal is handled by visibility (see [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)), not a work order.
@@ -56,7 +55,7 @@ Spy does not have explore/prospect; Spy's garrison reveal is handled by visibili
 - **Builder work:** Uses `WorkOrder` targets `build_improvement` and `upgrade_town`. Each completed order increases the tile's improvement level by 1 (or upgrades a town) after a **multi-turn build** whose duration increases with target level and terrain; costs and turn counts derive from Imperialism II (e.g. Level 1 cheaper/faster than Level 4). See [extraction-and-improvements.md](extraction-and-improvements.md) and [development-resolution.md](../program/development-resolution.md).
 - **Engineer work:** Uses `WorkOrder` targets `build_road`, `build_port`, and `build_fort`. Each completed order constructs or upgrades transport/fortification on the **target tile** after one or more turns, consuming lumber and metal per [02-economy](../../Obsidian/obsidian-shared/Projects/ColonizeThisV3/Imperialism II/02-economy.md) mirrored in ruleset config.
 - **Rail Builder work:** Uses `WorkOrder` target `build_rail`. Each completed order upgrades an existing road tile (transport level 1 or 2) to railroad (transport level 4) over multiple turns, costing 2 lumber + 2 steel; validation requires per-tile terrain from the region tile map and the transport tech appropriate to that terrain per [tech-tree-transport.md](tech-tree-transport.md). Authoritative material cost: `packages/colonizethis_data` `work_order_costs.dart` (`workOrderCostBuildRail`).
-- **Spy:** (1) **Presence reveal:** While a Spy is in a non-owner province, that province is fully visible to the Spy's owner; when the Spy leaves, the province returns to fogged after 5 turns (turn timer). (2) **steal_tech:** WorkOrder target = other GP's **capital province**; up to 5 turns; 8% per turn to steal a random tech the player does not have; completion or expiry clears work. (3) **counter_spy:** WorkOrder target = any **owned** province; each friendly Spy in that province adds 5% per turn (capped 30%) chance to kill an enemy Spy there. (4) **Invisibility:** Spy province locations are invisible to all players except the Spy's owner.
+- **Spy:** (1) **Presence reveal:** While a Spy is in a non-owner province, that province is fully visible to the Spy's owner; when the Spy leaves and no other Spy from the same owner remains there, visibility reverts to fogged **immediately** at end-of-turn (no grace timer). (2) **Passive RP boost:** A Spy present in any rival GP province (idle or on `counter_spy`) confers +15% RP per qualifying rival GP during Research for slots researching techs that rival already unlocked (funding ≥ Low). (3) **counter_spy:** WorkOrder target = any **owned** province; one Spy on `counter_spy` anywhere grants empire-wide +5% kill chance against enemy spies and enables 10%/turn defection rolls for survivors. (4) **Invisibility:** Spy province locations are invisible to all players except the Spy's owner. Refs #3834.
 - **Merchant:** **purchase_land** WorkOrder: target = tile in Minor/Tribe province that has a resource; if resource requires prospecting, player must have prospected that tile; player must not be at war with that Minor/Tribe; cost = 15 × resource base price (treasury) debited when work **completes**; requires **embassy** with that Minor/Tribe; assign-time validates `treasury >= cost` without debiting. **A tile may be purchased by at most one GP;** once recorded in `purchasedTilesByTileKey` at completion, no other GP may purchase that tile (validation rejects). Building a Merchant unit requires Merchant Companies tech; purchasing land requires embassy (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)).
 
 ---
@@ -99,17 +98,21 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
   When `A` submits an `explore` or `prospect` `WorkOrder` targeting a tile in `F`'s province  
   Then the system does not reject the order for the Consulate gate (acceptance remains subject to existing fog/visibility, unit-availability, and mineral-eligibility rules).
 
-- Given a Spy `WorkOrder` is issued (target `steal_tech` against a GP capital, or `counter_spy` against an own province) (Refs #3753 R4.4)  
+- Given a Spy `WorkOrder` is issued (target `counter_spy` against an own province) (Refs #3753 R4.4)  
   When the system validates the order  
   Then the Consulate gate does not reject the order, because no Spy work target is a Minor/Tribe province in current product (the gate is inert for Spy).
 
 - Given a Spy civilian unit controlled by the player is present in a province that is not owned by that player  
   When the system evaluates visibility for that player's map each turn  
-  Then the system treats that province as fully visible for that player, and when the Spy leaves that province, the system starts a 5-turn countdown after which all tiles in that province revert to fogged unless revealed by another source.
+  Then the system treats that province as fully visible for that player, and when the last Spy from that owner leaves that province, the system reverts all tiles in that province to fogged at end-of-turn unless revealed by another source.
 
-- Given a Spy civilian unit controlled by the player has an active `counter_spy` `WorkOrder` targeting an owned province and an enemy Spy is present in the same province  
-  When the system resolves counter-spy checks at end of turn  
-  Then the system computes a per-turn kill chance equal to 5% per friendly Spy in that province, capped at 30%, and removes the enemy Spy from the game if the random roll succeeds while leaving all friendly Spies in place.
+- Given two Spies from the same owner are present in the same foreign province and one Spy leaves  
+  When the system resolves end-of-turn fog decay  
+  Then the province remains fully visible to that owner because at least one Spy remains.
+
+- Given a Spy civilian unit controlled by the player has an active `counter_spy` `WorkOrder` targeting an owned province  
+  When the system resolves the pre-Research spy-resolution sub-step  
+  Then the system applies empire-wide +5% kill chance against enemy spies in all player-owned provinces (no per-province stacking) and rolls 10% defection for surviving enemy spies in counter-espionage territory.
 
 - Given a Merchant civilian unit controlled by the player has an active `purchase_land` `WorkOrder` targeting a tile in a Minor Nation or Tribe province that has a resource, the player is not at war with that Minor/Tribe, the player has an embassy with that Minor/Tribe, and any mineral resource on that tile has already been prospected by that player  
   When the system completes that `purchase_land` work (`remainingTurns` reaches 0 in Build/Work)  
@@ -145,7 +148,7 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
 
 - **Unit** (type = civilian) → has owner (player id) and **location** = **tileKey** only (required, format `regionId|provinceId|x|y`); province and region are derived from tileKey. Work is ordered via WorkOrder (unitId, action, targetTileKey). Military and naval units do not have tileKey. See [fog-and-exploration.md](fog-and-exploration.md).
 - **Assignment tracking (current schema):** Civilian units may persist `originTileKey` (tile before current assignment) and `assignedTileKey` (current assignment destination). While work is in progress, `tileKey` represents rendered intent placement (typically equal to `assignedTileKey`). On completion, both tracking fields are cleared; on cancel, `tileKey` is restored from `originTileKey` and both tracking fields are cleared.
-- **Province identity:** Civilian **location** (tileKey) and WorkOrder **targetTileKey** use the prefixed tile key format `regionId|provinceId|x|y`. Province and region for a civilian are derived from tileKey; any province lookup (e.g. for work cancel, build_port, steal_tech target) must use the full province id (`regionId|localId`). See [world-model-identity.md](world-model-identity.md).
+- **Province identity:** Civilian **location** (tileKey) and WorkOrder **targetTileKey** use the prefixed tile key format `regionId|provinceId|x|y`. Province and region for a civilian are derived from tileKey; any province lookup (e.g. for work cancel, build_port) must use the full province id (`regionId|localId`). See [world-model-identity.md](world-model-identity.md).
 - Civilian units have a **training cost**: cash is deducted from the player's **treasury** and paper from the player's **stockpile** when the unit is built. Work orders consume materials (lumber, metal, etc.) as defined in extraction-and-improvements and siege-mechanics. Materials are deducted when the work is **assigned** (during Build/Work phase application of WorkOrder); validation checks treasury/stockpile at order submit time.
 - Civilian units do not eat food; they do not consume workers when built (unlike military/naval).
 

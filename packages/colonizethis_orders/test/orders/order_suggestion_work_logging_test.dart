@@ -146,16 +146,6 @@ void main() {
       expect(
         lines.any(
           (m) =>
-              m.contains('unitId=u_spy') &&
-              m.contains('target=steal_tech') &&
-              m.contains('outcome=') &&
-              m.contains('reason='),
-        ),
-        isTrue,
-      );
-      expect(
-        lines.any(
-          (m) =>
               m.contains('unitId=u_merchant') &&
               m.contains('target=purchase_land') &&
               m.contains('outcome=') &&

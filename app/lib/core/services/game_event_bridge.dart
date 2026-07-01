@@ -130,6 +130,26 @@ class GameEventBridge {
             turnNumber: event.turnNumber,
           ),
         );
+      case SpyCaughtEvent():
+        _appBus.emit(
+          AppSpyCaughtEvent(
+            unitId: event.unitId,
+            spyOwnerId: event.spyOwnerId,
+            territoryOwnerId: event.territoryOwnerId,
+            provinceId: event.provinceId,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case SpyDefectedEvent():
+        _appBus.emit(
+          AppSpyDefectedEvent(
+            unitId: event.unitId,
+            previousOwnerId: event.previousOwnerId,
+            newOwnerId: event.newOwnerId,
+            provinceId: event.provinceId,
+            turnNumber: event.turnNumber,
+          ),
+        );
     }
   }
 }

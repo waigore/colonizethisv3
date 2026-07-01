@@ -299,6 +299,56 @@ void main() {
       expect(received.first.turnNumber, 8);
     });
 
+    test('forwards SpyCaughtEvent', () async {
+      final received = <AppSpyCaughtEvent>[];
+      appBus.on<AppSpyCaughtEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        SpyCaughtEvent(
+          unitId: 'spy1',
+          spyOwnerId: 'gp1',
+          territoryOwnerId: 'gp2',
+          provinceId: 'oldWorld|p1',
+          turnNumber: 5,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      final evt = received.first;
+      expect(evt.unitId, 'spy1');
+      expect(evt.spyOwnerId, 'gp1');
+      expect(evt.territoryOwnerId, 'gp2');
+      expect(evt.provinceId, 'oldWorld|p1');
+      expect(evt.turnNumber, 5);
+    });
+
+    test('forwards SpyDefectedEvent', () async {
+      final received = <AppSpyDefectedEvent>[];
+      appBus.on<AppSpyDefectedEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        SpyDefectedEvent(
+          unitId: 'spy2',
+          previousOwnerId: 'gp1',
+          newOwnerId: 'gp2',
+          provinceId: 'oldWorld|p2',
+          turnNumber: 6,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      final evt = received.first;
+      expect(evt.unitId, 'spy2');
+      expect(evt.previousOwnerId, 'gp1');
+      expect(evt.newOwnerId, 'gp2');
+      expect(evt.provinceId, 'oldWorld|p2');
+      expect(evt.turnNumber, 6);
+    });
+
     test('forwarded events maintain emission order', () async {
       final received = <GameToUIEvent>[];
       appBus.on<GameToUIEvent>().listen(received.add);

@@ -53,52 +53,6 @@ void main() {
       );
     });
 
-    test('skips implicit move leg for steal_tech target', () {
-      const ow = 'oldWorld';
-      const p1 = '$ow|p1';
-      const p2 = '$ow|p2';
-      final unit = Unit(
-        id: 'spy1',
-        type: kUnitTypeSpy,
-        ownerId: 'gp1',
-        locationProvinceId: p1,
-        tileKey: '$p1|0|0',
-      );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: p1, regionId: ow, ownerId: 'gp1'),
-              Province(id: p2, regionId: ow, ownerId: 'gp2'),
-            ],
-            units: [unit],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-          Player(
-            id: 'gp2',
-            displayName: 'GP2',
-            isHuman: false,
-            capitalProvinceId: p2,
-          ),
-        ],
-      );
-
-      final order = const WorkOrder(
-        unitId: 'spy1',
-        target: kWorkTargetStealTech,
-        targetTileKey: '$p2|0|0',
-      );
-
-      expect(
-        civilianBundledWorkNeedsProvinceMoveLeg(game, unit, order),
-        isFalse,
-      );
-    });
   });
 
   group('applyImplicitBundledCivilianWorkOrderMoves', () {

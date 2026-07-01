@@ -19,7 +19,7 @@ void main() {
       expect(civilianBuildTargetCount(kUnitTypeEngineer), 1);
 
       expect(civilianBuildMaxCount(kUnitTypeBuilder), 6);
-      expect(civilianBuildMaxCount(kUnitTypeSpy), 3);
+      expect(civilianBuildMaxCount(kUnitTypeSpy), isNull);
     });
 
     test('AC8: unknown type defaults — minCount 0, targetCount = minCount, '

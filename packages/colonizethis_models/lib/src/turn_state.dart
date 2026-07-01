@@ -10,6 +10,7 @@ enum TurnPhase {
   consumption,
   research,
   diplomacy,
+  spyResolution,
   movement,
   minorRegimentUpgrade,
   navalInterceptionCombat,

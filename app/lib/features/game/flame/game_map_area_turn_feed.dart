@@ -266,6 +266,60 @@ mixin _GameMapAreaTurnFeed on ConsumerState<GameMapArea>, _GameMapAreaStateBase 
                 text:
                     'Overture advanced! ${_factionLabel(offererGpId)} with ${_factionLabel(targetFactionId)}: ${newStage.toUpperCase()}!',
               ),
+            ct_models.AppSpyCaughtEvent(
+              :final provinceId,
+              :final spyOwnerId,
+              :final territoryOwnerId,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text: _mapPlayerId == territoryOwnerId
+                    ? '${_provinceLabel(provinceId)} — enemy spy from ${_factionLabel(spyOwnerId)} caught and eliminated!'
+                    : 'Spy caught in ${_provinceLabel(provinceId)}! ${_factionLabel(territoryOwnerId)} eliminated your agent!',
+                onTap: () {
+                  final province = _provinceByPrefixedId(provinceId);
+                  if (province == null) return;
+                  final tileKey = tileKeyForProvinceLocation(
+                    widget.game,
+                    province,
+                  );
+                  if (tileKey == null) return;
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: tileKey,
+                          regionId: province.regionId,
+                        ),
+                      );
+                },
+              ),
+            ct_models.AppSpyDefectedEvent(
+              :final provinceId,
+              :final previousOwnerId,
+              :final newOwnerId,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text: _mapPlayerId == newOwnerId
+                    ? '${_provinceLabel(provinceId)} — enemy spy from ${_factionLabel(previousOwnerId)} defected to your side!'
+                    : 'Spy defected in ${_provinceLabel(provinceId)}! Agent joined ${_factionLabel(newOwnerId)}!',
+                onTap: () {
+                  final province = _provinceByPrefixedId(provinceId);
+                  if (province == null) return;
+                  final tileKey = tileKeyForProvinceLocation(
+                    widget.game,
+                    province,
+                  );
+                  if (tileKey == null) return;
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: tileKey,
+                          regionId: province.regionId,
+                        ),
+                      );
+                },
+              ),
             _ => const PlayerTurnEventFeedEntry(text: 'Event resolved!'),
           };
         })

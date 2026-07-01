@@ -7,6 +7,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'economy_debt_rules.dart';
 import 'economy_tech_effects.dart';
 import 'research_rules.dart';
+import 'spy_resolver.dart';
 
 ({Game state, Player updated}) _applyResearchUnlockSideEffects({
   required Game state,
@@ -169,10 +170,17 @@ void _applyResearchOrderIfValid(
   final nextTreasury = ctx.treasury - funding.cost;
   if (nextTreasury < -ctx.maxDebt) return;
 
-  final points = effectiveResearchPointsForTechAllocation(
-    ctx.player,
-    tech,
-    funding.points,
+  final points = applySpyResearchBoostToPoints(
+    basePoints: effectiveResearchPointsForTechAllocation(
+      ctx.player,
+      tech,
+      funding.points,
+    ),
+    qualifyingRivalGpCount: spyResearchBoostGpCountForTech(
+      game: ctx.game,
+      playerId: ctx.player.id,
+      techId: techId,
+    ),
   );
   if (points <= 0) return;
 

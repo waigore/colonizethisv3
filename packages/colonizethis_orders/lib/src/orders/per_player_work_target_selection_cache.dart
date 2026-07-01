@@ -147,7 +147,6 @@ class PerPlayerWorkTargetSelectionCache {
 
   static const _mergedValidWorkTargets = <String>{
     kWorkTargetExplore,
-    kWorkTargetStealTech,
     kWorkTargetCounterSpy,
     kWorkTargetPurchaseLand,
   };

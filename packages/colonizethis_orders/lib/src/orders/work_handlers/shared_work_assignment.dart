@@ -36,23 +36,6 @@ bool tryAssignFixedDurationWorkOrder({
   return true;
 }
 
-bool tryAssignStealTechWorkOrder({
-  required WorkOrder order,
-  required Unit unit,
-  required String targetTileKey,
-  required void Function(String, Unit) updateUnit,
-}) {
-  return tryAssignFixedDurationWorkOrder(
-    order: order,
-    unit: unit,
-    targetTileKey: targetTileKey,
-    target: kWorkTargetStealTech,
-    totalTurns: totalTurnsForWork(kWorkTargetStealTech),
-    remainingTurns: totalTurnsForWork(kWorkTargetStealTech),
-    updateUnit: updateUnit,
-  );
-}
-
 bool tryAssignCounterSpyWorkOrder({
   required WorkOrder order,
   required Unit unit,

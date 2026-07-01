@@ -48,12 +48,6 @@ bool civilianBundledWorkNeedsProvinceMoveLeg(
   WorkOrder o,
 ) {
   if (unit.tileKey == null || unit.tileKey!.isEmpty) return false;
-  // steal_tech: spy work uses target-specific validation (war/visibility, GP
-  // capital rules); no implicit civilian MoveOrder-equivalent leg through
-  // MoveValidator in the bundled helper (see suggestWorkOrders spy tests).
-  if (o.target == kWorkTargetStealTech) {
-    return false;
-  }
   final dest = executionProvinceFullIdFromWorkOrder(game, o);
   if (dest == null) return false;
   final current = resolveToFullProvinceId(

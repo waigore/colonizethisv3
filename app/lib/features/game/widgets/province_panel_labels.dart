@@ -70,7 +70,6 @@ String workOrderTargetDisplayLabel(AppLocalizations l10n, String target) {
     kWorkTargetBuildPort => l10n.province_workOrder_build_port,
     kWorkTargetBuildFort => l10n.province_workOrder_build_fort,
     kWorkTargetBuildRail => l10n.province_workOrder_build_rail,
-    kWorkTargetStealTech => l10n.province_workOrder_steal_tech,
     kWorkTargetCounterSpy => l10n.province_workOrder_counter_spy,
     kWorkTargetPurchaseLand => l10n.province_workOrder_purchase_land,
     _ => target,

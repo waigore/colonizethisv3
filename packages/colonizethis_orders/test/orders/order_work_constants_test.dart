@@ -17,7 +17,7 @@ void main() {
         'domain file', () {
       expect(order_constants.kWorkTargetExplore, 'explore');
       expect(order_constants.kWorkTargetProspect, 'prospect');
-      expect(order_constants.kWorkTargetStealTech, 'steal_tech');
+      expect(order_constants.kWorkTargetCounterSpy, 'counter_spy');
       expect(order_constants.kWorkTargetPurchaseLand, 'purchase_land');
       expect(order_constants.kWorkTargetBuildRail, 'build_rail');
       expect(order_constants.kMineralResourceIds, contains('iron'));
