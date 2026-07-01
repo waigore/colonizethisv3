@@ -300,6 +300,44 @@ Game fourGpBreakDecayGame({
   );
 }
 
+/// Shared entry for subsidy resolver tests (alias for [gpMinorEmbassySubsidyGame]).
+Game subsidyResolverGame({
+  String id = 'g1',
+  int turnNumber = 2,
+  int gp1Treasury = 10_000,
+  RelationState relationState = RelationState.atPeace,
+  List<OvertureState> overtureStates = const [
+    OvertureState(
+      gpId: 'gp1',
+      targetId: 'minor1',
+      stage: OvertureStage.embassy,
+      sinceTurn: 0,
+    ),
+  ],
+  List<SubsidyState> subsidyStates = const [
+    SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 10),
+  ],
+  bool includeSubsidy = true,
+  bool includeDiplomaticExpertiseTech = false,
+}) =>
+    gpMinorEmbassySubsidyGame(
+      id: id,
+      turnNumber: turnNumber,
+      gp1Treasury: gp1Treasury,
+      relationState: relationState,
+      overtureStates: overtureStates,
+      subsidyStates: subsidyStates,
+      includeSubsidy: includeSubsidy,
+      includeDiplomaticExpertiseTech: includeDiplomaticExpertiseTech,
+    );
+
+/// Minimal game with configurable overtures for overture-clear helper tests.
+Game diplomacyGameWithOvertures(List<OvertureState> overtures) =>
+    TestFixtures.minimalGame(
+      players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+      overtureStates: overtures,
+    );
+
 /// GP + Minor with embassy overture for subsidy and grant-aid tests.
 Game gpMinorEmbassySubsidyGame({
   String id = 'g1',
