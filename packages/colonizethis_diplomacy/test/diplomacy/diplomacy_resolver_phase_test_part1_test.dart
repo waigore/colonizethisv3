@@ -3,6 +3,7 @@ import 'package:colonizethis_world/src/game_player_lookup.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
 import '../support/diplomacy_resolver_phase_test_support.dart';
 void main() {
   group('resolveDiplomacyPhase', () {
@@ -36,13 +37,8 @@ void main() {
     });
 
     test('alliance order sets relation to allied', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: true),
           Player(id: 'gp2', displayName: 'GP2', isHuman: true),

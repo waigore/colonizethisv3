@@ -12,6 +12,16 @@ const _mandatedFixtureTestPaths = <String>{
   'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_faction_membership_test.dart',
   'packages/colonizethis_diplomacy/test/diplomacy/known_diplomatic_targets_test.dart',
   'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_intra_turn_event_tally_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_dialogue_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_history_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_dossier_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_phase_test_part1_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_phase_types_split_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_phase_result_value_types_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_trade_and_labels_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_survival_peace_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_intervention_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_call_to_arms_test.dart',
 };
 
 /// Matches an inline `Game(` constructor call (standalone identifier, not

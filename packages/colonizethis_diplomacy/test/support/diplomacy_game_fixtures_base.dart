@@ -21,6 +21,7 @@ Game diplomacyGame({
   Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
       const {},
   Map<String, Map<String, String>>? playerVisibilityByTile,
+  Map<String, String>? purchasedTilesByTileKey,
   List<Fleet> fleets = const [],
   List<DiplomacyRelation> diplomacyRelations = const [],
   List<OvertureState> overtureStates = const [],
@@ -46,6 +47,7 @@ Game diplomacyGame({
     newWorld: newWorld,
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     playerVisibilityByTile: playerVisibilityByTile,
+    purchasedTilesByTileKey: purchasedTilesByTileKey,
     fleets: fleets,
     minorNations: minorNations,
     tribes: tribes,

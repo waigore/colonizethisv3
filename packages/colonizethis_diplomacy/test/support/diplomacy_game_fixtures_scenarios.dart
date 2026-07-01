@@ -398,6 +398,54 @@ Game knownDiplomaticTargetsAnchoredGame() => diplomacyGame(
       ],
     );
 
+/// Survival peace tests: GPs at war with configurable OW province counts.
+Game survivalPeaceProvinceGame({
+  required String id,
+  required int turnNumber,
+  required Map<String, int> provinceCountsByGpId,
+  required List<Player> players,
+  required List<DiplomacyRelation> diplomacyRelations,
+}) {
+  final provinces = <Province>[];
+  for (final entry in provinceCountsByGpId.entries) {
+    for (var i = 1; i <= entry.value; i++) {
+      provinces.add(
+        Province(
+          id: 'oldWorld|${entry.key}_$i',
+          regionId: 'oldWorld',
+          ownerId: entry.key,
+        ),
+      );
+    }
+  }
+  return diplomacyGame(
+    id: id,
+    turnNumber: turnNumber,
+    players: players,
+    oldWorld: RegionData(provinces: provinces),
+    diplomacyRelations: diplomacyRelations,
+  );
+}
+
+/// Trade-slot / world-market bid-cap probe game (Refs #3825).
+Game tradeSlotsBidCapTestGame({
+  Map<String, bool> techUnlocked = const {},
+  List<OvertureState> overtureStates = const [],
+  List<Player> players = const [
+    Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+  ],
+}) =>
+    diplomacyGame(
+      players: players
+          .map(
+            (p) => techUnlocked.isEmpty
+                ? p
+                : p.copyWith(techUnlocked: techUnlocked),
+          )
+          .toList(),
+      overtureStates: overtureStates,
+    );
+
 /// Isolated GP with no relations or visibility (known-target negative case).
 Game knownDiplomaticTargetsIsolatedGame() => diplomacyGame(
       id: 'g',
