@@ -26,7 +26,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetExplore,
         kWorkTargetProspect,
         kWorkTargetPurchaseLand,
-        kWorkTargetStealTech,
         kWorkTargetUpgradeTown;
 
 import 'support/panel_test_fixtures.dart';
@@ -428,7 +427,6 @@ void main() {
             target: kWorkTargetBuildRail,
             turns: 1,
           ),
-          (unitType: kUnitTypeSpy, target: kWorkTargetStealTech, turns: 5),
           (unitType: kUnitTypeSpy, target: kWorkTargetCounterSpy, turns: 1),
           (
             unitType: kUnitTypeMerchant,

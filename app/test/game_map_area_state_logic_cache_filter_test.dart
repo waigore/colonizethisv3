@@ -10,7 +10,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetExplore,
         kWorkTargetProspect,
         kWorkTargetPurchaseLand,
-        kWorkTargetStealTech,
         kWorkTargetUpgradeTown;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -28,7 +27,6 @@ void main() {
           GameMapAreaStateLogic.kCacheFirstWorkTargets,
           containsAll(<String>{
             kWorkTargetExplore,
-            kWorkTargetStealTech,
             kWorkTargetCounterSpy,
             kWorkTargetPurchaseLand,
             kWorkTargetProspect,
@@ -69,7 +67,6 @@ void main() {
 
         for (final workTarget in <String>[
           kWorkTargetExplore,
-          kWorkTargetStealTech,
           kWorkTargetCounterSpy,
           kWorkTargetPurchaseLand,
           kWorkTargetProspect,

@@ -17,7 +17,6 @@ const kWorkTargetBuildRoad = 'build_road';
 const kWorkTargetBuildPort = 'build_port';
 const kWorkTargetBuildFort = 'build_fort';
 const kWorkTargetBuildRail = 'build_rail';
-const kWorkTargetStealTech = 'steal_tech';
 const kWorkTargetCounterSpy = 'counter_spy';
 const kWorkTargetPurchaseLand = 'purchase_land';
 
@@ -51,9 +50,6 @@ void main() {
     });
     test('build_fort with null fortLevel uses 0', () {
       expect(totalTurnsForWork(kWorkTargetBuildFort), 1);
-    });
-    test('steal_tech returns 5', () {
-      expect(totalTurnsForWork(kWorkTargetStealTech), 5);
     });
     test('counter_spy returns 0', () {
       expect(totalTurnsForWork(kWorkTargetCounterSpy), 0);
@@ -152,10 +148,9 @@ void main() {
   });
 
   group('workOrderMaterialCost', () {
-    test('explore, prospect, steal_tech, counter_spy, purchase_land return null', () {
+    test('explore, prospect, counter_spy, purchase_land return null', () {
       expect(workOrderMaterialCost(kWorkTargetExplore), isNull);
       expect(workOrderMaterialCost(kWorkTargetProspect), isNull);
-      expect(workOrderMaterialCost(kWorkTargetStealTech), isNull);
       expect(workOrderMaterialCost(kWorkTargetCounterSpy), isNull);
       expect(workOrderMaterialCost(kWorkTargetPurchaseLand), isNull);
     });
@@ -220,8 +215,8 @@ void main() {
     test('Rail Builder has build_rail', () {
       expect(workOrderTargetsByUnitType[kUnitTypeRailBuilder], [kWorkTargetBuildRail]);
     });
-    test('Spy has steal_tech and counter_spy', () {
-      expect(workOrderTargetsByUnitType[kUnitTypeSpy], [kWorkTargetStealTech, kWorkTargetCounterSpy]);
+    test('Spy has counter_spy', () {
+      expect(workOrderTargetsByUnitType[kUnitTypeSpy], [kWorkTargetCounterSpy]);
     });
     test('Merchant has purchase_land', () {
       expect(workOrderTargetsByUnitType[kUnitTypeMerchant], [kWorkTargetPurchaseLand]);

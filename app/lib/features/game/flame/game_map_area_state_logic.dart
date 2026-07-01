@@ -85,7 +85,6 @@ class GameMapAreaStateLogic {
 
   static const Set<String> kCacheFirstWorkTargets = {
     kWorkTargetExplore,
-    kWorkTargetStealTech,
     kWorkTargetCounterSpy,
     kWorkTargetPurchaseLand,
     kWorkTargetProspect,
@@ -99,7 +98,6 @@ class GameMapAreaStateLogic {
 
   static const Set<String> _runtimeConflictProtectedCacheTargets = {
     kWorkTargetExplore,
-    kWorkTargetStealTech,
     kWorkTargetCounterSpy,
     kWorkTargetPurchaseLand,
     kWorkTargetProspect,
