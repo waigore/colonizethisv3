@@ -160,7 +160,7 @@ void main() {
       expect(entries, isEmpty);
     });
 
-    test('no human observer returns no evidence', () {
+    test('declare war: no human observer returns no evidence', () {
       final game = evidenceGame(
         players: const [
           Player(id: 'ai', displayName: 'AI', isHuman: false),
@@ -207,7 +207,7 @@ void main() {
       expect(entries, isEmpty);
     });
 
-    test('no human observer returns no evidence', () {
+    test('offer peace: no human observer returns no evidence', () {
       final game = evidenceGame(
         players: const [
           Player(id: 'ai', displayName: 'AI', isHuman: false),

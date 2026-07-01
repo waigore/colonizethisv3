@@ -2,6 +2,8 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 /// Focused regression coverage for the consolidated pending-human-decision flow
 /// (Refs #3562 AC3). The overture, FTP, intervention, and call-to-arms
 /// resolvers now share one control-flow shape: the human-control check runs
@@ -10,42 +12,6 @@ import 'package:colonizethis_test/test.dart';
 /// by rule. These tests assert that contract directly rather than relying on
 /// the indirect coverage in the per-resolver suites.
 void main() {
-  Game _twoGpGame({
-    required bool targetHuman,
-    required int score,
-    List<OvertureState> overtures = const [],
-    Set<String> ftpKeys = const {},
-    int gp1Treasury = 0,
-  }) {
-    return Game(
-      id: 'pending-flow',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
-      players: [
-        Player(
-          id: 'gp1',
-          displayName: 'GP1',
-          isHuman: false,
-        ).copyWith(treasury: gp1Treasury),
-        Player(id: 'gp2', displayName: 'GP2', isHuman: targetHuman),
-      ],
-      diplomacyRelations: [
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp2',
-          score: score,
-          level: RelationLevel.friendly,
-          state: RelationState.atPeace,
-        ),
-      ],
-      overtureStates: overtures,
-      ftpPartnershipKeys: ftpKeys,
-    );
-  }
-
   Orders _orders(DiplomaticOrderType type, {OvertureStage? stage}) => Orders(
     diplomaticOrdersByPlayerId: {
       'gp1': [
@@ -62,7 +28,7 @@ void main() {
     test(
       'human target with no decision suspends; resume applies the decision',
       () {
-        final game = _twoGpGame(
+        final game = twoGpPendingFlowGame(
           targetHuman: true,
           score: 50,
           gp1Treasury: overtureConsulateCost + 100,
@@ -100,7 +66,7 @@ void main() {
         // Score below neutral -> AI target rejects by rule. The accept decision
         // (only valid on the human resume path) must not be honoured for an AI
         // target now that the human-control check gates the decision lookup.
-        final game = _twoGpGame(
+        final game = twoGpPendingFlowGame(
           targetHuman: false,
           score: relationScoreNeutral - 10,
           gp1Treasury: overtureConsulateCost + 100,
@@ -137,7 +103,7 @@ void main() {
     test(
       'human target with no decision suspends; resume applies the decision',
       () {
-        final game = _twoGpGame(
+        final game = twoGpPendingFlowGame(
           targetHuman: true,
           score: 70,
           overtures: _embassyPair(),
@@ -167,7 +133,7 @@ void main() {
         // Embassy both ways and score >= min -> AI target accepts by rule. The
         // refuse decision must not be honoured for an AI target; the human-first
         // ordering means the AI rule governs.
-        final game = _twoGpGame(
+        final game = twoGpPendingFlowGame(
           targetHuman: false,
           score: 70,
           overtures: _embassyPair(),

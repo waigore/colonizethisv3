@@ -2,43 +2,36 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 /// Tests `processBoycotts` / `autoCancelBoycottsOnWar` (Refs #3753 R6):
 /// boycott apply/revoke, subsidy cancellation on apply, and auto-cancel on war.
 /// SPEC/game/diplomacy.md § GP–Tribe Rules (Boycott).
-Game _game({
+Game _boycottGame({
   bool gp1HoldsColony = true,
   RelationState gp1gp2State = RelationState.atPeace,
   List<BoycottState> boycotts = const [],
   List<SubsidyState> subsidies = const [],
-}) {
-  return Game(
-    id: 'g-boycott',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 7),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        state: gp1gp2State,
-      ),
-    ],
-    colonyStates: gp1HoldsColony
-        ? const [
-            ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
-          ]
-        : const [],
-    boycottStates: boycotts,
-    subsidyStates: subsidies,
-  );
-}
+}) =>
+    diplomacyGame(
+      id: 'g-boycott',
+      turnNumber: 7,
+      tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+      diplomacyRelations: [
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp2',
+          state: gp1gp2State,
+        ),
+      ],
+      colonyStates: gp1HoldsColony
+          ? const [
+              ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
+            ]
+          : const [],
+      boycottStates: boycotts,
+      subsidyStates: subsidies,
+    );
 
 Map<String, List<DiplomaticOrder>> _order(
   String gpId,
@@ -51,7 +44,7 @@ Map<String, List<DiplomaticOrder>> _order(
 void main() {
   group('processBoycotts (apply)', () {
     test('records a BoycottState and appends boycottSet', () {
-      final game = _game();
+      final game = _boycottGame();
       final result = processBoycotts(
         game,
         _order('gp1', DiplomaticOrderType.boycott, 'gp2'),
@@ -72,7 +65,7 @@ void main() {
     });
 
     test('cancels the target GP subsidy to the issuer colony on apply', () {
-      final game = _game(
+      final game = _boycottGame(
         subsidies: const [
           SubsidyState(payerId: 'gp2', targetId: 'tribe1', percent: 20),
         ],
@@ -93,7 +86,7 @@ void main() {
     });
 
     test('does not apply when the issuer holds no colony', () {
-      final game = _game(gp1HoldsColony: false);
+      final game = _boycottGame(gp1HoldsColony: false);
       final result = processBoycotts(
         game,
         _order('gp1', DiplomaticOrderType.boycott, 'gp2'),
@@ -104,7 +97,7 @@ void main() {
     });
 
     test('does not apply when at war with the target', () {
-      final game = _game(gp1gp2State: RelationState.atWar);
+      final game = _boycottGame(gp1gp2State: RelationState.atWar);
       final result = processBoycotts(
         game,
         _order('gp1', DiplomaticOrderType.boycott, 'gp2'),
@@ -115,7 +108,7 @@ void main() {
     });
 
     test('does not duplicate an existing boycott', () {
-      final game = _game(
+      final game = _boycottGame(
         boycotts: const [
           BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 2),
         ],
@@ -133,7 +126,7 @@ void main() {
 
   group('processBoycotts (revoke)', () {
     test('removes an existing boycott and appends boycottRevoked', () {
-      final game = _game(
+      final game = _boycottGame(
         boycotts: const [
           BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 2),
         ],
@@ -154,7 +147,7 @@ void main() {
     });
 
     test('is a no-op when no boycott exists to revoke', () {
-      final game = _game();
+      final game = _boycottGame();
       final result = processBoycotts(
         game,
         _order('gp1', DiplomaticOrderType.revokeBoycott, 'gp2'),
@@ -172,7 +165,7 @@ void main() {
 
   group('autoCancelBoycottsOnWar', () {
     test('removes a boycott whose pair is now at war and logs revoke', () {
-      final game = _game(
+      final game = _boycottGame(
         gp1gp2State: RelationState.atWar,
         boycotts: const [
           BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 2),
@@ -189,7 +182,7 @@ void main() {
     });
 
     test('keeps a boycott whose pair remains at peace', () {
-      final game = _game(
+      final game = _boycottGame(
         boycotts: const [
           BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 2),
         ],

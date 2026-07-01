@@ -78,7 +78,7 @@ void main() {
       expect(entries, isEmpty);
     });
 
-    test('no human observer returns no evidence', () {
+    test('land battle: no human observer returns no evidence', () {
       final game = evidenceGame(
         players: const [
           Player(id: 'gp1', displayName: 'AI1', isHuman: false),
@@ -249,7 +249,7 @@ void main() {
       expect(entries, isEmpty);
     });
 
-    test('no human observer returns no evidence', () {
+    test('steal tech: no human observer returns no evidence', () {
       final game = evidenceGame(
         turnNumber: 4,
         players: const [

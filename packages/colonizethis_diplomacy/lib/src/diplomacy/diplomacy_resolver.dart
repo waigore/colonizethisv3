@@ -8,6 +8,7 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'diplomacy_event_logging.dart';
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 
