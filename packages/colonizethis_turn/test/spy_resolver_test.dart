@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetCounterSpy;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
@@ -132,7 +133,7 @@ Game _gameWithForeignSpy({
           locationProvinceId: p1,
           tileKey: '$p1|0|0',
           status: UnitStatus.working,
-          currentWork: const CurrentWork(
+          currentWork: CurrentWork(
             workTarget: kWorkTargetCounterSpy,
             tileKey: '$p1|0|0',
             totalTurns: 0,

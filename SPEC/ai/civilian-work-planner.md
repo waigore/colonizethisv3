@@ -28,7 +28,7 @@ governs **selection scoring** only.
 | Merchant | `_appendMerchantPathResult` | `purchase_land` |
 | Rail Builder | `_appendRailBuilderPathResult` | `build_rail` |
 | Engineer | `_appendEngineerPathResult` | `build_road`, `build_port`, `build_fort` |
-| Spy | `_appendSpyPathResult` | `steal_tech`, `counter_spy` |
+| Spy | `_appendSpyPathResult` | `counter_spy` only (passive RP boost and scouting need no work order) |
 
 A unit type with no dedicated scorer falls through to a deterministic
 lexicographic fallback (`_pickLexicographic`), and an unrecognized unit type uses
@@ -127,64 +127,24 @@ records a single `FullAiCivilianWorkIdle(reason: 'no_suggestions')`. An exact
 cross-type score tie breaks via `_compareBuilderCrossType` — province id, then
 full tile key, then target — a stable, non-alphabetical-driven ordering.
 
-## Spy scoring model
+## Spy scoring model (Refs #3834)
 
-`_appendSpyPathResult` scores every Spy candidate (`steal_tech` and
-`counter_spy`) in a **single unified pool** (`_spyWorkScore`) and selects the
-highest. This replaces the lexicographic fallback, which always picked
-`counter_spy` first because it sorts alphabetically before `steal_tech`
-regardless of context or phase.
+`_appendSpyPathResult` scores only `counter_spy` candidates (`_spyWorkScore`). **`steal_tech` removed** — passive RP boost and scouting require no work order; idle Spies in rival GP territory are positioned via movement, not work selection.
 
-Spy selection is **phase-dependent** (Refs #3794 design decision #8): the
-selector receives a single `spyDevelopPhase` flag from the orchestrator
-(`domain_planner_orchestrator_economy.dart`, derived from the dispatched phase
-plan via `resolvePhaseEconomyDevelopActive`). In the DEVELOP phase `counter_spy`
-is preferred; in every other phase (EXPAND / COLONIAL / COLONIAL-lite)
-`steal_tech` is preferred. The preference is expressed as a GA-tunable phase
-bonus added to the preferred target type, sized to dominate the contextual
-bonuses of the other target type so the phase choice is decisive while context
-still differentiates candidates of the same target.
+**Empire-wide counter-espionage:** One Spy on `counter_spy` anywhere is sufficient. When the player already has a Spy on `counter_spy`, additional `counter_spy` candidates receive `kSpyCounterSpyBaseWorkScore ~/ 10` so a second assignment is strongly disfavored.
 
-`steal_tech` targets a rival Great Power capital province (the suggestion yields
-one candidate per rival GP capital). `counter_spy` targets one of the player's
-own provinces. Both use cheap, deterministic proxies (no per-tile path-finding),
-consistent with the budget rule:
+The selector receives `spyDevelopPhase` from the orchestrator (`resolvePhaseEconomyDevelopActive`). In DEVELOP, `kSpyPhaseCounterSpyBonus` is added to `counter_spy` scores.
 
 ```
-steal_tech score = kSpyStealTechBaseWorkScore
-      + min(techDeficit, 60) * kSpyStealTechTechDeficitWeight
-      + (relations hostile: at war OR relation score <= 25 ? kSpyStealTechHostileRelationsBonus : 0)
-      + (rival capital region == spy region              ? kSpyStealTechProximityBonus        : 0)
-      + (NOT DEVELOP phase                               ? kSpyPhaseStealTechBonus            : 0)
-
 counter_spy score = kSpyCounterSpyBaseWorkScore
-      + (a foreign-owned Spy occupies the province ? kSpyCounterSpyEnemySpyPresenceBonus : 0)
-      + (province == player capital province       ? kSpyCounterSpyCapitalBonus          : 0)
-      + (province in New World region              ? kSpyCounterSpyBorderBonus           : 0)
-      + (DEVELOP phase                             ? kSpyPhaseCounterSpyBonus            : 0)
+      + (foreign-owned Spy in province ? kSpyCounterSpyEnemySpyPresenceBonus : 0)
+      + (province == player capital        ? kSpyCounterSpyCapitalBonus          : 0)
+      + (province in New World region      ? kSpyCounterSpyBorderBonus           : 0)
+      + (DEVELOP phase                     ? kSpyPhaseCounterSpyBonus            : 0)
+      — (player already has counter_spy    ? score replaced with base/10         : 0)
 ```
 
-`techDeficit` is the count of tech ids the rival GP has unlocked
-(`Player.techUnlocked[id] == true`) that the player has not, capped at `60` for
-determinism/budget. The cap and `kSpyStealTechTechDeficitWeight` keep the
-non-phase `steal_tech` ceiling below `kSpyPhaseStealTechBonus`. Era weighting of
-missing techs is intentionally **not** modelled (cheap-proxy decision; the
-deficit count stands in for tech value). Hostile relations use the read-only
-`getRelation` / `factionsAtWar` world lookups (expando-cached per `Game`); a
-rival counts as hostile when at war or when the decimal relation score is in the
-0-25 Hostile band (scores are `[0, 100]` with 50 neutral, so a lower score means
-worse relations).
-Enemy-spy presence is a ground-truth scan of `worldState.allUnitsById` for a
-foreign-owned `Spy` whose `locationProvinceId` equals the candidate province,
-precomputed once per selection pass (consistent with the observer AI reading
-ground-truth `worldState` like the Rail Builder / Engineer scorers).
-
-Any non-Spy target scores `0`; an empty Spy pool falls back to
-`_pickLexicographic`; an idle Spy with no candidates records a single
-`FullAiCivilianWorkIdle(reason: 'no_suggestions')`. Equal scores break via
-`_compareSpyCandidate` — province id, then full tile key, then target — a stable
-secondary ordering where the selected candidate is driven by score, not by the
-target string's alphabetical position.
+Enemy-spy presence scans `worldState.allUnitsById` once per pass. Equal scores break via `_compareSpyCandidate` (province id, tile key, target). An empty Spy pool records `FullAiCivilianWorkIdle(reason: 'no_suggestions')`.
 
 ## GA-tunable scoring parameters
 
@@ -217,16 +177,13 @@ unchanged at default values.
 | `kUpgradeTownResourceValueBonus` | 200 | `upgrade_town` on a town tile carrying a resource |
 | `kUpgradeTownFrontlineBonus` | 150 | `upgrade_town` on a town tile in the New World region |
 | `kUpgradeTownLowDevBonus` | 120 | `upgrade_town` on an undeveloped town tile (improvement level 0) |
-| `kSpyStealTechBaseWorkScore` | 200 | baseline score for any valid `steal_tech` candidate |
-| `kSpyStealTechTechDeficitWeight` | 10 | per-tech bonus for each tech the rival has unlocked that the player lacks (deficit capped at 60) |
-| `kSpyStealTechHostileRelationsBonus` | 150 | `steal_tech` toward a rival the player is at war with or whose relation score is in the 0-25 Hostile band |
-| `kSpyStealTechProximityBonus` | 90 | `steal_tech` whose rival capital is in the same region as the Spy |
 | `kSpyCounterSpyBaseWorkScore` | 200 | baseline score for any valid `counter_spy` candidate |
 | `kSpyCounterSpyEnemySpyPresenceBonus` | 200 | `counter_spy` in a province occupied by a foreign-owned Spy |
 | `kSpyCounterSpyCapitalBonus` | 120 | `counter_spy` in the player's capital province |
 | `kSpyCounterSpyBorderBonus` | 90 | `counter_spy` in a New World region province (frontier/border proxy) |
-| `kSpyPhaseStealTechBonus` | 2000 | added to `steal_tech` scores outside the DEVELOP phase (decisive phase preference) |
-| `kSpyPhaseCounterSpyBonus` | 2000 | added to `counter_spy` scores in the DEVELOP phase (decisive phase preference) |
+| `kSpyPhaseCounterSpyBonus` | 2000 | added to `counter_spy` scores in the DEVELOP phase |
+
+Retired `kSpyStealTech*` / `kSpyPhaseStealTechBonus` constants remain in `ai_victory_config.dart` for GA backward compatibility but are unused after #3834.
 
 The feedstock-extraction and growth-stage gates that decide when each boost
 applies are unchanged; they remain self-clearing pure functions of
@@ -394,87 +351,61 @@ infrastructure feedstock routing).
   then the system returns a non-null `AiParameter` whose `category` equals
   `victory_config`.
 
-- **AC23 (Spy phase preference — non-DEVELOP prefers steal_tech):**
-  Given an idle Spy whose candidate set contains one `steal_tech` candidate (in a
-  rival GP capital) and one `counter_spy` candidate (in the player's own
-  province), and `spyDevelopPhase == false`,
+- **AC23 (Spy empire-wide counter_spy — second assignment disfavored):**
+  Given an idle Spy whose candidate set contains two `counter_spy` candidates and
+  another Spy of the same player is already on `counter_spy`,
   when `selectFullAiCivilianWorkOrders` runs,
-  then the system emits exactly one `WorkOrder` whose `target` is `steal_tech`.
+  then the system emits at most one `WorkOrder` (additional counter-spy sharply
+  reduced).
 
 - **AC24 (Spy phase preference — DEVELOP prefers counter_spy):**
-  Given the same idle Spy candidate set as AC23 but `spyDevelopPhase == true`,
+  Given an idle Spy with one `counter_spy` candidate and `spyDevelopPhase == true`,
   when `selectFullAiCivilianWorkOrders` runs,
-  then the system emits exactly one `WorkOrder` whose `target` is `counter_spy`,
-  not the alphabetically-later `steal_tech`.
+  then the system emits exactly one `WorkOrder` whose `target` is `counter_spy`.
 
-- **AC25 (steal_tech tech-deficit scoring):**
-  Given (outside DEVELOP) a Spy with two `steal_tech` candidates targeting two
-  rival GP capitals identical except that rival A has unlocked more techs the
-  player lacks than rival B,
-  when selection runs,
-  then the system selects the `steal_tech` candidate targeting rival A's capital.
-
-- **AC26 (steal_tech hostile-relations bonus):**
-  Given (outside DEVELOP) a Spy with two `steal_tech` candidates that differ only
-  in that the player is at war with one rival and at peace with the other,
-  when selection runs,
-  then the system selects the `steal_tech` candidate targeting the at-war rival.
-
-- **AC27 (counter_spy enemy-spy-presence bonus):**
-  Given (in DEVELOP) a Spy with two `counter_spy` candidates that differ only in
-  that one owned province is occupied by a foreign-owned Spy and the other is not,
+- **AC25 (counter_spy enemy-spy-presence bonus):**
+  Given a Spy with two `counter_spy` candidates that differ only in that one owned
+  province is occupied by a foreign-owned Spy and the other is not,
   when selection runs,
   then the system selects the `counter_spy` candidate in the province occupied by
   the foreign-owned Spy.
 
-- **AC28 (Spy non-zero baseline):**
+- **AC26 (Spy non-zero baseline):**
   Given an idle Spy with a single `counter_spy` candidate on a plain Old World
   owned province (no enemy spy, not the capital),
   when selection runs,
   then the system emits exactly one `WorkOrder` and records no
   `FullAiCivilianWorkIdle` event for that unit.
 
-- **AC29 (Spy idle when no candidates):**
+- **AC27 (Spy idle when no candidates):**
   Given an idle Spy with an empty candidate set,
   when selection runs,
   then the system emits no `WorkOrder` and records a single
   `FullAiCivilianWorkIdle` with `reason == 'no_suggestions'` for that unit.
 
-- **AC30 (Spy deterministic tie-break by province id):**
+- **AC28 (Spy deterministic tie-break by province id):**
   Given two equally-scored Spy candidates of the same target in provinces `p1`
   and `p2` presented in either input order,
   when selection runs,
   then the system emits the `p1` candidate in both orders (province-id ordering,
   independent of input order and of the target string).
 
-- **AC31 (Spy parameters registered):**
+- **AC29 (Spy parameters registered):**
   Given the AI parameter registry,
   when `AiParameterRegistry.byName(name)` is called for each of
-  `kSpyStealTechBaseWorkScore`, `kSpyStealTechTechDeficitWeight`,
-  `kSpyStealTechHostileRelationsBonus`, `kSpyStealTechProximityBonus`,
   `kSpyCounterSpyBaseWorkScore`, `kSpyCounterSpyEnemySpyPresenceBonus`,
   `kSpyCounterSpyCapitalBonus`, `kSpyCounterSpyBorderBonus`,
-  `kSpyPhaseStealTechBonus`, and `kSpyPhaseCounterSpyBonus`,
+  and `kSpyPhaseCounterSpyBonus`,
   then the system returns a non-null `AiParameter` whose `category` equals
   `victory_config`.
 
-- **AC32 (Spy phase wiring — live DEVELOP prefers counter_spy):**
-  Given the economy build pass (`domain_planner_orchestrator_economy.dart`)
-  runs for an idle Spy whose suggested candidate set contains one `steal_tech`
-  candidate (in a rival GP capital) and one `counter_spy` candidate (in the
-  player's own province), and the dispatched `PhasePlanOutcome` resolves
+- **AC30 (Spy phase wiring — live DEVELOP prefers counter_spy):**
+  Given the economy build pass runs for an idle Spy with a `counter_spy`
+  candidate and the dispatched `PhasePlanOutcome` resolves
   `resolvePhaseEconomyDevelopActive` to `true`,
   when the orchestrator calls `selectFullAiCivilianWorkOrders`,
   then the orchestrator passes `spyDevelopPhase: true` and the emitted Spy
   `WorkOrder` has `target == counter_spy`.
-
-- **AC33 (Spy phase wiring — live non-DEVELOP prefers steal_tech):**
-  Given the same orchestrator pass and Spy candidate set as AC32 but the
-  dispatched `PhasePlanOutcome` resolves `resolvePhaseEconomyDevelopActive` to
-  `false` (e.g. EXPAND),
-  when the orchestrator calls `selectFullAiCivilianWorkOrders`,
-  then the orchestrator passes `spyDevelopPhase: false` and the emitted Spy
-  `WorkOrder` has `target == steal_tech`.
 
 ## Deferred (follow-up work for #3794)
 
