@@ -3,34 +3,16 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdTradeFairs;
+import '../support/diplomacy_game_fixtures.dart';
+
 void main() {
   group('tradeSlotsForGp', () {
     test('returns 0 without embassy', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-        ],
-        overtureStates: const [],
-      );
+      final game = tradeSlotsBidCapTestGame();
       expect(tradeSlotsForGp(game, 'gp1', 'minor1'), 0);
     });
     test('returns 3 commodity slots with embassy (baseline)', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-        ],
+      final game = tradeSlotsBidCapTestGame(
         overtureStates: const [
           OvertureState(gpId: 'gp1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0),
         ],
@@ -39,21 +21,8 @@ void main() {
     });
 
     test('returns 6 with embassy and trade_fairs', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          Player(
-            id: 'gp1',
-            displayName: 'GP1',
-            isHuman: true,
-            techUnlocked: {kTechIdTradeFairs: true},
-          ),
-        ],
+      final game = tradeSlotsBidCapTestGame(
+        techUnlocked: {kTechIdTradeFairs: true},
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -69,31 +38,8 @@ void main() {
 
   // Refs #2989 A5; SPEC/program/world-market-resolution.md § Bid type cap helper.
   group('worldMarketBidTypeCap', () {
-    Game gameWith({
-      Map<String, bool> techUnlocked = const {},
-      List<OvertureState> overtures = const [],
-    }) =>
-        Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState:
-                const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            Player(
-              id: 'gp1',
-              displayName: 'GP1',
-              isHuman: true,
-              techUnlocked: techUnlocked,
-            ),
-          ],
-          overtureStates: overtures,
-        );
-
     test('returns 0 when player is unknown (ghost-player guard)', () {
-      final game = gameWith();
+      final game = tradeSlotsBidCapTestGame();
       expect(worldMarketBidTypeCap(game, 'ghost'), 0);
     });
 
@@ -102,7 +48,7 @@ void main() {
       'overtures at all (Refs #2924; SPEC/game/world-market.md § Bid type '
       'cap baseline participation)',
       () {
-        final game = gameWith();
+        final game = tradeSlotsBidCapTestGame();
         expect(
           worldMarketBidTypeCap(game, 'gp1'),
           kWorldMarketBaselineBidTypeCap,
@@ -116,8 +62,8 @@ void main() {
       'trade-consulate overtures (Refs #2924; the baseline cap precedes the '
       'embassy-tier 3-cap upgrade)',
       () {
-        final game = gameWith(
-          overtures: const [
+        final game = tradeSlotsBidCapTestGame(
+          overtureStates: const [
             OvertureState(
               gpId: 'gp1',
               targetId: 'minor1',
@@ -134,8 +80,8 @@ void main() {
     );
 
     test('returns 3 with at least one embassy and no trade_fairs', () {
-      final game = gameWith(
-        overtures: const [
+      final game = tradeSlotsBidCapTestGame(
+        overtureStates: const [
           OvertureState(
             gpId: 'gp1',
             targetId: 'minor1',
@@ -148,8 +94,8 @@ void main() {
     });
 
     test('returns 3 with NAP overture (NAP implies embassy)', () {
-      final game = gameWith(
-        overtures: const [
+      final game = tradeSlotsBidCapTestGame(
+        overtureStates: const [
           OvertureState(
             gpId: 'gp1',
             targetId: 'minor1',
@@ -162,9 +108,9 @@ void main() {
     });
 
     test('returns 6 with embassy and trade_fairs', () {
-      final game = gameWith(
+      final game = tradeSlotsBidCapTestGame(
         techUnlocked: {kTechIdTradeFairs: true},
-        overtures: const [
+        overtureStates: const [
           OvertureState(
             gpId: 'gp1',
             targetId: 'minor1',
@@ -180,14 +126,7 @@ void main() {
       'ignores embassies belonging to a different gp (aggregation is '
       'per-player, not global)',
       () {
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState:
-                const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
+        final game = diplomacyGame(
           players: const [
             Player(id: 'gp1', displayName: 'GP1', isHuman: true),
             Player(id: 'gp2', displayName: 'GP2', isHuman: false),

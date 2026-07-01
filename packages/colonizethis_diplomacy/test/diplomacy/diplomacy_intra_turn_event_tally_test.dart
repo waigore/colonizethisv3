@@ -3,20 +3,7 @@ import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_event_logging.dar
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-Game _emptyGame({int turn = 1, List<DiplomaticEvent> history = const []}) =>
-    Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: turn),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
-      players: const [
-        Player(id: 'gp1', displayName: 'A', isHuman: true),
-        Player(id: 'gp2', displayName: 'B', isHuman: false),
-      ],
-      diplomaticHistoryEvents: history,
-    );
+import '../support/diplomacy_game_fixtures.dart';
 
 DiplomaticEvent _event(int turn, int intraTurnIndex) => DiplomaticEvent(
   turn: turn,
@@ -42,8 +29,8 @@ void main() {
     });
 
     test('positive: append with tally matches sequential scan fallback', () {
-      var withTally = _emptyGame();
-      var withoutTally = _emptyGame();
+      var withTally = diplomacyHistoryGame();
+      var withoutTally = diplomacyHistoryGame();
       final tally = IntraTurnEventTally.fromGame(withTally);
 
       for (var i = 0; i < 4; i++) {
@@ -79,7 +66,7 @@ void main() {
     });
 
     test('positive: tally continues after pre-existing same-turn events', () {
-      final game = _emptyGame(
+      final game = diplomacyHistoryGame(
         history: [_event(2, 0), _event(2, 1)],
       );
       final tally = IntraTurnEventTally.fromGame(game);
@@ -96,7 +83,7 @@ void main() {
     });
 
     test('negative: without tally still assigns indices via scan', () {
-      final game = _emptyGame(history: [_event(1, 0)]);
+      final game = diplomacyHistoryGame(history: [_event(1, 0)]);
       final after = appendDiplomaticEvent(
         game,
         1,

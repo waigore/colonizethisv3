@@ -216,6 +216,13 @@ rules:
     runner: dart
     script: tool/check_diplomacy_test_duplicate_descriptions.dart
 
+  - rule_id: repo.diplomacy_test_inline_game_ctor
+    group: testing
+    title: colonizethis_diplomacy tests must not construct Game(...) inline (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_inline_game_ctor.dart
+
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
     title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)

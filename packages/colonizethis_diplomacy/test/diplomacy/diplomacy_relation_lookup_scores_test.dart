@@ -8,42 +8,14 @@ import '../support/diplomacy_game_fixtures.dart';
 /// and history-ordering helpers in `diplomacy_relation_lookup.dart`
 /// (Refs #3290 test migration — per-package coverage gate for
 /// `colonizethis_diplomacy`).
-Game _relationLookupGame({
-  List<Player> players = const [],
-  List<Province> oldWorldProvinces = const [],
-  List<Fleet> fleets = const [],
-  List<DiplomacyRelation> relations = const [],
-  List<DiplomaticEvent> history = const [],
-  int turnNumber = 1,
-}) =>
-    diplomacyGame(
-      id: 'g',
-      turnNumber: turnNumber,
-      players: players,
-      oldWorld: RegionData(provinces: oldWorldProvinces, units: const []),
-      fleets: fleets,
-      diplomacyRelations: relations,
-      diplomaticHistoryEvents: history,
-    );
-
-Province _prov(String localId, String owner) =>
-    Province(id: 'oldWorld|$localId', regionId: 'oldWorld', ownerId: owner);
-
-Fleet _fleet(String id, String owner, int ships) => Fleet(
-      id: id,
-      ownerId: owner,
-      regionId: 'oldWorld',
-      shipTypeIds: List<String>.filled(ships, 'frigate'),
-    );
-
 void main() {
   group('shipCountForFaction', () {
     test('positive: sums ships across the faction\'s fleets only', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         fleets: [
-          _fleet('f1', 'gp1', 2),
-          _fleet('f2', 'gp1', 3),
-          _fleet('f3', 'gp2', 4),
+          diplomacyTestFleet('f1', 'gp1', 2),
+          diplomacyTestFleet('f2', 'gp1', 3),
+          diplomacyTestFleet('f3', 'gp2', 4),
         ],
       );
       expect(shipCountForFaction(game, 'gp1'), 5);
@@ -51,23 +23,26 @@ void main() {
     });
 
     test('negative: faction with no fleets has zero ships', () {
-      expect(shipCountForFaction(_relationLookupGame(), 'gp9'), 0);
+      expect(shipCountForFaction(relationLookupGame(), 'gp9'), 0);
     });
   });
 
   group('greatPowerPowerScore', () {
     test('positive: provinces and ships are weighted', () {
       // 2 provinces * 10 + 0 regiments + 3 ships * 5 = 35.
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
-        oldWorldProvinces: [_prov('p1', 'gp1'), _prov('p2', 'gp1')],
-        fleets: [_fleet('f1', 'gp1', 3)],
+        oldWorldProvinces: [
+          oldWorldOwnedProvince('p1', 'gp1'),
+          oldWorldOwnedProvince('p2', 'gp1'),
+        ],
+        fleets: [diplomacyTestFleet('f1', 'gp1', 3)],
       );
       expect(greatPowerPowerScore(game, 'gp1'), 2 * 10 + 3 * 5);
     });
 
     test('negative: faction owning nothing scores zero', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       );
       expect(greatPowerPowerScore(game, 'gp1'), 0);
@@ -76,27 +51,34 @@ void main() {
 
   group('pickUniqueGreatPowerLeaderByPowerScore', () {
     test('negative: no players returns null', () {
-      expect(pickUniqueGreatPowerLeaderByPowerScore(_relationLookupGame()), isNull);
+      expect(pickUniqueGreatPowerLeaderByPowerScore(relationLookupGame()), isNull);
     });
 
     test('positive: strictly highest score is the unique leader', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         players: const [
           Player(id: 'gp1', displayName: 'A', isHuman: false),
           Player(id: 'gp2', displayName: 'B', isHuman: false),
         ],
-        oldWorldProvinces: [_prov('p1', 'gp1'), _prov('p2', 'gp1'), _prov('p3', 'gp2')],
+        oldWorldProvinces: [
+          oldWorldOwnedProvince('p1', 'gp1'),
+          oldWorldOwnedProvince('p2', 'gp1'),
+          oldWorldOwnedProvince('p3', 'gp2'),
+        ],
       );
       expect(pickUniqueGreatPowerLeaderByPowerScore(game), 'gp1');
     });
 
     test('negative: a tie for the top score returns null', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         players: const [
           Player(id: 'gp1', displayName: 'A', isHuman: false),
           Player(id: 'gp2', displayName: 'B', isHuman: false),
         ],
-        oldWorldProvinces: [_prov('p1', 'gp1'), _prov('p2', 'gp2')],
+        oldWorldProvinces: [
+          oldWorldOwnedProvince('p1', 'gp1'),
+          oldWorldOwnedProvince('p2', 'gp2'),
+        ],
       );
       expect(pickUniqueGreatPowerLeaderByPowerScore(game), isNull);
     });
@@ -104,7 +86,7 @@ void main() {
 
   group('canAttackWithWarOrDeclaring', () {
     test('positive: already at war can attack', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         relations: const [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -117,7 +99,7 @@ void main() {
     });
 
     test('positive: declaring war this turn can attack', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         relations: const [
           DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
         ],
@@ -134,7 +116,7 @@ void main() {
     });
 
     test('negative: at peace with no declare-war order cannot attack', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         relations: const [
           DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
         ],
@@ -153,7 +135,7 @@ void main() {
 
   group('diplomaticHistoryForPair', () {
     test('positive: same-turn events ordered by descending intraTurnIndex', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         history: const [
           DiplomaticEvent(
             turn: 5,
@@ -174,7 +156,7 @@ void main() {
     });
 
     test('negative: events not involving both parties are excluded', () {
-      final game = _relationLookupGame(
+      final game = relationLookupGame(
         history: const [
           DiplomaticEvent(
             turn: 3,

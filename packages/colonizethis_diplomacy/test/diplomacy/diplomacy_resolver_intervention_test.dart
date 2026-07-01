@@ -4,16 +4,13 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 void main() {
   group('intervention helpers', () {
     test('needsInterventionChoice returns gp id with embassy for attacked minor', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
           Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
@@ -45,13 +42,8 @@ void main() {
     });
 
     test('needsInterventionChoice returns null when defender is not minor', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
           Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
@@ -70,18 +62,12 @@ void main() {
     });
 
     test('applyInterventionChoice doNothing clears overtures and logs event', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'Attacker', isHuman: false),
         ],
-        diplomacyRelations: const [],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
         ],
@@ -113,18 +99,13 @@ void main() {
     });
 
     test('applyInterventionChoice protest reduces relation score with attacker', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'Attacker', isHuman: false),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp1',
             factionId2: 'gp2',
@@ -151,13 +132,8 @@ void main() {
     test(
       'applyInterventionChoice protest uses smaller penalty when attacker has Propaganda',
       () {
-        final game = Game(
+        final game = diplomacyGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
           players: [
             const Player(id: 'gp1', displayName: 'Human', isHuman: true),
             const Player(id: 'gp2', displayName: 'Attacker', isHuman: false)
@@ -189,13 +165,8 @@ void main() {
     );
 
     test('needsInterventionChoice returns null when no GP has embassy for minor', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
           Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
@@ -224,28 +195,21 @@ void main() {
       const minorProvId = '$ow|M1';
       const tileKey = '$ow|M1|0|0';
 
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.orders,
-            turnNumber: 3,
-          ),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: minorProvId, regionId: ow, ownerId: 'minor1'),
-            ],
-            units: [],
-          ),
-          newWorld: const RegionData(),
-          purchasedTilesByTileKey: const {
-            tileKey: 'gp1', // gp1 has purchased land in minor1 province
-          },
-        ),
+        turnNumber: 3,
         players: const [
           Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
           Player(id: 'gp2', displayName: 'Aggressor GP', isHuman: false),
         ],
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: minorProvId, regionId: ow, ownerId: 'minor1'),
+          ],
+        ),
+        purchasedTilesByTileKey: const {
+          tileKey: 'gp1',
+        },
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
         ],
@@ -293,28 +257,20 @@ void main() {
       const provinceId = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.orders,
-            turnNumber: 1,
-          ),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
-            ],
-            units: [],
-          ),
-          newWorld: const RegionData(),
-          purchasedTilesByTileKey: const {
-            tileKey: 'gp1',
-          },
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
           Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
         ],
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
+          ],
+        ),
+        purchasedTilesByTileKey: const {
+          tileKey: 'gp1',
+        },
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
         ],
@@ -347,28 +303,20 @@ void main() {
       const provinceId = '$nw|T1';
       const tileKey = '$nw|T1|0|0';
 
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.orders,
-            turnNumber: 1,
-          ),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: const [
-              Province(id: provinceId, regionId: nw, ownerId: 'tribe1'),
-            ],
-            units: [],
-          ),
-          purchasedTilesByTileKey: const {
-            tileKey: 'gp1',
-          },
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
           Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
         ],
+        newWorld: const RegionData(
+          provinces: [
+            Province(id: provinceId, regionId: nw, ownerId: 'tribe1'),
+          ],
+        ),
+        purchasedTilesByTileKey: const {
+          tileKey: 'gp1',
+        },
         tribes: const [
           Tribe(id: 'tribe1', displayName: 'Tribe 1'),
         ],

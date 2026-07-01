@@ -78,3 +78,81 @@ Game threePowerCallToArmsGame({
     ],
   );
 }
+
+/// Four-GP call-to-arms game where gp1 is allied with gp2 but at war with gp3.
+Game fourGpCallToArmsAtWarGame() => TestFixtures.minimalGame(
+      id: 'g-multi',
+      turnNumber: 25,
+      players: const [
+        Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+        Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        Player(id: 'gp3', displayName: 'GP3', isHuman: false),
+        Player(id: 'gp4', displayName: 'GP4', isHuman: false),
+      ],
+      diplomacyRelations: const [
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp2',
+          score: 80,
+          level: RelationLevel.allied,
+          state: RelationState.atPeace,
+          sinceTurn: 0,
+          lastInteractionTurn: 0,
+          formalAlliance: true,
+        ),
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp3',
+          score: 0,
+          level: RelationLevel.hostile,
+          state: RelationState.atWar,
+          sinceTurn: 1,
+          lastInteractionTurn: 1,
+        ),
+        DiplomacyRelation(
+          factionId1: 'gp2',
+          factionId2: 'gp4',
+          score: 50,
+          level: RelationLevel.neutral,
+          state: RelationState.atPeace,
+          sinceTurn: 0,
+          lastInteractionTurn: 0,
+        ),
+      ],
+    );
+
+/// Four-GP cascade penalty game for human refuse call-to-arms (Refs #3825).
+Game fourGpCallToArmsCascadeGame() => TestFixtures.minimalGame(
+      id: 'g-cascade',
+      turnNumber: 5,
+      players: const [
+        Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        Player(id: 'gp2', displayName: 'GP2', isHuman: true),
+        Player(id: 'gp3', displayName: 'GP3', isHuman: false),
+        Player(id: 'gp4', displayName: 'GP4', isHuman: false),
+      ],
+      diplomacyRelations: const [
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp2',
+          score: 80,
+          level: RelationLevel.allied,
+          state: RelationState.atPeace,
+          formalAlliance: true,
+        ),
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp3',
+          score: 60,
+          level: RelationLevel.friendly,
+          state: RelationState.atPeace,
+        ),
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp4',
+          score: 60,
+          level: RelationLevel.friendly,
+          state: RelationState.atPeace,
+        ),
+      ],
+    );

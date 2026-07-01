@@ -2,16 +2,14 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 void main() {
   group('diplomatic history', () {
     test('declare war appends declareWar event', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 5,
         players: const [
           Player(id: 'gp1', displayName: 'A', isHuman: true),
           Player(id: 'gp2', displayName: 'B', isHuman: false),
@@ -45,18 +43,14 @@ void main() {
     });
 
     test('diplomaticHistoryForPair returns events for pair newest first', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 10,
         players: const [
           Player(id: 'gp1', displayName: 'A', isHuman: true),
           Player(id: 'gp2', displayName: 'B', isHuman: false),
         ],
-        diplomaticHistoryEvents: [
+        diplomaticHistoryEvents: const [
           DiplomaticEvent(
             turn: 1,
             intraTurnIndex: 0,
