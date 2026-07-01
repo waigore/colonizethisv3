@@ -28,11 +28,14 @@ part of 'expand_phase_planner.dart';
 /// `const`-friendly so the default "no override" return uses a single
 /// shared instance ([defaultPlan]) without per-call allocations on the
 /// hot AI path.
-class ExpandMilitaryPlan {
+final class ExpandMilitaryPlan extends PhaseDestinationResult {
   const ExpandMilitaryPlan({
-    required this.priorityDestinationProvinceIdsSorted,
-    required this.priorityTargetOwnerFactionIdsSorted,
-  });
+    required List<String> priorityDestinationProvinceIdsSorted,
+    required List<String> priorityTargetOwnerFactionIdsSorted,
+  })  : _priorityDestinationProvinceIdsSorted =
+            priorityDestinationProvinceIdsSorted,
+        _priorityTargetOwnerFactionIdsSorted =
+            priorityTargetOwnerFactionIdsSorted;
 
   /// Reusable "no override" plan returned for non-EXPAND callers, GPs
   /// at quota, the empty-invadable guard, and the priority-arm
@@ -43,11 +46,15 @@ class ExpandMilitaryPlan {
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
 
+  final List<String> _priorityDestinationProvinceIdsSorted;
+  final List<String> _priorityTargetOwnerFactionIdsSorted;
+
   /// Subset of [ConquestSummary.invadableProvinceIdsSorted] (OW only)
   /// whose owners match the priority-arm filter for this turn. Sorted
   /// ascending so identical inputs yield identical lists (Refs #2509
   /// Must-have #7). Empty for [defaultPlan].
-  final List<String> priorityDestinationProvinceIdsSorted;
+  List<String> get priorityDestinationProvinceIdsSorted =>
+      _priorityDestinationProvinceIdsSorted;
 
   /// Faction ids of the owners covered by
   /// [priorityDestinationProvinceIdsSorted]. Sorted ascending and
@@ -57,26 +64,13 @@ class ExpandMilitaryPlan {
   ///   - One or more entries (sorted at-war owners) when the at-war
   ///     fallback arm fires ([planExpandMilitary] § Priority 2).
   ///   - Empty for [defaultPlan].
-  final List<String> priorityTargetOwnerFactionIdsSorted;
+  @override
+  List<String> get priorityTargetOwnerFactionIdsSorted =>
+      _priorityTargetOwnerFactionIdsSorted;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ExpandMilitaryPlan &&
-          planningListEquals(
-            priorityDestinationProvinceIdsSorted,
-            other.priorityDestinationProvinceIdsSorted,
-          ) &&
-          planningListEquals(
-            priorityTargetOwnerFactionIdsSorted,
-            other.priorityTargetOwnerFactionIdsSorted,
-          );
-
-  @override
-  int get hashCode => Object.hash(
-    Object.hashAll(priorityDestinationProvinceIdsSorted),
-    Object.hashAll(priorityTargetOwnerFactionIdsSorted),
-  );
+  List<String> get priorityProvinceIdsSorted =>
+      _priorityDestinationProvinceIdsSorted;
 
   @override
   String toString() =>

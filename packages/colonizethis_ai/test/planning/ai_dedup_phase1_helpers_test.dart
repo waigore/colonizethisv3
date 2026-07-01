@@ -5,6 +5,11 @@ import 'package:colonizethis_ai/src/planning/effective_labour_state.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_ai/src/planning/scored_candidate.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/phase_destination_result.dart';
+import 'package:colonizethis_ai/src/planning/strategic_planning_input.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
@@ -150,6 +155,48 @@ void main() {
       expect(ctx.declaredWarTargetFactionId, 'gp2');
       expect(ctx.nwInvasionWeight, 0.5);
       expect(ctx.oldWorldInvasionWeight, 0.8);
+    });
+  });
+
+  group('StrategicPlanningInput', () {
+    test('bundles required strategic entry fields', () {
+      final game = TestFixtures.minimalGame();
+      final topology = const MapTopology(nodes: [], edges: []);
+      final nationId = game.players.first.id;
+      final view = buildPlayerView(game, topology, nationId);
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(42);
+      final input = StrategicPlanningInput(
+        game: game,
+        topology: topology,
+        nationId: nationId,
+        view: view,
+        config: config,
+        seeds: seeds,
+        suggestionAPI: const DefaultOrderSuggestionAPI(),
+      );
+      expect(input.nationId, nationId);
+      expect(input.growthStagePlannerEnabled, isTrue);
+    });
+  });
+
+  group('PhaseDestinationResult', () {
+    test('ExpandMilitaryPlan shares equality via base lists', () {
+      const left = ExpandMilitaryPlan(
+        priorityDestinationProvinceIdsSorted: ['oldWorld|p1'],
+        priorityTargetOwnerFactionIdsSorted: ['minor1'],
+      );
+      const right = ExpandMilitaryPlan(
+        priorityDestinationProvinceIdsSorted: ['oldWorld|p1'],
+        priorityTargetOwnerFactionIdsSorted: ['minor1'],
+      );
+      expect(left, equals(right));
+      expect(left.priorityProvinceIdsSorted, ['oldWorld|p1']);
+      expect(left, isA<PhaseDestinationResult>());
     });
   });
 }

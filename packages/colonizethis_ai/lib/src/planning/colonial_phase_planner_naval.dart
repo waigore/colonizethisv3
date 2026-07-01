@@ -41,11 +41,14 @@ part of 'colonial_phase_planner.dart';
 /// can assert against literal constructions without relying on
 /// identity, mirroring the [ColonialMilitaryPlan] /
 /// [ColonialLiteNavalPlan] shape.
-class ColonialNavalPlan {
+final class ColonialNavalPlan extends PhaseDestinationResult {
   const ColonialNavalPlan({
-    required this.priorityInvasionTransportProvinceIdsSorted,
-    required this.priorityTargetOwnerFactionIdsSorted,
-  });
+    required List<String> priorityInvasionTransportProvinceIdsSorted,
+    required List<String> priorityTargetOwnerFactionIdsSorted,
+  })  : _priorityInvasionTransportProvinceIdsSorted =
+            priorityInvasionTransportProvinceIdsSorted,
+        _priorityTargetOwnerFactionIdsSorted =
+            priorityTargetOwnerFactionIdsSorted;
 
   /// Reusable "no override" plan returned for the outer COLONIAL
   /// guards (below quota, missing player, empty NW invadable) and for
@@ -58,6 +61,9 @@ class ColonialNavalPlan {
     priorityInvasionTransportProvinceIdsSorted: <String>[],
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
+
+  final List<String> _priorityInvasionTransportProvinceIdsSorted;
+  final List<String> _priorityTargetOwnerFactionIdsSorted;
 
   /// Subset of [ColonialSummary.invadableNewWorldProvinceIdsSorted]
   /// (NW only by builder contract) where invasion-transport naval
@@ -76,7 +82,8 @@ class ColonialNavalPlan {
   /// plan is intentionally scoped to the invasion-transport arm so a
   /// non-default plan does not suppress the parallel exploration /
   /// cargo activity.
-  final List<String> priorityInvasionTransportProvinceIdsSorted;
+  List<String> get priorityInvasionTransportProvinceIdsSorted =>
+      _priorityInvasionTransportProvinceIdsSorted;
 
   /// Faction ids of the owners covered by
   /// [priorityInvasionTransportProvinceIdsSorted]. Sorted ascending
@@ -90,26 +97,13 @@ class ColonialNavalPlan {
   ///   - One or more entries (sorted at-war owners) when the at-war
   ///     fallback arm fires ([planColonialNaval] § Priority 2).
   ///   - Empty for [defaultPlan].
-  final List<String> priorityTargetOwnerFactionIdsSorted;
+  @override
+  List<String> get priorityTargetOwnerFactionIdsSorted =>
+      _priorityTargetOwnerFactionIdsSorted;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ColonialNavalPlan &&
-          planningListEquals(
-            priorityInvasionTransportProvinceIdsSorted,
-            other.priorityInvasionTransportProvinceIdsSorted,
-          ) &&
-          planningListEquals(
-            priorityTargetOwnerFactionIdsSorted,
-            other.priorityTargetOwnerFactionIdsSorted,
-          );
-
-  @override
-  int get hashCode => Object.hash(
-    Object.hashAll(priorityInvasionTransportProvinceIdsSorted),
-    Object.hashAll(priorityTargetOwnerFactionIdsSorted),
-  );
+  List<String> get priorityProvinceIdsSorted =>
+      _priorityInvasionTransportProvinceIdsSorted;
 
   @override
   String toString() =>
@@ -411,11 +405,13 @@ List<String> planColonialLiteOvertures({
 /// hot AI path. Value equality compares both list contents so tests
 /// can assert against literal constructions without relying on
 /// identity.
-class ColonialLiteNavalPlan {
+final class ColonialLiteNavalPlan extends PhaseDestinationResult {
   const ColonialLiteNavalPlan({
-    required this.priorityNwProvinceIdsSorted,
-    required this.priorityTargetOwnerFactionIdsSorted,
-  });
+    required List<String> priorityNwProvinceIdsSorted,
+    required List<String> priorityTargetOwnerFactionIdsSorted,
+  })  : _priorityNwProvinceIdsSorted = priorityNwProvinceIdsSorted,
+        _priorityTargetOwnerFactionIdsSorted =
+            priorityTargetOwnerFactionIdsSorted;
 
   /// Reusable "no override" plan returned for the outer defensive
   /// guards (missing player, empty NW invadable) and for the
@@ -428,6 +424,9 @@ class ColonialLiteNavalPlan {
     priorityNwProvinceIdsSorted: <String>[],
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
+
+  final List<String> _priorityNwProvinceIdsSorted;
+  final List<String> _priorityTargetOwnerFactionIdsSorted;
 
   /// Subset of [ColonialSummary.invadableNewWorldProvinceIdsSorted]
   /// (NW only by builder contract) whose owners are tribes or minor
@@ -442,7 +441,7 @@ class ColonialLiteNavalPlan {
   /// naval-move destinations. Cargo routing (deliver riches to OW
   /// stockpile) is satisfied at the orchestrator layer by the
   /// existing colonial naval pathing the directive does not override.
-  final List<String> priorityNwProvinceIdsSorted;
+  List<String> get priorityNwProvinceIdsSorted => _priorityNwProvinceIdsSorted;
 
   /// Faction ids of the tribes / minor nations owning the provinces
   /// in [priorityNwProvinceIdsSorted]. Sorted ascending and
@@ -451,26 +450,12 @@ class ColonialLiteNavalPlan {
   /// COLONIAL-lite is the safeguard for **tribe / minor** NW
   /// penetration only (issue #2509 § COLONIAL-lite "establishOverture
   /// toward visible NW tribe / minor owners"). Empty for [defaultPlan].
-  final List<String> priorityTargetOwnerFactionIdsSorted;
+  @override
+  List<String> get priorityTargetOwnerFactionIdsSorted =>
+      _priorityTargetOwnerFactionIdsSorted;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ColonialLiteNavalPlan &&
-          planningListEquals(
-            priorityNwProvinceIdsSorted,
-            other.priorityNwProvinceIdsSorted,
-          ) &&
-          planningListEquals(
-            priorityTargetOwnerFactionIdsSorted,
-            other.priorityTargetOwnerFactionIdsSorted,
-          );
-
-  @override
-  int get hashCode => Object.hash(
-    Object.hashAll(priorityNwProvinceIdsSorted),
-    Object.hashAll(priorityTargetOwnerFactionIdsSorted),
-  );
+  List<String> get priorityProvinceIdsSorted => _priorityNwProvinceIdsSorted;
 
   @override
   String toString() =>
