@@ -1,4 +1,6 @@
 // DiplomacyPanel order UI + bus command emission coverage.
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart'
+    show grantOrSubsidyDialogId;
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -562,6 +564,108 @@ void main() {
       expect(event.playerId, humanId);
       expect(event.type, DiplomaticOrderType.setSubsidy);
       expect(event.targetFactionId, minorId);
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel active subsidy shows outgoing percent line (Refs #3753 S15)',
+    (WidgetTester tester) async {
+      const humanId = kPanelTestHumanPlayerId;
+      const minorId = 'm1';
+      const percent = 10;
+      final game = buildDiplomacyRichPanelTestGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: humanId,
+            targetId: minorId,
+            stage: OvertureStage.embassy,
+          ),
+        ],
+        subsidyStates: const [
+          SubsidyState(payerId: humanId, targetId: minorId, percent: percent),
+        ],
+      );
+
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: const MapTopology(),
+              currentOrders: const Orders(),
+              bus: AppEventBus.create(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Minors only'));
+      await tester.pump();
+
+      expect(
+        find.text('Outgoing subsidy: $percent% to Free City'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel Set Subsidy emits grantOrSubsidy dialog (Refs #3753 S15)',
+    (WidgetTester tester) async {
+      const humanId = kPanelTestHumanPlayerId;
+      const minorId = 'm1';
+      final game = buildDiplomacyRichPanelTestGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: humanId,
+            targetId: minorId,
+            stage: OvertureStage.embassy,
+          ),
+        ],
+      );
+      final bus = AppEventBus.create();
+      final openFuture = bus
+          .on<OpenDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: const MapTopology(),
+              currentOrders: const Orders(),
+              bus: bus,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Minors only'));
+      await tester.pump();
+
+      final minorRow = find.byKey(
+        ValueKey('${kDiplomacyRowBodyKeyPrefix}m1'),
+      );
+      final setSubsidyButton = find.descendant(
+        of: minorRow,
+        matching: find.text('Set Subsidy (5%)'),
+      );
+      await tester.ensureVisible(setSubsidyButton);
+      await tester.tap(setSubsidyButton);
+      await tester.pump();
+
+      final event = await openFuture;
+      expect(event.dialogId, grantOrSubsidyDialogId);
+      expect(event.params?['isSubsidy'], isTrue);
+      expect(event.params?['targetFactionId'], minorId);
     },
   );
 }
