@@ -9,7 +9,7 @@ import 'package:path/path.dart' as p;
 const _diplomacyLibRelative = 'packages/colonizethis_diplomacy/lib';
 
 const _definitionRelative =
-    'packages/colonizethis_diplomacy/lib/src/diplomacy/diplomacy_relation_lookup.dart';
+    'packages/colonizethis_diplomacy/lib/src/diplomacy/diplomacy_relation_upsert.dart';
 
 const _upsertToken = 'upsertRelation(';
 
