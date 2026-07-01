@@ -13,10 +13,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'army_conquest_prep.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
-import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'orchestrator_options.dart';
+import 'strategic_planning_input.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_goal_filter.dart';
 import 'phase_priority_weights.dart';
@@ -44,16 +44,18 @@ StrategicOrderResult generateStrategicOrders({
   void Function(PortraitMoodEvent)? onMood,
 }) {
   return generateStrategicOrdersWithTrace(
-    game: game,
-    topology: topology,
-    nationId: nationId,
-    view: view,
-    config: config,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    tileMapByRegion: tileMapByRegion,
-    onDialogue: onDialogue,
-    onMood: onMood,
+    StrategicPlanningInput(
+      game: game,
+      topology: topology,
+      nationId: nationId,
+      view: view,
+      config: config,
+      seeds: seeds,
+      suggestionAPI: suggestionAPI,
+      tileMapByRegion: tileMapByRegion,
+      onDialogue: onDialogue,
+      onMood: onMood,
+    ),
   ).result;
 }
 
@@ -71,27 +73,18 @@ class StrategicOrderTraceResult {
   final TurnTraceAiSection? aiTraceSection;
 }
 
-StrategicOrderTraceResult generateStrategicOrdersWithTrace({
-  required Game game,
-  required MapTopology topology,
-  required String nationId,
-  required PlayerView view,
-  required AIConfig config,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
-  Map<String, TileMapResult>? tileMapByRegion,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(PortraitMoodEvent)? onMood,
-  void Function(String phaseId)? onStagedPlannerProgress,
-  Orders? sameTurnPriorDiplomaticOrders,
-  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
-}) {
-  final turn = game.worldState.turnState.turnNumber;
-  _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
-  final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+StrategicOrderTraceResult generateStrategicOrdersWithTrace(
+  StrategicPlanningInput input,
+) {
+  final turn = input.game.worldState.turnState.turnNumber;
+  _log.i('generateStrategicOrders nationId=${input.nationId} turn=$turn');
+  final snapshot = AIWorldSnapshot.fromPlayerView(
+    input.view,
+    topology: input.topology,
+  );
   final observerGoalPhase = observerGoalPhaseFor(
     snapshot: snapshot,
-    game: game,
+    game: input.game,
   );
   final suppressColonialPressure = resolvePhaseGoalSuppressColonialPressure(
     observerGoalPhase,
@@ -111,19 +104,19 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   // overrides).
   final goalColonialPressureWeight = goalColonialPressureWeightFor(
     snapshot: snapshot,
-    game: game,
+    game: input.game,
   );
   final goalScores = evaluateStrategicGoalScores(
     snapshot,
-    config,
+    input.config,
     observerGoalPhase: observerGoalPhase,
     colonialPressureWeight: goalColonialPressureWeight,
   );
   var primaryGoal = selectPrimaryGoal(
     snapshot,
-    config,
-    seeds.goalSeed,
-    nationId: nationId,
+    input.config,
+    input.seeds.goalSeed,
+    nationId: input.nationId,
     turn: turn,
     observerGoalPhase: observerGoalPhase,
     colonialPressureWeight: goalColonialPressureWeight,
@@ -135,18 +128,18 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   }
   _log.d('primaryGoal=$primaryGoal');
   final planningGame = prepareConquestFieldArmy(
-    game: game,
-    nationId: nationId,
+    game: input.game,
+    nationId: input.nationId,
     provincesToVictory: snapshot.conquest.provincesToVictory,
     oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
     primaryGoal: primaryGoal,
   );
-  final planningView = planningGame == game
-      ? view
-      : buildPlayerView(planningGame, topology, nationId);
-  final planningSnapshot = planningView == view
+  final planningView = planningGame == input.game
+      ? input.view
+      : buildPlayerView(planningGame, input.topology, input.nationId);
+  final planningSnapshot = planningView == input.view
       ? snapshot
-      : AIWorldSnapshot.fromPlayerView(planningView, topology: topology);
+      : AIWorldSnapshot.fromPlayerView(planningView, topology: input.topology);
   // Refs #2509 S5: dispatch the phase plan once per AI player turn against
   // the planning-state inputs and thread the resolved `PhasePlanOutcome`
   // into both `runEconomyPlanner` and the orchestrator. The dispatch is
@@ -162,7 +155,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final phasePlan = runPhasePlanners(
     game: planningGame,
     snapshot: planningSnapshot,
-    personalityId: config.personalityId,
+    personalityId: input.config.personalityId,
   );
   // Refs #3517 Cluster 4: the treasury planner forecasts overseas trade-cargo
   // capacity via `computeExtraction`, an O(players × connected-tiles) scan.
@@ -179,13 +172,13 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   // `tradeCargoCapacityForGreatPower` short-circuits on) so a player with no
   // home fleet never pays for an extraction scan it would not consume.
   final tradeForecastExtractionById =
-      (tileMapByRegion != null &&
-          tileMapByRegion.isNotEmpty &&
-          cargoHoldsForHomeFleet(planningGame, nationId) > 0)
+      (input.tileMapByRegion != null &&
+          input.tileMapByRegion!.isNotEmpty &&
+          cargoHoldsForHomeFleet(planningGame, input.nationId) > 0)
       ? computeExtractionTotalsForTradeForecast(
           game: planningGame,
-          tileMapByRegion: tileMapByRegion,
-          topology: topology,
+          tileMapByRegion: input.tileMapByRegion!,
+          topology: input.topology,
         )
       : null;
   // Refs #3122 orchestrator wiring: the production strategic-AI entry
@@ -198,35 +191,35 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final economyPlan = runEconomyPlanner(
     game: planningGame,
     view: planningView,
-    config: config,
-    seeds: seeds,
+    config: input.config,
+    seeds: input.seeds,
     colonial: snapshot.colonial,
     snapshot: planningSnapshot,
     phasePlan: phasePlan,
-    tileMapByRegion: tileMapByRegion,
-    topology: topology,
+    tileMapByRegion: input.tileMapByRegion,
+    topology: input.topology,
     skipTradeOrderGeneration: true,
-    growthStagePlannerEnabled: growthStagePlannerEnabled,
+    growthStagePlannerEnabled: input.growthStagePlannerEnabled,
     extractionById: tradeForecastExtractionById,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
-    topology: topology,
-    nationId: nationId,
+    topology: input.topology,
+    nationId: input.nationId,
     view: planningView,
     snapshot: planningSnapshot,
-    config: config,
+    config: input.config,
     primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
+    seeds: input.seeds,
+    suggestionAPI: input.suggestionAPI,
     economyPlan: economyPlan,
     options: OrchestratorOptions(
-      tileMapByRegion: tileMapByRegion,
-      onStagedPlannerProgress: onStagedPlannerProgress,
-      sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+      tileMapByRegion: input.tileMapByRegion,
+      onStagedPlannerProgress: input.onStagedPlannerProgress,
+      sameTurnPriorDiplomaticOrders: input.sameTurnPriorDiplomaticOrders,
       phasePlan: phasePlan,
       recomputeTradeOrdersWithPendingCosts: true,
-      growthStagePlannerEnabled: growthStagePlannerEnabled,
+      growthStagePlannerEnabled: input.growthStagePlannerEnabled,
       extractionById: tradeForecastExtractionById,
     ),
   );
@@ -234,33 +227,35 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   // domain orchestrator (Refs #2994 F7) so all orchestrator callers see the
   // same merged output. Keep this read-only here.
   final orders = plannerOutcome.orders;
-  final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
-  final armyMoveCount = orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
-  final workCount = orders.workOrdersByPlayerId[nationId]?.length ?? 0;
-  final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
-  final tradeCount = orders.tradeOrdersByPlayerId[nationId]?.length ?? 0;
+  final moveCount = orders.moveOrdersByPlayerId[input.nationId]?.length ?? 0;
+  final armyMoveCount =
+      orders.armyMoveOrdersByPlayerId[input.nationId]?.length ?? 0;
+  final buildCount = orders.buildUnitOrdersByPlayerId[input.nationId]?.length ?? 0;
+  final workCount = orders.workOrdersByPlayerId[input.nationId]?.length ?? 0;
+  final researchCount =
+      orders.researchOrdersByPlayerId[input.nationId]?.length ?? 0;
+  final tradeCount = orders.tradeOrdersByPlayerId[input.nationId]?.length ?? 0;
   _log.i(
-    'generated orders nationId=$nationId move=$moveCount armyMove=$armyMoveCount '
+    'generated orders nationId=${input.nationId} move=$moveCount armyMove=$armyMoveCount '
     'build=$buildCount work=$workCount research=$researchCount trade=$tradeCount',
   );
   emitStrategicDialogueAndMood(
-    config: config,
-    seeds: seeds,
-    onDialogue: onDialogue,
-    onMood: onMood,
+    config: input.config,
+    seeds: input.seeds,
+    onDialogue: input.onDialogue,
+    onMood: input.onMood,
   );
   final result = StrategicOrderResult(orders: orders, economyPlan: economyPlan);
-  final ordersByDomain = orderCountsByDomain(nationId, orders);
-  final finalOrders = finalAggregatedOrders(nationId, orders);
+  final ordersByDomain = orderCountsByDomain(input.nationId, orders);
+  final finalOrders = finalAggregatedOrders(input.nationId, orders);
   return StrategicOrderTraceResult(
     result: result,
     game: planningGame,
     aiTraceSection: buildAiTraceSection(
-      nationId: nationId,
+      nationId: input.nationId,
       turn: turn,
-      config: config,
-      seeds: seeds,
+      config: input.config,
+      seeds: input.seeds,
       snapshot: snapshot,
       primaryGoal: primaryGoal,
       goalScores: goalScores,
