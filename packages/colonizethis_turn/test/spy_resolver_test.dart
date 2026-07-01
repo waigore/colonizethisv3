@@ -40,6 +40,21 @@ void main() {
       );
       expect(withCounter, greaterThan(without));
     });
+
+    test('records caught spy details when killed', () {
+      final game = _gameWithForeignSpy(garrisonRegiments: 8, seed: 99);
+      for (var i = 0; i < 500; i++) {
+        final result = resolveSpyPhase(game, random: Random(i));
+        if (result.caughtSpies.isEmpty) continue;
+        final caught = result.caughtSpies.single;
+        expect(caught.unitId, 'spy_enemy');
+        expect(caught.spyOwnerId, 'gp2');
+        expect(caught.territoryOwnerId, 'gp1');
+        expect(caught.provinceId, 'oldWorld|p2');
+        return;
+      }
+      fail('expected at least one kill in 500 trials with max garrison');
+    });
   });
 
   group('applySpyResearchBoostToPoints', () {

@@ -100,4 +100,20 @@ mixin _GameMapAreaEvents
     }
     _pendingPlayerTurnEvents.add(event);
   }
+
+  void _onAppSpyCaughtEvent(ct_models.AppSpyCaughtEvent event) {
+    if (event.spyOwnerId != _mapPlayerId &&
+        event.territoryOwnerId != _mapPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppSpyDefectedEvent(ct_models.AppSpyDefectedEvent event) {
+    if (event.previousOwnerId != _mapPlayerId &&
+        event.newOwnerId != _mapPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
 }

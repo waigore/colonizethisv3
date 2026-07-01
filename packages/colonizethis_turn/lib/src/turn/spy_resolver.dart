@@ -8,18 +8,52 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'turn_logging.dart';
 
+/// Spy killed during spy-resolution (Refs #3834 R9).
+class SpyCaughtDetail {
+  const SpyCaughtDetail({
+    required this.unitId,
+    required this.spyOwnerId,
+    required this.territoryOwnerId,
+    required this.provinceId,
+  });
+
+  final String unitId;
+  final String spyOwnerId;
+  final String territoryOwnerId;
+  final String provinceId;
+}
+
+/// Spy defected during spy-resolution (Refs #3834 R9).
+class SpyDefectedDetail {
+  const SpyDefectedDetail({
+    required this.unitId,
+    required this.previousOwnerId,
+    required this.newOwnerId,
+    required this.provinceId,
+  });
+
+  final String unitId;
+  final String previousOwnerId;
+  final String newOwnerId;
+  final String provinceId;
+}
+
 /// Result of the pre-Research spy-resolution sub-step (Refs #3834 R12).
 class SpyResolutionResult {
   const SpyResolutionResult({
     required this.game,
     this.killedSpyUnitIds = const [],
     this.defectedSpyUnitIds = const [],
+    this.caughtSpies = const [],
+    this.defectedSpies = const [],
     this.diplomacyPenaltiesApplied = 0,
   });
 
   final Game game;
   final List<String> killedSpyUnitIds;
   final List<String> defectedSpyUnitIds;
+  final List<SpyCaughtDetail> caughtSpies;
+  final List<SpyDefectedDetail> defectedSpies;
   final int diplomacyPenaltiesApplied;
 }
 
@@ -38,6 +72,8 @@ SpyResolutionResult resolveSpyPhase(Game game, {Random? random}) {
   final units = Map<String, Unit>.from(game.worldState.allUnitsById);
   final killedIds = <String>[];
   final defectedIds = <String>[];
+  final caughtDetails = <SpyCaughtDetail>[];
+  final defectedDetails = <SpyDefectedDetail>[];
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   var diplomacyHits = 0;
 
@@ -67,6 +103,14 @@ SpyResolutionResult resolveSpyPhase(Game game, {Random? random}) {
     if (rand.nextDouble() * 100 < killChancePercent) {
       units.remove(unitId);
       killedIds.add(unitId);
+      caughtDetails.add(
+        SpyCaughtDetail(
+          unitId: unitId,
+          spyOwnerId: spy.ownerId,
+          territoryOwnerId: territoryOwner,
+          provinceId: provinceId,
+        ),
+      );
       final penalty = applySpyDeathDiplomacyPenalty(
         relations: relations,
         spyOwnerId: spy.ownerId,
@@ -101,6 +145,14 @@ SpyResolutionResult resolveSpyPhase(Game game, {Random? random}) {
     );
     units[unitId] = defected;
     defectedIds.add(unitId);
+    defectedDetails.add(
+      SpyDefectedDetail(
+        unitId: unitId,
+        previousOwnerId: spy.ownerId,
+        newOwnerId: territoryOwner,
+        provinceId: provinceId,
+      ),
+    );
     turnLog.i(
       'spy defected unitId=$unitId from=${spy.ownerId} to=$territoryOwner '
       'province=$provinceId',
@@ -114,6 +166,8 @@ SpyResolutionResult resolveSpyPhase(Game game, {Random? random}) {
     game: nextGame,
     killedSpyUnitIds: killedIds,
     defectedSpyUnitIds: defectedIds,
+    caughtSpies: caughtDetails,
+    defectedSpies: defectedDetails,
     diplomacyPenaltiesApplied: diplomacyHits,
   );
 }

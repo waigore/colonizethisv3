@@ -33,6 +33,8 @@ Events are a union or sealed type (e.g. `GameEvent`) with variants. Payloads use
 | `player_province_discovered` | When a specific player transitions from unknown to known visibility in a province this turn | playerId, provinceId (prefixed), turnNumber. |
 | `player_sea_zone_discovered` | When a specific player first charts/enters a sea zone this turn | playerId, seaZoneId (prefixed), turnNumber. |
 | `overture_advanced` | When overture stage increases vs start of turn | offererGpId, targetFactionId, newStage, turnNumber. |
+| `spy_caught` | After spy-resolution kill roll eliminates a foreign spy | unitId, spyOwnerId, territoryOwnerId, provinceId (prefixed), turnNumber. |
+| `spy_defected` | After spy-resolution defection roll succeeds | unitId, previousOwnerId, newOwnerId, provinceId (prefixed), turnNumber. |
 
 Additional event types (e.g. extraction_summary) may be added in the same format. Dialogue and mood ([ai-events-and-dossier.md](ai-events-and-dossier.md)) may be a separate channel or folded into this stream; the emitter guarantees a single, ordered stream per game/turn so consumers can present a chronological feed.
 
@@ -40,7 +42,7 @@ Additional event types (e.g. extraction_summary) may be added in the same format
 
 ## Emission points
 
-- **Turn resolution:** During or immediately after each phase in [turn-resolution-phase-details.md](turn-resolution-phase-details.md) (Combat → combat_result, province_captured; Diplomacy → diplomacy_change; Research → research_complete; End-of-turn → victory_set when applicable). Caller or TurnResolver pushes events in phase order.
+- **Turn resolution:** During or immediately after each phase in [turn-resolution-phase-details.md](turn-resolution-phase-details.md) (Combat → combat_result, province_captured; Diplomacy → diplomacy_change; Spy resolution → spy_caught, spy_defected; Research → research_complete; End-of-turn → victory_set when applicable). Caller or TurnResolver pushes events in phase order.
 - **Order validation:** When [order-engine.md](order-engine.md) validates and rejects an order, an `order_rejected` event is emitted (or the validation layer emits it so that the UI can show the reason).
 
 The **caller** that owns the order list or invokes TurnResolver is responsible for wiring the event stream to the resolver/engine so that events are emitted in a deterministic order. Same game state and seeds produce the same event sequence (replay and save/load compatibility).
