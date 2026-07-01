@@ -1,6 +1,6 @@
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_ai/src/planning/scored_candidate.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('colonialPressureScaleFromWeight', () {
