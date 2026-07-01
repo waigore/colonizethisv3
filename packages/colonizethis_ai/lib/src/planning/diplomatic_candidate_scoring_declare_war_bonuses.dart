@@ -42,7 +42,7 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
   final desiredTerritory = targetProvinceCount <= 0
       ? 1
       : ((warDesire / 25).round()).clamp(1, targetProvinceCount);
-  var s = 50;
+  var s = kDiplomaticDefaultBaseScore;
   s += getAgendaConquerModifier(ctx.agendaId);
   s += getAgendaTreatyBreakingModifier(ctx.agendaId);
   s += (ctx.thresholds.warLikelihood - 50);

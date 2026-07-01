@@ -506,6 +506,39 @@ int scaleWeightedBonus(double weight, int baseConstant) {
 /// (Refs #2509 Must-have #7).
 double clampPhaseWeightUpperUnit(double weight) => weight > 1.0 ? 1.0 : weight;
 
+/// Default diplomatic candidate scoring baseline before order-type bonuses apply.
+const int kDiplomaticDefaultBaseScore = 50;
+
+/// Resolves colonial-pressure weight/scale from an optional soft-phase weight,
+/// or maps [legacyColonialPressureActive] to `1.0` / `0.0` when the weight is
+/// null.
+///
+/// When [clampToUnitInterval] is `true`, non-null weights are clamped to
+/// `[0.0, 1.0]` (Refs #3822 build-pick cargo scale). When `false`, the resolved
+/// weight is returned unchanged for downstream `scaleWeightedBonus` callers.
+double colonialPressureScaleFromWeight({
+  required double? colonialPressureWeight,
+  required bool legacyColonialPressureActive,
+  bool clampToUnitInterval = false,
+}) {
+  if (colonialPressureWeight != null) {
+    return clampToUnitInterval
+        ? colonialPressureWeight.clamp(0.0, 1.0).toDouble()
+        : colonialPressureWeight;
+  }
+  return legacyColonialPressureActive ? 1.0 : 0.0;
+}
+
+/// Element-wise equality for sorted string-id lists in phase planner value types.
+bool planningListEquals(List<String> a, List<String> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 /// Structural predicate: `true` only under [ObserverGoalPhase.colonial].
 ///
 /// Single source of truth for the colonial-pressure "active" gate shared by

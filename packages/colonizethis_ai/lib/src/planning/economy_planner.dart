@@ -12,8 +12,10 @@ import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
 import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
+import 'ai_commodity_ids.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
+import 'scored_candidate.dart';
 import 'treasury_planner.dart';
 
 final _log = packageLogger('economy_planner');
@@ -221,7 +223,7 @@ EconomyPlan runEconomyPlanner({
     ...missingRegimentBuildInputs,
     ...domesticImprovementInputOutputs,
     ...stageableImprovementInputs,
-    if (castIronLabourPeasantRecruitFabricBoost) CommodityCatalog.fabric.id,
+    if (castIronLabourPeasantRecruitFabricBoost) kAiCommodityIds.fabric,
   };
 
   // Refs #2847 H8-supply (S7-D lumber re-localization): an affluent supplier
@@ -475,7 +477,7 @@ List<AssignedRecipe> _allocateLabour({
       continue;
     }
     if (castIronLabourPeasantRecruitFabricBoost &&
-        recipe.outputCommodityId == CommodityCatalog.fabric.id) {
+        recipe.outputCommodityId == kAiCommodityIds.fabric) {
       continue;
     }
     final labourPerOutput = recipe.labourPerOutput;
@@ -525,7 +527,7 @@ List<AssignedRecipe> _allocateLabour({
             }
             return legacy;
           }();
-    candidates.add(ScoredRecipe(recipe: recipe, score: score));
+    candidates.add(ScoredRecipe(item: recipe, score: score));
   }
 
   if (candidates.isEmpty && labourByRecipe.isEmpty) return result;
@@ -533,20 +535,16 @@ List<AssignedRecipe> _allocateLabour({
   if (_log.debugEnabled) {
     _log.d(
       'recipe eval playerId=${config.leaderId} effectiveLabour=$effectiveLabour '
-      'candidates=${candidates.map((c) => "${c.recipe.id}:${c.score.toStringAsFixed(2)}").toList()}',
+      'candidates=${candidates.map((c) => "${c.item.id}:${c.score.toStringAsFixed(2)}").toList()}',
     );
   }
 
-  // Sort by score descending; use seed for tie-break.
-  candidates.sort((a, b) {
-    final c = b.score.compareTo(a.score);
-    if (c != 0) return c;
-    return a.recipe.id.compareTo(b.recipe.id);
-  });
+  final rankedRecipes = sortByScore(
+    candidates,
+    (a, b) => a.id.compareTo(b.id),
+  );
 
-  for (final scored in candidates) {
-    if (remainingLabour <= 0) break;
-    final recipe = scored.recipe;
+  for (final recipe in rankedRecipes) {
     final feasibilityStock =
         feedstockReserveOutputIds.contains(recipe.outputCommodityId)
             ? virtual
@@ -598,7 +596,7 @@ void _assignCastIronLabourFabricPrePass({
   required void Function(Stockpile virtual, int remainingLabour) onStateUpdated,
   Map<String, bool>? techUnlocked,
 }) {
-  final fabricId = CommodityCatalog.fabric.id;
+  final fabricId = kAiCommodityIds.fabric;
   final fabricRecipes = ProductionRecipesCatalog.producing(fabricId).toList()
     ..sort((a, b) => a.id.compareTo(b.id));
   var nextVirtual = virtual;

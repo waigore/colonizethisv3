@@ -12,6 +12,7 @@ import 'planner_context.dart';
 import 'planning_helpers.dart'
     show
         clampPhaseWeightUpperUnit,
+        colonialPressureScaleFromWeight,
         factionOwnsInvadableOldWorldProvince,
         isAtWarWithAnyGreatPower,
         minorAtWarPeaceTargetsWhere,
@@ -284,9 +285,12 @@ Orders runConquestArmyMovePlanner({
   // (`newWorldAcquisition = 0.05` for OW <= 7) the floor collapses to
   // `round(45 * 0.05) = 2`, well below the stalled-expansion floors so
   // the OW conquest sprint is not dominated by colonial-pressure pulls.
-  final colonialPressureWeight = phasePlan != null
-      ? resolvePhaseConquestColonialPressureWeight(phasePlan: phasePlan)
-      : (colonialPressureActive ? 1.0 : 0.0);
+  final colonialPressureWeight = colonialPressureScaleFromWeight(
+    colonialPressureWeight: phasePlan != null
+        ? resolvePhaseConquestColonialPressureWeight(phasePlan: phasePlan)
+        : null,
+    legacyColonialPressureActive: colonialPressureActive,
+  );
   final colonialPressureFloor = conquestColonialPressureMinWeightFloor(
     colonialPressureWeight: colonialPressureWeight,
   );

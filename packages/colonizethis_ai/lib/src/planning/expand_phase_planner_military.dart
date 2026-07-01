@@ -63,11 +63,11 @@ class ExpandMilitaryPlan {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ExpandMilitaryPlan &&
-          _listEquals(
+          planningListEquals(
             priorityDestinationProvinceIdsSorted,
             other.priorityDestinationProvinceIdsSorted,
           ) &&
-          _listEquals(
+          planningListEquals(
             priorityTargetOwnerFactionIdsSorted,
             other.priorityTargetOwnerFactionIdsSorted,
           );
@@ -83,15 +83,6 @@ class ExpandMilitaryPlan {
       'ExpandMilitaryPlan('
       'priorityDestinationProvinceIdsSorted: $priorityDestinationProvinceIdsSorted, '
       'priorityTargetOwnerFactionIdsSorted: $priorityTargetOwnerFactionIdsSorted)';
-}
-
-bool _listEquals(List<String> a, List<String> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }
 
 /// Returns the deterministic EXPAND-phase conquest destination filter

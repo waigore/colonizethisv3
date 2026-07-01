@@ -5,6 +5,7 @@
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'ai_commodity_ids.dart';
 import 'growth_stage.dart';
 import 'observer_goal_phase.dart';
 import 'planning_imports.dart';
@@ -192,7 +193,7 @@ RecruitmentPlan runRecruitmentPlanner({
       growthStageReservesFabricForMilitary(
         stage: growthStage,
         treasury: player.treasury,
-        fabricHeld: player.stockpile.quantityOf(CommodityCatalog.fabric.id),
+        fabricHeld: player.stockpile.quantityOf(kAiCommodityIds.fabric),
         cheapestRegimentTreasuryCost: cheapestRegimentBuildTreasuryCost(),
       );
 
@@ -599,7 +600,7 @@ bool _buildConsumesPeasant(BuildUnitOrder order) {
 /// AC13); trained tiers cost `paper`.
 bool _recruitConsumesFabric(RecruitWorkerOrder order) {
   final row = WorkerActionEconomyCatalog.forTier(order.targetTier);
-  return (row.materialCosts[CommodityCatalog.fabric.id] ?? 0) > 0;
+  return (row.materialCosts[kAiCommodityIds.fabric] ?? 0) > 0;
 }
 
 int _currentTierCount(WorkerPool pool, WorkerTier tier) {

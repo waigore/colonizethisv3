@@ -64,11 +64,11 @@ class ColonialMilitaryPlan {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ColonialMilitaryPlan &&
-          _colonialListEquals(
+          planningListEquals(
             priorityDestinationProvinceIdsSorted,
             other.priorityDestinationProvinceIdsSorted,
           ) &&
-          _colonialListEquals(
+          planningListEquals(
             priorityTargetOwnerFactionIdsSorted,
             other.priorityTargetOwnerFactionIdsSorted,
           );
@@ -84,15 +84,6 @@ class ColonialMilitaryPlan {
       'ColonialMilitaryPlan('
       'priorityDestinationProvinceIdsSorted: $priorityDestinationProvinceIdsSorted, '
       'priorityTargetOwnerFactionIdsSorted: $priorityTargetOwnerFactionIdsSorted)';
-}
-
-bool _colonialListEquals(List<String> a, List<String> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }
 
 /// Returns the deterministic COLONIAL-phase conquest destination filter
