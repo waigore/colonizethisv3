@@ -4,10 +4,14 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Repo-relative paths that must not construct `Game(` inline (Refs #3825 slice 2).
+/// Repo-relative paths that must not construct `Game(` inline (Refs #3825).
 const _mandatedFixtureTestPaths = <String>{
   'packages/colonizethis_diplomacy/test/diplomacy/gp_tribe_first_contact_test.dart',
   'packages/colonizethis_diplomacy/test/diplomacy/ai_gp_tribe_first_contact_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_ftp_resolver_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_faction_membership_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/known_diplomatic_targets_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_intra_turn_event_tally_test.dart',
 };
 
 /// Matches an inline `Game(` constructor call (standalone identifier, not

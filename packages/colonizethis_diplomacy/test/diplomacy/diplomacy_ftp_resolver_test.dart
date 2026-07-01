@@ -50,37 +50,10 @@ void main() {
     });
 
     test('human target suspends until FtpDecision supplied', () {
-      final game = Game(
+      final game = gpGpEmbassyGame(
         id: 'ftp-human',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-          Player(id: 'gp2', displayName: 'GP2', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'gp2',
-            score: 70,
-            level: RelationLevel.friendly,
-          ),
-        ],
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'gp2',
-            stage: OvertureStage.embassy,
-          ),
-          OvertureState(
-            gpId: 'gp2',
-            targetId: 'gp1',
-            stage: OvertureStage.embassy,
-          ),
-        ],
+        turnNumber: 1,
+        gp2Human: true,
       );
       final orders = Orders(
         diplomaticOrdersByPlayerId: {

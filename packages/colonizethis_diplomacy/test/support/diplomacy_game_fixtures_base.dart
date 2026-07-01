@@ -305,3 +305,25 @@ Game diplomacyGameWithOvertures(List<OvertureState> overtures) =>
       players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       overtureStates: overtures,
     );
+
+/// Six GPs plus five minors and five tribes for membership index stress tests.
+Game factionMembershipStressTestGame() => diplomacyGame(
+      id: 'g-membership',
+      players: List.generate(
+        6,
+        (i) => Player(
+          id: 'gp$i',
+          displayName: 'GP $i',
+          isHuman: false,
+          treasury: 1000,
+        ),
+      ),
+      minorNations: List.generate(
+        5,
+        (i) => MinorNation(id: 'minor$i', displayName: 'Minor $i'),
+      ),
+      tribes: List.generate(
+        5,
+        (i) => Tribe(id: 'tribe$i', displayName: 'Tribe $i'),
+      ),
+    );

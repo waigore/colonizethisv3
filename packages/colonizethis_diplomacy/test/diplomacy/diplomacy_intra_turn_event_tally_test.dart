@@ -3,18 +3,12 @@ import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_event_logging.dar
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 Game _emptyGame({int turn = 1, List<DiplomaticEvent> history = const []}) =>
-    Game(
+    diplomacyGame(
       id: 'g1',
-      worldState: WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: turn),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
-      players: const [
-        Player(id: 'gp1', displayName: 'A', isHuman: true),
-        Player(id: 'gp2', displayName: 'B', isHuman: false),
-      ],
+      turnNumber: turn,
       diplomaticHistoryEvents: history,
     );
 

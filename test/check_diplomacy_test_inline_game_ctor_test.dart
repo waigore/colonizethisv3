@@ -29,6 +29,13 @@ void main() {
           'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_ftp_resolver_test.dart',
           "final game = Game(id: 'g');",
         ),
+        isNotNull,
+      );
+      expect(
+        diplomacyTestInlineGameCtorViolationReason(
+          'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_history_test.dart',
+          "final game = Game(id: 'g');",
+        ),
         isNull,
       );
     });

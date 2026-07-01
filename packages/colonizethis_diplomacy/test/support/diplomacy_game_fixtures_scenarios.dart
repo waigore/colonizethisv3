@@ -88,10 +88,15 @@ Game gpGpEmbassyGame({
   int turnNumber = 3,
   int relationScore = 70,
   Set<String> existingFtpKeys = const {},
+  bool gp2Human = false,
 }) =>
     diplomacyGame(
       id: id,
       turnNumber: turnNumber,
+      players: [
+        const Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+        Player(id: 'gp2', displayName: 'GP2', isHuman: gp2Human),
+      ],
       diplomacyRelations: [
         DiplomacyRelation(
           factionId1: 'gp1',
@@ -349,3 +354,62 @@ Game humanAndAiGpTribeVisibilityGame({
     diplomacyRelations: const [],
   );
 }
+
+const _knownTargetsOw = 'oldWorld';
+
+/// GP with relation, visibility, and unit anchors for known-target tests.
+Game knownDiplomaticTargetsAnchoredGame() => diplomacyGame(
+      id: 'g',
+      turnNumber: 3,
+      players: const [Player(id: 'gp1', displayName: 'A', isHuman: true)],
+      oldWorld: RegionData(
+        provinces: const [
+          Province(
+            id: '$_knownTargetsOw|p1',
+            regionId: _knownTargetsOw,
+            ownerId: 'gp1',
+          ),
+          Province(
+            id: '$_knownTargetsOw|p2',
+            regionId: _knownTargetsOw,
+            ownerId: 'minor1',
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'u1',
+            type: kUnitTypeBuilder,
+            ownerId: 'gp1',
+            locationProvinceId: '$_knownTargetsOw|p1',
+          ),
+        ],
+      ),
+      playerVisibilityByTile: const {
+        'gp1': {'$_knownTargetsOw|p2|0|0': 'fullyVisible'},
+      },
+      tileKeysByRegionAndProvince: const {
+        _knownTargetsOw: {
+          '$_knownTargetsOw|p2': ['$_knownTargetsOw|p2|0|0'],
+        },
+      },
+      minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+      diplomacyRelations: const [
+        DiplomacyRelation(factionId1: 'minor1', factionId2: 'gp1'),
+      ],
+    );
+
+/// Isolated GP with no relations or visibility (known-target negative case).
+Game knownDiplomaticTargetsIsolatedGame() => diplomacyGame(
+      id: 'g',
+      turnNumber: 1,
+      players: const [Player(id: 'gp1', displayName: 'A', isHuman: true)],
+      oldWorld: const RegionData(
+        provinces: [
+          Province(
+            id: '$_knownTargetsOw|p1',
+            regionId: _knownTargetsOw,
+            ownerId: 'gp1',
+          ),
+        ],
+      ),
+    );
