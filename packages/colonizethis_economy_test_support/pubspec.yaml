@@ -9,6 +9,7 @@ environment:
   sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
+  colonizethis_data:
   colonizethis_economy:
   colonizethis_models:
 

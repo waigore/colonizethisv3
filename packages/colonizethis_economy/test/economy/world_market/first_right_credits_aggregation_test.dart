@@ -1,7 +1,7 @@
 import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'first_right_credits_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 void main() {
   group('computeFirstRightCredits aggregation (#3753 R8.2 full share)', () {

@@ -54,6 +54,7 @@ import 'check_economy_cost_check_shared_helper.dart';
 import 'check_economy_dedup_credit_aggregation.dart';
 import 'check_economy_dedup_port_tile_keys.dart';
 import 'check_economy_world_market_admission_shared.dart';
+import 'check_economy_bid_treasury_spend_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_map_clones.dart';
@@ -1001,6 +1002,8 @@ int? _tryRunLogicRuleInProcess({
       return runCheckEconomyDedupPortTileKeys(repoRoot);
     case 'repo.economy_dedup_credit_aggregation':
       return runCheckEconomyDedupCreditAggregation(repoRoot);
+    case 'repo.economy_bid_treasury_spend_shared':
+      return runCheckEconomyBidTreasurySpendShared(repoRoot);
     default:
       return null;
   }

@@ -52,12 +52,14 @@ abstract final class TestFixtures {
     List<Army> armies = const [],
     List<Fleet> fleets = const [],
     double richesCashMultiplier = 1.0,
+    int capitalTileGrainBonusPerTurn = 5,
     List<MinorNation> minorNations = const [],
     List<Tribe> tribes = const [],
     List<OvertureState> overtureStates = const [],
     List<DiplomacyRelation> diplomacyRelations = const [],
   }) => Game(
     id: id,
+    capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
     worldState: WorldState(
       turnState: TurnState(phase: phase, turnNumber: turnNumber),
       oldWorld: oldWorld ?? const RegionData(),

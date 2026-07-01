@@ -103,5 +103,36 @@ void main() {
         0,
       );
     });
+
+    test('bidTreasurySpendForOrder matches per-order summation core', () {
+      final bid = _bid('timber', 4);
+      final game = _gameWith([bid], prices: const {'timber': 30});
+      expect(
+        bidTreasurySpendForOrder(
+          order: bid,
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        120,
+      );
+      expect(
+        bidTreasurySpendForOrder(
+          order: _offer('timber', 4),
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        0,
+        reason: 'offers do not spend treasury',
+      );
+      expect(
+        bidTreasurySpendForOrder(
+          order: _bid('unknown', 4),
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        0,
+        reason: 'unpriced commodities contribute 0',
+      );
+    });
   });
 }

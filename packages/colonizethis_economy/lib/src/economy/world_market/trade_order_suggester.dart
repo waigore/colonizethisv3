@@ -19,7 +19,8 @@ import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'trade_order_admission.dart' show isWorldMarketTradeableCommodity;
-import 'treasury_bid_budget.dart' show effectiveMarketPriceForCommodityId;
+import 'treasury_bid_budget.dart'
+    show bidTreasurySpendForOrder, effectiveMarketPriceForCommodityId;
 import 'world_market_context_base.dart';
 
 /// Inputs for one [TradeOrderSuggester.suggest] pass.
@@ -197,9 +198,16 @@ class TradeOrderSuggester {
         ),
       );
       remainingCargoBudget -= cappedQty;
-      if (unitPrice != null && unitPrice > 0) {
-        remainingTreasuryBudget -= cappedQty * unitPrice;
-      }
+      remainingTreasuryBudget -= bidTreasurySpendForOrder(
+        order: TradeOrder(
+          commodityId: commodityId,
+          type: TradeOrderType.bid,
+          quantity: cappedQty,
+          priority: context.bidPriority,
+        ),
+        worldMarket: context.worldMarketState,
+        resourceRules: context._resourceRules,
+      );
       admittedBidCount += 1;
     }
 
