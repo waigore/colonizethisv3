@@ -133,6 +133,72 @@ void main() {
       expect(chips.boycottedByNames, isEmpty);
     });
 
+    test(
+      'AC: foreign colony boycotting the human yields a "Boycotted by" chip',
+      () {
+        const ow = 'oldWorld';
+        const nw = 'newWorld';
+        final game = Game(
+          id: 'standing-boycotted-by',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 8),
+            oldWorld: const RegionData(),
+            newWorld: RegionData(
+              provinces: [
+                Province(
+                  id: '$nw|t2prov',
+                  regionId: nw,
+                  displayName: 'Foreign Colony Land',
+                  ownerId: 't2',
+                ),
+              ],
+            ),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+            Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+          ],
+          tribes: const [Tribe(id: 't2', displayName: 'Aztec')],
+          diplomacyRelations: const [
+            DiplomacyRelation(factionId1: 'gp1', factionId2: 't2', score: 45),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 't2',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          colonyStates: const [
+            ColonyState(tribeId: 't2', colonyOfGpId: 'gp2', sinceTurn: 7),
+          ],
+          boycottStates: const [
+            BoycottState(gpId: 'gp2', targetGpId: 'gp1', sinceTurn: 8),
+          ],
+        );
+        final chips = diplomaticStandingChips(
+          game: game,
+          humanPlayerId: 'gp1',
+          factionId: 't2',
+          kind: FactionKind.tribe,
+          relation: const DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 't2',
+            score: 45,
+          ),
+          overture: const OvertureState(
+            gpId: 'gp1',
+            targetId: 't2',
+            stage: OvertureStage.tradeConsulate,
+          ),
+          purchasedTiles: PurchasedTileIndex.forTesting(const []),
+        );
+        expect(chips.boycottVsNames, isEmpty);
+        expect(chips.boycottedByNames, contains('Castile'));
+        expect(chips.treatyLabels, isNot(contains(kDiplomacyChipColony)));
+      },
+    );
+
     test('Minor at Join Empire stage yields a Join Empire chip', () {
       final game = Game(
         id: 'standing-minor-je',
@@ -266,6 +332,25 @@ void main() {
       expect(find.text(kDiplomacyChipEmbassy), findsOneWidget);
       expect(find.text('${kDiplomacyChipBoycottVsPrefix}Castile'), findsOneWidget);
       expect(find.text('${kDiplomacyChipOverseasPrefix}2 \u00b7 80%'), findsOneWidget);
+    });
+
+    testWidgets('renders Boycotted by chip for imposed colony embargo', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _clusterHost(
+          const DiplomaticStandingChips(
+            treatyLabels: [kDiplomacyChipColony],
+            boycottedByNames: ['Castile'],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.text('${kDiplomacyChipBoycottedByPrefix}Castile'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Negative: empty chips render nothing (no Wrap)', (
