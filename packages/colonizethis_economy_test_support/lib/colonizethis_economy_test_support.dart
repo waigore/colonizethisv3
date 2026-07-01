@@ -11,6 +11,7 @@ export 'src/bid_spend_game_factory.dart';
 export 'src/deal_matcher_test_support.dart';
 export 'src/frr_credits_test_support.dart';
 export 'src/tile_map_test_support.dart';
+export 'src/purchased_tile_riches_test_support.dart';
 export 'src/treasury_bid_budget_test_support.dart';
 export 'src/trade_order_factory.dart';
 export 'src/trade_order_validator_test_support.dart';

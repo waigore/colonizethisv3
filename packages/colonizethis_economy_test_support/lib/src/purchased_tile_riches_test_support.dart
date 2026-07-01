@@ -1,14 +1,8 @@
 /// Shared fixtures for the `computePurchasedTileRichesCredits` unit tests
-/// (Refs #2991 C5). Extracted so `purchased_tile_riches_test.dart` stays
-/// within the `repo.logic_test_file_size` 400-line limit.
+/// (Refs #2991 C5, #3823).
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
-
-import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
-
-export 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart'
-    show singleResourceTileMap, tileMapByRegionForResource;
 
 /// Canonical scenario: minor `M1` owns province `oldWorld|M1`; tile
 /// `oldWorld|M1|0|0` was previously purchased by `gpA`.

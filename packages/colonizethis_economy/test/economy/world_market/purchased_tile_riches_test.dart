@@ -13,8 +13,8 @@ import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_ric
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
-import 'purchased_tile_riches_test_support.dart';
 
 void main() {
   group('computePurchasedTileRichesCredits — riches handoff per #2991 C5', () {
