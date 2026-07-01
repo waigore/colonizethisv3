@@ -1,11 +1,16 @@
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
+import 'package:colonizethis_ai/src/planning/conquest_move_scoring_context.dart';
 import 'package:colonizethis_ai/src/planning/economy_phase_gates.dart';
 import 'package:colonizethis_ai/src/planning/effective_labour_state.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_ai/src/planning/scored_candidate.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../support/planner_test_helpers.dart';
 
 void main() {
   group('colonialPressureScaleFromWeight', () {
@@ -111,6 +116,40 @@ void main() {
         ).expandQuotaPressure,
         isTrue,
       );
+    });
+  });
+
+  group('ConquestMoveScoringContext', () {
+    test('forArmyMovePass copies planner pass fields', () {
+      final game = TestFixtures.minimalGame(
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+      );
+      final topology = const MapTopology(nodes: [], edges: []);
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      final plannerCtx = buildTestPlannerContext(game: game, topology: topology);
+      final ctx = ConquestMoveScoringContext.forArmyMovePass(
+        plannerCtx: plannerCtx,
+        snapshot: snapshot,
+        invadable: const {'oldWorld|p2'},
+        stalledExpansion: true,
+        declaredWarTargetFactionId: 'gp2',
+        phasePlanInvadableIsAuthoritative: true,
+        nwInvasionWeight: 0.5,
+        oldWorldInvasionWeight: 0.8,
+      );
+      expect(ctx.nationId, 'gp1');
+      expect(ctx.invadable, {'oldWorld|p2'});
+      expect(ctx.stalledExpansion, isTrue);
+      expect(ctx.declaredWarTargetFactionId, 'gp2');
+      expect(ctx.nwInvasionWeight, 0.5);
+      expect(ctx.oldWorldInvasionWeight, 0.8);
     });
   });
 }

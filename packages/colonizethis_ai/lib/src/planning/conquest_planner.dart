@@ -1,5 +1,6 @@
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
+import 'conquest_move_scoring_context.dart';
 import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
@@ -199,6 +200,18 @@ Orders runConquestArmyMovePlanner({
           snapshot: snapshot,
         )
       : null;
+  final stalledScoringCtx = stalledExpansion
+      ? ConquestMoveScoringContext.forArmyMovePass(
+          plannerCtx: ctx,
+          snapshot: snapshot,
+          invadable: invadableForPass,
+          stalledExpansion: true,
+          declaredWarTargetFactionId: declaredWarTargetFactionId,
+          phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+          nwInvasionWeight: nwInvasionWeight,
+          oldWorldInvasionWeight: oldWorldInvasionWeight,
+        )
+      : null;
   final armyMoveCandidates = ctx.suggestionAPI.suggestArmyMoveOrders(
     ctx.view,
     ctx.game,
@@ -212,12 +225,7 @@ Orders runConquestArmyMovePlanner({
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
         ctx: ctx,
-        snapshot: snapshot,
-        declaredWarTargetFactionId: declaredWarTargetFactionId,
-        invadable: invadableForPass,
-        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-        nwInvasionWeight: nwInvasionWeight,
-        oldWorldInvasionWeight: oldWorldInvasionWeight,
+        scoringCtx: stalledScoringCtx!,
         feedstockConquestTarget: feedstockConquestTarget,
       );
     }
@@ -236,12 +244,7 @@ Orders runConquestArmyMovePlanner({
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
         ctx: ctx,
-        snapshot: snapshot,
-        declaredWarTargetFactionId: declaredWarTargetFactionId,
-        invadable: invadableForPass,
-        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-        nwInvasionWeight: nwInvasionWeight,
-        oldWorldInvasionWeight: oldWorldInvasionWeight,
+        scoringCtx: stalledScoringCtx!,
         feedstockConquestTarget: feedstockConquestTarget,
       );
     }
@@ -336,33 +339,25 @@ Orders runConquestArmyMovePlanner({
   if (stalledExpansion) {
     return _applyStalledArmyMovesForAllFieldArmies(
       ctx: ctx,
-      snapshot: snapshot,
-      invadable: invadableForPass,
+      scoringCtx: stalledScoringCtx!,
       filtered: scoringCandidates,
-      declaredWarTargetFactionId: declaredWarTargetFactionId,
-      phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-      nwInvasionWeight: nwInvasionWeight,
-      oldWorldInvasionWeight: oldWorldInvasionWeight,
       feedstockConquestTarget: feedstockConquestTarget,
     );
   }
+  final scoringCtx = ConquestMoveScoringContext.forArmyMovePass(
+    plannerCtx: ctx,
+    snapshot: snapshot,
+    invadable: invadableForPass,
+    stalledExpansion: false,
+    declaredWarTargetFactionId: declaredWarTargetFactionId,
+    phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+    nwInvasionWeight: nwInvasionWeight,
+    oldWorldInvasionWeight: oldWorldInvasionWeight,
+  );
   final selected = selectWeightedCandidate(
     candidates: scoringCandidates,
     seed: ctx.seeds.militarySeed + 4000,
-    score: (m) => _scoreArmyMoveDestination(
-      move: m,
-      nationId: ctx.nationId,
-      game: ctx.game,
-      topology: ctx.topology,
-      snapshot: snapshot,
-      provinceOwner: ctx.provinceOwner,
-      invadable: invadableForPass,
-      stalledExpansion: false,
-      declaredWarTargetFactionId: declaredWarTargetFactionId,
-      phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-      nwInvasionWeight: nwInvasionWeight,
-      oldWorldInvasionWeight: oldWorldInvasionWeight,
-    ),
+    score: (m) => _scoreArmyMoveDestination(scoringCtx, m),
   );
   if (selected == null) return ctx.orders;
   if (_log.infoEnabled) {
@@ -420,13 +415,8 @@ ArmyMoveOrder? selectFeedstockBiasedBestArmyMove({
 
 Orders _applyStalledArmyMovesForAllFieldArmies({
   required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required Set<String> invadable,
+  required ConquestMoveScoringContext scoringCtx,
   required List<ArmyMoveOrder> filtered,
-  required String? declaredWarTargetFactionId,
-  required bool phasePlanInvadableIsAuthoritative,
-  required double nwInvasionWeight,
-  required double oldWorldInvasionWeight,
   required String? feedstockConquestTarget,
 }) {
   final armiesWithOrders = <String>{
@@ -445,20 +435,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
     final best = selectFeedstockBiasedBestArmyMove(
       candidates: candidates,
       feedstockConquestTarget: feedstockConquestTarget,
-      score: (move) => _scoreArmyMoveDestination(
-        move: move,
-        nationId: ctx.nationId,
-        game: ctx.game,
-        topology: ctx.topology,
-        snapshot: snapshot,
-        provinceOwner: ctx.provinceOwner,
-        invadable: invadable,
-        stalledExpansion: true,
-        declaredWarTargetFactionId: declaredWarTargetFactionId,
-        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-        nwInvasionWeight: nwInvasionWeight,
-        oldWorldInvasionWeight: oldWorldInvasionWeight,
-      ),
+      score: (move) => _scoreArmyMoveDestination(scoringCtx, move),
     );
     if (best == null) continue;
     if (_log.infoEnabled) {
@@ -475,12 +452,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
 
 Orders _runStalledFrontierArmyMoveFallback({
   required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required String? declaredWarTargetFactionId,
-  required Set<String> invadable,
-  required bool phasePlanInvadableIsAuthoritative,
-  required double nwInvasionWeight,
-  required double oldWorldInvasionWeight,
+  required ConquestMoveScoringContext scoringCtx,
   required String? feedstockConquestTarget,
 }) {
   final playerOwnedFullProvinceIds = <String>{
@@ -523,20 +495,7 @@ Orders _runStalledFrontierArmyMoveFallback({
   final best = selectFeedstockBiasedBestArmyMove(
     candidates: acceptedCandidates,
     feedstockConquestTarget: feedstockConquestTarget,
-    score: (candidate) => _scoreArmyMoveDestination(
-      move: candidate,
-      nationId: ctx.nationId,
-      game: ctx.game,
-      topology: ctx.topology,
-      snapshot: snapshot,
-      provinceOwner: ctx.provinceOwner,
-      invadable: invadable,
-      stalledExpansion: true,
-      declaredWarTargetFactionId: declaredWarTargetFactionId,
-      phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
-      nwInvasionWeight: nwInvasionWeight,
-      oldWorldInvasionWeight: oldWorldInvasionWeight,
-    ),
+    score: (candidate) => _scoreArmyMoveDestination(scoringCtx, candidate),
   );
   if (best == null) {
     return ctx.orders;
@@ -807,20 +766,23 @@ double conquestNwInvadableArmyMoveBonus({
   return signedBonus * nwInvasionWeight;
 }
 
-double _scoreArmyMoveDestination({
-  required ArmyMoveOrder move,
-  required String nationId,
-  required Game game,
-  required MapTopology topology,
-  required AIWorldSnapshot snapshot,
-  required Map<String, String?> provinceOwner,
-  required Set<String> invadable,
-  required bool stalledExpansion,
-  required String? declaredWarTargetFactionId,
-  required bool phasePlanInvadableIsAuthoritative,
-  required double nwInvasionWeight,
-  required double oldWorldInvasionWeight,
-}) {
+double _scoreArmyMoveDestination(
+  ConquestMoveScoringContext ctx,
+  ArmyMoveOrder move,
+) {
+  final nationId = ctx.nationId;
+  final game = ctx.game;
+  final topology = ctx.topology;
+  final snapshot = ctx.snapshot;
+  final provinceOwner = ctx.provinceOwner;
+  final invadable = ctx.invadable;
+  final stalledExpansion = ctx.stalledExpansion;
+  final declaredWarTargetFactionId = ctx.declaredWarTargetFactionId;
+  final phasePlanInvadableIsAuthoritative =
+      ctx.phasePlanInvadableIsAuthoritative;
+  final nwInvasionWeight = ctx.nwInvasionWeight;
+  final oldWorldInvasionWeight = ctx.oldWorldInvasionWeight;
+
   final destOwner = provinceOwner[move.destinationProvinceId] ?? '';
   final isNwInvadableDestination = snapshot
       .colonial
