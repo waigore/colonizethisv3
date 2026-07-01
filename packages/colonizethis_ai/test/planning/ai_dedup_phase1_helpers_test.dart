@@ -8,6 +8,7 @@ import 'package:colonizethis_ai/src/planning/scored_candidate.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/phase_destination_result.dart';
 import 'package:colonizethis_ai/src/planning/strategic_planning_input.dart';
+import 'package:colonizethis_ai/src/planning/growth_stage.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -180,7 +181,7 @@ void main() {
         suggestionAPI: const DefaultOrderSuggestionAPI(),
       );
       expect(input.nationId, nationId);
-      expect(input.growthStagePlannerEnabled, isTrue);
+      expect(input.growthStagePlannerEnabled, kGrowthStagePlannerEnabled);
     });
   });
 
