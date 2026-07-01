@@ -10,6 +10,8 @@ library colonizethis_economy_test_support;
 export 'src/bid_spend_game_factory.dart';
 export 'src/deal_matcher_test_support.dart';
 export 'src/frr_credits_test_support.dart';
+export 'src/non_gp_extraction_test_support.dart';
+export 'src/resource_extractor_test_support.dart';
 export 'src/tile_map_test_support.dart';
 export 'src/purchased_tile_riches_test_support.dart';
 export 'src/treasury_bid_budget_test_support.dart';

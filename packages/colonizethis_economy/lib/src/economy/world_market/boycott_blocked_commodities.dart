@@ -24,11 +24,18 @@ import '../non_gp_auto_offers.dart';
 /// when a boycott actually targets [buyerPlayerId] and tile maps are present.
 /// The connectivity/auto-offer computation is itself only reached when at least
 /// one colony Tribe is blocked for the buyer. Deterministic for fixed inputs.
+///
+/// Optional [connectivityByFactionId] and [autoOffersByFactionId] let callers
+/// reuse precomputed maps from an outer planning pass; when omitted, connectivity
+/// is resolved once and auto-offers are computed only for blocked colony Tribes
+/// (not every non-GP faction). Refs #3831.
 Set<CommodityId> boycottedColonySellableCommodityIds({
   required Game game,
   required String buyerPlayerId,
   required Map<String, TileMapResult> tileMapByRegion,
   MapTopology? topology,
+  Map<String, ConnectivityResult>? connectivityByFactionId,
+  Map<String, List<TradeOrder>>? autoOffersByFactionId,
 }) {
   if (game.boycottStates.isEmpty || game.colonyStates.isEmpty) {
     return const <CommodityId>{};
@@ -50,20 +57,45 @@ Set<CommodityId> boycottedColonySellableCommodityIds({
     return const <CommodityId>{};
   }
 
-  final connectivity = resolveNonGreatPowerConnectivity(
-    game: game,
-    tileMapByRegion: tileMapByRegion,
-    topology: topology,
-  );
+  if (autoOffersByFactionId != null) {
+    return _blockedCommodityIdsFromOffers(
+      blockedTribeIds,
+      autoOffersByFactionId,
+    );
+  }
+
+  final connectivity =
+      connectivityByFactionId ??
+      resolveNonGreatPowerConnectivity(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
+      );
   if (connectivity.isEmpty) {
     return const <CommodityId>{};
   }
+
+  final blockedConnectivity = <String, ConnectivityResult>{
+    for (final tribeId in blockedTribeIds)
+      if (connectivity.containsKey(tribeId)) tribeId: connectivity[tribeId]!,
+  };
+  if (blockedConnectivity.isEmpty) {
+    return const <CommodityId>{};
+  }
+
   final autoOffers = computeNonGreatPowerAutoOffers(
     game: game,
     tileMapByRegion: tileMapByRegion,
-    connectivityByFactionId: connectivity,
+    connectivityByFactionId: blockedConnectivity,
   );
 
+  return _blockedCommodityIdsFromOffers(blockedTribeIds, autoOffers);
+}
+
+Set<CommodityId> _blockedCommodityIdsFromOffers(
+  Set<String> blockedTribeIds,
+  Map<String, List<TradeOrder>> autoOffers,
+) {
   final blocked = <CommodityId>{};
   for (final tribeId in blockedTribeIds) {
     final offers = autoOffers[tribeId];

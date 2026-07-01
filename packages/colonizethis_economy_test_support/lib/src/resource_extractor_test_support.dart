@@ -3,15 +3,14 @@
 // Hoists the single-owned-province `computeExtraction` setup that was copied
 // verbatim across the four split resource-extractor suites so each scenario
 // only declares the inputs it actually varies (tile state, town dev, tech,
-// prospected tiles). Refs #3661 (economy test dedup, step 5).
+// prospected tiles). Refs #3661 (economy test dedup, step 5); #3831 Phase 4.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
-import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-export 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart'
-    show singleTileMap;
+import 'tile_map_test_support.dart';
 
 /// `{playerId: ConnectivityResult(...)}` for the single-player extraction
 /// setup. Hoists the `{'pl1': ConnectivityResult(connected: {…})}` wrapper
