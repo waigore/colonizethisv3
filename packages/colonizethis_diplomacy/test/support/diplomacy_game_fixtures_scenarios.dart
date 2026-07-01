@@ -183,3 +183,169 @@ Game evidenceGame({
       lastHumanResearchCategoryCompletionTurn:
           lastHumanResearchCategoryCompletionTurn,
     );
+
+/// Shared topology for GP–tribe first-contact tests with no sea routes.
+const gpTribeEmptyTopology = MapTopology(nodes: [], edges: []);
+
+/// Old World coastal province sea-connected to an unrevealed New World tribe
+/// colony, with zero New World tile visibility (Refs #3463, #3825).
+const gpTribeSeaReachableTopology = MapTopology(
+  nodes: [
+    TopologyNode(
+      id: 'oldWorld|home',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.province,
+    ),
+    TopologyNode(
+      id: 'oldWorld|owSea',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.seaZone,
+    ),
+    TopologyNode(
+      id: 'newWorld|nwSea',
+      regionId: 'newWorld',
+      type: TopologyNodeType.seaZone,
+    ),
+    TopologyNode(
+      id: 'newWorld|colony',
+      regionId: 'newWorld',
+      type: TopologyNodeType.province,
+    ),
+  ],
+  edges: [
+    TopologyEdge(id1: 'oldWorld|home', id2: 'oldWorld|owSea'),
+    TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
+    TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
+  ],
+);
+
+/// Human GP with NW tribe colony visibility and no GP–Tribe relation (Refs #3825).
+Game gpTribeFirstContactGame({
+  String id = 'g',
+  TurnPhase phase = TurnPhase.orders,
+  int turnNumber = 3,
+  Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+}) {
+  const ow = 'oldWorld';
+  const nw = 'newWorld';
+  return diplomacyGame(
+    id: id,
+    phase: phase,
+    turnNumber: turnNumber,
+    players: const [
+      Player(id: 'gp1', displayName: 'Spain', isHuman: true),
+    ],
+    oldWorld: RegionData(
+      provinces: [
+        Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+      ],
+    ),
+    newWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$nw|t1',
+          regionId: nw,
+          ownerId: 'tribe1',
+          displayName: 'Maya Capital',
+        ),
+      ],
+    ),
+    playerVisibilityByTile: playerVisibilityByTile ??
+        const {
+          'gp1': {'$nw|t1|0|0': 'fullyVisible'},
+        },
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ??
+        {
+          nw: {
+            '$nw|t1': ['$nw|t1|0|0'],
+          },
+        },
+    tribes: const [
+      Tribe(
+        id: 'tribe1',
+        displayName: 'Maya',
+        capitalProvinceId: '$nw|t1',
+      ),
+    ],
+    diplomacyRelations: const [],
+  );
+}
+
+/// Sea-reachable tribe colony with zero NW tile visibility (Refs #3825).
+Game gpTribeSeaReachableNoNwVisibilityGame({String id = 'g_sea'}) =>
+    diplomacyGame(
+      id: id,
+      turnNumber: 1,
+      players: const [
+        Player(id: 'gp1', displayName: 'Spain', isHuman: true),
+      ],
+      oldWorld: const RegionData(
+        provinces: [
+          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
+        ],
+      ),
+      newWorld: const RegionData(
+        provinces: [
+          Province(
+            id: 'newWorld|colony',
+            regionId: 'newWorld',
+            ownerId: 'tribe1',
+          ),
+        ],
+      ),
+      playerVisibilityByTile: const {
+        'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
+      },
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          'oldWorld|home': ['oldWorld|home|0|0'],
+        },
+        'newWorld': {
+          'newWorld|colony': ['newWorld|colony|0|0'],
+        },
+      },
+      tribes: const [Tribe(id: 'tribe1', displayName: 'Maya')],
+      diplomacyRelations: const [],
+    );
+
+/// Human and AI GPs with shared NW tribe tile visibility (Refs #3825).
+Game humanAndAiGpTribeVisibilityGame({
+  Map<String, bool> aiControlByGpId = const {},
+  TurnPhase phase = TurnPhase.endOfTurn,
+  int turnNumber = 4,
+}) {
+  const ow = 'oldWorld';
+  const nw = 'newWorld';
+  return diplomacyGame(
+    phase: phase,
+    turnNumber: turnNumber,
+    players: const [
+      Player(id: 'gp1', displayName: 'Spain', isHuman: true),
+      Player(id: 'gp2', displayName: 'France', isHuman: false),
+    ],
+    oldWorld: const RegionData(
+      provinces: [
+        Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+        Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+      ],
+    ),
+    newWorld: RegionData(
+      provinces: [
+        Province(id: '$nw|t1', regionId: nw, ownerId: 'tribe1'),
+      ],
+    ),
+    playerVisibilityByTile: const {
+      'gp1': {'$nw|t1|0|0': 'fullyVisible'},
+      'gp2': {'$nw|t1|0|0': 'fullyVisible'},
+    },
+    tileKeysByRegionAndProvince: const {
+      nw: {
+        '$nw|t1': ['$nw|t1|0|0'],
+      },
+    },
+    tribes: const [Tribe(id: 'tribe1', displayName: 'Maya')],
+    aiControlByGpId: aiControlByGpId,
+    diplomacyRelations: const [],
+  );
+}
