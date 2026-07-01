@@ -133,29 +133,6 @@ void _addCandidateTilesForTownWork({
   }
 }
 
-/// Adds candidate tiles for steal_tech: other GP capital provinces.
-void _addCandidateTilesForStealTech({
-  required Game game,
-  required String playerId,
-  required Set<String> result,
-}) {
-  for (final other in game.players) {
-    if (other.id == playerId) continue;
-    final capitalProvinceId = other.capitalProvinceId;
-    if (capitalProvinceId == null) continue;
-
-    // Find a tile in the capital province
-    final regionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    final tiles = game.worldState.tileKeysForProvince(
-      regionId,
-      capitalProvinceId,
-    );
-    if (tiles != null && tiles.isNotEmpty) {
-      result.add(tiles.first);
-    }
-  }
-}
-
 /// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
 class _WorkTilePrefilterCtx {
   _WorkTilePrefilterCtx({
@@ -254,14 +231,6 @@ void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
-  _addCandidateTilesForStealTech(
-    game: c.game,
-    playerId: c.playerId,
-    result: c.result,
-  );
-}
-
 void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
   final factionMembership =
       c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
@@ -334,7 +303,6 @@ final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
       kWorkTargetBuildFort: _prefilterWtTownWork,
       kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
       kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
-      kWorkTargetStealTech: _prefilterWtStealTech,
       kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,
       kWorkTargetExplore: _prefilterWtExplore,
       kWorkTargetProspect: _prefilterWtProspect,

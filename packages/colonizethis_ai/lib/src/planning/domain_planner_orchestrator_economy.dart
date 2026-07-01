@@ -93,7 +93,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   );
   final hasSpyWork = workCandidates.any(
     (o) =>
-        o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
+        o.target == kWorkTargetCounterSpy,
   );
   var workThreshold =
       40 -

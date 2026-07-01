@@ -882,7 +882,6 @@ const Map<String, int> kCivilianBuildMaxCountByType = {
   kUnitTypeBuilder: 6,
   kUnitTypeExplorer: 4,
   kUnitTypeEngineer: 4,
-  kUnitTypeSpy: 3,
   kUnitTypeMerchant: 4,
   kUnitTypeRailBuilder: 4,
 };

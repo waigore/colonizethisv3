@@ -387,6 +387,5 @@ final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
       kWorkTargetBuildRail: _completedWorkBuildRail,
       kWorkTargetProspect: _completedWorkProspect,
       kWorkTargetPurchaseLand: _completedWorkPurchaseLand,
-      kWorkTargetStealTech: _completedWorkNoop,
       kWorkTargetCounterSpy: _completedWorkNoop,
     };

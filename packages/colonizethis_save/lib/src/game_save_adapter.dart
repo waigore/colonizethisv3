@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
 
 import 'incompatible_save_format_exception.dart';
+import 'reconcile_legacy_spy_work.dart';
 
 final _log = packageLogger();
 
@@ -133,8 +134,10 @@ class GameSaveAdapter {
           'Invalid save payload for gameId=$gameId',
         );
       }
-      final game = reconcileGeneralsToGeneralCap(
-        Game.fromJson(Map<String, dynamic>.from(gameRaw)),
+      final game = reconcileLegacySpyWorkOrders(
+        reconcileGeneralsToGeneralCap(
+          Game.fromJson(Map<String, dynamic>.from(gameRaw)),
+        ),
       );
       _log.i('loaded gameId=$gameId');
       return game;
@@ -168,8 +171,10 @@ class GameSaveAdapter {
         'Invalid save payload for gameId=$gameId',
       );
     }
-    final game = reconcileGeneralsToGeneralCap(
-      Game.fromJson(Map<String, dynamic>.from(gameRaw)),
+    final game = reconcileLegacySpyWorkOrders(
+      reconcileGeneralsToGeneralCap(
+        Game.fromJson(Map<String, dynamic>.from(gameRaw)),
+      ),
     );
     _log.i('loaded strict gameId=$gameId');
     return game;

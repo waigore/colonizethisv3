@@ -27,8 +27,6 @@ int totalTurnsForWork(String workTarget, {int? improvementLevel, int? fortLevel}
       return (fortLevel ?? 0) + 1;
     case 'build_rail':
       return 1;
-    case 'steal_tech':
-      return 5;
     case 'counter_spy':
       return 0; // Ongoing, no completion
     case 'purchase_land':
@@ -104,7 +102,6 @@ WorkOrderCost? workOrderMaterialCost(
   switch (workTarget) {
     case 'explore':
     case 'prospect':
-    case 'steal_tech':
     case 'counter_spy':
     case 'purchase_land':
       return null;
@@ -131,7 +128,7 @@ const Map<String, List<String>> workOrderTargetsByUnitType = {
   kUnitTypeBuilder: ['build_improvement', 'upgrade_town'],
   kUnitTypeEngineer: ['build_road', 'build_port', 'build_fort'],
   kUnitTypeRailBuilder: ['build_rail'],
-  kUnitTypeSpy: ['steal_tech', 'counter_spy'],
+  kUnitTypeSpy: ['counter_spy'],
   kUnitTypeMerchant: ['purchase_land'],
 };
 

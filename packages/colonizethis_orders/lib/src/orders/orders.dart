@@ -24,7 +24,16 @@ export 'order_validation_result.dart';
 export 'order_validators.dart';
 export 'order_visibility.dart';
 export 'orders_application.dart';
-export 'orders_application_context.dart' show appendMilitaryRegimentToArmy;
+export 'orders_application_context.dart'
+    show
+        appendMilitaryRegimentToArmy,
+        spyBaseKillChancePercent,
+        spyCounterEspionageKillBoostPercent,
+        spyDeathDiplomacyPenalty,
+        spyDefectionChancePercent,
+        spyGarrisonKillChanceCapPercent,
+        spyGarrisonKillChancePerRegiment,
+        spyResearchBoostPerGp;
 export 'orders_application_helpers.dart';
 export 'projected_effects.dart';
 export 'validators/work_order_cost_calculator.dart';

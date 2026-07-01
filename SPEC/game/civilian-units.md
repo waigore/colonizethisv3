@@ -17,7 +17,7 @@
 | **Explorer** | Explore fog of war; prospect for minerals | 1000 cash, 2 paper | Starting | Minerals must be prospected before extraction; exploration/prospecting carries **no material cost** ("free"), but `explore`/`prospect` inside a Minor/Tribe province require a **Consulate** (or higher) with that faction (Refs #3753 R4) |
 | **Engineer** | Build roads, ports, fortifications | 1000 cash, 2 paper | Starting | Roads gather resources; ports and forts in cities/rivers |
 | **Builder** | Improve terrain production (mines, farms, ranches, plantations, fur posts, towns) | 1000 cash, 2 paper | Starting | Increases output 1→2→3→4; tech caps max level |
-| **Spy** | Presence reveal; steal technology; counter-spy | 2000 cash, 4 paper | Starting | Presence reveal in non-owner province; steal_tech/counter_spy work orders; invisible to other players |
+| **Spy** | Presence reveal; passive RP boost in rival GP territory; counter-spy (empire-wide) | 2000 cash, 4 paper | Starting | Presence reveal in non-owner province; passive research boost when spies are in rival GP provinces; `counter_spy` is the only active work order; invisible to other players |
 | **Merchant** | Purchase land in Minor Nations/Tribes and New World | 2000 cash, 4 paper | Merchant Companies tech; embassy for purchase_land | purchase_land WorkOrder: tile with resource; embassy required; not at war; cost 15× resource base price. See [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md). |
 | **Rail Builder** | Upgrade roads to railroads | 2000 cash, 4 paper | Early Steam Engine tech | Rail transports up to 4 resources per tile |
 
@@ -39,8 +39,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | build_port | Engineer | Lumber + metal | Config | Coastal/river; transport 4 |
 | build_fort | Engineer | Per siege-mechanics | Config (1+ turn per level) | Town tile; fort level 1–3 |
 | build_rail | Rail Builder | 2 lumber + 2 steel | Config | Road 1–2→4; rail tech vs terrain |
-| steal_tech | Spy | — | Up to 5 turns | Target = **GP capital province**; 8%/turn success; random tech player lacks |
-| counter_spy | Spy | — | Ongoing | Target = **owned province**; +5% per friendly spy/turn (cap 30%) to kill enemy spies |
+| counter_spy | Spy | — | Ongoing | Target = **owned province**; one spy on `counter_spy` anywhere grants empire-wide +5% kill bonus and 10%/turn defection chance against enemy spies in all owned provinces (Refs #3834) |
 | purchase_land | Merchant | 15 × resource base price (treasury); validate ≥ cost at assign; **debit at completion**; embassy in Minor/Tribe | 1 turn (`currentWork`) | Tile in Minor/Tribe with resource; not at war; mineral → must be prospected; `purchasedTilesByTileKey` updated at completion |
 
 Spy does not have explore/prospect; Spy's garrison reveal is handled by visibility (see [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)), not a work order.

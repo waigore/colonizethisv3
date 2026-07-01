@@ -99,8 +99,7 @@ export 'src/constants.dart'
         kMineralResourceIds,
         kWorkTargetBuildImprovement,
         kWorkTargetCounterSpy,
-        kWorkTargetPurchaseLand,
-        kWorkTargetStealTech;
+        kWorkTargetPurchaseLand;
 
 // Justified deep `src/` exports — no domain-barrel alternative (Refs #3393
 // Phase 3). Each symbol below is required by `colonizethis_ai` but is not yet

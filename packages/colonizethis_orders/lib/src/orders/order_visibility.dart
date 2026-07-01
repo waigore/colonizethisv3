@@ -186,7 +186,6 @@ final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
       kWorkTargetBuildFort: _workVisOwnedOrFoggedProvince,
       'build_rail': _workVisOwnedOrFoggedProvince,
       kWorkTargetPurchaseLand: _workVisFoggedProvince,
-      kWorkTargetStealTech: _workVisFoggedProvince,
       kWorkTargetCounterSpy: _workVisOwnedOrFoggedProvince,
     };
 

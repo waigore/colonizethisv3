@@ -14,7 +14,8 @@ TurnResolver runs phases in **fixed order**:
 4. **Consumption** — Military food upkeep first, then workers/navy (food + luxury); strike rules per [workers-and-population.md](../game/workers-and-population.md).
 5. **Production** — Recipes and idle labour; outputs to stockpile (uses post-Consumption stockpile and labour).
 6. **Diplomacy** — Before Research and Movement so same-turn ownership and relation changes are visible to downstream phases. Overtures, Join Empire/Colony, alliances, Declare War, Peace, **intervention** (when a GP declares war on a Minor/Tribe and another GP has Embassy or purchased land there), relation updates. [diplomacy-resolution.md](diplomacy-resolution.md)
-7. **Research** — Read orders; validate treasury; deduct spending; add progress; complete techs. [research-resolution.md](research-resolution.md)
+6a. **Spy resolution** — Immediately after Diplomacy and before Research: spy kill rolls (base 5% + garrison + empire-wide counter-esp), diplomacy penalties on kill, defection rolls, event emission. Research then applies passive spy RP boost from surviving spies in rival GP provinces. Refs #3834.
+7. **Research** — Read orders; validate treasury; deduct spending; add progress (including passive spy RP boost); complete techs. [research-resolution.md](research-resolution.md)
 8. **Movement** — Apply land/naval MoveOrders and mission assignments; update unit/fleet locations.
 9. **Minor Regiment Upgrade** — Compute `maxGreatPowerMilitaryLevel` from post-Research Great Power buildable regiment tiers; set Old World Minor Nations `effectiveMilitaryLevel`; upgrade eligible minor land regiments in place; set Tribe `effectiveMilitaryLevel` to 1 (no parity).
 10. **Naval Interception & Naval Combat** — Patrol/blockade/beachhead interceptions; sea battles; fleet updates. [naval-movement-resolution.md](naval-movement-resolution.md), [naval-combat-resolution.md](naval-combat-resolution.md)

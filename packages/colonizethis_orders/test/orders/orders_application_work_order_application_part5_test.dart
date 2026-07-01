@@ -9,9 +9,9 @@ void main() {
     const provinceId = 'oldWorld|P1';
     const tileKey = 'oldWorld|P1|0|0';
 
-    test('steal_tech work order sets currentWork for Spy unit', () {
-      const targetProvinceId = 'oldWorld|P2';
-      const targetTileKey = 'oldWorld|P2|0|0';
+    test('counter_spy work order sets currentWork for Spy unit', () {
+      const targetProvinceId = 'oldWorld|P1';
+      const targetTileKey = 'oldWorld|P1|0|0';
       final spy = Unit(
         id: 'spy1',
         type: kUnitTypeSpy,
@@ -29,8 +29,7 @@ void main() {
                 id: provinceId,
                 regionId: ow,
                 ownerId: 'p1',
-              ), // owner
-              const Province(id: targetProvinceId, regionId: ow, ownerId: 'p2'),
+              ),
             ],
             units: [spy],
           ),
@@ -38,7 +37,6 @@ void main() {
           tileKeysByRegionAndProvince: const {
             ow: {
               provinceId: [tileKey],
-              targetProvinceId: [targetTileKey],
             },
           },
         ),
@@ -49,13 +47,6 @@ void main() {
             isHuman: true,
             capitalProvinceId: provinceId,
           ),
-          Player(
-            id: 'p2',
-            displayName: 'P2',
-            isHuman: true,
-            capitalProvinceId: targetProvinceId,
-            techUnlocked: {'some_tech': true},
-          ),
         ],
       );
       final orders = Orders(
@@ -63,7 +54,7 @@ void main() {
           'p1': [
             const WorkOrder(
               unitId: 'spy1',
-              target: kWorkTargetStealTech,
+              target: kWorkTargetCounterSpy,
               targetTileKey: targetTileKey,
             ),
           ],
@@ -72,10 +63,7 @@ void main() {
       final next = applyBuildAndWorkOrders(game, orders);
       final spyAfter = next.worldState.oldWorld.units.single;
       expect(spyAfter.currentWork, isNotNull);
-      expect(spyAfter.currentWork!.workTarget, kWorkTargetStealTech);
-      expect(spyAfter.currentWork!.totalTurns, 5);
-      // One turn processed in same phase after applying, so remainingTurns 5 -> 4.
-      expect(spyAfter.currentWork!.remainingTurns, 4);
+      expect(spyAfter.currentWork!.workTarget, kWorkTargetCounterSpy);
     });
 
     test('explore work order sets currentWork when province has tiles', () {
