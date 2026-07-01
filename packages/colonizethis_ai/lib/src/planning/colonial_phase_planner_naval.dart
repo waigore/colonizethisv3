@@ -96,11 +96,11 @@ class ColonialNavalPlan {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ColonialNavalPlan &&
-          _colonialListEquals(
+          planningListEquals(
             priorityInvasionTransportProvinceIdsSorted,
             other.priorityInvasionTransportProvinceIdsSorted,
           ) &&
-          _colonialListEquals(
+          planningListEquals(
             priorityTargetOwnerFactionIdsSorted,
             other.priorityTargetOwnerFactionIdsSorted,
           );
@@ -457,11 +457,11 @@ class ColonialLiteNavalPlan {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ColonialLiteNavalPlan &&
-          _colonialListEquals(
+          planningListEquals(
             priorityNwProvinceIdsSorted,
             other.priorityNwProvinceIdsSorted,
           ) &&
-          _colonialListEquals(
+          planningListEquals(
             priorityTargetOwnerFactionIdsSorted,
             other.priorityTargetOwnerFactionIdsSorted,
           );

@@ -21,6 +21,7 @@ import 'planning_helpers.dart'
         isAtWarWithAnyGreatPower,
         isOwnOldWorldBelowConquestQuota,
         isOwnOldWorldExpansionStalled,
+        kDiplomaticDefaultBaseScore,
         mutualExhaustedGpStalemateSideQualifies,
         orderTargetIsAtWarInvadableBlocker;
 import 'war_desire_calculator.dart';
@@ -92,7 +93,7 @@ List<int> computeDiplomaticCandidateScores({
   }
 
   return candidates.map((o) {
-    var s = 50;
+    var s = kDiplomaticDefaultBaseScore;
     switch (o.type) {
       case DiplomaticOrderType.offerPeace:
         s = _scoreOfferPeaceDiplomaticOrder(

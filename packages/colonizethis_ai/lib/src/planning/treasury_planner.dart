@@ -27,6 +27,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'ai_commodity_ids.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'cast_iron_labour_gate.dart'
     show

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'goal_manager.dart';
+import 'planning_helpers.dart' show colonialPressureScaleFromWeight;
 import 'planning_imports.dart';
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
@@ -185,9 +186,11 @@ BuildUnitOrder? pickBuildOrder({
   // continuously across the OW priority curve, while callers that
   // omit the weight (tests, legacy entry points) keep the legacy
   // boolean activation/scale exactly.
-  final colonialPressureScale = colonialPressureWeight != null
-      ? colonialPressureWeight.clamp(0.0, 1.0).toDouble()
-      : (input.colonialPressure ? 1.0 : 0.0);
+  final colonialPressureScale = colonialPressureScaleFromWeight(
+    colonialPressureWeight: colonialPressureWeight,
+    legacyColonialPressureActive: input.colonialPressure,
+    clampToUnitInterval: true,
+  );
   final colonialPressureActive = colonialPressureScale > 0.0;
   final militaryRebuildCrisis = input.militaryRebuildCrisis;
   if (buildCandidates.isEmpty) return null;
