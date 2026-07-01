@@ -3,22 +3,20 @@ import 'package:colonizethis_world/src/game_player_lookup.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 void main() {
   group('dialogue (Phase 6)', () {
     test('AI declare war invokes onDialogue with diplomatic declare_war', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 2,
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI', isHuman: false),
           Player(id: 'gp3', displayName: 'Other', isHuman: false),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp2',
             factionId2: 'gp3',
@@ -46,19 +44,15 @@ void main() {
     });
 
     test('AI offer peace invokes onDialogue with diplomatic peace_offer', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 2,
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI', isHuman: false),
           Player(id: 'gp3', displayName: 'Other', isHuman: false),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp2',
             factionId2: 'gp3',
@@ -89,18 +83,13 @@ void main() {
     });
 
     test('human declare war does not invoke onDialogue', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI', isHuman: false),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp1',
             factionId2: 'gp2',
@@ -125,19 +114,15 @@ void main() {
     test('overture to human GP returns pending; resume with accept applies overture',
         () {
       // gp1 offers Consulate to gp2 (human). Phase should return pending.
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: [
           const Player(id: 'gp1', displayName: 'GP1', isHuman: false)
               .copyWith(treasury: overtureConsulateCost + 100),
           const Player(id: 'gp2', displayName: 'GP2', isHuman: true),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp1',
             factionId2: 'gp2',
@@ -148,7 +133,6 @@ void main() {
             lastInteractionTurn: 0,
           ),
         ],
-        overtureStates: const [],
       );
       final orders = Orders(
         diplomaticOrdersByPlayerId: {

@@ -2,22 +2,20 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 void main() {
   group('dossier evidence (Phase 6)', () {
     test('AI declare war on weaker GP appends warmonger evidence for human observer', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 2,
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI Strong', isHuman: false, militaryLevel: 3),
           Player(id: 'gp3', displayName: 'AI Weak', isHuman: false, militaryLevel: 1),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp2',
             factionId2: 'gp3',
@@ -43,19 +41,15 @@ void main() {
     });
 
     test('AI declare war on ally appends backstabber evidence for human observer', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 2,
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI', isHuman: false),
           Player(id: 'gp3', displayName: 'Other', isHuman: false),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp2',
             factionId2: 'gp3',
@@ -81,19 +75,15 @@ void main() {
     });
 
     test('AI offer peace appends peacemaker evidence for human observer', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 2,
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI', isHuman: false),
           Player(id: 'gp3', displayName: 'Other', isHuman: false),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp2',
             factionId2: 'gp3',
@@ -122,18 +112,13 @@ void main() {
     });
 
     test('human declare war does not append evidence', () {
-      final game = Game(
+      final game = diplomacyGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI', isHuman: false),
         ],
-        diplomacyRelations: [
+        diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp1',
             factionId2: 'gp2',

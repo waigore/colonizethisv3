@@ -2,6 +2,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/diplomacy_phase_scenarios.dart';
 import '../support/diplomacy_resolver_phase_test_support.dart';
 
 void main() {
@@ -14,26 +15,7 @@ void main() {
 
     test('setSubsidy at resolution with invalid percent is skipped, not thrown '
         '(Refs #3753 R3)', () {
-      var game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.embassy,
-            sinceTurn: 0,
-          ),
-        ],
-      );
-      game = game.copyWith(
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 50,
-            level: RelationLevel.neutral,
-          ),
-        ],
-      );
+      final game = gpMinorEmbassyNeutralPhaseGame();
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp1': const [
@@ -52,26 +34,7 @@ void main() {
 
     test('setSubsidy at resolution with valid percent records SubsidyState '
         '(Refs #3753 R3)', () {
-      var game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.embassy,
-            sinceTurn: 0,
-          ),
-        ],
-      );
-      game = game.copyWith(
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 50,
-            level: RelationLevel.neutral,
-          ),
-        ],
-      );
+      final game = gpMinorEmbassyNeutralPhaseGame();
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp1': const [

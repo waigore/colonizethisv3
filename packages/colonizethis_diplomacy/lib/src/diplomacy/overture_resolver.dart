@@ -27,17 +27,6 @@ bool _aiGpAccepts(Game game, String offererGpId, String targetGpId) {
   return score >= relationScoreNeutral;
 }
 
-OvertureState? _findOvertureForGpTarget(
-  List<OvertureState> overtures,
-  String gpId,
-  String targetId,
-) {
-  for (final o in overtures) {
-    if (o.gpId == gpId && o.targetId == targetId) return o;
-  }
-  return null;
-}
-
 int? _overtureCostForStage(OvertureStage stage) {
   if (stage == OvertureStage.tradeConsulate) return overtureConsulateCost;
   if (stage == OvertureStage.embassy) return overtureEmbassyCost;
@@ -140,7 +129,7 @@ _ValidatedOverture? _validateEstablishOvertureOrder({
   final rel = getRelation(state, gpId, targetId);
   if (rel != null && rel.atWar) return null;
 
-  final existing = _findOvertureForGpTarget(overtures, gpId, targetId);
+  final existing = findOvertureForGpTarget(overtures, gpId, targetId);
   final prevStage = stage.previous;
   final atPrevStage =
       (existing == null && prevStage == OvertureStage.none) ||
@@ -185,9 +174,7 @@ _OvertureOrderStep _applyAcceptedOverture({
   final nextPlayer = nextPlayers[playerIdx];
 
   var nextOvertures = overtures;
-  final osIdx = nextOvertures.indexWhere(
-    (o) => o.gpId == gpId && o.targetId == targetId,
-  );
+  final osIdx = indexOfOvertureForGpTarget(nextOvertures, gpId, targetId);
   if (osIdx >= 0) {
     nextOvertures = List<OvertureState>.from(nextOvertures);
     nextOvertures[osIdx] = nextOvertures[osIdx].copyWith(

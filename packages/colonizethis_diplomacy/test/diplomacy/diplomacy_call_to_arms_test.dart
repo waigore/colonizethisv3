@@ -37,50 +37,7 @@ void main() {
     test(
       'AI ally refuses call to arms when already at war with another GP',
       () {
-        final game = Game(
-          id: 'g-multi',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 25),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            const Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-            const Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-            const Player(id: 'gp3', displayName: 'GP3', isHuman: false),
-            const Player(id: 'gp4', displayName: 'GP4', isHuman: false),
-          ],
-          diplomacyRelations: [
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'gp2',
-              score: 80,
-              level: RelationLevel.allied,
-              state: RelationState.atPeace,
-              sinceTurn: 0,
-              lastInteractionTurn: 0,
-              formalAlliance: true,
-            ),
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'gp3',
-              score: 0,
-              level: RelationLevel.hostile,
-              state: RelationState.atWar,
-              sinceTurn: 1,
-              lastInteractionTurn: 1,
-            ),
-            DiplomacyRelation(
-              factionId1: 'gp2',
-              factionId2: 'gp4',
-              score: 50,
-              level: RelationLevel.neutral,
-              state: RelationState.atPeace,
-              sinceTurn: 0,
-              lastInteractionTurn: 0,
-            ),
-          ],
-        );
+        final game = fourGpCallToArmsAtWarGame();
         final orders = Orders(
           diplomaticOrdersByPlayerId: {
             'gp4': const [
@@ -276,46 +233,7 @@ void main() {
     test(
       'human refuse applies -10 to other GPs but leaves the aggressor unchanged',
       () {
-        final game = Game(
-          id: 'g-cascade',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-            Player(id: 'gp2', displayName: 'GP2', isHuman: true),
-            Player(id: 'gp3', displayName: 'GP3', isHuman: false),
-            Player(id: 'gp4', displayName: 'GP4', isHuman: false),
-          ],
-          diplomacyRelations: [
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'gp2',
-              score: 80,
-              level: RelationLevel.allied,
-              state: RelationState.atPeace,
-              formalAlliance: true,
-            ),
-            // Aggressor: excluded from the -10 cascade (only per-turn decay applies).
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'gp3',
-              score: 60,
-              level: RelationLevel.friendly,
-              state: RelationState.atPeace,
-            ),
-            // Bystander GP: receives the -10 cascade.
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'gp4',
-              score: 60,
-              level: RelationLevel.friendly,
-              state: RelationState.atPeace,
-            ),
-          ],
-        );
+        final game = fourGpCallToArmsCascadeGame();
         const orders = Orders(
           diplomaticOrdersByPlayerId: {
             'gp3': [

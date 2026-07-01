@@ -7,22 +7,6 @@ import '../support/diplomacy_game_fixtures.dart';
 /// Coverage for `processAlliances` in `alliance_resolver.dart`
 /// (Refs #3290 test migration — per-package coverage gate for
 /// `colonizethis_diplomacy`).
-Game _allianceGame({
-  List<Player> players = const [
-    Player(id: 'gp1', displayName: 'A', isHuman: false),
-    Player(id: 'gp2', displayName: 'B', isHuman: false),
-  ],
-  List<DiplomacyRelation> relations = const [],
-  List<Tribe> tribes = const [],
-}) =>
-    diplomacyGame(
-      id: 'g',
-      turnNumber: 7,
-      players: players,
-      tribes: tribes,
-      diplomacyRelations: relations,
-    );
-
 DiplomaticOrder _alliance(String target) => DiplomaticOrder(
       type: DiplomaticOrderType.alliance,
       targetFactionId: target,
@@ -31,7 +15,7 @@ DiplomaticOrder _alliance(String target) => DiplomaticOrder(
 void main() {
   group('processAlliances', () {
     test('positive: new relation between two GPs becomes Allied', () {
-      final game = _allianceGame();
+      final game = allianceResolverGame();
       final membership = DiplomacyFactionMembership.from(game);
       final after = processAlliances(
         game,
@@ -57,7 +41,7 @@ void main() {
     });
 
     test('positive: existing low-score relation is clamped up to Allied', () {
-      final game = _allianceGame(
+      final game = allianceResolverGame(
         relations: const [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -86,7 +70,7 @@ void main() {
     });
 
     test('negative: alliance order targeting a non-GP is ignored', () {
-      final game = _allianceGame(
+      final game = allianceResolverGame(
         tribes: const [Tribe(id: 'tribe1', displayName: 'T')],
       );
       final membership = DiplomacyFactionMembership.from(game);
@@ -104,7 +88,7 @@ void main() {
     });
 
     test('negative: non-alliance order leaves relations unchanged', () {
-      final game = _allianceGame();
+      final game = allianceResolverGame();
       final membership = DiplomacyFactionMembership.from(game);
       final after = processAlliances(
         game,

@@ -2,6 +2,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 /// Value-equality and pending-state coverage for the Diplomacy-phase value
 /// types in `diplomacy_phase_result.dart` (Refs #3290 test migration —
 /// per-package coverage gate for `colonizethis_diplomacy`).
@@ -270,13 +272,8 @@ void main() {
   });
 
   group('DiplomacyPhaseResult.isPending', () {
-    final game = Game(
+    final game = diplomacyGame(
       id: 'g',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
       players: const [Player(id: 'gp1', displayName: 'A', isHuman: true)],
     );
 
