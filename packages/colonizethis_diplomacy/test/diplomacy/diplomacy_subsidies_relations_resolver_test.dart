@@ -61,6 +61,97 @@ void main() {
     );
   });
 
+  group('applyRelationModifiersAndUpdateScores subsidy pair index (Refs #2394)', () {
+    test(
+      'two SetSubsidy toward same target in one pass keeps one state with final percent',
+      () {
+        final game = subsidyResolverGame(
+          turnNumber: 1,
+          includeSubsidy: false,
+          includeDiplomaticExpertiseTech: true,
+        );
+
+        final after = applyRelationModifiersAndUpdateScores(game, {
+          'gp1': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 5,
+            ),
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 15,
+            ),
+          ],
+        }, 1);
+
+        expect(after.subsidyStates, hasLength(1));
+        final s = after.subsidyStates.single;
+        expect(s.payerId, 'gp1');
+        expect(s.targetId, 'minor1');
+        expect(s.percent, 15);
+        expect(after.playerById('gp1')!.treasury, 10_000);
+      },
+    );
+
+    test(
+      'two SetSubsidy toward different targets in one pass records both',
+      () {
+        final game = gpTwoMinorsEmbassySubsidyGame();
+
+        final after = applyRelationModifiersAndUpdateScores(game, {
+          'gp1': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 10,
+            ),
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor2',
+              amount: 20,
+            ),
+          ],
+        }, 1);
+
+        expect(after.subsidyStates, hasLength(2));
+        final byTarget = {
+          for (final x in after.subsidyStates) x.targetId: x.percent,
+        };
+        expect(byTarget['minor1'], 10);
+        expect(byTarget['minor2'], 20);
+      },
+    );
+
+    test(
+      'pre-existing subsidy row is updated by later SetSubsidy in same pass',
+      () {
+        final game = subsidyResolverGame(
+          turnNumber: 1,
+          includeSubsidy: true,
+          subsidyStates: const [
+            SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 5),
+          ],
+          includeDiplomaticExpertiseTech: true,
+        );
+
+        final after = applyRelationModifiersAndUpdateScores(game, {
+          'gp1': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 20,
+            ),
+          ],
+        }, 1);
+
+        expect(after.subsidyStates, hasLength(1));
+        expect(after.subsidyStates.single.percent, 20);
+      },
+    );
+  });
+
   group('processOngoingSubsidies (percent model, Refs #3753 R3)', () {
     const embassy = OvertureState(
       gpId: 'gp1',

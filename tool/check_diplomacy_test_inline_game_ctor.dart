@@ -22,6 +22,11 @@ const _mandatedFixtureTestPaths = <String>{
   'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_survival_peace_test.dart',
   'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_intervention_test.dart',
   'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_call_to_arms_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_phase_test_part2_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_subsidies_relations_resolver_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/alliance_break_cooldown_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/boycott_resolver_test.dart',
+  'packages/colonizethis_diplomacy/test/diplomacy/boycott_blocked_trade_pair_keys_test.dart',
 };
 
 /// Matches an inline `Game(` constructor call (standalone identifier, not

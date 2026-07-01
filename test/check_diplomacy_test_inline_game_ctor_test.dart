@@ -43,7 +43,14 @@ void main() {
           'packages/colonizethis_diplomacy/test/diplomacy/alliance_break_cooldown_test.dart',
           "final game = Game(id: 'g');",
         ),
-        isNull,
+        isNotNull,
+      );
+      expect(
+        diplomacyTestInlineGameCtorViolationReason(
+          'packages/colonizethis_diplomacy/test/diplomacy/boycott_resolver_test.dart',
+          "final game = Game(id: 'g');",
+        ),
+        isNotNull,
       );
     });
   });
