@@ -16,6 +16,7 @@ import 'economy_planner.dart';
 import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
+import 'orchestrator_options.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_goal_filter.dart';
 import 'phase_priority_weights.dart';
@@ -219,13 +220,15 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
     economyPlan: economyPlan,
-    tileMapByRegion: tileMapByRegion,
-    onStagedPlannerProgress: onStagedPlannerProgress,
-    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-    phasePlan: phasePlan,
-    recomputeTradeOrdersWithPendingCosts: true,
-    growthStagePlannerEnabled: growthStagePlannerEnabled,
-    extractionById: tradeForecastExtractionById,
+    options: OrchestratorOptions(
+      tileMapByRegion: tileMapByRegion,
+      onStagedPlannerProgress: onStagedPlannerProgress,
+      sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+      phasePlan: phasePlan,
+      recomputeTradeOrdersWithPendingCosts: true,
+      growthStagePlannerEnabled: growthStagePlannerEnabled,
+      extractionById: tradeForecastExtractionById,
+    ),
   );
   // Trade orders are merged into [Orders.tradeOrdersByPlayerId] inside the
   // domain orchestrator (Refs #2994 F7) so all orchestrator callers see the

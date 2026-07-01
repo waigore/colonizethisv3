@@ -304,35 +304,26 @@ ColonialAcquisitionTarget? planColonialAcquisition({
   final preferDeclareWarOverJoinEmpire = _personalityPrefersWarOverAlliance(
     personalityId,
   );
+  final searchContext = AcquisitionSearchContext(
+    game: game,
+    snapshot: snapshot,
+    invadable: invadable,
+    provinceOwner: provinceOwner,
+    treasury: treasury,
+    ownColonyTribeIds: ownColonyTribeIds,
+  );
 
-  ColonialAcquisitionTarget? tryJoinEmpire() => _findJoinEmpireTarget(
-    game: game,
-    snapshot: snapshot,
-    invadable: invadable,
-    provinceOwner: provinceOwner,
-    treasury: treasury,
-    ownColonyTribeIds: ownColonyTribeIds,
-  );
-  ColonialAcquisitionTarget? tryPurchaseLand() => _findPurchaseLandTarget(
-    game: game,
-    snapshot: snapshot,
-    invadable: invadable,
-    provinceOwner: provinceOwner,
-    treasury: treasury,
-    ownColonyTribeIds: ownColonyTribeIds,
-  );
+  ColonialAcquisitionTarget? tryJoinEmpire() =>
+      _findJoinEmpireTarget(searchContext);
+  ColonialAcquisitionTarget? tryPurchaseLand() =>
+      _findPurchaseLandTarget(searchContext);
   final waiveDeclareWarTreasuryGate = isNwLockRecoveryPathEActive(
     snapshot: snapshot,
     expandEconomyPlan: expandEconomyPlan,
   );
   ColonialAcquisitionTarget? tryDeclareWar() => _findDeclareWarTarget(
-    game: game,
-    snapshot: snapshot,
-    invadable: invadable,
-    provinceOwner: provinceOwner,
-    treasury: treasury,
+    searchContext,
     waiveTreasuryGate: waiveDeclareWarTreasuryGate,
-    ownColonyTribeIds: ownColonyTribeIds,
   );
 
   if (preferDeclareWarOverJoinEmpire) {
@@ -363,35 +354,50 @@ bool _personalityPrefersWarOverAlliance(String? personalityId) {
   return thresholds.warLikelihood > thresholds.allianceTendency;
 }
 
+/// Shared search inputs for the three colonial acquisition target finders
+/// (Refs #3822 Phase 3).
+final class AcquisitionSearchContext {
+  const AcquisitionSearchContext({
+    required this.game,
+    required this.snapshot,
+    required this.invadable,
+    required this.provinceOwner,
+    required this.treasury,
+    required this.ownColonyTribeIds,
+  });
+
+  final Game game;
+  final AIWorldSnapshot snapshot;
+  final List<String> invadable;
+  final Map<String, String> provinceOwner;
+  final int treasury;
+  final Set<String> ownColonyTribeIds;
+}
+
 /// Iterates [invadable] in distance order and returns the first
 /// [AcquisitionMethod.joinEmpire] candidate satisfying the four
 /// Join-Empire gates (non-GP owner, overture stage `nap`, relation
 /// score ≥ Friendly, treasury ≥ `joinEmpireCostForMinorOrTribe`).
-ColonialAcquisitionTarget? _findJoinEmpireTarget({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required List<String> invadable,
-  required Map<String, String> provinceOwner,
-  required int treasury,
-  required Set<String> ownColonyTribeIds,
-}) {
-  for (final provinceId in invadable) {
-    final ownerId = provinceOwner[provinceId];
+ColonialAcquisitionTarget? _findJoinEmpireTarget(
+  AcquisitionSearchContext ctx,
+) {
+  for (final provinceId in ctx.invadable) {
+    final ownerId = ctx.provinceOwner[provinceId];
     if (ownerId == null) continue;
-    if (game.playerById(ownerId) != null) continue;
-    if (ownColonyTribeIds.contains(ownerId)) continue;
+    if (ctx.game.playerById(ownerId) != null) continue;
+    if (ctx.ownColonyTribeIds.contains(ownerId)) continue;
 
-    final overture = getOverture(game, snapshot.playerId, ownerId);
+    final overture = getOverture(ctx.game, ctx.snapshot.playerId, ownerId);
     if (overture == null) continue;
     if (overture.stage != OvertureStage.nap) continue;
 
-    final relation = getRelation(game, snapshot.playerId, ownerId);
+    final relation = getRelation(ctx.game, ctx.snapshot.playerId, ownerId);
     if (relation == null || relation.score < relationScoreMinFriendly) {
       continue;
     }
 
-    final cost = joinEmpireCostForMinorOrTribe(game, ownerId);
-    if (treasury < cost) continue;
+    final cost = joinEmpireCostForMinorOrTribe(ctx.game, ownerId);
+    if (ctx.treasury < cost) continue;
 
     return ColonialAcquisitionTarget(
       targetFactionId: ownerId,
@@ -420,40 +426,35 @@ ColonialAcquisitionTarget? _findJoinEmpireTarget({
 /// legacy first-match deterministic tiebreak (Refs #2509 Must-have #7).
 /// A missing relation row contributes [relationScoreNeutral] (50),
 /// matching the score-default convention used elsewhere in the planners.
-ColonialAcquisitionTarget? _findPurchaseLandTarget({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required List<String> invadable,
-  required Map<String, String> provinceOwner,
-  required int treasury,
-  required Set<String> ownColonyTribeIds,
-}) {
-  if (!_hasIdleMerchant(game.worldState, snapshot.playerId)) {
+ColonialAcquisitionTarget? _findPurchaseLandTarget(
+  AcquisitionSearchContext ctx,
+) {
+  if (!_hasIdleMerchant(ctx.game.worldState, ctx.snapshot.playerId)) {
     return null;
   }
   final prospected =
-      game.worldState.playerProspectedTiles[snapshot.playerId] ??
+      ctx.game.worldState.playerProspectedTiles[ctx.snapshot.playerId] ??
       const <String>{};
-  final purchasedByTile = game.worldState.purchasedTilesByTileKey;
+  final purchasedByTile = ctx.game.worldState.purchasedTilesByTileKey;
 
   String? bestOwnerId;
   num bestScore = 0;
-  for (final provinceId in invadable) {
-    final ownerId = provinceOwner[provinceId];
+  for (final provinceId in ctx.invadable) {
+    final ownerId = ctx.provinceOwner[provinceId];
     if (ownerId == null) continue;
-    if (game.playerById(ownerId) != null) continue;
-    if (ownColonyTribeIds.contains(ownerId)) continue;
+    if (ctx.game.playerById(ownerId) != null) continue;
+    if (ctx.ownColonyTribeIds.contains(ownerId)) continue;
 
-    final relation = getRelation(game, snapshot.playerId, ownerId);
+    final relation = getRelation(ctx.game, ctx.snapshot.playerId, ownerId);
     if (relation != null && relation.atWar) continue;
 
-    final overture = getOverture(game, snapshot.playerId, ownerId);
+    final overture = getOverture(ctx.game, ctx.snapshot.playerId, ownerId);
     if (overture == null || !overture.hasEmbassy) continue;
 
     if (!_provinceHasValidPurchaseLandTile(
-      world: game.worldState,
+      world: ctx.game.worldState,
       provinceId: provinceId,
-      treasury: treasury,
+      treasury: ctx.treasury,
       prospected: prospected,
       purchasedByTile: purchasedByTile,
     )) {
@@ -478,29 +479,25 @@ ColonialAcquisitionTarget? _findPurchaseLandTarget({
 /// [AcquisitionMethod.declareWar] candidate satisfying the outer
 /// gates (regiments ≥ 1, treasury ≥ cheapest regiment cost) and the
 /// per-province gates (non-GP owner, not already at war).
-ColonialAcquisitionTarget? _findDeclareWarTarget({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required List<String> invadable,
-  required Map<String, String> provinceOwner,
-  required int treasury,
+ColonialAcquisitionTarget? _findDeclareWarTarget(
+  AcquisitionSearchContext ctx, {
   required bool waiveTreasuryGate,
-  required Set<String> ownColonyTribeIds,
 }) {
-  if (regimentCountForPlayer(game, snapshot.playerId) <= 0) {
+  if (regimentCountForPlayer(ctx.game, ctx.snapshot.playerId) <= 0) {
     return null;
   }
-  if (!waiveTreasuryGate && treasury < _cheapestRegimentBuildTreasuryCost()) {
+  if (!waiveTreasuryGate &&
+      ctx.treasury < _cheapestRegimentBuildTreasuryCost()) {
     return null;
   }
 
-  for (final provinceId in invadable) {
-    final ownerId = provinceOwner[provinceId];
+  for (final provinceId in ctx.invadable) {
+    final ownerId = ctx.provinceOwner[provinceId];
     if (ownerId == null) continue;
-    if (game.playerById(ownerId) != null) continue;
-    if (ownColonyTribeIds.contains(ownerId)) continue;
+    if (ctx.game.playerById(ownerId) != null) continue;
+    if (ctx.ownColonyTribeIds.contains(ownerId)) continue;
 
-    final relation = getRelation(game, snapshot.playerId, ownerId);
+    final relation = getRelation(ctx.game, ctx.snapshot.playerId, ownerId);
     if (relation != null && relation.atWar) continue;
 
     return ColonialAcquisitionTarget(

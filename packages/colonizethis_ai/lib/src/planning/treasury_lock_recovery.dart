@@ -198,14 +198,6 @@ bool _isBelowQuotaZeroNwLockRecoverySeller({
   return ow >= 2;
 }
 
-/// True when any below-quota zero-NW lock-recovery seller still needs the
-/// H8 regiment build-input bootstrap path (Refs #2847 H8-supply market).
-bool _anyLockRecoverySellerNeedsRegimentBuildInput(
-  Game game, {
-  _LockRecoveryGameScan? scan,
-}) => (scan ?? _LockRecoveryGameScan.fromGame(game))
-    .anySellerNeedsRegimentBuildInput;
-
 /// Public accessor for the below-quota zero-NW lock-recovery seller predicate
 /// (Refs #2847 H8-supply castIron source). The economy planner uses it to keep
 /// the supplier `castIron` over-production off for a GP that is itself a locked

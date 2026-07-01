@@ -26,6 +26,7 @@ import 'planning_helpers.dart'
         orderTargetIsAtWarInvadableBlocker;
 import 'war_desire_calculator.dart';
 
+part 'diplomatic_scoring_context.dart';
 part 'diplomatic_candidate_scoring_offer_peace.dart';
 part 'diplomatic_candidate_scoring_declare_war_context.dart';
 part 'diplomatic_candidate_scoring_declare_war.dart';
@@ -80,7 +81,7 @@ List<int> computeDiplomaticCandidateScores({
     (m) => _minorOwnsOldWorldProvinces(game, m.id),
   );
   final warDesireByTarget = <String, int>{};
-  int warDesireForTarget(String targetFactionId, num relationScore) {
+  int memoizedWarDesire(String targetFactionId, num relationScore) {
     return warDesireByTarget.putIfAbsent(
       targetFactionId,
       () => computeWarDesireScore(
@@ -91,21 +92,28 @@ List<int> computeDiplomaticCandidateScores({
       ),
     );
   }
+  final warDesireForTarget = memoizedWarDesire;
 
   return candidates.map((o) {
     var s = kDiplomaticDefaultBaseScore;
     switch (o.type) {
       case DiplomaticOrderType.offerPeace:
         s = _scoreOfferPeaceDiplomaticOrder(
-          order: o,
-          nationId: nationId,
-          game: game,
-          snapshot: snapshot,
-          agendaId: agendaId,
-          thresholds: thresholds,
-          provinceOwner: provinceOwner,
-          invadableOwners: invadableOwners,
-          warDesireForTarget: warDesireForTarget,
+          DiplomaticScoringContext(
+            order: o,
+            nationId: nationId,
+            game: game,
+            snapshot: snapshot,
+            provinceOwner: provinceOwner,
+            currentTurn: currentTurn,
+            sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+            warDesireForTarget: warDesireForTarget,
+          ),
+          OfferPeaceScoringParams(
+            agendaId: agendaId,
+            thresholds: thresholds,
+            invadableOwners: invadableOwners,
+          ),
         );
         break;
       case DiplomaticOrderType.alliance:
@@ -158,16 +166,20 @@ List<int> computeDiplomaticCandidateScores({
         break;
       case DiplomaticOrderType.establishOverture:
         s = _scoreEstablishOvertureDiplomaticOrder(
-          order: o,
-          nationId: nationId,
-          game: game,
-          snapshot: snapshot,
-          thresholds: thresholds,
-          provinceOwner: provinceOwner,
-          improveRelationsCooldownTurns: improveRelationsCooldownTurns,
-          currentTurn: currentTurn,
-          sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-          warDesireForTarget: warDesireForTarget,
+          DiplomaticScoringContext(
+            order: o,
+            nationId: nationId,
+            game: game,
+            snapshot: snapshot,
+            provinceOwner: provinceOwner,
+            currentTurn: currentTurn,
+            sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+            warDesireForTarget: warDesireForTarget,
+          ),
+          EstablishOvertureScoringParams(
+            thresholds: thresholds,
+            improveRelationsCooldownTurns: improveRelationsCooldownTurns,
+          ),
         );
         break;
       default:

@@ -449,13 +449,17 @@ int? _declareWarSuppressedWarConcentrationScore(
   }
   // While an invadable OW frontier has a GP blocker, do not open (or stack)
   // wars on other adjacent GPs — applies above the stalled OW band (seed-42 gp4).
+  final primaryGpBlocker = primaryInvadableOldWorldGpBlocker(
+    game: ctx.game,
+    snapshot: ctx.snapshot,
+  );
   if (atWarWithGp &&
       ctx.isAdjacentGp &&
       ctx.targetIsGreatPower &&
       ctx.targetNotAlreadyAtWar &&
       ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      ctx.invadableGpBlocker != null &&
-      ctx.order.targetFactionId != ctx.invadableGpBlocker) {
+      primaryGpBlocker != null &&
+      ctx.order.targetFactionId != primaryGpBlocker) {
     return 0;
   }
   if (ctx.stalledOwExpansion &&

@@ -5,19 +5,21 @@ part of 'diplomatic_candidate_scoring.dart';
 /// to keep that dispatcher under the function-size gate; behaviour-preserving.
 /// Combines the improve-relations urgency (decay-aware), colonial-tribe and
 /// FTP-competition bonuses, and the embassy-kickback valuation. Refs #3758.
-int _scoreEstablishOvertureDiplomaticOrder({
-  required DiplomaticOrder order,
-  required String nationId,
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required PersonalityThresholds thresholds,
-  required Map<String, String> provinceOwner,
-  required int improveRelationsCooldownTurns,
-  required int currentTurn,
-  required Orders? sameTurnPriorDiplomaticOrders,
-  required int Function(String targetFactionId, num relationScore)
-  warDesireForTarget,
-}) {
+int _scoreEstablishOvertureDiplomaticOrder(
+  DiplomaticScoringContext ctx,
+  EstablishOvertureScoringParams params,
+) {
+  final order = ctx.order;
+  final nationId = ctx.nationId;
+  final game = ctx.game;
+  final snapshot = ctx.snapshot;
+  final provinceOwner = ctx.provinceOwner;
+  final currentTurn = ctx.currentTurn;
+  final sameTurnPriorDiplomaticOrders = ctx.sameTurnPriorDiplomaticOrders;
+  final warDesireForTarget = ctx.warDesireForTarget;
+  final thresholds = params.thresholds;
+  final improveRelationsCooldownTurns = params.improveRelationsCooldownTurns;
+
   if (shouldSuppressNewWorldColonialOrders(snapshot: snapshot, game: game) &&
       (isTribeFaction(game, order.targetFactionId) ||
           snapshot.colonial.preferredColonialTargetFactionIdsSorted.contains(
