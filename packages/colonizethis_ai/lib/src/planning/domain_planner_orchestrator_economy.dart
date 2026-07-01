@@ -75,7 +75,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   // Refs #3793 decision #10: the Spy demand boost fires when the GP is at war
   // OR pursuing a tech-steal posture (behind the most-advanced rival GP's
   // unlocked-tech count by `kCivilianBuildSpyTechStealDeficit`). This replaces
-  // the prior war-posture-only approximation so `steal_tech` value is reflected
+  // the prior war-posture-only approximation so passive spy RP value is reflected
   // even at peace (SPEC § Live economy wiring; AC4c). Inert unless
   // `civilianBuildPlannerEnabled` (buildCivilianBuildScoringInput returns null).
   final spyDemand =

@@ -183,8 +183,6 @@ unchanged at default values.
 | `kSpyCounterSpyBorderBonus` | 90 | `counter_spy` in a New World region province (frontier/border proxy) |
 | `kSpyPhaseCounterSpyBonus` | 2000 | added to `counter_spy` scores in the DEVELOP phase |
 
-Retired `kSpyStealTech*` / `kSpyPhaseStealTechBonus` constants remain in `ai_victory_config.dart` for GA backward compatibility but are unused after #3834.
-
 The feedstock-extraction and growth-stage gates that decide when each boost
 applies are unchanged; they remain self-clearing pure functions of
 `(game, playerId)` and the static catalogs. Detailed gate behaviour is normative

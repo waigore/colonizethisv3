@@ -884,27 +884,6 @@ final List<AiParameter> victoryConfigParams = <AiParameter>[
         'tile under the feedstock-extraction gate.',
   ),
   _vcInt(
-    'kSpyStealTechBaseWorkScore',
-    kSpyStealTechBaseWorkScore,
-    'Baseline Spy steal_tech work score for any valid candidate.',
-  ),
-  _vcInt(
-    'kSpyStealTechTechDeficitWeight',
-    kSpyStealTechTechDeficitWeight,
-    'Per-tech Spy steal_tech bonus for each tech the rival has that the player '
-        'lacks (deficit capped at 60).',
-  ),
-  _vcInt(
-    'kSpyStealTechHostileRelationsBonus',
-    kSpyStealTechHostileRelationsBonus,
-    'Extra Spy steal_tech score toward an at-war or negative-relation rival.',
-  ),
-  _vcInt(
-    'kSpyStealTechProximityBonus',
-    kSpyStealTechProximityBonus,
-    'Extra Spy steal_tech score when the rival capital is in the Spy\'s region.',
-  ),
-  _vcInt(
     'kSpyCounterSpyBaseWorkScore',
     kSpyCounterSpyBaseWorkScore,
     'Baseline Spy counter_spy work score for any valid candidate.',
@@ -923,11 +902,6 @@ final List<AiParameter> victoryConfigParams = <AiParameter>[
     'kSpyCounterSpyBorderBonus',
     kSpyCounterSpyBorderBonus,
     'Extra Spy counter_spy score in a New World region province.',
-  ),
-  _vcInt(
-    'kSpyPhaseStealTechBonus',
-    kSpyPhaseStealTechBonus,
-    'Phase bonus added to Spy steal_tech scores outside the DEVELOP phase.',
   ),
   _vcInt(
     'kSpyPhaseCounterSpyBonus',

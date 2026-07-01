@@ -358,6 +358,18 @@ void emitSpyResolutionEvents(
         turnNumber: turn,
       ),
     );
+    if (!sink.hasDialogue) continue;
+    final reactive = dialogueEventsForReactiveSpiesDefected(
+      stateAfter,
+      newOwnerId: detail.newOwnerId,
+      previousOwnerId: detail.previousOwnerId,
+      provinceId: detail.provinceId,
+      turnNumber: turn,
+      seed: turn,
+    );
+    for (final e in reactive) {
+      sink.dialogue(e);
+    }
   }
 }
 

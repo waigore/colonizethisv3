@@ -375,8 +375,8 @@ int unlockedTechCount(Player player) {
 /// Whether the Great Power [activePlayerId] is **pursuing a tech-steal posture**
 /// (decision #10, SPEC/ai/civilian-build-planner.md § Live economy wiring): it
 /// has unlocked fewer techs than the most-advanced rival Great Power by at
-/// least [kCivilianBuildSpyTechStealDeficit], so a `steal_tech` target exists
-/// and the civilian Spy build receives the demand boost even at peace.
+/// least [kCivilianBuildSpyTechStealDeficit], so the civilian Spy build receives
+/// the demand boost even at peace (passive RP posture; Refs #3834).
 ///
 /// Iterates [Game.players] (Great Powers only — minor nations and tribes are not
 /// [Player] entries; the list is small and bounded) to find the maximum rival

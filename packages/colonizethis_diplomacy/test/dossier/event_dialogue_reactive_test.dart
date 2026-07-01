@@ -313,5 +313,25 @@ void main() {
       );
       expect(events.single.situation, 'spies_caught');
     });
+
+    test('spies_defected emits only for AI defector and human previous owner', () {
+      final game = dialogueGame(
+        turnNumber: 8,
+        players: const [
+          Player(id: 'h1', displayName: 'Human', isHuman: true),
+          Player(id: 'a1', displayName: 'AI', isHuman: false),
+        ],
+      );
+      final events = dialogueEventsForReactiveSpiesDefected(
+        game,
+        newOwnerId: 'a1',
+        previousOwnerId: 'h1',
+        provinceId: 'oldWorld|P4',
+        turnNumber: 8,
+        seed: 0,
+      );
+      expect(events.single.situation, 'spies_defected');
+      expect(events.single.leaderId, 'a1');
+    });
   });
 }

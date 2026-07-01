@@ -138,5 +138,47 @@ void main() {
         isTrue,
       );
     });
+
+    test('emits reactive spies_defected dialogue when AI gains human spy', () {
+      final game = Game(
+        id: 'g1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 7),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+      );
+      final result = SpyResolutionResult(
+        game: game,
+        defectedSpies: const [
+          SpyDefectedDetail(
+            unitId: 'spy1',
+            previousOwnerId: 'gp1',
+            newOwnerId: 'gp2',
+            provinceId: 'oldWorld|p1',
+          ),
+        ],
+      );
+      final dialogue = <DialogueEvent>[];
+      emitSpyResolutionEvents(
+        game,
+        result,
+        7,
+        TurnEventSink(onDialogue: dialogue.add),
+      );
+      expect(
+        dialogue.any(
+          (e) =>
+              e.category == 'reactive' &&
+              e.situation == 'spies_defected' &&
+              e.leaderId == 'gp2',
+        ),
+        isTrue,
+      );
+    });
   });
 }

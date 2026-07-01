@@ -44,6 +44,32 @@ void main() {
       expect(withCounter, greaterThan(without));
     });
 
+    test('garrison and counter-espionage kill bonuses stack additively', () {
+      final garrisonOnly = _countKills(
+        _gameWithForeignSpy(
+          garrisonRegiments: 5,
+          ownerRunsCounterSpy: false,
+          seed: 7,
+        ),
+      );
+      final counterOnly = _countKills(
+        _gameWithForeignSpy(
+          garrisonRegiments: 0,
+          ownerRunsCounterSpy: true,
+          seed: 7,
+        ),
+      );
+      final combined = _countKills(
+        _gameWithForeignSpy(
+          garrisonRegiments: 5,
+          ownerRunsCounterSpy: true,
+          seed: 7,
+        ),
+      );
+      expect(combined, greaterThan(garrisonOnly));
+      expect(combined, greaterThan(counterOnly));
+    });
+
     test('applies diplomacy penalty and lastInteractionTurn on kill', () {
       final game = _gameWithForeignSpy(garrisonRegiments: 8, seed: 99);
       final relations = [
