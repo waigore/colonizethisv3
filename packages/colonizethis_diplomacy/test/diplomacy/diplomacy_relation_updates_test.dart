@@ -1,8 +1,11 @@
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart';
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_updates.dart';
 import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../support/diplomacy_relation_fixtures.dart';
 
 DiplomacyRelation? _linearScanGetRelation(
   Game game,
@@ -35,12 +38,7 @@ void main() {
   group('applyGrantAidModifier', () {
     test('updates existing relation when pair already present', () {
       final relations = [
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp2',
-          score: 50,
-          level: RelationLevel.neutral,
-        ),
+        peaceRelation('gp1', 'gp2', 50, level: RelationLevel.neutral),
       ];
       final result = applyGrantAidModifier(
         relations: relations,
@@ -57,12 +55,7 @@ void main() {
   group('applySubsidyBoost', () {
     test('updates existing relation when pair already present', () {
       final relations = [
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp2',
-          score: 60,
-          level: RelationLevel.friendly,
-        ),
+        peaceRelation('gp1', 'gp2', 60, level: RelationLevel.friendly),
       ];
       final result = applySubsidyBoost(
         relations: relations,
@@ -74,6 +67,164 @@ void main() {
       expect(result.length, 1);
       expect(result[0].score, 70);
       expect(result[0].lastInteractionTurn, 3);
+    });
+  });
+
+  group('canonicalPairIds', () {
+    test('orders ids canonically regardless of argument order', () {
+      final a = canonicalPairIds('gp2', 'gp1');
+      final b = canonicalPairIds('gp1', 'gp2');
+      expect(a, b);
+    });
+  });
+
+  group('applyGrantAidModifier with no existing relation', () {
+    test('creates a new relation seeded from neutral + 5', () {
+      final relations = applyGrantAidModifier(
+        relations: const [],
+        gpId: 'gp1',
+        targetId: 'minor1',
+        turn: 4,
+      );
+      expect(relations, hasLength(1));
+      final rel = relations.single;
+      expect(rel.score, relationScoreNeutral + 5);
+      expect(rel.level, scoreToLevel(relationScoreNeutral + 5));
+      expect(rel.lastInteractionTurn, 4);
+    });
+  });
+
+  group('applySubsidyBoost with no existing relation', () {
+    test('creates a new relation seeded from neutral + boost', () {
+      final relations = applySubsidyBoost(
+        relations: const [],
+        payerId: 'gp1',
+        targetId: 'tribe1',
+        boost: 6,
+        turn: 8,
+      );
+      expect(relations, hasLength(1));
+      final rel = relations.single;
+      expect(rel.score, relationScoreNeutral + 6);
+      expect(rel.level, scoreToLevel(relationScoreNeutral + 6));
+      expect(rel.lastInteractionTurn, 8);
+    });
+  });
+
+  group('setWarStateForPair with no existing relation', () {
+    test('creates a hostile at-war relation', () {
+      final relations = setWarStateForPair(
+        relations: const [],
+        gpId: 'gp1',
+        targetId: 'gp2',
+        turn: 2,
+      );
+      expect(relations, hasLength(1));
+      final rel = relations.single;
+      expect(rel.state, RelationState.atWar);
+      expect(rel.level, RelationLevel.hostile);
+      expect(rel.sinceTurn, 2);
+      expect(rel.formalAlliance, isFalse);
+    });
+  });
+
+  group('setWarStateForPair clears a formal alliance (war invariant)', () {
+    test('transitioning an allied pair to war drops formalAlliance', () {
+      const allied = DiplomacyRelation(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        score: 80,
+        level: RelationLevel.allied,
+        formalAlliance: true,
+      );
+      final relations = setWarStateForPair(
+        relations: const [allied],
+        gpId: 'gp1',
+        targetId: 'gp2',
+        turn: 5,
+      );
+      final rel = relations.single;
+      expect(rel.state, RelationState.atWar);
+      expect(rel.formalAlliance, isFalse);
+    });
+  });
+
+  group('RelationUpsertIndex', () {
+    test('positive: updates an existing pair in place (canonical order)', () {
+      final index = RelationUpsertIndex([rel('gp1', 'gp2', 40)]);
+      index.upsert('gp2', 'gp1', (e) => e!.copyWith(score: 88));
+      final result = index.toList();
+      expect(result.length, 1);
+      expect(result.single.score, 88);
+    });
+
+    test('positive: appends a new pair and reuses its index on later upserts', () {
+      final index = RelationUpsertIndex([rel('gp1', 'gp2', 40)]);
+      index.upsert('gp3', 'gp4', (e) {
+        expect(e, isNull);
+        return rel('gp3', 'gp4', 10);
+      });
+      index.upsert('gp3', 'gp4', (e) {
+        expect(e, isNotNull);
+        return e!.copyWith(score: 20);
+      });
+      final result = index.toList();
+      expect(result.length, 2);
+      expect(getRelationFromList(result, 'gp3', 'gp4')?.score, 20);
+    });
+
+    test('positive: matches sequential upsertRelation results', () {
+      final start = [rel('a', 'b', 30), rel('c', 'd', 60)];
+
+      var sequential = upsertRelation(
+        start,
+        'a',
+        'b',
+        (e) => e!.copyWith(score: e.score + 5),
+      );
+      sequential = upsertRelation(
+        sequential,
+        'e',
+        'f',
+        (e) => rel('e', 'f', 70),
+      );
+      sequential = upsertRelation(
+        sequential,
+        'c',
+        'd',
+        (e) => e!.copyWith(score: e.score - 10),
+      );
+
+      final index = RelationUpsertIndex(start)
+        ..upsert('a', 'b', (e) => e!.copyWith(score: e.score + 5))
+        ..upsert('e', 'f', (e) => rel('e', 'f', 70))
+        ..upsert('c', 'd', (e) => e!.copyWith(score: e.score - 10));
+      final batched = index.toList();
+
+      expect(batched.length, sequential.length);
+      for (var i = 0; i < sequential.length; i++) {
+        expect(batched[i].factionId1, sequential[i].factionId1);
+        expect(batched[i].factionId2, sequential[i].factionId2);
+        expect(batched[i].score, sequential[i].score);
+      }
+    });
+
+    test('negative: empty start list appends new relations only', () {
+      final index = RelationUpsertIndex(const [])
+        ..upsert('x', 'y', (e) {
+          expect(e, isNull);
+          return rel('x', 'y', 50);
+        });
+      expect(index.length, 1);
+      expect(index.toList().single.score, 50);
+    });
+
+    test('negative: toList returns a defensive copy (no shared mutation)', () {
+      final index = RelationUpsertIndex([rel('a', 'b', 50)]);
+      final snapshot = index.toList();
+      index.upsert('a', 'b', (e) => e!.copyWith(score: 99));
+      expect(snapshot.single.score, 50);
+      expect(index.toList().single.score, 99);
     });
   });
 
@@ -92,16 +243,7 @@ void main() {
         ),
         const DiplomacyRelation(factionId1: 'm1', factionId2: 'm2', score: 3),
       ];
-      final game = Game(
-        id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
-        diplomacyRelations: relations,
-      );
+      final game = relationsOnlyGame(relations: relations);
       final ids = <String>{
         'zebra',
         'alpha',
@@ -136,16 +278,7 @@ void main() {
           stage: OvertureStage.embassy,
         ),
       ];
-      final game = Game(
-        id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
-        overtureStates: overtures,
-      );
+      final game = relationsOnlyGame(overtureStates: overtures);
       expect(
         getOverture(game, 'gp1', 't1'),
         _linearScanGetOverture(game, 'gp1', 't1'),
@@ -160,15 +293,8 @@ void main() {
     test(
       'after upsertRelation, new Game sees updated relation via getRelation',
       () {
-        final g0 = Game(
-          id: 't',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: const [],
-          diplomacyRelations: const [
+        final g0 = relationsOnlyGame(
+          relations: const [
             DiplomacyRelation(factionId1: 'a', factionId2: 'b', score: 40),
           ],
         );
@@ -188,26 +314,21 @@ void main() {
 
   group('AC-5 provinceCountOwnedBy histogram (Refs #2268)', () {
     test('cached counts match full scan for every owner in a two-region setup', () {
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|a', regionId: 'oldWorld', ownerId: 'gp1'),
-              Province(id: 'oldWorld|b', regionId: 'oldWorld', ownerId: 'tribe_x'),
-              Province(id: 'oldWorld|c', regionId: 'oldWorld', ownerId: null),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'gp1'),
-              Province(id: 'newWorld|n2', regionId: 'newWorld', ownerId: 'minor_y'),
-              Province(id: 'newWorld|n3', regionId: 'newWorld', ownerId: 'minor_y'),
-            ],
-          ),
+      final game = relationsOnlyGame(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'oldWorld|a', regionId: 'oldWorld', ownerId: 'gp1'),
+            Province(id: 'oldWorld|b', regionId: 'oldWorld', ownerId: 'tribe_x'),
+            Province(id: 'oldWorld|c', regionId: 'oldWorld', ownerId: null),
+          ],
         ),
-        players: const [],
+        newWorld: RegionData(
+          provinces: [
+            Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'gp1'),
+            Province(id: 'newWorld|n2', regionId: 'newWorld', ownerId: 'minor_y'),
+            Province(id: 'newWorld|n3', regionId: 'newWorld', ownerId: 'minor_y'),
+          ],
+        ),
       );
       const owners = {'gp1', 'tribe_x', 'minor_y', 'nobody', ''};
       for (final id in owners) {
@@ -217,24 +338,17 @@ void main() {
           reason: 'faction $id',
         );
       }
-      // Repeated reads use the same snapshot (histogram built once per Game).
       expect(provinceCountOwnedBy(game, 'gp1'), 2);
       expect(provinceCountOwnedBy(game, 'minor_y'), 2);
     });
 
     test('copyWith new Game instance gets counts from its own worldState', () {
-      final g0 = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'm1'),
-            ],
-          ),
-          newWorld: const RegionData(),
+      final g0 = relationsOnlyGame(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'm1'),
+          ],
         ),
-        players: const [],
       );
       expect(provinceCountOwnedBy(g0, 'm1'), 1);
 
