@@ -613,6 +613,140 @@ void main() {
   );
 
   testWidgets(
+    'DiplomacyPanel pending grantAid shows amount line and Cancel (Refs #3753 R2)',
+    (WidgetTester tester) async {
+      const humanId = kPanelTestHumanPlayerId;
+      const minorId = 'm1';
+      const amount = 2000;
+      final game = buildDiplomacyRichPanelTestGame();
+      final bus = AppEventBus.create();
+      final removeFuture = bus
+          .on<RemoveDiplomaticOrderRequestedEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      final currentOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          humanId: [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.grantAid,
+              targetFactionId: minorId,
+              amount: amount,
+            ),
+          ],
+        },
+      );
+
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: const MapTopology(),
+              currentOrders: currentOrders,
+              bus: bus,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Minors only'));
+      await tester.pump();
+
+      final minorRow = find.byKey(
+        ValueKey('${kDiplomacyRowBodyKeyPrefix}m1'),
+      );
+
+      expect(
+        find.descendant(
+          of: minorRow,
+          matching: find.text(
+            'Pending grant aid: £$amount (resolves end of turn)',
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: minorRow, matching: find.text('Grant Aid')),
+        findsNothing,
+      );
+
+      final cancelButton = find.descendant(
+        of: minorRow,
+        matching: find.text('Cancel'),
+      );
+      await tester.ensureVisible(cancelButton);
+      await tester.tap(cancelButton);
+      await tester.pump();
+
+      final event = await removeFuture;
+      expect(event.playerId, humanId);
+      expect(event.type, DiplomaticOrderType.grantAid);
+      expect(event.targetFactionId, minorId);
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel Grant Aid emits grantOrSubsidy dialog (Refs #3753 R2)',
+    (WidgetTester tester) async {
+      const humanId = kPanelTestHumanPlayerId;
+      const minorId = 'm1';
+      final game = buildDiplomacyRichPanelTestGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: humanId,
+            targetId: minorId,
+            stage: OvertureStage.embassy,
+          ),
+        ],
+      );
+      final bus = AppEventBus.create();
+      final openFuture = bus
+          .on<OpenDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: const MapTopology(),
+              currentOrders: const Orders(),
+              bus: bus,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Minors only'));
+      await tester.pump();
+
+      final minorRow = find.byKey(
+        ValueKey('${kDiplomacyRowBodyKeyPrefix}m1'),
+      );
+      final grantAidButton = find.descendant(
+        of: minorRow,
+        matching: find.text('Grant Aid'),
+      );
+      await tester.ensureVisible(grantAidButton);
+      await tester.tap(grantAidButton);
+      await tester.pump();
+
+      final event = await openFuture;
+      expect(event.dialogId, grantOrSubsidyDialogId);
+      expect(event.params?['isSubsidy'], isFalse);
+      expect(event.params?['targetFactionId'], minorId);
+    },
+  );
+
+  testWidgets(
     'DiplomacyPanel Set Subsidy emits grantOrSubsidy dialog (Refs #3753 S15)',
     (WidgetTester tester) async {
       const humanId = kPanelTestHumanPlayerId;
