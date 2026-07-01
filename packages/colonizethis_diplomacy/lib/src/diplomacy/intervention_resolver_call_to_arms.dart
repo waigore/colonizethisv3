@@ -4,12 +4,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../dossier/evidence_rules.dart'
     show evidenceForIsolationistCallToArmsRefuse;
-import 'diplomacy_logging.dart';
+import 'diplomacy_event_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
 
 class CallToArmsResult {
   CallToArmsResult(this.game, {this.pendingCallToArms});
@@ -67,10 +66,7 @@ Game cancelSubsidiesBetweenGps(
       .toList();
   var g = game.copyWith(subsidyStates: subsidyStates);
   for (final s in cancelled) {
-    diploLog.i(
-      'diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
-    );
-    g = appendDiplomaticEvent(
+    g = logDiplomaticEvent(
       g,
       turn,
       DiplomaticEventType.subsidyCancelled,
@@ -80,6 +76,8 @@ Game cancelSubsidiesBetweenGps(
       reason: 'war',
       wasAiInitiator: isAiControlledForEvidence(g, s.payerId),
       eventTally: eventTally,
+      logMessage:
+          'diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
     );
   }
   return g;

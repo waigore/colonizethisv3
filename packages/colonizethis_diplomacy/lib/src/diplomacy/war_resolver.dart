@@ -7,7 +7,7 @@ import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
 import 'diplomacy_shared_helpers.dart';
 import 'intervention_resolver.dart';
-import 'overture_resolver.dart';
+import 'diplomacy_event_logging.dart';
 
 Game processWarAndPeace(
   Game game,

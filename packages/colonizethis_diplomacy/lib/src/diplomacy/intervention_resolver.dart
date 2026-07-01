@@ -7,7 +7,7 @@ import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_shared_helpers.dart';
 import 'intervention_resolver_apply.dart';
-import 'overture_resolver.dart';
+import 'diplomacy_event_logging.dart';
 
 export 'intervention_resolver_apply.dart';
 export 'intervention_resolver_call_to_arms.dart';

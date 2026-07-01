@@ -5,7 +5,7 @@ import 'alliance_break_cooldown.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
+import 'diplomacy_event_logging.dart';
 
 /// Applies a voluntary alliance break: unified penalties, `allianceBroken`
 /// history, and a one-turn bilateral overture cooldown. Idempotent when no

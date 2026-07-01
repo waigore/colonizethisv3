@@ -2,10 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'diplomacy_event_logging.dart';
+import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
-import 'diplomacy_resolver.dart';
 import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
 
 String _subsidyPairKey(String payerId, String targetId) =>
     '$payerId\x1F$targetId';
@@ -39,7 +39,7 @@ Game terminateAgreementsOnWar(Game game, {IntraTurnEventTally? eventTally}) {
 
   if (clearedForEvents.isNotEmpty) {
     for (final o in clearedForEvents) {
-      game = appendDiplomaticEvent(
+      game = logDiplomaticEvent(
         game,
         turn,
         DiplomaticEventType.agreementsClearedOnWar,
@@ -48,9 +48,10 @@ Game terminateAgreementsOnWar(Game game, {IntraTurnEventTally? eventTally}) {
         toFactionId: o.targetId,
         reason: 'war',
         eventTally: eventTally,
+        logMessage:
+            'diplomacy agreements cleared on war ${o.gpId}-${o.targetId}',
       );
     }
-    diploLog.i('diplomacy agreements terminated (war)');
   }
   return game;
 }

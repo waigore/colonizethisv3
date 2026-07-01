@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
+import 'diplomacy_event_logging.dart';
 
 /// Resolves `boycott` and `revokeBoycott` diplomatic orders (Refs #3753 R6).
 ///

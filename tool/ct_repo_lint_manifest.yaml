@@ -167,6 +167,34 @@ rules:
     runner: dart
     script: tool/check_diplomacy_phase_types_value_equality.dart
 
+  - rule_id: repo.diplomacy_event_logging_unified
+    group: architecture
+    title: colonizethis_diplomacy resolvers must use logDiplomaticEvent, not raw appendDiplomaticEvent (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_event_logging_unified.dart
+
+  - rule_id: repo.diplomacy_treasury_debit_shared
+    group: architecture
+    title: colonizethis_diplomacy lib treasury debits must route through debitPlayerTreasury (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_treasury_debit_shared.dart
+
+  - rule_id: repo.diplomacy_no_loop_upsert_relation
+    group: architecture
+    title: colonizethis_diplomacy lib must not call upsertRelation more than once per function body (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_no_loop_upsert_relation.dart
+
+  - rule_id: repo.diplomacy_test_duplicate_descriptions
+    group: testing
+    title: colonizethis_diplomacy test descriptions must not duplicate across files (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_duplicate_descriptions.dart
+
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
     title: treasury planner must use ProductionRecipesCatalog.producing index, not ProductionRecipesCatalog.all scans (Refs #3288)

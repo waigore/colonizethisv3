@@ -56,13 +56,9 @@ abstract final class FactionAbsorptionEngine {
     int turn,
   ) {
     final cost = joinEmpireCostForMinorOrTribe(game, tribeId);
-    final players = List<Player>.from(game.players);
+    var players = List<Player>.from(game.players);
     final gpIdx = indexByKey(players, (p) => p.id)[gpId] ?? -1;
-    if (gpIdx >= 0) {
-      players[gpIdx] = players[gpIdx].copyWith(
-        treasury: players[gpIdx].treasury - cost,
-      );
-    }
+    players = debitPlayerTreasury(players, gpIdx, cost);
 
     final colonies = game.colonyStates
         .where((c) => c.tribeId != tribeId)
@@ -136,17 +132,11 @@ Game _absorbIntoGp(
     final gpIdx = playerIndexById[gpId] ?? -1;
     final targetIdx = playerIndexById[absorbedFactionId] ?? -1;
     if (gpIdx < 0 || targetIdx < 0) return game;
-    players[gpIdx] = players[gpIdx].copyWith(
-      treasury: players[gpIdx].treasury - cost,
-    );
+    players = debitPlayerTreasury(players, gpIdx, cost);
     players.removeAt(targetIdx);
   } else {
     final gpIdx = playerIndexById[gpId] ?? -1;
-    if (gpIdx >= 0) {
-      players[gpIdx] = players[gpIdx].copyWith(
-        treasury: players[gpIdx].treasury - cost,
-      );
-    }
+    players = debitPlayerTreasury(players, gpIdx, cost);
   }
 
   final provinceIds = _sortedFullProvinceIdsOwnedBy(game, absorbedFactionId);

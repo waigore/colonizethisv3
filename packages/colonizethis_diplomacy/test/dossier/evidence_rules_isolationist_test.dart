@@ -85,7 +85,7 @@ void main() {
       expect(entries, isEmpty);
     });
 
-    test('no human observer returns no evidence', () {
+    test('isolationist call to arms: no human observer returns no evidence', () {
       final game = evidenceGame(
         turnNumber: 3,
         players: const [

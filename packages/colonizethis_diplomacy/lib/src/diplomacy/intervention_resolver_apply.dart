@@ -2,10 +2,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_combat/src/combat/conflict_detection.dart';
+import 'diplomacy_event_logging.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
 
 /// True when [gpId] has purchased land tiles inside provinces owned by
 /// [factionId]. Package-visible so the intervention resolver library can reuse
@@ -53,7 +53,7 @@ Game applyInterventionAgainstAggressor(
       interveningGpId,
       defenderMinorOrTribeId,
     ).game;
-    g = appendDiplomaticEvent(
+    g = logDiplomaticEvent(
       g,
       turn,
       DiplomaticEventType.interventionDoNothing,
@@ -61,20 +61,17 @@ Game applyInterventionAgainstAggressor(
       fromFactionId: interveningGpId,
       toFactionId: aggressorGpId,
       eventTally: eventTally,
+      logMessage:
+          'diplomacy intervention do nothing $interveningGpId vs $aggressorGpId',
     );
     return g;
   }
 
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
 
   if (choice == InterventionChoice.intervene) {
     final ids = canonicalPairIds(interveningGpId, aggressorGpId);
-    // Single isolated upsert for one intervention choice (not a loop), so the
-    // standalone helper is acceptable here over RelationUpsertIndex (Refs #3562
-    // AC5).
-    relations = upsertRelation(relations, interveningGpId, aggressorGpId, (
-      existing,
-    ) {
+    relationsIndex.upsert(interveningGpId, aggressorGpId, (existing) {
       if (existing == null) {
         return DiplomacyRelation(
           factionId1: ids.id1,
@@ -105,11 +102,7 @@ Game applyInterventionAgainstAggressor(
     });
   } else if (choice == InterventionChoice.protest) {
     final ids = canonicalPairIds(interveningGpId, aggressorGpId);
-    // Single isolated upsert for one intervention choice (not a loop); see AC5
-    // note above (Refs #3562).
-    relations = upsertRelation(relations, interveningGpId, aggressorGpId, (
-      existing,
-    ) {
+    relationsIndex.upsert(interveningGpId, aggressorGpId, (existing) {
       final delta = warDeclarationThirdPartyPenaltyDelta(game, aggressorGpId);
       final newScore = ((existing?.score ?? relationScoreNeutral) - delta)
           .clamp(relationScoreMin, relationScoreMax);
@@ -131,11 +124,11 @@ Game applyInterventionAgainstAggressor(
     });
   }
 
-  var g = game.copyWith(diplomacyRelations: relations);
+  var g = game.copyWith(diplomacyRelations: relationsIndex.toList());
   final eventType = choice == InterventionChoice.intervene
       ? DiplomaticEventType.interventionIntervene
       : DiplomaticEventType.interventionProtest;
-  g = appendDiplomaticEvent(
+  g = logDiplomaticEvent(
     g,
     turn,
     eventType,
@@ -143,6 +136,8 @@ Game applyInterventionAgainstAggressor(
     fromFactionId: interveningGpId,
     toFactionId: aggressorGpId,
     eventTally: eventTally,
+    logMessage:
+        'diplomacy intervention $choice $interveningGpId vs $aggressorGpId',
   );
   return g;
 }
