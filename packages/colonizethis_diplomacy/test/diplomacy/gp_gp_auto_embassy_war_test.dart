@@ -3,31 +3,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
-Game _twoGpGame({
-  required List<OvertureState> overtureStates,
-  RelationState relationState = RelationState.atPeace,
-}) {
-  return TestFixtures.minimalGame(
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        state: relationState,
-        score: 50,
-      ),
-    ],
-    overtureStates: overtureStates,
-  );
-}
+import '../support/diplomacy_game_fixtures.dart';
 
 void main() {
   group('applyGpGpWarOvertureRules (Refs #3753 S3)', () {
     test('preserves embassy-tier overtures between warring GPs', () {
-      final game = _twoGpGame(
+      final game = twoGpGpWarOvertureGame(
+        relationState: RelationState.atWar,
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -42,7 +24,6 @@ void main() {
             sinceTurn: 0,
           ),
         ],
-        relationState: RelationState.atWar,
       );
 
       final result = applyGpGpWarOvertureRules(game, 'gp1', 'gp2');
@@ -53,7 +34,7 @@ void main() {
     });
 
     test('downgrades NAP to embassy and records change', () {
-      final game = _twoGpGame(
+      final game = twoGpGpWarOvertureGame(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -79,7 +60,7 @@ void main() {
     });
 
     test('removes consulate-tier GP–GP overtures on war', () {
-      final game = _twoGpGame(
+      final game = twoGpGpWarOvertureGame(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -99,7 +80,7 @@ void main() {
 
   group('terminateAgreementsOnWar GP–GP (Refs #3753 S3)', () {
     test('embassy survives war; NAP cleared via downgrade', () {
-      final game = _twoGpGame(
+      final game = twoGpGpWarOvertureGame(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -158,7 +139,7 @@ void main() {
 
   group('resolveDiplomacyPhase GP–GP war then peace (Refs #3753 S3)', () {
     test('embassy persists through declare war and offer peace', () {
-      var game = _twoGpGame(
+      var game = twoGpGpWarOvertureGame(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',

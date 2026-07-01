@@ -2,55 +2,13 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 /// Regression coverage for the O(1) intervention-choice lookup (Refs #3419 step
 /// 6). When one aggressor declares war on two Minors in the same turn and an AI
 /// GP is invested in both, that GP must record exactly one intervention choice
 /// toward the aggressor for the turn — the second defender sees the already
 /// recorded key and is skipped, identical to the prior history-scan behaviour.
-Game _twoMinorWarGame() {
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp_attacker', displayName: 'Aggressor', isHuman: false),
-      Player(id: 'gp_ai', displayName: 'AI Investor', isHuman: false),
-    ],
-    minorNations: const [
-      MinorNation(id: 'minor1', displayName: 'Minor 1'),
-      MinorNation(id: 'minor2', displayName: 'Minor 2'),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: 'gp_ai',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-      OvertureState(
-        gpId: 'gp_ai',
-        targetId: 'minor2',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'gp_attacker',
-        factionId2: 'minor1',
-        state: RelationState.atPeace,
-      ),
-      DiplomacyRelation(
-        factionId1: 'gp_attacker',
-        factionId2: 'minor2',
-        state: RelationState.atPeace,
-      ),
-    ],
-  );
-}
 
 int _interventionChoiceCount(Game game, String from, String to) {
   return game.diplomaticHistoryEvents.where((e) {
@@ -81,7 +39,7 @@ void main() {
           },
         );
 
-        final result = resolveDiplomacyPhase(_twoMinorWarGame(), orders);
+        final result = resolveDiplomacyPhase(twoMinorWarGame(), orders);
         // No human is invested, so the phase fully resolves (no pending prompt).
         expect(result.isPending, isFalse);
         expect(
@@ -94,7 +52,7 @@ void main() {
     test(
       'negative: a pre-recorded choice this turn suppresses re-processing',
       () {
-        final base = _twoMinorWarGame();
+        final base = twoMinorWarGame();
         // Seed a recorded choice for this turn so the resolver treats the AI
         // GP as already decided and emits no further intervention events.
         final seeded = base.copyWith(

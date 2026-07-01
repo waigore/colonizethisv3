@@ -2,70 +2,10 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 /// Tests the voluntary `breakAlliance` order resolution and the unified
 /// alliance-break penalty (R11). SPEC/game/diplomacy.md § Alliances.
-Game _fourGpGame({
-  required int gp1gp2Score,
-  required bool gp1gp2FormalAlliance,
-  RelationState gp1gp2State = RelationState.atPeace,
-  int gp1gp3Score = 60,
-  int gp1gp4Score = 60,
-}) {
-  return Game(
-    id: 'g-break',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-      Player(id: 'gp3', displayName: 'GP3', isHuman: false),
-      Player(id: 'gp4', displayName: 'GP4', isHuman: false),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        score: gp1gp2Score,
-        level: scoreToLevel(gp1gp2Score),
-        state: gp1gp2State,
-        sinceTurn: 0,
-        lastInteractionTurn: 0,
-        formalAlliance: gp1gp2FormalAlliance,
-      ),
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp3',
-        score: gp1gp3Score,
-        level: scoreToLevel(gp1gp3Score),
-        state: RelationState.atPeace,
-        sinceTurn: 0,
-        lastInteractionTurn: 0,
-      ),
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp4',
-        score: gp1gp4Score,
-        level: scoreToLevel(gp1gp4Score),
-        state: RelationState.atPeace,
-        sinceTurn: 0,
-        lastInteractionTurn: 0,
-      ),
-      // Control: a relation not involving the breaker must be untouched.
-      DiplomacyRelation(
-        factionId1: 'gp2',
-        factionId2: 'gp3',
-        score: 50,
-        level: RelationLevel.neutral,
-        state: RelationState.atPeace,
-        sinceTurn: 0,
-        lastInteractionTurn: 0,
-      ),
-    ],
-  );
-}
 
 Map<String, List<DiplomaticOrder>> _breakOrder(String gpId, String targetId) =>
     {
@@ -82,7 +22,7 @@ void main() {
     test(
       'breaks formal alliance: -50 to ally, -10 to every other GP, clears flag',
       () {
-        final game = _fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: true);
+        final game = fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: true);
         final result = processBreakAlliances(
           game,
           _breakOrder('gp1', 'gp2'),
@@ -112,7 +52,7 @@ void main() {
     );
 
     test('clamps the ally penalty at the relation-score minimum', () {
-      final game = _fourGpGame(
+      final game = fourGpGame(
         gp1gp2Score: 40,
         gp1gp2FormalAlliance: true,
         gp1gp3Score: 5,
@@ -133,7 +73,7 @@ void main() {
         // Under the war invariant (SPEC/game/diplomacy.md § Alliances) an at-war
         // pair can never hold a formal alliance, so a break order against it
         // finds nothing to break and applies no penalty / no event.
-        final game = _fourGpGame(
+        final game = fourGpGame(
           gp1gp2Score: 30,
           gp1gp2FormalAlliance: false,
           gp1gp2State: RelationState.atWar,
@@ -156,7 +96,7 @@ void main() {
     );
 
     test('no-op when no formal alliance exists (no penalty, no event)', () {
-      final game = _fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: false);
+      final game = fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: false);
       final result = processBreakAlliances(
         game,
         _breakOrder('gp1', 'gp2'),
@@ -174,7 +114,7 @@ void main() {
     test(
       'AC14: phase-4a break is idempotent after human immediate break same turn',
       () {
-        final game = _fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: true);
+        final game = fourGpGame(gp1gp2Score: 80, gp1gp2FormalAlliance: true);
         final membership = DiplomacyFactionMembership.from(game);
         final afterImmediate = applyVoluntaryAllianceBreak(
           game,

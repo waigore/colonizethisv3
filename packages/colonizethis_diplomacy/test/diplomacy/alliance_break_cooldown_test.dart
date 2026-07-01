@@ -2,37 +2,15 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-Game _twoGpGame({List<AllianceBreakCooldownState> cooldowns = const []}) {
-  return Game(
-    id: 'g',
-    worldState: const WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 5),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: true),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        score: 80,
-        formalAlliance: true,
-      ),
-    ],
-    allianceBreakCooldowns: cooldowns,
-  );
-}
+import '../support/diplomacy_game_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('isAllianceBreakCooldownActive', () {
     test('active only on the break turn', () {
-      final game = _twoGpGame(
-        cooldowns: const [
+      final game = twoGpGame(
+        allianceBreakCooldowns: const [
           AllianceBreakCooldownState(
             factionId1: 'gp1',
             factionId2: 'gp2',
@@ -53,7 +31,7 @@ void main() {
 
   group('applyVoluntaryAllianceBreak', () {
     test('records cooldown and clears formal alliance', () {
-      final game = _twoGpGame();
+      final game = twoGpGame();
       final membership = DiplomacyFactionMembership.from(game);
       final next = applyVoluntaryAllianceBreak(
         game,
@@ -70,7 +48,7 @@ void main() {
     });
 
     test('idempotent when no formal alliance remains', () {
-      final game = _twoGpGame().copyWith(
+      final game = twoGpGame().copyWith(
         diplomacyRelations: const [
           DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 50),
         ],

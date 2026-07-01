@@ -2,6 +2,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomacy_game_fixtures.dart';
+
 /// Composed end-to-end Diplomacy-phase integration (Refs #3753 S17): verifies
 /// the interaction between the unified alliance-break ripple (R11) and the
 /// final per-turn relation decay step (R9.3/R9.4 skip-on-event) when both run
@@ -14,54 +16,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// step that runs later in the same phase, while an uninvolved pair still
 /// decays toward equilibrium 50. SPEC/game/diplomacy.md § Alliances /
 /// § Relation Model; SPEC/program/diplomacy-resolution.md.
-Game _fourGpGame({
-  required num gp1gp2Score,
-  required num gp1gp3Score,
-  required num gp1gp4Score,
-  required num gp2gp3Score,
-}) {
-  DiplomacyRelation rel(
-    String a,
-    String b,
-    num score, {
-    bool formalAlliance = false,
-  }) {
-    final ids = canonicalPairIds(a, b);
-    return DiplomacyRelation(
-      factionId1: ids.id1,
-      factionId2: ids.id2,
-      score: score,
-      level: scoreToLevel(score),
-      state: RelationState.atPeace,
-      sinceTurn: 0,
-      lastInteractionTurn: 0,
-      formalAlliance: formalAlliance,
-    );
-  }
-
-  return Game(
-    id: 'g-break-decay',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-      Player(id: 'gp3', displayName: 'GP3', isHuman: false),
-      Player(id: 'gp4', displayName: 'GP4', isHuman: false),
-    ],
-    diplomacyRelations: [
-      rel('gp1', 'gp2', gp1gp2Score, formalAlliance: true),
-      rel('gp1', 'gp3', gp1gp3Score),
-      rel('gp1', 'gp4', gp1gp4Score),
-      // Control pair: does not involve the breaker (gp1), so it receives no
-      // alliance-break event and must still decay toward 50.
-      rel('gp2', 'gp3', gp2gp3Score),
-    ],
-  );
-}
 
 Orders _breakOrders(String gpId, String targetId) => Orders(
   diplomaticOrdersByPlayerId: {
@@ -84,7 +38,7 @@ void main() {
         () {
           // gp2-gp3 (80) is untouched by gp1 breaking with gp2, so the final
           // decay step pulls it -4 toward equilibrium 50.
-          final game = _fourGpGame(
+          final game = fourGpBreakDecayGame(
             gp1gp2Score: 80,
             gp1gp3Score: 80,
             gp1gp4Score: 80,
@@ -99,7 +53,7 @@ void main() {
       test(
         'negative: every pair the break penalty modified is skipped by decay',
         () {
-          final game = _fourGpGame(
+          final game = fourGpBreakDecayGame(
             gp1gp2Score: 80,
             gp1gp3Score: 80,
             gp1gp4Score: 80,
@@ -122,7 +76,7 @@ void main() {
       );
 
       test('positive: exactly one allianceBroken event is recorded', () {
-        final game = _fourGpGame(
+        final game = fourGpBreakDecayGame(
           gp1gp2Score: 80,
           gp1gp3Score: 80,
           gp1gp4Score: 80,
@@ -145,7 +99,7 @@ void main() {
         () {
           // Without a breakAlliance order the alliance survives and, with no
           // events at all, every non-war pair off equilibrium decays -4.
-          final game = _fourGpGame(
+          final game = fourGpBreakDecayGame(
             gp1gp2Score: 80,
             gp1gp3Score: 80,
             gp1gp4Score: 80,
