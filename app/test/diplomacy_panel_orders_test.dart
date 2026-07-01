@@ -219,6 +219,110 @@ void main() {
   );
 
   testWidgets(
+    'DiplomacyPanel colony holder shows Boycott enabled on GP row (Refs #3753 S14)',
+    (WidgetTester tester) async {
+      const humanId = kPanelTestHumanPlayerId;
+      const target = 'gp2';
+      final game = buildDiplomacyPanelTestGame().copyWith(
+        colonyStates: const [
+          ColonyState(tribeId: 't1', colonyOfGpId: humanId, sinceTurn: 1),
+        ],
+        tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
+      );
+      final bus = AppEventBus.create();
+      final appendFuture = bus
+          .on<AppendDiplomaticOrderRequestedEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
+        event.result(true);
+      });
+      addTearDown(confirmSub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: const MapTopology(),
+              currentOrders: const Orders(),
+              bus: bus,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Boycott'), findsOneWidget);
+      expect(find.text('Revoke Boycott'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Boycott'));
+      await tester.tap(find.text('Boycott'));
+      await tester.pump();
+
+      final event = await appendFuture;
+      expect(event.playerId, humanId);
+      expect(event.order.type, DiplomaticOrderType.boycott);
+      expect(event.order.targetFactionId, target);
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel active boycott shows Revoke Boycott enabled on GP row (Refs #3753 S14)',
+    (WidgetTester tester) async {
+      const humanId = kPanelTestHumanPlayerId;
+      const target = 'gp2';
+      final game = buildDiplomacyPanelTestGame().copyWith(
+        colonyStates: const [
+          ColonyState(tribeId: 't1', colonyOfGpId: humanId, sinceTurn: 1),
+        ],
+        tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
+        boycottStates: const [
+          BoycottState(gpId: humanId, targetGpId: target, sinceTurn: 1),
+        ],
+      );
+      final bus = AppEventBus.create();
+      final appendFuture = bus
+          .on<AppendDiplomaticOrderRequestedEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
+        event.result(true);
+      });
+      addTearDown(confirmSub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: const MapTopology(),
+              currentOrders: const Orders(),
+              bus: bus,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Revoke Boycott'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Revoke Boycott'));
+      await tester.tap(find.text('Revoke Boycott'));
+      await tester.pump();
+
+      final event = await appendFuture;
+      expect(event.playerId, humanId);
+      expect(event.order.type, DiplomaticOrderType.revokeBoycott);
+      expect(event.order.targetFactionId, target);
+    },
+  );
+
+  testWidgets(
     'DiplomacyPanel pending boycott shows Cancel and removes on tap (Refs #3753 S14)',
     (WidgetTester tester) async {
       const humanId = kPanelTestHumanPlayerId;
