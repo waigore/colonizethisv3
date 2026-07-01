@@ -3,6 +3,8 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 /// Tests for `TradeOrderSuggester.suggest` per
 /// `SPEC/program/world-market-resolution.md` § Trade order suggestion API.
 /// Refs #2989 A6. Treasury-cap (rule 5) cases live in
@@ -10,13 +12,7 @@ import 'package:colonizethis_test/test.dart';
 void main() {
   group('TradeOrderSuggester.suggest — empty / defensive paths', () {
     test('empty context returns empty result', () {
-      final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
-        ),
-      );
+      final result = TradeOrderSuggester.suggest(suggesterCtx());
       expect(result.isEmpty, isTrue);
       expect(result.offers, isEmpty);
       expect(result.bids, isEmpty);
@@ -24,9 +20,7 @@ void main() {
 
     test('negative tradeCargoCapacity returns empty result', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
+        suggesterCtx(
           tradeCargoCapacity: -1,
           availableStockpileByCommodityId: {'timber': 10},
           commodityNeedByCommodityId: {'iron': 10},
@@ -39,10 +33,7 @@ void main() {
       'negative entries in available/need maps are silently dropped (no throw)',
       () {
         final result = TradeOrderSuggester.suggest(
-          const TradeSuggestionContext(
-            playerId: 'gp1',
-            bidTypeCap: 3,
-            tradeCargoCapacity: 100,
+          suggesterCtx(
             availableStockpileByCommodityId: {'timber': -5, 'iron': 10},
             commodityNeedByCommodityId: {'coal': -3, 'wool': 4},
           ),
@@ -60,12 +51,7 @@ void main() {
       'positive available stockpile produces an offer with that quantity',
       () {
         final result = TradeOrderSuggester.suggest(
-          const TradeSuggestionContext(
-            playerId: 'gp1',
-            bidTypeCap: 3,
-            tradeCargoCapacity: 100,
-            availableStockpileByCommodityId: {'timber': 12},
-          ),
+          suggesterCtx(availableStockpileByCommodityId: {'timber': 12}),
         );
         expect(result.offers, hasLength(1));
         final offer = result.offers.single;
@@ -80,10 +66,7 @@ void main() {
 
     test('zero / missing available is not offered', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
+        suggesterCtx(
           availableStockpileByCommodityId: {'timber': 0, 'iron': 5},
         ),
       );
@@ -94,10 +77,7 @@ void main() {
 
     test('riches commodities are excluded from offers', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
+        suggesterCtx(
           availableStockpileByCommodityId: {
             'spices': 100,
             'gold': 50,
@@ -111,10 +91,7 @@ void main() {
 
     test('offers iterate in alphabetical commodity id order (determinism)', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
+        suggesterCtx(
           availableStockpileByCommodityId: {
             'wool': 4,
             'coal': 2,
@@ -137,12 +114,7 @@ void main() {
       'positive need with zero stockpile produces a bid with that quantity',
       () {
         final result = TradeOrderSuggester.suggest(
-          const TradeSuggestionContext(
-            playerId: 'gp1',
-            bidTypeCap: 3,
-            tradeCargoCapacity: 100,
-            commodityNeedByCommodityId: {'timber': 8},
-          ),
+          suggesterCtx(commodityNeedByCommodityId: {'timber': 8}),
         );
         expect(result.bids, hasLength(1));
         final bid = result.bids.single;
@@ -158,10 +130,7 @@ void main() {
     test('mutual-exclusion at suggestion time: same commodity with stockpile=5 '
         'and need=9 produces a deficit bid of 4 only (no offer)', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
+        suggesterCtx(
           availableStockpileByCommodityId: {'timber': 5},
           commodityNeedByCommodityId: {'timber': 9},
         ),
@@ -174,10 +143,7 @@ void main() {
 
     test('riches commodities are excluded from bids even when needed', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
+        suggesterCtx(
           commodityNeedByCommodityId: {'gems': 5, 'gold': 5, 'timber': 4},
         ),
       );
@@ -190,10 +156,8 @@ void main() {
   group('TradeOrderSuggester.suggest — bid type cap (rule 4)', () {
     test('bidTypeCap=0 suppresses every bid', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
+        suggesterCtx(
           bidTypeCap: 0,
-          tradeCargoCapacity: 100,
           commodityNeedByCommodityId: {'timber': 4, 'iron': 3},
         ),
       );
@@ -205,10 +169,7 @@ void main() {
       'bidTypeCap=3 admits the first three alphabetical commodities only',
       () {
         final result = TradeOrderSuggester.suggest(
-          const TradeSuggestionContext(
-            playerId: 'gp1',
-            bidTypeCap: 3,
-            tradeCargoCapacity: 100,
+          suggesterCtx(
             commodityNeedByCommodityId: {
               'wool': 5,
               'coal': 5,
@@ -229,10 +190,8 @@ void main() {
 
     test('bidTypeCap=6 admits up to six distinct commodities', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
+        suggesterCtx(
           bidTypeCap: 6,
-          tradeCargoCapacity: 100,
           commodityNeedByCommodityId: {
             'cattle': 1,
             'coal': 1,
@@ -259,9 +218,7 @@ void main() {
   group('TradeOrderSuggester.suggest — cumulative cargo cap (rule 5)', () {
     test('cargo budget is consumed across distinct bids (per-buyer total)', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
+        suggesterCtx(
           tradeCargoCapacity: 6,
           commodityNeedByCommodityId: {'coal': 4, 'iron': 5},
         ),
@@ -279,9 +236,7 @@ void main() {
 
     test('per-commodity bid never exceeds tradeCargoCapacity', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
+        suggesterCtx(
           tradeCargoCapacity: 10,
           commodityNeedByCommodityId: {'timber': 999},
         ),
@@ -292,9 +247,7 @@ void main() {
 
     test('zero cargo budget suppresses bids entirely', () {
       final result = TradeOrderSuggester.suggest(
-        const TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
+        suggesterCtx(
           tradeCargoCapacity: 0,
           commodityNeedByCommodityId: {'timber': 5},
         ),
@@ -307,9 +260,7 @@ void main() {
     test(
       'every suggested order is accepted by TradeOrderValidator.validate',
       () {
-        const context = TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
+        final context = suggesterCtx(
           tradeCargoCapacity: 12,
           treasuryBudgetForBids: 500,
           availableStockpileByCommodityId: {'timber': 10, 'wool': 0},
@@ -342,10 +293,8 @@ void main() {
       'mixed surplus/deficit submission produces no commodity in both lists',
       () {
         final result = TradeOrderSuggester.suggest(
-          const TradeSuggestionContext(
-            playerId: 'gp1',
+          suggesterCtx(
             bidTypeCap: 6,
-            tradeCargoCapacity: 100,
             availableStockpileByCommodityId: {'timber': 50, 'wool': 5},
             commodityNeedByCommodityId: {
               'wool': 8, // net = -3 → bid only

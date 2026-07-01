@@ -7,6 +7,14 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void main() {
+  late final TileMapResult ironTileMap;
+  late final TileMapResult grainTileMap;
+
+  setUpAll(() {
+    ironTileMap = singleTileMap(Resource.iron);
+    grainTileMap = singleTileMap(Resource.grain);
+  });
+
   group('ResourceExtractor', () {
     test('extracts wool and copper when present on tile map', () {
       final grid = [
@@ -55,7 +63,7 @@ void main() {
     });
 
     test('mineral tiles without prospected are excluded from extraction', () {
-      final tileMap = singleTileMap(Resource.iron);
+      final tileMap = ironTileMap;
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 2)
           .setRoadLevel('oldWorld|p1|0|0', 2);
@@ -71,7 +79,7 @@ void main() {
     });
 
     test('mineral from prospected tile counts in land', () {
-      final tileMap = singleTileMap(Resource.iron);
+      final tileMap = ironTileMap;
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 2)
           .setRoadLevel('oldWorld|p1|0|0', 2);
@@ -91,7 +99,7 @@ void main() {
     });
 
     test('effective extraction capped by province townDevelopmentLevel', () {
-      final tileMap = singleTileMap(Resource.grain);
+      final tileMap = grainTileMap;
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 4)
           .setRoadLevel('oldWorld|p1|0|0', 4);
