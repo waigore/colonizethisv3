@@ -49,8 +49,8 @@ void main() {
       tileMapByRegion: null,
     );
 
-    test('resolveValidTileKeys returns post-filter cache for counter_spy and '
-        'purchase_land', () {
+    test('resolveValidTileKeys returns post-filter cache for counter-spy and '
+        'purchase-land targets', () {
       const counterTile = 'oldWorld|owned|1|1';
       const purchaseTile = 'oldWorld|minor|2|2';
 
