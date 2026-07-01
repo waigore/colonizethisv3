@@ -68,6 +68,25 @@ int? effectiveMarketPriceForCommodityId({
   return resourceRules.defaultMarketPriceForCommodityId(commodityId);
 }
 
+/// Treasury spend for a single bid order: `quantity × effectiveMarketPrice`.
+///
+/// Returns `0` for offers, non-positive quantities, or when no effective
+/// price exists (`null` from [effectiveMarketPriceForCommodityId]).
+int bidTreasurySpendForOrder({
+  required TradeOrder order,
+  required WorldMarketState worldMarket,
+  required data.ResourceRules resourceRules,
+}) {
+  if (order.type != TradeOrderType.bid || order.quantity <= 0) return 0;
+  final int? price = effectiveMarketPriceForCommodityId(
+    commodityId: order.commodityId,
+    worldMarket: worldMarket,
+    resourceRules: resourceRules,
+  );
+  if (price == null) return 0;
+  return order.quantity * price;
+}
+
 /// Sum of `quantity × effectiveMarketPrice` across every staged
 /// `TradeOrderType.bid` for [playerId] in [orders].
 ///
@@ -107,15 +126,11 @@ int _sumBidSpend({
   if (orders == null || orders.isEmpty) return 0;
   int total = 0;
   for (final TradeOrder o in orders) {
-    if (o.type != TradeOrderType.bid) continue;
-    if (o.quantity <= 0) continue;
-    final int? price = effectiveMarketPriceForCommodityId(
-      commodityId: o.commodityId,
+    total += bidTreasurySpendForOrder(
+      order: o,
       worldMarket: game.worldMarketState,
       resourceRules: resourceRules,
     );
-    if (price == null) continue;
-    total += o.quantity * price;
   }
   return total;
 }

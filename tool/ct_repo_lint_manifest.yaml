@@ -118,6 +118,34 @@ rules:
     runner: dart
     script: tool/check_economy_test_duplicate_descriptions.dart
 
+  - rule_id: repo.economy_test_no_duplicate_fixtures
+    group: testing
+    title: colonizethis_economy test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3823)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_duplicate_fixtures.dart
+
+  - rule_id: repo.economy_test_no_local_world_market_support
+    group: testing
+    title: colonizethis_economy test/ must not host world_market_* or first_right_* test_support files (Refs #3823)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_local_world_market_support.dart
+
+  - rule_id: repo.economy_bid_treasury_spend_shared
+    group: architecture
+    title: economy trade_order_validator must delegate bid spend to bidTreasurySpendForOrder in treasury_bid_budget.dart (Refs #3823)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_bid_treasury_spend_shared.dart
+
+  - rule_id: repo.economy_test_file_size
+    group: testing
+    title: colonizethis_economy test files must stay at or below 400 physical lines (Refs #3823)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_file_size.dart
+
   - rule_id: repo.diplomacy_test_no_duplicate_fixtures
     group: testing
     title: colonizethis_diplomacy test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3715)

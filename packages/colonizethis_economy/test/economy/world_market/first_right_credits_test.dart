@@ -3,7 +3,7 @@ import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_ind
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'first_right_credits_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 int _alwaysZero(String _, String __) => 0;
 

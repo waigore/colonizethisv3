@@ -2,7 +2,7 @@ import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_ind
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// SPEC: SPEC/game/world-market-first-right-of-refusal.md
 /// § Acceptance criteria → Purchased-tile index (D1) ACs D1-1 through D1-7.
