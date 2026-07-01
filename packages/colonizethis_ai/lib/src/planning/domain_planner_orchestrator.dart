@@ -112,11 +112,6 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
         snapshot: snapshot,
         personalityId: config.personalityId,
       );
-  final economyPhaseGates = EconomyPhaseGates.fromPhasePlan(
-    phasePlan: resolvedPhasePlan,
-    snapshot: snapshot,
-  );
-
   var ctx = PlannerContext(
     nationId: nationId,
     view: view,
@@ -136,7 +131,6 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
-    economyPhaseGates: economyPhaseGates,
     economyPlan: economyPlan,
     tileMapByRegion: options.tileMapByRegion,
     emit: emit,

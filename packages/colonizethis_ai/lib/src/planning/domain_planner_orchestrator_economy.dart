@@ -30,11 +30,14 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
-  required EconomyPhaseGates economyPhaseGates,
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
 }) {
+  final economyPhaseGates = EconomyPhaseGates.fromPhasePlan(
+    phasePlan: phasePlan,
+    snapshot: snapshot,
+  );
   final growthStagePlannerEnabled = ctx.growthStagePlannerEnabled;
   // Refs #3288: accumulate the orchestrator-emitted economy families (work,
   // recruit, build) into a single mutable [OrdersBuilder] and freeze once,
