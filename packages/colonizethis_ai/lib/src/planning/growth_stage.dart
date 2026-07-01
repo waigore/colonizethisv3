@@ -2,6 +2,7 @@
 
 import '../perception/perception_snapshot.dart';
 import 'ai_commodity_ids.dart';
+import 'effective_labour_state.dart';
 import 'planning_imports.dart';
 
 /// When true, growth-stage scoring replaces H8 reactive boosts in the economy
@@ -76,17 +77,8 @@ class GrowthStage {
       );
     }
 
-    final regimentCounts = regimentTypeCountsForPlayer(
-      game.worldState,
-      playerId,
-    );
-    final shipCounts = shipTypeCountsForPlayer(game.worldState, playerId);
-    final effectiveLabour = effectiveLabourForWorkers(
-      workers: player.workerPool,
-      stockpile: player.stockpile,
-      regimentCountsById: regimentCounts,
-      shipCountsById: shipCounts,
-    );
+    final effectiveLabour =
+        EffectiveLabourState.fromGame(game, playerId).compute();
     final stockpile = player.stockpile;
 
     var workerGrowth = _clamp01(

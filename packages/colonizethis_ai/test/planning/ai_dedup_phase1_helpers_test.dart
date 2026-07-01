@@ -1,5 +1,7 @@
+import 'package:colonizethis_ai/src/planning/effective_labour_state.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_ai/src/planning/scored_candidate.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
@@ -70,6 +72,13 @@ void main() {
         (a, b) => a.compareTo(b),
       );
       expect(ranked, ['a', 'b', 'c']);
+    });
+  });
+
+  group('EffectiveLabourState', () {
+    test('fromGame returns zero labour for missing player', () {
+      final game = TestFixtures.minimalGame();
+      expect(EffectiveLabourState.fromGame(game, 'missing').compute(), 0);
     });
   });
 }

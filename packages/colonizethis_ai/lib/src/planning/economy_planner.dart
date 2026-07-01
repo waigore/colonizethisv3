@@ -13,6 +13,7 @@ import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
 import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
 import 'ai_commodity_ids.dart';
+import 'effective_labour_state.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 import 'scored_candidate.dart';
@@ -82,17 +83,7 @@ EconomyPlan runEconomyPlanner({
 
   final stockpile = player.stockpile;
   final workers = player.workerPool;
-  final regimentCounts = regimentTypeCountsForPlayer(
-    game.worldState,
-    view.playerId,
-  );
-  final shipCounts = shipTypeCountsForPlayer(game.worldState, view.playerId);
-  final effectiveLabour = effectiveLabourForWorkers(
-    workers: workers,
-    stockpile: stockpile,
-    regimentCountsById: regimentCounts,
-    shipCountsById: shipCounts,
-  );
+  final effectiveLabour = EffectiveLabourState.fromGame(game, view.playerId).compute();
 
   final belowQuotaPeaceTreasuryRecovery = _resolveBelowQuotaPeaceTreasuryRecovery(
     game: game,

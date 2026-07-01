@@ -7,6 +7,7 @@
 // (all workers fed — not a food-starvation case).
 
 import 'ai_commodity_ids.dart';
+import 'effective_labour_state.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart' show feasibleRuns;
 
@@ -40,12 +41,7 @@ bool isCastIronLabourPopulationBoundForLockRecoverySeller({
   );
   if (!materialFeasible) return false;
 
-  final effectiveLabour = effectiveLabourForWorkers(
-    workers: player.workerPool,
-    stockpile: player.stockpile,
-    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
-    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
-  );
+  final effectiveLabour = EffectiveLabourState.fromGame(game, playerId).compute();
   if (feasibleRuns(
         recipe: recipe,
         stockpile: player.stockpile,
@@ -138,12 +134,7 @@ bool isDomesticFabricProductionLabourInfeasible({
   final player = game.playerById(playerId);
   if (player == null) return false;
 
-  final effectiveLabour = effectiveLabourForWorkers(
-    workers: player.workerPool,
-    stockpile: player.stockpile,
-    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
-    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
-  );
+  final effectiveLabour = EffectiveLabourState.fromGame(game, playerId).compute();
   final fabricId = kAiCommodityIds.fabric;
   var anyMaterialFeasible = false;
   for (final recipe in ProductionRecipesCatalog.producing(fabricId)) {
